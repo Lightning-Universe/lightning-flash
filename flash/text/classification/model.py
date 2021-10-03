@@ -70,7 +70,7 @@ class TextClassifier(ClassificationAdapterTask):
         if training_strategy == "default":
             if not num_classes:
                 raise MisconfigurationException("`num_classes` should be provided.")
-            
+
         else:
             num_classes = training_strategy_kwargs.get("ways", None)
             if not num_classes:

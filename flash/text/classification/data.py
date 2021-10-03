@@ -11,34 +11,29 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 from functools import partial
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union, TypeVar
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, TypeVar, Union
 
 import pandas as pd
 import torch
-from torch import Tensor
-import os
-import flash
-from flash.text.classification.tokenizers.base import BaseTokenizer
-from flash.core.data.auto_dataset import AutoDataset, IterableAutoDataset
 from pytorch_lightning.trainer.states import RunningStage
-from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources, LabelsState
-from flash.core.data.process import Deserializer, Postprocess, Preprocess, Serializer
+from torch import Tensor
 from torch.utils.data.sampler import Sampler
 
 import flash
-from flash.core.data.auto_dataset import AutoDataset
+from flash.core.data.auto_dataset import AutoDataset, IterableAutoDataset
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DataSource, DefaultDataSources, LabelsState
-from flash.core.data.process import Deserializer, Postprocess, Preprocess
+from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources, LabelsState
+from flash.core.data.process import Deserializer, Postprocess, Preprocess, Serializer
 from flash.core.integrations.labelstudio.data_source import LabelStudioTextClassificationDataSource
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
-
+from flash.text.classification.tokenizers.base import BaseTokenizer
 
 if _TEXT_AVAILABLE:
-    from datasets import DatasetDict, load_dataset, Dataset
+    from datasets import Dataset, DatasetDict, load_dataset
+
     from flash.text.classification.tokenizers import TEXT_CLASSIFIER_TOKENIZERS
 
 
@@ -64,7 +59,7 @@ class TextSerializer(Serializer):
     def __init__(self, tokenizer):
         super().__init__()
         self.tokenizer = tokenizer
-    
+
     def serialize(self, token_ids: Union[int, List[int]]) -> str:
         return self.tokenizer.decode(token_ids)
 
@@ -115,8 +110,10 @@ class TextDataSource(DataSource):
         if running_stage == RunningStage.TRAINING and not self.tokenizer._is_fit:
             batch_iterator = self.tokenizer._batch_iterator(dataset)
             self.tokenizer.fit(batch_iterator)  # TODO: save state to disk
-            print(f"Tokenizer fit with `vocab_size={self.tokenizer.vocab_size}`, `max_length={self.tokenizer.max_length}`, `batch_size={self.tokenizer.batch_size}`")
-        
+            print(
+                f"Tokenizer fit with `vocab_size={self.tokenizer.vocab_size}`, `max_length={self.tokenizer.max_length}`, `batch_size={self.tokenizer.batch_size}`"
+            )
+
         return dataset
 
 
@@ -137,8 +134,8 @@ class TextFileDataSource(TextDataSource):
         data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
         dataset: Optional[Any] = None,
     ) -> Dataset:
-        """Loads data into HuggingFace datasets.Dataset"""
-        
+        """Loads data into HuggingFace datasets.Dataset."""
+
         if self.filetype == "json":
             file, input, target, field = data
         else:
@@ -395,7 +392,7 @@ class TextClassificationPreprocess(Preprocess):
             self.tokenizer, self.vocab_size = backbone
         else:
             self.tokenizer, self.vocab_size = TEXT_CLASSIFIER_TOKENIZERS.get(backbone)(**backbone_kwargs)
-        
+
         os.environ["TOKENIZERS_PARALLELISM"] = "true"  # TODO: do we really need this?
 
         super().__init__(
@@ -409,7 +406,9 @@ class TextClassificationPreprocess(Preprocess):
                 DefaultDataSources.DATAFRAME: TextDataFrameDataSource(self.tokenizer, self.vocab_size),
                 DefaultDataSources.LISTS: TextListDataSource(self.tokenizer, self.vocab_size),
                 DefaultDataSources.SENTENCES: TextSentencesDataSource(self.tokenizer, self.vocab_size),
-                DefaultDataSources.LABELSTUDIO: LabelStudioTextClassificationDataSource(self.tokenizer, self.vocab_size),
+                DefaultDataSources.LABELSTUDIO: LabelStudioTextClassificationDataSource(
+                    self.tokenizer, self.vocab_size
+                ),
             },
             default_data_source=DefaultDataSources.SENTENCES,
             deserializer=TextDeserializer(self.tokenizer, self.vocab_size),
@@ -424,7 +423,7 @@ class TextClassificationPreprocess(Preprocess):
 
     @classmethod
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
-        return cls(**state_dict)        
+        return cls(**state_dict)
 
     def collate(self, samples: Union[List[Dict[str, Any]], List[str]]) -> Dict[str, Tensor]:
         """Tokenizes inputs and collates."""
@@ -436,13 +435,13 @@ class TextClassificationPreprocess(Preprocess):
                 return_tensors="pt",
             )
         }
-        
+
         if DefaultDataKeys.TARGET in samples[0]:
             collated_batch[DefaultDataKeys.TARGET] = torch.tensor(
                 [sample[DefaultDataKeys.TARGET] for sample in samples],
                 dtype=torch.int64,  # like what HuggingFace returns above
             )
-        
+
         return collated_batch
 
 
