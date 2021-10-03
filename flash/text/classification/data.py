@@ -12,33 +12,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import partial
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union, TypeVar
 
 import torch
 from torch import Tensor
-
+import os
 import flash
-from flash.core.data.auto_dataset import AutoDataset
+from flash.text.classification.tokenizers import BaseTokenizer
+from flash.core.data.auto_dataset import AutoDataset, IterableAutoDataset
+from pytorch_lightning.trainer.states import RunningStage
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DataSource, DefaultDataSources, LabelsState
+from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources, LabelsState
 from flash.core.data.process import Deserializer, Postprocess, Preprocess
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 
-if _TEXT_AVAILABLE:
-    from datasets import DatasetDict, load_dataset
-    from transformers import AutoTokenizer, default_data_collator
-    from transformers.modeling_outputs import SequenceClassifierOutput
 
+if _TEXT_AVAILABLE:
+    from datasets import DatasetDict, load_dataset, Dataset
+    from transformers.modeling_outputs import SequenceClassifierOutput
     from flash.text.classification.tokenizers import TEXT_CLASSIFIER_TOKENIZERS
+
+
+DATA_TYPE = TypeVar("DATA_TYPE")
 
 
 class TextDeserializer(Deserializer):
     @requires("text")
-    def __init__(self, backbone: str, **backbone_kwargs):
+    def __init__(self, tokenizer):
         super().__init__()
-        self.backbone = backbone
-        self.backbone_kwargs = backbone_kwargs
-        self.tokenizer, self.vocab_size = TEXT_CLASSIFIER_TOKENIZERS.get(backbone)(**backbone_kwargs)
+        self.tokenizer = tokenizer
 
     def deserialize(self, text: Union[str, List[str]]) -> Tensor:
         return self.tokenizer(text)
@@ -59,22 +61,11 @@ class TextDeserializer(Deserializer):
 
 class TextDataSource(DataSource):
     @requires("text")
-    def __init__(self, backbone: str, **backbone_kwargs):
+    def __init__(self, tokenizer, vocab_size: int):
         super().__init__()
 
-        self.backbone = backbone
-        self.backbone_kwargs = backbone_kwargs
-        self.tokenizer, self.vocab_size = TEXT_CLASSIFIER_TOKENIZERS.get(backbone)(**backbone_kwargs)
-
-    def _tokenize_fn(
-        self,
-        ex: Union[Dict[str, str], str],
-        input: Optional[str] = None,
-    ) -> Callable:
-        """This function is used to tokenize sentences using the provided tokenizer."""
-        if isinstance(ex, dict):
-            ex = ex[input]
-        return self.tokenizer(ex)
+        self.tokenizer = tokenizer
+        self.vocab_size = vocab_size
 
     @staticmethod
     def _transform_label(label_to_class_mapping: Dict[str, int], target: str, ex: Dict[str, Union[int, str]]):
@@ -90,25 +81,53 @@ class TextDataSource(DataSource):
         self.__dict__.update(state)
         self.tokenizer, self.vocab_size = TEXT_CLASSIFIER_TOKENIZERS.get(self.backbone)(**self.backbone_kwargs)
 
+    def generate_dataset(
+        self,
+        data: Optional[DATA_TYPE],
+        running_stage: RunningStage,
+    ) -> Optional[Union[AutoDataset, IterableAutoDataset]]:
+        """Generate a single dataset with the given input to
+        :meth:`~flash.core.data.data_source.DataSource.load_data` for the given ``running_stage``.
+        Args:
+            data: The input to :meth:`~flash.core.data.data_source.DataSource.load_data` to use to create the dataset.
+            running_stage: The running_stage for this dataset.
+        Returns:
+            The constructed :class:`~flash.core.data.auto_dataset.BaseAutoDataset`.
+        """
+
+        dataset: Union[AutoDataset, IterableAutoDataset] = super().generate_dataset(data, running_stage)
+
+        # predict might not be present
+        if not dataset:
+            return
+
+        # decide whether to train tokenizer
+        if running_stage == RunningStage.TRAINING and not self.tokenizer._is_fit:
+            batch_iterator = self.tokenizer._batch_iterator(dataset)
+            self.tokenizer.fit(batch_iterator)  # TODO: save state to disk
+        
+        return dataset
+
 
 class TextFileDataSource(TextDataSource):
-    def __init__(self, filetype: str, backbone: str, **backbone_kwargs):
-        super().__init__(backbone, **backbone_kwargs)
+    def __init__(self, filetype: str, tokenizer, vocab_size: int):
+        super().__init__(tokenizer, vocab_size)
 
         self.filetype = filetype
 
     @staticmethod
     def _multilabel_target(targets, element):
         targets = [element.pop(target) for target in targets]
-        element["labels"] = targets
+        element[DefaultDataKeys.TARGET] = targets
         return element
 
     def load_data(
         self,
         data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
         dataset: Optional[Any] = None,
-        columns: Union[List[str], Tuple[str]] = ("input_ids", "attention_mask", "labels"),
-    ) -> Union[Sequence[Mapping[str, Any]]]:
+    ) -> Dataset:
+        """Loads data into HuggingFace datasets.Dataset"""
+        
         if self.filetype == "json":
             file, input, target, field = data
         else:
@@ -149,7 +168,7 @@ class TextFileDataSource(TextDataSource):
             if isinstance(target, List):
                 # multi-target
                 dataset.multi_label = True
-                dataset_dict = dataset_dict.map(partial(self._multilabel_target, target))
+                dataset_dict = dataset_dict.map(partial(self._multilabel_target, target))  # NOTE: renames target column
                 dataset.num_classes = len(target)
                 self.set_state(LabelsState(target))
             else:
@@ -167,17 +186,16 @@ class TextFileDataSource(TextDataSource):
                     label_to_class_mapping = {v: k for k, v in enumerate(labels)}
                     dataset_dict = dataset_dict.map(partial(self._transform_label, label_to_class_mapping, target))
 
-                # Hugging Face models expect target to be named ``labels``.
-                if target != "labels":
-                    dataset_dict.rename_column_(target, "labels")
+                # rename label column
+                dataset_dict = dataset_dict.rename_column(target, DefaultDataKeys.TARGET)
 
-        dataset_dict = dataset_dict.map(partial(self._tokenize_fn, input=input), batched=True)
-        dataset_dict.set_format("torch", columns=columns)
+        # rename input column
+        dataset_dict = dataset_dict.rename_column(input, DefaultDataKeys.INPUT)
 
         return dataset_dict[stage]
 
     def predict_load_data(self, data: Any, dataset: AutoDataset):
-        return self.load_data(data, dataset, columns=["input_ids", "attention_mask"])
+        return self.load_data(data, dataset)
 
     def __getstate__(self):  # TODO: Find out why this is being pickled
         state = self.__dict__.copy()
@@ -190,8 +208,8 @@ class TextFileDataSource(TextDataSource):
 
 
 class TextCSVDataSource(TextFileDataSource):
-    def __init__(self, backbone: str, **backbone_kwargs):
-        super().__init__("csv", backbone, **backbone_kwargs)
+    def __init__(self, tokenizer, vocab_size: int):
+        super().__init__("csv", tokenizer, vocab_size)
 
     def __getstate__(self):  # TODO: Find out why this is being pickled
         state = self.__dict__.copy()
@@ -204,8 +222,8 @@ class TextCSVDataSource(TextFileDataSource):
 
 
 class TextJSONDataSource(TextFileDataSource):
-    def __init__(self, backbone: str, **backbone_kwargs):
-        super().__init__("json", backbone, **backbone_kwargs)
+    def __init__(self, tokenizer, vocab_size: int):
+        super().__init__("json", tokenizer, vocab_size)
 
     def __getstate__(self):  # TODO: Find out why this is being pickled
         state = self.__dict__.copy()
@@ -218,8 +236,8 @@ class TextJSONDataSource(TextFileDataSource):
 
 
 class TextSentencesDataSource(TextDataSource):
-    def __init__(self, backbone: str, **backbone_kwargs):
-        super().__init__(backbone, **backbone_kwargs)
+    def __init__(self, tokenizer, vocab_size: int):
+        super().__init__(tokenizer, vocab_size)
 
     def load_data(
         self,
@@ -254,11 +272,16 @@ class TextClassificationPreprocess(Preprocess):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        backbone: str = "prajjwal1/bert-tiny",
+        backbone: Union[str, Tuple[BaseTokenizer, int]] = "prajjwal1/bert-tiny",
         **backbone_kwargs,
     ):
-        self.backbone = backbone
-        self.backbone_kwargs = backbone_kwargs
+
+        if isinstance(backbone, tuple):
+            self.tokenizer, self.vocab_size = backbone
+        else:
+            self.tokenizer, self.vocab_size = TEXT_CLASSIFIER_TOKENIZERS.get(backbone)(**backbone_kwargs)
+        
+        os.environ["TOKENIZERS_PARALLELISM"] = "true"  # TODO: do we really need this?
 
         super().__init__(
             train_transform=train_transform,
@@ -266,12 +289,12 @@ class TextClassificationPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.CSV: TextCSVDataSource(self.backbone, **backbone_kwargs),
-                DefaultDataSources.JSON: TextJSONDataSource(self.backbone, **backbone_kwargs),
-                "sentences": TextSentencesDataSource(self.backbone, **backbone_kwargs),
+                DefaultDataSources.CSV: TextCSVDataSource(self.tokenizer, self.vocab_size),
+                DefaultDataSources.JSON: TextJSONDataSource(self.tokenizer, self.vocab_size),
+                "sentences": TextSentencesDataSource(self.tokenizer, self.vocab_size),
             },
             default_data_source="sentences",
-            deserializer=TextDeserializer(self.backbone, **self.backbone_kwargs),
+            deserializer=TextDeserializer(self.tokenizer),
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
@@ -282,20 +305,26 @@ class TextClassificationPreprocess(Preprocess):
 
     @classmethod
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
-        return cls(**state_dict)
+        return cls(**state_dict)        
 
-    def per_batch_transform(self, batch: Any) -> Any:
-        if "labels" not in batch:
-            # todo: understand why an extra dimension has been added.
-            if batch["input_ids"].dim() == 3:
-                batch["input_ids"] = batch["input_ids"].squeeze(0)
-        return batch
+    def collate(self, samples: Union[List[Dict[str, Any]], List[str]]) -> Dict[str, Tensor]:
+        """Tokenizes inputs and collates."""
 
-    def collate(self, samples: Any) -> Tensor:
-        """Override to convert a set of samples to a batch."""
-        if isinstance(samples, dict):
-            samples = [samples]
-        return default_data_collator(samples)
+        # collate and then tokenize (more efficient)
+        collated_batch = {
+            DefaultDataKeys.INPUT: self.tokenizer(
+                [sample[DefaultDataKeys.INPUT] for sample in samples],
+                return_tensors="pt",
+            )
+        }
+        
+        if DefaultDataKeys.TARGET in samples[0]:
+            collated_batch[DefaultDataKeys.TARGET] = torch.tensor(
+                [sample[DefaultDataKeys.TARGET] for sample in samples],
+                dtype=torch.int64,  # like what HuggingFace returns above
+            )
+        
+        return collated_batch
 
 
 class TextClassificationPostprocess(Postprocess):
@@ -315,15 +344,6 @@ class TextClassificationData(DataModule):
     def backbone(self) -> Optional[str]:
         return getattr(self.preprocess, "backbone", None)
 
-
-# if __name__ == "__main__":
-#     from flash.text.classification.tokenizers import TEXT_CLASSIFIER_TOKENIZERS.get
-#     from flash.text.classification.data import TextClassificationData
-
-#     datamodule = TextClassificationData.from_csv(
-#         train_file="/Users/49796/Documents/GitHub/lightning-flash/flash_notebooks/data/imdb/train.csv",
-#         input_fields="review",
-#         target_fields="sentiment",
-#         backbone="prajjwal1/bert-tiny",
-#         backbone_kwargs={"pretrained": True},
-#     )
+    @property
+    def vocab_size(self) -> str:
+        return getattr(self.preprocess, "vocab_size")

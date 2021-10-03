@@ -11,23 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import inspect
-import os
-from collections import defaultdict
 from functools import partial
-from typing import Any, Callable, List, Optional, Type
+from typing import Any, Optional
 
 import torch
-from pytorch_lightning import LightningModule
-from pytorch_lightning.plugins import DataParallelPlugin, DDPPlugin, DDPSpawnPlugin
-from pytorch_lightning.trainer.states import TrainerFn
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from pytorch_lightning.utilities.warnings import WarningCache
-from torch.utils.data import DataLoader, IterableDataset, Sampler
 
-import flash
 from flash.core.adapter import Adapter, AdapterTask
-from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
@@ -91,20 +81,23 @@ class DefaultAdapter(Adapter):
         return cls(task, backbone, head)
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        labels = batch.pop(DefaultDataKeys.TARGET)
+        batch = (batch, labels)
         return Task.training_step(self._task.task, batch, batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        labels = batch.pop(DefaultDataKeys.TARGET)
+        batch = (batch, labels)
         return Task.validation_step(self._task.task, batch, batch_idx)
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        labels = batch.pop(DefaultDataKeys.TARGET)
+        batch = (batch, labels)
         return Task.test_step(self._task.task, batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         batch[DefaultDataKeys.PREDS] = Task.predict_step(
-            self._task.task, (batch[DefaultDataKeys.INPUT]), batch_idx, dataloader_idx=dataloader_idx
+            self._task.task, (batch,), batch_idx, dataloader_idx=dataloader_idx
         )
         return batch
 

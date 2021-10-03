@@ -16,13 +16,8 @@
 # ResNet encoder adapted from: https://github.com/facebookresearch/swav/blob/master/src/resnet50.py
 # as the official torchvision implementation does not support wide resnet architecture
 # found in self-supervised learning model weights
-import os
-import warnings
-from typing import Union
-
 import torch
 import transformers
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from transformers import AutoConfig, AutoModel
 from transformers.modeling_outputs import (
@@ -98,28 +93,4 @@ def _trasformer(
     # re-enable HF warnings
     transformers.logging.set_verbosity_warning()
 
-    # # TODO: do we really need this?
-    # os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
-    # # disable HF thousand warnings
-    # warnings.simplefilter("ignore")
-    # # set os environ variable for multiprocesses
-    # os.environ["PYTHONWARNINGS"] = "ignore"
-
     return model, model.config.hidden_size
-
-
-# if __name__ == "__main__":
-#     from flash.core.data.data_source import DefaultDataKeys
-
-#     batch = {
-#         DefaultDataKeys.INPUT: {
-#             "input_ids": torch.tensor([[1, 2, 3]]),
-#             "attention_mask": torch.tensor([[0, 0, 0]]),
-#         },
-#         DefaultDataKeys.TARGET: None,
-#     }
-
-#     model = Transformer(pretrained=False)
-#     outputs = model(batch[DefaultDataKeys.INPUT])
-#     print(outputs)
-#     print(model._sentence_representation)

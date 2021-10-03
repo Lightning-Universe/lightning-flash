@@ -16,15 +16,18 @@
 # ResNet encoder adapted from: https://github.com/facebookresearch/swav/blob/master/src/resnet50.py
 # as the official torchvision implementation does not support wide resnet architecture
 # found in self-supervised learning model weights
-from typing import Generator, List, Tuple, Union
-
+from typing import Generator, List, Optional, Tuple, Union
+from flash.text.classification.tokenizers import BaseTokenizer
 import datasets
 import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from transformers import AutoConfig, AutoTokenizer
 
 
-class TrasformerTokenizer:
+class TrasformerTokenizer(BaseTokenizer):
+
+    # TODO: make this more flexible and allow users to pass tokenizers arguments!!
+
     def __init__(self, model_name: bool, pretrained: bool = True, **kwargs):
         self.model_name = model_name
         self.pretrained = pretrained
@@ -56,7 +59,7 @@ class TrasformerTokenizer:
         self.tokenizer = self.tokenizer.train_new_from_iterator(batch_iterator, vocab_size=self.vocab_size)
         self._is_fit = True
 
-    def __call__(self, x: Union[str, List[str]]) -> torch.Tensor:
+    def __call__(self, x: Union[str, List[str]], return_tensors: Optional[str] = None) -> Union[List[int], torch.Tensor]:
         if not self._is_fit:
             raise MisconfigurationException("If pretrained=False, tokenizer must be fit before using it")
 
@@ -66,6 +69,7 @@ class TrasformerTokenizer:
             padding=True,  # pads to longest string in the batch, more efficient than "max_length"
             truncation=True,  # truncate to max_length supported by the model
             max_length=self.max_length,
+            return_tensors=return_tensors,
         )
 
     def decode(self, token_ids: Union[int, List[int]]) -> str:
@@ -88,8 +92,3 @@ def _trasformer_tokenizer(
     tokenizer = TrasformerTokenizer(model_name, pretrained, **kwargs)
 
     return tokenizer, tokenizer.vocab_size
-
-
-# if __name__ == "__main__":
-#     tok = TrasformerTokenizer("prajjwal1/bert-medium", pretrained=True)
-#     print(tok(["My name is Flash", "I love maccheroni"]))

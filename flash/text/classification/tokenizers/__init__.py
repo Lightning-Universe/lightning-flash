@@ -16,12 +16,6 @@
 # ResNet encoder adapted from: https://github.com/facebookresearch/swav/blob/master/src/resnet50.py
 # as the official torchvision implementation does not support wide resnet architecture
 # found in self-supervised learning model weights
-import os
-import warnings
-from typing import Union
-
-from torch import nn
-
 from flash.core.registry import ExternalRegistry, FlashRegistry
 from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
 from flash.core.utilities.providers import _HUGGINGFACE
@@ -38,6 +32,5 @@ if _TRANSFORMERS_AVAILABLE:
     TEXT_CLASSIFIER_TOKENIZERS += HUGGINGFACE_TEXT_CLASSIFIER_TOKENIZERS
 
 
-# if __name__ == "__main__":
-#     tok = TEXT_CLASSIFIER_TOKENIZERS.get("prajjwal1/bert-medium")(pretrained=True)
-#     print(tok(["My name is Flash", "I love maccheroni"]))
+class BaseTokenizer:
+    pass
