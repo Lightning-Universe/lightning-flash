@@ -39,8 +39,7 @@ class TextClassifier(ClassificationAdapterTask):
     def __init__(
         self,
         num_classes: Optional[int] = None,
-        vocab_size: Optional[int] = None,
-        backbone: Union[str, Tuple[nn.Module, int]] = "prajjwal1/bert-medium",
+        backbone: Union[str, Tuple[nn.Module, int]] = "prajjwal1/bert-tiny",
         backbone_kwargs: Optional[Dict] = None,
         head: Optional[Union[FunctionType, nn.Module]] = None,
         pretrained: Union[bool, str] = True,
@@ -81,9 +80,6 @@ class TextClassifier(ClassificationAdapterTask):
             backbone, num_features = backbone
         else:
             backbone, num_features = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
-
-        if backbone.vocab_size != vocab_size:
-            raise MisconfigurationException("Model and tokenizer have different `vocab_size`.")
 
         head = head(num_features, num_classes) if isinstance(head, FunctionType) else head
         head = head or nn.Sequential(
