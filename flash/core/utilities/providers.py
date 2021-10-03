@@ -42,6 +42,7 @@ _SEGMENTATION_MODELS = Provider(
 _LEARN2LEARN = Provider("learnables/learn2learn", "https://github.com/learnables/learn2learn")
 _PYSTICHE = Provider("pystiche/pystiche", "https://github.com/pystiche/pystiche")
 _HUGGINGFACE = Provider("Hugging Face/transformers", "https://github.com/huggingface/transformers")
+_HUGGINGFACE_TOKENIZERS = Provider("Hugging Face/tokenizers", "https://github.com/huggingface/tokenizers")
 _FAIRSEQ = Provider("PyTorch/fairseq", "https://github.com/pytorch/fairseq")
 _OPEN3D_ML = Provider("Intelligent Systems Lab Org/Open3D-ML", "https://github.com/isl-org/Open3D-ML")
 _PYTORCHVIDEO = Provider("Facebook Research/PyTorchVideo", "https://github.com/facebookresearch/pytorchvideo")
