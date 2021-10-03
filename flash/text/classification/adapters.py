@@ -81,18 +81,15 @@ class DefaultAdapter(Adapter):
         return cls(task, backbone, head)
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
-        labels = batch.pop(DefaultDataKeys.TARGET)
-        batch = (batch, labels)
+        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
         return Task.training_step(self._task.task, batch, batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        labels = batch.pop(DefaultDataKeys.TARGET)
-        batch = (batch, labels)
+        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
         return Task.validation_step(self._task.task, batch, batch_idx)
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
-        labels = batch.pop(DefaultDataKeys.TARGET)
-        batch = (batch, labels)
+        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
         return Task.test_step(self._task.task, batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
