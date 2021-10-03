@@ -1,1 +1,2 @@
-from flash.text.embeddings.sentence_embeddings import SentenceEmbeddings
+from flash.text.embeddings.data import SentenceEmbedData,SentenceEmbedPreprocess
+from flash.text.embeddings.model import SentenceEmbedder
