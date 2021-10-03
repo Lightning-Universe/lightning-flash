@@ -77,17 +77,18 @@ class Transformer(nn.Module):
         return self._sentence_representation(x)
 
 
-def _trasformer(
+def _transformer(
     model_name: str = "prajjwal1/bert-tiny",
     pretrained: bool = True,
     strategy: str = "cls_token",
 ) -> Tuple[nn.Module, int]:
-    # disable HF thousand warnings when loading model
+
+    # disable Hugging Face warnings
     transformers.logging.set_verbosity_error()
-
+    
     model = Transformer(model_name, pretrained, strategy)
-
-    # re-enable HF warnings
+    
+    # re-enable Hugging Face warnings
     transformers.logging.set_verbosity_warning()
 
     return model, model.config.hidden_size

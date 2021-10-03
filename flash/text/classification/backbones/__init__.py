@@ -19,13 +19,13 @@
 from flash.core.registry import ExternalRegistry, FlashRegistry
 from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
 from flash.core.utilities.providers import _HUGGINGFACE
-from flash.text.classification.backbones.transfomers import _trasformer
+from flash.text.classification.backbones.transfomers import _transformer
 
 TEXT_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
 
 if _TRANSFORMERS_AVAILABLE:
     HUGGINGFACE_TEXT_CLASSIFIER_BACKBONES = ExternalRegistry(
-        getter=_trasformer,
+        getter=_transformer,
         name="trasformer",
         providers=_HUGGINGFACE,
     )
