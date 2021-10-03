@@ -11,37 +11,28 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, Union,List
-
 import os
 import warnings
-
-import torch
-import torchmetrics
-from torch import nn
-from torch.optim.lr_scheduler import _LRScheduler
-from flash.core.model import Task
-from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.process import Serializer
-from flash.core.registry import FlashRegistry
-from flash.template.classification.backbones import TEMPLATE_BACKBONES
-from sentence_transformers import SentenceTransformer
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import numpy as np
 import torch
+import torchmetrics
 from pytorch_lightning import Callback
 from pytorch_lightning.utilities import rank_zero_info
-from torch import Tensor
+from sentence_transformers import SentenceTransformer
+from torch import nn, Tensor
 from torch.optim.lr_scheduler import _LRScheduler
 from torchmetrics import Metric
 
 from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.process import Serializer
 from flash.core.finetuning import FlashBaseFinetuning
 from flash.core.model import Task
 from flash.core.registry import ExternalRegistry, FlashRegistry
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.core.utilities.providers import _SENTENCE_TRANSFORMERS
-
+from flash.template.classification.backbones import TEMPLATE_BACKBONES
 
 if _TEXT_AVAILABLE:
     from sentence_transformers import SentenceTransformer
@@ -55,10 +46,11 @@ else:
     SentenceTransformer = None
 
     SENTENCE_TRANSFORMERS_BACKBONE = FlashRegistry("backbones")
-    
+
+
 class SentenceEmbedder(Task):
-    """The ``SentenceEmbedder`` is a :class:`~flash.Task` for generating sentence embeddings, training and validation. For more details,
-    see `embeddings`.
+    """The ``SentenceEmbedder`` is a :class:`~flash.Task` for generating sentence embeddings, training and
+    validation. For more details, see `embeddings`.
 
     You can change the backbone to any question answering model from `UKPLab/sentence-transformers
     <https://github.com/UKPLab/sentence-transformers>`_ using the ``backbone``
@@ -80,10 +72,10 @@ class SentenceEmbedder(Task):
         learning_rate: Learning rate to use for training, defaults to `3e-4`
         enable_ort: Enable Torch ONNX Runtime Optimization: https://onnxruntime.ai/docs/#onnx-runtime-for-training
     """
+
     required_extras: str = "text"
 
     backbones: FlashRegistry = FlashRegistry("backbones") + SENTENCE_TRANSFORMERS_BACKBONE
-    
 
     def __init__(
         self,
@@ -95,9 +87,9 @@ class SentenceEmbedder(Task):
         scheduler_kwargs: Optional[Dict[str, Any]] = None,
         metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
         learning_rate: float = 5e-5,
-        enable_ort: bool = False        
+        enable_ort: bool = False,
     ):
-        
+
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
         # disable HF thousand warnings
         warnings.simplefilter("ignore")
@@ -113,16 +105,20 @@ class SentenceEmbedder(Task):
             learning_rate=learning_rate,
         )
         self.model = self.backbones.get(backbone)()
-    def generate_embeddings(self, sentences: Union[str, List[str]],
-               batch_size: int = 32,
-               show_progress_bar: bool = None,
-               output_value: str = 'sentence_embedding',
-               convert_to_numpy: bool = True,
-               convert_to_tensor: bool = False,
-               device: str = None,
-               normalize_embeddings: bool = False) -> Union[List[Tensor], np.ndarray, Tensor]:
-        
-       return self.model.encode(
+
+    def generate_embeddings(
+        self,
+        sentences: Union[str, List[str]],
+        batch_size: int = 32,
+        show_progress_bar: bool = None,
+        output_value: str = "sentence_embedding",
+        convert_to_numpy: bool = True,
+        convert_to_tensor: bool = False,
+        device: str = None,
+        normalize_embeddings: bool = False,
+    ) -> Union[List[Tensor], np.ndarray, Tensor]:
+
+        return self.model.encode(
             sentences=sentences,
             batch_size=batch_size,
             show_progress_bar=show_progress_bar,
@@ -132,8 +128,6 @@ class SentenceEmbedder(Task):
             device=device,
             normalize_embeddings=normalize_embeddings,
         )
-
-        
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         """For the training step, we just extract the :attr:`~flash.core.data.data_source.DefaultDataKeys.INPUT` and

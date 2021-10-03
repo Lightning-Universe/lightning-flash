@@ -2,6 +2,7 @@ from typing import Callable, Dict, Optional, Union
 
 from flash.text.seq2seq.core.data import Seq2SeqData, Seq2SeqPostprocess, Seq2SeqPreprocess
 
+
 class SentenceEmbedPreprocess(Seq2SeqPreprocess):
     def __init__(
         self,
