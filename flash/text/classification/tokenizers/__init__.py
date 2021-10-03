@@ -18,7 +18,7 @@
 # found in self-supervised learning model weights
 from flash.core.registry import ExternalRegistry, FlashRegistry
 from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
-from flash.core.utilities.providers import _HUGGINGFACE
+from flash.core.utilities.providers import _HUGGINGFACE_TOKENIZERS
 from flash.text.classification.tokenizers.transfomers import _trasformer_tokenizer
 
 TEXT_CLASSIFIER_TOKENIZERS = FlashRegistry("tokenizers")
@@ -27,6 +27,6 @@ if _TRANSFORMERS_AVAILABLE:
     HUGGINGFACE_TEXT_CLASSIFIER_TOKENIZERS = ExternalRegistry(
         getter=_trasformer_tokenizer,
         name="trasformer",
-        providers=_HUGGINGFACE,
+        providers=_HUGGINGFACE_TOKENIZERS,
     )
     TEXT_CLASSIFIER_TOKENIZERS += HUGGINGFACE_TEXT_CLASSIFIER_TOKENIZERS
