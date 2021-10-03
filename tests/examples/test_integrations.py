@@ -17,13 +17,12 @@ from unittest import mock
 
 import pytest
 
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _BAAL_AVAILABLE, _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE
 from tests.examples.utils import run_test
 
 root = Path(__file__).parent.parent.parent
 
 
-@pytest.mark.skipif(True, reason="Need to update the weights")
 @mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
 @pytest.mark.parametrize(
     "folder, file",
@@ -34,6 +33,11 @@ root = Path(__file__).parent.parent.parent
             marks=pytest.mark.skipif(
                 not (_IMAGE_AVAILABLE and _FIFTYONE_AVAILABLE), reason="fiftyone library isn't installed"
             ),
+        ),
+        pytest.param(
+            "baal",
+            "image_classification_active_learning.py",
+            marks=pytest.mark.skipif(not (_IMAGE_AVAILABLE and _BAAL_AVAILABLE), reason="baal library isn't installed"),
         ),
     ],
 )

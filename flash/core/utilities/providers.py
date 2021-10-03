@@ -46,3 +46,4 @@ _HUGGINGFACE_TOKENIZERS = Provider("Hugging Face/tokenizers", "https://github.co
 _FAIRSEQ = Provider("PyTorch/fairseq", "https://github.com/pytorch/fairseq")
 _OPEN3D_ML = Provider("Intelligent Systems Lab Org/Open3D-ML", "https://github.com/isl-org/Open3D-ML")
 _PYTORCHVIDEO = Provider("Facebook Research/PyTorchVideo", "https://github.com/facebookresearch/pytorchvideo")
+_VISSL = Provider("Facebook Research/vissl", "https://github.com/facebookresearch/vissl")
