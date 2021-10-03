@@ -20,7 +20,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from transformers import AutoConfig, AutoTokenizer
 
 
-class TrasformerTokenizer(BaseTokenizer):
+class TransformerTokenizer(BaseTokenizer):
 
     # TODO: make this more flexible and allow users to pass tokenizers arguments!!
 
@@ -77,8 +77,8 @@ def _trasformer_tokenizer(
     model_name: str = "prajjwal1/bert-tiny",
     pretrained: bool = True,
     **kwargs,
-) -> Tuple["TrasformerTokenizer", int]:
+) -> Tuple["TransformerTokenizer", int]:
 
-    tokenizer = TrasformerTokenizer(model_name, pretrained, **kwargs)
+    tokenizer = TransformerTokenizer(model_name, pretrained, **kwargs)
 
     return tokenizer, tokenizer.vocab_size
