@@ -26,14 +26,14 @@ class TransformerTokenizer(BaseTokenizer):
 
     # TODO: make this more flexible and allow users to pass tokenizers arguments!!
 
-    def __init__(self, model_name: bool, pretrained: bool = True, **kwargs):
-        self.model_name = model_name
+    def __init__(self, backbone: str, pretrained: bool = True, **kwargs):
+        self.backbone = backbone
         self.pretrained = pretrained
 
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.tokenizer = AutoTokenizer.from_pretrained(backbone)
 
         # NOTE: self.tokenizer.model_max_length returns crazy value, pick this from config
-        self.config = AutoConfig.from_pretrained(model_name)
+        self.config = AutoConfig.from_pretrained(backbone)
         self.max_length = self.config.max_position_embeddings
         self.vocab_size = self.config.vocab_size
         self._is_fit = pretrained
@@ -46,7 +46,7 @@ class TransformerTokenizer(BaseTokenizer):
             max_length = kwargs.get("max_length", self.max_length)
             if max_length > self.max_length:
                 raise MisconfigurationException(
-                    f"`max_length` must be less or equal to {self.max_length}, which is the maximum supported by {model_name}"
+                    f"`max_length` must be less or equal to {self.max_length}, which is the maximum supported by {backbone}"
                 )
             else:
                 self.max_length = max_length
@@ -78,11 +78,11 @@ class TransformerTokenizer(BaseTokenizer):
 
 
 def _trasformer_tokenizer(
-    model_name: str = "prajjwal1/bert-tiny",
+    backbone: str = "prajjwal1/bert-tiny",
     pretrained: bool = True,
     **kwargs,
 ) -> Tuple["TransformerTokenizer", int]:
 
-    tokenizer = TransformerTokenizer(model_name, pretrained, **kwargs)
+    tokenizer = TransformerTokenizer(backbone, pretrained, **kwargs)
 
     return tokenizer, tokenizer.vocab_size
