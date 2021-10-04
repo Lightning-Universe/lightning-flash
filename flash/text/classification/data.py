@@ -59,7 +59,7 @@ class TextSerializer(Serializer):
     def __init__(self, tokenizer):
         super().__init__()
         self.tokenizer = tokenizer
-    
+
     def serialize(self, token_ids: Union[int, List[int]]) -> str:
         return self.tokenizer.decode(token_ids)
 
@@ -116,8 +116,10 @@ class TextDataSource(DataSource):
         if running_stage == RunningStage.TRAINING and not self.tokenizer._is_fit:
             batch_iterator = self.tokenizer._batch_iterator(dataset)
             self.tokenizer.fit(batch_iterator)  # TODO: save state to disk
-            print(f"Tokenizer fit with `vocab_size={self.tokenizer.vocab_size}`, `max_length={self.tokenizer.max_length}`, `batch_size={self.tokenizer.batch_size}`")
-        
+            print(
+                f"Tokenizer fit with `vocab_size={self.tokenizer.vocab_size}`, `max_length={self.tokenizer.max_length}`, `batch_size={self.tokenizer.batch_size}`"
+            )
+
         return dataset
 
     def load_data(
@@ -263,7 +265,7 @@ class TextClassificationPreprocess(Preprocess):
             self.tokenizer, self.vocab_size = backbone
         else:
             self.tokenizer, self.vocab_size = TEXT_CLASSIFIER_TOKENIZERS.get(backbone)(**backbone_kwargs)
-        
+
         os.environ["TOKENIZERS_PARALLELISM"] = "true"  # TODO: do we really need this?
 
         super().__init__(
@@ -292,7 +294,7 @@ class TextClassificationPreprocess(Preprocess):
 
     @classmethod
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
-        return cls(**state_dict)        
+        return cls(**state_dict)
 
     def collate(self, samples: Union[List[Dict[str, Any]], List[str]]) -> Dict[str, Tensor]:
         """Tokenizes inputs and collates."""
@@ -304,13 +306,13 @@ class TextClassificationPreprocess(Preprocess):
                 return_tensors="pt",
             )
         }
-        
+
         if DefaultDataKeys.TARGET in samples[0]:
             collated_batch[DefaultDataKeys.TARGET] = torch.tensor(
                 [sample[DefaultDataKeys.TARGET] for sample in samples],
                 dtype=torch.int64,  # like what HuggingFace returns above
             )
-        
+
         return collated_batch
 
 

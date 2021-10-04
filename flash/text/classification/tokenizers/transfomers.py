@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from typing import Generator, List, Optional, Tuple, Union
-from flash.core.data.data_source import DefaultDataKeys
-from flash.text.classification.tokenizers.base import BaseTokenizer
+
 import datasets
 import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from transformers import AutoConfig, AutoTokenizer
+
+from flash.core.data.data_source import DefaultDataKeys
+from flash.text.classification.tokenizers.base import BaseTokenizer
 
 
 class TransformerTokenizer(BaseTokenizer):
@@ -35,7 +37,7 @@ class TransformerTokenizer(BaseTokenizer):
         self.max_length = self.config.max_position_embeddings
         self.vocab_size = self.config.vocab_size
         self._is_fit = pretrained
-        
+
         # Allow the user to specify this otherwise fallback to original
         if not pretrained:
 
@@ -55,7 +57,9 @@ class TransformerTokenizer(BaseTokenizer):
         self.tokenizer = self.tokenizer.train_new_from_iterator(batch_iterator, vocab_size=self.vocab_size)
         self._is_fit = True
 
-    def __call__(self, x: Union[str, List[str]], return_tensors: Optional[str] = None) -> Union[List[int], torch.Tensor]:
+    def __call__(
+        self, x: Union[str, List[str]], return_tensors: Optional[str] = None
+    ) -> Union[List[int], torch.Tensor]:
         if not self._is_fit:
             raise MisconfigurationException("If pretrained=False, tokenizer must be fit before using it")
 

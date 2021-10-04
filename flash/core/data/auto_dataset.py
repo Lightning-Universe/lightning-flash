@@ -81,7 +81,9 @@ class BaseAutoDataset(Generic[DATA_TYPE]):
                 sample = dict(**sample)
             with self._load_sample_context:
                 parameters = signature(self.load_sample).parameters
-                if len(parameters) > 1 and self.DATASET_KEY in parameters:  # TODO: This should be "dataset" like in text
+                if (
+                    len(parameters) > 1 and self.DATASET_KEY in parameters
+                ):  # TODO: This should be "dataset" like in text
                     sample = self.load_sample(sample, self)
                 else:
                     sample = self.load_sample(sample)

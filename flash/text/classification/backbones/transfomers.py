@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import Dict, Tuple
+
 import torch
 import transformers
 from torch import nn
@@ -19,7 +21,6 @@ from transformers.modeling_outputs import (
     BaseModelOutputWithPastAndCrossAttentions,
     BaseModelOutputWithPoolingAndCrossAttentions,
 )
-from typing import Dict, Tuple
 
 from flash.core.registry import FlashRegistry
 
@@ -85,9 +86,9 @@ def _transformer(
 
     # disable Hugging Face warnings
     transformers.logging.set_verbosity_error()
-    
+
     model = Transformer(model_name, pretrained, strategy)
-    
+
     # re-enable Hugging Face warnings
     transformers.logging.set_verbosity_warning()
 
