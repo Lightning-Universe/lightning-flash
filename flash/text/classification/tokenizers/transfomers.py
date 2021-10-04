@@ -13,28 +13,24 @@
 # limitations under the License.
 from typing import Generator, List, Optional, Tuple, Union
 
-import datasets
 import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from transformers import AutoConfig, AutoTokenizer
 
-from flash.core.data.data_source import DefaultDataKeys
 from flash.text.classification.tokenizers.base import BaseTokenizer
 
 
 class TransformerTokenizer(BaseTokenizer):
 
     def __init__(self, backbone: str, pretrained: bool = True, **backbone_kwargs):
-        self.backbone = backbone
-        self.pretrained = pretrained
-
+        super.__init__(backbone, pretrained)
+ 
         self.tokenizer = AutoTokenizer.from_pretrained(backbone)
 
         # NOTE: self.tokenizer.model_max_length returns crazy value, pick this from config
         self.config = AutoConfig.from_pretrained(backbone)
         self.max_length = self.config.max_position_embeddings
         self.vocab_size = self.config.vocab_size
-        self._is_fit = pretrained
 
         # allow the user to specify this otherwise fallback to original
         if not pretrained:
@@ -69,10 +65,6 @@ class TransformerTokenizer(BaseTokenizer):
             max_length=self.max_length,
             return_tensors=return_tensors,
         )
-
-    def _batch_iterator(self, dataset: datasets.Dataset) -> Generator[List[str], None, None]:
-        for i in range(0, len(dataset), self.batch_size):
-            yield dataset[i : i + self.batch_size][DefaultDataKeys.INPUT]
 
 
 def _trasformer_tokenizer(
