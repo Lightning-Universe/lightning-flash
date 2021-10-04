@@ -11,16 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Type, Union
 
-import pytorch_lightning as pl
 import torch
-from torch import nn
+from torch.nn import Module
 from torch.optim import Optimizer
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Preprocess, Serializer
-from flash.core.finetuning import FlashBaseFinetuning
 from flash.core.model import Task
 from flash.core.utilities.imports import _FASTFACE_AVAILABLE
 from flash.image.face_detection.backbones import FACE_DETECTION_BACKBONES
@@ -30,12 +28,12 @@ if _FASTFACE_AVAILABLE:
     import fastface as ff
 
 
-class FaceDetectionFineTuning(FlashBaseFinetuning):
-    def __init__(self, train_bn: bool = True) -> None:
-        super().__init__(train_bn=train_bn)
+# class FaceDetectionFineTuning(FlashBaseFinetuning):
+#     def __init__(self, train_bn: bool = True) -> None:
+#         super().__init__(train_bn=train_bn)
 
-    def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
-        self.freeze(modules=pl_module.model.backbone, train_bn=self.train_bn)
+#     def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
+#         self.freeze(modules=pl_module.model.backbone, train_bn=self.train_bn)
 
 
 class DetectionLabels(Serializer):
@@ -67,7 +65,7 @@ class FaceDetector(Task):
         model: str = "lffd_slim",
         pretrained: bool = True,
         loss=None,
-        metrics: Union[Callable, nn.Module, Mapping, Sequence, None] = None,
+        metrics: Union[Callable, Module, Mapping, Sequence, None] = None,
         optimizer: Type[Optimizer] = torch.optim.AdamW,
         learning_rate: float = 1e-4,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
@@ -77,12 +75,12 @@ class FaceDetector(Task):
         self.save_hyperparameters()
 
         if model in ff.list_pretrained_models():
-            model = FaceDetector.get_model(model, pretrained, **kwargs)
+            self.model = FaceDetector.get_model(model, pretrained, **kwargs)
         else:
             ValueError(model + f" is not supported yet, please select one from {ff.list_pretrained_models()}")
 
         super().__init__(
-            model=model,
+            model=self.model,
             loss_fn=loss,
             metrics=metrics or {"AP": ff.metric.AveragePrecision()},  # TODO: replace with torch metrics MAP
             learning_rate=learning_rate,
@@ -183,5 +181,9 @@ class FaceDetector(Task):
         batch[DefaultDataKeys.PREDS] = self(images)
         return batch
 
-    def configure_finetune_callback(self):
-        return [FaceDetectionFineTuning()]
+    # def configure_finetune_callback(self):
+    #     return [FaceDetectionFineTuning()]
+
+    def get_backbone_to_freeze_before_training(self) -> Union[Module, Iterable[Union[Module, Iterable]]]:
+        """Return the module attributes of the model to be frozen."""
+        return self.model.backbone

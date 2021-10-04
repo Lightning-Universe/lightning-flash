@@ -24,6 +24,8 @@ import torch
 import torchmetrics
 from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.callbacks import Callback
+from pytorch_lightning.callbacks.finetuning import BaseFinetuning
+from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -45,6 +47,7 @@ from flash.core.data.process import (
     SerializerMapping,
 )
 from flash.core.data.properties import ProcessState
+from flash.core.finetuning import FlashBaseFinetuning
 from flash.core.hooks import FineTuningHook
 from flash.core.registry import FlashRegistry
 from flash.core.schedulers import _SCHEDULERS_REGISTRY
@@ -512,9 +515,22 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHook,
             return [optimizer], [self._instantiate_scheduler(optimizer)]
         return optimizer
 
-    @staticmethod
-    def configure_finetune_callback() -> List[Callback]:
-        return []
+    def configure_finetune_callback(
+        self,
+        strategy_key: str,
+        strategy_metadata: Optional[Union[int, Tuple[int, int]]] = None,
+        train_bn: bool = True,
+    ) -> List[BaseFinetuning]:
+
+        model_attr_names_to_be_frozen = self.get_backbone_to_freeze_before_training()
+        return [
+            FlashBaseFinetuning(
+                strategy_key=strategy_key,
+                strategy_metadata=strategy_metadata,
+                modules=model_attr_names_to_be_frozen,
+                train_bn=train_bn,
+            )
+        ]
 
     @staticmethod
     def _resolve(

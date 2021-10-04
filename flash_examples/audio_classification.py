@@ -16,7 +16,6 @@ import torch
 import flash
 from flash.audio import AudioClassificationData
 from flash.core.data.utils import download_data
-from flash.core.finetuning import FreezeUnfreeze
 from flash.image import ImageClassifier
 
 # 1. Create the DataModule
@@ -33,7 +32,7 @@ model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
 
 # 3. Create the trainer and finetune the model
 trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
-trainer.finetune(model, datamodule=datamodule, strategy=FreezeUnfreeze(unfreeze_epoch=1))
+trainer.finetune(model, datamodule=datamodule, strategy=("freeze_unfreeze", 1))
 
 # 4. Predict what's on few images! air_conditioner, children_playing, siren e.t.c
 predictions = model.predict(

@@ -11,27 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import List, Union
+from typing import Iterable, List, Optional, Tuple, Union
 
 from pytorch_lightning import LightningModule
 from pytorch_lightning.callbacks import BaseFinetuning
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torch import nn
+from torch.nn import Module, ModuleDict
 from torch.optim import Optimizer
-
-
-class NoFreeze(BaseFinetuning):
-    def freeze_before_training(self, pl_module: LightningModule) -> None:
-        pass
-
-    def finetune_function(
-        self,
-        pl_module: LightningModule,
-        epoch: int,
-        optimizer: Optimizer,
-        opt_idx: int,
-    ) -> None:
-        pass
 
 
 class FlashBaseFinetuning(BaseFinetuning):
@@ -40,118 +25,147 @@ class FlashBaseFinetuning(BaseFinetuning):
     Override :meth:`.finetune_function` to put your unfreeze logic.
     """
 
-    def __init__(self, attr_names: Union[str, List[str]] = "backbone", train_bn: bool = True):
+    def __init__(
+        self,
+        strategy_key: str,
+        strategy_metadata: Optional[Union[int, Tuple[int, int]]],
+        modules: Union[Module, Iterable[Union[Module, Iterable]]],
+        train_bn: bool = True,
+    ):
         """
         Args:
+            strategy_key: The finetuning strategy to be used. (Check :meth"`Trainer.finetune` for the available
+             strategies.)
+            strategy_metadata: Data that accompanies certain finetuning strategies like epoch number or number of
+             layers.
             attr_names: Name(s) of the module attributes of the model to be frozen.
             train_bn: Whether to train Batch Norm layer
         """
         super().__init__()
 
-        self.attr_names = [attr_names] if isinstance(attr_names, str) else attr_names
+        self.strategy = strategy_key
+        self.strategy_metadata = strategy_metadata
+
+        self.attr_names = FlashBaseFinetuning.get_module_names(modules)
+
         self.train_bn = train_bn
 
-    def freeze_before_training(self, pl_module: LightningModule) -> None:
-        self.freeze_using_attr_names(pl_module, self.attr_names, train_bn=self.train_bn)
+    @staticmethod
+    def get_module_names(modules: Union[Module, Iterable[Union[Module, Iterable]]]) -> List[str]:
+        """This function is used to flatten a module or an iterable of modules into a list of its leaf modules
+        (modules with no children) and parent modules that have parameters directly themselves and extract the
+        names.
 
-    def freeze_using_attr_names(self, pl_module, attr_names: List[str], train_bn: bool = True):
+        Args:
+            modules: A given module or an iterable of modules
+
+        Returns:
+            List of module names.
+        """
+        _module_names: List[str] = []
+        _modules: Iterable[Module] = []
+        if isinstance(modules, ModuleDict):
+            _modules.extend(modules.values())
+        elif isinstance(modules, Iterable):
+            for module in modules:
+                _module_names.extend(FlashBaseFinetuning.get_module_names(module))
+        else:
+            _modules.append(modules)
+        for module in _modules:
+            for name, _module in module.named_modules():
+                if not list(_module.children()) or _module._parameters:
+                    _module_names.append(name)
+        return _module_names
+
+    @staticmethod
+    def _get_modules_from_attr_names(
+        pl_module: LightningModule,
+        attr_names: List[str],
+    ) -> List[Union[Module, Iterable[Union[Module, Iterable]]]]:
+
+        modules: List[Union[Module, Iterable[Union[Module, Iterable]]]] = []
         for attr_name in attr_names:
-            attr = getattr(pl_module, attr_name, None)
-            if not attr or not isinstance(attr, nn.Module):
-                MisconfigurationException(f"Your model must have a {attr} attribute")
-            self.freeze(modules=attr, train_bn=train_bn)
+            _sub_module = pl_module.get_submodule(attr_name)
+            # if not attr or not isinstance(attr, nn.Module):
+            #     MisconfigurationException(f"Your model must have a {attr} attribute")
+            modules.append(_sub_module)
+        return modules
 
-    def finetune_function(self, pl_module: LightningModule, epoch: int, optimizer: Optimizer, opt_idx: int):
-        pass
+    def _freeze_using_attr_names(self, pl_module: LightningModule, train_bn: bool = True) -> None:
+        modules = FlashBaseFinetuning._get_modules_from_attr_names(pl_module=pl_module)
+        self.freeze(modules=modules, train_bn=train_bn)
 
+    def freeze_before_training(self, pl_module: LightningModule) -> None:
+        if self.strategy != "no_freeze":
+            self._freeze_using_attr_names(pl_module, train_bn=self.train_bn)
 
-class Freeze(FlashBaseFinetuning):
-    def finetune_function(
+    def _freeze_unfreeze_function(
         self,
         pl_module: LightningModule,
         epoch: int,
         optimizer: Optimizer,
         opt_idx: int,
-    ) -> None:
-        pass
-
-
-class FreezeUnfreeze(FlashBaseFinetuning):
-    def __init__(self, attr_names: Union[str, List[str]] = "backbone", train_bn: bool = True, unfreeze_epoch: int = 10):
-        super().__init__(attr_names, train_bn)
-        self.unfreeze_epoch = unfreeze_epoch
-
-    def finetune_function(
-        self,
-        pl_module: LightningModule,
-        epoch: int,
-        optimizer: Optimizer,
-        opt_idx: int,
-    ) -> None:
-        if epoch != self.unfreeze_epoch:
+        strategy_metadata: int,
+    ):
+        unfreeze_epoch: int = strategy_metadata
+        # Common Implementation
+        if epoch != unfreeze_epoch:
             return
-        modules = [getattr(pl_module, attr_name) for attr_name in self.attr_names]
+        modules = FlashBaseFinetuning._get_modules_from_attr_names(pl_module=pl_module, attr_names=self.attr_names)
         self.unfreeze_and_add_param_group(
             modules=modules,
             optimizer=optimizer,
             train_bn=self.train_bn,
         )
 
-
-class UnfreezeMilestones(FlashBaseFinetuning):
-    def __init__(
-        self,
-        attr_names: Union[str, List[str]] = "backbone",
-        train_bn: bool = True,
-        unfreeze_milestones: tuple = (5, 10),
-        num_layers: int = 5,
-    ):
-        self.unfreeze_milestones = unfreeze_milestones
-        self.num_layers = num_layers
-
-        super().__init__(attr_names, train_bn)
-
-    def finetune_function(
+    def _unfreeze_milestones_function(
         self,
         pl_module: LightningModule,
         epoch: int,
         optimizer: Optimizer,
         opt_idx: int,
-    ) -> None:
-        backbone_modules = list(pl_module.backbone.modules())
-        if epoch == self.unfreeze_milestones[0]:
+        strategy_metadata: Tuple[Tuple[int, int], int],
+    ):
+        unfreeze_milestones: Tuple[int, int] = strategy_metadata[0]
+        num_layers: int = strategy_metadata[1]
+
+        # backbone_modules_attrs = list(pl_module.backbone.modules())
+        if epoch == unfreeze_milestones[0]:
             # unfreeze num_layers last layers
+            backbone_modules = FlashBaseFinetuning._get_modules_from_attr_names(
+                pl_module=pl_module,
+                attr_names=self.attr_names[-num_layers:],
+            )
             self.unfreeze_and_add_param_group(
-                modules=backbone_modules[-self.num_layers :],
+                modules=backbone_modules,
                 optimizer=optimizer,
                 train_bn=self.train_bn,
             )
 
-        elif epoch == self.unfreeze_milestones[1]:
+        elif epoch == unfreeze_milestones[1]:
             # unfreeze remaining layers
+            backbone_modules = FlashBaseFinetuning._get_modules_from_attr_names(
+                pl_module=pl_module,
+                attr_names=self.attr_names[:-num_layers],
+            )
             self.unfreeze_and_add_param_group(
-                modules=backbone_modules[: -self.num_layers],
+                modules=backbone_modules,
                 optimizer=optimizer,
                 train_bn=self.train_bn,
             )
 
+    def finetune_function(self, pl_module: LightningModule, epoch: int, optimizer: Optimizer, opt_idx: int):
+        if self.strategy in "freeze_unfreeze":
+            self._freeze_unfreeze_function(pl_module, epoch, optimizer, opt_idx, self.strategy_metadata)
+        elif self.strategy == "unfreeze_milestones":
+            self._unfreeze_milestones_function(pl_module, epoch, optimizer, opt_idx, self.strategy_metadata)
+        else:
+            pass
 
-_DEFAULTS_FINETUNE_STRATEGIES = {
-    "no_freeze": NoFreeze,
-    "freeze": Freeze,
-    "freeze_unfreeze": FreezeUnfreeze,
-    "unfreeze_milestones": UnfreezeMilestones,
-}
 
-
-def instantiate_default_finetuning_callbacks(strategy):
-    if not strategy or strategy not in _DEFAULTS_FINETUNE_STRATEGIES:
-        raise MisconfigurationException(
-            f"a strategy should be provided. Use {list(_DEFAULTS_FINETUNE_STRATEGIES)} or provide a callback"
-            " instance of `flash.core.finetuning.FlashBaseFinetuning`. Found {strategy} "
-        )
-    if isinstance(strategy, str):
-        strategy = strategy.lower()
-        if strategy in _DEFAULTS_FINETUNE_STRATEGIES:
-            return [_DEFAULTS_FINETUNE_STRATEGIES[strategy]()]
-    return []
+_DEFAULTS_FINETUNE_STRATEGIES = [
+    "no_freeze",
+    "freeze",
+    "freeze_unfreeze",
+    "unfreeze_milestones",
+]

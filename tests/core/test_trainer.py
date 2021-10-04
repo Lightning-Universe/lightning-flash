@@ -17,13 +17,17 @@ from typing import Any
 import pytest
 import torch
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+from pytorch_lightning.callbacks.finetuning import BaseFinetuning
+from pytorch_lightning.core.lightning import LightningModule
+from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.nn import functional as F
+from torch.optim.optimizer import Optimizer
+from torch.utils.data import DataLoader
 
 from flash import Trainer
 from flash.core.classification import ClassificationTask
-from flash.core.finetuning import NoFreeze
 from flash.core.utilities.stages import RunningStage
 from tests.helpers.boring_model import BoringModel
 
@@ -52,11 +56,25 @@ class DummyClassifier(nn.Module):
         return self.head(self.backbone(x))
 
 
+class NoFreeze(BaseFinetuning):
+    def freeze_before_training(self, pl_module: LightningModule) -> None:
+        pass
+
+    def finetune_function(
+        self,
+        pl_module: LightningModule,
+        epoch: int,
+        optimizer: Optimizer,
+        opt_idx: int,
+    ) -> None:
+        pass
+
+
 @pytest.mark.parametrize("callbacks, should_warn", [([], False), ([NoFreeze()], True)])
 def test_trainer_fit(tmpdir, callbacks, should_warn):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
-    train_dl = torch.utils.data.DataLoader(DummyDataset())
-    val_dl = torch.utils.data.DataLoader(DummyDataset())
+    train_dl = DataLoader(DummyDataset())
+    val_dl = DataLoader(DummyDataset())
     task = ClassificationTask(model, loss_fn=F.nll_loss)
     trainer = Trainer(fast_dev_run=True, default_root_dir=tmpdir, callbacks=callbacks)
 
@@ -69,8 +87,8 @@ def test_trainer_fit(tmpdir, callbacks, should_warn):
 
 def test_trainer_finetune(tmpdir):
     model = DummyClassifier()
-    train_dl = torch.utils.data.DataLoader(DummyDataset())
-    val_dl = torch.utils.data.DataLoader(DummyDataset())
+    train_dl = DataLoader(DummyDataset())
+    val_dl = DataLoader(DummyDataset())
     task = ClassificationTask(model, loss_fn=F.nll_loss)
     trainer = Trainer(fast_dev_run=True, default_root_dir=tmpdir)
     trainer.finetune(task, train_dl, val_dl, strategy=NoFreeze())

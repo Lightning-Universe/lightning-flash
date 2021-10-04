@@ -11,22 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import List, Optional, Tuple, Union
+from typing import Iterable, Union
+
+from torch.nn import Module
 
 
 class FineTuningHook:
-    def get_parameters_to_freeze_before_training(self) -> Union[str, List[str]]:
+    def get_backbone_to_freeze_before_training(self) -> Union[Module, Iterable[Union[Module, Iterable]]]:
         """Return the name(s) of the module attributes of the model to be frozen."""
         pass
 
-    def determine_finetuning_strategy(self, strategy: str) -> Optional[Union[int, Tuple[Tuple[int, ...], int]]]:
-        """Return the strategy along with the required parameters.
-
-        One time definition for all types of strategies if required.
-        """
-        # Return value based on strategy
-        #     No Freeze          = None
-        #     Freeze             = None
-        #     FreezeUnfreeze     = 10
-        #     UnfreezeMilestones = ((5, 10), 5)
-        return None
+    # def get_backbone_from_flash_task(self, pl_module: Module) -> Module:
+    #     raise NotImplementedError

@@ -12,16 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from types import FunctionType
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Type, Union
 
 import torch
-from pytorch_lightning import LightningModule
-from pytorch_lightning.callbacks import Callback
-from pytorch_lightning.callbacks.finetuning import BaseFinetuning
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.nn import functional as F
-from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DistributedSampler
 from torchmetrics import Accuracy, Metric
@@ -44,32 +40,6 @@ if _PYTORCHVIDEO_AVAILABLE:
             fn = getattr(hub, fn_name)
             if isinstance(fn, FunctionType):
                 _VIDEO_CLASSIFIER_BACKBONES(fn=fn, providers=_PYTORCHVIDEO)
-
-
-class VideoClassifierFinetuning(BaseFinetuning):
-    def __init__(self, num_layers: int = 5, train_bn: bool = True, unfreeze_epoch: int = 1):
-        super().__init__()
-        self.num_layers = num_layers
-        self.train_bn = train_bn
-        self.unfreeze_epoch = unfreeze_epoch
-
-    def freeze_before_training(self, pl_module: LightningModule) -> None:
-        self.freeze(modules=list(pl_module.backbone.children())[: -self.num_layers], train_bn=self.train_bn)
-
-    def finetune_function(
-        self,
-        pl_module: LightningModule,
-        epoch: int,
-        optimizer: Optimizer,
-        opt_idx: int,
-    ) -> None:
-        if epoch != self.unfreeze_epoch:
-            return
-        self.unfreeze_and_add_param_group(
-            modules=list(pl_module.backbone.children())[-self.num_layers :],
-            optimizer=optimizer,
-            train_bn=self.train_bn,
-        )
 
 
 class VideoClassifier(ClassificationTask):
@@ -176,8 +146,12 @@ class VideoClassifier(ClassificationTask):
         batch[DefaultDataKeys.PREDS] = predictions
         return batch
 
-    def configure_finetune_callback(self) -> List[Callback]:
-        return [VideoClassifierFinetuning()]
+    # def configure_finetune_callback(self) -> List[Callback]:
+    #     return [VideoClassifierFinetuning()]
+
+    def get_backbone_to_freeze_before_training(self) -> Union[nn.Module, Iterable[Union[nn.Module, Iterable]]]:
+        """Return the module attributes of the model to be frozen."""
+        return list(self.backbone.children())
 
     @staticmethod
     def _ci_benchmark_fn(history: List[Dict[str, Any]]):
