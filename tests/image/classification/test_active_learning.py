@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import warnings
 from pathlib import Path
 
 import numpy as np
@@ -27,8 +26,8 @@ from flash.image.classification.integrations.baal import ActiveLearningDataModul
 from tests.helpers.utils import _IMAGE_TESTING
 from tests.image.classification.test_data import _rand_image
 
-# ======== Mock functions ========
 
+# ======== Mock functions ========
 
 @pytest.mark.skipif(not (_IMAGE_TESTING and _BAAL_AVAILABLE), reason="image and baal libraries aren't installed.")
 @pytest.mark.parametrize('initial_num_labels, query_size', [(0, 5), (5, 5)])
@@ -61,18 +60,23 @@ def test_active_learning_training(tmpdir, initial_num_labels, query_size):
         image_size=image_size,
     )
 
-    with warnings.catch_warnings(record=True) as w:
+    if initial_num_labels == 0:
+        with pytest.warns(UserWarning) as record:
+            active_learning_dm = ActiveLearningDataModule(
+                dm,
+                initial_num_labels=initial_num_labels,
+                query_size=query_size,
+                val_split=0.5,
+            )
+            assert len(record) == 1
+            assert "No labels provided for the initial step" in record[0].message.args[0]
+    else:
         active_learning_dm = ActiveLearningDataModule(
             dm,
             initial_num_labels=initial_num_labels,
             query_size=query_size,
             val_split=0.5,
         )
-        if initial_num_labels == 0:
-            assert len(w) == 1
-            assert "No labels provided for the initial step" in str(w[-1].message)
-        else:
-            assert len(w) == 0
 
     head = nn.Sequential(
         nn.Dropout(p=0.1),
@@ -103,6 +107,3 @@ def test_active_learning_training(tmpdir, initial_num_labels, query_size):
     else:
         # in the second scenario we have more labelled data!
         assert len(active_learning_dm.val_dataloader()) == 5
-
-
-

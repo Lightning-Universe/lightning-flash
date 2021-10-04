@@ -168,8 +168,6 @@ class ActiveLearningDataModule(LightningDataModule):
                 unlabelled = self._dataset.labelled[unlabelled_mask]
                 unlabelled[indices[-self.query_size:]] = True
                 self._dataset.labelled[unlabelled_mask] = unlabelled
-        else:
-            self._dataset.label_randomly(self.query_size)
 
     def state_dict(self) -> Dict[str, torch.Tensor]:
         return self._dataset.state_dict()

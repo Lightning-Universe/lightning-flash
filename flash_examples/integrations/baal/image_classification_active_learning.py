@@ -1,3 +1,5 @@
+import pytorch_lightning as pl
+pl.seed_everything(42)
 # Copyright The PyTorch Lightning team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +27,7 @@ download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./
 # Implement the research use-case where we mask labels from labelled dataset.
 datamodule = ActiveLearningDataModule(
     ImageClassificationData.from_folders(train_folder="data/hymenoptera_data/train/", batch_size=2),
+    initial_num_labels=5,
     val_split=0.1,
 )
 
