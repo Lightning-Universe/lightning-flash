@@ -42,12 +42,15 @@ DATA_TYPE = TypeVar("DATA_TYPE")
 
 class TextDeserializer(Deserializer):
     @requires("text")
-    def __init__(self, tokenizer):
+    def __init__(self, tokenizer: Union[str, BaseTokenizer], **kwargs):
         super().__init__()
-        self.tokenizer = tokenizer
+        if isinstance(tokenizer, str):
+            self.tokenizer, _ = TEXT_CLASSIFIER_TOKENIZERS.get(tokenizer)(**kwargs)
+        else:
+            self.tokenizer = tokenizer
 
     def deserialize(self, text: Union[str, List[str]]) -> Tensor:
-        return self.tokenizer(text)
+        return self.tokenizer(text, return_tensors="pt")
 
     @property
     def example_input(self) -> str:
@@ -161,6 +164,11 @@ class TextDataSource(DataSource):
 
         return hf_dataset
 
+    def predict_load_data(self, data: Any, dataset: AutoDataset):
+        # receiving (Any, input) and outputting (Any, input, target)
+        data = (data, None)
+        return self.load_data(data, dataset)
+
 
 class TextCSVDataSource(TextDataSource):
     def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Dataset, str, str]:
@@ -199,7 +207,11 @@ class TextHuggingFaceDatasetDataSource(TextDataSource):
 class TextListDataSource(TextDataSource):    
     def to_hf_dataset(self, data: Tuple[List[str], List[str]]) -> Tuple[Dataset, List[str], List[str]]:
         input, target = data
-        hf_dataset = Dataset.from_dict({"input": input, "labels": target})
+        if target:
+            hf_dataset = Dataset.from_dict({"input": input, "labels": target})
+        else:
+            # predicting
+            hf_dataset = Dataset.from_dict({"input": input})
         return hf_dataset, input, target
 
     def load_data(
@@ -235,9 +247,6 @@ class TextListDataSource(TextDataSource):
                 hf_dataset = hf_dataset.rename_column("labels", DefaultDataKeys.TARGET)
 
         return hf_dataset
-
-    def predict_load_data(self, data: Any, dataset: AutoDataset):
-        return self.load_data(data, dataset, columns=["input_ids", "attention_mask"])
 
 
 class TextClassificationPreprocess(Preprocess):
