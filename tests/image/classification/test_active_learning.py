@@ -30,7 +30,7 @@ from tests.image.classification.test_data import _rand_image
 # ======== Mock functions ========
 
 @pytest.mark.skipif(not (_IMAGE_TESTING and _BAAL_AVAILABLE), reason="image and baal libraries aren't installed.")
-@pytest.mark.parametrize('initial_num_labels, query_size', [(0, 5), (5, 5)])
+@pytest.mark.parametrize("initial_num_labels, query_size", [(0, 5), (5, 5)])
 def test_active_learning_training(tmpdir, initial_num_labels, query_size):
     seed_everything(42)
     train_dir = Path(tmpdir / "train")

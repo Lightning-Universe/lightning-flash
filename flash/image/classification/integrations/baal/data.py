@@ -108,8 +108,9 @@ class ActiveLearningDataModule(LightningDataModule):
             self.test_dataloader = self._test_dataloader
 
         if not self.initial_num_labels:
-            warnings.warn("No labels provided for the initial step,"
-                          "the estimated uncertainties are unreliable!", UserWarning)
+            warnings.warn(
+                "No labels provided for the initial step," "the estimated uncertainties are unreliable!", UserWarning
+            )
         else:
             self._dataset.label_randomly(self.initial_num_labels)
 
@@ -166,7 +167,7 @@ class ActiveLearningDataModule(LightningDataModule):
             if self._dataset is not None:
                 unlabelled_mask = self._dataset.labelled == False  # noqa E712
                 unlabelled = self._dataset.labelled[unlabelled_mask]
-                unlabelled[indices[-self.query_size:]] = True
+                unlabelled[indices[-self.query_size :]] = True
                 self._dataset.labelled[unlabelled_mask] = unlabelled
 
     def state_dict(self) -> Dict[str, torch.Tensor]:
