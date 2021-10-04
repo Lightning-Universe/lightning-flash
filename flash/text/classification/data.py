@@ -11,34 +11,29 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 from functools import partial
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union, TypeVar
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, TypeVar, Union, Type
 
 import pandas as pd
+from pandas.core.frame import DataFrame
 import torch
-from torch import Tensor
-import os
-import flash
-from flash.text.classification.tokenizers.base import BaseTokenizer
-from flash.core.data.auto_dataset import AutoDataset, IterableAutoDataset
 from pytorch_lightning.trainer.states import RunningStage
+from torch import Tensor
+from torch.utils.data.sampler import Sampler
+
+from flash.core.data.auto_dataset import AutoDataset, IterableAutoDataset
+from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources, LabelsState
 from flash.core.data.process import Deserializer, Postprocess, Preprocess, Serializer
-from torch.utils.data.sampler import Sampler
-
-import flash
-from flash.core.data.auto_dataset import AutoDataset
-from flash.core.data.callback import BaseDataFetcher
-from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DataSource, DefaultDataSources, LabelsState
-from flash.core.data.process import Deserializer, Postprocess, Preprocess
 from flash.core.integrations.labelstudio.data_source import LabelStudioTextClassificationDataSource
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
-
+from flash.text.classification.tokenizers.base import BaseTokenizer
 
 if _TEXT_AVAILABLE:
-    from datasets import DatasetDict, load_dataset, Dataset
+    from datasets import Dataset, load_dataset
+
     from flash.text.classification.tokenizers import TEXT_CLASSIFIER_TOKENIZERS
 
 
@@ -82,6 +77,12 @@ class TextDataSource(DataSource):
         ex[target] = label_to_class_mapping[ex[target]]
         return ex
 
+    @staticmethod
+    def _multilabel_target(targets, element):
+        targets = [element.pop(target) for target in targets]
+        element[DefaultDataKeys.TARGET] = targets
+        return element
+
     def __getstate__(self):  # TODO: Find out why this is being pickled
         state = self.__dict__.copy()
         state.pop("tokenizer")
@@ -119,154 +120,20 @@ class TextDataSource(DataSource):
         
         return dataset
 
-
-class TextFileDataSource(TextDataSource):
-    def __init__(self, filetype: str, tokenizer, vocab_size: int):
-        super().__init__(tokenizer, vocab_size)
-
-        self.filetype = filetype
-
-    @staticmethod
-    def _multilabel_target(targets, element):
-        targets = [element.pop(target) for target in targets]
-        element[DefaultDataKeys.TARGET] = targets
-        return element
-
     def load_data(
         self,
         data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
         dataset: Optional[Any] = None,
     ) -> Dataset:
         """Loads data into HuggingFace datasets.Dataset"""
+
+        hf_dataset, input, target = self.to_hf_dataset(data)
         
-        if self.filetype == "json":
-            file, input, target, field = data
-        else:
-            file, input, target = data
-
-        data_files = {}
-
-        stage = self.running_stage.value
-        data_files[stage] = str(file)
-
-        # FLASH_TESTING is set in the CI to run faster.
-        if flash._IS_TESTING and not torch.cuda.is_available():
-            try:
-                if self.filetype == "json" and field is not None:
-                    dataset_dict = DatasetDict(
-                        {
-                            stage: load_dataset(
-                                self.filetype, data_files=data_files, split=[f"{stage}[:20]"], field=field
-                            )[0]
-                        }
-                    )
-                else:
-                    dataset_dict = DatasetDict(
-                        {stage: load_dataset(self.filetype, data_files=data_files, split=[f"{stage}[:20]"])[0]}
-                    )
-            except Exception:
-                if self.filetype == "json" and field is not None:
-                    dataset_dict = load_dataset(self.filetype, data_files=data_files, field=field)
-                else:
-                    dataset_dict = load_dataset(self.filetype, data_files=data_files)
-        else:
-            if self.filetype == "json" and field is not None:
-                dataset_dict = load_dataset(self.filetype, data_files=data_files, field=field)
-            else:
-                dataset_dict = load_dataset(self.filetype, data_files=data_files)
-
         if not self.predicting:
             if isinstance(target, List):
                 # multi-target
                 dataset.multi_label = True
-                dataset_dict = dataset_dict.map(partial(self._multilabel_target, target))  # NOTE: renames target column
-                dataset.num_classes = len(target)
-                self.set_state(LabelsState(target))
-            else:
-                dataset.multi_label = False
-                if self.training:
-                    labels = list(sorted(list(set(dataset_dict[stage][target]))))
-                    dataset.num_classes = len(labels)
-                    self.set_state(LabelsState(labels))
-
-                labels = self.get_state(LabelsState)
-
-                # convert labels to ids
-                if labels is not None:
-                    labels = labels.labels
-                    label_to_class_mapping = {v: k for k, v in enumerate(labels)}
-                    dataset_dict = dataset_dict.map(partial(self._transform_label, label_to_class_mapping, target))
-
-                # rename label column
-                dataset_dict = dataset_dict.rename_column(target, DefaultDataKeys.TARGET)
-
-        # rename input column
-        dataset_dict = dataset_dict.rename_column(input, DefaultDataKeys.INPUT)
-
-        return dataset_dict[stage]
-
-    def predict_load_data(self, data: Any, dataset: AutoDataset):
-        return self.load_data(data, dataset)
-
-    def __getstate__(self):  # TODO: Find out why this is being pickled
-        state = self.__dict__.copy()
-        state.pop("tokenizer")
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.tokenizer, self.vocab_size = TEXT_CLASSIFIER_TOKENIZERS.get(self.backbone)(**self.backbone_kwargs)
-
-
-class TextCSVDataSource(TextFileDataSource):
-    def __init__(self, tokenizer, vocab_size: int):
-        super().__init__("csv", tokenizer, vocab_size)
-
-    def __getstate__(self):  # TODO: Find out why this is being pickled
-        state = self.__dict__.copy()
-        state.pop("tokenizer")
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.tokenizer, self.vocab_size = TEXT_CLASSIFIER_TOKENIZERS.get(self.backbone)(**self.backbone_kwargs)
-
-
-class TextJSONDataSource(TextFileDataSource):
-    def __init__(self, tokenizer, vocab_size: int):
-        super().__init__("json", tokenizer, vocab_size)
-
-    def __getstate__(self):  # TODO: Find out why this is being pickled
-        state = self.__dict__.copy()
-        state.pop("tokenizer")
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.tokenizer, self.vocab_size = TEXT_CLASSIFIER_TOKENIZERS.get(self.backbone)(**self.backbone_kwargs)
-
-
-class TextDataFrameDataSource(TextDataSource):
-    @staticmethod
-    def _multilabel_target(targets, element):
-        targets = [element.pop(target) for target in targets]
-        element["labels"] = targets
-        return element
-
-    def load_data(
-        self,
-        data: Tuple[pd.DataFrame, Union[str, List[str]], Union[str, List[str]]],
-        dataset: Optional[Any] = None,
-        columns: Union[List[str], Tuple[str]] = ("input_ids", "attention_mask", "labels"),
-    ) -> Union[Sequence[Mapping[str, Any]]]:
-        df, input, target = data
-        hf_dataset = Dataset.from_pandas(df)
-
-        if not self.predicting:
-            if isinstance(target, List):
-                # multi-target
-                dataset.multi_label = True
-                hf_dataset = hf_dataset.map(partial(self._multilabel_target, target))
+                hf_dataset = hf_dataset.map(partial(self._multilabel_target, target))  # NOTE: renames target column
                 dataset.num_classes = len(target)
                 self.set_state(LabelsState(target))
             else:
@@ -284,37 +151,71 @@ class TextDataFrameDataSource(TextDataSource):
                     label_to_class_mapping = {v: k for k, v in enumerate(labels)}
                     hf_dataset = hf_dataset.map(partial(self._transform_label, label_to_class_mapping, target))
 
-                # Hugging Face models expect target to be named ``labels``.
-                if target != "labels":
-                    hf_dataset.rename_column_(target, "labels")
+                # rename label column
+                hf_dataset = hf_dataset.rename_column(target, DefaultDataKeys.TARGET)
 
-        hf_dataset = hf_dataset.map(partial(self._tokenize_fn, input=input), batched=True)
-        hf_dataset.set_format("torch", columns=columns)
+        # rename input column
+        hf_dataset = hf_dataset.rename_column(input, DefaultDataKeys.INPUT)
 
         return hf_dataset
 
-    def predict_load_data(self, data: Any, dataset: AutoDataset):
-        return self.load_data(data, dataset, columns=["input_ids", "attention_mask"])
 
-    def __getstate__(self):  # TODO: Find out why this is being pickled
-        state = self.__dict__.copy()
-        state.pop("tokenizer")
-        return state
+class TextCSVDataSource(TextDataSource):
+    def __init__(self, tokenizer, vocab_size: int):
+        super().__init__(tokenizer, vocab_size)
 
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+    def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Dataset, str, str]:
+        file, input, target = data
+        dataset_dict = load_dataset("csv", data_files={"train": str(file)})
+        return dataset_dict["train"], input, target
+
+
+class TextJSONDataSource(TextDataSource):
+    def __init__(self, tokenizer, vocab_size: int):
+        super().__init__(tokenizer, vocab_size)
+
+    def to_hf_dataset(self, data: Tuple[str, str, str, str]) -> Tuple[Dataset, str, str]:
+        file, input, target, field = data
+        dataset_dict = load_dataset("json", data_files={"train": str(file)}, field=field)
+        return dataset_dict["train"], input, target
+
+
+class TextDataFrameDataSource(TextDataSource):
+    def __init__(self, tokenizer, vocab_size: int):
+        super().__init__(tokenizer, vocab_size)
+    
+    def to_hf_dataset(self, data: Tuple[DataFrame, str, str]) -> Tuple[Dataset, str, str]:
+        df, input, target = data
+        hf_dataset = Dataset.from_pandas(df)
+        return hf_dataset, input, target
+
+
+class TextParquetDataSource(TextDataSource):
+    def __init__(self, tokenizer, vocab_size: int):
+        super().__init__(tokenizer, vocab_size)
+
+    def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Dataset, str, str]:
+        file, input, target = data
+        hf_dataset = Dataset.from_parquet(file)
+        return hf_dataset, input, target
 
 
 class TextListDataSource(TextDataSource):
+    def __init__(self, tokenizer, vocab_size: int):
+        super().__init__(tokenizer, vocab_size)
+    
+    def to_hf_dataset(self, data: Tuple[List[str], List[str]]) -> Tuple[Dataset, List[str], List[str]]:
+        input, target = data
+        hf_dataset = Dataset.from_dict({"input": input, "labels": target})
+        return hf_dataset, input, target
+
     def load_data(
         self,
         data: Tuple[List[str], Union[List[Any], List[List[Any]]]],
         dataset: Optional[Any] = None,
-        columns: Union[List[str], Tuple[str]] = ("input_ids", "attention_mask", "labels"),
     ) -> Union[Sequence[Mapping[str, Any]]]:
-        input, target = data
-        hf_dataset = Dataset.from_dict({"input": input, "labels": target})
+        
+        hf_dataset, input, target = self.to_hf_dataset(data)
 
         if not self.predicting:
             if isinstance(target[0], List):
@@ -329,7 +230,7 @@ class TextListDataSource(TextDataSource):
                     dataset.num_classes = len(labels)
                     self.set_state(LabelsState(labels))
 
-                    labels = self.get_state(LabelsState)
+                labels = self.get_state(LabelsState)
 
                 # convert labels to ids
                 if labels is not None:
@@ -337,46 +238,13 @@ class TextListDataSource(TextDataSource):
                     label_to_class_mapping = {v: k for k, v in enumerate(labels)}
                     hf_dataset = hf_dataset.map(partial(self._transform_label, label_to_class_mapping, "labels"))
 
-        hf_dataset = hf_dataset.map(partial(self._tokenize_fn, input="input"), batched=True)
-        hf_dataset.set_format("torch", columns=columns)
+                # rename label column
+                hf_dataset = hf_dataset.rename_column("labels", DefaultDataKeys.TARGET)
 
         return hf_dataset
 
     def predict_load_data(self, data: Any, dataset: AutoDataset):
         return self.load_data(data, dataset, columns=["input_ids", "attention_mask"])
-
-    def __getstate__(self):  # TODO: Find out why this is being pickled
-        state = self.__dict__.copy()
-        state.pop("tokenizer")
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
-
-
-class TextSentencesDataSource(TextDataSource):
-    def __init__(self, tokenizer, vocab_size: int):
-        super().__init__(tokenizer, vocab_size)
-
-    def load_data(
-        self,
-        data: Union[str, List[str]],
-        dataset: Optional[Any] = None,
-    ) -> Union[Sequence[Mapping[str, Any]]]:
-
-        if isinstance(data, str):
-            data = [data]
-        return data
-
-    def __getstate__(self):  # TODO: Find out why this is being pickled
-        state = self.__dict__.copy()
-        state.pop("tokenizer")
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.tokenizer, self.vocab_size = TEXT_CLASSIFIER_TOKENIZERS.get(self.backbone)(**self.backbone_kwargs)
 
 
 class TextClassificationPreprocess(Preprocess):
@@ -406,13 +274,13 @@ class TextClassificationPreprocess(Preprocess):
             data_sources={
                 DefaultDataSources.CSV: TextCSVDataSource(self.tokenizer, self.vocab_size),
                 DefaultDataSources.JSON: TextJSONDataSource(self.tokenizer, self.vocab_size),
+                DefaultDataSources.PARQUET: TextParquetDataSource(self.tokenizer, self.vocab_size),
                 DefaultDataSources.DATAFRAME: TextDataFrameDataSource(self.tokenizer, self.vocab_size),
                 DefaultDataSources.LISTS: TextListDataSource(self.tokenizer, self.vocab_size),
-                DefaultDataSources.SENTENCES: TextSentencesDataSource(self.tokenizer, self.vocab_size),
                 DefaultDataSources.LABELSTUDIO: LabelStudioTextClassificationDataSource(self.tokenizer, self.vocab_size),
             },
-            default_data_source=DefaultDataSources.SENTENCES,
-            deserializer=TextDeserializer(self.tokenizer, self.vocab_size),
+            default_data_source=DefaultDataSources.LISTS,
+            deserializer=TextDeserializer(self.tokenizer),
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
@@ -602,6 +470,92 @@ class TextClassificationData(DataModule):
             (val_data, val_targets),
             (test_data, test_targets),
             predict_data,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_fetcher=data_fetcher,
+            preprocess=preprocess,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            sampler=sampler,
+            **preprocess_kwargs,
+        )
+
+    @classmethod
+    def from_parquet(
+        cls,
+        input_fields: Union[str, Sequence[str]],
+        target_fields: Optional[Union[str, Sequence[str]]] = None,
+        train_file: Optional[str] = None,
+        val_file: Optional[str] = None,
+        test_file: Optional[str] = None,
+        predict_file: Optional[str] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_fetcher: Optional[BaseDataFetcher] = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: int = 0,
+        sampler: Optional[Type[Sampler]] = None,
+        **preprocess_kwargs: Any,
+    ) -> "DataModule":
+        """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given PARQUET files using the
+        :class:`~flash.core.data.data_source.DataSource`
+        of name :attr:`~flash.core.data.data_source.DefaultDataSources.PARQUET`
+        from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
+
+        Args:
+            input_fields: The field or fields (columns) in the PARQUET file to use for the input.
+            target_fields: The field or fields (columns) in the PARQUET file to use for the target.
+            train_file: The PARQUET file containing the training data.
+            val_file: The PARQUET file containing the validation data.
+            test_file: The PARQUET file containing the testing data.
+            predict_file: The PARQUET file containing the data to use when predicting.
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`.
+            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+                will be constructed and used.
+            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            sampler: The ``sampler`` to use for the ``train_dataloader``.
+            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
+                if ``preprocess = None``.
+
+        Returns:
+            The constructed data module.
+
+        Examples::
+
+            data_module = DataModule.from_parquet(
+                "input",
+                "target",
+                train_file="train_data.parquet",
+                train_transform={
+                    "to_tensor_transform": torch.as_tensor,
+                },
+            )
+        """
+        return cls.from_data_source(
+            DefaultDataSources.PARQUET,
+            (train_file, input_fields, target_fields),
+            (val_file, input_fields, target_fields),
+            (test_file, input_fields, target_fields),
+            (predict_file, input_fields, target_fields),
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,

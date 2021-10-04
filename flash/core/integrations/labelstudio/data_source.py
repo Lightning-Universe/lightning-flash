@@ -10,7 +10,7 @@ from pytorch_lightning.utilities.cloud_io import get_filesystem
 from flash import DataSource
 from flash.core.data.auto_dataset import AutoDataset, IterableAutoDataset
 from flash.core.data.data_source import DefaultDataKeys, has_len
-from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE, _TEXT_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE, _TEXT_AVAILABLE, _TORCHVISION_AVAILABLE, requires
 
 if _TORCHVISION_AVAILABLE:
     from torchvision.datasets.folder import default_loader
@@ -198,27 +198,23 @@ class LabelStudioTextClassificationDataSource(LabelStudioDataSource):
     Export data should point to text data
     """
 
-    def __init__(self, backbone=None, max_length=128):
+    @requires("text")
+    def __init__(self, tokenizer, vocab_size):
         super().__init__()
-        if backbone:
-            if _TEXT_AVAILABLE:
-                from transformers import AutoTokenizer
-            self.backbone = backbone
-            self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
-            self.max_length = max_length
+        self.tokenizer = tokenizer
+        self.vocab_size = vocab_size
 
     def load_sample(self, sample: Mapping[str, Any] = None, dataset: Optional[Any] = None) -> Any:
         """Load 1 sample from dataset."""
-        if self.backbone:
-            data = ""
-            for key in sample.get("data"):
-                data += sample.get("data").get(key)
-            tokenized_data = self.tokenizer(data, max_length=self.max_length, truncation=True, padding="max_length")
-            for key in tokenized_data:
-                tokenized_data[key] = torch.tensor(tokenized_data[key])
-            tokenized_data["labels"] = self._get_labels_from_sample(sample["label"])
-            # separate text data type block
-            result = tokenized_data
+        data = ""
+        for key in sample.get("data"):
+            data += sample.get("data").get(key)
+        tokenized_data = self.tokenizer(data)
+        for key in tokenized_data:
+            tokenized_data[key] = torch.tensor(tokenized_data[key])
+        tokenized_data["labels"] = self._get_labels_from_sample(sample["label"])
+        # separate text data type block
+        result = tokenized_data
         return result
 
 

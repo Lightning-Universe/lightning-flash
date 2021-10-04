@@ -158,6 +158,7 @@ class DefaultDataSources(LightningEnum):
     TENSORS = "tensors"
     CSV = "csv"
     JSON = "json"
+    PARQUET = "parquet"
     DATASETS = "datasets"
     FIFTYONE = "fiftyone"
     DATAFRAME = "data_frame"
