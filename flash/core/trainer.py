@@ -199,13 +199,6 @@ class Trainer(PlTrainer):
         train_bn: bool = True,
     ):
         """This function is used to select the `BaseFinetuning` to be used for finetuning."""
-        if strategy is not None and not isinstance(strategy, (str, BaseFinetuning)):
-            raise MisconfigurationException(
-                "strategy should be a ``pytorch_lightning.callbacks.BaseFinetuning``"
-                f"callback or a str within {list(_DEFAULTS_FINETUNE_STRATEGIES[:2])}"
-                f"or a tuple configuration with {list(_DEFAULTS_FINETUNE_STRATEGIES[2:])}"
-            )
-
         if strategy is None:
             raise MisconfigurationException("Please provide a strategy.")
 
@@ -214,32 +207,43 @@ class Trainer(PlTrainer):
 
         elif isinstance(strategy, str):
             if strategy not in _DEFAULTS_FINETUNE_STRATEGIES[:2]:
-                MisconfigurationException(f"Please provide a valid strategy from {_DEFAULTS_FINETUNE_STRATEGIES}.")
+                raise MisconfigurationException(
+                    f"Please provide a valid strategy from {_DEFAULTS_FINETUNE_STRATEGIES}."
+                )
             finetuning_callback = model.configure_finetune_callback(strategy, None)
 
         elif isinstance(strategy, Tuple):
             if not isinstance(strategy[0], str) or strategy[0] not in _DEFAULTS_FINETUNE_STRATEGIES[2:]:
-                MisconfigurationException(
+                raise MisconfigurationException(
                     "First input of `strategy` should be a string within `freeze_unfreeze`, `unfreeze_milestones`"
                 )
 
             if strategy[0] == "freeze_unfreeze" and not isinstance(strategy[1], int):
-                MisconfigurationException(
+                raise MisconfigurationException(
                     "`freeze_unfreeze` stratgey only accepts one integer denoting the epoch number to switch."
                 )
 
-            if strategy[0] == "unfreeze_milestones" and (
-                not isinstance(strategy[1], Tuple)
-                or (not isinstance(strategy[1][0], Tuple) and not isinstance(strategy[1][1], int))
-                or (not isinstance(strategy[1][0][0], int) and not isinstance(strategy[1][0][1], int))
+            if strategy[0] == "unfreeze_milestones" and not (
+                isinstance(strategy[1], Tuple)
+                and isinstance(strategy[1][0], Tuple)
+                and isinstance(strategy[1][1], int)
+                and isinstance(strategy[1][0][0], int)
+                and isinstance(strategy[1][0][1], int)
             ):
-                MisconfigurationException(
+
+                raise MisconfigurationException(
                     "`unfreeze_milestones` stratgey only accepts the format Tuple[Tuple[int, int], int]. HINT example: "
                     "((5, 10), 15)."
                 )
 
             finetuning_callback = model.configure_finetune_callback(strategy[0], strategy[1], train_bn=train_bn)
 
+        else:
+            raise MisconfigurationException(
+                "strategy should be a ``pytorch_lightning.callbacks.BaseFinetuning``"
+                f"callback or a str within {list(_DEFAULTS_FINETUNE_STRATEGIES[:2])}"
+                f"or a tuple configuration with {list(_DEFAULTS_FINETUNE_STRATEGIES[2:])}"
+            )
         self.callbacks = self._merge_callbacks(self.callbacks, finetuning_callback)
 
     @staticmethod
