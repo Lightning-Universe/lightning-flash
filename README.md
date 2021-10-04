@@ -254,7 +254,12 @@ For example, to train an image classifier for 10 epochs with a `resnet50` backbo
   flash image_classification --trainer.max_epochs 10 --trainer.gpus 2 --model.backbone resnet50 from_folders --train_folder {PATH_TO_DATA}
 ```
 
----
+## Kaggle examples
+
+
+- [Titanic crash with Lightning⚡Flash](https://www.kaggle.com/jirkaborovec/titanic-crash-with-lightning-flash)
+- [Covid detection with Lightning⚡️Flash](https://www.kaggle.com/jirkaborovec/covid-detection-with-lightning-flash)
+
 
 ## Contribute!
 The lightning + Flash team is hard at work building more tasks for common deep-learning use cases. But we're looking for incredible contributors like you to submit new tasks!
