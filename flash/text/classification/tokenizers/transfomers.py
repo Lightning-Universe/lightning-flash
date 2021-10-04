@@ -81,6 +81,6 @@ def _trasformer_tokenizer(
     **backbone_kwargs,
 ) -> Tuple["TransformerTokenizer", int]:
 
-    tokenizer = TransformerTokenizer(backbone, pretrained, **kwargs)
+    tokenizer = TransformerTokenizer(backbone, pretrained, **backbone_kwargs)
 
     return tokenizer, tokenizer.vocab_size
