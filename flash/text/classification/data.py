@@ -15,7 +15,7 @@ import os
 from functools import partial
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, TypeVar, Union, Type
 
-import pandas as pd
+import datasets
 from pandas.core.frame import DataFrame
 import torch
 from pytorch_lightning.trainer.states import RunningStage
@@ -112,7 +112,7 @@ class TextDataSource(DataSource):
         if not dataset:
             return
 
-        # decide whether to train tokenizer
+        # decide whether to fit tokenizer
         if running_stage == RunningStage.TRAINING and not self.tokenizer._is_fit:
             batch_iterator = self.tokenizer._batch_iterator(dataset)
             self.tokenizer.fit(batch_iterator)  # TODO: save state to disk
@@ -201,6 +201,14 @@ class TextParquetDataSource(TextDataSource):
         hf_dataset = Dataset.from_parquet(file)
         return hf_dataset, input, target
 
+class TextHuggingFaceDatasetDataSource(TextDataSource):
+    def __init__(self, tokenizer, vocab_size: int):
+        super().__init__(tokenizer, vocab_size)
+
+    def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Dataset, str, str]:
+        hf_dataset, input, target = data
+        return hf_dataset, input, target
+
 
 class TextListDataSource(TextDataSource):
     def __init__(self, tokenizer, vocab_size: int):
@@ -278,6 +286,7 @@ class TextClassificationPreprocess(Preprocess):
                 DefaultDataSources.JSON: TextJSONDataSource(self.tokenizer, self.vocab_size),
                 DefaultDataSources.PARQUET: TextParquetDataSource(self.tokenizer, self.vocab_size),
                 DefaultDataSources.DATAFRAME: TextDataFrameDataSource(self.tokenizer, self.vocab_size),
+                DefaultDataSources.HUGGINGFACE_DATASET: TextHuggingFaceDatasetDataSource(self.tokenizer, self.vocab_size),
                 DefaultDataSources.LISTS: TextListDataSource(self.tokenizer, self.vocab_size),
                 DefaultDataSources.LABELSTUDIO: LabelStudioTextClassificationDataSource(self.tokenizer, self.vocab_size),
             },
@@ -288,7 +297,6 @@ class TextClassificationPreprocess(Preprocess):
     def get_state_dict(self) -> Dict[str, Any]:
         return {
             **self.transforms,
-            "backbone": self.backbone,
             "tokenizer": self.tokenizer,
         }
 
@@ -339,10 +347,10 @@ class TextClassificationData(DataModule):
         cls,
         input_field: str,
         target_fields: Union[str, Sequence[str]],
-        train_data_frame: Optional[pd.DataFrame] = None,
-        val_data_frame: Optional[pd.DataFrame] = None,
-        test_data_frame: Optional[pd.DataFrame] = None,
-        predict_data_frame: Optional[pd.DataFrame] = None,
+        train_data_frame: Optional[DataFrame] = None,
+        val_data_frame: Optional[DataFrame] = None,
+        test_data_frame: Optional[DataFrame] = None,
+        predict_data_frame: Optional[DataFrame] = None,
         train_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
@@ -488,7 +496,7 @@ class TextClassificationData(DataModule):
     @classmethod
     def from_parquet(
         cls,
-        input_fields: Union[str, Sequence[str]],
+        input_field: str,
         target_fields: Optional[Union[str, Sequence[str]]] = None,
         train_file: Optional[str] = None,
         val_file: Optional[str] = None,
@@ -554,10 +562,83 @@ class TextClassificationData(DataModule):
         """
         return cls.from_data_source(
             DefaultDataSources.PARQUET,
-            (train_file, input_fields, target_fields),
-            (val_file, input_fields, target_fields),
-            (test_file, input_fields, target_fields),
-            (predict_file, input_fields, target_fields),
+            (train_file, input_field, target_fields),
+            (val_file, input_field, target_fields),
+            (test_file, input_field, target_fields),
+            (predict_file, input_field, target_fields),
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_fetcher=data_fetcher,
+            preprocess=preprocess,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            sampler=sampler,
+            **preprocess_kwargs,
+        )
+
+    @classmethod
+    def from_hf_datasets(
+        cls,
+        input_field: str,
+        target_fields: Union[str, Sequence[str]],
+        train_hf_dataset: Optional[datasets.Dataset] = None,
+        val_hf_dataset: Optional[datasets.Dataset] = None,
+        test_hf_dataset: Optional[datasets.Dataset] = None,
+        predict_hf_dataset: Optional[datasets.Dataset] = None,
+        train_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_fetcher: Optional[BaseDataFetcher] = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: int = 0,
+        sampler: Optional[Type[Sampler]] = None,
+        **preprocess_kwargs: Any,
+    ) -> "DataModule":
+        """Creates a :class:`~flash.text.classification.data.TextClassificationData` object from the given 
+        Hugging Face datasets ``Dataset`` objects.
+
+        Args:
+            input_field: The field (column) in the pandas ``Dataset`` to use for the input.
+            target_fields: The field or fields (columns) in the pandas ``Dataset`` to use for the target.
+            train_hf_dataset: The pandas ``Dataset`` containing the training data.
+            val_hf_dataset: The pandas ``Dataset`` containing the validation data.
+            test_hf_dataset: The pandas ``Dataset`` containing the testing data.
+            predict_hf_dataset: The pandas ``Dataset`` containing the data to use when predicting.
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`.
+            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+                will be constructed and used.
+            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            sampler: The ``sampler`` to use for the ``train_dataloader``.
+            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
+                if ``preprocess = None``.
+
+        Returns:
+            The constructed data module.
+        """
+        return cls.from_data_source(
+            DefaultDataSources.HUGGINGFACE_DATASET,
+            (train_hf_dataset, input_field, target_fields),
+            (val_hf_dataset, input_field, target_fields),
+            (test_hf_dataset, input_field, target_fields),
+            (predict_hf_dataset, input_field, target_fields),
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,

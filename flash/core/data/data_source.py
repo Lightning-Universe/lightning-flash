@@ -160,6 +160,7 @@ class DefaultDataSources(LightningEnum):
     JSON = "json"
     PARQUET = "parquet"
     DATASETS = "datasets"
+    HUGGINGFACE_DATASET = "hf_dataset"
     FIFTYONE = "fiftyone"
     DATAFRAME = "data_frame"
     LISTS = "lists"
