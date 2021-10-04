@@ -163,9 +163,6 @@ class TextDataSource(DataSource):
 
 
 class TextCSVDataSource(TextDataSource):
-    def __init__(self, tokenizer, vocab_size: int):
-        super().__init__(tokenizer, vocab_size)
-
     def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Dataset, str, str]:
         file, input, target = data
         dataset_dict = load_dataset("csv", data_files={"train": str(file)})
@@ -173,19 +170,13 @@ class TextCSVDataSource(TextDataSource):
 
 
 class TextJSONDataSource(TextDataSource):
-    def __init__(self, tokenizer, vocab_size: int):
-        super().__init__(tokenizer, vocab_size)
-
     def to_hf_dataset(self, data: Tuple[str, str, str, str]) -> Tuple[Dataset, str, str]:
         file, input, target, field = data
         dataset_dict = load_dataset("json", data_files={"train": str(file)}, field=field)
         return dataset_dict["train"], input, target
 
 
-class TextDataFrameDataSource(TextDataSource):
-    def __init__(self, tokenizer, vocab_size: int):
-        super().__init__(tokenizer, vocab_size)
-    
+class TextDataFrameDataSource(TextDataSource):    
     def to_hf_dataset(self, data: Tuple[DataFrame, str, str]) -> Tuple[Dataset, str, str]:
         df, input, target = data
         hf_dataset = Dataset.from_pandas(df)
@@ -193,27 +184,19 @@ class TextDataFrameDataSource(TextDataSource):
 
 
 class TextParquetDataSource(TextDataSource):
-    def __init__(self, tokenizer, vocab_size: int):
-        super().__init__(tokenizer, vocab_size)
-
     def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Dataset, str, str]:
         file, input, target = data
         hf_dataset = Dataset.from_parquet(file)
         return hf_dataset, input, target
 
-class TextHuggingFaceDatasetDataSource(TextDataSource):
-    def __init__(self, tokenizer, vocab_size: int):
-        super().__init__(tokenizer, vocab_size)
 
+class TextHuggingFaceDatasetDataSource(TextDataSource):
     def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Dataset, str, str]:
         hf_dataset, input, target = data
         return hf_dataset, input, target
 
 
-class TextListDataSource(TextDataSource):
-    def __init__(self, tokenizer, vocab_size: int):
-        super().__init__(tokenizer, vocab_size)
-    
+class TextListDataSource(TextDataSource):    
     def to_hf_dataset(self, data: Tuple[List[str], List[str]]) -> Tuple[Dataset, List[str], List[str]]:
         input, target = data
         hf_dataset = Dataset.from_dict({"input": input, "labels": target})
@@ -271,7 +254,9 @@ class TextClassificationPreprocess(Preprocess):
 
         if isinstance(backbone, tuple):
             self.tokenizer, self.vocab_size = backbone
+            self.backbone = self.tokenizer.backbone
         else:
+            self.backbone = backbone
             self.tokenizer, self.vocab_size = TEXT_CLASSIFIER_TOKENIZERS.get(backbone)(**backbone_kwargs)
 
         os.environ["TOKENIZERS_PARALLELISM"] = "true"  # TODO: do we really need this?
