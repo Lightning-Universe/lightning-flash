@@ -168,8 +168,6 @@ class TextDataSource(DataSource):
         return hf_dataset
 
     def predict_load_data(self, data: Any, dataset: AutoDataset):
-        # receiving (Any, input) and outputting (Any, input, target)
-        data = (data, None)
         return self.load_data(data, dataset)
 
 
