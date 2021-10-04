@@ -42,12 +42,15 @@ DATA_TYPE = TypeVar("DATA_TYPE")
 
 class TextDeserializer(Deserializer):
     @requires("text")
-    def __init__(self, tokenizer: Union[str, BaseTokenizer], **kwargs):
+    def __init__(self, backbone: Union[str, BaseTokenizer], **backbone_kwargs):
         super().__init__()
-        if isinstance(tokenizer, str):
-            self.tokenizer, _ = TEXT_CLASSIFIER_TOKENIZERS.get(tokenizer)(**kwargs)
+        
+        if isinstance(backbone, str):
+            self.tokenizer, _ = TEXT_CLASSIFIER_TOKENIZERS.get(backbone)(**backbone_kwargs)
+            self.backbone = backbone
         else:
-            self.tokenizer = tokenizer
+            self.tokenizer = backbone
+            self.backbone = self.tokenizer.backbone
 
     def deserialize(self, text: Union[str, List[str]]) -> Tensor:
         return self.tokenizer(text, return_tensors="pt")
