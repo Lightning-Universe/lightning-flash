@@ -68,6 +68,10 @@ class DefaultAdapter(Adapter):
         self._task = NoModule(task)
         self.model = Model(backbone=backbone, head=head)
 
+    @property
+    def backbone(self) -> Optional[str]:
+        return getattr(self.model, "backbone")
+
     @classmethod
     @catch_url_error
     def from_task(
