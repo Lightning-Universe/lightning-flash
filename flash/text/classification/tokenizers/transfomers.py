@@ -24,9 +24,7 @@ from flash.text.classification.tokenizers.base import BaseTokenizer
 
 class TransformerTokenizer(BaseTokenizer):
 
-    # TODO: make this more flexible and allow users to pass tokenizers arguments!!
-
-    def __init__(self, backbone: str, pretrained: bool = True, **kwargs):
+    def __init__(self, backbone: str, pretrained: bool = True, **backbone_kwargs):
         self.backbone = backbone
         self.pretrained = pretrained
 
@@ -38,12 +36,12 @@ class TransformerTokenizer(BaseTokenizer):
         self.vocab_size = self.config.vocab_size
         self._is_fit = pretrained
 
-        # Allow the user to specify this otherwise fallback to original
+        # allow the user to specify this otherwise fallback to original
         if not pretrained:
 
-            self.vocab_size = kwargs.get("vocab_size", self.config.vocab_size)
-            self.batch_size = kwargs.get("batch_size", 1000)
-            max_length = kwargs.get("max_length", self.max_length)
+            self.vocab_size = backbone_kwargs.get("vocab_size", self.config.vocab_size)
+            self.batch_size = backbone_kwargs.get("batch_size", 1000)
+            max_length = backbone_kwargs.get("max_length", self.max_length)
             if max_length > self.max_length:
                 raise MisconfigurationException(
                     f"`max_length` must be less or equal to {self.max_length}, which is the maximum supported by {backbone}"
@@ -80,7 +78,7 @@ class TransformerTokenizer(BaseTokenizer):
 def _trasformer_tokenizer(
     backbone: str = "prajjwal1/bert-tiny",
     pretrained: bool = True,
-    **kwargs,
+    **backbone_kwargs,
 ) -> Tuple["TransformerTokenizer", int]:
 
     tokenizer = TransformerTokenizer(backbone, pretrained, **kwargs)
