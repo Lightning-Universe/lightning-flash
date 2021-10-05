@@ -21,15 +21,12 @@ from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
 from torch.utils.data._utils.collate import default_collate
 
+from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.flash_dataset_container import FlashDatasetsContainer
 from flash.core.data.flash_datasets import FlashDataset
-from flash.core.data.flash_transform import FlashTransform, TransformPlacement
+from flash.core.data.flash_transform import FlashTransform, TRANSFORM_TYPE, TransformPlacement
 from flash.core.data.transforms import ApplyToKeys
-from flash.core.data.utils import download_data
 from flash.core.registry import FlashRegistry
-
-download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./data")
 
 #############################################################################################
 # Imagine you have some images and they are already sorted by classes in their own folder.  #
@@ -79,10 +76,6 @@ class MultipleFoldersImageDataset(FlashDataset):
 
     transform_registry = FlashRegistry("image_classification_transform")
 
-    def __init__(self, **dataset_kwargs):
-        super().__init__()
-        self.dataset_kwargs = dataset_kwargs
-
     def load_data(self, folders: List[str]) -> List[Dict[DefaultDataKeys, Any]]:
         if self.training:
             self.num_classes = len(folders)
@@ -97,13 +90,14 @@ class MultipleFoldersImageDataset(FlashDataset):
         sample[DefaultDataKeys.METADATA] = image.size
         return sample
 
-    def predict_load_data(self, predict_folder: Optional[str]) -> List[Dict[DefaultDataKeys, Any]]:
+    def predict_load_data(self, predict_folder: str) -> List[Dict[DefaultDataKeys, Any]]:
+        assert os.path.isdir(predict_folder)
         return [{DefaultDataKeys.INPUT: os.path.join(predict_folder, p)} for p in os.listdir(predict_folder)]
 
 
-train_dataset = MultipleFoldersImageDataset.from_data(TRAIN_FOLDERS, RunningStage.TRAINING)
-val_dataset = MultipleFoldersImageDataset.from_data(VAL_FOLDERS, RunningStage.VALIDATING)
-predict_dataset = MultipleFoldersImageDataset.from_data(PREDICT_FOLDER, RunningStage.PREDICTING)
+train_dataset = MultipleFoldersImageDataset.from_data(TRAIN_FOLDERS, running_stage=RunningStage.TRAINING)
+val_dataset = MultipleFoldersImageDataset.from_data(VAL_FOLDERS, running_stage=RunningStage.VALIDATING)
+predict_dataset = MultipleFoldersImageDataset.from_data(PREDICT_FOLDER, running_stage=RunningStage.PREDICTING)
 
 
 #############################################################################################
@@ -115,27 +109,41 @@ predict_dataset = MultipleFoldersImageDataset.from_data(PREDICT_FOLDER, RunningS
 #############################################################################################
 
 
-class FlashRandomRotationTransform(FlashTransform):
-    def configure_transforms(self, rotation: float = 10) -> Dict[TransformPlacement, Callable]:
-        transform = T.Compose([T.ToTensor(), T.RandomRotation(rotation)]) if self.training else T.ToTensor()
-        per_sample_transform = ApplyToKeys("input", transform)
+class ImageBaseTransform(FlashTransform):
+    def configure_transforms(self, image_size: int = 224) -> Dict[TransformPlacement, Callable]:
         return {
-            TransformPlacement.PER_SAMPLE_TRANSFORM: per_sample_transform,
+            TransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(
+                "input", T.Compose([T.Resize((image_size, image_size)), T.ToTensor()])
+            ),
+            TransformPlacement.COLLATE: default_collate,
+        }
+
+
+class ImageRandomRotationTransform(ImageBaseTransform):
+    def configure_transforms(self, image_size: int = 224, rotation: float = 0) -> Dict[TransformPlacement, Callable]:
+        transforms = [T.Resize((image_size, image_size)), T.ToTensor()]
+        if self.training:
+            transforms += [T.RandomRotation(rotation)]
+        return {
+            TransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys("input", T.Compose(transforms)),
             TransformPlacement.COLLATE: default_collate,
         }
 
 
 # Register your transform within the Flash Dataset registry
 # Note: Registries can be shared by multiple dataset.
-MultipleFoldersImageDataset.register_transform(FlashRandomRotationTransform, CustomDataTransform.RANDOM_ROTATION)
+MultipleFoldersImageDataset.register_transform(CustomDataTransform.BASE, ImageBaseTransform)
+MultipleFoldersImageDataset.register_transform(CustomDataTransform.RANDOM_ROTATION, ImageRandomRotationTransform)
 
 train_dataset = MultipleFoldersImageDataset.from_data(
-    TRAIN_FOLDERS, RunningStage.TRAINING, transform=(CustomDataTransform.RANDOM_ROTATION, {"rotation": 45})
+    TRAIN_FOLDERS,
+    running_stage=RunningStage.TRAINING,
+    transform=(CustomDataTransform.RANDOM_ROTATION, {"rotation": 45}),
 )
 
 print(train_dataset.transform)
 # Out:
-# FlashRandomRotationTransform(
+# ImageClassificationRandomRotationTransform(
 #    running_stage=train,
 #    transform={
 #        TransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(
@@ -149,12 +157,12 @@ print(train_dataset.transform)
 
 
 validation_dataset = MultipleFoldersImageDataset.from_data(
-    VAL_FOLDERS, RunningStage.VALIDATING, transform=CustomDataTransform.RANDOM_ROTATION
+    VAL_FOLDERS, running_stage=RunningStage.VALIDATING, transform=CustomDataTransform.BASE
 )
 
 print(validation_dataset.transform)
 # Out:
-# FlashRandomRotationTransform(
+# ImageClassificationRandomRotationTransform(
 #    running_stage=validate,
 #    transform={
 #        TransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(keys="input", transform=ToTensor()),
@@ -171,25 +179,17 @@ print(train_dataset[0])
 # }
 
 #############################################################################################
-#                        Step 4 / 5: Create an FlashDatasetsContainer                       #
+#                           Step 4 / 5: Create a DataModule                                 #
 #                                                                                           #
-# The `FlashDatasetsContainer` class is a collection of DataSource which can be built out   #
-# with `class_method` constructors.                                                         #
-# The `FlashDatasetsContainer` requires a FlashRegistry `data_sources_registry`             #
-# class attributes. By creating a `from_multiple_folders`, we can easily create a           #
-# constructor taking the folders paths and by using the `cls.from_data_source`              #
-# with `CustomDataFormat.MULTIPLE_FOLDERS`, it would indicate the parent class the          #
-# associated `DataSource` is our newly implemented one. The extra arguments are the         #
-# `{stage}_data` to be passed to the `{stage}_load_data` from the associated                #
-# `MultipleFoldersImage`.                                                                   #
+# The `ImageClassificationDataModule` class is a collection of FlashDataset
+# and its responsability is to create the dataloaders.
 #                                                                                           #
 #############################################################################################
 
 
-class ImageClassificationContainer(FlashDatasetsContainer):
+class ImageClassificationDataModule(DataModule):
 
-    data_sources_registry = FlashRegistry("image_classification_loader")
-    default_data_source = CustomDataFormat.MULTIPLE_FOLDERS
+    flash_datasets_registry = FlashRegistry("image_classification_loader")
 
     @classmethod
     def from_multiple_folders(
@@ -198,52 +198,78 @@ class ImageClassificationContainer(FlashDatasetsContainer):
         val_folders: Optional[List[str]] = None,
         test_folders: Optional[List[str]] = None,
         predict_folder: Optional[str] = None,
-    ):
-        return cls.create_flash_datasets(
-            CustomDataFormat.MULTIPLE_FOLDERS, train_folders, val_folders, test_folders, predict_folder
+        train_transform: Optional[TRANSFORM_TYPE] = None,
+        val_transform: Optional[TRANSFORM_TYPE] = None,
+        test_transform: Optional[TRANSFORM_TYPE] = None,
+        predict_transform: Optional[TRANSFORM_TYPE] = None,
+        **data_module_kwargs: Any,
+    ) -> "ImageClassificationDataModule":
+
+        datasets = cls.create_flash_datasets(
+            CustomDataFormat.MULTIPLE_FOLDERS,
+            train_folders,
+            val_folders,
+            test_folders,
+            predict_folder,
+            train_transform,
+            val_transform,
+            test_transform,
+            predict_transform,
         )
 
+        return cls(*datasets, **data_module_kwargs)
 
-ImageClassificationContainer.register_data_source(MultipleFoldersImageDataset, CustomDataFormat.MULTIPLE_FOLDERS)
+
+ImageClassificationDataModule.register_flash_dataset(CustomDataFormat.MULTIPLE_FOLDERS, MultipleFoldersImageDataset)
 
 
 #############################################################################################
 #                         Step 5 / 5: Finally, create the loader                            #
 #############################################################################################
 
-FOLDER_PATH = "./data/hymenoptera_data/train"
-
-container = ImageClassificationContainer.from_multiple_folders(
-    train_folders=[os.path.join(FOLDER_PATH, "ants"), os.path.join(FOLDER_PATH, "bees")],
-    val_folders=[os.path.join(FOLDER_PATH, "ants"), os.path.join(FOLDER_PATH, "bees")],
-    predict_folder=os.path.join(FOLDER_PATH, "ants"),
+datamodule = ImageClassificationDataModule.from_multiple_folders(
+    train_folders=TRAIN_FOLDERS,
+    val_folders=VAL_FOLDERS,
+    predict_folder=PREDICT_FOLDER,
+    train_transform=CustomDataTransform.RANDOM_ROTATION,
 )
 
-assert isinstance(container.train_dataset, FlashDataset)
-assert isinstance(container.predict_dataset, FlashDataset)
+assert isinstance(datamodule.train_dataset, FlashDataset)
+assert isinstance(datamodule.predict_dataset, FlashDataset)
 
 # The ``num_classes`` value was set line 76.
-assert container.train_dataset.num_classes == 2
+assert datamodule.train_dataset.num_classes == 2
 
 # The ``num_classes`` value was set only for training as `self.training` was used,
 # so it doesn't exist for the predict_dataset
 with suppress(AttributeError):
-    container.val_dataset.num_classes
+    datamodule.val_dataset.num_classes
 
 # As test_data weren't provided, the test dataset is None.
-assert not container.test_dataset
+assert not datamodule.test_dataset
 
 
-print(container.train_dataset[0])
+print(datamodule.train_dataset[0])
 # out:
 # {
 #   <DefaultDataKeys.INPUT: 'input'>: 'data/hymenoptera_data/train/ants/957233405_25c1d1187b.jpg',
 #   <DefaultDataKeys.TARGET: 'target'>: 0
+#   <DefaultDataKeys.METADATA: 'metadata'>: (...)
 # }
 
-assert isinstance(container.predict_dataset, FlashDataset)
-print(container.predict_dataset[0])
+assert isinstance(datamodule.predict_dataset, FlashDataset)
+print(datamodule.predict_dataset[0])
 # out:
 # {
 #   {<DefaultDataKeys.INPUT: 'input'>: 'data/hymenoptera_data/train/ants/957233405_25c1d1187b.jpg'}
 # }
+
+
+batch = next(iter(datamodule.train_dataloader()))
+# Out:
+# {
+#   <DefaultDataKeys.INPUT: 'input'>: tensor([...]),
+#   <DefaultDataKeys.TARGET: 'target'>: tensor([...]),
+#   <DefaultDataKeys.METADATA: 'metadata'>: [(...), (...), ...],
+# }
+print(batch)

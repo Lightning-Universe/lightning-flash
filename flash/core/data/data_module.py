@@ -31,6 +31,7 @@ import numpy as np
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning.trainer.states import RunningStage
+from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import IterableDataset, Subset
@@ -42,8 +43,11 @@ from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_pipeline import DataPipeline, DefaultPreprocess, Postprocess, Preprocess
 from flash.core.data.data_source import DataSource, DefaultDataSources
+from flash.core.data.flash_datasets import BaseDataset
+from flash.core.data.flash_transform import FlashTransform, TRANSFORM_TYPE
 from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX
+from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, requires
 
 if _FIFTYONE_AVAILABLE and TYPE_CHECKING:
@@ -82,6 +86,8 @@ class DataModule(pl.LightningDataModule):
             Will be passed to the DataLoader for the training dataset. Defaults to None.
     """
 
+    flash_datasets_registry: Optional[FlashRegistry] = None
+    default_flash_dataset_enum: Optional[LightningEnum] = None
     preprocess_cls = DefaultPreprocess
     postprocess_cls = Postprocess
 
@@ -1371,3 +1377,82 @@ class DataModule(pl.LightningDataModule):
             num_workers=num_workers,
             **preprocess_kwargs,
         )
+
+    @classmethod
+    def create_flash_datasets(
+        cls,
+        enum: LightningEnum,
+        train_data: Optional[Any] = None,
+        val_data: Optional[Any] = None,
+        test_data: Optional[Any] = None,
+        predict_data: Optional[Any] = None,
+        train_transform: Optional[TRANSFORM_TYPE] = None,
+        val_transform: Optional[TRANSFORM_TYPE] = None,
+        test_transform: Optional[TRANSFORM_TYPE] = None,
+        predict_transform: Optional[TRANSFORM_TYPE] = None,
+        **flash_dataset_kwargs,
+    ) -> Tuple[Optional[BaseDataset]]:
+        cls._verify_flash_dataset_enum(enum)
+        flash_dataset_cls: BaseDataset = cls.flash_datasets_registry.get(enum)
+        return (
+            cls._create_flash_dataset(
+                flash_dataset_cls,
+                train_data,
+                running_stage=RunningStage.TRAINING,
+                transform=train_transform,
+                **flash_dataset_kwargs,
+            ),
+            cls._create_flash_dataset(
+                flash_dataset_cls,
+                val_data,
+                running_stage=RunningStage.VALIDATING,
+                transform=val_transform,
+                **flash_dataset_kwargs,
+            ),
+            cls._create_flash_dataset(
+                flash_dataset_cls,
+                test_data,
+                running_stage=RunningStage.TESTING,
+                transform=test_transform,
+                **flash_dataset_kwargs,
+            ),
+            cls._create_flash_dataset(
+                flash_dataset_cls,
+                predict_data,
+                running_stage=RunningStage.PREDICTING,
+                transform=predict_transform,
+                **flash_dataset_kwargs,
+            ),
+        )
+
+    @staticmethod
+    def _create_flash_dataset(
+        flash_dataset_cls, *load_data_args, running_stage: RunningStage, transform: Optional[FlashTransform], **kwargs
+    ) -> Optional[BaseDataset]:
+        if load_data_args[0]:
+            return flash_dataset_cls.from_data(
+                *load_data_args, running_stage=running_stage, transform=transform, **kwargs
+            )
+
+    @classmethod
+    def _verify_flash_dataset_enum(cls, enum: LightningEnum) -> None:
+        if not cls.flash_datasets_registry or not isinstance(cls.flash_datasets_registry, FlashRegistry):
+            raise MisconfigurationException(
+                "The ``AutoContainer`` should have ``flash_datasets_registry`` (FlashRegistry) populated "
+                "with datasource class and ``default_flash_dataset_enum`` (LightningEnum) class attributes. "
+            )
+
+        if enum not in cls.flash_datasets_registry.available_keys():
+            available_constructors = [
+                f"from_{key.name.lower()}" for key in cls.flash_datasets_registry.available_keys()
+            ]
+            raise MisconfigurationException(
+                f"The ``AutoContainer`` ``flash_datasets_registry`` doesn't contain the associated {enum} "
+                f"HINT: Here are the available constructors {available_constructors}"
+            )
+
+    @classmethod
+    def register_flash_dataset(cls, enum: LightningEnum, flash_dataset_cls: Type[BaseDataset]) -> None:
+        if cls.flash_datasets_registry is None:
+            raise MisconfigurationException("The class attribute `flash_datasets_registry` should be set. ")
+        cls.flash_datasets_registry(fn=flash_dataset_cls, name=enum)

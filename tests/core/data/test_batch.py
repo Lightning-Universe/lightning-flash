@@ -31,14 +31,9 @@ def test_sequential_str():
         RunningStage.TRAINING,
         True,
     )
-    assert str(sequential) == (
-        "_Sequential:\n"
-        "\t(pre_tensor_transform): FuncModule(softmax)\n"
-        "\t(to_tensor_transform): FuncModule(as_tensor)\n"
-        "\t(post_tensor_transform): FuncModule(relu)\n"
-        "\t(assert_contains_tensor): True\n"
-        "\t(stage): RunningStage.TRAINING"
-    )
+    assert "(pre_tensor_transform): <built-in method softmax" in str(sequential)
+    assert "(to_tensor_transform): <built-in method as_tensor" in str(sequential)
+    assert "(post_tensor_transform): <built-in method relu" in str(sequential)
 
 
 def test_preprocessor_str():
@@ -51,15 +46,9 @@ def test_preprocessor_str():
         False,
         True,
     )
-    assert str(preprocessor) == (
-        "_Preprocessor:\n"
-        "\t(per_sample_transform): FuncModule(relu)\n"
-        "\t(collate_fn): FuncModule(default_collate)\n"
-        "\t(per_batch_transform): FuncModule(softmax)\n"
-        "\t(apply_per_sample_transform): False\n"
-        "\t(on_device): True\n"
-        "\t(stage): RunningStage.TRAINING"
-    )
+    assert "function default_collate" in str(preprocessor)
+    assert "built-in method relu" in str(preprocessor)
+    assert "built-in method softmax" in str(preprocessor)
 
 
 def test_postprocessor_str():
@@ -69,13 +58,10 @@ def test_postprocessor_str():
         torch.softmax,
         None,
     )
-    assert str(postprocessor) == (
-        "_Postprocessor:\n"
-        "\t(per_batch_transform): FuncModule(relu)\n"
-        "\t(uncollate_fn): FuncModule(default_uncollate)\n"
-        "\t(per_sample_transform): FuncModule(softmax)\n"
-        "\t(serializer): None"
-    )
+    breakpoint()
+    assert "(uncollate_fn): <function default_uncollate" in str(postprocessor)
+    assert "(per_batch_transform): <built-in method relu" in str(postprocessor)
+    assert "(per_sample_transform): <built-in method softmax" in str(postprocessor)
 
 
 class TestDefaultUncollate:

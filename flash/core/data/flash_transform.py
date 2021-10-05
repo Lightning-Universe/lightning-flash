@@ -18,6 +18,7 @@ import torch
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from torch.utils.data._utils.collate import default_collate
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.properties import Properties
@@ -26,7 +27,7 @@ from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX
 from flash.core.registry import FlashRegistry
 
-_TRANSFORM_TYPE = Optional[Union["FlashTransform", Callable, Tuple[LightningEnum, Dict[str, Any]], LightningEnum]]
+TRANSFORM_TYPE = Optional[Union["FlashTransform", Callable, Tuple[LightningEnum, Dict[str, Any]], LightningEnum]]
 
 
 class TransformPlacement(LightningEnum):
@@ -39,6 +40,13 @@ class TransformPlacement(LightningEnum):
 
 
 class FlashTransform(Properties):
+    def configure_transforms(self) -> Optional[Dict[str, Callable]]:
+        """The default transforms to use.
+
+        Will be overridden by transforms passed to the ``__init__``.
+        """
+        return None
+
     def __init__(
         self,
         running_stage: RunningStage,
@@ -54,6 +62,103 @@ class FlashTransform(Properties):
 
         transform = transform or self._resolve_transforms(running_stage)
         self.transform = self._check_transforms(transform, running_stage)
+
+    @property
+    def current_transform(self) -> Callable:
+        if self.transform:
+            return self._get_transform(self.transform)
+        return self._identity
+
+    @property
+    def transforms(self) -> Dict[str, Optional[Dict[str, Callable]]]:
+        """The transforms currently being used by this :class:`~flash.core.data.process.Preprocess`."""
+        return {
+            "transform": self.transform,
+        }
+
+    def per_sample_transform(self, sample: Any) -> Any:
+        if isinstance(sample, list):
+            return [self.current_transform(s) for s in sample]
+        return self.current_transform(sample)
+
+    def per_batch_transform(self, batch: Any) -> Any:
+        """Transforms to apply to a whole batch (if possible use this for efficiency).
+
+        .. note::
+
+            This option is mutually exclusive with :meth:`per_sample_transform_on_device`,
+            since if both are specified, uncollation has to be applied.
+        """
+        return self.current_transform(batch)
+
+    def collate(self, samples: Sequence, metadata=None) -> Any:
+        """Transform to convert a sequence of samples to a collated batch."""
+        current_transform = self.current_transform
+        if current_transform is self._identity:
+            current_transform = default_collate
+
+        # the model can provide a custom ``collate_fn``.
+        collate_fn = self.get_state(CollateFn)
+        if collate_fn is not None:
+            collate_fn = collate_fn.collate_fn
+        else:
+            collate_fn = current_transform
+            # return collate_fn.collate_fn(samples)
+
+        parameters = inspect.signature(collate_fn).parameters
+        if len(parameters) > 1 and DefaultDataKeys.METADATA in parameters:
+            return collate_fn(samples, metadata)
+        return collate_fn(samples)
+
+    def per_sample_transform_on_device(self, sample: Any) -> Any:
+        """Transforms to apply to the data before the collation (per-sample basis).
+
+        .. note::
+
+            This option is mutually exclusive with :meth:`per_batch_transform`,
+            since if both are specified, uncollation has to be applied.
+
+        .. note::
+
+            This function won't be called within the dataloader workers, since to make that happen
+            each of the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
+        """
+        return self.current_transform(sample)
+
+    def per_batch_transform_on_device(self, batch: Any) -> Any:
+        """Transforms to apply to a whole batch (if possible use this for efficiency).
+
+        .. note::
+
+            This function won't be called within the dataloader workers, since to make that happen
+            each of the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
+        """
+        return self.current_transform(batch)
+
+    @classmethod
+    def from_transform(
+        cls,
+        transform: TRANSFORM_TYPE,
+        running_stage: RunningStage,
+        transform_registry: Optional[FlashRegistry],
+    ) -> Optional["FlashTransform"]:
+
+        if isinstance(transform, FlashTransform):
+            transform.running_stage = running_stage
+            return transform
+
+        if isinstance(transform, Callable):
+            return cls(running_stage, {TransformPlacement.PER_SAMPLE_TRANSFORM: transform})
+
+        if isinstance(transform, tuple) or isinstance(transform, LightningEnum):
+            enum, transform_kwargs = cls._sanetize_registry_transform(transform, transform_registry)
+            transform_cls = transform_registry.get(enum)
+            return transform_cls(running_stage, transform=None, **transform_kwargs)
+
+        if not transform:
+            return None
+
+        raise MisconfigurationException(f"The format for the transform isn't correct. Found {transform}")
 
     def _resolve_transforms(self, running_stage: RunningStage) -> Optional[Dict[str, Callable]]:
         from flash.core.data.data_pipeline import DataPipeline
@@ -127,114 +232,6 @@ class FlashTransform(Properties):
         if self.current_fn in transform:
             return transform[self.current_fn]
         return self._identity
-
-    @property
-    def current_transform(self) -> Callable:
-        if self._transform:
-            return self._get_transform(self._transform)
-        return self._identity
-
-    @property
-    def transforms(self) -> Dict[str, Optional[Dict[str, Callable]]]:
-        """The transforms currently being used by this :class:`~flash.core.data.process.Preprocess`."""
-        return {
-            "transform": self.transform,
-        }
-
-    @staticmethod
-    def configure_transforms() -> Optional[Dict[str, Callable]]:
-        """The default transforms to use.
-
-        Will be overridden by transforms passed to the ``__init__``.
-        """
-        return None
-
-    def _apply_sample_transform(self, sample: Any) -> Any:
-        if isinstance(sample, list):
-            return [self.current_transform(s) for s in sample]
-        return self.current_transform(sample)
-
-    def per_sample_transform(self, sample: Any) -> Any:
-        return self._apply_sample_transform(sample)
-
-    def per_batch_transform(self, batch: Any) -> Any:
-        """Transforms to apply to a whole batch (if possible use this for efficiency).
-
-        .. note::
-
-            This option is mutually exclusive with :meth:`per_sample_transform_on_device`,
-            since if both are specified, uncollation has to be applied.
-        """
-        return self.current_transform(batch)
-
-    def collate(self, samples: Sequence, metadata=None) -> Any:
-        """Transform to convert a sequence of samples to a collated batch."""
-        current_transform = self.current_transform
-        if current_transform is self._identity:
-            current_transform = self._default_collate
-
-        # the model can provide a custom ``collate_fn``.
-        collate_fn = self.get_state(CollateFn)
-        if collate_fn is not None:
-            collate_fn = collate_fn.collate_fn
-        else:
-            collate_fn = current_transform
-            # return collate_fn.collate_fn(samples)
-
-        parameters = inspect.signature(collate_fn).parameters
-        if len(parameters) > 1 and DefaultDataKeys.METADATA in parameters:
-            return collate_fn(samples, metadata)
-        return collate_fn(samples)
-
-    def per_sample_transform_on_device(self, sample: Any) -> Any:
-        """Transforms to apply to the data before the collation (per-sample basis).
-
-        .. note::
-
-            This option is mutually exclusive with :meth:`per_batch_transform`,
-            since if both are specified, uncollation has to be applied.
-
-        .. note::
-
-            This function won't be called within the dataloader workers, since to make that happen
-            each of the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
-        """
-        return self.current_transform(sample)
-
-    def per_batch_transform_on_device(self, batch: Any) -> Any:
-        """Transforms to apply to a whole batch (if possible use this for efficiency).
-
-        .. note::
-
-            This function won't be called within the dataloader workers, since to make that happen
-            each of the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
-        """
-        return self.current_transform(batch)
-
-    @classmethod
-    def from_transform(
-        cls,
-        transform: _TRANSFORM_TYPE,
-        running_stage: RunningStage,
-        transform_registry: Optional[FlashRegistry],
-    ) -> Optional["FlashTransform"]:
-
-        if isinstance(transform, FlashTransform):
-            transform.running_stage = running_stage
-            return transform
-
-        if isinstance(transform, Callable):
-            return cls(running_stage, {TransformPlacement.PER_SAMPLE_TRANSFORM: transform})
-
-        if isinstance(transform, tuple) or isinstance(transform, LightningEnum):
-            enum, transform_kwargs = cls._sanetize_registry_transform(transform, transform_registry)
-            transform_cls = transform_registry.get(enum)
-            return transform_cls(running_stage, transform=None, **transform_kwargs)
-
-        if not transform:
-            return None
-
-        raise MisconfigurationException(f"The format for the transform isn't correct. Found {transform}")
 
     @classmethod
     def _sanetize_registry_transform(

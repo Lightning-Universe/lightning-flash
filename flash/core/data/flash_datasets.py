@@ -18,7 +18,7 @@ from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Dataset, IterableDataset
 
-from flash.core.data.flash_transform import _TRANSFORM_TYPE, FlashTransform, TransformPlacement
+from flash.core.data.flash_transform import FlashTransform, TRANSFORM_TYPE, TransformPlacement
 from flash.core.data.properties import Properties
 from flash.core.registry import FlashRegistry
 
@@ -46,19 +46,20 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
 
     def setup(
         self,
-        data: Any,
-        running_stage: RunningStage,
-        transform: _TRANSFORM_TYPE = None,
+        *load_data_args: Any,
+        running_stage: Optional[RunningStage] = None,
+        transform: TRANSFORM_TYPE = None,
     ) -> None:
+        assert running_stage
         self.running_stage = running_stage
-        self.data = self._load_data(data)
+        self.data = self._load_data(*load_data_args)
         if transform or self.transform_registry:
             self.transform = FlashTransform.from_transform(
                 transform, running_stage, transform_registry=self.transform_registry
             )
 
     @property
-    def running_stage(self) -> RunningStage:
+    def running_stage(self) -> Optional[RunningStage]:
         return self._running_stage
 
     @running_stage.setter
@@ -92,20 +93,21 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
     @classmethod
     def from_data(
         cls,
-        data: Any,
-        running_stage: RunningStage,
-        transform: _TRANSFORM_TYPE = None,
+        *load_data_args,
+        running_stage: Optional[RunningStage] = None,
+        transform: TRANSFORM_TYPE = None,
         **kwargs: Any,
     ) -> "BaseDataset":
+        assert running_stage
         flash_dataset = cls(**kwargs)
-        flash_dataset.setup(data, running_stage, transform=transform)
+        flash_dataset.setup(*load_data_args, running_stage=running_stage, transform=transform)
         return flash_dataset
 
     def resolve_functions(self):
         raise NotImplementedError
 
     @classmethod
-    def register_transform(cls, fn: Type[FlashTransform], enum: LightningEnum) -> None:
+    def register_transform(cls, enum: LightningEnum, fn: Type[FlashTransform]) -> None:
         if cls.transform_registry is None:
             raise MisconfigurationException(
                 "The class attribute `transform_registry` should be set as a class attribute. "
@@ -121,6 +123,12 @@ class FlashDataset(BaseDataset[Sequence], Dataset):
 
     The `data` argument must be a ``Sequence`` (it must have a length).
     """
+
+    def load_data(self, data: Any) -> Any:
+        return data
+
+    def load_sample(self, data: Any) -> Any:
+        return data
 
     def resolve_functions(self):
         self._resolve_functions("load_data", FlashDataset)
@@ -138,6 +146,12 @@ class FlashIterableDataset(BaseDataset[Iterable], IterableDataset):
 
     The `data` argument must be an ``Iterable``.
     """
+
+    def load_data(self, data: Any) -> Any:
+        return data
+
+    def load_sample(self, data: Any) -> Any:
+        return data
 
     def resolve_functions(self):
         self._resolve_functions("load_data", FlashIterableDataset)
