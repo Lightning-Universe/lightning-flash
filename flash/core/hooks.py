@@ -17,9 +17,9 @@ from torch.nn import Module
 
 
 class FineTuningHook:
-    def get_backbone_to_freeze_before_training(self) -> Union[Module, Iterable[Union[Module, Iterable]]]:
+    def get_backbone_for_finetuning(self) -> Union[Module, Iterable[Union[Module, Iterable]]]:
         """Return the name(s) of the module attributes of the model to be frozen."""
-        pass
+        return None
 
-    # def get_backbone_from_flash_task(self, pl_module: Module) -> Module:
+    # def get_backbone(self, pl_module: Union[Task, LightningModule]) -> Module:
     #     raise NotImplementedError

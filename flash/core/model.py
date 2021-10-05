@@ -522,12 +522,13 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHook,
         train_bn: bool = True,
     ) -> List[BaseFinetuning]:
 
-        model_attr_names_to_be_frozen = self.get_backbone_to_freeze_before_training()
+        # Get all backbone modules to retreive names.
+        task_backbones = self.get_backbone_for_finetuning()
         return [
             FlashBaseFinetuning(
                 strategy_key=strategy_key,
                 strategy_metadata=strategy_metadata,
-                modules=model_attr_names_to_be_frozen,
+                modules=task_backbones,
                 train_bn=train_bn,
             )
         ]

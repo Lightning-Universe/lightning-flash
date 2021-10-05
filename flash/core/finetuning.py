@@ -13,12 +13,14 @@
 # limitations under the License.
 from typing import Iterable, List, Optional, Tuple, Union
 
-from pytorch_lightning import LightningModule
 from pytorch_lightning.callbacks import BaseFinetuning
 from torch.nn import Module, ModuleDict
 from torch.optim import Optimizer
 
+from flash.core.model import Task
 
+
+# Handle None case and just take one module using a single hook.
 class FlashBaseFinetuning(BaseFinetuning):
     """FlashBaseFinetuning can be used to create a custom Flash Finetuning Callback.
 
@@ -46,7 +48,7 @@ class FlashBaseFinetuning(BaseFinetuning):
         self.strategy = strategy_key
         self.strategy_metadata = strategy_metadata
 
-        self.attr_names = FlashBaseFinetuning.get_module_names(modules)
+        self.attr_names = FlashBaseFinetuning.get_module_names(modules=modules)
 
         self.train_bn = train_bn
 
@@ -79,7 +81,7 @@ class FlashBaseFinetuning(BaseFinetuning):
 
     @staticmethod
     def _get_modules_from_attr_names(
-        pl_module: LightningModule,
+        pl_module: Task,
         attr_names: List[str],
     ) -> List[Union[Module, Iterable[Union[Module, Iterable]]]]:
 
@@ -91,17 +93,17 @@ class FlashBaseFinetuning(BaseFinetuning):
             modules.append(_sub_module)
         return modules
 
-    def _freeze_using_attr_names(self, pl_module: LightningModule, train_bn: bool = True) -> None:
+    def _freeze_using_attr_names(self, pl_module: Task, train_bn: bool = True) -> None:
         modules = FlashBaseFinetuning._get_modules_from_attr_names(pl_module=pl_module)
         self.freeze(modules=modules, train_bn=train_bn)
 
-    def freeze_before_training(self, pl_module: LightningModule) -> None:
+    def freeze_before_training(self, pl_module: Task) -> None:
         if self.strategy != "no_freeze":
             self._freeze_using_attr_names(pl_module, train_bn=self.train_bn)
 
     def _freeze_unfreeze_function(
         self,
-        pl_module: LightningModule,
+        pl_module: Task,
         epoch: int,
         optimizer: Optimizer,
         opt_idx: int,
@@ -120,7 +122,7 @@ class FlashBaseFinetuning(BaseFinetuning):
 
     def _unfreeze_milestones_function(
         self,
-        pl_module: LightningModule,
+        pl_module: Task,
         epoch: int,
         optimizer: Optimizer,
         opt_idx: int,
@@ -154,7 +156,7 @@ class FlashBaseFinetuning(BaseFinetuning):
                 train_bn=self.train_bn,
             )
 
-    def finetune_function(self, pl_module: LightningModule, epoch: int, optimizer: Optimizer, opt_idx: int):
+    def finetune_function(self, pl_module: Task, epoch: int, optimizer: Optimizer, opt_idx: int):
         if self.strategy in "freeze_unfreeze":
             self._freeze_unfreeze_function(pl_module, epoch, optimizer, opt_idx, self.strategy_metadata)
         elif self.strategy == "unfreeze_milestones":

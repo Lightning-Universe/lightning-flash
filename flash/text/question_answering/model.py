@@ -306,7 +306,7 @@ class QuestionAnsweringTask(Task):
     # def configure_finetune_callback(self) -> List[FlashBaseFinetuning]:
     #     return [QuestionAnsweringFreezeEmbeddings(self.model.config.model_type, train_bn=True)]
 
-    def get_backbone_to_freeze_before_training(self) -> Union[Module, Iterable[Union[Module, Iterable]]]:
+    def get_backbone_for_finetuning(self) -> Union[Module, Iterable[Union[Module, Iterable]]]:
         """Return the module attributes of the model to be frozen."""
         return _get_question_answering_bacbones_for_freezing(self.model)
 

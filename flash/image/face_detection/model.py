@@ -184,6 +184,6 @@ class FaceDetector(Task):
     # def configure_finetune_callback(self):
     #     return [FaceDetectionFineTuning()]
 
-    def get_backbone_to_freeze_before_training(self) -> Union[Module, Iterable[Union[Module, Iterable]]]:
+    def get_backbone_for_finetuning(self) -> Union[Module, Iterable[Union[Module, Iterable]]]:
         """Return the module attributes of the model to be frozen."""
         return self.model.backbone

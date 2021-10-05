@@ -163,7 +163,7 @@ class Seq2SeqTask(Task):
         label_str = self.tokenizer.batch_decode(labels, skip_special_tokens=True)
         return [str.strip(s) for s in label_str]
 
-    def get_backbone_to_freeze_before_training(self) -> Union[Module, Iterable[Union[Module, Iterable]]]:
+    def get_backbone_for_finetuning(self) -> Union[Module, Iterable[Union[Module, Iterable]]]:
         """Return the module attributes of the model to be frozen."""
         model_type = self.model.config.model_type
 

@@ -149,7 +149,7 @@ class VideoClassifier(ClassificationTask):
     # def configure_finetune_callback(self) -> List[Callback]:
     #     return [VideoClassifierFinetuning()]
 
-    def get_backbone_to_freeze_before_training(self) -> Union[nn.Module, Iterable[Union[nn.Module, Iterable]]]:
+    def get_backbone_for_finetuning(self) -> Union[nn.Module, Iterable[Union[nn.Module, Iterable]]]:
         """Return the module attributes of the model to be frozen."""
         return list(self.backbone.children())
 
