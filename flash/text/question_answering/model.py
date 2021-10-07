@@ -247,12 +247,13 @@ class QuestionAnsweringTask(Task):
     def forward(self, batch: Any) -> Any:
         metadata = batch.pop(DefaultDataKeys.METADATA)
         outputs = self.model(**batch)
+        loss = outputs.loss
         start_logits = outputs.start_logits
         end_logits = outputs.end_logits
 
         generated_answers = self._generate_answers(start_logits, end_logits, metadata)
         batch[DefaultDataKeys.METADATA] = metadata
-        return generated_answers
+        return loss, generated_answers
 
     def training_step(self, batch: Any, batch_idx: int) -> Tensor:
         outputs = self.model(**batch)
@@ -261,9 +262,10 @@ class QuestionAnsweringTask(Task):
         return loss
 
     def common_step(self, prefix: str, batch: Any) -> torch.Tensor:
-        generated_answers = self(batch)
+        loss, generated_answers = self(batch)
         result = self.compute_metrics(generated_answers, batch[DefaultDataKeys.METADATA])
-        self.log_dict(result, on_step=False, on_epoch=True, prog_bar=True)
+        self.log(f"{prefix}_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log_dict(result, on_step=False, on_epoch=True, prog_bar=False)
 
     def compute_metrics(self, generated_tokens, batch):
         for example in batch:
@@ -281,7 +283,7 @@ class QuestionAnsweringTask(Task):
         self.common_step("test", batch)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        generated_answers = self(batch)
+        _, generated_answers = self(batch)
         return generated_answers
 
     @property
