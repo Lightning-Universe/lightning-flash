@@ -136,6 +136,8 @@ def test_from_files(tmpdir):
     batch = next(iter(dm.val_dataloader()))
     assert "input_ids" in batch
     assert "attention_mask" in batch
+    assert "start_positions" in batch
+    assert "end_positions" in batch
     assert DefaultDataKeys.METADATA in batch
     assert "context" in batch[DefaultDataKeys.METADATA][0]
     assert "answer" in batch[DefaultDataKeys.METADATA][0]
@@ -145,6 +147,8 @@ def test_from_files(tmpdir):
     batch = next(iter(dm.test_dataloader()))
     assert "input_ids" in batch
     assert "attention_mask" in batch
+    assert "start_positions" in batch
+    assert "end_positions" in batch
     assert DefaultDataKeys.METADATA in batch
     assert "context" in batch[DefaultDataKeys.METADATA][0]
     assert "answer" in batch[DefaultDataKeys.METADATA][0]
