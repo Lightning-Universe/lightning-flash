@@ -320,6 +320,8 @@ class TextClassificationPreprocess(Preprocess):
 
 
 class TextClassificationPostprocess(Postprocess):
+    # TODO: this has to hook into the preprocessor and take the tokenizer
+    # as it might be trained
     pass
 
 
