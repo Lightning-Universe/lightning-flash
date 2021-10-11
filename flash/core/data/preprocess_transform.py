@@ -27,7 +27,7 @@ from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX
 from flash.core.registry import FlashRegistry
 
-TRANSFORM_TYPE = Optional[
+PRE_TRANSFORM_TYPE = Optional[
     Union["PreTransform", Callable, Tuple[Union[LightningEnum, str], Dict[str, Any]], Union[LightningEnum, str]]
 ]
 
@@ -134,7 +134,7 @@ class PreTransform(Properties):
     @classmethod
     def from_transform(
         cls,
-        transform: TRANSFORM_TYPE,
+        transform: PRE_TRANSFORM_TYPE,
         running_stage: RunningStage,
         transform_registry: Optional[FlashRegistry] = None,
     ) -> Optional["PreTransform"]:
