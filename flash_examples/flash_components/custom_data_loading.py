@@ -71,8 +71,8 @@ class CustomDataFormat(LightningEnum):
 # Otherwise, it would use the load_data function.                                           #
 # If you use FlashDataset outside of Flash, the only requirements are to return a Sequence  #
 # from load_data with FlashDataset or an Iterable with FlashIterableDataset.                #
-# When using FlashDataset with Flash Tasks, the model expects the `load_sample`             #
-# to return a dictionary with `DefaultDataKeys` as its keys.                                #
+# When using FlashDataset with Flash Tasks, the model expects the `load_sample` to return a #
+#  dictionary with `DefaultDataKeys` as its keys (c.f `input`, `target`, metadata)          #
 #                                                                                           #
 #############################################################################################
 
