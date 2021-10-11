@@ -28,7 +28,6 @@ from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DefaultPreprocess, Postprocess
 from flash.core.data.datasets import BaseDataset
-from flash.core.data.preprocess_transform import PreTransform
 from flash.core.data.splits import SplitDataset
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
 
@@ -77,8 +76,6 @@ class DataModule(DataModule):
         val_dataset: Optional[BaseDataset] = None,
         test_dataset: Optional[BaseDataset] = None,
         predict_dataset: Optional[BaseDataset] = None,
-        pre_transform: Optional[PreTransform] = None,
-        postprocess: Optional[Postprocess] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
@@ -89,8 +86,7 @@ class DataModule(DataModule):
         if flash._IS_TESTING and torch.cuda.is_available():
             batch_size = 16
 
-        self._pre_transform: Optional[PreTransform] = pre_transform
-        self._postprocess: Optional[Postprocess] = postprocess
+        self._postprocess: Optional[Postprocess] = None
         self._viz: Optional[BaseVisualization] = None
         self._data_fetcher: Optional[BaseDataFetcher] = data_fetcher or self.configure_data_fetcher()
 
