@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from abc import abstractmethod
-from typing import Any, Callable, Iterable, Mapping, Optional, Type, TypeVar, Union
+from typing import Any, Callable, Iterable, Mapping, Optional, Type, Union
 
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -20,8 +20,6 @@ from torch.utils.data import Dataset, IterableDataset
 
 from flash.core.data.properties import Properties
 from flash.core.registry import FlashRegistry
-
-DATA_TYPE = TypeVar("DATA_TYPE")
 
 
 class BaseDataset(Properties):
@@ -65,7 +63,7 @@ class BaseDataset(Properties):
     def _resolve_functions(self, func_name: str, cls: Type["BaseDataset"]) -> None:
         from flash.core.data.data_pipeline import DataPipeline  # noqa F811
 
-        function: Callable[[DATA_TYPE, Optional[Any]], Any] = getattr(
+        function: Callable[[Any, Optional[Any]], Any] = getattr(
             self,
             DataPipeline._resolve_function_hierarchy(
                 func_name,
@@ -100,6 +98,8 @@ class BaseDataset(Properties):
     def resolve_functions(self):
         raise NotImplementedError
 
+    # Set to None as they are dymically resolved when the dataset is made stage aware
+    # c.f running_stage is set in `__init__` function.
     _load_data = None
     _load_sample = None
 
