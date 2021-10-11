@@ -240,7 +240,7 @@ print(batch)
 
 
 #############################################################################################
-#                Step 4 / 5: Provide your new utility with your DataModule                  #
+#                Step 5 / 5: Provide your new utility with your DataModule                  #
 #                                                                                           #
 # The `DataModule` class is a collection of FlashDataset and you can pass them directly to  #
 # its init function.                                                                        #
