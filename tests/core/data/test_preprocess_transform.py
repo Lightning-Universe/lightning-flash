@@ -18,6 +18,7 @@ from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.preprocess_transform import PreTransform, PreTransformPlacement
+from flash.core.registry import FlashRegistry
 
 
 def test_preprocess_transform():
@@ -61,3 +62,13 @@ def test_preprocess_transform():
 
     with pytest.raises(MisconfigurationException, match="test_transform contains {'wrong_key'}"):
         transform = FailureMyPreTransform(running_stage=RunningStage.TESTING)
+
+    transform_registry = FlashRegistry("transforms")
+    transform_registry(fn=MyPreTransform, name="something")
+
+    transform = PreTransform.from_transform(
+        running_stage=RunningStage.TRAINING, transform="something", transform_registry=transform_registry
+    )
+
+    assert isinstance(transform, MyPreTransform)
+    assert transform.transform == {PreTransformPlacement.PER_SAMPLE_TRANSFORM: transform.fn}

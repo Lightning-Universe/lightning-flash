@@ -27,7 +27,9 @@ from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX
 from flash.core.registry import FlashRegistry
 
-TRANSFORM_TYPE = Optional[Union["PreTransform", Callable, Tuple[LightningEnum, Dict[str, Any]], LightningEnum]]
+TRANSFORM_TYPE = Optional[
+    Union["PreTransform", Callable, Tuple[Union[LightningEnum, str], Dict[str, Any]], Union[LightningEnum, str]]
+]
 
 
 class PreTransformPlacement(LightningEnum):
@@ -144,7 +146,7 @@ class PreTransform(Properties):
         if isinstance(transform, Callable):
             return cls(running_stage, {PreTransformPlacement.PER_SAMPLE_TRANSFORM: transform})
 
-        if isinstance(transform, tuple) or isinstance(transform, LightningEnum):
+        if isinstance(transform, tuple) or isinstance(transform, (LightningEnum, str)):
             enum, transform_kwargs = cls._sanetize_registry_transform(transform, transform_registry)
             transform_cls = transform_registry.get(enum)
             return transform_cls(running_stage, transform=None, **transform_kwargs)
@@ -229,20 +231,20 @@ class PreTransform(Properties):
 
     @classmethod
     def _sanetize_registry_transform(
-        cls, transform: Tuple[LightningEnum, Any], transform_registry: Optional[FlashRegistry]
-    ) -> Tuple[LightningEnum, Dict]:
+        cls, transform: Tuple[Union[LightningEnum, str], Any], transform_registry: Optional[FlashRegistry]
+    ) -> Tuple[Union[LightningEnum, str], Dict]:
         msg = "The transform should be provided as a tuple with the following types (LightningEnum, Dict[str, Any]) "
         msg += "when requesting transform from the registry."
         if not transform_registry:
             raise MisconfigurationException("You requested a transform from the registry, but it is empty.")
         if isinstance(transform, tuple) and len(transform) > 2:
             raise MisconfigurationException(msg)
-        if isinstance(transform, LightningEnum):
+        if isinstance(transform, (LightningEnum, str)):
             enum = transform
             transform_kwargs = {}
         else:
             enum, transform_kwargs = transform
-        if not isinstance(enum, LightningEnum):
+        if not isinstance(enum, (LightningEnum, str)):
             raise MisconfigurationException(msg)
         if not isinstance(transform_kwargs, Dict):
             raise MisconfigurationException(msg)
