@@ -164,8 +164,6 @@ class Trainer(PlTrainer):
         of the backbone throughout training layers of the backbone throughout training.
 
         Args:
-            datamodule: A instance of :class:`LightningDataModule`.
-
             model: Model to fit.
 
             train_dataloader: A PyTorch DataLoader with training samples. If the model has
@@ -173,6 +171,8 @@ class Trainer(PlTrainer):
 
             val_dataloaders: Either a single PyTorch Dataloader or a list of them, specifying validation samples.
                 If the model has a predefined val_dataloaders method this will be skipped
+
+            datamodule: A instance of :class:`LightningDataModule`.
 
             strategy: Should either be a string or a finetuning callback subclassing
                 :class:`pytorch_lightning.callbacks.BaseFinetuning`.
@@ -187,7 +187,7 @@ class Trainer(PlTrainer):
         self._resolve_callbacks(model, strategy)
         return super().fit(model, train_dataloader, val_dataloaders, datamodule)
 
-    def _resolve_callbacks(self, model, strategy):
+    def _resolve_callbacks(self, model: LightningModule, strategy: Optional[Union[str, BaseFinetuning]] = None) -> None:
         """This function is used to select the `BaseFinetuning` to be used for finetuning."""
         if strategy is not None and not isinstance(strategy, (str, BaseFinetuning)):
             raise MisconfigurationException(
