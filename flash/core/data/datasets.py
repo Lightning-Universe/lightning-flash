@@ -15,9 +15,11 @@ from abc import abstractmethod
 from typing import Any, Callable, Iterable, Mapping, Optional, Type, Union
 
 from pytorch_lightning.trainer.states import RunningStage
+from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Dataset, IterableDataset
 
+from flash.core.data.preprocess_transform import PRE_TRANSFORM_TYPE, PreTransform
 from flash.core.data.properties import Properties
 from flash.core.registry import FlashRegistry
 
@@ -27,6 +29,7 @@ class BaseDataset(Properties):
     DATASET_KEY = "dataset"
 
     transform_registry: Optional[FlashRegistry] = None
+    transform: Optional[PreTransform] = None
 
     @abstractmethod
     def load_data(self, data: Any) -> Union[Iterable, Mapping]:
@@ -39,9 +42,13 @@ class BaseDataset(Properties):
     def load_sample(self, data: Any) -> Any:
         """The `load_sample` hook contains the logic to load a single sample."""
 
-    def __init__(self, running_stage: RunningStage) -> None:
+    def __init__(self, running_stage: RunningStage, transform: Optional[PRE_TRANSFORM_TYPE]) -> None:
         super().__init__()
         self.running_stage = running_stage
+        if transform:
+            self.transform = PreTransform.from_transform(
+                transform, running_stage=running_stage, transform_registry=self.transform_registry
+            )
 
     def pass_args_to_load_data(
         self,
@@ -84,6 +91,7 @@ class BaseDataset(Properties):
         cls,
         *load_data_args,
         running_stage: Optional[RunningStage] = None,
+        transform: Optional[PRE_TRANSFORM_TYPE] = None,
         **dataset_kwargs: Any,
     ) -> "BaseDataset":
         if not running_stage:
@@ -91,9 +99,17 @@ class BaseDataset(Properties):
                 "You should provide a running_stage to your dataset"
                 " `from pytorch_lightning.trainer.states import RunningStage`."
             )
-        flash_dataset = cls(**dataset_kwargs, running_stage=running_stage)
+        flash_dataset = cls(**dataset_kwargs, running_stage=running_stage, transform=transform)
         flash_dataset.pass_args_to_load_data(*load_data_args)
         return flash_dataset
+
+    @classmethod
+    def register_transform(cls, enum: Union[LightningEnum, str], fn: Type[PreTransform]) -> None:
+        if cls.transform_registry is None:
+            raise MisconfigurationException(
+                "The class attribute `transform_registry` should be set as a class attribute. "
+            )
+        cls.transform_registry(fn=fn, name=enum)
 
     def resolve_functions(self):
         raise NotImplementedError

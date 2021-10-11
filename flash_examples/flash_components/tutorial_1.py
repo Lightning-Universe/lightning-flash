@@ -22,8 +22,8 @@ from pytorch_lightning.utilities.enums import LightningEnum
 from torch.utils.data._utils.collate import default_collate
 
 from flash import FlashDataset, PreTransform, PreTransformPlacement
-from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.new_data_module import DataModule
 from flash.core.data.preprocess_transform import PRE_TRANSFORM_TYPE
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.registry import FlashRegistry
@@ -156,11 +156,10 @@ print(train_dataset.transform)
 #    },
 # )
 
-
-validation_dataset = MultipleFoldersImageDataset.from_data(
+val_dataset = MultipleFoldersImageDataset.from_data(
     VAL_FOLDERS, running_stage=RunningStage.VALIDATING, transform=CustomDataTransform.BASE
 )
-print(validation_dataset.transform)
+print(val_dataset.transform)
 # Out:
 # ImageClassificationRandomRotationTransform(
 #    running_stage=validate,
@@ -173,7 +172,7 @@ print(validation_dataset.transform)
 print(train_dataset[0])
 # Out:
 # {
-#   <DefaultDataKeys.INPUT: 'input'>: tensor([...]),
+#   <DefaultDataKeys.INPUT: 'input'>: PIL.JpegImagePlugin,
 #   <DefaultDataKeys.TARGET: 'target'>: 0,
 #   <DefaultDataKeys.METADATA: 'metadata'>: (500, 375)
 # }
@@ -187,55 +186,16 @@ print(train_dataset[0])
 #############################################################################################
 
 
-datamodule = DataModule(train_dataset=train_dataset)
+def create_dataset(data, running_stage):
+    return MultipleFoldersImageDataset.from_data(data, running_stage=running_stage, transform=CustomDataTransform.BASE)
 
 
-class ImageClassificationDataModule(DataModule):
-
-    flash_datasets_registry = FlashRegistry("image_classification_loader")
-
-    @classmethod
-    def from_multiple_folders(
-        cls,
-        train_folders: Optional[List[str]] = None,
-        val_folders: Optional[List[str]] = None,
-        test_folders: Optional[List[str]] = None,
-        predict_folder: Optional[str] = None,
-        train_transform: Optional[PRE_TRANSFORM_TYPE] = None,
-        val_transform: Optional[PRE_TRANSFORM_TYPE] = None,
-        test_transform: Optional[PRE_TRANSFORM_TYPE] = None,
-        predict_transform: Optional[PRE_TRANSFORM_TYPE] = None,
-        **data_module_kwargs: Any,
-    ) -> "ImageClassificationDataModule":
-
-        datasets = cls.create_flash_datasets(
-            CustomDataFormat.MULTIPLE_FOLDERS,
-            train_folders,
-            val_folders,
-            test_folders,
-            predict_folder,
-            train_transform,
-            val_transform,
-            test_transform,
-            predict_transform,
-        )
-
-        return cls(*datasets, **data_module_kwargs)
-
-
-ImageClassificationDataModule.register_flash_dataset(CustomDataFormat.MULTIPLE_FOLDERS, MultipleFoldersImageDataset)
-
-
-#############################################################################################
-#                         Step 5 / 5: Finally, create the loader                            #
-#############################################################################################
-
-datamodule = ImageClassificationDataModule.from_multiple_folders(
-    train_folders=TRAIN_FOLDERS,
-    val_folders=VAL_FOLDERS,
-    predict_folder=PREDICT_FOLDER,
-    train_transform=CustomDataTransform.RANDOM_ROTATION,
+datamodule = DataModule(
+    train_dataset=create_dataset(TRAIN_FOLDERS, RunningStage.TRAINING),
+    val_dataset=create_dataset(VAL_FOLDERS, RunningStage.VALIDATING),
+    predict_dataset=create_dataset(PREDICT_FOLDER, RunningStage.PREDICTING),
 )
+
 
 assert isinstance(datamodule.train_dataset, FlashDataset)
 assert isinstance(datamodule.predict_dataset, FlashDataset)

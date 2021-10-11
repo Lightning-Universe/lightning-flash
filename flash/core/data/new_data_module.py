@@ -112,8 +112,6 @@ class DataModule(pl.LightningDataModule):
         self._viz: Optional[BaseVisualization] = None
         self._data_fetcher: Optional[BaseDataFetcher] = data_fetcher or self.configure_data_fetcher()
 
-        self.data_fetcher.attach_to_preprocess(self.pre_transform)
-
         self._train_ds = train_dataset
         self._val_ds = val_dataset
         self._test_ds = test_dataset
@@ -282,6 +280,7 @@ class DataModule(pl.LightningDataModule):
         train_ds: Dataset = self._train_ds() if isinstance(self._train_ds, Callable) else self._train_ds
         shuffle: bool = False
         collate_fn = self._resolve_collate_fn(train_ds, RunningStage.TRAINING)
+        breakpoint()
         if isinstance(train_ds, IterableAutoDataset):
             drop_last = False
         else:
