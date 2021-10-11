@@ -14,3 +14,5 @@ sphinx-togglebutton>=0.2
 sphinx-copybutton>=0.3
 jinja2
 numpy>=1.21.2 # hotfix for docs, failing without numpy install
+pandas
+torch
