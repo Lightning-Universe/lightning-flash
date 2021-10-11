@@ -20,6 +20,7 @@ from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data._utils.collate import default_collate
 
+from flash.core.data.data_pipeline import _Preprocessor, DataPipeline
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.properties import Properties
 from flash.core.data.states import CollateFn
@@ -42,9 +43,6 @@ class PreTransformPlacement(LightningEnum):
 
 
 class PreTransform(Properties):
-    def get_state_dict(self) -> Dict[str, Any]:
-        return {}
-
     def configure_transforms(self) -> Optional[Dict[str, Callable]]:
         """The default transforms to use.
 
@@ -67,6 +65,7 @@ class PreTransform(Properties):
 
         transform = transform or self._resolve_transforms(running_stage)
         self.transform = self._check_transforms(transform, running_stage)
+        self.callbacks = []
 
     @property
     def current_transform(self) -> Callable:
@@ -121,6 +120,8 @@ class PreTransform(Properties):
         workers, since to make that happen     each of the workers would have to create it's own CUDA-context which
         would pollute GPU memory (if on GPU).
         """
+        if isinstance(sample, list):
+            return [self.current_transform(s) for s in sample]
         return self.current_transform(sample)
 
     def per_batch_transform_on_device(self, batch: Any) -> Any:
@@ -164,18 +165,6 @@ class PreTransform(Properties):
         )
         transforms: Optional[Dict[str, Callable]] = resolved_function(**self._tranform_kwargs)
         return transforms
-
-    def _save_to_state_dict(self, destination, prefix, keep_vars):
-        preprocess_state_dict = self.get_state_dict()
-        if not isinstance(preprocess_state_dict, Dict):
-            raise MisconfigurationException("get_state_dict should return a dictionary")
-        preprocess_state_dict["_meta"] = {}
-        preprocess_state_dict["_meta"]["module"] = self.__module__
-        preprocess_state_dict["_meta"]["class_name"] = self.__class__.__name__
-        preprocess_state_dict["_meta"]["_state"] = self._state
-        destination["preprocess.state_dict"] = preprocess_state_dict
-        self._ddp_params_and_buffers_to_ignore = ["preprocess.state_dict"]
-        return super()._save_to_state_dict(destination, prefix, keep_vars)
 
     def _check_transforms(
         self, transform: Optional[Dict[str, Callable]], stage: RunningStage
@@ -255,3 +244,74 @@ class PreTransform(Properties):
 
     def __getitem__(self, placement: PreTransformPlacement) -> Callable:
         return self.transform[placement]
+
+    def _make_collates(self, on_device: bool, collate: Callable) -> Tuple[Callable, Callable]:
+        if on_device:
+            return self._identity, collate
+        return collate, self._identity
+
+    @property
+    def dataloader_collate_fn(self):
+        """Generate the function to be injected within the DataLoader as the collate_fn."""
+        return self._create_collate_preprocessors()[0]
+
+    @property
+    def on_after_batch_transfer_fn(self):
+        """Generate the function to be injected after the on_after_batch_transfer from the LightningModule."""
+        return self._create_collate_preprocessors()[1]
+
+    def _create_collate_preprocessors(self) -> Tuple[Any]:
+        prefix: str = _STAGES_PREFIX[self.running_stage]
+
+        func_names: Dict[str, str] = {
+            k: DataPipeline._resolve_function_hierarchy(k, self, self.running_stage, PreTransform)
+            for k in [v.value for v in PreTransformPlacement]
+        }
+
+        collate_fn: Callable = getattr(self, func_names["collate"])
+
+        per_batch_transform_overriden: bool = DataPipeline._is_overriden_recursive(
+            "per_batch_transform", self, PreTransform, prefix=prefix
+        )
+
+        per_sample_transform_on_device_overriden: bool = DataPipeline._is_overriden_recursive(
+            "per_sample_transform_on_device", self, PreTransform, prefix=prefix
+        )
+
+        is_per_overriden = per_batch_transform_overriden and per_sample_transform_on_device_overriden
+        if self._collate_in_worker_from_transform is None and is_per_overriden:
+            raise MisconfigurationException(
+                f"{self.__class__.__name__}: `per_batch_transform` and `per_sample_transform_on_device` "
+                f"are mutually exclusive for stage {self.running_stage}"
+            )
+
+        if isinstance(self._collate_in_worker_from_transform, bool):
+            worker_collate_fn, device_collate_fn = self._make_collates(
+                not self._collate_in_worker_from_transform, collate_fn
+            )
+        else:
+            worker_collate_fn, device_collate_fn = self._make_collates(
+                per_sample_transform_on_device_overriden, collate_fn
+            )
+
+        worker_collate_fn = (
+            worker_collate_fn.collate_fn if isinstance(worker_collate_fn, _Preprocessor) else worker_collate_fn
+        )
+
+        worker_preprocessor = _Preprocessor(
+            self,
+            worker_collate_fn,
+            getattr(self, func_names["per_sample_transform"]),
+            getattr(self, func_names["per_batch_transform"]),
+            self.running_stage,
+        )
+        device_preprocessor = _Preprocessor(
+            self,
+            device_collate_fn,
+            getattr(self, func_names["per_sample_transform_on_device"]),
+            getattr(self, func_names["per_batch_transform_on_device"]),
+            self.running_stage,
+            apply_per_sample_transform=device_collate_fn != self._identity,
+            on_device=True,
+        )
+        return worker_preprocessor, device_preprocessor

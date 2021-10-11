@@ -72,3 +72,23 @@ def test_preprocess_transform():
 
     assert isinstance(transform, MyPreTransform)
     assert transform.transform == {PreTransformPlacement.PER_SAMPLE_TRANSFORM: transform.fn}
+
+    collate_fn = transform.dataloader_collate_fn
+    assert collate_fn.collate_fn.func == transform.collate
+    assert collate_fn.per_sample_transform.func == transform.per_sample_transform
+    assert collate_fn.per_batch_transform.func == transform.per_batch_transform
+
+    on_after_batch_transfer_fn = transform.on_after_batch_transfer_fn
+    assert on_after_batch_transfer_fn.collate_fn.func == transform._identity
+    assert on_after_batch_transfer_fn.per_sample_transform.func == transform.per_sample_transform_on_device
+    assert on_after_batch_transfer_fn.per_batch_transform.func == transform.per_batch_transform_on_device
+
+    class MyPreTransform(PreTransform):
+        def configure_transforms(self) -> Optional[Dict[str, Callable]]:
+            return {
+                PreTransformPlacement.PER_BATCH_TRANSFORM: fn,
+                PreTransformPlacement.PER_SAMPLE_TRANSFORM_ON_DEVICE: fn,
+            }
+
+    with pytest.raises(MisconfigurationException, match="`per_batch_transform` and `per_sample_transform_on_device`"):
+        transform = MyPreTransform(running_stage=RunningStage.TESTING)
