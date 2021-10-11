@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 from contextlib import suppress
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 
 import torchvision.transforms as T
 from PIL import Image
@@ -24,6 +24,7 @@ from torch.utils.data._utils.collate import default_collate
 from flash import FlashDataset, PreTransform, PreTransformPlacement
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.new_data_module import DataModule
+from flash.core.data.preprocess_transform import PRE_TRANSFORM_TYPE
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.registry import FlashRegistry
 
@@ -179,8 +180,8 @@ print(train_dataset[0])
 #############################################################################################
 #                           Step 4 / 5: Create a DataModule                                 #
 #                                                                                           #
-# The `ImageClassificationDataModule` class is a collection of FlashDataset
-# and its responsability is to create the dataloaders.
+# The `DataModule` class is a collection of FlashDataset and you can pass them directly to  #
+# its init function.                                                                        #
 #                                                                                           #
 #############################################################################################
 
@@ -226,6 +227,70 @@ print(datamodule.predict_dataset[0])
 #   {<DefaultDataKeys.INPUT: 'input'>: 'data/hymenoptera_data/train/ants/957233405_25c1d1187b.jpg'}
 # }
 
+
+# access the dataloader, the collate_fn will be injected directly within the dataloader from the provided transform
+batch = next(iter(datamodule.train_dataloader()))
+# Out:
+# {
+#   <DefaultDataKeys.INPUT: 'input'>: tensor([...]),
+#   <DefaultDataKeys.TARGET: 'target'>: tensor([...]),
+#   <DefaultDataKeys.METADATA: 'metadata'>: [(...), (...), ...],
+# }
+print(batch)
+
+
+#############################################################################################
+#                Step 4 / 5: Provide your new utility with your DataModule                  #
+#                                                                                           #
+# The `DataModule` class is a collection of FlashDataset and you can pass them directly to  #
+# its init function.                                                                        #
+#                                                                                           #
+#############################################################################################
+
+
+class ImageClassificationDataModule(DataModule):
+    @classmethod
+    def from_multiple_folders(
+        cls,
+        train_folders: Optional[List[str]] = None,
+        val_folders: Optional[List[str]] = None,
+        test_folders: Optional[List[str]] = None,
+        predict_folder: Optional[str] = None,
+        train_transform: Optional[PRE_TRANSFORM_TYPE] = None,
+        val_transform: Optional[PRE_TRANSFORM_TYPE] = None,
+        test_transform: Optional[PRE_TRANSFORM_TYPE] = None,
+        predict_transform: Optional[PRE_TRANSFORM_TYPE] = None,
+        **data_module_kwargs: Any,
+    ) -> "ImageClassificationDataModule":
+
+        datasets = cls.create_flash_datasets(
+            CustomDataFormat.MULTIPLE_FOLDERS,
+            train_folders,
+            val_folders,
+            test_folders,
+            predict_folder,
+            train_transform,
+            val_transform,
+            test_transform,
+            predict_transform,
+        )
+
+        return cls(*datasets, **data_module_kwargs)
+
+
+ImageClassificationDataModule.register_flash_dataset(CustomDataFormat.MULTIPLE_FOLDERS, MultipleFoldersImageDataset)
+
+
+#############################################################################################
+#                         Step 5 / 5: Finally, create the loader                            #
+#############################################################################################
+
+datamodule = ImageClassificationDataModule.from_multiple_folders(
+    train_folders=TRAIN_FOLDERS,
+    val_folders=VAL_FOLDERS,
+    predict_folder=PREDICT_FOLDER,
+    train_transform=CustomDataTransform.RANDOM_ROTATION,
+)
 
 # access the dataloader, the collate_fn will be injected directly within the dataloader from the provided transform
 batch = next(iter(datamodule.train_dataloader()))
