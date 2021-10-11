@@ -58,11 +58,20 @@ def test_flash_dataset():
         def val_load_data(self, data, *args):
             return data
 
+        def predict_load_data(self, data, data2):
+            return [{"input": x, "target": y} for x, y in zip(data, data2)]
+
     dataset = TestDataset(running_stage=RunningStage.TRAINING, shift=1)
     dataset.pass_args_to_load_data(range(10), range(10, 20))
     assert len(dataset) == 10
     assert dataset[0] == (0, 11)
     assert dataset[-1] == (9, 20)
+
+    dataset = TestDataset(running_stage=RunningStage.VALIDATING, shift=1)
+    dataset.pass_args_to_load_data(range(10), range(10, 20))
+    assert len(dataset) == 10
+    assert dataset[0] == 0
+    assert dataset[-1] == 9
 
     dataset = TestDataset(running_stage=RunningStage.TESTING, shift=1)
     dataset.pass_args_to_load_data(range(10), range(10, 20))
@@ -70,11 +79,9 @@ def test_flash_dataset():
     assert dataset[0] == [0, 9]
     assert dataset[-1] == [9, 18]
 
-    dataset = TestDataset(running_stage=RunningStage.VALIDATING, shift=1)
+    dataset = TestDataset(running_stage=RunningStage.PREDICTING, shift=1)
     dataset.pass_args_to_load_data(range(10), range(10, 20))
-    assert len(dataset) == 10
-    assert dataset[0] == 0
-    assert dataset[-1] == 9
+    assert dataset[0] == {"input": 0, "target": 10}
 
     class TestDataset(FlashIterableDataset):
         def __init__(self, running_stage: RunningStage, shift=0):
