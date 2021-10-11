@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Generic, Iterable, Optional, Sequence, Type, TypeVar
+from abc import abstractmethod
+from typing import Any, Callable, Generic, Iterable, Mapping, Optional, Type, TypeVar
 
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -29,15 +30,19 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
 
     transform_registry: Optional[FlashRegistry] = None
 
-    def load_data(self, data: Any) -> Any:
-        return data
+    @abstractmethod
+    def load_data(self, data: Any) -> DATA_TYPE:
+        """The `load_data` hook should return either a Mapping or an Iterable.
 
+        Override to add your dataset logic creation logic.
+        """
+
+    @abstractmethod
     def load_sample(self, data: Any) -> Any:
-        return data
+        """The `load_sample` hook contains the logic to load a single sample."""
 
     def __init__(self, running_stage: RunningStage) -> None:
         super().__init__()
-
         self.running_stage = running_stage
 
     def pass_args_to_load_data(
@@ -80,7 +85,7 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
     def from_data(
         cls,
         *load_data_args,
-        running_stage: RunningStage = None,
+        running_stage: Optional[RunningStage] = None,
         **dataset_kwargs: Any,
     ) -> "BaseDataset":
         if not running_stage:
@@ -95,20 +100,26 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
     def resolve_functions(self):
         raise NotImplementedError
 
-    _load_data = load_data
-    _load_sample = load_sample
+    _load_data = None
+    _load_sample = None
 
 
-class FlashDataset(BaseDataset[Sequence], Dataset):
+class FlashDataset(BaseDataset[Mapping], Dataset):
     """The ``FlashDataset`` is a ``BaseDataset`` and a :class:`~torch.utils.data.Dataset`.
 
-    The `data` argument must be a ``Sequence`` (it must have a length).
+    The `data` argument must be a ``Mapping`` (it must have a length).
     """
 
-    def load_data(self, data: Any) -> Any:
+    def load_data(self, data: Any) -> Mapping:
+        """By default, the `load_data` perform an identity operation Override to add your own logic to load the
+        data."""
         return data
 
     def load_sample(self, data: Any) -> Any:
+        """By default, the `load_sample` perform an identity operation.
+
+        Override to add your own logic to load a single sample.
+        """
         return data
 
     def resolve_functions(self):
@@ -128,10 +139,16 @@ class FlashIterableDataset(BaseDataset[Iterable], IterableDataset):
     The `data` argument must be an ``Iterable``.
     """
 
-    def load_data(self, data: Any) -> Any:
+    def load_data(self, data: Any) -> Iterable:
+        """By default, the `load_data` perform an identity operation Override to add your own logic to load the
+        data."""
         return data
 
     def load_sample(self, data: Any) -> Any:
+        """By default, the `load_sample` perform an identity operation.
+
+        Override to add your own logic to load a single sample.
+        """
         return data
 
     def resolve_functions(self):
