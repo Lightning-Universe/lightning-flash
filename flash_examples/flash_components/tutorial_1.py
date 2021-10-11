@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 from contextlib import suppress
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List
 
 import torchvision.transforms as T
 from PIL import Image
@@ -24,7 +24,6 @@ from torch.utils.data._utils.collate import default_collate
 from flash import FlashDataset, PreTransform, PreTransformPlacement
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.new_data_module import DataModule
-from flash.core.data.preprocess_transform import PRE_TRANSFORM_TYPE
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.registry import FlashRegistry
 
@@ -228,6 +227,7 @@ print(datamodule.predict_dataset[0])
 # }
 
 
+# access the dataloader, the collate_fn will be injected directly within the dataloader from the provided transform
 batch = next(iter(datamodule.train_dataloader()))
 # Out:
 # {

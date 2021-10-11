@@ -67,6 +67,16 @@ class BaseDataset(Properties):
         self._running_stage = running_stage
         self.resolve_functions()
 
+    @property
+    def dataloader_collate_fn(self) -> Optional[Callable]:
+        if self.transform:
+            return self.transform.dataloader_collate_fn
+
+    @property
+    def on_after_batch_transfer_fn(self) -> Optional[Callable]:
+        if self.transform:
+            return self.transform.on_after_batch_transfer_fn
+
     def _resolve_functions(self, func_name: str, cls: Type["BaseDataset"]) -> None:
         from flash.core.data.data_pipeline import DataPipeline  # noqa F811
 
