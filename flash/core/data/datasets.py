@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from abc import abstractmethod
-from typing import Any, Callable, Generic, Iterable, Mapping, Optional, Type, TypeVar
+from typing import Any, Callable, Iterable, Mapping, Optional, Type, TypeVar, Union
 
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -24,14 +24,14 @@ from flash.core.registry import FlashRegistry
 DATA_TYPE = TypeVar("DATA_TYPE")
 
 
-class BaseDataset(Generic[DATA_TYPE], Properties):
+class BaseDataset(Properties):
 
     DATASET_KEY = "dataset"
 
     transform_registry: Optional[FlashRegistry] = None
 
     @abstractmethod
-    def load_data(self, data: Any) -> DATA_TYPE:
+    def load_data(self, data: Any) -> Union[Iterable, Mapping]:
         """The `load_data` hook should return either a Mapping or an Iterable.
 
         Override to add your dataset logic creation logic.
@@ -104,7 +104,7 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
     _load_sample = None
 
 
-class FlashDataset(BaseDataset[Mapping], Dataset):
+class FlashDataset(Dataset, BaseDataset):
     """The ``FlashDataset`` is a ``BaseDataset`` and a :class:`~torch.utils.data.Dataset`.
 
     The `data` argument must be a ``Mapping`` (it must have a length).
@@ -135,7 +135,7 @@ class FlashDataset(BaseDataset[Mapping], Dataset):
         return len(self.data)
 
 
-class FlashIterableDataset(BaseDataset[Iterable], IterableDataset):
+class FlashIterableDataset(IterableDataset, BaseDataset):
     """The ``IterableAutoDataset`` is a ``BaseDataset`` and a :class:`~torch.utils.data.IterableDataset`.
 
     The `data` argument must be an ``Iterable``.
