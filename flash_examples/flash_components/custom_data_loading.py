@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 from contextlib import suppress
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import torchvision.transforms as T
 from PIL import Image
@@ -21,7 +21,7 @@ from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
 from torch.utils.data._utils.collate import default_collate
 
-from flash import FlashDataset, PreTransform, PreTransformPlacement
+from flash import FlashDataset, PreTransform
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.new_data_module import DataModule
 from flash.core.data.preprocess_transform import PRE_TRANSFORM_TYPE
@@ -96,9 +96,9 @@ class MultipleFoldersImageDataset(FlashDataset):
         return [{DefaultDataKeys.INPUT: os.path.join(predict_folder, p)} for p in os.listdir(predict_folder)]
 
 
-train_dataset = MultipleFoldersImageDataset.from_data(TRAIN_FOLDERS, running_stage=RunningStage.TRAINING)
-val_dataset = MultipleFoldersImageDataset.from_data(VAL_FOLDERS, running_stage=RunningStage.VALIDATING)
-predict_dataset = MultipleFoldersImageDataset.from_data(PREDICT_FOLDER, running_stage=RunningStage.PREDICTING)
+train_dataset = MultipleFoldersImageDataset.from_train_data(TRAIN_FOLDERS)
+val_dataset = MultipleFoldersImageDataset.from_val_data(VAL_FOLDERS)
+predict_dataset = MultipleFoldersImageDataset.from_predict_data(PREDICT_FOLDER)
 
 
 #############################################################################################
@@ -111,24 +111,20 @@ predict_dataset = MultipleFoldersImageDataset.from_data(PREDICT_FOLDER, running_
 
 
 class ImageBaseTransform(PreTransform):
-    def configure_transforms(self, image_size: int = 224) -> Dict[PreTransformPlacement, Callable]:
-        return {
-            PreTransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(
-                DefaultDataKeys.INPUT, T.Compose([T.Resize((image_size, image_size)), T.ToTensor()])
-            ),
-            PreTransformPlacement.COLLATE: default_collate,
-        }
+    def configure_per_sample_transform(self, image_size: int = 224) -> Any:
+        per_sample_transform = T.Compose([T.Resize((image_size, image_size)), T.ToTensor()])
+        return ApplyToKeys(DefaultDataKeys.INPUT, per_sample_transform)
+
+    def configure_collate(self) -> Any:
+        return default_collate
 
 
 class ImageRandomRotationTransform(ImageBaseTransform):
-    def configure_transforms(self, image_size: int = 224, rotation: float = 0) -> Dict[PreTransformPlacement, Callable]:
+    def configure_per_sample_transform(self, image_size: int = 224, rotation: float = 0) -> Any:
         transforms = [T.Resize((image_size, image_size)), T.ToTensor()]
         if self.training:
             transforms += [T.RandomRotation(rotation)]
-        return {
-            PreTransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(DefaultDataKeys.INPUT, T.Compose(transforms)),
-            PreTransformPlacement.COLLATE: default_collate,
-        }
+        return ApplyToKeys(DefaultDataKeys.INPUT, T.Compose(transforms))
 
 
 # Register your transform within the Flash Dataset registry
@@ -136,9 +132,8 @@ class ImageRandomRotationTransform(ImageBaseTransform):
 MultipleFoldersImageDataset.register_transform(CustomDataTransform.BASE, ImageBaseTransform)
 MultipleFoldersImageDataset.register_transform(CustomDataTransform.RANDOM_ROTATION, ImageRandomRotationTransform)
 
-train_dataset = MultipleFoldersImageDataset.from_data(
+train_dataset = MultipleFoldersImageDataset.from_train_data(
     TRAIN_FOLDERS,
-    running_stage=RunningStage.TRAINING,
     transform=(CustomDataTransform.RANDOM_ROTATION, {"rotation": 45}),
 )
 
@@ -156,9 +151,7 @@ print(train_dataset.transform)
 #    },
 # )
 
-val_dataset = MultipleFoldersImageDataset.from_data(
-    VAL_FOLDERS, running_stage=RunningStage.VALIDATING, transform=CustomDataTransform.BASE
-)
+val_dataset = MultipleFoldersImageDataset.from_val_data(VAL_FOLDERS, transform=CustomDataTransform.BASE)
 print(val_dataset.transform)
 # Out:
 # ImageClassificationRandomRotationTransform(
@@ -194,6 +187,7 @@ datamodule = DataModule(
     train_dataset=create_dataset(TRAIN_FOLDERS, RunningStage.TRAINING),
     val_dataset=create_dataset(VAL_FOLDERS, RunningStage.VALIDATING),
     predict_dataset=create_dataset(PREDICT_FOLDER, RunningStage.PREDICTING),
+    batch_size=2,
 )
 
 
@@ -290,6 +284,7 @@ datamodule = ImageClassificationDataModule.from_multiple_folders(
     val_folders=VAL_FOLDERS,
     predict_folder=PREDICT_FOLDER,
     train_transform=CustomDataTransform.RANDOM_ROTATION,
+    batch_size=2,
 )
 
 # access the dataloader, the collate_fn will be injected directly within the dataloader from the provided transform

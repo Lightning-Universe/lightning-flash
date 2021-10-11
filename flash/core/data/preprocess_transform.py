@@ -43,12 +43,40 @@ class PreTransformPlacement(LightningEnum):
 
 
 class PreTransform(Properties):
-    def configure_transforms(self) -> Optional[Dict[str, Callable]]:
+    def configure_per_sample_transform(self, *args, **kwargs) -> Callable:
         """The default transforms to use.
 
         Will be overridden by transforms passed to the ``__init__``.
         """
-        return None
+        return self._identity
+
+    def configure_per_batch_transform(self, *args, **kwargs) -> Callable:
+        """The default transforms to use.
+
+        Will be overridden by transforms passed to the ``__init__``.
+        """
+        return self._identity
+
+    def configure_collate(self, *args, **kwargs) -> Callable:
+        """The default transforms to use.
+
+        Will be overridden by transforms passed to the ``__init__``.
+        """
+        return default_collate
+
+    def configure_per_sample_transform_on_device(self, *args, **kwargs) -> Callable:
+        """The default transforms to use.
+
+        Will be overridden by transforms passed to the ``__init__``.
+        """
+        return self._identity
+
+    def configure_per_batch_transform_on_device(self, *args, **kwargs) -> Callable:
+        """The default transforms to use.
+
+        Will be overridden by transforms passed to the ``__init__``.
+        """
+        return self._identity
 
     def __init__(
         self,
@@ -160,11 +188,19 @@ class PreTransform(Properties):
     def _resolve_transforms(self, running_stage: RunningStage) -> Optional[Dict[str, Callable]]:
         from flash.core.data.data_pipeline import DataPipeline
 
-        resolved_function = getattr(
-            self, DataPipeline._resolve_function_hierarchy("configure_transforms", self, running_stage, PreTransform)
-        )
-        transforms: Optional[Dict[str, Callable]] = resolved_function(**self._tranform_kwargs)
-        return transforms
+        transforms_out = {}
+        for placement in PreTransformPlacement:
+            transform_name = f"configure_{placement.value}"
+            resolved_function = getattr(
+                self, DataPipeline._resolve_function_hierarchy(transform_name, self, running_stage, PreTransform)
+            )
+            params = inspect.signature(resolved_function).parameters
+            transforms: Optional[Dict[str, Callable]] = resolved_function(
+                **{k: v for k, v in self._tranform_kwargs.items() if k in params}
+            )
+            if transforms != self._identity:
+                transforms_out[placement] = transforms
+        return transforms_out
 
     def _check_transforms(
         self, transform: Optional[Dict[str, Callable]], stage: RunningStage

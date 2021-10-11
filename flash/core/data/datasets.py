@@ -114,6 +114,48 @@ class BaseDataset(Properties):
         return flash_dataset
 
     @classmethod
+    def from_train_data(
+        cls,
+        *load_data_args,
+        transform: Optional[PRE_TRANSFORM_TYPE] = None,
+        **dataset_kwargs: Any,
+    ) -> "BaseDataset":
+        return cls.from_data(
+            *load_data_args, running_stage=RunningStage.TRAINING, transform=transform, **dataset_kwargs
+        )
+
+    @classmethod
+    def from_val_data(
+        cls,
+        *load_data_args,
+        transform: Optional[PRE_TRANSFORM_TYPE] = None,
+        **dataset_kwargs: Any,
+    ) -> "BaseDataset":
+        return cls.from_data(
+            *load_data_args, running_stage=RunningStage.VALIDATING, transform=transform, **dataset_kwargs
+        )
+
+    @classmethod
+    def from_test_data(
+        cls,
+        *load_data_args,
+        transform: Optional[PRE_TRANSFORM_TYPE] = None,
+        **dataset_kwargs: Any,
+    ) -> "BaseDataset":
+        return cls.from_data(*load_data_args, running_stage=RunningStage.TESTING, transform=transform, **dataset_kwargs)
+
+    @classmethod
+    def from_predict_data(
+        cls,
+        *load_data_args,
+        transform: Optional[PRE_TRANSFORM_TYPE] = None,
+        **dataset_kwargs: Any,
+    ) -> "BaseDataset":
+        return cls.from_data(
+            *load_data_args, running_stage=RunningStage.PREDICTING, transform=transform, **dataset_kwargs
+        )
+
+    @classmethod
     def register_transform(cls, enum: Union[LightningEnum, str], fn: Type[PreTransform]) -> None:
         if cls.transform_registry is None:
             raise MisconfigurationException(

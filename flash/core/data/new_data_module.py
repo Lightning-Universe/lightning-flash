@@ -83,10 +83,15 @@ class DataModule(DataModule):
         predict_dataset: Optional[BaseDataset] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
         val_split: Optional[float] = None,
-        batch_size: int = 4,
+        batch_size: Optional[int] = None,
         num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
+        pin_memory: bool = True,
+        persistent_workers: bool = True,
     ) -> None:
+
+        if not batch_size:
+            raise MisconfigurationException("The `batch_size` should be provided to the DataModule on instantiation.")
 
         if flash._IS_TESTING and torch.cuda.is_available():
             batch_size = 16
@@ -99,6 +104,11 @@ class DataModule(DataModule):
         self._val_ds = val_dataset
         self._test_ds = test_dataset
         self._predict_ds = predict_dataset
+
+        if self._train_ds and self._val_ds and isinstance(val_split, float) and val_split > 0:
+            raise MisconfigurationException(
+                "A `val_dataset` was provided with `val_split`. Please, choose one or the other."
+            )
 
         if self._train_ds is not None and (val_split is not None and self._val_ds is None):
             self._train_ds, self._val_ds = self._split_train_val(self._train_ds, val_split)
@@ -120,6 +130,8 @@ class DataModule(DataModule):
         if num_workers is None:
             num_workers = 0
         self.num_workers = num_workers
+        self.persistent_workers = persistent_workers and num_workers > 0
+        self.pin_memory = pin_memory
 
         self.sampler = sampler
 
@@ -139,8 +151,6 @@ class DataModule(DataModule):
             drop_last = False
         else:
             drop_last = len(train_ds) > self.batch_size
-        pin_memory = True
-        persistent_workers = self.num_workers > 0
 
         if self.sampler is None:
             sampler = None
@@ -154,11 +164,12 @@ class DataModule(DataModule):
                 trainer=self.trainer,
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
-                pin_memory=pin_memory,
+                pin_memory=self.pin_memory,
                 shuffle=shuffle,
                 drop_last=drop_last,
                 collate_fn=collate_fn,
                 sampler=sampler,
+                persistent_workers=self.persistent_workers,
             )
 
         return DataLoader(
@@ -167,17 +178,15 @@ class DataModule(DataModule):
             shuffle=shuffle,
             sampler=sampler,
             num_workers=self.num_workers,
-            pin_memory=pin_memory,
+            pin_memory=self.pin_memory,
             drop_last=drop_last,
             collate_fn=collate_fn,
-            persistent_workers=persistent_workers,
+            persistent_workers=self.persistent_workers,
         )
 
     def _val_dataloader(self) -> DataLoader:
         val_ds: BaseDataset = self._val_ds
         collate_fn = val_ds.dataloader_collate_fn
-        pin_memory = True
-        persistent_workers = self.num_workers > 0
 
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
             return self.trainer.lightning_module.process_val_dataset(
@@ -185,24 +194,23 @@ class DataModule(DataModule):
                 trainer=self.trainer,
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
-                pin_memory=pin_memory,
+                pin_memory=self.pin_memory,
                 collate_fn=collate_fn,
+                persistent_workers=self.persistent_workers,
             )
 
         return DataLoader(
             val_ds,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            pin_memory=pin_memory,
+            pin_memory=self.pin_memory,
             collate_fn=collate_fn,
-            persistent_workers=persistent_workers,
+            persistent_workers=self.persistent_workers,
         )
 
     def _test_dataloader(self) -> DataLoader:
         test_ds: BaseDataset = self._test_ds
         collate_fn = test_ds.dataloader_collate_fn
-        pin_memory = True
-        persistent_workers = False
 
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
             return self.trainer.lightning_module.process_test_dataset(
@@ -210,17 +218,18 @@ class DataModule(DataModule):
                 trainer=self.trainer,
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
-                pin_memory=pin_memory,
+                pin_memory=self.pin_memory,
                 collate_fn=collate_fn,
+                persistent_workers=self.persistent_workers,
             )
 
         return DataLoader(
             test_ds,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            pin_memory=pin_memory,
+            pin_memory=self.pin_memory,
             collate_fn=collate_fn,
-            persistent_workers=persistent_workers,
+            persistent_workers=self.persistent_workers,
         )
 
     def _predict_dataloader(self) -> DataLoader:
@@ -232,25 +241,23 @@ class DataModule(DataModule):
         else:
             batch_size = min(self.batch_size, len(predict_ds) if len(predict_ds) > 0 else 1)
 
-        pin_memory = True
-        persistent_workers = False
-
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
             return self.trainer.lightning_module.process_predict_dataset(
                 predict_ds,
                 batch_size=batch_size,
                 num_workers=self.num_workers,
-                pin_memory=pin_memory,
+                pin_memory=self.pin_memory,
                 collate_fn=collate_fn,
+                persistent_workers=self.persistent_workers,
             )
 
         return DataLoader(
             predict_ds,
             batch_size=batch_size,
             num_workers=self.num_workers,
-            pin_memory=True,
+            pin_memory=self.pin_memory,
             collate_fn=collate_fn,
-            persistent_workers=persistent_workers,
+            persistent_workers=self.persistent_workers,
         )
 
     @classmethod
