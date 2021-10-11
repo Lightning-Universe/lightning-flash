@@ -17,6 +17,7 @@ from typing import Any, Dict, List, Optional
 
 import torchvision.transforms as T
 from PIL import Image
+from pytorch_lightning import seed_everything
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
 from torch.utils.data._utils.collate import default_collate
@@ -27,6 +28,8 @@ from flash.core.data.new_data_module import DataModule
 from flash.core.data.preprocess_transform import PRE_TRANSFORM_TYPE
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.registry import FlashRegistry
+
+seed_everything(42)
 
 #############################################################################################
 #                    Use Case: Load Data from multiple folders                              #
@@ -165,7 +168,7 @@ print(val_dataset.transform)
 print(train_dataset[0])
 # Out:
 # {
-#   <DefaultDataKeys.INPUT: 'input'>: PIL.JpegImagePlugin,
+#   <DefaultDataKeys.INPUT: 'input'>: <PIL.JpegImagePlugin.JpegImageFile image mode=RGB size=500x375 at 0x...>,
 #   <DefaultDataKeys.TARGET: 'target'>: 0,
 #   <DefaultDataKeys.METADATA: 'metadata'>: (500, 375)
 # }
@@ -207,11 +210,11 @@ assert not datamodule.test_dataset
 
 
 print(datamodule.train_dataset[0])
-# out:
+# Out:
 # {
-#   <DefaultDataKeys.INPUT: 'input'>: 'data/hymenoptera_data/train/ants/957233405_25c1d1187b.jpg',
-#   <DefaultDataKeys.TARGET: 'target'>: 0
-#   <DefaultDataKeys.METADATA: 'metadata'>: (...)
+#   <DefaultDataKeys.INPUT: 'input'>: <PIL.JpegImagePlugin.JpegImageFile image mode=RGB size=500x375 at 0x...>,
+#   <DefaultDataKeys.TARGET: 'target'>: 0,
+#   <DefaultDataKeys.METADATA: 'metadata'>: (500, 375)
 # }
 
 assert isinstance(datamodule.predict_dataset, FlashDataset)
