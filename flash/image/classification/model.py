@@ -65,7 +65,7 @@ class ImageClassifier(ClassificationAdapterTask):
             `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
         multi_label: Whether the targets are multi-label or not.
-        serializer: A instance of :class:`~flash.core.data.process.Serializer` or a mapping consisting of such 
+        serializer: A instance of :class:`~flash.core.data.process.Serializer` or a mapping consisting of such
             to use when serializing prediction outputs.
         training_strategy: string indicating the training strategy. Adjust if you want to use `learn2learn`
             for doing meta-learning research

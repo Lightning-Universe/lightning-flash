@@ -183,7 +183,7 @@ class DataModule(pl.LightningDataModule):
 
     @property
     def data_fetcher(self) -> BaseDataFetcher:
-        """This property returns the data fetcher """
+        """This property returns the data fetcher."""
         return self._data_fetcher or DataModule.configure_data_fetcher()
 
     @data_fetcher.setter
@@ -281,7 +281,7 @@ class DataModule(pl.LightningDataModule):
             return self.data_pipeline.worker_preprocessor(running_stage)
 
     def _train_dataloader(self) -> DataLoader:
-        """ Configure the train dataloader of the datamodule """
+        """Configure the train dataloader of the datamodule."""
         train_ds: Dataset = self._train_ds() if isinstance(self._train_ds, Callable) else self._train_ds
         shuffle: bool = False
         collate_fn = self._resolve_collate_fn(train_ds, RunningStage.TRAINING)
@@ -324,7 +324,7 @@ class DataModule(pl.LightningDataModule):
         )
 
     def _val_dataloader(self) -> DataLoader:
-        """ Configure the validation dataloader of the datamodule """
+        """Configure the validation dataloader of the datamodule."""
         val_ds: Dataset = self._val_ds() if isinstance(self._val_ds, Callable) else self._val_ds
         collate_fn = self._resolve_collate_fn(val_ds, RunningStage.VALIDATING)
         pin_memory = True
@@ -350,7 +350,7 @@ class DataModule(pl.LightningDataModule):
         )
 
     def _test_dataloader(self) -> DataLoader:
-        """ Configure the test dataloader of the datamodule """
+        """Configure the test dataloader of the datamodule."""
         test_ds: Dataset = self._test_ds() if isinstance(self._test_ds, Callable) else self._test_ds
         collate_fn = self._resolve_collate_fn(test_ds, RunningStage.TESTING)
         pin_memory = True
@@ -376,7 +376,7 @@ class DataModule(pl.LightningDataModule):
         )
 
     def _predict_dataloader(self) -> DataLoader:
-        """ Configure the prediction dataloader of the datamodule """
+        """Configure the prediction dataloader of the datamodule."""
         predict_ds: Dataset = self._predict_ds() if isinstance(self._predict_ds, Callable) else self._predict_ds
 
         if isinstance(predict_ds, IterableAutoDataset):
@@ -408,7 +408,7 @@ class DataModule(pl.LightningDataModule):
 
     @property
     def num_classes(self) -> Optional[int]:
-        """ Property that returns the number of classes of the datamodule if a multiclass task """
+        """Property that returns the number of classes of the datamodule if a multiclass task."""
         n_cls_train = getattr(self.train_dataset, "num_classes", None)
         n_cls_val = getattr(self.val_dataset, "num_classes", None)
         n_cls_test = getattr(self.test_dataset, "num_classes", None)
@@ -416,7 +416,7 @@ class DataModule(pl.LightningDataModule):
 
     @property
     def multi_label(self) -> Optional[bool]:
-        """ Property that returns the number of labels of the datamodule if a multilabel task """
+        """Property that returns the number of labels of the datamodule if a multilabel task."""
         multi_label_train = getattr(self.train_dataset, "multi_label", None)
         multi_label_val = getattr(self.val_dataset, "multi_label", None)
         multi_label_test = getattr(self.test_dataset, "multi_label", None)
@@ -424,22 +424,23 @@ class DataModule(pl.LightningDataModule):
 
     @property
     def data_source(self) -> Optional[DataSource]:
-        """ Property that returns the data source """
+        """Property that returns the data source."""
         return self._data_source
 
     @property
     def preprocess(self) -> Preprocess:
-        """ Property that returns the preprocessing class used on input data """
+        """Property that returns the preprocessing class used on input data."""
         return self._preprocess or self.preprocess_cls()
 
     @property
     def postprocess(self) -> Postprocess:
-        """ Property that returns the postprocessing class used on the input data """
+        """Property that returns the postprocessing class used on the input data."""
         return self._postprocess or self.postprocess_cls()
 
     @property
     def data_pipeline(self) -> DataPipeline:
-        """ Property that returns the full data pipeline including the data source, preprocessing and postprocessing """
+        """Property that returns the full data pipeline including the data source, preprocessing and
+        postprocessing."""
         return DataPipeline(self.data_source, self.preprocess, self.postprocess)
 
     def available_data_sources(self) -> Sequence[str]:
@@ -456,17 +457,16 @@ class DataModule(pl.LightningDataModule):
         train_dataset: Dataset,
         val_split: float,
     ) -> Tuple[Any, Any]:
-        """ Utility function for splitting the training dataset into a disjoint subset of training samples and validation
-            samples.
+        """Utility function for splitting the training dataset into a disjoint subset of training samples and
+        validation samples.
 
         Args:
             train_dataset: A instance of a :class:`torch.utils.data.Dataset`.
             val_split: A float between 0 and 1 determining the number fraction of samples that should go into the
                 validation split
-        
+
         Returns:
             A tuple containing the training and validation datasets
-
         """
 
         if not isinstance(val_split, float) or (isinstance(val_split, float) and val_split > 1 or val_split < 0):

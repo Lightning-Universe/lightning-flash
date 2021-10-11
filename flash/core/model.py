@@ -107,8 +107,8 @@ class ModuleWrapperBase:
 
 class DatasetProcessor:
     """The ``DatasetProcessor`` mixin provides hooks for classes which need custom logic for producing the data
-    loaders for each running stage given the corresponding dataset.
-    """
+    loaders for each running stage given the corresponding dataset."""
+
     def _process_dataset(
         self,
         dataset: BaseAutoDataset,
@@ -230,9 +230,8 @@ class DatasetProcessor:
 
 
 class BenchmarkConvergenceCI(Callback):
-    """ Specialized callback only used during testing
-        Keeps track metrics during training.
-    """
+    """Specialized callback only used during testing Keeps track metrics during training."""
+
     def __init__(self):
         self.history = []
 
@@ -248,8 +247,7 @@ class BenchmarkConvergenceCI(Callback):
 
 def predict_context(func: Callable) -> Callable:
     """This decorator is used as context manager to put model in eval mode before running predict and reset to
-    train after.
-    """
+    train after."""
 
     @functools.wraps(func)
     def wrapper(self, *args, **kwargs) -> Any:
@@ -303,7 +301,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         optimizer: Optimizer to use for training, defaults to :class:`torch.optim.Adam`.
         optimizer_kwargs: A dict containing additional arguments for initializing the optimizer. Note that
             this includes all other arguments than the learning rate which is a seperate argument.
-        scheduler: Learning rate scheduler to use for the training. Should be an instance of 
+        scheduler: Learning rate scheduler to use for the training. Should be an instance of
             :class:`torch.optim.lr_scheduler._LRScheduler`. Defaults to using no scheduler.
         scheduler_kwargs: A dict containing additional arguments for initializing the learning rate scheduler.
         metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
@@ -363,22 +361,21 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         self.serializer = serializer
 
     def step(self, batch: Any, batch_idx: int, metrics: nn.ModuleDict) -> Any:
-        """
-        Implement the core logic for the training/validation/test step. By default this includes:
+        """Implement the core logic for the training/validation/test step. By default this includes:
+
             - Inference on the current batch
             - Calculating the loss
             - Calculating relevant metrics
-            
+
         Override for custom behavior.
 
         Args:
             batch: The output of your dataloader. Can either be a single Tensor or a list of Tensors.
             batch_idx: Integer displaying index of this batch
             metrics: A module dict containing metrics for calculating relevant training statitics
-        
+
         Returns:
             A dict containing both the loss and relevant metrics
-
         """
         x, y = batch
         y_hat = self(x)
@@ -471,7 +468,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         Args:
             x: Input to predict. Can be raw data or processed data. If str, assumed to be a folder of data.
             data_source: A string that indicates the format of the data source to use which will override
-                the current data source format used 
+                the current data source format used
             deserializer: A single :class:`~flash.core.data.process.Deserializer` to deserialize the input
             data_pipeline: Use this to override the current data pipeline
 
@@ -505,7 +502,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         return self(batch)
 
     def configure_optimizers(self) -> Union[Optimizer, Tuple[List[Optimizer], List[_LRScheduler]]]:
-        """ Implement how optimizer and optionally learning rate schedulers should be configured. """
+        """Implement how optimizer and optionally learning rate schedulers should be configured."""
         optimizer = self.optimizer
         if not isinstance(self.optimizer, Optimizer):
             self.optimizer_kwargs["lr"] = self.learning_rate
