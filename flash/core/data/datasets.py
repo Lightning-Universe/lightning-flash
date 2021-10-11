@@ -111,8 +111,10 @@ class FlashDataset(BaseDataset[Mapping], Dataset):
     """
 
     def load_data(self, data: Any) -> Mapping:
-        """By default, the `load_data` perform an identity operation Override to add your own logic to load the
-        data."""
+        """By default, the `load_data` perform an identity operation.
+
+        Override to add your own logic to load the data.
+        """
         return data
 
     def load_sample(self, data: Any) -> Any:
@@ -140,8 +142,10 @@ class FlashIterableDataset(BaseDataset[Iterable], IterableDataset):
     """
 
     def load_data(self, data: Any) -> Iterable:
-        """By default, the `load_data` perform an identity operation Override to add your own logic to load the
-        data."""
+        """By default, the `load_data` perform an identity operation.
+
+        Override to add your own logic to load the data.
+        """
         return data
 
     def load_sample(self, data: Any) -> Any:
