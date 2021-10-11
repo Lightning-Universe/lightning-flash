@@ -67,6 +67,10 @@ class CustomDataFormat(LightningEnum):
 # The hook resolution for the function is done in the following way.                        #
 # If {state}_load_data is implemented then it would be used exclusively for that stage.     #
 # Otherwise, it would use the load_data function.                                           #
+# If you use FlashDataset outside of Flash, the only requirements are to return a Sequence  #
+# from load_data with FlashDataset or an Iterable with FlashIterableDataset.                #
+# When using FlashDataset with Flash Tasks, the model expects the `load_sample`             #
+# to return a dictionary with `DefaultDataKeys` as its keys.                                #
 #                                                                                           #
 #############################################################################################
 
