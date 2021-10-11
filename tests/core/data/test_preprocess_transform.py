@@ -11,9 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from functools import partial
 from typing import Callable, Dict, Optional
 
 import pytest
+import torch
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
@@ -27,8 +29,8 @@ def test_preprocess_transform():
 
     assert str(transform) == "PreTransform(running_stage=train, transform=None)"
 
-    def fn():
-        pass
+    def fn(x):
+        return x + 1
 
     transform = PreTransform.from_transform(running_stage=RunningStage.TRAINING, transform=fn)
     assert transform.transform == {PreTransformPlacement.PER_SAMPLE_TRANSFORM: fn}
@@ -38,11 +40,12 @@ def test_preprocess_transform():
             return None
 
     transform = MyPreTransform(running_stage=RunningStage.TRAINING)
+    assert not transform._current_fn
     assert str(transform) == "MyPreTransform(running_stage=train, transform=None)"
 
     class MyPreTransform(PreTransform):
-        def fn(self):
-            pass
+        def fn(self, x):
+            return x + 1
 
         def configure_transforms(self) -> Optional[Dict[str, Callable]]:
             return {PreTransformPlacement.PER_SAMPLE_TRANSFORM: self.fn if self.training else fn}
@@ -50,8 +53,28 @@ def test_preprocess_transform():
     transform = MyPreTransform(running_stage=RunningStage.TRAINING)
     assert transform.transform == {PreTransformPlacement.PER_SAMPLE_TRANSFORM: transform.fn}
 
+    transform._current_fn = "per_sample_transform"
+    assert transform.current_transform == transform.fn
+    assert transform.per_sample_transform(1) == 2
+    assert transform.per_sample_transform([1, 2]) == [2, 3]
+
+    transform._current_fn = "per_sample_transform_on_device"
+    assert transform.current_transform == transform._identity
+    assert transform.per_sample_transform_on_device(1) == 1
+    assert transform.per_sample_transform_on_device([1, 2]) == [1, 2]
+
+    transform._current_fn = "collate"
+    assert transform.current_transform == transform._identity
+    assert torch.equal(transform.collate([0, 1]), torch.tensor([0, 1]))
+
+    transform._current_fn = "per_batch_transform"
+    assert transform.current_transform == transform._identity
+    assert transform.per_batch_transform(2) == 2
+
     transform = MyPreTransform(running_stage=RunningStage.TESTING)
     assert transform.transform == {PreTransformPlacement.PER_SAMPLE_TRANSFORM: fn}
+
+    assert transform.transforms == {"transform": {PreTransformPlacement.PER_SAMPLE_TRANSFORM: fn}}
 
     class FailureMyPreTransform(PreTransform):
         def configure_transforms(self) -> Optional[Dict[str, Callable]]:
@@ -70,6 +93,10 @@ def test_preprocess_transform():
         running_stage=RunningStage.TRAINING, transform="something", transform_registry=transform_registry
     )
 
+    transform = transform.from_transform(
+        running_stage=RunningStage.TRAINING, transform=transform, transform_registry=transform_registry
+    )
+
     assert isinstance(transform, MyPreTransform)
     assert transform.transform == {PreTransformPlacement.PER_SAMPLE_TRANSFORM: transform.fn}
 
@@ -83,6 +110,8 @@ def test_preprocess_transform():
     assert on_after_batch_transfer_fn.per_sample_transform.func == transform.per_sample_transform_on_device
     assert on_after_batch_transfer_fn.per_batch_transform.func == transform.per_batch_transform_on_device
 
+    assert transform._collate_in_worker_from_transform
+
     class MyPreTransform(PreTransform):
         def configure_transforms(self) -> Optional[Dict[str, Callable]]:
             return {
@@ -92,3 +121,27 @@ def test_preprocess_transform():
 
     with pytest.raises(MisconfigurationException, match="`per_batch_transform` and `per_sample_transform_on_device`"):
         transform = MyPreTransform(running_stage=RunningStage.TESTING)
+
+    with pytest.raises(MisconfigurationException, match="The format for the transform isn't correct"):
+        PreTransform.from_transform(1, running_stage=RunningStage.TRAINING)
+
+    class MyPreTransform(PreTransform):
+        def configure_transforms(self) -> Optional[Dict[str, Callable]]:
+            return {
+                PreTransformPlacement.COLLATE: fn,
+                PreTransformPlacement.PER_SAMPLE_TRANSFORM_ON_DEVICE: fn,
+                PreTransformPlacement.PER_BATCH_TRANSFORM_ON_DEVICE: fn,
+            }
+
+    transform = MyPreTransform(running_stage=RunningStage.TESTING)
+    assert not transform._collate_in_worker_from_transform
+
+    def compose(x, funcs):
+        for f in funcs:
+            x = f(x)
+        return x
+
+    transform = PreTransform.from_transform(
+        transform=partial(compose, funcs=[fn, fn]), running_stage=RunningStage.TRAINING
+    )
+    assert transform[PreTransformPlacement.PER_SAMPLE_TRANSFORM](1) == 3

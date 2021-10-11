@@ -14,7 +14,6 @@
 import inspect
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
-import torch
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -24,7 +23,6 @@ from flash.core.data.data_pipeline import _Preprocessor, DataPipeline
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.properties import Properties
 from flash.core.data.states import CollateFn
-from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX
 from flash.core.registry import FlashRegistry
 
@@ -172,17 +170,6 @@ class PreTransform(Properties):
         if transform is None:
             return transform
 
-        if isinstance(transform, list):
-            transform = {"pre_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, torch.nn.Sequential(*transform))}
-        elif callable(transform):
-            transform = {"pre_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, transform)}
-
-        if not isinstance(transform, Dict):
-            raise MisconfigurationException(
-                "Transform should be a dict. "
-                f"Here are the available keys for your transforms: {[v for v in PreTransformPlacement]}."
-            )
-
         keys_diff = set(transform.keys()).difference([v for v in PreTransformPlacement])
 
         if len(keys_diff) > 0:
@@ -206,7 +193,7 @@ class PreTransform(Properties):
         elif is_per_sample_transform_on_device_in:
             collate_in_worker = False
 
-        setattr(self, f"_{_STAGES_PREFIX[stage]}_collate_in_worker_from_transform", collate_in_worker)
+        self._collate_in_worker_from_transform = collate_in_worker
         return transform
 
     @staticmethod
