@@ -43,7 +43,7 @@ class BaseDataset(Properties):
     def load_sample(self, data: Any) -> Any:
         """The `load_sample` hook contains the logic to load a single sample."""
 
-    def __init__(self, running_stage: RunningStage, transform: Optional[PRE_TRANSFORM_TYPE]) -> None:
+    def __init__(self, running_stage: RunningStage, transform: Optional[PRE_TRANSFORM_TYPE] = None) -> None:
         super().__init__()
         self.running_stage = running_stage
         if transform:
