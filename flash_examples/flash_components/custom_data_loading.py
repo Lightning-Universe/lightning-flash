@@ -13,6 +13,7 @@
 # limitations under the License.
 import os
 from contextlib import suppress
+from functools import partial
 from typing import Any, Dict, List, Optional
 
 import torchvision.transforms as T
@@ -51,6 +52,7 @@ class CustomDataTransform(LightningEnum):
 
     BASE = "base"
     RANDOM_ROTATION = "random_rotation"
+    RANDOM_90_DEG_ROTATION = "random_90_def_rotation"
 
 
 class CustomDataFormat(LightningEnum):
@@ -138,6 +140,9 @@ class ImageRandomRotationTransform(ImageBaseTransform):
 # Note: Registries can be shared by multiple dataset.
 MultipleFoldersImageDataset.register_transform(CustomDataTransform.BASE, ImageBaseTransform)
 MultipleFoldersImageDataset.register_transform(CustomDataTransform.RANDOM_ROTATION, ImageRandomRotationTransform)
+MultipleFoldersImageDataset.register_transform(
+    CustomDataTransform.RANDOM_90_DEG_ROTATION, partial(ImageRandomRotationTransform, rotation=90)
+)
 
 train_dataset = MultipleFoldersImageDataset.from_train_data(
     TRAIN_FOLDERS,
@@ -154,6 +159,25 @@ print(train_dataset.transform)
 #           transform=Compose(
 #                ToTensor()
 #                RandomRotation(degrees=[-45.0, 45.0], interpolation=nearest, expand=False, fill=0)),
+#        PreTransformPlacement.COLLATE: default_collate,
+#    },
+# )
+
+train_dataset = MultipleFoldersImageDataset.from_train_data(
+    TRAIN_FOLDERS,
+    transform=CustomDataTransform.RANDOM_90_DEG_ROTATION,
+)
+
+print(train_dataset.transform)
+# Out:
+# ImageClassificationRandomRotationTransform(
+#    running_stage=train,
+#    transform={
+#        PreTransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(
+#           keys="input",
+#           transform=Compose(
+#                ToTensor()
+#                RandomRotation(degrees=[-90.0, 90.0], interpolation=nearest, expand=False, fill=0)),
 #        PreTransformPlacement.COLLATE: default_collate,
 #    },
 # )

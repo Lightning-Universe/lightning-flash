@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from abc import abstractmethod
+from functools import partial
 from typing import Any, Callable, Iterable, Mapping, Optional, Type, Union
 
 from pytorch_lightning.trainer.states import RunningStage
@@ -156,7 +157,7 @@ class BaseDataset(Properties):
         )
 
     @classmethod
-    def register_transform(cls, enum: Union[LightningEnum, str], fn: Type[PreTransform]) -> None:
+    def register_transform(cls, enum: Union[LightningEnum, str], fn: Union[Type[PreTransform], partial]) -> None:
         if cls.transform_registry is None:
             raise MisconfigurationException(
                 "The class attribute `transform_registry` should be set as a class attribute. "
