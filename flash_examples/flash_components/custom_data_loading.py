@@ -23,10 +23,10 @@ from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
 from torch.utils.data._utils.collate import default_collate
 
-from flash import FlashDataset, PreTransform
+from flash import FlashDataset, PreprocessTransform
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.new_data_module import DataModule
-from flash.core.data.preprocess_transform import PRE_TRANSFORM_TYPE
+from flash.core.data.preprocess_transform import PREPROCESS_TRANSFORM_TYPE
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.registry import FlashRegistry
 
@@ -111,15 +111,15 @@ predict_dataset = MultipleFoldersImageDataset.from_predict_data(PREDICT_FOLDER)
 
 
 #############################################################################################
-#                   Step 3 / 5: [optional] Implement a PreTransform                       #
+#                   Step 3 / 5: [optional] Implement a PreprocessTransform                       #
 #                                                                                           #
-# A `PreTransform` is a state-aware (c.f training, validating, testing and predicting)    #
+# A `PreprocessTransform` is a state-aware (c.f training, validating, testing and predicting)    #
 # transform. You would have to implement a `configure_transforms` hook with your transform  #
 #                                                                                           #
 #############################################################################################
 
 
-class ImageBaseTransform(PreTransform):
+class ImageBaseTransform(PreprocessTransform):
     def configure_per_sample_transform(self, image_size: int = 224) -> Any:
         per_sample_transform = T.Compose([T.Resize((image_size, image_size)), T.ToTensor()])
         return ApplyToKeys(DefaultDataKeys.INPUT, per_sample_transform)
@@ -154,12 +154,12 @@ print(train_dataset.transform)
 # ImageClassificationRandomRotationTransform(
 #    running_stage=train,
 #    transform={
-#        PreTransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(
+#        PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(
 #           keys="input",
 #           transform=Compose(
 #                ToTensor()
 #                RandomRotation(degrees=[-45.0, 45.0], interpolation=nearest, expand=False, fill=0)),
-#        PreTransformPlacement.COLLATE: default_collate,
+#        PreprocessTransformPlacement.COLLATE: default_collate,
 #    },
 # )
 
@@ -173,12 +173,12 @@ print(train_dataset.transform)
 # ImageClassificationRandomRotationTransform(
 #    running_stage=train,
 #    transform={
-#        PreTransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(
+#        PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(
 #           keys="input",
 #           transform=Compose(
 #                ToTensor()
 #                RandomRotation(degrees=[-90.0, 90.0], interpolation=nearest, expand=False, fill=0)),
-#        PreTransformPlacement.COLLATE: default_collate,
+#        PreprocessTransformPlacement.COLLATE: default_collate,
 #    },
 # )
 
@@ -188,8 +188,8 @@ print(val_dataset.transform)
 # ImageClassificationRandomRotationTransform(
 #    running_stage=validate,
 #    transform={
-#        PreTransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(keys="input", transform=ToTensor()),
-#        PreTransformPlacement.COLLATE: default_collate,
+#        PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(keys="input", transform=ToTensor()),
+#        PreprocessTransformPlacement.COLLATE: default_collate,
 #    },
 # )
 
@@ -281,10 +281,10 @@ class ImageClassificationDataModule(DataModule):
         val_folders: Optional[List[str]] = None,
         test_folders: Optional[List[str]] = None,
         predict_folder: Optional[str] = None,
-        train_transform: Optional[PRE_TRANSFORM_TYPE] = None,
-        val_transform: Optional[PRE_TRANSFORM_TYPE] = None,
-        test_transform: Optional[PRE_TRANSFORM_TYPE] = None,
-        predict_transform: Optional[PRE_TRANSFORM_TYPE] = None,
+        train_transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
+        val_transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
+        test_transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
+        predict_transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
         **data_module_kwargs: Any,
     ) -> "ImageClassificationDataModule":
 

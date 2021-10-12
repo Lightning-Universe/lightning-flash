@@ -20,7 +20,7 @@ from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Dataset, IterableDataset
 
-from flash.core.data.preprocess_transform import PRE_TRANSFORM_TYPE, PreTransform
+from flash.core.data.preprocess_transform import PREPROCESS_TRANSFORM_TYPE, PreprocessTransform
 from flash.core.data.properties import Properties
 from flash.core.registry import FlashRegistry
 
@@ -30,7 +30,7 @@ class BaseDataset(Properties):
     DATASET_KEY = "dataset"
 
     transform_registry: Optional[FlashRegistry] = None
-    transform: Optional[PreTransform] = None
+    transform: Optional[PreprocessTransform] = None
 
     @abstractmethod
     def load_data(self, data: Any) -> Union[Iterable, Mapping]:
@@ -43,11 +43,11 @@ class BaseDataset(Properties):
     def load_sample(self, data: Any) -> Any:
         """The `load_sample` hook contains the logic to load a single sample."""
 
-    def __init__(self, running_stage: RunningStage, transform: Optional[PRE_TRANSFORM_TYPE] = None) -> None:
+    def __init__(self, running_stage: RunningStage, transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None) -> None:
         super().__init__()
         self.running_stage = running_stage
         if transform:
-            self.transform = PreTransform.from_transform(
+            self.transform = PreprocessTransform.from_transform(
                 transform, running_stage=running_stage, transform_registry=self.transform_registry
             )
 
@@ -102,7 +102,7 @@ class BaseDataset(Properties):
         cls,
         *load_data_args,
         running_stage: Optional[RunningStage] = None,
-        transform: Optional[PRE_TRANSFORM_TYPE] = None,
+        transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
         **dataset_kwargs: Any,
     ) -> "BaseDataset":
         if not running_stage:
@@ -118,7 +118,7 @@ class BaseDataset(Properties):
     def from_train_data(
         cls,
         *load_data_args,
-        transform: Optional[PRE_TRANSFORM_TYPE] = None,
+        transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
         **dataset_kwargs: Any,
     ) -> "BaseDataset":
         return cls.from_data(
@@ -129,7 +129,7 @@ class BaseDataset(Properties):
     def from_val_data(
         cls,
         *load_data_args,
-        transform: Optional[PRE_TRANSFORM_TYPE] = None,
+        transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
         **dataset_kwargs: Any,
     ) -> "BaseDataset":
         return cls.from_data(
@@ -140,7 +140,7 @@ class BaseDataset(Properties):
     def from_test_data(
         cls,
         *load_data_args,
-        transform: Optional[PRE_TRANSFORM_TYPE] = None,
+        transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
         **dataset_kwargs: Any,
     ) -> "BaseDataset":
         return cls.from_data(*load_data_args, running_stage=RunningStage.TESTING, transform=transform, **dataset_kwargs)
@@ -149,7 +149,7 @@ class BaseDataset(Properties):
     def from_predict_data(
         cls,
         *load_data_args,
-        transform: Optional[PRE_TRANSFORM_TYPE] = None,
+        transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
         **dataset_kwargs: Any,
     ) -> "BaseDataset":
         return cls.from_data(
@@ -157,7 +157,7 @@ class BaseDataset(Properties):
         )
 
     @classmethod
-    def register_transform(cls, enum: Union[LightningEnum, str], fn: Union[Type[PreTransform], partial]) -> None:
+    def register_transform(cls, enum: Union[LightningEnum, str], fn: Union[Type[PreprocessTransform], partial]) -> None:
         if cls.transform_registry is None:
             raise MisconfigurationException(
                 "The class attribute `transform_registry` should be set as a class attribute. "
