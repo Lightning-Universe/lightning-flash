@@ -24,9 +24,11 @@ from torch.utils.data._utils.collate import default_collate
 from flash import FlashDataset, PreprocessTransform
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.transforms import ApplyToKeys
+from flash.core.data.utils import download_data
 from flash.core.registry import FlashRegistry
 
 seed_everything(42)
+download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./data")
 
 #############################################################################################
 #                    Use Case: Load Data from multiple folders                              #
@@ -80,7 +82,7 @@ PREDICT_FOLDER = os.path.join(FOLDER_PATH, "ants")
 
 class MultipleFoldersImageDataset(FlashDataset):
 
-    transform_registry = FlashRegistry("image_classification_transform")
+    transforms_registry = FlashRegistry("image_classification_transform")
 
     def load_data(self, folders: List[str]) -> List[Dict[DefaultDataKeys, Any]]:
         if self.training:

@@ -29,7 +29,7 @@ class BaseDataset(Properties):
 
     DATASET_KEY = "dataset"
 
-    transform_registry: Optional[FlashRegistry] = None
+    transforms_registry: Optional[FlashRegistry] = None
     transform: Optional[PreprocessTransform] = None
 
     @abstractmethod
@@ -48,7 +48,7 @@ class BaseDataset(Properties):
         self.running_stage = running_stage
         if transform:
             self.transform = PreprocessTransform.from_transform(
-                transform, running_stage=running_stage, transform_registry=self.transform_registry
+                transform, running_stage=running_stage, transforms_registry=self.transforms_registry
             )
 
     def pass_args_to_load_data(
@@ -158,11 +158,11 @@ class BaseDataset(Properties):
 
     @classmethod
     def register_transform(cls, enum: Union[LightningEnum, str], fn: Union[Type[PreprocessTransform], partial]) -> None:
-        if cls.transform_registry is None:
+        if cls.transforms_registry is None:
             raise MisconfigurationException(
-                "The class attribute `transform_registry` should be set as a class attribute. "
+                "The class attribute `transforms_registry` should be set as a class attribute. "
             )
-        cls.transform_registry(fn=fn, name=enum)
+        cls.transforms_registry(fn=fn, name=enum)
 
     def resolve_functions(self):
         raise NotImplementedError

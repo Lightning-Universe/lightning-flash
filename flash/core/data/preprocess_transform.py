@@ -169,7 +169,7 @@ class PreprocessTransform(Properties):
         cls,
         transform: PREPROCESS_TRANSFORM_TYPE,
         running_stage: RunningStage,
-        transform_registry: Optional[FlashRegistry] = None,
+        transforms_registry: Optional[FlashRegistry] = None,
     ) -> Optional["PreprocessTransform"]:
 
         if isinstance(transform, PreprocessTransform):
@@ -180,8 +180,8 @@ class PreprocessTransform(Properties):
             return cls(running_stage, {PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: transform})
 
         if isinstance(transform, tuple) or isinstance(transform, (LightningEnum, str)):
-            enum, transform_kwargs = cls._sanitize_registry_transform(transform, transform_registry)
-            transform_cls = transform_registry.get(enum)
+            enum, transform_kwargs = cls._sanitize_registry_transform(transform, transforms_registry)
+            transform_cls = transforms_registry.get(enum)
             return transform_cls(running_stage, transform=None, **transform_kwargs)
 
         if not transform:
@@ -193,40 +193,40 @@ class PreprocessTransform(Properties):
     def from_train_transform(
         cls,
         transform: PREPROCESS_TRANSFORM_TYPE,
-        transform_registry: Optional[FlashRegistry] = None,
+        transforms_registry: Optional[FlashRegistry] = None,
     ) -> Optional["PreprocessTransform"]:
         return cls.from_transform(
-            transform=transform, running_stage=RunningStage.TRAINING, transform_registry=transform_registry
+            transform=transform, running_stage=RunningStage.TRAINING, transforms_registry=transforms_registry
         )
 
     @classmethod
     def from_val_transform(
         cls,
         transform: PREPROCESS_TRANSFORM_TYPE,
-        transform_registry: Optional[FlashRegistry] = None,
+        transforms_registry: Optional[FlashRegistry] = None,
     ) -> Optional["PreprocessTransform"]:
         return cls.from_transform(
-            transform=transform, running_stage=RunningStage.VALIDATING, transform_registry=transform_registry
+            transform=transform, running_stage=RunningStage.VALIDATING, transforms_registry=transforms_registry
         )
 
     @classmethod
     def from_test_transform(
         cls,
         transform: PREPROCESS_TRANSFORM_TYPE,
-        transform_registry: Optional[FlashRegistry] = None,
+        transforms_registry: Optional[FlashRegistry] = None,
     ) -> Optional["PreprocessTransform"]:
         return cls.from_transform(
-            transform=transform, running_stage=RunningStage.TESTING, transform_registry=transform_registry
+            transform=transform, running_stage=RunningStage.TESTING, transforms_registry=transforms_registry
         )
 
     @classmethod
     def from_predict_transform(
         cls,
         transform: PREPROCESS_TRANSFORM_TYPE,
-        transform_registry: Optional[FlashRegistry] = None,
+        transforms_registry: Optional[FlashRegistry] = None,
     ) -> Optional["PreprocessTransform"]:
         return cls.from_transform(
-            transform=transform, running_stage=RunningStage.PREDICTING, transform_registry=transform_registry
+            transform=transform, running_stage=RunningStage.PREDICTING, transforms_registry=transforms_registry
         )
 
     def _resolve_transforms(self, running_stage: RunningStage) -> Optional[Dict[str, Callable]]:
@@ -298,11 +298,11 @@ class PreprocessTransform(Properties):
 
     @classmethod
     def _sanitize_registry_transform(
-        cls, transform: Tuple[Union[LightningEnum, str], Any], transform_registry: Optional[FlashRegistry]
+        cls, transform: Tuple[Union[LightningEnum, str], Any], transforms_registry: Optional[FlashRegistry]
     ) -> Tuple[Union[LightningEnum, str], Dict]:
         msg = "The transform should be provided as a tuple with the following types (LightningEnum, Dict[str, Any]) "
         msg += "when requesting transform from the registry."
-        if not transform_registry:
+        if not transforms_registry:
             raise MisconfigurationException("You requested a transform from the registry, but it is empty.")
         if isinstance(transform, tuple) and len(transform) > 2:
             raise MisconfigurationException(msg)

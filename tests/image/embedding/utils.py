@@ -9,7 +9,7 @@ if _TORCHVISION_AVAILABLE:
     from torchvision.datasets import FakeData
 
 if _VISSL_AVAILABLE:
-    from classy_vision.dataset.transforms import TRANSFORM_REGISTRY
+    from classy_vision.dataset.transforms import transforms_registry
 
 
 def ssl_datamodule(
@@ -20,7 +20,7 @@ def ssl_datamodule(
     crop_scales=[[0.4, 1], [0.05, 0.4]],
     collate_fn=multicrop_collate_fn,
 ):
-    multi_crop_transform = TRANSFORM_REGISTRY["multicrop_ssl_transform"](
+    multi_crop_transform = transforms_registry["multicrop_ssl_transform"](
         total_num_crops, num_crops, size_crops, crop_scales
     )
 
