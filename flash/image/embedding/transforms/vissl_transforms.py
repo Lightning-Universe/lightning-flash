@@ -21,7 +21,7 @@ from flash.core.utilities.imports import _VISSL_AVAILABLE
 from flash.image.embedding.vissl.transforms import moco_collate_fn, multicrop_collate_fn, simclr_collate_fn
 
 if _VISSL_AVAILABLE:
-    from classy_vision.dataset.transforms import transforms_registry
+    from classy_vision.dataset.transforms import TRANSFORM_REGISTRY
 
 
 def simclr_transform(
@@ -35,7 +35,7 @@ def simclr_transform(
     collate_fn: Callable = simclr_collate_fn,
 ) -> nn.Module:
     """For simclr, barlow twins and moco."""
-    transform = transforms_registry["multicrop_ssl_transform"](
+    transform = TRANSFORM_REGISTRY["multicrop_ssl_transform"](
         total_num_crops=total_num_crops,
         num_crops=num_crops,
         size_crops=size_crops,
@@ -59,7 +59,7 @@ def swav_transform(
     collate_fn: Callable = multicrop_collate_fn,
 ) -> nn.Module:
     """For swav and dino."""
-    transform = transforms_registry["multicrop_ssl_transform"](
+    transform = TRANSFORM_REGISTRY["multicrop_ssl_transform"](
         total_num_crops=total_num_crops,
         num_crops=num_crops,
         size_crops=size_crops,
