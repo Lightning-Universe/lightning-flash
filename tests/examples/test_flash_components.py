@@ -18,6 +18,7 @@ from unittest import mock
 import pytest
 
 from tests.examples.utils import run_test
+from tests.helpers.utils import _IMAGE_TESTING
 
 root = Path(__file__).parent.parent.parent
 
@@ -29,6 +30,7 @@ root = Path(__file__).parent.parent.parent
         pytest.param(
             "flash_components",
             "custom_data_loading.py",
+            marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed"),
         ),
     ],
 )
