@@ -58,6 +58,7 @@ class StyleTransfer(Task):
         content_layer: Which layer from the backbone to extract the content loss from.
         content_weight: The weight associated with the content loss. A lower value will lose content over style.
         style_layers: Layers from the backbone to derive the style loss from.
+        style_weight: The weight associated with the style loss. A lower value will lose style over content.
         optimizer: Optimizer to use for training the model.
         optimizer_kwargs: Optimizer keywords arguments.
         scheduler: Scheduler to use for training the model.
