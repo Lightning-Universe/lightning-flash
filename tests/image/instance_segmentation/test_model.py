@@ -15,7 +15,7 @@ import os
 from functools import partial
 
 import flash
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE
+from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE
 from flash.image import InstanceSegmentation, InstanceSegmentationData
 
 if _ICEVISION_AVAILABLE:
@@ -25,7 +25,6 @@ from unittest import mock
 import pytest
 
 from flash.__main__ import main
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE
 
 
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
