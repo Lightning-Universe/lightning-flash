@@ -563,9 +563,16 @@ def test_lightning_cli_link_arguments(tmpdir):
     assert cli.model.num_classes == 5
 
 
+class CustomException(BaseException):
+    pass
+
+
 class EarlyExitTestModel(BoringModel):
     def on_fit_start(self):
-        raise KeyboardInterrupt()
+        raise CustomException()
+
+    def on_exception(self, execption):
+        raise execption
 
 
 @pytest.mark.parametrize("logger", (False, True))
@@ -577,7 +584,7 @@ class EarlyExitTestModel(BoringModel):
     ),
 )
 def test_cli_ddp_spawn_save_config_callback(tmpdir, logger, trainer_kwargs):
-    with mock.patch("sys.argv", ["any.py"]), pytest.raises(KeyboardInterrupt):
+    with mock.patch("sys.argv", ["any.py"]), pytest.raises(CustomException):
         LightningCLI(
             EarlyExitTestModel,
             trainer_defaults={
