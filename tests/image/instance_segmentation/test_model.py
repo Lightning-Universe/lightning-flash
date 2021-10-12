@@ -39,6 +39,7 @@ def test_cli():
             pass
 
 
+# todo: this test takes around 25s because of the icedata download, can we speed it up?
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _ICEVISION_AVAILABLE, reason="IceVision is not installed for testing")
 def test_instance_segmentation_inference(tmpdir):
@@ -66,7 +67,6 @@ def test_instance_segmentation_inference(tmpdir):
         [
             str(data_dir / "images/yorkshire_terrier_9.jpg"),
             str(data_dir / "images/yorkshire_terrier_12.jpg"),
-            str(data_dir / "images/yorkshire_terrier_13.jpg"),
             str(data_dir / "images/yorkshire_terrier_13.jpg"),
         ]
     )

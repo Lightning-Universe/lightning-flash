@@ -24,7 +24,7 @@ from flash.core.data.process import Serializer
 from flash.core.data.serialization import Preds
 from flash.core.registry import FlashRegistry
 from flash.image.instance_segmentation.backbones import INSTANCE_SEGMENTATION_HEADS
-from flash.image.instance_segmentation.data import InstanceSegmentationPreprocess
+from flash.image.instance_segmentation.data import InstanceSegmentationPostProcess, InstanceSegmentationPreprocess
 
 
 class InstanceSegmentation(AdapterTask):
@@ -107,4 +107,6 @@ class InstanceSegmentation(AdapterTask):
                 "the model due to pickling issues. "
                 "If you'd like to change this, extend the InstanceSegmentation Task and override `on_load_checkpoint`."
             )
-            self.data_pipeline = DataPipeline(preprocess=InstanceSegmentationPreprocess())
+            self.data_pipeline = DataPipeline(
+                preprocess=InstanceSegmentationPreprocess(), postprocess=InstanceSegmentationPostProcess()
+            )
