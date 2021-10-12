@@ -14,6 +14,7 @@
 import functools
 import inspect
 import weakref
+from functools import partial
 from typing import Any, Callable, Dict, Optional, Sequence, Set, Tuple, Type, TYPE_CHECKING, Union
 
 import torch
@@ -530,6 +531,10 @@ class DataPipeline:
             for idx, loader in enumerate(dataloader):
                 if isinstance(loader, DataLoader):
                     dl_args = {k: v for k, v in vars(loader).items() if not k.startswith("_")}
+
+                    # TODO: Remove the partial function once resolved on Lightning side.
+                    if isinstance(dl_args["collate_fn"], partial):
+                        dl_args["collate_fn"] = dl_args["collate_fn"].keywords["default_collate"]
 
                     if isinstance(dl_args["collate_fn"], _Preprocessor):
                         dl_args["collate_fn"] = dl_args["collate_fn"]._original_collate_fn
