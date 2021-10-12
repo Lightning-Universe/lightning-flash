@@ -103,15 +103,15 @@ def test_preprocess_transform():
         }
     }
 
-    transform_registry = FlashRegistry("transforms")
-    transform_registry(fn=MyPreprocessTransform, name="something")
+    transforms_registry = FlashRegistry("transforms")
+    transforms_registry(fn=MyPreprocessTransform, name="something")
 
     transform = PreprocessTransform.from_transform(
-        running_stage=RunningStage.TRAINING, transform="something", transform_registry=transform_registry
+        running_stage=RunningStage.TRAINING, transform="something", transforms_registry=transforms_registry
     )
 
     transform = transform.from_transform(
-        running_stage=RunningStage.TRAINING, transform=transform, transform_registry=transform_registry
+        running_stage=RunningStage.TRAINING, transform=transform, transforms_registry=transforms_registry
     )
 
     assert isinstance(transform, MyPreprocessTransform)
@@ -167,3 +167,42 @@ def test_preprocess_transform():
         transform=partial(compose, funcs=[fn, fn]), running_stage=RunningStage.TRAINING
     )
     assert transform[PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM](1) == 3
+
+
+def test_transform_with_registry():
+    def fn():
+        pass
+
+    class MyPreprocessTransform(PreprocessTransform):
+        def configure_transforms(self, name: str = "lightning") -> Optional[Dict[str, Callable]]:
+            self.name = name
+            return {
+                PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM_ON_DEVICE: fn,
+            }
+
+    registry = FlashRegistry("transforms")
+    registry(name="custom", fn=MyPreprocessTransform)
+
+    transform = PreprocessTransform.from_train_transform(transform="custom", transforms_registry=registry)
+    assert isinstance(transform, MyPreprocessTransform)
+    assert transform.name == "lightning"
+
+    transform = PreprocessTransform.from_train_transform(
+        transform=("custom", {"name": "flash"}), transforms_registry=registry
+    )
+    assert isinstance(transform, MyPreprocessTransform)
+    assert transform.name == "flash"
+
+    transform = PreprocessTransform.from_train_transform(transform=None, transforms_registry=registry)
+    assert transform is None
+
+    transform = PreprocessTransform.from_train_transform(transform=None, transforms_registry=registry)
+    assert transform is None
+
+    with pytest.raises(
+        MisconfigurationException, match="The transform should be provided as a tuple with the following types"
+    ):
+        transform = PreprocessTransform.from_train_transform(transform=("custom", None), transforms_registry=registry)
+
+    with pytest.raises(MisconfigurationException, match="The format for the transform isn't correct"):
+        transform = PreprocessTransform.from_train_transform(transform=1, transforms_registry=registry)

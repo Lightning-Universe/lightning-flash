@@ -29,7 +29,6 @@ from flash.core.data.new_data_module import DataModule
 from flash.core.data.preprocess_transform import PREPROCESS_TRANSFORM_TYPE
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import download_data
-from flash.core.registry import FlashRegistry
 
 seed_everything(42)
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", f"{_PACKAGE_ROOT}/data")
@@ -85,9 +84,6 @@ PREDICT_FOLDER = os.path.join(FOLDER_PATH, "ants")
 
 
 class MultipleFoldersImageDataset(FlashDataset):
-
-    transform_registry = FlashRegistry("image_classification_transform")
-
     def load_data(self, folders: List[str]) -> List[Dict[DefaultDataKeys, Any]]:
         if self.training:
             self.num_classes = len(folders)
