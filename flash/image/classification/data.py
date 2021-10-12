@@ -55,6 +55,18 @@ class ImageClassificationDataFrameDataSource(LoaderDataFrameDataSource):
 
 
 class ImageClassificationPreprocess(Preprocess):
+    """Preprocssing of data of image classification.
+
+    Args::
+        train_transfor:m
+        val_transform:
+        test_transform:
+        predict_transform:
+        image_size: tuple with the (heigh, width) of the images
+        deserializer:
+        data_source_kwargs: Additional kwargs for the data source initializer
+    """
+
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,

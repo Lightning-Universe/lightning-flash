@@ -90,6 +90,11 @@ class VideoClassifier(ClassificationTask):
             containing a combination of the aforementioned. In all cases, each metric needs to have the signature
             `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
+        head: either a `nn.Module` or a callable function that converts the features extrated from the backbone
+            into class log probabilities (assuming default loss function). If `None`, will default to using
+            a single linear layer.
+        serializer: A instance of :class:`~flash.core.data.process.Serializer` that determines how the output
+            should be serialized e.g. convert the model output into the desired output format when predicting.
     """
 
     backbones: FlashRegistry = _VIDEO_CLASSIFIER_BACKBONES
