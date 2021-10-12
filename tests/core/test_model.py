@@ -27,6 +27,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn, Tensor
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
+from torchmetrics import Accuracy
 
 import flash
 from flash.core.adapter import Adapter
@@ -146,7 +147,7 @@ class AdapterParent(Parent):
 # ================================
 
 
-@pytest.mark.parametrize("metrics", [None, pl.metrics.Accuracy(), {"accuracy": pl.metrics.Accuracy()}])
+@pytest.mark.parametrize("metrics", [None, Accuracy(), {"accuracy": Accuracy()}])
 def test_classificationtask_train(tmpdir: str, metrics: Any):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
     train_dl = torch.utils.data.DataLoader(DummyDataset())
