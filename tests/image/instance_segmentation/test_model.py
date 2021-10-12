@@ -13,8 +13,6 @@
 # limitations under the License.
 from functools import partial
 
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
-
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
 from flash.image import InstanceSegmentation, InstanceSegmentationData
 
@@ -57,15 +55,9 @@ def test_instance_segmentation_inference():
         backbone="resnet18_fpn",
         num_classes=datamodule.num_classes,
     )
+    from flash.image.instance_segmentation.data import InstanceSegmentationPreprocess
 
-    # check to ensure that if the images are not the same size, we raise an error
-    with pytest.raises(MisconfigurationException, match="For inference, all input images must be the same size"):
-        model.predict(
-            [
-                str(data_dir / "images/yorkshire_terrier_9.jpg"),
-                str(data_dir / "images/yorkshire_terrier_10.jpg"),  # has a different size
-            ]
-        )
+    model._preprocess = InstanceSegmentationPreprocess()
 
     predictions = model.predict(
         [
