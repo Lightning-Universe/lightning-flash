@@ -11,12 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import math
 from pathlib import Path
 
 import numpy as np
 import pytest
 from pytorch_lightning import seed_everything
 from torch import nn
+from torch.utils.data import SequentialSampler
 
 import flash
 from flash.core.classification import Probabilities
@@ -26,13 +28,11 @@ from flash.image.classification.integrations.baal import ActiveLearningDataModul
 from tests.helpers.utils import _IMAGE_TESTING
 from tests.image.classification.test_data import _rand_image
 
+
 # ======== Mock functions ========
 
-
-@pytest.mark.skipif(not (_IMAGE_TESTING and _BAAL_AVAILABLE), reason="image and baal libraries aren't installed.")
-@pytest.mark.parametrize("initial_num_labels, query_size", [(0, 5), (5, 5)])
-def test_active_learning_training(tmpdir, initial_num_labels, query_size):
-    seed_everything(42)
+@pytest.fixture
+def simple_datamodule(tmpdir):
     train_dir = Path(tmpdir / "train")
     train_dir.mkdir()
 
@@ -59,11 +59,18 @@ def test_active_learning_training(tmpdir, initial_num_labels, query_size):
         num_workers=0,
         image_size=image_size,
     )
+    return dm
+
+
+@pytest.mark.skipif(not (_IMAGE_TESTING and _BAAL_AVAILABLE), reason="image and baal libraries aren't installed.")
+@pytest.mark.parametrize("initial_num_labels, query_size", [(0, 5), (5, 5)])
+def test_active_learning_training(simple_datamodule, initial_num_labels, query_size):
+    seed_everything(42)
 
     if initial_num_labels == 0:
         with pytest.warns(UserWarning) as record:
             active_learning_dm = ActiveLearningDataModule(
-                dm,
+                simple_datamodule,
                 initial_num_labels=initial_num_labels,
                 query_size=query_size,
                 val_split=0.5,
@@ -72,7 +79,7 @@ def test_active_learning_training(tmpdir, initial_num_labels, query_size):
             assert "No labels provided for the initial step" in record[0].message.args[0]
     else:
         active_learning_dm = ActiveLearningDataModule(
-            dm,
+            simple_datamodule,
             initial_num_labels=initial_num_labels,
             query_size=query_size,
             val_split=0.5,
@@ -96,11 +103,14 @@ def test_active_learning_training(tmpdir, initial_num_labels, query_size):
     if initial_num_labels == 0:
         assert len(active_learning_dm._dataset) == 15
     else:
-        # the last batch is 4 samples!
-        assert len(active_learning_dm._dataset) == 19
+        assert len(active_learning_dm._dataset) == 20
     assert active_learning_loop.progress.total.completed == 3
     labelled = active_learning_loop.state_dict()["state_dict"]["datamodule_state_dict"]["labelled"]
     assert isinstance(labelled, np.ndarray)
+
+    # Check that we iterate over the actual pool and that shuffle is disabled.
+    assert len(active_learning_dm.predict_dataloader()) == math.ceil((~labelled).sum() / simple_datamodule.batch_size)
+    assert isinstance(active_learning_dm.predict_dataloader().sampler, SequentialSampler)
 
     if initial_num_labels == 0:
         assert len(active_learning_dm.val_dataloader()) == 4

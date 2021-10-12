@@ -38,7 +38,7 @@ else:
 
 
 def dataset_to_non_labelled_tensor(dataset: BaseAutoDataset) -> torch.tensor:
-    return torch.zeros(len(dataset))
+    return np.zeros(len(dataset))
 
 
 def filter_unlabelled_data(dataset: BaseAutoDataset) -> Dataset:
@@ -153,8 +153,8 @@ class ActiveLearningDataModule(LightningDataModule):
         return self.labelled.test_dataloader()
 
     def predict_dataloader(self) -> "DataLoader":
-        self.labelled._train_ds = self.filter_unlabelled_data(self._dataset.pool)
-        return self.labelled.train_dataloader()
+        self.labelled._predict_ds = self.filter_unlabelled_data(self._dataset.pool)
+        return self.labelled._predict_dataloader()
 
     def label(self, probabilities: List[torch.Tensor] = None, indices=None):
         if probabilities is not None and indices:
