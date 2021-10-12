@@ -180,7 +180,7 @@ class PreprocessTransform(Properties):
             return cls(running_stage, {PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: transform})
 
         if isinstance(transform, tuple) or isinstance(transform, (LightningEnum, str)):
-            enum, transform_kwargs = cls._sanetize_registry_transform(transform, transform_registry)
+            enum, transform_kwargs = cls._sanitize_registry_transform(transform, transform_registry)
             transform_cls = transform_registry.get(enum)
             return transform_cls(running_stage, transform=None, **transform_kwargs)
 
@@ -188,6 +188,46 @@ class PreprocessTransform(Properties):
             return None
 
         raise MisconfigurationException(f"The format for the transform isn't correct. Found {transform}")
+
+    @classmethod
+    def from_train_transform(
+        cls,
+        transform: PREPROCESS_TRANSFORM_TYPE,
+        transform_registry: Optional[FlashRegistry] = None,
+    ) -> Optional["PreprocessTransform"]:
+        return cls.from_transform(
+            transform=transform, running_stage=RunningStage.TRAINING, transform_registry=transform_registry
+        )
+
+    @classmethod
+    def from_val_transform(
+        cls,
+        transform: PREPROCESS_TRANSFORM_TYPE,
+        transform_registry: Optional[FlashRegistry] = None,
+    ) -> Optional["PreprocessTransform"]:
+        return cls.from_transform(
+            transform=transform, running_stage=RunningStage.VALIDATING, transform_registry=transform_registry
+        )
+
+    @classmethod
+    def from_test_transform(
+        cls,
+        transform: PREPROCESS_TRANSFORM_TYPE,
+        transform_registry: Optional[FlashRegistry] = None,
+    ) -> Optional["PreprocessTransform"]:
+        return cls.from_transform(
+            transform=transform, running_stage=RunningStage.TESTING, transform_registry=transform_registry
+        )
+
+    @classmethod
+    def from_predict_transform(
+        cls,
+        transform: PREPROCESS_TRANSFORM_TYPE,
+        transform_registry: Optional[FlashRegistry] = None,
+    ) -> Optional["PreprocessTransform"]:
+        return cls.from_transform(
+            transform=transform, running_stage=RunningStage.PREDICTING, transform_registry=transform_registry
+        )
 
     def _resolve_transforms(self, running_stage: RunningStage) -> Optional[Dict[str, Callable]]:
         from flash.core.data.data_pipeline import DataPipeline
@@ -257,7 +297,7 @@ class PreprocessTransform(Properties):
         return self._identity
 
     @classmethod
-    def _sanetize_registry_transform(
+    def _sanitize_registry_transform(
         cls, transform: Tuple[Union[LightningEnum, str], Any], transform_registry: Optional[FlashRegistry]
     ) -> Tuple[Union[LightningEnum, str], Dict]:
         msg = "The transform should be provided as a tuple with the following types (LightningEnum, Dict[str, Any]) "

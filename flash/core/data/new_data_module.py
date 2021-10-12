@@ -30,7 +30,7 @@ from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DefaultPreprocess, Postprocess
 from flash.core.data.datasets import BaseDataset
-from flash.core.data.preprocess_transform import PRE_TRANSFORM_TYPE, PreTransform
+from flash.core.data.preprocess_transform import PREPROCESS_TRANSFORM_TYPE, PreprocessTransform
 from flash.core.data.splits import SplitDataset
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
@@ -51,7 +51,6 @@ class DataModule(DataModule):
         val_dataset: Dataset for validating model performance during training. Defaults to None.
         test_dataset: Dataset to test model performance. Defaults to None.
         predict_dataset: Dataset for predicting. Defaults to None.
-        data_source: The :class:`~flash.core.data.data_source.DataSource` that was used to create the datasets.
         preprocess: The :class:`~flash.core.data.process.Preprocess` to use when constructing the
             :class:`~flash.core.data.data_pipeline.DataPipeline`. If ``None``, a
             :class:`~flash.core.data.process.DefaultPreprocess` will be used.
@@ -268,10 +267,10 @@ class DataModule(DataModule):
         val_data: Optional[Any] = None,
         test_data: Optional[Any] = None,
         predict_data: Optional[Any] = None,
-        train_transform: Optional[PRE_TRANSFORM_TYPE] = None,
-        val_transform: Optional[PRE_TRANSFORM_TYPE] = None,
-        test_transform: Optional[PRE_TRANSFORM_TYPE] = None,
-        predict_transform: Optional[PRE_TRANSFORM_TYPE] = None,
+        train_transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
+        val_transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
+        test_transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
+        predict_transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
         **flash_dataset_kwargs,
     ) -> Tuple[Optional[BaseDataset]]:
         cls._verify_flash_dataset_enum(enum)
@@ -309,7 +308,11 @@ class DataModule(DataModule):
 
     @staticmethod
     def _create_flash_dataset(
-        flash_dataset_cls, *load_data_args, running_stage: RunningStage, transform: Optional[PreTransform], **kwargs
+        flash_dataset_cls,
+        *load_data_args,
+        running_stage: RunningStage,
+        transform: Optional[PreprocessTransform],
+        **kwargs,
     ) -> Optional[BaseDataset]:
         if load_data_args[0]:
             return flash_dataset_cls.from_data(

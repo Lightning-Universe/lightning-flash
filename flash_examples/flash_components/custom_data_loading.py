@@ -306,10 +306,7 @@ class ImageClassificationDataModule(DataModule):
 ImageClassificationDataModule.register_flash_dataset(CustomDataFormat.MULTIPLE_FOLDERS, MultipleFoldersImageDataset)
 
 
-#############################################################################################
-#                         Step 5 / 5: Finally, create the loader                            #
-#############################################################################################
-
+# Create the datamodule with your new constructor.
 datamodule = ImageClassificationDataModule.from_multiple_folders(
     train_folders=TRAIN_FOLDERS,
     val_folders=VAL_FOLDERS,
