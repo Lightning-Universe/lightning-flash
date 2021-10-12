@@ -28,8 +28,8 @@ from flash.image.classification.integrations.baal import ActiveLearningDataModul
 from tests.helpers.utils import _IMAGE_TESTING
 from tests.image.classification.test_data import _rand_image
 
-
 # ======== Mock functions ========
+
 
 @pytest.fixture
 def simple_datamodule(tmpdir):
