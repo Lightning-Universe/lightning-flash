@@ -21,14 +21,15 @@ from pytorch_lightning import seed_everything
 from pytorch_lightning.utilities.enums import LightningEnum
 from torch.utils.data._utils.collate import default_collate
 
-from flash import FlashDataset, PreprocessTransform
+from flash import _PACKAGE_ROOT, FlashDataset, PreprocessTransform
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import download_data
 from flash.core.registry import FlashRegistry
 
 seed_everything(42)
-download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./data")
+ROOT_DATA = f"{_PACKAGE_ROOT}/data"
+download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", ROOT_DATA)
 
 #############################################################################################
 #                    Use Case: Load Data from multiple folders                              #
@@ -74,7 +75,7 @@ class CustomDataFormat(LightningEnum):
 #                                                                                           #
 #############################################################################################
 
-FOLDER_PATH = "./data/hymenoptera_data/train"
+FOLDER_PATH = f"{ROOT_DATA}/hymenoptera_data/train"
 TRAIN_FOLDERS = [os.path.join(FOLDER_PATH, "ants"), os.path.join(FOLDER_PATH, "bees")]
 VAL_FOLDERS = [os.path.join(FOLDER_PATH, "ants"), os.path.join(FOLDER_PATH, "bees")]
 PREDICT_FOLDER = os.path.join(FOLDER_PATH, "ants")
