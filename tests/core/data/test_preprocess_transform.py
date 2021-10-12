@@ -18,6 +18,7 @@ import pytest
 import torch
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from torch.utils.data.dataloader import default_collate
 
 from flash.core.data.preprocess_transform import PreprocessTransform, PreprocessTransformPlacement
 from flash.core.registry import FlashRegistry
@@ -27,7 +28,10 @@ def test_preprocess_transform():
 
     transform = PreprocessTransform(running_stage=RunningStage.TRAINING)
 
-    assert str(transform) == "PreprocessTransform(running_stage=train, transform=None)"
+    assert (
+        "PreprocessTransform(running_stage=train, transform={<PreprocessTransformPlacement.COLLATE: 'collate'>"
+        in str(transform)
+    )
 
     def fn(x):
         return x + 1
@@ -50,17 +54,23 @@ def test_preprocess_transform():
 
     transform = MyPreprocessTransform(running_stage=RunningStage.TRAINING)
     assert not transform._current_fn
-    assert str(transform) == "MyPreprocessTransform(running_stage=train, transform=None)"
+    assert (
+        "PreprocessTransform(running_stage=train, transform={<PreprocessTransformPlacement.COLLATE: 'collate'>"
+        in str(transform)
+    )
 
     class MyPreprocessTransform(PreprocessTransform):
         def fn(self, x):
             return x + 1
 
-        def configure_transforms(self) -> Optional[Dict[str, Callable]]:
-            return {PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: self.fn if self.training else fn}
+        def configure_per_sample_transform(self) -> Optional[Dict[str, Callable]]:
+            return self.fn if self.training else fn
 
     transform = MyPreprocessTransform(running_stage=RunningStage.TRAINING)
-    assert transform.transform == {PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: transform.fn}
+    assert transform.transform == {
+        PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: transform.fn,
+        PreprocessTransformPlacement.COLLATE: default_collate,
+    }
 
     transform._current_fn = "per_sample_transform"
     assert transform.current_transform == transform.fn
@@ -73,7 +83,7 @@ def test_preprocess_transform():
     assert transform.per_sample_transform_on_device([1, 2]) == [1, 2]
 
     transform._current_fn = "collate"
-    assert transform.current_transform == transform._identity
+    assert transform.current_transform == default_collate
     assert torch.equal(transform.collate([0, 1]), torch.tensor([0, 1]))
 
     transform._current_fn = "per_batch_transform"
@@ -81,33 +91,34 @@ def test_preprocess_transform():
     assert transform.per_batch_transform(2) == 2
 
     transform = MyPreprocessTransform(running_stage=RunningStage.TESTING)
-    assert transform.transform == {PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: fn}
+    assert transform.transform == {
+        PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: fn,
+        PreprocessTransformPlacement.COLLATE: default_collate,
+    }
 
-    assert transform.transforms == {"transform": {PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: fn}}
+    assert transform.transforms == {
+        "transform": {
+            PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: fn,
+            PreprocessTransformPlacement.COLLATE: default_collate,
+        }
+    }
 
-    class FailureMyPreprocessTransform(PreprocessTransform):
-        def configure_transforms(self) -> Optional[Dict[str, Callable]]:
-            return {"wrong_key": fn}
-
-    with pytest.raises(MisconfigurationException, match="train_transform contains {'wrong_key'}"):
-        transform = FailureMyPreprocessTransform(running_stage=RunningStage.TRAINING)
-
-    with pytest.raises(MisconfigurationException, match="test_transform contains {'wrong_key'}"):
-        transform = FailureMyPreprocessTransform(running_stage=RunningStage.TESTING)
-
-    transform_registry = FlashRegistry("transforms")
-    transform_registry(fn=MyPreprocessTransform, name="something")
+    transforms_registry = FlashRegistry("transforms")
+    transforms_registry(fn=MyPreprocessTransform, name="something")
 
     transform = PreprocessTransform.from_transform(
-        running_stage=RunningStage.TRAINING, transform="something", transform_registry=transform_registry
+        running_stage=RunningStage.TRAINING, transform="something", transforms_registry=transforms_registry
     )
 
     transform = transform.from_transform(
-        running_stage=RunningStage.TRAINING, transform=transform, transform_registry=transform_registry
+        running_stage=RunningStage.TRAINING, transform=transform, transforms_registry=transforms_registry
     )
 
     assert isinstance(transform, MyPreprocessTransform)
-    assert transform.transform == {PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: transform.fn}
+    assert transform.transform == {
+        PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: transform.fn,
+        PreprocessTransformPlacement.COLLATE: default_collate,
+    }
 
     collate_fn = transform.dataloader_collate_fn
     assert collate_fn.collate_fn.func == transform.collate
@@ -124,9 +135,11 @@ def test_preprocess_transform():
     class MyPreprocessTransform(PreprocessTransform):
         def configure_transforms(self) -> Optional[Dict[str, Callable]]:
             return {
-                PreprocessTransformPlacement.PER_BATCH_TRANSFORM: fn,
                 PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM_ON_DEVICE: fn,
             }
+
+        def configure_per_batch_transform(self):
+            return fn
 
     with pytest.raises(MisconfigurationException, match="`per_batch_transform` and `per_sample_transform_on_device`"):
         transform = MyPreprocessTransform(running_stage=RunningStage.TESTING)
@@ -154,3 +167,42 @@ def test_preprocess_transform():
         transform=partial(compose, funcs=[fn, fn]), running_stage=RunningStage.TRAINING
     )
     assert transform[PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM](1) == 3
+
+
+def test_transform_with_registry():
+    def fn():
+        pass
+
+    class MyPreprocessTransform(PreprocessTransform):
+        def configure_transforms(self, name: str = "lightning") -> Optional[Dict[str, Callable]]:
+            self.name = name
+            return {
+                PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM_ON_DEVICE: fn,
+            }
+
+    registry = FlashRegistry("transforms")
+    registry(name="custom", fn=MyPreprocessTransform)
+
+    transform = PreprocessTransform.from_train_transform(transform="custom", transforms_registry=registry)
+    assert isinstance(transform, MyPreprocessTransform)
+    assert transform.name == "lightning"
+
+    transform = PreprocessTransform.from_train_transform(
+        transform=("custom", {"name": "flash"}), transforms_registry=registry
+    )
+    assert isinstance(transform, MyPreprocessTransform)
+    assert transform.name == "flash"
+
+    transform = PreprocessTransform.from_train_transform(transform=None, transforms_registry=registry)
+    assert transform is None
+
+    transform = PreprocessTransform.from_train_transform(transform=None, transforms_registry=registry)
+    assert transform is None
+
+    with pytest.raises(
+        MisconfigurationException, match="The transform should be provided as a tuple with the following types"
+    ):
+        transform = PreprocessTransform.from_train_transform(transform=("custom", None), transforms_registry=registry)
+
+    with pytest.raises(MisconfigurationException, match="The format for the transform isn't correct"):
+        transform = PreprocessTransform.from_train_transform(transform=1, transforms_registry=registry)
