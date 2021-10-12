@@ -11,6 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from functools import partial
+
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
+
+from flash.core.utilities.imports import _ICEVISION_AVAILABLE
+from flash.image import InstanceSegmentation, InstanceSegmentationData
+
+if _ICEVISION_AVAILABLE:
+    import icedata
 from unittest import mock
 
 import pytest
@@ -28,3 +37,41 @@ def test_cli():
             main()
         except SystemExit:
             pass
+
+
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _ICEVISION_AVAILABLE, reason="IceVision is not installed for testing")
+def test_instance_segmentation_inference():
+    """Test to ensure that inference runs with instance segmentation from input paths."""
+
+    data_dir = icedata.pets.load_data()
+
+    datamodule = InstanceSegmentationData.from_folders(
+        train_folder=data_dir,
+        val_split=0.1,
+        parser=partial(icedata.pets.parser, mask=True),
+    )
+
+    model = InstanceSegmentation(
+        head="mask_rcnn",
+        backbone="resnet18_fpn",
+        num_classes=datamodule.num_classes,
+    )
+
+    # check to ensure that if the images are not the same size, we raise an error
+    with pytest.raises(MisconfigurationException, match="For inference, all input images must be the same size"):
+        model.predict(
+            [
+                str(data_dir / "images/yorkshire_terrier_9.jpg"),
+                str(data_dir / "images/yorkshire_terrier_10.jpg"),  # has a different size
+            ]
+        )
+
+    predictions = model.predict(
+        [
+            str(data_dir / "images/yorkshire_terrier_9.jpg"),
+            str(data_dir / "images/yorkshire_terrier_12.jpg"),
+            str(data_dir / "images/yorkshire_terrier_13.jpg"),
+        ]
+    )
+    assert len(predictions) == 3

@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import functools
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader, Sampler
 
 import flash
@@ -22,7 +24,7 @@ from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.integrations.icevision.transforms import from_icevision_predictions, to_icevision_record
 from flash.core.model import Task
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE
+from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _PIL_AVAILABLE
 from flash.core.utilities.url_error import catch_url_error
 
 if _ICEVISION_AVAILABLE:
@@ -30,6 +32,8 @@ if _ICEVISION_AVAILABLE:
     from icevision.metrics import Metric as IceVisionMetric
 else:
     COCOMetric = object
+if _PIL_AVAILABLE:
+    from PIL import Image
 
 
 class SimpleCOCOMetric(COCOMetric):
@@ -88,6 +92,21 @@ class IceVisionAdapter(Adapter):
             ),
             DefaultDataKeys.METADATA: metadata,
         }
+
+    @staticmethod
+    def _inference_collate_fn(collate_fn, samples, metadata: Optional[List[Dict[str, Any]]] = None):
+        # handle string path inputs
+        samples = [
+            {DefaultDataKeys.INPUT: Image.open(sample)} if isinstance(sample, (str, Path)) else sample
+            for sample in samples
+        ]
+        # check to ensure all image sizes are the same
+        is_input_images_sizes_same = all(
+            x[DefaultDataKeys.INPUT].size == samples[0][DefaultDataKeys.INPUT].size for x in samples
+        )
+        if not is_input_images_sizes_same:
+            raise MisconfigurationException("For inference, all input images must be the same size.")
+        return IceVisionAdapter._collate_fn(collate_fn, samples, metadata)
 
     def process_train_dataset(
         self,
@@ -181,7 +200,7 @@ class IceVisionAdapter(Adapter):
             drop_last=drop_last,
             sampler=sampler,
         )
-        data_loader.collate_fn = functools.partial(self._collate_fn, data_loader.collate_fn)
+        data_loader.collate_fn = functools.partial(self._inference_collate_fn, data_loader.collate_fn)
         return data_loader
 
     def training_step(self, batch, batch_idx) -> Any:

@@ -51,12 +51,12 @@ def to_icevision_record(sample: Dict[str, Any]):
     component.set_class_map(metadata.get("class_map", None))
     record.add_component(component)
 
-    if "labels" in sample[DefaultDataKeys.TARGET]:
+    if "labels" in sample.get(DefaultDataKeys.TARGET, {}):
         labels_component = InstancesLabelsRecordComponent()
         labels_component.add_labels_by_id(sample[DefaultDataKeys.TARGET]["labels"])
         record.add_component(labels_component)
 
-    if "bboxes" in sample[DefaultDataKeys.TARGET]:
+    if "bboxes" in sample.get(DefaultDataKeys.TARGET, {}):
         bboxes = [
             BBox.from_xywh(bbox["xmin"], bbox["ymin"], bbox["width"], bbox["height"])
             for bbox in sample[DefaultDataKeys.TARGET]["bboxes"]
@@ -65,13 +65,13 @@ def to_icevision_record(sample: Dict[str, Any]):
         component.set_bboxes(bboxes)
         record.add_component(component)
 
-    if "masks" in sample[DefaultDataKeys.TARGET]:
+    if "masks" in sample.get(DefaultDataKeys.TARGET, {}):
         mask_array = MaskArray(sample[DefaultDataKeys.TARGET]["masks"])
         component = MasksRecordComponent()
         component.set_masks(mask_array)
         record.add_component(component)
 
-    if "keypoints" in sample[DefaultDataKeys.TARGET]:
+    if "keypoints" in sample.get(DefaultDataKeys.TARGET, {}):
         keypoints = []
 
         for keypoints_list, keypoints_metadata in zip(
