@@ -534,7 +534,9 @@ class DataPipeline:
 
                     # TODO: Remove the partial function once resolved on Lightning side.
                     if isinstance(dl_args["collate_fn"], partial):
-                        dl_args["collate_fn"] = dl_args["collate_fn"].keywords["default_collate"]
+                        default_collate = dl_args["collate_fn"].keywords.get("default_collate", None)
+                        if default_collate:
+                            dl_args["collate_fn"] = default_collate
 
                     if isinstance(dl_args["collate_fn"], _Preprocessor):
                         dl_args["collate_fn"] = dl_args["collate_fn"]._original_collate_fn
