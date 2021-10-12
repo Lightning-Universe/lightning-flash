@@ -532,6 +532,7 @@ class DataPipeline:
                 if isinstance(loader, DataLoader):
                     dl_args = {k: v for k, v in vars(loader).items() if not k.startswith("_")}
 
+                    # TODO: Remove the partial function once resolved on Lightning side.
                     if isinstance(dl_args["collate_fn"], partial):
                         dl_args["collate_fn"] = dl_args["collate_fn"].keywords["default_collate"]
 
