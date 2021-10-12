@@ -32,7 +32,16 @@ def test_preprocess_transform():
     def fn(x):
         return x + 1
 
-    transform = PreprocessTransform.from_transform(running_stage=RunningStage.TRAINING, transform=fn)
+    transform = PreprocessTransform.from_train_transform(transform=fn)
+    assert transform.transform == {PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: fn}
+
+    transform = PreprocessTransform.from_val_transform(transform=fn)
+    assert transform.transform == {PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: fn}
+
+    transform = PreprocessTransform.from_test_transform(transform=fn)
+    assert transform.transform == {PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: fn}
+
+    transform = PreprocessTransform.from_predict_transform(transform=fn)
     assert transform.transform == {PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: fn}
 
     class MyPreprocessTransform(PreprocessTransform):
