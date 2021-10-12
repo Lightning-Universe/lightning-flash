@@ -275,7 +275,7 @@ class Preprocess(BasePreprocess, Properties):
 
         if is_per_batch_transform_in and is_per_sample_transform_on_device_in:
             raise MisconfigurationException(
-                f"{transform}: `per_batch_transform` and `per_sample_transform_on_device` " f"are mutually exclusive."
+                f"{transform}: `per_batch_transform` and `per_sample_transform_on_device` are mutually exclusive."
             )
 
         collate_in_worker: Optional[bool] = None
@@ -340,7 +340,6 @@ class Preprocess(BasePreprocess, Properties):
 
         Will be overridden by transforms passed to the ``__init__``.
         """
-        return None
 
     def _apply_sample_transform(self, sample: Any) -> Any:
         if isinstance(sample, list):

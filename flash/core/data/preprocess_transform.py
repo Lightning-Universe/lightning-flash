@@ -27,11 +27,11 @@ from flash.core.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX
 from flash.core.registry import FlashRegistry
 
 TRANSFORM_TYPE = Optional[
-    Union["PreTransform", Callable, Tuple[Union[LightningEnum, str], Dict[str, Any]], Union[LightningEnum, str]]
+    Union["PreprocessTransform", Callable, Tuple[Union[LightningEnum, str], Dict[str, Any]], Union[LightningEnum, str]]
 ]
 
 
-class PreTransformPlacement(LightningEnum):
+class PreprocessTransformPlacement(LightningEnum):
 
     PER_SAMPLE_TRANSFORM = "per_sample_transform"
     PER_BATCH_TRANSFORM = "per_batch_transform"
@@ -40,26 +40,25 @@ class PreTransformPlacement(LightningEnum):
     PER_BATCH_TRANSFORM_ON_DEVICE = "per_batch_transform_on_device"
 
 
-class PreTransform(Properties):
+class PreprocessTransform(Properties):
     def configure_transforms(self) -> Optional[Dict[str, Callable]]:
         """The default transforms to use.
 
         Will be overridden by transforms passed to the ``__init__``.
         """
-        return None
 
     def __init__(
         self,
         running_stage: RunningStage,
         transform: Union[Callable, List, Dict[str, Callable]] = None,
-        **tranform_kwargs,
+        **transform_kwargs,
     ):
         super().__init__()
         # used to keep track of provided transforms
         self._running_stage = running_stage
         self._collate_in_worker_from_transform: Optional[bool] = None
 
-        self._tranform_kwargs = tranform_kwargs
+        self._transform_kwargs = transform_kwargs
 
         transform = transform or self._resolve_transforms(running_stage)
         self.transform = self._check_transforms(transform, running_stage)
@@ -136,14 +135,14 @@ class PreTransform(Properties):
         transform: TRANSFORM_TYPE,
         running_stage: RunningStage,
         transform_registry: Optional[FlashRegistry] = None,
-    ) -> Optional["PreTransform"]:
+    ) -> Optional["PreprocessTransform"]:
 
-        if isinstance(transform, PreTransform):
+        if isinstance(transform, PreprocessTransform):
             transform.running_stage = running_stage
             return transform
 
         if isinstance(transform, Callable):
-            return cls(running_stage, {PreTransformPlacement.PER_SAMPLE_TRANSFORM: transform})
+            return cls(running_stage, {PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: transform})
 
         if isinstance(transform, tuple) or isinstance(transform, (LightningEnum, str)):
             enum, transform_kwargs = cls._sanetize_registry_transform(transform, transform_registry)
@@ -159,9 +158,10 @@ class PreTransform(Properties):
         from flash.core.data.data_pipeline import DataPipeline
 
         resolved_function = getattr(
-            self, DataPipeline._resolve_function_hierarchy("configure_transforms", self, running_stage, PreTransform)
+            self,
+            DataPipeline._resolve_function_hierarchy("configure_transforms", self, running_stage, PreprocessTransform),
         )
-        transforms: Optional[Dict[str, Callable]] = resolved_function(**self._tranform_kwargs)
+        transforms: Optional[Dict[str, Callable]] = resolved_function(**self._transform_kwargs)
         return transforms
 
     def _check_transforms(
@@ -170,7 +170,7 @@ class PreTransform(Properties):
         if transform is None:
             return transform
 
-        keys_diff = set(transform.keys()).difference([v for v in PreTransformPlacement])
+        keys_diff = set(transform.keys()).difference([v for v in PreprocessTransformPlacement])
 
         if len(keys_diff) > 0:
             raise MisconfigurationException(
@@ -182,7 +182,7 @@ class PreTransform(Properties):
 
         if is_per_batch_transform_in and is_per_sample_transform_on_device_in:
             raise MisconfigurationException(
-                f"{transform}: `per_batch_transform` and `per_sample_transform_on_device` " f"are mutually exclusive."
+                f"{transform}: `per_batch_transform` and `per_sample_transform_on_device` are mutually exclusive."
             )
 
         collate_in_worker: Optional[bool] = None
@@ -229,7 +229,7 @@ class PreTransform(Properties):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(running_stage={self.running_stage}, transform={self.transform})"
 
-    def __getitem__(self, placement: PreTransformPlacement) -> Callable:
+    def __getitem__(self, placement: PreprocessTransformPlacement) -> Callable:
         return self.transform[placement]
 
     def _make_collates(self, on_device: bool, collate: Callable) -> Tuple[Callable, Callable]:
@@ -251,18 +251,18 @@ class PreTransform(Properties):
         prefix: str = _STAGES_PREFIX[self.running_stage]
 
         func_names: Dict[str, str] = {
-            k: DataPipeline._resolve_function_hierarchy(k, self, self.running_stage, PreTransform)
-            for k in [v.value for v in PreTransformPlacement]
+            k: DataPipeline._resolve_function_hierarchy(k, self, self.running_stage, PreprocessTransform)
+            for k in [v.value for v in PreprocessTransformPlacement]
         }
 
         collate_fn: Callable = getattr(self, func_names["collate"])
 
         per_batch_transform_overriden: bool = DataPipeline._is_overriden_recursive(
-            "per_batch_transform", self, PreTransform, prefix=prefix
+            "per_batch_transform", self, PreprocessTransform, prefix=prefix
         )
 
         per_sample_transform_on_device_overriden: bool = DataPipeline._is_overriden_recursive(
-            "per_sample_transform_on_device", self, PreTransform, prefix=prefix
+            "per_sample_transform_on_device", self, PreprocessTransform, prefix=prefix
         )
 
         is_per_overriden = per_batch_transform_overriden and per_sample_transform_on_device_overriden
