@@ -11,8 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 from functools import partial
 
+import flash
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
 from flash.image import InstanceSegmentation, InstanceSegmentationData
 
@@ -39,7 +41,7 @@ def test_cli():
 
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _ICEVISION_AVAILABLE, reason="IceVision is not installed for testing")
-def test_instance_segmentation_inference():
+def test_instance_segmentation_inference(tmpdir):
     """Test to ensure that inference runs with instance segmentation from input paths."""
 
     data_dir = icedata.pets.load_data()
@@ -55,15 +57,30 @@ def test_instance_segmentation_inference():
         backbone="resnet18_fpn",
         num_classes=datamodule.num_classes,
     )
-    from flash.image.instance_segmentation.data import InstanceSegmentationPreprocess
 
-    model._preprocess = InstanceSegmentationPreprocess()
+    # 3. Create the trainer and finetune the model
+    trainer = flash.Trainer(max_epochs=1, fast_dev_run=True)
+    trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
     predictions = model.predict(
         [
             str(data_dir / "images/yorkshire_terrier_9.jpg"),
             str(data_dir / "images/yorkshire_terrier_12.jpg"),
             str(data_dir / "images/yorkshire_terrier_13.jpg"),
+            str(data_dir / "images/yorkshire_terrier_13.jpg"),
+        ]
+    )
+    assert len(predictions) == 3
+
+    model_path = os.path.join(tmpdir, "model.pt")
+    trainer.save_checkpoint(model_path)
+    InstanceSegmentation.load_from_checkpoint(model_path)
+
+    predictions = model.predict(
+        [
+            str(data_dir / "images/yorkshire_terrier_9.jpg"),
+            str(data_dir / "images/yorkshire_terrier_12.jpg"),
+            str(data_dir / "images/yorkshire_terrier_15.jpg"),
         ]
     )
     assert len(predictions) == 3
