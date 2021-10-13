@@ -89,15 +89,16 @@ def test_data_module():
 
     class TestModel(Task):
         def training_step(self, batch, batch_idx):
-            assert torch.equal(batch, torch.tensor([-94, -91]))
+            assert sum(batch < 0) == 2
 
         def validation_step(self, batch, batch_idx):
-            assert torch.equal(batch, torch.tensor([100, 101]))
+            assert sum(batch > 0) == 2
 
         def test_step(self, batch, batch_idx):
-            assert torch.equal(batch, torch.tensor([-1000, -999]))
+            assert sum(batch < 500) == 2
 
         def predict_step(self, batch, batch_idx):
+            assert sum(batch > 500) == 2
             assert torch.equal(batch, torch.tensor([1000, 1001]))
 
         def on_train_dataloader(self) -> None:
