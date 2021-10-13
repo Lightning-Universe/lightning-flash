@@ -19,7 +19,6 @@ from typing import Any, Dict, List, Optional
 import torchvision.transforms as T
 from PIL import Image
 from pytorch_lightning import seed_everything
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
 from torch.utils.data._utils.collate import default_collate
 
@@ -49,7 +48,7 @@ download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", f"{
 #############################################################################################
 
 
-class CustomDataTransform(LightningEnum):
+class DataTransform(LightningEnum):
 
     BASE = "base"
     RANDOM_ROTATION = "random_rotation"
@@ -136,15 +135,15 @@ class ImageRandomRotationTransform(ImageBaseTransform):
 
 # Register your transform within the Flash Dataset registry
 # Note: Registries can be shared by multiple dataset.
-MultipleFoldersImageDataset.register_transform(CustomDataTransform.BASE, ImageBaseTransform)
-MultipleFoldersImageDataset.register_transform(CustomDataTransform.RANDOM_ROTATION, ImageRandomRotationTransform)
+MultipleFoldersImageDataset.register_transform(DataTransform.BASE, ImageBaseTransform)
+MultipleFoldersImageDataset.register_transform(DataTransform.RANDOM_ROTATION, ImageRandomRotationTransform)
 MultipleFoldersImageDataset.register_transform(
-    CustomDataTransform.RANDOM_90_DEG_ROTATION, partial(ImageRandomRotationTransform, rotation=90)
+    DataTransform.RANDOM_90_DEG_ROTATION, partial(ImageRandomRotationTransform, rotation=90)
 )
 
 train_dataset = MultipleFoldersImageDataset.from_train_data(
     TRAIN_FOLDERS,
-    transform=(CustomDataTransform.RANDOM_ROTATION, {"rotation": 45}),
+    transform=(DataTransform.RANDOM_ROTATION, {"rotation": 45}),
 )
 
 print(train_dataset.transform)
@@ -163,7 +162,7 @@ print(train_dataset.transform)
 
 train_dataset = MultipleFoldersImageDataset.from_train_data(
     TRAIN_FOLDERS,
-    transform=CustomDataTransform.RANDOM_90_DEG_ROTATION,
+    transform=DataTransform.RANDOM_90_DEG_ROTATION,
 )
 
 print(train_dataset.transform)
@@ -180,7 +179,7 @@ print(train_dataset.transform)
 #    },
 # )
 
-val_dataset = MultipleFoldersImageDataset.from_val_data(VAL_FOLDERS, transform=CustomDataTransform.BASE)
+val_dataset = MultipleFoldersImageDataset.from_val_data(VAL_FOLDERS, transform=DataTransform.BASE)
 print(val_dataset.transform)
 # Out:
 # ImageClassificationRandomRotationTransform(
@@ -208,14 +207,10 @@ print(train_dataset[0])
 #############################################################################################
 
 
-def create_dataset(data, running_stage):
-    return MultipleFoldersImageDataset.from_data(data, running_stage=running_stage, transform=CustomDataTransform.BASE)
-
-
 datamodule = DataModule(
-    train_dataset=create_dataset(TRAIN_FOLDERS, RunningStage.TRAINING),
-    val_dataset=create_dataset(VAL_FOLDERS, RunningStage.VALIDATING),
-    predict_dataset=create_dataset(PREDICT_FOLDER, RunningStage.PREDICTING),
+    train_dataset=MultipleFoldersImageDataset.from_train_data(TRAIN_FOLDERS, transform=DataTransform.RANDOM_ROTATION),
+    val_dataset=MultipleFoldersImageDataset.from_val_data(VAL_FOLDERS, transform=DataTransform.BASE),
+    predict_dataset=MultipleFoldersImageDataset.from_predict_data(PREDICT_FOLDER, transform=DataTransform.BASE),
     batch_size=2,
 )
 
@@ -309,7 +304,7 @@ datamodule = ImageClassificationDataModule.from_multiple_folders(
     train_folders=TRAIN_FOLDERS,
     val_folders=VAL_FOLDERS,
     predict_folder=PREDICT_FOLDER,
-    train_transform=CustomDataTransform.RANDOM_ROTATION,
+    train_transform=DataTransform.RANDOM_ROTATION,
     batch_size=2,
 )
 
