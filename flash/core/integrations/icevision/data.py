@@ -38,7 +38,9 @@ class IceVisionPathsDataSource(ImagePathsDataSource):
 
     def predict_load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         if isinstance(sample[DefaultDataKeys.INPUT], BaseRecord):
+            # load the data via IceVision Base Record
             return self.load_sample(sample)
+        # load the data using numpy
         filepath = sample[DefaultDataKeys.INPUT]
         sample = super().load_sample(sample)
         image = np.array(sample[DefaultDataKeys.INPUT])
