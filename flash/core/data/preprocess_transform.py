@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import inspect
+from functools import partial, wraps
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 from pytorch_lightning.trainer.states import RunningStage
@@ -38,6 +39,17 @@ class PreprocessTransformPlacement(LightningEnum):
     COLLATE = "collate"
     PER_SAMPLE_TRANSFORM_ON_DEVICE = "per_sample_transform_on_device"
     PER_BATCH_TRANSFORM_ON_DEVICE = "per_batch_transform_on_device"
+
+
+def transform_context(func: Callable, current_fn: str) -> Callable:
+    @wraps(func)
+    def wrapper(self, *args, **kwargs) -> Any:
+        self.current_fn = current_fn
+        result = func(self, *args, **kwargs)
+        self.current_fn = None
+        return result
+
+    return wrapper
 
 
 class PreprocessTransform(Properties):
@@ -112,11 +124,13 @@ class PreprocessTransform(Properties):
             "transform": self.transform,
         }
 
+    @partial(transform_context, current_fn="per_sample_transform")
     def per_sample_transform(self, sample: Any) -> Any:
         if isinstance(sample, list):
             return [self.current_transform(s) for s in sample]
         return self.current_transform(sample)
 
+    @partial(transform_context, current_fn="per_batch_transform")
     def per_batch_transform(self, batch: Any) -> Any:
         """Transforms to apply to a whole batch (if possible use this for efficiency).
 
@@ -125,6 +139,7 @@ class PreprocessTransform(Properties):
         """
         return self.current_transform(batch)
 
+    @partial(transform_context, current_fn="collate")
     def collate(self, samples: Sequence, metadata=None) -> Any:
         """Transform to convert a sequence of samples to a collated batch."""
         current_transform = self.current_transform
@@ -144,6 +159,7 @@ class PreprocessTransform(Properties):
             return collate_fn(samples, metadata)
         return collate_fn(samples)
 
+    @partial(transform_context, current_fn="per_sample_transform_on_device")
     def per_sample_transform_on_device(self, sample: Any) -> Any:
         """Transforms to apply to the data before the collation (per-sample basis).
 
@@ -156,6 +172,7 @@ class PreprocessTransform(Properties):
             return [self.current_transform(s) for s in sample]
         return self.current_transform(sample)
 
+    @partial(transform_context, current_fn="per_batch_transform_on_device")
     def per_batch_transform_on_device(self, batch: Any) -> Any:
         """Transforms to apply to a whole batch (if possible use this for efficiency).
 

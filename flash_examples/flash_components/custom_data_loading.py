@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+from contextlib import suppress
 from functools import partial
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import torchvision.transforms as T
 from PIL import Image
@@ -23,13 +24,13 @@ from torch.utils.data._utils.collate import default_collate
 
 from flash import _PACKAGE_ROOT, FlashDataset, PreprocessTransform
 from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.new_data_module import DataModule
+from flash.core.data.preprocess_transform import PREPROCESS_TRANSFORM_TYPE
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import download_data
-from flash.core.registry import FlashRegistry
 
 seed_everything(42)
-ROOT_DATA = f"{_PACKAGE_ROOT}/data"
-download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", ROOT_DATA)
+download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", f"{_PACKAGE_ROOT}/data")
 
 #############################################################################################
 #                    Use Case: Load Data from multiple folders                              #
@@ -47,7 +48,7 @@ download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", ROO
 #############################################################################################
 
 
-class CustomDataTransform(LightningEnum):
+class DataTransform(LightningEnum):
 
     BASE = "base"
     RANDOM_ROTATION = "random_rotation"
@@ -75,16 +76,13 @@ class CustomDataFormat(LightningEnum):
 #                                                                                           #
 #############################################################################################
 
-FOLDER_PATH = f"{ROOT_DATA}/hymenoptera_data/train"
+FOLDER_PATH = f"{_PACKAGE_ROOT}/data/hymenoptera_data/train"
 TRAIN_FOLDERS = [os.path.join(FOLDER_PATH, "ants"), os.path.join(FOLDER_PATH, "bees")]
 VAL_FOLDERS = [os.path.join(FOLDER_PATH, "ants"), os.path.join(FOLDER_PATH, "bees")]
 PREDICT_FOLDER = os.path.join(FOLDER_PATH, "ants")
 
 
 class MultipleFoldersImageDataset(FlashDataset):
-
-    transforms_registry = FlashRegistry("image_classification_transform")
-
     def load_data(self, folders: List[str]) -> List[Dict[DefaultDataKeys, Any]]:
         if self.training:
             self.num_classes = len(folders)
@@ -137,15 +135,15 @@ class ImageRandomRotationTransform(ImageBaseTransform):
 
 # Register your transform within the Flash Dataset registry
 # Note: Registries can be shared by multiple dataset.
-MultipleFoldersImageDataset.register_transform(CustomDataTransform.BASE, ImageBaseTransform)
-MultipleFoldersImageDataset.register_transform(CustomDataTransform.RANDOM_ROTATION, ImageRandomRotationTransform)
+MultipleFoldersImageDataset.register_transform(DataTransform.BASE, ImageBaseTransform)
+MultipleFoldersImageDataset.register_transform(DataTransform.RANDOM_ROTATION, ImageRandomRotationTransform)
 MultipleFoldersImageDataset.register_transform(
-    CustomDataTransform.RANDOM_90_DEG_ROTATION, partial(ImageRandomRotationTransform, rotation=90)
+    DataTransform.RANDOM_90_DEG_ROTATION, partial(ImageRandomRotationTransform, rotation=90)
 )
 
 train_dataset = MultipleFoldersImageDataset.from_train_data(
     TRAIN_FOLDERS,
-    transform=(CustomDataTransform.RANDOM_ROTATION, {"rotation": 45}),
+    transform=(DataTransform.RANDOM_ROTATION, {"rotation": 45}),
 )
 
 print(train_dataset.transform)
@@ -164,7 +162,7 @@ print(train_dataset.transform)
 
 train_dataset = MultipleFoldersImageDataset.from_train_data(
     TRAIN_FOLDERS,
-    transform=CustomDataTransform.RANDOM_90_DEG_ROTATION,
+    transform=DataTransform.RANDOM_90_DEG_ROTATION,
 )
 
 print(train_dataset.transform)
@@ -181,7 +179,7 @@ print(train_dataset.transform)
 #    },
 # )
 
-val_dataset = MultipleFoldersImageDataset.from_val_data(VAL_FOLDERS, transform=CustomDataTransform.BASE)
+val_dataset = MultipleFoldersImageDataset.from_val_data(VAL_FOLDERS, transform=DataTransform.BASE)
 print(val_dataset.transform)
 # Out:
 # ImageClassificationRandomRotationTransform(
@@ -199,3 +197,126 @@ print(train_dataset[0])
 #   <DefaultDataKeys.TARGET: 'target'>: 0,
 #   <DefaultDataKeys.METADATA: 'metadata'>: (500, 375)
 # }
+
+#############################################################################################
+#                           Step 4 / 5: Create a DataModule                                 #
+#                                                                                           #
+# The `DataModule` class is a collection of FlashDataset and you can pass them directly to  #
+# its init function.                                                                        #
+#                                                                                           #
+#############################################################################################
+
+
+datamodule = DataModule(
+    train_dataset=MultipleFoldersImageDataset.from_train_data(TRAIN_FOLDERS, transform=DataTransform.RANDOM_ROTATION),
+    val_dataset=MultipleFoldersImageDataset.from_val_data(VAL_FOLDERS, transform=DataTransform.BASE),
+    predict_dataset=MultipleFoldersImageDataset.from_predict_data(PREDICT_FOLDER, transform=DataTransform.BASE),
+    batch_size=2,
+)
+
+
+assert isinstance(datamodule.train_dataset, FlashDataset)
+assert isinstance(datamodule.predict_dataset, FlashDataset)
+
+# The ``num_classes`` value was set line 89.
+assert datamodule.train_dataset.num_classes == 2
+
+# The ``num_classes`` value was set only for training as `self.training` was used,
+# so it doesn't exist for the predict_dataset
+with suppress(AttributeError):
+    datamodule.val_dataset.num_classes
+
+# As test_data weren't provided, the test dataset is None.
+assert not datamodule.test_dataset
+
+
+print(datamodule.train_dataset[0])
+# Out:
+# {
+#   <DefaultDataKeys.INPUT: 'input'>: <PIL.JpegImagePlugin.JpegImageFile image mode=RGB size=500x375 at 0x...>,
+#   <DefaultDataKeys.TARGET: 'target'>: 0,
+#   <DefaultDataKeys.METADATA: 'metadata'>: (500, 375)
+# }
+
+assert isinstance(datamodule.predict_dataset, FlashDataset)
+print(datamodule.predict_dataset[0])
+# out:
+# {
+#   {<DefaultDataKeys.INPUT: 'input'>: 'data/hymenoptera_data/train/ants/957233405_25c1d1187b.jpg'}
+# }
+
+
+# access the dataloader, the collate_fn will be injected directly within the dataloader from the provided transform
+batch = next(iter(datamodule.train_dataloader()))
+# Out:
+# {
+#   <DefaultDataKeys.INPUT: 'input'>: tensor([...]),
+#   <DefaultDataKeys.TARGET: 'target'>: tensor([...]),
+#   <DefaultDataKeys.METADATA: 'metadata'>: [(...), (...), ...],
+# }
+print(batch)
+
+
+#############################################################################################
+#                Step 5 / 5: Provide your new utility with your DataModule                  #
+#                                                                                           #
+# The `DataModule` class is a collection of FlashDataset and you can pass them directly to  #
+# its init function.                                                                        #
+#                                                                                           #
+#############################################################################################
+
+
+class ImageClassificationDataModule(DataModule):
+    @classmethod
+    def from_multiple_folders(
+        cls,
+        train_folders: Optional[List[str]] = None,
+        val_folders: Optional[List[str]] = None,
+        test_folders: Optional[List[str]] = None,
+        predict_folder: Optional[str] = None,
+        train_transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
+        val_transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
+        test_transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
+        predict_transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
+        **data_module_kwargs: Any,
+    ) -> "ImageClassificationDataModule":
+
+        return cls(
+            *cls.create_flash_datasets(
+                CustomDataFormat.MULTIPLE_FOLDERS,
+                train_folders,
+                val_folders,
+                test_folders,
+                predict_folder,
+                train_transform,
+                val_transform,
+                test_transform,
+                predict_transform,
+            ),
+            **data_module_kwargs,
+        )
+
+
+ImageClassificationDataModule.register_flash_dataset(CustomDataFormat.MULTIPLE_FOLDERS, MultipleFoldersImageDataset)
+
+
+# Create the datamodule with your new constructor. This is purely equivalent to the previous datamdoule creation.
+datamodule = ImageClassificationDataModule.from_multiple_folders(
+    train_folders=TRAIN_FOLDERS,
+    val_folders=VAL_FOLDERS,
+    predict_folder=PREDICT_FOLDER,
+    train_transform=DataTransform.RANDOM_ROTATION,
+    val_transform=DataTransform.BASE,
+    predict_transform=DataTransform.BASE,
+    batch_size=2,
+)
+
+# access the dataloader, the collate_fn will be injected directly within the dataloader from the provided transform
+batch = next(iter(datamodule.train_dataloader()))
+# Out:
+# {
+#   <DefaultDataKeys.INPUT: 'input'>: tensor([...]),
+#   <DefaultDataKeys.TARGET: 'target'>: tensor([...]),
+#   <DefaultDataKeys.METADATA: 'metadata'>: [(...), (...), ...],
+# }
+print(batch)
