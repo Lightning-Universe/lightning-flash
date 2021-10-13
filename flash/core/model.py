@@ -931,3 +931,23 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         composition = Composition(predict=comp, TESTING=flash._IS_TESTING)
         composition.serve(host=host, port=port)
         return composition
+
+
+class TaskV2(Task):
+    def on_train_dataloader(self) -> None:
+        pass
+
+    def on_val_dataloader(self) -> None:
+        pass
+
+    def on_test_dataloader(self, *_) -> None:
+        pass
+
+    def on_predict_dataloader(self) -> None:
+        pass
+
+    def on_predict_end(self) -> None:
+        pass
+
+    def on_fit_end(self) -> None:
+        pass

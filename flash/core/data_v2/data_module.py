@@ -29,9 +29,9 @@ from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DefaultPreprocess, Postprocess
-from flash.core.data.datasets import BaseDataset
-from flash.core.data.preprocess_transform import PREPROCESS_TRANSFORM_TYPE, PreprocessTransform
 from flash.core.data.splits import SplitDataset
+from flash.core.data_v2.datasets import BaseDataset
+from flash.core.data_v2.preprocess_transform import PREPROCESS_TRANSFORM_TYPE, PreprocessTransform
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
 

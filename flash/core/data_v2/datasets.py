@@ -20,8 +20,8 @@ from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Dataset, IterableDataset
 
-from flash.core.data.preprocess_transform import PREPROCESS_TRANSFORM_TYPE, PreprocessTransform
 from flash.core.data.properties import Properties
+from flash.core.data_v2.preprocess_transform import PREPROCESS_TRANSFORM_TYPE, PreprocessTransform
 from flash.core.registry import FlashRegistry
 
 __all__ = [
