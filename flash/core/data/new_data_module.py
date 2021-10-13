@@ -168,7 +168,6 @@ class DataModule(DataModule):
                 drop_last=drop_last,
                 collate_fn=collate_fn,
                 sampler=sampler,
-                persistent_workers=self.persistent_workers,
             )
 
         return DataLoader(
@@ -195,7 +194,6 @@ class DataModule(DataModule):
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
                 collate_fn=collate_fn,
-                persistent_workers=self.persistent_workers,
             )
 
         return DataLoader(
@@ -219,7 +217,6 @@ class DataModule(DataModule):
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
                 collate_fn=collate_fn,
-                persistent_workers=self.persistent_workers,
             )
 
         return DataLoader(
@@ -247,7 +244,6 @@ class DataModule(DataModule):
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
                 collate_fn=collate_fn,
-                persistent_workers=self.persistent_workers,
             )
 
         return DataLoader(
@@ -258,6 +254,23 @@ class DataModule(DataModule):
             collate_fn=collate_fn,
             persistent_workers=self.persistent_workers,
         )
+
+    def on_after_batch_transfer(self, batch: Any, dataloader_idx: int) -> Any:
+        ds = None
+        if self.trainer.training:
+            ds = self._train_ds
+        elif self.trainer.validating:
+            ds = self._val_ds
+        elif self.trainer.testing:
+            ds = self._test_ds
+        elif self.trainer.predicting:
+            ds = self._predict_ds
+
+        if ds:
+            transform = ds.on_after_batch_transfer_fn
+            batch = transform(batch)
+
+        return batch
 
     @classmethod
     def create_flash_datasets(

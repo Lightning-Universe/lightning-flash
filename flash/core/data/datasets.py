@@ -24,6 +24,12 @@ from flash.core.data.preprocess_transform import PREPROCESS_TRANSFORM_TYPE, Prep
 from flash.core.data.properties import Properties
 from flash.core.registry import FlashRegistry
 
+__all__ = [
+    "BaseDataset",
+    "FlashDataset",
+    "FlashIterableDataset",
+]
+
 
 class BaseDataset(Properties):
 
@@ -71,11 +77,13 @@ class BaseDataset(Properties):
     @property
     def dataloader_collate_fn(self) -> Optional[Callable]:
         if self.transform:
+            self.transform.running_stage = self.running_stage
             return self.transform.dataloader_collate_fn
 
     @property
     def on_after_batch_transfer_fn(self) -> Optional[Callable]:
         if self.transform:
+            self.transform.running_stage = self.running_stage
             return self.transform.on_after_batch_transfer_fn
 
     def _resolve_functions(self, func_name: str, cls: Type["BaseDataset"]) -> None:
