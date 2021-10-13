@@ -13,10 +13,7 @@
 # limitations under the License.
 from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple, Union
 
-import torch
 from pytorch_lightning.utilities import rank_zero_info
-from torch.optim import Optimizer
-from torch.optim.lr_scheduler import _LRScheduler
 
 from flash.core.adapter import AdapterTask
 from flash.core.data.data_pipeline import DataPipeline
