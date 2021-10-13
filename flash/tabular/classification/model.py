@@ -56,7 +56,9 @@ class TabularClassifier(ClassificationTask):
         embedding_sizes: List[Tuple[int, int]] = None,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Union[str, Callable, Tuple[str, Dict[str, Any]]] = "Adam",
-        lr_scheduler: Optional[Union[str, Callable, Tuple[str, Dict[str, Any]]]] = None,
+        lr_scheduler: Optional[
+            Union[str, Callable, Tuple[str, Dict[str, Any]], Tuple[str, Dict[str, Any], Dict[str, Any]]]
+        ] = None,
         metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-2,
         multi_label: bool = False,

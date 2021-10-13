@@ -108,7 +108,9 @@ class VideoClassifier(ClassificationTask):
         pretrained: bool = True,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Union[str, Callable, Tuple[str, Dict[str, Any]]] = "SGD",
-        lr_scheduler: Optional[Union[str, Callable, Tuple[str, Dict[str, Any]]]] = None,
+        lr_scheduler: Optional[
+            Union[str, Callable, Tuple[str, Dict[str, Any]], Tuple[str, Dict[str, Any], Dict[str, Any]]]
+        ] = None,
         metrics: Union[Metric, Callable, Mapping, Sequence, None] = Accuracy(),
         learning_rate: float = 1e-3,
         head: Optional[Union[FunctionType, nn.Module]] = None,

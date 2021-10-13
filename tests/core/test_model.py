@@ -13,6 +13,7 @@
 # limitations under the License.
 import functools
 import math
+from copy import deepcopy
 from itertools import chain
 from numbers import Number
 from pathlib import Path
@@ -23,7 +24,6 @@ import numpy as np
 import pytest
 import pytorch_lightning as pl
 import torch
-import torchmetrics
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn, Tensor
@@ -318,7 +318,7 @@ def custom_steplr_configuration_return_as_dict(optimizer):
         ("custom_steplr_configuration_return_as_dict", "step"),
         (functools.partial(torch.optim.lr_scheduler.StepLR, step_size=10), "epoch"),
         (("StepLR", {"step_size": 10}), "step"),
-        (("StepLR", {"step_size": 10, "interval": None}), "step"),
+        (("StepLR", {"step_size": 10}, {"interval": "epoch"}), "epoch"),
     ],
 )
 def test_optimizers_and_schedulers(tmpdir, optim, sched, interval):
@@ -375,14 +375,13 @@ def test_external_optimizers_torch_optimizer(tmpdir, optim):
 )
 def test_external_schedulers_provider_hf_transformers(tmpdir, optim, sched):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
-    task = ClassificationTask(model, optimizer=optim, lr_scheduler=sched, loss_fn=F.nll_loss)
-    trainer = flash.Trainer(max_epochs=1, limit_train_batches=2, gpus=torch.cuda.device_count())
+    task = ClassificationTask(model, optimizer=deepcopy(optim), lr_scheduler=deepcopy(sched), loss_fn=F.nll_loss)
+    trainer = flash.Trainer(max_epochs=1, limit_train_batches=10, gpus=torch.cuda.device_count())
     ds = DummyDataset()
     trainer.fit(task, train_dataloader=DataLoader(ds))
 
-    optimizer, scheduler = task.configure_optimizers()
-    assert isinstance(optimizer[0], torch.optim.Adadelta)
-    assert isinstance(scheduler[0]["scheduler"], torch.optim.lr_scheduler.LambdaLR)
+    assert isinstance(trainer.optimizers[0], torch.optim.Adadelta)
+    assert isinstance(trainer.lr_schedulers[0]["scheduler"], torch.optim.lr_scheduler.LambdaLR)
 
 
 def test_errors_and_exceptions_optimizers_and_schedulers():

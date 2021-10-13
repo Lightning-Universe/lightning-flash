@@ -52,7 +52,9 @@ class SpeechRecognition(Task):
         self,
         backbone: str = "facebook/wav2vec2-base-960h",
         optimizer: Union[str, Callable, Tuple[str, Dict[str, Any]]] = "Adam",
-        lr_scheduler: Optional[Union[str, Callable, Tuple[str, Dict[str, Any]]]] = None,
+        lr_scheduler: Optional[
+            Union[str, Callable, Tuple[str, Dict[str, Any]], Tuple[str, Dict[str, Any], Dict[str, Any]]]
+        ] = None,
         learning_rate: float = 1e-5,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
     ):

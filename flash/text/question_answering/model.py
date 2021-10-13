@@ -95,7 +95,9 @@ class QuestionAnsweringTask(Task):
         backbone: str = "distilbert-base-uncased",
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
         optimizer: Union[str, Callable, Tuple[str, Dict[str, Any]]] = "Adam",
-        lr_scheduler: Optional[Union[str, Callable, Tuple[str, Dict[str, Any]]]] = None,
+        lr_scheduler: Optional[
+            Union[str, Callable, Tuple[str, Dict[str, Any]], Tuple[str, Dict[str, Any], Dict[str, Any]]]
+        ] = None,
         metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
         learning_rate: float = 5e-5,
         enable_ort: bool = False,

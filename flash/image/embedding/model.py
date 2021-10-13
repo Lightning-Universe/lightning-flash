@@ -73,7 +73,9 @@ class ImageEmbedder(AdapterTask):
         backbone: str = "resnet",
         pretrained: bool = False,
         optimizer: Union[str, Callable, Tuple[str, Dict[str, Any]]] = "Adam",
-        lr_scheduler: Optional[Union[str, Callable, Tuple[str, Dict[str, Any]]]] = None,
+        lr_scheduler: Optional[
+            Union[str, Callable, Tuple[str, Dict[str, Any]], Tuple[str, Dict[str, Any], Dict[str, Any]]]
+        ] = None,
         learning_rate: float = 1e-3,
         backbone_kwargs: Optional[Dict[str, Any]] = None,
         training_strategy_kwargs: Optional[Dict[str, Any]] = None,

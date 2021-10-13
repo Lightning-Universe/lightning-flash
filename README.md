@@ -196,10 +196,10 @@ Once you've chosen, create the model:
 model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer="Adam", lr_scheduler=None)
 
 # - Callable
-model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer=functools.partial(torch.optim.AdaDelta, eps=0.5), lr_scheduler=None)
+model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer=functools.partial(torch.optim.Adadelta, eps=0.5), lr_scheduler=None)
 
 # - Tuple[string, dict]: (The dict takes in the optimizer kwargs)
-model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer=("AdaDelta", {"epa": 0.5}), lr_scheduler=None)
+model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer=("Adadelta", {"epa": 0.5}), lr_scheduler=None)
 
 #### The scheduler of choice can be passed as a
 # - String value

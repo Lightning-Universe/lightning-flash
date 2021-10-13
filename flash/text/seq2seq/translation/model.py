@@ -50,7 +50,9 @@ class TranslationTask(Seq2SeqTask):
         backbone: str = "t5-small",
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
         optimizer: Union[str, Callable, Tuple[str, Dict[str, Any]]] = "Adam",
-        lr_scheduler: Optional[Union[str, Callable, Tuple[str, Dict[str, Any]]]] = None,
+        lr_scheduler: Optional[
+            Union[str, Callable, Tuple[str, Dict[str, Any]], Tuple[str, Dict[str, Any], Dict[str, Any]]]
+        ] = None,
         metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-5,
         val_target_max_length: Optional[int] = 128,

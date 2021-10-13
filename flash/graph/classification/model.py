@@ -107,7 +107,9 @@ class GraphClassifier(ClassificationTask):
         hidden_channels: Union[List[int], int] = 512,
         loss_fn: Callable = F.cross_entropy,
         optimizer: Union[str, Callable, Tuple[str, Dict[str, Any]]] = "Adam",
-        lr_scheduler: Optional[Union[str, Callable, Tuple[str, Dict[str, Any]]]] = None,
+        lr_scheduler: Optional[
+            Union[str, Callable, Tuple[str, Dict[str, Any]], Tuple[str, Dict[str, Any], Dict[str, Any]]]
+        ] = None,
         metrics: Union[Callable, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-3,
         model: torch.nn.Module = None,

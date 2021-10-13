@@ -57,7 +57,9 @@ class KeypointDetector(AdapterTask):
         head: Optional[str] = "keypoint_rcnn",
         pretrained: bool = True,
         optimizer: Union[str, Callable, Tuple[str, Dict[str, Any]]] = "Adam",
-        lr_scheduler: Optional[Union[str, Callable, Tuple[str, Dict[str, Any]]]] = None,
+        lr_scheduler: Optional[
+            Union[str, Callable, Tuple[str, Dict[str, Any]], Tuple[str, Dict[str, Any], Dict[str, Any]]]
+        ] = None,
         learning_rate: float = 5e-4,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
         **kwargs: Any,
