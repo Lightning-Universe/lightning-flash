@@ -327,7 +327,7 @@ class DataModule(DataModule):
         transform: Optional[PreprocessTransform],
         **kwargs,
     ) -> Optional[BaseDataset]:
-        if load_data_args[0]:
+        if load_data_args[0] is not None:
             return flash_dataset_cls.from_data(
                 *load_data_args, running_stage=running_stage, transform=transform, **kwargs
             )
