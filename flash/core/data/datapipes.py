@@ -30,6 +30,9 @@ class FlashDataPipes(Properties, IterDataPipe):
 
     data_pipe: Optional["FlashDataPipes"] = None
 
+    # This function is resolved dynamically once the stage was been set
+    current_process_data: Optional[Callable] = None  #
+
     @abstractmethod
     def process_data(self, data: Any) -> Union[Iterable, Mapping]:
         """The `load_data` hook should return either a Mapping or an Iterable.
@@ -110,8 +113,6 @@ class FlashDataPipes(Properties, IterDataPipe):
         **dataset_kwargs: Any,
     ) -> "FlashDataPipes":
         return cls.from_data(*load_data_args, running_stage=RunningStage.PREDICTING, **dataset_kwargs)
-
-    current_process_data = None
 
     def __len__(self):
         return len(self.data_pipe)
