@@ -85,7 +85,8 @@ def test_data_module():
     )
 
     batch = next(iter(dm.train_dataloader()))
-    assert torch.equal(batch, torch.tensor([8, 0]))
+    assert batch.shape == torch.Size([2])
+    assert batch.min() >= 0 and batch.max() < 10
 
     class TestModel(Task):
         def training_step(self, batch, batch_idx):
