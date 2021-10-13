@@ -281,19 +281,20 @@ class ImageClassificationDataModule(DataModule):
         **data_module_kwargs: Any,
     ) -> "ImageClassificationDataModule":
 
-        datasets = cls.create_flash_datasets(
-            CustomDataFormat.MULTIPLE_FOLDERS,
-            train_folders,
-            val_folders,
-            test_folders,
-            predict_folder,
-            train_transform,
-            val_transform,
-            test_transform,
-            predict_transform,
+        return cls(
+            *cls.create_flash_datasets(
+                CustomDataFormat.MULTIPLE_FOLDERS,
+                train_folders,
+                val_folders,
+                test_folders,
+                predict_folder,
+                train_transform,
+                val_transform,
+                test_transform,
+                predict_transform,
+            ),
+            **data_module_kwargs,
         )
-
-        return cls(*datasets, **data_module_kwargs)
 
 
 ImageClassificationDataModule.register_flash_dataset(CustomDataFormat.MULTIPLE_FOLDERS, MultipleFoldersImageDataset)
