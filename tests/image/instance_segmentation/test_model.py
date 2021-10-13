@@ -13,13 +13,17 @@
 # limitations under the License.
 import os
 from functools import partial
+from pathlib import Path
 
 import flash
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _ICEDATA_AVAILABLE, _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE
 from flash.image import InstanceSegmentation, InstanceSegmentationData
 
-if _ICEVISION_AVAILABLE:
+if _ICEDATA_AVAILABLE:
     import icedata
+if _ICEVISION_AVAILABLE:
+    import icevision
+
 from unittest import mock
 
 import pytest
@@ -43,7 +47,9 @@ def test_cli():
 @pytest.mark.skipif(not _ICEVISION_AVAILABLE, reason="IceVision is not installed for testing")
 def test_instance_segmentation_inference(tmpdir):
     """Test to ensure that inference runs with instance segmentation from input paths."""
-
+    # modify the root path to use 'data' where our CI caches datasets
+    icevision.utils.data_dir.data_dir = Path("data/icevision/")
+    icevision.utils.data_dir.data_dir.mkdir(exist_ok=True, parents=True)
     data_dir = icedata.pets.load_data()
 
     datamodule = InstanceSegmentationData.from_folders(
