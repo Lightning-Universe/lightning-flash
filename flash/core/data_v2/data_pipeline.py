@@ -30,6 +30,7 @@ from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.data_source import DataSource
 from flash.core.data.process import DefaultPreprocess, Deserializer, Postprocess, Preprocess, Serializer
 from flash.core.data.utils import _POSTPROCESS_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
+from flash.core.data_v2.datasets import BaseDataset
 from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_4_3
 
 if TYPE_CHECKING:
@@ -60,12 +61,13 @@ class DataPipeline:
 
     def __init__(
         self,
-        dataset: Optional[DataSource] = None,
+        dataset: Optional[BaseDataset] = None,
         postprocess: Optional[Postprocess] = None,
         deserializer: Optional[Deserializer] = None,
         serializer: Optional[Serializer] = None,
     ) -> None:
 
+        self._dataset = dataset
         self._preprocess_pipeline = dataset or DefaultPreprocess()
         self._postprocess_pipeline = postprocess or Postprocess()
         self._serializer = serializer or Serializer()

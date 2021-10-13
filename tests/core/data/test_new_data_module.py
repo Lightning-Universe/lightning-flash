@@ -19,12 +19,12 @@ from pytorch_lightning.trainer.states import RunningStage
 from torch.utils.data.dataloader import default_collate
 
 from flash import Task, Trainer
-from flash.core.data.datasets import FlashDataset
-from flash.core.data.new_data_module import DataModule
-from flash.core.data.preprocess_transform import PreprocessTransform
+from flash.core.data_v2.data_module import DataModule
+from flash.core.data_v2.datasets import FlashDataset
+from flash.core.data_v2.preprocess_transform import PreprocessTransform
 
 
-def test_data_module():
+def test_data_module(tmpdir):
     seed_everything(42)
 
     def train_fn(data):
@@ -121,7 +121,7 @@ def test_data_module():
             pass
 
     model = TestModel(torch.nn.Linear(1, 1))
-    trainer = Trainer(fast_dev_run=True)
+    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.fit(model, dm)
     trainer.validate(model, dm)
     trainer.test(model, dm)

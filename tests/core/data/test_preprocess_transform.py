@@ -20,7 +20,7 @@ from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data.dataloader import default_collate
 
-from flash.core.data.preprocess_transform import PreprocessTransform, PreprocessTransformPlacement
+from flash.core.data_v2.preprocess_transform import PreprocessTransform, PreprocessTransformPlacement
 from flash.core.registry import FlashRegistry
 
 

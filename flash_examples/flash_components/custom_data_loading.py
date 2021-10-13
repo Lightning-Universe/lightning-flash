@@ -24,10 +24,10 @@ from torch.utils.data._utils.collate import default_collate
 
 from flash import _PACKAGE_ROOT, FlashDataset, PreprocessTransform
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.new_data_module import DataModule
-from flash.core.data.preprocess_transform import PREPROCESS_TRANSFORM_TYPE
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import download_data
+from flash.core.data_v2.data_module import DataModule
+from flash.core.data_v2.preprocess_transform import PREPROCESS_TRANSFORM_TYPE
 
 seed_everything(42)
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", f"{_PACKAGE_ROOT}/data")
