@@ -43,20 +43,13 @@ else:
 
 class DataModule(DataModule):
     """A basic DataModule class for all Flash tasks. This class includes references to a
-    :class:`~flash.core.data.data_source.DataSource`, :class:`~flash.core.data.process.Preprocess`,
-    :class:`~flash.core.data.process.Postprocess`, and a :class:`~flash.core.data.callback.BaseDataFetcher`.
+    :class:`~flash.core.data.datasets.BaseDataset` and a :class:`~flash.core.data.callback.BaseDataFetcher`.
 
     Args:
         train_dataset: Dataset for training. Defaults to None.
         val_dataset: Dataset for validating model performance during training. Defaults to None.
         test_dataset: Dataset to test model performance. Defaults to None.
         predict_dataset: Dataset for predicting. Defaults to None.
-        preprocess: The :class:`~flash.core.data.process.Preprocess` to use when constructing the
-            :class:`~flash.core.data.data_pipeline.DataPipeline`. If ``None``, a
-            :class:`~flash.core.data.process.DefaultPreprocess` will be used.
-        postprocess: The :class:`~flash.core.data.process.Postprocess` to use when constructing the
-            :class:`~flash.core.data.data_pipeline.DataPipeline`. If ``None``, a plain
-            :class:`~flash.core.data.process.Postprocess` will be used.
         data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to attach to the
             :class:`~flash.core.data.process.Preprocess`. If ``None``, the output from
             :meth:`~flash.core.data.data_module.DataModule.configure_data_fetcher` will be used.
