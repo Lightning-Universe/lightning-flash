@@ -61,6 +61,7 @@ class SemanticSegmentation(ClassificationTask):
         learning_rate: Learning rate to use for training.
         multi_label: Whether the targets are multi-label or not.
         serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
+        postprocess: :class:`~flash.core.data.process.Postprocess` use for post processing samples.
     """
 
     postprocess_cls = SemanticSegmentationPostprocess

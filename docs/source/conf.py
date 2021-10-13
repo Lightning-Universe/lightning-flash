@@ -38,7 +38,7 @@ try:
 except ModuleNotFoundError:
 
     about = _load_py_module("__about__.py")
-    providers = _load_py_module("flash/core/utilities/providers.py")
+    providers = _load_py_module("core/utilities/providers.py")
 
 SPHINX_MOCK_REQUIREMENTS = int(os.environ.get("SPHINX_MOCK_REQUIREMENTS", True))
 
@@ -210,7 +210,7 @@ PACKAGE_MAPPING = {
     "pytorch-tabnet": "pytorch_tabnet",
     "pyDeprecate": "deprecate",
 }
-MOCK_PACKAGES = ["numpy", "PyYAML", "tqdm"]
+MOCK_PACKAGES = ["PyYAML", "tqdm"]
 if SPHINX_MOCK_REQUIREMENTS:
     # mock also base packages when we are on RTD since we don't install them there
     MOCK_PACKAGES += _package_list_from_file(os.path.join(_PATH_ROOT, "requirements.txt"))
