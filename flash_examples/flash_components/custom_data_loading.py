@@ -223,7 +223,7 @@ datamodule = DataModule(
 assert isinstance(datamodule.train_dataset, FlashDataset)
 assert isinstance(datamodule.predict_dataset, FlashDataset)
 
-# The ``num_classes`` value was set line 76.
+# The ``num_classes`` value was set line 89.
 assert datamodule.train_dataset.num_classes == 2
 
 # The ``num_classes`` value was set only for training as `self.training` was used,
