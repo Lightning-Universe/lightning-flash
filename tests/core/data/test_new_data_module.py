@@ -126,3 +126,10 @@ def test_data_module():
     trainer.validate(model, dm)
     trainer.test(model, dm)
     trainer.predict(model, dm)
+
+    class CustomDataModule(DataModule):
+        pass
+
+    CustomDataModule.register_flash_dataset("custom", TestDataset)
+    train_dataset, *_ = DataModule.create_flash_datasets("custom", range(10))
+    assert train_dataset[0] == 0

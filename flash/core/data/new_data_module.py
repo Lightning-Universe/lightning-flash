@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Optional, Tuple, Type, TYPE_CHECKING, Union
+from typing import Any, Optional, Tuple, Type, TYPE_CHECKING, Union
 
 import pytorch_lightning as pl
 import torch
@@ -19,19 +19,17 @@ from pytorch_lightning import LightningDataModule
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 from torch.utils.data.dataset import IterableDataset
 from torch.utils.data.sampler import Sampler
 
 import flash
-from flash.core.data.auto_dataset import BaseAutoDataset, IterableAutoDataset
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DefaultPreprocess, Postprocess
 from flash.core.data.datasets import BaseDataset
 from flash.core.data.preprocess_transform import PREPROCESS_TRANSFORM_TYPE, PreprocessTransform
-from flash.core.data.splits import SplitDataset
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
 
@@ -131,10 +129,6 @@ class DataModule(DataModule):
 
         LightningDataModule.__init__(self)
 
-    def _resolve_collate_fn(self, dataset: Dataset, running_stage: RunningStage) -> Optional[Callable]:
-        if isinstance(dataset, (BaseAutoDataset, SplitDataset)):
-            return self.data_pipeline.worker_preprocessor(running_stage)
-
     def _train_dataloader(self) -> DataLoader:
         train_ds: BaseDataset = self._train_ds
         collate_fn = train_ds.dataloader_collate_fn
@@ -146,7 +140,7 @@ class DataModule(DataModule):
 
         if self.sampler is None:
             sampler = None
-            shuffle = not isinstance(train_ds, (IterableDataset, IterableAutoDataset))
+            shuffle = not isinstance(train_ds, IterableDataset)
         else:
             sampler = self.sampler(train_ds)
 
@@ -225,7 +219,7 @@ class DataModule(DataModule):
         predict_ds: BaseDataset = self._predict_ds
         collate_fn = predict_ds.dataloader_collate_fn
 
-        if isinstance(predict_ds, IterableAutoDataset):
+        if isinstance(predict_ds, IterableDataset):
             batch_size = self.batch_size
         else:
             batch_size = min(self.batch_size, len(predict_ds) if len(predict_ds) > 0 else 1)
@@ -343,7 +337,7 @@ class DataModule(DataModule):
             )
 
     @classmethod
-    def register_flash_dataset(cls, enum: LightningEnum, flash_dataset_cls: Type[BaseDataset]) -> None:
+    def register_flash_dataset(cls, enum: Union[str, LightningEnum], flash_dataset_cls: Type[BaseDataset]) -> None:
         if cls.flash_datasets_registry is None:
             raise MisconfigurationException("The class attribute `flash_datasets_registry` should be set. ")
         cls.flash_datasets_registry(fn=flash_dataset_cls, name=enum)
