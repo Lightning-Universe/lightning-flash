@@ -19,12 +19,13 @@ from PIL import Image
 from pytorch_lightning import seed_everything
 from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
+from torch.utils.data import DataLoader
 from torch.utils.data._utils.collate import default_collate
 
 from flash import _PACKAGE_ROOT
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.datapipes import FlashDataPipes
-from flash.core.data.preprocess_transform import PreprocessTransform, PreprocessTransformPlacement
+from flash.core.data.preprocess_transform import PreprocessTransform
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import download_data
 
@@ -82,7 +83,7 @@ VAL_FOLDERS = [os.path.join(FOLDER_PATH, "ants"), os.path.join(FOLDER_PATH, "bee
 PREDICT_FOLDER = os.path.join(FOLDER_PATH, "ants")
 
 
-class ListFolders(FlashDataPipes):
+class ListImagesFromFolders(FlashDataPipes):
     def __init__(self, folders: List[str], running_stage: RunningStage):
         super().__init__(running_stage=running_stage)
         self.folders = folders
@@ -134,20 +135,25 @@ class PreprocessTransformDataPipes(FlashDataPipes):
     ):
         super().__init__(running_stage=running_stage)
 
-        self.data_pipe = data_pipe.map(
-            lambda x: self.transform[PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM](x)
-        ).batch(batch_size)
+        self.data_pipe = data_pipe.map(lambda x: self.transform.per_sample_transform(x)).batch(batch_size)
         self.transform = transform
 
     def process_data(self, list_of_samples: Any):
-        batch = self.transform[PreprocessTransformPlacement.COLLATE](list_of_samples)
+        batch = self.transform.collate(list_of_samples)
         return self.transform.per_batch_transform(batch)
 
 
-train_data_pipe = ListFolders.from_train_data(TRAIN_FOLDERS)
+train_data_pipe = ListImagesFromFolders.from_train_data(TRAIN_FOLDERS)
 train_data_pipe = LoadImage.from_train_data(train_data_pipe)
 train_data_pipe = PreprocessTransformDataPipes.from_train_data(
     train_data_pipe, batch_size=2, transform=ImageBaseTransform(running_stage=RunningStage.TRAINING)
 )
-batch = next(iter(train_data_pipe))
-print(batch)
+dataloader = DataLoader(train_data_pipe, collate_fn=lambda x: x)
+batch = next(iter(dataloader))
+breakpoint()
+# Out:
+# {
+#   <DefaultDataKeys.INPUT: 'input'>: tensor([[[[...]]]]),
+#   <DefaultDataKeys.TARGET: 'target'>: tensor([0, 0]),
+#   <DefaultDataKeys.METADATA: 'metadata'>: tensor([500, 500]), tensor([375, 500])]
+# }

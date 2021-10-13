@@ -22,6 +22,10 @@ from flash.core.utilities.imports import _TORCH_DATA_AVAILABLE
 
 if _TORCH_DATA_AVAILABLE:
     from torch.utils.data import IterDataPipe
+else:
+
+    class IterDataPipe:
+        pass
 
 
 class FlashDataPipes(Properties, IterDataPipe):
