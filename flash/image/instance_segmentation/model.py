@@ -13,11 +13,18 @@
 # limitations under the License.
 from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple, Union
 
+import torch
+from pytorch_lightning.utilities import rank_zero_info
+from torch.optim import Optimizer
+from torch.optim.lr_scheduler import _LRScheduler
+
 from flash.core.adapter import AdapterTask
+from flash.core.data.data_pipeline import DataPipeline
 from flash.core.data.process import Serializer
 from flash.core.data.serialization import Preds
 from flash.core.registry import FlashRegistry
 from flash.image.instance_segmentation.backbones import INSTANCE_SEGMENTATION_HEADS
+from flash.image.instance_segmentation.data import InstanceSegmentationPostProcess, InstanceSegmentationPreprocess
 
 
 class InstanceSegmentation(AdapterTask):
@@ -86,3 +93,16 @@ class InstanceSegmentation(AdapterTask):
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]) -> None:
         """This function is used only for debugging usage with CI."""
         # todo
+
+    def on_load_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
+        super().on_load_checkpoint(checkpoint)
+        # todo: currently the data pipeline for icevision is not serializable, so we re-create the pipeline.
+        if "data_pipeline" not in checkpoint:
+            rank_zero_info(
+                "Assigned Segmentation Data Pipeline for data processing. This is because a data-pipeline stored in "
+                "the model due to pickling issues. "
+                "If you'd like to change this, extend the InstanceSegmentation Task and override `on_load_checkpoint`."
+            )
+            self.data_pipeline = DataPipeline(
+                preprocess=InstanceSegmentationPreprocess(), postprocess=InstanceSegmentationPostProcess()
+            )
