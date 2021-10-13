@@ -300,12 +300,14 @@ class ImageClassificationDataModule(DataModule):
 ImageClassificationDataModule.register_flash_dataset(CustomDataFormat.MULTIPLE_FOLDERS, MultipleFoldersImageDataset)
 
 
-# Create the datamodule with your new constructor.
+# Create the datamodule with your new constructor. This is purely equivalent to the previous datamdoule creation.
 datamodule = ImageClassificationDataModule.from_multiple_folders(
     train_folders=TRAIN_FOLDERS,
     val_folders=VAL_FOLDERS,
     predict_folder=PREDICT_FOLDER,
     train_transform=DataTransform.RANDOM_ROTATION,
+    val_transform=DataTransform.BASE,
+    predict_transform=DataTransform.BASE,
     batch_size=2,
 )
 
