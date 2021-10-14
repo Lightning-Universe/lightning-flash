@@ -94,7 +94,7 @@ class TextDataSource(DataSource):
         if flash._IS_TESTING and not torch.cuda.is_available():
             hf_dataset = hf_dataset[:20]
 
-        return hf_dataset, other
+        return (hf_dataset, *other)
 
     def load_data(
         self,
@@ -177,7 +177,7 @@ class TextDataFrameDataSource(TextDataSource):
 class TextParquetDataSource(TextDataSource):
     def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Dataset, str, str]:
         file, *other = data
-        hf_dataset = Dataset.from_parquet(file)
+        hf_dataset = Dataset.from_parquet(str(file))
         return hf_dataset, *other
 
 

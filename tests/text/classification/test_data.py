@@ -127,7 +127,7 @@ def test_from_parquet(tmpdir):
     parquet_path = parquet_data(tmpdir)
     dm = TextClassificationData.from_parquet(
         "sentence",
-        "label",
+        "lab1",
         backbone=TEST_BACKBONE,
         train_file=parquet_path,
         val_file=parquet_path,
@@ -257,8 +257,8 @@ def test_from_data_frame_multilabel():
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_from_hf_dataset():
-    dm = TextClassificationData.from_data_frame(
+def test_from_hf_datasets():
+    dm = TextClassificationData.from_hf_datasets(
         "sentence",
         "lab1",
         backbone=TEST_BACKBONE,
@@ -283,8 +283,8 @@ def test_from_hf_dataset():
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_from_hf_dataset_multilabel():
-    dm = TextClassificationData.from_data_frame(
+def test_from_hf_datasets_multilabel():
+    dm = TextClassificationData.from_hf_datasets(
         "sentence",
         ["lab1", "lab2"],
         backbone=TEST_BACKBONE,
