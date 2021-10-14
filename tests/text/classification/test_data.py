@@ -262,9 +262,9 @@ def test_from_hf_datasets():
         "sentence",
         "lab1",
         backbone=TEST_BACKBONE,
-        train_data_frame=TEST_HF_DATASET_DATA,
-        val_data_frame=TEST_HF_DATASET_DATA,
-        test_data_frame=TEST_HF_DATASET_DATA,
+        train_hf_dataset=TEST_HF_DATASET_DATA,
+        val_hf_dataset=TEST_HF_DATASET_DATA,
+        test_hf_dataset=TEST_HF_DATASET_DATA,
         batch_size=1,
     )
 
@@ -288,9 +288,9 @@ def test_from_hf_datasets_multilabel():
         "sentence",
         ["lab1", "lab2"],
         backbone=TEST_BACKBONE,
-        train_data_frame=TEST_HF_DATASET_DATA,
-        val_data_frame=TEST_HF_DATASET_DATA,
-        test_data_frame=TEST_HF_DATASET_DATA,
+        train_hf_dataset=TEST_HF_DATASET_DATA,
+        val_hf_dataset=TEST_HF_DATASET_DATA,
+        test_hf_dataset=TEST_HF_DATASET_DATA,
         batch_size=1,
     )
 

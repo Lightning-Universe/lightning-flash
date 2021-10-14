@@ -215,6 +215,7 @@ class TextListDataSource(TextDataSource):
             if isinstance(target_list[0], List):
                 # multi-target_list
                 dataset.multi_label = True
+                hf_dataset = hf_dataset.map(partial(self._multilabel_target, target))  # NOTE: renames target column
                 dataset.num_classes = len(target_list[0])
                 self.set_state(LabelsState(target_list))
             else:
