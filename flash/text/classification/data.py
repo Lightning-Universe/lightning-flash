@@ -94,7 +94,7 @@ class TextDataSource(DataSource):
         if flash._IS_TESTING and not torch.cuda.is_available():
             hf_dataset = hf_dataset[:20]
 
-        return hf_dataset, *other
+        return hf_dataset, other
 
     def load_data(
         self,
@@ -199,7 +199,7 @@ class TextListDataSource(TextDataSource):
 
         # predicting
         hf_dataset = Dataset.from_dict({input: data})
-        
+
         return hf_dataset, input
 
     def load_data(
@@ -268,7 +268,9 @@ class TextClassificationPreprocess(Preprocess):
                 DefaultDataSources.CSV: TextCSVDataSource(self.backbone, max_length=max_length),
                 DefaultDataSources.JSON: TextJSONDataSource(self.backbone, max_length=max_length),
                 DefaultDataSources.PARQUET: TextParquetDataSource(self.backbone, max_length=max_length),
-                DefaultDataSources.HUGGINGFACE_DATASET: TextHuggingFaceDatasetDataSource(self.backbone, max_length=max_length),
+                DefaultDataSources.HUGGINGFACE_DATASET: TextHuggingFaceDatasetDataSource(
+                    self.backbone, max_length=max_length
+                ),
                 DefaultDataSources.DATAFRAME: TextDataFrameDataSource(self.backbone, max_length=max_length),
                 DefaultDataSources.LISTS: TextListDataSource(self.backbone, max_length=max_length),
                 DefaultDataSources.LABELSTUDIO: LabelStudioTextClassificationDataSource(
@@ -579,7 +581,7 @@ class TextClassificationData(DataModule):
         sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
-        """Creates a :class:`~flash.text.classification.data.TextClassificationData` object from the given 
+        """Creates a :class:`~flash.text.classification.data.TextClassificationData` object from the given
         Hugging Face datasets ``Dataset`` objects.
 
         Args:
