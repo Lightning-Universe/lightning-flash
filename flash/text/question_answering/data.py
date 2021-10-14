@@ -23,7 +23,6 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import torch
-from pytorch_lightning.trainer.states import RunningStage
 from torch import Tensor
 from torch.utils.data.sampler import Sampler
 
@@ -34,6 +33,7 @@ from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultData
 from flash.core.data.process import Postprocess, Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
+from flash.core.utilities.stages import RunningStage
 
 if _TEXT_AVAILABLE:
     import datasets

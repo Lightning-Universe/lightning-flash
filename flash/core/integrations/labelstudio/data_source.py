@@ -4,13 +4,13 @@ from pathlib import Path
 from typing import Any, Mapping, Optional, Sequence, TypeVar, Union
 
 import torch
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.cloud_io import get_filesystem
 
 from flash import DataSource
 from flash.core.data.auto_dataset import AutoDataset, IterableAutoDataset
 from flash.core.data.data_source import DefaultDataKeys, has_len
 from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE, _TEXT_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.stages import RunningStage
 
 if _TORCHVISION_AVAILABLE:
     from torchvision.datasets.folder import default_loader
