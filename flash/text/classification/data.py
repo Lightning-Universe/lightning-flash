@@ -94,7 +94,7 @@ class TextDataSource(DataSource):
         if flash._IS_TESTING and not torch.cuda.is_available():
             hf_dataset = hf_dataset[:20]
 
-        return (hf_dataset, *other) 
+        return (hf_dataset, *other)
 
     def load_data(
         self,
@@ -157,14 +157,14 @@ class TextCSVDataSource(TextDataSource):
     def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Dataset, str, str]:
         file, *other = data
         dataset_dict = load_dataset("csv", data_files={"train": str(file)})
-        return dataset_dict["train"], *other
+        return (dataset_dict["train"], *other)
 
 
 class TextJSONDataSource(TextDataSource):
     def to_hf_dataset(self, data: Tuple[str, str, str, str]) -> Tuple[Dataset, str, str]:
         file, *other, field = data
         dataset_dict = load_dataset("json", data_files={"train": str(file)}, field=field)
-        return dataset_dict["train"], *other
+        return (dataset_dict["train"], *other)
 
 
 class TextDataFrameDataSource(TextDataSource):
