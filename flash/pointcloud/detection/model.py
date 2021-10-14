@@ -42,7 +42,6 @@ class PointCloudObjectDetector(Task):
     pointcloud data.
 
     Args:
-        num_features: The number of features (elements) in the input data.
         num_classes: The number of classes (outputs) for this :class:`~flash.core.model.Task`.
         backbone: The backbone name (or a tuple of ``nn.Module``, output size) to use.
         backbone_kwargs: Any additional kwargs to pass to the backbone constructor.
@@ -55,11 +54,7 @@ class PointCloudObjectDetector(Task):
         metrics: Any metrics to use with this :class:`~flash.core.model.Task`. If ``None``, a default will be selected
             by the :class:`~flash.core.classification.ClassificationTask` depending on the ``multi_label`` argument.
         learning_rate: The learning rate for the optimizer.
-        multi_label: If ``True``, this will be treated as a multi-label classification problem.
         serializer: The :class:`~flash.core.data.process.Serializer` to use for prediction outputs.
-        lambda_loss_cls: The value to scale the loss classification.
-        lambda_loss_bbox: The value to scale the bounding boxes loss.
-        lambda_loss_dir: The value to scale the bounding boxes direction loss.
     """
 
     backbones: FlashRegistry = POINTCLOUD_OBJECT_DETECTION_BACKBONES
@@ -70,7 +65,6 @@ class PointCloudObjectDetector(Task):
         num_classes: int,
         backbone: Union[str, Tuple[nn.Module, int]] = "pointpillars_kitti",
         backbone_kwargs: Optional[Dict] = None,
-        head: Optional[nn.Module] = None,
         loss_fn: Optional[Callable] = None,
         optimizer: Union[Type[torch.optim.Optimizer], torch.optim.Optimizer] = torch.optim.Adam,
         optimizer_kwargs: Optional[Dict[str, Any]] = None,
@@ -79,9 +73,6 @@ class PointCloudObjectDetector(Task):
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-2,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = PointCloudObjectDetectorSerializer(),
-        lambda_loss_cls: float = 1.0,
-        lambda_loss_bbox: float = 1.0,
-        lambda_loss_dir: float = 1.0,
     ):
 
         super().__init__(

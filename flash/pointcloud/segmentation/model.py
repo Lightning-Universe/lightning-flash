@@ -73,10 +73,11 @@ class PointCloudSegmentation(ClassificationTask):
     pointcloud data.
 
     Args:
-        num_features: The number of features (elements) in the input data.
         num_classes: The number of classes (outputs) for this :class:`~flash.core.model.Task`.
         backbone: The backbone name (or a tuple of ``nn.Module``, output size) to use.
         backbone_kwargs: Any additional kwargs to pass to the backbone constructor.
+        head: a `nn.Module` to use on top of the backbone. The output dimension should match the `num_classes`
+            argument. If not set will default to a single linear layer.
         loss_fn: The loss function to use. If ``None``, a default will be selected by the
             :class:`~flash.core.classification.ClassificationTask` depending on the ``multi_label`` argument.
         optimizer: The optimizer or optimizer class to use.
