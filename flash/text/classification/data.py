@@ -88,12 +88,13 @@ class TextDataSource(DataSource):
         return element
 
     def _to_hf_dataset(self, data):
-        hf_dataset, input, target = self.to_hf_dataset(data)
+        """account for flash CI testing context"""
+        hf_dataset, *other = self.to_hf_dataset(data)
 
         if flash._IS_TESTING and not torch.cuda.is_available():
             hf_dataset = hf_dataset[:20]
 
-        return hf_dataset, input, target
+        return hf_dataset, *other
 
     def load_data(
         self,
@@ -102,9 +103,10 @@ class TextDataSource(DataSource):
     ) -> Dataset:
         """Loads data into HuggingFace datasets.Dataset"""
 
-        hf_dataset, input, target = self._to_hf_dataset(data)
+        hf_dataset, input, *other = self._to_hf_dataset(data)
 
         if not self.predicting:
+            target = other.pop()
             if isinstance(target, List):
                 # multi-target
                 dataset.multi_label = True
@@ -120,7 +122,7 @@ class TextDataSource(DataSource):
 
                 labels = self.get_state(LabelsState)
 
-                # convert labels to ids
+                # convert labels to ids (note: the target column get overwritten)
                 if labels is not None:
                     labels = labels.labels
                     label_to_class_mapping = {v: k for k, v in enumerate(labels)}
@@ -133,12 +135,13 @@ class TextDataSource(DataSource):
         hf_dataset = hf_dataset.map(partial(self._tokenize_fn, input=input), batched=True)
 
         # set format
-        hf_dataset.set_format("torch", columns=["input_ids", "attention_mask", DefaultDataKeys.TARGET])
+        hf_dataset = hf_dataset.remove_columns([input])  # just leave the numerical columns
+        hf_dataset.set_format("torch")
 
         return hf_dataset
 
     def predict_load_data(self, data: Any, dataset: AutoDataset):
-        return self.load_data(data, dataset, columns=["input_ids", "attention_mask"])
+        return self.load_data(data, dataset)
 
     def __getstate__(self):  # TODO: Find out why this is being pickled
         state = self.__dict__.copy()
@@ -152,50 +155,52 @@ class TextDataSource(DataSource):
 
 class TextCSVDataSource(TextDataSource):
     def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Dataset, str, str]:
-        file, input, target = data
+        file, *other = data
         dataset_dict = load_dataset("csv", data_files={"train": str(file)})
-        return dataset_dict["train"], input, target
+        return dataset_dict["train"], *other
 
 
 class TextJSONDataSource(TextDataSource):
     def to_hf_dataset(self, data: Tuple[str, str, str, str]) -> Tuple[Dataset, str, str]:
-        file, input, target, field = data
+        file, *other, field = data
         dataset_dict = load_dataset("json", data_files={"train": str(file)}, field=field)
-        return dataset_dict["train"], input, target
+        return dataset_dict["train"], *other
 
 
 class TextDataFrameDataSource(TextDataSource):
     def to_hf_dataset(self, data: Tuple[DataFrame, str, str]) -> Tuple[Dataset, str, str]:
-        df, input, target = data
+        df, *other = data
         hf_dataset = Dataset.from_pandas(df)
-        return hf_dataset, input, target
+        return hf_dataset, *other
 
 
 class TextParquetDataSource(TextDataSource):
     def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Dataset, str, str]:
-        file, input, target = data
+        file, *other = data
         hf_dataset = Dataset.from_parquet(file)
-        return hf_dataset, input, target
+        return hf_dataset, *other
 
 
 class TextHuggingFaceDatasetDataSource(TextDataSource):
     def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Dataset, str, str]:
-        hf_dataset, input, target = data
-        return hf_dataset, input, target
+        hf_dataset, *other = data
+        return hf_dataset, *other
 
 
 class TextListDataSource(TextDataSource):
     def to_hf_dataset(self, data: Tuple[List[str], List[str]]) -> Tuple[Dataset, List[str], List[str]]:
-        input_list, target_list = data
         input = "input"
-        target = "labels"
 
-        if target_list:
+        if isinstance(data, tuple):
+            input_list, target_list = data
+            target = "labels"
             hf_dataset = Dataset.from_dict({input: input_list, target: target_list})
-        else:
-            # predicting
-            hf_dataset = Dataset.from_dict({"input": input})
-        return hf_dataset, input, target, input_list, target_list
+            return hf_dataset, input, target, target_list
+
+        # predicting
+        hf_dataset = Dataset.from_dict({input: data})
+        
+        return hf_dataset, input
 
     def load_data(
         self,
@@ -203,9 +208,10 @@ class TextListDataSource(TextDataSource):
         dataset: Optional[Any] = None,
     ) -> Union[Sequence[Mapping[str, Any]]]:
 
-        hf_dataset, input, target, _, target_list = self.to_hf_dataset(data)
+        hf_dataset, input, *other = self._to_hf_dataset(data)
 
         if not self.predicting:
+            target, target_list = other
             if isinstance(target_list[0], List):
                 # multi-target_list
                 dataset.multi_label = True
@@ -233,7 +239,8 @@ class TextListDataSource(TextDataSource):
         hf_dataset = hf_dataset.map(partial(self._tokenize_fn, input=input), batched=True)
 
         # set format
-        hf_dataset.set_format("torch", columns=["input_ids", "attention_mask", DefaultDataKeys.TARGET])
+        hf_dataset = hf_dataset.remove_columns([input])  # just leave the numerical columns
+        hf_dataset.set_format("torch")
 
         return hf_dataset
 
@@ -260,6 +267,8 @@ class TextClassificationPreprocess(Preprocess):
             data_sources={
                 DefaultDataSources.CSV: TextCSVDataSource(self.backbone, max_length=max_length),
                 DefaultDataSources.JSON: TextJSONDataSource(self.backbone, max_length=max_length),
+                DefaultDataSources.PARQUET: TextParquetDataSource(self.backbone, max_length=max_length),
+                DefaultDataSources.HUGGINGFACE_DATASET: TextHuggingFaceDatasetDataSource(self.backbone, max_length=max_length),
                 DefaultDataSources.DATAFRAME: TextDataFrameDataSource(self.backbone, max_length=max_length),
                 DefaultDataSources.LISTS: TextListDataSource(self.backbone, max_length=max_length),
                 DefaultDataSources.LABELSTUDIO: LabelStudioTextClassificationDataSource(
@@ -450,6 +459,165 @@ class TextClassificationData(DataModule):
             (val_data, val_targets),
             (test_data, test_targets),
             predict_data,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_fetcher=data_fetcher,
+            preprocess=preprocess,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            sampler=sampler,
+            **preprocess_kwargs,
+        )
+
+    @classmethod
+    def from_parquet(
+        cls,
+        input_field: str,
+        target_fields: Optional[Union[str, Sequence[str]]] = None,
+        train_file: Optional[str] = None,
+        val_file: Optional[str] = None,
+        test_file: Optional[str] = None,
+        predict_file: Optional[str] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_fetcher: Optional[BaseDataFetcher] = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: int = 0,
+        sampler: Optional[Type[Sampler]] = None,
+        **preprocess_kwargs: Any,
+    ) -> "DataModule":
+        """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given PARQUET files using the
+        :class:`~flash.core.data.data_source.DataSource`
+        of name :attr:`~flash.core.data.data_source.DefaultDataSources.PARQUET`
+        from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
+
+        Args:
+            input_fields: The field or fields (columns) in the PARQUET file to use for the input.
+            target_fields: The field or fields (columns) in the PARQUET file to use for the target.
+            train_file: The PARQUET file containing the training data.
+            val_file: The PARQUET file containing the validation data.
+            test_file: The PARQUET file containing the testing data.
+            predict_file: The PARQUET file containing the data to use when predicting.
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`.
+            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+                will be constructed and used.
+            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            sampler: The ``sampler`` to use for the ``train_dataloader``.
+            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
+                if ``preprocess = None``.
+
+        Returns:
+            The constructed data module.
+
+        Examples::
+
+            data_module = DataModule.from_parquet(
+                "input",
+                "target",
+                train_file="train_data.parquet",
+                train_transform={
+                    "to_tensor_transform": torch.as_tensor,
+                },
+            )
+        """
+        return cls.from_data_source(
+            DefaultDataSources.PARQUET,
+            (train_file, input_field, target_fields),
+            (val_file, input_field, target_fields),
+            (test_file, input_field, target_fields),
+            (predict_file, input_field, target_fields),
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_fetcher=data_fetcher,
+            preprocess=preprocess,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            sampler=sampler,
+            **preprocess_kwargs,
+        )
+
+    @classmethod
+    def from_hf_datasets(
+        cls,
+        input_field: str,
+        target_fields: Union[str, Sequence[str]],
+        train_hf_dataset: Optional[Dataset] = None,
+        val_hf_dataset: Optional[Dataset] = None,
+        test_hf_dataset: Optional[Dataset] = None,
+        predict_hf_dataset: Optional[Dataset] = None,
+        train_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_fetcher: Optional[BaseDataFetcher] = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: int = 0,
+        sampler: Optional[Type[Sampler]] = None,
+        **preprocess_kwargs: Any,
+    ) -> "DataModule":
+        """Creates a :class:`~flash.text.classification.data.TextClassificationData` object from the given 
+        Hugging Face datasets ``Dataset`` objects.
+
+        Args:
+            input_field: The field (column) in the pandas ``Dataset`` to use for the input.
+            target_fields: The field or fields (columns) in the pandas ``Dataset`` to use for the target.
+            train_hf_dataset: The pandas ``Dataset`` containing the training data.
+            val_hf_dataset: The pandas ``Dataset`` containing the validation data.
+            test_hf_dataset: The pandas ``Dataset`` containing the testing data.
+            predict_hf_dataset: The pandas ``Dataset`` containing the data to use when predicting.
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`.
+            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+                will be constructed and used.
+            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            sampler: The ``sampler`` to use for the ``train_dataloader``.
+            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
+                if ``preprocess = None``.
+
+        Returns:
+            The constructed data module.
+        """
+        return cls.from_data_source(
+            DefaultDataSources.HUGGINGFACE_DATASET,
+            (train_hf_dataset, input_field, target_fields),
+            (val_hf_dataset, input_field, target_fields),
+            (test_hf_dataset, input_field, target_fields),
+            (predict_hf_dataset, input_field, target_fields),
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,
