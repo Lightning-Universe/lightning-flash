@@ -30,6 +30,8 @@ from flash.core.data.data_source import (
     TensorDataSource,
 )
 from flash.core.data.process import Deserializer
+from flash.core.data_v2.datasets import PathsDataset
+from flash.core.data_v2.preprocess_transform import PreprocessTransform
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, Image, requires
 
 if _TORCHVISION_AVAILABLE:

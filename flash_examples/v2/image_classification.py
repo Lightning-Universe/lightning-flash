@@ -22,8 +22,7 @@ from flash.image.classification.model_v2 import ImageClassifier
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./data")
 
 datamodule = ImageClassificationData.from_folders(
-    train_folder="data/hymenoptera_data/train/",
-    val_folder="data/hymenoptera_data/val/",
+    train_folder="data/hymenoptera_data/train/", val_folder="data/hymenoptera_data/val/", batch_size=2
 )
 
 # 2. Build the task

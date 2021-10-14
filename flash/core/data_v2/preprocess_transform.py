@@ -24,7 +24,7 @@ from flash.core.data.data_pipeline import _Preprocessor, DataPipeline
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.properties import Properties
 from flash.core.data.states import CollateFn
-from flash.core.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX
+from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.registry import FlashRegistry
 
 PREPROCESS_TRANSFORM_TYPE = Optional[
@@ -278,12 +278,12 @@ class PreprocessTransform(Properties):
         if transform is None:
             return transform
 
-        keys_diff = set(transform.keys()).difference([v for v in PreprocessTransformPlacement])
+        keys = [v for v in PreprocessTransformPlacement]
+
+        keys_diff = set(transform.keys()).difference(keys)
 
         if len(keys_diff) > 0:
-            raise MisconfigurationException(
-                f"{stage}_transform contains {keys_diff}. Only {_PREPROCESS_FUNCS} keys are supported."
-            )
+            raise MisconfigurationException(f"{stage}_transform contains {keys_diff}. Only {keys} keys are supported.")
 
         is_per_batch_transform_in = "per_batch_transform" in transform
         is_per_sample_transform_on_device_in = "per_sample_transform_on_device" in transform

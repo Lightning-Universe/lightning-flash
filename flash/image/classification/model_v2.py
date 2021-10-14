@@ -11,157 +11,228 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from types import FunctionType
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Mapping, Optional, Tuple, Union
 
 import torch
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torch import nn
-from torch.optim.lr_scheduler import _LRScheduler
-from torchmetrics import Metric
 
-from flash.core.classification import ClassificationAdapterTask, Labels
-from flash.core.data.process import Serializer
+from flash.core.data.process import (
+    Deserializer,
+    DeserializerMapping,
+    Postprocess,
+    Preprocess,
+    Serializer,
+    SerializerMapping,
+)
+from flash.core.data_v2.data_pipeline import DataPipeline, DataPipelineState
 from flash.core.registry import FlashRegistry
-from flash.image.classification.adapters import TRAINING_STRATEGIES
-from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES
+from flash.image.classification.model import ImageClassifier
 
 
-class ImageClassifier(ClassificationAdapterTask):
-    """The ``ImageClassifier`` is a :class:`~flash.Task` for classifying images. For more details, see
-    :ref:`image_classification`. The ``ImageClassifier`` also supports multi-label classification with
-    ``multi_label=True``. For more details, see :ref:`image_classification_multi_label`.
+class ImageClassifier(ImageClassifier):
 
-    You can register custom backbones to use with the ``ImageClassifier``:
-    ::
+    _flash_datasets_registry: Optional[FlashRegistry]
 
-        from torch import nn
-        import torchvision
-        from flash.image import ImageClassifier
+    @staticmethod
+    def _resolve(
+        old_deserializer: Optional[Deserializer],
+        old_postprocess: Optional[Postprocess],
+        old_serializer: Optional[Serializer],
+        new_deserializer: Optional[Deserializer],
+        new_postprocess: Optional[Postprocess],
+        new_serializer: Optional[Serializer],
+    ) -> Tuple[Optional[Deserializer], Optional[Preprocess], Optional[Postprocess], Optional[Serializer]]:
+        """Resolves the correct :class:`~flash.core.data.process.Preprocess`, :class:`~flash.core.data.process.Postprocess`, and
+        :class:`~flash.core.data.process.Serializer` to use, choosing ``new_*`` if it is not None or a base class
+        (:class:`~flash.core.data.process.Preprocess`, :class:`~flash.core.data.process.Postprocess`, or
+        :class:`~flash.core.data.process.Serializer`) and ``old_*`` otherwise.
 
-        # This is useful to create new backbone and make them accessible from `ImageClassifier`
-        @ImageClassifier.backbones(name="resnet18")
-        def fn_resnet(pretrained: bool = True):
-            model = torchvision.models.resnet18(pretrained)
-            # remove the last two layers & turn it into a Sequential model
-            backbone = nn.Sequential(*list(model.children())[:-2])
-            num_features = model.fc.in_features
-            # backbones need to return the num_features to build the head
-            return backbone, num_features
+        Args:
+            old_preprocess: :class:`~flash.core.data.process.Preprocess` to be overridden.
+            old_postprocess: :class:`~flash.core.data.process.Postprocess` to be overridden.
+            old_serializer: :class:`~flash.core.data.process.Serializer` to be overridden.
+            new_preprocess: :class:`~flash.core.data.process.Preprocess` to override with.
+            new_postprocess: :class:`~flash.core.data.process.Postprocess` to override with.
+            new_serializer: :class:`~flash.core.data.process.Serializer` to override with.
 
-    Args:
-        num_classes: Number of classes to classify.
-        backbone: A string or (model, num_features) tuple to use to compute image features, defaults to ``"resnet18"``.
-        pretrained: A bool or string to specify the pretrained weights of the backbone, defaults to ``True``
-            which loads the default supervised pretrained weights.
-        loss_fn: Loss function for training, defaults to :func:`torch.nn.functional.cross_entropy`.
-        optimizer: Optimizer to use for training, defaults to :class:`torch.optim.SGD`.
-        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
-        scheduler: The scheduler or scheduler class to use.
-        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
-        metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
-            package, a custom metric inheriting from `torchmetrics.Metric`, a callable function or a list/dict
-            containing a combination of the aforementioned. In all cases, each metric needs to have the signature
-            `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
-        learning_rate: Learning rate to use for training, defaults to ``1e-3``.
-        multi_label: Whether the targets are multi-label or not.
-        serializer: A instance of :class:`~flash.core.data.process.Serializer` or a mapping consisting of such
-            to use when serializing prediction outputs.
-        training_strategy: string indicating the training strategy. Adjust if you want to use `learn2learn`
-            for doing meta-learning research
-        training_strategy_kwargs: Additional kwargs for setting the training strategy
-    """
+        Returns:
+            The resolved :class:`~flash.core.data.process.Preprocess`, :class:`~flash.core.data.process.Postprocess`,
+            and :class:`~flash.core.data.process.Serializer`.
+        """
+        preprocess = None
+        deserializer = old_deserializer
+        if new_deserializer is not None and type(new_deserializer) != Deserializer:
+            deserializer = new_deserializer
 
-    backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES
-    training_strategies: FlashRegistry = TRAINING_STRATEGIES
+        postprocess = old_postprocess
+        if new_postprocess is not None and type(new_postprocess) != Postprocess:
+            postprocess = new_postprocess
 
-    required_extras: str = "image"
+        serializer = old_serializer
+        if new_serializer is not None and type(new_serializer) != Serializer:
+            serializer = new_serializer
 
-    def __init__(
+        return deserializer, preprocess, postprocess, serializer
+
+    @torch.jit.unused
+    @property
+    def deserializer(self) -> Optional[Deserializer]:
+        return self._deserializer
+
+    @deserializer.setter
+    def deserializer(self, deserializer: Union[Deserializer, Mapping[str, Deserializer]]):
+        if isinstance(deserializer, Mapping):
+            deserializer = DeserializerMapping(deserializer)
+        self._deserializer = deserializer
+
+    @torch.jit.unused
+    @property
+    def serializer(self) -> Optional[Serializer]:
+        """The current :class:`.Serializer` associated with this model.
+
+        If this property was set to a mapping
+        (e.g. ``.serializer = {'output1': SerializerOne()}``) then this will be a :class:`.MappingSerializer`.
+        """
+        return self._serializer
+
+    @torch.jit.unused
+    @serializer.setter
+    def serializer(self, serializer: Union[Serializer, Mapping[str, Serializer]]):
+        if isinstance(serializer, Mapping):
+            serializer = SerializerMapping(serializer)
+        self._serializer = serializer
+
+    def build_data_pipeline(
         self,
-        num_classes: Optional[int] = None,
-        backbone: Union[str, Tuple[nn.Module, int]] = "resnet18",
-        backbone_kwargs: Optional[Dict] = None,
-        head: Optional[Union[FunctionType, nn.Module]] = None,
-        pretrained: Union[bool, str] = True,
-        loss_fn: Optional[Callable] = None,
-        optimizer: Union[Type[torch.optim.Optimizer], torch.optim.Optimizer] = torch.optim.Adam,
-        optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
-        metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
-        learning_rate: float = 1e-3,
-        multi_label: bool = False,
-        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
-        training_strategy: Optional[str] = "default",
-        training_strategy_kwargs: Optional[Dict[str, Any]] = None,
-    ):
+        data_source: Optional[str] = None,
+        deserializer: Optional[Deserializer] = None,
+        data_pipeline: Optional[DataPipeline] = None,
+    ) -> Optional[DataPipeline]:
+        """Build a :class:`.DataPipeline` incorporating available
+        :class:`~flash.core.data.process.Preprocess` and :class:`~flash.core.data.process.Postprocess`
+        objects. These will be overridden in the following resolution order (lowest priority first):
 
-        self.save_hyperparameters()
+        - Lightning ``Datamodule``, either attached to the :class:`.Trainer` or to the :class:`.Task`.
+        - :class:`.Task` defaults given to :meth:`.Task.__init__`.
+        - :class:`.Task` manual overrides by setting :py:attr:`~data_pipeline`.
+        - :class:`.DataPipeline` passed to this method.
 
-        if not backbone_kwargs:
-            backbone_kwargs = {}
+        Args:
+            data_source: A string that indicates the format of the data source to use which will override
+                the current data source format used.
+            deserializer: deserializer to use
+            data_pipeline: Optional highest priority source of
+                :class:`~flash.core.data.process.Preprocess` and :class:`~flash.core.data.process.Postprocess`.
 
-        if not training_strategy_kwargs:
-            training_strategy_kwargs = {}
+        Returns:
+            The fully resolved :class:`.DataPipeline`.
+        """
+        deserializer, old_data_source, preprocess, postprocess, serializer = None, None, None, None, None
 
-        if training_strategy == "default":
-            if not num_classes:
-                raise MisconfigurationException("`num_classes` should be provided.")
-        else:
-            num_classes = training_strategy_kwargs.get("ways", None)
-            if not num_classes:
-                raise MisconfigurationException(
-                    "`training_strategy_kwargs` should contain `ways`, `meta_batch_size` and `shots`."
-                )
+        # Datamodule
+        datamodule = None
+        if self.trainer is not None and hasattr(self.trainer, "datamodule"):
+            datamodule = self.trainer.datamodule
+        elif getattr(self, "datamodule", None) is not None:
+            datamodule = self.datamodule
 
-        if isinstance(backbone, tuple):
-            backbone, num_features = backbone
-        else:
-            backbone, num_features = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
+        datamodule.data_pipeline
 
-        head = head(num_features, num_classes) if isinstance(head, FunctionType) else head
-        head = head or nn.Sequential(
-            nn.Linear(num_features, num_classes),
+        if getattr(datamodule, "data_pipeline", None) is not None:
+            old_data_source = getattr(datamodule.data_pipeline, "data_source", None)
+            preprocess = getattr(datamodule.data_pipeline, "_preprocess_pipeline", None)
+            postprocess = getattr(datamodule.data_pipeline, "_postprocess_pipeline", None)
+            serializer = getattr(datamodule.data_pipeline, "_serializer", None)
+            deserializer = getattr(datamodule.data_pipeline, "_deserializer", None)
+
+        # Defaults / task attributes
+        deserializer, preprocess, postprocess, serializer = self._resolve(
+            deserializer,
+            preprocess,
+            postprocess,
+            serializer,
+            self._deserializer,
+            self._preprocess,
+            self._postprocess,
+            self._serializer,
         )
 
-        adapter_from_class = self.training_strategies.get(training_strategy)
-        adapter = adapter_from_class(
-            task=self,
-            num_classes=num_classes,
-            backbone=backbone,
-            head=head,
-            pretrained=pretrained,
-            **training_strategy_kwargs,
+        # Datapipeline
+        if data_pipeline is not None:
+            deserializer, preprocess, postprocess, serializer = self._resolve(
+                deserializer,
+                preprocess,
+                postprocess,
+                serializer,
+                getattr(data_pipeline, "_deserializer", None),
+                getattr(data_pipeline, "_preprocess_pipeline", None),
+                getattr(data_pipeline, "_postprocess_pipeline", None),
+                getattr(data_pipeline, "_serializer", None),
+            )
+
+        data_source = data_source or old_data_source
+
+        if deserializer is None or type(deserializer) is Deserializer:
+            deserializer = getattr(preprocess, "deserializer", deserializer)
+
+        data_pipeline = DataPipeline(None, postprocess, deserializer, serializer)
+        self._data_pipeline_state = self._data_pipeline_state or DataPipelineState()
+        self.attach_data_pipeline_state(self._data_pipeline_state)
+        self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)
+        return data_pipeline
+
+    @torch.jit.unused
+    @property
+    def data_pipeline(self) -> DataPipeline:
+        """The current :class:`.DataPipeline`.
+
+        If set, the new value will override the :class:`.Task` defaults. See
+        :py:meth:`~build_data_pipeline` for more details on the resolution order.
+        """
+        return self.build_data_pipeline()
+
+    @torch.jit.unused
+    @data_pipeline.setter
+    def data_pipeline(self, data_pipeline: Optional[DataPipeline]) -> None:
+        breakpoint()
+        self._deserializer, self._preprocess, self._postprocess, self.serializer = self._resolve(
+            self._deserializer,
+            self._preprocess,
+            self._postprocess,
+            self._serializer,
+            getattr(data_pipeline, "_deserializer", None),
+            getattr(data_pipeline, "_preprocess_pipeline", None),
+            getattr(data_pipeline, "_postprocess_pipeline", None),
+            getattr(data_pipeline, "_serializer", None),
         )
 
-        super().__init__(
-            adapter,
-            num_classes=num_classes,
-            loss_fn=loss_fn,
-            metrics=metrics,
-            learning_rate=learning_rate,
-            optimizer=optimizer,
-            optimizer_kwargs=optimizer_kwargs,
-            scheduler=scheduler,
-            scheduler_kwargs=scheduler_kwargs,
-            multi_label=multi_label,
-            serializer=serializer or Labels(multi_label=multi_label),
-        )
+        # self._preprocess.state_dict()
+        if getattr(self._preprocess, "_ddp_params_and_buffers_to_ignore", None):
+            self._ddp_params_and_buffers_to_ignore = self._preprocess._ddp_params_and_buffers_to_ignore
 
-    @classmethod
-    def available_pretrained_weights(cls, backbone: str):
-        result = cls.backbones.get(backbone, with_metadata=True)
-        pretrained_weights = None
+    @torch.jit.unused
+    @property
+    def preprocess(self) -> Preprocess:
+        return getattr(self.data_pipeline, "_preprocess_pipeline", None)
 
-        if "weights_paths" in result["metadata"]:
-            pretrained_weights = list(result["metadata"]["weights_paths"].keys())
+    @torch.jit.unused
+    @property
+    def postprocess(self) -> Postprocess:
+        return getattr(self.data_pipeline, "_postprocess_pipeline", None)
 
-        return pretrained_weights
+    def on_train_dataloader(self) -> None:
+        pass
 
-    def _ci_benchmark_fn(self, history: List[Dict[str, Any]]):
-        """This function is used only for debugging usage with CI."""
-        if self.hparams.multi_label:
-            assert history[-1]["val_f1"] > 0.40, history[-1]["val_f1"]
-        else:
-            assert history[-1]["val_accuracy"] > 0.85, history[-1]["val_accuracy"]
+    def on_val_dataloader(self) -> None:
+        pass
+
+    def on_test_dataloader(self, *_) -> None:
+        pass
+
+    def on_predict_dataloader(self) -> None:
+        pass
+
+    def on_predict_end(self) -> None:
+        pass
+
+    def on_fit_end(self) -> None:
+        pass

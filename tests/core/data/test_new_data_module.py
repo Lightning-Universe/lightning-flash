@@ -19,8 +19,8 @@ from pytorch_lightning.trainer.states import RunningStage
 from torch.utils.data.dataloader import default_collate
 
 from flash import Task, Trainer
+from flash.core.data_v2.base_dataset import FlashDataset
 from flash.core.data_v2.data_module import DataModule
-from flash.core.data_v2.datasets import FlashDataset
 from flash.core.data_v2.preprocess_transform import PreprocessTransform
 
 

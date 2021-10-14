@@ -14,6 +14,7 @@
 import functools
 import inspect
 import weakref
+from dataclasses import dataclass
 from functools import partial
 from typing import Any, Callable, Dict, Optional, Sequence, Set, Tuple, Type, TYPE_CHECKING, Union
 
@@ -30,11 +31,19 @@ from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.data_source import DataSource
 from flash.core.data.process import DefaultPreprocess, Deserializer, Postprocess, Preprocess, Serializer
 from flash.core.data.utils import _POSTPROCESS_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
-from flash.core.data_v2.datasets import BaseDataset
+from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_4_3
 
 if TYPE_CHECKING:
     from flash.core.model import Task
+
+
+@dataclass
+class DatasetHolder:
+
+    flash_datasets_registry: FlashRegistry
+    flash_kwargs: Any
+    dataset_state: DataPipelineState
 
 
 class DataPipeline:
@@ -61,7 +70,7 @@ class DataPipeline:
 
     def __init__(
         self,
-        dataset: Optional[BaseDataset] = None,
+        dataset: Optional[DatasetHolder] = None,
         postprocess: Optional[Postprocess] = None,
         deserializer: Optional[Deserializer] = None,
         serializer: Optional[Serializer] = None,

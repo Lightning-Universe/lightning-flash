@@ -480,6 +480,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         data_pipeline = self.build_data_pipeline(data_source or "default", deserializer, data_pipeline)
         dataset = data_pipeline.data_source.generate_dataset(x, running_stage)
         dataloader = self.process_predict_dataset(dataset)
+        breakpoint()
         x = list(dataloader.dataset)
         x = data_pipeline.worker_preprocessor(running_stage, collate_fn=dataloader.collate_fn)(x)
         # todo (tchaton): Remove this when sync with Lightning master.
@@ -931,23 +932,3 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         composition = Composition(predict=comp, TESTING=flash._IS_TESTING)
         composition.serve(host=host, port=port)
         return composition
-
-
-class TaskV2(Task):
-    def on_train_dataloader(self) -> None:
-        pass
-
-    def on_val_dataloader(self) -> None:
-        pass
-
-    def on_test_dataloader(self, *_) -> None:
-        pass
-
-    def on_predict_dataloader(self) -> None:
-        pass
-
-    def on_predict_end(self) -> None:
-        pass
-
-    def on_fit_end(self) -> None:
-        pass

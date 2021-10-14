@@ -16,9 +16,12 @@ from typing import Callable, Dict, Tuple
 
 import torch
 from torch import nn
+from torch.utils.data.dataloader import default_collate
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.transforms import ApplyToKeys, kornia_collate, merge_transforms
+from flash.core.data_v2.preprocess_transform import PreprocessTransform, PreprocessTransformPlacement
+from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _ALBUMENTATIONS_AVAILABLE, _KORNIA_AVAILABLE, _TORCHVISION_AVAILABLE, requires
 
 if _KORNIA_AVAILABLE:
@@ -50,13 +53,20 @@ def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
     if _KORNIA_AVAILABLE and os.getenv("FLASH_TESTING", "0") != "1":
         #  Better approach as all transforms are applied on tensor directly
         return {
-            "to_tensor_transform": nn.Sequential(
-                ApplyToKeys(DefaultDataKeys.INPUT, torchvision.transforms.ToTensor()),
+            "per_sample_transform": nn.Sequential(
+                ApplyToKeys(
+                    DefaultDataKeys.INPUT,
+                    T.Compose(
+                        [
+                            torchvision.transforms.ToTensor(),
+                            K.geometry.Resize(image_size),
+                            K.augmentation.Normalize(
+                                torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])
+                            ),
+                        ]
+                    ),
+                ),
                 ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor),
-            ),
-            "post_tensor_transform": ApplyToKeys(
-                DefaultDataKeys.INPUT,
-                K.geometry.Resize(image_size),
             ),
             "collate": kornia_collate,
             "per_batch_transform_on_device": ApplyToKeys(
@@ -65,14 +75,18 @@ def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
             ),
         }
     return {
-        "pre_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, T.Resize(image_size)),
-        "to_tensor_transform": nn.Sequential(
-            ApplyToKeys(DefaultDataKeys.INPUT, torchvision.transforms.ToTensor()),
+        "per_sample_transform": nn.Sequential(
+            ApplyToKeys(
+                DefaultDataKeys.INPUT,
+                T.Compose(
+                    [
+                        torchvision.transforms.ToTensor(),
+                        T.Resize(image_size),
+                        T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+                    ]
+                ),
+            ),
             ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor),
-        ),
-        "post_tensor_transform": ApplyToKeys(
-            DefaultDataKeys.INPUT,
-            T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
         ),
         "collate": kornia_collate,
     }
@@ -83,8 +97,60 @@ def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]
     if _KORNIA_AVAILABLE and os.getenv("FLASH_TESTING", "0") != "1":
         #  Better approach as all transforms are applied on tensor directly
         transforms = {
-            "post_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, K.augmentation.RandomHorizontalFlip()),
+            "per_sample_transform": ApplyToKeys(DefaultDataKeys.INPUT, K.augmentation.RandomHorizontalFlip()),
         }
     else:
-        transforms = {"pre_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, T.RandomHorizontalFlip())}
+        transforms = {"per_sample_transform": ApplyToKeys(DefaultDataKeys.INPUT, T.RandomHorizontalFlip())}
     return merge_transforms(default_transforms(image_size), transforms)
+
+
+class DefaultImageClassificationPreprocessTransform(PreprocessTransform):
+    def configure_transforms(
+        self, image_size: Tuple[int, int] = (196, 196)
+    ) -> Dict[PreprocessTransformPlacement, Callable]:
+        if _KORNIA_AVAILABLE and os.getenv("FLASH_TESTING", "0") != "1":
+            #  Better approach as all transforms are applied on tensor directly
+            return {
+                PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: nn.Sequential(
+                    ApplyToKeys(
+                        DefaultDataKeys.INPUT,
+                        T.Compose(
+                            [
+                                torchvision.transforms.ToTensor(),
+                                K.geometry.Resize(image_size),
+                                K.augmentation.Normalize(
+                                    torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])
+                                ),
+                            ]
+                            + (self.training) * [K.augmentation.RandomHorizontalFlip()]
+                        ),
+                    ),
+                    ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor),
+                ),
+                PreprocessTransformPlacement.COLLATE: kornia_collate,
+                PreprocessTransformPlacement.PER_BATCH_TRANSFORM_ON_DEVICE: ApplyToKeys(
+                    DefaultDataKeys.INPUT,
+                    K.augmentation.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
+                ),
+            }
+        return {
+            PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: nn.Sequential(
+                ApplyToKeys(
+                    DefaultDataKeys.INPUT,
+                    T.Compose(
+                        [
+                            torchvision.transforms.ToTensor(),
+                            T.Resize(image_size),
+                            T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+                        ]
+                        + (self.training) * [T.RandomHorizontalFlip()]
+                    ),
+                ),
+                ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor),
+            ),
+            PreprocessTransformPlacement.COLLATE: default_collate,
+        }
+
+
+IMAGE_CLASSIFICATION_REGISTRY = FlashRegistry("transforms")
+IMAGE_CLASSIFICATION_REGISTRY(name="default", fn=DefaultImageClassificationPreprocessTransform)
