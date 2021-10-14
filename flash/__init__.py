@@ -23,7 +23,7 @@ if _TORCH_AVAILABLE:
     from flash.core.data.data_module import DataModule  # noqa: E402
     from flash.core.data.data_source import DataSource
     from flash.core.data.datasets import FlashDataset, FlashIterableDataset
-    from flash.core.data.preprocess_transform import PreprocessTransform
+    from flash.core.data.input_transform import InputTransform
     from flash.core.data.process import Postprocess, Preprocess, Serializer
     from flash.core.model import Task  # noqa: E402
     from flash.core.trainer import Trainer  # noqa: E402
@@ -45,7 +45,7 @@ if _TORCH_AVAILABLE:
         "FlashDataset",
         "FlashIterableDataset",
         "Preprocess",
-        "PreprocessTransform",
+        "InputTransform",
         "Postprocess",
         "Serializer",
         "Task",

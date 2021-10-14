@@ -18,10 +18,9 @@ from typing import Any, Dict, List
 import torchvision.transforms as T
 from PIL import Image
 from pytorch_lightning import seed_everything
-from pytorch_lightning.utilities.enums import LightningEnum
 from torch.utils.data._utils.collate import default_collate
 
-from flash import _PACKAGE_ROOT, FlashDataset, PreprocessTransform
+from flash import _PACKAGE_ROOT, FlashDataset, InputTransform
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import download_data
@@ -43,24 +42,7 @@ download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", ROO
 
 
 #############################################################################################
-#            Step 1 / 5: Create an enum to describe your new loading mechanism              #
-#############################################################################################
-
-
-class CustomDataTransform(LightningEnum):
-
-    BASE = "base"
-    RANDOM_ROTATION = "random_rotation"
-    RANDOM_90_DEG_ROTATION = "random_90_def_rotation"
-
-
-class CustomDataFormat(LightningEnum):
-
-    MULTIPLE_FOLDERS = "multiple_folders"
-
-
-#############################################################################################
-#                         Step 2 / 5: Implement a FlashDataset                              #
+#                         Step 1 / 2: Implement a FlashDataset                              #
 #                                                                                           #
 # A `FlashDataset` is a state-aware (c.f training, validating, testing and predicting)      #
 # dataset.                                                                                  #
@@ -110,15 +92,15 @@ predict_dataset = MultipleFoldersImageDataset.from_predict_data(PREDICT_FOLDER)
 
 
 #############################################################################################
-#                   Step 3 / 5: [optional] Implement a PreprocessTransform                       #
+#                   Step 2 / 2: [optional] Implement a InputTransform                       #
 #                                                                                           #
-# A `PreprocessTransform` is a state-aware (c.f training, validating, testing and predicting)    #
+# A `InputTransform` is a state-aware (c.f training, validating, testing and predicting)    #
 # transform. You would have to implement a `configure_transforms` hook with your transform  #
 #                                                                                           #
 #############################################################################################
 
 
-class ImageBaseTransform(PreprocessTransform):
+class ImageBaseTransform(InputTransform):
     def configure_per_sample_transform(self, image_size: int = 224) -> Any:
         per_sample_transform = T.Compose([T.Resize((image_size, image_size)), T.ToTensor()])
         return ApplyToKeys(DefaultDataKeys.INPUT, per_sample_transform)
@@ -137,15 +119,15 @@ class ImageRandomRotationTransform(ImageBaseTransform):
 
 # Register your transform within the Flash Dataset registry
 # Note: Registries can be shared by multiple dataset.
-MultipleFoldersImageDataset.register_transform(CustomDataTransform.BASE, ImageBaseTransform)
-MultipleFoldersImageDataset.register_transform(CustomDataTransform.RANDOM_ROTATION, ImageRandomRotationTransform)
+MultipleFoldersImageDataset.register_transform("base", ImageBaseTransform)
+MultipleFoldersImageDataset.register_transform("random_rotation", ImageRandomRotationTransform)
 MultipleFoldersImageDataset.register_transform(
-    CustomDataTransform.RANDOM_90_DEG_ROTATION, partial(ImageRandomRotationTransform, rotation=90)
+    "random_90_def_rotation", partial(ImageRandomRotationTransform, rotation=90)
 )
 
 train_dataset = MultipleFoldersImageDataset.from_train_data(
     TRAIN_FOLDERS,
-    transform=(CustomDataTransform.RANDOM_ROTATION, {"rotation": 45}),
+    transform=("random_rotation", {"rotation": 45}),
 )
 
 print(train_dataset.transform)
@@ -153,18 +135,18 @@ print(train_dataset.transform)
 # ImageClassificationRandomRotationTransform(
 #    running_stage=train,
 #    transform={
-#        PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(
+#        InputTransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(
 #           keys="input",
 #           transform=Compose(
 #                ToTensor()
 #                RandomRotation(degrees=[-45.0, 45.0], interpolation=nearest, expand=False, fill=0)),
-#        PreprocessTransformPlacement.COLLATE: default_collate,
+#        InputTransformPlacement.COLLATE: default_collate,
 #    },
 # )
 
 train_dataset = MultipleFoldersImageDataset.from_train_data(
     TRAIN_FOLDERS,
-    transform=CustomDataTransform.RANDOM_90_DEG_ROTATION,
+    transform="random_90_def_rotation",
 )
 
 print(train_dataset.transform)
@@ -172,23 +154,23 @@ print(train_dataset.transform)
 # ImageClassificationRandomRotationTransform(
 #    running_stage=train,
 #    transform={
-#        PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(
+#        InputTransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(
 #           keys="input",
 #           transform=Compose(
 #                ToTensor()
 #                RandomRotation(degrees=[-90.0, 90.0], interpolation=nearest, expand=False, fill=0)),
-#        PreprocessTransformPlacement.COLLATE: default_collate,
+#        InputTransformPlacement.COLLATE: default_collate,
 #    },
 # )
 
-val_dataset = MultipleFoldersImageDataset.from_val_data(VAL_FOLDERS, transform=CustomDataTransform.BASE)
+val_dataset = MultipleFoldersImageDataset.from_val_data(VAL_FOLDERS, transform="base")
 print(val_dataset.transform)
 # Out:
 # ImageClassificationRandomRotationTransform(
 #    running_stage=validate,
 #    transform={
-#        PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(keys="input", transform=ToTensor()),
-#        PreprocessTransformPlacement.COLLATE: default_collate,
+#        InputTransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(keys="input", transform=ToTensor()),
+#        InputTransformPlacement.COLLATE: default_collate,
 #    },
 # )
 
