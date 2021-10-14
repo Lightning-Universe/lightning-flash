@@ -14,12 +14,12 @@
 from typing import Any
 
 import torch
-from pytorch_lightning.trainer.states import RunningStage
 from torch import tensor
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.process import DefaultPreprocess
+from flash.core.utilities.running_stage import RunningStage
 
 
 def test_base_data_fetcher(tmpdir):

@@ -19,7 +19,6 @@ import numpy as np
 import pytest
 import torch
 from pytorch_lightning import Trainer
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor, tensor
 from torch.utils.data import DataLoader
@@ -34,6 +33,7 @@ from flash.core.data.process import DefaultPreprocess, Deserializer, Postprocess
 from flash.core.data.properties import ProcessState
 from flash.core.model import Task
 from flash.core.utilities.imports import _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.running_stage import RunningStage
 from tests.helpers.utils import _IMAGE_TESTING
 
 if _TORCHVISION_AVAILABLE:

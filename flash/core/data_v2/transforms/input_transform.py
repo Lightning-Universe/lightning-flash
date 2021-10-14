@@ -15,7 +15,6 @@ import inspect
 from functools import partial, wraps
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data._utils.collate import default_collate
@@ -26,6 +25,7 @@ from flash.core.data.properties import Properties
 from flash.core.data.states import CollateFn
 from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.registry import FlashRegistry
+from flash.core.utilities.running_stage import RunningStage
 
 INPUT_TRANSFORM_TYPE = Optional[
     Union["InputTransform", Callable, Tuple[Union[LightningEnum, str], Dict[str, Any]], Union[LightningEnum, str]]

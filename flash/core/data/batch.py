@@ -14,7 +14,6 @@
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, TYPE_CHECKING, Union
 
 import torch
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 
@@ -26,6 +25,7 @@ from flash.core.data.utils import (
     CurrentFuncContext,
     CurrentRunningStageContext,
 )
+from flash.core.utilities.running_stage import RunningStage
 
 if TYPE_CHECKING:
     from flash.core.data.process import Deserializer, Preprocess, Serializer

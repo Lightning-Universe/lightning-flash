@@ -193,7 +193,6 @@ class ImageClassifier(ImageClassifier):
     @torch.jit.unused
     @data_pipeline.setter
     def data_pipeline(self, data_pipeline: Optional[DataPipeline]) -> None:
-        breakpoint()
         self._deserializer, self._preprocess, self._postprocess, self.serializer = self._resolve(
             self._deserializer,
             self._preprocess,

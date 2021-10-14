@@ -16,12 +16,12 @@ from typing import Callable, Dict, Optional
 
 import pytest
 import torch
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data.dataloader import default_collate
 
 from flash.core.data_v2.transforms.input_transform import InputTransform, InputTransformPlacement
 from flash.core.registry import FlashRegistry
+from flash.core.utilities.running_stage import RunningStage
 
 
 def test_input_transform():

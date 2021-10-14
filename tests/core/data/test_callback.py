@@ -15,12 +15,12 @@ from unittest import mock
 from unittest.mock import ANY, call, MagicMock
 
 import torch
-from pytorch_lightning.trainer.states import RunningStage
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.process import DefaultPreprocess
 from flash.core.model import Task
 from flash.core.trainer import Trainer
+from flash.core.utilities.running_stage import RunningStage
 
 
 @mock.patch("pickle.dumps")  # need to mock pickle or we get pickle error

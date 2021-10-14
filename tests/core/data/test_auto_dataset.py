@@ -14,11 +14,11 @@
 from typing import List
 
 import pytest
-from pytorch_lightning.trainer.states import RunningStage
 
 from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.core.data.callback import FlashCallback
 from flash.core.data.data_source import DataSource
+from flash.core.utilities.running_stage import RunningStage
 
 
 class _AutoDatasetTestDataSource(DataSource):

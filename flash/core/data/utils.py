@@ -19,10 +19,11 @@ from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Set, Type
 
 import requests
 import torch
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.apply_func import apply_to_collection
 from torch import Tensor
 from tqdm.auto import tqdm as tq
+
+from flash.core.utilities.running_stage import RunningStage
 
 _STAGES_PREFIX = {
     RunningStage.TRAINING: "train",

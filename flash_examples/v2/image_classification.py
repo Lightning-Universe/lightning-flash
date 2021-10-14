@@ -15,13 +15,13 @@ import torch
 
 import flash
 from flash.core.data.utils import download_data
-from flash.image.classification.data_v2 import ImageClassificationData
+from flash.image.classification.data_v2 import ImageClassificationDataModule
 from flash.image.classification.model_v2 import ImageClassifier
 
 # 1. Create the DataModule
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./data")
 
-datamodule = ImageClassificationData.from_folders(
+datamodule = ImageClassificationDataModule.from_folders(
     train_folder="data/hymenoptera_data/train/", val_folder="data/hymenoptera_data/val/", batch_size=2
 )
 

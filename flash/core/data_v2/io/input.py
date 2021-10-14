@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 import warnings
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import partial
 from pathlib import Path
 from typing import (
@@ -37,15 +37,16 @@ from typing import (
 import numpy as np
 import pandas as pd
 import torch
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
 from torch.utils.data.dataset import Dataset
 from tqdm import tqdm
 
+from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.properties import ProcessState
 from flash.core.data_v2.base_dataset import BaseDataset, FlashDataset
 from flash.core.data_v2.transforms.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
+from flash.core.utilities.running_stage import RunningStage
 
 SampleCollection = None
 if _FIFTYONE_AVAILABLE:
@@ -185,9 +186,9 @@ class InputDataKeys(LightningEnum):
 class InputStateContainer:
 
     example_input_array: Any = None
-    args: Optional[Any] = None
-    kwargs: Optional[Dict[str, Any]] = None
-    state: Optional[Dict] = None
+    args: Tuple = field(default_factory=lambda: ())
+    kwargs: Dict[str, Any] = field(default_factory=lambda: {})
+    state: Dict = field(default_factory=lambda: {})
     input_transform: Optional[InputTransform] = None
 
     @classmethod
@@ -225,6 +226,19 @@ class InputsStateContainer:
             test_input_state=InputStateContainer.from_dataset(test_dataset),
             predict_input_state=InputStateContainer.from_dataset(predict_dataset),
         )
+
+    def attach_data_pipeline_state(self, data_pipeline_state: DataPipelineState) -> None:
+        for state in self._state.values():
+            data_pipeline_state.set_state(state)
+
+    @property
+    def _state(self) -> Dict:
+        return {
+            **self.train_input_state.state,
+            **self.val_input_state.state,
+            **self.test_input_state.state,
+            **self.predict_input_state.state,
+        }
 
 
 class BaseDataFormat(LightningEnum):

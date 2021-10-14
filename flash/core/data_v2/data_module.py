@@ -16,7 +16,6 @@ from typing import Any, Optional, Tuple, Type, Union
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning import LightningDataModule
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader
@@ -33,6 +32,7 @@ from flash.core.data_v2.io.input import InputsStateContainer
 from flash.core.data_v2.transforms.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
 from flash.core.data_v2.transforms.output_transform import OutputTransform
 from flash.core.registry import FlashRegistry
+from flash.core.utilities.running_stage import RunningStage
 
 
 class DataModule(DataModule):

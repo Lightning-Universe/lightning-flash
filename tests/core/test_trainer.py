@@ -17,7 +17,6 @@ from typing import Any
 import pytest
 import torch
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.nn import functional as F
@@ -25,6 +24,7 @@ from torch.nn import functional as F
 from flash import Trainer
 from flash.core.classification import ClassificationTask
 from flash.core.finetuning import NoFreeze
+from flash.core.utilities.running_stage import RunningStage
 from tests.helpers.boring_model import BoringModel
 
 

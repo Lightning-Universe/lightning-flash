@@ -16,7 +16,6 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 import torch
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
@@ -43,6 +42,7 @@ from flash.core.utilities.imports import (
     lazy_import,
     requires,
 )
+from flash.core.utilities.running_stage import RunningStage
 from flash.image.data import ImageDeserializer, IMG_EXTENSIONS
 from flash.image.segmentation.serialization import SegmentationLabels
 from flash.image.segmentation.transforms import default_transforms, predict_default_transforms, train_default_transforms

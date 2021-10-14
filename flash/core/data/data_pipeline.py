@@ -19,7 +19,6 @@ from typing import Any, Callable, Dict, Optional, Sequence, Set, Tuple, Type, TY
 
 import torch
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from pytorch_lightning.utilities.model_helpers import is_overridden
@@ -32,6 +31,7 @@ from flash.core.data.process import DefaultPreprocess, Deserializer, Postprocess
 from flash.core.data.properties import ProcessState
 from flash.core.data.utils import _POSTPROCESS_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
 from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_4_3
+from flash.core.utilities.running_stage import RunningStage
 
 if TYPE_CHECKING:
     from flash.core.model import Task

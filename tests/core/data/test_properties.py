@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pytest
-from pytorch_lightning.trainer.states import RunningStage
 
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.properties import ProcessState, Properties
+from flash.core.utilities.running_stage import RunningStage
 
 
 def test_properties_data_pipeline_state():

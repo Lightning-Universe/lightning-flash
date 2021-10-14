@@ -2,11 +2,11 @@ from contextlib import contextmanager
 from typing import Any, List, Sequence
 
 from pytorch_lightning.callbacks import Callback
-from pytorch_lightning.trainer.states import RunningStage
 from torch import Tensor
 
 import flash
 from flash.core.data.utils import _STAGES_PREFIX
+from flash.core.utilities.running_stage import RunningStage
 
 
 class FlashCallback(Callback):

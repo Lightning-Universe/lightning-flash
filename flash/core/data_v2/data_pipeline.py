@@ -15,7 +15,6 @@ import inspect
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Type
 
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.data_pipeline import DataPipelineState
@@ -24,6 +23,7 @@ from flash.core.data_v2.io.output import Output
 from flash.core.data_v2.transforms.input_transform import InputTransform
 from flash.core.data_v2.transforms.output_transform import OutputTransform
 from flash.core.registry import FlashRegistry
+from flash.core.utilities.running_stage import RunningStage
 
 
 @dataclass
@@ -57,12 +57,10 @@ class DataPipeline:
         give a warning."""
         data_pipeline_state = data_pipeline_state or DataPipelineState()
         data_pipeline_state._initialized = False
-        if self.flash_dataset is not None:
-            self.flash_dataset.attach_data_pipeline_state(data_pipeline_state)
-        self._preprocess_pipeline.attach_data_pipeline_state(data_pipeline_state)
-        self._postprocess_pipeline.attach_data_pipeline_state(data_pipeline_state)
-        self._serializer.attach_data_pipeline_state(data_pipeline_state)
+        if self._inputs_state:
+            self._inputs_state.attach_data_pipeline_state(data_pipeline_state)
         data_pipeline_state._initialized = True  # TODO: Not sure we need this
+        breakpoint()
         return data_pipeline_state
 
     @property

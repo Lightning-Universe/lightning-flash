@@ -22,7 +22,7 @@ from flash.image.classification.transforms import IMAGE_CLASSIFICATION_REGISTRY
 from flash.image.io import ImagePathsInput
 
 
-class ImageClassificationData(DataModule):
+class ImageClassificationDataModule(DataModule):
     """Data module for image classification tasks."""
 
     @classmethod
@@ -96,4 +96,4 @@ class ImageClassificationData(DataModule):
 
 
 ImagePathsInput.input_transforms_registry = IMAGE_CLASSIFICATION_REGISTRY
-ImageClassificationData.register_flash_dataset(DefaultDataSources.FOLDERS, ImagePathsInput)
+ImageClassificationDataModule.register_flash_dataset(DefaultDataSources.FOLDERS, ImagePathsInput)

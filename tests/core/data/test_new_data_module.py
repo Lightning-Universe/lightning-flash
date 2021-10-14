@@ -15,13 +15,13 @@ from typing import Callable
 
 import torch
 from pytorch_lightning import seed_everything
-from pytorch_lightning.trainer.states import RunningStage
 from torch.utils.data.dataloader import default_collate
 
 from flash import Task, Trainer
 from flash.core.data_v2.base_dataset import FlashDataset
 from flash.core.data_v2.data_module import DataModule
 from flash.core.data_v2.transforms.input_transform import InputTransform
+from flash.core.utilities.running_stage import RunningStage
 
 
 def test_data_module(tmpdir):

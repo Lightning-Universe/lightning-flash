@@ -14,11 +14,11 @@
 from inspect import signature
 from typing import Any, Callable, Generic, Iterable, Optional, Sequence, TypeVar
 
-from pytorch_lightning.trainer.states import RunningStage
 from torch.utils.data import Dataset, IterableDataset
 
 import flash
 from flash.core.data.utils import CurrentRunningStageFuncContext
+from flash.core.utilities.running_stage import RunningStage
 
 DATA_TYPE = TypeVar("DATA_TYPE")
 
