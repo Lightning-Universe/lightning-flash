@@ -27,10 +27,11 @@ import flash
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_pipeline import DefaultPreprocess, Postprocess
 from flash.core.data_v2.base_dataset import BaseDataset
-from flash.core.data_v2.data_pipeline import DataPipeline, DatasetHolder
+from flash.core.data_v2.data_pipeline import DataPipeline
+from flash.core.data_v2.io.input import InputsStateContainer
 from flash.core.data_v2.transforms.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
+from flash.core.data_v2.transforms.output_transform import OutputTransform
 from flash.core.registry import FlashRegistry
 
 
@@ -56,8 +57,8 @@ class DataModule(DataModule):
             Will be passed to the DataLoader for the training dataset. Defaults to None.
     """
 
-    preprocess_cls = DefaultPreprocess
-    postprocess_cls = Postprocess
+    input_transform_cls = InputTransform
+    output_transform_cls = OutputTransform
     flash_datasets_registry = FlashRegistry("datasets")
 
     def __init__(
@@ -81,7 +82,7 @@ class DataModule(DataModule):
         if flash._IS_TESTING and torch.cuda.is_available():
             batch_size = 16
 
-        self._postprocess: Optional[Postprocess] = None
+        self._output_transform: Optional[OutputTransform] = None
         self._viz: Optional[BaseVisualization] = None
         self._data_fetcher: Optional[BaseDataFetcher] = data_fetcher or self.configure_data_fetcher()
 
@@ -258,9 +259,13 @@ class DataModule(DataModule):
     def data_pipeline(self) -> DataPipeline:
         """Property that returns the full data pipeline including the data source, preprocessing and
         postprocessing."""
-        breakpoint()
-        DatasetHolder(self.flash_datasets_registry)
-        return DataPipeline(self.flash_datasets_registry, self.postprocess)
+        inputs_state = InputsStateContainer.from_datasets(self._train_ds, self._val_ds, self._test_ds, self._predict_ds)
+        return DataPipeline(
+            flash_datasets_registry=self.flash_datasets_registry,
+            inputs_state=inputs_state,
+            output_transform=None,
+            output=None,
+        )
 
     @classmethod
     def create_flash_datasets(
@@ -278,36 +283,35 @@ class DataModule(DataModule):
     ) -> Tuple[Optional[BaseDataset]]:
         cls._verify_flash_dataset_enum(enum)
         flash_dataset_cls: BaseDataset = cls.flash_datasets_registry.get(enum)
-        return (
-            cls._create_flash_dataset(
-                flash_dataset_cls,
-                train_data,
-                running_stage=RunningStage.TRAINING,
-                transform=train_transform,
-                **flash_dataset_kwargs,
-            ),
-            cls._create_flash_dataset(
-                flash_dataset_cls,
-                val_data,
-                running_stage=RunningStage.VALIDATING,
-                transform=val_transform,
-                **flash_dataset_kwargs,
-            ),
-            cls._create_flash_dataset(
-                flash_dataset_cls,
-                test_data,
-                running_stage=RunningStage.TESTING,
-                transform=test_transform,
-                **flash_dataset_kwargs,
-            ),
-            cls._create_flash_dataset(
-                flash_dataset_cls,
-                predict_data,
-                running_stage=RunningStage.PREDICTING,
-                transform=predict_transform,
-                **flash_dataset_kwargs,
-            ),
+        train_dataset = cls._create_flash_dataset(
+            flash_dataset_cls,
+            train_data,
+            running_stage=RunningStage.TRAINING,
+            transform=train_transform,
+            **flash_dataset_kwargs,
         )
+        val_dataset = cls._create_flash_dataset(
+            flash_dataset_cls,
+            val_data,
+            running_stage=RunningStage.VALIDATING,
+            transform=val_transform,
+            **flash_dataset_kwargs,
+        )
+        test_dataset = cls._create_flash_dataset(
+            flash_dataset_cls,
+            test_data,
+            running_stage=RunningStage.TESTING,
+            transform=test_transform,
+            **flash_dataset_kwargs,
+        )
+        predict_dataset = cls._create_flash_dataset(
+            flash_dataset_cls,
+            predict_data,
+            running_stage=RunningStage.PREDICTING,
+            transform=predict_transform,
+            **flash_dataset_kwargs,
+        )
+        return train_dataset, val_dataset, test_dataset, predict_dataset
 
     @staticmethod
     def _create_flash_dataset(
@@ -323,11 +327,12 @@ class DataModule(DataModule):
             )
 
     @classmethod
-    def _verify_flash_dataset_enum(cls, enum: LightningEnum) -> None:
+    def _verify_flash_dataset_enum(cls, enum: Union[LightningEnum, str]) -> None:
         if not cls.flash_datasets_registry or not isinstance(cls.flash_datasets_registry, FlashRegistry):
             raise MisconfigurationException(
                 "The ``DataModule`` should have ``flash_datasets_registry`` (FlashRegistry) populated "
-                "with flash_dataset class and ``default_flash_dataset_enum`` (LightningEnum) class attributes. "
+                "with flash_dataset class and ``default_flash_dataset_enum`` "
+                "(Union[LightningEnum, str]) class attributes. "
             )
 
         if enum not in cls.flash_datasets_registry.available_keys():
@@ -340,7 +345,7 @@ class DataModule(DataModule):
             )
 
     @classmethod
-    def register_flash_dataset(cls, enum: LightningEnum, flash_dataset_cls: Type[BaseDataset]) -> None:
+    def register_flash_dataset(cls, enum: Union[LightningEnum, str], flash_dataset_cls: Type[BaseDataset]) -> None:
         if cls.flash_datasets_registry is None:
             raise MisconfigurationException("The class attribute `flash_datasets_registry` should be set. ")
         cls.flash_datasets_registry(fn=flash_dataset_cls, name=enum)

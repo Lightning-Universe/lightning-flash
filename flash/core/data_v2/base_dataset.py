@@ -40,6 +40,7 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
 
     input_transforms_registry: Optional[FlashRegistry] = FlashRegistry("transforms")
     transform: Optional[InputTransform] = None
+    example_input_array: Any = None
 
     @abstractmethod
     def load_data(self, data: DATA_TYPE) -> Union[Iterable, Mapping]:
@@ -52,13 +53,17 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
     def load_sample(self, data: Any) -> Any:
         """The `load_sample` hook contains the logic to load a single sample."""
 
-    def __init__(self, running_stage: RunningStage, transform: Optional[INPUT_TRANSFORM_TYPE] = None) -> None:
+    def __init__(
+        self, *args, running_stage: RunningStage, transform: Optional[INPUT_TRANSFORM_TYPE] = None, **kwargs
+    ) -> None:
         super().__init__()
         self.running_stage = running_stage
         if transform:
             self.transform = InputTransform.from_transform(
                 transform, running_stage=running_stage, input_transforms_registry=self.input_transforms_registry
             )
+        self.args = args
+        self.kwargs = kwargs
 
     def pass_args_to_load_data(
         self,

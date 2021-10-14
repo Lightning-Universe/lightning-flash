@@ -43,8 +43,8 @@ from torch.utils.data.dataset import Dataset
 from tqdm import tqdm
 
 from flash.core.data.properties import ProcessState
-from flash.core.data_v2.base_dataset import FlashDataset
-from flash.core.data_v2.transforms.input_transform import INPUT_TRANSFORM_TYPE
+from flash.core.data_v2.base_dataset import BaseDataset, FlashDataset
+from flash.core.data_v2.transforms.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 
 SampleCollection = None
@@ -179,6 +179,52 @@ class InputDataKeys(LightningEnum):
     # TODO: Create a FlashEnum class???
     def __hash__(self) -> int:
         return hash(self.value)
+
+
+@dataclass
+class InputStateContainer:
+
+    example_input_array: Any = None
+    args: Optional[Any] = None
+    kwargs: Optional[Dict[str, Any]] = None
+    state: Optional[Dict] = None
+    input_transform: Optional[InputTransform] = None
+
+    @classmethod
+    def from_dataset(cls, dataset: Optional[BaseDataset]) -> "InputStateContainer":
+        if dataset:
+            return cls(
+                example_input_array=dataset.example_input_array,
+                args=dataset.args,
+                kwargs=dataset.kwargs,
+                state=dataset._state,
+                input_transform=dataset.transform,
+            )
+        return cls()
+
+
+@dataclass
+class InputsStateContainer:
+
+    train_input_state: InputStateContainer
+    val_input_state: InputStateContainer
+    test_input_state: InputStateContainer
+    predict_input_state: InputStateContainer
+
+    @classmethod
+    def from_datasets(
+        cls,
+        train_dataset: Optional[BaseDataset],
+        val_dataset: Optional[BaseDataset],
+        test_dataset: Optional[BaseDataset],
+        predict_dataset: Optional[BaseDataset],
+    ) -> "InputsStateContainer":
+        return cls(
+            train_input_state=InputStateContainer.from_dataset(train_dataset),
+            val_input_state=InputStateContainer.from_dataset(val_dataset),
+            test_input_state=InputStateContainer.from_dataset(test_dataset),
+            predict_input_state=InputStateContainer.from_dataset(predict_dataset),
+        )
 
 
 class BaseDataFormat(LightningEnum):
