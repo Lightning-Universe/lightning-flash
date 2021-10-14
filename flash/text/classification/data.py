@@ -100,7 +100,7 @@ class TextDataSource(DataSource):
         data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
         dataset: Optional[Any] = None,
     ) -> Dataset:
-        """Loads data into HuggingFace datasets.Dataset"""
+        """Loads data into HuggingFace datasets.Dataset."""
 
         hf_dataset, input, target = self._to_hf_dataset(data)
 

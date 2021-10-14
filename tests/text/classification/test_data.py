@@ -21,13 +21,13 @@ from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import TextClassificationData
 from flash.text.classification.data import (
-    TextDataSource,
     TextCSVDataSource,
-    TextJSONDataSource,
     TextDataFrameDataSource,
-    TextParquetDataSource,
+    TextDataSource,
     TextHuggingFaceDatasetDataSource,
+    TextJSONDataSource,
     TextListDataSource,
+    TextParquetDataSource,
 )
 from tests.helpers.utils import _TEXT_TESTING
 
