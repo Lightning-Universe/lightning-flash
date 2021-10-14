@@ -17,16 +17,17 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import TextClassificationData
 from flash.text.classification.data import (
-    TextCSVDataSource,
-    TextDataFrameDataSource,
     TextDataSource,
-    TextFileDataSource,
+    TextCSVDataSource,
     TextJSONDataSource,
+    TextDataFrameDataSource,
+    TextParquetDataSource,
+    TextHuggingFaceDatasetDataSource,
     TextListDataSource,
-    TextSentencesDataSource,
 )
 from tests.helpers.utils import _TEXT_TESTING
 
@@ -53,7 +54,6 @@ TEST_JSON_DATA_FIELD = """{"data": [
 {"sentence": "this is a sentence three","lab":0}]}
 """
 
-
 TEST_DATA_FRAME_DATA = pd.DataFrame(
     {
         "sentence": ["this is a sentence one", "this is a sentence two", "this is a sentence three"],
@@ -61,7 +61,6 @@ TEST_DATA_FRAME_DATA = pd.DataFrame(
         "lab2": [1, 0, 1],
     },
 )
-
 
 TEST_LIST_DATA = ["this is a sentence one", "this is a sentence two", "this is a sentence three"]
 TEST_LIST_TARGETS = [0, 1, 0]
@@ -90,16 +89,6 @@ def json_data_with_field(tmpdir):
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_csv(tmpdir):
     csv_path = csv_data(tmpdir)
-    dm = TextClassificationData.from_csv("sentence", "label", backbone=TEST_BACKBONE, train_file=csv_path, batch_size=1)
-    batch = next(iter(dm.train_dataloader()))
-    assert batch["labels"].item() in [0, 1]
-    assert "input_ids" in batch
-
-
-@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_test_valid(tmpdir):
-    csv_path = csv_data(tmpdir)
     dm = TextClassificationData.from_csv(
         "sentence",
         "label",
@@ -109,12 +98,17 @@ def test_test_valid(tmpdir):
         test_file=csv_path,
         batch_size=1,
     )
+
+    batch = next(iter(dm.train_dataloader()))
+    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert "input_ids" in batch
+
     batch = next(iter(dm.val_dataloader()))
-    assert batch["labels"].item() in [0, 1]
+    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
     assert "input_ids" in batch
 
     batch = next(iter(dm.test_dataloader()))
-    assert batch["labels"].item() in [0, 1]
+    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
     assert "input_ids" in batch
 
 
@@ -122,9 +116,26 @@ def test_test_valid(tmpdir):
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_json(tmpdir):
     json_path = json_data(tmpdir)
-    dm = TextClassificationData.from_json("sentence", "lab", backbone=TEST_BACKBONE, train_file=json_path, batch_size=1)
+    dm = TextClassificationData.from_json(
+        "sentence",
+        "lab",
+        backbone=TEST_BACKBONE,
+        train_file=json_path,
+        val_file=json_path,
+        test_file=json_path,
+        batch_size=1,
+    )
+
     batch = next(iter(dm.train_dataloader()))
-    assert batch["labels"].item() in [0, 1]
+    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.val_dataloader()))
+    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.test_dataloader()))
+    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
     assert "input_ids" in batch
 
 
@@ -133,10 +144,26 @@ def test_from_json(tmpdir):
 def test_from_json_with_field(tmpdir):
     json_path = json_data_with_field(tmpdir)
     dm = TextClassificationData.from_json(
-        "sentence", "lab", backbone=TEST_BACKBONE, train_file=json_path, batch_size=1, field="data"
+        "sentence",
+        "lab",
+        backbone=TEST_BACKBONE,
+        train_file=json_path,
+        val_file=json_path,
+        test_file=json_path,
+        batch_size=1,
+        field="data",
     )
+
     batch = next(iter(dm.train_dataloader()))
-    assert batch["labels"].item() in [0, 1]
+    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.val_dataloader()))
+    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.test_dataloader()))
+    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
     assert "input_ids" in batch
 
 
@@ -144,10 +171,25 @@ def test_from_json_with_field(tmpdir):
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_data_frame():
     dm = TextClassificationData.from_data_frame(
-        "sentence", "lab1", backbone=TEST_BACKBONE, train_data_frame=TEST_DATA_FRAME_DATA, batch_size=1
+        "sentence",
+        "lab1",
+        backbone=TEST_BACKBONE,
+        train_data_frame=TEST_DATA_FRAME_DATA,
+        val_data_frame=TEST_DATA_FRAME_DATA,
+        test_data_frame=TEST_DATA_FRAME_DATA,
+        batch_size=1,
     )
+
     batch = next(iter(dm.train_dataloader()))
-    assert batch["labels"].item() in [0, 1]
+    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.val_dataloader()))
+    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.test_dataloader()))
+    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
     assert "input_ids" in batch
 
 
@@ -155,10 +197,25 @@ def test_from_data_frame():
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_data_frame_multilabel():
     dm = TextClassificationData.from_data_frame(
-        "sentence", ["lab1", "lab2"], backbone=TEST_BACKBONE, train_data_frame=TEST_DATA_FRAME_DATA, batch_size=1
+        "sentence",
+        ["lab1", "lab2"],
+        backbone=TEST_BACKBONE,
+        train_data_frame=TEST_DATA_FRAME_DATA,
+        val_data_frame=TEST_DATA_FRAME_DATA,
+        test_data_frame=TEST_DATA_FRAME_DATA,
+        batch_size=1,
     )
+
     batch = next(iter(dm.train_dataloader()))
-    assert all([label in [0, 1] for label in batch["labels"][0]])
+    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.val_dataloader()))
+    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.test_dataloader()))
+    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
     assert "input_ids" in batch
 
 
@@ -166,10 +223,26 @@ def test_from_data_frame_multilabel():
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_lists():
     dm = TextClassificationData.from_lists(
-        backbone=TEST_BACKBONE, train_data=TEST_LIST_DATA, train_targets=TEST_LIST_TARGETS, batch_size=1
+        backbone=TEST_BACKBONE,
+        train_data=TEST_LIST_DATA,
+        train_targets=TEST_LIST_TARGETS,
+        val_data=TEST_LIST_DATA,
+        val_targets=TEST_LIST_TARGETS,
+        test_data=TEST_LIST_DATA,
+        test_targets=TEST_LIST_TARGETS,
+        batch_size=1,
     )
+
     batch = next(iter(dm.train_dataloader()))
-    assert batch["labels"].item() in [0, 1]
+    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.val_dataloader()))
+    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.test_dataloader()))
+    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
     assert "input_ids" in batch
 
 
@@ -177,10 +250,26 @@ def test_from_lists():
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_lists_multilabel():
     dm = TextClassificationData.from_lists(
-        backbone=TEST_BACKBONE, train_data=TEST_LIST_DATA, train_targets=TEST_LIST_TARGETS_MULTILABEL, batch_size=1
+        backbone=TEST_BACKBONE,
+        train_data=TEST_LIST_DATA,
+        train_targets=TEST_LIST_TARGETS_MULTILABEL,
+        val_data=TEST_LIST_DATA,
+        val_targets=TEST_LIST_TARGETS_MULTILABEL,
+        test_data=TEST_LIST_DATA,
+        test_targets=TEST_LIST_TARGETS_MULTILABEL,
+        batch_size=1,
     )
+
     batch = next(iter(dm.train_dataloader()))
-    assert all([label in [0, 1] for label in batch["labels"][0]])
+    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.val_dataloader()))
+    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.test_dataloader()))
+    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
     assert "input_ids" in batch
 
 
@@ -196,17 +285,17 @@ def test_text_module_not_found_error():
     "cls, kwargs",
     [
         (TextDataSource, {}),
-        (TextFileDataSource, {"filetype": "csv"}),
         (TextCSVDataSource, {}),
         (TextJSONDataSource, {}),
         (TextDataFrameDataSource, {}),
+        (TextParquetDataSource, {}),
+        (TextHuggingFaceDatasetDataSource, {}),
         (TextListDataSource, {}),
-        (TextSentencesDataSource, {}),
     ],
 )
 def test_tokenizer_state(cls, kwargs):
     """Tests that the tokenizer is not in __getstate__"""
-    instance = cls(backbone="sshleifer/tiny-mbart", **kwargs)
+    instance = cls(backbone=TEST_BACKBONE, **kwargs)
     state = instance.__getstate__()
     tokenizers = []
     for name, attribute in instance.__dict__.items():
