@@ -120,7 +120,6 @@ class VideoClassifier(ClassificationTask):
             model=None,
             loss_fn=loss_fn,
             optimizer=optimizer,
-            # optimizer_kwargs=optimizer_kwargs,
             lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,

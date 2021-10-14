@@ -110,7 +110,6 @@ class StyleTransfer(Task):
             model=model,
             loss_fn=perceptual_loss,
             optimizer=optimizer,
-            # optimizer_kwargs=optimizer_kwargs,
             lr_scheduler=lr_scheduler,
             learning_rate=learning_rate,
             serializer=serializer,

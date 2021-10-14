@@ -81,7 +81,6 @@ class KeypointDetector(AdapterTask):
             adapter,
             learning_rate=learning_rate,
             optimizer=optimizer,
-            # optimizer_kwargs=optimizer_kwargs,
             lr_scheduler=lr_scheduler,
             serializer=serializer or Preds(),
         )
