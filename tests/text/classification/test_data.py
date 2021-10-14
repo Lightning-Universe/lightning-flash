@@ -33,6 +33,7 @@ from tests.helpers.utils import _TEXT_TESTING
 
 if _TEXT_AVAILABLE:
     from transformers.tokenization_utils_base import PreTrainedTokenizerBase
+    from datasets import Dataset
 
 TEST_BACKBONE = "prajjwal1/bert-tiny"  # super small model for testing
 
@@ -62,6 +63,8 @@ TEST_DATA_FRAME_DATA = pd.DataFrame(
     },
 )
 
+TEST_HF_DATASET_DATA =  Dataset.from_pandas(TEST_DATA_FRAME_DATA)
+
 TEST_LIST_DATA = ["this is a sentence one", "this is a sentence two", "this is a sentence three"]
 TEST_LIST_TARGETS = [0, 1, 0]
 TEST_LIST_TARGETS_MULTILABEL = [[0, 1], [1, 0], [0, 1]]
@@ -84,6 +87,10 @@ def json_data_with_field(tmpdir):
     path.write_text(TEST_JSON_DATA_FIELD)
     return path
 
+def parquet_data(tmpdir):
+    path = Path(tmpdir) / "data.parquet"
+    TEST_DATA_FRAME_DATA.to_parquet(path)
+    return path
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
@@ -96,6 +103,33 @@ def test_from_csv(tmpdir):
         train_file=csv_path,
         val_file=csv_path,
         test_file=csv_path,
+        batch_size=1,
+    )
+
+    batch = next(iter(dm.train_dataloader()))
+    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.val_dataloader()))
+    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.test_dataloader()))
+    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert "input_ids" in batch
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+def test_from_parquet(tmpdir):
+    parquet_path = parquet_data(tmpdir)
+    dm = TextClassificationData.from_parquet(
+        "sentence",
+        "label",
+        backbone=TEST_BACKBONE,
+        train_file=parquet_path,
+        val_file=parquet_path,
+        test_file=parquet_path,
         batch_size=1,
     )
 
@@ -203,6 +237,58 @@ def test_from_data_frame_multilabel():
         train_data_frame=TEST_DATA_FRAME_DATA,
         val_data_frame=TEST_DATA_FRAME_DATA,
         test_data_frame=TEST_DATA_FRAME_DATA,
+        batch_size=1,
+    )
+
+    batch = next(iter(dm.train_dataloader()))
+    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.val_dataloader()))
+    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.test_dataloader()))
+    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert "input_ids" in batch
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+def test_from_hf_dataset():
+    dm = TextClassificationData.from_data_frame(
+        "sentence",
+        "lab1",
+        backbone=TEST_BACKBONE,
+        train_data_frame=TEST_HF_DATASET_DATA,
+        val_data_frame=TEST_HF_DATASET_DATA,
+        test_data_frame=TEST_HF_DATASET_DATA,
+        batch_size=1,
+    )
+
+    batch = next(iter(dm.train_dataloader()))
+    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.val_dataloader()))
+    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.test_dataloader()))
+    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert "input_ids" in batch
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+def test_from_hf_dataset_multilabel():
+    dm = TextClassificationData.from_data_frame(
+        "sentence",
+        ["lab1", "lab2"],
+        backbone=TEST_BACKBONE,
+        train_data_frame=TEST_HF_DATASET_DATA,
+        val_data_frame=TEST_HF_DATASET_DATA,
+        test_data_frame=TEST_HF_DATASET_DATA,
         batch_size=1,
     )
 
