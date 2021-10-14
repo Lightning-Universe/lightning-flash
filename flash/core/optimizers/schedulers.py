@@ -8,6 +8,7 @@ from torch.optim.lr_scheduler import (
     CosineAnnealingWarmRestarts,
     CyclicLR,
     MultiStepLR,
+    ReduceLROnPlateau,
     StepLR,
 )
 
@@ -24,6 +25,7 @@ for n in dir(lr_scheduler):
 
     if inspect.isclass(sched) and sched != _LRScheduler and issubclass(sched, _LRScheduler):
         schedulers.append(sched)
+schedulers.append(ReduceLROnPlateau)
 
 
 for scheduler in schedulers:
