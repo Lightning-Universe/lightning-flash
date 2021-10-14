@@ -48,8 +48,8 @@ class DetectionLabels(Serializer):
 class FaceDetector(Task):
     """The ``FaceDetector`` is a :class:`~flash.Task` for detecting faces in images.
 
-    For more details, see
-    :ref:`face_detection`.
+    For more details, see :ref:`face_detection`.
+
     Args:
         model: a string of :attr`_models`. Defaults to 'lffd_slim'.
         pretrained: Whether the model from fastface should be loaded with it's pretrained weights.
@@ -58,6 +58,9 @@ class FaceDetector(Task):
             Changing this argument currently has no effect.
         optimizer: The optimizer to use for training. Can either be the actual class or the class name.
         learning_rate: The learning rate to use for training
+        serializer: A instance of :class:`~flash.core.data.process.Serializer` or a mapping consisting of such
+            to use when serializing prediction outputs.
+        kwargs: additional kwargs nessesary for initializing face detector backbone
     """
 
     required_extras: str = "image"
@@ -66,7 +69,7 @@ class FaceDetector(Task):
         self,
         model: str = "lffd_slim",
         pretrained: bool = True,
-        loss=None,
+        loss: Optional[Union[Callable, Mapping, Sequence]] = None,
         metrics: Union[Callable, nn.Module, Mapping, Sequence, None] = None,
         optimizer: Type[Optimizer] = torch.optim.AdamW,
         learning_rate: float = 1e-4,
