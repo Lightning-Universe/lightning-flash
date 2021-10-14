@@ -15,10 +15,12 @@ from typing import Any, Dict
 
 import numpy as np
 import torch
+from pytorch_lightning.trainer.states import RunningStage
 
 from flash.core.data_v2.io.input import (
     FiftyOneInput,
     has_file_allowed_extension,
+    INPUT_TRANSFORM_TYPE,
     InputDataKeys,
     NumpyInput,
     PathsInput,
@@ -50,8 +52,17 @@ def image_loader(filepath: str):
 
 
 class ImagePathsInput(PathsInput):
-    def __init__(self):
-        super().__init__(loader=image_loader, extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
+    def __init__(
+        self,
+        running_stage: RunningStage,
+        transform: INPUT_TRANSFORM_TYPE,
+    ):
+        super().__init__(
+            running_stage=running_stage,
+            transform=transform,
+            loader=image_loader,
+            extensions=IMG_EXTENSIONS + NP_EXTENSIONS,
+        )
 
     @requires("image")
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:

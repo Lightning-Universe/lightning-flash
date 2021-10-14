@@ -95,5 +95,5 @@ class ImageClassificationData(DataModule):
         return MatplotlibVisualization(*args, **kwargs)
 
 
-ImagePathsInput.transform = IMAGE_CLASSIFICATION_REGISTRY
+ImagePathsInput.input_transforms_registry = IMAGE_CLASSIFICATION_REGISTRY
 ImageClassificationData.register_flash_dataset(DefaultDataSources.FOLDERS, ImagePathsInput)

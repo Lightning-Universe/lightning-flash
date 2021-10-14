@@ -20,7 +20,7 @@ from torch.utils.data.dataloader import default_collate
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.transforms import ApplyToKeys, kornia_collate, merge_transforms
-from flash.core.data_v2.transforms.input_transform import PreprocessTransform, PreprocessTransformPlacement
+from flash.core.data_v2.transforms.input_transform import INPUT_TRANSFORM_TYPE, InputTransform, InputTransformPlacement
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _ALBUMENTATIONS_AVAILABLE, _KORNIA_AVAILABLE, _TORCHVISION_AVAILABLE, requires
 
@@ -104,14 +104,12 @@ def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]
     return merge_transforms(default_transforms(image_size), transforms)
 
 
-class DefaultImageClassificationPreprocessTransform(PreprocessTransform):
-    def configure_transforms(
-        self, image_size: Tuple[int, int] = (196, 196)
-    ) -> Dict[PreprocessTransformPlacement, Callable]:
+class DefaultImageClassificationInputTransform(InputTransform):
+    def configure_transforms(self, image_size: Tuple[int, int] = (196, 196)) -> Dict[INPUT_TRANSFORM_TYPE, Callable]:
         if _KORNIA_AVAILABLE and os.getenv("FLASH_TESTING", "0") != "1":
             #  Better approach as all transforms are applied on tensor directly
             return {
-                PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: nn.Sequential(
+                InputTransformPlacement.PER_SAMPLE_TRANSFORM: nn.Sequential(
                     ApplyToKeys(
                         DefaultDataKeys.INPUT,
                         T.Compose(
@@ -127,14 +125,14 @@ class DefaultImageClassificationPreprocessTransform(PreprocessTransform):
                     ),
                     ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor),
                 ),
-                PreprocessTransformPlacement.COLLATE: kornia_collate,
-                PreprocessTransformPlacement.PER_BATCH_TRANSFORM_ON_DEVICE: ApplyToKeys(
+                InputTransformPlacement.COLLATE: kornia_collate,
+                InputTransformPlacement.PER_BATCH_TRANSFORM_ON_DEVICE: ApplyToKeys(
                     DefaultDataKeys.INPUT,
                     K.augmentation.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
                 ),
             }
         return {
-            PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: nn.Sequential(
+            InputTransformPlacement.PER_SAMPLE_TRANSFORM: nn.Sequential(
                 ApplyToKeys(
                     DefaultDataKeys.INPUT,
                     T.Compose(
@@ -148,9 +146,9 @@ class DefaultImageClassificationPreprocessTransform(PreprocessTransform):
                 ),
                 ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor),
             ),
-            PreprocessTransformPlacement.COLLATE: default_collate,
+            InputTransformPlacement.COLLATE: default_collate,
         }
 
 
 IMAGE_CLASSIFICATION_REGISTRY = FlashRegistry("transforms")
-IMAGE_CLASSIFICATION_REGISTRY(name="default", fn=DefaultImageClassificationPreprocessTransform)
+IMAGE_CLASSIFICATION_REGISTRY(name="default", fn=DefaultImageClassificationInputTransform)
