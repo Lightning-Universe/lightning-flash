@@ -30,7 +30,7 @@ else:
 
 
 class GraphBlock(nn.Module):
-    """ Graph convolutional block 
+    """Graph convolutional block.
 
     Args:
         nc_input: number of input channels
@@ -60,8 +60,8 @@ class GraphBlock(nn.Module):
 
 
 class BaseGraphModel(nn.Module):
-    """ Base convolutional graph model 
-    
+    """Base convolutional graph model.
+
     Args:
         num_features: number of input features
         hidden_channels: list of integers with the number of channels in all the hidden layers.
@@ -71,6 +71,7 @@ class BaseGraphModel(nn.Module):
         act: activation function to use between layers
         **conv_kwargs: additional kwargs used for initialization of convolutional operator
     """
+
     def __init__(
         self,
         num_features: int,
