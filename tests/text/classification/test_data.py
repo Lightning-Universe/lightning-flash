@@ -32,8 +32,8 @@ from flash.text.classification.data import (
 from tests.helpers.utils import _TEXT_TESTING
 
 if _TEXT_AVAILABLE:
-    from transformers.tokenization_utils_base import PreTrainedTokenizerBase
     from datasets import Dataset
+    from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 
 TEST_BACKBONE = "prajjwal1/bert-tiny"  # super small model for testing
 
@@ -63,7 +63,7 @@ TEST_DATA_FRAME_DATA = pd.DataFrame(
     },
 )
 
-TEST_HF_DATASET_DATA =  Dataset.from_pandas(TEST_DATA_FRAME_DATA)
+TEST_HF_DATASET_DATA = Dataset.from_pandas(TEST_DATA_FRAME_DATA)
 
 TEST_LIST_DATA = ["this is a sentence one", "this is a sentence two", "this is a sentence three"]
 TEST_LIST_TARGETS = [0, 1, 0]
@@ -87,10 +87,12 @@ def json_data_with_field(tmpdir):
     path.write_text(TEST_JSON_DATA_FIELD)
     return path
 
+
 def parquet_data(tmpdir):
     path = Path(tmpdir) / "data.parquet"
     TEST_DATA_FRAME_DATA.to_parquet(path)
     return path
+
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")

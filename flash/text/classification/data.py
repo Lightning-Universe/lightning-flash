@@ -88,7 +88,7 @@ class TextDataSource(DataSource):
         return element
 
     def _to_hf_dataset(self, data):
-        """account for flash CI testing context"""
+        """account for flash CI testing context."""
         hf_dataset, *other = self.to_hf_dataset(data)
 
         if flash._IS_TESTING and not torch.cuda.is_available():
@@ -199,7 +199,7 @@ class TextListDataSource(TextDataSource):
 
         # predicting
         hf_dataset = Dataset.from_dict({input: data})
-        
+
         return hf_dataset, input
 
     def load_data(
@@ -268,7 +268,9 @@ class TextClassificationPreprocess(Preprocess):
                 DefaultDataSources.CSV: TextCSVDataSource(self.backbone, max_length=max_length),
                 DefaultDataSources.JSON: TextJSONDataSource(self.backbone, max_length=max_length),
                 DefaultDataSources.PARQUET: TextParquetDataSource(self.backbone, max_length=max_length),
-                DefaultDataSources.HUGGINGFACE_DATASET: TextHuggingFaceDatasetDataSource(self.backbone, max_length=max_length),
+                DefaultDataSources.HUGGINGFACE_DATASET: TextHuggingFaceDatasetDataSource(
+                    self.backbone, max_length=max_length
+                ),
                 DefaultDataSources.DATAFRAME: TextDataFrameDataSource(self.backbone, max_length=max_length),
                 DefaultDataSources.LISTS: TextListDataSource(self.backbone, max_length=max_length),
                 DefaultDataSources.LABELSTUDIO: LabelStudioTextClassificationDataSource(
@@ -579,8 +581,8 @@ class TextClassificationData(DataModule):
         sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
-        """Creates a :class:`~flash.text.classification.data.TextClassificationData` object from the given 
-        Hugging Face datasets ``Dataset`` objects.
+        """Creates a :class:`~flash.text.classification.data.TextClassificationData` object from the given Hugging
+        Face datasets ``Dataset`` objects.
 
         Args:
             input_field: The field (column) in the pandas ``Dataset`` to use for the input.
