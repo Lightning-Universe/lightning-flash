@@ -24,7 +24,7 @@ from flash.core.data.input_transform import InputTransform, InputTransformPlacem
 from flash.core.registry import FlashRegistry
 
 
-def test_preprocess_transform():
+def test_input_transform():
 
     transform = InputTransform(running_stage=RunningStage.TRAINING)
 
@@ -101,15 +101,15 @@ def test_preprocess_transform():
         }
     }
 
-    transforms_registry = FlashRegistry("transforms")
-    transforms_registry(fn=MyInputTransform, name="something")
+    input_transforms_registry = FlashRegistry("transforms")
+    input_transforms_registry(fn=MyInputTransform, name="something")
 
     transform = InputTransform.from_transform(
-        running_stage=RunningStage.TRAINING, transform="something", transforms_registry=transforms_registry
+        running_stage=RunningStage.TRAINING, transform="something", input_transforms_registry=input_transforms_registry
     )
 
     transform = transform.from_transform(
-        running_stage=RunningStage.TRAINING, transform=transform, transforms_registry=transforms_registry
+        running_stage=RunningStage.TRAINING, transform=transform, input_transforms_registry=input_transforms_registry
     )
 
     assert isinstance(transform, MyInputTransform)
@@ -181,26 +181,26 @@ def test_transform_with_registry():
     registry = FlashRegistry("transforms")
     registry(name="custom", fn=MyInputTransform)
 
-    transform = InputTransform.from_train_transform(transform="custom", transforms_registry=registry)
+    transform = InputTransform.from_train_transform(transform="custom", input_transforms_registry=registry)
     assert isinstance(transform, MyInputTransform)
     assert transform.name == "lightning"
 
     transform = InputTransform.from_train_transform(
-        transform=("custom", {"name": "flash"}), transforms_registry=registry
+        transform=("custom", {"name": "flash"}), input_transforms_registry=registry
     )
     assert isinstance(transform, MyInputTransform)
     assert transform.name == "flash"
 
-    transform = InputTransform.from_train_transform(transform=None, transforms_registry=registry)
+    transform = InputTransform.from_train_transform(transform=None, input_transforms_registry=registry)
     assert transform is None
 
-    transform = InputTransform.from_train_transform(transform=None, transforms_registry=registry)
+    transform = InputTransform.from_train_transform(transform=None, input_transforms_registry=registry)
     assert transform is None
 
     with pytest.raises(
         MisconfigurationException, match="The transform should be provided as a tuple with the following types"
     ):
-        transform = InputTransform.from_train_transform(transform=("custom", None), transforms_registry=registry)
+        transform = InputTransform.from_train_transform(transform=("custom", None), input_transforms_registry=registry)
 
     with pytest.raises(MisconfigurationException, match="The format for the transform isn't correct"):
-        transform = InputTransform.from_train_transform(transform=1, transforms_registry=registry)
+        transform = InputTransform.from_train_transform(transform=1, input_transforms_registry=registry)

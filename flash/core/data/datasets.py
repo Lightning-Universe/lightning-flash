@@ -24,12 +24,18 @@ from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
 from flash.core.data.properties import Properties
 from flash.core.registry import FlashRegistry
 
+__all__ = [
+    "BaseDataset",
+    "FlashDataset",
+    "FlashIterableDataset",
+]
+
 
 class BaseDataset(Properties):
 
     DATASET_KEY = "dataset"
 
-    transforms_registry: Optional[FlashRegistry] = None
+    input_transforms_registry: Optional[FlashRegistry] = FlashRegistry("transforms")
     transform: Optional[InputTransform] = None
 
     @abstractmethod
@@ -48,7 +54,7 @@ class BaseDataset(Properties):
         self.running_stage = running_stage
         if transform:
             self.transform = InputTransform.from_transform(
-                transform, running_stage=running_stage, transforms_registry=self.transforms_registry
+                transform, running_stage=running_stage, input_transforms_registry=self.input_transforms_registry
             )
 
     def pass_args_to_load_data(
@@ -71,11 +77,13 @@ class BaseDataset(Properties):
     @property
     def dataloader_collate_fn(self) -> Optional[Callable]:
         if self.transform:
+            self.transform.running_stage = self.running_stage
             return self.transform.dataloader_collate_fn
 
     @property
     def on_after_batch_transfer_fn(self) -> Optional[Callable]:
         if self.transform:
+            self.transform.running_stage = self.running_stage
             return self.transform.on_after_batch_transfer_fn
 
     def _resolve_functions(self, func_name: str, cls: Type["BaseDataset"]) -> None:
@@ -157,12 +165,14 @@ class BaseDataset(Properties):
         )
 
     @classmethod
-    def register_transform(cls, enum: Union[LightningEnum, str], fn: Union[Type[InputTransform], partial]) -> None:
-        if cls.transforms_registry is None:
+    def register_input_transform(
+        cls, enum: Union[LightningEnum, str], fn: Union[Type[InputTransform], partial]
+    ) -> None:
+        if cls.input_transforms_registry is None:
             raise MisconfigurationException(
-                "The class attribute `transforms_registry` should be set as a class attribute. "
+                "The class attribute `input_transforms_registry` should be set as a class attribute. "
             )
-        cls.transforms_registry(fn=fn, name=enum)
+        cls.input_transforms_registry(fn=fn, name=enum)
 
     def resolve_functions(self):
         raise NotImplementedError

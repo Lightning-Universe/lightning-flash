@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import inspect
+from functools import partial, wraps
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 from pytorch_lightning.trainer.states import RunningStage
@@ -38,6 +39,17 @@ class InputTransformPlacement(LightningEnum):
     COLLATE = "collate"
     PER_SAMPLE_TRANSFORM_ON_DEVICE = "per_sample_transform_on_device"
     PER_BATCH_TRANSFORM_ON_DEVICE = "per_batch_transform_on_device"
+
+
+def transform_context(func: Callable, current_fn: str) -> Callable:
+    @wraps(func)
+    def wrapper(self, *args, **kwargs) -> Any:
+        self.current_fn = current_fn
+        result = func(self, *args, **kwargs)
+        self.current_fn = None
+        return result
+
+    return wrapper
 
 
 class InputTransform(Properties):
@@ -112,11 +124,13 @@ class InputTransform(Properties):
             "transform": self.transform,
         }
 
+    @partial(transform_context, current_fn="per_sample_transform")
     def per_sample_transform(self, sample: Any) -> Any:
         if isinstance(sample, list):
             return [self.current_transform(s) for s in sample]
         return self.current_transform(sample)
 
+    @partial(transform_context, current_fn="per_batch_transform")
     def per_batch_transform(self, batch: Any) -> Any:
         """Transforms to apply to a whole batch (if possible use this for efficiency).
 
@@ -125,6 +139,7 @@ class InputTransform(Properties):
         """
         return self.current_transform(batch)
 
+    @partial(transform_context, current_fn="collate")
     def collate(self, samples: Sequence, metadata=None) -> Any:
         """Transform to convert a sequence of samples to a collated batch."""
         current_transform = self.current_transform
@@ -144,6 +159,7 @@ class InputTransform(Properties):
             return collate_fn(samples, metadata)
         return collate_fn(samples)
 
+    @partial(transform_context, current_fn="per_sample_transform_on_device")
     def per_sample_transform_on_device(self, sample: Any) -> Any:
         """Transforms to apply to the data before the collation (per-sample basis).
 
@@ -156,6 +172,7 @@ class InputTransform(Properties):
             return [self.current_transform(s) for s in sample]
         return self.current_transform(sample)
 
+    @partial(transform_context, current_fn="per_batch_transform_on_device")
     def per_batch_transform_on_device(self, batch: Any) -> Any:
         """Transforms to apply to a whole batch (if possible use this for efficiency).
 
@@ -169,7 +186,7 @@ class InputTransform(Properties):
         cls,
         transform: INPUT_TRANSFORM_TYPE,
         running_stage: RunningStage,
-        transforms_registry: Optional[FlashRegistry] = None,
+        input_transforms_registry: Optional[FlashRegistry] = None,
     ) -> Optional["InputTransform"]:
 
         if isinstance(transform, InputTransform):
@@ -180,8 +197,8 @@ class InputTransform(Properties):
             return cls(running_stage, {InputTransformPlacement.PER_SAMPLE_TRANSFORM: transform})
 
         if isinstance(transform, tuple) or isinstance(transform, (LightningEnum, str)):
-            enum, transform_kwargs = cls._sanitize_registry_transform(transform, transforms_registry)
-            transform_cls = transforms_registry.get(enum)
+            enum, transform_kwargs = cls._sanitize_registry_transform(transform, input_transforms_registry)
+            transform_cls = input_transforms_registry.get(enum)
             return transform_cls(running_stage, transform=None, **transform_kwargs)
 
         if not transform:
@@ -193,40 +210,46 @@ class InputTransform(Properties):
     def from_train_transform(
         cls,
         transform: INPUT_TRANSFORM_TYPE,
-        transforms_registry: Optional[FlashRegistry] = None,
+        input_transforms_registry: Optional[FlashRegistry] = None,
     ) -> Optional["InputTransform"]:
         return cls.from_transform(
-            transform=transform, running_stage=RunningStage.TRAINING, transforms_registry=transforms_registry
+            transform=transform,
+            running_stage=RunningStage.TRAINING,
+            input_transforms_registry=input_transforms_registry,
         )
 
     @classmethod
     def from_val_transform(
         cls,
         transform: INPUT_TRANSFORM_TYPE,
-        transforms_registry: Optional[FlashRegistry] = None,
+        input_transforms_registry: Optional[FlashRegistry] = None,
     ) -> Optional["InputTransform"]:
         return cls.from_transform(
-            transform=transform, running_stage=RunningStage.VALIDATING, transforms_registry=transforms_registry
+            transform=transform,
+            running_stage=RunningStage.VALIDATING,
+            input_transforms_registry=input_transforms_registry,
         )
 
     @classmethod
     def from_test_transform(
         cls,
         transform: INPUT_TRANSFORM_TYPE,
-        transforms_registry: Optional[FlashRegistry] = None,
+        input_transforms_registry: Optional[FlashRegistry] = None,
     ) -> Optional["InputTransform"]:
         return cls.from_transform(
-            transform=transform, running_stage=RunningStage.TESTING, transforms_registry=transforms_registry
+            transform=transform, running_stage=RunningStage.TESTING, input_transforms_registry=input_transforms_registry
         )
 
     @classmethod
     def from_predict_transform(
         cls,
         transform: INPUT_TRANSFORM_TYPE,
-        transforms_registry: Optional[FlashRegistry] = None,
+        input_transforms_registry: Optional[FlashRegistry] = None,
     ) -> Optional["InputTransform"]:
         return cls.from_transform(
-            transform=transform, running_stage=RunningStage.PREDICTING, transforms_registry=transforms_registry
+            transform=transform,
+            running_stage=RunningStage.PREDICTING,
+            input_transforms_registry=input_transforms_registry,
         )
 
     def _resolve_transforms(self, running_stage: RunningStage) -> Optional[Dict[str, Callable]]:
@@ -298,11 +321,11 @@ class InputTransform(Properties):
 
     @classmethod
     def _sanitize_registry_transform(
-        cls, transform: Tuple[Union[LightningEnum, str], Any], transforms_registry: Optional[FlashRegistry]
+        cls, transform: Tuple[Union[LightningEnum, str], Any], input_transforms_registry: Optional[FlashRegistry]
     ) -> Tuple[Union[LightningEnum, str], Dict]:
         msg = "The transform should be provided as a tuple with the following types (LightningEnum, Dict[str, Any]) "
         msg += "when requesting transform from the registry."
-        if not transforms_registry:
+        if not input_transforms_registry:
             raise MisconfigurationException("You requested a transform from the registry, but it is empty.")
         if isinstance(transform, tuple) and len(transform) > 2:
             raise MisconfigurationException(msg)
