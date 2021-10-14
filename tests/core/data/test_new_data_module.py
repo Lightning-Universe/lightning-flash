@@ -21,7 +21,7 @@ from torch.utils.data.dataloader import default_collate
 from flash import Task, Trainer
 from flash.core.data_v2.base_dataset import FlashDataset
 from flash.core.data_v2.data_module import DataModule
-from flash.core.data_v2.preprocess_transform import PreprocessTransform
+from flash.core.data_v2.transforms.input_transform import InputTransform
 
 
 def test_data_module(tmpdir):
@@ -42,7 +42,7 @@ def test_data_module(tmpdir):
     class TestDataset(FlashDataset):
         pass
 
-    class TestTransform(PreprocessTransform):
+    class TestTransform(InputTransform):
         def configure_collate(self, *args, **kwargs) -> Callable:
             return default_collate
 
@@ -126,3 +126,10 @@ def test_data_module(tmpdir):
     trainer.validate(model, dm)
     trainer.test(model, dm)
     trainer.predict(model, dm)
+
+    class CustomDataModule(DataModule):
+        pass
+
+    CustomDataModule.register_flash_dataset("custom", TestDataset)
+    train_dataset, *_ = DataModule.create_flash_datasets("custom", range(10))
+    assert train_dataset[0] == 0

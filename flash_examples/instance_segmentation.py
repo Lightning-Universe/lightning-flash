@@ -45,8 +45,8 @@ trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 predictions = model.predict(
     [
         str(data_dir / "images/yorkshire_terrier_9.jpg"),
-        str(data_dir / "images/english_cocker_spaniel_1.jpg"),
-        str(data_dir / "images/scottish_terrier_1.jpg"),
+        str(data_dir / "images/yorkshire_terrier_12.jpg"),
+        str(data_dir / "images/yorkshire_terrier_13.jpg"),
     ]
 )
 print(predictions)

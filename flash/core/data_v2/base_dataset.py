@@ -21,7 +21,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Dataset, IterableDataset
 
 from flash.core.data.properties import Properties
-from flash.core.data_v2.preprocess_transform import PREPROCESS_TRANSFORM_TYPE, PreprocessTransform
+from flash.core.data_v2.transforms.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
 from flash.core.registry import FlashRegistry
 
 __all__ = [
@@ -38,8 +38,8 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
 
     DATASET_KEY = "dataset"
 
-    transforms_registry: Optional[FlashRegistry] = FlashRegistry("transforms")
-    transform: Optional[PreprocessTransform] = None
+    input_transforms_registry: Optional[FlashRegistry] = FlashRegistry("transforms")
+    transform: Optional[InputTransform] = None
 
     @abstractmethod
     def load_data(self, data: DATA_TYPE) -> Union[Iterable, Mapping]:
@@ -52,12 +52,12 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
     def load_sample(self, data: Any) -> Any:
         """The `load_sample` hook contains the logic to load a single sample."""
 
-    def __init__(self, running_stage: RunningStage, transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None) -> None:
+    def __init__(self, running_stage: RunningStage, transform: Optional[INPUT_TRANSFORM_TYPE] = None) -> None:
         super().__init__()
         self.running_stage = running_stage
         if transform:
-            self.transform = PreprocessTransform.from_transform(
-                transform, running_stage=running_stage, transforms_registry=self.transforms_registry
+            self.transform = InputTransform.from_transform(
+                transform, running_stage=running_stage, input_transforms_registry=self.input_transforms_registry
             )
 
     def pass_args_to_load_data(
@@ -113,7 +113,7 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
         cls,
         *load_data_args,
         running_stage: Optional[RunningStage] = None,
-        transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
+        transform: Optional[INPUT_TRANSFORM_TYPE] = None,
         **dataset_kwargs: Any,
     ) -> "BaseDataset":
         if not running_stage:
@@ -129,7 +129,7 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
     def from_train_data(
         cls,
         *load_data_args,
-        transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
+        transform: Optional[INPUT_TRANSFORM_TYPE] = None,
         **dataset_kwargs: Any,
     ) -> "BaseDataset":
         return cls.from_data(
@@ -140,7 +140,7 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
     def from_val_data(
         cls,
         *load_data_args,
-        transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
+        transform: Optional[INPUT_TRANSFORM_TYPE] = None,
         **dataset_kwargs: Any,
     ) -> "BaseDataset":
         return cls.from_data(
@@ -151,7 +151,7 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
     def from_test_data(
         cls,
         *load_data_args,
-        transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
+        transform: Optional[INPUT_TRANSFORM_TYPE] = None,
         **dataset_kwargs: Any,
     ) -> "BaseDataset":
         return cls.from_data(*load_data_args, running_stage=RunningStage.TESTING, transform=transform, **dataset_kwargs)
@@ -160,7 +160,7 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
     def from_predict_data(
         cls,
         *load_data_args,
-        transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
+        transform: Optional[INPUT_TRANSFORM_TYPE] = None,
         **dataset_kwargs: Any,
     ) -> "BaseDataset":
         return cls.from_data(
@@ -168,12 +168,14 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
         )
 
     @classmethod
-    def register_transform(cls, enum: Union[LightningEnum, str], fn: Union[Type[PreprocessTransform], partial]) -> None:
-        if cls.transforms_registry is None:
+    def register_input_transform(
+        cls, enum: Union[LightningEnum, str], fn: Union[Type[InputTransform], partial]
+    ) -> None:
+        if cls.input_transforms_registry is None:
             raise MisconfigurationException(
-                "The class attribute `transforms_registry` should be set as a class attribute. "
+                "The class attribute `input_transforms_registry` should be set as a class attribute. "
             )
-        cls.transforms_registry(fn=fn, name=enum)
+        cls.input_transforms_registry(fn=fn, name=enum)
 
     def resolve_functions(self):
         raise NotImplementedError

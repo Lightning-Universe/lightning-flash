@@ -20,7 +20,7 @@ from torch.utils.data.dataloader import default_collate
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.transforms import ApplyToKeys, kornia_collate, merge_transforms
-from flash.core.data_v2.preprocess_transform import PreprocessTransform, PreprocessTransformPlacement
+from flash.core.data_v2.transforms.input_transform import PreprocessTransform, PreprocessTransformPlacement
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _ALBUMENTATIONS_AVAILABLE, _KORNIA_AVAILABLE, _TORCHVISION_AVAILABLE, requires
 

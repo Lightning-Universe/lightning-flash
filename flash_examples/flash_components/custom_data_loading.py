@@ -19,15 +19,14 @@ from typing import Any, Dict, List, Optional
 import torchvision.transforms as T
 from PIL import Image
 from pytorch_lightning import seed_everything
-from pytorch_lightning.utilities.enums import LightningEnum
 from torch.utils.data._utils.collate import default_collate
 
-from flash import _PACKAGE_ROOT, FlashDataset, PreprocessTransform
+from flash import _PACKAGE_ROOT, FlashDataset, InputTransform
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import download_data
 from flash.core.data_v2.data_module import DataModule
-from flash.core.data_v2.preprocess_transform import PREPROCESS_TRANSFORM_TYPE
+from flash.core.data_v2.transforms.input_transform import INPUT_TRANSFORM_TYPE
 
 seed_everything(42)
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", f"{_PACKAGE_ROOT}/data")
@@ -44,24 +43,7 @@ download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", f"{
 
 
 #############################################################################################
-#            Step 1 / 5: Create an enum to describe your new loading mechanism              #
-#############################################################################################
-
-
-class DataTransform(LightningEnum):
-
-    BASE = "base"
-    RANDOM_ROTATION = "random_rotation"
-    RANDOM_90_DEG_ROTATION = "random_90_def_rotation"
-
-
-class CustomDataFormat(LightningEnum):
-
-    MULTIPLE_FOLDERS = "multiple_folders"
-
-
-#############################################################################################
-#                         Step 2 / 5: Implement a FlashDataset                              #
+#                         Step 1 / 2: Implement a FlashDataset                              #
 #                                                                                           #
 # A `FlashDataset` is a state-aware (c.f training, validating, testing and predicting)      #
 # dataset.                                                                                  #
@@ -108,15 +90,15 @@ predict_dataset = MultipleFoldersImageDataset.from_predict_data(PREDICT_FOLDER)
 
 
 #############################################################################################
-#                   Step 3 / 5: [optional] Implement a PreprocessTransform                       #
+#                   Step 2 / 2: [optional] Implement a InputTransform                       #
 #                                                                                           #
-# A `PreprocessTransform` is a state-aware (c.f training, validating, testing and predicting)    #
+# A `InputTransform` is a state-aware (c.f training, validating, testing and predicting)    #
 # transform. You would have to implement a `configure_transforms` hook with your transform  #
 #                                                                                           #
 #############################################################################################
 
 
-class ImageBaseTransform(PreprocessTransform):
+class BaseImageInputTransform(InputTransform):
     def configure_per_sample_transform(self, image_size: int = 224) -> Any:
         per_sample_transform = T.Compose([T.Resize((image_size, image_size)), T.ToTensor()])
         return ApplyToKeys(DefaultDataKeys.INPUT, per_sample_transform)
@@ -125,7 +107,7 @@ class ImageBaseTransform(PreprocessTransform):
         return default_collate
 
 
-class ImageRandomRotationTransform(ImageBaseTransform):
+class ImageRandomRotationInputTransform(BaseImageInputTransform):
     def configure_per_sample_transform(self, image_size: int = 224, rotation: float = 0) -> Any:
         transforms = [T.Resize((image_size, image_size)), T.ToTensor()]
         if self.training:
@@ -135,15 +117,15 @@ class ImageRandomRotationTransform(ImageBaseTransform):
 
 # Register your transform within the Flash Dataset registry
 # Note: Registries can be shared by multiple dataset.
-MultipleFoldersImageDataset.register_transform(DataTransform.BASE, ImageBaseTransform)
-MultipleFoldersImageDataset.register_transform(DataTransform.RANDOM_ROTATION, ImageRandomRotationTransform)
-MultipleFoldersImageDataset.register_transform(
-    DataTransform.RANDOM_90_DEG_ROTATION, partial(ImageRandomRotationTransform, rotation=90)
+MultipleFoldersImageDataset.register_input_transform("base", BaseImageInputTransform)
+MultipleFoldersImageDataset.register_input_transform("random_rotation", ImageRandomRotationInputTransform)
+MultipleFoldersImageDataset.register_input_transform(
+    "random_90_def_rotation", partial(ImageRandomRotationInputTransform, rotation=90)
 )
 
 train_dataset = MultipleFoldersImageDataset.from_train_data(
     TRAIN_FOLDERS,
-    transform=(DataTransform.RANDOM_ROTATION, {"rotation": 45}),
+    transform=("random_rotation", {"rotation": 45}),
 )
 
 print(train_dataset.transform)
@@ -151,18 +133,18 @@ print(train_dataset.transform)
 # ImageClassificationRandomRotationTransform(
 #    running_stage=train,
 #    transform={
-#        PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(
+#        InputTransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(
 #           keys="input",
 #           transform=Compose(
 #                ToTensor()
 #                RandomRotation(degrees=[-45.0, 45.0], interpolation=nearest, expand=False, fill=0)),
-#        PreprocessTransformPlacement.COLLATE: default_collate,
+#        InputTransformPlacement.COLLATE: default_collate,
 #    },
 # )
 
 train_dataset = MultipleFoldersImageDataset.from_train_data(
     TRAIN_FOLDERS,
-    transform=DataTransform.RANDOM_90_DEG_ROTATION,
+    transform="random_90_def_rotation",
 )
 
 print(train_dataset.transform)
@@ -170,23 +152,23 @@ print(train_dataset.transform)
 # ImageClassificationRandomRotationTransform(
 #    running_stage=train,
 #    transform={
-#        PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(
+#        InputTransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(
 #           keys="input",
 #           transform=Compose(
 #                ToTensor()
 #                RandomRotation(degrees=[-90.0, 90.0], interpolation=nearest, expand=False, fill=0)),
-#        PreprocessTransformPlacement.COLLATE: default_collate,
+#        InputTransformPlacement.COLLATE: default_collate,
 #    },
 # )
 
-val_dataset = MultipleFoldersImageDataset.from_val_data(VAL_FOLDERS, transform=DataTransform.BASE)
+val_dataset = MultipleFoldersImageDataset.from_val_data(VAL_FOLDERS, transform="base")
 print(val_dataset.transform)
 # Out:
 # ImageClassificationRandomRotationTransform(
 #    running_stage=validate,
 #    transform={
-#        PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(keys="input", transform=ToTensor()),
-#        PreprocessTransformPlacement.COLLATE: default_collate,
+#        InputTransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(keys="input", transform=ToTensor()),
+#        InputTransformPlacement.COLLATE: default_collate,
 #    },
 # )
 
@@ -208,9 +190,9 @@ print(train_dataset[0])
 
 
 datamodule = DataModule(
-    train_dataset=MultipleFoldersImageDataset.from_train_data(TRAIN_FOLDERS, transform=DataTransform.RANDOM_ROTATION),
-    val_dataset=MultipleFoldersImageDataset.from_val_data(VAL_FOLDERS, transform=DataTransform.BASE),
-    predict_dataset=MultipleFoldersImageDataset.from_predict_data(PREDICT_FOLDER, transform=DataTransform.BASE),
+    train_dataset=MultipleFoldersImageDataset.from_train_data(TRAIN_FOLDERS, transform="random_rotation"),
+    val_dataset=MultipleFoldersImageDataset.from_val_data(VAL_FOLDERS, transform="base"),
+    predict_dataset=MultipleFoldersImageDataset.from_predict_data(PREDICT_FOLDER, transform="base"),
     batch_size=2,
 )
 
@@ -274,16 +256,16 @@ class ImageClassificationDataModule(DataModule):
         val_folders: Optional[List[str]] = None,
         test_folders: Optional[List[str]] = None,
         predict_folder: Optional[str] = None,
-        train_transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
-        val_transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
-        test_transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
-        predict_transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
+        train_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
+        val_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
+        test_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
+        predict_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
         **data_module_kwargs: Any,
     ) -> "ImageClassificationDataModule":
 
         return cls(
             *cls.create_flash_datasets(
-                CustomDataFormat.MULTIPLE_FOLDERS,
+                "multiple_folders",
                 train_folders,
                 val_folders,
                 test_folders,
@@ -297,7 +279,7 @@ class ImageClassificationDataModule(DataModule):
         )
 
 
-ImageClassificationDataModule.register_flash_dataset(CustomDataFormat.MULTIPLE_FOLDERS, MultipleFoldersImageDataset)
+ImageClassificationDataModule.register_flash_dataset("multiple_folders", MultipleFoldersImageDataset)
 
 
 # Create the datamodule with your new constructor. This is purely equivalent to the previous datamdoule creation.
@@ -305,9 +287,9 @@ datamodule = ImageClassificationDataModule.from_multiple_folders(
     train_folders=TRAIN_FOLDERS,
     val_folders=VAL_FOLDERS,
     predict_folder=PREDICT_FOLDER,
-    train_transform=DataTransform.RANDOM_ROTATION,
-    val_transform=DataTransform.BASE,
-    predict_transform=DataTransform.BASE,
+    train_transform="random_rotation",
+    val_transform="base",
+    predict_transform="base",
     batch_size=2,
 )
 

@@ -27,12 +27,12 @@ from flash.core.data.states import CollateFn
 from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.registry import FlashRegistry
 
-PREPROCESS_TRANSFORM_TYPE = Optional[
-    Union["PreprocessTransform", Callable, Tuple[Union[LightningEnum, str], Dict[str, Any]], Union[LightningEnum, str]]
+INPUT_TRANSFORM_TYPE = Optional[
+    Union["InputTransform", Callable, Tuple[Union[LightningEnum, str], Dict[str, Any]], Union[LightningEnum, str]]
 ]
 
 
-class PreprocessTransformPlacement(LightningEnum):
+class InputTransformPlacement(LightningEnum):
 
     PER_SAMPLE_TRANSFORM = "per_sample_transform"
     PER_BATCH_TRANSFORM = "per_batch_transform"
@@ -52,8 +52,8 @@ def transform_context(func: Callable, current_fn: str) -> Callable:
     return wrapper
 
 
-class PreprocessTransform(Properties):
-    def configure_transforms(self, *args, **kwargs) -> Dict[PreprocessTransformPlacement, Callable]:
+class InputTransform(Properties):
+    def configure_transforms(self, *args, **kwargs) -> Dict[InputTransformPlacement, Callable]:
         """The default transforms to use.
 
         Will be overridden by transforms passed to the ``__init__``.
@@ -184,21 +184,21 @@ class PreprocessTransform(Properties):
     @classmethod
     def from_transform(
         cls,
-        transform: PREPROCESS_TRANSFORM_TYPE,
+        transform: INPUT_TRANSFORM_TYPE,
         running_stage: RunningStage,
-        transforms_registry: Optional[FlashRegistry] = None,
-    ) -> Optional["PreprocessTransform"]:
+        input_transforms_registry: Optional[FlashRegistry] = None,
+    ) -> Optional["InputTransform"]:
 
-        if isinstance(transform, PreprocessTransform):
+        if isinstance(transform, InputTransform):
             transform.running_stage = running_stage
             return transform
 
         if isinstance(transform, Callable):
-            return cls(running_stage, {PreprocessTransformPlacement.PER_SAMPLE_TRANSFORM: transform})
+            return cls(running_stage, {InputTransformPlacement.PER_SAMPLE_TRANSFORM: transform})
 
         if isinstance(transform, tuple) or isinstance(transform, (LightningEnum, str)):
-            enum, transform_kwargs = cls._sanitize_registry_transform(transform, transforms_registry)
-            transform_cls = transforms_registry.get(enum)
+            enum, transform_kwargs = cls._sanitize_registry_transform(transform, input_transforms_registry)
+            transform_cls = input_transforms_registry.get(enum)
             return transform_cls(running_stage, transform=None, **transform_kwargs)
 
         if not transform:
@@ -209,41 +209,47 @@ class PreprocessTransform(Properties):
     @classmethod
     def from_train_transform(
         cls,
-        transform: PREPROCESS_TRANSFORM_TYPE,
-        transforms_registry: Optional[FlashRegistry] = None,
-    ) -> Optional["PreprocessTransform"]:
+        transform: INPUT_TRANSFORM_TYPE,
+        input_transforms_registry: Optional[FlashRegistry] = None,
+    ) -> Optional["InputTransform"]:
         return cls.from_transform(
-            transform=transform, running_stage=RunningStage.TRAINING, transforms_registry=transforms_registry
+            transform=transform,
+            running_stage=RunningStage.TRAINING,
+            input_transforms_registry=input_transforms_registry,
         )
 
     @classmethod
     def from_val_transform(
         cls,
-        transform: PREPROCESS_TRANSFORM_TYPE,
-        transforms_registry: Optional[FlashRegistry] = None,
-    ) -> Optional["PreprocessTransform"]:
+        transform: INPUT_TRANSFORM_TYPE,
+        input_transforms_registry: Optional[FlashRegistry] = None,
+    ) -> Optional["InputTransform"]:
         return cls.from_transform(
-            transform=transform, running_stage=RunningStage.VALIDATING, transforms_registry=transforms_registry
+            transform=transform,
+            running_stage=RunningStage.VALIDATING,
+            input_transforms_registry=input_transforms_registry,
         )
 
     @classmethod
     def from_test_transform(
         cls,
-        transform: PREPROCESS_TRANSFORM_TYPE,
-        transforms_registry: Optional[FlashRegistry] = None,
-    ) -> Optional["PreprocessTransform"]:
+        transform: INPUT_TRANSFORM_TYPE,
+        input_transforms_registry: Optional[FlashRegistry] = None,
+    ) -> Optional["InputTransform"]:
         return cls.from_transform(
-            transform=transform, running_stage=RunningStage.TESTING, transforms_registry=transforms_registry
+            transform=transform, running_stage=RunningStage.TESTING, input_transforms_registry=input_transforms_registry
         )
 
     @classmethod
     def from_predict_transform(
         cls,
-        transform: PREPROCESS_TRANSFORM_TYPE,
-        transforms_registry: Optional[FlashRegistry] = None,
-    ) -> Optional["PreprocessTransform"]:
+        transform: INPUT_TRANSFORM_TYPE,
+        input_transforms_registry: Optional[FlashRegistry] = None,
+    ) -> Optional["InputTransform"]:
         return cls.from_transform(
-            transform=transform, running_stage=RunningStage.PREDICTING, transforms_registry=transforms_registry
+            transform=transform,
+            running_stage=RunningStage.PREDICTING,
+            input_transforms_registry=input_transforms_registry,
         )
 
     def _resolve_transforms(self, running_stage: RunningStage) -> Optional[Dict[str, Callable]]:
@@ -251,7 +257,7 @@ class PreprocessTransform(Properties):
 
         resolved_function = getattr(
             self,
-            DataPipeline._resolve_function_hierarchy("configure_transforms", self, running_stage, PreprocessTransform),
+            DataPipeline._resolve_function_hierarchy("configure_transforms", self, running_stage, InputTransform),
         )
         params = inspect.signature(resolved_function).parameters
         transforms_out: Optional[Dict[str, Callable]] = resolved_function(
@@ -259,10 +265,10 @@ class PreprocessTransform(Properties):
         )
 
         transforms_out = transforms_out or {}
-        for placement in PreprocessTransformPlacement:
+        for placement in InputTransformPlacement:
             transform_name = f"configure_{placement.value}"
             resolved_function = getattr(
-                self, DataPipeline._resolve_function_hierarchy(transform_name, self, running_stage, PreprocessTransform)
+                self, DataPipeline._resolve_function_hierarchy(transform_name, self, running_stage, InputTransform)
             )
             params = inspect.signature(resolved_function).parameters
             transforms: Optional[Dict[str, Callable]] = resolved_function(
@@ -278,8 +284,7 @@ class PreprocessTransform(Properties):
         if transform is None:
             return transform
 
-        keys = [v for v in PreprocessTransformPlacement]
-
+        keys = [v for v in InputTransformPlacement]
         keys_diff = set(transform.keys()).difference(keys)
 
         if len(keys_diff) > 0:
@@ -315,11 +320,11 @@ class PreprocessTransform(Properties):
 
     @classmethod
     def _sanitize_registry_transform(
-        cls, transform: Tuple[Union[LightningEnum, str], Any], transforms_registry: Optional[FlashRegistry]
+        cls, transform: Tuple[Union[LightningEnum, str], Any], input_transforms_registry: Optional[FlashRegistry]
     ) -> Tuple[Union[LightningEnum, str], Dict]:
         msg = "The transform should be provided as a tuple with the following types (LightningEnum, Dict[str, Any]) "
         msg += "when requesting transform from the registry."
-        if not transforms_registry:
+        if not input_transforms_registry:
             raise MisconfigurationException("You requested a transform from the registry, but it is empty.")
         if isinstance(transform, tuple) and len(transform) > 2:
             raise MisconfigurationException(msg)
@@ -337,7 +342,7 @@ class PreprocessTransform(Properties):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(running_stage={self.running_stage}, transform={self.transform})"
 
-    def __getitem__(self, placement: PreprocessTransformPlacement) -> Callable:
+    def __getitem__(self, placement: InputTransformPlacement) -> Callable:
         return self.transform[placement]
 
     def _make_collates(self, on_device: bool, collate: Callable) -> Tuple[Callable, Callable]:
@@ -359,18 +364,18 @@ class PreprocessTransform(Properties):
         prefix: str = _STAGES_PREFIX[self.running_stage]
 
         func_names: Dict[str, str] = {
-            k: DataPipeline._resolve_function_hierarchy(k, self, self.running_stage, PreprocessTransform)
-            for k in [v.value for v in PreprocessTransformPlacement]
+            k: DataPipeline._resolve_function_hierarchy(k, self, self.running_stage, InputTransform)
+            for k in [v.value for v in InputTransformPlacement]
         }
 
         collate_fn: Callable = getattr(self, func_names["collate"])
 
         per_batch_transform_overriden: bool = DataPipeline._is_overriden_recursive(
-            "per_batch_transform", self, PreprocessTransform, prefix=prefix
+            "per_batch_transform", self, InputTransform, prefix=prefix
         )
 
         per_sample_transform_on_device_overriden: bool = DataPipeline._is_overriden_recursive(
-            "per_sample_transform_on_device", self, PreprocessTransform, prefix=prefix
+            "per_sample_transform_on_device", self, InputTransform, prefix=prefix
         )
 
         is_per_overriden = per_batch_transform_overriden and per_sample_transform_on_device_overriden
