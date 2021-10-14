@@ -32,7 +32,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Changed the default `num_workers` on linux to `0` (matching the default for other OS) ([#759](https://github.com/PyTorchLightning/lightning-flash/pull/759))
 
-- Optimizer and LR Scheduler registry are used to get the respective inputs to the Task using a string (or a callable). ([777](https://github.com/PyTorchLightning/lightning-flash/pull/777))
+- Optimizer and LR Scheduler registry are used to get the respective inputs to the Task using a string (or a callable). ([#777](https://github.com/PyTorchLightning/lightning-flash/pull/777))
 
 ### Fixed
 
