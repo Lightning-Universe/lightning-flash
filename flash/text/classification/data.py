@@ -94,7 +94,7 @@ class TextDataSource(DataSource):
         if flash._IS_TESTING and not torch.cuda.is_available():
             hf_dataset = hf_dataset[:20]
 
-        return (hf_dataset, *other) 
+        return (hf_dataset, *other)
 
     def load_data(
         self,
