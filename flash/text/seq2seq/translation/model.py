@@ -33,8 +33,8 @@ class TranslationTask(Seq2SeqTask):
     Args:
         backbone: backbone model to use for the task.
         loss_fn: Loss function for training.
-        optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
-        lr_scheduler: The scheduler or scheduler class to use.
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
         metrics: Metrics to compute for training and evaluation. Defauls to calculating the BLEU metric.
             Changing this argument currently has no effect.
         learning_rate: Learning rate to use for training, defaults to `1e-5`

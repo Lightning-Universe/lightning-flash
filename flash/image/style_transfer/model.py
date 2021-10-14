@@ -58,8 +58,8 @@ class StyleTransfer(Task):
         content_weight: The weight associated with the content loss. A lower value will lose content over style.
         style_layers: Layers from the backbone to derive the style loss from.
         style_weight: The weight associated with the style loss. A lower value will lose style over content.
-        optimizer: Optimizer to use for training the model.
-        lr_scheduler: Scheduler to use for training the model.
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
         serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
     """

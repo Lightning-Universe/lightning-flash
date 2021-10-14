@@ -61,10 +61,8 @@ class Seq2SeqTask(Task):
 
     Args:
         loss_fn: Loss function for training
-        optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
-
-        lr_scheduler: The scheduler or scheduler class to use.
-
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
         metrics: Metrics to compute for training and evaluation. Changing this argument currently has no effect
         learning_rate: Learning rate to use for training, defaults to `3e-4`
         val_target_max_length: Maximum length of targets in validation. Defaults to `128`

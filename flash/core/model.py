@@ -300,13 +300,13 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
     Args:
         model: Model to use for the task.
         loss_fn: Loss function for training.
-        optimizer: Optimizer to use for training, defaults to :class:`torch.optim.Adam`.
-        lr_scheduler: The scheduler or scheduler class to use.
+        learning_rate: Learning rate to use for training, defaults to ``5e-5``.
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
         metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
             package, a custom metric inheriting from `torchmetrics.Metric`, a callable function or a list/dict
             containing a combination of the aforementioned. In all cases, each metric needs to have the signature
             `metric(preds,target)` and return a single scalar tensor.
-        learning_rate: Learning rate to use for training, defaults to ``5e-5``.
         deserializer: Either a single :class:`~flash.core.data.process.Deserializer` or a mapping of these to
             deserialize the input
         preprocess: :class:`~flash.core.data.process.Preprocess` to use as the default for this task.

@@ -38,10 +38,8 @@ class TextClassifier(ClassificationTask):
     Args:
         num_classes: Number of classes to classify.
         backbone: A model to use to compute text features can be any BERT model from HuggingFace/transformersimage .
-        optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
-
-        lr_scheduler: The scheduler or scheduler class to use.
-
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
         metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
             package, a custom metric inherenting from `torchmetrics.Metric`, a callable function or a list/dict
             containing a combination of the aforementioned. In all cases, each metric needs to have the signature

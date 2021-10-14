@@ -78,10 +78,8 @@ class PointCloudSegmentation(ClassificationTask):
         backbone_kwargs: Any additional kwargs to pass to the backbone constructor.
         loss_fn: The loss function to use. If ``None``, a default will be selected by the
             :class:`~flash.core.classification.ClassificationTask` depending on the ``multi_label`` argument.
-        optimizer: The optimizer or optimizer class to use.
-
-        lr_scheduler: The scheduler or scheduler class to use.
-
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
         metrics: Any metrics to use with this :class:`~flash.core.model.Task`. If ``None``, a default will be selected
             by the :class:`~flash.core.classification.ClassificationTask` depending on the ``multi_label`` argument.
         learning_rate: The learning rate for the optimizer.

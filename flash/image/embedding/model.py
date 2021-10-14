@@ -51,8 +51,8 @@ class ImageEmbedder(AdapterTask):
             'moco_transform', or 'barlow_twins_transform'.
         backbone: VISSL backbone, defaults to ``resnet``.
         pretrained: Use a pretrained backbone, defaults to ``False``.
-        optimizer: Optimizer to use for training and finetuning, defaults to :class:`torch.optim.SGD`.
-        lr_scheduler: The scheduler or scheduler class to use.
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
         backbone_kwargs: arguments to be passed to VISSL backbones, i.e. ``vision_transformer`` and ``resnet``.
         training_strategy_kwargs: arguments passed to VISSL loss function, projection head and training hooks.

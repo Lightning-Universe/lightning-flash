@@ -55,8 +55,8 @@ class FaceDetector(Task):
         loss: the function(s) to update the model with. Has no effect for fastface models.
         metrics: The provided metrics. All metrics here will be logged to progress bar and the respective logger.
             Changing this argument currently has no effect.
-        optimizer: The optimizer to use for training. Can either be the actual class or the class name.
-        lr_scheduler: The scheduler or scheduler class to use.
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
         learning_rate: The learning rate to use for training
     """
 

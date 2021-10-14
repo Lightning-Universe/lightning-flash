@@ -89,11 +89,10 @@ class GraphClassifier(ClassificationTask):
         num_features: Number of columns in table (not including target column).
         num_classes: Number of classes to classify.
         hidden_channels: Hidden dimension sizes.
-        loss_fn: Loss function for training, defaults to cross entropy.
-        optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
-        lr_scheduler: The scheduler or scheduler class to use.
-        metrics: Metrics to compute for training and evaluation.
         learning_rate: Learning rate to use for training, defaults to `1e-3`
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
+        metrics: Metrics to compute for training and evaluation.
         model: GraphNN used, defaults to BaseGraphModel.
         conv_cls: kind of convolution used in model, defaults to GCNConv
     """

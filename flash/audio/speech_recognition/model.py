@@ -38,9 +38,9 @@ class SpeechRecognition(Task):
     Args:
         backbone: Any speech recognition model from `HuggingFace/transformers
             <https://huggingface.co/models?pipeline_tag=automatic-speech-recognition>`_.
+        learning_rate: Learning rate to use for training, defaults to ``1e-5``.
         optimizer: Optimizer to use for training.
-        lr_scheduler: The scheduler or scheduler class to use.
-        learning_rate: Learning rate to use for training, defaults to ``1e-3``.
+        lr_scheduler: The LR scheduler to use during training.
         serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
     """
 

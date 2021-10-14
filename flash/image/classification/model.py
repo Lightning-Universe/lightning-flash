@@ -53,8 +53,8 @@ class ImageClassifier(ClassificationAdapterTask):
         pretrained: A bool or string to specify the pretrained weights of the backbone, defaults to ``True``
             which loads the default supervised pretrained weights.
         loss_fn: Loss function for training, defaults to :func:`torch.nn.functional.cross_entropy`.
-        optimizer: Optimizer to use for training, defaults to :class:`torch.optim.SGD`.
-        lr_scheduler: The scheduler or scheduler class to use.
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
         metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
             package, a custom metric inheriting from `torchmetrics.Metric`, a callable function or a list/dict
             containing a combination of the aforementioned. In all cases, each metric needs to have the signature

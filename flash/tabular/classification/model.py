@@ -35,7 +35,8 @@ class TabularClassifier(ClassificationTask):
         num_classes: Number of classes to classify.
         embedding_sizes: List of (num_classes, emb_dim) to form categorical embeddings.
         loss_fn: Loss function for training, defaults to cross entropy.
-        optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
         metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
             package, a custom metric inherenting from `torchmetrics.Metric`, a callable function or a list/dict
             containing a combination of the aforementioned. In all cases, each metric needs to have the signature
