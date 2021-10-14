@@ -171,20 +171,20 @@ class TextDataFrameDataSource(TextDataSource):
     def to_hf_dataset(self, data: Tuple[DataFrame, str, str]) -> Tuple[Dataset, str, str]:
         df, *other = data
         hf_dataset = Dataset.from_pandas(df)
-        return hf_dataset, *other
+        return (hf_dataset, *other)
 
 
 class TextParquetDataSource(TextDataSource):
     def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Dataset, str, str]:
         file, *other = data
         hf_dataset = Dataset.from_parquet(str(file))
-        return hf_dataset, *other
+        return (hf_dataset, *other)
 
 
 class TextHuggingFaceDatasetDataSource(TextDataSource):
     def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Dataset, str, str]:
         hf_dataset, *other = data
-        return hf_dataset, *other
+        return (hf_dataset, *other)
 
 
 class TextListDataSource(TextDataSource):
