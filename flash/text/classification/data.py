@@ -188,7 +188,7 @@ class TextListDataSource(TextDataSource):
     def to_hf_dataset(self, data: Tuple[List[str], List[str]]) -> Tuple[Dataset, List[str], List[str]]:
         input_list, target_list = data
         input = "input"
-        target = "target"
+        target = "labels"
 
         if target_list:
             hf_dataset = Dataset.from_dict({input: input_list, target: target_list})
