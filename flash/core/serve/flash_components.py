@@ -2,11 +2,11 @@ import inspect
 from typing import Any, Callable, Mapping
 
 import torch
-from pytorch_lightning.trainer.states import RunningStage
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.serve import expose, ModelComponent
 from flash.core.serve.types.base import BaseType
+from flash.core.utilities.stages import RunningStage
 
 
 class FlashInputs(BaseType):

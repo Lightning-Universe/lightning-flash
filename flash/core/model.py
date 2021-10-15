@@ -25,7 +25,6 @@ import torchmetrics
 from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.trainer.optimizers import _get_default_scheduler_config
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -53,6 +52,7 @@ from flash.core.serve import Composition
 from flash.core.utilities import providers
 from flash.core.utilities.apply_func import get_callable_dict
 from flash.core.utilities.imports import requires
+from flash.core.utilities.stages import RunningStage
 
 
 class ModuleWrapperBase:
