@@ -92,7 +92,8 @@ class TextDataSource(DataSource):
         hf_dataset, *other = self.to_hf_dataset(data)
 
         if flash._IS_TESTING and not torch.cuda.is_available():
-            hf_dataset = hf_dataset[:20]
+            # NOTE: must subset in this way to return a Dataset
+            hf_dataset = hf_dataset.select(range(20))
 
         return (hf_dataset, *other)
 
