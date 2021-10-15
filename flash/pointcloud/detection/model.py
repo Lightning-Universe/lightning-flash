@@ -55,6 +55,9 @@ class PointCloudObjectDetector(Task):
             by the :class:`~flash.core.classification.ClassificationTask` depending on the ``multi_label`` argument.
         learning_rate: The learning rate for the optimizer.
         serializer: The :class:`~flash.core.data.process.Serializer` to use for prediction outputs.
+        lambda_loss_cls: The value to scale the loss classification.
+        lambda_loss_bbox: The value to scale the bounding boxes loss.
+        lambda_loss_dir: The value to scale the bounding boxes direction loss.
     """
 
     backbones: FlashRegistry = POINTCLOUD_OBJECT_DETECTION_BACKBONES
@@ -73,6 +76,9 @@ class PointCloudObjectDetector(Task):
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         learning_rate: float = 1e-2,
         serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = PointCloudObjectDetectorSerializer(),
+        lambda_loss_cls: float = 1.0,
+        lambda_loss_bbox: float = 1.0,
+        lambda_loss_dir: float = 1.0,
     ):
 
         super().__init__(
