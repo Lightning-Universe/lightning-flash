@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, List, Type, Union
 
 import torch
 from torch import nn
@@ -20,6 +20,7 @@ from torch.nn import Linear
 
 from flash.core.classification import ClassificationTask
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
+from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 
 if _GRAPH_AVAILABLE:
     from torch_geometric.nn import BatchNorm, GCNConv, global_mean_pool, MessagePassing
@@ -104,14 +105,12 @@ class GraphClassifier(ClassificationTask):
         num_features: int,
         num_classes: int,
         hidden_channels: Union[List[int], int] = 512,
-        loss_fn: Callable = F.cross_entropy,
-        optimizer: Union[str, Callable, Tuple[str, Dict[str, Any]]] = "Adam",
-        lr_scheduler: Optional[
-            Union[str, Callable, Tuple[str, Dict[str, Any]], Tuple[str, Dict[str, Any], Dict[str, Any]]]
-        ] = None,
-        metrics: Union[Callable, Mapping, Sequence, None] = None,
-        learning_rate: float = 1e-3,
         model: torch.nn.Module = None,
+        loss_fn: LOSS_FN_TYPE = F.cross_entropy,
+        learning_rate: float = 1e-3,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
+        metrics: METRICS_TYPE = None,
         conv_cls: Type[MessagePassing] = GCNConv,
         **conv_kwargs
     ):

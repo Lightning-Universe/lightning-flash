@@ -13,16 +13,15 @@
 # limitations under the License.
 import os
 import warnings
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List
 
 import torch
 from pytorch_lightning import Callback
-from torchmetrics import Metric
 
 from flash.core.classification import ClassificationTask, Labels
-from flash.core.data.process import Serializer
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
+from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, SERIALIZER_TYPE
 from flash.text.classification.backbones import TEXT_CLASSIFIER_BACKBONES
 from flash.text.ort_callback import ORTCallback
 
@@ -58,15 +57,13 @@ class TextClassifier(ClassificationTask):
         self,
         num_classes: int,
         backbone: str = "prajjwal1/bert-medium",
-        loss_fn: Optional[Callable] = None,
-        optimizer: Union[str, Callable, Tuple[str, Dict[str, Any]]] = "Adam",
-        lr_scheduler: Optional[
-            Union[str, Callable, Tuple[str, Dict[str, Any]], Tuple[str, Dict[str, Any], Dict[str, Any]]]
-        ] = None,
-        metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
+        loss_fn: LOSS_FN_TYPE = None,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
+        metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-2,
         multi_label: bool = False,
-        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
+        serializer: SERIALIZER_TYPE = None,
         enable_ort: bool = False,
     ):
         self.save_hyperparameters()

@@ -11,12 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 from flash.core.adapter import AdapterTask
-from flash.core.data.process import Serializer
 from flash.core.data.serialization import Preds
 from flash.core.registry import FlashRegistry
+from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE, SERIALIZER_TYPE
 from flash.image.keypoint_detection.backbones import KEYPOINT_DETECTION_HEADS
 
 
@@ -56,12 +56,10 @@ class KeypointDetector(AdapterTask):
         backbone: Optional[str] = "resnet18_fpn",
         head: Optional[str] = "keypoint_rcnn",
         pretrained: bool = True,
-        optimizer: Union[str, Callable, Tuple[str, Dict[str, Any]]] = "Adam",
-        lr_scheduler: Optional[
-            Union[str, Callable, Tuple[str, Dict[str, Any]], Tuple[str, Dict[str, Any], Dict[str, Any]]]
-        ] = None,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
         learning_rate: float = 5e-4,
-        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
+        serializer: SERIALIZER_TYPE = None,
         **kwargs: Any,
     ):
         self.save_hyperparameters()

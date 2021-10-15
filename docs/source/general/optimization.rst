@@ -12,7 +12,7 @@ With the use of :ref:`registry`, instantiation of an optimzer or a learning rate
 Setting an optimizer to a task
 ==============================
 
-Each task has an inbuilt method :func:`~flash.core.model.Task.available_optimizers` which will list all the optimizers
+Each task has a built-in method :func:`~flash.core.model.Task.available_optimizers` which will list all the optimizers
 registered with Flash.
 
     >>> from flash.core.classification import ClassificationTask
@@ -51,7 +51,7 @@ An alternative to customizing an optimizer using a tuple is to pass it as a call
 Setting a Learning Rate Scheduler
 =================================
 
-Each task has an inbuilt method :func:`~flash.core.model.Task.available_lr_schedulers` which will list all the learning
+Each task has a built-in method :func:`~flash.core.model.Task.available_lr_schedulers` which will list all the learning
 rate schedulers registered with Flash.
 
     >>> from flash.core.classification import ClassificationTask

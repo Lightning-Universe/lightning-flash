@@ -19,14 +19,13 @@
 import collections
 import os
 import warnings
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, List, Mapping, Optional, Sequence, Union
 
 import numpy as np
 import torch
 from pytorch_lightning import Callback
 from pytorch_lightning.utilities import rank_zero_info
 from torch import Tensor
-from torchmetrics import Metric
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.finetuning import FlashBaseFinetuning
@@ -34,6 +33,7 @@ from flash.core.model import Task
 from flash.core.registry import ExternalRegistry, FlashRegistry
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.core.utilities.providers import _HUGGINGFACE
+from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.text.ort_callback import ORTCallback
 from flash.text.question_answering.finetuning import QuestionAnsweringFreezeEmbeddings
 from flash.text.seq2seq.core.metrics import RougeMetric
@@ -92,11 +92,9 @@ class QuestionAnsweringTask(Task):
         self,
         backbone: str = "distilbert-base-uncased",
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
-        optimizer: Union[str, Callable, Tuple[str, Dict[str, Any]]] = "Adam",
-        lr_scheduler: Optional[
-            Union[str, Callable, Tuple[str, Dict[str, Any]], Tuple[str, Dict[str, Any], Dict[str, Any]]]
-        ] = None,
-        metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
+        metrics: METRICS_TYPE = None,
         learning_rate: float = 5e-5,
         enable_ort: bool = False,
         n_best_size: int = 20,

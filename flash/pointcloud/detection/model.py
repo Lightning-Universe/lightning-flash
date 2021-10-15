@@ -12,10 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import sys
-from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 import torch
-import torchmetrics
 from torch import nn
 from torch.utils.data import DataLoader, Sampler
 
@@ -27,6 +26,7 @@ from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.apply_func import get_callable_dict
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
+from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, SERIALIZER_TYPE
 from flash.pointcloud.detection.backbones import POINTCLOUD_OBJECT_DETECTION_BACKBONES
 
 __FILE_EXAMPLE__ = "pointcloud_detection"
@@ -68,14 +68,12 @@ class PointCloudObjectDetector(Task):
         backbone: Union[str, Tuple[nn.Module, int]] = "pointpillars_kitti",
         backbone_kwargs: Optional[Dict] = None,
         head: Optional[nn.Module] = None,
-        loss_fn: Optional[Callable] = None,
-        optimizer: Union[str, Callable, Tuple[str, Dict[str, Any]]] = "Adam",
-        lr_scheduler: Optional[
-            Union[str, Callable, Tuple[str, Dict[str, Any]], Tuple[str, Dict[str, Any], Dict[str, Any]]]
-        ] = None,
-        metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
+        loss_fn: LOSS_FN_TYPE = None,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
+        metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-2,
-        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = PointCloudObjectDetectorSerializer(),
+        serializer: SERIALIZER_TYPE = PointCloudObjectDetectorSerializer(),
         lambda_loss_cls: float = 1.0,
         lambda_loss_bbox: float = 1.0,
         lambda_loss_dir: float = 1.0,

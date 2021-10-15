@@ -401,6 +401,10 @@ def test_errors_and_exceptions_optimizers_and_schedulers():
         )
         task.configure_optimizers()
 
+    with pytest.raises(TypeError):
+        task = ClassificationTask(model, optimizer=("Adam", ["non", "dict", "type"]), lr_scheduler=None)
+        task.configure_optimizers()
+
     with pytest.raises(KeyError):
         task = ClassificationTask(model, optimizer="Adam", lr_scheduler="not_a_valid_key")
         task.configure_optimizers()

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from types import FunctionType
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
 import torch
 from pytorch_lightning import LightningModule
@@ -23,15 +23,15 @@ from torch import nn
 from torch.nn import functional as F
 from torch.optim import Optimizer
 from torch.utils.data import DistributedSampler
-from torchmetrics import Accuracy, Metric
+from torchmetrics import Accuracy
 
 import flash
 from flash.core.classification import ClassificationTask, Labels
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.process import Serializer
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE
 from flash.core.utilities.providers import _PYTORCHVIDEO
+from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, SERIALIZER_TYPE
 
 _VIDEO_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
 
@@ -106,15 +106,13 @@ class VideoClassifier(ClassificationTask):
         backbone: Union[str, nn.Module] = "x3d_xs",
         backbone_kwargs: Optional[Dict] = None,
         pretrained: bool = True,
-        loss_fn: Callable = F.cross_entropy,
-        optimizer: Union[str, Callable, Tuple[str, Dict[str, Any]]] = "SGD",
-        lr_scheduler: Optional[
-            Union[str, Callable, Tuple[str, Dict[str, Any]], Tuple[str, Dict[str, Any], Dict[str, Any]]]
-        ] = None,
-        metrics: Union[Metric, Callable, Mapping, Sequence, None] = Accuracy(),
+        loss_fn: LOSS_FN_TYPE = F.cross_entropy,
+        optimizer: OPTIMIZER_TYPE = "SGD",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
+        metrics: METRICS_TYPE = Accuracy(),
         learning_rate: float = 1e-3,
         head: Optional[Union[FunctionType, nn.Module]] = None,
-        serializer: Optional[Serializer] = None,
+        serializer: SERIALIZER_TYPE = None,
     ):
         super().__init__(
             model=None,

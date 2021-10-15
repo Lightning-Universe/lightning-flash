@@ -25,6 +25,8 @@ for n in dir(lr_scheduler):
 
     if inspect.isclass(sched) and sched != _LRScheduler and issubclass(sched, _LRScheduler):
         schedulers.append(sched)
+
+# Adding `ReduceLROnPlateau` separately as it is subclassed from `object` and not `_LRScheduler`.
 schedulers.append(ReduceLROnPlateau)
 
 

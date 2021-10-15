@@ -17,7 +17,7 @@ import pickle
 from abc import ABCMeta
 from copy import deepcopy
 from importlib import import_module
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple, Type, Union
 
 import pytorch_lightning as pl
 import torch
@@ -53,6 +53,17 @@ from flash.core.utilities import providers
 from flash.core.utilities.apply_func import get_callable_dict
 from flash.core.utilities.imports import requires
 from flash.core.utilities.stages import RunningStage
+from flash.core.utilities.types import (
+    DESERIALIZER_TYPE,
+    LOSS_FN_TYPE,
+    LR_SCHEDULER_TYPE,
+    METRICS_TYPE,
+    MODEL_TYPE,
+    OPTIMIZER_TYPE,
+    POSTPROCESS_TYPE,
+    PREPROCESS_TYPE,
+    SERIALIZER_TYPE,
+)
 
 
 class ModuleWrapperBase:
@@ -322,18 +333,16 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
     def __init__(
         self,
-        model: Optional[nn.Module] = None,
-        loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
+        model: MODEL_TYPE = None,
+        loss_fn: LOSS_FN_TYPE = None,
         learning_rate: float = 5e-5,
-        optimizer: Union[str, Callable, Tuple[str, Dict[str, Any]]] = "Adam",
-        lr_scheduler: Optional[
-            Union[str, Callable, Tuple[str, Dict[str, Any]], Tuple[str, Dict[str, Any], Dict[str, Any]]]
-        ] = None,
-        metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
-        deserializer: Optional[Union[Deserializer, Mapping[str, Deserializer]]] = None,
-        preprocess: Optional[Preprocess] = None,
-        postprocess: Optional[Postprocess] = None,
-        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
+        metrics: METRICS_TYPE = None,
+        deserializer: DESERIALIZER_TYPE = None,
+        preprocess: PREPROCESS_TYPE = None,
+        postprocess: POSTPROCESS_TYPE = None,
+        serializer: SERIALIZER_TYPE = None,
     ):
         super().__init__()
         if model is not None:
@@ -512,10 +521,10 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         """Implement how optimizer and optionally learning rate schedulers should be configured."""
         if isinstance(self.optimizer, str):
             optimizer_fn = self._get_optimizer_class_from_registry(self.optimizer.lower())
-            _optimizers_kwargs: Dict[str, Any] = {}
+            optimizers_kwargs: Dict[str, Any] = {"lr": self.learning_rate}
         elif isinstance(self.optimizer, Callable):
             optimizer_fn = self.optimizer
-            _optimizers_kwargs: Dict[str, Any] = {}
+            optimizers_kwargs: Dict[str, Any] = {"lr": self.learning_rate}
         elif isinstance(self.optimizer, Tuple):
             if len(self.optimizer) != 2:
                 raise MisconfigurationException(
@@ -536,7 +545,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
                 )
 
             optimizer_fn: Callable = self._get_optimizer_class_from_registry(self.optimizer[0])
-            _optimizers_kwargs: Dict[str, Any] = self.optimizer[1]
+            optimizers_kwargs: Dict[str, Any] = self.optimizer[1]
+            optimizers_kwargs["lr"] = self.learning_rate
         else:
             raise TypeError(
                 f"""Optimizer should be of type string or callable or tuple(string, dictionary)
@@ -544,7 +554,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
             )
 
         model_parameters = filter(lambda p: p.requires_grad, self.parameters())
-        optimizer: Optimizer = optimizer_fn(model_parameters, lr=self.learning_rate, **_optimizers_kwargs)
+        optimizer: Optimizer = optimizer_fn(model_parameters, **optimizers_kwargs)
         if self.lr_scheduler is not None:
             return [optimizer], [self._instantiate_lr_scheduler(optimizer)]
         return optimizer

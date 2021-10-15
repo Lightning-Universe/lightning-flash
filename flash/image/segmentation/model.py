@@ -11,19 +11,27 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
 import torch
 from torch import nn
 from torch.nn import functional as F
-from torchmetrics import IoU, Metric
+from torchmetrics import IoU
 
 from flash.core.classification import ClassificationTask
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.process import Postprocess, Serializer
+from flash.core.data.process import Postprocess
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _KORNIA_AVAILABLE
 from flash.core.utilities.isinstance import _isinstance
+from flash.core.utilities.types import (
+    LOSS_FN_TYPE,
+    LR_SCHEDULER_TYPE,
+    METRICS_TYPE,
+    OPTIMIZER_TYPE,
+    POSTPROCESS_TYPE,
+    SERIALIZER_TYPE,
+)
 from flash.image.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 from flash.image.segmentation.heads import SEMANTIC_SEGMENTATION_HEADS
 from flash.image.segmentation.serialization import SegmentationLabels
@@ -80,16 +88,14 @@ class SemanticSegmentation(ClassificationTask):
         head: str = "fpn",
         head_kwargs: Optional[Dict] = None,
         pretrained: Union[bool, str] = True,
-        loss_fn: Optional[Callable] = None,
-        optimizer: Union[str, Callable, Tuple[str, Dict[str, Any]]] = "Adam",
-        lr_scheduler: Optional[
-            Union[str, Callable, Tuple[str, Dict[str, Any]], Tuple[str, Dict[str, Any], Dict[str, Any]]]
-        ] = None,
-        metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
+        loss_fn: LOSS_FN_TYPE = None,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
+        metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-3,
         multi_label: bool = False,
-        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
-        postprocess: Optional[Postprocess] = None,
+        serializer: SERIALIZER_TYPE = None,
+        postprocess: POSTPROCESS_TYPE = None,
     ) -> None:
         if metrics is None:
             metrics = IoU(num_classes=num_classes)
