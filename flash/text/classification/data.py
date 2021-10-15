@@ -82,7 +82,7 @@ class TextDataSource(DataSource):
         return ex
 
     @staticmethod
-    def _multilabel_target(targets, element):
+    def _multilabel_target(targets: List[str], element: Dict[str, Any]) -> Dict[str, Any]:
         targets = [element.pop(target) for target in targets]
         element[DefaultDataKeys.TARGET] = targets
         return element
@@ -106,7 +106,7 @@ class TextDataSource(DataSource):
         hf_dataset, input, *other = self._to_hf_dataset(data)
 
         if not self.predicting:
-            target = other.pop()
+            target: Union[str, List[str]] = other.pop()
             if isinstance(target, List):
                 # multi-target
                 dataset.multi_label = True
@@ -191,16 +191,17 @@ class TextListDataSource(TextDataSource):
     def to_hf_dataset(self, data: Tuple[List[str], List[str]]) -> Tuple[Dataset, List[str], List[str]]:
         input = "input"
 
-        if isinstance(data, tuple):
+        if not self.predicting:
             input_list, target_list = data
-            target = "labels"
-            hf_dataset = Dataset.from_dict({input: input_list, target: target_list})
-            return hf_dataset, input, target, target_list
+            # NOTE: here we already deal with multilabels
+            # NOTE: here we already rename to correct column names
+            hf_dataset = Dataset.from_dict({DefaultDataKeys.INPUT: input_list, DefaultDataKeys.TARGET: target_list})
+            return hf_dataset, target_list
 
         # predicting
         hf_dataset = Dataset.from_dict({input: data})
 
-        return hf_dataset, input
+        return hf_dataset
 
     def load_data(
         self,
@@ -208,20 +209,19 @@ class TextListDataSource(TextDataSource):
         dataset: Optional[Any] = None,
     ) -> Union[Sequence[Mapping[str, Any]]]:
 
-        hf_dataset, input, *other = self._to_hf_dataset(data)
+        hf_dataset, *other = self._to_hf_dataset(data)
 
         if not self.predicting:
-            target, target_list = other
+            target_list = other.pop()
             if isinstance(target_list[0], List):
                 # multi-target_list
                 dataset.multi_label = True
-                hf_dataset = hf_dataset.map(partial(self._multilabel_target, target))  # NOTE: renames target column
                 dataset.num_classes = len(target_list[0])
                 self.set_state(LabelsState(target_list))
             else:
                 dataset.multi_label = False
                 if self.training:
-                    labels = list(sorted(list(set(hf_dataset[target]))))
+                    labels = list(sorted(list(set(hf_dataset[DefaultDataKeys.TARGET]))))
                     dataset.num_classes = len(labels)
                     self.set_state(LabelsState(labels))
 
@@ -231,16 +231,16 @@ class TextListDataSource(TextDataSource):
                 if labels is not None:
                     labels = labels.labels
                     label_to_class_mapping = {v: k for k, v in enumerate(labels)}
-                    hf_dataset = hf_dataset.map(partial(self._transform_label, label_to_class_mapping, target))
-
-                # rename label column
-                hf_dataset = hf_dataset.rename_column(target, DefaultDataKeys.TARGET)
+                    # happens in-place and keeps the target column name
+                    hf_dataset = hf_dataset.map(
+                        partial(self._transform_label, label_to_class_mapping, DefaultDataKeys.TARGET)
+                    )
 
         # tokenize
-        hf_dataset = hf_dataset.map(partial(self._tokenize_fn, input=input), batched=True)
+        hf_dataset = hf_dataset.map(partial(self._tokenize_fn, input=DefaultDataKeys.INPUT), batched=True)
 
         # set format
-        hf_dataset = hf_dataset.remove_columns([input])  # just leave the numerical columns
+        hf_dataset = hf_dataset.remove_columns([DefaultDataKeys.INPUT])  # just leave the numerical columns
         hf_dataset.set_format("torch")
 
         return hf_dataset
