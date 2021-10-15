@@ -100,7 +100,7 @@ class TextDataSource(DataSource):
         self,
         data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
         dataset: Optional[Any] = None,
-    ) -> Dataset:
+    ) -> Sequence[Mapping[str, Any]]:
         """Loads data into HuggingFace datasets.Dataset."""
 
         hf_dataset, input, *other = self._to_hf_dataset(data)
@@ -207,7 +207,7 @@ class TextListDataSource(TextDataSource):
         self,
         data: Tuple[List[str], Union[List[Any], List[List[Any]]]],
         dataset: Optional[Any] = None,
-    ) -> Union[Sequence[Mapping[str, Any]]]:
+    ) -> Sequence[Mapping[str, Any]]:
 
         hf_dataset, *other = self._to_hf_dataset(data)
 
