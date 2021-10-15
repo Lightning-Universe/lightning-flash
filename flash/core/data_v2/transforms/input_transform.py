@@ -25,7 +25,7 @@ from flash.core.data.properties import Properties
 from flash.core.data.states import CollateFn
 from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.running_stage import RunningStage
+from flash.core.utilities.stages import RunningStage
 
 INPUT_TRANSFORM_TYPE = Optional[
     Union["InputTransform", Callable, Tuple[Union[LightningEnum, str], Dict[str, Any]], Union[LightningEnum, str]]

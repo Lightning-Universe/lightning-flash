@@ -19,7 +19,7 @@ from torch.testing import assert_allclose
 from torch.utils.data._utils.collate import default_collate
 
 from flash.core.data.batch import _Postprocessor, _Preprocessor, _Sequential, default_uncollate
-from flash.core.utilities.running_stage import RunningStage
+from flash.core.utilities.stages import RunningStage
 
 
 def test_sequential_str():

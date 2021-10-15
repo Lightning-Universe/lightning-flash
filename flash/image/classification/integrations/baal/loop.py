@@ -24,7 +24,7 @@ from pytorch_lightning.trainer.states import TrainerFn
 import flash
 from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.utilities.imports import requires
-from flash.core.utilities.running_stage import RunningStage
+from flash.core.utilities.stages import RunningStage
 from flash.image.classification.integrations.baal.data import ActiveLearningDataModule
 from flash.image.classification.integrations.baal.dropout import InferenceMCDropoutTask
 

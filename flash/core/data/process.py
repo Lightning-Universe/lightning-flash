@@ -29,7 +29,7 @@ from flash.core.data.properties import Properties
 from flash.core.data.states import CollateFn
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX, convert_to_modules, CurrentRunningStageFuncContext
-from flash.core.utilities.running_stage import RunningStage
+from flash.core.utilities.stages import RunningStage
 
 
 class BasePreprocess(ABC):

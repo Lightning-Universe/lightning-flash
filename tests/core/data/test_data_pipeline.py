@@ -33,7 +33,7 @@ from flash.core.data.process import DefaultPreprocess, Deserializer, Postprocess
 from flash.core.data.properties import ProcessState
 from flash.core.model import Task
 from flash.core.utilities.imports import _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
-from flash.core.utilities.running_stage import RunningStage
+from flash.core.utilities.stages import RunningStage
 from tests.helpers.utils import _IMAGE_TESTING
 
 if _TORCHVISION_AVAILABLE:

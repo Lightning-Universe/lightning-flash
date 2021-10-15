@@ -23,7 +23,7 @@ from flash.core.data_v2.io.output import Output
 from flash.core.data_v2.transforms.input_transform import InputTransform
 from flash.core.data_v2.transforms.output_transform import OutputTransform
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.running_stage import RunningStage
+from flash.core.utilities.stages import RunningStage
 
 
 @dataclass

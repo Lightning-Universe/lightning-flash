@@ -19,7 +19,7 @@ from torch import tensor
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.process import DefaultPreprocess
-from flash.core.utilities.running_stage import RunningStage
+from flash.core.utilities.stages import RunningStage
 
 
 def test_base_data_fetcher(tmpdir):

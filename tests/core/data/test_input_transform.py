@@ -21,7 +21,7 @@ from torch.utils.data.dataloader import default_collate
 
 from flash.core.data_v2.transforms.input_transform import InputTransform, InputTransformPlacement
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.running_stage import RunningStage
+from flash.core.utilities.stages import RunningStage
 
 
 def test_input_transform():

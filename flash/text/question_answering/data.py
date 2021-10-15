@@ -33,7 +33,7 @@ from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultData
 from flash.core.data.process import Postprocess, Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
-from flash.core.utilities.running_stage import RunningStage
+from flash.core.utilities.stages import RunningStage
 
 if _TEXT_AVAILABLE:
     import datasets

@@ -10,7 +10,7 @@ from flash import DataSource
 from flash.core.data.auto_dataset import AutoDataset, IterableAutoDataset
 from flash.core.data.data_source import DefaultDataKeys, has_len
 from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE, _TEXT_AVAILABLE, _TORCHVISION_AVAILABLE
-from flash.core.utilities.running_stage import RunningStage
+from flash.core.utilities.stages import RunningStage
 
 if _TORCHVISION_AVAILABLE:
     from torchvision.datasets.folder import default_loader

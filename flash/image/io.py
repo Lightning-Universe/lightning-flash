@@ -26,7 +26,7 @@ from flash.core.data_v2.io.input import (
     TensorInput,
 )
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, Image, requires
-from flash.core.utilities.running_stage import RunningStage
+from flash.core.utilities.stages import RunningStage
 
 if _TORCHVISION_AVAILABLE:
     from torchvision.datasets.folder import default_loader, IMG_EXTENSIONS

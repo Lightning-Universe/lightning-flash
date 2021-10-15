@@ -24,7 +24,7 @@ from torch.nn import functional as F
 from flash import Trainer
 from flash.core.classification import ClassificationTask
 from flash.core.finetuning import NoFreeze
-from flash.core.utilities.running_stage import RunningStage
+from flash.core.utilities.stages import RunningStage
 from tests.helpers.boring_model import BoringModel
 
 

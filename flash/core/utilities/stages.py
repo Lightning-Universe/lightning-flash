@@ -26,7 +26,7 @@ class RunningStage(LightningEnum):
         - ``TrainerFn.VALIDATING`` - ``RunningStage.VALIDATING``
         - ``TrainerFn.TESTING`` - ``RunningStage.TESTING``
         - ``TrainerFn.PREDICTING`` - ``RunningStage.PREDICTING``
-        - ``TrainerFn.PREDICTING`` - ``RunningStage.PREDICTING``
+        - ``TrainerFn.SERVING`` - ``RunningStage.SERVING``
         - ``TrainerFn.TUNING`` - ``RunningStage.{TUNING,SANITY_CHECKING,TRAINING,VALIDATING}``
     """
 
@@ -56,7 +56,17 @@ _STAGES_PREFIX = {
     RunningStage.TESTING: "test",
     RunningStage.VALIDATING: "val",
     RunningStage.PREDICTING: "predict",
-    RunningStage.SERVING: "serving",
+    RunningStage.SERVING: "serve",
 }
 
-_STAGES_PREFIX_VALUES = {"train", "test", "val", "predict", "serving"}
+_STAGES_PREFIX_VALUES = {"train", "test", "val", "predict", "serve"}
+
+_RUNNING_STAGE_MAPPING = {
+    RunningStage.TRAINING: RunningStage.TRAINING,
+    RunningStage.SANITY_CHECKING: RunningStage.VALIDATING,
+    RunningStage.VALIDATING: RunningStage.VALIDATING,
+    RunningStage.TESTING: RunningStage.TESTING,
+    RunningStage.PREDICTING: RunningStage.PREDICTING,
+    RunningStage.SERVING: RunningStage.SERVING,
+    RunningStage.TUNING: RunningStage.TUNING,
+}

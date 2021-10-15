@@ -15,7 +15,7 @@ import pytest
 
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.properties import ProcessState, Properties
-from flash.core.utilities.running_stage import RunningStage
+from flash.core.utilities.stages import RunningStage
 
 
 def test_properties_data_pipeline_state():

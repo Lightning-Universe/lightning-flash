@@ -31,7 +31,7 @@ from flash.core.data.process import DefaultPreprocess, Deserializer, Postprocess
 from flash.core.data.properties import ProcessState
 from flash.core.data.utils import _POSTPROCESS_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
 from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_4_3
-from flash.core.utilities.running_stage import RunningStage
+from flash.core.utilities.stages import _RUNNING_STAGE_MAPPING, RunningStage
 
 if TYPE_CHECKING:
     from flash.core.model import Task
@@ -582,17 +582,6 @@ class DataPipeline:
 
 
 class _StageOrchestrator:
-
-    # This is used to map ``SANITY_CHECKING`` to ``VALIDATING``
-    internal_mapping = {
-        RunningStage.TRAINING: RunningStage.TRAINING,
-        RunningStage.SANITY_CHECKING: RunningStage.VALIDATING,
-        RunningStage.VALIDATING: RunningStage.VALIDATING,
-        RunningStage.TESTING: RunningStage.TESTING,
-        RunningStage.PREDICTING: RunningStage.PREDICTING,
-        RunningStage.TUNING: RunningStage.TUNING,
-    }
-
     def __init__(self, func_to_wrap: Callable, model: "Task") -> None:
         self.func = func_to_wrap
 
@@ -609,7 +598,7 @@ class _StageOrchestrator:
         except AttributeError:
             stage = self.model.trainer.state.stage
 
-        internal_running_state = self.internal_mapping[stage]
+        internal_running_state = _RUNNING_STAGE_MAPPING[stage]
         additional_func = self._stage_mapping.get(internal_running_state, None)
 
         if additional_func:

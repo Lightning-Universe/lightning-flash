@@ -46,7 +46,7 @@ from flash.core.data.properties import ProcessState
 from flash.core.data_v2.base_dataset import BaseDataset, FlashDataset
 from flash.core.data_v2.transforms.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
-from flash.core.utilities.running_stage import RunningStage
+from flash.core.utilities.stages import RunningStage
 
 SampleCollection = None
 if _FIFTYONE_AVAILABLE:

@@ -50,7 +50,7 @@ from flash.core.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.serve import Composition
 from flash.core.utilities.apply_func import get_callable_dict
 from flash.core.utilities.imports import requires
-from flash.core.utilities.running_stage import RunningStage
+from flash.core.utilities.stages import RunningStage
 
 
 class ModuleWrapperBase:

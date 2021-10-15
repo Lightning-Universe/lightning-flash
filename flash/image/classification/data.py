@@ -25,7 +25,7 @@ from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources, Loa
 from flash.core.data.process import Deserializer, Preprocess
 from flash.core.integrations.labelstudio.data_source import LabelStudioImageClassificationDataSource
 from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, Image, requires
-from flash.core.utilities.running_stage import RunningStage
+from flash.core.utilities.stages import RunningStage
 from flash.image.classification.transforms import default_transforms, train_default_transforms
 from flash.image.data import (
     image_loader,

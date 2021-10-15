@@ -24,7 +24,7 @@ from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources, Lab
 from flash.core.data.process import Preprocess
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _SKLEARN_AVAILABLE
-from flash.core.utilities.running_stage import RunningStage
+from flash.core.utilities.stages import RunningStage
 
 if _SKLEARN_AVAILABLE:
     from sklearn.utils import Bunch

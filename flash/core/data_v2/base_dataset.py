@@ -22,7 +22,7 @@ from torch.utils.data import Dataset, IterableDataset
 from flash.core.data.properties import Properties
 from flash.core.data_v2.transforms.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.running_stage import RunningStage
+from flash.core.utilities.stages import RunningStage
 
 __all__ = [
     "BaseDataset",
@@ -124,7 +124,7 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
         if not running_stage:
             raise MisconfigurationException(
                 "You should provide a running_stage to your dataset"
-                " `from flash.core.utilities.running_stage import RunningStage`."
+                " `from flash.core.utilities.stages import RunningStage`."
             )
         flash_dataset = cls(**dataset_kwargs, running_stage=running_stage, transform=transform)
         flash_dataset.pass_args_to_load_data(*load_data_args)

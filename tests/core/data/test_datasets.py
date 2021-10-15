@@ -14,8 +14,8 @@
 import pytest
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
-from flash.core.data.datasets import FlashDataset, FlashIterableDataset
-from flash.core.utilities.running_stage import RunningStage
+from flash.core.data_v2.base_dataset import FlashDataset, FlashIterableDataset
+from flash.core.utilities.stages import RunningStage
 
 
 def test_flash_dataset():

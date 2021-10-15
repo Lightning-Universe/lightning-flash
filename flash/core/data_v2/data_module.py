@@ -32,7 +32,7 @@ from flash.core.data_v2.io.input import InputsStateContainer
 from flash.core.data_v2.transforms.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
 from flash.core.data_v2.transforms.output_transform import OutputTransform
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.running_stage import RunningStage
+from flash.core.utilities.stages import RunningStage
 
 
 class DataModule(DataModule):

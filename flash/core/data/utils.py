@@ -23,7 +23,7 @@ from pytorch_lightning.utilities.apply_func import apply_to_collection
 from torch import Tensor
 from tqdm.auto import tqdm as tq
 
-from flash.core.utilities.running_stage import RunningStage
+from flash.core.utilities.stages import RunningStage
 
 _STAGES_PREFIX = {
     RunningStage.TRAINING: "train",

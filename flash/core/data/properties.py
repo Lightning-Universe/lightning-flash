@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from typing import Dict, Optional, Type, TypeVar
 
 import flash
-from flash.core.utilities.running_stage import RunningStage
+from flash.core.utilities.stages import RunningStage
 
 
 @dataclass(unsafe_hash=True, frozen=True)

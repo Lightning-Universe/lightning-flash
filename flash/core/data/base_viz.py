@@ -18,7 +18,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.utils import _CALLBACK_FUNCS
 from flash.core.utilities.apply_func import _is_overriden
-from flash.core.utilities.running_stage import RunningStage
+from flash.core.utilities.stages import RunningStage
 
 
 class BaseVisualization(BaseDataFetcher):

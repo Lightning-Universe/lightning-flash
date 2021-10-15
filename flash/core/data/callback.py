@@ -6,7 +6,7 @@ from torch import Tensor
 
 import flash
 from flash.core.data.utils import _STAGES_PREFIX
-from flash.core.utilities.running_stage import RunningStage
+from flash.core.utilities.stages import RunningStage
 
 
 class FlashCallback(Callback):

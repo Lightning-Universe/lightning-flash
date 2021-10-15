@@ -20,7 +20,7 @@ from flash.core.data.data_module import DataModule
 from flash.core.data.process import DefaultPreprocess
 from flash.core.model import Task
 from flash.core.trainer import Trainer
-from flash.core.utilities.running_stage import RunningStage
+from flash.core.utilities.stages import RunningStage
 
 
 @mock.patch("pickle.dumps")  # need to mock pickle or we get pickle error

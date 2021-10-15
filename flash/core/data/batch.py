@@ -25,7 +25,7 @@ from flash.core.data.utils import (
     CurrentFuncContext,
     CurrentRunningStageContext,
 )
-from flash.core.utilities.running_stage import RunningStage
+from flash.core.utilities.stages import RunningStage
 
 if TYPE_CHECKING:
     from flash.core.data.process import Deserializer, Preprocess, Serializer
