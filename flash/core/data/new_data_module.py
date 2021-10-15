@@ -16,7 +16,6 @@ from typing import Any, Optional, Tuple, Type, TYPE_CHECKING, Union
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning import LightningDataModule
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader
@@ -32,6 +31,7 @@ from flash.core.data.datasets import BaseDataset
 from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
+from flash.core.utilities.stages import RunningStage
 
 if _FIFTYONE_AVAILABLE and TYPE_CHECKING:
     from fiftyone.core.collections import SampleCollection

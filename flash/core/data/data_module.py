@@ -30,7 +30,6 @@ from typing import (
 import numpy as np
 import pytorch_lightning as pl
 import torch
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import IterableDataset, Subset
@@ -45,6 +44,7 @@ from flash.core.data.data_source import DataSource, DefaultDataSources
 from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, requires
+from flash.core.utilities.stages import RunningStage
 
 if _FIFTYONE_AVAILABLE and TYPE_CHECKING:
     from fiftyone.core.collections import SampleCollection

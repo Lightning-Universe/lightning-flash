@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pytest
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.datasets import FlashDataset, FlashIterableDataset
+from flash.core.utilities.stages import RunningStage
 
 
 def test_flash_dataset():
