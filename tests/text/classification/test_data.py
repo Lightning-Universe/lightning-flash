@@ -81,8 +81,6 @@ TEST_DATA_FRAME_DATA = pd.DataFrame(
     },
 )
 
-TEST_HF_DATASET_DATA = Dataset.from_pandas(TEST_DATA_FRAME_DATA)
-
 TEST_LIST_DATA = ["this is a sentence one", "this is a sentence two", "this is a sentence three"]
 TEST_LIST_TARGETS = [0, 1, 0]
 TEST_LIST_TARGETS_MULTILABEL = [[0, 1], [1, 0], [0, 1]]
@@ -434,6 +432,7 @@ def test_from_data_frame_multilabel():
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_hf_datasets():
+    TEST_HF_DATASET_DATA = Dataset.from_pandas(TEST_DATA_FRAME_DATA)
     dm = TextClassificationData.from_hf_datasets(
         "sentence",
         "lab1",
@@ -464,6 +463,7 @@ def test_from_hf_datasets():
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_hf_datasets_multilabel():
+    TEST_HF_DATASET_DATA = Dataset.from_pandas(TEST_DATA_FRAME_DATA)
     dm = TextClassificationData.from_hf_datasets(
         "sentence",
         ["lab1", "lab2"],
