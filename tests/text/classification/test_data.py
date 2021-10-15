@@ -43,16 +43,34 @@ this is a sentence two,1
 this is a sentence three,0
 """
 
+TEST_CSV_DATA_MULTILABEL = """sentence,lab1,lab2
+this is a sentence one,0,1
+this is a sentence two,1,0
+this is a sentence three,0,1
+"""
+
 TEST_JSON_DATA = """
 {"sentence": "this is a sentence one","lab":0}
 {"sentence": "this is a sentence two","lab":1}
 {"sentence": "this is a sentence three","lab":0}
 """
 
+TEST_JSON_DATA_MULTILABEL = """
+{"sentence": "this is a sentence one","lab1":0, "lab2": 1}
+{"sentence": "this is a sentence two","lab1":1, "lab2": 0}
+{"sentence": "this is a sentence three","lab1":0, "lab2": 1}
+"""
+
 TEST_JSON_DATA_FIELD = """{"data": [
 {"sentence": "this is a sentence one","lab":0},
 {"sentence": "this is a sentence two","lab":1},
 {"sentence": "this is a sentence three","lab":0}]}
+"""
+
+TEST_JSON_DATA_FIELD_MULTILABEL = """{"data": [
+{"sentence": "this is a sentence one","lab1":0, "lab2": 1},
+{"sentence": "this is a sentence two","lab1":1, "lab2": 0},
+{"sentence": "this is a sentence three","lab1":0, "lab2": 1}]}
 """
 
 TEST_DATA_FRAME_DATA = pd.DataFrame(
@@ -70,21 +88,30 @@ TEST_LIST_TARGETS = [0, 1, 0]
 TEST_LIST_TARGETS_MULTILABEL = [[0, 1], [1, 0], [0, 1]]
 
 
-def csv_data(tmpdir):
+def csv_data(tmpdir, multilabel: bool):
     path = Path(tmpdir) / "data.csv"
-    path.write_text(TEST_CSV_DATA)
+    if multilabel:
+        path.write_text(TEST_CSV_DATA_MULTILABEL)
+    else:
+        path.write_text(TEST_CSV_DATA)
     return path
 
 
-def json_data(tmpdir):
+def json_data(tmpdir, multilabel: bool):
     path = Path(tmpdir) / "data.json"
-    path.write_text(TEST_JSON_DATA)
+    if multilabel:
+        path.write_text(TEST_JSON_DATA_MULTILABEL)
+    else:
+        path.write_text(TEST_JSON_DATA)
     return path
 
 
-def json_data_with_field(tmpdir):
+def json_data_with_field(tmpdir, multilabel: bool):
     path = Path(tmpdir) / "data.json"
-    path.write_text(TEST_JSON_DATA_FIELD)
+    if multilabel:
+        path.write_text(TEST_JSON_DATA_FIELD_MULTILABEL)
+    else:
+        path.write_text(TEST_JSON_DATA_FIELD)
     return path
 
 
@@ -97,7 +124,7 @@ def parquet_data(tmpdir):
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_csv(tmpdir):
-    csv_path = csv_data(tmpdir)
+    csv_path = csv_data(tmpdir, multilabel=False)
     dm = TextClassificationData.from_csv(
         "sentence",
         "label",
@@ -105,6 +132,7 @@ def test_from_csv(tmpdir):
         train_file=csv_path,
         val_file=csv_path,
         test_file=csv_path,
+        predict_file=csv_path,
         batch_size=1,
     )
 
@@ -118,40 +146,47 @@ def test_from_csv(tmpdir):
 
     batch = next(iter(dm.test_dataloader()))
     assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.predict_dataloader()))
     assert "input_ids" in batch
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_from_parquet(tmpdir):
-    parquet_path = parquet_data(tmpdir)
-    dm = TextClassificationData.from_parquet(
+def test_from_csv_multilabel(tmpdir):
+    csv_path = csv_data(tmpdir, multilabel=True)
+    dm = TextClassificationData.from_csv(
         "sentence",
-        "lab1",
+        ["lab1", "lab2"],
         backbone=TEST_BACKBONE,
-        train_file=parquet_path,
-        val_file=parquet_path,
-        test_file=parquet_path,
+        train_file=csv_path,
+        val_file=csv_path,
+        test_file=csv_path,
+        predict_file=csv_path,
         batch_size=1,
     )
 
     batch = next(iter(dm.train_dataloader()))
-    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
     assert "input_ids" in batch
 
     batch = next(iter(dm.val_dataloader()))
-    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
     assert "input_ids" in batch
 
     batch = next(iter(dm.test_dataloader()))
-    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.predict_dataloader()))
     assert "input_ids" in batch
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_json(tmpdir):
-    json_path = json_data(tmpdir)
+    json_path = json_data(tmpdir, multilabel=False)
     dm = TextClassificationData.from_json(
         "sentence",
         "lab",
@@ -159,6 +194,7 @@ def test_from_json(tmpdir):
         train_file=json_path,
         val_file=json_path,
         test_file=json_path,
+        predict_file=json_path,
         batch_size=1,
     )
 
@@ -174,11 +210,45 @@ def test_from_json(tmpdir):
     assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
     assert "input_ids" in batch
 
+    batch = next(iter(dm.predict_dataloader()))
+    assert "input_ids" in batch
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+def test_from_json_multilabel(tmpdir):
+    json_path = json_data(tmpdir, multilabel=True)
+    dm = TextClassificationData.from_json(
+        "sentence",
+        ["lab1", "lab2"],
+        backbone=TEST_BACKBONE,
+        train_file=json_path,
+        val_file=json_path,
+        test_file=json_path,
+        predict_file=json_path,
+        batch_size=1,
+    )
+
+    batch = next(iter(dm.train_dataloader()))
+    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.val_dataloader()))
+    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.test_dataloader()))
+    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.predict_dataloader()))
+    assert "input_ids" in batch
+
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_json_with_field(tmpdir):
-    json_path = json_data_with_field(tmpdir)
+    json_path = json_data_with_field(tmpdir, multilabel=False)
     dm = TextClassificationData.from_json(
         "sentence",
         "lab",
@@ -186,6 +256,7 @@ def test_from_json_with_field(tmpdir):
         train_file=json_path,
         val_file=json_path,
         test_file=json_path,
+        predict_file=json_path,
         batch_size=1,
         field="data",
     )
@@ -202,17 +273,54 @@ def test_from_json_with_field(tmpdir):
     assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
     assert "input_ids" in batch
 
+    batch = next(iter(dm.predict_dataloader()))
+    assert "input_ids" in batch
+
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_from_data_frame():
-    dm = TextClassificationData.from_data_frame(
+def test_from_json_with_field_multilabel(tmpdir):
+    json_path = json_data_with_field(tmpdir, multilabel=True)
+    dm = TextClassificationData.from_json(
+        "sentence",
+        ["lab1", "lab2"],
+        backbone=TEST_BACKBONE,
+        train_data_frame=json_path,
+        val_data_frame=json_path,
+        test_data_frame=json_path,
+        predict_data_frame=json_path,
+        batch_size=1,
+        field="data",
+    )
+
+    batch = next(iter(dm.train_dataloader()))
+    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.val_dataloader()))
+    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.test_dataloader()))
+    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.predict_dataloader()))
+    assert "input_ids" in batch
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+def test_from_parquet(tmpdir):
+    parquet_path = parquet_data(tmpdir)
+    dm = TextClassificationData.from_parquet(
         "sentence",
         "lab1",
         backbone=TEST_BACKBONE,
-        train_data_frame=TEST_DATA_FRAME_DATA,
-        val_data_frame=TEST_DATA_FRAME_DATA,
-        test_data_frame=TEST_DATA_FRAME_DATA,
+        train_file=parquet_path,
+        val_file=parquet_path,
+        test_file=parquet_path,
+        predict_file=parquet_path,
         batch_size=1,
     )
 
@@ -226,6 +334,70 @@ def test_from_data_frame():
 
     batch = next(iter(dm.test_dataloader()))
     assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.predict_dataloader()))
+    assert "input_ids" in batch
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+def test_from_parquet_multilabel(tmpdir):
+    parquet_path = parquet_data(tmpdir)
+    dm = TextClassificationData.from_parquet(
+        "sentence",
+        ["lab1", "lab2"],
+        backbone=TEST_BACKBONE,
+        train_file=parquet_path,
+        val_file=parquet_path,
+        test_file=parquet_path,
+        predict_file=parquet_path,
+        batch_size=1,
+    )
+
+    batch = next(iter(dm.train_dataloader()))
+    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.val_dataloader()))
+    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.test_dataloader()))
+    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.predict_dataloader()))
+    assert "input_ids" in batch
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+def test_from_data_frame():
+    dm = TextClassificationData.from_data_frame(
+        "sentence",
+        "lab1",
+        backbone=TEST_BACKBONE,
+        train_data_frame=TEST_DATA_FRAME_DATA,
+        val_data_frame=TEST_DATA_FRAME_DATA,
+        test_data_frame=TEST_DATA_FRAME_DATA,
+        predict_data_frame=TEST_DATA_FRAME_DATA,
+        batch_size=1,
+    )
+
+    batch = next(iter(dm.train_dataloader()))
+    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.val_dataloader()))
+    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.test_dataloader()))
+    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.predict_dataloader()))
     assert "input_ids" in batch
 
 
@@ -239,6 +411,7 @@ def test_from_data_frame_multilabel():
         train_data_frame=TEST_DATA_FRAME_DATA,
         val_data_frame=TEST_DATA_FRAME_DATA,
         test_data_frame=TEST_DATA_FRAME_DATA,
+        predict_data_frame=TEST_DATA_FRAME_DATA,
         batch_size=1,
     )
 
@@ -252,6 +425,9 @@ def test_from_data_frame_multilabel():
 
     batch = next(iter(dm.test_dataloader()))
     assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.predict_dataloader()))
     assert "input_ids" in batch
 
 
@@ -265,6 +441,7 @@ def test_from_hf_datasets():
         train_hf_dataset=TEST_HF_DATASET_DATA,
         val_hf_dataset=TEST_HF_DATASET_DATA,
         test_hf_dataset=TEST_HF_DATASET_DATA,
+        predict_hf_dataset=TEST_HF_DATASET_DATA,
         batch_size=1,
     )
 
@@ -278,6 +455,9 @@ def test_from_hf_datasets():
 
     batch = next(iter(dm.test_dataloader()))
     assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.predict_dataloader()))
     assert "input_ids" in batch
 
 
@@ -291,6 +471,7 @@ def test_from_hf_datasets_multilabel():
         train_hf_dataset=TEST_HF_DATASET_DATA,
         val_hf_dataset=TEST_HF_DATASET_DATA,
         test_hf_dataset=TEST_HF_DATASET_DATA,
+        predict_hf_dataset=TEST_HF_DATASET_DATA,
         batch_size=1,
     )
 
@@ -304,6 +485,9 @@ def test_from_hf_datasets_multilabel():
 
     batch = next(iter(dm.test_dataloader()))
     assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.predict_dataloader()))
     assert "input_ids" in batch
 
 
@@ -318,6 +502,7 @@ def test_from_lists():
         val_targets=TEST_LIST_TARGETS,
         test_data=TEST_LIST_DATA,
         test_targets=TEST_LIST_TARGETS,
+        predict_data=TEST_LIST_DATA,
         batch_size=1,
     )
 
@@ -331,6 +516,9 @@ def test_from_lists():
 
     batch = next(iter(dm.test_dataloader()))
     assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.predict_dataloader()))
     assert "input_ids" in batch
 
 
@@ -345,6 +533,7 @@ def test_from_lists_multilabel():
         val_targets=TEST_LIST_TARGETS_MULTILABEL,
         test_data=TEST_LIST_DATA,
         test_targets=TEST_LIST_TARGETS_MULTILABEL,
+        predict_data=TEST_LIST_DATA,
         batch_size=1,
     )
 
@@ -358,6 +547,9 @@ def test_from_lists_multilabel():
 
     batch = next(iter(dm.test_dataloader()))
     assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert "input_ids" in batch
+
+    batch = next(iter(dm.predict_dataloader()))
     assert "input_ids" in batch
 
 
