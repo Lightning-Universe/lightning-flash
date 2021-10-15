@@ -18,7 +18,7 @@ from flash.core.data.data_source import DefaultDataSources
 from flash.core.data_v2.data_module import DataModule
 from flash.core.data_v2.transforms.input_transform import InputTransform
 from flash.image.classification.data import MatplotlibVisualization
-from flash.image.classification.transforms import IMAGE_CLASSIFICATION_REGISTRY
+from flash.image.classification.transforms import IMAGE_CLASSIFICATION_INPUT_TRANSFORMS_REGISTRY
 from flash.image.io import ImagePathsInput
 
 
@@ -95,5 +95,5 @@ class ImageClassificationDataModule(DataModule):
         return MatplotlibVisualization(*args, **kwargs)
 
 
-ImagePathsInput.input_transforms_registry = IMAGE_CLASSIFICATION_REGISTRY
+ImagePathsInput.input_transforms_registry = IMAGE_CLASSIFICATION_INPUT_TRANSFORMS_REGISTRY
 ImageClassificationDataModule.register_flash_dataset(DefaultDataSources.FOLDERS, ImagePathsInput)

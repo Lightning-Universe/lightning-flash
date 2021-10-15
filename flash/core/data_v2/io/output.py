@@ -18,19 +18,19 @@ from flash.core.data.properties import Properties
 
 class Output(Properties):
     def transform(sample: Any) -> Any:
-        """Serialize the given sample into the desired output format.
+        """Transform the given sample into the desired output format.
 
         Args:
-            sample: The output from the :class:`.Postprocess`.
+            sample: The output from the :class:`.OutputTransform`.
 
         Returns:
-            The serialized output.
+            The transformed output.
         """
         return sample
 
     def __init__(self):
         """A :class:`.Output` encapsulates a single ``transform`` method which is used to convert the model output
-        into the desired output format when predicting."""
+        into the desired output format when predicting or serving."""
         super().__init__()
         self._is_enabled = True
 

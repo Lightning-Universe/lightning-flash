@@ -257,8 +257,7 @@ class DataModule(DataModule):
 
     @property
     def data_pipeline(self) -> DataPipeline:
-        """Property that returns the full data pipeline including the data source, preprocessing and
-        postprocessing."""
+        """Property that returns the full data pipeline including the datasets state, transforms and output."""
         inputs_state = InputsStateContainer.from_datasets(self._train_ds, self._val_ds, self._test_ds, self._predict_ds)
         return DataPipeline(
             flash_datasets_registry=self.flash_datasets_registry,
@@ -328,13 +327,6 @@ class DataModule(DataModule):
 
     @classmethod
     def _verify_flash_dataset_enum(cls, enum: Union[LightningEnum, str]) -> None:
-        if not cls.flash_datasets_registry or not isinstance(cls.flash_datasets_registry, FlashRegistry):
-            raise MisconfigurationException(
-                "The ``DataModule`` should have ``flash_datasets_registry`` (FlashRegistry) populated "
-                "with flash_dataset class and ``default_flash_dataset_enum`` "
-                "(Union[LightningEnum, str]) class attributes. "
-            )
-
         if enum not in cls.flash_datasets_registry.available_keys():
             available_constructors = [
                 f"from_{key.name.lower()}" for key in cls.flash_datasets_registry.available_keys()

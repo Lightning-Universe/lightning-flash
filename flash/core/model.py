@@ -480,7 +480,6 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         data_pipeline = self.build_data_pipeline(data_source or "default", deserializer, data_pipeline)
         dataset = data_pipeline.data_source.generate_dataset(x, running_stage)
         dataloader = self.process_predict_dataset(dataset)
-        breakpoint()
         x = list(dataloader.dataset)
         x = data_pipeline.worker_preprocessor(running_stage, collate_fn=dataloader.collate_fn)(x)
         # todo (tchaton): Remove this when sync with Lightning master.

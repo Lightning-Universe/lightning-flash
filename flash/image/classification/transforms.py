@@ -53,18 +53,10 @@ def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
     if _KORNIA_AVAILABLE and os.getenv("FLASH_TESTING", "0") != "1":
         #  Better approach as all transforms are applied on tensor directly
         return {
-            "per_sample_transform": nn.Sequential(
+            "to_tensor_transform": nn.Sequential(
                 ApplyToKeys(
                     DefaultDataKeys.INPUT,
-                    T.Compose(
-                        [
-                            torchvision.transforms.ToTensor(),
-                            K.geometry.Resize(image_size),
-                            K.augmentation.Normalize(
-                                torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])
-                            ),
-                        ]
-                    ),
+                    T.Compose([torchvision.transforms.ToTensor(), K.geometry.Resize(image_size)]),
                 ),
                 ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor),
             ),
@@ -75,7 +67,7 @@ def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
             ),
         }
     return {
-        "per_sample_transform": nn.Sequential(
+        "to_tensor_transform": nn.Sequential(
             ApplyToKeys(
                 DefaultDataKeys.INPUT,
                 T.Compose(
@@ -116,9 +108,6 @@ class DefaultImageClassificationInputTransform(InputTransform):
                             [
                                 torchvision.transforms.ToTensor(),
                                 K.geometry.Resize(image_size),
-                                K.augmentation.Normalize(
-                                    torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])
-                                ),
                             ]
                             + (self.training) * [K.augmentation.RandomHorizontalFlip()]
                         ),
@@ -150,5 +139,5 @@ class DefaultImageClassificationInputTransform(InputTransform):
         }
 
 
-IMAGE_CLASSIFICATION_REGISTRY = FlashRegistry("transforms")
-IMAGE_CLASSIFICATION_REGISTRY(name="default", fn=DefaultImageClassificationInputTransform)
+IMAGE_CLASSIFICATION_INPUT_TRANSFORMS_REGISTRY = FlashRegistry("transforms")
+IMAGE_CLASSIFICATION_INPUT_TRANSFORMS_REGISTRY(name="default", fn=DefaultImageClassificationInputTransform)

@@ -284,11 +284,13 @@ class InputTransform(Properties):
         if transform is None:
             return transform
 
-        keys = [v for v in InputTransformPlacement]
-        keys_diff = set(transform.keys()).difference(keys)
+        keys_diff = set(transform.keys()).difference([v for v in InputTransformPlacement])
 
         if len(keys_diff) > 0:
-            raise MisconfigurationException(f"{stage}_transform contains {keys_diff}. Only {keys} keys are supported.")
+            raise MisconfigurationException(
+                f"{stage}_transform contains {keys_diff}. "
+                f"Only {[v for v in InputTransformPlacement]} keys are supported."
+            )
 
         is_per_batch_transform_in = "per_batch_transform" in transform
         is_per_sample_transform_on_device_in = "per_sample_transform_on_device" in transform

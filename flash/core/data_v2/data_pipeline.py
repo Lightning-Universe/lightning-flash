@@ -36,7 +36,8 @@ class InputContainer:
 
 
 class DataPipeline:
-    """DataPipeline holds the engineering logic to connect."""
+    """DataPipeline holds the engineering logic to connect input, input_transform, model, output_transform, output
+    together."""
 
     def __init__(
         self,
@@ -115,6 +116,8 @@ class DataPipeline:
             prefixes += ["test"]
         elif stage == RunningStage.PREDICTING:
             prefixes += ["predict"]
+        elif stage == RunningStage.SERVING:
+            prefixes += ["serve"]
 
         prefixes += [None]
 
