@@ -192,7 +192,7 @@ class TextListDataSource(TextDataSource):
         self, data: Union[Tuple[List[str], List[str]], List[str]]
     ) -> Tuple[Sequence[Mapping[str, Any]], Optional[List[str]]]:
 
-        if not self.predicting:
+        if isinstance(data, tuple):
             input_list, target_list = data
             # NOTE: here we already deal with multilabels
             # NOTE: here we already rename to correct column names
