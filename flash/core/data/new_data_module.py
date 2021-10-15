@@ -29,7 +29,7 @@ from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DefaultPreprocess, Postprocess
 from flash.core.data.datasets import BaseDataset
-from flash.core.data.preprocess_transform import PREPROCESS_TRANSFORM_TYPE, PreprocessTransform
+from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
 
@@ -267,10 +267,10 @@ class DataModule(DataModule):
         val_data: Optional[Any] = None,
         test_data: Optional[Any] = None,
         predict_data: Optional[Any] = None,
-        train_transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
-        val_transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
-        test_transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
-        predict_transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
+        train_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
+        val_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
+        test_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
+        predict_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
         **flash_dataset_kwargs,
     ) -> Tuple[Optional[BaseDataset]]:
         cls._verify_flash_dataset_enum(enum)
@@ -311,7 +311,7 @@ class DataModule(DataModule):
         flash_dataset_cls,
         *load_data_args,
         running_stage: RunningStage,
-        transform: Optional[PreprocessTransform],
+        transform: Optional[InputTransform],
         **kwargs,
     ) -> Optional[BaseDataset]:
         if load_data_args[0] is not None:
