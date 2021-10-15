@@ -87,7 +87,7 @@ class TextDataSource(DataSource):
         element[DefaultDataKeys.TARGET] = targets
         return element
 
-    def _to_hf_dataset(self, data):
+    def _to_hf_dataset(self, data) -> Sequence[Mapping[str, Any]]:
         """account for flash CI testing context."""
         hf_dataset, *other = self.to_hf_dataset(data)
 
@@ -154,42 +154,43 @@ class TextDataSource(DataSource):
 
 
 class TextCSVDataSource(TextDataSource):
-    def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Dataset, str, str]:
+    def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, str]:
         file, *other = data
         dataset_dict = load_dataset("csv", data_files={"train": str(file)})
         return (dataset_dict["train"], *other)
 
 
 class TextJSONDataSource(TextDataSource):
-    def to_hf_dataset(self, data: Tuple[str, str, str, str]) -> Tuple[Dataset, str, str]:
+    def to_hf_dataset(self, data: Tuple[str, str, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, str]:
         file, *other, field = data
         dataset_dict = load_dataset("json", data_files={"train": str(file)}, field=field)
         return (dataset_dict["train"], *other)
 
 
 class TextDataFrameDataSource(TextDataSource):
-    def to_hf_dataset(self, data: Tuple[DataFrame, str, str]) -> Tuple[Dataset, str, str]:
+    def to_hf_dataset(self, data: Tuple[DataFrame, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, str]:
         df, *other = data
         hf_dataset = Dataset.from_pandas(df)
         return (hf_dataset, *other)
 
 
 class TextParquetDataSource(TextDataSource):
-    def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Dataset, str, str]:
+    def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, str]:
         file, *other = data
         hf_dataset = Dataset.from_parquet(str(file))
         return (hf_dataset, *other)
 
 
 class TextHuggingFaceDatasetDataSource(TextDataSource):
-    def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Dataset, str, str]:
+    def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, str]:
         hf_dataset, *other = data
         return (hf_dataset, *other)
 
 
 class TextListDataSource(TextDataSource):
-    def to_hf_dataset(self, data: Tuple[List[str], List[str]]) -> Tuple[Dataset, List[str], List[str]]:
-        input = "input"
+    def to_hf_dataset(
+        self, data: Union[Tuple[List[str], List[str]], List[str]]
+    ) -> Tuple[Sequence[Mapping[str, Any]], Optional[List[str]]]:
 
         if not self.predicting:
             input_list, target_list = data
@@ -199,9 +200,9 @@ class TextListDataSource(TextDataSource):
             return hf_dataset, target_list
 
         # predicting
-        hf_dataset = Dataset.from_dict({input: data})
+        hf_dataset = Dataset.from_dict({DefaultDataKeys.INPUT: data})
 
-        return hf_dataset
+        return (hf_dataset,)
 
     def load_data(
         self,
