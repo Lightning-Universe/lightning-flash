@@ -192,6 +192,9 @@ class FuncModule(torch.nn.Module):
     def forward(self, *args, **kwargs) -> Any:
         return self.func(*args, **kwargs)
 
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}({self.func.__name__})"
+
 
 def convert_to_modules(transforms: Optional[Dict[str, Callable]]):
 

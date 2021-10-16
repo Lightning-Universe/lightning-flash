@@ -123,18 +123,6 @@ class DataModule(pl.LightningDataModule):
         if self._train_ds is not None and (val_split is not None and self._val_ds is None):
             self._train_ds, self._val_ds = self._split_train_val(self._train_ds, val_split)
 
-        if self._train_ds:
-            self.train_dataloader = self._train_dataloader
-
-        if self._val_ds:
-            self.val_dataloader = self._val_dataloader
-
-        if self._test_ds:
-            self.test_dataloader = self._test_dataloader
-
-        if self._predict_ds:
-            self.predict_dataloader = self._predict_dataloader
-
         self.batch_size = batch_size
 
         if num_workers is None:
@@ -280,9 +268,11 @@ class DataModule(pl.LightningDataModule):
         if isinstance(dataset, (BaseAutoDataset, SplitDataset)):
             return self.data_pipeline.worker_preprocessor(running_stage)
 
-    def _train_dataloader(self) -> DataLoader:
+    def train_dataloader(self) -> Optional[DataLoader]:
         """Configure the train dataloader of the datamodule."""
-        train_ds: Dataset = self._train_ds() if isinstance(self._train_ds, Callable) else self._train_ds
+        train_ds: Optional[Dataset] = self._train_ds() if isinstance(self._train_ds, Callable) else self._train_ds
+        if not train_ds:
+            return None
         shuffle: bool = False
         collate_fn = self._resolve_collate_fn(train_ds, RunningStage.TRAINING)
         if isinstance(train_ds, IterableAutoDataset):
@@ -323,9 +313,11 @@ class DataModule(pl.LightningDataModule):
             persistent_workers=persistent_workers,
         )
 
-    def _val_dataloader(self) -> DataLoader:
+    def val_dataloader(self) -> Optional[DataLoader]:
         """Configure the validation dataloader of the datamodule."""
-        val_ds: Dataset = self._val_ds() if isinstance(self._val_ds, Callable) else self._val_ds
+        val_ds: Optional[Dataset] = self._val_ds() if isinstance(self._val_ds, Callable) else self._val_ds
+        if not val_ds:
+            return None
         collate_fn = self._resolve_collate_fn(val_ds, RunningStage.VALIDATING)
         pin_memory = True
         persistent_workers = self.num_workers > 0
@@ -349,9 +341,11 @@ class DataModule(pl.LightningDataModule):
             persistent_workers=persistent_workers,
         )
 
-    def _test_dataloader(self) -> DataLoader:
+    def test_dataloader(self) -> Optional[DataLoader]:
         """Configure the test dataloader of the datamodule."""
-        test_ds: Dataset = self._test_ds() if isinstance(self._test_ds, Callable) else self._test_ds
+        test_ds: Optional[Dataset] = self._test_ds() if isinstance(self._test_ds, Callable) else self._test_ds
+        if not test_ds:
+            return None
         collate_fn = self._resolve_collate_fn(test_ds, RunningStage.TESTING)
         pin_memory = True
         persistent_workers = False
@@ -375,9 +369,14 @@ class DataModule(pl.LightningDataModule):
             persistent_workers=persistent_workers,
         )
 
-    def _predict_dataloader(self) -> DataLoader:
+    def _predict_dataloader(self) -> Optional[DataLoader]:
         """Configure the prediction dataloader of the datamodule."""
-        predict_ds: Dataset = self._predict_ds() if isinstance(self._predict_ds, Callable) else self._predict_ds
+        predict_ds: Optional[Dataset] = (
+            self._predict_ds() if isinstance(self._predict_ds, Callable) else self._predict_ds
+        )
+
+        if not predict_ds:
+            return None
 
         if isinstance(predict_ds, IterableAutoDataset):
             batch_size = self.batch_size

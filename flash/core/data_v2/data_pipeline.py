@@ -12,27 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import inspect
-from dataclasses import dataclass
-from typing import Any, Dict, Optional, Type
+from typing import Any, Optional, Type
 
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data_v2.io.input import InputsStateContainer
 from flash.core.data_v2.io.output import Output
-from flash.core.data_v2.transforms.input_transform import InputTransform
 from flash.core.data_v2.transforms.output_transform import OutputTransform
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.stages import RunningStage
-
-
-@dataclass
-class InputContainer:
-
-    args: Any
-    kwargs: Any
-    train_state: Dict
-    train_input_transform: Optional[InputTransform]
 
 
 class DataPipeline:

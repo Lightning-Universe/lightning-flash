@@ -99,18 +99,6 @@ class DataModule(DataModule):
         if self._train_ds is not None and (val_split is not None and self._val_ds is None):
             self._train_ds, self._val_ds = self._split_train_val(self._train_ds, val_split)
 
-        if self._train_ds:
-            self.train_dataloader = self._train_dataloader
-
-        if self._val_ds:
-            self.val_dataloader = self._val_dataloader
-
-        if self._test_ds:
-            self.test_dataloader = self._test_dataloader
-
-        if self._predict_ds:
-            self.predict_dataloader = self._predict_dataloader
-
         self.batch_size = batch_size
 
         if num_workers is None:
@@ -125,8 +113,10 @@ class DataModule(DataModule):
 
         LightningDataModule.__init__(self)
 
-    def _train_dataloader(self) -> DataLoader:
-        train_ds: BaseDataset = self._train_ds
+    def train_dataloader(self) -> Optional[DataLoader]:
+        train_ds: Optional[BaseDataset] = self._train_ds
+        if not train_ds:
+            return None
         collate_fn = train_ds.dataloader_collate_fn
         shuffle: bool = False
         if isinstance(train_ds, IterableDataset):
@@ -165,8 +155,10 @@ class DataModule(DataModule):
             persistent_workers=self.persistent_workers,
         )
 
-    def _val_dataloader(self) -> DataLoader:
-        val_ds: BaseDataset = self._val_ds
+    def val_dataloader(self) -> Optional[DataLoader]:
+        val_ds: Optional[BaseDataset] = self._val_ds
+        if not val_ds:
+            return None
         collate_fn = val_ds.dataloader_collate_fn
 
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
@@ -188,8 +180,10 @@ class DataModule(DataModule):
             persistent_workers=self.persistent_workers,
         )
 
-    def _test_dataloader(self) -> DataLoader:
-        test_ds: BaseDataset = self._test_ds
+    def test_dataloader(self) -> Optional[DataLoader]:
+        test_ds: Optional[BaseDataset] = self._test_ds
+        if not test_ds:
+            return None
         collate_fn = test_ds.dataloader_collate_fn
 
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
@@ -211,8 +205,10 @@ class DataModule(DataModule):
             persistent_workers=self.persistent_workers,
         )
 
-    def _predict_dataloader(self) -> DataLoader:
-        predict_ds: BaseDataset = self._predict_ds
+    def predict_dataloader(self) -> Optional[DataLoader]:
+        predict_ds: Optional[BaseDataset] = self._predict_ds
+        if not predict_ds:
+            return None
         collate_fn = predict_ds.dataloader_collate_fn
 
         if isinstance(predict_ds, IterableDataset):
