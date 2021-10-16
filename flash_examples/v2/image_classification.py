@@ -33,9 +33,7 @@ trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Predict what's on a few images! ants or bees?
-predictions = model.predict(
-    ["data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg"], input="folders", output="labels"
-)
+predictions = model.predict("data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg", output="labels")
 print(predictions)
 
 # 5. Save the model!
