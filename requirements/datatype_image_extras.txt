@@ -7,4 +7,6 @@ icedata
 effdet
 albumentations
 learn2learn
+structlog==21.1.0   # remove when baal resolved its dependency.
 baal
+fastface

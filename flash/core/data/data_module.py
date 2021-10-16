@@ -30,7 +30,6 @@ from typing import (
 import numpy as np
 import pytorch_lightning as pl
 import torch
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import IterableDataset, Subset
@@ -45,6 +44,7 @@ from flash.core.data.data_source import DataSource, DefaultDataSources
 from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, requires
+from flash.core.utilities.stages import RunningStage
 
 if _FIFTYONE_AVAILABLE and TYPE_CHECKING:
     from fiftyone.core.collections import SampleCollection
@@ -183,6 +183,7 @@ class DataModule(pl.LightningDataModule):
 
     @property
     def data_fetcher(self) -> BaseDataFetcher:
+        """This property returns the data fetcher."""
         return self._data_fetcher or DataModule.configure_data_fetcher()
 
     @data_fetcher.setter
@@ -280,6 +281,7 @@ class DataModule(pl.LightningDataModule):
             return self.data_pipeline.worker_preprocessor(running_stage)
 
     def _train_dataloader(self) -> DataLoader:
+        """Configure the train dataloader of the datamodule."""
         train_ds: Dataset = self._train_ds() if isinstance(self._train_ds, Callable) else self._train_ds
         shuffle: bool = False
         collate_fn = self._resolve_collate_fn(train_ds, RunningStage.TRAINING)
@@ -288,6 +290,7 @@ class DataModule(pl.LightningDataModule):
         else:
             drop_last = len(train_ds) > self.batch_size
         pin_memory = True
+        persistent_workers = self.num_workers > 0
 
         if self.sampler is None:
             sampler = None
@@ -317,12 +320,15 @@ class DataModule(pl.LightningDataModule):
             pin_memory=pin_memory,
             drop_last=drop_last,
             collate_fn=collate_fn,
+            persistent_workers=persistent_workers,
         )
 
     def _val_dataloader(self) -> DataLoader:
+        """Configure the validation dataloader of the datamodule."""
         val_ds: Dataset = self._val_ds() if isinstance(self._val_ds, Callable) else self._val_ds
         collate_fn = self._resolve_collate_fn(val_ds, RunningStage.VALIDATING)
         pin_memory = True
+        persistent_workers = self.num_workers > 0
 
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
             return self.trainer.lightning_module.process_val_dataset(
@@ -340,12 +346,15 @@ class DataModule(pl.LightningDataModule):
             num_workers=self.num_workers,
             pin_memory=pin_memory,
             collate_fn=collate_fn,
+            persistent_workers=persistent_workers,
         )
 
     def _test_dataloader(self) -> DataLoader:
+        """Configure the test dataloader of the datamodule."""
         test_ds: Dataset = self._test_ds() if isinstance(self._test_ds, Callable) else self._test_ds
         collate_fn = self._resolve_collate_fn(test_ds, RunningStage.TESTING)
         pin_memory = True
+        persistent_workers = False
 
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
             return self.trainer.lightning_module.process_test_dataset(
@@ -363,9 +372,11 @@ class DataModule(pl.LightningDataModule):
             num_workers=self.num_workers,
             pin_memory=pin_memory,
             collate_fn=collate_fn,
+            persistent_workers=persistent_workers,
         )
 
     def _predict_dataloader(self) -> DataLoader:
+        """Configure the prediction dataloader of the datamodule."""
         predict_ds: Dataset = self._predict_ds() if isinstance(self._predict_ds, Callable) else self._predict_ds
 
         if isinstance(predict_ds, IterableAutoDataset):
@@ -375,6 +386,7 @@ class DataModule(pl.LightningDataModule):
 
         collate_fn = self._resolve_collate_fn(predict_ds, RunningStage.PREDICTING)
         pin_memory = True
+        persistent_workers = False
 
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
             return self.trainer.lightning_module.process_predict_dataset(
@@ -386,11 +398,17 @@ class DataModule(pl.LightningDataModule):
             )
 
         return DataLoader(
-            predict_ds, batch_size=batch_size, num_workers=self.num_workers, pin_memory=True, collate_fn=collate_fn
+            predict_ds,
+            batch_size=batch_size,
+            num_workers=self.num_workers,
+            pin_memory=True,
+            collate_fn=collate_fn,
+            persistent_workers=persistent_workers,
         )
 
     @property
     def num_classes(self) -> Optional[int]:
+        """Property that returns the number of classes of the datamodule if a multiclass task."""
         n_cls_train = getattr(self.train_dataset, "num_classes", None)
         n_cls_val = getattr(self.val_dataset, "num_classes", None)
         n_cls_test = getattr(self.test_dataset, "num_classes", None)
@@ -398,6 +416,7 @@ class DataModule(pl.LightningDataModule):
 
     @property
     def multi_label(self) -> Optional[bool]:
+        """Property that returns the number of labels of the datamodule if a multilabel task."""
         multi_label_train = getattr(self.train_dataset, "multi_label", None)
         multi_label_val = getattr(self.val_dataset, "multi_label", None)
         multi_label_test = getattr(self.test_dataset, "multi_label", None)
@@ -405,18 +424,23 @@ class DataModule(pl.LightningDataModule):
 
     @property
     def data_source(self) -> Optional[DataSource]:
+        """Property that returns the data source."""
         return self._data_source
 
     @property
     def preprocess(self) -> Preprocess:
+        """Property that returns the preprocessing class used on input data."""
         return self._preprocess or self.preprocess_cls()
 
     @property
     def postprocess(self) -> Postprocess:
+        """Property that returns the postprocessing class used on the input data."""
         return self._postprocess or self.postprocess_cls()
 
     @property
     def data_pipeline(self) -> DataPipeline:
+        """Property that returns the full data pipeline including the data source, preprocessing and
+        postprocessing."""
         return DataPipeline(self.data_source, self.preprocess, self.postprocess)
 
     def available_data_sources(self) -> Sequence[str]:
@@ -433,6 +457,17 @@ class DataModule(pl.LightningDataModule):
         train_dataset: Dataset,
         val_split: float,
     ) -> Tuple[Any, Any]:
+        """Utility function for splitting the training dataset into a disjoint subset of training samples and
+        validation samples.
+
+        Args:
+            train_dataset: A instance of a :class:`torch.utils.data.Dataset`.
+            val_split: A float between 0 and 1 determining the number fraction of samples that should go into the
+                validation split
+
+        Returns:
+            A tuple containing the training and validation datasets
+        """
 
         if not isinstance(val_split, float) or (isinstance(val_split, float) and val_split > 1 or val_split < 0):
             raise MisconfigurationException(f"`val_split` should be a float between 0 and 1. Found {val_split}.")
@@ -1223,6 +1258,131 @@ class DataModule(pl.LightningDataModule):
             val_dataset,
             test_dataset,
             predict_dataset,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_fetcher=data_fetcher,
+            preprocess=preprocess,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            **preprocess_kwargs,
+        )
+
+    @classmethod
+    def from_labelstudio(
+        cls,
+        export_json: str = None,
+        train_export_json: str = None,
+        val_export_json: str = None,
+        test_export_json: str = None,
+        predict_export_json: str = None,
+        data_folder: str = None,
+        train_data_folder: str = None,
+        val_data_folder: str = None,
+        test_data_folder: str = None,
+        predict_data_folder: str = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_fetcher: Optional[BaseDataFetcher] = None,
+        preprocess: Optional[Preprocess] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: Optional[int] = None,
+        **preprocess_kwargs: Any,
+    ) -> "DataModule":
+        """Creates a :class:`~flash.core.data.data_module.DataModule` object
+        from the given export file and data directory using the
+        :class:`~flash.core.data.data_source.DataSource` of name
+        :attr:`~flash.core.data.data_source.DefaultDataSources.FOLDERS`
+        from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
+
+        Args:
+            export_json: path to label studio export file
+            train_export_json: path to label studio export file for train set,
+            overrides export_json if specified
+            val_export_json: path to label studio export file for validation
+            test_export_json: path to label studio export file for test
+            predict_export_json: path to label studio export file for predict
+            data_folder: path to label studio data folder
+            train_data_folder: path to label studio data folder for train data set,
+            overrides data_folder if specified
+            val_data_folder: path to label studio data folder for validation data
+            test_data_folder: path to label studio data folder for test data
+            predict_data_folder: path to label studio data folder for predict data
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`.
+            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+                will be constructed and used.
+            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
+                if ``preprocess = None``.
+
+        Returns:
+            The constructed data module.
+
+        Examples::
+
+            data_module = DataModule.from_labelstudio(
+                export_json='project.json',
+                data_folder='label-studio/media/upload',
+                val_split=0.8,
+            )
+        """
+        data = {
+            "data_folder": data_folder,
+            "export_json": export_json,
+            "split": val_split,
+            "multi_label": preprocess_kwargs.get("multi_label", False),
+        }
+        train_data = None
+        val_data = None
+        test_data = None
+        predict_data = None
+        if (train_data_folder or data_folder) and train_export_json:
+            train_data = {
+                "data_folder": train_data_folder or data_folder,
+                "export_json": train_export_json,
+                "multi_label": preprocess_kwargs.get("multi_label", False),
+            }
+        if (val_data_folder or data_folder) and val_export_json:
+            val_data = {
+                "data_folder": val_data_folder or data_folder,
+                "export_json": val_export_json,
+                "multi_label": preprocess_kwargs.get("multi_label", False),
+            }
+        if (test_data_folder or data_folder) and test_export_json:
+            test_data = {
+                "data_folder": test_data_folder or data_folder,
+                "export_json": test_export_json,
+                "multi_label": preprocess_kwargs.get("multi_label", False),
+            }
+        if (predict_data_folder or data_folder) and predict_export_json:
+            predict_data = {
+                "data_folder": predict_data_folder or data_folder,
+                "export_json": predict_export_json,
+                "multi_label": preprocess_kwargs.get("multi_label", False),
+            }
+        return cls.from_data_source(
+            DefaultDataSources.LABELSTUDIO,
+            train_data=train_data if train_data else data,
+            val_data=val_data,
+            test_data=test_data,
+            predict_data=predict_data,
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,

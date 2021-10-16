@@ -13,6 +13,7 @@
 # limitations under the License.
 import contextlib
 import os
+import random
 import re
 import tempfile
 from pathlib import Path
@@ -127,7 +128,7 @@ def mock_encoded_video_dataset_folder(tmpdir):
 
 
 @pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
-def test_video_classifier_finetune(tmpdir):
+def test_video_classifier_finetune_from_folders(tmpdir):
 
     with mock_encoded_video_dataset_file() as (
         mock_csv,
@@ -184,6 +185,93 @@ def test_video_classifier_finetune(tmpdir):
 
         datamodule = VideoClassificationData.from_folders(
             train_folder=mock_csv,
+            clip_sampler="uniform",
+            clip_duration=half_duration,
+            video_sampler=SequentialSampler,
+            decode_audio=False,
+            train_transform=train_transform,
+        )
+
+        model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50")
+
+        trainer = flash.Trainer(fast_dev_run=True, gpus=torch.cuda.device_count())
+
+        trainer.finetune(model, datamodule=datamodule)
+
+
+@pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
+def test_video_classifier_finetune_from_files(tmpdir):
+
+    with mock_encoded_video_dataset_file() as (
+        mock_csv,
+        label_videos,
+        total_duration,
+    ):
+        label_names = ["label_1", "label_2", "label_3", "label_4"]
+
+        half_duration = total_duration / 2 - 1e-9
+
+        files = []
+        labels = []
+        with open(mock_csv) as fin:
+            for line in fin:
+                if not line:
+                    break
+                splits = line.split()
+                fname = splits[0]
+                label = label_names[random.randint(0, len(labels))]
+                files.append(fname)
+                labels.append(label)
+
+        datamodule = VideoClassificationData.from_files(
+            train_files=files,
+            train_targets=labels,
+            clip_sampler="uniform",
+            clip_duration=half_duration,
+            video_sampler=SequentialSampler,
+            decode_audio=False,
+        )
+
+        for sample in datamodule.train_dataset.data:
+            expected_t_shape = 5
+            assert sample["video"].shape[1] == expected_t_shape
+
+        assert len(VideoClassifier.available_backbones()) > 5
+
+        train_transform = {
+            "post_tensor_transform": Compose(
+                [
+                    ApplyTransformToKey(
+                        key="video",
+                        transform=Compose(
+                            [
+                                UniformTemporalSubsample(8),
+                                RandomShortSideScale(min_size=256, max_size=320),
+                                RandomCrop(244),
+                                RandomHorizontalFlip(p=0.5),
+                            ]
+                        ),
+                    ),
+                ]
+            ),
+            "per_batch_transform_on_device": Compose(
+                [
+                    ApplyTransformToKey(
+                        key="video",
+                        transform=K.VideoSequential(
+                            K.Normalize(torch.tensor([0.45, 0.45, 0.45]), torch.tensor([0.225, 0.225, 0.225])),
+                            K.augmentation.ColorJitter(0.1, 0.1, 0.1, 0.1, p=1.0),
+                            data_format="BCTHW",
+                            same_on_frame=False,
+                        ),
+                    ),
+                ]
+            ),
+        }
+
+        datamodule = VideoClassificationData.from_files(
+            train_files=files,
+            train_targets=labels,
             clip_sampler="uniform",
             clip_duration=half_duration,
             video_sampler=SequentialSampler,

@@ -10,15 +10,33 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Added backbones for `Graph Classification` and `Graph Embedding` Tasks ([#592](https://github.com/PyTorchLightning/lightning-flash/pull/592))
 
+- Added `LabelStudio` integration ([#554](https://github.com/PyTorchLightning/lightning-flash/pull/554))
+
 - Added support `learn2learn` training_strategy for `ImageClassifier` ([#737](https://github.com/PyTorchLightning/lightning-flash/pull/737))
 
 - Added `vissl` training_strategies for `ImageEmbedder` ([#682](https://github.com/PyTorchLightning/lightning-flash/pull/682))
 
 - Added support for `from_data_frame` to `TextClassificationData` ([#785](https://github.com/PyTorchLightning/lightning-flash/pull/785))
 
+- Added `FastFace` integration ([#606](https://github.com/PyTorchLightning/lightning-flash/pull/606))
+
+- Added support for `from_lists` to `TextClassificationData` ([#805](https://github.com/PyTorchLightning/lightning-flash/pull/805))
+
+- Flash DataPipeline API Refactor:
+    - Add FlashDataset ([#851](https://github.com/PyTorchLightning/lightning-flash/pull/851), [#853](https://github.com/PyTorchLightning/lightning-flash/pull/853))
+    - Add PreprocessTransform ([#852](https://github.com/PyTorchLightning/lightning-flash/pull/852))
+    - Add support for PreprocessTransform to FlashDatasets ([#856](https://github.com/PyTorchLightning/lightning-flash/pull/856))
+
+
+- Added flash components tutorial ([#856](https://github.com/PyTorchLightning/lightning-flash/pull/856))
+
 ### Changed
 
 - Changed the default `num_workers` on linux to `0` (matching the default for other OS) ([#759](https://github.com/PyTorchLightning/lightning-flash/pull/759))
+
+
+- Changed `PreprocessTransform` to `InputTransform` ([#868](https://github.com/PyTorchLightning/lightning-flash/pull/868))
+
 
 ### Fixed
 

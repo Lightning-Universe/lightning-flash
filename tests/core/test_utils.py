@@ -13,6 +13,8 @@
 # limitations under the License.
 import os
 
+import pytest
+
 from flash.core.data.utils import download_data
 from flash.core.utilities.apply_func import get_callable_dict, get_callable_name
 
@@ -50,7 +52,10 @@ def test_get_callable_dict():
     assert d["two"] == b
 
 
-def test_download_data(tmpdir):
+@pytest.mark.parametrize("file", ["titanic.zip", "titanic.tar.gz", "titanic.tar.bz2"])
+def test_download_data(tmpdir, file):
+    download_path = "https://pl-flash-data.s3.amazonaws.com/"
     path = os.path.join(tmpdir, "data")
-    download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", path)
-    assert set(os.listdir(path)) == {"titanic", "titanic.zip"}
+    download_data(download_path + file, path)
+    assert "titanic" in set(os.listdir(path))
+    assert file in set(os.listdir(path))

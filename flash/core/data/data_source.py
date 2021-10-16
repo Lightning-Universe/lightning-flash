@@ -39,7 +39,6 @@ from typing import (
 import numpy as np
 import pandas as pd
 import torch
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
 from torch.nn import Module
 from torch.utils.data.dataset import Dataset
@@ -49,6 +48,7 @@ from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableA
 from flash.core.data.properties import ProcessState, Properties
 from flash.core.data.utils import CurrentRunningStageFuncContext
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
+from flash.core.utilities.stages import RunningStage
 
 SampleCollection = None
 if _FIFTYONE_AVAILABLE:
@@ -160,6 +160,10 @@ class DefaultDataSources(LightningEnum):
     JSON = "json"
     DATASETS = "datasets"
     FIFTYONE = "fiftyone"
+    DATAFRAME = "data_frame"
+    LISTS = "lists"
+    SENTENCES = "sentences"
+    LABELSTUDIO = "labelstudio"
 
     # TODO: Create a FlashEnum class???
     def __hash__(self) -> int:

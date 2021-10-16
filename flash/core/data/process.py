@@ -17,7 +17,6 @@ from abc import ABC, abstractclassmethod, abstractmethod
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union
 
 import torch
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 from torch.utils.data._utils.collate import default_collate
@@ -30,6 +29,7 @@ from flash.core.data.properties import Properties
 from flash.core.data.states import CollateFn
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX, convert_to_modules, CurrentRunningStageFuncContext
+from flash.core.utilities.stages import RunningStage
 
 
 class BasePreprocess(ABC):
@@ -275,7 +275,7 @@ class Preprocess(BasePreprocess, Properties):
 
         if is_per_batch_transform_in and is_per_sample_transform_on_device_in:
             raise MisconfigurationException(
-                f"{transform}: `per_batch_transform` and `per_sample_transform_on_device` " f"are mutually exclusive."
+                f"{transform}: `per_batch_transform` and `per_sample_transform_on_device` are mutually exclusive."
             )
 
         collate_in_worker: Optional[bool] = None
@@ -340,7 +340,6 @@ class Preprocess(BasePreprocess, Properties):
 
         Will be overridden by transforms passed to the ``__init__``.
         """
-        return None
 
     def _apply_sample_transform(self, sample: Any) -> Any:
         if isinstance(sample, list):

@@ -19,7 +19,6 @@ import numpy as np
 import pytest
 import torch
 from pytorch_lightning import Trainer
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor, tensor
 from torch.utils.data import DataLoader
@@ -34,6 +33,7 @@ from flash.core.data.process import DefaultPreprocess, Deserializer, Postprocess
 from flash.core.data.properties import ProcessState
 from flash.core.model import Task
 from flash.core.utilities.imports import _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.stages import RunningStage
 from tests.helpers.utils import _IMAGE_TESTING
 
 if _TORCHVISION_AVAILABLE:
@@ -525,7 +525,7 @@ class LamdaDummyDataset(torch.utils.data.Dataset):
         return 5
 
 
-class TestPreprocessTransformationsDataSource(DataSource):
+class TestInputTransformationsDataSource(DataSource):
     def __init__(self):
         super().__init__()
 
@@ -583,9 +583,9 @@ class TestPreprocessTransformationsDataSource(DataSource):
         return LamdaDummyDataset(self.fn_predict_load_data)
 
 
-class TestPreprocessTransformations(DefaultPreprocess):
+class TestInputTransformations(DefaultPreprocess):
     def __init__(self):
-        super().__init__(data_sources={"default": TestPreprocessTransformationsDataSource()})
+        super().__init__(data_sources={"default": TestInputTransformationsDataSource()})
 
         self.train_pre_tensor_transform_called = False
         self.train_collate_called = False
@@ -651,7 +651,7 @@ class TestPreprocessTransformations(DefaultPreprocess):
         return sample
 
 
-class TestPreprocessTransformations2(TestPreprocessTransformations):
+class TestInputTransformations2(TestInputTransformations):
     def val_to_tensor_transform(self, sample: Any) -> Tensor:
         self.val_to_tensor_transform_called = True
         return {"a": tensor(sample["a"]), "b": tensor(sample["b"])}
@@ -684,7 +684,7 @@ class CustomModel(Task):
 def test_datapipeline_transformations(tmpdir):
 
     datamodule = DataModule.from_data_source(
-        "default", 1, 1, 1, 1, batch_size=2, num_workers=0, preprocess=TestPreprocessTransformations()
+        "default", 1, 1, 1, 1, batch_size=2, num_workers=0, preprocess=TestInputTransformations()
     )
 
     assert datamodule.train_dataloader().dataset[0] == (0, 1, 2, 3)
@@ -697,7 +697,7 @@ def test_datapipeline_transformations(tmpdir):
         batch = next(iter(datamodule.val_dataloader()))
 
     datamodule = DataModule.from_data_source(
-        "default", 1, 1, 1, 1, batch_size=2, num_workers=0, preprocess=TestPreprocessTransformations2()
+        "default", 1, 1, 1, 1, batch_size=2, num_workers=0, preprocess=TestInputTransformations2()
     )
     batch = next(iter(datamodule.val_dataloader()))
     assert torch.equal(batch["a"], tensor([0, 1]))

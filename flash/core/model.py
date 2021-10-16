@@ -24,7 +24,6 @@ import torch
 import torchmetrics
 from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.callbacks import Callback
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -51,6 +50,7 @@ from flash.core.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.serve import Composition
 from flash.core.utilities.apply_func import get_callable_dict
 from flash.core.utilities.imports import requires
+from flash.core.utilities.stages import RunningStage
 
 
 class ModuleWrapperBase:
@@ -230,6 +230,8 @@ class DatasetProcessor:
 
 
 class BenchmarkConvergenceCI(Callback):
+    """Specialized callback only used during testing Keeps track metrics during training."""
+
     def __init__(self):
         self.history = []
 
@@ -295,12 +297,24 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
     Args:
         model: Model to use for the task.
-        loss_fn: Loss function for training
+        loss_fn: Loss function for training.
         optimizer: Optimizer to use for training, defaults to :class:`torch.optim.Adam`.
-        metrics: Metrics to compute for training and evaluation.
+        optimizer_kwargs: A dict containing additional arguments for initializing the optimizer. Note that
+            this includes all other arguments than the learning rate which is a seperate argument.
+        scheduler: Learning rate scheduler to use for the training. Should be an instance of
+            :class:`torch.optim.lr_scheduler._LRScheduler`. Defaults to using no scheduler.
+        scheduler_kwargs: A dict containing additional arguments for initializing the learning rate scheduler.
+        metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
+            package, a custom metric inheriting from `torchmetrics.Metric`, a callable function or a list/dict
+            containing a combination of the aforementioned. In all cases, each metric needs to have the signature
+            `metric(preds,target)` and return a single scalar tensor.
         learning_rate: Learning rate to use for training, defaults to ``5e-5``.
+        deserializer: Either a single :class:`~flash.core.data.process.Deserializer` or a mapping of these to
+            deserialize the input
         preprocess: :class:`~flash.core.data.process.Preprocess` to use as the default for this task.
         postprocess: :class:`~flash.core.data.process.Postprocess` to use as the default for this task.
+        serializer: Either a single :class:`~flash.core.data.process.Serializer` or a mapping of these to
+            serialize the output e.g. convert the model output into the desired output format when predicting.
     """
 
     schedulers: FlashRegistry = _SCHEDULERS_REGISTRY
@@ -347,9 +361,21 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         self.serializer = serializer
 
     def step(self, batch: Any, batch_idx: int, metrics: nn.ModuleDict) -> Any:
-        """The training/validation/test step.
+        """Implement the core logic for the training/validation/test step. By default this includes:
+
+            - Inference on the current batch
+            - Calculating the loss
+            - Calculating relevant metrics
 
         Override for custom behavior.
+
+        Args:
+            batch: The output of your dataloader. Can either be a single Tensor or a list of Tensors.
+            batch_idx: Integer displaying index of this batch
+            metrics: A module dict containing metrics for calculating relevant training statitics
+
+        Returns:
+            A dict containing both the loss and relevant metrics
         """
         x, y = batch
         y_hat = self(x)
@@ -441,7 +467,9 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
         Args:
             x: Input to predict. Can be raw data or processed data. If str, assumed to be a folder of data.
-
+            data_source: A string that indicates the format of the data source to use which will override
+                the current data source format used
+            deserializer: A single :class:`~flash.core.data.process.Deserializer` to deserialize the input
             data_pipeline: Use this to override the current data pipeline
 
         Returns:
@@ -474,6 +502,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         return self(batch)
 
     def configure_optimizers(self) -> Union[Optimizer, Tuple[List[Optimizer], List[_LRScheduler]]]:
+        """Implement how optimizer and optionally learning rate schedulers should be configured."""
         optimizer = self.optimizer
         if not isinstance(self.optimizer, Optimizer):
             self.optimizer_kwargs["lr"] = self.learning_rate
@@ -576,6 +605,9 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         - :class:`.DataPipeline` passed to this method.
 
         Args:
+            data_source: A string that indicates the format of the data source to use which will override
+                the current data source format used.
+            deserializer: deserializer to use
             data_pipeline: Optional highest priority source of
                 :class:`~flash.core.data.process.Preprocess` and :class:`~flash.core.data.process.Postprocess`.
 
