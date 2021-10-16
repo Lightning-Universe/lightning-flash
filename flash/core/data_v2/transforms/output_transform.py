@@ -21,9 +21,9 @@ from flash.core.data_v2.io.input import InputDataKeys
 
 
 class OutputTransformPlacement(LightningEnum):
-    PER_BATCH_TRANSFORM = ("per_batch_transform",)
-    UNCOLLATE = ("uncollate",)
-    PER_SAMPLE_TRANSFORM = ("per_sample_transform",)
+    PER_BATCH_TRANSFORM = "per_batch_transform"
+    UNCOLLATE = "uncollate"
+    PER_SAMPLE_TRANSFORM = "per_sample_transform"
 
 
 class OutputTransform(Properties):

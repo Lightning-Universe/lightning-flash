@@ -270,7 +270,7 @@ def test_datamodule_labelstudio_text():
 @pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
 def test_datasource_labelstudio_video():
     """Test creation of LabelStudioVideoClassificationDataSource from video."""
-    download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/video_data.zip")
+    download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/video_data.zip", "./data/")
     data = {"data_folder": "data/upload/", "export_json": "data/project.json", "multi_label": True}
     preprocess = VideoClassificationPreprocess()
     ds = preprocess.data_source_of_name(DefaultDataSources.LABELSTUDIO)
@@ -287,7 +287,7 @@ def test_datasource_labelstudio_video():
 @pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
 def test_datamodule_labelstudio_video():
     """Test creation of Datamodule from video."""
-    download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/video_data.zip")
+    download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/video_data.zip", "./data/")
     datamodule = VideoClassificationData.from_labelstudio(
         export_json="data/project.json",
         data_folder="data/upload/",
