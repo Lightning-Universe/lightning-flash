@@ -19,9 +19,11 @@ from pytorch_lightning.utilities import rank_zero_warn
 
 from flash.core.adapter import AdapterTaskV2
 from flash.core.classification import ClassificationMixin
-from flash.core.data.data_source import DefaultDataKeys, LabelsState
+from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data_v2.io.input import LabelsState
 from flash.core.data_v2.io.output import Output
 from flash.core.model_v2 import TaskV2
+from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 
 Classification, Classifications = None, None
@@ -311,3 +313,11 @@ class FiftyOneLabelsOutput(ClassificationOutput):
             filepath = sample[DefaultDataKeys.METADATA]["filepath"]
             return {"filepath": filepath, "predictions": fo_predictions}
         return fo_predictions
+
+
+CLASSIFICATION_OUTPUT_REGISTRY = FlashRegistry("output")
+CLASSIFICATION_OUTPUT_REGISTRY(name="logits", fn=LogitsOutput)
+CLASSIFICATION_OUTPUT_REGISTRY(name="probabilities", fn=ProbabilitiesOutput)
+CLASSIFICATION_OUTPUT_REGISTRY(name="classes", fn=ClassesOutput)
+CLASSIFICATION_OUTPUT_REGISTRY(name="labels", fn=LabelsOutput)
+CLASSIFICATION_OUTPUT_REGISTRY(name="fiftyone_labels", fn=FiftyOneLabelsOutput)

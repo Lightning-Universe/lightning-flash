@@ -272,7 +272,7 @@ class DatasetInput(FlashDataset[Dataset]):
 
     Args:
         labels: Optionally pass the labels as a mapping from class index to label string. These will then be set as the
-            :class:`~flash.core.data.data_source.LabelsState`.
+            :class:`~flash.core.data_v2.io.input.LabelsState`.
     """
 
     def load_sample(self, sample: Any) -> Mapping[str, Any]:
@@ -291,7 +291,7 @@ class SequenceInput(
 
     Args:
         labels: Optionally pass the labels as a mapping from class index to label string. These will then be set as the
-            :class:`~flash.core.data.data_source.LabelsState`.
+            :class:`~flash.core.data_v2.io.input.LabelsState`.
     """
 
     def __init__(
@@ -327,7 +327,7 @@ class PathsInput(SequenceInput):
     Args:
         extensions: The file extensions supported by this data source (e.g. ``(".jpg", ".png")``).
         labels: Optionally pass the labels as a mapping from class index to label string. These will then be set as the
-            :class:`~flash.core.data.data_source.LabelsState`.
+            :class:`~flash.core.data_v2.io.input.LabelsState`.
     """
 
     def __init__(

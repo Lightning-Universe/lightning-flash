@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import functools
 import inspect
 import pickle
 from copy import deepcopy
@@ -77,10 +78,10 @@ class TaskV2(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Che
 
     _datamodule_cls: Optional[DataModule] = None
     _inputs_state: Optional[InputsStateContainer] = None
-    _output_transform: Optional[OutputTransform] = None
     _flash_datasets_registry: Optional[FlashRegistry] = None
     _output_transform: Optional[OutputTransform] = None
     _output: Optional[Output] = None
+    _output_registry = FlashRegistry("output")
 
     schedulers: FlashRegistry = _SCHEDULERS_REGISTRY
     required_extras: Optional[Union[str, List[str]]] = None
@@ -95,7 +96,7 @@ class TaskV2(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Che
         scheduler_kwargs: Optional[Dict[str, Any]] = None,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         learning_rate: float = 5e-5,
-        output_transform: Optional[OutputTransform] = None,
+        output_transform: Optional[OutputTransform] = OutputTransform(),
         output: Optional[Union[Output, Mapping[str, Output]]] = None,
     ):
         super().__init__()
@@ -115,7 +116,25 @@ class TaskV2(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Che
         self.save_hyperparameters("learning_rate", "optimizer")
 
         self.output_transform = output_transform
-        self.output = output
+        self.output = self._output_registry.get(output)() if isinstance(output, str) else output
+
+        self.predict_step = self._wrap_predict_step(self.predict_step)
+
+    @property
+    def output(self) -> Optional[Output]:
+        return self._output
+
+    @output.setter
+    def output(self, output: Optional[Output]) -> None:
+        self._output = output
+
+    @property
+    def output_transform(self) -> Optional[Output]:
+        return self._output_transform
+
+    @output_transform.setter
+    def output_transform(self, output_transform: Optional[OutputTransform]) -> None:
+        self._output_transform = output_transform
 
     def step(self, batch: Any, batch_idx: int, metrics: nn.ModuleDict) -> Any:
         """Implement the core logic for the training/validation/test step. By default this includes:
@@ -246,7 +265,6 @@ class TaskV2(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Che
         self._resolve_flash_datasets_registry(data_pipeline._flash_datasets_registry)
         self._resolve_inputs_state(data_pipeline._inputs_state)
         self._resolve_inputs_state(data_pipeline._output_transform)
-        self.data_pipeline
 
     def _resolve_flash_datasets_registry(self, flash_datasets_registry: Optional[FlashRegistry]) -> None:
         if not self._flash_datasets_registry:
@@ -272,6 +290,21 @@ class TaskV2(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Che
             state = self._inputs_state.predict_input_state
         return state.input_transform if state else state
 
+    def _wrap_predict_step(self, predict_step: Callable) -> Callable:
+        @functools.wraps(predict_step)
+        def wrapped_func(*args: Any, **kwargs: Any) -> Optional[Any]:
+            predictions = predict_step(*args, **kwargs)
+            if self.output_transform:
+                predictions = self.output_transform(predictions)
+            if self.output:
+                predictions = [self.output(sample) for sample in predictions]
+
+            if isinstance(predictions, torch.Tensor) and isinstance(predictions[0], torch.Tensor):
+                return torch.stack(predictions)
+            return predictions
+
+        return wrapped_func
+
     @predict_context
     def predict(
         self,
@@ -296,25 +329,14 @@ class TaskV2(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Che
         assert running_stage in (RunningStage.PREDICTING, RunningStage.SERVING)
 
         transform = self._resolve_transform(input_transform_stage)
-        dataset_cls: BaseDataset = self._flash_datasets_registry.get(input)
+        self.output = self._output_registry.get(output)() if isinstance(output, str) else output
+        dataset_cls: BaseDataset = self.data_pipeline._flash_datasets_registry.get(input)
         dataset = dataset_cls.from_data(x, running_stage=running_stage, transform=transform)
-        breakpoint()
-
         x = dataset.dataloader_collate_fn([x for x in dataset])
         x = self.transfer_batch_to_device(x, self.device, 0)
         x = dataset.on_after_batch_transfer_fn(x)
         x = x[0] if isinstance(x, list) else x
-        predictions = self.predict_step(x, 0)  # batch_idx is always 0 when running with `model.predict`
-        breakpoint()
-        return predictions
-
-    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        if isinstance(batch, tuple):
-            batch = batch[0]
-        elif isinstance(batch, list):
-            # Todo: Understand why stack is needed
-            batch = torch.stack(batch)
-        return super().predict_step(batch, batch_idx, dataloader_idx)
+        return self.predict_step(x, 0)
 
     def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         # This may be an issue since here we create the same problems with pickle as in

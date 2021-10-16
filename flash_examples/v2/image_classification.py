@@ -34,11 +34,7 @@ trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Predict what's on a few images! ants or bees?
 predictions = model.predict(
-    [
-        "data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg",
-        "data/hymenoptera_data/val/bees/590318879_68cf112861.jpg",
-        "data/hymenoptera_data/val/ants/540543309_ddbb193ee5.jpg",
-    ]
+    ["data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg"], input="folders", output="labels"
 )
 print(predictions)
 

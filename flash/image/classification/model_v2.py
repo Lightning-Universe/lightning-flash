@@ -20,7 +20,7 @@ from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
 from torchmetrics import Metric
 
-from flash.core.classification_v2 import ClassificationAdapterTask, LabelsOutput
+from flash.core.classification_v2 import CLASSIFICATION_OUTPUT_REGISTRY, ClassificationAdapterTask, LabelsOutput
 from flash.core.data_v2.io.output import Output
 from flash.core.registry import FlashRegistry
 from flash.image.classification.adapters import TRAINING_STRATEGIES
@@ -74,6 +74,7 @@ class ImageClassifier(ClassificationAdapterTask):
         training_strategy_kwargs: Additional kwargs for setting the training strategy
     """
 
+    _output_registry = CLASSIFICATION_OUTPUT_REGISTRY
     backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES
     training_strategies: FlashRegistry = TRAINING_STRATEGIES
     _datamodule_cls = ImageClassificationDataModule
