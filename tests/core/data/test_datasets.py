@@ -26,7 +26,7 @@ def test_flash_dataset():
     with pytest.raises(MisconfigurationException, match="You should provide a running_stage"):
         _ = TestDataset.from_data(None)
 
-    dataset = TestDataset.from_data(None, running_stage=RunningStage.TRAINING)
+    dataset = TestDataset.from_train_data(None)
     assert isinstance(dataset, TestDataset)
     assert dataset.data is None
 
@@ -45,7 +45,7 @@ def test_flash_dataset():
 
     class TestDataset(FlashDataset):
         def __init__(self, running_stage: RunningStage, shift=0):
-            super().__init__(running_stage)
+            super().__init__(running_stage=running_stage)
             self.shift = shift
 
         def load_data(self, data, data2):
@@ -85,7 +85,7 @@ def test_flash_dataset():
 
     class TestDataset(FlashIterableDataset):
         def __init__(self, running_stage: RunningStage, shift=0):
-            super().__init__(running_stage)
+            super().__init__(running_stage=running_stage)
             self.shift = shift
 
         def load_data(self, data, data2):

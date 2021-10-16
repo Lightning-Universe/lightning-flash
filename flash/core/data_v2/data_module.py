@@ -317,7 +317,7 @@ class DataModule(DataModule):
         flash_dataset_cls,
         *load_data_args,
         running_stage: RunningStage,
-        transform: Optional[InputTransform],
+        transform: Optional[INPUT_TRANSFORM_TYPE],
         **kwargs,
     ) -> Optional[BaseDataset]:
         if load_data_args[0] is not None:
@@ -337,7 +337,14 @@ class DataModule(DataModule):
             )
 
     @classmethod
-    def register_flash_dataset(cls, enum: Union[LightningEnum, str], flash_dataset_cls: Type[BaseDataset]) -> None:
+    def register_flash_dataset(
+        cls,
+        enum: Union[LightningEnum, str],
+        flash_dataset_cls: Type[BaseDataset],
+        input_transforms_registry: Optional[FlashRegistry] = None,
+    ) -> None:
         if cls.flash_datasets_registry is None:
             raise MisconfigurationException("The class attribute `flash_datasets_registry` should be set. ")
+        if input_transforms_registry:
+            flash_dataset_cls.input_transforms_registry = input_transforms_registry
         cls.flash_datasets_registry(fn=flash_dataset_cls, name=enum)

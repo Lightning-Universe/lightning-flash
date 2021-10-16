@@ -60,13 +60,12 @@ class DataPipeline:
         data_pipeline_state._initialized = False
         if self._inputs_state:
             self._inputs_state.attach_data_pipeline_state(data_pipeline_state)
-        data_pipeline_state._initialized = True  # TODO: Not sure we need this
-        breakpoint()
+        if self._output_transform:
+            self._output_transform.attach_data_pipeline_state(data_pipeline_state)
+        if self._output:
+            self._output.attach_data_pipeline_state(data_pipeline_state)
+        data_pipeline_state._initialized = True
         return data_pipeline_state
-
-    @property
-    def example_input(self) -> str:
-        return self._flash_dataset.example_input
 
     @staticmethod
     def _is_overriden(method_name: str, process_obj, super_obj: Any, prefix: Optional[str] = None) -> bool:

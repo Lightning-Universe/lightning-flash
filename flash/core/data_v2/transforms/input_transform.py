@@ -152,7 +152,6 @@ class InputTransform(Properties):
             collate_fn = collate_fn.collate_fn
         else:
             collate_fn = current_transform
-            # return collate_fn.collate_fn(samples)
 
         parameters = inspect.signature(collate_fn).parameters
         if len(parameters) > 1 and DefaultDataKeys.METADATA in parameters:
@@ -274,7 +273,7 @@ class InputTransform(Properties):
             transforms: Optional[Dict[str, Callable]] = resolved_function(
                 **{k: v for k, v in self._transform_kwargs.items() if k in params}
             )
-            if transforms != self._identity:
+            if placement not in transforms_out and transforms != self._identity:
                 transforms_out[placement] = transforms
         return transforms_out
 

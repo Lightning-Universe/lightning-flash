@@ -21,6 +21,7 @@ from torch.utils.data import DataLoader, Sampler
 import flash
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.model import DatasetProcessor, ModuleWrapperBase, Task
+from flash.core.model_v2 import TaskV2
 
 
 class Adapter(DatasetProcessor, ModuleWrapperBase, nn.Module):
@@ -65,6 +66,144 @@ def identity_collate_fn(x):
 
 
 class AdapterTask(Task):
+    """The ``AdapterTask`` is a :class:`~flash.core.model.Task` which wraps an :class:`~flash.core.adapter.Adapter`
+    and forwards all of the hooks.
+
+    Args:
+        adapter: The :class:`~flash.core.adapter.Adapter` to wrap.
+        kwargs: Keyword arguments to be passed to the base :class:`~flash.core.model.Task`.
+    """
+
+    def __init__(self, adapter: Adapter, **kwargs):
+        super().__init__(**kwargs)
+
+        self.adapter = adapter
+
+    @torch.jit.unused
+    @property
+    def backbone(self) -> nn.Module:
+        return self.adapter.backbone
+
+    def forward(self, x: torch.Tensor) -> Any:
+        return self.adapter.forward(x)
+
+    def training_step(self, batch: Any, batch_idx: int) -> Any:
+        return self.adapter.training_step(batch, batch_idx)
+
+    def validation_step(self, batch: Any, batch_idx: int) -> None:
+        return self.adapter.validation_step(batch, batch_idx)
+
+    def test_step(self, batch: Any, batch_idx: int) -> None:
+        return self.adapter.test_step(batch, batch_idx)
+
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        return self.adapter.predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
+
+    def training_epoch_end(self, outputs) -> None:
+        return self.adapter.training_epoch_end(outputs)
+
+    def validation_epoch_end(self, outputs) -> None:
+        return self.adapter.validation_epoch_end(outputs)
+
+    def test_epoch_end(self, outputs) -> None:
+        return self.adapter.test_epoch_end(outputs)
+
+    def process_train_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        trainer: "flash.Trainer",
+        batch_size: int,
+        num_workers: int,
+        pin_memory: bool,
+        collate_fn: Callable,
+        shuffle: bool = False,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None,
+    ) -> DataLoader:
+        return self.adapter.process_train_dataset(
+            dataset,
+            trainer,
+            batch_size,
+            num_workers,
+            pin_memory,
+            collate_fn,
+            shuffle,
+            drop_last,
+            sampler,
+        )
+
+    def process_val_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        trainer: "flash.Trainer",
+        batch_size: int,
+        num_workers: int,
+        pin_memory: bool,
+        collate_fn: Callable,
+        shuffle: bool = False,
+        drop_last: bool = False,
+        sampler: Optional[Sampler] = None,
+    ) -> DataLoader:
+        return self.adapter.process_val_dataset(
+            dataset,
+            trainer,
+            batch_size,
+            num_workers,
+            pin_memory,
+            collate_fn,
+            shuffle,
+            drop_last,
+            sampler,
+        )
+
+    def process_test_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        trainer: "flash.Trainer",
+        batch_size: int,
+        num_workers: int,
+        pin_memory: bool,
+        collate_fn: Callable,
+        shuffle: bool = False,
+        drop_last: bool = False,
+        sampler: Optional[Sampler] = None,
+    ) -> DataLoader:
+        return self.adapter.process_test_dataset(
+            dataset,
+            trainer,
+            batch_size,
+            num_workers,
+            pin_memory,
+            collate_fn,
+            shuffle,
+            drop_last,
+            sampler,
+        )
+
+    def process_predict_dataset(
+        self,
+        dataset: BaseAutoDataset,
+        batch_size: int = 1,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        collate_fn: Callable = identity_collate_fn,
+        shuffle: bool = False,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None,
+    ) -> DataLoader:
+        return self.adapter.process_predict_dataset(
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
+        )
+
+
+class AdapterTaskV2(TaskV2):
     """The ``AdapterTask`` is a :class:`~flash.core.model.Task` which wraps an :class:`~flash.core.adapter.Adapter`
     and forwards all of the hooks.
 

@@ -150,6 +150,7 @@ class InputFormat(LightningEnum):
     """The ``InputFormat`` enum contains the data source names used by all of the default ``from_*`` methods in
     :class:`~flash.core.data.data_module.DataModule`."""
 
+    DEFAULT = "default"
     FOLDERS = "folders"
     FILES = "files"
     NUMPY = "numpy"
@@ -231,14 +232,27 @@ class InputsStateContainer:
         for state in self._state.values():
             data_pipeline_state.set_state(state)
 
+        self._set_data_pipeline_state(self.train_input_state, data_pipeline_state)
+        self._set_data_pipeline_state(self.val_input_state, data_pipeline_state)
+        self._set_data_pipeline_state(self.test_input_state, data_pipeline_state)
+        self._set_data_pipeline_state(self.predict_input_state, data_pipeline_state)
+
     @property
     def _state(self) -> Dict:
         return {
             **self.train_input_state.state,
+            **(self.train_input_state.input_transform._state if self.train_input_state.input_transform else {}),
             **self.val_input_state.state,
+            **(self.val_input_state.input_transform._state if self.val_input_state.input_transform else {}),
             **self.test_input_state.state,
+            **(self.test_input_state.input_transform._state if self.test_input_state.input_transform else {}),
             **self.predict_input_state.state,
+            **(self.predict_input_state.input_transform._state if self.predict_input_state.input_transform else {}),
         }
+
+    def _set_data_pipeline_state(self, state: InputStateContainer, data_pipeline_state: DataPipelineState) -> None:
+        if state and state.input_transform:
+            state.input_transform._data_pipeline_state = data_pipeline_state
 
 
 class BaseDataFormat(LightningEnum):

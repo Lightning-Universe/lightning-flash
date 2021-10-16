@@ -14,9 +14,9 @@
 from typing import Any, Optional
 
 from flash.core.data.callback import BaseDataFetcher
-from flash.core.data.data_source import DefaultDataSources
 from flash.core.data_v2.data_module import DataModule
-from flash.core.data_v2.transforms.input_transform import InputTransform
+from flash.core.data_v2.io.input import InputFormat
+from flash.core.data_v2.transforms.input_transform import INPUT_TRANSFORM_TYPE
 from flash.image.classification.data import MatplotlibVisualization
 from flash.image.classification.transforms import IMAGE_CLASSIFICATION_INPUT_TRANSFORMS_REGISTRY
 from flash.image.io import ImagePathsInput
@@ -32,15 +32,15 @@ class ImageClassificationDataModule(DataModule):
         val_folder: Optional[str] = None,
         test_folder: Optional[str] = None,
         predict_folder: Optional[str] = None,
-        train_transform: Optional[InputTransform] = "default",
-        val_transform: Optional[InputTransform] = "default",
-        test_transform: Optional[InputTransform] = "default",
-        predict_transform: Optional[InputTransform] = "default",
+        train_transform: Optional[INPUT_TRANSFORM_TYPE] = InputFormat.DEFAULT,
+        val_transform: Optional[INPUT_TRANSFORM_TYPE] = InputFormat.DEFAULT,
+        test_transform: Optional[INPUT_TRANSFORM_TYPE] = InputFormat.DEFAULT,
+        predict_transform: Optional[INPUT_TRANSFORM_TYPE] = InputFormat.DEFAULT,
         **data_module_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given folders using the
         :class:`~flash.core.data.data_source.DataSource` of name
-        :attr:`~flash.core.data.data_source.DefaultDataSources.FOLDERS`
+        :attr:`~flash.core.data_v2.io.input.InputFormat.FOLDERS`
         from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
 
         Args:
@@ -73,7 +73,7 @@ class ImageClassificationDataModule(DataModule):
         """
         return cls(
             *cls.create_flash_datasets(
-                DefaultDataSources.FOLDERS,
+                InputFormat.FOLDERS,
                 train_folder,
                 val_folder,
                 test_folder,
@@ -95,5 +95,6 @@ class ImageClassificationDataModule(DataModule):
         return MatplotlibVisualization(*args, **kwargs)
 
 
-ImagePathsInput.input_transforms_registry = IMAGE_CLASSIFICATION_INPUT_TRANSFORMS_REGISTRY
-ImageClassificationDataModule.register_flash_dataset(DefaultDataSources.FOLDERS, ImagePathsInput)
+input_transforms_registry = IMAGE_CLASSIFICATION_INPUT_TRANSFORMS_REGISTRY
+ImageClassificationDataModule.register_flash_dataset(InputFormat.DEFAULT, ImagePathsInput, input_transforms_registry)
+ImageClassificationDataModule.register_flash_dataset(InputFormat.FOLDERS, ImagePathsInput, input_transforms_registry)
