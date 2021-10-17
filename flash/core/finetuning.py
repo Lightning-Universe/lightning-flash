@@ -17,15 +17,14 @@ from pytorch_lightning.callbacks import BaseFinetuning
 from torch.nn import Module, ModuleDict
 from torch.optim import Optimizer
 
-from flash.core.model import Task
-
-
 # Handle None case and just take one module using a single hook.
-class FlashBaseFinetuning(BaseFinetuning):
-    """FlashBaseFinetuning can be used to create a custom Flash Finetuning Callback.
 
-    Override :meth:`.finetune_function` to put your unfreeze logic.
-    """
+# Take a function that return the backbone(s).
+# Use it again and again.
+
+
+class FlashBaseFinetuning(BaseFinetuning):
+    """FlashBaseFinetuning can be used to create a custom Flash Finetuning Callback."""
 
     def __init__(
         self,
@@ -45,12 +44,12 @@ class FlashBaseFinetuning(BaseFinetuning):
         """
         super().__init__()
 
-        self.strategy = strategy_key
-        self.strategy_metadata = strategy_metadata
+        self.strategy: str = strategy_key
+        self.strategy_metadata: Optional[Union[int, Tuple[int, int]]] = strategy_metadata
 
-        self.attr_names = FlashBaseFinetuning.get_module_names(modules=modules)
+        self.attr_names: List[str] = FlashBaseFinetuning.get_module_names(modules=modules)
 
-        self.train_bn = train_bn
+        self.train_bn: bool = train_bn
 
     @staticmethod
     def get_module_names(modules: Union[Module, Iterable[Union[Module, Iterable]]]) -> List[str]:
@@ -64,6 +63,9 @@ class FlashBaseFinetuning(BaseFinetuning):
         Returns:
             List of module names.
         """
+        if modules is None:
+            return []
+
         _module_names: List[str] = []
         _modules: Iterable[Module] = []
         if isinstance(modules, ModuleDict):
@@ -81,7 +83,7 @@ class FlashBaseFinetuning(BaseFinetuning):
 
     @staticmethod
     def _get_modules_from_attr_names(
-        pl_module: Task,
+        pl_module: Union[Module, Iterable[Union[Module, Iterable]]],
         attr_names: List[str],
     ) -> List[Union[Module, Iterable[Union[Module, Iterable]]]]:
 
@@ -93,17 +95,19 @@ class FlashBaseFinetuning(BaseFinetuning):
             modules.append(_sub_module)
         return modules
 
-    def _freeze_using_attr_names(self, pl_module: Task, train_bn: bool = True) -> None:
+    def _freeze_using_attr_names(
+        self, pl_module: Union[Module, Iterable[Union[Module, Iterable]]], train_bn: bool = True
+    ) -> None:
         modules = FlashBaseFinetuning._get_modules_from_attr_names(pl_module=pl_module)
         self.freeze(modules=modules, train_bn=train_bn)
 
-    def freeze_before_training(self, pl_module: Task) -> None:
+    def freeze_before_training(self, pl_module: Union[Module, Iterable[Union[Module, Iterable]]]) -> None:
         if self.strategy != "no_freeze":
             self._freeze_using_attr_names(pl_module, train_bn=self.train_bn)
 
     def _freeze_unfreeze_function(
         self,
-        pl_module: Task,
+        pl_module: Union[Module, Iterable[Union[Module, Iterable]]],
         epoch: int,
         optimizer: Optimizer,
         opt_idx: int,
@@ -122,7 +126,7 @@ class FlashBaseFinetuning(BaseFinetuning):
 
     def _unfreeze_milestones_function(
         self,
-        pl_module: Task,
+        pl_module: Union[Module, Iterable[Union[Module, Iterable]]],
         epoch: int,
         optimizer: Optimizer,
         opt_idx: int,
@@ -156,7 +160,13 @@ class FlashBaseFinetuning(BaseFinetuning):
                 train_bn=self.train_bn,
             )
 
-    def finetune_function(self, pl_module: Task, epoch: int, optimizer: Optimizer, opt_idx: int):
+    def finetune_function(
+        self,
+        pl_module: Union[Module, Iterable[Union[Module, Iterable]]],
+        epoch: int,
+        optimizer: Optimizer,
+        opt_idx: int,
+    ):
         if self.strategy in "freeze_unfreeze":
             self._freeze_unfreeze_function(pl_module, epoch, optimizer, opt_idx, self.strategy_metadata)
         elif self.strategy == "unfreeze_milestones":
