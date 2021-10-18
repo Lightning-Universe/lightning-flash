@@ -26,9 +26,8 @@ from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources, LabelsState
 from flash.core.data.process import Deserializer, Postprocess, Preprocess
-from flash.core.integrations.labelstudio.data_source import LabelStudioTextClassificationDataSource
+from flash.core.integrations.labelstudio.data_source import LabelStudioDataSource
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
-from flash.text.classification import tokenizers
 from flash.text.classification.tokenizers.base import BaseTokenizer
 
 if _TEXT_AVAILABLE:
@@ -65,10 +64,9 @@ class TextDeserializer(Deserializer):
 
 class TextDataSource(DataSource):
     @requires("text")
-    def __init__(self, tokenizer: BaseTokenizer, vocab_size: Optional[int] = None):
+    def __init__(self, tokenizer: BaseTokenizer):
         super().__init__()
         self.tokenizer = tokenizer
-        self.vocab_size = vocab_size
 
     def _tokenize_fn(
         self,
@@ -248,6 +246,30 @@ class TextListDataSource(TextDataSource):
         return hf_dataset
 
 
+class LabelStudioTextClassificationDataSource(LabelStudioDataSource):
+    """The ``LabelStudioTextDataSource`` expects the input to
+    :meth:`~flash.core.data.data_source.DataSource.load_data` to be a json export from label studio.
+    Export data should point to text data
+    """
+
+    def __init__(self, tokenizer: BaseTokenizer):
+        super().__init__()
+        self.tokenizer = tokenizer
+
+    def load_sample(self, sample: Mapping[str, Any] = None, dataset: Optional[Any] = None) -> Any:
+        """Load 1 sample from dataset."""
+        data = ""
+        for key in sample.get("data"):
+            data += sample.get("data").get(key)
+        tokenized_data = self.tokenizer(data, max_length=self.max_length, truncation=True, padding="max_length")
+        for key in tokenized_data:
+            tokenized_data[key] = torch.tensor(tokenized_data[key])
+        tokenized_data["labels"] = self._get_labels_from_sample(sample["label"])
+        # separate text data type block
+        result = tokenized_data
+        return result
+
+
 class TextClassificationPreprocess(Preprocess):
     @requires("text")
     def __init__(
@@ -278,17 +300,13 @@ class TextClassificationPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.CSV: TextCSVDataSource(self.tokenizer, self.vocab_size),
-                DefaultDataSources.JSON: TextJSONDataSource(self.tokenizer, self.vocab_size),
-                DefaultDataSources.PARQUET: TextParquetDataSource(self.tokenizer, self.vocab_size),
-                DefaultDataSources.HUGGINGFACE_DATASET: TextHuggingFaceDatasetDataSource(
-                    self.tokenizer, self.vocab_size
-                ),
-                DefaultDataSources.DATAFRAME: TextDataFrameDataSource(self.tokenizer, self.vocab_size),
-                DefaultDataSources.LISTS: TextListDataSource(self.tokenizer, self.vocab_size),
-                # DefaultDataSources.LABELSTUDIO: LabelStudioTextClassificationDataSource(
-                #     self.tokenizer, self.vocab_size
-                # ),
+                DefaultDataSources.CSV: TextCSVDataSource(self.tokenizer),
+                DefaultDataSources.JSON: TextJSONDataSource(self.tokenizer),
+                DefaultDataSources.PARQUET: TextParquetDataSource(self.tokenizer),
+                DefaultDataSources.HUGGINGFACE_DATASET: TextHuggingFaceDatasetDataSource(self.tokenizer),
+                DefaultDataSources.DATAFRAME: TextDataFrameDataSource(self.tokenizer),
+                DefaultDataSources.LISTS: TextListDataSource(self.tokenizer),
+                DefaultDataSources.LABELSTUDIO: LabelStudioTextClassificationDataSource(self.tokenizer),
             },
             default_data_source=DefaultDataSources.LISTS,
             deserializer=TextDeserializer(self.tokenizer),
