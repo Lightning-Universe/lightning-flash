@@ -11,12 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Generator, List
-
-from flash.core.utilities.imports import _TEXT_AVAILABLE
-
-if _TEXT_AVAILABLE:
-    import datasets
+from typing import Any, Generator, List, Mapping, Sequence
 
 
 class BaseTokenizer:
@@ -28,6 +23,6 @@ class BaseTokenizer:
     def fit(self):
         pass
 
-    def _batch_iterator(self, dataset: datasets.Dataset, input: str) -> Generator[List[str], None, None]:
+    def _batch_iterator(self, dataset: Sequence[Mapping[str, Any]], input: str) -> Generator[List[str], None, None]:
         for i in range(0, len(dataset), self.batch_size):
             yield dataset[i : i + self.batch_size][input]

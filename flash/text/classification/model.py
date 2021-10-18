@@ -69,12 +69,6 @@ class TextClassifier(ClassificationTask):
     ):
         self.save_hyperparameters()
 
-        os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
-        # disable HF thousand warnings
-        warnings.simplefilter("ignore")
-        # set os environ variable for multiprocesses
-        os.environ["PYTHONWARNINGS"] = "ignore"
-
         super().__init__(
             num_classes=num_classes,
             model=None,
