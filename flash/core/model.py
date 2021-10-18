@@ -914,7 +914,6 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         return deepcopy(lr_scheduler_fn)
 
     def _instantiate_lr_scheduler(self, optimizer: Optimizer) -> Dict[str, Any]:
-        print(type(self.lr_scheduler))
         if isinstance(self.lr_scheduler, str):
             lr_scheduler_data: Dict[str, Any] = self._get_lr_scheduler_class_from_registry(self.lr_scheduler)
             lr_scheduler_fn = lr_scheduler_data.pop("fn")
