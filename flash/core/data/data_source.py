@@ -158,11 +158,12 @@ class DefaultDataSources(LightningEnum):
     TENSORS = "tensors"
     CSV = "csv"
     JSON = "json"
+    PARQUET = "parquet"
     DATASETS = "datasets"
+    HUGGINGFACE_DATASET = "hf_dataset"
     FIFTYONE = "fiftyone"
     DATAFRAME = "data_frame"
     LISTS = "lists"
-    SENTENCES = "sentences"
     LABELSTUDIO = "labelstudio"
 
     # TODO: Create a FlashEnum class???

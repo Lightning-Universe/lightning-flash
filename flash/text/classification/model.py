@@ -21,6 +21,7 @@ from torch.optim.lr_scheduler import _LRScheduler
 from torchmetrics import Metric
 
 from flash.core.classification import ClassificationTask, Labels
+from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Serializer
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
@@ -115,7 +116,7 @@ class TextClassifier(ClassificationTask):
         return super().to_metrics_format(x)
 
     def step(self, batch, batch_idx, metrics) -> dict:
-        target = batch.pop("labels")
+        target = batch.pop(DefaultDataKeys.TARGET)
         batch = (batch, target)
         return super().step(batch, batch_idx, metrics)
 
