@@ -34,6 +34,7 @@ from tests.helpers.utils import _TEXT_TESTING
 if _TEXT_AVAILABLE:
     from datasets import Dataset
     from transformers.tokenization_utils_base import PreTrainedTokenizerBase
+    from flash.text.classification.tokenizers import TEXT_CLASSIFIER_TOKENIZERS
 
 TEST_BACKBONE = "prajjwal1/bert-tiny"  # super small model for testing
 
@@ -121,12 +122,14 @@ def parquet_data(tmpdir):
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_from_csv(tmpdir):
+@pytest.mark.parametrize("pretrained", [True, False])
+def test_from_csv(tmpdir, pretrained):
     csv_path = csv_data(tmpdir, multilabel=False)
     dm = TextClassificationData.from_csv(
         "sentence",
         "label",
         backbone=TEST_BACKBONE,
+        pretrained=pretrained,
         train_file=csv_path,
         val_file=csv_path,
         test_file=csv_path,
@@ -152,11 +155,13 @@ def test_from_csv(tmpdir):
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_from_csv_multilabel(tmpdir):
+@pytest.mark.parametrize("pretrained", [True, False])
+def test_from_csv_multilabel(tmpdir, pretrained):
     csv_path = csv_data(tmpdir, multilabel=True)
     dm = TextClassificationData.from_csv(
         "sentence",
         ["lab1", "lab2"],
+        pretrained=pretrained,
         backbone=TEST_BACKBONE,
         train_file=csv_path,
         val_file=csv_path,
@@ -183,11 +188,13 @@ def test_from_csv_multilabel(tmpdir):
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_from_json(tmpdir):
+@pytest.mark.parametrize("pretrained", [True, False])
+def test_from_json(tmpdir, pretrained):
     json_path = json_data(tmpdir, multilabel=False)
     dm = TextClassificationData.from_json(
         "sentence",
         "lab",
+        pretrained=pretrained,
         backbone=TEST_BACKBONE,
         train_file=json_path,
         val_file=json_path,
@@ -214,11 +221,13 @@ def test_from_json(tmpdir):
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_from_json_multilabel(tmpdir):
+@pytest.mark.parametrize("pretrained", [True, False])
+def test_from_json_multilabel(tmpdir, pretrained):
     json_path = json_data(tmpdir, multilabel=True)
     dm = TextClassificationData.from_json(
         "sentence",
         ["lab1", "lab2"],
+        pretrained=pretrained,
         backbone=TEST_BACKBONE,
         train_file=json_path,
         val_file=json_path,
@@ -245,11 +254,13 @@ def test_from_json_multilabel(tmpdir):
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_from_json_with_field(tmpdir):
+@pytest.mark.parametrize("pretrained", [True, False])
+def test_from_json_with_field(tmpdir, pretrained):
     json_path = json_data_with_field(tmpdir, multilabel=False)
     dm = TextClassificationData.from_json(
         "sentence",
         "lab",
+        pretrained=pretrained,
         backbone=TEST_BACKBONE,
         train_file=json_path,
         val_file=json_path,
@@ -277,11 +288,13 @@ def test_from_json_with_field(tmpdir):
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_from_json_with_field_multilabel(tmpdir):
+@pytest.mark.parametrize("pretrained", [True, False])
+def test_from_json_with_field_multilabel(tmpdir, pretrained):
     json_path = json_data_with_field(tmpdir, multilabel=True)
     dm = TextClassificationData.from_json(
         "sentence",
         ["lab1", "lab2"],
+        pretrained=pretrained,
         backbone=TEST_BACKBONE,
         train_file=json_path,
         val_file=json_path,
@@ -309,11 +322,13 @@ def test_from_json_with_field_multilabel(tmpdir):
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_from_parquet(tmpdir):
+@pytest.mark.parametrize("pretrained", [True, False])
+def test_from_parquet(tmpdir, pretrained):
     parquet_path = parquet_data(tmpdir)
     dm = TextClassificationData.from_parquet(
         "sentence",
         "lab1",
+        pretrained=pretrained,
         backbone=TEST_BACKBONE,
         train_file=parquet_path,
         val_file=parquet_path,
@@ -340,11 +355,13 @@ def test_from_parquet(tmpdir):
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_from_parquet_multilabel(tmpdir):
+@pytest.mark.parametrize("pretrained", [True, False])
+def test_from_parquet_multilabel(tmpdir, pretrained):
     parquet_path = parquet_data(tmpdir)
     dm = TextClassificationData.from_parquet(
         "sentence",
         ["lab1", "lab2"],
+        pretrained=pretrained,
         backbone=TEST_BACKBONE,
         train_file=parquet_path,
         val_file=parquet_path,
@@ -371,10 +388,12 @@ def test_from_parquet_multilabel(tmpdir):
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_from_data_frame():
+@pytest.mark.parametrize("pretrained", [True, False])
+def test_from_data_frame(pretrained):
     dm = TextClassificationData.from_data_frame(
         "sentence",
         "lab1",
+        pretrained=pretrained,
         backbone=TEST_BACKBONE,
         train_data_frame=TEST_DATA_FRAME_DATA,
         val_data_frame=TEST_DATA_FRAME_DATA,
@@ -401,10 +420,12 @@ def test_from_data_frame():
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_from_data_frame_multilabel():
+@pytest.mark.parametrize("pretrained", [True, False])
+def test_from_data_frame_multilabel(pretrained):
     dm = TextClassificationData.from_data_frame(
         "sentence",
         ["lab1", "lab2"],
+        pretrained=pretrained,
         backbone=TEST_BACKBONE,
         train_data_frame=TEST_DATA_FRAME_DATA,
         val_data_frame=TEST_DATA_FRAME_DATA,
@@ -431,11 +452,13 @@ def test_from_data_frame_multilabel():
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_from_hf_datasets():
+@pytest.mark.parametrize("pretrained", [True, False])
+def test_from_hf_datasets(pretrained):
     TEST_HF_DATASET_DATA = Dataset.from_pandas(TEST_DATA_FRAME_DATA)
     dm = TextClassificationData.from_hf_datasets(
         "sentence",
         "lab1",
+        pretrained=pretrained,
         backbone=TEST_BACKBONE,
         train_hf_dataset=TEST_HF_DATASET_DATA,
         val_hf_dataset=TEST_HF_DATASET_DATA,
@@ -462,11 +485,13 @@ def test_from_hf_datasets():
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_from_hf_datasets_multilabel():
+@pytest.mark.parametrize("pretrained", [True, False])
+def test_from_hf_datasets_multilabel(pretrained):
     TEST_HF_DATASET_DATA = Dataset.from_pandas(TEST_DATA_FRAME_DATA)
     dm = TextClassificationData.from_hf_datasets(
         "sentence",
         ["lab1", "lab2"],
+        pretrained=pretrained,
         backbone=TEST_BACKBONE,
         train_hf_dataset=TEST_HF_DATASET_DATA,
         val_hf_dataset=TEST_HF_DATASET_DATA,
@@ -493,8 +518,10 @@ def test_from_hf_datasets_multilabel():
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_from_lists():
+@pytest.mark.parametrize("pretrained", [True, False])
+def test_from_lists(pretrained):
     dm = TextClassificationData.from_lists(
+        pretrained=pretrained,
         backbone=TEST_BACKBONE,
         train_data=TEST_LIST_DATA,
         train_targets=TEST_LIST_TARGETS,
@@ -524,8 +551,10 @@ def test_from_lists():
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_from_lists_multilabel():
+@pytest.mark.parametrize("pretrained", [True, False])
+def test_from_lists_multilabel(pretrained):
     dm = TextClassificationData.from_lists(
+        pretrained=pretrained,
         backbone=TEST_BACKBONE,
         train_data=TEST_LIST_DATA,
         train_targets=TEST_LIST_TARGETS_MULTILABEL,
@@ -559,30 +588,41 @@ def test_text_module_not_found_error():
         TextClassificationData.from_json("sentence", "lab", backbone=TEST_BACKBONE, train_file="", batch_size=1)
 
 
-@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-@pytest.mark.parametrize(
-    "cls, kwargs",
-    [
-        (TextDataSource, {}),
-        (TextCSVDataSource, {}),
-        (TextJSONDataSource, {}),
-        (TextDataFrameDataSource, {}),
-        (TextParquetDataSource, {}),
-        (TextHuggingFaceDatasetDataSource, {}),
-        (TextListDataSource, {}),
-    ],
-)
-def test_tokenizer_state(cls, kwargs):
-    """Tests that the tokenizer is not in __getstate__"""
-    instance = cls(backbone=TEST_BACKBONE, **kwargs)
-    state = instance.__getstate__()
-    tokenizers = []
-    for name, attribute in instance.__dict__.items():
-        if isinstance(attribute, PreTrainedTokenizerBase):
-            assert name not in state
-            setattr(instance, name, None)
-            tokenizers.append(name)
-    instance.__setstate__(state)
-    for name in tokenizers:
-        assert getattr(instance, name, None) is not None
+# @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
+# @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+# @pytest.mark.parametrize(
+#     "cls, kwargs",
+#     [
+#         (TextDataSource, {}),
+#         (TextCSVDataSource, {}),
+#         (TextJSONDataSource, {}),
+#         (TextDataFrameDataSource, {}),
+#         (TextParquetDataSource, {}),
+#         (TextHuggingFaceDatasetDataSource, {}),
+#         (TextListDataSource, {}),
+#     ],
+# )
+# def test_tokenizer_state(cls, kwargs):
+#     """Tests that the tokenizer is not in __getstate__"""
+#     tok, _ = TEXT_CLASSIFIER_TOKENIZERS.get(TEST_BACKBONE)(pretrained=True)
+#     instance = cls(tokenizer=tok, **kwargs)
+#     state = instance.__getstate__()
+#     tokenizers = []
+#     for name, attribute in instance.__dict__.items():
+#         if isinstance(attribute, PreTrainedTokenizerBase):
+#             assert name not in state
+#             setattr(instance, name, None)
+#             tokenizers.append(name)
+#     instance.__setstate__(state)
+#     for name in tokenizers:
+#         assert getattr(instance, name, None) is not None
+
+
+def test_tokenizer_training():
+    tok1, vocab_size1 = TEXT_CLASSIFIER_TOKENIZERS.get(TEST_BACKBONE)(pretrained=True)
+    tok2, vocab_size2 = TEXT_CLASSIFIER_TOKENIZERS.get(TEST_BACKBONE)(pretrained=False, vocab_size=10)
+    assert tok1.vocab_size != tok2.vocab_size
+    assert tok2.vocab_size == 10
+    assert tok1.vocab_size == vocab_size1
+    assert tok2.vocab_size == vocab_size2
+
