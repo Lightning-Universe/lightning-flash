@@ -20,6 +20,7 @@ from torch import Tensor
 from torch.utils.data.sampler import Sampler
 
 import flash
+import os
 from flash.core.data.auto_dataset import AutoDataset
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
@@ -27,46 +28,46 @@ from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultData
 from flash.core.data.process import Deserializer, Postprocess, Preprocess
 from flash.core.integrations.labelstudio.data_source import LabelStudioTextClassificationDataSource
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
+from flash.text.classification import tokenizers
+from flash.text.classification.tokenizers.base import BaseTokenizer
 
 if _TEXT_AVAILABLE:
     from datasets import Dataset, load_dataset
-    from transformers import AutoTokenizer, default_data_collator
+    from flash.text.classification.tokenizers import TEXT_CLASSIFIER_TOKENIZERS
+    from transformers import default_data_collator
     from transformers.modeling_outputs import SequenceClassifierOutput
 
 
 class TextDeserializer(Deserializer):
     @requires("text")
-    def __init__(self, backbone: str, max_length: int, use_fast: bool = True, **kwargs):
+    def __init__(self, tokenizer: BaseTokenizer):
         super().__init__()
-        self.backbone = backbone
-        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=use_fast, **kwargs)
-        self.max_length = max_length
-
+        
+        self.tokenizer = tokenizer
+        
     def deserialize(self, text: str) -> Tensor:
-        return self.tokenizer(text, max_length=self.max_length, truncation=True, padding="max_length")
+        return self.tokenizer(text)
 
     @property
     def example_input(self) -> str:
         return "An example input"
 
-    def __getstate__(self):  # TODO: Find out why this is being pickled
-        state = self.__dict__.copy()
-        state.pop("tokenizer")
-        return state
+    # def __getstate__(self):  # TODO: Find out why this is being pickled
+    #     state = self.__dict__.copy()
+    #     state.pop("tokenizer")
+    #     return state
 
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+    # def __setstate__(self, state):
+    #     self.__dict__.update(state)
+    #     self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
 class TextDataSource(DataSource):
     @requires("text")
-    def __init__(self, backbone: str, max_length: int = 128):
+    def __init__(self, tokenizer: BaseTokenizer, vocab_size: Optional[int] = None):
         super().__init__()
-
-        self.backbone = backbone
-        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
-        self.max_length = max_length
+        self.tokenizer = tokenizer
+        self.vocab_size = vocab_size
 
     def _tokenize_fn(
         self,
@@ -74,7 +75,7 @@ class TextDataSource(DataSource):
         input: Optional[str] = None,
     ) -> Callable:
         """This function is used to tokenize sentences using the provided tokenizer."""
-        return self.tokenizer(ex[input], max_length=self.max_length, truncation=True, padding="max_length")
+        return self.tokenizer(ex[input])
 
     @staticmethod
     def _transform_label(label_to_class_mapping: Dict[str, int], target: str, ex: Dict[str, Union[int, str]]):
@@ -97,6 +98,42 @@ class TextDataSource(DataSource):
 
         return (hf_dataset, *other)
 
+    def _encode_target(self, hf_dataset, dataset, target) -> Sequence[Mapping[str, Any]]:
+        if isinstance(target, list):
+            # multi-target
+            dataset.multi_label = True
+            hf_dataset = hf_dataset.map(partial(self._multilabel_target, target))  # NOTE: renames target column
+            dataset.num_classes = len(target)
+            self.set_state(LabelsState(target))
+        else:
+            dataset.multi_label = False
+            if self.training:
+                labels = list(sorted(list(set(hf_dataset[target]))))
+                dataset.num_classes = len(labels)
+                self.set_state(LabelsState(labels))
+
+            labels = self.get_state(LabelsState)
+
+            # convert labels to ids (note: the target column get overwritten)
+            if labels is not None:
+                labels = labels.labels
+                label_to_class_mapping = {v: k for k, v in enumerate(labels)}
+                hf_dataset = hf_dataset.map(partial(self._transform_label, label_to_class_mapping, target))
+
+            # rename label column
+            hf_dataset = hf_dataset.rename_column(target, DefaultDataKeys.TARGET)
+
+        return hf_dataset
+
+    def _encode_input(self, hf_dataset, input) -> Sequence[Mapping[str, Any]]:
+         # tokenize
+        if not self.tokenizer._is_fit:
+            self.tokenizer.fit(hf_dataset, input=input)
+        hf_dataset = hf_dataset.map(partial(self._tokenize_fn, input=input), batched=True)
+        hf_dataset = hf_dataset.remove_columns([input])  # just leave the numerical columns
+
+        return hf_dataset
+
     def load_data(
         self,
         data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
@@ -108,35 +145,9 @@ class TextDataSource(DataSource):
 
         if not self.predicting:
             target: Union[str, List[str]] = other.pop()
-            if isinstance(target, List):
-                # multi-target
-                dataset.multi_label = True
-                hf_dataset = hf_dataset.map(partial(self._multilabel_target, target))  # NOTE: renames target column
-                dataset.num_classes = len(target)
-                self.set_state(LabelsState(target))
-            else:
-                dataset.multi_label = False
-                if self.training:
-                    labels = list(sorted(list(set(hf_dataset[target]))))
-                    dataset.num_classes = len(labels)
-                    self.set_state(LabelsState(labels))
+            hf_dataset = self._encode_target(hf_dataset, dataset, target)
 
-                labels = self.get_state(LabelsState)
-
-                # convert labels to ids (note: the target column get overwritten)
-                if labels is not None:
-                    labels = labels.labels
-                    label_to_class_mapping = {v: k for k, v in enumerate(labels)}
-                    hf_dataset = hf_dataset.map(partial(self._transform_label, label_to_class_mapping, target))
-
-                # rename label column
-                hf_dataset = hf_dataset.rename_column(target, DefaultDataKeys.TARGET)
-
-        # tokenize
-        hf_dataset = hf_dataset.map(partial(self._tokenize_fn, input=input), batched=True)
-
-        # set format
-        hf_dataset = hf_dataset.remove_columns([input])  # just leave the numerical columns
+        hf_dataset = self._encode_input(hf_dataset, input)
         hf_dataset.set_format("torch")
 
         return hf_dataset
@@ -144,106 +155,90 @@ class TextDataSource(DataSource):
     def predict_load_data(self, data: Any, dataset: AutoDataset):
         return self.load_data(data, dataset)
 
-    def __getstate__(self):  # TODO: Find out why this is being pickled
-        state = self.__dict__.copy()
-        state.pop("tokenizer")
-        return state
+    # def __getstate__(self):  # TODO: Find out why this is being pickled
+    #     state = self.__dict__.copy()
+    #     state.pop("tokenizer")
+    #     return state
 
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+    # def __setstate__(self, state):
+    #     self.__dict__.update(state)
+    #     self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
 class TextCSVDataSource(TextDataSource):
-    def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, str]:
-        file, *other = data
+    def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, Optional[List[str]]]:
+        file, input, *other = data
         dataset_dict = load_dataset("csv", data_files={"train": str(file)})
-        return (dataset_dict["train"], *other)
+        return (dataset_dict["train"], input, *other)
 
 
 class TextJSONDataSource(TextDataSource):
-    def to_hf_dataset(self, data: Tuple[str, str, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, str]:
-        file, *other, field = data
+    def to_hf_dataset(self, data: Tuple[str, str, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, Optional[List[str]]]:
+        file, input, *other, field = data
         dataset_dict = load_dataset("json", data_files={"train": str(file)}, field=field)
-        return (dataset_dict["train"], *other)
+        return (dataset_dict["train"], input, *other)
 
 
 class TextDataFrameDataSource(TextDataSource):
-    def to_hf_dataset(self, data: Tuple[DataFrame, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, str]:
-        df, *other = data
+    def to_hf_dataset(self, data: Tuple[DataFrame, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, Optional[List[str]]]:
+        df, input, *other = data
         hf_dataset = Dataset.from_pandas(df)
-        return (hf_dataset, *other)
+        return (hf_dataset, input, *other)
 
 
 class TextParquetDataSource(TextDataSource):
-    def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, str]:
-        file, *other = data
+    def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, Optional[List[str]]]:
+        file, input, *other = data
         hf_dataset = Dataset.from_parquet(str(file))
-        return (hf_dataset, *other)
+        return (hf_dataset, input, *other)
 
 
 class TextHuggingFaceDatasetDataSource(TextDataSource):
-    def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, str]:
-        hf_dataset, *other = data
-        return (hf_dataset, *other)
+    def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, Optional[List[str]]]:
+        hf_dataset, input, *other = data
+        return (hf_dataset, input, *other)
 
 
 class TextListDataSource(TextDataSource):
     def to_hf_dataset(
         self, data: Union[Tuple[List[str], List[str]], List[str]]
-    ) -> Tuple[Sequence[Mapping[str, Any]], Optional[List[str]]]:
+    ) -> Tuple[Sequence[Mapping[str, Any]], str, Optional[List[str]]]:
 
         if isinstance(data, tuple):
             input_list, target_list = data
             # NOTE: here we already deal with multilabels
             # NOTE: here we already rename to correct column names
             hf_dataset = Dataset.from_dict({DefaultDataKeys.INPUT: input_list, DefaultDataKeys.TARGET: target_list})
-            return hf_dataset, target_list
+            return hf_dataset, DefaultDataKeys.INPUT, target_list
 
         # predicting
         hf_dataset = Dataset.from_dict({DefaultDataKeys.INPUT: data})
 
-        return (hf_dataset,)
+        return (hf_dataset, DefaultDataKeys.INPUT)
 
-    def load_data(
-        self,
-        data: Tuple[List[str], Union[List[Any], List[List[Any]]]],
-        dataset: Optional[Any] = None,
-    ) -> Sequence[Mapping[str, Any]]:
+    def _encode_target(self, hf_dataset, dataset, target) -> Sequence[Mapping[str, Any]]:
+        if isinstance(target[0], List):
+            # multi-target
+            dataset.multi_label = True
+            dataset.num_classes = len(target[0])
+            self.set_state(LabelsState(target))
+        else:
+            dataset.multi_label = False
+            if self.training:
+                labels = list(sorted(list(set(hf_dataset[DefaultDataKeys.TARGET]))))
+                dataset.num_classes = len(labels)
+                self.set_state(LabelsState(labels))
 
-        hf_dataset, *other = self._to_hf_dataset(data)
+            labels = self.get_state(LabelsState)
 
-        if not self.predicting:
-            target_list = other.pop()
-            if isinstance(target_list[0], List):
-                # multi-target_list
-                dataset.multi_label = True
-                dataset.num_classes = len(target_list[0])
-                self.set_state(LabelsState(target_list))
-            else:
-                dataset.multi_label = False
-                if self.training:
-                    labels = list(sorted(list(set(hf_dataset[DefaultDataKeys.TARGET]))))
-                    dataset.num_classes = len(labels)
-                    self.set_state(LabelsState(labels))
-
-                labels = self.get_state(LabelsState)
-
-                # convert labels to ids
-                if labels is not None:
-                    labels = labels.labels
-                    label_to_class_mapping = {v: k for k, v in enumerate(labels)}
-                    # happens in-place and keeps the target column name
-                    hf_dataset = hf_dataset.map(
-                        partial(self._transform_label, label_to_class_mapping, DefaultDataKeys.TARGET)
-                    )
-
-        # tokenize
-        hf_dataset = hf_dataset.map(partial(self._tokenize_fn, input=DefaultDataKeys.INPUT), batched=True)
-
-        # set format
-        hf_dataset = hf_dataset.remove_columns([DefaultDataKeys.INPUT])  # just leave the numerical columns
-        hf_dataset.set_format("torch")
+            # convert labels to ids
+            if labels is not None:
+                labels = labels.labels
+                label_to_class_mapping = {v: k for k, v in enumerate(labels)}
+                # happens in-place and keeps the target column name
+                hf_dataset = hf_dataset.map(
+                    partial(self._transform_label, label_to_class_mapping, DefaultDataKeys.TARGET)
+                )
 
         return hf_dataset
 
@@ -256,39 +251,47 @@ class TextClassificationPreprocess(Preprocess):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        backbone: str = "prajjwal1/bert-tiny",
-        max_length: int = 128,
+        backbone: Union[str, Tuple[BaseTokenizer, int]] = "prajjwal1/bert-tiny",
+        pretrained: Optional[bool] = True,
+        backbone_kwargs: Optional[Dict[str, Any]] = {},
     ):
-        self.backbone = backbone
-        self.max_length = max_length
 
+        if isinstance(backbone, tuple):
+            self.tokenizer, self.vocab_size = backbone
+            self.backbone = self.tokenizer.backbone
+        else:
+            self.backbone = backbone
+            self.tokenizer, self.vocab_size = TEXT_CLASSIFIER_TOKENIZERS.get(backbone)(pretrained=pretrained, **backbone_kwargs)
+
+        os.environ["TOKENIZERS_PARALLELISM"] = "true"  # TODO: do we really need this?
+        
         super().__init__(
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.CSV: TextCSVDataSource(self.backbone, max_length=max_length),
-                DefaultDataSources.JSON: TextJSONDataSource(self.backbone, max_length=max_length),
-                DefaultDataSources.PARQUET: TextParquetDataSource(self.backbone, max_length=max_length),
+                DefaultDataSources.CSV: TextCSVDataSource(self.tokenizer, self.vocab_size),
+                DefaultDataSources.JSON: TextJSONDataSource(self.tokenizer, self.vocab_size),
+                DefaultDataSources.PARQUET: TextParquetDataSource(self.tokenizer, self.vocab_size),
                 DefaultDataSources.HUGGINGFACE_DATASET: TextHuggingFaceDatasetDataSource(
-                    self.backbone, max_length=max_length
+                    self.tokenizer, self.vocab_size
                 ),
-                DefaultDataSources.DATAFRAME: TextDataFrameDataSource(self.backbone, max_length=max_length),
-                DefaultDataSources.LISTS: TextListDataSource(self.backbone, max_length=max_length),
-                DefaultDataSources.LABELSTUDIO: LabelStudioTextClassificationDataSource(
-                    backbone=self.backbone, max_length=max_length
-                ),
+                DefaultDataSources.DATAFRAME: TextDataFrameDataSource(self.tokenizer, self.vocab_size),
+                DefaultDataSources.LISTS: TextListDataSource(self.tokenizer, self.vocab_size),
+                # DefaultDataSources.LABELSTUDIO: LabelStudioTextClassificationDataSource(
+                #     self.tokenizer, self.vocab_size
+                # ),
             },
             default_data_source=DefaultDataSources.LISTS,
-            deserializer=TextDeserializer(backbone, max_length),
+            deserializer=TextDeserializer(self.tokenizer),
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
         return {
             **self.transforms,
-            "backbone": self.backbone,
-            "max_length": self.max_length,
+            # "backbone": self.backbone,
+            # "backbone_kwargs": self.max_length,
         }
 
     @classmethod
