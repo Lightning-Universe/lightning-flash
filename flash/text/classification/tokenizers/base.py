@@ -13,7 +13,10 @@
 # limitations under the License.
 from typing import Generator, List
 
-import datasets
+from flash.core.utilities.imports import _TEXT_AVAILABLE
+
+if _TEXT_AVAILABLE:
+    import datasets
 
 
 class BaseTokenizer:
