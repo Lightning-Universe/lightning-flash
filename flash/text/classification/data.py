@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 from functools import partial
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
 
@@ -20,7 +21,6 @@ from torch import Tensor
 from torch.utils.data.sampler import Sampler
 
 import flash
-import os
 from flash.core.data.auto_dataset import AutoDataset
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
@@ -33,18 +33,19 @@ from flash.text.classification.tokenizers.base import BaseTokenizer
 
 if _TEXT_AVAILABLE:
     from datasets import Dataset, load_dataset
-    from flash.text.classification.tokenizers import TEXT_CLASSIFIER_TOKENIZERS
     from transformers import default_data_collator
     from transformers.modeling_outputs import SequenceClassifierOutput
+
+    from flash.text.classification.tokenizers import TEXT_CLASSIFIER_TOKENIZERS
 
 
 class TextDeserializer(Deserializer):
     @requires("text")
     def __init__(self, tokenizer: BaseTokenizer):
         super().__init__()
-        
+
         self.tokenizer = tokenizer
-        
+
     def deserialize(self, text: str) -> Tensor:
         return self.tokenizer(text)
 
@@ -126,7 +127,7 @@ class TextDataSource(DataSource):
         return hf_dataset
 
     def _encode_input(self, hf_dataset, input) -> Sequence[Mapping[str, Any]]:
-         # tokenize
+        # tokenize
         if not self.tokenizer._is_fit:
             self.tokenizer.fit(hf_dataset, input=input)
         hf_dataset = hf_dataset.map(partial(self._tokenize_fn, input=input), batched=True)
@@ -173,14 +174,18 @@ class TextCSVDataSource(TextDataSource):
 
 
 class TextJSONDataSource(TextDataSource):
-    def to_hf_dataset(self, data: Tuple[str, str, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, Optional[List[str]]]:
+    def to_hf_dataset(
+        self, data: Tuple[str, str, str, str]
+    ) -> Tuple[Sequence[Mapping[str, Any]], str, Optional[List[str]]]:
         file, input, *other, field = data
         dataset_dict = load_dataset("json", data_files={"train": str(file)}, field=field)
         return (dataset_dict["train"], input, *other)
 
 
 class TextDataFrameDataSource(TextDataSource):
-    def to_hf_dataset(self, data: Tuple[DataFrame, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, Optional[List[str]]]:
+    def to_hf_dataset(
+        self, data: Tuple[DataFrame, str, str]
+    ) -> Tuple[Sequence[Mapping[str, Any]], str, Optional[List[str]]]:
         df, input, *other = data
         hf_dataset = Dataset.from_pandas(df)
         return (hf_dataset, input, *other)
@@ -261,10 +266,12 @@ class TextClassificationPreprocess(Preprocess):
             self.backbone = self.tokenizer.backbone
         else:
             self.backbone = backbone
-            self.tokenizer, self.vocab_size = TEXT_CLASSIFIER_TOKENIZERS.get(backbone)(pretrained=pretrained, **backbone_kwargs)
+            self.tokenizer, self.vocab_size = TEXT_CLASSIFIER_TOKENIZERS.get(backbone)(
+                pretrained=pretrained, **backbone_kwargs
+            )
 
         os.environ["TOKENIZERS_PARALLELISM"] = "true"  # TODO: do we really need this?
-        
+
         super().__init__(
             train_transform=train_transform,
             val_transform=val_transform,
