@@ -13,18 +13,16 @@
 # limitations under the License.
 import os
 import warnings
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Dict, List
 
 import torch
 from pytorch_lightning import Callback
-from torch.optim.lr_scheduler import _LRScheduler
-from torchmetrics import Metric
 
 from flash.core.classification import ClassificationTask, Labels
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.process import Serializer
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
+from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, SERIALIZER_TYPE
 from flash.text.classification.backbones import TEXT_CLASSIFIER_BACKBONES
 from flash.text.ort_callback import ORTCallback
 
@@ -40,10 +38,8 @@ class TextClassifier(ClassificationTask):
     Args:
         num_classes: Number of classes to classify.
         backbone: A model to use to compute text features can be any BERT model from HuggingFace/transformersimage .
-        optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
-        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
-        scheduler: The scheduler or scheduler class to use.
-        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
         metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
             package, a custom metric inherenting from `torchmetrics.Metric`, a callable function or a list/dict
             containing a combination of the aforementioned. In all cases, each metric needs to have the signature
@@ -62,15 +58,13 @@ class TextClassifier(ClassificationTask):
         self,
         num_classes: int,
         backbone: str = "prajjwal1/bert-medium",
-        loss_fn: Optional[Callable] = None,
-        optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-        optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
-        metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
+        loss_fn: LOSS_FN_TYPE = None,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
+        metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-2,
         multi_label: bool = False,
-        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
+        serializer: SERIALIZER_TYPE = None,
         enable_ort: bool = False,
     ):
         self.save_hyperparameters()
@@ -86,9 +80,7 @@ class TextClassifier(ClassificationTask):
             model=None,
             loss_fn=loss_fn,
             optimizer=optimizer,
-            optimizer_kwargs=optimizer_kwargs,
-            scheduler=scheduler,
-            scheduler_kwargs=scheduler_kwargs,
+            lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
             multi_label=multi_label,
