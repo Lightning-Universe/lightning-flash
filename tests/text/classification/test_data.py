@@ -34,6 +34,7 @@ from tests.helpers.utils import _TEXT_TESTING
 if _TEXT_AVAILABLE:
     from datasets import Dataset
     from transformers.tokenization_utils_base import PreTrainedTokenizerBase
+
     from flash.text.classification.tokenizers import TEXT_CLASSIFIER_TOKENIZERS
 
 TEST_BACKBONE = "prajjwal1/bert-tiny"  # super small model for testing
@@ -625,4 +626,3 @@ def test_tokenizer_training():
     assert tok2.vocab_size == 10
     assert tok1.vocab_size == vocab_size1
     assert tok2.vocab_size == vocab_size2
-

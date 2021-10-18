@@ -25,10 +25,9 @@ if _TEXT_AVAILABLE:
 
 
 class TransformerTokenizer(BaseTokenizer):
-
     def __init__(self, backbone: str, pretrained: bool = True, **backbone_kwargs):
         super().__init__(backbone, pretrained)
- 
+
         self.tokenizer = AutoTokenizer.from_pretrained(backbone)
 
         # NOTE: self.tokenizer.model_max_length returns crazy value, pick this from config

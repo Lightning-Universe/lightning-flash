@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from typing import Generator, List
+
 import datasets
+
 
 class BaseTokenizer:
     def __init__(self, backbone: str, pretrained: bool):
@@ -26,4 +28,3 @@ class BaseTokenizer:
     def _batch_iterator(self, dataset: datasets.Dataset, input: str) -> Generator[List[str], None, None]:
         for i in range(0, len(dataset), self.batch_size):
             yield dataset[i : i + self.batch_size][input]
-
