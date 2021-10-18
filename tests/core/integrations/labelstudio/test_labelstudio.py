@@ -5,11 +5,10 @@ from flash.core.data.utils import download_data
 from flash.core.integrations.labelstudio.data_source import (
     LabelStudioDataSource,
     LabelStudioImageClassificationDataSource,
-    LabelStudioTextClassificationDataSource,
 )
 from flash.core.integrations.labelstudio.visualizer import launch_app
 from flash.image.classification.data import ImageClassificationData
-from flash.text.classification.data import TextClassificationData
+from flash.text.classification.data import TextClassificationData, LabelStudioTextClassificationDataSource
 from flash.video.classification.data import VideoClassificationData, VideoClassificationPreprocess
 from tests.helpers.utils import _IMAGE_TESTING, _TEXT_TESTING, _VIDEO_TESTING
 
