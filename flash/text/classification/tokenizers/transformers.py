@@ -23,7 +23,6 @@ if _TEXT_AVAILABLE:
     from transformers import AutoConfig, AutoTokenizer
 
 
-
 class TransformerTokenizer(BaseTokenizer):
     def __init__(self, backbone: str, pretrained: bool = True, **backbone_kwargs):
         super().__init__(backbone, pretrained)
