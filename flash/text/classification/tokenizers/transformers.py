@@ -11,13 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Sequence, Mapping, Any, List, Optional, Tuple, Union
+from typing import Any, List, Mapping, Optional, Sequence, Tuple, Union
 
 import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from transformers import AutoConfig, AutoTokenizer
 
+from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 from flash.text.classification.tokenizers.base import BaseTokenizer
+
+if _TEXT_AVAILABLE:
+    from transformers import AutoConfig, AutoTokenizer
+
 
 
 class TransformerTokenizer(BaseTokenizer):
