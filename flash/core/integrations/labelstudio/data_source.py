@@ -192,36 +192,6 @@ class LabelStudioImageClassificationDataSource(LabelStudioDataSource):
         return result
 
 
-class LabelStudioTextClassificationDataSource(LabelStudioDataSource):
-    """The ``LabelStudioTextDataSource`` expects the input to
-    :meth:`~flash.core.data.data_source.DataSource.load_data` to be a json export from label studio.
-    Export data should point to text data
-    """
-
-    def __init__(self, backbone=None, max_length=128):
-        super().__init__()
-        if backbone:
-            if _TEXT_AVAILABLE:
-                from transformers import AutoTokenizer
-            self.backbone = backbone
-            self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
-            self.max_length = max_length
-
-    def load_sample(self, sample: Mapping[str, Any] = None, dataset: Optional[Any] = None) -> Any:
-        """Load 1 sample from dataset."""
-        if self.backbone:
-            data = ""
-            for key in sample.get("data"):
-                data += sample.get("data").get(key)
-            tokenized_data = self.tokenizer(data, max_length=self.max_length, truncation=True, padding="max_length")
-            for key in tokenized_data:
-                tokenized_data[key] = torch.tensor(tokenized_data[key])
-            tokenized_data["labels"] = self._get_labels_from_sample(sample["label"])
-            # separate text data type block
-            result = tokenized_data
-        return result
-
-
 class LabelStudioVideoClassificationDataSource(LabelStudioDataSource):
     """The ``LabelStudioVideoDataSource`` expects the input to
     :meth:`~flash.core.data.data_source.DataSource.load_data` to be a json export from label studio.
