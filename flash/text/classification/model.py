@@ -13,11 +13,13 @@
 # limitations under the License.
 import os
 import warnings
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import torch
 from pytorch_lightning import Callback
 
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from torch.nn.modules import padding
 from flash.core.classification import ClassificationTask, Labels
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.registry import FlashRegistry
@@ -58,6 +60,8 @@ class TextClassifier(ClassificationTask):
         self,
         num_classes: int,
         backbone: str = "prajjwal1/bert-medium",
+        vocab_size: Optional[int] = None,
+        pretrained: Optional[bool] = True,
         loss_fn: LOSS_FN_TYPE = None,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
@@ -82,12 +86,46 @@ class TextClassifier(ClassificationTask):
         )
         self.enable_ort = enable_ort
         self.model = self.backbones.get(backbone)(num_labels=num_classes)
+        self.pretrained = pretrained
+        
+        if self.pretrained:
+            if vocab_size:
+                print("`pretrained=True`, ignoring `vocab_size` argument.")
+            self.vocab_size = self.model.config.vocab_size
+        
+        else:
+            if vocab_size:
+                self.vocab_size = vocab_size 
+                print(f"Re-initialize word embeddings layer with `vocab_size={self.vocab_size}`")
+            else:
+                self.vocab_size = self.model.config.vocab_size
+                print(f"Re-initialize word embeddings layer with the original `vocab_size={self.vocab_size}`")
+            self._init_embeddings()
+        
         self.save_hyperparameters()
 
     @property
     def backbone(self):
         return self.model.base_model
 
+    def _init_embeddings(self):
+        # TODO: add tests
+        num_embeddings = self.model.config.vocab_size 
+        initializer_range = self.model.config.initializer_range
+
+        for name, module in self.model.named_modules():
+            # find the word embedding layer
+            if isinstance(module, torch.nn.Embedding) and module.num_embeddings == num_embeddings:
+                embedding_module_name = name
+                embedding_dim = module.embedding_dim
+                padding_idx = module.padding_idx
+                break
+        transformer_type, _, name = embedding_module_name.split(".")
+        new_embedding_module = torch.nn.Embedding(self.vocab_size, embedding_dim, padding_idx)
+        new_embedding_module.weight.data.normal_(mean=0.0, std=initializer_range)
+
+        getattr(self.model, transformer_type).embeddings.add_module(name, new_embedding_module)
+    
     def forward(self, batch: Dict[str, torch.Tensor]):
         return self.model(input_ids=batch.get("input_ids", None), attention_mask=batch.get("attention_mask", None))
 
