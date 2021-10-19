@@ -138,7 +138,6 @@ class TextDataSource(DataSource):
             hf_dataset = self._encode_target(hf_dataset, dataset, target)
 
         hf_dataset = self._encode_input(hf_dataset, input)
-        hf_dataset.set_format("torch")
 
         return hf_dataset
 
