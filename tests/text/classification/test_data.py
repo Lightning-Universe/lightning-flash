@@ -619,6 +619,7 @@ def test_text_module_not_found_error():
 #         assert getattr(instance, name, None) is not None
 
 
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_tokenizer_training():
     tok1, vocab_size1 = TEXT_CLASSIFIER_TOKENIZERS.get(TEST_BACKBONE)(pretrained=True)
     tok2, vocab_size2 = TEXT_CLASSIFIER_TOKENIZERS.get(TEST_BACKBONE)(pretrained=False, vocab_size=10)
