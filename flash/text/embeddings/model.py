@@ -29,24 +29,8 @@ from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Serializer
 from flash.core.finetuning import FlashBaseFinetuning
 from flash.core.model import Task
-from flash.core.registry import ExternalRegistry, FlashRegistry
-from flash.core.utilities.imports import _TEXT_AVAILABLE
-from flash.core.utilities.providers import _SENTENCE_TRANSFORMERS
-from flash.template.classification.backbones import TEMPLATE_BACKBONES
-
-if _TEXT_AVAILABLE:
-    from sentence_transformers import SentenceTransformer
-
-    SENTENCE_TRANSFORMERS_BACKBONE = ExternalRegistry(
-        SentenceTransformer,
-        "backbones",
-        _SENTENCE_TRANSFORMERS,
-    )
-else:
-    SentenceTransformer = None
-
-    SENTENCE_TRANSFORMERS_BACKBONE = FlashRegistry("backbones")
-
+from flash.core.registry import FlashRegistry
+from flash.text.embeddings.backbones import SENTENCE_TRANSFORMERS_BACKBONE
 
 class SentenceEmbedder(Task):
     """The ``SentenceEmbedder`` is a :class:`~flash.Task` for generating sentence embeddings, training and
@@ -75,7 +59,7 @@ class SentenceEmbedder(Task):
 
     required_extras: str = "text"
 
-    backbones: FlashRegistry = FlashRegistry("backbones") + SENTENCE_TRANSFORMERS_BACKBONE
+    backbones: FlashRegistry = SENTENCE_TRANSFORMERS_BACKBONE
 
     def __init__(
         self,
@@ -128,6 +112,9 @@ class SentenceEmbedder(Task):
             device=device,
             normalize_embeddings=normalize_embeddings,
         )
+    @property
+    def backbone(self):
+        return self.model.base_model
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         """For the training step, we just extract the :attr:`~flash.core.data.data_source.DefaultDataKeys.INPUT` and
