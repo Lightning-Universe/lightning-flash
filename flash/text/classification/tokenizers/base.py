@@ -20,7 +20,7 @@ class BaseTokenizer:
         self.pretrained = pretrained
         self._is_fit = pretrained
 
-    def fit(self):
+    def fit(self, hf_dataset: Sequence[Mapping[str, Any]], input: str) -> None:
         pass
 
     def _batch_iterator(self, dataset: Sequence[Mapping[str, Any]], input: str) -> Generator[List[str], None, None]:

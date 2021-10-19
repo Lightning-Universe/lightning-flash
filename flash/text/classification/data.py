@@ -238,9 +238,9 @@ class TextClassificationPreprocess(Preprocess):
         predict_transform: Optional[Dict[str, Callable]] = None,
         backbone: Union[str, Tuple[BaseTokenizer, int]] = "prajjwal1/bert-tiny",
         pretrained: Optional[bool] = True,
-        backbone_kwargs: Optional[Dict[str, Any]] = {},
+        backbone_kwargs: Optional[Dict[str, Any]] = None,
     ):
-
+        self.backbone_kwargs = backbone_kwargs if backbone_kwargs else {}
         if isinstance(backbone, tuple):
             self.tokenizer, self.vocab_size = backbone
             self.backbone = self.tokenizer.backbone

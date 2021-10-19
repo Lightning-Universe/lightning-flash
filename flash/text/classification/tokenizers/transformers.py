@@ -43,8 +43,7 @@ class TransformerTokenizer(BaseTokenizer):
             raise MisconfigurationException(
                 f"`max_length` must be less or equal to {self.max_length}, which is the maximum supported by {backbone}"
             )
-        else:
-            self.max_length = max_length
+        self.max_length = max_length
 
         # allow the user to specify this otherwise fallback to original
         if not pretrained:
