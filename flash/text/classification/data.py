@@ -26,7 +26,7 @@ from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources, LabelsState
 from flash.core.data.process import Deserializer, Postprocess, Preprocess
-from flash.core.integrations.labelstudio.data_source import LabelStudioDataSource
+from flash.core.integrations.labelstudio.data_source import LabelStudioTextClassificationDataSource
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 from flash.text.classification.tokenizers.base import BaseTokenizer
 
@@ -226,30 +226,6 @@ class TextListDataSource(TextDataSource):
                 )
 
         return hf_dataset
-
-
-class LabelStudioTextClassificationDataSource(LabelStudioDataSource):
-    """The ``LabelStudioTextDataSource`` expects the input to
-    :meth:`~flash.core.data.data_source.DataSource.load_data` to be a json export from label studio.
-    Export data should point to text data
-    """
-
-    def __init__(self, tokenizer: BaseTokenizer):
-        super().__init__()
-        self.tokenizer = tokenizer
-
-    def load_sample(self, sample: Mapping[str, Any] = None, dataset: Optional[Any] = None) -> Any:
-        """Load 1 sample from dataset."""
-        data = ""
-        for key in sample.get("data"):
-            data += sample.get("data").get(key)
-        tokenized_data = self.tokenizer(data)
-        for key in tokenized_data:
-            tokenized_data[key] = torch.tensor(tokenized_data[key])
-        tokenized_data["labels"] = self._get_labels_from_sample(sample["label"])
-        # separate text data type block
-        result = tokenized_data
-        return result
 
 
 class TextClassificationPreprocess(Preprocess):

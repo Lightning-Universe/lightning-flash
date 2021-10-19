@@ -14,6 +14,11 @@ from flash.core.utilities.stages import RunningStage
 
 if _TORCHVISION_AVAILABLE:
     from torchvision.datasets.folder import default_loader
+
+if _TEXT_AVAILABLE:
+    from flash.text.classification.tokenizers.base import BaseTokenizer
+
+
 DATA_TYPE = TypeVar("DATA_TYPE")
 
 
@@ -234,3 +239,27 @@ class LabelStudioVideoClassificationDataSource(LabelStudioDataSource):
             )
             return dataset
         return []
+
+
+class LabelStudioTextClassificationDataSource(LabelStudioDataSource):
+    """The ``LabelStudioTextDataSource`` expects the input to
+    :meth:`~flash.core.data.data_source.DataSource.load_data` to be a json export from label studio.
+    Export data should point to text data
+    """
+
+    def __init__(self, tokenizer: BaseTokenizer):
+        super().__init__()
+        self.tokenizer = tokenizer
+
+    def load_sample(self, sample: Mapping[str, Any] = None, dataset: Optional[Any] = None) -> Any:
+        """Load 1 sample from dataset."""
+        data = ""
+        for key in sample.get("data"):
+            data += sample.get("data").get(key)
+        tokenized_data = self.tokenizer(data)
+        for key in tokenized_data:
+            tokenized_data[key] = torch.tensor(tokenized_data[key])
+        tokenized_data["labels"] = self._get_labels_from_sample(sample["label"])
+        # separate text data type block
+        result = tokenized_data
+        return result
