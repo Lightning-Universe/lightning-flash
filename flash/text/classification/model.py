@@ -105,7 +105,7 @@ class TextClassifier(ClassificationTask):
         return self.model.base_model
 
     def _init_embeddings(self):
-        num_embeddings = self.model.config.vocab_size 
+        num_embeddings = self.model.config.vocab_size
         initializer_range = self.model.config.initializer_range
 
         for name, module in self.model.named_modules():

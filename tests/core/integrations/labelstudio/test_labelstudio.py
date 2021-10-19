@@ -231,6 +231,7 @@ def test_datasource_labelstudio_text():
     """Test creation of LabelStudioTextClassificationDataSource and Datamodule from text."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/text_data.zip", "./data/")
     from flash.text.classification.tokenizers import TEXT_CLASSIFIER_TOKENIZERS
+
     backbone = "prajjwal1/bert-tiny"
     tokenizer, _ = TEXT_CLASSIFIER_TOKENIZERS.get(backbone)(pretrained=True)
     data = {
