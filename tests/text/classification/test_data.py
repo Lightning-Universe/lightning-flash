@@ -20,22 +20,11 @@ import pytest
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import TextClassificationData
-
-# from flash.text.classification.data import (
-#     TextCSVDataSource,
-#     TextDataFrameDataSource,
-#     TextDataSource,
-#     TextHuggingFaceDatasetDataSource,
-#     TextJSONDataSource,
-#     TextListDataSource,
-#     TextParquetDataSource,
-# )
 from tests.helpers.utils import _TEXT_TESTING
 
 if _TEXT_AVAILABLE:
     from datasets import Dataset
 
-    # from transformers.tokenization_utils_base import PreTrainedTokenizerBase
     from flash.text.classification.tokenizers import TEXT_CLASSIFIER_TOKENIZERS
 
 TEST_BACKBONE = "prajjwal1/bert-tiny"  # super small model for testing
@@ -588,36 +577,6 @@ def test_from_lists_multilabel(pretrained):
 def test_text_module_not_found_error():
     with pytest.raises(ModuleNotFoundError, match="[text]"):
         TextClassificationData.from_json("sentence", "lab", backbone=TEST_BACKBONE, train_file="", batch_size=1)
-
-
-# @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-# @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-# @pytest.mark.parametrize(
-#     "cls, kwargs",
-#     [
-#         (TextDataSource, {}),
-#         (TextCSVDataSource, {}),
-#         (TextJSONDataSource, {}),
-#         (TextDataFrameDataSource, {}),
-#         (TextParquetDataSource, {}),
-#         (TextHuggingFaceDatasetDataSource, {}),
-#         (TextListDataSource, {}),
-#     ],
-# )
-# def test_tokenizer_state(cls, kwargs):
-#     """Tests that the tokenizer is not in __getstate__"""
-#     tok, _ = TEXT_CLASSIFIER_TOKENIZERS.get(TEST_BACKBONE)(pretrained=True)
-#     instance = cls(tokenizer=tok, **kwargs)
-#     state = instance.__getstate__()
-#     tokenizers = []
-#     for name, attribute in instance.__dict__.items():
-#         if isinstance(attribute, PreTrainedTokenizerBase):
-#             assert name not in state
-#             setattr(instance, name, None)
-#             tokenizers.append(name)
-#     instance.__setstate__(state)
-#     for name in tokenizers:
-#         assert getattr(instance, name, None) is not None
 
 
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
