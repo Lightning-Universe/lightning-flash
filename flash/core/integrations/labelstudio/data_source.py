@@ -9,15 +9,11 @@ from pytorch_lightning.utilities.cloud_io import get_filesystem
 from flash import DataSource
 from flash.core.data.auto_dataset import AutoDataset, IterableAutoDataset
 from flash.core.data.data_source import DefaultDataKeys, has_len
-from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE, _TEXT_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 
 if _TORCHVISION_AVAILABLE:
     from torchvision.datasets.folder import default_loader
-
-if _TEXT_AVAILABLE:
-    from flash.text.classification.tokenizers.base import BaseTokenizer
-
 
 DATA_TYPE = TypeVar("DATA_TYPE")
 
@@ -247,7 +243,7 @@ class LabelStudioTextClassificationDataSource(LabelStudioDataSource):
     Export data should point to text data
     """
 
-    def __init__(self, tokenizer: BaseTokenizer):
+    def __init__(self, tokenizer):
         super().__init__()
         self.tokenizer = tokenizer
 
