@@ -80,9 +80,15 @@ def test_init_embeddings():
     m3 = TextClassifier(num_classes=2, backbone=TEST_BACKBONE, pretrained=False, vocab_size=10)
 
     assert m1.model.bert.embeddings.word_embeddings != m2.model.bert.embeddings.word_embeddings
-    assert m1.model.bert.embeddings.word_embeddings.num_embeddings == m2.model.bert.embeddings.word_embeddings.num_embeddings
+    assert (
+        m1.model.bert.embeddings.word_embeddings.num_embeddings
+        == m2.model.bert.embeddings.word_embeddings.num_embeddings
+    )
     assert m1.model.bert.embeddings.word_embeddings != m3.model.bert.embeddings.word_embeddings
-    assert m1.model.bert.embeddings.word_embeddings.num_embeddings != m3.model.bert.embeddings.word_embeddings.num_embeddings
+    assert (
+        m1.model.bert.embeddings.word_embeddings.num_embeddings
+        != m3.model.bert.embeddings.word_embeddings.num_embeddings
+    )
 
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")

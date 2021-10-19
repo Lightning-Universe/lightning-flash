@@ -83,21 +83,21 @@ class TextClassifier(ClassificationTask):
         self.enable_ort = enable_ort
         self.model = self.backbones.get(backbone)(num_labels=num_classes)
         self.pretrained = pretrained
-        
+
         if self.pretrained:
             if vocab_size:
                 print("`pretrained=True`, ignoring `vocab_size` argument.")
             self.vocab_size = self.model.config.vocab_size
-        
+
         else:
             if vocab_size:
-                self.vocab_size = vocab_size 
+                self.vocab_size = vocab_size
                 print(f"Re-initialize word embeddings layer with `vocab_size={self.vocab_size}`")
             else:
                 self.vocab_size = self.model.config.vocab_size
                 print(f"Re-initialize word embeddings layer with the original `vocab_size={self.vocab_size}`")
             self._init_embeddings()
-        
+
         self.save_hyperparameters()
 
     @property
@@ -120,7 +120,7 @@ class TextClassifier(ClassificationTask):
         new_embedding_module.weight.data.normal_(mean=0.0, std=initializer_range)
 
         getattr(self.model, transformer_type).embeddings.add_module(name, new_embedding_module)
-    
+
     def forward(self, batch: Dict[str, torch.Tensor]):
         return self.model(input_ids=batch.get("input_ids", None), attention_mask=batch.get("attention_mask", None))
 
