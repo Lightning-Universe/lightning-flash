@@ -20,20 +20,20 @@ import pytest
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import TextClassificationData
-from flash.text.classification.data import (
-    TextCSVDataSource,
-    TextDataFrameDataSource,
-    TextDataSource,
-    TextHuggingFaceDatasetDataSource,
-    TextJSONDataSource,
-    TextListDataSource,
-    TextParquetDataSource,
-)
+# from flash.text.classification.data import (
+#     TextCSVDataSource,
+#     TextDataFrameDataSource,
+#     TextDataSource,
+#     TextHuggingFaceDatasetDataSource,
+#     TextJSONDataSource,
+#     TextListDataSource,
+#     TextParquetDataSource,
+# )
 from tests.helpers.utils import _TEXT_TESTING
 
 if _TEXT_AVAILABLE:
     from datasets import Dataset
-    from transformers.tokenization_utils_base import PreTrainedTokenizerBase
+    # from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 
     from flash.text.classification.tokenizers import TEXT_CLASSIFIER_TOKENIZERS
 
