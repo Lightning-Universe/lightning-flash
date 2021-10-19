@@ -52,15 +52,6 @@ class TextDeserializer(Deserializer):
     def example_input(self) -> str:
         return "An example input"
 
-    # def __getstate__(self):  # TODO: Find out why this is being pickled
-    #     state = self.__dict__.copy()
-    #     state.pop("tokenizer")
-    #     return state
-
-    # def __setstate__(self, state):
-    #     self.__dict__.update(state)
-    #     self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
-
 
 class TextDataSource(DataSource):
     @requires("text")
@@ -153,15 +144,6 @@ class TextDataSource(DataSource):
 
     def predict_load_data(self, data: Any, dataset: AutoDataset):
         return self.load_data(data, dataset)
-
-    # def __getstate__(self):  # TODO: Find out why this is being pickled
-    #     state = self.__dict__.copy()
-    #     state.pop("tokenizer")
-    #     return state
-
-    # def __setstate__(self, state):
-    #     self.__dict__.update(state)
-    #     self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
 class TextCSVDataSource(TextDataSource):
@@ -261,7 +243,7 @@ class LabelStudioTextClassificationDataSource(LabelStudioDataSource):
         data = ""
         for key in sample.get("data"):
             data += sample.get("data").get(key)
-        tokenized_data = self.tokenizer(data, max_length=self.max_length, truncation=True, padding="max_length")
+        tokenized_data = self.tokenizer(data)
         for key in tokenized_data:
             tokenized_data[key] = torch.tensor(tokenized_data[key])
         tokenized_data["labels"] = self._get_labels_from_sample(sample["label"])
