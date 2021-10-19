@@ -168,7 +168,6 @@ def test_datasource_labelstudio():
 def test_datasource_labelstudio_image():
     """Test creation of LabelStudioImageClassificationDataSource from images."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/data_nofile.zip")
-
     data = {
         "data_folder": "data/upload/",
         "export_json": "data/project_nofile.json",
@@ -231,14 +230,16 @@ def test_label_studio_predictions_visualization():
 def test_datasource_labelstudio_text():
     """Test creation of LabelStudioTextClassificationDataSource and Datamodule from text."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/text_data.zip", "./data/")
-    backbone = "prajjwal1/bert-medium"
+    from flash.text.classification.tokenizers import TEXT_CLASSIFIER_TOKENIZERS
+    backbone = "prajjwal1/bert-tiny"
+    tokenizer, _ = TEXT_CLASSIFIER_TOKENIZERS.get(backbone)(pretrained=True)
     data = {
         "data_folder": "data/upload/",
         "export_json": "data/project.json",
         "split": 0.2,
         "multi_label": False,
     }
-    ds = LabelStudioTextClassificationDataSource(backbone=backbone)
+    ds = LabelStudioTextClassificationDataSource(tokenizer=tokenizer)
     train, val, test, predict = ds.to_datasets(train_data=data, test_data=data)
     train_sample = train[0]
     test_sample = test[0]
@@ -253,7 +254,7 @@ def test_datasource_labelstudio_text():
 def test_datamodule_labelstudio_text():
     """Test creation of LabelStudioTextClassificationDataSource and Datamodule from text."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/text_data.zip", "./data/")
-    backbone = "prajjwal1/bert-medium"
+    backbone = "prajjwal1/bert-tiny"
     datamodule = TextClassificationData.from_labelstudio(
         train_export_json="data/project.json",
         val_export_json="data/project.json",

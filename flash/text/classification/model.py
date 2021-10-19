@@ -11,15 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
-import warnings
 from typing import Any, Dict, List, Optional
 
 import torch
 from pytorch_lightning import Callback
 
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torch.nn.modules import padding
 from flash.core.classification import ClassificationTask, Labels
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.registry import FlashRegistry
@@ -109,7 +105,6 @@ class TextClassifier(ClassificationTask):
         return self.model.base_model
 
     def _init_embeddings(self):
-        # TODO: add tests
         num_embeddings = self.model.config.vocab_size 
         initializer_range = self.model.config.initializer_range
 
