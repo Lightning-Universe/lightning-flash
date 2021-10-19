@@ -16,6 +16,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+import torch
 from pytorch_lightning import seed_everything
 from torch import nn
 from torch.utils.data import SequentialSampler
@@ -27,6 +28,7 @@ from flash.image import ImageClassificationData, ImageClassifier
 from flash.image.classification.integrations.baal import ActiveLearningDataModule, ActiveLearningLoop
 from tests.helpers.utils import _IMAGE_TESTING
 from tests.image.classification.test_data import _rand_image
+
 
 # ======== Mock functions ========
 
@@ -100,6 +102,15 @@ def test_active_learning_training(simple_datamodule, initial_num_labels, query_s
     trainer.fit_loop = active_learning_loop
 
     trainer.finetune(model, datamodule=active_learning_dm, strategy="freeze")
+    # Check that all metrics are logged
+    assert all(any(m in log_met for log_met in active_learning_loop.trainer.logged_metrics)
+               for m in ("train", "val", "test"))
+
+    # Check that the weights has changed for both module.
+    classifier = active_learning_loop._lightning_module.adapter.parameters()
+    mc_inference = active_learning_loop.inference_model.parent_module.parameters()
+    assert all(torch.equal(p1, p2) for p1, p2 in zip(classifier, mc_inference))
+
     if initial_num_labels == 0:
         assert len(active_learning_dm._dataset) == 15
     else:

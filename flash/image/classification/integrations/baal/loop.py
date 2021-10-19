@@ -19,7 +19,7 @@ from pytorch_lightning.loops import Loop
 from pytorch_lightning.loops.fit_loop import FitLoop
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.trainer.progress import Progress
-from pytorch_lightning.trainer.states import TrainerFn
+from pytorch_lightning.trainer.states import TrainerFn, TrainerStatus
 
 import flash
 from flash.core.data.utils import _STAGES_PREFIX
@@ -72,6 +72,7 @@ class ActiveLearningLoop(Loop):
     def on_run_start(self, *args: Any, **kwargs: Any) -> None:
         assert isinstance(self.trainer.datamodule, ActiveLearningDataModule)
         self.trainer.predict_loop._return_predictions = True
+        self.trainer.test_loop._return_predictions = True
         self._lightning_module = self.trainer.lightning_module
         self._model_state_dict = deepcopy(self._lightning_module.state_dict())
         self.inference_model = InferenceMCDropoutTask(self._lightning_module, self.inference_iteration)
@@ -83,6 +84,7 @@ class ActiveLearningLoop(Loop):
         if self.trainer.datamodule.has_labelled_data:
             self._reset_dataloader_for_stage(RunningStage.TRAINING)
             self._reset_dataloader_for_stage(RunningStage.VALIDATING)
+            self._reset_dataloader_for_stage(RunningStage.TESTING)
         if self.trainer.datamodule.has_unlabelled_data:
             self._reset_dataloader_for_stage(RunningStage.PREDICTING)
         self.progress.increment_ready()
@@ -94,7 +96,10 @@ class ActiveLearningLoop(Loop):
             self.fit_loop.run()
 
         if self.trainer.datamodule.has_test:
-            self.trainer.test_loop.run()
+            self._reset_testing()
+            metrics = self.trainer.test_loop.run()
+            if metrics:
+                self.trainer.logger.log_metrics(metrics[0], step=self.trainer.global_step)
 
         if self.trainer.datamodule.has_unlabelled_data:
             self._reset_predicting()
@@ -139,6 +144,13 @@ class ActiveLearningLoop(Loop):
         self.trainer.predicting = True
         self.trainer.lightning_module.on_predict_dataloader()
         self.trainer.accelerator.connect(self.inference_model)
+
+    def _reset_testing(self):
+        self.trainer.state.fn = TrainerFn.TESTING
+        self.trainer.state.status = TrainerStatus.RUNNING
+        self.trainer.testing = True
+        self.trainer.lightning_module.on_test_dataloader()
+        self.trainer.accelerator.connect(self._lightning_module)
 
     def _reset_dataloader_for_stage(self, running_state: RunningStage):
         dataloader_name = f"{_STAGES_PREFIX[running_state]}_dataloader"
