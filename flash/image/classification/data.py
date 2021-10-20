@@ -16,7 +16,6 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, U
 import numpy as np
 import pandas as pd
 import torch
-from pytorch_lightning.trainer.states import RunningStage
 from torch.utils.data.sampler import Sampler
 
 from flash.core.data.base_viz import BaseVisualization  # for viz
@@ -26,6 +25,7 @@ from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources, Loa
 from flash.core.data.process import Deserializer, Preprocess
 from flash.core.integrations.labelstudio.data_source import LabelStudioImageClassificationDataSource
 from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, Image, requires
+from flash.core.utilities.stages import RunningStage
 from flash.image.classification.transforms import default_transforms, train_default_transforms
 from flash.image.data import (
     image_loader,
@@ -55,6 +55,18 @@ class ImageClassificationDataFrameDataSource(LoaderDataFrameDataSource):
 
 
 class ImageClassificationPreprocess(Preprocess):
+    """Preprocssing of data of image classification.
+
+    Args::
+        train_transfor:m
+        val_transform:
+        test_transform:
+        predict_transform:
+        image_size: tuple with the (heigh, width) of the images
+        deserializer:
+        data_source_kwargs: Additional kwargs for the data source initializer
+    """
+
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,

@@ -19,11 +19,12 @@ from pytorch_lightning.loops import Loop
 from pytorch_lightning.loops.fit_loop import FitLoop
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.trainer.progress import Progress
-from pytorch_lightning.trainer.states import RunningStage, TrainerFn
+from pytorch_lightning.trainer.states import TrainerFn
 
 import flash
 from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.utilities.imports import requires
+from flash.core.utilities.stages import RunningStage
 from flash.image.classification.integrations.baal.data import ActiveLearningDataModule
 from flash.image.classification.integrations.baal.dropout import InferenceMCDropoutTask
 

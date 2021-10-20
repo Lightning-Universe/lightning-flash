@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import warnings
 from typing import Callable, Dict, List, Optional
 
 import numpy as np
@@ -37,7 +38,7 @@ else:
 
 
 def dataset_to_non_labelled_tensor(dataset: BaseAutoDataset) -> torch.tensor:
-    return torch.zeros(len(dataset))
+    return np.zeros(len(dataset))
 
 
 def filter_unlabelled_data(dataset: BaseAutoDataset) -> Dataset:
@@ -59,7 +60,8 @@ class ActiveLearningDataModule(LightningDataModule):
         heuristic: "AbstractHeuristic" = BALD(),
         map_dataset_to_labelled: Optional[Callable] = dataset_to_non_labelled_tensor,
         filter_unlabelled_data: Optional[Callable] = filter_unlabelled_data,
-        num_label_randomly: int = 5,
+        initial_num_labels: Optional[int] = None,
+        query_size: int = 1,
         val_split: Optional[float] = None,
     ):
         """The `ActiveLearningDataModule` handles data manipulation for ActiveLearning.
@@ -70,7 +72,8 @@ class ActiveLearningDataModule(LightningDataModule):
             heuristic: Sorting algorithm used to rank samples on how likely they can help with model performance.
             map_dataset_to_labelled: Function used to emulate masking on labelled dataset.
             filter_unlabelled_data: Function used to filter the unlabelled data while computing uncertainties.
-            num_label_randomly: Number of samples to randomly label from the uncertainty scores.
+            initial_num_labels: Number of samples to randomly label to start the training with.
+            query_size: Number of samples to be labelled at each Active Learning loop based on the fed heuristic.
             val_split: Float to split train dataset into train and validation set.
         """
         super().__init__()
@@ -78,7 +81,8 @@ class ActiveLearningDataModule(LightningDataModule):
         self.heuristic = heuristic
         self.map_dataset_to_labelled = map_dataset_to_labelled
         self.filter_unlabelled_data = filter_unlabelled_data
-        self.num_label_randomly = num_label_randomly
+        self.initial_num_labels = initial_num_labels
+        self.query_size = query_size
         self.val_split = val_split
         self._dataset: Optional[ActiveLearningDataset] = None
 
@@ -102,6 +106,13 @@ class ActiveLearningDataModule(LightningDataModule):
 
         if self.labelled._test_ds:
             self.test_dataloader = self._test_dataloader
+
+        if not self.initial_num_labels:
+            warnings.warn(
+                "No labels provided for the initial step," "the estimated uncertainties are unreliable!", UserWarning
+            )
+        else:
+            self._dataset.label_randomly(self.initial_num_labels)
 
     @property
     def has_test(self) -> bool:
@@ -142,8 +153,8 @@ class ActiveLearningDataModule(LightningDataModule):
         return self.labelled.test_dataloader()
 
     def predict_dataloader(self) -> "DataLoader":
-        self.labelled._train_ds = self.filter_unlabelled_data(self._dataset.pool)
-        return self.labelled.train_dataloader()
+        self.labelled._predict_ds = self.filter_unlabelled_data(self._dataset.pool)
+        return self.labelled._predict_dataloader()
 
     def label(self, probabilities: List[torch.Tensor] = None, indices=None):
         if probabilities is not None and indices:
@@ -156,10 +167,8 @@ class ActiveLearningDataModule(LightningDataModule):
             if self._dataset is not None:
                 unlabelled_mask = self._dataset.labelled == False  # noqa E712
                 unlabelled = self._dataset.labelled[unlabelled_mask]
-                unlabelled[indices[-self.num_label_randomly :]] = True
+                unlabelled[indices[-self.query_size :]] = True
                 self._dataset.labelled[unlabelled_mask] = unlabelled
-        else:
-            self._dataset.label_randomly(self.num_label_randomly)
 
     def state_dict(self) -> Dict[str, torch.Tensor]:
         return self._dataset.state_dict()
