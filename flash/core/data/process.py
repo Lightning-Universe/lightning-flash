@@ -357,7 +357,10 @@ class Preprocess(BasePreprocess, Properties):
         pre_tensor_transform = self.get_state(PreTensorTransform)
 
         if pre_tensor_transform is not None:
-            return self._apply_given_transform(sample, pre_tensor_transform.transform)
+            if pre_tensor_transform.transform is not None:
+                return self._apply_given_transform(sample, pre_tensor_transform.transform)
+            else:
+                return sample    
         else:
             return self._apply_sample_transform(sample)
 
@@ -366,7 +369,10 @@ class Preprocess(BasePreprocess, Properties):
         to_tensor_transform = self.get_state(ToTensorTransform)
 
         if to_tensor_transform is not None:
-            return self._apply_given_transform(sample, to_tensor_transform.transform)
+            if to_tensor_transform.transform is not None:
+                return self._apply_given_transform(sample, to_tensor_transform.transform)
+            else:
+                return sample
         else:
             return self._apply_sample_transform(sample)
 
@@ -375,7 +381,10 @@ class Preprocess(BasePreprocess, Properties):
         post_tensor_transform = self.get_state(PostTensorTransform)
 
         if post_tensor_transform is not None:
-            return self._apply_given_transform(sample, post_tensor_transform.transform)
+            if post_tensor_transform.transform is not None:
+                return self._apply_given_transform(sample, post_tensor_transform.transform)
+            else:
+                return sample
         else:
             return self._apply_sample_transform(sample)
 

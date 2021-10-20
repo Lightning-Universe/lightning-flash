@@ -88,6 +88,9 @@ class ImageEmbedder(AdapterTask):
         if training_strategy_kwargs is None:
             training_strategy_kwargs = {}
 
+        if pretraining_transform_kwargs is None:
+            pretraining_transform_kwargs = {}
+
         backbone, _ = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
 
         metadata = self.training_strategies.get(training_strategy, with_metadata=True)
@@ -114,6 +117,7 @@ class ImageEmbedder(AdapterTask):
             transform,
         )
 
+        # TODO: add tests to check this goes to None if this is set
         self.adapter.set_state(CollateFn(collate_fn))
         self.adapter.set_state(ToTensorTransform(to_tensor_transform))
         self.adapter.set_state(PostTensorTransform(None))
