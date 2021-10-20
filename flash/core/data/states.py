@@ -23,6 +23,24 @@ class PostTensorTransform(ProcessState):
 
 
 @dataclass(unsafe_hash=True, frozen=True)
+class PerSampleTransformOnDevice(ProcessState):
+
+    transform: Optional[Callable] = None
+
+
+@dataclass(unsafe_hash=True, frozen=True)
+class PerBatchTransform(ProcessState):
+
+    transform: Optional[Callable] = None
+
+
+@dataclass(unsafe_hash=True, frozen=True)
+class PerBatchTransformOnDevice(ProcessState):
+
+    transform: Optional[Callable] = None
+
+
+@dataclass(unsafe_hash=True, frozen=True)
 class CollateFn(ProcessState):
 
     collate_fn: Optional[Callable] = None

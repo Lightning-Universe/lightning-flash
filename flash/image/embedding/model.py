@@ -16,7 +16,15 @@ from typing import Any, Dict, List, Optional
 
 from flash.core.adapter import AdapterTask
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.states import CollateFn, PostTensorTransform, PreTensorTransform, ToTensorTransform
+from flash.core.data.states import (
+    CollateFn,
+    PerBatchTransform,
+    PerBatchTransformOnDevice,
+    PerSampleTransformOnDevice,
+    PostTensorTransform,
+    PreTensorTransform,
+    ToTensorTransform,
+)
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _VISSL_AVAILABLE
@@ -117,11 +125,13 @@ class ImageEmbedder(AdapterTask):
             transform,
         )
 
-        # TODO: add tests to check this goes to None if this is set
         self.adapter.set_state(CollateFn(collate_fn))
         self.adapter.set_state(ToTensorTransform(to_tensor_transform))
         self.adapter.set_state(PostTensorTransform(None))
         self.adapter.set_state(PreTensorTransform(None))
+        self.adapter.set_state(PerSampleTransformOnDevice(None))
+        self.adapter.set_state(PerBatchTransform(None))
+        self.adapter.set_state(PerBatchTransformOnDevice(None))
 
         warnings.warn(
             "Warning: VISSL ImageEmbedder overrides any user provided transforms"

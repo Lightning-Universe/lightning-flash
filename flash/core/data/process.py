@@ -25,8 +25,16 @@ import flash
 from flash.core.data.batch import default_uncollate
 from flash.core.data.callback import FlashCallback
 from flash.core.data.data_source import DatasetDataSource, DataSource, DefaultDataKeys, DefaultDataSources
-from flash.core.data.properties import Properties
-from flash.core.data.states import CollateFn, PostTensorTransform, PreTensorTransform, ToTensorTransform
+from flash.core.data.properties import ProcessState, Properties
+from flash.core.data.states import (
+    CollateFn,
+    PerBatchTransform,
+    PerBatchTransformOnDevice,
+    PerSampleTransformOnDevice,
+    PostTensorTransform,
+    PreTensorTransform,
+    ToTensorTransform,
+)
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX, convert_to_modules, CurrentRunningStageFuncContext
 from flash.core.utilities.stages import RunningStage
@@ -346,47 +354,59 @@ class Preprocess(BasePreprocess, Properties):
             return [self.current_transform(s) for s in sample]
         return self.current_transform(sample)
 
-    def _apply_given_transform(self, sample: Any, transform: Callable):
+    def _apply_batch_transform(self, batch: Any):
+        return self.current_transform(batch)
+
+    def _apply_transform_on_sample(self, sample: Any, transform: Callable):
         if isinstance(sample, list):
             return [transform(s) for s in sample]
 
         return transform(sample)
 
+    def _apply_transform_on_batch(self, batch: Any, transform: Callable):
+        return transform(sample)
+
+    def _apply_process_state_transform(
+        self,
+        process_state: ProcessState,
+        sample: Optional[Any] = None,
+        batch: Optional[Any] = None,
+    ):
+        # assert both sample and batch are not None
+        if sample is None:
+            assert batch is not None, "sample not provided, batch should not be None"
+            mode = "batch"
+        else:
+            assert batch is None, "sample provided, batch should be None"
+            mode = "sample"
+
+        process_state_transform = self.get_state(process_state)
+
+        if process_state_transform is not None:
+            if process_state_transform.transform is not None:
+                if mode == "sample":
+                    return self._apply_transform_on_sample(sample, process_state_transform.transform)
+                else:
+                    return self._apply_transform_on_batch(batch, process_state_transform.transform)
+            else:
+                return sample
+        else:
+            if mode == "sample":
+                return self._apply_sample_transform(sample)
+            else:
+                return self._apply_batch_transform(batch)
+
     def pre_tensor_transform(self, sample: Any) -> Any:
         """Transforms to apply on a single object."""
-        pre_tensor_transform = self.get_state(PreTensorTransform)
-
-        if pre_tensor_transform is not None:
-            if pre_tensor_transform.transform is not None:
-                return self._apply_given_transform(sample, pre_tensor_transform.transform)
-            else:
-                return sample    
-        else:
-            return self._apply_sample_transform(sample)
+        return self._apply_process_state_transform(PreTensorTransform, sample=sample)
 
     def to_tensor_transform(self, sample: Any) -> Tensor:
         """Transforms to convert single object to a tensor."""
-        to_tensor_transform = self.get_state(ToTensorTransform)
-
-        if to_tensor_transform is not None:
-            if to_tensor_transform.transform is not None:
-                return self._apply_given_transform(sample, to_tensor_transform.transform)
-            else:
-                return sample
-        else:
-            return self._apply_sample_transform(sample)
+        return self._apply_process_state_transform(ToTensorTransform, sample=sample)
 
     def post_tensor_transform(self, sample: Tensor) -> Tensor:
         """Transforms to apply on a tensor."""
-        post_tensor_transform = self.get_state(PostTensorTransform)
-
-        if post_tensor_transform is not None:
-            if post_tensor_transform.transform is not None:
-                return self._apply_given_transform(sample, post_tensor_transform.transform)
-            else:
-                return sample
-        else:
-            return self._apply_sample_transform(sample)
+        return self._apply_process_state_transform(PostTensorTransform, sample=sample)
 
     def per_batch_transform(self, batch: Any) -> Any:
         """Transforms to apply to a whole batch (if possible use this for efficiency).
@@ -396,7 +416,7 @@ class Preprocess(BasePreprocess, Properties):
             This option is mutually exclusive with :meth:`per_sample_transform_on_device`,
             since if both are specified, uncollation has to be applied.
         """
-        return self.current_transform(batch)
+        return self._apply_process_state_transform(PerBatchTransform, batch=batch)
 
     def collate(self, samples: Sequence, metadata=None) -> Any:
         """Transform to convert a sequence of samples to a collated batch."""
@@ -430,7 +450,7 @@ class Preprocess(BasePreprocess, Properties):
             This function won't be called within the dataloader workers, since to make that happen
             each of the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
         """
-        return self.current_transform(sample)
+        return self._apply_process_state_transform(PerSampleTransformOnDevice, sample=sample)
 
     def per_batch_transform_on_device(self, batch: Any) -> Any:
         """Transforms to apply to a whole batch (if possible use this for efficiency).
@@ -440,7 +460,7 @@ class Preprocess(BasePreprocess, Properties):
             This function won't be called within the dataloader workers, since to make that happen
             each of the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
         """
-        return self.current_transform(batch)
+        return self._apply_process_state_transform(PerBatchTransformOnDevice, batch=batch)
 
     def available_data_sources(self) -> Sequence[str]:
         """Get the list of available data source names for use with this
