@@ -59,20 +59,12 @@ def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
                 K.geometry.Resize(image_size),
             ),
             "collate": kornia_collate,
-            "per_batch_transform_on_device": ApplyToKeys(
-                DefaultDataKeys.INPUT,
-                K.augmentation.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
-            ),
         }
     return {
         "pre_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, T.Resize(image_size)),
         "to_tensor_transform": nn.Sequential(
             ApplyToKeys(DefaultDataKeys.INPUT, torchvision.transforms.ToTensor()),
             ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor),
-        ),
-        "post_tensor_transform": ApplyToKeys(
-            DefaultDataKeys.INPUT,
-            T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
         ),
         "collate": kornia_collate,
     }

@@ -26,7 +26,7 @@ from flash.core.data.batch import default_uncollate
 from flash.core.data.callback import FlashCallback
 from flash.core.data.data_source import DatasetDataSource, DataSource, DefaultDataKeys, DefaultDataSources
 from flash.core.data.properties import Properties
-from flash.core.data.states import CollateFn
+from flash.core.data.states import CollateFn, PreTensorTransform, ToTensorTransform, PostTensorTransform
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX, convert_to_modules, CurrentRunningStageFuncContext
 from flash.core.utilities.stages import RunningStage
@@ -346,17 +346,38 @@ class Preprocess(BasePreprocess, Properties):
             return [self.current_transform(s) for s in sample]
         return self.current_transform(sample)
 
+    def _apply_given_transform(self, sample: Any, transform: Callable):
+        if isinstance(sample, list):
+            return [transform(s) for s in sample]
+
+        return transform(sample)
+
     def pre_tensor_transform(self, sample: Any) -> Any:
         """Transforms to apply on a single object."""
-        return self._apply_sample_transform(sample)
+        pre_tensor_transform = self.get_state(PreTensorTransform).transform
+
+        if pre_tensor_transform is not None:
+            return self._apply_given_transform(sample, pre_tensor_transform)
+        else:
+            return self._apply_sample_transform(sample)
 
     def to_tensor_transform(self, sample: Any) -> Tensor:
         """Transforms to convert single object to a tensor."""
-        return self._apply_sample_transform(sample)
+        to_tensor_transform = self.get_state(ToTensorTransform).transform
+
+        if to_tensor_transform is not None:
+            return self._apply_given_transform(sample, to_tensor_transform)
+        else:
+            return self._apply_sample_transform(sample)
 
     def post_tensor_transform(self, sample: Tensor) -> Tensor:
         """Transforms to apply on a tensor."""
-        return self._apply_sample_transform(sample)
+        post_tensor_transform = self.get_state(PostTensorTransform).transform
+
+        if post_tensor_transform is not None:
+            return self._apply_given_transform(sample, post_tensor_transform)
+        else:
+            return self._apply_sample_transform(sample)
 
     def per_batch_transform(self, batch: Any) -> Any:
         """Transforms to apply to a whole batch (if possible use this for efficiency).
