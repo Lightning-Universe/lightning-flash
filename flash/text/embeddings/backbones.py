@@ -12,4 +12,3 @@ if _TEXT_AVAILABLE:
         "backbones",
         _SENTENCE_TRANSFORMERS,
     )
-

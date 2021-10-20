@@ -32,6 +32,7 @@ from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.text.embeddings.backbones import SENTENCE_TRANSFORMERS_BACKBONE
 
+
 class SentenceEmbedder(Task):
     """The ``SentenceEmbedder`` is a :class:`~flash.Task` for generating sentence embeddings, training and
     validation. For more details, see `embeddings`.
@@ -112,6 +113,7 @@ class SentenceEmbedder(Task):
             device=device,
             normalize_embeddings=normalize_embeddings,
         )
+
     @property
     def backbone(self):
         return self.model.base_model

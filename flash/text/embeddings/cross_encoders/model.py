@@ -32,9 +32,10 @@ from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.text.embeddings.backbones import SENTENCE_TRANSFORMERS_BACKBONE
 
+
 class CrossEncoder(Task):
-    """The ``CrossEncoder`` is a :class:`~flash.Task` for generating sentence embeddings, training and
-    validation. For more details, see `cross_encoders`.
+    """The ``CrossEncoder`` is a :class:`~flash.Task` for generating sentence embeddings, training and validation.
+    For more details, see `cross_encoders`.
 
     You can change the backbone to any CrossEncoder model from `UKPLab/sentence-transformers
     <https://github.com/UKPLab/sentence-transformers>`_ using the ``backbone``
@@ -89,6 +90,7 @@ class CrossEncoder(Task):
             learning_rate=learning_rate,
         )
         self.model = self.backbones.get(backbone)()
+
     @property
     def backbone(self):
         return self.model.base_model
