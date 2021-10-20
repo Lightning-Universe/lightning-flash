@@ -5,10 +5,10 @@ from flash.core.utilities.providers import _SENTENCE_TRANSFORMERS
 SENTENCE_TRANSFORMERS_BACKBONE = FlashRegistry("backbones")
 
 if _TEXT_AVAILABLE:
-    from sentence_transformers import SentenceTransformer
+    from sentence_transformers.cross_encoder import CrossEncoder
 
     SENTENCE_TRANSFORMERS_BACKBONE += ExternalRegistry(
-        SentenceTransformer,
+        CrossEncoder,
         "backbones",
         _SENTENCE_TRANSFORMERS,
     )

@@ -33,11 +33,11 @@ from flash.core.registry import FlashRegistry
 from flash.text.embeddings.backbones import SENTENCE_TRANSFORMERS_BACKBONE
 
 
-class SentenceEmbedder(Task):
-    """The ``SentenceEmbedder`` is a :class:`~flash.Task` for generating sentence embeddings, training and
-    validation. For more details, see `embeddings`.
+class CrossEncoder(Task):
+    """The ``CrossEncoder`` is a :class:`~flash.Task` for generating sentence embeddings, training and validation.
+    For more details, see `cross_encoders`.
 
-    You can change the backbone to any question answering model from `UKPLab/sentence-transformers
+    You can change the backbone to any CrossEncoder model from `UKPLab/sentence-transformers
     <https://github.com/UKPLab/sentence-transformers>`_ using the ``backbone``
     argument.
 
@@ -64,7 +64,7 @@ class SentenceEmbedder(Task):
 
     def __init__(
         self,
-        backbone: str = "all-MiniLM-L6-v2",
+        backbone: str = "distilroberta-base",
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
         optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
         optimizer_kwargs: Optional[Dict[str, Any]] = None,
@@ -90,29 +90,6 @@ class SentenceEmbedder(Task):
             learning_rate=learning_rate,
         )
         self.model = self.backbones.get(backbone)()
-
-    def generate_embeddings(
-        self,
-        sentences: Union[str, List[str]],
-        batch_size: int = 32,
-        show_progress_bar: bool = None,
-        output_value: str = "sentence_embedding",
-        convert_to_numpy: bool = True,
-        convert_to_tensor: bool = False,
-        device: str = None,
-        normalize_embeddings: bool = False,
-    ) -> Union[List[Tensor], np.ndarray, Tensor]:
-
-        return self.model.encode(
-            sentences=sentences,
-            batch_size=batch_size,
-            show_progress_bar=show_progress_bar,
-            output_value=output_value,
-            convert_to_numpy=convert_to_numpy,
-            convert_to_tensor=convert_to_tensor,
-            device=device,
-            normalize_embeddings=normalize_embeddings,
-        )
 
     @property
     def backbone(self):
@@ -142,8 +119,7 @@ class SentenceEmbedder(Task):
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         """For the predict step, we just extract the :attr:`~flash.core.data.data_source.DefaultDataKeys.INPUT` key
         from the input and forward it to the :meth:`~flash.core.model.Task.predict_step`."""
-        batch = batch[DefaultDataKeys.INPUT]
-        return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
+        return self.model.predict(batch)
 
     def forward(self, x) -> torch.Tensor:
         """First call the backbone, then the model head."""
