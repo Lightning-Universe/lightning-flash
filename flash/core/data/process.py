@@ -360,7 +360,7 @@ class Preprocess(BasePreprocess, Properties):
             if pre_tensor_transform.transform is not None:
                 return self._apply_given_transform(sample, pre_tensor_transform.transform)
             else:
-                return sample    
+                return sample
         else:
             return self._apply_sample_transform(sample)
 
