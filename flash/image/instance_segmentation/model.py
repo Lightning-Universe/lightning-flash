@@ -11,18 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, List, Mapping, Optional, Type, Union
+from typing import Any, Dict, List, Optional
 
-import torch
 from pytorch_lightning.utilities import rank_zero_info
-from torch.optim import Optimizer
-from torch.optim.lr_scheduler import _LRScheduler
 
 from flash.core.adapter import AdapterTask
 from flash.core.data.data_pipeline import DataPipeline
-from flash.core.data.process import Serializer
 from flash.core.data.serialization import Preds
 from flash.core.registry import FlashRegistry
+from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE, SERIALIZER_TYPE
 from flash.image.instance_segmentation.backbones import INSTANCE_SEGMENTATION_HEADS
 from flash.image.instance_segmentation.data import InstanceSegmentationPostProcess, InstanceSegmentationPreprocess
 
@@ -44,10 +41,8 @@ class InstanceSegmentation(AdapterTask):
         loss: the function(s) to update the model with. Has no effect for torchvision detection models.
         metrics: The provided metrics. All metrics here will be logged to progress bar and the respective logger.
             Changing this argument currently has no effect.
-        optimizer: The optimizer to use for training. Can either be the actual class or the class name.
-        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
-        scheduler: The scheduler or scheduler class to use.
-        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
         pretrained: Whether the model from torchvision should be loaded with it's pretrained weights.
             Has no effect for custom models.
         learning_rate: The learning rate to use for training
@@ -64,12 +59,10 @@ class InstanceSegmentation(AdapterTask):
         backbone: Optional[str] = "resnet18_fpn",
         head: Optional[str] = "mask_rcnn",
         pretrained: bool = True,
-        optimizer: Type[Optimizer] = torch.optim.Adam,
-        optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
         learning_rate: float = 5e-4,
-        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
+        serializer: SERIALIZER_TYPE = None,
         **kwargs: Any,
     ):
         self.save_hyperparameters()
@@ -88,9 +81,7 @@ class InstanceSegmentation(AdapterTask):
             adapter,
             learning_rate=learning_rate,
             optimizer=optimizer,
-            optimizer_kwargs=optimizer_kwargs,
-            scheduler=scheduler,
-            scheduler_kwargs=scheduler_kwargs,
+            lr_scheduler=lr_scheduler,
             serializer=serializer or Preds(),
         )
 
