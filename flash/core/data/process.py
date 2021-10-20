@@ -364,7 +364,7 @@ class Preprocess(BasePreprocess, Properties):
         return transform(sample)
 
     def _apply_transform_on_batch(self, batch: Any, transform: Callable):
-        return transform(sample)
+        return transform(batch)
 
     def _apply_process_state_transform(
         self,
@@ -389,7 +389,10 @@ class Preprocess(BasePreprocess, Properties):
                 else:
                     return self._apply_transform_on_batch(batch, process_state_transform.transform)
             else:
-                return sample
+                if mode == "sample":
+                    return sample
+                else:
+                    return batch
         else:
             if mode == "sample":
                 return self._apply_sample_transform(sample)
