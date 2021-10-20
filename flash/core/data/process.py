@@ -354,28 +354,28 @@ class Preprocess(BasePreprocess, Properties):
 
     def pre_tensor_transform(self, sample: Any) -> Any:
         """Transforms to apply on a single object."""
-        pre_tensor_transform = self.get_state(PreTensorTransform).transform
+        pre_tensor_transform = self.get_state(PreTensorTransform)
 
         if pre_tensor_transform is not None:
-            return self._apply_given_transform(sample, pre_tensor_transform)
+            return self._apply_given_transform(sample, pre_tensor_transform.transform)
         else:
             return self._apply_sample_transform(sample)
 
     def to_tensor_transform(self, sample: Any) -> Tensor:
         """Transforms to convert single object to a tensor."""
-        to_tensor_transform = self.get_state(ToTensorTransform).transform
+        to_tensor_transform = self.get_state(ToTensorTransform)
 
         if to_tensor_transform is not None:
-            return self._apply_given_transform(sample, to_tensor_transform)
+            return self._apply_given_transform(sample, to_tensor_transform.transform)
         else:
             return self._apply_sample_transform(sample)
 
     def post_tensor_transform(self, sample: Tensor) -> Tensor:
         """Transforms to apply on a tensor."""
-        post_tensor_transform = self.get_state(PostTensorTransform).transform
+        post_tensor_transform = self.get_state(PostTensorTransform)
 
         if post_tensor_transform is not None:
-            return self._apply_given_transform(sample, post_tensor_transform)
+            return self._apply_given_transform(sample, post_tensor_transform.transform)
         else:
             return self._apply_sample_transform(sample)
 
