@@ -31,7 +31,7 @@ from flash.core.data.data_pipeline import _StageOrchestrator, DataPipeline, Data
 from flash.core.data.data_source import DataSource
 from flash.core.data.process import DefaultPreprocess, Deserializer, Postprocess, Preprocess, Serializer
 from flash.core.data.properties import ProcessState
-from flash.core.data.states import ToTensorTransform, PerBatchTransformOnDevice
+from flash.core.data.states import PerBatchTransformOnDevice, ToTensorTransform
 from flash.core.model import Task
 from flash.core.utilities.imports import _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.core.utilities.stages import RunningStage
