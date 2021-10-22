@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import inspect
+from copy import deepcopy
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Type
 
 import numpy as np
@@ -33,7 +34,7 @@ class IceVisionPathsDataSource(ImagePathsDataSource):
         return super().predict_load_data(data, dataset)
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        record = sample[DefaultDataKeys.INPUT].load()
+        record = deepcopy(sample[DefaultDataKeys.INPUT]).load()
         return from_icevision_record(record)
 
     def predict_load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
