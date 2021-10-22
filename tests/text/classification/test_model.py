@@ -113,7 +113,8 @@ def test_load_from_checkpoint_dependency_error():
     "cli_args",
     (
         ["flash", "text_classification", "--trainer.fast_dev_run", "True"],
-        ["flash", "text_classification", "--trainer.fast_dev_run", "True", "from_toxic"],
+        # TODO: update this to work with Pietro's new text data loading (separate PR)
+        # ["flash", "text_classification", "--trainer.fast_dev_run", "True", "from_toxic"],
     ),
 )
 def test_cli(cli_args):
