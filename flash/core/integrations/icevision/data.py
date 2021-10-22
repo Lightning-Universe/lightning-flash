@@ -34,7 +34,7 @@ class IceVisionPathsDataSource(ImagePathsDataSource):
         return super().predict_load_data(data, dataset)
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        record = deepcopy(sample[DefaultDataKeys.INPUT]).load()
+        record = deepcopy(sample[DefaultDataKeys.INPUT].load())
         return from_icevision_record(record)
 
     def predict_load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
