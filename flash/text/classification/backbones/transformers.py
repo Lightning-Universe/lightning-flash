@@ -14,12 +14,15 @@
 from typing import Dict, Optional, Tuple
 
 import torch
-import transformers
 from torch import nn
-from transformers import AutoConfig, AutoModel
-from transformers.modeling_outputs import BaseModelOutputWithPoolingAndCrossAttentions
 
 from flash.core.registry import FlashRegistry
+from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
+
+if _TRANSFORMERS_AVAILABLE:
+    import transformers
+    from transformers import AutoConfig, AutoModel
+    from transformers.modeling_outputs import BaseModelOutputWithPoolingAndCrossAttentions
 
 
 def _forward_avg(x: BaseModelOutputWithPoolingAndCrossAttentions) -> torch.Tensor:
