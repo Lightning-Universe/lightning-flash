@@ -30,9 +30,11 @@ from tests.helpers.utils import _SERVE_TESTING, _TEXT_TESTING
 
 
 class DummyDataset(torch.utils.data.Dataset):
+    
     def __getitem__(self, index):
         return {
             "input_ids": torch.randint(1000, size=(100,)),
+            "attention_mask": torch.ones(size=(100,)),
             DefaultDataKeys.TARGET: torch.randint(2, size=(1,)).item(),
         }
 
@@ -42,61 +44,139 @@ class DummyDataset(torch.utils.data.Dataset):
 
 # ==============================
 
-TEST_BACKBONE = "prajjwal1/bert-tiny"  # super small model for testing
+TEST_HF_BACKBONE = "prajjwal1/bert-tiny"  # super small model for testing
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_init_train(tmpdir):
-    model = TextClassifier(2, TEST_BACKBONE)
-    train_dl = torch.utils.data.DataLoader(DummyDataset())
+@pytest.mark.parametrize("strategy", ("avg", "cls_token", "pooler_output"))
+@pytest.mark.parametrize("pretrained", (True, False))
+@pytest.mark.parametrize("vocab_size", (None, 1000))
+def test_hf_backbones_init_train(tmpdir, strategy, pretrained, vocab_size):
+    model = TextClassifier(
+        num_classes=2,
+        backbone=TEST_HF_BACKBONE,
+        pretrained=pretrained,
+        backbone_kwargs={"strategy": strategy, "vocab_size": vocab_size},
+    )
+    dl = torch.utils.data.DataLoader(DummyDataset())
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    trainer.fit(model, train_dl)
+    trainer.fit(model, train_dataloader=dl, val_dataloaders=dl)
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.parametrize("strategy", ("avg", "cls_token", "pooler_output"))
+@pytest.mark.parametrize("pretrained", (True, False))
+@pytest.mark.parametrize("vocab_size", (None, 1000))
+@pytest.mark.parametrize("finetune_strategy", ("no_freeze", "freeze"))
+def test_hf_backbones_finetune(tmpdir, strategy, pretrained, vocab_size, finetune_strategy):
+    model = TextClassifier(
+        num_classes=2,
+        backbone=TEST_HF_BACKBONE,
+        pretrained=pretrained,
+        backbone_kwargs={"strategy": strategy, "vocab_size": vocab_size},
+    )
+    dl = torch.utils.data.DataLoader(DummyDataset())
+    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
+    trainer.finetune(model, train_dataloader=dl, val_dataloaders=dl, strategy=finetune_strategy)
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.parametrize("strategy", ("avg", "cls_token", "pooler_output"))
+@pytest.mark.parametrize("pretrained", (True, False))
+@pytest.mark.parametrize("vocab_size", (None, 1000))
+def test_hf_backbones_test(tmpdir, strategy, pretrained, vocab_size):
+    model = TextClassifier(
+        num_classes=2,
+        backbone=TEST_HF_BACKBONE,
+        pretrained=pretrained,
+        backbone_kwargs={"strategy": strategy, "vocab_size": vocab_size},
+    )
+    dl = torch.utils.data.DataLoader(DummyDataset())
+    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
+    trainer.test(model, dataloaders=dl)
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.parametrize("strategy", ("avg", "cls_token", "pooler_output"))
+@pytest.mark.parametrize("pretrained", (True, False))
+@pytest.mark.parametrize("vocab_size", (None, 1000))
+def test_hf_backbones_predict(tmpdir, strategy, pretrained, vocab_size):
+    model = TextClassifier(
+        num_classes=2,
+        backbone=TEST_HF_BACKBONE,
+        pretrained=pretrained,
+        backbone_kwargs={"strategy": strategy, "vocab_size": vocab_size},
+    )
+    dl = torch.utils.data.DataLoader(DummyDataset())
+    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
+    trainer.predict(model, dataloaders=dl)
 
 
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_jit(tmpdir):
-    sample_input = {"input_ids": torch.randint(1000, size=(1, 100))}
+@pytest.mark.parametrize("strategy", ("avg", "cls_token", "pooler_output"))
+@pytest.mark.parametrize("pretrained", (True, False))
+@pytest.mark.parametrize("vocab_size", (None, 1000))
+def test_hf_backbones_jit(tmpdir, strategy, pretrained, vocab_size):
     path = os.path.join(tmpdir, "test.pt")
+    model = TextClassifier(
+        num_classes=2,
+        backbone=TEST_HF_BACKBONE,
+        pretrained=pretrained,
+        backbone_kwargs={"strategy": strategy, "vocab_size": vocab_size},
+    )
+    dl = torch.utils.data.DataLoader(DummyDataset())
 
-    model = TextClassifier(2, TEST_BACKBONE)
     model.eval()
 
     # Huggingface bert model only supports `torch.jit.trace` with `strict=False`
+    sample_input = next(iter(dl))
     model = torch.jit.trace(model, sample_input, strict=False)
 
     torch.jit.save(model, path)
     model = torch.jit.load(path)
 
-    out = model(sample_input)["logits"]
+    out = model(sample_input)
     assert isinstance(out, torch.Tensor)
     assert out.shape == torch.Size([1, 2])
 
 
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_init_embeddings():
-    m1 = TextClassifier(num_classes=2, backbone=TEST_BACKBONE, pretrained=True)
-    m2 = TextClassifier(num_classes=2, backbone=TEST_BACKBONE, pretrained=False)
-    m3 = TextClassifier(num_classes=2, backbone=TEST_BACKBONE, pretrained=False, vocab_size=10)
+def test_hf_backbones_pretrained():
+    m1 = TextClassifier(num_classes=2, backbone=TEST_HF_BACKBONE, pretrained=True)
+    m2 = TextClassifier(num_classes=2, backbone=TEST_HF_BACKBONE, pretrained=False)
 
-    assert m1.model.bert.embeddings.word_embeddings != m2.model.bert.embeddings.word_embeddings
-    assert (
-        m1.model.bert.embeddings.word_embeddings.num_embeddings
-        == m2.model.bert.embeddings.word_embeddings.num_embeddings
+    for (_, param1), (_, param2) in zip(m1.backbone.named_parameters(), m2.backbone.named_parameters()):
+        assert torch.all(param1 != param2)
+
+
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.parametrize("pretrained", (True, False))
+def test_hf_backbones_reinit_word_embeddings(pretrained):
+    m1 = TextClassifier(num_classes=2, backbone=TEST_HF_BACKBONE, pretrained=pretrained)
+    m2 = TextClassifier(
+        num_classes=2, backbone=TEST_HF_BACKBONE, pretrained=pretrained, backbone_kwargs={"vocab_size": 10}
     )
-    assert m1.model.bert.embeddings.word_embeddings != m3.model.bert.embeddings.word_embeddings
-    assert (
-        m1.model.bert.embeddings.word_embeddings.num_embeddings
-        != m3.model.bert.embeddings.word_embeddings.num_embeddings
-    )
+
+    for (name1, param1), (name2, param2) in zip(m1.backbone.named_parameters(), m2.backbone.named_parameters()):
+        print(name1, name2)
+        if "word_embeddings" in name1:
+            assert param1.shape != param2.shape
+            continue
+        if pretrained:
+            # when pretrained, all other params should be equal
+            assert torch.all(param1 == param2)
 
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
-    model = TextClassifier(2, TEST_BACKBONE)
+    model = TextClassifier(2, TEST_HF_BACKBONE)
     # TODO: Currently only servable once a preprocess and postprocess have been attached
-    model._preprocess = TextClassificationPreprocess(backbone=TEST_BACKBONE)
+    model._preprocess = TextClassificationPreprocess(backbone=TEST_HF_BACKBONE)
     model._postprocess = TextClassificationPostprocess()
     model.eval()
     model.serve()

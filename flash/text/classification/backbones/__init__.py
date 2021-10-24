@@ -19,16 +19,15 @@
 from flash.core.registry import ExternalRegistry, FlashRegistry
 from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
 from flash.core.utilities.providers import _HUGGINGFACE
+from flash.text.classification.backbones.transformers import _transformer
 
-if _TRANSFORMERS_AVAILABLE:
-    from transformers import AutoModelForSequenceClassification
 
 TEXT_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
 
 if _TRANSFORMERS_AVAILABLE:
     HUGGINGFACE_TEXT_CLASSIFIER_BACKBONES = ExternalRegistry(
-        getter=AutoModelForSequenceClassification.from_pretrained,
-        name="backbones",
+        getter=_transformer,
+        name="transformers",
         providers=_HUGGINGFACE,
     )
     TEXT_CLASSIFIER_BACKBONES += HUGGINGFACE_TEXT_CLASSIFIER_BACKBONES

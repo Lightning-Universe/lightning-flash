@@ -11,9 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union, Tuple
+from types import FunctionType
 
 import torch
+from torch import nn
 from pytorch_lightning import Callback
 
 from flash.core.classification import ClassificationTask, Labels
@@ -26,6 +28,19 @@ from flash.text.ort_callback import ORTCallback
 
 if _TRANSFORMERS_AVAILABLE:
     from transformers.modeling_outputs import Seq2SeqSequenceClassifierOutput, SequenceClassifierOutput
+
+
+class Model(torch.nn.Module):
+    def __init__(self, backbone: nn.Module, head: Optional[nn.Module]):
+        super().__init__()
+        self.backbone = backbone
+        self.head = head
+
+    def forward(self, x):
+        x = self.backbone(x)
+        if self.head is None:
+            return x
+        return self.head(x)
 
 
 class TextClassifier(ClassificationTask):
@@ -55,23 +70,40 @@ class TextClassifier(ClassificationTask):
     def __init__(
         self,
         num_classes: int,
-        backbone: str = "prajjwal1/bert-medium",
-        vocab_size: Optional[int] = None,
-        pretrained: Optional[bool] = True,
-        loss_fn: LOSS_FN_TYPE = None,
+        head: Optional[Union[FunctionType, nn.Module]] = None,
+        backbone: Union[str, Tuple[nn.Module, int]] = "prajjwal1/bert-tiny",
+        backbone_kwargs: Optional[Dict] = None,
+        pretrained: bool = True,
+        loss_fn: Optional[LOSS_FN_TYPE] = None,
         optimizer: OPTIMIZER_TYPE = "Adam",
-        lr_scheduler: LR_SCHEDULER_TYPE = None,
-        metrics: METRICS_TYPE = None,
+        lr_scheduler: Optional[LR_SCHEDULER_TYPE] = None,
+        metrics: Optional[METRICS_TYPE] = None,
         learning_rate: float = 1e-2,
         multi_label: bool = False,
-        serializer: SERIALIZER_TYPE = None,
+        serializer: Optional[SERIALIZER_TYPE] = None,
         enable_ort: bool = False,
     ):
         self.save_hyperparameters()
+        
+        self.enable_ort = enable_ort
+        self.pretrained = pretrained
+
+        if not backbone_kwargs:
+            backbone_kwargs = {}
+        
+        if isinstance(backbone, tuple):
+            backbone, num_features = backbone
+        else:
+            backbone, num_features = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
+
+        head = head(num_features, num_classes) if isinstance(head, FunctionType) else head
+        head = head or nn.Sequential(
+            nn.Linear(num_features, num_classes),
+        )
 
         super().__init__(
             num_classes=num_classes,
-            model=None,
+            model=Model(backbone=backbone, head=head),
             loss_fn=loss_fn,
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
@@ -80,59 +112,13 @@ class TextClassifier(ClassificationTask):
             multi_label=multi_label,
             serializer=serializer or Labels(multi_label=multi_label),
         )
-        self.enable_ort = enable_ort
-        self.model = self.backbones.get(backbone)(num_labels=num_classes)
-        self.pretrained = pretrained
-
-        if self.pretrained:
-            if vocab_size:
-                print("`pretrained=True`, ignoring `vocab_size` argument.")
-            self.vocab_size = self.model.config.vocab_size
-
-        else:
-            if vocab_size:
-                self.vocab_size = vocab_size
-                print(f"Re-initialize word embeddings layer with `vocab_size={self.vocab_size}`")
-            else:
-                self.vocab_size = self.model.config.vocab_size
-                print(f"Re-initialize word embeddings layer with the original `vocab_size={self.vocab_size}`")
-            self._init_embeddings()
-
-        self.save_hyperparameters()
 
     @property
     def backbone(self):
-        return self.model.base_model
-
-    def _init_embeddings(self):
-        num_embeddings = self.model.config.vocab_size
-        initializer_range = self.model.config.initializer_range
-
-        for name, module in self.model.named_modules():
-            # find the word embedding layer
-            if isinstance(module, torch.nn.Embedding) and module.num_embeddings == num_embeddings:
-                embedding_module_name = name
-                embedding_dim = module.embedding_dim
-                padding_idx = module.padding_idx
-                break
-        transformer_type, _, name = embedding_module_name.split(".")
-        new_embedding_module = torch.nn.Embedding(self.vocab_size, embedding_dim, padding_idx)
-        new_embedding_module.weight.data.normal_(mean=0.0, std=initializer_range)
-
-        getattr(self.model, transformer_type).embeddings.add_module(name, new_embedding_module)
+        return self.model.backbone
 
     def forward(self, batch: Dict[str, torch.Tensor]):
-        return self.model(input_ids=batch.get("input_ids", None), attention_mask=batch.get("attention_mask", None))
-
-    def to_loss_format(self, x) -> torch.Tensor:
-        if isinstance(x, (SequenceClassifierOutput, Seq2SeqSequenceClassifierOutput)):
-            x = x.logits
-        return super().to_loss_format(x)
-
-    def to_metrics_format(self, x) -> torch.Tensor:
-        if isinstance(x, (SequenceClassifierOutput, Seq2SeqSequenceClassifierOutput)):
-            x = x.logits
-        return super().to_metrics_format(x)
+        return self.model(batch)
 
     def step(self, batch, batch_idx, metrics) -> dict:
         target = batch.pop(DefaultDataKeys.TARGET)
@@ -142,15 +128,15 @@ class TextClassifier(ClassificationTask):
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         return self(batch)
 
+    def configure_callbacks(self) -> List[Callback]:
+        callbacks = super().configure_callbacks() or []
+        if self.enable_ort:
+            callbacks.append(ORTCallback())
+        return callbacks
+
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]):
         """This function is used only for debugging usage with CI."""
         if self.hparams.multi_label:
             assert history[-1]["val_f1"] > 0.40, history[-1]["val_f1"]
         else:
             assert history[-1]["val_accuracy"] > 0.70, history[-1]["val_accuracy"]
-
-    def configure_callbacks(self) -> List[Callback]:
-        callbacks = super().configure_callbacks() or []
-        if self.enable_ort:
-            callbacks.append(ORTCallback())
-        return callbacks
