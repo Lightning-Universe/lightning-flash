@@ -18,6 +18,7 @@ import transformers
 from torch import nn
 from transformers import AutoConfig, AutoModel
 from transformers.modeling_outputs import BaseModelOutputWithPoolingAndCrossAttentions
+
 from flash.core.registry import FlashRegistry
 
 
@@ -72,7 +73,7 @@ class Transformer(nn.Module):
         return self._sentence_representation(x)
 
     def _init_embeddings(self):
-        """Re-initializes the embedding layer"""
+        """Re-initializes the embedding layer."""
         num_embeddings = self.model.config.vocab_size
         initializer_range = self.model.config.initializer_range
 
@@ -87,7 +88,7 @@ class Transformer(nn.Module):
         new_embedding_module = torch.nn.Embedding(self.vocab_size, embedding_dim, padding_idx)
         new_embedding_module.weight.data.normal_(mean=0.0, std=initializer_range)
 
-        self.model.embeddings.add_module(name, new_embedding_module)        
+        self.model.embeddings.add_module(name, new_embedding_module)
 
 
 def _transformer(

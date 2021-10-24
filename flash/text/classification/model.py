@@ -11,12 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, List, Optional, Union, Tuple
 from types import FunctionType
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import torch
-from torch import nn
 from pytorch_lightning import Callback
+from torch import nn
 
 from flash.core.classification import ClassificationTask, Labels
 from flash.core.data.data_source import DefaultDataKeys
@@ -84,13 +84,13 @@ class TextClassifier(ClassificationTask):
         enable_ort: bool = False,
     ):
         self.save_hyperparameters()
-        
+
         self.enable_ort = enable_ort
         self.pretrained = pretrained
 
         if not backbone_kwargs:
             backbone_kwargs = {}
-        
+
         if isinstance(backbone, tuple):
             backbone, num_features = backbone
         else:
