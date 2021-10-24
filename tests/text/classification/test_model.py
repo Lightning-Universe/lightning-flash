@@ -30,7 +30,6 @@ from tests.helpers.utils import _SERVE_TESTING, _TEXT_TESTING
 
 
 class DummyDataset(torch.utils.data.Dataset):
-    
     def __getitem__(self, index):
         return {
             "input_ids": torch.randint(1000, size=(100,)),
