@@ -87,7 +87,7 @@ class Transformer(nn.Module):
         new_embedding_module = torch.nn.Embedding(self.vocab_size, embedding_dim, padding_idx)
         new_embedding_module.weight.data.normal_(mean=0.0, std=initializer_range)
 
-        self.model.embeddings.add_module(name, new_embedding_module)        
+        self.model.embeddings.add_module(name, new_embedding_module)
 
 
 def _transformer(

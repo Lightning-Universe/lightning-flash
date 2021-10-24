@@ -21,13 +21,9 @@ from pytorch_lightning import Callback
 from flash.core.classification import ClassificationTask, Labels
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, SERIALIZER_TYPE
 from flash.text.classification.backbones import TEXT_CLASSIFIER_BACKBONES
 from flash.text.ort_callback import ORTCallback
-
-if _TRANSFORMERS_AVAILABLE:
-    from transformers.modeling_outputs import Seq2SeqSequenceClassifierOutput, SequenceClassifierOutput
 
 
 class Model(torch.nn.Module):
@@ -84,13 +80,13 @@ class TextClassifier(ClassificationTask):
         enable_ort: bool = False,
     ):
         self.save_hyperparameters()
-        
+
         self.enable_ort = enable_ort
         self.pretrained = pretrained
 
         if not backbone_kwargs:
             backbone_kwargs = {}
-        
+
         if isinstance(backbone, tuple):
             backbone, num_features = backbone
         else:
