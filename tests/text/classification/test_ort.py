@@ -25,7 +25,7 @@ from flash.text import TextClassifier
 from flash.text.ort_callback import ORTCallback
 from tests.helpers.boring_model import BoringModel
 from tests.helpers.utils import _TEXT_TESTING
-from tests.text.classification.test_model import DummyDataset, TEST__HF_BACKBONE
+from tests.text.classification.test_model import DummyDataset, TEST_HF_BACKBONE
 
 if _TORCH_ORT_AVAILABLE:
     from torch_ort import ORTModule
@@ -39,7 +39,7 @@ def test_init_train_enable_ort(tmpdir):
         def on_train_start(self, trainer: Trainer, pl_module: LightningModule) -> None:
             assert isinstance(pl_module.model, ORTModule)
 
-    model = TextClassifier(2, TEST__HF_BACKBONE, enable_ort=True)
+    model = TextClassifier(2, TEST_HF_BACKBONE, enable_ort=True)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True, callbacks=TestCallback())
     trainer.fit(
         model,
