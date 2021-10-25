@@ -30,14 +30,14 @@ from flash.core.data.process import Serializer
 from flash.core.finetuning import FlashBaseFinetuning
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
-from flash.text.embeddings.backbones import SENTENCE_TRANSFORMERS_BACKBONE
+from flash.text.nli.backbones import SENTENCE_TRANSFORMERS_BACKBONE
 
 
-class CrossEncoder(Task):
-    """The ``CrossEncoder`` is a :class:`~flash.Task` for generating sentence embeddings, training and validation.
-    For more details, see `cross_encoders`.
+class NLI(Task):
+    """The ``SentenceEmbedder`` is a :class:`~flash.Task` for generating sentence embeddings, training and
+    validation. For more details, see `embeddings`.
 
-    You can change the backbone to any CrossEncoder model from `UKPLab/sentence-transformers
+    You can change the backbone to any question answering model from `UKPLab/sentence-transformers
     <https://github.com/UKPLab/sentence-transformers>`_ using the ``backbone``
     argument.
 
@@ -80,48 +80,59 @@ class CrossEncoder(Task):
         warnings.simplefilter("ignore")
         # set os environ variable for multiprocesses
         os.environ["PYTHONWARNINGS"] = "ignore"
-        super().__init__(
-            loss_fn=loss_fn,
-            optimizer=optimizer,
-            optimizer_kwargs=optimizer_kwargs,
-            scheduler=scheduler,
-            scheduler_kwargs=scheduler_kwargs,
-            metrics=metrics,
-            learning_rate=learning_rate,
-        )
         self.model = self.backbones.get(backbone)()
+        self.labels=["contradiction","entailment","neutral"]
+
+    def generate_embeddings(
+        self,
+        sentences: Union[str, List[str]],
+        batch_size: int = 32,
+        show_progress_bar: bool = None,
+        output_value: str = "sentence_embedding",
+        convert_to_numpy: bool = True,
+        convert_to_tensor: bool = False,
+        device: str = None,
+        normalize_embeddings: bool = False,
+    ) -> Union[List[Tensor], np.ndarray, Tensor]:
+
+        return self.model.encode(
+            sentences=sentences,
+            batch_size=batch_size,
+            show_progress_bar=show_progress_bar,
+            output_value=output_value,
+            convert_to_numpy=convert_to_numpy,
+            convert_to_tensor=convert_to_tensor,
+            device=device,
+            normalize_embeddings=normalize_embeddings,
+        )
 
     @property
     def backbone(self):
         return self.model.base_model
+    def forward(self, batch: Any) -> Any:
+        pass
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         """For the training step, we just extract the :attr:`~flash.core.data.data_source.DefaultDataKeys.INPUT` and
         :attr:`~flash.core.data.data_source.DefaultDataKeys.TARGET` keys from the input and forward them to the
         :meth:`~flash.core.model.Task.training_step`."""
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
-        return super().training_step(batch, batch_idx)
-
+        pass
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
         """For the validation step, we just extract the :attr:`~flash.core.data.data_source.DefaultDataKeys.INPUT` and
         :attr:`~flash.core.data.data_source.DefaultDataKeys.TARGET` keys from the input and forward them to the
         :meth:`~flash.core.model.Task.validation_step`."""
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
-        return super().validation_step(batch, batch_idx)
+        pass
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
         """For the test step, we just extract the :attr:`~flash.core.data.data_source.DefaultDataKeys.INPUT` and
         :attr:`~flash.core.data.data_source.DefaultDataKeys.TARGET` keys from the input and forward them to the
         :meth:`~flash.core.model.Task.test_step`."""
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
-        return super().test_step(batch, batch_idx)
+        pass
 
-    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+    def predict_step(self, batch: Any) -> Any:
         """For the predict step, we just extract the :attr:`~flash.core.data.data_source.DefaultDataKeys.INPUT` key
         from the input and forward it to the :meth:`~flash.core.model.Task.predict_step`."""
-        return self.model.predict(batch)
+        predictions=self.model.predict(batch)
+        return self.labels[np.argmax(predictions)]
 
-    def forward(self, x) -> torch.Tensor:
-        """First call the backbone, then the model head."""
-        x = self.backbone(x)
-        return self.head(x)
+
