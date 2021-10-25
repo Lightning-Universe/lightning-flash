@@ -49,7 +49,7 @@ from flash.core.data.properties import ProcessState
 from flash.core.optimizers.optimizers import _OPTIMIZERS_REGISTRY
 from flash.core.optimizers.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.registry import FlashRegistry
-from flash.core.serve import Composition
+from flash.core.serve.composition import Composition
 from flash.core.utilities import providers
 from flash.core.utilities.apply_func import get_callable_dict
 from flash.core.utilities.imports import requires
