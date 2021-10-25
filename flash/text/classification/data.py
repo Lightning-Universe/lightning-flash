@@ -83,7 +83,7 @@ class TextDataSource(DataSource):
 
     @staticmethod
     def _multilabel_target(targets: List[str], element: Dict[str, Any]) -> Dict[str, Any]:
-        targets = [element.pop(target) for target in targets]
+        targets = [int(element.pop(target)) for target in targets]
         element[DefaultDataKeys.TARGET] = targets
         return element
 
@@ -132,11 +132,14 @@ class TextDataSource(DataSource):
                 # rename label column
                 hf_dataset = hf_dataset.rename_column(target, DefaultDataKeys.TARGET)
 
+        # remove extra columns
+        extra_columns = set(hf_dataset.column_names) - {input, DefaultDataKeys.TARGET}
+        hf_dataset = hf_dataset.remove_columns(extra_columns)
+
         # tokenize
-        hf_dataset = hf_dataset.map(partial(self._tokenize_fn, input=input), batched=True)
+        hf_dataset = hf_dataset.map(partial(self._tokenize_fn, input=input), batched=True, remove_columns=[input])
 
         # set format
-        hf_dataset = hf_dataset.remove_columns([input])  # just leave the numerical columns
         hf_dataset.set_format("torch")
 
         return hf_dataset
