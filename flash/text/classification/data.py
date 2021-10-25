@@ -269,11 +269,7 @@ class TextClassificationPreprocess(Preprocess):
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
-        return {
-            **self.transforms,
-            # "backbone": self.backbone,
-            # "backbone_kwargs": self.max_length,
-        }
+        return {**self.transforms}
 
     @classmethod
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
