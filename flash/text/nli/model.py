@@ -81,7 +81,7 @@ class NLI(Task):
         # set os environ variable for multiprocesses
         os.environ["PYTHONWARNINGS"] = "ignore"
         self.model = self.backbones.get(backbone)()
-        self.labels=["contradiction","entailment","neutral"]
+        self.labels = ["contradiction", "entailment", "neutral"]
 
     def generate_embeddings(
         self,
@@ -109,6 +109,7 @@ class NLI(Task):
     @property
     def backbone(self):
         return self.model.base_model
+
     def forward(self, batch: Any) -> Any:
         pass
 
@@ -117,6 +118,7 @@ class NLI(Task):
         :attr:`~flash.core.data.data_source.DefaultDataKeys.TARGET` keys from the input and forward them to the
         :meth:`~flash.core.model.Task.training_step`."""
         pass
+
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
         """For the validation step, we just extract the :attr:`~flash.core.data.data_source.DefaultDataKeys.INPUT` and
         :attr:`~flash.core.data.data_source.DefaultDataKeys.TARGET` keys from the input and forward them to the
@@ -132,7 +134,5 @@ class NLI(Task):
     def predict_step(self, batch: Any) -> Any:
         """For the predict step, we just extract the :attr:`~flash.core.data.data_source.DefaultDataKeys.INPUT` key
         from the input and forward it to the :meth:`~flash.core.model.Task.predict_step`."""
-        predictions=self.model.predict(batch)
+        predictions = self.model.predict(batch)
         return self.labels[np.argmax(predictions)]
-
-
