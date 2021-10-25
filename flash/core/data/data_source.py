@@ -71,7 +71,7 @@ def has_file_allowed_extension(filename: str, extensions: Tuple[str, ...]) -> bo
     Returns:
         bool: True if the filename ends with one of given extensions
     """
-    return filename.lower().endswith(extensions)
+    return str(filename).lower().endswith(extensions)
 
 
 # Credit to the PyTorchVision Team:

@@ -18,7 +18,7 @@ from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources, FiftyOneDataSource
 from flash.core.data.process import Preprocess
 from flash.core.integrations.icevision.data import IceVisionParserDataSource, IceVisionPathsDataSource
-from flash.core.integrations.icevision.transforms import default_transforms
+from flash.core.integrations.icevision.transforms import default_transforms, from_icevision_record
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _ICEVISION_AVAILABLE, lazy_import, requires
 
 SampleCollection = None
@@ -125,7 +125,7 @@ class ObjectDetectionFiftyOneDataSource(IceVisionPathsDataSource, FiftyOneDataSo
 
         parser = FiftyOneParser(data, class_map, self.label_field, self.iscrowd)
         records = parser.parse(data_splitter=SingleSplitSplitter())
-        return [{DefaultDataKeys.INPUT: record} for record in records[0]]
+        return [from_icevision_record(record) for record in records[0]]
 
     @staticmethod
     @requires("fiftyone")

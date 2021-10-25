@@ -30,7 +30,7 @@ datamodule = ObjectDetectionData.from_coco(
 model = ObjectDetector(head="efficientdet", backbone="d0", num_classes=datamodule.num_classes, image_size=128)
 
 # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(max_epochs=1)
+trainer = flash.Trainer(max_epochs=1, limit_train_batches=1, limit_val_batches=1)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Detect objects in a few images!
