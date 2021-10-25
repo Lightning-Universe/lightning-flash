@@ -46,7 +46,8 @@ from flash.core.data.process import (
     SerializerMapping,
 )
 from flash.core.data.properties import ProcessState
-from flash.core.optimizers import _OPTIMIZERS_REGISTRY, _SCHEDULERS_REGISTRY
+from flash.core.optimizers.optimizers import _OPTIMIZERS_REGISTRY
+from flash.core.optimizers.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.registry import FlashRegistry
 from flash.core.serve import Composition
 from flash.core.utilities import providers
