@@ -38,7 +38,7 @@ try:
 except ModuleNotFoundError:
 
     about = _load_py_module("__about__.py")
-    providers = _load_py_module("core/utilities/providers.py")
+    providers = _load_py_module("flash/core/utilities/providers.py")
 
 SPHINX_MOCK_REQUIREMENTS = int(os.environ.get("SPHINX_MOCK_REQUIREMENTS", True))
 
