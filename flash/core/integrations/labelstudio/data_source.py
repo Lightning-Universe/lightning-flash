@@ -13,6 +13,10 @@ from flash.core.utilities.stages import RunningStage
 
 if _TORCHVISION_AVAILABLE:
     from torchvision.datasets.folder import default_loader
+
+if _TEXT_AVAILABLE:
+    from transformers import AutoTokenizer
+
 DATA_TYPE = TypeVar("DATA_TYPE")
 
 
@@ -200,8 +204,6 @@ class LabelStudioTextClassificationDataSource(LabelStudioDataSource):
     def __init__(self, backbone=None, max_length=128):
         super().__init__()
         if backbone:
-            if _TEXT_AVAILABLE:
-                from transformers import AutoTokenizer
             self.backbone = backbone
             self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
             self.max_length = max_length
