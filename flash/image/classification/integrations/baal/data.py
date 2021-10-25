@@ -20,8 +20,8 @@ from pytorch_lightning import LightningDataModule
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader, Dataset, random_split
 
-from flash import DataModule
 from flash.core.data.auto_dataset import BaseAutoDataset
+from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipeline
 from flash.core.utilities.imports import _BAAL_AVAILABLE, requires
 
