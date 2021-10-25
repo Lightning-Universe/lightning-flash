@@ -173,7 +173,7 @@ def test_hf_backbones_reinit_word_embeddings(pretrained):
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
-    model = TextClassifier(2, TEST_HF_BACKBONE)
+    model = TextClassifier(num_classes=2, backbone=TEST_HF_BACKBONE)
     # TODO: Currently only servable once a preprocess and postprocess have been attached
     model._preprocess = TextClassificationPreprocess(backbone=TEST_HF_BACKBONE)
     model._postprocess = TextClassificationPostprocess()

@@ -66,10 +66,10 @@ class TextClassifier(ClassificationTask):
     def __init__(
         self,
         num_classes: int,
-        head: Optional[Union[FunctionType, nn.Module]] = None,
         backbone: Union[str, Tuple[nn.Module, int]] = "prajjwal1/bert-tiny",
         backbone_kwargs: Optional[Dict] = None,
         pretrained: bool = True,
+        head: Optional[Union[FunctionType, nn.Module]] = None,
         loss_fn: Optional[LOSS_FN_TYPE] = None,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: Optional[LR_SCHEDULER_TYPE] = None,
