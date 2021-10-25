@@ -21,7 +21,7 @@ from PIL import Image
 from pytorch_lightning import seed_everything
 from torch.utils.data._utils.collate import default_collate
 
-from flash import _PACKAGE_ROOT, FlashDataset, InputTransform
+from flash import _PACKAGE_ROOT, Input, InputTransform
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import download_data
@@ -43,17 +43,17 @@ download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", f"{
 
 
 #############################################################################################
-#                         Step 1 / 2: Implement a FlashDataset                              #
+#                         Step 1 / 2: Implement a Input                              #
 #                                                                                           #
-# A `FlashDataset` is a state-aware (c.f training, validating, testing and predicting)      #
+# A `Input` is a state-aware (c.f training, validating, testing and predicting)      #
 # dataset.                                                                                  #
 # and with specialized hooks (c.f load_data, load_sample) for each of those stages.         #
 # The hook resolution for the function is done in the following way.                        #
 # If {state}_load_data is implemented then it would be used exclusively for that stage.     #
 # Otherwise, it would use the load_data function.                                           #
-# If you use FlashDataset outside of Flash, the only requirements are to return a Sequence  #
-# from load_data with FlashDataset or an Iterable with FlashIterableDataset.                #
-# When using FlashDataset with Flash Tasks, the model expects the `load_sample` to return a #
+# If you use Input outside of Flash, the only requirements are to return a Sequence  #
+# from load_data with Input or an Iterable with FlashIterableDataset.                #
+# When using Input with Flash Tasks, the model expects the `load_sample` to return a #
 #  dictionary with `DefaultDataKeys` as its keys (c.f `input`, `target`, metadata)          #
 #                                                                                           #
 #############################################################################################
@@ -64,7 +64,7 @@ VAL_FOLDERS = [os.path.join(FOLDER_PATH, "ants"), os.path.join(FOLDER_PATH, "bee
 PREDICT_FOLDER = os.path.join(FOLDER_PATH, "ants")
 
 
-class MultipleFoldersImageDataset(FlashDataset):
+class MultipleImageFoldersInput(Input):
     def load_data(self, folders: List[str]) -> List[Dict[DefaultDataKeys, Any]]:
         if self.training:
             self.num_classes = len(folders)
@@ -84,9 +84,9 @@ class MultipleFoldersImageDataset(FlashDataset):
         return [{DefaultDataKeys.INPUT: os.path.join(predict_folder, p)} for p in os.listdir(predict_folder)]
 
 
-train_dataset = MultipleFoldersImageDataset.from_train_data(TRAIN_FOLDERS)
-val_dataset = MultipleFoldersImageDataset.from_val_data(VAL_FOLDERS)
-predict_dataset = MultipleFoldersImageDataset.from_predict_data(PREDICT_FOLDER)
+train_dataset = MultipleImageFoldersInput.from_train_data(TRAIN_FOLDERS)
+val_dataset = MultipleImageFoldersInput.from_val_data(VAL_FOLDERS)
+predict_dataset = MultipleImageFoldersInput.from_predict_data(PREDICT_FOLDER)
 
 
 #############################################################################################
@@ -117,13 +117,13 @@ class ImageRandomRotationInputTransform(BaseImageInputTransform):
 
 # Register your transform within the Flash Dataset registry
 # Note: Registries can be shared by multiple dataset.
-MultipleFoldersImageDataset.register_input_transform("base", BaseImageInputTransform)
-MultipleFoldersImageDataset.register_input_transform("random_rotation", ImageRandomRotationInputTransform)
-MultipleFoldersImageDataset.register_input_transform(
+MultipleImageFoldersInput.register_input_transform("base", BaseImageInputTransform)
+MultipleImageFoldersInput.register_input_transform("random_rotation", ImageRandomRotationInputTransform)
+MultipleImageFoldersInput.register_input_transform(
     "random_90_def_rotation", partial(ImageRandomRotationInputTransform, rotation=90)
 )
 
-train_dataset = MultipleFoldersImageDataset.from_train_data(
+train_dataset = MultipleImageFoldersInput.from_train_data(
     TRAIN_FOLDERS,
     transform=("random_rotation", {"rotation": 45}),
 )
@@ -142,7 +142,7 @@ print(train_dataset.transform)
 #    },
 # )
 
-train_dataset = MultipleFoldersImageDataset.from_train_data(
+train_dataset = MultipleImageFoldersInput.from_train_data(
     TRAIN_FOLDERS,
     transform="random_90_def_rotation",
 )
@@ -161,7 +161,7 @@ print(train_dataset.transform)
 #    },
 # )
 
-val_dataset = MultipleFoldersImageDataset.from_val_data(VAL_FOLDERS, transform="base")
+val_dataset = MultipleImageFoldersInput.from_val_data(VAL_FOLDERS, transform="base")
 print(val_dataset.transform)
 # Out:
 # ImageClassificationRandomRotationTransform(
@@ -183,22 +183,22 @@ print(train_dataset[0])
 #############################################################################################
 #                           Step 4 / 5: Create a DataModule                                 #
 #                                                                                           #
-# The `DataModule` class is a collection of FlashDataset and you can pass them directly to  #
+# The `DataModule` class is a collection of Input and you can pass them directly to  #
 # its init function.                                                                        #
 #                                                                                           #
 #############################################################################################
 
 
 datamodule = DataModule(
-    train_dataset=MultipleFoldersImageDataset.from_train_data(TRAIN_FOLDERS, transform="random_rotation"),
-    val_dataset=MultipleFoldersImageDataset.from_val_data(VAL_FOLDERS, transform="base"),
-    predict_dataset=MultipleFoldersImageDataset.from_predict_data(PREDICT_FOLDER, transform="base"),
+    train_dataset=MultipleImageFoldersInput.from_train_data(TRAIN_FOLDERS, transform="random_rotation"),
+    val_dataset=MultipleImageFoldersInput.from_val_data(VAL_FOLDERS, transform="base"),
+    predict_dataset=MultipleImageFoldersInput.from_predict_data(PREDICT_FOLDER, transform="base"),
     batch_size=2,
 )
 
 
-assert isinstance(datamodule.train_dataset, FlashDataset)
-assert isinstance(datamodule.predict_dataset, FlashDataset)
+assert isinstance(datamodule.train_dataset, Input)
+assert isinstance(datamodule.predict_dataset, Input)
 
 # The ``num_classes`` value was set line 89.
 assert datamodule.train_dataset.num_classes == 2
@@ -220,7 +220,7 @@ print(datamodule.train_dataset[0])
 #   <DefaultDataKeys.METADATA: 'metadata'>: (500, 375)
 # }
 
-assert isinstance(datamodule.predict_dataset, FlashDataset)
+assert isinstance(datamodule.predict_dataset, Input)
 print(datamodule.predict_dataset[0])
 # out:
 # {
@@ -242,7 +242,7 @@ print(batch)
 #############################################################################################
 #                Step 5 / 5: Provide your new utility with your DataModule                  #
 #                                                                                           #
-# The `DataModule` class is a collection of FlashDataset and you can pass them directly to  #
+# The `DataModule` class is a collection of Input and you can pass them directly to  #
 # its init function.                                                                        #
 #                                                                                           #
 #############################################################################################
@@ -264,8 +264,8 @@ class ImageClassificationDataModule(DataModule):
     ) -> "ImageClassificationDataModule":
 
         return cls(
-            *cls.create_flash_datasets(
-                "multiple_folders",
+            *cls.create_inputs(
+                MultipleImageFoldersInput,
                 train_folders,
                 val_folders,
                 test_folders,
@@ -277,9 +277,6 @@ class ImageClassificationDataModule(DataModule):
             ),
             **data_module_kwargs,
         )
-
-
-ImageClassificationDataModule.register_flash_dataset("multiple_folders", MultipleFoldersImageDataset)
 
 
 # Create the datamodule with your new constructor. This is purely equivalent to the previous datamdoule creation.

@@ -29,9 +29,9 @@ from torch.optim.lr_scheduler import _LRScheduler
 from torch.optim.optimizer import Optimizer
 
 import flash
-from flash.core.data_v2.base_dataset import BaseDataset
 from flash.core.data_v2.data_module import DataModule
 from flash.core.data_v2.data_pipeline import DataPipeline, DataPipelineState
+from flash.core.data_v2.io.base_input import BaseInput
 from flash.core.data_v2.io.input import InputFormat, InputsStateContainer
 from flash.core.data_v2.io.output import Output
 from flash.core.data_v2.transforms.output_transform import OutputTransform
@@ -330,11 +330,11 @@ class TaskV2(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Che
 
         transform = self._resolve_transform(input_transform_stage)
         self.output = self._output_registry.get(output)() if isinstance(output, str) else output
-        dataset_cls: BaseDataset = self.data_pipeline._flash_datasets_registry.get(input)
-        dataset = dataset_cls.from_data(x, running_stage=running_stage, transform=transform)
-        x = dataset.dataloader_collate_fn([x for x in dataset])
+        input_cls: BaseInput = self.data_pipeline._flash_datasets_registry.get(input)
+        input = input_cls.from_data(x, running_stage=running_stage, transform=transform)
+        x = input.dataloader_collate_fn([x for x in input])
         x = self.transfer_batch_to_device(x, self.device, 0)
-        x = dataset.on_after_batch_transfer_fn(x)
+        x = input.on_after_batch_transfer_fn(x)
         x = x[0] if isinstance(x, list) else x
         return self.predict_step(x, 0)
 

@@ -38,7 +38,7 @@ class ImageClassificationDataModule(DataModule):
         predict_transform: Optional[INPUT_TRANSFORM_TYPE] = InputFormat.DEFAULT,
         **data_module_kwargs: Any,
     ) -> "DataModule":
-        """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given folders using the
+        """Creates a :class:`~flash.core.data_v2.data_module.DataModule` object from the given folders using the
         :class:`~flash.core.data.data_source.DataSource` of name
         :attr:`~flash.core.data_v2.io.input.InputFormat.FOLDERS`
         from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
@@ -56,24 +56,14 @@ class ImageClassificationDataModule(DataModule):
                 :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
                 :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
-            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`.
-            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
-                will be constructed and used.
-            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            sampler: The ``sampler`` to use for the ``train_dataloader``.
-            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
-                if ``preprocess = None``.
+            data_module_kwargs: The keywords arguments for the :class:`~flash.core.data_v2.data_module.DataModule`.
 
         Returns:
             The constructed data module.
         """
         return cls(
-            *cls.create_flash_datasets(
-                InputFormat.FOLDERS,
+            *cls.create_inputs(
+                ImagePathsInput,
                 train_folder,
                 val_folder,
                 test_folder,

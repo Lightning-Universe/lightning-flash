@@ -14,36 +14,36 @@
 import pytest
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
-from flash.core.data_v2.base_dataset import FlashDataset, FlashIterableDataset
+from flash.core.data_v2.io.base_input import Input, IterableInput
 from flash.core.utilities.stages import RunningStage
 
 
-def test_flash_dataset():
-    class TestDataset(FlashDataset):
+def test_inputs():
+    class TestInput(Input):
 
         pass
 
     with pytest.raises(MisconfigurationException, match="You should provide a running_stage"):
-        _ = TestDataset.from_data(None)
+        _ = TestInput.from_data(None)
 
-    dataset = TestDataset.from_train_data(None)
-    assert isinstance(dataset, TestDataset)
+    dataset = TestInput.from_train_data(None)
+    assert isinstance(dataset, TestInput)
     assert dataset.data is None
 
-    dataset = TestDataset.from_data(range(10), running_stage=RunningStage.TRAINING)
+    dataset = TestInput.from_data(range(10), running_stage=RunningStage.TRAINING)
     assert len(dataset) == 10
     assert dataset[0] == 0
 
-    class TestDataset(FlashDataset):
+    class TestInput(Input):
         def load_data(self, data, data2):
             return [(x, y) for x, y in zip(data, data2)]
 
-    dataset = TestDataset.from_data(range(10), range(10, 20), running_stage=RunningStage.TRAINING)
+    dataset = TestInput.from_data(range(10), range(10, 20), running_stage=RunningStage.TRAINING)
     assert len(dataset) == 10
     assert dataset[0] == (0, 10)
     assert dataset[-1] == (9, 19)
 
-    class TestDataset(FlashDataset):
+    class TestInput(Input):
         def __init__(self, running_stage: RunningStage, shift=0):
             super().__init__(running_stage=running_stage)
             self.shift = shift
@@ -61,29 +61,29 @@ def test_flash_dataset():
         def predict_load_data(self, data, data2):
             return [{"input": x, "target": y} for x, y in zip(data, data2)]
 
-    dataset = TestDataset(running_stage=RunningStage.TRAINING, shift=1)
+    dataset = TestInput(running_stage=RunningStage.TRAINING, shift=1)
     dataset.pass_args_to_load_data(range(10), range(10, 20))
     assert len(dataset) == 10
     assert dataset[0] == (0, 11)
     assert dataset[-1] == (9, 20)
 
-    dataset = TestDataset(running_stage=RunningStage.VALIDATING, shift=1)
+    dataset = TestInput(running_stage=RunningStage.VALIDATING, shift=1)
     dataset.pass_args_to_load_data(range(10), range(10, 20))
     assert len(dataset) == 10
     assert dataset[0] == 0
     assert dataset[-1] == 9
 
-    dataset = TestDataset(running_stage=RunningStage.TESTING, shift=1)
+    dataset = TestInput(running_stage=RunningStage.TESTING, shift=1)
     dataset.pass_args_to_load_data(range(10), range(10, 20))
     assert len(dataset) == 10
     assert dataset[0] == [0, 9]
     assert dataset[-1] == [9, 18]
 
-    dataset = TestDataset(running_stage=RunningStage.PREDICTING, shift=1)
+    dataset = TestInput(running_stage=RunningStage.PREDICTING, shift=1)
     dataset.pass_args_to_load_data(range(10), range(10, 20))
     assert dataset[0] == {"input": 0, "target": 10}
 
-    class TestDataset(FlashIterableDataset):
+    class TestInput(IterableInput):
         def __init__(self, running_stage: RunningStage, shift=0):
             super().__init__(running_stage=running_stage)
             self.shift = shift
@@ -98,7 +98,7 @@ def test_flash_dataset():
         def load_sample(self, data):
             return (data[0], (data[1][0] + 2,))
 
-    dataset = TestDataset(running_stage=RunningStage.TRAINING, shift=1)
+    dataset = TestInput(running_stage=RunningStage.TRAINING, shift=1)
     dataset.pass_args_to_load_data(range(10), range(10, 20))
     dataset_iter = iter(dataset)
     assert next(dataset_iter) == (0, (2,))

@@ -25,16 +25,16 @@ from flash.core.registry import FlashRegistry
 from flash.core.utilities.stages import RunningStage
 
 __all__ = [
-    "BaseDataset",
-    "FlashDataset",
-    "FlashIterableDataset",
+    "BaseInput",
+    "Input",
+    "IterableInput",
 ]
 
 
 DATA_TYPE = TypeVar("DATA_TYPE")
 
 
-class BaseDataset(Generic[DATA_TYPE], Properties):
+class BaseInput(Generic[DATA_TYPE], Properties):
 
     DATASET_KEY = "dataset"
 
@@ -69,7 +69,7 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
         self,
         *load_data_args: Any,
         **load_data_kwargs,
-    ) -> "BaseDataset":
+    ) -> "BaseInput":
         self.data = self._load_data(*load_data_args, **load_data_kwargs)
         return self
 
@@ -94,7 +94,7 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
             self.transform.running_stage = self.running_stage
             return self.transform.on_after_batch_transfer_fn
 
-    def _resolve_functions(self, func_name: str, cls: Type["BaseDataset"]) -> None:
+    def _resolve_functions(self, func_name: str, cls: Type["BaseInput"]) -> None:
         from flash.core.data.data_pipeline import DataPipeline  # noqa F811
 
         function: Callable[[Any, Optional[Any]], Any] = getattr(
@@ -120,7 +120,7 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
         running_stage: Optional[RunningStage] = None,
         transform: Optional[INPUT_TRANSFORM_TYPE] = None,
         **dataset_kwargs: Any,
-    ) -> "BaseDataset":
+    ) -> "BaseInput":
         if not running_stage:
             raise MisconfigurationException(
                 "You should provide a running_stage to your dataset"
@@ -136,7 +136,7 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
         *load_data_args,
         transform: Optional[INPUT_TRANSFORM_TYPE] = None,
         **dataset_kwargs: Any,
-    ) -> "BaseDataset":
+    ) -> "BaseInput":
         return cls.from_data(
             *load_data_args, running_stage=RunningStage.TRAINING, transform=transform, **dataset_kwargs
         )
@@ -147,7 +147,7 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
         *load_data_args,
         transform: Optional[INPUT_TRANSFORM_TYPE] = None,
         **dataset_kwargs: Any,
-    ) -> "BaseDataset":
+    ) -> "BaseInput":
         return cls.from_data(
             *load_data_args, running_stage=RunningStage.VALIDATING, transform=transform, **dataset_kwargs
         )
@@ -158,7 +158,7 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
         *load_data_args,
         transform: Optional[INPUT_TRANSFORM_TYPE] = None,
         **dataset_kwargs: Any,
-    ) -> "BaseDataset":
+    ) -> "BaseInput":
         return cls.from_data(*load_data_args, running_stage=RunningStage.TESTING, transform=transform, **dataset_kwargs)
 
     @classmethod
@@ -167,7 +167,7 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
         *load_data_args,
         transform: Optional[INPUT_TRANSFORM_TYPE] = None,
         **dataset_kwargs: Any,
-    ) -> "BaseDataset":
+    ) -> "BaseInput":
         return cls.from_data(
             *load_data_args, running_stage=RunningStage.PREDICTING, transform=transform, **dataset_kwargs
         )
@@ -191,8 +191,8 @@ class BaseDataset(Generic[DATA_TYPE], Properties):
     _load_sample = None
 
 
-class FlashDataset(Dataset, BaseDataset[DATA_TYPE]):
-    """The ``FlashDataset`` is a ``BaseDataset`` and a :class:`~torch.utils.data.Dataset`.
+class Input(Dataset, BaseInput[DATA_TYPE]):
+    """The ``Input`` is a ``BaseInput`` and a :class:`~torch.utils.data.Dataset`.
 
     The `data` argument must be a ``Mapping`` (it must have a length).
     """
@@ -212,8 +212,8 @@ class FlashDataset(Dataset, BaseDataset[DATA_TYPE]):
         return data
 
     def resolve_functions(self):
-        self._resolve_functions("load_data", FlashDataset)
-        self._resolve_functions("load_sample", FlashDataset)
+        self._resolve_functions("load_data", Input)
+        self._resolve_functions("load_sample", Input)
 
     def __getitem__(self, index: int) -> Any:
         return self._call_load_sample(self.data[index])
@@ -222,8 +222,8 @@ class FlashDataset(Dataset, BaseDataset[DATA_TYPE]):
         return len(self.data)
 
 
-class FlashIterableDataset(IterableDataset, BaseDataset[DATA_TYPE]):
-    """The ``IterableAutoDataset`` is a ``BaseDataset`` and a :class:`~torch.utils.data.IterableDataset`.
+class IterableInput(IterableDataset, BaseInput[DATA_TYPE]):
+    """The ``IterableInput`` is a ``BaseInput`` and a :class:`~torch.utils.data.IterableDataset`.
 
     The `data` argument must be an ``Iterable``.
     """
@@ -243,8 +243,8 @@ class FlashIterableDataset(IterableDataset, BaseDataset[DATA_TYPE]):
         return data
 
     def resolve_functions(self):
-        self._resolve_functions("load_data", FlashIterableDataset)
-        self._resolve_functions("load_sample", FlashIterableDataset)
+        self._resolve_functions("load_data", IterableInput)
+        self._resolve_functions("load_sample", IterableInput)
 
     def __iter__(self):
         self.data_iter = iter(self.data)

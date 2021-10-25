@@ -43,7 +43,7 @@ from tqdm import tqdm
 
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.properties import ProcessState
-from flash.core.data_v2.base_dataset import BaseDataset, FlashDataset
+from flash.core.data_v2.io.base_input import BaseInput, Input
 from flash.core.data_v2.transforms.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 from flash.core.utilities.stages import RunningStage
@@ -193,7 +193,7 @@ class InputStateContainer:
     input_transform: Optional[InputTransform] = None
 
     @classmethod
-    def from_dataset(cls, dataset: Optional[BaseDataset]) -> "InputStateContainer":
+    def from_dataset(cls, dataset: Optional[BaseInput]) -> "InputStateContainer":
         if dataset:
             return cls(
                 example_input_array=dataset.example_input_array,
@@ -216,10 +216,10 @@ class InputsStateContainer:
     @classmethod
     def from_datasets(
         cls,
-        train_dataset: Optional[BaseDataset],
-        val_dataset: Optional[BaseDataset],
-        test_dataset: Optional[BaseDataset],
-        predict_dataset: Optional[BaseDataset],
+        train_dataset: Optional[BaseInput],
+        val_dataset: Optional[BaseInput],
+        test_dataset: Optional[BaseInput],
+        predict_dataset: Optional[BaseInput],
     ) -> "InputsStateContainer":
         return cls(
             train_input_state=InputStateContainer.from_dataset(train_dataset),
@@ -256,7 +256,7 @@ class InputsStateContainer:
 
 
 class BaseDataFormat(LightningEnum):
-    """The base class for creating ``data_format`` for :class:`~flash.core.data_v2.base_dataset.FlashDataset`."""
+    """The base class for creating ``data_format`` for :class:`~flash.core.data_v2.base_dataset.Input`."""
 
     def __hash__(self) -> int:
         return hash(self.value)
@@ -266,9 +266,9 @@ DATA_TYPE = TypeVar("DATA_TYPE")
 SEQUENCE_DATA_TYPE = TypeVar("SEQUENCE_DATA_TYPE")
 
 
-class DatasetInput(FlashDataset[Dataset]):
+class DatasetInput(Input[Dataset]):
     """The ``DatasetInput`` implements default behaviours for data sources which expect the input to
-    :meth:`~flash.core.data_v2.base_dataset.FlashDataset.load_data` to be a :class:`torch.utils.data.dataset.Dataset`
+    :meth:`~flash.core.data_v2.io.base_input.Input.load_data` to be a :class:`torch.utils.data.dataset.Dataset`
 
     Args:
         labels: Optionally pass the labels as a mapping from class index to label string. These will then be set as the
@@ -283,10 +283,10 @@ class DatasetInput(FlashDataset[Dataset]):
 
 class SequenceInput(
     Generic[SEQUENCE_DATA_TYPE],
-    FlashDataset[Tuple[Sequence[SEQUENCE_DATA_TYPE], Optional[Sequence]]],
+    Input[Tuple[Sequence[SEQUENCE_DATA_TYPE], Optional[Sequence]]],
 ):
     """The ``SequenceInput`` implements default behaviours for data sources which expect the input to
-    :meth:`~flash.core.data_v2.base_dataset.FlashDataset.load_data` to be a sequence of tuples (``(input, target)``
+    :meth:`~flash.core.data_v2.io.base_input.Input.load_data` to be a sequence of tuples (``(input, target)``
     where target can be ``None``).
 
     Args:
@@ -321,7 +321,7 @@ class SequenceInput(
 
 class PathsInput(SequenceInput):
     """The ``PathsInput`` implements default behaviours for data sources which expect the input to
-    :meth:`~flash.core.data_v2.base_dataset.FlashDataset.load_data` to be either a directory with a subdirectory for
+    :meth:`~flash.core.data_v2.io.base_input.Input.load_data` to be either a directory with a subdirectory for
     each class or a tuple containing list of files and corresponding list of targets.
 
     Args:
@@ -415,7 +415,7 @@ class PathsInput(SequenceInput):
         return sample
 
 
-class DataFrameInput(FlashDataset[Tuple[pd.DataFrame, str, Union[str, List[str]], Optional[str], Optional[str]]]):
+class DataFrameInput(Input[Tuple[pd.DataFrame, str, Union[str, List[str]], Optional[str], Optional[str]]]):
     def __init__(self, running_stage: RunningStage, transform: INPUT_TRANSFORM_TYPE, loader: Callable[[str], Any]):
         super().__init__(running_stage=running_stage, transform=transform)
 
@@ -529,9 +529,9 @@ class DataFrameInput(FlashDataset[Tuple[pd.DataFrame, str, Union[str, List[str]]
         return sample
 
 
-class TensorInput(FlashDataset[torch.Tensor]):
+class TensorInput(Input[torch.Tensor]):
     """The ``TensorInput`` is a ``SequenceInput`` which expects the input to
-    :meth:`~flash.core.data_v2.base_dataset.FlashDataset.load_data` to be a sequence of ``torch.Tensor`` objects."""
+    :meth:`~flash.core.data_v2.io.base_input.Input.load_data` to be a sequence of ``torch.Tensor`` objects."""
 
     def load_data(
         self,
@@ -545,12 +545,12 @@ class TensorInput(FlashDataset[torch.Tensor]):
 
 class NumpyInput(SequenceInput[np.ndarray]):
     """The ``NumpyInput`` is a ``SequenceInput`` which expects the input to
-    :meth:`~flash.core.data_v2.base_dataset.FlashDataset.load_data` to be a sequence of ``np.ndarray`` objects."""
+    :meth:`~flash.core.data_v2.io.base_input.Input.load_data` to be a sequence of ``np.ndarray`` objects."""
 
 
-class FiftyOneInput(FlashDataset[SampleCollection]):
+class FiftyOneInput(Input[SampleCollection]):
     """The ``FiftyOneInput`` expects the input to
-    :meth:`~flash.core.data_v2.base_dataset.FlashDataset.load_data`
+    :meth:`~flash.core.data_v2.io.base_input.Input.load_data`
     to be a ``fiftyone.core.collections.SampleCollection``."""
 
     def __init__(self, running_stage: RunningStage, transform: INPUT_TRANSFORM_TYPE, label_field: str = "ground_truth"):
