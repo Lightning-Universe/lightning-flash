@@ -1,7 +1,7 @@
 import json
 import os
 from pathlib import Path
-from typing import Any, Mapping, Optional, Sequence, TypeVar, Union
+from typing import Any, Mapping, Optional, Sequence, Union
 
 import torch
 from pytorch_lightning.utilities.cloud_io import get_filesystem
@@ -16,8 +16,6 @@ if _TORCHVISION_AVAILABLE:
 
 if _TEXT_AVAILABLE:
     from transformers import AutoTokenizer
-
-DATA_TYPE = TypeVar("DATA_TYPE")
 
 
 class LabelStudioDataSource(DataSource):
@@ -83,7 +81,7 @@ class LabelStudioDataSource(DataSource):
 
     def generate_dataset(
         self,
-        data: Optional[DATA_TYPE],
+        data: Optional[Any],
         running_stage: RunningStage,
     ) -> Optional[Union[AutoDataset, IterableAutoDataset]]:
         """Generate dataset from loaded data."""
