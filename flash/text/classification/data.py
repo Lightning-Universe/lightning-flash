@@ -83,7 +83,7 @@ class TextDataSource(DataSource):
 
     @staticmethod
     def _multilabel_target(targets: List[str], element: Dict[str, Any]) -> Dict[str, Any]:
-        targets = [int(element.pop(target)) for target in targets]
+        targets = [element.pop(target) for target in targets]
         element[DefaultDataKeys.TARGET] = targets
         return element
 
