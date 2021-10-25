@@ -299,3 +299,6 @@ batch = next(iter(datamodule.train_dataloader()))
 #   <DefaultDataKeys.METADATA: 'metadata'>: [(...), (...), ...],
 # }
 print(batch)
+
+# Finally, you can register
+ImageClassificationDataModule.register_input("from_multiple_folders", MultipleImageFoldersInput)

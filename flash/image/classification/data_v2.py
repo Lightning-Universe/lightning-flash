@@ -86,5 +86,5 @@ class ImageClassificationDataModule(DataModule):
 
 
 input_transforms_registry = IMAGE_CLASSIFICATION_INPUT_TRANSFORMS_REGISTRY
-ImageClassificationDataModule.register_flash_dataset(InputFormat.DEFAULT, ImagePathsInput, input_transforms_registry)
-ImageClassificationDataModule.register_flash_dataset(InputFormat.FOLDERS, ImagePathsInput, input_transforms_registry)
+ImageClassificationDataModule.register_input(InputFormat.DEFAULT, ImagePathsInput, input_transforms_registry)
+ImageClassificationDataModule.register_input(InputFormat.FOLDERS, ImagePathsInput, input_transforms_registry)

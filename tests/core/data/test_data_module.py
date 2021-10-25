@@ -130,6 +130,6 @@ def test_data_module(tmpdir):
     class CustomDataModule(DataModule):
         pass
 
-    CustomDataModule.register_flash_dataset("custom", TestDataset)
+    CustomDataModule.register_input("custom", TestDataset)
     train_dataset, *_ = DataModule.create_flash_datasets("custom", range(10))
     assert train_dataset[0] == 0

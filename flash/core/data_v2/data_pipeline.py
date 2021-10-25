@@ -30,13 +30,13 @@ class DataPipeline:
 
     def __init__(
         self,
-        flash_datasets_registry: Optional[FlashRegistry] = None,
+        inputs_registry: Optional[FlashRegistry] = None,
         inputs_state: Optional[InputsStateContainer] = None,
         output_transform: Optional[OutputTransform] = None,
         output: Optional[Output] = None,
     ) -> None:
 
-        self._flash_datasets_registry = flash_datasets_registry
+        self._inputs_registry = inputs_registry
         self._inputs_state = inputs_state
         self._output_transform = output_transform
         self._output = output

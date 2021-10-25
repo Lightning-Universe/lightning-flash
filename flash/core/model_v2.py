@@ -78,7 +78,7 @@ class TaskV2(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Che
 
     _datamodule_cls: Optional[DataModule] = None
     _inputs_state: Optional[InputsStateContainer] = None
-    _flash_datasets_registry: Optional[FlashRegistry] = None
+    _inputs_registry: Optional[FlashRegistry] = None
     _output_transform: Optional[OutputTransform] = None
     _output: Optional[Output] = None
     _output_registry = FlashRegistry("output")
@@ -249,7 +249,7 @@ class TaskV2(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Che
     @property
     def data_pipeline(self) -> DataPipeline:
         data_pipeline = DataPipeline(
-            flash_datasets_registry=self._flash_datasets_registry,
+            inputs_registry=self._inputs_registry,
             inputs_state=self._inputs_state,
             output_transform=self._output_transform,
             output=self._output,
@@ -262,13 +262,13 @@ class TaskV2(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Che
     @torch.jit.unused
     @data_pipeline.setter
     def data_pipeline(self, data_pipeline: Optional[DataPipeline]) -> None:
-        self._resolve_flash_datasets_registry(data_pipeline._flash_datasets_registry)
+        self._resolve_inputs_registry(data_pipeline._inputs_registry)
         self._resolve_inputs_state(data_pipeline._inputs_state)
         self._resolve_inputs_state(data_pipeline._output_transform)
 
-    def _resolve_flash_datasets_registry(self, flash_datasets_registry: Optional[FlashRegistry]) -> None:
-        if not self._flash_datasets_registry:
-            self._flash_datasets_registry = flash_datasets_registry or self._datamodule_cls.flash_datasets_registry
+    def _resolve_inputs_registry(self, inputs_registry: Optional[FlashRegistry]) -> None:
+        if not self._inputs_registry:
+            self._inputs_registry = inputs_registry or self._datamodule_cls.inputs_registry
 
     def _resolve_inputs_state(self, inputs_state: Optional[InputsStateContainer]) -> None:
         if not self._inputs_state:
@@ -330,7 +330,7 @@ class TaskV2(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Che
 
         transform = self._resolve_transform(input_transform_stage)
         self.output = self._output_registry.get(output)() if isinstance(output, str) else output
-        input_cls: BaseInput = self.data_pipeline._flash_datasets_registry.get(input)
+        input_cls: BaseInput = self.data_pipeline._inputs_registry.get(input)
         input = input_cls.from_data(x, running_stage=running_stage, transform=transform)
         x = input.dataloader_collate_fn([x for x in input])
         x = self.transfer_batch_to_device(x, self.device, 0)

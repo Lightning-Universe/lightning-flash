@@ -59,7 +59,7 @@ class DataModule(DataModule):
 
     input_transform_cls = InputTransform
     output_transform_cls = OutputTransform
-    flash_datasets_registry = FlashRegistry("datasets")
+    inputs_registry = FlashRegistry("inputs")
 
     def __init__(
         self,
@@ -256,7 +256,7 @@ class DataModule(DataModule):
         """Property that returns the full data pipeline including the datasets state, transforms and output."""
         inputs_state = InputsStateContainer.from_datasets(self._train_ds, self._val_ds, self._test_ds, self._predict_ds)
         return DataPipeline(
-            flash_datasets_registry=self.flash_datasets_registry,
+            inputs_registry=self.inputs_registry,
             inputs_state=inputs_state,
             output_transform=None,
             output=None,
@@ -265,7 +265,7 @@ class DataModule(DataModule):
     @classmethod
     def create_inputs(
         cls,
-        input_cls: Type[BaseInput],
+        input_cls_or_key: Union[Type[BaseInput], str, LightningEnum],
         train_data: Optional[Any] = None,
         val_data: Optional[Any] = None,
         test_data: Optional[Any] = None,
@@ -276,6 +276,10 @@ class DataModule(DataModule):
         predict_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
         **flash_dataset_kwargs,
     ) -> Tuple[Optional[BaseInput]]:
+        if not issubclass(input_cls_or_key, BaseInput):
+            input_cls = cls.inputs_registry.get(input_cls_or_key)
+        else:
+            input_cls = input_cls_or_key
         train_dataset = cls._create_input(
             input_cls,
             train_data,
@@ -319,24 +323,22 @@ class DataModule(DataModule):
 
     @classmethod
     def _verify_flash_dataset_enum(cls, enum: Union[LightningEnum, str]) -> None:
-        if enum not in cls.flash_datasets_registry.available_keys():
-            available_constructors = [
-                f"from_{key.name.lower()}" for key in cls.flash_datasets_registry.available_keys()
-            ]
+        if enum not in cls.inputs_registry.available_keys():
+            available_constructors = [f"from_{key.name.lower()}" for key in cls.inputs_registry.available_keys()]
             raise MisconfigurationException(
-                f"The ``DataModule`` ``flash_datasets_registry`` doesn't contain the associated {enum} "
+                f"The ``DataModule`` ``inputs_registry`` doesn't contain the associated {enum} "
                 f"HINT: Here are the available constructors {available_constructors}"
             )
 
     @classmethod
-    def register_flash_dataset(
+    def register_input(
         cls,
         enum: Union[LightningEnum, str],
         input_cls: Type[BaseInput],
         input_transforms_registry: Optional[FlashRegistry] = None,
     ) -> None:
-        if cls.flash_datasets_registry is None:
-            raise MisconfigurationException("The class attribute `flash_datasets_registry` should be set. ")
+        if cls.inputs_registry is None:
+            raise MisconfigurationException("The class attribute `inputs_registry` should be set. ")
         if input_transforms_registry:
             input_cls.input_transforms_registry = input_transforms_registry
-        cls.flash_datasets_registry(fn=input_cls, name=enum)
+        cls.inputs_registry(fn=input_cls, name=enum)
