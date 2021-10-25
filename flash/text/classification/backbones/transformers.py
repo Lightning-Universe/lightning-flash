@@ -24,24 +24,19 @@ if _TRANSFORMERS_AVAILABLE:
     from transformers import AutoConfig, AutoModel
     from transformers.modeling_outputs import BaseModelOutputWithPoolingAndCrossAttentions
 
-
     def _forward_avg(x: BaseModelOutputWithPoolingAndCrossAttentions) -> torch.Tensor:
         return x.last_hidden_state.mean(dim=1)
-
 
     def _forward_cls(x: BaseModelOutputWithPoolingAndCrossAttentions) -> torch.Tensor:
         return x.last_hidden_state[:, 0, :]
 
-
     def _forward_pooler(x: BaseModelOutputWithPoolingAndCrossAttentions) -> torch.Tensor:
         return x.pooler_output
-
 
     AVAILABLE_STRATEGIES: FlashRegistry = FlashRegistry("strategies")
     AVAILABLE_STRATEGIES(fn=_forward_avg, name="avg")
     AVAILABLE_STRATEGIES(fn=_forward_cls, name="cls_token")
     AVAILABLE_STRATEGIES(fn=_forward_pooler, name="pooler_output")
-
 
     class Transformer(nn.Module):
 
@@ -92,7 +87,6 @@ if _TRANSFORMERS_AVAILABLE:
             new_embedding_module.weight.data.normal_(mean=0.0, std=initializer_range)
 
             self.model.embeddings.add_module(name, new_embedding_module)
-
 
     def _transformer(
         model_name: str = "prajjwal1/bert-tiny",
