@@ -138,6 +138,7 @@ class ActiveLearningLoop(Loop):
         self.trainer.training = True
         self.trainer.lightning_module.on_train_dataloader()
         self.trainer.accelerator.connect(self._lightning_module)
+        self.fit_loop.epoch_progress = Progress()
 
     def _reset_predicting(self):
         self.trainer.state.fn = TrainerFn.PREDICTING
@@ -154,10 +155,13 @@ class ActiveLearningLoop(Loop):
 
     def _reset_dataloader_for_stage(self, running_state: RunningStage):
         dataloader_name = f"{_STAGES_PREFIX[running_state]}_dataloader"
-        setattr(
-            self.trainer.lightning_module,
-            dataloader_name,
-            _PatchDataLoader(getattr(self.trainer.datamodule, dataloader_name)(), running_state),
-        )
-        setattr(self.trainer, dataloader_name, None)
-        getattr(self.trainer, f"reset_{dataloader_name}")(self.trainer.lightning_module)
+        # If the dataloader exists, we reset it.
+        dataloader = getattr(self.trainer.datamodule, dataloader_name, None)
+        if dataloader:
+            setattr(
+                self.trainer.lightning_module,
+                dataloader_name,
+                _PatchDataLoader(dataloader(), running_state),
+            )
+            setattr(self.trainer, dataloader_name, None)
+            getattr(self.trainer, f"reset_{dataloader_name}")(self.trainer.lightning_module)

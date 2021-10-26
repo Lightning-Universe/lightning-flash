@@ -165,10 +165,7 @@ class ActiveLearningDataModule(LightningDataModule):
             uncertainties = self.heuristic.get_uncertainties(torch.cat(probabilities, dim=0))
             indices = np.argsort(uncertainties)
             if self._dataset is not None:
-                unlabelled_mask = self._dataset.labelled == False  # noqa E712
-                unlabelled = self._dataset.labelled[unlabelled_mask]
-                unlabelled[indices[-self.query_size :]] = True
-                self._dataset.labelled[unlabelled_mask] = unlabelled
+                self._dataset.label(indices[-self.query_size:])
 
     def state_dict(self) -> Dict[str, torch.Tensor]:
         return self._dataset.state_dict()
