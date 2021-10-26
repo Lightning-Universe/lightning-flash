@@ -16,7 +16,15 @@ from typing import Any, Dict, List, Optional
 
 from flash.core.adapter import AdapterTask
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.states import CollateFn, PostTensorTransform, PreTensorTransform, ToTensorTransform
+from flash.core.data.states import (
+    CollateFn,
+    PerBatchTransform,
+    PerBatchTransformOnDevice,
+    PerSampleTransformOnDevice,
+    PostTensorTransform,
+    PreTensorTransform,
+    ToTensorTransform,
+)
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _VISSL_AVAILABLE
@@ -88,6 +96,9 @@ class ImageEmbedder(AdapterTask):
         if training_strategy_kwargs is None:
             training_strategy_kwargs = {}
 
+        if pretraining_transform_kwargs is None:
+            pretraining_transform_kwargs = {}
+
         backbone, _ = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
 
         metadata = self.training_strategies.get(training_strategy, with_metadata=True)
@@ -118,6 +129,9 @@ class ImageEmbedder(AdapterTask):
         self.adapter.set_state(ToTensorTransform(to_tensor_transform))
         self.adapter.set_state(PostTensorTransform(None))
         self.adapter.set_state(PreTensorTransform(None))
+        self.adapter.set_state(PerSampleTransformOnDevice(None))
+        self.adapter.set_state(PerBatchTransform(None))
+        self.adapter.set_state(PerBatchTransformOnDevice(None))
 
         warnings.warn(
             "Warning: VISSL ImageEmbedder overrides any user provided transforms"
