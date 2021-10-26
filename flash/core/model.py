@@ -46,12 +46,13 @@ from flash.core.data.process import (
     SerializerMapping,
 )
 from flash.core.data.properties import ProcessState
-from flash.core.optimizers import _OPTIMIZERS_REGISTRY, _SCHEDULERS_REGISTRY
+from flash.core.optimizers.optimizers import _OPTIMIZERS_REGISTRY
+from flash.core.optimizers.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.registry import FlashRegistry
-from flash.core.serve import Composition
-from flash.core.utilities import providers
+from flash.core.serve.composition import Composition
 from flash.core.utilities.apply_func import get_callable_dict
 from flash.core.utilities.imports import requires
+from flash.core.utilities.providers import _HUGGINGFACE
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import (
     DESERIALIZER_TYPE,
@@ -979,7 +980,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
         # Providers part
         if lr_scheduler_metadata is not None and "providers" in lr_scheduler_metadata.keys():
-            if lr_scheduler_metadata["providers"] == providers._HUGGINGFACE:
+            if lr_scheduler_metadata["providers"] == _HUGGINGFACE:
                 if lr_scheduler_data["name"] != "constant_schedule":
                     num_training_steps: int = self.get_num_training_steps()
                     num_warmup_steps: int = self._compute_warmup(
