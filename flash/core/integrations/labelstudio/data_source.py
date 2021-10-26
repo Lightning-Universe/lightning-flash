@@ -1,7 +1,7 @@
 import json
 import os
 from pathlib import Path
-from typing import Any, Mapping, Optional, Sequence, Union, TypeVar
+from typing import Any, Mapping, Optional, Sequence, TypeVar, Union
 
 import torch
 from pytorch_lightning.utilities.cloud_io import get_filesystem
