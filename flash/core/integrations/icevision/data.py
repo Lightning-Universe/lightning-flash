@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import inspect
+from collections import defaultdict
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Type
 
 from flash.core.data.data_source import DefaultDataKeys, LabelsState
@@ -51,7 +52,19 @@ class IceVisionParserDataSource(IceVisionPathsDataSource):
             dataset.num_classes = parser.class_map.num_classes
             self.set_state(LabelsState([parser.class_map.get_by_id(i) for i in range(dataset.num_classes)]))
 
-            return [{DefaultDataKeys.INPUT: sample, DefaultDataKeys.METADATA: {"parser": parser}} for sample in parser]
+            samples = defaultdict(list)
+
+            for sample in parser:
+                parser.prepare(sample)
+                true_record_id = parser.record_id(sample)
+                record_id = parser.idmap[true_record_id]
+
+                samples[record_id].append(sample)
+
+            return [
+                {DefaultDataKeys.INPUT: samples, DefaultDataKeys.METADATA: {"parser": parser}}
+                for samples in samples.values()
+            ]
         raise ValueError("The parser argument must be provided.")
 
     def predict_load_data(self, data: Any, dataset: Optional[Any] = None) -> Sequence[Dict[str, Any]]:
@@ -62,18 +75,23 @@ class IceVisionParserDataSource(IceVisionPathsDataSource):
 
     def load_sample(self, sample: Dict[str, Any]):
         parser = sample[DefaultDataKeys.METADATA]["parser"]
-        sample = sample[DefaultDataKeys.INPUT]
+        samples = sample[DefaultDataKeys.INPUT]
 
-        # Adapted from IceVision source code
-        parser.prepare(sample)
-        # TODO: Do we still need idmap?
-        true_record_id = parser.record_id(sample)
-        record_id = parser.idmap[true_record_id]
+        record = None
 
-        record = parser.create_record()
-        # HACK: fix record_id (needs to be transformed with idmap)
-        record.set_record_id(record_id)
-        is_new = True
+        for sample in samples:
+            # Adapted from IceVision source code
+            parser.prepare(sample)
+            # TODO: Do we still need idmap?
+            true_record_id = parser.record_id(sample)
+            record_id = parser.idmap[true_record_id]
 
-        parser.parse_fields(sample, record=record, is_new=is_new)
+            is_new = False
+            if record is None:
+                record = parser.create_record()
+                # HACK: fix record_id (needs to be transformed with idmap)
+                record.set_record_id(record_id)
+                is_new = True
+
+            parser.parse_fields(sample, record=record, is_new=is_new)
         return super().load_sample(from_icevision_record(record))
