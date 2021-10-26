@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Tuple
 
 from torch import nn
@@ -92,7 +93,7 @@ def to_icevision_record(sample: Dict[str, Any]):
     else:
         if "filepath" in metadata:
             input_component = FilepathRecordComponent()
-            input_component.filepath = metadata["filepath"]
+            input_component.filepath = Path(metadata["filepath"])
         else:
             input_component = ImageRecordComponent()
         input_component.composite = record
@@ -160,11 +161,10 @@ def from_icevision_detection(record: "BaseRecord"):
 
 
 def from_icevision_record(record: "BaseRecord"):
-    sample = {
-        DefaultDataKeys.METADATA: {
-            "size": (record.height, record.width),
-        }
-    }
+    sample = {DefaultDataKeys.METADATA: {}}
+
+    if getattr(record, "height", None) is not None and getattr(record, "width", None) is not None:
+        sample[DefaultDataKeys.METADATA]["size"] = (record.height, record.width)
 
     if getattr(record, "record_id", None) is not None:
         sample[DefaultDataKeys.METADATA]["image_id"] = record.record_id
@@ -175,7 +175,7 @@ def from_icevision_record(record: "BaseRecord"):
     if record.img is not None:
         sample[DefaultDataKeys.INPUT] = record.img
     elif getattr(record, "filepath", None) is not None:
-        sample[DefaultDataKeys.INPUT] = record.filepath
+        sample[DefaultDataKeys.INPUT] = str(record.filepath)
 
     sample[DefaultDataKeys.TARGET] = from_icevision_detection(record)
 

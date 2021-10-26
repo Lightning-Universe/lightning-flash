@@ -15,24 +15,35 @@ import inspect
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Type
 
 from flash.core.data.data_source import LabelsState
-from flash.core.integrations.icevision.transforms import from_icevision_record
+from flash.core.integrations.icevision.transforms import from_icevision_record, to_icevision_record
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
 from flash.image.data import ImagePathsDataSource
 
 if _ICEVISION_AVAILABLE:
     from icevision.data.data_splitter import SingleSplitSplitter
     from icevision.parsers.parser import Parser
+    from icevision.utils.imageio import ImgSize
 
 
 class IceVisionPathsDataSource(ImagePathsDataSource):
     def predict_load_data(self, data: Tuple[str, str], dataset: Optional[Any] = None) -> Sequence[Dict[str, Any]]:
         return super().predict_load_data(data, dataset)
 
+    def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+        sample = super().load_sample(sample)
+        record = to_icevision_record(sample)
+        record.autofix()
+        return from_icevision_record(record)
+
 
 class IceVisionParserDataSource(IceVisionPathsDataSource):
     def __init__(self, parser: Optional[Type["Parser"]] = None):
         super().__init__()
         self.parser = parser
+
+    @staticmethod
+    def _mock_img_size(_) -> ImgSize:
+        return ImgSize(None, None)
 
     def load_data(self, data: Tuple[str, str], dataset: Optional[Any] = None) -> Sequence[Dict[str, Any]]:
         if self.parser is not None:
@@ -45,7 +56,11 @@ class IceVisionParserDataSource(IceVisionPathsDataSource):
                 raise ValueError("The parser must be a callable or an IceVision Parser type.")
             dataset.num_classes = parser.class_map.num_classes
             self.set_state(LabelsState([parser.class_map.get_by_id(i) for i in range(dataset.num_classes)]))
-            records = parser.parse(data_splitter=SingleSplitSplitter())
+
+            # Patch img_size to prevent image being loaded
+            parser.img_size = self._mock_img_size
+
+            records = parser.parse(data_splitter=SingleSplitSplitter(), autofix=False)
             return [from_icevision_record(record) for record in records[0]]
         raise ValueError("The parser argument must be provided.")
 
