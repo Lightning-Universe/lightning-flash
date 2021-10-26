@@ -165,7 +165,7 @@ class ActiveLearningDataModule(LightningDataModule):
             uncertainties = self.heuristic.get_uncertainties(torch.cat(probabilities, dim=0))
             indices = np.argsort(uncertainties)
             if self._dataset is not None:
-                self._dataset.label(indices[-self.query_size:])
+                self._dataset.label(indices[-self.query_size :])
 
     def state_dict(self) -> Dict[str, torch.Tensor]:
         return self._dataset.state_dict()
