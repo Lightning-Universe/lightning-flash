@@ -129,6 +129,7 @@ def test_active_learning_training(simple_datamodule, initial_num_labels, query_s
         assert len(active_learning_dm.val_dataloader()) == 5
 
 
+@pytest.mark.skipif(not (_IMAGE_TESTING and _BAAL_AVAILABLE), reason="image and baal libraries aren't installed.")
 def test_no_validation_loop(simple_datamodule):
     active_learning_dm = ActiveLearningDataModule(
         simple_datamodule,

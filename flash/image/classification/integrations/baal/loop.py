@@ -72,7 +72,6 @@ class ActiveLearningLoop(Loop):
     def on_run_start(self, *args: Any, **kwargs: Any) -> None:
         assert isinstance(self.trainer.datamodule, ActiveLearningDataModule)
         self.trainer.predict_loop._return_predictions = True
-        self.trainer.test_loop._return_predictions = True
         self._lightning_module = self.trainer.lightning_module
         self._model_state_dict = deepcopy(self._lightning_module.state_dict())
         self.inference_model = InferenceMCDropoutTask(self._lightning_module, self.inference_iteration)
