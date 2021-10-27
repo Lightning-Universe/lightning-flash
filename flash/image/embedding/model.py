@@ -151,5 +151,6 @@ class ImageEmbedder(AdapterTask):
     def available_training_strategies(cls) -> List[str]:
         registry: Optional[FlashRegistry] = getattr(cls, "training_strategies", None)
         if registry is None:
+            warnings.warn("Please check if 'vissl' is installed!", UserWarning)
             return []
         return registry.available_keys()
