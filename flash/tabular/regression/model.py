@@ -16,7 +16,7 @@ from typing import Any, Callable, Dict, List, Tuple
 import torch
 from torch.nn import functional as F
 
-from flash.core.classification import ClassificationTask, Probabilities
+from flash.core.Regression import RegressionTask
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _TABULAR_AVAILABLE
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, SERIALIZER_TYPE
@@ -25,13 +25,11 @@ if _TABULAR_AVAILABLE:
     from pytorch_tabnet.tab_network import TabNet
 
 
-class TabularClassifier(ClassificationTask):
-    """The ``TabularClassifier`` is a :class:`~flash.Task` for classifying tabular data. For more details, see
-    :ref:`tabular_classification`.
+class TabularRegressor(RegressionTask):
+    """The ``TabularRegressor`` is a :class:`~flash.Task` for regression tabular data.
 
     Args:
         num_features: Number of columns in table (not including target column).
-        num_classes: Number of classes to classify.
         embedding_sizes: List of (num_classes, emb_dim) to form categorical embeddings.
         loss_fn: Loss function for training, defaults to cross entropy.
         optimizer: Optimizer to use for training.
@@ -39,7 +37,7 @@ class TabularClassifier(ClassificationTask):
         metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
             package, a custom metric inherenting from `torchmetrics.Metric`, a callable function or a list/dict
             containing a combination of the aforementioned. In all cases, each metric needs to have the signature
-            `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
+            `metric(preds,target)` and return a single scalar tensor.
         learning_rate: Learning rate to use for training.
         multi_label: Whether the targets are multi-label or not.
         serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
@@ -52,14 +50,12 @@ class TabularClassifier(ClassificationTask):
     def __init__(
         self,
         num_features: int,
-        num_classes: int,
         embedding_sizes: List[Tuple[int, int]] = None,
         loss_fn: Callable = F.cross_entropy,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-2,
-        multi_label: bool = False,
         serializer: SERIALIZER_TYPE = None,
         **tabnet_kwargs,
     ):
@@ -68,7 +64,7 @@ class TabularClassifier(ClassificationTask):
         cat_dims, cat_emb_dim = zip(*embedding_sizes) if embedding_sizes else ([], [])
         model = TabNet(
             input_dim=num_features,
-            output_dim=num_classes,
+            output_dim=1,
             cat_idxs=list(range(len(embedding_sizes))),
             cat_dims=list(cat_dims),
             cat_emb_dim=list(cat_emb_dim),
@@ -82,8 +78,7 @@ class TabularClassifier(ClassificationTask):
             lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
-            multi_label=multi_label,
-            serializer=serializer or Probabilities(),
+            serializer=serializer,
         )
 
         self.save_hyperparameters()
@@ -114,11 +109,6 @@ class TabularClassifier(ClassificationTask):
         return self(batch)
 
     @classmethod
-    def from_data(cls, datamodule, **kwargs) -> "TabularClassifier":
+    def from_data(cls, datamodule, **kwargs) -> "TabularRegressor":
         model = cls(datamodule.num_features, datamodule.num_classes, datamodule.embedding_sizes, **kwargs)
         return model
-
-    @staticmethod
-    def _ci_benchmark_fn(history: List[Dict[str, Any]]):
-        """This function is used only for debugging usage with CI."""
-        assert history[-1]["val_accuracy"] > 0.6, history[-1]["val_accuracy"]
