@@ -22,7 +22,6 @@ from flash.core.model import Task
 
 
 class RegressionMixin:
-
     @staticmethod
     def _build(
         loss_fn: Optional[Callable] = None,

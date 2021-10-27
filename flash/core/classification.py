@@ -39,7 +39,6 @@ def binary_cross_entropy_with_logits(x: torch.Tensor, y: torch.Tensor) -> torch.
 
 
 class ClassificationMixin:
-
     @staticmethod
     def _build(
         num_classes: Optional[int] = None,
