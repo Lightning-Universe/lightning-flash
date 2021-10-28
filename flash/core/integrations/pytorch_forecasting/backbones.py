@@ -13,9 +13,9 @@
 # limitations under the License.
 import functools
 
+from flash.core.integrations.pytorch_forecasting.adapter import PyTorchForecastingAdapter
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _FORECASTING_AVAILABLE
-from flash.tabular.forecasting.adapters import PyTorchForecastingAdapter
 
 if _FORECASTING_AVAILABLE:
     from pytorch_forecasting import (
@@ -28,7 +28,7 @@ if _FORECASTING_AVAILABLE:
     )
 
 
-TABULAR_FORECASTING_BACKBONES = FlashRegistry("backbones")
+PYTORCH_FORECASTING_BACKBONES = FlashRegistry("backbones")
 
 
 if _FORECASTING_AVAILABLE:
@@ -40,7 +40,7 @@ if _FORECASTING_AVAILABLE:
         [TemporalFusionTransformer, NBeats, RecurrentNetwork, DeepAR, DecoderMLP],
         ["temporal_fusion_transformer", "n_beats", "recurrent_network", "deep_ar", "decoder_mlp"],
     ):
-        TABULAR_FORECASTING_BACKBONES(
+        PYTORCH_FORECASTING_BACKBONES(
             functools.partial(load_torch_forecasting, model),
             name=name,
             namespace="tabular/forecasting",

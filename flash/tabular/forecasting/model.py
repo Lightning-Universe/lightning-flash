@@ -14,25 +14,27 @@
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import torchmetrics
+from pytorch_lightning import LightningModule
 
 from flash.core.adapter import AdapterTask
+from flash.core.integrations.pytorch_forecasting.adapter import PyTorchForecastingAdapter
+from flash.core.integrations.pytorch_forecasting.backbones import PYTORCH_FORECASTING_BACKBONES
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE
-from flash.tabular.forecasting.backbones import TABULAR_FORECASTING_BACKBONES
 
 
 class TabularForecaster(AdapterTask):
-    backbones: FlashRegistry = TABULAR_FORECASTING_BACKBONES
+    backbones: FlashRegistry = FlashRegistry("backbones") + PYTORCH_FORECASTING_BACKBONES
 
     def __init__(
         self,
         parameters: Dict[str, Any],
-        backbone: str = "temporal_fusion_transformer",
+        backbone: str,
         loss_fn: Optional[Callable] = None,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: Union[torchmetrics.Metric, List[torchmetrics.Metric]] = None,
-        learning_rate: float = 3e-2,
+        learning_rate: float = 4e-3,
         **backbone_kwargs
     ):
 
@@ -54,3 +56,19 @@ class TabularForecaster(AdapterTask):
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
         )
+
+    @property
+    def pytorch_forecasting_model(self) -> LightningModule:
+        """This property provides access to the ``LightningModule`` object that is wrapped by Flash for backbones
+        provided by PyTorch Forecasting.
+
+        This can be used with
+        :func:`~flash.core.integrations.pytorch_forecasting.transforms.convert_predictions` to access the visualization
+        features built in to PyTorch Forecasting.
+        """
+        if not isinstance(self.adapter, PyTorchForecastingAdapter):
+            raise AttributeError(
+                "The `pytorch_forecasting_model` attribute can only be accessed for backbones provided by PyTorch "
+                "Forecasting."
+            )
+        return self.adapter.backbone

@@ -95,6 +95,7 @@ class TabularForecastingPreprocess(Preprocess):
                 DefaultDataSources.DATAFRAME: TabularForecastingDataFrameDataSource(**data_source_kwargs),
             },
             deserializer=deserializer,
+            default_data_source=DefaultDataSources.DATAFRAME,
         )
 
     def get_state_dict(self, strict: bool = False) -> Dict[str, Any]:

@@ -15,16 +15,18 @@ from copy import copy
 from functools import partial
 from typing import Any, Callable, Dict, List, Optional, Union
 
+import torch
 import torchmetrics
 
+from flash import Task
 from flash.core.adapter import Adapter
+from flash.core.data.batch import default_uncollate
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.states import CollateFn
-from flash.core.model import Task
 from flash.core.utilities.imports import _FORECASTING_AVAILABLE, _PANDAS_AVAILABLE
 
 if _PANDAS_AVAILABLE:
-    from pandas.core.frame import DataFrame
+    from pandas import DataFrame
 
 if _FORECASTING_AVAILABLE:
     from pytorch_forecasting import TimeSeriesDataSet
@@ -33,13 +35,16 @@ else:
 
 
 class PatchTimeSeriesDataSet(TimeSeriesDataSet):
-    """Hack to prevent index construction when instantiating model.
+    """Hack to prevent index construction or data validation / conversion when instantiating model.
 
     This enables the ``TimeSeriesDataSet`` to be created from a single row of data.
     """
 
     def _construct_index(self, data: DataFrame, predict_mode: bool) -> DataFrame:
         return DataFrame()
+
+    def _data_to_tensors(self, data: DataFrame) -> Dict[str, torch.Tensor]:
+        return {}
 
 
 class PyTorchForecastingAdapter(Adapter):
@@ -80,15 +85,12 @@ class PyTorchForecastingAdapter(Adapter):
         if not backbone_kwargs:
             backbone_kwargs = {}
 
-        forecasting_model = task.backbones.get(backbone)(time_series_dataset=time_series_dataset, **backbone_kwargs)
+        adapter = cls(task.backbones.get(backbone)(time_series_dataset=time_series_dataset, **backbone_kwargs))
 
         # Attach the required collate function
-        task.set_state(CollateFn(partial(PyTorchForecastingAdapter._collate_fn, time_series_dataset._collate_fn)))
+        adapter.set_state(CollateFn(partial(PyTorchForecastingAdapter._collate_fn, time_series_dataset._collate_fn)))
 
-        # Attach the `forecasting_model` attribute to expose the built-in inference methods from PyTorch Forecasting
-        task.forecasting_model = forecasting_model
-
-        return cls(forecasting_model)
+        return adapter
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
@@ -99,16 +101,14 @@ class PyTorchForecastingAdapter(Adapter):
         return self.backbone.validation_step(batch, batch_idx)
 
     def test_step(self, batch: Any, batch_idx: int) -> None:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
-        # PyTorch Forecasting models don't have a `test_step`, so re-use `validation_step`
-        return self.backbone.validation_step(batch, batch_idx)
+        raise NotImplementedError(
+            "Backbones provided by PyTorch Forecasting don't support testing. Use validation instead."
+        )
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        raise NotImplementedError(
-            "Flash's inference is not currently supported with backbones provided by PyTorch Forecasting. You can "
-            "access the PyTorch Forecasting LightningModule directly with the `forecasting_model` attribute of the "
-            "`TabularForecaster`."
-        )
+        result = dict(self.backbone(batch[DefaultDataKeys.INPUT]))
+        result[DefaultDataKeys.INPUT] = default_uncollate(batch[DefaultDataKeys.INPUT])
+        return default_uncollate(result)
 
     def training_epoch_end(self, outputs) -> None:
         self.backbone.training_epoch_end(outputs)
@@ -117,5 +117,6 @@ class PyTorchForecastingAdapter(Adapter):
         self.backbone.validation_epoch_end(outputs)
 
     def test_epoch_end(self, outputs) -> None:
-        # PyTorch Forecasting models don't have a `test_epoch_end`, so re-use `validation_epoch_end`
-        self.backbone.validation_epoch_end(outputs)
+        raise NotImplementedError(
+            "Backbones provided by PyTorch Forecasting don't support testing. Use validation instead."
+        )

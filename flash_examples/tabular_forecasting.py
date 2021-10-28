@@ -11,89 +11,53 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import numpy as np
-from pytorch_forecasting.data import GroupNormalizer
-from pytorch_forecasting.data.examples import get_stallion_data
+import torch
 
 import flash
+from flash.core.utilities.imports import example_requires
 from flash.tabular.forecasting import TabularForecaster, TabularForecastingData
 
-data = get_stallion_data()
+example_requires("tabular")
 
-# add time index
-data["time_idx"] = data["date"].dt.year * 12 + data["date"].dt.month
-data["time_idx"] -= data["time_idx"].min()
+import pandas as pd  # noqa: E402
+from pytorch_forecasting.data import NaNLabelEncoder  # noqa: E402
+from pytorch_forecasting.data.examples import generate_ar_data  # noqa: E402
 
-# add additional features
-data["month"] = data.date.dt.month.astype(str).astype("category")  # categories have be strings
-data["log_volume"] = np.log(data.volume + 1e-8)
-data["avg_volume_by_sku"] = data.groupby(["time_idx", "sku"], observed=True).volume.transform("mean")
-data["avg_volume_by_agency"] = data.groupby(["time_idx", "agency"], observed=True).volume.transform("mean")
+# Example based on this tutorial: https://pytorch-forecasting.readthedocs.io/en/latest/tutorials/ar.html
+# 1. Create the DataModule
 
-# we want to encode special days as one variable and thus need to first reverse one-hot encoding
-special_days = [
-    "easter_day",
-    "good_friday",
-    "new_year",
-    "christmas",
-    "labor_day",
-    "independence_day",
-    "revolution_day_memorial",
-    "regional_games",
-    "fifa_u_17_world_cup",
-    "football_gold_cup",
-    "beer_capital",
-    "music_fest",
-]
-data[special_days] = data[special_days].apply(lambda x: x.map({0: "-", 1: x.name})).astype("category")
-data.sample(10, random_state=521)
+data = generate_ar_data(seasonality=10.0, timesteps=400, n_series=100, seed=42)
+data["static"] = 2
+data["date"] = pd.Timestamp("2020-01-01") + pd.to_timedelta(data.time_idx, "D")
 
-max_prediction_length = 6
-max_encoder_length = 24
+max_prediction_length = 20
+
 training_cutoff = data["time_idx"].max() - max_prediction_length
 
 datamodule = TabularForecastingData.from_data_frame(
     time_idx="time_idx",
-    target="volume",
-    group_ids=["agency", "sku"],
-    min_encoder_length=max_encoder_length // 2,  # keep encoder length long (as it is in the validation set)
-    max_encoder_length=max_encoder_length,
-    min_prediction_length=1,
+    target="value",
+    categorical_encoders={"series": NaNLabelEncoder().fit(data.series)},
+    group_ids=["series"],
+    # only unknown variable is "value" - and N-Beats can also not take any additional variables
+    time_varying_unknown_reals=["value"],
+    max_encoder_length=60,
     max_prediction_length=max_prediction_length,
-    static_categoricals=["agency", "sku"],
-    static_reals=["avg_population_2017", "avg_yearly_household_income_2017"],
-    time_varying_known_categoricals=["special_days", "month"],
-    variable_groups={"special_days": special_days},  # group of categorical variables can be treated as one variable
-    time_varying_known_reals=["time_idx", "price_regular", "discount_in_percent"],
-    time_varying_unknown_categoricals=[],
-    time_varying_unknown_reals=[
-        "volume",
-        "log_volume",
-        "industry_volume",
-        "soda_volume",
-        "avg_max_temp",
-        "avg_volume_by_agency",
-        "avg_volume_by_sku",
-    ],
-    target_normalizer=GroupNormalizer(
-        groups=["agency", "sku"], transformation="softplus"
-    ),  # use softplus and normalize by group
-    add_relative_time_idx=True,
-    add_target_scales=True,
-    add_encoder_length=True,
     train_data_frame=data[lambda x: x.time_idx <= training_cutoff],
     val_data_frame=data,
-    batch_size=64,
+    batch_size=32,
 )
 
-model = TabularForecaster(
-    datamodule.parameters,
-    hidden_size=16,
-    attention_head_size=1,
-    dropout=0.1,
-    hidden_continuous_size=8,
-    output_size=7,
-)
+# 2. Build the task
+model = TabularForecaster(datamodule.parameters, backbone="n_beats", widths=[32, 512], backcast_loss_ratio=0.1)
 
-trainer = flash.Trainer(max_epochs=30, gradient_clip_val=0.1)
+# 3. Create the trainer and train the model
+trainer = flash.Trainer(max_epochs=1, gpus=torch.cuda.device_count(), gradient_clip_val=0.01, limit_train_batches=10)
 trainer.fit(model, datamodule=datamodule)
+
+# 4. Generate predictions
+predictions = model.predict(data)
+print(predictions)
+
+# 5. Save the model!
+trainer.save_checkpoint("tabular_forecasting_model.pt")
