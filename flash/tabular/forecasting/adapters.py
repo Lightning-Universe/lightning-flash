@@ -46,12 +46,10 @@ class PyTorchForecastingAdapter(Adapter):
     """The ``PyTorchForecastingAdapter`` is an :class:`~flash.core.adapter.Adapter` for integrating with PyTorch
     Forecasting."""
 
-    def __init__(self, backbone, collate_fn):
+    def __init__(self, backbone):
         super().__init__()
 
         self.backbone = backbone
-
-        self.set_state(CollateFn(partial(PyTorchForecastingAdapter._collate_fn, collate_fn)))
 
     @staticmethod
     def _collate_fn(collate_fn, samples):
@@ -82,10 +80,15 @@ class PyTorchForecastingAdapter(Adapter):
         if not backbone_kwargs:
             backbone_kwargs = {}
 
-        return cls(
-            task.backbones.get(backbone)(time_series_dataset=time_series_dataset, **backbone_kwargs),
-            time_series_dataset._collate_fn,
-        )
+        forecasting_model = task.backbones.get(backbone)(time_series_dataset=time_series_dataset, **backbone_kwargs)
+
+        # Attach the required collate function
+        task.set_state(CollateFn(partial(PyTorchForecastingAdapter._collate_fn, time_series_dataset._collate_fn)))
+
+        # Attach the `forecasting_model` attribute to expose the built-in inference methods from PyTorch Forecasting
+        task.forecasting_model = forecasting_model
+
+        return cls(forecasting_model)
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
@@ -99,6 +102,13 @@ class PyTorchForecastingAdapter(Adapter):
         batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
         # PyTorch Forecasting models don't have a `test_step`, so re-use `validation_step`
         return self.backbone.validation_step(batch, batch_idx)
+
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        raise NotImplementedError(
+            "Flash's inference is not currently supported with backbones provided by PyTorch Forecasting. You can "
+            "access the PyTorch Forecasting LightningModule directly with the `forecasting_model` attribute of the "
+            "`TabularForecaster`."
+        )
 
     def training_epoch_end(self, outputs) -> None:
         self.backbone.training_epoch_end(outputs)
