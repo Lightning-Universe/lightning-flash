@@ -14,11 +14,13 @@
 import torch
 
 import flash
+from flash.core.integrations.pytorch_forecasting import convert_predictions
 from flash.core.utilities.imports import example_requires
 from flash.tabular.forecasting import TabularForecaster, TabularForecastingData
 
-example_requires("tabular")
+example_requires(["tabular", "matplotlib"])
 
+import matplotlib.pyplot as plt  # noqa: E402
 import pandas as pd  # noqa: E402
 from pytorch_forecasting.data import NaNLabelEncoder  # noqa: E402
 from pytorch_forecasting.data.examples import generate_ar_data  # noqa: E402
@@ -59,5 +61,16 @@ trainer.fit(model, datamodule=datamodule)
 predictions = model.predict(data)
 print(predictions)
 
-# 5. Save the model!
-trainer.save_checkpoint("tabular_forecasting_model.pt")
+# Convert predictions
+predictions, inputs = convert_predictions(predictions)
+
+# Plot predictions
+for idx in range(10):  # plot 10 examples
+    model.pytorch_forecasting_model.plot_prediction(inputs, predictions, idx=idx, add_loss_to_title=True)
+
+# Plot interpretation
+for idx in range(10):  # plot 10 examples
+    model.pytorch_forecasting_model.plot_interpretation(inputs, predictions, idx=idx)
+
+# Show the plots!
+plt.show()
