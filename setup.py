@@ -48,14 +48,24 @@ long_description = setup_tools._load_readme_description(
 base_req = setup_tools._load_requirements(path_dir=_PATH_ROOT, file_name="requirements.txt")
 # find all extra requirements
 _load_req = partial(setup_tools._load_requirements, path_dir=_PATH_REQUIRE)
-SKIP_REQ_FILES = ("devel.txt")
-found_req_files = sorted([os.path.basename(p) for p in glob.glob(os.path.join(_PATH_REQUIRE, "*.txt"))])
+SKIP_REQ_FILES = "devel.txt"
+found_req_files = sorted(os.path.basename(p) for p in glob.glob(os.path.join(_PATH_REQUIRE, "*.txt")))
 # filter unwanted files
 found_req_files = [n for n in found_req_files if n not in SKIP_REQ_FILES]
 found_req_names = [os.path.splitext(req)[0].replace("datatype_", "") for req in found_req_files]
 # define basic and extra extras
-extras_req = {name: base_req + _load_req(file_name=fname) for name, fname in zip(found_req_names, found_req_files) if "_" not in name}
-extras_req.update({name: extras_req[name.split("_")[0]] + _load_req(file_name=fname) for name, fname in zip(found_req_names, found_req_files) if "_" in name})
+extras_req = {
+    name: base_req + _load_req(file_name=fname)
+    for name, fname in zip(found_req_names, found_req_files)
+    if "_" not in name
+}
+extras_req.update(
+    {
+        name: extras_req[name.split("_")[0]] + _load_req(file_name=fname)
+        for name, fname in zip(found_req_names, found_req_files)
+        if "_" in name
+    }
+)
 # some extra combinations
 extras_req["vision"] = extras_req["image"] + extras_req["video"]
 extras_req["all"] = extras_req["vision"] + extras_req["tabular"] + extras_req["text"]
