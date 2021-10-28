@@ -11,20 +11,27 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Dict, List, Optional, Union
 
 import torch
 from torch import nn
 from torch.nn import functional as F
-from torch.optim.lr_scheduler import _LRScheduler
-from torchmetrics import IoU, Metric
+from torchmetrics import IoU
 
 from flash.core.classification import ClassificationTask
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.process import Postprocess, Serializer
+from flash.core.data.process import Postprocess
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _KORNIA_AVAILABLE
 from flash.core.utilities.isinstance import _isinstance
+from flash.core.utilities.types import (
+    LOSS_FN_TYPE,
+    LR_SCHEDULER_TYPE,
+    METRICS_TYPE,
+    OPTIMIZER_TYPE,
+    POSTPROCESS_TYPE,
+    SERIALIZER_TYPE,
+)
 from flash.image.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 from flash.image.segmentation.heads import SEMANTIC_SEGMENTATION_HEADS
 from flash.image.segmentation.serialization import SegmentationLabels
@@ -54,9 +61,7 @@ class SemanticSegmentation(ClassificationTask):
         pretrained: Use a pretrained backbone.
         loss_fn: Loss function for training.
         optimizer: Optimizer to use for training.
-        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
-        scheduler: The scheduler or scheduler class to use.
-        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
+        lr_scheduler: The LR scheduler to use during training.
         metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
             package, a custom metric inherenting from `torchmetrics.Metric`, a callable function or a list/dict
             containing a combination of the aforementioned. In all cases, each metric needs to have the signature
@@ -64,6 +69,7 @@ class SemanticSegmentation(ClassificationTask):
         learning_rate: Learning rate to use for training.
         multi_label: Whether the targets are multi-label or not.
         serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
+        postprocess: :class:`~flash.core.data.process.Postprocess` use for post processing samples.
     """
 
     postprocess_cls = SemanticSegmentationPostprocess
@@ -82,16 +88,14 @@ class SemanticSegmentation(ClassificationTask):
         head: str = "fpn",
         head_kwargs: Optional[Dict] = None,
         pretrained: Union[bool, str] = True,
-        loss_fn: Optional[Callable] = None,
-        optimizer: Type[torch.optim.Optimizer] = torch.optim.AdamW,
-        optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
-        metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
+        loss_fn: LOSS_FN_TYPE = None,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
+        metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-3,
         multi_label: bool = False,
-        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
-        postprocess: Optional[Postprocess] = None,
+        serializer: SERIALIZER_TYPE = None,
+        postprocess: POSTPROCESS_TYPE = None,
     ) -> None:
         if metrics is None:
             metrics = IoU(num_classes=num_classes)
@@ -107,9 +111,7 @@ class SemanticSegmentation(ClassificationTask):
             model=None,
             loss_fn=loss_fn,
             optimizer=optimizer,
-            optimizer_kwargs=optimizer_kwargs,
-            scheduler=scheduler,
-            scheduler_kwargs=scheduler_kwargs,
+            lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
             serializer=serializer or SegmentationLabels(),

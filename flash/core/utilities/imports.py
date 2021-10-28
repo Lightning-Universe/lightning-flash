@@ -88,6 +88,7 @@ _UVICORN_AVAILABLE = _module_available("uvicorn")
 _PIL_AVAILABLE = _module_available("PIL")
 _OPEN3D_AVAILABLE = _module_available("open3d")
 _SEGMENTATION_MODELS_AVAILABLE = _module_available("segmentation_models_pytorch")
+_FASTFACE_AVAILABLE = _module_available("fastface")
 _LIBROSA_AVAILABLE = _module_available("librosa")
 _TORCH_SCATTER_AVAILABLE = _module_available("torch_scatter")
 _TORCH_SPARSE_AVAILABLE = _module_available("torch_sparse")
@@ -102,6 +103,9 @@ _LEARN2LEARN_AVAILABLE = _module_available("learn2learn") and _compare_version("
 _TORCH_ORT_AVAILABLE = _module_available("torch_ort")
 _VISSL_AVAILABLE = _module_available("vissl") and _module_available("classy_vision")
 _ALBUMENTATIONS_AVAILABLE = _module_available("albumentations")
+_BAAL_AVAILABLE = _module_available("baal")
+_TORCH_OPTIMIZER_AVAILABLE = _module_available("torch_optimizer")
+
 
 if _PIL_AVAILABLE:
     from PIL import Image  # noqa: F401

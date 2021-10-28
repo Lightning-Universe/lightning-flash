@@ -11,17 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Tuple
 
 import torch
 from torch.nn import functional as F
-from torch.optim.lr_scheduler import _LRScheduler
-from torchmetrics import Metric
 
 from flash.core.classification import ClassificationTask, Probabilities
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.process import Serializer
 from flash.core.utilities.imports import _TABULAR_AVAILABLE
+from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, SERIALIZER_TYPE
 
 if _TABULAR_AVAILABLE:
     from pytorch_tabnet.tab_network import TabNet
@@ -36,7 +34,8 @@ class TabularClassifier(ClassificationTask):
         num_classes: Number of classes to classify.
         embedding_sizes: List of (num_classes, emb_dim) to form categorical embeddings.
         loss_fn: Loss function for training, defaults to cross entropy.
-        optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
         metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
             package, a custom metric inherenting from `torchmetrics.Metric`, a callable function or a list/dict
             containing a combination of the aforementioned. In all cases, each metric needs to have the signature
@@ -56,14 +55,12 @@ class TabularClassifier(ClassificationTask):
         num_classes: int,
         embedding_sizes: List[Tuple[int, int]] = None,
         loss_fn: Callable = F.cross_entropy,
-        optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-        optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
-        metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
+        metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-2,
         multi_label: bool = False,
-        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
+        serializer: SERIALIZER_TYPE = None,
         **tabnet_kwargs,
     ):
         self.save_hyperparameters()
@@ -82,9 +79,7 @@ class TabularClassifier(ClassificationTask):
             model=model,
             loss_fn=loss_fn,
             optimizer=optimizer,
-            optimizer_kwargs=optimizer_kwargs,
-            scheduler=scheduler,
-            scheduler_kwargs=scheduler_kwargs,
+            lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
             multi_label=multi_label,

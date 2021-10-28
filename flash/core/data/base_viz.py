@@ -13,12 +13,12 @@
 # limitations under the License.
 from typing import Any, Dict, List, Set
 
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.utils import _CALLBACK_FUNCS
 from flash.core.utilities.apply_func import _is_overriden
+from flash.core.utilities.stages import RunningStage
 
 
 class BaseVisualization(BaseDataFetcher):

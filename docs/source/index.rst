@@ -33,6 +33,7 @@ Lightning Flash
    general/registry
    general/serve
    general/backbones
+   general/optimization
 
 .. toctree::
    :maxdepth: 1
@@ -89,9 +90,11 @@ Lightning Flash
    :caption: Integrations
 
    integrations/providers
+   integrations/baal
    integrations/fiftyone
-   integrations/learn2learn
    integrations/icevision
+   integrations/learn2learn
+   integrations/vissl
 
 .. toctree::
    :maxdepth: 1

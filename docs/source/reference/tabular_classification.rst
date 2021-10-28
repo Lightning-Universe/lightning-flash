@@ -35,8 +35,8 @@ The data is provided in CSV files that look like this:
     6,0,3,"Moran, Mr. James",male,,0,0,330877,8.4583,,Q
     ...
 
-Once we've downloaded the data using :func:`~flash.core.data.download_data`, we can create the :class:`~flash.tabular.classification.data.TabularClassificationData` from our CSV files using the :func:`~flash.tabular.classification.data.TabularClassificationData.from_csv` method.
-From :meth:`the API reference <flash.tabular.classification.data.TabularClassificationData.from_csv>`, we need to provide:
+Once we've downloaded the data using :func:`~flash.core.data.download_data`, we can create the :class:`~flash.tabular.classification.data.TabularData` from our CSV files using the :func:`~flash.tabular.classification.data.TabularData.from_csv` method.
+From :meth:`the API reference <flash.tabular.classification.data.TabularData.from_csv>`, we need to provide:
 
 * **cat_cols**- A list of the names of columns that contain categorical data (strings or integers).
 * **num_cols**- A list of the names of columns that contain numerical continuous data (floats).

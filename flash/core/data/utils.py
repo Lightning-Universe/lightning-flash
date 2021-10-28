@@ -13,15 +13,17 @@
 # limitations under the License.
 
 import os.path
+import tarfile
 import zipfile
 from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Set, Type
 
 import requests
 import torch
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.apply_func import apply_to_collection
 from torch import Tensor
 from tqdm.auto import tqdm as tq
+
+from flash.core.utilities.stages import RunningStage
 
 _STAGES_PREFIX = {
     RunningStage.TRAINING: "train",
@@ -148,10 +150,23 @@ def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:
             ):
                 fp.write(chunk)  # type: ignore
 
+    def extract_tarfile(file_path: str, extract_path: str, mode: str):
+        if os.path.exists(file_path):
+            with tarfile.open(file_path, mode=mode) as tar_ref:
+                for member in tar_ref.getmembers():
+                    try:
+                        tar_ref.extract(member, path=extract_path, set_attrs=False)
+                    except PermissionError:
+                        raise PermissionError(f"Could not extract tar file {file_path}")
+
     if ".zip" in local_filename:
         if os.path.exists(local_filename):
             with zipfile.ZipFile(local_filename, "r") as zip_ref:
                 zip_ref.extractall(path)
+    elif local_filename.endswith(".tar.gz") or local_filename.endswith(".tgz"):
+        extract_tarfile(local_filename, path, "r:gz")
+    elif local_filename.endswith(".tar.bz2") or local_filename.endswith(".tbz"):
+        extract_tarfile(local_filename, path, "r:bz2")
 
 
 def _contains_any_tensor(value: Any, dtype: Type = Tensor) -> bool:
