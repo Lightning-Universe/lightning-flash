@@ -83,7 +83,8 @@ class ActiveLearningLoop(Loop):
         if self.trainer.datamodule.has_labelled_data:
             self._reset_dataloader_for_stage(RunningStage.TRAINING)
             self._reset_dataloader_for_stage(RunningStage.VALIDATING)
-            self._reset_dataloader_for_stage(RunningStage.TESTING)
+            if self.trainer.datamodule.has_test:
+                self._reset_dataloader_for_stage(RunningStage.TESTING)
         if self.trainer.datamodule.has_unlabelled_data:
             self._reset_dataloader_for_stage(RunningStage.PREDICTING)
         self.progress.increment_ready()
