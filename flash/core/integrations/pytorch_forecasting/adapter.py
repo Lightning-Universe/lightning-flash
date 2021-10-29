@@ -27,6 +27,8 @@ from flash.core.utilities.imports import _FORECASTING_AVAILABLE, _PANDAS_AVAILAB
 
 if _PANDAS_AVAILABLE:
     from pandas import DataFrame
+else:
+    DataFrame = object
 
 if _FORECASTING_AVAILABLE:
     from pytorch_forecasting import TimeSeriesDataSet
