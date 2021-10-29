@@ -16,6 +16,7 @@ import functools
 from flash.core.integrations.pytorch_forecasting.adapter import PyTorchForecastingAdapter
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _FORECASTING_AVAILABLE
+from flash.core.utilities.providers import _PYTORCH_FORECASTING
 
 if _FORECASTING_AVAILABLE:
     from pytorch_forecasting import (
@@ -43,6 +44,6 @@ if _FORECASTING_AVAILABLE:
         PYTORCH_FORECASTING_BACKBONES(
             functools.partial(load_torch_forecasting, model),
             name=name,
-            namespace="tabular/forecasting",
+            providers=_PYTORCH_FORECASTING,
             adapter=PyTorchForecastingAdapter,
         )
