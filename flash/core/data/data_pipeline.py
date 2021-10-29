@@ -19,7 +19,6 @@ from typing import Any, Callable, Dict, Optional, Sequence, Set, Tuple, Type, TY
 
 import torch
 from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
-from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from pytorch_lightning.utilities.model_helpers import is_overridden
 from torch.utils.data import DataLoader, IterableDataset
@@ -42,29 +41,19 @@ class DataPipelineState:
 
     def __init__(self):
         self._state: Dict[Type[ProcessState], ProcessState] = {}
-        self._initialized = False
 
     def set_state(self, state: ProcessState):
         """Add the given :class:`.ProcessState` to the :class:`.DataPipelineState`."""
 
-        if not self._initialized:
-            self._state[type(state)] = state
-        else:
-            rank_zero_warn(
-                f"Attempted to add a state ({state}) after the data pipeline has already been initialized. This will"
-                " only have an effect when a new data pipeline is created.",
-                UserWarning,
-            )
+        self._state[type(state)] = state
 
     def get_state(self, state_type: Type[ProcessState]) -> Optional[ProcessState]:
         """Get the :class:`.ProcessState` of the given type from the :class:`.DataPipelineState`."""
 
-        if state_type in self._state:
-            return self._state[state_type]
-        return None
+        return self._state.get(state_type, None)
 
     def __str__(self) -> str:
-        return f"{self.__class__.__name__}(initialized={self._initialized}, state={self._state})"
+        return f"{self.__class__.__name__}(state={self._state})"
 
 
 class DataPipeline:
@@ -113,13 +102,11 @@ class DataPipeline:
         :class:`.Postprocess`, and :class:`.Serializer`. Once this has been called, any attempt to add new state will
         give a warning."""
         data_pipeline_state = data_pipeline_state or DataPipelineState()
-        data_pipeline_state._initialized = False
         if self.data_source is not None:
             self.data_source.attach_data_pipeline_state(data_pipeline_state)
         self._preprocess_pipeline.attach_data_pipeline_state(data_pipeline_state)
         self._postprocess_pipeline.attach_data_pipeline_state(data_pipeline_state)
         self._serializer.attach_data_pipeline_state(data_pipeline_state)
-        data_pipeline_state._initialized = True  # TODO: Not sure we need this
         return data_pipeline_state
 
     @property

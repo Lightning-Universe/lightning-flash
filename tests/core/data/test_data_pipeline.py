@@ -59,17 +59,8 @@ class TestDataPipelineState:
         state.set_state(ProcessState())
 
         assert str(state) == (
-            "DataPipelineState(initialized=False, "
-            "state={<class 'flash.core.data.properties.ProcessState'>: ProcessState()})"
+            "DataPipelineState(state={<class 'flash.core.data.properties.ProcessState'>: ProcessState()})"
         )
-
-    @staticmethod
-    def test_warning():
-        state = DataPipelineState()
-        state._initialized = True
-
-        with pytest.warns(UserWarning, match="data pipeline has already been initialized"):
-            state.set_state(ProcessState())
 
     @staticmethod
     def test_get_state():
