@@ -115,8 +115,3 @@ class PyTorchForecastingAdapter(Adapter):
 
     def validation_epoch_end(self, outputs) -> None:
         self.backbone.validation_epoch_end(outputs)
-
-    def test_epoch_end(self, outputs) -> None:
-        raise NotImplementedError(
-            "Backbones provided by PyTorch Forecasting don't support testing. Use validation instead."
-        )

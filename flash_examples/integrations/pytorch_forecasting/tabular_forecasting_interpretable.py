@@ -27,7 +27,6 @@ from pytorch_forecasting.data.examples import generate_ar_data  # noqa: E402
 
 # Example based on this tutorial: https://pytorch-forecasting.readthedocs.io/en/latest/tutorials/ar.html
 # 1. Create the DataModule
-
 data = generate_ar_data(seasonality=10.0, timesteps=400, n_series=100, seed=42)
 data["static"] = 2
 data["date"] = pd.Timestamp("2020-01-01") + pd.to_timedelta(data.time_idx, "D")

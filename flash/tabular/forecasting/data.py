@@ -15,6 +15,8 @@ from copy import copy
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Mapping, Optional, Union
 
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
+
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
@@ -41,12 +43,21 @@ class TimeSeriesDataSetParametersState(ProcessState):
 
 class TabularForecastingDataFrameDataSource(DataSource[DataFrame]):
     @requires("tabular")
-    def __init__(self, time_idx: str, target: Union[str, List[str]], group_ids: List[str], **data_source_kwargs: Any):
+    def __init__(
+        self,
+        time_idx: str,
+        target: Union[str, List[str]],
+        group_ids: List[str],
+        parameters: Optional[Dict[str, Any]] = None,
+        **data_source_kwargs: Any,
+    ):
         super().__init__()
         self.time_idx = time_idx
         self.target = target
         self.group_ids = group_ids
         self.data_source_kwargs = data_source_kwargs
+
+        self.set_state(TimeSeriesDataSetParametersState(parameters))
 
     def load_data(self, data: DataFrame, dataset: Optional[Any] = None):
         if self.training:
@@ -54,14 +65,21 @@ class TabularForecastingDataFrameDataSource(DataSource[DataFrame]):
                 data, time_idx=self.time_idx, group_ids=self.group_ids, target=self.target, **self.data_source_kwargs
             )
             parameters = time_series_dataset.get_parameters()
-            self.set_state(TimeSeriesDataSetParametersState(parameters))
 
             # Add some sample data so that we can recreate the `TimeSeriesDataSet` later on
-            parameters = copy(parameters)
             parameters["data_sample"] = data.iloc[[0]]
+
+            self.set_state(TimeSeriesDataSetParametersState(parameters))
             dataset.parameters = parameters
         else:
-            parameters = self.get_state(TimeSeriesDataSetParametersState).time_series_dataset_parameters
+            parameters = copy(self.get_state(TimeSeriesDataSetParametersState).time_series_dataset_parameters)
+            if parameters is None:
+                raise MisconfigurationException(
+                    "Loading data for evaluation or inference requires parameters from the train data. Either "
+                    "construct the train data at the same time as evaluation and inference or provide the train "
+                    "`datamodule.parameters` to `from_data_frame` in the `parameters` argument."
+                )
+            parameters.pop("data_sample")
             time_series_dataset = TimeSeriesDataSet.from_parameters(
                 parameters,
                 data,
@@ -112,15 +130,16 @@ class TabularForecastingData(DataModule):
     preprocess_cls = TabularForecastingPreprocess
 
     @property
-    def parameters(self) -> Dict[str, Any]:
-        return self.train_dataset.parameters
+    def parameters(self) -> Optional[Dict[str, Any]]:
+        return getattr(self.train_dataset, "parameters", None)
 
     @classmethod
     def from_data_frame(
         cls,
-        time_idx: str,
-        target: Union[str, List[str]],
-        group_ids: List[str],
+        time_idx: Optional[str] = None,
+        target: Optional[Union[str, List[str]]] = None,
+        group_ids: Optional[List[str]] = None,
+        parameters: Optional[Dict[str, Any]] = None,
         train_data_frame: Optional[DataFrame] = None,
         val_data_frame: Optional[DataFrame] = None,
         test_data_frame: Optional[DataFrame] = None,
@@ -182,6 +201,7 @@ class TabularForecastingData(DataModule):
             time_idx=time_idx,
             target=target,
             group_ids=group_ids,
+            parameters=parameters,
             data_source=DefaultDataSources.DATAFRAME,
             train_data=train_data_frame,
             val_data=val_data_frame,
