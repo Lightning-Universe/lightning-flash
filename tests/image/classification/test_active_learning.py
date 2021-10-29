@@ -16,6 +16,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+import torch
 from pytorch_lightning import seed_everything
 from torch import nn
 from torch.utils.data import SequentialSampler
@@ -94,12 +95,21 @@ def test_active_learning_training(simple_datamodule, initial_num_labels, query_s
         backbone="resnet18", head=head, num_classes=active_learning_dm.num_classes, serializer=Probabilities()
     )
     trainer = flash.Trainer(max_epochs=3)
-
-    active_learning_loop = ActiveLearningLoop(label_epoch_frequency=1)
+    active_learning_loop = ActiveLearningLoop(label_epoch_frequency=1, inference_iteration=3)
     active_learning_loop.connect(trainer.fit_loop)
     trainer.fit_loop = active_learning_loop
 
-    trainer.finetune(model, datamodule=active_learning_dm, strategy="freeze")
+    trainer.finetune(model, datamodule=active_learning_dm, strategy="no_freeze")
+    # Check that all metrics are logged
+    assert all(
+        any(m in log_met for log_met in active_learning_loop.trainer.logged_metrics) for m in ("train", "val", "test")
+    )
+
+    # Check that the weights has changed for both module.
+    classifier = active_learning_loop._lightning_module.adapter.parameters()
+    mc_inference = active_learning_loop.inference_model.parent_module.parameters()
+    assert all(torch.equal(p1, p2) for p1, p2 in zip(classifier, mc_inference))
+
     if initial_num_labels == 0:
         assert len(active_learning_dm._dataset) == 15
     else:
@@ -117,3 +127,29 @@ def test_active_learning_training(simple_datamodule, initial_num_labels, query_s
     else:
         # in the second scenario we have more labelled data!
         assert len(active_learning_dm.val_dataloader()) == 5
+
+
+@pytest.mark.skipif(not (_IMAGE_TESTING and _BAAL_AVAILABLE), reason="image and baal libraries aren't installed.")
+def test_no_validation_loop(simple_datamodule):
+    active_learning_dm = ActiveLearningDataModule(
+        simple_datamodule,
+        initial_num_labels=2,
+        query_size=100,
+        val_split=0.0,
+    )
+    assert active_learning_dm.val_dataloader is None
+    head = nn.Sequential(
+        nn.Dropout(p=0.1),
+        nn.Linear(512, active_learning_dm.num_classes),
+    )
+
+    model = ImageClassifier(
+        backbone="resnet18", head=head, num_classes=active_learning_dm.num_classes, serializer=Probabilities()
+    )
+    trainer = flash.Trainer(max_epochs=3)
+    active_learning_loop = ActiveLearningLoop(label_epoch_frequency=1, inference_iteration=3)
+    active_learning_loop.connect(trainer.fit_loop)
+    trainer.fit_loop = active_learning_loop
+
+    # Check that we can finetune without val_set
+    trainer.finetune(model, datamodule=active_learning_dm, strategy="no_freeze")
