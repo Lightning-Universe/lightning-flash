@@ -84,8 +84,7 @@ class PyTorchForecastingAdapter(Adapter):
             metrics = [metrics]
         backbone_kwargs["logging_metrics"] = metrics
 
-        if not backbone_kwargs:
-            backbone_kwargs = {}
+        backbone_kwargs = backbone_kwargs or {}
 
         adapter = cls(task.backbones.get(backbone)(time_series_dataset=time_series_dataset, **backbone_kwargs))
 
