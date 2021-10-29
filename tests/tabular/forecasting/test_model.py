@@ -16,6 +16,7 @@ import pytest
 import flash
 from flash.core.utilities.imports import _PANDAS_AVAILABLE, _TABULAR_AVAILABLE
 from flash.tabular.forecasting import TabularForecaster, TabularForecastingData
+from tests.helpers.utils import _TABULAR_TESTING
 
 if _TABULAR_AVAILABLE:
     from pytorch_forecasting.data import NaNLabelEncoder
@@ -35,6 +36,7 @@ def sample_data():
     return data, training_cutoff, max_prediction_length
 
 
+@pytest.mark.skipif(not _TABULAR_TESTING, reason="Tabular libraries aren't installed.")
 def test_fast_dev_run_smoke(sample_data):
     """Test that fast dev run works with the NBeats example data."""
     data, training_cutoff, max_prediction_length = sample_data
@@ -56,6 +58,7 @@ def test_fast_dev_run_smoke(sample_data):
     trainer.fit(model, datamodule=datamodule)
 
 
+@pytest.mark.skipif(not _TABULAR_TESTING, reason="Tabular libraries aren't installed.")
 def test_testing_raises(sample_data):
     """Tests that ``NotImplementedError`` is raised when attempting to perform a test pass."""
     data, training_cutoff, max_prediction_length = sample_data
