@@ -29,7 +29,6 @@ if _PANDAS_AVAILABLE:
 @pytest.fixture
 def sample_data():
     data = generate_ar_data(seasonality=10.0, timesteps=100, n_series=2, seed=42)
-    data["static"] = 2
     data["date"] = pd.Timestamp("2020-01-01") + pd.to_timedelta(data.time_idx, "D")
     max_prediction_length = 20
     training_cutoff = data["time_idx"].max() - max_prediction_length

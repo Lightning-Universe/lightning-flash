@@ -75,6 +75,7 @@ class PyTorchForecastingAdapter(Adapter):
         **backbone_kwargs,
     ) -> Adapter:
         parameters = copy(parameters)
+        # Remove the single row of data from the parameters to reconstruct the `time_series_dataset`
         data = parameters.pop("data_sample")
         time_series_dataset = PatchTimeSeriesDataSet.from_parameters(parameters, data)
 
