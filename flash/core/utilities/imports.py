@@ -70,6 +70,7 @@ _BOLTS_AVAILABLE = _module_available("pl_bolts") and _compare_version("torch", o
 _PANDAS_AVAILABLE = _module_available("pandas")
 _SKLEARN_AVAILABLE = _module_available("sklearn")
 _TABNET_AVAILABLE = _module_available("pytorch_tabnet")
+_FORECASTING_AVAILABLE = _module_available("pytorch_forecasting")
 _KORNIA_AVAILABLE = _module_available("kornia")
 _COCO_AVAILABLE = _module_available("pycocotools")
 _TIMM_AVAILABLE = _module_available("timm")
@@ -103,6 +104,8 @@ _TORCH_ORT_AVAILABLE = _module_available("torch_ort")
 _VISSL_AVAILABLE = _module_available("vissl") and _module_available("classy_vision")
 _ALBUMENTATIONS_AVAILABLE = _module_available("albumentations")
 _BAAL_AVAILABLE = _module_available("baal")
+_TORCH_OPTIMIZER_AVAILABLE = _module_available("torch_optimizer")
+
 
 if _PIL_AVAILABLE:
     from PIL import Image  # noqa: F401
@@ -124,7 +127,7 @@ _TEXT_AVAILABLE = all(
         _DATASETS_AVAILABLE,
     ]
 )
-_TABULAR_AVAILABLE = _TABNET_AVAILABLE and _PANDAS_AVAILABLE
+_TABULAR_AVAILABLE = _TABNET_AVAILABLE and _PANDAS_AVAILABLE and _FORECASTING_AVAILABLE
 _VIDEO_AVAILABLE = _TORCHVISION_AVAILABLE and _PIL_AVAILABLE and _PYTORCHVIDEO_AVAILABLE and _KORNIA_AVAILABLE
 _IMAGE_AVAILABLE = all(
     [

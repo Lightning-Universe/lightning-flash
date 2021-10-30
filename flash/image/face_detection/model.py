@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Dict, List
 
 import torch
 from torch.nn import Module
@@ -19,8 +20,20 @@ from torch.optim import Optimizer
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Preprocess, Serializer
+
+from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.process import Serializer
+from flash.core.finetuning import FlashBaseFinetuning
 from flash.core.model import Task
 from flash.core.utilities.imports import _FASTFACE_AVAILABLE
+from flash.core.utilities.types import (
+    LOSS_FN_TYPE,
+    LR_SCHEDULER_TYPE,
+    METRICS_TYPE,
+    OPTIMIZER_TYPE,
+    PREPROCESS_TYPE,
+    SERIALIZER_TYPE,
+)
 from flash.image.face_detection.backbones import FACE_DETECTION_BACKBONES
 from flash.image.face_detection.data import FaceDetectionPreprocess
 
@@ -54,7 +67,8 @@ class FaceDetector(Task):
         loss: the function(s) to update the model with. Has no effect for fastface models.
         metrics: The provided metrics. All metrics here will be logged to progress bar and the respective logger.
             Changing this argument currently has no effect.
-        optimizer: The optimizer to use for training. Can either be the actual class or the class name.
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
         learning_rate: The learning rate to use for training
     """
 
@@ -64,12 +78,13 @@ class FaceDetector(Task):
         self,
         model: str = "lffd_slim",
         pretrained: bool = True,
-        loss=None,
-        metrics: Union[Callable, Module, Mapping, Sequence, None] = None,
-        optimizer: Type[Optimizer] = torch.optim.AdamW,
+        loss_fn: LOSS_FN_TYPE = None,
+        metrics: METRICS_TYPE = None,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
         learning_rate: float = 1e-4,
-        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
-        preprocess: Optional[Preprocess] = None,
+        serializer: SERIALIZER_TYPE = None,
+        preprocess: PREPROCESS_TYPE = None,
         **kwargs: Any,
     ):
         self.save_hyperparameters()
@@ -80,11 +95,12 @@ class FaceDetector(Task):
             ValueError(model + f" is not supported yet, please select one from {ff.list_pretrained_models()}")
 
         super().__init__(
-            model=self.model,
-            loss_fn=loss,
+            model=model,
+            loss_fn=loss_fn,
             metrics=metrics or {"AP": ff.metric.AveragePrecision()},  # TODO: replace with torch metrics MAP
             learning_rate=learning_rate,
             optimizer=optimizer,
+            lr_scheduler=lr_scheduler,
             serializer=serializer or DetectionLabels(),
             preprocess=preprocess or FaceDetectionPreprocess(),
         )

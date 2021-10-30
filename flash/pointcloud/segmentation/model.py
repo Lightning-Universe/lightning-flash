@@ -11,13 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Dict, Iterable, Optional, Tuple, Union
 
 import torch
-import torchmetrics
+from pytorch_lightning import Callback, LightningModule
 from torch import nn
 from torch.nn import functional as F
-from torch.optim.lr_scheduler import _LRScheduler
+from torch.optim import Optimizer
 from torch.utils.data import DataLoader, Sampler
 from torchmetrics import IoU
 
@@ -28,6 +28,7 @@ from flash.core.data.process import Serializer
 from flash.core.data.states import CollateFn
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
+from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, SERIALIZER_TYPE
 from flash.pointcloud.segmentation.backbones import POINTCLOUD_SEGMENTATION_BACKBONES
 
 if _POINTCLOUD_AVAILABLE:
@@ -50,10 +51,8 @@ class PointCloudSegmentation(ClassificationTask):
         backbone_kwargs: Any additional kwargs to pass to the backbone constructor.
         loss_fn: The loss function to use. If ``None``, a default will be selected by the
             :class:`~flash.core.classification.ClassificationTask` depending on the ``multi_label`` argument.
-        optimizer: The optimizer or optimizer class to use.
-        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
-        scheduler: The scheduler or scheduler class to use.
-        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
         metrics: Any metrics to use with this :class:`~flash.core.model.Task`. If ``None``, a default will be selected
             by the :class:`~flash.core.classification.ClassificationTask` depending on the ``multi_label`` argument.
         learning_rate: The learning rate for the optimizer.
@@ -71,15 +70,13 @@ class PointCloudSegmentation(ClassificationTask):
         backbone: Union[str, Tuple[nn.Module, int]] = "RandLANet",
         backbone_kwargs: Optional[Dict] = None,
         head: Optional[nn.Module] = None,
-        loss_fn: Optional[Callable] = torch.nn.functional.cross_entropy,
-        optimizer: Union[Type[torch.optim.Optimizer], torch.optim.Optimizer] = torch.optim.Adam,
-        optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
-        metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
+        loss_fn: LOSS_FN_TYPE = torch.nn.functional.cross_entropy,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
+        metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-2,
         multi_label: bool = False,
-        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = PointCloudSegmentationSerializer(),
+        serializer: SERIALIZER_TYPE = PointCloudSegmentationSerializer(),
     ):
         import flash
 
@@ -90,9 +87,7 @@ class PointCloudSegmentation(ClassificationTask):
             model=None,
             loss_fn=loss_fn,
             optimizer=optimizer,
-            optimizer_kwargs=optimizer_kwargs,
-            scheduler=scheduler,
-            scheduler_kwargs=scheduler_kwargs,
+            lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
             multi_label=multi_label,

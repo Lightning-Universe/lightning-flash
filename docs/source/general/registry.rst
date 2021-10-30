@@ -1,8 +1,9 @@
+
+.. _registry:
+
 ########
 Registry
 ########
-
-.. _registry:
 
 ********************
 Available Registries

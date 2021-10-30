@@ -14,3 +14,4 @@ isort
 #mypy
 scikit-learn
 pytest_mock
+torch_optimizer

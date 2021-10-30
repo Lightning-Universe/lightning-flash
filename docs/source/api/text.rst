@@ -22,12 +22,14 @@ ______________
 
     classification.data.TextClassificationPostprocess
     classification.data.TextClassificationPreprocess
-    classification.data.TextCSVDataSource
-    classification.data.TextDataSource
     classification.data.TextDeserializer
-    classification.data.TextFileDataSource
+    classification.data.TextDataSource
+    classification.data.TextCSVDataSource
     classification.data.TextJSONDataSource
-    classification.data.TextSentencesDataSource
+    classification.data.TextDataFrameDataSource
+    classification.data.TextParquetDataSource
+    classification.data.TextHuggingFaceDatasetDataSource
+    classification.data.TextListDataSource
 
 Question Answering
 __________________

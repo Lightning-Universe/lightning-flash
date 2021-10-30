@@ -31,6 +31,7 @@ from flash.core.data.data_pipeline import _StageOrchestrator, DataPipeline, Data
 from flash.core.data.data_source import DataSource
 from flash.core.data.process import DefaultPreprocess, Deserializer, Postprocess, Preprocess, Serializer
 from flash.core.data.properties import ProcessState
+from flash.core.data.states import PerBatchTransformOnDevice, ToTensorTransform
 from flash.core.model import Task
 from flash.core.utilities.imports import _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.core.utilities.stages import RunningStage
@@ -58,17 +59,8 @@ class TestDataPipelineState:
         state.set_state(ProcessState())
 
         assert str(state) == (
-            "DataPipelineState(initialized=False, "
-            "state={<class 'flash.core.data.properties.ProcessState'>: ProcessState()})"
+            "DataPipelineState(state={<class 'flash.core.data.properties.ProcessState'>: ProcessState()})"
         )
-
-    @staticmethod
-    def test_warning():
-        state = DataPipelineState()
-        state._initialized = True
-
-        with pytest.warns(UserWarning, match="data pipeline has already been initialized"):
-            state.set_state(ProcessState())
 
     @staticmethod
     def test_get_state():
@@ -731,6 +723,84 @@ def test_datapipeline_transformations(tmpdir):
     assert preprocess.test_to_tensor_transform_called
     assert preprocess.test_post_tensor_transform_called
     assert data_source.predict_load_data_called
+
+
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+def test_datapipeline_transformations_overridden_by_task():
+    # define preprocess transforms
+    class ImageDataSource(DataSource):
+        def load_data(self, folder: str):
+            # from folder -> return files paths
+            return ["a.jpg", "b.jpg"]
+
+        def load_sample(self, path: str) -> Image.Image:
+            # from a file path, load the associated image
+            return np.random.uniform(0, 1, (64, 64, 3))
+
+    class ImageClassificationPreprocess(DefaultPreprocess):
+        def __init__(
+            self,
+            train_transform=None,
+            val_transform=None,
+            test_transform=None,
+            predict_transform=None,
+        ):
+            super().__init__(
+                train_transform=train_transform,
+                val_transform=val_transform,
+                test_transform=test_transform,
+                predict_transform=predict_transform,
+                data_sources={"default": ImageDataSource()},
+            )
+
+        def default_transforms(self):
+            return {
+                "to_tensor_transform": T.Compose([T.ToTensor()]),
+                "per_batch_transform_on_device": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+            }
+
+    # define task which overrides transforms using set_state
+    class CustomModel(Task):
+        def __init__(self):
+            super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
+
+            # override default transform to resize images
+            self.set_state(ToTensorTransform(T.Compose([T.ToTensor(), T.Resize(128)])))
+
+            # remove normalization, => image still in [0, 1] range
+            self.set_state(PerBatchTransformOnDevice(None))
+
+        def training_step(self, batch, batch_idx):
+            assert batch.shape == torch.Size([2, 3, 128, 128])
+            assert torch.max(batch) <= 1.0
+            assert torch.min(batch) >= 0.0
+
+        def validation_step(self, batch, batch_idx):
+            assert batch.shape == torch.Size([2, 3, 128, 128])
+            assert torch.max(batch) <= 1.0
+            assert torch.min(batch) >= 0.0
+
+    class CustomDataModule(DataModule):
+
+        preprocess_cls = ImageClassificationPreprocess
+
+    datamodule = CustomDataModule.from_data_source(
+        "default",
+        "train_folder",
+        "val_folder",
+        None,
+        batch_size=2,
+    )
+
+    # call trainer
+    model = CustomModel()
+    trainer = Trainer(
+        max_epochs=1,
+        limit_train_batches=2,
+        limit_val_batches=1,
+        num_sanity_val_steps=1,
+    )
+    trainer.fit(model, datamodule=datamodule)
 
 
 def test_is_overriden_recursive(tmpdir):

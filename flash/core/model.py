@@ -17,7 +17,7 @@ import pickle
 from abc import ABCMeta
 from copy import deepcopy
 from importlib import import_module
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple, Type, Union
 
 import pytorch_lightning as pl
 import torch
@@ -26,6 +26,7 @@ from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.callbacks.finetuning import BaseFinetuning
 from pytorch_lightning.trainer.states import RunningStage
+from pytorch_lightning.trainer.optimizers import _get_default_scheduler_config
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -49,12 +50,25 @@ from flash.core.data.process import (
 from flash.core.data.properties import ProcessState
 from flash.core.finetuning import FlashBaseFinetuning
 from flash.core.hooks import FineTuningHook
+from flash.core.optimizers.optimizers import _OPTIMIZERS_REGISTRY
+from flash.core.optimizers.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.registry import FlashRegistry
-from flash.core.schedulers import _SCHEDULERS_REGISTRY
-from flash.core.serve import Composition
+from flash.core.serve.composition import Composition
 from flash.core.utilities.apply_func import get_callable_dict
 from flash.core.utilities.imports import requires
+from flash.core.utilities.providers import _HUGGINGFACE
 from flash.core.utilities.stages import RunningStage
+from flash.core.utilities.types import (
+    DESERIALIZER_TYPE,
+    LOSS_FN_TYPE,
+    LR_SCHEDULER_TYPE,
+    METRICS_TYPE,
+    MODEL_TYPE,
+    OPTIMIZER_TYPE,
+    POSTPROCESS_TYPE,
+    PREPROCESS_TYPE,
+    SERIALIZER_TYPE,
+)
 
 
 class ModuleWrapperBase:
@@ -302,17 +316,13 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHook,
     Args:
         model: Model to use for the task.
         loss_fn: Loss function for training.
-        optimizer: Optimizer to use for training, defaults to :class:`torch.optim.Adam`.
-        optimizer_kwargs: A dict containing additional arguments for initializing the optimizer. Note that
-            this includes all other arguments than the learning rate which is a seperate argument.
-        scheduler: Learning rate scheduler to use for the training. Should be an instance of
-            :class:`torch.optim.lr_scheduler._LRScheduler`. Defaults to using no scheduler.
-        scheduler_kwargs: A dict containing additional arguments for initializing the learning rate scheduler.
+        learning_rate: Learning rate to use for training, defaults to ``5e-5``.
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
         metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
             package, a custom metric inheriting from `torchmetrics.Metric`, a callable function or a list/dict
             containing a combination of the aforementioned. In all cases, each metric needs to have the signature
             `metric(preds,target)` and return a single scalar tensor.
-        learning_rate: Learning rate to use for training, defaults to ``5e-5``.
         deserializer: Either a single :class:`~flash.core.data.process.Deserializer` or a mapping of these to
             deserialize the input
         preprocess: :class:`~flash.core.data.process.Preprocess` to use as the default for this task.
@@ -321,36 +331,34 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHook,
             serialize the output e.g. convert the model output into the desired output format when predicting.
     """
 
-    schedulers: FlashRegistry = _SCHEDULERS_REGISTRY
+    optimizers: FlashRegistry = _OPTIMIZERS_REGISTRY
+    lr_schedulers: FlashRegistry = _SCHEDULERS_REGISTRY
 
     required_extras: Optional[Union[str, List[str]]] = None
 
     def __init__(
         self,
-        model: Optional[nn.Module] = None,
-        loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
-        optimizer: Union[Type[torch.optim.Optimizer], torch.optim.Optimizer] = torch.optim.Adam,
-        optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
-        metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
+        model: MODEL_TYPE = None,
+        loss_fn: LOSS_FN_TYPE = None,
         learning_rate: float = 5e-5,
-        deserializer: Optional[Union[Deserializer, Mapping[str, Deserializer]]] = None,
-        preprocess: Optional[Preprocess] = None,
-        postprocess: Optional[Postprocess] = None,
-        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
+        metrics: METRICS_TYPE = None,
+        deserializer: DESERIALIZER_TYPE = None,
+        preprocess: PREPROCESS_TYPE = None,
+        postprocess: POSTPROCESS_TYPE = None,
+        serializer: SERIALIZER_TYPE = None,
     ):
         super().__init__()
         if model is not None:
             self.model = model
         self.loss_fn = {} if loss_fn is None else get_callable_dict(loss_fn)
         self.optimizer = optimizer
-        self.scheduler = scheduler
-        self.optimizer_kwargs = optimizer_kwargs or {}
-        self.scheduler_kwargs = scheduler_kwargs or {}
+        self.lr_scheduler = lr_scheduler
 
         self.train_metrics = nn.ModuleDict({} if metrics is None else get_callable_dict(metrics))
         self.val_metrics = nn.ModuleDict({} if metrics is None else get_callable_dict(deepcopy(metrics)))
+        self.test_metrics = nn.ModuleDict({} if metrics is None else get_callable_dict(deepcopy(metrics)))
         self.learning_rate = learning_rate
         # TODO: should we save more? Bug on some regarding yaml if we save metrics
         self.save_hyperparameters("learning_rate", "optimizer")
@@ -451,7 +459,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHook,
         )
 
     def test_step(self, batch: Any, batch_idx: int) -> None:
-        output = self.step(batch, batch_idx, self.val_metrics)
+        output = self.step(batch, batch_idx, self.test_metrics)
         self.log_dict(
             {f"test_{k}": v for k, v in output[OutputKeys.LOGS].items()},
             on_step=False,
@@ -505,14 +513,56 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHook,
             batch = torch.stack(batch)
         return self(batch)
 
+    def _get_optimizer_class_from_registry(self, optimizer_key: str) -> Optimizer:
+        if optimizer_key.lower() not in self.available_optimizers():
+            raise KeyError(
+                f"Please provide a valid optimizer name and make sure it is registerd with the Optimizer registry."
+                f"\nUse `{self.__class__.__name__}.available_optimizers()` to list the available optimizers."
+                f"\nList of available Optimizers: {self.available_optimizers()}."
+            )
+        optimizer_fn = self.optimizers.get(optimizer_key.lower())
+        return optimizer_fn
+
     def configure_optimizers(self) -> Union[Optimizer, Tuple[List[Optimizer], List[_LRScheduler]]]:
         """Implement how optimizer and optionally learning rate schedulers should be configured."""
-        optimizer = self.optimizer
-        if not isinstance(self.optimizer, Optimizer):
-            self.optimizer_kwargs["lr"] = self.learning_rate
-            optimizer = optimizer(filter(lambda p: p.requires_grad, self.parameters()), **self.optimizer_kwargs)
-        if self.scheduler:
-            return [optimizer], [self._instantiate_scheduler(optimizer)]
+        if isinstance(self.optimizer, str):
+            optimizer_fn = self._get_optimizer_class_from_registry(self.optimizer.lower())
+            optimizers_kwargs: Dict[str, Any] = {"lr": self.learning_rate}
+        elif isinstance(self.optimizer, Callable):
+            optimizer_fn = self.optimizer
+            optimizers_kwargs: Dict[str, Any] = {"lr": self.learning_rate}
+        elif isinstance(self.optimizer, Tuple):
+            if len(self.optimizer) != 2:
+                raise MisconfigurationException(
+                    f"The tuple configuration of an optimizer input must be of length 2 with the first index"
+                    f" containing a str from {self.available_optimizers()} and the second index containing the"
+                    f" required keyword arguments to initialize the Optimizer."
+                )
+
+            if not isinstance(self.optimizer[0], str):
+                raise TypeError(
+                    f"The first value in optimizer argument tuple should be a string but got {type(self.optimizer[0])}."
+                )
+
+            if not isinstance(self.optimizer[1], Dict):
+                raise TypeError(
+                    f"The second value in optimizer argument tuple should be of dict type but got "
+                    f"{type(self.optimizer[1])}."
+                )
+
+            optimizer_fn: Callable = self._get_optimizer_class_from_registry(self.optimizer[0])
+            optimizers_kwargs: Dict[str, Any] = self.optimizer[1]
+            optimizers_kwargs["lr"] = self.learning_rate
+        else:
+            raise TypeError(
+                f"""Optimizer should be of type string or callable or tuple(string, dictionary)
+                but got {type(self.optimizer)}."""
+            )
+
+        model_parameters = filter(lambda p: p.requires_grad, self.parameters())
+        optimizer: Optimizer = optimizer_fn(model_parameters, **optimizers_kwargs)
+        if self.lr_scheduler is not None:
+            return [optimizer], [self._instantiate_lr_scheduler(optimizer)]
         return optimizer
 
     def configure_finetune_callback(
@@ -825,8 +875,15 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHook,
         return list(inspect.signature(registry.get(key)).parameters.items())
 
     @classmethod
-    def available_schedulers(cls) -> List[str]:
-        registry: Optional[FlashRegistry] = getattr(cls, "schedulers", None)
+    def available_optimizers(cls) -> List[str]:
+        registry: Optional[FlashRegistry] = getattr(cls, "optimizers", None)
+        if registry is None:
+            return []
+        return registry.available_keys()
+
+    @classmethod
+    def available_lr_schedulers(cls) -> List[str]:
+        registry: Optional[FlashRegistry] = getattr(cls, "lr_schedulers", None)
         if registry is None:
             return []
         return registry.available_keys()
@@ -866,24 +923,117 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHook,
             num_warmup_steps *= num_training_steps
         return round(num_warmup_steps)
 
-    def _instantiate_scheduler(self, optimizer: Optimizer) -> _LRScheduler:
-        scheduler = self.scheduler
-        if isinstance(scheduler, _LRScheduler):
-            return scheduler
-        if isinstance(scheduler, str):
-            scheduler_fn = self.schedulers.get(self.scheduler)
-            num_training_steps: int = self.get_num_training_steps()
-            num_warmup_steps: int = self._compute_warmup(
-                num_training_steps=num_training_steps,
-                num_warmup_steps=self.scheduler_kwargs.get("num_warmup_steps"),
+    def _get_lr_scheduler_class_from_registry(self, lr_scheduler_key: str) -> Dict[str, Any]:
+        if lr_scheduler_key.lower() not in self.available_lr_schedulers():
+            raise KeyError(
+                f"Please provide a valid scheduler name and make sure it is registerd with the Scheduler registry."
+                f"\nUse `{self.__class__.__name__}.available_lr_schedulers()` to list the available schedulers."
+                f"\n>>> List of available LR Schedulers: {self.available_lr_schedulers()}."
             )
-            return scheduler_fn(optimizer, num_warmup_steps, num_training_steps)
-        if issubclass(scheduler, _LRScheduler):
-            return scheduler(optimizer, **self.scheduler_kwargs)
-        raise MisconfigurationException(
-            "scheduler can be a scheduler, a scheduler type with `scheduler_kwargs` "
-            f"or a built-in scheduler in {self.available_schedulers()}"
-        )
+        lr_scheduler_fn: Dict[str, Any] = self.lr_schedulers.get(lr_scheduler_key.lower(), with_metadata=True)
+        return deepcopy(lr_scheduler_fn)
+
+    def _instantiate_lr_scheduler(self, optimizer: Optimizer) -> Dict[str, Any]:
+        if isinstance(self.lr_scheduler, str):
+            lr_scheduler_data: Dict[str, Any] = self._get_lr_scheduler_class_from_registry(self.lr_scheduler)
+            lr_scheduler_fn = lr_scheduler_data.pop("fn")
+            lr_scheduler_metadata: Dict[str, Any] = lr_scheduler_data.pop("metadata", None)
+            lr_scheduler_kwargs: Dict[str, Any] = {}
+            lr_scheduler_config = _get_default_scheduler_config()
+            for key, value in lr_scheduler_config.items():
+                lr_scheduler_config[key] = lr_scheduler_metadata.pop(key, None) or value
+
+        elif isinstance(self.lr_scheduler, Callable):
+            lr_scheduler_data = {}
+            lr_scheduler_fn = self.lr_scheduler
+            lr_scheduler_metadata: Dict[str, Any] = None
+            lr_scheduler_kwargs: Dict[str, Any] = {}
+            lr_scheduler_config = _get_default_scheduler_config()
+
+        elif isinstance(self.lr_scheduler, Tuple):
+            if len(self.lr_scheduler) not in [2, 3]:
+                raise MisconfigurationException(
+                    f"The tuple configuration of an scheduler input must be:\n"
+                    f"1) Of length 2 with the first index containing a str from {self.available_lr_schedulers()} and"
+                    f" the second index containing the required keyword arguments to initialize the LR Scheduler.\n"
+                    f"2) Of length 3 with the first index containing a str from {self.available_lr_schedulers()} and"
+                    f" the second index containing the required keyword arguments to initialize the LR Scheduler and"
+                    f" the third index containing a Lightning scheduler configuration dictionary of the format"
+                    f" {_get_default_scheduler_config()}. NOTE: Do not set the `scheduler` key in the"
+                    f" lr_scheduler_config, it will overriden with an instance of the provided scheduler key."
+                )
+
+            if not isinstance(self.lr_scheduler[0], (str, Callable)):
+                raise TypeError(
+                    f"The first value in lr_scheduler argument tuple should be of type string or type Callable"
+                    f" but got {type(self.lr_scheduler[0])}."
+                )
+
+            if not isinstance(self.lr_scheduler[1], Dict):
+                raise TypeError(
+                    f"The second value in lr_scheduler argument tuple should be of type dict but got"
+                    f" {type(self.lr_scheduler[1])}."
+                )
+
+            if len(self.lr_scheduler) == 3 and not isinstance(self.lr_scheduler[2], Dict):
+                raise TypeError(
+                    f"The third value in lr_scheduler argument tuple should be of type dict but got"
+                    f" {type(self.lr_scheduler[2])}."
+                )
+
+            lr_scheduler_data: Dict[str, Any] = self._get_lr_scheduler_class_from_registry(self.lr_scheduler[0])
+            lr_scheduler_fn = lr_scheduler_data.pop("fn")
+            lr_scheduler_metadata: Dict[str, Any] = lr_scheduler_data.pop("metadata", None)
+            lr_scheduler_kwargs: Dict[str, Any] = self.lr_scheduler[1]
+            lr_scheduler_config = _get_default_scheduler_config()
+            for key, value in lr_scheduler_config.items():
+                lr_scheduler_config[key] = lr_scheduler_metadata.pop(key, None) or value
+            if len(self.lr_scheduler) == 3:
+                lr_scheduler_config.update(self.lr_scheduler[2])
+
+        else:
+            raise TypeError(
+                f"`lr_scheduler` argument should be of type string or callable or tuple(string, dictionary)"
+                f" or tuple(string, dictionary, dictionary) but got {type(self.lr_scheduler)}."
+            )
+
+        # Providers part
+        if lr_scheduler_metadata is not None and "providers" in lr_scheduler_metadata.keys():
+            if lr_scheduler_metadata["providers"] == _HUGGINGFACE:
+                if lr_scheduler_data["name"] != "constant_schedule":
+                    num_training_steps: int = self.get_num_training_steps()
+                    num_warmup_steps: int = self._compute_warmup(
+                        num_training_steps=num_training_steps,
+                        num_warmup_steps=lr_scheduler_kwargs["num_warmup_steps"],
+                    )
+                    lr_scheduler_kwargs["num_warmup_steps"] = num_warmup_steps
+                    if lr_scheduler_data["name"] != "constant_schedule_with_warmup":
+                        lr_scheduler_kwargs["num_training_steps"] = num_training_steps
+
+        # User can register a callable that returns a lr_scheduler_config
+        # 1) If return value is an instance of _LR_Scheduler -> Add to current config and return the config.
+        # 2) If return value is a dictionary, check for the lr_scheduler_config `only keys` and return the config.
+        lr_scheduler: Union[_LRScheduler, Dict[str, Any]] = lr_scheduler_fn(optimizer, **lr_scheduler_kwargs)
+
+        if not isinstance(lr_scheduler, (_LRScheduler, Dict)):
+            raise MisconfigurationException(
+                f"Please make sure that your custom configuration outputs either an LR Scheduler or a scheduler"
+                f" configuration with keys belonging to {list(_get_default_scheduler_config().keys())}."
+            )
+
+        if isinstance(lr_scheduler, Dict):
+            dummy_config = _get_default_scheduler_config()
+            if not all(config_key in dummy_config.keys() for config_key in lr_scheduler.keys()):
+                raise MisconfigurationException(
+                    f"Please make sure that your custom configuration outputs either an LR Scheduler or a scheduler"
+                    f" configuration with keys belonging to {list(dummy_config.keys())}."
+                )
+            # If all are present, return the config
+            return lr_scheduler
+
+        # If `lr_scheduler` is not a Dict, then add it to the current config and return the config.
+        lr_scheduler_config["scheduler"] = lr_scheduler
+        return lr_scheduler_config
 
     def _load_from_state_dict(
         self, state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs

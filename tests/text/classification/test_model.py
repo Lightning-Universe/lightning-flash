@@ -20,6 +20,7 @@ import torch
 
 from flash import Trainer
 from flash.__main__ import main
+from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import TextClassifier
 from flash.text.classification.data import TextClassificationPostprocess, TextClassificationPreprocess
@@ -32,7 +33,7 @@ class DummyDataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
         return {
             "input_ids": torch.randint(1000, size=(100,)),
-            "labels": torch.randint(2, size=(1,)).item(),
+            DefaultDataKeys.TARGET: torch.randint(2, size=(1,)).item(),
         }
 
     def __len__(self) -> int:

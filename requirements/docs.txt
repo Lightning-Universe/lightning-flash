@@ -3,7 +3,7 @@ recommonmark  # fails with badges
 m2r  # fails with multi-line text
 nbsphinx>=0.8
 pandoc>=1.0
-docutils>=0.16
+docutils>=0.16,<0.18  # Sphinx is not yet compatible with docutils >= 0.18
 sphinxcontrib-fulltoc>=1.0
 sphinxcontrib-mockautodoc
 
@@ -13,6 +13,3 @@ sphinx-paramlinks>=0.5.1
 sphinx-togglebutton>=0.2
 sphinx-copybutton>=0.3
 jinja2
-numpy>=1.21.2 # hotfix for docs, failing without numpy install
-pandas
-torch
