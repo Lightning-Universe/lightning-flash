@@ -27,7 +27,7 @@ from flash.core.data.states import (
 )
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _VISSL_AVAILABLE
+from flash.core.utilities.imports import _VISSL_AVAILABLE, requires
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE
 
 if _VISSL_AVAILABLE:
@@ -72,7 +72,7 @@ class ImageEmbedder(AdapterTask):
     backbones: FlashRegistry = IMAGE_EMBEDDER_BACKBONES
     transforms: FlashRegistry = IMAGE_EMBEDDER_TRANSFORMS
 
-    required_extras: str = "image"
+    required_extras: List[str] = ["image", "vissl"]
 
     def __init__(
         self,
@@ -148,6 +148,7 @@ class ImageEmbedder(AdapterTask):
         self.adapter.on_train_batch_end(outputs, batch, batch_idx, dataloader_idx)
 
     @classmethod
+    @requires(["image", "vissl"])
     def available_training_strategies(cls) -> List[str]:
         registry: Optional[FlashRegistry] = getattr(cls, "training_strategies", None)
         if registry is None:
