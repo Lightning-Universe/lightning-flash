@@ -141,7 +141,7 @@ For example, to unfreeze after epoch 7:
 
     from flash.core.finetuning import FreezeUnfreeze
 
-    trainer.finetune(model, datamodule, strategy=FreezeUnfreeze(unfreeze_epoch=7))
+    trainer.finetune(model, datamodule, strategy=("freeze_unfreeze", 7))
 
 Under the hood, the pseudocode looks like:
 
@@ -156,7 +156,7 @@ Under the hood, the pseudocode looks like:
 
     train(backbone, head, epochs=10)
 
-    # unfreeze after 10 epochs
+    # unfreeze after 7 epochs
     backbone.unfreeze()
 
     train(backbone, head)
@@ -176,7 +176,7 @@ Here's an example where:
 
     from flash.core.finetuning import UnfreezeMilestones
 
-    trainer.finetune(model, datamodule, strategy=UnfreezeMilestones(unfreeze_milestones=(3, 8), num_layers=2))
+    trainer.finetune(model, datamodule, strategy=("unfreeze_milestones", ((3, 8), 2)))
 
 Under the hood, the pseudocode looks like:
 
