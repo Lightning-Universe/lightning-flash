@@ -16,7 +16,7 @@ from collections import defaultdict
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Type
 
 from flash.core.data.data_source import DefaultDataKeys, LabelsState
-from flash.core.integrations.icevision.transforms import from_icevision_record, to_icevision_record
+from flash.core.integrations.icevision.transforms import from_icevision_record
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
 from flash.image.data import ImagePathsDataSource
 
@@ -30,9 +30,10 @@ class IceVisionPathsDataSource(ImagePathsDataSource):
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         sample = super().load_sample(sample)
-        record = to_icevision_record(sample)
-        record.autofix()
-        return from_icevision_record(record)
+        return sample
+        # record = to_icevision_record(sample)
+        # record.autofix()
+        # return from_icevision_record(record)
 
 
 class IceVisionParserDataSource(IceVisionPathsDataSource):
@@ -94,4 +95,5 @@ class IceVisionParserDataSource(IceVisionPathsDataSource):
                 is_new = True
 
             parser.parse_fields(sample, record=record, is_new=is_new)
+        record.autofix()
         return super().load_sample(from_icevision_record(record))
