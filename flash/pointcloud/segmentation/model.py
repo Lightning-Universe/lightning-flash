@@ -14,10 +14,8 @@
 from typing import Any, Callable, Dict, Iterable, Optional, Tuple, Union
 
 import torch
-from pytorch_lightning import Callback, LightningModule
 from torch import nn
 from torch.nn import functional as F
-from torch.optim import Optimizer
 from torch.utils.data import DataLoader, Sampler
 from torchmetrics import IoU
 
