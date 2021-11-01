@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Type, Union
-from typing import Any, Dict, List
 
 import torch
 from torch.nn import Module
@@ -20,9 +19,6 @@ from torch.optim import Optimizer
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.process import Preprocess, Serializer
-
-from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.process import Serializer
 from flash.core.finetuning import FlashBaseFinetuning
 from flash.core.model import Task
 from flash.core.utilities.imports import _FASTFACE_AVAILABLE
