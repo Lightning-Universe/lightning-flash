@@ -11,15 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Iterable, Union
+from typing import Iterable, Optional, Union
 
 from torch.nn import Module
 
 
 class FineTuningHook:
-    def get_backbone_for_finetuning(self) -> Union[Module, Iterable[Union[Module, Iterable]]]:
+    def get_backbone_for_finetuning(self) -> Optional[Union[Module, Iterable[Union[Module, Iterable]]]]:
         """Return the name(s) of the module attributes of the model to be frozen."""
         return None
-
-    # def get_backbone(self, pl_module: Union[Task, LightningModule]) -> Module:
-    #     raise NotImplementedError
