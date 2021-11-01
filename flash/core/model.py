@@ -25,7 +25,6 @@ import torchmetrics
 from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.callbacks.finetuning import BaseFinetuning
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.trainer.optimizers import _get_default_scheduler_config
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.enums import LightningEnum
@@ -48,7 +47,7 @@ from flash.core.data.process import (
     SerializerMapping,
 )
 from flash.core.data.properties import ProcessState
-from flash.core.finetuning import FlashBaseFinetuning
+from flash.core.finetuning import _DEFAULTS_FINETUNE_STRATEGIES, _FINETUNING_STRATEGIES_REGISTRY
 from flash.core.hooks import FineTuningHook
 from flash.core.optimizers.optimizers import _OPTIMIZERS_REGISTRY
 from flash.core.optimizers.schedulers import _SCHEDULERS_REGISTRY
@@ -333,6 +332,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHook,
 
     optimizers: FlashRegistry = _OPTIMIZERS_REGISTRY
     lr_schedulers: FlashRegistry = _SCHEDULERS_REGISTRY
+    finetuning_strategies: FlashRegistry = _FINETUNING_STRATEGIES_REGISTRY
 
     required_extras: Optional[Union[str, List[str]]] = None
 
@@ -567,21 +567,52 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHook,
 
     def configure_finetune_callback(
         self,
-        strategy_key: str,
-        strategy_metadata: Optional[Union[int, Tuple[int, int]]] = None,
+        strategy: Union[str, BaseFinetuning, Tuple[str, int], Tuple[str, Tuple[int, int]]] = "no_freeze",
         train_bn: bool = True,
     ) -> List[BaseFinetuning]:
 
-        # Get all backbone modules to retreive names.
-        task_backbones = self.get_backbone_for_finetuning()
-        return [
-            FlashBaseFinetuning(
-                strategy_key=strategy_key,
-                strategy_metadata=strategy_metadata,
-                modules=task_backbones,
-                train_bn=train_bn,
+        if isinstance(strategy, BaseFinetuning):
+            return [strategy]
+
+        if isinstance(strategy, str):
+            if strategy not in _DEFAULTS_FINETUNE_STRATEGIES[:2]:
+                raise MisconfigurationException(
+                    f"Please provide a valid strategy from {_DEFAULTS_FINETUNE_STRATEGIES}."
+                )
+            finetuning_strategy_fn: Callable = self.finetuning_strategies.get(key=strategy)
+            finetuning_strategy_metadata = {"strategy_metadata": None, "train_bn": True}
+
+        elif isinstance(strategy, Tuple):
+            if not isinstance(strategy[0], str) or strategy[0] not in _DEFAULTS_FINETUNE_STRATEGIES[2:]:
+                raise MisconfigurationException(
+                    "First input of `strategy` should be a string within `freeze_unfreeze`, `unfreeze_milestones`"
+                )
+            if strategy[0] == "freeze_unfreeze" and not isinstance(strategy[1], int):
+                raise MisconfigurationException(
+                    "`freeze_unfreeze` stratgey only accepts one integer denoting the epoch number to switch."
+                )
+            if strategy[0] == "unfreeze_milestones" and not (
+                isinstance(strategy[1], Tuple)
+                and isinstance(strategy[1][0], Tuple)
+                and isinstance(strategy[1][1], int)
+                and isinstance(strategy[1][0][0], int)
+                and isinstance(strategy[1][0][1], int)
+            ):
+                raise MisconfigurationException(
+                    "`unfreeze_milestones` stratgey only accepts the format Tuple[Tuple[int, int], int]. HINT example: "
+                    "((5, 10), 15)."
+                )
+            finetuning_strategy_fn: Callable = self.finetuning_strategies.get(key=strategy[0])
+            finetuning_strategy_metadata = {"strategy_metadata": strategy[1], "train_bn": train_bn}
+
+        else:
+            raise MisconfigurationException(
+                "strategy should be a ``pytorch_lightning.callbacks.BaseFinetuning``"
+                f"callback or a str within {list(_DEFAULTS_FINETUNE_STRATEGIES[:2])}"
+                f"or a tuple configuration with {list(_DEFAULTS_FINETUNE_STRATEGIES[2:])}"
             )
-        ]
+
+        return [finetuning_strategy_fn(**finetuning_strategy_metadata)]
 
     @staticmethod
     def _resolve(
@@ -884,6 +915,13 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHook,
     @classmethod
     def available_lr_schedulers(cls) -> List[str]:
         registry: Optional[FlashRegistry] = getattr(cls, "lr_schedulers", None)
+        if registry is None:
+            return []
+        return registry.available_keys()
+
+    @classmethod
+    def available_finetuning_strategies(cls) -> List[str]:
+        registry: Optional[FlashRegistry] = getattr(cls, "finetuning_strategies", None)
         if registry is None:
             return []
         return registry.available_keys()
