@@ -31,11 +31,9 @@ class IceVisionPathsDataSource(ImagePathsDataSource):
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         sample = super().load_sample(sample)
         # Hack to avoid a bug in IceVision
-        sample[DefaultDataKeys.INPUT].shape = sample[DefaultDataKeys.INPUT].size
+        if not hasattr(sample[DefaultDataKeys.INPUT], "shape"):
+            sample[DefaultDataKeys.INPUT].shape = sample[DefaultDataKeys.INPUT].size
         return sample
-        # record = to_icevision_record(sample)
-        # record.autofix()
-        # return from_icevision_record(record)
 
 
 class IceVisionParserDataSource(IceVisionPathsDataSource):
