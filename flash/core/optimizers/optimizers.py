@@ -4,19 +4,20 @@ from typing import Callable, List
 from torch import optim
 
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _TORCH_OPTIMIZER_AVAILABLE
+from flash.core.utilities.imports import _TORCH_AVAILABLE, _TORCH_OPTIMIZER_AVAILABLE
 
 _OPTIMIZERS_REGISTRY = FlashRegistry("optimizer")
 
-_optimizers: List[Callable] = []
-for n in dir(optim):
-    _optimizer = getattr(optim, n)
+if _TORCH_AVAILABLE:
+    _optimizers: List[Callable] = []
+    for n in dir(optim):
+        _optimizer = getattr(optim, n)
 
-    if isclass(_optimizer) and _optimizer != optim.Optimizer and issubclass(_optimizer, optim.Optimizer):
-        _optimizers.append(_optimizer)
+        if isclass(_optimizer) and _optimizer != optim.Optimizer and issubclass(_optimizer, optim.Optimizer):
+            _optimizers.append(_optimizer)
 
-for fn in _optimizers:
-    _OPTIMIZERS_REGISTRY(fn, name=fn.__name__.lower())
+    for fn in _optimizers:
+        _OPTIMIZERS_REGISTRY(fn, name=fn.__name__.lower())
 
 
 if _TORCH_OPTIMIZER_AVAILABLE:

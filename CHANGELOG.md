@@ -8,38 +8,38 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added a `TabularForecaster` task based on PyTorch Forecasting ([#647](https://github.com/PyTorchLightning/lightning-flash/pull/647))
+
+### Changed
+
+### Fixed
+
+- Fixed a bug where test metrics were not logged correctly with active learning ([#879](https://github.com/PyTorchLightning/lightning-flash/pull/879))
+
+
+- Fixed a bug where validation metrics could be aggregated together with test metrics in some cases ([#900](https://github.com/PyTorchLightning/lightning-flash/pull/900))
+- Fixed a bug where the latest versions of torchmetrics and Lightning Flash could not be installed together ([#902](https://github.com/PyTorchLightning/lightning-flash/pull/902))
+
+## [0.5.1] - 2021-10-26
+
+### Added
+
 - Added `LabelStudio` integration ([#554](https://github.com/PyTorchLightning/lightning-flash/pull/554))
-
 - Added support `learn2learn` training_strategy for `ImageClassifier` ([#737](https://github.com/PyTorchLightning/lightning-flash/pull/737))
-
 - Added `vissl` training_strategies for `ImageEmbedder` ([#682](https://github.com/PyTorchLightning/lightning-flash/pull/682))
-
 - Added support for `from_data_frame` to `TextClassificationData` ([#785](https://github.com/PyTorchLightning/lightning-flash/pull/785))
-
 - Added `FastFace` integration ([#606](https://github.com/PyTorchLightning/lightning-flash/pull/606))
-
 - Added support for `from_lists` to `TextClassificationData` ([#805](https://github.com/PyTorchLightning/lightning-flash/pull/805))
-
-- Flash DataPipeline API Refactor:
-    - Add FlashDataset ([#851](https://github.com/PyTorchLightning/lightning-flash/pull/851), [#853](https://github.com/PyTorchLightning/lightning-flash/pull/853))
-    - Add PreprocessTransform ([#852](https://github.com/PyTorchLightning/lightning-flash/pull/852))
-    - Add support for PreprocessTransform to FlashDatasets ([#856](https://github.com/PyTorchLightning/lightning-flash/pull/856))
-
-
-- Added flash components tutorial ([#856](https://github.com/PyTorchLightning/lightning-flash/pull/856))
 
 ### Changed
 
 - Changed the default `num_workers` on linux to `0` (matching the default for other OS) ([#759](https://github.com/PyTorchLightning/lightning-flash/pull/759))
-
-- Changed `PreprocessTransform` to `InputTransform` ([#868](https://github.com/PyTorchLightning/lightning-flash/pull/868))
-
 - Optimizer and LR Scheduler registry are used to get the respective inputs to the Task using a string (or a callable). ([#777](https://github.com/PyTorchLightning/lightning-flash/pull/777))
-
 
 ### Fixed
 
 - Fixed a bug where additional kwargs (e.g. sampler) passed to tabular data would be ignored ([#792](https://github.com/PyTorchLightning/lightning-flash/pull/792))
+- Fixed a bug where loading text data with additional non-numeric columns (not input or target) would give an error ([#888](https://github.com/PyTorchLightning/lightning-flash/pull/888))
 
 
 ## [0.5.0] - 2021-09-07
