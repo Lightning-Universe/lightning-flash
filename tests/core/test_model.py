@@ -437,6 +437,7 @@ def test_errors_and_exceptions_optimizers_and_schedulers():
 def test_classification_task_metrics():
     train_dataset = FixedDataset([0, 1])
     val_dataset = FixedDataset([1, 1])
+    test_dataset = FixedDataset([0, 0])
 
     model = OnesModel()
 
@@ -444,6 +445,13 @@ def test_classification_task_metrics():
         def on_train_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
             assert math.isclose(trainer.callback_metrics["train_accuracy_epoch"], 0.5)
 
+        def on_validation_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
+            assert math.isclose(trainer.callback_metrics["val_accuracy"], 1.0)
+
+        def on_test_end(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
+            assert math.isclose(trainer.callback_metrics["test_accuracy"], 0.0)
+
     task = ClassificationTask(model)
     trainer = flash.Trainer(max_epochs=1, callbacks=CheckAccuracy(), gpus=torch.cuda.device_count())
     trainer.fit(task, train_dataloader=DataLoader(train_dataset), val_dataloaders=DataLoader(val_dataset))
+    trainer.test(task, dataloaders=DataLoader(test_dataset))
