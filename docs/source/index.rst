@@ -61,6 +61,7 @@ Lightning Flash
    :caption: Tabular
 
    reference/tabular_classification
+   reference/tabular_forecasting
 
 .. toctree::
    :maxdepth: 1
@@ -94,6 +95,7 @@ Lightning Flash
    integrations/fiftyone
    integrations/icevision
    integrations/learn2learn
+   integrations/pytorch_forecasting
    integrations/vissl
 
 .. toctree::

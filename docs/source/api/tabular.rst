@@ -30,6 +30,21 @@ __________
 
     ~regression.data.TabularRegressionData
 
+Forecasting
+___________
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: classtemplate.rst
+
+    ~forecasting.model.TabularForecaster
+    ~forecasting.data.TabularForecastingData
+
+    forecasting.data.TabularForecastingPreprocess
+    forecasting.data.TabularForecastingDataFrameDataSource
+    forecasting.data.TimeSeriesDataSetParametersState
+
 flash.tabular.data
 __________________
 
