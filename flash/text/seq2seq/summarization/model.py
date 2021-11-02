@@ -16,8 +16,8 @@ from typing import Any, Dict, List, Optional
 import torch
 
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
-from flash.text.seq2seq.core.metrics import RougeMetric
-from flash.text.seq2seq.core.model import Seq2SeqTask
+from flash.text.seq2seq.metrics import RougeMetric
+from flash.text.seq2seq.model import Seq2SeqTask
 
 
 class SummarizationTask(Seq2SeqTask):
