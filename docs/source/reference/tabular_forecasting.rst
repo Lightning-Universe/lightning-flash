@@ -15,7 +15,7 @@ The Task
 ********
 
 Tabular (or timeseries) forecasting is the task of using historical data to predict future trends in a time varying quantity such as: stock prices, temperature, etc.
-The :class:`~flash.tabular.forecasting.model.TabularForecaster` and :class:`~flash.tabular.forecasting.data.TabularForecastingData` enable timeseries forecasting in Flash using `PyTorch Forecasting <https://github.com/jdb78/pytorch-forecasting>`_.
+The :class:`~flash.tabular.forecasting.model.TabularForecaster` and :class:`~flash.tabular.forecasting.data.TabularForecastingData` enable timeseries forecasting in Flash using `PyTorch Forecasting <https://github.com/jdb78/pytorch-forecasting>`__.
 
 ------
 
