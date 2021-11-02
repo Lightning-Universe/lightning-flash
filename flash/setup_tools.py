@@ -29,7 +29,7 @@ def _load_requirements(path_dir: str, file_name: str = "requirements.txt", comme
         if found:
             ln = ln[: min(found)].strip()
         # skip directly installed dependencies
-        if ln.startswith("http") or ln.startswith("git"):
+        if ln.startswith("http") or ln.startswith("git") or ln.startswith("-r"):
             continue
         if ln:  # if requirement is not empty
             reqs.append(ln)
