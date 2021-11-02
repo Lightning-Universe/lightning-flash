@@ -106,7 +106,9 @@ class TextClassificationParquetDataSource(TextClassificationDataSource, TextParq
     pass
 
 
-class TextClassificationHuggingFaceDatasetDataSource(TextClassificationDataSource, TextHuggingFaceDatasetDataSourceMixin):
+class TextClassificationHuggingFaceDatasetDataSource(
+    TextClassificationDataSource, TextHuggingFaceDatasetDataSourceMixin
+):
     pass
 
 
@@ -178,7 +180,7 @@ class TextClassificationPreprocess(TextPreprocessMixin):
             default_data_source=DefaultDataSources.LISTS,
             deserializer=TextDeserializer(self.tokenizer),
         )
-    
+
 
 class TextClassificationData(TextDataModule):
     """Data Module for text classification tasks."""

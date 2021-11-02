@@ -24,18 +24,14 @@ import flash
 from flash.core.data.auto_dataset import AutoDataset
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources, LabelsState
+from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Deserializer, Postprocess, Preprocess
-from flash.core.integrations.labelstudio.data_source import LabelStudioTextClassificationDataSource
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 from flash.text.classification.tokenizers.base import BaseTokenizer
 
 if _TEXT_AVAILABLE:
     from datasets import Dataset, load_dataset
     from transformers import default_data_collator
-    from transformers.modeling_outputs import SequenceClassifierOutput
-
-    from flash.text.classification.tokenizers import TEXT_CLASSIFIER_TOKENIZERS
 
 
 class TextDeserializer(Deserializer):
@@ -60,7 +56,7 @@ class TextDataSource(DataSource):
 
     def _tokenize_fn(
         self,
-        ex: Union[Dict[str, str], str],
+        ex: Dict[str, str],
         input: Optional[str] = None,
     ) -> Callable:
         """This function is used to tokenize sentences using the provided tokenizer."""
@@ -75,11 +71,11 @@ class TextDataSource(DataSource):
 
         hf_dataset, input, *other = self._to_hf_dataset(data)
 
+        hf_dataset = self.encode_input(hf_dataset, input)
+
         if not self.predicting:
             target = other.pop()
             hf_dataset = self.encode_target(hf_dataset, dataset, target)
-
-        hf_dataset = self.encode_input(hf_dataset, input)
 
         return hf_dataset
 
