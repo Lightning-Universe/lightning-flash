@@ -23,7 +23,7 @@ from flash.__main__ import main
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import TextClassifier
-from flash.text.classification.data import TextClassificationPostprocess, TextClassificationPreprocess
+from flash.text.classification.data import TextClassificationPreprocess
 from tests.helpers.utils import _SERVE_TESTING, _TEXT_TESTING
 
 # ======== Mock functions ========
@@ -97,7 +97,6 @@ def test_serve():
     model = TextClassifier(2, TEST_BACKBONE)
     # TODO: Currently only servable once a preprocess and postprocess have been attached
     model._preprocess = TextClassificationPreprocess(backbone=TEST_BACKBONE)
-    model._postprocess = TextClassificationPostprocess()
     model.eval()
     model.serve()
 
