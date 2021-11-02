@@ -11,9 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from unittest import mock
+
 import pytest
 
 import flash
+from flash.__main__ import main
 from flash.core.utilities.imports import _PANDAS_AVAILABLE, _TABULAR_AVAILABLE
 from flash.tabular.forecasting import TabularForecaster, TabularForecastingData
 from tests.helpers.utils import _TABULAR_TESTING
@@ -78,3 +81,13 @@ def test_testing_raises(sample_data):
 
     with pytest.raises(NotImplementedError, match="Backbones provided by PyTorch Forecasting don't support testing."):
         trainer.test(model, datamodule)
+
+
+@pytest.mark.skipif(not _TABULAR_TESTING, reason="Tabular libraries aren't installed.")
+def test_cli():
+    cli_args = ["flash", "tabular_forecasting", "--trainer.fast_dev_run", "True"]
+    with mock.patch("sys.argv", cli_args):
+        try:
+            main()
+        except SystemExit:
+            pass

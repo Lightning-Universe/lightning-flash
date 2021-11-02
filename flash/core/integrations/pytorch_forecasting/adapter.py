@@ -70,9 +70,9 @@ class PyTorchForecastingAdapter(Adapter):
         task: Task,
         parameters: Dict[str, Any],
         backbone: str,
+        backbone_kwargs: Optional[Dict[str, Any]] = None,
         loss_fn: Optional[Callable] = None,
         metrics: Optional[Union[torchmetrics.Metric, List[torchmetrics.Metric]]] = None,
-        **backbone_kwargs,
     ) -> Adapter:
         parameters = copy(parameters)
         # Remove the single row of data from the parameters to reconstruct the `time_series_dataset`
