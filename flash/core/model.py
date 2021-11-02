@@ -354,6 +354,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
         self.train_metrics = nn.ModuleDict({} if metrics is None else get_callable_dict(metrics))
         self.val_metrics = nn.ModuleDict({} if metrics is None else get_callable_dict(deepcopy(metrics)))
+        self.test_metrics = nn.ModuleDict({} if metrics is None else get_callable_dict(deepcopy(metrics)))
         self.learning_rate = learning_rate
         # TODO: should we save more? Bug on some regarding yaml if we save metrics
         self.save_hyperparameters("learning_rate", "optimizer")
@@ -454,7 +455,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         )
 
     def test_step(self, batch: Any, batch_idx: int) -> None:
-        output = self.step(batch, batch_idx, self.val_metrics)
+        output = self.step(batch, batch_idx, self.test_metrics)
         self.log_dict(
             {f"test_{k}": v for k, v in output[OutputKeys.LOGS].items()},
             on_step=False,
