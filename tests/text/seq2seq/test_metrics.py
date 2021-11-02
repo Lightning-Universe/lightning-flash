@@ -14,7 +14,7 @@
 import pytest
 import torch
 
-from flash.text.seq2seq.core.metrics import BLEUScore, RougeMetric
+from flash.text.seq2seq.metrics import BLEUScore, RougeMetric
 from tests.helpers.utils import _TEXT_TESTING
 
 
