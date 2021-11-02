@@ -76,7 +76,7 @@ class DataModule(DataModule):
         batch_size: Optional[int] = None,
         num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
-        pin_memory: bool = True,
+        pin_memory: bool = False,
         persistent_workers: bool = True,
     ) -> None:
 
