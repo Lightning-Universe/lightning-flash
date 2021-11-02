@@ -30,13 +30,15 @@ from flash.core.data.data_source import (
     TensorDataSource,
 )
 from flash.core.data.process import Deserializer
-from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, Image, requires
+from flash.core.utilities.imports import _OPENCV_AVAILABLE, _TORCHVISION_AVAILABLE, Image, requires
 
 if _TORCHVISION_AVAILABLE:
     from torchvision.datasets.folder import default_loader, IMG_EXTENSIONS
     from torchvision.transforms.functional import to_pil_image
 else:
     IMG_EXTENSIONS = (".jpg", ".jpeg", ".png", ".ppm", ".bmp", ".pgm", ".tif", ".tiff", ".webp")
+if _OPENCV_AVAILABLE:
+    import cv2
 
 
 NP_EXTENSIONS = (".npy",)
@@ -44,7 +46,14 @@ NP_EXTENSIONS = (".npy",)
 
 def image_loader(filepath: str):
     if has_file_allowed_extension(filepath, IMG_EXTENSIONS):
-        img = default_loader(filepath)
+        try:
+            img = default_loader(filepath)
+        except Exception as ex:
+            if _OPENCV_AVAILABLE:
+                im = cv2.cvtColor(cv2.imread(str(filepath)), cv2.COLOR_BGR2RGB)
+                img = Image.fromarray(im)
+            else:
+                raise ex
     elif has_file_allowed_extension(filepath, NP_EXTENSIONS):
         img = Image.fromarray(np.load(filepath).astype("uint8"), "RGB")
     else:
