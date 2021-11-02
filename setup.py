@@ -55,7 +55,7 @@ found_req_files = [n for n in found_req_files if n not in SKIP_REQ_FILES]
 found_req_names = [os.path.splitext(req)[0].replace("datatype_", "") for req in found_req_files]
 # define basic and extra extras
 extras_req = {
-    name: base_req + _load_req(file_name=fname)
+    name: _load_req(file_name=fname)
     for name, fname in zip(found_req_names, found_req_files)
     if "_" not in name
 }
