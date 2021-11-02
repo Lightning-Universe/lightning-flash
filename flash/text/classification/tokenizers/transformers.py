@@ -27,7 +27,7 @@ class TransformerTokenizer(BaseTokenizer):
     def __init__(self, backbone: str, pretrained: bool = True, **backbone_kwargs):
         super().__init__(backbone, pretrained)
 
-        self.tokenizer = AutoTokenizer.from_pretrained(backbone)
+        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
 
         # NOTE: self.tokenizer.model_max_length returns crazy value, pick this from config
         self.config = AutoConfig.from_pretrained(backbone)
