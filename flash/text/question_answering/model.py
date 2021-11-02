@@ -36,7 +36,7 @@ from flash.core.utilities.providers import _HUGGINGFACE
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.text.ort_callback import ORTCallback
 from flash.text.question_answering.finetuning import QuestionAnsweringFreezeEmbeddings
-from flash.text.seq2seq.core.metrics import RougeMetric
+from flash.text.seq2seq.metrics import RougeMetric
 
 if _TEXT_AVAILABLE:
     from transformers import AutoModelForQuestionAnswering
