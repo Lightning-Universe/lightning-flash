@@ -54,7 +54,11 @@ def test_fast_dev_run_smoke(sample_data):
         val_data_frame=data,
     )
 
-    model = TabularForecaster(datamodule.parameters, backbone="n_beats", widths=[32, 512], backcast_loss_ratio=0.1)
+    model = TabularForecaster(
+        datamodule.parameters,
+        backbone="n_beats",
+        backbone_kwargs={"widths": [32, 512], "backcast_loss_ratio": 0.1},
+    )
 
     trainer = flash.Trainer(max_epochs=1, fast_dev_run=True, gradient_clip_val=0.01)
     trainer.fit(model, datamodule=datamodule)
@@ -76,7 +80,11 @@ def test_testing_raises(sample_data):
         test_data_frame=data,
     )
 
-    model = TabularForecaster(datamodule.parameters, backbone="n_beats", widths=[32, 512], backcast_loss_ratio=0.1)
+    model = TabularForecaster(
+        datamodule.parameters,
+        backbone="n_beats",
+        backbone_kwargs={"widths": [32, 512], "backcast_loss_ratio": 0.1},
+    )
     trainer = flash.Trainer(max_epochs=1, fast_dev_run=True, gradient_clip_val=0.01)
 
     with pytest.raises(NotImplementedError, match="Backbones provided by PyTorch Forecasting don't support testing."):
