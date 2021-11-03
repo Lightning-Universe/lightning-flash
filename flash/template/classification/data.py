@@ -20,7 +20,7 @@ from torch import nn
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import InputDataKeys, InputFormat, LabelsState, NumpyInput, NumpyInput
+from flash.core.data.io.input import InputDataKeys, InputFormat, LabelsState, NumpyInput
 from flash.core.data.process import Preprocess
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _SKLEARN_AVAILABLE
@@ -154,9 +154,9 @@ class TemplateData(DataModule):
     """Creating our :class:`~flash.core.data.data_module.DataModule` is as easy as setting the ``preprocess_cls``
     attribute.
 
-    We get the ``from_numpy`` method for free as we've configured a ``InputFormat.NUMPY`` data source. We'll also
-    add a ``from_sklearn`` method so that we can use our ``TemplateSKLearnInput. Finally, we define the
-    ``num_features`` property for convenience.
+    We get the ``from_numpy`` method for free as we've configured a ``InputFormat.NUMPY`` data source. We'll also add a
+    ``from_sklearn`` method so that we can use our ``TemplateSKLearnInput. Finally, we define the ``num_features``
+    property for convenience.
     """
 
     preprocess_cls = TemplatePreprocess

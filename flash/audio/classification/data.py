@@ -17,12 +17,12 @@ import numpy as np
 
 from flash.audio.classification.transforms import default_transforms, train_default_transforms
 from flash.core.data.io.input import (
-    InputFormat,
-    InputDataKeys,
+    DataFrameInput,
     has_file_allowed_extension,
+    InputDataKeys,
+    InputFormat,
     NumpyInput,
     PathsInput,
-    DataFrameInput,
 )
 from flash.core.data.process import Deserializer, Preprocess
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE

@@ -23,13 +23,7 @@ from torch.utils.data import Dataset
 
 import flash
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import (
-    DatasetInput,
-    BaseInput,
-    InputDataKeys,
-    PathsInput,
-)
-from flash.core.data.io.input import InputFormat
+from flash.core.data.io.input import BaseInput, DatasetInput, InputDataKeys, InputFormat, PathsInput
 from flash.core.data.process import Deserializer, Postprocess, Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _AUDIO_AVAILABLE, requires
@@ -69,11 +63,7 @@ class BaseSpeechRecognition:
     @staticmethod
     def _load_sample(sample: Dict[str, Any], sampling_rate: int) -> Any:
         path = sample[InputDataKeys.INPUT]
-        if (
-            not os.path.isabs(path)
-            and InputDataKeys.METADATA in sample
-            and "root" in sample[InputDataKeys.METADATA]
-        ):
+        if not os.path.isabs(path) and InputDataKeys.METADATA in sample and "root" in sample[InputDataKeys.METADATA]:
             path = os.path.join(sample[InputDataKeys.METADATA]["root"], path)
         speech_array, sampling_rate = librosa.load(path, sr=sampling_rate)
         sample[InputDataKeys.INPUT] = speech_array

@@ -20,13 +20,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Sampler
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import (
-    InputDataKeys,
-    InputFormat,
-    FiftyOneInput,
-    PathsInput,
-    LabelsState,
-)
+from flash.core.data.io.input import FiftyOneInput, InputDataKeys, InputFormat, LabelsState, PathsInput
 from flash.core.data.process import Preprocess
 from flash.core.integrations.labelstudio.data_source import LabelStudioVideoClassificationInput
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, lazy_import

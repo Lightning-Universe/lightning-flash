@@ -15,7 +15,7 @@ from typing import Any, Callable, Dict, Hashable, Optional, Sequence, Tuple, TYP
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import InputDataKeys, InputFormat, FiftyOneInput
+from flash.core.data.io.input import FiftyOneInput, InputDataKeys, InputFormat
 from flash.core.data.process import Preprocess
 from flash.core.integrations.icevision.data import IceVisionParserInput, IceVisionPathsInput
 from flash.core.integrations.icevision.transforms import default_transforms

@@ -23,8 +23,8 @@ from flash.text import TextClassificationData
 from flash.text.classification.data import (
     TextCSVInput,
     TextDataFrameInput,
-    TextInput,
     TextHuggingFaceDatasetInput,
+    TextInput,
     TextJSONInput,
     TextListInput,
     TextParquetInput,

@@ -19,8 +19,8 @@ from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text.seq2seq.core.data import (
     Seq2SeqBackboneState,
     Seq2SeqCSVInput,
-    Seq2SeqInput,
     Seq2SeqFileInput,
+    Seq2SeqInput,
     Seq2SeqJSONInput,
     Seq2SeqPostprocess,
     Seq2SeqSentencesInput,

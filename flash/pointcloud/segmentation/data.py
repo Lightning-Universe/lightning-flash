@@ -1,5 +1,4 @@
 from typing import Any, Callable, Dict, Optional, Tuple
-from unittest.mock import Base
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import BaseInput, InputDataKeys, InputFormat

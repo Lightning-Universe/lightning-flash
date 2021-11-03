@@ -104,8 +104,8 @@ class TemplateSKLearnClassifier(ClassificationTask):
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        """For the predict step, we just extract the :attr:`~flash.core.data.io.input.InputDataKeys.INPUT` key
-        from the input and forward it to the :meth:`~flash.core.model.Task.predict_step`."""
+        """For the predict step, we just extract the :attr:`~flash.core.data.io.input.InputDataKeys.INPUT` key from
+        the input and forward it to the :meth:`~flash.core.model.Task.predict_step`."""
         batch = batch[InputDataKeys.INPUT]
         return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
 

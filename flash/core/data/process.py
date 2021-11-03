@@ -24,7 +24,7 @@ from torch.utils.data._utils.collate import default_collate
 import flash
 from flash.core.data.batch import default_uncollate
 from flash.core.data.callback import FlashCallback
-from flash.core.data.io.input import DatasetInput, BaseInput, InputDataKeys, InputFormat
+from flash.core.data.io.input import BaseInput, DatasetInput, InputDataKeys, InputFormat
 from flash.core.data.properties import ProcessState, Properties
 from flash.core.data.states import (
     CollateFn,

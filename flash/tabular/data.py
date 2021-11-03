@@ -92,9 +92,7 @@ class TabularDataFrameInput(BaseInput[DataFrame]):
     def load_data(self, data: DataFrame, dataset: Optional[Any] = None):
         df, cat_vars, num_vars = self.common_load_data(data, dataset=dataset)
         target = df[self.target_col].to_numpy().astype(np.float32 if self.is_regression else np.int64)
-        return [
-            {InputDataKeys.INPUT: (c, n), InputDataKeys.TARGET: t} for c, n, t in zip(cat_vars, num_vars, target)
-        ]
+        return [{InputDataKeys.INPUT: (c, n), InputDataKeys.TARGET: t} for c, n, t in zip(cat_vars, num_vars, target)]
 
     def predict_load_data(self, data: DataFrame, dataset: Optional[Any] = None):
         _, cat_vars, num_vars = self.common_load_data(data, dataset=dataset)
@@ -298,9 +296,7 @@ class TabularData(DataModule):
     ) -> Tuple[float, float, List[str], Dict[str, Any], Dict[str, Any]]:
 
         if train_data_frame is None:
-            raise MisconfigurationException(
-                "train_data_frame is required to instantiate the TabularDataFrameInput"
-            )
+            raise MisconfigurationException("train_data_frame is required to instantiate the TabularDataFrameInput")
 
         data_frames = [train_data_frame]
 

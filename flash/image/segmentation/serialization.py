@@ -17,7 +17,7 @@ import numpy as np
 import torch
 
 import flash
-from flash.core.data.io.input import InputDataKeys, ImageLabelsMap
+from flash.core.data.io.input import ImageLabelsMap, InputDataKeys
 from flash.core.data.process import Serializer
 from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,

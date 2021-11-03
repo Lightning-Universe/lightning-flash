@@ -3,8 +3,8 @@ import pytest
 from flash.core.data.io.input import InputFormat
 from flash.core.data.utils import download_data
 from flash.core.integrations.labelstudio.data_source import (
-    LabelStudioInput,
     LabelStudioImageClassificationInput,
+    LabelStudioInput,
     LabelStudioTextClassificationInput,
 )
 from flash.core.integrations.labelstudio.visualizer import launch_app

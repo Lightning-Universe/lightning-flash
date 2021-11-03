@@ -20,8 +20,7 @@ from torch import Tensor
 
 import flash
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import BaseInput
-from flash.core.data.io.input import InputFormat
+from flash.core.data.io.input import BaseInput, InputFormat
 from flash.core.data.process import Postprocess, Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires

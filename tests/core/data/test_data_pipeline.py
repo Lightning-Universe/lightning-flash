@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 from typing import Any, Callable, cast, Dict, List, Optional, Tuple
-from unittest.mock import Base, patch
+from unittest.mock import patch
 
 import numpy as np
 import pytest

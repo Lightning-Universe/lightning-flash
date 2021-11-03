@@ -25,10 +25,10 @@ from flash.core.data.base_viz import BaseVisualization  # for viz
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import (
-    InputDataKeys,
-    InputFormat,
     FiftyOneInput,
     ImageLabelsMap,
+    InputDataKeys,
+    InputFormat,
     NumpyInput,
     PathsInput,
     TensorInput,

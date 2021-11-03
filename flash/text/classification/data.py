@@ -274,9 +274,7 @@ class TextClassificationPreprocess(Preprocess):
                 InputFormat.CSV: TextCSVInput(self.backbone, max_length=max_length),
                 InputFormat.JSON: TextJSONInput(self.backbone, max_length=max_length),
                 InputFormat.PARQUET: TextParquetInput(self.backbone, max_length=max_length),
-                InputFormat.HUGGINGFACE_DATASET: TextHuggingFaceDatasetInput(
-                    self.backbone, max_length=max_length
-                ),
+                InputFormat.HUGGINGFACE_DATASET: TextHuggingFaceDatasetInput(self.backbone, max_length=max_length),
                 InputFormat.DATAFRAME: TextDataFrameInput(self.backbone, max_length=max_length),
                 InputFormat.LISTS: TextListInput(self.backbone, max_length=max_length),
                 InputFormat.LABELSTUDIO: LabelStudioTextClassificationInput(
