@@ -1,4 +1,5 @@
 import pytorch_lightning as pl
+
 pl.seed_everything(42)
 # Copyright The PyTorch Lightning team.
 #
