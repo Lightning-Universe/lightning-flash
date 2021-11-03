@@ -21,15 +21,30 @@ from torch import Tensor
 import flash
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataSources
-from flash.core.data.process import Postprocess, Preprocess
+from flash.core.data.process import Postprocess, Preprocess, Deserializer
 from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
-from flash.text.classification.data import TextDeserializer
 
 if _TEXT_AVAILABLE:
     import datasets
     from datasets import DatasetDict, load_dataset
     from transformers import AutoTokenizer, default_data_collator
+
+
+class TextDeserializer(Deserializer):
+    @requires("text")
+    def __init__(self, backbone: str, max_length: int, use_fast: bool = True, **kwargs):
+        super().__init__()
+        self.backbone = backbone
+        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=use_fast, **kwargs)
+        self.max_length = max_length
+
+    def deserialize(self, text: str) -> Tensor:
+        return self.tokenizer(text, max_length=self.max_length, truncation=True, padding="max_length")
+
+    @property
+    def example_input(self) -> str:
+        return "An example input"
 
 
 class Seq2SeqDataSource(DataSource):
