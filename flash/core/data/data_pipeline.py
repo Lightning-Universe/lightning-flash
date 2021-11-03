@@ -32,8 +32,8 @@ from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_4_3
 from flash.core.utilities.stages import _RUNNING_STAGE_MAPPING, RunningStage
 
 if TYPE_CHECKING:
-    from flash.core.model import Task
     from flash.core.data.io.input import BaseInput
+    from flash.core.model import Task
 
 
 class DataPipelineState:
