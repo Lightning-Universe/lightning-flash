@@ -15,6 +15,7 @@ import os
 from functools import partial
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
+from flash.core.data.data_pipeline import Postprocess
 from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources, LabelsState
 from flash.core.integrations.labelstudio.data_source import LabelStudioTextClassificationDataSource
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
@@ -33,6 +34,8 @@ from flash.text.data import (
 )
 
 if _TEXT_AVAILABLE:
+    from transformers.modeling_outputs import SequenceClassifierOutput
+
     from flash.text.classification.tokenizers import TEXT_CLASSIFIER_TOKENIZERS
 
 
@@ -181,7 +184,15 @@ class TextClassificationPreprocess(TextPreprocessMixin):
         )
 
 
+class TextClassificationPostprocess(Postprocess):
+    def per_batch_transform(self, batch: Any) -> Any:
+        if isinstance(batch, SequenceClassifierOutput):
+            batch = batch.logits
+        return super().per_batch_transform(batch)
+
+
 class TextClassificationData(TextDataModule):
     """Data Module for text classification tasks."""
 
     preprocess_cls = TextClassificationPreprocess
+    postprocess_cls = TextClassificationPostprocess
