@@ -17,7 +17,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 from flash.core.data.data_pipeline import Postprocess
 from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources, LabelsState
 from flash.core.integrations.labelstudio.data_source import LabelStudioTextClassificationDataSource
-from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
+from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text.data import (
     TextCSVDataSourceMixin,
     TextDataFrameDataSourceMixin,
