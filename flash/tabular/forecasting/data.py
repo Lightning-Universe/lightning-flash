@@ -45,9 +45,9 @@ class TabularForecastingDataFrameDataSource(DataSource[DataFrame]):
     @requires("tabular")
     def __init__(
         self,
-        time_idx: str,
-        target: Union[str, List[str]],
-        group_ids: List[str],
+        time_idx: Optional[str] = None,
+        target: Optional[Union[str, List[str]]] = None,
+        group_ids: Optional[List[str]] = None,
         parameters: Optional[Dict[str, Any]] = None,
         **data_source_kwargs: Any,
     ):
