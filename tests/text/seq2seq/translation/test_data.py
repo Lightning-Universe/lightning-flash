@@ -49,12 +49,20 @@ TEST_JSON_DATA_FIELD = """{"data": [
 TEST_DATA_FRAME_DATA = pd.DataFrame(
     {
         "input": ["this is a sentence one", "this is a sentence two", "this is a sentence three"],
-        "target": ["this is a translated sentence one", "this is a translated sentence two", "this is a translated sentence three"],
+        "target": [
+            "this is a translated sentence one",
+            "this is a translated sentence two",
+            "this is a translated sentence three",
+        ],
     }
 )
 
 TEST_LIST_DATA = ["this is a sentence one", "this is a sentence two", "this is a sentence three"]
-TEST_LIST_TARGETS = ["this is a translated sentence one", "this is a translated sentence two", "this is a translated sentence three"]
+TEST_LIST_TARGETS = [
+    "this is a translated sentence one",
+    "this is a translated sentence two",
+    "this is a translated sentence three",
+]
 
 
 def csv_data(tmpdir):
@@ -145,7 +153,6 @@ def test_from_json(tmpdir, pretrained):
 
     batch = next(iter(dm.predict_dataloader()))
     assert "input_ids" in batch
-
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")

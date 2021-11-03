@@ -22,6 +22,7 @@ from flash.text.classification.tokenizers.base import BaseTokenizer
 from flash.text.data import (
     TextCSVDataSourceMixin,
     TextDataFrameDataSourceMixin,
+    TextDataModule,
     TextDataSource,
     TextDeserializer,
     TextHuggingFaceDatasetDataSourceMixin,
@@ -29,7 +30,6 @@ from flash.text.data import (
     TextListDataSourceMixin,
     TextParquetDataSourceMixin,
     TextPreprocessMixin,
-    TextDataModule,
 )
 
 if _TEXT_AVAILABLE:

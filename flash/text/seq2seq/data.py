@@ -11,20 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from functools import partial
-from typing import Any, Callable, Dict, Optional, Union, List
-
 import os
 from functools import partial
-from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
-from flash.core.data.process import Postprocess
 from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources
+from flash.core.data.process import Postprocess
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 from flash.text.classification.tokenizers.base import BaseTokenizer
 from flash.text.data import (
     TextCSVDataSourceMixin,
     TextDataFrameDataSourceMixin,
+    TextDataModule,
     TextDataSource,
     TextDeserializer,
     TextHuggingFaceDatasetDataSourceMixin,
@@ -32,7 +30,6 @@ from flash.text.data import (
     TextListDataSourceMixin,
     TextParquetDataSourceMixin,
     TextPreprocessMixin,
-    TextDataModule,
 )
 
 if _TEXT_AVAILABLE:
