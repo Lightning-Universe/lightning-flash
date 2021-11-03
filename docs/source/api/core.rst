@@ -68,6 +68,15 @@ _________________________________
     ~flash.core.integrations.icevision.transforms.default_transforms
     ~flash.core.integrations.icevision.transforms.train_default_transforms
 
+flash.core.integrations.pytorch_forecasting
+___________________________________________
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    ~flash.core.integrations.pytorch_forecasting.transforms.convert_predictions
+
 flash.core.model
 ________________
 

@@ -14,17 +14,47 @@
 import contextlib
 import functools
 import inspect
+from argparse import Namespace
 from functools import wraps
 from inspect import Parameter, signature
-from typing import Any, Callable, List, Optional, Set, Type
+from typing import Any, Callable, Dict, List, Optional, Set, Type, Union
 
 import pytorch_lightning as pl
 from jsonargparse import ArgumentParser
 from jsonargparse.signatures import get_class_signature_functions
+from pytorch_lightning import LightningModule, Trainer
 
 import flash
 from flash.core.data.io.input import InputFormat
-from flash.core.utilities.lightning_cli import class_from_function, LightningCLI
+from flash.core.utilities.lightning_cli import (
+    class_from_function,
+    LightningArgumentParser,
+    LightningCLI,
+    SaveConfigCallback,
+)
+
+
+class ModelExcludeSaveConfigCallback(SaveConfigCallback):
+    """An override of the ``SaveConfigCallback`` that excludes chosen parameters from the model config."""
+
+    def __init__(
+        self,
+        parser: LightningArgumentParser,
+        config: Union[Namespace, Dict[str, Any]],
+        config_filename: str,
+        overwrite: bool = False,
+        exclude_list: Optional[List[str]] = None,
+    ) -> None:
+        if exclude_list is None:
+            exclude_list = []
+        self.exclude_list = exclude_list
+
+        super().__init__(parser, config, config_filename, overwrite)
+
+    def setup(self, trainer: Trainer, pl_module: LightningModule, stage: Optional[str] = None) -> None:
+        for parameter in self.exclude_list:
+            del self.config["model"][parameter]
+        return super().setup(trainer, pl_module, stage)
 
 
 def drop_kwargs(func):
@@ -117,7 +147,13 @@ class FlashCLI(LightningCLI):
 
         self._subcommand_builders = {}
 
-        super().__init__(drop_kwargs(model_class), datamodule_class=None, trainer_class=trainer_class, **kwargs)
+        super().__init__(
+            drop_kwargs(model_class),
+            datamodule_class=None,
+            save_config_callback=functools.partial(ModelExcludeSaveConfigCallback, exclude_list=datamodule_attributes),
+            trainer_class=trainer_class,
+            **kwargs,
+        )
 
     @contextlib.contextmanager
     def patch_default_subcommand(self):
