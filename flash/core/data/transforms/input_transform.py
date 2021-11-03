@@ -19,7 +19,8 @@ from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data._utils.collate import default_collate
 
-from flash.core.data.data_pipeline import _Preprocessor, DataPipeline
+from flash.core.data.batch import _Preprocessor
+from flash.core.data.data_pipeline import DataPipeline
 from flash.core.data.io.input import InputDataKeys
 from flash.core.data.properties import Properties
 from flash.core.data.states import CollateFn

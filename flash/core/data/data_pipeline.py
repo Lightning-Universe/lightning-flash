@@ -33,6 +33,7 @@ from flash.core.utilities.stages import _RUNNING_STAGE_MAPPING, RunningStage
 
 if TYPE_CHECKING:
     from flash.core.model import Task
+    from flash.core.data.io.input import BaseInput
 
 
 class DataPipelineState:
@@ -82,7 +83,7 @@ class DataPipeline:
 
     def __init__(
         self,
-        data_source: Optional["BaseInput"] = None,
+        data_source: Optional[BaseInput] = None,
         preprocess: Optional[Preprocess] = None,
         postprocess: Optional[Postprocess] = None,
         deserializer: Optional[Deserializer] = None,
@@ -552,7 +553,7 @@ class DataPipeline:
             model.predict_step = model.predict_step._original
 
     def __str__(self) -> str:
-        data_source: "BaseInput" = self.data_source
+        data_source: BaseInput = self.data_source
         preprocess: Preprocess = self._preprocess_pipeline
         postprocess: Postprocess = self._postprocess_pipeline
         serializer: Serializer = self._serializer

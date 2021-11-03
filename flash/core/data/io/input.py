@@ -47,6 +47,9 @@ from flash.core.data.transforms.input_transform import INPUT_TRANSFORM_TYPE, Inp
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 from flash.core.utilities.stages import RunningStage
 
+if TYPE_CHECKING:
+    from flash.core.data.data_pipeline import DataPipelineState
+
 SampleCollection = None
 if _FIFTYONE_AVAILABLE:
     fol = lazy_import("fiftyone.core.labels")
@@ -227,7 +230,7 @@ class InputsStateContainer:
             predict_input_state=InputStateContainer.from_dataset(predict_dataset),
         )
 
-    def attach_data_pipeline_state(self, data_pipeline_state: "DataPipelineState") -> None:
+    def attach_data_pipeline_state(self, data_pipeline_state: DataPipelineState) -> None:
         for state in self._state.values():
             data_pipeline_state.set_state(state)
 
@@ -249,7 +252,7 @@ class InputsStateContainer:
             **(self.predict_input_state.input_transform._state if self.predict_input_state.input_transform else {}),
         }
 
-    def _set_data_pipeline_state(self, state: InputStateContainer, data_pipeline_state: "DataPipelineState") -> None:
+    def _set_data_pipeline_state(self, state: InputStateContainer, data_pipeline_state: DataPipelineState) -> None:
         if state and state.input_transform:
             state.input_transform._data_pipeline_state = data_pipeline_state
 
