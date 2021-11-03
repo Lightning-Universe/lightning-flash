@@ -314,7 +314,7 @@ class _Postprocessor(torch.nn.Module):
             f"\t(per_batch_transform): {str(self.per_batch_transform)}\n"
             f"\t(uncollate_fn): {str(self.uncollate_fn)}\n"
             f"\t(per_sample_transform): {str(self.per_sample_transform)}\n"
-            f"\t(serializer): {str(self.output)}"
+            f"\t(output): {str(self.output)}"
         )
 
 
