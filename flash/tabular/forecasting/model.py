@@ -30,24 +30,27 @@ class TabularForecaster(AdapterTask):
         self,
         parameters: Dict[str, Any],
         backbone: str,
+        backbone_kwargs: Optional[Dict[str, Any]] = None,
         loss_fn: Optional[Callable] = None,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: Union[torchmetrics.Metric, List[torchmetrics.Metric]] = None,
         learning_rate: float = 4e-3,
-        **backbone_kwargs
     ):
 
         self.save_hyperparameters()
+
+        if backbone_kwargs is None:
+            backbone_kwargs = {}
 
         metadata = self.backbones.get(backbone, with_metadata=True)
         adapter = metadata["metadata"]["adapter"].from_task(
             self,
             parameters=parameters,
             backbone=backbone,
+            backbone_kwargs=backbone_kwargs,
             loss_fn=loss_fn,
             metrics=metrics,
-            **backbone_kwargs,
         )
 
         super().__init__(
