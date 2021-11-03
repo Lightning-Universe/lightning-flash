@@ -11,12 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from flash.text.seq2seq.data import Seq2SeqData, Seq2SeqPreprocess
+from flash.text.seq2seq.data import Seq2SeqData, Seq2SeqPreprocess, Seq2SeqPostprocess
 
 
 class TranslationPreprocess(Seq2SeqPreprocess):
     pass
 
 
+class TranslationPostprocess(Seq2SeqPostprocess):
+    pass
+
+
 class TranslationData(Seq2SeqData):
     preprocess_cls = TranslationPreprocess
+    postprocess_cls = TranslationPostprocess

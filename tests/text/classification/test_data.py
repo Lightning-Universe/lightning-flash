@@ -25,7 +25,7 @@ from tests.helpers.utils import _TEXT_TESTING
 if _TEXT_AVAILABLE:
     from datasets import Dataset
 
-    from flash.text.classification.tokenizers import TEXT_CLASSIFIER_TOKENIZERS
+    from flash.text.tokenizers import TEXT_CLASSIFIER_TOKENIZERS
 
 TEST_BACKBONE = "prajjwal1/bert-tiny"  # super small model for testing
 

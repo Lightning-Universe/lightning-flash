@@ -17,7 +17,7 @@ import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.utilities.imports import _TEXT_AVAILABLE
-from flash.text.classification.tokenizers.base import BaseTokenizer
+from flash.text.tokenizers.base import BaseTokenizer
 
 if _TEXT_AVAILABLE:
     from transformers import AutoConfig, AutoTokenizer
@@ -70,6 +70,9 @@ class TransformerTokenizer(BaseTokenizer):
             max_length=self.max_length,
             return_tensors=None,  # transfomed to tensor in `load_data`
         )
+
+    def decode(self, x, **kwargs):
+        return self.tokenizer.batch_decode(x, **kwargs)
 
 
 def _trasformer_tokenizer(

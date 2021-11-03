@@ -12,8 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
+from dataclasses import dataclass
+from functools import partial
 
 import torch
+import os
 from pandas.core.frame import DataFrame
 from torch import Tensor
 from torch.utils.data.sampler import Sampler
@@ -23,13 +26,14 @@ from flash.core.data.auto_dataset import AutoDataset
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
-from flash.core.data.process import Deserializer, Preprocess
+from flash.core.data.process import Deserializer, Preprocess, ProcessState
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
-from flash.text.classification.tokenizers.base import BaseTokenizer
 
 if _TEXT_AVAILABLE:
     from datasets import Dataset, load_dataset
     from transformers import default_data_collator
+    from flash.text.tokenizers import TEXT_CLASSIFIER_TOKENIZERS
+    from flash.text.tokenizers.base import BaseTokenizer
 
 
 class TextDeserializer(Deserializer):
@@ -46,11 +50,18 @@ class TextDeserializer(Deserializer):
         return "An example input"
 
 
+@dataclass(unsafe_hash=True, frozen=True)
+class TokenizerState(ProcessState):
+    """A :class:`~flash.core.data.properties.ProcessState` containing ``tokenizer``."""
+
+    tokenizer: BaseTokenizer
+
+
 class TextDataSource(DataSource):
     @requires("text")
     def __init__(self, tokenizer: BaseTokenizer):
         super().__init__()
-        self.tokenizer = tokenizer
+        self.set_state(TokenizerState(tokenizer))
 
     def _tokenize_fn(
         self,
@@ -58,7 +69,16 @@ class TextDataSource(DataSource):
         input: Optional[str] = None,
     ) -> Callable:
         """This function is used to tokenize sentences using the provided tokenizer."""
-        return self.tokenizer(ex[input])
+        return self.get_state(TokenizerState).tokenizer(ex[input])
+
+    def encode_input(self, hf_dataset, input) -> Sequence[Mapping[str, Any]]:
+        # tokenize
+        if not self.get_state(TokenizerState).tokenizer._is_fit:
+            self.get_state(TokenizerState).tokenizer.fit(hf_dataset, input=input)
+        hf_dataset = hf_dataset.map(partial(self._tokenize_fn, input=input), batched=True)
+        hf_dataset = hf_dataset.remove_columns([input])  # just leave the numerical columns
+
+        return hf_dataset
 
     def load_data(
         self,
@@ -147,7 +167,40 @@ class TextListDataSourceMixin:
         return (hf_dataset, DefaultDataKeys.INPUT)
 
 
-class TextPreprocessMixin(Preprocess):
+class TextPreprocess(Preprocess):
+    @requires("text")
+    def __init__(
+        self,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_sources: Optional[Dict[str, "DataSource"]] = None,
+        backbone: Union[str, Tuple[BaseTokenizer, int]] = None,
+        pretrained: Optional[bool] = True,
+        **backbone_kwargs: Optional[Dict[str, Any]],
+    ):
+        if isinstance(backbone, tuple):
+            self.tokenizer, self.vocab_size = backbone
+            self.backbone = self.tokenizer.backbone
+        else:
+            self.backbone = backbone
+            self.tokenizer, self.vocab_size = TEXT_CLASSIFIER_TOKENIZERS.get(backbone)(
+                pretrained=pretrained, **backbone_kwargs
+            )
+
+        os.environ["TOKENIZERS_PARALLELISM"] = "true"  # TODO: do we really need this?
+
+        super().__init__(
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_sources={k: v(self.tokenizer) for k, v in data_sources.items()},
+            default_data_source=DefaultDataSources.LISTS,
+            deserializer=TextDeserializer(self.tokenizer),
+        )
+
     def get_state_dict(self) -> Dict[str, Any]:
         return {**self.transforms}
 

@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
 from functools import partial
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
@@ -19,30 +18,24 @@ from flash.core.data.data_pipeline import Postprocess
 from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources, LabelsState
 from flash.core.integrations.labelstudio.data_source import LabelStudioTextClassificationDataSource
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
-from flash.text.classification.tokenizers.base import BaseTokenizer
+from flash.text.tokenizers.base import BaseTokenizer
 from flash.text.data import (
     TextCSVDataSourceMixin,
     TextDataFrameDataSourceMixin,
     TextDataModule,
     TextDataSource,
-    TextDeserializer,
     TextHuggingFaceDatasetDataSourceMixin,
     TextJSONDataSourceMixin,
     TextListDataSourceMixin,
     TextParquetDataSourceMixin,
-    TextPreprocessMixin,
+    TextPreprocess,
 )
 
 if _TEXT_AVAILABLE:
     from transformers.modeling_outputs import SequenceClassifierOutput
 
-    from flash.text.classification.tokenizers import TEXT_CLASSIFIER_TOKENIZERS
-
 
 class TextClassificationDataSource(TextDataSource):
-    @requires("text")
-    def __init__(self, tokenizer: BaseTokenizer):
-        super().__init__(tokenizer)
 
     @staticmethod
     def _transform_label(label_to_class_mapping: Dict[str, int], target: str, ex: Dict[str, Union[int, str]]):
@@ -79,15 +72,6 @@ class TextClassificationDataSource(TextDataSource):
 
             # rename label column
             hf_dataset = hf_dataset.rename_column(target, DefaultDataKeys.TARGET)
-
-        return hf_dataset
-
-    def encode_input(self, hf_dataset, input) -> Sequence[Mapping[str, Any]]:
-        # tokenize
-        if not self.tokenizer._is_fit:
-            self.tokenizer.fit(hf_dataset, input=input)
-        hf_dataset = hf_dataset.map(partial(self._tokenize_fn, input=input), batched=True)
-        hf_dataset = hf_dataset.remove_columns([input])  # just leave the numerical columns
 
         return hf_dataset
 
@@ -142,8 +126,7 @@ class TextClassificationListDataSource(TextClassificationDataSource, TextListDat
         return hf_dataset
 
 
-class TextClassificationPreprocess(TextPreprocessMixin):
-    @requires("text")
+class TextClassificationPreprocess(TextPreprocess):
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -154,16 +137,6 @@ class TextClassificationPreprocess(TextPreprocessMixin):
         pretrained: Optional[bool] = True,
         **backbone_kwargs: Optional[Dict[str, Any]],
     ):
-        if isinstance(backbone, tuple):
-            self.tokenizer, self.vocab_size = backbone
-            self.backbone = self.tokenizer.backbone
-        else:
-            self.backbone = backbone
-            self.tokenizer, self.vocab_size = TEXT_CLASSIFIER_TOKENIZERS.get(backbone)(
-                pretrained=pretrained, **backbone_kwargs
-            )
-
-        os.environ["TOKENIZERS_PARALLELISM"] = "true"  # TODO: do we really need this?
 
         super().__init__(
             train_transform=train_transform,
@@ -171,16 +144,17 @@ class TextClassificationPreprocess(TextPreprocessMixin):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.CSV: TextClassificationCSVDataSource(self.tokenizer),
-                DefaultDataSources.JSON: TextClassificationJSONDataSource(self.tokenizer),
-                DefaultDataSources.PARQUET: TextClassificationParquetDataSource(self.tokenizer),
-                DefaultDataSources.HUGGINGFACE_DATASET: TextClassificationHuggingFaceDatasetDataSource(self.tokenizer),
-                DefaultDataSources.DATAFRAME: TextClassificationDataFrameDataSource(self.tokenizer),
-                DefaultDataSources.LISTS: TextClassificationListDataSource(self.tokenizer),
-                DefaultDataSources.LABELSTUDIO: LabelStudioTextClassificationDataSource(self.tokenizer),
+                DefaultDataSources.CSV: TextClassificationCSVDataSource,
+                DefaultDataSources.JSON: TextClassificationJSONDataSource,
+                DefaultDataSources.PARQUET: TextClassificationParquetDataSource,
+                DefaultDataSources.HUGGINGFACE_DATASET: TextClassificationHuggingFaceDatasetDataSource,
+                DefaultDataSources.DATAFRAME: TextClassificationDataFrameDataSource,
+                DefaultDataSources.LISTS: TextClassificationListDataSource,
+                DefaultDataSources.LABELSTUDIO: LabelStudioTextClassificationDataSource,
             },
-            default_data_source=DefaultDataSources.LISTS,
-            deserializer=TextDeserializer(self.tokenizer),
+            backbone=backbone,
+            pretrained=pretrained,
+            **backbone_kwargs,
         )
 
 

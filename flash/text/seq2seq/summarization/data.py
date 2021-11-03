@@ -11,12 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from flash.text.seq2seq.data import Seq2SeqData, Seq2SeqPreprocess
+from flash.text.seq2seq.data import Seq2SeqData, Seq2SeqPreprocess, Seq2SeqPostprocess
 
 
 class SummarizationPreprocess(Seq2SeqPreprocess):
     pass
 
 
+class SummarizationPostprocess(Seq2SeqPostprocess):
+    pass
+
+
 class SummarizationData(Seq2SeqData):
     preprocess_cls = SummarizationPreprocess
+    postprocess_cls = SummarizationPostprocess

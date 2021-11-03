@@ -14,7 +14,7 @@
 from flash.core.registry import ExternalRegistry, FlashRegistry
 from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
 from flash.core.utilities.providers import _HUGGINGFACE_TOKENIZERS
-from flash.text.classification.tokenizers.transformers import _trasformer_tokenizer
+from flash.text.tokenizers.transformers import _trasformer_tokenizer
 
 TEXT_CLASSIFIER_TOKENIZERS = FlashRegistry("tokenizers")
 

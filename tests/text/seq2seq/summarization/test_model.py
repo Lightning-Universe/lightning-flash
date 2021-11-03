@@ -21,8 +21,7 @@ import torch
 from flash import Trainer
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import SummarizationTask
-from flash.text.seq2seq.data import Seq2SeqPostprocess
-from flash.text.seq2seq.summarization.data import SummarizationPreprocess
+from flash.text.seq2seq.summarization.data import SummarizationPreprocess, SummarizationPostprocess 
 from tests.helpers.utils import _SERVE_TESTING, _TEXT_TESTING
 
 # ======== Mock functions ========
@@ -80,7 +79,7 @@ def test_serve():
     model = SummarizationTask(TEST_BACKBONE)
     # TODO: Currently only servable once a preprocess and postprocess have been attached
     model._preprocess = SummarizationPreprocess(backbone=TEST_BACKBONE)
-    model._postprocess = Seq2SeqPostprocess()
+    model._postprocess = SummarizationPostprocess()
     model.eval()
     model.serve()
 
