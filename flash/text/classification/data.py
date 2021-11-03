@@ -15,6 +15,7 @@ from functools import partial
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 import torch
+
 from flash.core.data.data_pipeline import Postprocess
 from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources, LabelsState
 from flash.core.integrations.labelstudio.data_source import LabelStudioDataSource
@@ -29,9 +30,9 @@ from flash.text.data import (
     TextListDataSourceMixin,
     TextParquetDataSourceMixin,
     TextPreprocess,
+    TokenizerState,
 )
 from flash.text.tokenizers import BaseTokenizer
-from flash.text.data import TokenizerState
 
 if _TEXT_AVAILABLE:
     from transformers.modeling_outputs import SequenceClassifierOutput
