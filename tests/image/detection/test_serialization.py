@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import torch
 
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import InputDataKeys
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE
 from flash.image.detection.serialization import FiftyOneDetectionLabels
 
@@ -24,7 +24,7 @@ class TestFiftyOneDetectionLabels:
         labels_serial = FiftyOneDetectionLabels(labels=labels)
 
         sample = {
-            DefaultDataKeys.PREDS: {
+            InputDataKeys.PREDS: {
                 "bboxes": [
                     {
                         "xmin": torch.tensor(20),
@@ -36,7 +36,7 @@ class TestFiftyOneDetectionLabels:
                 "labels": [torch.tensor(0)],
                 "scores": [torch.tensor(0.5)],
             },
-            DefaultDataKeys.METADATA: {
+            InputDataKeys.METADATA: {
                 "filepath": "something",
                 "size": (100, 100),
             },

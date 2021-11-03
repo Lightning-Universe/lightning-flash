@@ -17,7 +17,7 @@ import numpy as np
 import torch
 
 import flash
-from flash.core.data.data_source import DefaultDataKeys, ImageLabelsMap
+from flash.core.data.io.input import InputDataKeys, ImageLabelsMap
 from flash.core.data.process import Serializer
 from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,
@@ -91,7 +91,7 @@ class SegmentationLabels(Serializer):
         plt.show()
 
     def serialize(self, sample: Dict[str, torch.Tensor]) -> torch.Tensor:
-        preds = sample[DefaultDataKeys.PREDS]
+        preds = sample[InputDataKeys.PREDS]
         assert len(preds.shape) == 3, preds.shape
         labels = torch.argmax(preds, dim=-3)  # HxW
 
@@ -126,6 +126,6 @@ class FiftyOneSegmentationLabels(SegmentationLabels):
         labels = super().serialize(sample)
         fo_predictions = fol.Segmentation(mask=np.array(labels))
         if self.return_filepath:
-            filepath = sample[DefaultDataKeys.METADATA]["filepath"]
+            filepath = sample[InputDataKeys.METADATA]["filepath"]
             return {"filepath": filepath, "predictions": fo_predictions}
         return fo_predictions

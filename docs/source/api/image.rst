@@ -43,7 +43,7 @@ ________________
     ~detection.data.ObjectDetectionData
 
     detection.data.FiftyOneParser
-    detection.data.ObjectDetectionFiftyOneDataSource
+    detection.data.ObjectDetectionFiftyOneInput
     detection.data.ObjectDetectionPreprocess
     detection.serialization.FiftyOneDetectionLabels
 
@@ -96,10 +96,10 @@ ____________
     ~segmentation.data.SemanticSegmentationPreprocess
 
     segmentation.data.SegmentationMatplotlibVisualization
-    segmentation.data.SemanticSegmentationNumpyDataSource
-    segmentation.data.SemanticSegmentationTensorDataSource
-    segmentation.data.SemanticSegmentationPathsDataSource
-    segmentation.data.SemanticSegmentationFiftyOneDataSource
+    segmentation.data.SemanticSegmentationNumpyInput
+    segmentation.data.SemanticSegmentationTensorInput
+    segmentation.data.SemanticSegmentationPathsInput
+    segmentation.data.SemanticSegmentationFiftyOneInput
     segmentation.data.SemanticSegmentationDeserializer
     segmentation.model.SemanticSegmentationPostprocess
     segmentation.serialization.FiftyOneSegmentationLabels
@@ -140,7 +140,7 @@ ________________
     :template: classtemplate.rst
 
     ~data.ImageDeserializer
-    ~data.ImageFiftyOneDataSource
-    ~data.ImageNumpyDataSource
-    ~data.ImagePathsDataSource
-    ~data.ImageTensorDataSource
+    ~data.ImageFiftyOneInput
+    ~data.ImageNumpyInput
+    ~data.ImagePathsInput
+    ~data.ImageTensorInput

@@ -23,7 +23,7 @@ from flash import Task, Trainer
 from flash.core.classification import Labels, LabelsState
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState, DefaultPreprocess
-from flash.core.data.data_source import DefaultDataSources
+from flash.core.data.io.input import InputFormat
 from flash.core.data.process import Serializer, SerializerMapping
 from flash.core.data.properties import ProcessState
 
@@ -114,7 +114,7 @@ class CustomPreprocess(DefaultPreprocess):
         super().__init__(
             data_sources={
                 "test": Mock(return_value="test"),
-                DefaultDataSources.TENSORS: Mock(return_value="tensors"),
+                InputFormat.TENSORS: Mock(return_value="tensors"),
             },
             default_data_source="test",
         )
@@ -124,7 +124,7 @@ def test_data_source_of_name():
     preprocess = CustomPreprocess()
 
     assert preprocess.data_source_of_name("test")() == "test"
-    assert preprocess.data_source_of_name(DefaultDataSources.TENSORS)() == "tensors"
+    assert preprocess.data_source_of_name(InputFormat.TENSORS)() == "tensors"
     assert preprocess.data_source_of_name("tensors")() == "tensors"
     assert preprocess.data_source_of_name("default")() == "test"
 
@@ -135,13 +135,13 @@ def test_data_source_of_name():
 def test_available_data_sources():
     preprocess = CustomPreprocess()
 
-    assert DefaultDataSources.TENSORS in preprocess.available_data_sources()
+    assert InputFormat.TENSORS in preprocess.available_data_sources()
     assert "test" in preprocess.available_data_sources()
     assert len(preprocess.available_data_sources()) == 3
 
     data_module = DataModule(preprocess=preprocess)
 
-    assert DefaultDataSources.TENSORS in data_module.available_data_sources()
+    assert InputFormat.TENSORS in data_module.available_data_sources()
     assert "test" in data_module.available_data_sources()
     assert len(data_module.available_data_sources()) == 3
 

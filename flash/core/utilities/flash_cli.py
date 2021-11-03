@@ -23,7 +23,7 @@ from jsonargparse import ArgumentParser
 from jsonargparse.signatures import get_class_signature_functions
 
 import flash
-from flash.core.data.data_source import DefaultDataSources
+from flash.core.data.io.input import InputFormat
 from flash.core.utilities.lightning_cli import class_from_function, LightningCLI
 
 
@@ -96,9 +96,9 @@ class FlashCLI(LightningCLI):
             datamodule_class: The :class:`~flash.data.data_module.DataModule` class.
             trainer_class: An optional extension of the :class:`pytorch_lightning.Trainer` class.
             trainer_fn: The trainer function to run.
-            datasource: Use this if your ``DataModule`` is created using a classmethod. Any of:
+            baseinput: Use this if your ``DataModule`` is created using a classmethod. Any of:
                 - ``None``. The ``datamodule_class.__init__`` signature will be used.
-                - ``str``. One of :class:`~flash.data.data_source.DefaultDataSources`. This will use the signature of
+                - ``str``. One of :class:`~flash.data.io.input.InputFormat`. This will use the signature of
                     the corresponding ``DataModule.from_*`` method.
                 - ``Callable``. A custom method.
             kwargs: See the parent arguments
@@ -147,7 +147,7 @@ class FlashCLI(LightningCLI):
         data_sources = self.local_datamodule_class.preprocess_cls().available_data_sources()
 
         for data_source in data_sources:
-            if isinstance(data_source, DefaultDataSources):
+            if isinstance(data_source, InputFormat):
                 data_source = data_source.value
             if hasattr(self.local_datamodule_class, f"from_{data_source}"):
                 self.add_subcommand_from_function(

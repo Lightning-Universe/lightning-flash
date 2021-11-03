@@ -39,7 +39,7 @@ ENVIRONMENT = Environment(
 )
 
 
-class AutoDataSources(Directive):
+class AutoInputs(Directive):
     has_content = True
     required_arguments = 2
     optional_arguments = 0
@@ -81,4 +81,4 @@ class AutoDataSources(Directive):
 
 
 def setup(app):
-    app.add_directive("autodatasources", AutoDataSources)
+    app.add_directive("autoinputs", AutoInputs)

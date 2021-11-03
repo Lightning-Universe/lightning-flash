@@ -102,7 +102,7 @@ To view configuration options and options for running the audio classifier with 
 Loading Data
 ************
 
-.. autodatasources:: flash.audio.classification.data AudioClassificationData
+.. autoinputs:: flash.audio.classification.data AudioClassificationData
 
     {% extends "base.rst" %}
     {% block from_datasets %}

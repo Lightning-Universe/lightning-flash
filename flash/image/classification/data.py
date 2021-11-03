@@ -21,19 +21,19 @@ from torch.utils.data.sampler import Sampler
 from flash.core.data.base_viz import BaseVisualization  # for viz
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources, LoaderDataFrameDataSource
+from flash.core.data.io.input import InputDataKeys, InputFormat, LoaderDataFrameInput
 from flash.core.data.process import Deserializer, Preprocess
-from flash.core.integrations.labelstudio.data_source import LabelStudioImageClassificationDataSource
+from flash.core.integrations.labelstudio.data_source import LabelStudioImageClassificationInput
 from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, Image, requires
 from flash.core.utilities.stages import RunningStage
 from flash.image.classification.transforms import default_transforms, train_default_transforms
 from flash.image.data import (
     image_loader,
     ImageDeserializer,
-    ImageFiftyOneDataSource,
-    ImageNumpyDataSource,
-    ImagePathsDataSource,
-    ImageTensorDataSource,
+    ImageFiftyOneInput,
+    ImageNumpyInput,
+    ImagePathsInput,
+    ImageTensorInput,
 )
 
 if _MATPLOTLIB_AVAILABLE:
@@ -42,15 +42,15 @@ else:
     plt = None
 
 
-class ImageClassificationDataFrameDataSource(LoaderDataFrameDataSource):
+class ImageClassificationDataFrameInput(LoaderDataFrameInput):
     def __init__(self):
         super().__init__(image_loader)
 
     @requires("image")
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         sample = super().load_sample(sample, dataset)
-        w, h = sample[DefaultDataKeys.INPUT].size  # WxH
-        sample[DefaultDataKeys.METADATA]["size"] = (h, w)
+        w, h = sample[InputDataKeys.INPUT].size  # WxH
+        sample[InputDataKeys.METADATA]["size"] = (h, w)
         return sample
 
 
@@ -85,17 +85,17 @@ class ImageClassificationPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.FIFTYONE: ImageFiftyOneDataSource(**data_source_kwargs),
-                DefaultDataSources.FILES: ImagePathsDataSource(),
-                DefaultDataSources.FOLDERS: ImagePathsDataSource(),
-                DefaultDataSources.NUMPY: ImageNumpyDataSource(),
-                DefaultDataSources.TENSORS: ImageTensorDataSource(),
-                "data_frame": ImageClassificationDataFrameDataSource(),
-                DefaultDataSources.CSV: ImageClassificationDataFrameDataSource(),
-                DefaultDataSources.LABELSTUDIO: LabelStudioImageClassificationDataSource(),
+                InputFormat.FIFTYONE: ImageFiftyOneInput(**data_source_kwargs),
+                InputFormat.FILES: ImagePathsInput(),
+                InputFormat.FOLDERS: ImagePathsInput(),
+                InputFormat.NUMPY: ImageNumpyInput(),
+                InputFormat.TENSORS: ImageTensorInput(),
+                "data_frame": ImageClassificationDataFrameInput(),
+                InputFormat.CSV: ImageClassificationDataFrameInput(),
+                InputFormat.LABELSTUDIO: LabelStudioImageClassificationInput(),
             },
             deserializer=deserializer or ImageDeserializer(),
-            default_data_source=DefaultDataSources.FILES,
+            default_data_source=InputFormat.FILES,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
@@ -244,8 +244,8 @@ class ImageClassificationData(DataModule):
         **preprocess_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.image.classification.data.ImageClassificationData` object from the given CSV
-        files using the :class:`~flash.core.data.data_source.DataSource` of name
-        :attr:`~flash.core.data.data_source.DefaultDataSources.CSV` from the passed or constructed
+        files using the :class:`~flash.core.data.io.input.BaseInput` of name
+        :attr:`~flash.core.data.io.input.InputFormat.CSV` from the passed or constructed
         :class:`~flash.core.data.process.Preprocess`.
 
         Args:
@@ -295,7 +295,7 @@ class ImageClassificationData(DataModule):
             The constructed data module.
         """
         return cls.from_data_source(
-            DefaultDataSources.CSV,
+            InputFormat.CSV,
             (train_file, input_field, target_fields, train_images_root, train_resolver),
             (val_file, input_field, target_fields, val_images_root, val_resolver),
             (test_file, input_field, target_fields, test_images_root, test_resolver),
@@ -358,9 +358,9 @@ class MatplotlibVisualization(BaseVisualization):
         for i, ax in enumerate(axs):
             # unpack images and labels
             if isinstance(data, list):
-                _img, _label = data[i][DefaultDataKeys.INPUT], data[i].get(DefaultDataKeys.TARGET, "")
+                _img, _label = data[i][InputDataKeys.INPUT], data[i].get(InputDataKeys.TARGET, "")
             elif isinstance(data, dict):
-                _img, _label = data[DefaultDataKeys.INPUT][i], data.get(DefaultDataKeys.TARGET, [""] * (i + 1))[i]
+                _img, _label = data[InputDataKeys.INPUT][i], data.get(InputDataKeys.TARGET, [""] * (i + 1))[i]
             else:
                 raise TypeError(f"Unknown data type. Got: {type(data)}.")
             # convert images to numpy
@@ -391,4 +391,4 @@ class MatplotlibVisualization(BaseVisualization):
 
     def show_per_batch_transform(self, batch: List[Any], running_stage):
         win_title: str = f"{running_stage} - show_per_batch_transform"
-        self._show_images_and_labels(batch[0], batch[0][DefaultDataKeys.INPUT].shape[0], win_title)
+        self._show_images_and_labels(batch[0], batch[0][InputDataKeys.INPUT].shape[0], win_title)

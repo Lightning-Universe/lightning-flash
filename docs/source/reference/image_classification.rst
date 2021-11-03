@@ -85,7 +85,7 @@ To view configuration options and options for running the image classifier with 
 Loading Data
 ************
 
-.. autodatasources:: flash.image.classification.data ImageClassificationData
+.. autoinputs:: flash.image.classification.data ImageClassificationData
 
     {% extends "base.rst" %}
     {% block from_datasets %}
@@ -120,13 +120,13 @@ We use the `post_tensor_transform` hook to apply the transformations after the i
     from torchvision import transforms as T
 
     import flash
-    from flash.core.data.data_source import DefaultDataKeys
+    from flash.core.data.io.input import InputDatakeys
     from flash.core.data.transforms import ApplyToKeys, merge_transforms
     from flash.image import ImageClassificationData, ImageClassifier
     from flash.image.classification.transforms import default_transforms
 
     post_tensor_transform = ApplyToKeys(
-        DefaultDataKeys.INPUT,
+        InputDatakeys.INPUT,
         T.Compose([T.RandomHorizontalFlip(), T.ColorJitter(), T.RandomAutocontrast(), T.RandomPerspective()]),
     )
 

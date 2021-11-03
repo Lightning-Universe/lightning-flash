@@ -20,15 +20,15 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Sampler
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import (
-    DefaultDataKeys,
-    DefaultDataSources,
-    FiftyOneDataSource,
+from flash.core.data.io.input import (
+    InputDataKeys,
+    InputFormat,
+    FiftyOneInput,
+    PathsInput,
     LabelsState,
-    PathsDataSource,
 )
 from flash.core.data.process import Preprocess
-from flash.core.integrations.labelstudio.data_source import LabelStudioVideoClassificationDataSource
+from flash.core.integrations.labelstudio.data_source import LabelStudioVideoClassificationInput
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, lazy_import
 
 SampleCollection = None
@@ -82,9 +82,9 @@ class BaseVideoClassification:
         return sample
 
     def predict_load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        video_path = sample[DefaultDataKeys.INPUT]
+        video_path = sample[InputDataKeys.INPUT]
         sample.update(self._encoded_video_to_dict(EncodedVideo.from_path(video_path)))
-        sample[DefaultDataKeys.METADATA] = {"filepath": video_path}
+        sample[InputDataKeys.METADATA] = {"filepath": video_path}
         return sample
 
     def _encoded_video_to_dict(self, video, annotation: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -122,7 +122,7 @@ class BaseVideoClassification:
         raise NotImplementedError("Subclass must implement _make_encoded_video_dataset()")
 
 
-class VideoClassificationPathsDataSource(BaseVideoClassification, PathsDataSource):
+class VideoClassificationPathsInput(BaseVideoClassification, PathsInput):
     def __init__(
         self,
         clip_sampler: "ClipSampler",
@@ -136,7 +136,7 @@ class VideoClassificationPathsDataSource(BaseVideoClassification, PathsDataSourc
             decode_audio=decode_audio,
             decoder=decoder,
         )
-        PathsDataSource.__init__(
+        PathsInput.__init__(
             self,
             extensions=("mp4", "avi"),
         )
@@ -152,7 +152,7 @@ class VideoClassificationPathsDataSource(BaseVideoClassification, PathsDataSourc
         return ds
 
 
-class VideoClassificationListDataSource(BaseVideoClassification, PathsDataSource):
+class VideoClassificationListInput(BaseVideoClassification, PathsInput):
     def __init__(
         self,
         clip_sampler: "ClipSampler",
@@ -166,7 +166,7 @@ class VideoClassificationListDataSource(BaseVideoClassification, PathsDataSource
             decode_audio=decode_audio,
             decoder=decoder,
         )
-        PathsDataSource.__init__(
+        PathsInput.__init__(
             self,
             extensions=("mp4", "avi"),
         )
@@ -222,9 +222,9 @@ class VideoClassificationListDataSource(BaseVideoClassification, PathsDataSource
         return ds
 
 
-class VideoClassificationFiftyOneDataSource(
+class VideoClassificationFiftyOneInput(
     BaseVideoClassification,
-    FiftyOneDataSource,
+    FiftyOneInput,
 ):
     def __init__(
         self,
@@ -240,7 +240,7 @@ class VideoClassificationFiftyOneDataSource(
             decode_audio=decode_audio,
             decoder=decoder,
         )
-        FiftyOneDataSource.__init__(
+        FiftyOneInput.__init__(
             self,
             label_field=label_field,
         )
@@ -310,26 +310,26 @@ class VideoClassificationPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.FILES: VideoClassificationListDataSource(
+                InputFormat.FILES: VideoClassificationListInput(
                     clip_sampler,
                     video_sampler=video_sampler,
                     decode_audio=decode_audio,
                     decoder=decoder,
                 ),
-                DefaultDataSources.FOLDERS: VideoClassificationPathsDataSource(
+                InputFormat.FOLDERS: VideoClassificationPathsInput(
                     clip_sampler,
                     video_sampler=video_sampler,
                     decode_audio=decode_audio,
                     decoder=decoder,
                 ),
-                DefaultDataSources.FIFTYONE: VideoClassificationFiftyOneDataSource(
+                InputFormat.FIFTYONE: VideoClassificationFiftyOneInput(
                     clip_sampler,
                     video_sampler=video_sampler,
                     decode_audio=decode_audio,
                     decoder=decoder,
                     **data_source_kwargs,
                 ),
-                DefaultDataSources.LABELSTUDIO: LabelStudioVideoClassificationDataSource(
+                InputFormat.LABELSTUDIO: LabelStudioVideoClassificationInput(
                     clip_sampler=clip_sampler,
                     video_sampler=video_sampler,
                     decode_audio=decode_audio,
@@ -337,7 +337,7 @@ class VideoClassificationPreprocess(Preprocess):
                     **data_source_kwargs,
                 ),
             },
-            default_data_source=DefaultDataSources.FILES,
+            default_data_source=InputFormat.FILES,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:

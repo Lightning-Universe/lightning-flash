@@ -19,7 +19,7 @@ import yaml
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.auto_dataset import BaseAutoDataset
-from flash.core.data.data_source import BaseDataFormat, DataSource
+from flash.core.data.io.input import BaseDataFormat, BaseInput
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
 
 if _POINTCLOUD_AVAILABLE:
@@ -151,7 +151,7 @@ class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
         return data, attr
 
 
-class PointCloudObjectDetectorFoldersDataSource(DataSource):
+class PointCloudObjectDetectorFoldersInput(BaseInput):
     def __init__(
         self,
         data_format: Optional[BaseDataFormat] = None,

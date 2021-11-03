@@ -24,7 +24,7 @@ from torch.utils.data._utils.collate import default_collate
 import flash
 from flash.core.data.batch import default_uncollate
 from flash.core.data.callback import FlashCallback
-from flash.core.data.data_source import DatasetDataSource, DataSource, DefaultDataKeys, DefaultDataSources
+from flash.core.data.io.input import DatasetInput, BaseInput, InputDataKeys, InputFormat
 from flash.core.data.properties import ProcessState, Properties
 from flash.core.data.states import (
     CollateFn,
@@ -190,7 +190,7 @@ class Preprocess(BasePreprocess, Properties):
         val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         predict_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
-        data_sources: Optional[Dict[str, "DataSource"]] = None,
+        data_sources: Optional[Dict[str, "BaseInput"]] = None,
         deserializer: Optional["Deserializer"] = None,
         default_data_source: Optional[str] = None,
     ):
@@ -219,8 +219,8 @@ class Preprocess(BasePreprocess, Properties):
         self._test_transform = convert_to_modules(self.test_transform)
         self._predict_transform = convert_to_modules(self.predict_transform)
 
-        if DefaultDataSources.DATASETS not in data_sources:
-            data_sources[DefaultDataSources.DATASETS] = DatasetDataSource()
+        if InputFormat.DATASETS not in data_sources:
+            data_sources[InputFormat.DATASETS] = DatasetInput()
 
         self._data_sources = data_sources
         self._deserializer = deserializer
@@ -262,9 +262,9 @@ class Preprocess(BasePreprocess, Properties):
             return transform
 
         if isinstance(transform, list):
-            transform = {"pre_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, torch.nn.Sequential(*transform))}
+            transform = {"pre_tensor_transform": ApplyToKeys(InputDataKeys.INPUT, torch.nn.Sequential(*transform))}
         elif callable(transform):
-            transform = {"pre_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, transform)}
+            transform = {"pre_tensor_transform": ApplyToKeys(InputDataKeys.INPUT, transform)}
 
         if not isinstance(transform, Dict):
             raise MisconfigurationException(
@@ -436,7 +436,7 @@ class Preprocess(BasePreprocess, Properties):
             # return collate_fn.collate_fn(samples)
 
         parameters = inspect.signature(collate_fn).parameters
-        if len(parameters) > 1 and DefaultDataKeys.METADATA in parameters:
+        if len(parameters) > 1 and InputDataKeys.METADATA in parameters:
             return collate_fn(samples, metadata)
         return collate_fn(samples)
 
@@ -474,15 +474,15 @@ class Preprocess(BasePreprocess, Properties):
         """
         return list(self._data_sources.keys())
 
-    def data_source_of_name(self, data_source_name: str) -> DataSource:
-        """Get the :class:`~flash.core.data.data_source.DataSource` of the given name from the
+    def data_source_of_name(self, data_source_name: str) -> BaseInput:
+        """Get the :class:`~flash.core.data.io.input.BaseInput` of the given name from the
         :class:`~flash.core.data.process.Preprocess`.
 
         Args:
             data_source_name: The name of the data source to look up.
 
         Returns:
-            The :class:`~flash.core.data.data_source.DataSource` of the given name.
+            The :class:`~flash.core.data.io.input.BaseInput` of the given name.
 
         Raises:
             MisconfigurationException: If the requested data source is not configured by this
@@ -506,7 +506,7 @@ class DefaultPreprocess(Preprocess):
         val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         predict_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
-        data_sources: Optional[Dict[str, "DataSource"]] = None,
+        data_sources: Optional[Dict[str, "BaseInput"]] = None,
         default_data_source: Optional[str] = None,
     ):
         super().__init__(
@@ -514,7 +514,7 @@ class DefaultPreprocess(Preprocess):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources=data_sources or {"default": DataSource()},
+            data_sources=data_sources or {"default": BaseInput()},
             default_data_source=default_data_source or "default",
         )
 

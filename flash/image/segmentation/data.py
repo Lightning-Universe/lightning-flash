@@ -24,14 +24,14 @@ from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.base_viz import BaseVisualization  # for viz
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import (
-    DefaultDataKeys,
-    DefaultDataSources,
-    FiftyOneDataSource,
+from flash.core.data.io.input import (
+    InputDataKeys,
+    InputFormat,
+    FiftyOneInput,
     ImageLabelsMap,
-    NumpyDataSource,
-    PathsDataSource,
-    TensorDataSource,
+    NumpyInput,
+    PathsInput,
+    TensorInput,
 )
 from flash.core.data.process import Deserializer, Preprocess
 from flash.core.utilities.imports import (
@@ -66,23 +66,23 @@ if _TORCHVISION_AVAILABLE:
     from torchvision.datasets.folder import default_loader, has_file_allowed_extension
 
 
-class SemanticSegmentationNumpyDataSource(NumpyDataSource):
+class SemanticSegmentationNumpyInput(NumpyInput):
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        img = torch.from_numpy(sample[DefaultDataKeys.INPUT]).float()
-        sample[DefaultDataKeys.INPUT] = img
-        sample[DefaultDataKeys.METADATA] = {"size": img.shape}
+        img = torch.from_numpy(sample[InputDataKeys.INPUT]).float()
+        sample[InputDataKeys.INPUT] = img
+        sample[InputDataKeys.METADATA] = {"size": img.shape}
         return sample
 
 
-class SemanticSegmentationTensorDataSource(TensorDataSource):
+class SemanticSegmentationTensorInput(TensorInput):
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        img = sample[DefaultDataKeys.INPUT].float()
-        sample[DefaultDataKeys.INPUT] = img
-        sample[DefaultDataKeys.METADATA] = {"size": img.shape}
+        img = sample[InputDataKeys.INPUT].float()
+        sample[InputDataKeys.INPUT] = img
+        sample[InputDataKeys.METADATA] = {"size": img.shape}
         return sample
 
 
-class SemanticSegmentationPathsDataSource(PathsDataSource):
+class SemanticSegmentationPathsInput(PathsInput):
     def __init__(self):
         super().__init__(IMG_EXTENSIONS)
 
@@ -125,7 +125,7 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
             zip(input_data, target_data),
         )
 
-        data = [{DefaultDataKeys.INPUT: input, DefaultDataKeys.TARGET: target} for input, target in data]
+        data = [{InputDataKeys.INPUT: input, InputDataKeys.TARGET: target} for input, target in data]
 
         return data
 
@@ -134,17 +134,17 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
 
     def load_sample(self, sample: Mapping[str, Any]) -> Mapping[str, Union[torch.Tensor, torch.Size]]:
         # unpack data paths
-        img_path = sample[DefaultDataKeys.INPUT]
-        img_labels_path = sample[DefaultDataKeys.TARGET]
+        img_path = sample[InputDataKeys.INPUT]
+        img_labels_path = sample[InputDataKeys.TARGET]
 
         # load images directly to torch tensors
         img: torch.Tensor = FT.to_tensor(default_loader(img_path))  # CxHxW
         img_labels: torch.Tensor = torchvision.io.read_image(img_labels_path)  # CxHxW
         img_labels = img_labels[0]  # HxW
 
-        sample[DefaultDataKeys.INPUT] = img.float()
-        sample[DefaultDataKeys.TARGET] = img_labels.float()
-        sample[DefaultDataKeys.METADATA] = {
+        sample[InputDataKeys.INPUT] = img.float()
+        sample[InputDataKeys.TARGET] = img_labels.float()
+        sample[InputDataKeys.METADATA] = {
             "filepath": img_path,
             "size": img.shape,
         }
@@ -152,18 +152,18 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
 
     @staticmethod
     def predict_load_sample(sample: Mapping[str, Any]) -> Mapping[str, Any]:
-        img_path = sample[DefaultDataKeys.INPUT]
+        img_path = sample[InputDataKeys.INPUT]
         img = FT.to_tensor(default_loader(img_path)).float()
 
-        sample[DefaultDataKeys.INPUT] = img
-        sample[DefaultDataKeys.METADATA] = {
+        sample[InputDataKeys.INPUT] = img
+        sample[InputDataKeys.METADATA] = {
             "filepath": img_path,
             "size": img.shape,
         }
         return sample
 
 
-class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
+class SemanticSegmentationFiftyOneInput(FiftyOneInput):
     def __init__(self, label_field: str = "ground_truth"):
         super().__init__(label_field=label_field)
         self._fo_dataset_name = None
@@ -176,20 +176,20 @@ class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
         self._validate(data)
 
         self._fo_dataset_name = data.name
-        return [{DefaultDataKeys.INPUT: f} for f in data.values("filepath")]
+        return [{InputDataKeys.INPUT: f} for f in data.values("filepath")]
 
     def load_sample(self, sample: Mapping[str, str]) -> Mapping[str, Union[torch.Tensor, torch.Size]]:
         _fo_dataset = fo.load_dataset(self._fo_dataset_name)
 
-        img_path = sample[DefaultDataKeys.INPUT]
+        img_path = sample[InputDataKeys.INPUT]
         fo_sample = _fo_dataset[img_path]
 
         img: torch.Tensor = FT.to_tensor(default_loader(img_path))  # CxHxW
         img_labels: torch.Tensor = torch.from_numpy(fo_sample[self.label_field].mask)  # HxW
 
-        sample[DefaultDataKeys.INPUT] = img.float()
-        sample[DefaultDataKeys.TARGET] = img_labels.float()
-        sample[DefaultDataKeys.METADATA] = {
+        sample[InputDataKeys.INPUT] = img.float()
+        sample[InputDataKeys.TARGET] = img_labels.float()
+        sample[InputDataKeys.METADATA] = {
             "filepath": img_path,
             "size": img.shape,
         }
@@ -197,11 +197,11 @@ class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
 
     @staticmethod
     def predict_load_sample(sample: Mapping[str, Any]) -> Mapping[str, Any]:
-        img_path = sample[DefaultDataKeys.INPUT]
+        img_path = sample[InputDataKeys.INPUT]
         img = FT.to_tensor(default_loader(img_path)).float()
 
-        sample[DefaultDataKeys.INPUT] = img
-        sample[DefaultDataKeys.METADATA] = {
+        sample[InputDataKeys.INPUT] = img
+        sample[InputDataKeys.METADATA] = {
             "filepath": img_path,
             "size": img.shape,
         }
@@ -211,8 +211,8 @@ class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
 class SemanticSegmentationDeserializer(ImageDeserializer):
     def deserialize(self, data: str) -> torch.Tensor:
         result = super().deserialize(data)
-        result[DefaultDataKeys.INPUT] = FT.to_tensor(result[DefaultDataKeys.INPUT])
-        result[DefaultDataKeys.METADATA] = {"size": result[DefaultDataKeys.INPUT].shape}
+        result[InputDataKeys.INPUT] = FT.to_tensor(result[InputDataKeys.INPUT])
+        result[InputDataKeys.METADATA] = {"size": result[InputDataKeys.INPUT].shape}
         return result
 
 
@@ -250,14 +250,14 @@ class SemanticSegmentationPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.FIFTYONE: SemanticSegmentationFiftyOneDataSource(**data_source_kwargs),
-                DefaultDataSources.FILES: SemanticSegmentationPathsDataSource(),
-                DefaultDataSources.FOLDERS: SemanticSegmentationPathsDataSource(),
-                DefaultDataSources.TENSORS: SemanticSegmentationTensorDataSource(),
-                DefaultDataSources.NUMPY: SemanticSegmentationNumpyDataSource(),
+                InputFormat.FIFTYONE: SemanticSegmentationFiftyOneInput(**data_source_kwargs),
+                InputFormat.FILES: SemanticSegmentationPathsInput(),
+                InputFormat.FOLDERS: SemanticSegmentationPathsInput(),
+                InputFormat.TENSORS: SemanticSegmentationTensorInput(),
+                InputFormat.NUMPY: SemanticSegmentationNumpyInput(),
             },
             deserializer=deserializer or SemanticSegmentationDeserializer(),
-            default_data_source=DefaultDataSources.FILES,
+            default_data_source=InputFormat.FILES,
         )
 
         if labels_map:
@@ -427,7 +427,7 @@ class SemanticSegmentationData(DataModule):
             )
         """
         return cls.from_data_source(
-            DefaultDataSources.FOLDERS,
+            InputFormat.FOLDERS,
             (train_folder, train_target_folder),
             (val_folder, val_target_folder),
             (test_folder, test_target_folder),
@@ -483,8 +483,8 @@ class SegmentationMatplotlibVisualization(BaseVisualization):
             # unpack images and labels
             sample = data[i]
             if isinstance(sample, dict):
-                image = sample[DefaultDataKeys.INPUT]
-                label = sample[DefaultDataKeys.TARGET]
+                image = sample[InputDataKeys.INPUT]
+                label = sample[InputDataKeys.TARGET]
             elif isinstance(sample, tuple):
                 image = sample[0]
                 label = sample[1]

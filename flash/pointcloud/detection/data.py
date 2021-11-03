@@ -4,15 +4,15 @@ from torch.utils.data import Sampler
 
 from flash.core.data.base_viz import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import BaseDataFormat, DataSource, DefaultDataKeys, DefaultDataSources
+from flash.core.data.io.input import BaseDataFormat, BaseInput, InputDataKeys, InputFormat
 from flash.core.data.process import Deserializer, Preprocess
 from flash.pointcloud.detection.open3d_ml.data_sources import (
     PointCloudObjectDetectionDataFormat,
-    PointCloudObjectDetectorFoldersDataSource,
+    PointCloudObjectDetectorFoldersInput,
 )
 
 
-class PointCloudObjectDetectorDatasetDataSource(DataSource):
+class PointCloudObjectDetectorDatasetInput(BaseInput):
     def __init__(self, **kwargs):
         super().__init__()
 
@@ -30,8 +30,8 @@ class PointCloudObjectDetectorDatasetDataSource(DataSource):
         sample = dataset.dataset[index]
 
         return {
-            DefaultDataKeys.INPUT: sample["data"],
-            DefaultDataKeys.METADATA: sample["attr"],
+            InputDataKeys.INPUT: sample["data"],
+            InputDataKeys.METADATA: sample["attr"],
         }
 
 
@@ -52,11 +52,11 @@ class PointCloudObjectDetectorPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.DATASETS: PointCloudObjectDetectorDatasetDataSource(**data_source_kwargs),
-                DefaultDataSources.FOLDERS: PointCloudObjectDetectorFoldersDataSource(**data_source_kwargs),
+                InputFormat.DATASETS: PointCloudObjectDetectorDatasetInput(**data_source_kwargs),
+                InputFormat.FOLDERS: PointCloudObjectDetectorFoldersInput(**data_source_kwargs),
             },
             deserializer=deserializer,
-            default_data_source=DefaultDataSources.FOLDERS,
+            default_data_source=InputFormat.FOLDERS,
         )
 
     def get_state_dict(self):
@@ -98,8 +98,8 @@ class PointCloudObjectDetectorData(DataModule):
         **preprocess_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given folders using the
-        :class:`~flash.core.data.data_source.DataSource` of name
-        :attr:`~flash.core.data.data_source.DefaultDataSources.FOLDERS`
+        :class:`~flash.core.data.io.input.BaseInput` of name
+        :attr:`~flash.core.data.io.input.InputFormat.FOLDERS`
         from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
 
         Args:
@@ -144,7 +144,7 @@ class PointCloudObjectDetectorData(DataModule):
             )
         """
         return cls.from_data_source(
-            DefaultDataSources.FOLDERS,
+            InputFormat.FOLDERS,
             train_folder,
             val_folder,
             test_folder,

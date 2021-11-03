@@ -17,7 +17,7 @@ import pytest
 import torch
 from torch import nn
 
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import InputDataKeys
 from flash.core.data.transforms import ApplyToKeys, kornia_collate, KorniaParallelTransforms, merge_transforms
 from flash.core.data.utils import convert_to_modules
 
@@ -26,10 +26,10 @@ class TestApplyToKeys:
     @pytest.mark.parametrize(
         "sample, keys, expected",
         [
-            ({DefaultDataKeys.INPUT: "test"}, DefaultDataKeys.INPUT, "test"),
+            ({InputDataKeys.INPUT: "test"}, InputDataKeys.INPUT, "test"),
             (
-                {DefaultDataKeys.INPUT: "test_a", DefaultDataKeys.TARGET: "test_b"},
-                [DefaultDataKeys.INPUT, DefaultDataKeys.TARGET],
+                {InputDataKeys.INPUT: "test_a", InputDataKeys.TARGET: "test_b"},
+                [InputDataKeys.INPUT, InputDataKeys.TARGET],
                 ["test_a", "test_b"],
             ),
             ({"input": "test"}, "input", "test"),
@@ -51,13 +51,13 @@ class TestApplyToKeys:
         "transform, expected",
         [
             (
-                ApplyToKeys(DefaultDataKeys.INPUT, torch.nn.ReLU()),
-                "ApplyToKeys(keys=<DefaultDataKeys.INPUT: 'input'>, transform=ReLU())",
+                ApplyToKeys(InputDataKeys.INPUT, torch.nn.ReLU()),
+                "ApplyToKeys(keys=<InputDataKeys.INPUT: 'input'>, transform=ReLU())",
             ),
             (
-                ApplyToKeys([DefaultDataKeys.INPUT, DefaultDataKeys.TARGET], torch.nn.ReLU()),
-                "ApplyToKeys(keys=[<DefaultDataKeys.INPUT: 'input'>, "
-                "<DefaultDataKeys.TARGET: 'target'>], transform=ReLU())",
+                ApplyToKeys([InputDataKeys.INPUT, InputDataKeys.TARGET], torch.nn.ReLU()),
+                "ApplyToKeys(keys=[<InputDataKeys.INPUT: 'input'>, "
+                "<InputDataKeys.TARGET: 'target'>], transform=ReLU())",
             ),
             (ApplyToKeys("input", torch.nn.ReLU()), "ApplyToKeys(keys='input', transform=ReLU())"),
             (
@@ -100,15 +100,15 @@ def test_kornia_parallel_transforms(with_params):
 
 def test_kornia_collate():
     samples = [
-        {DefaultDataKeys.INPUT: torch.zeros(1, 3, 10, 10), DefaultDataKeys.TARGET: 1},
-        {DefaultDataKeys.INPUT: torch.zeros(1, 3, 10, 10), DefaultDataKeys.TARGET: 2},
-        {DefaultDataKeys.INPUT: torch.zeros(1, 3, 10, 10), DefaultDataKeys.TARGET: 3},
+        {InputDataKeys.INPUT: torch.zeros(1, 3, 10, 10), InputDataKeys.TARGET: 1},
+        {InputDataKeys.INPUT: torch.zeros(1, 3, 10, 10), InputDataKeys.TARGET: 2},
+        {InputDataKeys.INPUT: torch.zeros(1, 3, 10, 10), InputDataKeys.TARGET: 3},
     ]
 
     result = kornia_collate(samples)
-    assert torch.all(result[DefaultDataKeys.TARGET] == torch.tensor([1, 2, 3]))
-    assert list(result[DefaultDataKeys.INPUT].shape) == [3, 3, 10, 10]
-    assert torch.allclose(result[DefaultDataKeys.INPUT], torch.zeros(1))
+    assert torch.all(result[InputDataKeys.TARGET] == torch.tensor([1, 2, 3]))
+    assert list(result[InputDataKeys.INPUT].shape) == [3, 3, 10, 10]
+    assert torch.allclose(result[InputDataKeys.INPUT], torch.zeros(1))
 
 
 _MOCK_TRANSFORM = Mock()

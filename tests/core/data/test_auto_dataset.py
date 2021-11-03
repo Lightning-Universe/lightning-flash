@@ -17,11 +17,11 @@ import pytest
 
 from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.core.data.callback import FlashCallback
-from flash.core.data.data_source import DataSource
+from flash.core.data.io.input import BaseInput
 from flash.core.utilities.stages import RunningStage
 
 
-class _AutoDatasetTestDataSource(DataSource):
+class _AutoDatasetTestInput(BaseInput):
     def __init__(self, with_dset: bool):
         self._callbacks: List[FlashCallback] = []
         self.load_data_count = 0
@@ -87,7 +87,7 @@ class _AutoDatasetTestDataSource(DataSource):
 @pytest.mark.parametrize("running_stage", [RunningStage.TRAINING, RunningStage.TESTING, RunningStage.VALIDATING])
 def test_base_autodataset_smoke(running_stage):
     dt = range(10)
-    ds = DataSource()
+    ds = BaseInput()
     dset = BaseAutoDataset(data=dt, data_source=ds, running_stage=running_stage)
     assert dset is not None
     assert dset.running_stage == running_stage
@@ -108,7 +108,7 @@ def test_base_autodataset_smoke(running_stage):
 def test_autodataset_smoke():
     num_samples = 20
     dt = range(num_samples)
-    ds = DataSource()
+    ds = BaseInput()
 
     dset = AutoDataset(data=dt, data_source=ds, running_stage=RunningStage.TRAINING)
     assert dset is not None
@@ -136,7 +136,7 @@ def test_autodataset_smoke():
 def test_iterable_autodataset_smoke():
     num_samples = 20
     dt = range(num_samples)
-    ds = DataSource()
+    ds = BaseInput()
 
     dset = IterableAutoDataset(data=dt, data_source=ds, running_stage=RunningStage.TRAINING)
     assert dset is not None
@@ -169,7 +169,7 @@ def test_iterable_autodataset_smoke():
     ],
 )
 def test_preprocessing_data_source_with_running_stage(with_dataset):
-    data_source = _AutoDatasetTestDataSource(with_dataset)
+    data_source = _AutoDatasetTestInput(with_dataset)
     running_stage = RunningStage.TRAINING
 
     dataset = data_source.generate_dataset(range(10), running_stage=running_stage)

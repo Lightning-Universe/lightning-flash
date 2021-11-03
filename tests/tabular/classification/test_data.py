@@ -17,7 +17,7 @@ from unittest.mock import Mock
 import numpy as np
 import pytest
 
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import InputDataKeys
 from flash.core.utilities.imports import _PANDAS_AVAILABLE
 
 if _PANDAS_AVAILABLE:
@@ -110,8 +110,8 @@ def test_categorical_target(tmpdir):
     )
     for dl in [dm.train_dataloader(), dm.val_dataloader(), dm.test_dataloader()]:
         data = next(iter(dl))
-        (cat, num) = data[DefaultDataKeys.INPUT]
-        target = data[DefaultDataKeys.TARGET]
+        (cat, num) = data[InputDataKeys.INPUT]
+        target = data[InputDataKeys.TARGET]
         assert cat.shape == (1, 1)
         assert num.shape == (1, 2)
         assert target.shape == (1,)
@@ -134,8 +134,8 @@ def test_from_data_frame(tmpdir):
     )
     for dl in [dm.train_dataloader(), dm.val_dataloader(), dm.test_dataloader()]:
         data = next(iter(dl))
-        (cat, num) = data[DefaultDataKeys.INPUT]
-        target = data[DefaultDataKeys.TARGET]
+        (cat, num) = data[InputDataKeys.INPUT]
+        target = data[InputDataKeys.TARGET]
         assert cat.shape == (1, 1)
         assert num.shape == (1, 2)
         assert target.shape == (1,)
@@ -161,8 +161,8 @@ def test_from_csv(tmpdir):
     )
     for dl in [dm.train_dataloader(), dm.val_dataloader(), dm.test_dataloader()]:
         data = next(iter(dl))
-        (cat, num) = data[DefaultDataKeys.INPUT]
-        target = data[DefaultDataKeys.TARGET]
+        (cat, num) = data[InputDataKeys.INPUT]
+        target = data[InputDataKeys.TARGET]
         assert cat.shape == (1, 1)
         assert num.shape == (1, 2)
         assert target.shape == (1,)

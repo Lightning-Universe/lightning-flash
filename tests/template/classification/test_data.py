@@ -14,7 +14,7 @@
 import numpy as np
 import pytest
 
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import InputDataKeys
 from flash.core.utilities.imports import _SKLEARN_AVAILABLE
 from flash.template.classification.data import TemplateData, TemplatePreprocess
 
@@ -69,19 +69,19 @@ class TestTemplateData:
 
         # check training data
         data = next(iter(dm.train_dataloader()))
-        rows, targets = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        rows, targets = data[InputDataKeys.INPUT], data[InputDataKeys.TARGET]
         assert rows.shape == (2, self.num_features)
         assert targets.shape == (2,)
 
         # check val data
         data = next(iter(dm.val_dataloader()))
-        rows, targets = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        rows, targets = data[InputDataKeys.INPUT], data[InputDataKeys.TARGET]
         assert rows.shape == (2, self.num_features)
         assert targets.shape == (2,)
 
         # check test data
         data = next(iter(dm.test_dataloader()))
-        rows, targets = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        rows, targets = data[InputDataKeys.INPUT], data[InputDataKeys.TARGET]
         assert rows.shape == (2, self.num_features)
         assert targets.shape == (2,)
 
@@ -105,18 +105,18 @@ class TestTemplateData:
 
         # check training data
         data = next(iter(dm.train_dataloader()))
-        rows, targets = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        rows, targets = data[InputDataKeys.INPUT], data[InputDataKeys.TARGET]
         assert rows.shape == (2, dm.num_features)
         assert targets.shape == (2,)
 
         # check val data
         data = next(iter(dm.val_dataloader()))
-        rows, targets = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        rows, targets = data[InputDataKeys.INPUT], data[InputDataKeys.TARGET]
         assert rows.shape == (2, dm.num_features)
         assert targets.shape == (2,)
 
         # check test data
         data = next(iter(dm.test_dataloader()))
-        rows, targets = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        rows, targets = data[InputDataKeys.INPUT], data[InputDataKeys.TARGET]
         assert rows.shape == (2, dm.num_features)
         assert targets.shape == (2,)

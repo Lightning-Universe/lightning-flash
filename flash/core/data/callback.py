@@ -89,14 +89,14 @@ class BaseDataFetcher(FlashCallback):
 
         from flash.core.data.callback import BaseDataFetcher
         from flash.core.data.data_module import DataModule
-        from flash.core.data.data_source import DataSource
+        from flash.core.data.io.input import BaseInput
         from flash.core.data.process import Preprocess
 
         class CustomPreprocess(Preprocess):
 
             def __init__(**kwargs):
                 super().__init__(
-                    data_sources = {"inputs": DataSource()},
+                    data_sources = {"inputs": BaseInput()},
                     **kwargs,
                 )
 

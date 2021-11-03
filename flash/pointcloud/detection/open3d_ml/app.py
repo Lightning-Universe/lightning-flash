@@ -16,7 +16,7 @@ from torch.utils.data.dataset import Dataset
 
 import flash
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import InputDataKeys
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
 
 if _POINTCLOUD_AVAILABLE:
@@ -156,10 +156,10 @@ if _POINTCLOUD_AVAILABLE:
 
                 for pred in predictions:
                     data = {
-                        "points": pred[DefaultDataKeys.INPUT][:, :3],
-                        "name": pred[DefaultDataKeys.METADATA],
+                        "points": pred[InputDataKeys.INPUT][:, :3],
+                        "name": pred[InputDataKeys.METADATA],
                     }
-                    bounding_box = pred[DefaultDataKeys.PREDS]
+                    bounding_box = pred[InputDataKeys.PREDS]
 
                     viz.visualize([data], bounding_boxes=bounding_box)
 

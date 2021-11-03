@@ -18,12 +18,12 @@ from typing import Any, Callable, Dict, Optional, Sequence, Union
 from torch import nn
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources
+from flash.core.data.io.input import InputDataKeys, InputFormat
 from flash.core.data.process import Preprocess
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 from flash.image.classification import ImageClassificationData
-from flash.image.data import ImageNumpyDataSource, ImagePathsDataSource, ImageTensorDataSource
+from flash.image.data import ImageNumpyInput, ImagePathsInput, ImageTensorInput
 from flash.image.style_transfer.utils import raise_not_supported
 
 if _TORCHVISION_AVAILABLE:
@@ -33,7 +33,7 @@ __all__ = ["StyleTransferPreprocess", "StyleTransferData"]
 
 
 def _apply_to_input(
-    default_transforms_fn, keys: Union[Sequence[DefaultDataKeys], DefaultDataKeys]
+    default_transforms_fn, keys: Union[Sequence[InputDataKeys], InputDataKeys]
 ) -> Callable[..., Dict[str, ApplyToKeys]]:
     @functools.wraps(default_transforms_fn)
     def wrapper(*args: Any, **kwargs: Any) -> Optional[Dict[str, ApplyToKeys]]:
@@ -71,13 +71,13 @@ class StyleTransferPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.FILES: ImagePathsDataSource(),
-                DefaultDataSources.FOLDERS: ImagePathsDataSource(),
-                DefaultDataSources.NUMPY: ImageNumpyDataSource(),
-                DefaultDataSources.TENSORS: ImageTensorDataSource(),
-                DefaultDataSources.TENSORS: ImageTensorDataSource(),
+                InputFormat.FILES: ImagePathsInput(),
+                InputFormat.FOLDERS: ImagePathsInput(),
+                InputFormat.NUMPY: ImageNumpyInput(),
+                InputFormat.TENSORS: ImageTensorInput(),
+                InputFormat.TENSORS: ImageTensorInput(),
             },
-            default_data_source=DefaultDataSources.FILES,
+            default_data_source=InputFormat.FILES,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
@@ -87,7 +87,7 @@ class StyleTransferPreprocess(Preprocess):
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
         return cls(**state_dict)
 
-    @functools.partial(_apply_to_input, keys=DefaultDataKeys.INPUT)
+    @functools.partial(_apply_to_input, keys=InputDataKeys.INPUT)
     def default_transforms(self) -> Optional[Dict[str, Callable]]:
         if self.training:
             return dict(
@@ -132,7 +132,7 @@ class StyleTransferData(ImageClassificationData):
         )
 
         return cls.from_data_source(
-            DefaultDataSources.FOLDERS,
+            InputFormat.FOLDERS,
             train_data=train_folder,
             predict_data=predict_folder,
             preprocess=preprocess,

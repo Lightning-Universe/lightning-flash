@@ -75,7 +75,7 @@ To view configuration options and options for running the semantic segmentation 
 Loading Data
 ************
 
-.. autodatasources:: flash.image.segmentation.data SemanticSegmentationData
+.. autoinputs:: flash.image.segmentation.data SemanticSegmentationData
 
     {% extends "base.rst" %}
     {% block from_folders %}

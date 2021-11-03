@@ -18,7 +18,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 
 from flash.core.data.callback import ControlFlow
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import InputDataKeys
 from flash.core.data.utils import (
     _contains_any_tensor,
     convert_to_modules,
@@ -198,7 +198,7 @@ class _Preprocessor(torch.nn.Module):
     def _extract_metadata(
         samples: List[Dict[str, Any]],
     ) -> Tuple[List[Dict[str, Any]], Optional[List[Dict[str, Any]]]]:
-        metadata = [s.pop(DefaultDataKeys.METADATA, None) if isinstance(s, Mapping) else None for s in samples]
+        metadata = [s.pop(InputDataKeys.METADATA, None) if isinstance(s, Mapping) else None for s in samples]
         return samples, metadata if any(m is not None for m in metadata) else None
 
     def forward(self, samples: Sequence[Any]) -> Any:
@@ -232,7 +232,7 @@ class _Preprocessor(torch.nn.Module):
                     except TypeError:
                         samples = self.collate_fn(samples)
                     if metadata and isinstance(samples, dict):
-                        samples[DefaultDataKeys.METADATA] = metadata
+                        samples[InputDataKeys.METADATA] = metadata
                     self.callback.on_collate(samples, self.stage)
 
             with self._per_batch_transform_context:
@@ -291,8 +291,8 @@ class _Postprocessor(torch.nn.Module):
     @staticmethod
     def _extract_metadata(batch: Any) -> Tuple[Any, Optional[Any]]:
         metadata = None
-        if isinstance(batch, Mapping) and DefaultDataKeys.METADATA in batch:
-            metadata = batch.pop(DefaultDataKeys.METADATA, None)
+        if isinstance(batch, Mapping) and InputDataKeys.METADATA in batch:
+            metadata = batch.pop(InputDataKeys.METADATA, None)
         return batch, metadata
 
     def forward(self, batch: Sequence[Any]):
@@ -300,7 +300,7 @@ class _Postprocessor(torch.nn.Module):
         uncollated = self.uncollate_fn(self.per_batch_transform(batch))
         if metadata:
             for sample, sample_metadata in zip(uncollated, metadata):
-                sample[DefaultDataKeys.METADATA] = sample_metadata
+                sample[InputDataKeys.METADATA] = sample_metadata
 
         final_preds = [self.per_sample_transform(sample) for sample in uncollated]
 

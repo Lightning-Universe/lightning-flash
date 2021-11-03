@@ -13,7 +13,7 @@
 # limitations under the License.
 from typing import Any, List, Union
 
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import InputDataKeys
 from flash.core.data.process import Serializer
 
 
@@ -21,4 +21,4 @@ class Preds(Serializer):
     """A :class:`~flash.core.data.process.Serializer` which returns the "preds" from the model outputs."""
 
     def serialize(self, sample: Any) -> Union[int, List[int]]:
-        return sample.get(DefaultDataKeys.PREDS, sample) if isinstance(sample, dict) else sample
+        return sample.get(InputDataKeys.PREDS, sample) if isinstance(sample, dict) else sample

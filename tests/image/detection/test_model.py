@@ -22,7 +22,7 @@ from pytorch_lightning import Trainer
 from torch.utils.data import Dataset
 
 from flash.__main__ import main
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import InputDataKeys
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE
 from flash.image import ObjectDetector
 
@@ -53,16 +53,16 @@ class DummyDetectionDataset(Dataset):
 
         img = np.random.rand(*self.img_shape).astype(np.float32)
 
-        sample[DefaultDataKeys.INPUT] = img
+        sample[InputDataKeys.INPUT] = img
 
-        sample[DefaultDataKeys.TARGET] = {
+        sample[InputDataKeys.TARGET] = {
             "bboxes": [],
             "labels": [],
         }
 
         for i in range(self.num_boxes):
-            sample[DefaultDataKeys.TARGET]["bboxes"].append(self._random_bbox())
-            sample[DefaultDataKeys.TARGET]["labels"].append(random.randint(0, self.num_classes - 1))
+            sample[InputDataKeys.TARGET]["bboxes"].append(self._random_bbox())
+            sample[InputDataKeys.TARGET]["labels"].append(random.randint(0, self.num_classes - 1))
 
         return sample
 
@@ -78,7 +78,7 @@ def test_init():
     dl = model.process_predict_dataset(ds, batch_size=batch_size)
     data = next(iter(dl))
 
-    out = model.forward(data[DefaultDataKeys.INPUT])
+    out = model.forward(data[InputDataKeys.INPUT])
 
     assert len(out) == batch_size
     assert all(isinstance(res, dict) for res in out)

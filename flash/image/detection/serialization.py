@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Optional, TYPE_CHECKING, Union
 
 from pytorch_lightning.utilities import rank_zero_warn
 
-from flash.core.data.data_source import DefaultDataKeys, LabelsState
+from flash.core.data.io.input import InputDataKeys, LabelsState
 from flash.core.data.process import Serializer
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 
@@ -56,8 +56,8 @@ class FiftyOneDetectionLabels(Serializer):
             self.set_state(LabelsState(labels))
 
     def serialize(self, sample: Dict[str, Any]) -> Union[Detections, Dict[str, Any]]:
-        if DefaultDataKeys.METADATA not in sample:
-            raise ValueError("sample requires DefaultDataKeys.METADATA to use a FiftyOneDetectionLabels serializer.")
+        if InputDataKeys.METADATA not in sample:
+            raise ValueError("sample requires InputDataKeys.METADATA to use a FiftyOneDetectionLabels serializer.")
 
         labels = None
         if self._labels is not None:
@@ -69,11 +69,11 @@ class FiftyOneDetectionLabels(Serializer):
             else:
                 rank_zero_warn("No LabelsState was found, int targets will be used as label strings", UserWarning)
 
-        height, width = sample[DefaultDataKeys.METADATA]["size"]
+        height, width = sample[InputDataKeys.METADATA]["size"]
 
         detections = []
 
-        preds = sample[DefaultDataKeys.PREDS]
+        preds = sample[InputDataKeys.PREDS]
 
         for bbox, label, score in zip(preds["bboxes"], preds["labels"], preds["scores"]):
             confidence = score.tolist()
@@ -104,6 +104,6 @@ class FiftyOneDetectionLabels(Serializer):
             )
         fo_predictions = fo.Detections(detections=detections)
         if self.return_filepath:
-            filepath = sample[DefaultDataKeys.METADATA]["filepath"]
+            filepath = sample[InputDataKeys.METADATA]["filepath"]
             return {"filepath": filepath, "predictions": fo_predictions}
         return fo_predictions

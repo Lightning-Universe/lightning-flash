@@ -20,7 +20,7 @@ import torch
 import torch.nn as nn
 
 from flash.audio import AudioClassificationData
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import InputDataKeys
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
 from tests.helpers.utils import _AUDIO_TESTING
@@ -279,8 +279,8 @@ def test_from_filepaths_splits(tmpdir):
 
     _to_tensor = {
         "to_tensor_transform": nn.Sequential(
-            ApplyToKeys(DefaultDataKeys.INPUT, torchvision.transforms.ToTensor()),
-            ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor),
+            ApplyToKeys(InputDataKeys.INPUT, torchvision.transforms.ToTensor()),
+            ApplyToKeys(InputDataKeys.TARGET, torch.as_tensor),
         ),
     }
 

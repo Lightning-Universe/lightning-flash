@@ -19,7 +19,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
+from flash.core.data.io.input import BaseInput, InputDataKeys, InputFormat
 from flash.core.data.process import Deserializer, Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _FORECASTING_AVAILABLE, _PANDAS_AVAILABLE, requires
@@ -41,7 +41,7 @@ class TimeSeriesDataSetParametersState(ProcessState):
     time_series_dataset_parameters: Optional[Dict[str, Any]]
 
 
-class TabularForecastingDataFrameDataSource(DataSource[DataFrame]):
+class TabularForecastingDataFrameInput(BaseInput[DataFrame]):
     @requires("tabular")
     def __init__(
         self,
@@ -90,7 +90,7 @@ class TabularForecastingDataFrameDataSource(DataSource[DataFrame]):
         return time_series_dataset
 
     def load_sample(self, sample: Mapping[str, Any], dataset: Optional[Any] = None) -> Any:
-        return {DefaultDataKeys.INPUT: sample[0], DefaultDataKeys.TARGET: sample[1]}
+        return {InputDataKeys.INPUT: sample[0], InputDataKeys.TARGET: sample[1]}
 
 
 class TabularForecastingPreprocess(Preprocess):
@@ -110,10 +110,10 @@ class TabularForecastingPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.DATAFRAME: TabularForecastingDataFrameDataSource(**data_source_kwargs),
+                InputFormat.DATAFRAME: TabularForecastingDataFrameInput(**data_source_kwargs),
             },
             deserializer=deserializer,
-            default_data_source=DefaultDataSources.DATAFRAME,
+            default_data_source=InputFormat.DATAFRAME,
         )
 
     def get_state_dict(self, strict: bool = False) -> Dict[str, Any]:
@@ -202,7 +202,7 @@ class TabularForecastingData(DataModule):
             target=target,
             group_ids=group_ids,
             parameters=parameters,
-            data_source=DefaultDataSources.DATAFRAME,
+            data_source=InputFormat.DATAFRAME,
             train_data=train_data_frame,
             val_data=val_data_frame,
             test_data=test_data_frame,

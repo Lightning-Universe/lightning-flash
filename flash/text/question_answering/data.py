@@ -29,7 +29,7 @@ from torch.utils.data.sampler import Sampler
 import flash
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
+from flash.core.data.io.input import BaseInput, InputDataKeys, InputFormat
 from flash.core.data.process import Postprocess, Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
@@ -41,7 +41,7 @@ if _TEXT_AVAILABLE:
     from transformers import AutoTokenizer, DataCollatorWithPadding, default_data_collator
 
 
-class QuestionAnsweringDataSource(DataSource):
+class QuestionAnsweringInput(BaseInput):
     @requires("text")
     def __init__(
         self,
@@ -105,14 +105,14 @@ class QuestionAnsweringDataSource(DataSource):
             contexts = tokenized_samples.pop("context")
             answers = tokenized_samples.pop("answer")
 
-            tokenized_samples[DefaultDataKeys.METADATA] = []
+            tokenized_samples[InputDataKeys.METADATA] = []
             for offset_mapping, example_id, context in zip(offset_mappings, example_ids, contexts):
-                tokenized_samples[DefaultDataKeys.METADATA].append(
+                tokenized_samples[InputDataKeys.METADATA].append(
                     {"context": context, "offset_mapping": offset_mapping, "example_id": example_id}
                 )
             if self._running_stage.evaluating:
                 for index, answer in enumerate(answers):
-                    tokenized_samples[DefaultDataKeys.METADATA][index]["answer"] = answer
+                    tokenized_samples[InputDataKeys.METADATA][index]["answer"] = answer
 
             del offset_mappings
             del example_ids
@@ -237,7 +237,7 @@ class QuestionAnsweringDataSource(DataSource):
         return self._doc_stride
 
 
-class QuestionAnsweringFileDataSource(QuestionAnsweringDataSource):
+class QuestionAnsweringFileInput(QuestionAnsweringInput):
     def __init__(
         self,
         filetype: str,
@@ -343,7 +343,7 @@ class QuestionAnsweringFileDataSource(QuestionAnsweringDataSource):
         self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
-class QuestionAnsweringCSVDataSource(QuestionAnsweringFileDataSource):
+class QuestionAnsweringCSVInput(QuestionAnsweringFileInput):
     def __init__(
         self,
         backbone: str,
@@ -377,7 +377,7 @@ class QuestionAnsweringCSVDataSource(QuestionAnsweringFileDataSource):
         self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
-class QuestionAnsweringJSONDataSource(QuestionAnsweringFileDataSource):
+class QuestionAnsweringJSONInput(QuestionAnsweringFileInput):
     def __init__(
         self,
         backbone: str,
@@ -411,7 +411,7 @@ class QuestionAnsweringJSONDataSource(QuestionAnsweringFileDataSource):
         self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
-class QuestionAnsweringDictionaryDataSource(QuestionAnsweringDataSource):
+class QuestionAnsweringDictionaryInput(QuestionAnsweringInput):
     def load_data(self, data: Any, columns: List[str] = None) -> "datasets.Dataset":
         stage = self._running_stage.value
 
@@ -433,7 +433,7 @@ class QuestionAnsweringDictionaryDataSource(QuestionAnsweringDataSource):
         self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
-class SQuADDataSource(QuestionAnsweringDataSource):
+class SQuADInput(QuestionAnsweringInput):
     def load_data(self, data: str, dataset: Optional[Any] = None) -> "datasets.Dataset":
         stage = self._running_stage.value
 
@@ -521,7 +521,7 @@ class QuestionAnsweringPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.CSV: QuestionAnsweringCSVDataSource(
+                InputFormat.CSV: QuestionAnsweringCSVInput(
                     self.backbone,
                     max_source_length=max_source_length,
                     max_target_length=max_target_length,
@@ -531,7 +531,7 @@ class QuestionAnsweringPreprocess(Preprocess):
                     answer_column_name=answer_column_name,
                     doc_stride=doc_stride,
                 ),
-                DefaultDataSources.JSON: QuestionAnsweringJSONDataSource(
+                InputFormat.JSON: QuestionAnsweringJSONInput(
                     self.backbone,
                     max_source_length=max_source_length,
                     max_target_length=max_target_length,
@@ -541,7 +541,7 @@ class QuestionAnsweringPreprocess(Preprocess):
                     answer_column_name=answer_column_name,
                     doc_stride=doc_stride,
                 ),
-                "dict": QuestionAnsweringDictionaryDataSource(
+                "dict": QuestionAnsweringDictionaryInput(
                     self.backbone,
                     max_source_length=max_source_length,
                     max_target_length=max_target_length,
@@ -551,7 +551,7 @@ class QuestionAnsweringPreprocess(Preprocess):
                     answer_column_name=answer_column_name,
                     doc_stride=doc_stride,
                 ),
-                "squad_v2": SQuADDataSource(
+                "squad_v2": SQuADInput(
                     self.backbone,
                     max_source_length=max_source_length,
                     max_target_length=max_target_length,
@@ -727,8 +727,8 @@ class QuestionAnsweringData(DataModule):
         **preprocess_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.text.question_answering.QuestionAnsweringData` object from the given JSON files
-        using the :class:`~flash.text.question_answering.QuestionAnsweringDataSource`of name
-        :attr:`~flash.core.data.data_source.DefaultDataSources.JSON` from the passed or constructed
+        using the :class:`~flash.text.question_answering.QuestionAnsweringInput`of name
+        :attr:`~flash.core.data.io.input.InputFormat.JSON` from the passed or constructed
         :class:`~flash.text.question_answering.QuestionAnsweringPreprocess`.
 
         Args:
@@ -789,7 +789,7 @@ class QuestionAnsweringData(DataModule):
             )
         """
         return cls.from_data_source(
-            DefaultDataSources.JSON,
+            InputFormat.JSON,
             (train_file, field),
             (val_file, field),
             (test_file, field),
@@ -827,8 +827,8 @@ class QuestionAnsweringData(DataModule):
         **preprocess_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given CSV files using the
-        :class:`~flash.core.data.data_source.DataSource`
-        of name :attr:`~flash.core.data.data_source.DefaultDataSources.CSV`
+        :class:`~flash.core.data.io.input.BaseInput`
+        of name :attr:`~flash.core.data.io.input.InputFormat.CSV`
         from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
 
         Args:
@@ -892,7 +892,7 @@ class QuestionAnsweringData(DataModule):
             )
         """
         return cls.from_data_source(
-            DefaultDataSources.CSV,
+            InputFormat.CSV,
             train_file,
             val_file,
             test_file,

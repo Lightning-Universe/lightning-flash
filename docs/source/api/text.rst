@@ -23,13 +23,13 @@ ______________
     classification.data.TextClassificationPostprocess
     classification.data.TextClassificationPreprocess
     classification.data.TextDeserializer
-    classification.data.TextDataSource
-    classification.data.TextCSVDataSource
-    classification.data.TextJSONDataSource
-    classification.data.TextDataFrameDataSource
-    classification.data.TextParquetDataSource
-    classification.data.TextHuggingFaceDatasetDataSource
-    classification.data.TextListDataSource
+    classification.data.TextInput
+    classification.data.TextCSVInput
+    classification.data.TextJSONInput
+    classification.data.TextDataFrameInput
+    classification.data.TextParquetInput
+    classification.data.TextHuggingFaceDatasetInput
+    classification.data.TextListInput
 
 Question Answering
 __________________
@@ -43,14 +43,14 @@ __________________
     ~question_answering.data.QuestionAnsweringData
 
     question_answering.data.QuestionAnsweringBackboneState
-    question_answering.data.QuestionAnsweringCSVDataSource
-    question_answering.data.QuestionAnsweringDataSource
-    question_answering.data.QuestionAnsweringDictionaryDataSource
-    question_answering.data.QuestionAnsweringFileDataSource
-    question_answering.data.QuestionAnsweringJSONDataSource
+    question_answering.data.QuestionAnsweringCSVInput
+    question_answering.data.QuestionAnsweringInput
+    question_answering.data.QuestionAnsweringDictionaryInput
+    question_answering.data.QuestionAnsweringFileInput
+    question_answering.data.QuestionAnsweringJSONInput
     question_answering.data.QuestionAnsweringPostprocess
     question_answering.data.QuestionAnsweringPreprocess
-    question_answering.data.SQuADDataSource
+    question_answering.data.SQuADInput
 
 
 Summarization
@@ -92,13 +92,13 @@ _______________
     ~seq2seq.core.finetuning.Seq2SeqFreezeEmbeddings
 
     seq2seq.core.data.Seq2SeqBackboneState
-    seq2seq.core.data.Seq2SeqCSVDataSource
-    seq2seq.core.data.Seq2SeqDataSource
-    seq2seq.core.data.Seq2SeqFileDataSource
-    seq2seq.core.data.Seq2SeqJSONDataSource
+    seq2seq.core.data.Seq2SeqCSVInput
+    seq2seq.core.data.Seq2SeqInput
+    seq2seq.core.data.Seq2SeqFileInput
+    seq2seq.core.data.Seq2SeqJSONInput
     seq2seq.core.data.Seq2SeqPostprocess
     seq2seq.core.data.Seq2SeqPreprocess
-    seq2seq.core.data.Seq2SeqSentencesDataSource
+    seq2seq.core.data.Seq2SeqSentencesInput
     seq2seq.core.metrics.BLEUScore
     seq2seq.core.metrics.RougeBatchAggregator
     seq2seq.core.metrics.RougeMetric

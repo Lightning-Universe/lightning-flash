@@ -19,7 +19,7 @@ import torch
 from pytorch_lightning import Callback
 
 from flash.core.classification import ClassificationTask, Labels
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import InputDataKeys
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, SERIALIZER_TYPE
@@ -108,7 +108,7 @@ class TextClassifier(ClassificationTask):
         return super().to_metrics_format(x)
 
     def step(self, batch, batch_idx, metrics) -> dict:
-        target = batch.pop(DefaultDataKeys.TARGET)
+        target = batch.pop(InputDataKeys.TARGET)
         batch = (batch, target)
         return super().step(batch, batch_idx, metrics)
 

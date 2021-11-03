@@ -40,7 +40,7 @@ from flash.core.data.auto_dataset import BaseAutoDataset, IterableAutoDataset
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_pipeline import DataPipeline, DefaultPreprocess, Postprocess, Preprocess
-from flash.core.data.data_source import DataSource, DefaultDataSources
+from flash.core.data.io.input import BaseInput, InputFormat
 from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, requires
@@ -54,7 +54,7 @@ else:
 
 class DataModule(pl.LightningDataModule):
     """A basic DataModule class for all Flash tasks. This class includes references to a
-    :class:`~flash.core.data.data_source.DataSource`, :class:`~flash.core.data.process.Preprocess`,
+    :class:`~flash.core.data.io.input.BaseInput`, :class:`~flash.core.data.process.Preprocess`,
     :class:`~flash.core.data.process.Postprocess`, and a :class:`~flash.core.data.callback.BaseDataFetcher`.
 
     Args:
@@ -62,7 +62,7 @@ class DataModule(pl.LightningDataModule):
         val_dataset: Dataset for validating model performance during training. Defaults to None.
         test_dataset: Dataset to test model performance. Defaults to None.
         predict_dataset: Dataset for predicting. Defaults to None.
-        data_source: The :class:`~flash.core.data.data_source.DataSource` that was used to create the datasets.
+        data_source: The :class:`~flash.core.data.io.input.BaseInput` that was used to create the datasets.
         preprocess: The :class:`~flash.core.data.process.Preprocess` to use when constructing the
             :class:`~flash.core.data.data_pipeline.DataPipeline`. If ``None``, a
             :class:`~flash.core.data.process.DefaultPreprocess` will be used.
@@ -91,7 +91,7 @@ class DataModule(pl.LightningDataModule):
         val_dataset: Optional[Dataset] = None,
         test_dataset: Optional[Dataset] = None,
         predict_dataset: Optional[Dataset] = None,
-        data_source: Optional[DataSource] = None,
+        data_source: Optional[BaseInput] = None,
         preprocess: Optional[Preprocess] = None,
         postprocess: Optional[Postprocess] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
@@ -106,7 +106,7 @@ class DataModule(pl.LightningDataModule):
         if flash._IS_TESTING and torch.cuda.is_available():
             batch_size = 16
 
-        self._data_source: DataSource = data_source
+        self._data_source: BaseInput = data_source
         self._preprocess: Optional[Preprocess] = preprocess
         self._postprocess: Optional[Postprocess] = postprocess
         self._viz: Optional[BaseVisualization] = None
@@ -423,7 +423,7 @@ class DataModule(pl.LightningDataModule):
         return multi_label_train or multi_label_val or multi_label_test
 
     @property
-    def data_source(self) -> Optional[DataSource]:
+    def data_source(self) -> Optional[BaseInput]:
         """Property that returns the data source."""
         return self._data_source
 
@@ -508,21 +508,21 @@ class DataModule(pl.LightningDataModule):
         **preprocess_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given inputs to
-        :meth:`~flash.core.data.data_source.DataSource.load_data` (``train_data``, ``val_data``, ``test_data``,
+        :meth:`~flash.core.data.io.input.BaseInput.load_data` (``train_data``, ``val_data``, ``test_data``,
         ``predict_data``). The data source will be resolved from the instantiated
         :class:`~flash.core.data.process.Preprocess`
         using :meth:`~flash.core.data.process.Preprocess.data_source_of_name`.
 
         Args:
             data_source: The name of the data source to use for the
-                :meth:`~flash.core.data.data_source.DataSource.load_data`.
-            train_data: The input to :meth:`~flash.core.data.data_source.DataSource.load_data` to use when creating
+                :meth:`~flash.core.data.io.input.BaseInput.load_data`.
+            train_data: The input to :meth:`~flash.core.data.io.input.BaseInput.load_data` to use when creating
                 the train dataset.
-            val_data: The input to :meth:`~flash.core.data.data_source.DataSource.load_data` to use when creating
+            val_data: The input to :meth:`~flash.core.data.io.input.BaseInput.load_data` to use when creating
                 the validation dataset.
-            test_data: The input to :meth:`~flash.core.data.data_source.DataSource.load_data` to use when creating
+            test_data: The input to :meth:`~flash.core.data.io.input.BaseInput.load_data` to use when creating
                 the test dataset.
-            predict_data: The input to :meth:`~flash.core.data.data_source.DataSource.load_data` to use when creating
+            predict_data: The input to :meth:`~flash.core.data.io.input.BaseInput.load_data` to use when creating
                 the predict dataset.
             train_transform: The dictionary of transforms to use during training which maps
                 :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
@@ -550,7 +550,7 @@ class DataModule(pl.LightningDataModule):
         Examples::
 
             data_module = DataModule.from_data_source(
-                DefaultDataSources.FOLDERS,
+                InputFormat.FOLDERS,
                 train_data="train_folder",
                 train_transform={
                     "to_tensor_transform": torch.as_tensor,
@@ -609,8 +609,8 @@ class DataModule(pl.LightningDataModule):
         **preprocess_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given folders using the
-        :class:`~flash.core.data.data_source.DataSource` of name
-        :attr:`~flash.core.data.data_source.DefaultDataSources.FOLDERS`
+        :class:`~flash.core.data.io.input.BaseInput` of name
+        :attr:`~flash.core.data.io.input.InputFormat.FOLDERS`
         from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
 
         Args:
@@ -642,7 +642,7 @@ class DataModule(pl.LightningDataModule):
             The constructed data module.
         """
         return cls.from_data_source(
-            DefaultDataSources.FOLDERS,
+            InputFormat.FOLDERS,
             train_folder,
             val_folder,
             test_folder,
@@ -683,8 +683,8 @@ class DataModule(pl.LightningDataModule):
         **preprocess_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given sequences of files
-        using the :class:`~flash.core.data.data_source.DataSource` of name
-        :attr:`~flash.core.data.data_source.DefaultDataSources.FILES` from the passed or constructed
+        using the :class:`~flash.core.data.io.input.BaseInput` of name
+        :attr:`~flash.core.data.io.input.InputFormat.FILES` from the passed or constructed
         :class:`~flash.core.data.process.Preprocess`.
 
         Args:
@@ -719,7 +719,7 @@ class DataModule(pl.LightningDataModule):
             The constructed data module.
         """
         return cls.from_data_source(
-            DefaultDataSources.FILES,
+            InputFormat.FILES,
             (train_files, train_targets),
             (val_files, val_targets),
             (test_files, test_targets),
@@ -760,8 +760,8 @@ class DataModule(pl.LightningDataModule):
         **preprocess_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given tensors using the
-        :class:`~flash.core.data.data_source.DataSource`
-        of name :attr:`~flash.core.data.data_source.DefaultDataSources.TENSOR`
+        :class:`~flash.core.data.io.input.BaseInput`
+        of name :attr:`~flash.core.data.io.input.InputFormat.TENSOR`
         from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
 
         Args:
@@ -806,7 +806,7 @@ class DataModule(pl.LightningDataModule):
             )
         """
         return cls.from_data_source(
-            DefaultDataSources.TENSORS,
+            InputFormat.TENSORS,
             (train_data, train_targets),
             (val_data, val_targets),
             (test_data, test_targets),
@@ -847,8 +847,8 @@ class DataModule(pl.LightningDataModule):
         **preprocess_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given numpy array using the
-        :class:`~flash.core.data.data_source.DataSource`
-        of name :attr:`~flash.core.data.data_source.DefaultDataSources.NUMPY`
+        :class:`~flash.core.data.io.input.BaseInput`
+        of name :attr:`~flash.core.data.io.input.InputFormat.NUMPY`
         from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
 
         Args:
@@ -893,7 +893,7 @@ class DataModule(pl.LightningDataModule):
             )
         """
         return cls.from_data_source(
-            DefaultDataSources.NUMPY,
+            InputFormat.NUMPY,
             (train_data, train_targets),
             (val_data, val_targets),
             (test_data, test_targets),
@@ -934,8 +934,8 @@ class DataModule(pl.LightningDataModule):
         **preprocess_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given JSON files using the
-        :class:`~flash.core.data.data_source.DataSource`
-        of name :attr:`~flash.core.data.data_source.DefaultDataSources.JSON`
+        :class:`~flash.core.data.io.input.BaseInput`
+        of name :attr:`~flash.core.data.io.input.InputFormat.JSON`
         from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
 
         Args:
@@ -1003,7 +1003,7 @@ class DataModule(pl.LightningDataModule):
             )
         """
         return cls.from_data_source(
-            DefaultDataSources.JSON,
+            InputFormat.JSON,
             (train_file, input_fields, target_fields, field),
             (val_file, input_fields, target_fields, field),
             (test_file, input_fields, target_fields, field),
@@ -1043,8 +1043,8 @@ class DataModule(pl.LightningDataModule):
         **preprocess_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given CSV files using the
-        :class:`~flash.core.data.data_source.DataSource`
-        of name :attr:`~flash.core.data.data_source.DefaultDataSources.CSV`
+        :class:`~flash.core.data.io.input.BaseInput`
+        of name :attr:`~flash.core.data.io.input.InputFormat.CSV`
         from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
 
         Args:
@@ -1089,7 +1089,7 @@ class DataModule(pl.LightningDataModule):
             )
         """
         return cls.from_data_source(
-            DefaultDataSources.CSV,
+            InputFormat.CSV,
             (train_file, input_fields, target_fields),
             (val_file, input_fields, target_fields),
             (test_file, input_fields, target_fields),
@@ -1127,8 +1127,8 @@ class DataModule(pl.LightningDataModule):
         **preprocess_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given datasets using the
-        :class:`~flash.core.data.data_source.DataSource`
-        of name :attr:`~flash.core.data.data_source.DefaultDataSources.DATASETS`
+        :class:`~flash.core.data.io.input.BaseInput`
+        of name :attr:`~flash.core.data.io.input.InputFormat.DATASETS`
         from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
 
         Args:
@@ -1169,7 +1169,7 @@ class DataModule(pl.LightningDataModule):
             )
         """
         return cls.from_data_source(
-            DefaultDataSources.DATASETS,
+            InputFormat.DATASETS,
             train_dataset,
             val_dataset,
             test_dataset,
@@ -1208,8 +1208,8 @@ class DataModule(pl.LightningDataModule):
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object
         from the given FiftyOne Datasets using the
-        :class:`~flash.core.data.data_source.DataSource` of name
-        :attr:`~flash.core.data.data_source.DefaultDataSources.FIFTYONE`
+        :class:`~flash.core.data.io.input.BaseInput` of name
+        :attr:`~flash.core.data.io.input.InputFormat.FIFTYONE`
         from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
 
         Args:
@@ -1253,7 +1253,7 @@ class DataModule(pl.LightningDataModule):
             )
         """
         return cls.from_data_source(
-            DefaultDataSources.FIFTYONE,
+            InputFormat.FIFTYONE,
             train_dataset,
             val_dataset,
             test_dataset,
@@ -1296,8 +1296,8 @@ class DataModule(pl.LightningDataModule):
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object
         from the given export file and data directory using the
-        :class:`~flash.core.data.data_source.DataSource` of name
-        :attr:`~flash.core.data.data_source.DefaultDataSources.FOLDERS`
+        :class:`~flash.core.data.io.input.BaseInput` of name
+        :attr:`~flash.core.data.io.input.InputFormat.FOLDERS`
         from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
 
         Args:
@@ -1378,7 +1378,7 @@ class DataModule(pl.LightningDataModule):
                 "multi_label": preprocess_kwargs.get("multi_label", False),
             }
         return cls.from_data_source(
-            DefaultDataSources.LABELSTUDIO,
+            InputFormat.LABELSTUDIO,
             train_data=train_data if train_data else data,
             val_data=val_data,
             test_data=test_data,

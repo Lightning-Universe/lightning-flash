@@ -1,11 +1,11 @@
 import pytest
 
-from flash.core.data.data_source import DefaultDataSources
+from flash.core.data.io.input import InputFormat
 from flash.core.data.utils import download_data
 from flash.core.integrations.labelstudio.data_source import (
-    LabelStudioDataSource,
-    LabelStudioImageClassificationDataSource,
-    LabelStudioTextClassificationDataSource,
+    LabelStudioInput,
+    LabelStudioImageClassificationInput,
+    LabelStudioTextClassificationInput,
 )
 from flash.core.integrations.labelstudio.visualizer import launch_app
 from flash.image.classification.data import ImageClassificationData
@@ -125,22 +125,22 @@ def test_utility_load():
             "project": 7,
         }
     ]
-    ds = LabelStudioDataSource._load_json_data(data=data, data_folder=".", multi_label=False)
+    ds = LabelStudioInput._load_json_data(data=data, data_folder=".", multi_label=False)
     assert ds[3] == {"image"}
     assert ds[2] == {"Road", "Car", "Obstacle"}
     assert len(ds[1]) == 0
     assert len(ds[0]) == 5
-    ds_multi = LabelStudioDataSource._load_json_data(data=data, data_folder=".", multi_label=True)
+    ds_multi = LabelStudioInput._load_json_data(data=data, data_folder=".", multi_label=True)
     assert ds_multi[3] == {"image"}
     assert ds_multi[2] == {"Road", "Car", "Obstacle"}
     assert len(ds_multi[1]) == 0
     assert len(ds_multi[0]) == 5
 
 
-def test_datasource_labelstudio():
-    """Test creation of LabelStudioDataSource."""
+def test_input_labelstudio():
+    """Test creation of LabelStudioInput."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/data.zip")
-    ds = LabelStudioDataSource()
+    ds = LabelStudioInput()
     data = {
         "data_folder": "data/upload/",
         "export_json": "data/project.json",
@@ -154,7 +154,7 @@ def test_datasource_labelstudio():
     assert val_sample
     assert test
     assert not predict
-    ds_no_split = LabelStudioDataSource()
+    ds_no_split = LabelStudioInput()
     data = {
         "data_folder": "data/upload/",
         "export_json": "data/project.json",
@@ -166,8 +166,8 @@ def test_datasource_labelstudio():
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
-def test_datasource_labelstudio_image():
-    """Test creation of LabelStudioImageClassificationDataSource from images."""
+def test_input_labelstudio_image():
+    """Test creation of LabelStudioImageClassificationInput from images."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/data_nofile.zip")
 
     data = {
@@ -176,7 +176,7 @@ def test_datasource_labelstudio_image():
         "split": 0.2,
         "multi_label": True,
     }
-    ds = LabelStudioImageClassificationDataSource()
+    ds = LabelStudioImageClassificationInput()
     train, val, test, predict = ds.to_datasets(train_data=data, val_data=data, test_data=data, predict_data=data)
     train_sample = train[0]
     val_sample = val[0]
@@ -190,7 +190,7 @@ def test_datasource_labelstudio_image():
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_datamodule_labelstudio_image():
-    """Test creation of LabelStudioImageClassificationDataSource and Datamodule from images."""
+    """Test creation of LabelStudioImageClassificationInput and Datamodule from images."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/data.zip")
 
     datamodule = ImageClassificationData.from_labelstudio(
@@ -205,7 +205,7 @@ def test_datamodule_labelstudio_image():
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_label_studio_predictions_visualization():
-    """Test creation of LabelStudioImageClassificationDataSource and Datamodule from images."""
+    """Test creation of LabelStudioImageClassificationInput and Datamodule from images."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/data.zip")
 
     datamodule = ImageClassificationData.from_labelstudio(
@@ -229,8 +229,8 @@ def test_label_studio_predictions_visualization():
 
 
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_datasource_labelstudio_text():
-    """Test creation of LabelStudioTextClassificationDataSource and Datamodule from text."""
+def test_input_labelstudio_text():
+    """Test creation of LabelStudioTextClassificationInput and Datamodule from text."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/text_data.zip", "./data/")
     backbone = "prajjwal1/bert-medium"
     data = {
@@ -239,7 +239,7 @@ def test_datasource_labelstudio_text():
         "split": 0.2,
         "multi_label": False,
     }
-    ds = LabelStudioTextClassificationDataSource(backbone=backbone)
+    ds = LabelStudioTextClassificationInput(backbone=backbone)
     train, val, test, predict = ds.to_datasets(train_data=data, test_data=data)
     train_sample = train[0]
     test_sample = test[0]
@@ -252,7 +252,7 @@ def test_datasource_labelstudio_text():
 
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_datamodule_labelstudio_text():
-    """Test creation of LabelStudioTextClassificationDataSource and Datamodule from text."""
+    """Test creation of LabelStudioTextClassificationInput and Datamodule from text."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/text_data.zip", "./data/")
     backbone = "prajjwal1/bert-medium"
     datamodule = TextClassificationData.from_labelstudio(
@@ -268,12 +268,12 @@ def test_datamodule_labelstudio_text():
 
 
 @pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
-def test_datasource_labelstudio_video():
-    """Test creation of LabelStudioVideoClassificationDataSource from video."""
+def test_input_labelstudio_video():
+    """Test creation of LabelStudioVideoClassificationInput from video."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/video_data.zip")
     data = {"data_folder": "data/upload/", "export_json": "data/project.json", "multi_label": True}
     preprocess = VideoClassificationPreprocess()
-    ds = preprocess.data_source_of_name(DefaultDataSources.LABELSTUDIO)
+    ds = preprocess.data_source_of_name(InputFormat.LABELSTUDIO)
     train, val, test, predict = ds.to_datasets(train_data=data, test_data=data)
     sample_iter = iter(train)
     sample = next(sample_iter)

@@ -17,7 +17,7 @@ import torch
 import torch.nn as nn
 
 from flash.core.adapter import Adapter
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import InputDataKeys
 from flash.core.model import Task
 from flash.core.utilities.imports import _VISSL_AVAILABLE
 from flash.image.embedding.vissl.hooks import AdaptVISSLHooks
@@ -169,10 +169,10 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
         return model_output
 
     def shared_step(self, batch: Any, train: bool = True) -> Any:
-        out = self.ssl_forward(batch[DefaultDataKeys.INPUT])
+        out = self.ssl_forward(batch[InputDataKeys.INPUT])
 
         # for moco and dino
-        self.task.last_batch["sample"]["input"] = batch[DefaultDataKeys.INPUT]
+        self.task.last_batch["sample"]["input"] = batch[InputDataKeys.INPUT]
         if "data_momentum" in batch.keys():
             self.task.last_batch["sample"]["data_momentum"] = [batch["data_momentum"]]
 
@@ -204,6 +204,6 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
         return loss
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        input_image = batch[DefaultDataKeys.INPUT]
+        input_image = batch[InputDataKeys.INPUT]
 
         return self(input_image)

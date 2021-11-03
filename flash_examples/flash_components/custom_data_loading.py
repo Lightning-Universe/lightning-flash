@@ -22,7 +22,7 @@ from pytorch_lightning import seed_everything
 from torch.utils.data._utils.collate import default_collate
 
 from flash import _PACKAGE_ROOT, FlashDataset, InputTransform
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import InputDataKeys
 from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE
 from flash.core.data.new_data_module import DataModule
 from flash.core.data.transforms import ApplyToKeys
@@ -54,7 +54,7 @@ download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", f"{
 # If you use FlashDataset outside of Flash, the only requirements are to return a Sequence  #
 # from load_data with FlashDataset or an Iterable with FlashIterableDataset.                #
 # When using FlashDataset with Flash Tasks, the model expects the `load_sample` to return a #
-#  dictionary with `DefaultDataKeys` as its keys (c.f `input`, `target`, metadata)          #
+#  dictionary with `InputDataKeys` as its keys (c.f `input`, `target`, metadata)          #
 #                                                                                           #
 #############################################################################################
 
@@ -65,23 +65,23 @@ PREDICT_FOLDER = os.path.join(FOLDER_PATH, "ants")
 
 
 class MultipleFoldersImageDataset(FlashDataset):
-    def load_data(self, folders: List[str]) -> List[Dict[DefaultDataKeys, Any]]:
+    def load_data(self, folders: List[str]) -> List[Dict[InputDataKeys, Any]]:
         if self.training:
             self.num_classes = len(folders)
         return [
-            {DefaultDataKeys.INPUT: os.path.join(folder, p), DefaultDataKeys.TARGET: class_idx}
+            {InputDataKeys.INPUT: os.path.join(folder, p), InputDataKeys.TARGET: class_idx}
             for class_idx, folder in enumerate(folders)
             for p in os.listdir(folder)
         ]
 
-    def load_sample(self, sample: Dict[DefaultDataKeys, Any]) -> Dict[DefaultDataKeys, Any]:
-        sample[DefaultDataKeys.INPUT] = image = Image.open(sample[DefaultDataKeys.INPUT])
-        sample[DefaultDataKeys.METADATA] = image.size
+    def load_sample(self, sample: Dict[InputDataKeys, Any]) -> Dict[InputDataKeys, Any]:
+        sample[InputDataKeys.INPUT] = image = Image.open(sample[InputDataKeys.INPUT])
+        sample[InputDataKeys.METADATA] = image.size
         return sample
 
-    def predict_load_data(self, predict_folder: str) -> List[Dict[DefaultDataKeys, Any]]:
+    def predict_load_data(self, predict_folder: str) -> List[Dict[InputDataKeys, Any]]:
         assert os.path.isdir(predict_folder)
-        return [{DefaultDataKeys.INPUT: os.path.join(predict_folder, p)} for p in os.listdir(predict_folder)]
+        return [{InputDataKeys.INPUT: os.path.join(predict_folder, p)} for p in os.listdir(predict_folder)]
 
 
 train_dataset = MultipleFoldersImageDataset.from_train_data(TRAIN_FOLDERS)
@@ -101,7 +101,7 @@ predict_dataset = MultipleFoldersImageDataset.from_predict_data(PREDICT_FOLDER)
 class BaseImageInputTransform(InputTransform):
     def configure_per_sample_transform(self, image_size: int = 224) -> Any:
         per_sample_transform = T.Compose([T.Resize((image_size, image_size)), T.ToTensor()])
-        return ApplyToKeys(DefaultDataKeys.INPUT, per_sample_transform)
+        return ApplyToKeys(InputDataKeys.INPUT, per_sample_transform)
 
     def configure_collate(self) -> Any:
         return default_collate
@@ -112,7 +112,7 @@ class ImageRandomRotationInputTransform(BaseImageInputTransform):
         transforms = [T.Resize((image_size, image_size)), T.ToTensor()]
         if self.training:
             transforms += [T.RandomRotation(rotation)]
-        return ApplyToKeys(DefaultDataKeys.INPUT, T.Compose(transforms))
+        return ApplyToKeys(InputDataKeys.INPUT, T.Compose(transforms))
 
 
 # Register your transform within the Flash Dataset registry
@@ -175,9 +175,9 @@ print(val_dataset.transform)
 print(train_dataset[0])
 # Out:
 # {
-#   <DefaultDataKeys.INPUT: 'input'>: <PIL.JpegImagePlugin.JpegImageFile image mode=RGB size=500x375 at 0x...>,
-#   <DefaultDataKeys.TARGET: 'target'>: 0,
-#   <DefaultDataKeys.METADATA: 'metadata'>: (500, 375)
+#   <InputDataKeys.INPUT: 'input'>: <PIL.JpegImagePlugin.JpegImageFile image mode=RGB size=500x375 at 0x...>,
+#   <InputDataKeys.TARGET: 'target'>: 0,
+#   <InputDataKeys.METADATA: 'metadata'>: (500, 375)
 # }
 
 #############################################################################################
@@ -215,16 +215,16 @@ assert not datamodule.test_dataset
 print(datamodule.train_dataset[0])
 # Out:
 # {
-#   <DefaultDataKeys.INPUT: 'input'>: <PIL.JpegImagePlugin.JpegImageFile image mode=RGB size=500x375 at 0x...>,
-#   <DefaultDataKeys.TARGET: 'target'>: 0,
-#   <DefaultDataKeys.METADATA: 'metadata'>: (500, 375)
+#   <InputDataKeys.INPUT: 'input'>: <PIL.JpegImagePlugin.JpegImageFile image mode=RGB size=500x375 at 0x...>,
+#   <InputDataKeys.TARGET: 'target'>: 0,
+#   <InputDataKeys.METADATA: 'metadata'>: (500, 375)
 # }
 
 assert isinstance(datamodule.predict_dataset, FlashDataset)
 print(datamodule.predict_dataset[0])
 # out:
 # {
-#   {<DefaultDataKeys.INPUT: 'input'>: 'data/hymenoptera_data/train/ants/957233405_25c1d1187b.jpg'}
+#   {<InputDataKeys.INPUT: 'input'>: 'data/hymenoptera_data/train/ants/957233405_25c1d1187b.jpg'}
 # }
 
 
@@ -232,9 +232,9 @@ print(datamodule.predict_dataset[0])
 batch = next(iter(datamodule.train_dataloader()))
 # Out:
 # {
-#   <DefaultDataKeys.INPUT: 'input'>: tensor([...]),
-#   <DefaultDataKeys.TARGET: 'target'>: tensor([...]),
-#   <DefaultDataKeys.METADATA: 'metadata'>: [(...), (...), ...],
+#   <InputDataKeys.INPUT: 'input'>: tensor([...]),
+#   <InputDataKeys.TARGET: 'target'>: tensor([...]),
+#   <InputDataKeys.METADATA: 'metadata'>: [(...), (...), ...],
 # }
 print(batch)
 
@@ -297,8 +297,8 @@ datamodule = ImageClassificationDataModule.from_multiple_folders(
 batch = next(iter(datamodule.train_dataloader()))
 # Out:
 # {
-#   <DefaultDataKeys.INPUT: 'input'>: tensor([...]),
-#   <DefaultDataKeys.TARGET: 'target'>: tensor([...]),
-#   <DefaultDataKeys.METADATA: 'metadata'>: [(...), (...), ...],
+#   <InputDataKeys.INPUT: 'input'>: tensor([...]),
+#   <InputDataKeys.TARGET: 'target'>: tensor([...]),
+#   <InputDataKeys.METADATA: 'metadata'>: [(...), (...), ...],
 # }
 print(batch)

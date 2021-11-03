@@ -18,7 +18,7 @@ import torch
 from pytorch_lightning import seed_everything
 
 from flash import Trainer
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import InputDataKeys
 from flash.core.data.utils import download_data
 from flash.pointcloud.detection import PointCloudObjectDetector, PointCloudObjectDetectorData
 from tests.helpers.utils import _POINTCLOUD_TESTING
@@ -54,5 +54,5 @@ def test_pointcloud_object_detection_data(tmpdir):
     model.eval()
 
     predictions = model.predict([join(predict_path, "scans/000000.bin")])
-    assert predictions[0][DefaultDataKeys.INPUT].shape[1] == 4
-    assert len(predictions[0][DefaultDataKeys.PREDS]) == 158
+    assert predictions[0][InputDataKeys.INPUT].shape[1] == 4
+    assert len(predictions[0][InputDataKeys.PREDS]) == 158

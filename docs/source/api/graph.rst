@@ -30,4 +30,4 @@ ________________
     :nosignatures:
     :template: classtemplate.rst
 
-    ~data.GraphDatasetDataSource
+    ~data.GraphDatasetInput

@@ -8,7 +8,7 @@ import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash import Trainer
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import InputDataKeys
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE
 from flash.image import SemanticSegmentation, SemanticSegmentationData, SemanticSegmentationPreprocess
 from tests.helpers.utils import _IMAGE_TESTING
@@ -108,19 +108,19 @@ class TestSemanticSegmentationData:
 
         # check training data
         data = next(iter(dm.train_dataloader()))
-        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        imgs, labels = data[InputDataKeys.INPUT], data[InputDataKeys.TARGET]
         assert imgs.shape == (2, 3, 128, 128)
         assert labels.shape == (2, 128, 128)
 
         # check val data
         data = next(iter(dm.val_dataloader()))
-        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        imgs, labels = data[InputDataKeys.INPUT], data[InputDataKeys.TARGET]
         assert imgs.shape == (2, 3, 128, 128)
         assert labels.shape == (2, 128, 128)
 
         # check test data
         data = next(iter(dm.test_dataloader()))
-        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        imgs, labels = data[InputDataKeys.INPUT], data[InputDataKeys.TARGET]
         assert imgs.shape == (2, 3, 128, 128)
         assert labels.shape == (2, 128, 128)
 
@@ -163,7 +163,7 @@ class TestSemanticSegmentationData:
 
         # check training data
         data = next(iter(dm.train_dataloader()))
-        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        imgs, labels = data[InputDataKeys.INPUT], data[InputDataKeys.TARGET]
         assert imgs.shape == (1, 3, 128, 128)
         assert labels.shape == (1, 128, 128)
 
@@ -210,19 +210,19 @@ class TestSemanticSegmentationData:
 
         # check training data
         data = next(iter(dm.train_dataloader()))
-        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        imgs, labels = data[InputDataKeys.INPUT], data[InputDataKeys.TARGET]
         assert imgs.shape == (2, 3, 128, 128)
         assert labels.shape == (2, 128, 128)
 
         # check val data
         data = next(iter(dm.val_dataloader()))
-        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        imgs, labels = data[InputDataKeys.INPUT], data[InputDataKeys.TARGET]
         assert imgs.shape == (2, 3, 128, 128)
         assert labels.shape == (2, 128, 128)
 
         # check test data
         data = next(iter(dm.test_dataloader()))
-        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        imgs, labels = data[InputDataKeys.INPUT], data[InputDataKeys.TARGET]
         assert imgs.shape == (2, 3, 128, 128)
         assert labels.shape == (2, 128, 128)
 
@@ -309,25 +309,25 @@ class TestSemanticSegmentationData:
 
         # check training data
         data = next(iter(dm.train_dataloader()))
-        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        imgs, labels = data[InputDataKeys.INPUT], data[InputDataKeys.TARGET]
         assert imgs.shape == (2, 3, 128, 128)
         assert labels.shape == (2, 128, 128)
 
         # check val data
         data = next(iter(dm.val_dataloader()))
-        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        imgs, labels = data[InputDataKeys.INPUT], data[InputDataKeys.TARGET]
         assert imgs.shape == (2, 3, 128, 128)
         assert labels.shape == (2, 128, 128)
 
         # check test data
         data = next(iter(dm.test_dataloader()))
-        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        imgs, labels = data[InputDataKeys.INPUT], data[InputDataKeys.TARGET]
         assert imgs.shape == (2, 3, 128, 128)
         assert labels.shape == (2, 128, 128)
 
         # check predict data
         data = next(iter(dm.predict_dataloader()))
-        imgs = data[DefaultDataKeys.INPUT]
+        imgs = data[InputDataKeys.INPUT]
         assert imgs.shape == (2, 3, 128, 128)
 
     @staticmethod
@@ -383,7 +383,7 @@ class TestSemanticSegmentationData:
 
         # check training data
         data = next(iter(dm.train_dataloader()))
-        imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        imgs, labels = data[InputDataKeys.INPUT], data[InputDataKeys.TARGET]
         assert imgs.shape == (2, 3, 128, 128)
         assert labels.shape == (2, 128, 128)
         assert labels.min().item() == 0

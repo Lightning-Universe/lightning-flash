@@ -16,7 +16,7 @@ from typing import Any, Dict, List
 import pytorch_lightning as pl
 import torch
 
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import InputDataKeys
 from flash.core.data.process import Serializer
 from flash.core.finetuning import FlashBaseFinetuning
 from flash.core.model import Task
@@ -48,7 +48,7 @@ class DetectionLabels(Serializer):
     """A :class:`.Serializer` which extracts predictions from sample dict."""
 
     def serialize(self, sample: Any) -> Dict[str, Any]:
-        return sample[DefaultDataKeys.PREDS] if isinstance(sample, Dict) else sample
+        return sample[InputDataKeys.PREDS] if isinstance(sample, Dict) else sample
 
 
 class FaceDetector(Task):
@@ -152,7 +152,7 @@ class FaceDetector(Task):
             metric.update(pred_boxes, target_boxes)
 
     def __shared_step(self, batch, train=False) -> Any:
-        images, targets = batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET]
+        images, targets = batch[InputDataKeys.INPUT], batch[InputDataKeys.TARGET]
         images = self._prepare_batch(images)
         logits = self.model(images)
         loss = self.model.compute_loss(logits, targets)
@@ -188,8 +188,8 @@ class FaceDetector(Task):
         self.log_dict({f"test_{k}": v for k, v in metric_results.items()}, on_epoch=True)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        images = batch[DefaultDataKeys.INPUT]
-        batch[DefaultDataKeys.PREDS] = self(images)
+        images = batch[InputDataKeys.INPUT]
+        batch[InputDataKeys.PREDS] = self(images)
         return batch
 
     def configure_finetune_callback(self):

@@ -21,7 +21,7 @@ from torch.utils.data.sampler import Sampler
 from flash.core.classification import LabelsState
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
+from flash.core.data.io.input import BaseInput, InputDataKeys, InputFormat
 from flash.core.data.process import Deserializer, Postprocess, Preprocess
 from flash.core.utilities.imports import _PANDAS_AVAILABLE
 from flash.tabular.classification.utils import (
@@ -39,7 +39,7 @@ else:
     DataFrame = object
 
 
-class TabularDataFrameDataSource(DataSource[DataFrame]):
+class TabularDataFrameInput(BaseInput[DataFrame]):
     def __init__(
         self,
         cat_cols: Optional[List[str]] = None,
@@ -93,15 +93,15 @@ class TabularDataFrameDataSource(DataSource[DataFrame]):
         df, cat_vars, num_vars = self.common_load_data(data, dataset=dataset)
         target = df[self.target_col].to_numpy().astype(np.float32 if self.is_regression else np.int64)
         return [
-            {DefaultDataKeys.INPUT: (c, n), DefaultDataKeys.TARGET: t} for c, n, t in zip(cat_vars, num_vars, target)
+            {InputDataKeys.INPUT: (c, n), InputDataKeys.TARGET: t} for c, n, t in zip(cat_vars, num_vars, target)
         ]
 
     def predict_load_data(self, data: DataFrame, dataset: Optional[Any] = None):
         _, cat_vars, num_vars = self.common_load_data(data, dataset=dataset)
-        return [{DefaultDataKeys.INPUT: (c, n)} for c, n in zip(cat_vars, num_vars)]
+        return [{InputDataKeys.INPUT: (c, n)} for c, n in zip(cat_vars, num_vars)]
 
 
-class TabularCSVDataSource(TabularDataFrameDataSource):
+class TabularCSVInput(TabularDataFrameInput):
     def load_data(self, data: str, dataset: Optional[Any] = None):
         return super().load_data(pd.read_csv(data), dataset=dataset)
 
@@ -145,7 +145,7 @@ class TabularDeserializer(Deserializer):
         cat_vars = np.stack(cat_vars, 1)
         num_vars = np.stack(num_vars, 1)
 
-        return [{DefaultDataKeys.INPUT: [c, n]} for c, n in zip(cat_vars, num_vars)]
+        return [{InputDataKeys.INPUT: [c, n]} for c, n in zip(cat_vars, num_vars)]
 
     @property
     def example_input(self) -> str:
@@ -193,14 +193,14 @@ class TabularPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.CSV: TabularCSVDataSource(
+                InputFormat.CSV: TabularCSVInput(
                     cat_cols, num_cols, target_col, mean, std, codes, target_codes, classes, is_regression
                 ),
-                "data_frame": TabularDataFrameDataSource(
+                "data_frame": TabularDataFrameInput(
                     cat_cols, num_cols, target_col, mean, std, codes, target_codes, classes, is_regression
                 ),
             },
-            default_data_source=DefaultDataSources.CSV,
+            default_data_source=InputFormat.CSV,
             deserializer=deserializer
             or TabularDeserializer(
                 cat_cols=cat_cols,
@@ -299,7 +299,7 @@ class TabularData(DataModule):
 
         if train_data_frame is None:
             raise MisconfigurationException(
-                "train_data_frame is required to instantiate the TabularDataFrameDataSource"
+                "train_data_frame is required to instantiate the TabularDataFrameInput"
             )
 
         data_frames = [train_data_frame]

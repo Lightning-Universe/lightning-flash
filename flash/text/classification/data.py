@@ -23,9 +23,9 @@ import flash
 from flash.core.data.auto_dataset import AutoDataset
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources, LabelsState
+from flash.core.data.io.input import BaseInput, InputDataKeys, InputFormat, LabelsState
 from flash.core.data.process import Deserializer, Postprocess, Preprocess
-from flash.core.integrations.labelstudio.data_source import LabelStudioTextClassificationDataSource
+from flash.core.integrations.labelstudio.data_source import LabelStudioTextClassificationInput
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 
 if _TEXT_AVAILABLE:
@@ -59,7 +59,7 @@ class TextDeserializer(Deserializer):
         self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
-class TextDataSource(DataSource):
+class TextInput(BaseInput):
     @requires("text")
     def __init__(self, backbone: str, max_length: int = 128):
         super().__init__()
@@ -84,7 +84,7 @@ class TextDataSource(DataSource):
     @staticmethod
     def _multilabel_target(targets: List[str], element: Dict[str, Any]) -> Dict[str, Any]:
         targets = [element.pop(target) for target in targets]
-        element[DefaultDataKeys.TARGET] = targets
+        element[InputDataKeys.TARGET] = targets
         return element
 
     def _to_hf_dataset(self, data) -> Sequence[Mapping[str, Any]]:
@@ -130,10 +130,10 @@ class TextDataSource(DataSource):
                     hf_dataset = hf_dataset.map(partial(self._transform_label, label_to_class_mapping, target))
 
                 # rename label column
-                hf_dataset = hf_dataset.rename_column(target, DefaultDataKeys.TARGET)
+                hf_dataset = hf_dataset.rename_column(target, InputDataKeys.TARGET)
 
         # remove extra columns
-        extra_columns = set(hf_dataset.column_names) - {input, DefaultDataKeys.TARGET}
+        extra_columns = set(hf_dataset.column_names) - {input, InputDataKeys.TARGET}
         hf_dataset = hf_dataset.remove_columns(extra_columns)
 
         # tokenize
@@ -157,41 +157,41 @@ class TextDataSource(DataSource):
         self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
-class TextCSVDataSource(TextDataSource):
+class TextCSVInput(TextInput):
     def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, str]:
         file, *other = data
         dataset_dict = load_dataset("csv", data_files={"train": str(file)})
         return (dataset_dict["train"], *other)
 
 
-class TextJSONDataSource(TextDataSource):
+class TextJSONInput(TextInput):
     def to_hf_dataset(self, data: Tuple[str, str, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, str]:
         file, *other, field = data
         dataset_dict = load_dataset("json", data_files={"train": str(file)}, field=field)
         return (dataset_dict["train"], *other)
 
 
-class TextDataFrameDataSource(TextDataSource):
+class TextDataFrameInput(TextInput):
     def to_hf_dataset(self, data: Tuple[DataFrame, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, str]:
         df, *other = data
         hf_dataset = Dataset.from_pandas(df)
         return (hf_dataset, *other)
 
 
-class TextParquetDataSource(TextDataSource):
+class TextParquetInput(TextInput):
     def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, str]:
         file, *other = data
         hf_dataset = Dataset.from_parquet(str(file))
         return (hf_dataset, *other)
 
 
-class TextHuggingFaceDatasetDataSource(TextDataSource):
+class TextHuggingFaceDatasetInput(TextInput):
     def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, str]:
         hf_dataset, *other = data
         return (hf_dataset, *other)
 
 
-class TextListDataSource(TextDataSource):
+class TextListInput(TextInput):
     def to_hf_dataset(
         self, data: Union[Tuple[List[str], List[str]], List[str]]
     ) -> Tuple[Sequence[Mapping[str, Any]], Optional[List[str]]]:
@@ -200,11 +200,11 @@ class TextListDataSource(TextDataSource):
             input_list, target_list = data
             # NOTE: here we already deal with multilabels
             # NOTE: here we already rename to correct column names
-            hf_dataset = Dataset.from_dict({DefaultDataKeys.INPUT: input_list, DefaultDataKeys.TARGET: target_list})
+            hf_dataset = Dataset.from_dict({InputDataKeys.INPUT: input_list, InputDataKeys.TARGET: target_list})
             return hf_dataset, target_list
 
         # predicting
-        hf_dataset = Dataset.from_dict({DefaultDataKeys.INPUT: data})
+        hf_dataset = Dataset.from_dict({InputDataKeys.INPUT: data})
 
         return (hf_dataset,)
 
@@ -226,7 +226,7 @@ class TextListDataSource(TextDataSource):
             else:
                 dataset.multi_label = False
                 if self.training:
-                    labels = list(sorted(list(set(hf_dataset[DefaultDataKeys.TARGET]))))
+                    labels = list(sorted(list(set(hf_dataset[InputDataKeys.TARGET]))))
                     dataset.num_classes = len(labels)
                     self.set_state(LabelsState(labels))
 
@@ -238,14 +238,14 @@ class TextListDataSource(TextDataSource):
                     label_to_class_mapping = {v: k for k, v in enumerate(labels)}
                     # happens in-place and keeps the target column name
                     hf_dataset = hf_dataset.map(
-                        partial(self._transform_label, label_to_class_mapping, DefaultDataKeys.TARGET)
+                        partial(self._transform_label, label_to_class_mapping, InputDataKeys.TARGET)
                     )
 
         # tokenize
-        hf_dataset = hf_dataset.map(partial(self._tokenize_fn, input=DefaultDataKeys.INPUT), batched=True)
+        hf_dataset = hf_dataset.map(partial(self._tokenize_fn, input=InputDataKeys.INPUT), batched=True)
 
         # set format
-        hf_dataset = hf_dataset.remove_columns([DefaultDataKeys.INPUT])  # just leave the numerical columns
+        hf_dataset = hf_dataset.remove_columns([InputDataKeys.INPUT])  # just leave the numerical columns
         hf_dataset.set_format("torch")
 
         return hf_dataset
@@ -271,19 +271,19 @@ class TextClassificationPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.CSV: TextCSVDataSource(self.backbone, max_length=max_length),
-                DefaultDataSources.JSON: TextJSONDataSource(self.backbone, max_length=max_length),
-                DefaultDataSources.PARQUET: TextParquetDataSource(self.backbone, max_length=max_length),
-                DefaultDataSources.HUGGINGFACE_DATASET: TextHuggingFaceDatasetDataSource(
+                InputFormat.CSV: TextCSVInput(self.backbone, max_length=max_length),
+                InputFormat.JSON: TextJSONInput(self.backbone, max_length=max_length),
+                InputFormat.PARQUET: TextParquetInput(self.backbone, max_length=max_length),
+                InputFormat.HUGGINGFACE_DATASET: TextHuggingFaceDatasetInput(
                     self.backbone, max_length=max_length
                 ),
-                DefaultDataSources.DATAFRAME: TextDataFrameDataSource(self.backbone, max_length=max_length),
-                DefaultDataSources.LISTS: TextListDataSource(self.backbone, max_length=max_length),
-                DefaultDataSources.LABELSTUDIO: LabelStudioTextClassificationDataSource(
+                InputFormat.DATAFRAME: TextDataFrameInput(self.backbone, max_length=max_length),
+                InputFormat.LISTS: TextListInput(self.backbone, max_length=max_length),
+                InputFormat.LABELSTUDIO: LabelStudioTextClassificationInput(
                     backbone=self.backbone, max_length=max_length
                 ),
             },
-            default_data_source=DefaultDataSources.LISTS,
+            default_data_source=InputFormat.LISTS,
             deserializer=TextDeserializer(backbone, max_length),
         )
 
@@ -384,7 +384,7 @@ class TextClassificationData(DataModule):
             The constructed data module.
         """
         return cls.from_data_source(
-            DefaultDataSources.DATAFRAME,
+            InputFormat.DATAFRAME,
             (train_data_frame, input_field, target_fields),
             (val_data_frame, input_field, target_fields),
             (test_data_frame, input_field, target_fields),
@@ -462,7 +462,7 @@ class TextClassificationData(DataModule):
             The constructed data module.
         """
         return cls.from_data_source(
-            DefaultDataSources.LISTS,
+            InputFormat.LISTS,
             (train_data, train_targets),
             (val_data, val_targets),
             (test_data, test_targets),
@@ -502,8 +502,8 @@ class TextClassificationData(DataModule):
         **preprocess_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given PARQUET files using the
-        :class:`~flash.core.data.data_source.DataSource`
-        of name :attr:`~flash.core.data.data_source.DefaultDataSources.PARQUET`
+        :class:`~flash.core.data.io.input.BaseInput`
+        of name :attr:`~flash.core.data.io.input.InputFormat.PARQUET`
         from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
 
         Args:
@@ -548,7 +548,7 @@ class TextClassificationData(DataModule):
             )
         """
         return cls.from_data_source(
-            DefaultDataSources.PARQUET,
+            InputFormat.PARQUET,
             (train_file, input_field, target_fields),
             (val_file, input_field, target_fields),
             (test_file, input_field, target_fields),
@@ -621,7 +621,7 @@ class TextClassificationData(DataModule):
             The constructed data module.
         """
         return cls.from_data_source(
-            DefaultDataSources.HUGGINGFACE_DATASET,
+            InputFormat.HUGGINGFACE_DATASET,
             (train_hf_dataset, input_field, target_fields),
             (val_hf_dataset, input_field, target_fields),
             (test_hf_dataset, input_field, target_fields),

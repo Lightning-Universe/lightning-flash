@@ -36,7 +36,7 @@ from torch.utils.data import DataLoader, Sampler
 import flash
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
-from flash.core.data.data_source import DataSource
+from flash.core.data.io.input import BaseInput
 from flash.core.data.process import (
     Deserializer,
     DeserializerMapping,
@@ -709,7 +709,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
         if isinstance(data_source, str):
             if preprocess is None:
-                data_source = DataSource()  # TODO: warn the user that we are not using the specified data source
+                data_source = BaseInput()  # TODO: warn the user that we are not using the specified data source
             else:
                 data_source = preprocess.data_source_of_name(data_source)
 

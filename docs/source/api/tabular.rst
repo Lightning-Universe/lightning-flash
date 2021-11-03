@@ -39,8 +39,8 @@ __________________
     :template: classtemplate.rst
 
     ~data.TabularData
-    ~data.TabularDataFrameDataSource
-    ~data.TabularCSVDataSource
+    ~data.TabularDataFrameInput
+    ~data.TabularCSVInput
     ~data.TabularDeserializer
     ~data.TabularPreprocess
     ~data.TabularPostprocess
