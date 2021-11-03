@@ -72,12 +72,8 @@ class Seq2SeqDataSource(DataSource):
         input: Optional[str] = None,
         target: Optional[str] = None,
     ) -> Callable:
-        if isinstance(ex, dict):
-            ex_input = ex[input]
-            ex_target = ex[target] if target else None
-        else:
-            ex_input = ex
-            ex_target = None
+        ex_input = ex[input]
+        ex_target = ex[target] if target else None
 
         model_inputs = self.tokenizer(
             ex_input,
