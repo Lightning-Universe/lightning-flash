@@ -17,7 +17,6 @@ from flash.text.seq2seq.data import Seq2SeqData, Seq2SeqPreprocess
 class SummarizationPreprocess(Seq2SeqPreprocess):
     pass
 
+
 class SummarizationData(Seq2SeqData):
     preprocess_cls = SummarizationPreprocess
-
-
