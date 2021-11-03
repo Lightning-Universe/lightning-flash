@@ -18,7 +18,7 @@ class BaseTokenizer:
     def __init__(self, backbone: str, pretrained: bool):
         self.backbone = backbone
         self.pretrained = pretrained
-        self._is_fit = pretrained
+        self.is_fitted = pretrained
 
     def fit(self, hf_dataset: Sequence[Mapping[str, Any]], input: str) -> None:
         pass
