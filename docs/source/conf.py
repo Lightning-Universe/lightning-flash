@@ -112,7 +112,7 @@ extensions = [
     "sphinx_paramlinks",
     "sphinx_togglebutton",
     "pt_lightning_sphinx_theme.extensions.lightning_tutorials",
-    "autoinputs",
+    "autodatasources",
 ]
 
 # autodoc: Default to members and undoc-members

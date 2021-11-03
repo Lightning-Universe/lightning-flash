@@ -85,7 +85,7 @@ To view configuration options and options for running the image classifier with 
 Loading Data
 ************
 
-.. autoinputs:: flash.image.classification.data ImageClassificationData
+.. autodatasources:: flash.image.classification.data ImageClassificationData
 
     {% extends "base.rst" %}
     {% block from_datasets %}
