@@ -18,7 +18,6 @@ from flash.core.data.data_pipeline import Postprocess
 from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources, LabelsState
 from flash.core.integrations.labelstudio.data_source import LabelStudioTextClassificationDataSource
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
-from flash.text.tokenizers.base import BaseTokenizer
 from flash.text.data import (
     TextCSVDataSourceMixin,
     TextDataFrameDataSourceMixin,
@@ -30,13 +29,13 @@ from flash.text.data import (
     TextParquetDataSourceMixin,
     TextPreprocess,
 )
+from flash.text.tokenizers.base import BaseTokenizer
 
 if _TEXT_AVAILABLE:
     from transformers.modeling_outputs import SequenceClassifierOutput
 
 
 class TextClassificationDataSource(TextDataSource):
-
     @staticmethod
     def _transform_label(label_to_class_mapping: Dict[str, int], target: str, ex: Dict[str, Union[int, str]]):
         ex[target] = label_to_class_mapping[ex[target]]

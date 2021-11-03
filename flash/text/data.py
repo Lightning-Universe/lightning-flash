@@ -11,12 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
+import os
 from dataclasses import dataclass
 from functools import partial
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
 
 import torch
-import os
 from pandas.core.frame import DataFrame
 from torch import Tensor
 from torch.utils.data.sampler import Sampler
@@ -32,6 +32,7 @@ from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 if _TEXT_AVAILABLE:
     from datasets import Dataset, load_dataset
     from transformers import default_data_collator
+
     from flash.text.tokenizers import TEXT_CLASSIFIER_TOKENIZERS
     from flash.text.tokenizers.base import BaseTokenizer
 

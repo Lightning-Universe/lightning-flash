@@ -16,7 +16,6 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Postprocess
 from flash.core.utilities.imports import requires
-from flash.text.tokenizers.base import BaseTokenizer
 from flash.text.data import (
     TextCSVDataSourceMixin,
     TextDataFrameDataSourceMixin,
@@ -29,10 +28,10 @@ from flash.text.data import (
     TextPreprocess,
     TokenizerState,
 )
+from flash.text.tokenizers.base import BaseTokenizer
 
 
 class Seq2SeqDataSource(TextDataSource):
-
     def encode_target(self, hf_dataset, dataset, target) -> Sequence[Mapping[str, Any]]:
         if isinstance(target, List):
             target = DefaultDataKeys.TARGET

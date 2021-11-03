@@ -21,7 +21,7 @@ import torch
 from flash import Trainer
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import SummarizationTask
-from flash.text.seq2seq.summarization.data import SummarizationPreprocess, SummarizationPostprocess 
+from flash.text.seq2seq.summarization.data import SummarizationPostprocess, SummarizationPreprocess
 from tests.helpers.utils import _SERVE_TESTING, _TEXT_TESTING
 
 # ======== Mock functions ========
