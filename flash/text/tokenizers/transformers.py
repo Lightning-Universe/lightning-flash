@@ -51,15 +51,15 @@ class TransformerTokenizer(BaseTokenizer):
             self.batch_size = backbone_kwargs.get("batch_size", 1000)
 
     def fit(self, hf_dataset: Sequence[Mapping[str, Any]], input: str) -> None:
-        if self._is_fit:
+        if self.is_fitted:
             print("Tokenizer is already trained. Doint nothing.")
             return
         batch_iterator = self._batch_iterator(hf_dataset, input=input)
         self.tokenizer = self.tokenizer.train_new_from_iterator(batch_iterator, vocab_size=self.vocab_size)
-        self._is_fit = True
+        self.is_fitted = True
 
     def __call__(self, x: Union[str, List[str]]) -> Union[List[int], torch.Tensor]:
-        if not self._is_fit:
+        if not self.is_fitted:
             raise MisconfigurationException("If pretrained=False, tokenizer must be fit before using it")
 
         return self.tokenizer(
@@ -75,7 +75,7 @@ class TransformerTokenizer(BaseTokenizer):
         return self.tokenizer.batch_decode(x, **kwargs)
 
 
-def _trasformer_tokenizer(
+def _transformer_tokenizer(
     backbone: str = "prajjwal1/bert-tiny",
     pretrained: bool = True,
     **backbone_kwargs,

@@ -74,7 +74,7 @@ class TextDataSource(DataSource):
 
     def encode_input(self, hf_dataset, input) -> Sequence[Mapping[str, Any]]:
         # tokenize
-        if not self.get_state(TokenizerState).tokenizer._is_fit:
+        if not self.get_state(TokenizerState).tokenizer.is_fitted:
             self.get_state(TokenizerState).tokenizer.fit(hf_dataset, input=input)
         hf_dataset = hf_dataset.map(partial(self._tokenize_fn, input=input), batched=True)
         hf_dataset = hf_dataset.remove_columns([input])  # just leave the numerical columns
