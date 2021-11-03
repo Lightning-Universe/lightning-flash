@@ -41,7 +41,6 @@ from pytorch_lightning.utilities.enums import LightningEnum
 from torch.utils.data.dataset import Dataset
 from tqdm import tqdm
 
-from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.base_input import BaseInput, Input
 from flash.core.data.properties import ProcessState
 from flash.core.data.transforms.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
@@ -228,7 +227,7 @@ class InputsStateContainer:
             predict_input_state=InputStateContainer.from_dataset(predict_dataset),
         )
 
-    def attach_data_pipeline_state(self, data_pipeline_state: DataPipelineState) -> None:
+    def attach_data_pipeline_state(self, data_pipeline_state: "DataPipelineState") -> None:
         for state in self._state.values():
             data_pipeline_state.set_state(state)
 
@@ -250,7 +249,7 @@ class InputsStateContainer:
             **(self.predict_input_state.input_transform._state if self.predict_input_state.input_transform else {}),
         }
 
-    def _set_data_pipeline_state(self, state: InputStateContainer, data_pipeline_state: DataPipelineState) -> None:
+    def _set_data_pipeline_state(self, state: InputStateContainer, data_pipeline_state: "DataPipelineState") -> None:
         if state and state.input_transform:
             state.input_transform._data_pipeline_state = data_pipeline_state
 
