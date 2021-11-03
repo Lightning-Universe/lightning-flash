@@ -41,8 +41,8 @@ model = ObjectDetector(head="efficientdet", backbone="d0", num_classes=datamodul
 trainer = flash.Trainer(max_epochs=1)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
-# 4. Set the serializer and get some predictions
-model.serializer = FiftyOneDetectionLabels(return_filepath=True)  # output FiftyOne format
+# 4. Set the output and get some predictions
+model.output = FiftyOneDetectionLabels(return_filepath=True)  # output FiftyOne format
 predictions = trainer.predict(model, datamodule=datamodule)
 predictions = list(chain.from_iterable(predictions))  # flatten batches
 

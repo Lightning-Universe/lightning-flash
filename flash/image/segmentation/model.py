@@ -29,8 +29,8 @@ from flash.core.utilities.types import (
     LR_SCHEDULER_TYPE,
     METRICS_TYPE,
     OPTIMIZER_TYPE,
+    OUTPUT_TYPE,
     POSTPROCESS_TYPE,
-    SERIALIZER_TYPE,
 )
 from flash.image.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 from flash.image.segmentation.heads import SEMANTIC_SEGMENTATION_HEADS
@@ -68,7 +68,7 @@ class SemanticSegmentation(ClassificationTask):
             `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.IOU`.
         learning_rate: Learning rate to use for training.
         multi_label: Whether the targets are multi-label or not.
-        serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
+        output: The :class:`~flash.core.data.process.Output` to use when serializing prediction outputs.
         postprocess: :class:`~flash.core.data.process.Postprocess` use for post processing samples.
     """
 
@@ -94,7 +94,7 @@ class SemanticSegmentation(ClassificationTask):
         metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-3,
         multi_label: bool = False,
-        serializer: SERIALIZER_TYPE = None,
+        output: OUTPUT_TYPE = None,
         postprocess: POSTPROCESS_TYPE = None,
     ) -> None:
         if metrics is None:
@@ -114,7 +114,7 @@ class SemanticSegmentation(ClassificationTask):
             lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
-            serializer=serializer or SegmentationLabels(),
+            output=output or SegmentationLabels(),
             postprocess=postprocess or self.postprocess_cls(),
         )
 

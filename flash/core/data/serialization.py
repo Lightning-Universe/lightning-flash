@@ -14,11 +14,11 @@
 from typing import Any, List, Union
 
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.process import Serializer
+from flash.core.data.io.output import Output
 
 
-class Preds(Serializer):
-    """A :class:`~flash.core.data.process.Serializer` which returns the "preds" from the model outputs."""
+class Preds(Output):
+    """A :class:`~flash.core.data.process.Output` which returns the "preds" from the model outputs."""
 
-    def serialize(self, sample: Any) -> Union[int, List[int]]:
+    def transform(self, sample: Any) -> Union[int, List[int]]:
         return sample.get(DefaultDataKeys.PREDS, sample) if isinstance(sample, dict) else sample

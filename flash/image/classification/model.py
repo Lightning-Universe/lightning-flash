@@ -19,7 +19,7 @@ from torch import nn
 
 from flash.core.classification import ClassificationAdapterTask, Labels
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, SERIALIZER_TYPE
+from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 from flash.image.classification.adapters import TRAINING_STRATEGIES
 from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES
 
@@ -60,7 +60,7 @@ class ImageClassifier(ClassificationAdapterTask):
             `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
         multi_label: Whether the targets are multi-label or not.
-        serializer: A instance of :class:`~flash.core.data.process.Serializer` or a mapping consisting of such
+        output: A instance of :class:`~flash.core.data.process.Output` or a mapping consisting of such
             to use when serializing prediction outputs.
         training_strategy: string indicating the training strategy. Adjust if you want to use `learn2learn`
             for doing meta-learning research
@@ -85,7 +85,7 @@ class ImageClassifier(ClassificationAdapterTask):
         metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-3,
         multi_label: bool = False,
-        serializer: SERIALIZER_TYPE = None,
+        output: OUTPUT_TYPE = None,
         training_strategy: Optional[str] = "default",
         training_strategy_kwargs: Optional[Dict[str, Any]] = None,
     ):
@@ -137,7 +137,7 @@ class ImageClassifier(ClassificationAdapterTask):
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
             multi_label=multi_label,
-            serializer=serializer or Labels(multi_label=multi_label),
+            output=output or Labels(multi_label=multi_label),
         )
 
     @classmethod

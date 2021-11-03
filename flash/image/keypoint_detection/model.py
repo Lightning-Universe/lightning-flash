@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional
 from flash.core.adapter import AdapterTask
 from flash.core.data.serialization import Preds
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE, SERIALIZER_TYPE
+from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 from flash.image.keypoint_detection.backbones import KEYPOINT_DETECTION_HEADS
 
 
@@ -59,7 +59,7 @@ class KeypointDetector(AdapterTask):
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         learning_rate: float = 5e-4,
-        serializer: SERIALIZER_TYPE = None,
+        output: OUTPUT_TYPE = None,
         **kwargs: Any,
     ):
         self.save_hyperparameters()
@@ -80,7 +80,7 @@ class KeypointDetector(AdapterTask):
             learning_rate=learning_rate,
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
-            serializer=serializer or Preds(),
+            output=output or Preds(),
         )
 
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]) -> None:

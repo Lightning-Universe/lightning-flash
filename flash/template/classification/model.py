@@ -19,7 +19,7 @@ from torch import nn
 from flash.core.classification import ClassificationTask, Labels
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, SERIALIZER_TYPE
+from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 from flash.template.classification.backbones import TEMPLATE_BACKBONES
 
 
@@ -40,7 +40,7 @@ class TemplateSKLearnClassifier(ClassificationTask):
             by the :class:`~flash.core.classification.ClassificationTask` depending on the ``multi_label`` argument.
         learning_rate: The learning rate for the optimizer.
         multi_label: If ``True``, this will be treated as a multi-label classification problem.
-        serializer: The :class:`~flash.core.data.process.Serializer` to use for prediction outputs.
+        output: The :class:`~flash.core.data.process.Output` to use for prediction outputs.
     """
 
     backbones: FlashRegistry = TEMPLATE_BACKBONES
@@ -57,7 +57,7 @@ class TemplateSKLearnClassifier(ClassificationTask):
         metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-2,
         multi_label: bool = False,
-        serializer: SERIALIZER_TYPE = None,
+        output: OUTPUT_TYPE = None,
     ):
         super().__init__(
             model=None,
@@ -67,7 +67,7 @@ class TemplateSKLearnClassifier(ClassificationTask):
             metrics=metrics,
             learning_rate=learning_rate,
             multi_label=multi_label,
-            serializer=serializer or Labels(),
+            output=output or Labels(),
         )
 
         self.save_hyperparameters()

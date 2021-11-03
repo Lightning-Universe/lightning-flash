@@ -24,12 +24,12 @@ from torchmetrics import IoU
 from flash.core.classification import ClassificationTask
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.process import Serializer
+from flash.core.data.io.output import Output
 from flash.core.data.states import CollateFn
 from flash.core.finetuning import BaseFinetuning
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
-from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, SERIALIZER_TYPE
+from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 from flash.pointcloud.segmentation.backbones import POINTCLOUD_SEGMENTATION_BACKBONES
 
 if _POINTCLOUD_AVAILABLE:
@@ -63,7 +63,7 @@ class PointCloudSegmentationFinetuning(BaseFinetuning):
         )
 
 
-class PointCloudSegmentationSerializer(Serializer):
+class PointCloudSegmentationOutput(Output):
     pass
 
 
@@ -84,7 +84,7 @@ class PointCloudSegmentation(ClassificationTask):
             by the :class:`~flash.core.classification.ClassificationTask` depending on the ``multi_label`` argument.
         learning_rate: The learning rate for the optimizer.
         multi_label: If ``True``, this will be treated as a multi-label classification problem.
-        serializer: The :class:`~flash.core.data.process.Serializer` to use for prediction outputs.
+        output: The :class:`~flash.core.data.process.Output` to use for prediction outputs.
     """
 
     backbones: FlashRegistry = POINTCLOUD_SEGMENTATION_BACKBONES
@@ -103,7 +103,7 @@ class PointCloudSegmentation(ClassificationTask):
         metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-2,
         multi_label: bool = False,
-        serializer: SERIALIZER_TYPE = PointCloudSegmentationSerializer(),
+        output: OUTPUT_TYPE = PointCloudSegmentationOutput(),
     ):
         import flash
 
@@ -118,7 +118,7 @@ class PointCloudSegmentation(ClassificationTask):
             metrics=metrics,
             learning_rate=learning_rate,
             multi_label=multi_label,
-            serializer=serializer,
+            output=output,
         )
 
         self.save_hyperparameters()

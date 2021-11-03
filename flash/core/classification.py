@@ -20,7 +20,7 @@ from pytorch_lightning.utilities import rank_zero_warn
 
 from flash.core.adapter import AdapterTask
 from flash.core.data.data_source import DefaultDataKeys, LabelsState
-from flash.core.data.process import Serializer
+from flash.core.data.io.output import Output
 from flash.core.model import Task
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 
@@ -68,7 +68,7 @@ class ClassificationTask(Task, ClassificationMixin):
         loss_fn: Optional[Callable] = None,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         multi_label: bool = False,
-        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
+        output: Optional[Union[Output, Mapping[str, Output]]] = None,
         **kwargs,
     ) -> None:
 
@@ -78,7 +78,7 @@ class ClassificationTask(Task, ClassificationMixin):
             *args,
             loss_fn=loss_fn,
             metrics=metrics,
-            serializer=serializer or Classes(multi_label=multi_label),
+            output=output or Classes(multi_label=multi_label),
             **kwargs,
         )
 
@@ -91,7 +91,7 @@ class ClassificationAdapterTask(AdapterTask, ClassificationMixin):
         loss_fn: Optional[Callable] = None,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         multi_label: bool = False,
-        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
+        output: Optional[Union[Output, Mapping[str, Output]]] = None,
         **kwargs,
     ) -> None:
 
@@ -101,13 +101,13 @@ class ClassificationAdapterTask(AdapterTask, ClassificationMixin):
             *args,
             loss_fn=loss_fn,
             metrics=metrics,
-            serializer=serializer or Classes(multi_label=multi_label),
+            output=output or Classes(multi_label=multi_label),
             **kwargs,
         )
 
 
-class ClassificationSerializer(Serializer):
-    """A base class for classification serializers.
+class ClassificationOutput(Output):
+    """A base class for classification outputs.
 
     Args:
         multi_label: If true, treats outputs as multi label logits.
@@ -123,12 +123,12 @@ class ClassificationSerializer(Serializer):
         return self._mutli_label
 
 
-class PredsClassificationSerializer(ClassificationSerializer):
-    """A :class:`~flash.core.classification.ClassificationSerializer` which gets the
+class PredsClassificationOutput(ClassificationOutput):
+    """A :class:`~flash.core.classification.ClassificationOutput` which gets the
     :attr:`~flash.core.data.data_source.DefaultDataKeys.PREDS` from the sample.
     """
 
-    def serialize(self, sample: Any) -> Any:
+    def transform(self, sample: Any) -> Any:
         if isinstance(sample, Mapping) and DefaultDataKeys.PREDS in sample:
             sample = sample[DefaultDataKeys.PREDS]
         if not isinstance(sample, torch.Tensor):
@@ -136,26 +136,26 @@ class PredsClassificationSerializer(ClassificationSerializer):
         return sample
 
 
-class Logits(PredsClassificationSerializer):
-    """A :class:`.Serializer` which simply converts the model outputs (assumed to be logits) to a list."""
+class Logits(PredsClassificationOutput):
+    """A :class:`.Output` which simply converts the model outputs (assumed to be logits) to a list."""
 
-    def serialize(self, sample: Any) -> Any:
-        return super().serialize(sample).tolist()
+    def transform(self, sample: Any) -> Any:
+        return super().transform(sample).tolist()
 
 
-class Probabilities(PredsClassificationSerializer):
-    """A :class:`.Serializer` which applies a softmax to the model outputs (assumed to be logits) and converts to a
+class Probabilities(PredsClassificationOutput):
+    """A :class:`.Output` which applies a softmax to the model outputs (assumed to be logits) and converts to a
     list."""
 
-    def serialize(self, sample: Any) -> Any:
-        sample = super().serialize(sample)
+    def transform(self, sample: Any) -> Any:
+        sample = super().transform(sample)
         if self.multi_label:
             return torch.sigmoid(sample).tolist()
         return torch.softmax(sample, -1).tolist()
 
 
-class Classes(PredsClassificationSerializer):
-    """A :class:`.Serializer` which applies an argmax to the model outputs (either logits or probabilities) and
+class Classes(PredsClassificationOutput):
+    """A :class:`.Output` which applies an argmax to the model outputs (either logits or probabilities) and
     converts to a list.
 
     Args:
@@ -168,8 +168,8 @@ class Classes(PredsClassificationSerializer):
 
         self.threshold = threshold
 
-    def serialize(self, sample: Any) -> Union[int, List[int]]:
-        sample = super().serialize(sample)
+    def transform(self, sample: Any) -> Union[int, List[int]]:
+        sample = super().transform(sample)
         if self.multi_label:
             one_hot = (sample.sigmoid() > self.threshold).int().tolist()
             result = []
@@ -181,7 +181,7 @@ class Classes(PredsClassificationSerializer):
 
 
 class Labels(Classes):
-    """A :class:`.Serializer` which converts the model outputs (either logits or probabilities) to the label of the
+    """A :class:`.Output` which converts the model outputs (either logits or probabilities) to the label of the
     argmax classification.
 
     Args:
@@ -198,7 +198,7 @@ class Labels(Classes):
         if labels is not None:
             self.set_state(LabelsState(labels))
 
-    def serialize(self, sample: Any) -> Union[int, List[int], str, List[str]]:
+    def transform(self, sample: Any) -> Union[int, List[int], str, List[str]]:
         labels = None
 
         if self._labels is not None:
@@ -208,18 +208,18 @@ class Labels(Classes):
             if state is not None:
                 labels = state.labels
 
-        classes = super().serialize(sample)
+        classes = super().transform(sample)
 
         if labels is not None:
             if self.multi_label:
                 return [labels[cls] for cls in classes]
             return labels[classes]
-        rank_zero_warn("No LabelsState was found, this serializer will act as a Classes serializer.", UserWarning)
+        rank_zero_warn("No LabelsState was found, this output will act as a Classes output.", UserWarning)
         return classes
 
 
-class FiftyOneLabels(ClassificationSerializer):
-    """A :class:`.Serializer` which converts the model outputs to FiftyOne classification format.
+class FiftyOneLabels(ClassificationOutput):
+    """A :class:`.Output` which converts the model outputs to FiftyOne classification format.
 
     Args:
         labels: A list of labels, assumed to map the class index to the label for that class. If ``labels`` is not
@@ -254,7 +254,7 @@ class FiftyOneLabels(ClassificationSerializer):
         if labels is not None:
             self.set_state(LabelsState(labels))
 
-    def serialize(
+    def transform(
         self,
         sample: Any,
     ) -> Union[Classification, Classifications, Dict[str, Any], Dict[str, Any]]:

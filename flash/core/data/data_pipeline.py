@@ -24,9 +24,10 @@ from pytorch_lightning.utilities.model_helpers import is_overridden
 from torch.utils.data import DataLoader, IterableDataset
 
 from flash.core.data.auto_dataset import IterableAutoDataset
-from flash.core.data.batch import _DeserializeProcessor, _Postprocessor, _Preprocessor, _Sequential, _SerializeProcessor
+from flash.core.data.batch import _DeserializeProcessor, _Postprocessor, _Preprocessor, _Sequential
 from flash.core.data.data_source import DataSource
-from flash.core.data.process import DefaultPreprocess, Deserializer, Postprocess, Preprocess, Serializer
+from flash.core.data.io.output import _OutputProcessor, Output
+from flash.core.data.process import DefaultPreprocess, Deserializer, Postprocess, Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.data.utils import _POSTPROCESS_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
 from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_4_3
@@ -87,26 +88,26 @@ class DataPipeline:
         preprocess: Optional[Preprocess] = None,
         postprocess: Optional[Postprocess] = None,
         deserializer: Optional[Deserializer] = None,
-        serializer: Optional[Serializer] = None,
+        output: Optional[Output] = None,
     ) -> None:
         self.data_source = data_source
 
         self._preprocess_pipeline = preprocess or DefaultPreprocess()
         self._postprocess_pipeline = postprocess or Postprocess()
-        self._serializer = serializer or Serializer()
+        self._output = output or Output()
         self._deserializer = deserializer or Deserializer()
         self._running_stage = None
 
     def initialize(self, data_pipeline_state: Optional[DataPipelineState] = None) -> DataPipelineState:
         """Creates the :class:`.DataPipelineState` and gives the reference to the: :class:`.Preprocess`,
-        :class:`.Postprocess`, and :class:`.Serializer`. Once this has been called, any attempt to add new state will
+        :class:`.Postprocess`, and :class:`.Output`. Once this has been called, any attempt to add new state will
         give a warning."""
         data_pipeline_state = data_pipeline_state or DataPipelineState()
         if self.data_source is not None:
             self.data_source.attach_data_pipeline_state(data_pipeline_state)
         self._preprocess_pipeline.attach_data_pipeline_state(data_pipeline_state)
         self._postprocess_pipeline.attach_data_pipeline_state(data_pipeline_state)
-        self._serializer.attach_data_pipeline_state(data_pipeline_state)
+        self._output.attach_data_pipeline_state(data_pipeline_state)
         return data_pipeline_state
 
     @property
@@ -165,8 +166,8 @@ class DataPipeline:
     def postprocessor(self, running_stage: RunningStage, is_serving=False) -> _Postprocessor:
         return self._create_uncollate_postprocessors(running_stage, is_serving=is_serving)
 
-    def serialize_processor(self) -> _SerializeProcessor:
-        return _SerializeProcessor(self._serializer)
+    def output_processor(self) -> _OutputProcessor:
+        return _OutputProcessor(self._output)
 
     @classmethod
     def _resolve_function_hierarchy(
@@ -443,7 +444,7 @@ class DataPipeline:
             getattr(postprocess, func_names["uncollate"]),
             getattr(postprocess, func_names["per_batch_transform"]),
             getattr(postprocess, func_names["per_sample_transform"]),
-            serializer=None if is_serving else self._serializer,
+            output=None if is_serving else self._output,
             save_fn=save_fn,
             save_per_sample=save_per_sample,
             is_serving=is_serving,
@@ -556,7 +557,7 @@ class DataPipeline:
         data_source: DataSource = self.data_source
         preprocess: Preprocess = self._preprocess_pipeline
         postprocess: Postprocess = self._postprocess_pipeline
-        serializer: Serializer = self._serializer
+        output: Output = self._output
         deserializer: Deserializer = self._deserializer
         return (
             f"{self.__class__.__name__}("
@@ -564,7 +565,7 @@ class DataPipeline:
             f"deserializer={deserializer}, "
             f"preprocess={preprocess}, "
             f"postprocess={postprocess}, "
-            f"serializer={serializer})"
+            f"output={output})"
         )
 
 

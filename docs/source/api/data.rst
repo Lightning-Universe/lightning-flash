@@ -114,8 +114,8 @@ _______________________
     ~flash.core.data.process.Deserializer
     ~flash.core.data.process.Postprocess
     ~flash.core.data.process.Preprocess
-    ~flash.core.data.process.SerializerMapping
-    ~flash.core.data.process.Serializer
+    ~flash.core.data.process.OutputMapping
+    ~flash.core.data.process.Output
 
 flash.core.data.properties
 __________________________

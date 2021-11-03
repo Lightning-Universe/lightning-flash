@@ -42,22 +42,22 @@ class TestFiftyOneDetectionLabels:
             },
         }
 
-        detections = serial.serialize(sample)
+        detections = serial.transform(sample)
         assert len(detections.detections) == 1
         np.testing.assert_array_almost_equal(detections.detections[0].bounding_box, [0.2, 0.3, 0.2, 0.2])
         assert detections.detections[0].confidence == 0.5
         assert detections.detections[0].label == "0"
 
-        detections = filepath_serial.serialize(sample)
+        detections = filepath_serial.transform(sample)
         assert len(detections["predictions"].detections) == 1
         np.testing.assert_array_almost_equal(detections["predictions"].detections[0].bounding_box, [0.2, 0.3, 0.2, 0.2])
         assert detections["predictions"].detections[0].confidence == 0.5
         assert detections["filepath"] == "something"
 
-        detections = threshold_serial.serialize(sample)
+        detections = threshold_serial.transform(sample)
         assert len(detections.detections) == 0
 
-        detections = labels_serial.serialize(sample)
+        detections = labels_serial.transform(sample)
         assert len(detections.detections) == 1
         np.testing.assert_array_almost_equal(detections.detections[0].bounding_box, [0.2, 0.3, 0.2, 0.2])
         assert detections.detections[0].confidence == 0.5

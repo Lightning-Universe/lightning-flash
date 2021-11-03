@@ -25,16 +25,16 @@ Add output serializers to your Task
 
 We recommend that you do most of the heavy lifting in the :class:`~flash.core.data.process.Postprocess`.
 Specifically, it should include any formatting and transforms that should always be applied to the predictions.
-If you want to support different use cases that require different prediction formats, you should add some :class:`~flash.core.data.process.Serializer` implementations in a ``serialization.py`` file.
+If you want to support different use cases that require different prediction formats, you should add some :class:`~flash.core.data.process.Output` implementations in a ``serialization.py`` file.
 
 Some good examples are in `flash/core/classification.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash/core/classification.py>`_.
-Here's the :class:`~flash.core.classification.Classes` :class:`~flash.core.data.process.Serializer`:
+Here's the :class:`~flash.core.classification.Classes` :class:`~flash.core.data.process.Output`:
 
 .. literalinclude:: ../../../flash/core/classification.py
     :language: python
     :pyobject: Classes
 
-Alternatively, here's the :class:`~flash.core.classification.Logits` :class:`~flash.core.data.process.Serializer`:
+Alternatively, here's the :class:`~flash.core.classification.Logits` :class:`~flash.core.data.process.Output`:
 
 .. literalinclude:: ../../../flash/core/classification.py
     :language: python
