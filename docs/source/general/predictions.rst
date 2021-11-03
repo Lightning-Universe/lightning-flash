@@ -53,7 +53,7 @@ Predict on a csv file
 Serializing predictions
 =======================
 
-To change how predictions are serialized you can attach a :class:`~flash.core.data.process.Output` to your
+To change how predictions are serialized you can attach a :class:`~flash.core.data.io.output.Output` to your
 :class:`~flash.core.model.Task`. For example, you can choose to serialize outputs as probabilities (for more options see the API
 reference below).
 
