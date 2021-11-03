@@ -20,16 +20,16 @@ ______________
     ~classification.model.TextClassifier
     ~classification.data.TextClassificationData
 
+    data.TextDeserializer
     classification.data.TextClassificationPostprocess
     classification.data.TextClassificationPreprocess
-    classification.data.TextDeserializer
-    classification.data.TextDataSource
-    classification.data.TextCSVDataSource
-    classification.data.TextJSONDataSource
-    classification.data.TextDataFrameDataSource
-    classification.data.TextParquetDataSource
-    classification.data.TextHuggingFaceDatasetDataSource
-    classification.data.TextListDataSource
+    classification.data.TextClassificationDataSource
+    classification.data.TextClassificationCSVDataSource
+    classification.data.TextClassificationJSONDataSource
+    classification.data.TextClassificationDataFrameDataSource
+    classification.data.TextClassificationParquetDataSource
+    classification.data.TextClassificationHuggingFaceDatasetDataSource
+    classification.data.TextClassificationListDataSource
 
 Question Answering
 __________________
@@ -87,18 +87,20 @@ _______________
     :nosignatures:
     :template: classtemplate.rst
 
-    ~seq2seq.core.model.Seq2SeqTask
-    ~seq2seq.core.data.Seq2SeqData
-    ~seq2seq.core.finetuning.Seq2SeqFreezeEmbeddings
+    ~seq2seq.model.Seq2SeqTask
+    ~seq2seq.data.Seq2SeqData
+    ~seq2seq.finetuning.Seq2SeqFreezeEmbeddings
 
-    seq2seq.core.data.Seq2SeqBackboneState
-    seq2seq.core.data.Seq2SeqCSVDataSource
-    seq2seq.core.data.Seq2SeqDataSource
-    seq2seq.core.data.Seq2SeqFileDataSource
-    seq2seq.core.data.Seq2SeqJSONDataSource
-    seq2seq.core.data.Seq2SeqPostprocess
-    seq2seq.core.data.Seq2SeqPreprocess
-    seq2seq.core.data.Seq2SeqSentencesDataSource
-    seq2seq.core.metrics.BLEUScore
-    seq2seq.core.metrics.RougeBatchAggregator
-    seq2seq.core.metrics.RougeMetric
+    seq2seq.data.Seq2SeqCSVDataSource
+    seq2seq.data.Seq2SeqJSONDataSource
+    seq2seq.data.Seq2SeqDataFrameDataSource
+    seq2seq.data.Seq2SeqParquetDataSource
+    seq2seq.data.Seq2SeqHuggingFaceDatasetDataSource
+    seq2seq.data.Seq2SeqListDataSource
+
+    seq2seq.data.Seq2SeqDataSource
+    seq2seq.data.Seq2SeqPostprocess
+    seq2seq.data.Seq2SeqPreprocess
+    seq2seq.metrics.BLEUScore
+    seq2seq.metrics.RougeBatchAggregator
+    seq2seq.metrics.RougeMetric
