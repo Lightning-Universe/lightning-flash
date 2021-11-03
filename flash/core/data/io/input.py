@@ -41,9 +41,9 @@ from pytorch_lightning.utilities.enums import LightningEnum
 from torch.utils.data.dataset import Dataset
 from tqdm import tqdm
 
+from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
 from flash.core.data.io.base_input import BaseInput, Input
 from flash.core.data.properties import ProcessState
-from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 from flash.core.utilities.stages import RunningStage
 
