@@ -63,16 +63,12 @@ trainer.fit(model, datamodule=datamodule)
 predictions = model.predict(data)
 print(predictions)
 
-# Convert predictions
+# Plot with PyTorch Forecasting!
 predictions, inputs = convert_predictions(predictions)
 
-# Plot predictions
-for idx in range(10):  # plot 10 examples
-    model.pytorch_forecasting_model.plot_prediction(inputs, predictions, idx=idx, add_loss_to_title=True)
+fig, axs = plt.subplots(2, 3, sharex="col")
 
-# Plot interpretation
-for idx in range(10):  # plot 10 examples
-    model.pytorch_forecasting_model.plot_interpretation(inputs, predictions, idx=idx)
+for idx in range(3):
+    model.pytorch_forecasting_model.plot_interpretation(inputs, predictions, idx=idx, ax=[axs[0][idx], axs[1][idx]])
 
-# Show the plots!
 plt.show()
