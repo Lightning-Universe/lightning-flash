@@ -14,9 +14,10 @@
 from functools import partial
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
+import torch
 from flash.core.data.data_pipeline import Postprocess
 from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources, LabelsState
-from flash.core.integrations.labelstudio.data_source import LabelStudioTextClassificationDataSource
+from flash.core.integrations.labelstudio.data_source import LabelStudioDataSource
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text.data import (
     TextCSVDataSourceMixin,
@@ -29,7 +30,8 @@ from flash.text.data import (
     TextParquetDataSourceMixin,
     TextPreprocess,
 )
-from flash.text.tokenizers.base import BaseTokenizer
+from flash.text.tokenizers import BaseTokenizer
+from flash.text.data import TokenizerState
 
 if _TEXT_AVAILABLE:
     from transformers.modeling_outputs import SequenceClassifierOutput
@@ -123,6 +125,30 @@ class TextClassificationListDataSource(TextClassificationDataSource, TextListDat
                 )
 
         return hf_dataset
+
+
+class LabelStudioTextClassificationDataSource(LabelStudioDataSource):
+    """The ``LabelStudioTextDataSource`` expects the input to
+    :meth:`~flash.core.data.data_source.DataSource.load_data` to be a json export from label studio.
+    Export data should point to text data
+    """
+
+    def __init__(self, tokenizer: BaseTokenizer):
+        super().__init__()
+        self.set_state(TokenizerState(tokenizer))
+
+    def load_sample(self, sample: Mapping[str, Any] = None, dataset: Optional[Any] = None) -> Any:
+        """Load 1 sample from dataset."""
+        data = ""
+        for key in sample.get("data"):
+            data += sample.get("data").get(key)
+        tokenized_data = self.get_state(TokenizerState).tokenizer(data)
+        for key in tokenized_data:
+            tokenized_data[key] = torch.tensor(tokenized_data[key])
+        tokenized_data["labels"] = self._get_labels_from_sample(sample["label"])
+        # separate text data type block
+        result = tokenized_data
+        return result
 
 
 class TextClassificationPreprocess(TextPreprocess):
