@@ -21,7 +21,18 @@ from flash.tabular import TabularRegressionData, TabularRegressor
 download_data("https://archive.ics.uci.edu/ml/machine-learning-databases/00560/SeoulBikeData.csv", "./data")
 
 datamodule = TabularRegressionData.from_csv(
-    categorical_fields=["Hour", "Temperature(�C)", "Humidity(%)", "Wind speed (m/s)", "Wind speed (m/s)", "Visibility (10m)", "Dew point temperature(�C)", "Solar Radiation (MJ/m2)", "Rainfall(mm)", "Snowfall (cm)"],
+    categorical_fields=[
+        "Hour",
+        "Temperature(�C)",
+        "Humidity(%)",
+        "Wind speed (m/s)",
+        "Wind speed (m/s)",
+        "Visibility (10m)",
+        "Dew point temperature(�C)",
+        "Solar Radiation (MJ/m2)",
+        "Rainfall(mm)",
+        "Snowfall (cm)",
+    ],
     numerical_fields=["Seasons", "Holiday", "Functioning Day"],
     target_fields="Rented Bike Count",
     train_file="data/SeoulBikeData.csv",
