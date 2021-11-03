@@ -1,5 +1,3 @@
-import pytorch_lightning as pl
-pl.seed_everything(42)
 # Copyright The PyTorch Lightning team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,9 +11,14 @@ pl.seed_everything(42)
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import pytorch_lightning as pl
+
 from flash import Trainer
 from flash.core.data.utils import download_data
 from flash.text import QuestionAnsweringData, QuestionAnsweringTask
+
+pl.seed_everything(42)
+
 
 # 1. Create the DataModule
 download_data("https://pl-flash-data.s3.amazonaws.com/squad_tiny.zip", "./data/")
