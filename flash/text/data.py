@@ -28,13 +28,13 @@ from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Deserializer, Preprocess, ProcessState
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
+from flash.text.tokenizers.base import BaseTokenizer
 
 if _TEXT_AVAILABLE:
     from datasets import Dataset, load_dataset
     from transformers import default_data_collator
 
     from flash.text.tokenizers import TEXT_CLASSIFIER_TOKENIZERS
-    from flash.text.tokenizers.base import BaseTokenizer
 
 
 class TextDeserializer(Deserializer):
