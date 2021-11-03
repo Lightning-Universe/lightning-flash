@@ -18,11 +18,11 @@ from typing import Any, Callable, Dict, List, Optional, Union
 import torch
 import torchmetrics
 
-from flash import Task
 from flash.core.adapter import Adapter
 from flash.core.data.batch import default_uncollate
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.states import CollateFn
+from flash.core.model import Task
 from flash.core.utilities.imports import _FORECASTING_AVAILABLE, _PANDAS_AVAILABLE
 
 if _PANDAS_AVAILABLE:
@@ -70,9 +70,9 @@ class PyTorchForecastingAdapter(Adapter):
         task: Task,
         parameters: Dict[str, Any],
         backbone: str,
+        backbone_kwargs: Optional[Dict[str, Any]] = None,
         loss_fn: Optional[Callable] = None,
         metrics: Optional[Union[torchmetrics.Metric, List[torchmetrics.Metric]]] = None,
-        **backbone_kwargs,
     ) -> Adapter:
         parameters = copy(parameters)
         # Remove the single row of data from the parameters to reconstruct the `time_series_dataset`
