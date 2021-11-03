@@ -28,7 +28,7 @@ from flash.text.data import (
     TextPreprocess,
     TokenizerState,
 )
-from flash.text.tokenizers.base import BaseTokenizer
+from flash.text.tokenizers import BaseTokenizer
 
 
 class Seq2SeqDataSource(TextDataSource):
@@ -104,6 +104,9 @@ class Seq2SeqPostprocess(Postprocess):
     @requires("text")
     def __init__(self):
         super().__init__()
+        # self.tokenizer = self.get_state(TokenizerState).tokenizer
+        # if not self.tokenizer:
+        #     self.tokenizer =
 
     def uncollate(self, generated_tokens: Any) -> Any:
         pred_str = self.get_state(TokenizerState).tokenizer.decode(generated_tokens, skip_special_tokens=True)

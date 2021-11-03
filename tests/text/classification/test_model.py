@@ -97,7 +97,7 @@ def test_serve():
     model = TextClassifier(2, TEST_BACKBONE)
     # TODO: Currently only servable once a preprocess and postprocess have been attached
     model._preprocess = TextClassificationPreprocess(backbone=TEST_BACKBONE)
-    model._preprocess = TextClassificationPostprocess()
+    model._postprocess = TextClassificationPostprocess()
     model.eval()
     model.serve()
 

@@ -62,6 +62,9 @@ class TextDataSource(DataSource):
     @requires("text")
     def __init__(self, tokenizer: BaseTokenizer):
         super().__init__()
+        # TODO: this needs to be set here because preprocessor owns the data_sources
+        # and has to initialize them before it can set the state
+        # once data_sources are separated from preprocess, this can be removed
         self.set_state(TokenizerState(tokenizer))
 
     def _tokenize_fn(
@@ -201,6 +204,8 @@ class TextPreprocess(Preprocess):
             default_data_source=DefaultDataSources.LISTS,
             deserializer=TextDeserializer(self.tokenizer),
         )
+
+        self.set_state(TokenizerState(self.tokenizer))
 
     def get_state_dict(self) -> Dict[str, Any]:
         return {**self.transforms}

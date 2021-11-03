@@ -77,7 +77,6 @@ def test_jit(tmpdir):
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = SummarizationTask(TEST_BACKBONE)
-    # TODO: Currently only servable once a preprocess and postprocess have been attached
     model._preprocess = SummarizationPreprocess(backbone=TEST_BACKBONE)
     model._postprocess = SummarizationPostprocess()
     model.eval()
