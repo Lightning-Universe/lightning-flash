@@ -18,7 +18,7 @@ from flash.core.data.io.output import Output
 
 
 class Preds(Output):
-    """A :class:`~flash.core.data.process.Output` which returns the "preds" from the model outputs."""
+    """A :class:`~flash.core.data.io.output.Output` which returns the "preds" from the model outputs."""
 
     def transform(self, sample: Any) -> Union[int, List[int]]:
         return sample.get(DefaultDataKeys.PREDS, sample) if isinstance(sample, dict) else sample

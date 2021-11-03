@@ -317,7 +317,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
             deserialize the input
         preprocess: :class:`~flash.core.data.process.Preprocess` to use as the default for this task.
         postprocess: :class:`~flash.core.data.process.Postprocess` to use as the default for this task.
-        output: Either a single :class:`~flash.core.data.process.Output` or a mapping of these to
+        output: Either a single :class:`~flash.core.data.io.output.Output` or a mapping of these to
             serialize the output e.g. convert the model output into the desired output format when predicting.
     """
 
@@ -571,21 +571,21 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         new_output: Optional[Output],
     ) -> Tuple[Optional[Deserializer], Optional[Preprocess], Optional[Postprocess], Optional[Output]]:
         """Resolves the correct :class:`~flash.core.data.process.Preprocess`, :class:`~flash.core.data.process.Postprocess`, and
-        :class:`~flash.core.data.process.Output` to use, choosing ``new_*`` if it is not None or a base class
+        :class:`~flash.core.data.io.output.Output` to use, choosing ``new_*`` if it is not None or a base class
         (:class:`~flash.core.data.process.Preprocess`, :class:`~flash.core.data.process.Postprocess`, or
-        :class:`~flash.core.data.process.Output`) and ``old_*`` otherwise.
+        :class:`~flash.core.data.io.output.Output`) and ``old_*`` otherwise.
 
         Args:
             old_preprocess: :class:`~flash.core.data.process.Preprocess` to be overridden.
             old_postprocess: :class:`~flash.core.data.process.Postprocess` to be overridden.
-            old_output: :class:`~flash.core.data.process.Output` to be overridden.
+            old_output: :class:`~flash.core.data.io.output.Output` to be overridden.
             new_preprocess: :class:`~flash.core.data.process.Preprocess` to override with.
             new_postprocess: :class:`~flash.core.data.process.Postprocess` to override with.
-            new_output: :class:`~flash.core.data.process.Output` to override with.
+            new_output: :class:`~flash.core.data.io.output.Output` to override with.
 
         Returns:
             The resolved :class:`~flash.core.data.process.Preprocess`, :class:`~flash.core.data.process.Postprocess`,
-            and :class:`~flash.core.data.process.Output`.
+            and :class:`~flash.core.data.io.output.Output`.
         """
         deserializer = old_deserializer
         if new_deserializer is not None and type(new_deserializer) != Deserializer:
