@@ -72,7 +72,7 @@ class TransformerTokenizer(BaseTokenizer):
         )
 
 
-def _trasformer_tokenizer(
+def _transformer_tokenizer(
     backbone: str = "prajjwal1/bert-tiny",
     pretrained: bool = True,
     **backbone_kwargs,
