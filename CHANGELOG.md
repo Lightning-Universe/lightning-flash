@@ -160,7 +160,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Added Video Classification task ([#216](https://github.com/PyTorchLightning/lightning-flash/pull/216))
 - Added Dino backbone for image classification ([#259](https://github.com/PyTorchLightning/lightning-flash/pull/259))
 - Added Data Sources API ([#256](https://github.com/PyTorchLightning/lightning-flash/pull/256) [#264](https://github.com/PyTorchLightning/lightning-flash/pull/264) [#272](https://github.com/PyTorchLightning/lightning-flash/pull/272))
-- Refactor preprocess_cls to preprocess, add Output, add DataPipelineState ([#229](https://github.com/PyTorchLightning/lightning-flash/pull/229))
+- Refactor preprocess_cls to preprocess, add Serializer, add DataPipelineState ([#229](https://github.com/PyTorchLightning/lightning-flash/pull/229))
 - Added Semantic Segmentation task ([#239](https://github.com/PyTorchLightning/lightning-flash/pull/239) [#287](https://github.com/PyTorchLightning/lightning-flash/pull/287) [#290](https://github.com/PyTorchLightning/lightning-flash/pull/290))
 - Added Object detection prediction example ([#283](https://github.com/PyTorchLightning/lightning-flash/pull/283))
 - Added Style Transfer task and accompanying finetuning and prediction examples ([#262](https://github.com/PyTorchLightning/lightning-flash/pull/262))
@@ -169,7 +169,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Rename valid_ to val_ ([#197](https://github.com/PyTorchLightning/lightning-flash/pull/197))
-- Refactor preprocess_cls to preprocess, add Output, add DataPipelineState ([#229](https://github.com/PyTorchLightning/lightning-flash/pull/229))
+- Refactor preprocess_cls to preprocess, add Serializer, add DataPipelineState ([#229](https://github.com/PyTorchLightning/lightning-flash/pull/229))
 
 ### Fixed
 
