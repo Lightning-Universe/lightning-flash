@@ -71,11 +71,7 @@ class BaseSpeechRecognition:
     @staticmethod
     def _load_sample(sample: Dict[str, Any], sampling_rate: int) -> Any:
         path = sample[InputDataKeys.INPUT]
-        if (
-            not os.path.isabs(path)
-            and InputDataKeys.METADATA in sample
-            and "root" in sample[InputDataKeys.METADATA]
-        ):
+        if not os.path.isabs(path) and InputDataKeys.METADATA in sample and "root" in sample[InputDataKeys.METADATA]:
             path = os.path.join(sample[InputDataKeys.METADATA]["root"], path)
         speech_array, sampling_rate = librosa.load(path, sr=sampling_rate)
         sample[InputDataKeys.INPUT] = speech_array

@@ -22,9 +22,9 @@ import torch
 
 import flash
 from flash.core.data.io.input import (
-    InputDataKeys,
     FiftyOneInput,
     has_file_allowed_extension,
+    InputDataKeys,
     NumpyInput,
     PathsInput,
     TensorInput,

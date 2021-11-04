@@ -286,9 +286,9 @@ class Input(Generic[DATA_TYPE], Properties, Module):
         predict_data: Optional[DATA_TYPE] = None,
     ) -> Tuple[Optional[BaseAutoDataset], ...]:
         """Construct data sets (of type :class:`~flash.core.data.auto_dataset.BaseAutoDataset`) from this data
-        source by calling :meth:`~flash.core.data.io.input.Input.load_data` with each of the ``*_data``
-        arguments. If an argument is given as ``None`` then no dataset will be created for that stage (``train``,
-        ``val``, ``test``, ``predict``).
+        source by calling :meth:`~flash.core.data.io.input.Input.load_data` with each of the ``*_data`` arguments.
+        If an argument is given as ``None`` then no dataset will be created for that stage (``train``, ``val``,
+        ``test``, ``predict``).
 
         Args:
             train_data: The input to :meth:`~flash.core.data.io.input.Input.load_data` to use to create the
@@ -335,9 +335,7 @@ class Input(Generic[DATA_TYPE], Properties, Module):
 
             mock_dataset = typing.cast(AutoDataset, MockDataset())
             with CurrentRunningStageFuncContext(running_stage, "load_data", self):
-                resolved_func_name = DataPipeline._resolve_function_hierarchy(
-                    "load_data", self, running_stage, Input
-                )
+                resolved_func_name = DataPipeline._resolve_function_hierarchy("load_data", self, running_stage, Input)
                 load_data: Callable[[DATA_TYPE, Optional[Any]], Any] = getattr(self, resolved_func_name)
                 parameters = signature(load_data).parameters
                 if len(parameters) > 1 and "dataset" in parameters:  # TODO: This was DATASET_KEY before
@@ -401,9 +399,7 @@ class SequenceInput(
         inputs, targets = data
         if targets is None:
             return self.predict_load_data(data)
-        return [
-            {InputDataKeys.INPUT: input, InputDataKeys.TARGET: target} for input, target in zip(inputs, targets)
-        ]
+        return [{InputDataKeys.INPUT: input, InputDataKeys.TARGET: target} for input, target in zip(inputs, targets)]
 
     @staticmethod
     def predict_load_data(data: Sequence[SEQUENCE_DATA_TYPE]) -> Sequence[Mapping[str, Any]]:
@@ -509,9 +505,7 @@ class PathsInput(SequenceInput):
         return sample
 
 
-class LoaderDataFrameInput(
-    Input[Tuple[pd.DataFrame, str, Union[str, List[str]], Optional[str], Optional[str]]]
-):
+class LoaderDataFrameInput(Input[Tuple[pd.DataFrame, str, Union[str, List[str]], Optional[str], Optional[str]]]):
     def __init__(self, loader: Callable[[str], Any]):
         super().__init__()
 

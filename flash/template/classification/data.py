@@ -154,9 +154,9 @@ class TemplateData(DataModule):
     """Creating our :class:`~flash.core.data.data_module.DataModule` is as easy as setting the
     ``input_transform_cls`` attribute.
 
-    We get the ``from_numpy`` method for free as we've configured a ``InputFormat.NUMPY`` data source. We'll also
-    add a ``from_sklearn`` method so that we can use our ``TemplateSKLearnInput. Finally, we define the
-    ``num_features`` property for convenience.
+    We get the ``from_numpy`` method for free as we've configured a ``InputFormat.NUMPY`` data source. We'll also add a
+    ``from_sklearn`` method so that we can use our ``TemplateSKLearnInput. Finally, we define the ``num_features``
+    property for convenience.
     """
 
     input_transform_cls = TemplateInputTransform

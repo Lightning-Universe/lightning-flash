@@ -90,9 +90,7 @@ if _POINTCLOUD_AVAILABLE:
                     self._Input_combobox.selected_text = "points"
 
                 self._dont_update_geometry = True
-                self._on_Input_changed(
-                    self._Input_combobox.selected_text, self._Input_combobox.selected_index
-                )
+                self._on_Input_changed(self._Input_combobox.selected_text, self._Input_combobox.selected_index)
                 self._update_geometry_colors()
                 self._dont_update_geometry = False
                 # _Input_combobox was empty, now isn't, re-layout.

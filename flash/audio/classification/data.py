@@ -17,9 +17,9 @@ import numpy as np
 
 from flash.audio.classification.transforms import default_transforms, train_default_transforms
 from flash.core.data.io.input import (
+    has_file_allowed_extension,
     InputDataKeys,
     InputFormat,
-    has_file_allowed_extension,
     LoaderDataFrameInput,
     NumpyInput,
     PathsInput,
