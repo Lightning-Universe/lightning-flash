@@ -23,7 +23,7 @@ from torchmetrics import IoU
 
 from flash.core.classification import ClassificationTask
 from flash.core.data.auto_dataset import BaseAutoDataset
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import InputDataKeys
 from flash.core.data.io.output import Output
 from flash.core.data.states import CollateFn
 from flash.core.finetuning import BaseFinetuning
@@ -149,22 +149,22 @@ class PointCloudSegmentation(ClassificationTask):
         return x.reshape(-1, x.shape[-1])
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.INPUT]["labels"].view(-1))
+        batch = (batch[InputDataKeys.INPUT], batch[InputDataKeys.INPUT]["labels"].view(-1))
         return super().training_step(batch, batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.INPUT]["labels"].view(-1))
+        batch = (batch[InputDataKeys.INPUT], batch[InputDataKeys.INPUT]["labels"].view(-1))
         return super().validation_step(batch, batch_idx)
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.INPUT]["labels"].view(-1))
+        batch = (batch[InputDataKeys.INPUT], batch[InputDataKeys.INPUT]["labels"].view(-1))
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch[DefaultDataKeys.PREDS] = self(batch[DefaultDataKeys.INPUT])
-        batch[DefaultDataKeys.TARGET] = batch[DefaultDataKeys.INPUT]["labels"]
+        batch[InputDataKeys.PREDS] = self(batch[InputDataKeys.INPUT])
+        batch[InputDataKeys.TARGET] = batch[InputDataKeys.INPUT]["labels"]
         # drop sub-sampled pointclouds
-        batch[DefaultDataKeys.INPUT] = batch[DefaultDataKeys.INPUT]["xyz"][0]
+        batch[InputDataKeys.INPUT] = batch[InputDataKeys.INPUT]["xyz"][0]
         return batch
 
     def forward(self, x) -> torch.Tensor:

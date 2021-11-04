@@ -19,7 +19,7 @@ from torch.nn import functional as F
 from torchmetrics import IoU
 
 from flash.core.classification import ClassificationTask
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import InputDataKeys
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _KORNIA_AVAILABLE
@@ -42,9 +42,9 @@ if _KORNIA_AVAILABLE:
 
 class SemanticSegmentationOutputTransform(OutputTransform):
     def per_sample_transform(self, sample: Any) -> Any:
-        resize = K.geometry.Resize(sample[DefaultDataKeys.METADATA]["size"][-2:], interpolation="bilinear")
-        sample[DefaultDataKeys.PREDS] = resize(sample[DefaultDataKeys.PREDS])
-        sample[DefaultDataKeys.INPUT] = resize(sample[DefaultDataKeys.INPUT])
+        resize = K.geometry.Resize(sample[InputDataKeys.METADATA]["size"][-2:], interpolation="bilinear")
+        sample[InputDataKeys.PREDS] = resize(sample[InputDataKeys.PREDS])
+        sample[InputDataKeys.INPUT] = resize(sample[InputDataKeys.INPUT])
         return super().per_sample_transform(sample)
 
 
@@ -137,20 +137,20 @@ class SemanticSegmentation(ClassificationTask):
         self.backbone = self.head.encoder
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        batch = (batch[InputDataKeys.INPUT], batch[InputDataKeys.TARGET])
         return super().training_step(batch, batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        batch = (batch[InputDataKeys.INPUT], batch[InputDataKeys.TARGET])
         return super().validation_step(batch, batch_idx)
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        batch = (batch[InputDataKeys.INPUT], batch[InputDataKeys.TARGET])
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch_input = batch[DefaultDataKeys.INPUT]
-        batch[DefaultDataKeys.PREDS] = super().predict_step(batch_input, batch_idx, dataloader_idx=dataloader_idx)
+        batch_input = batch[InputDataKeys.INPUT]
+        batch[InputDataKeys.PREDS] = super().predict_step(batch_input, batch_idx, dataloader_idx=dataloader_idx)
         return batch
 
     def forward(self, x) -> torch.Tensor:

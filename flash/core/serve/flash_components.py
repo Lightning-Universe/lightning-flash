@@ -3,7 +3,7 @@ from typing import Any, Callable, Mapping
 
 import torch
 
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import InputDataKeys
 from flash.core.serve import expose, ModelComponent
 from flash.core.serve.types.base import BaseType
 from flash.core.utilities.stages import RunningStage
@@ -36,7 +36,7 @@ class FlashOutputs(BaseType):
             for output in outputs:
                 result = self._output(output)
                 if isinstance(result, Mapping):
-                    result = result[DefaultDataKeys.PREDS]
+                    result = result[InputDataKeys.PREDS]
                 results.append(result)
         if len(results) == 1:
             return results[0]

@@ -19,7 +19,7 @@ import torch
 
 from flash import Trainer
 from flash.core.data.data_pipeline import DataPipeline
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import InputDataKeys
 from flash.core.utilities.imports import _SKLEARN_AVAILABLE
 from flash.template import TemplateSKLearnClassifier
 from flash.template.classification.data import TemplateInputTransform
@@ -38,8 +38,8 @@ class DummyDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         return {
-            DefaultDataKeys.INPUT: torch.randn(self.num_features),
-            DefaultDataKeys.TARGET: torch.randint(self.num_classes - 1, (1,))[0],
+            InputDataKeys.INPUT: torch.randn(self.num_features),
+            InputDataKeys.TARGET: torch.randint(self.num_classes - 1, (1,))[0],
         }
 
     def __len__(self) -> int:

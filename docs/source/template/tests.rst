@@ -36,7 +36,7 @@ test_data.py
 
 The most important tests in `test_data.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/tests/template/classification/test_data.py>`_ check that the ``from_*`` methods work correctly.
 In the class ``TestTemplateData``, we have two of these: ``test_from_numpy`` and ``test_from_sklearn``.
-In general, there should be one ``test_from_*`` method for each :class:`~flash.core.data.data_source` you have configured.
+In general, there should be one ``test_from_*`` method for each :class:`~flash.core.data.io.input` you have configured.
 
 Here's the code for ``test_from_numpy``:
 
@@ -76,7 +76,7 @@ These tests are very similar to ``test_train``, but here they are for completene
 
 We also include tests for prediction named ``test_predict_*`` for each of our data sources.
 In our case, we have ``test_predict_numpy`` and ``test_predict_sklearn``.
-These tests should use the ``data_source`` argument to :meth:`~flash.core.model.Task.predict` to select the required :class:`~flash.core.data.DataSource`.
+These tests should use the ``data_source`` argument to :meth:`~flash.core.model.Task.predict` to select the required :class:`~flash.core.data.Input`.
 Here's ``test_predict_sklearn`` as an example:
 
 .. literalinclude:: ../../../tests/template/classification/test_model.py

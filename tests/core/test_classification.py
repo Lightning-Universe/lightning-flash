@@ -15,7 +15,7 @@ import pytest
 import torch
 
 from flash.core.classification import Classes, FiftyOneLabels, Labels, Logits, Probabilities
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import InputDataKeys
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE
 
 
@@ -47,7 +47,7 @@ def test_classification_outputs_multi_label():
 def test_classification_outputs_fiftyone():
 
     logits = torch.tensor([-0.1, 0.2, 0.3])
-    example_output = {DefaultDataKeys.PREDS: logits, DefaultDataKeys.METADATA: {"filepath": "something"}}  # 3 classes
+    example_output = {InputDataKeys.PREDS: logits, InputDataKeys.METADATA: {"filepath": "something"}}  # 3 classes
     labels = ["class_1", "class_2", "class_3"]
 
     predictions = FiftyOneLabels(return_filepath=True).transform(example_output)

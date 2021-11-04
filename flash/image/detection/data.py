@@ -15,9 +15,9 @@ from typing import Any, Callable, Dict, Hashable, Optional, Sequence, Tuple, TYP
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources, FiftyOneDataSource
+from flash.core.data.io.input import InputDataKeys, InputFormat, FiftyOneInput
 from flash.core.data.io.input_transform import InputTransform
-from flash.core.integrations.icevision.data import IceVisionParserDataSource, IceVisionPathsDataSource
+from flash.core.integrations.icevision.data import IceVisionParserInput, IceVisionPathsInput
 from flash.core.integrations.icevision.transforms import default_transforms
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _ICEVISION_AVAILABLE, lazy_import, requires
 
@@ -103,7 +103,7 @@ class FiftyOneParser(Parser):
         return output_bbox
 
 
-class ObjectDetectionFiftyOneDataSource(IceVisionPathsDataSource, FiftyOneDataSource):
+class ObjectDetectionFiftyOneInput(IceVisionPathsInput, FiftyOneInput):
     def __init__(self, label_field: str = "ground_truth", iscrowd: str = "iscrowd"):
         super().__init__()
         self.label_field = label_field
@@ -125,12 +125,12 @@ class ObjectDetectionFiftyOneDataSource(IceVisionPathsDataSource, FiftyOneDataSo
 
         parser = FiftyOneParser(data, class_map, self.label_field, self.iscrowd)
         records = parser.parse(data_splitter=SingleSplitSplitter())
-        return [{DefaultDataKeys.INPUT: record} for record in records[0]]
+        return [{InputDataKeys.INPUT: record} for record in records[0]]
 
     @staticmethod
     @requires("fiftyone")
     def predict_load_data(data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Dict[str, Any]]:
-        return [{DefaultDataKeys.INPUT: f} for f in data.values("filepath")]
+        return [{InputDataKeys.INPUT: f} for f in data.values("filepath")]
 
 
 class ObjectDetectionInputTransform(InputTransform):
@@ -152,14 +152,14 @@ class ObjectDetectionInputTransform(InputTransform):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                "coco": IceVisionParserDataSource(parser=COCOBBoxParser),
-                "via": IceVisionParserDataSource(parser=VIABBoxParser),
-                "voc": IceVisionParserDataSource(parser=VOCBBoxParser),
-                DefaultDataSources.FILES: IceVisionPathsDataSource(),
-                DefaultDataSources.FOLDERS: IceVisionParserDataSource(parser=parser),
-                DefaultDataSources.FIFTYONE: ObjectDetectionFiftyOneDataSource(**data_source_kwargs),
+                "coco": IceVisionParserInput(parser=COCOBBoxParser),
+                "via": IceVisionParserInput(parser=VIABBoxParser),
+                "voc": IceVisionParserInput(parser=VOCBBoxParser),
+                InputFormat.FILES: IceVisionPathsInput(),
+                InputFormat.FOLDERS: IceVisionParserInput(parser=parser),
+                InputFormat.FIFTYONE: ObjectDetectionFiftyOneInput(**data_source_kwargs),
             },
-            default_data_source=DefaultDataSources.FILES,
+            default_data_source=InputFormat.FILES,
         )
 
         self._default_collate = self._identity

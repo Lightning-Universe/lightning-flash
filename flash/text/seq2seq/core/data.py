@@ -20,7 +20,7 @@ from torch import Tensor
 
 import flash
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DataSource, DefaultDataSources
+from flash.core.data.io.input import Input, InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.properties import ProcessState
@@ -33,7 +33,7 @@ if _TEXT_AVAILABLE:
     from transformers import AutoTokenizer, default_data_collator
 
 
-class Seq2SeqDataSource(DataSource):
+class Seq2SeqInput(Input):
     @requires("text")
     def __init__(
         self,
@@ -94,7 +94,7 @@ class Seq2SeqDataSource(DataSource):
         self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True, **self.backbone_kwargs)
 
 
-class Seq2SeqFileDataSource(Seq2SeqDataSource):
+class Seq2SeqFileInput(Seq2SeqInput):
     def __init__(
         self,
         filetype: str,
@@ -162,7 +162,7 @@ class Seq2SeqFileDataSource(Seq2SeqDataSource):
         self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True, **self.backbone_kwargs)
 
 
-class Seq2SeqCSVDataSource(Seq2SeqFileDataSource):
+class Seq2SeqCSVInput(Seq2SeqFileInput):
     def __init__(
         self,
         backbone: str,
@@ -190,7 +190,7 @@ class Seq2SeqCSVDataSource(Seq2SeqFileDataSource):
         self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True, **self.backbone_kwargs)
 
 
-class Seq2SeqJSONDataSource(Seq2SeqFileDataSource):
+class Seq2SeqJSONInput(Seq2SeqFileInput):
     def __init__(
         self,
         backbone: str,
@@ -218,7 +218,7 @@ class Seq2SeqJSONDataSource(Seq2SeqFileDataSource):
         self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True, **self.backbone_kwargs)
 
 
-class Seq2SeqSentencesDataSource(Seq2SeqDataSource):
+class Seq2SeqSentencesInput(Seq2SeqInput):
     def load_data(
         self,
         data: Union[str, List[str]],
@@ -274,21 +274,21 @@ class Seq2SeqInputTransform(InputTransform):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.CSV: Seq2SeqCSVDataSource(
+                InputFormat.CSV: Seq2SeqCSVInput(
                     self.backbone,
                     max_source_length=max_source_length,
                     max_target_length=max_target_length,
                     padding=padding,
                     **backbone_kwargs,
                 ),
-                DefaultDataSources.JSON: Seq2SeqJSONDataSource(
+                InputFormat.JSON: Seq2SeqJSONInput(
                     self.backbone,
                     max_source_length=max_source_length,
                     max_target_length=max_target_length,
                     padding=padding,
                     **backbone_kwargs,
                 ),
-                "sentences": Seq2SeqSentencesDataSource(
+                "sentences": Seq2SeqSentencesInput(
                     self.backbone,
                     max_source_length=max_source_length,
                     max_target_length=max_target_length,

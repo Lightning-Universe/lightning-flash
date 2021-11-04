@@ -29,7 +29,7 @@ from torch.utils.data import DataLoader, IterableDataset, Sampler
 import flash
 from flash.core.adapter import Adapter, AdapterTask
 from flash.core.data.auto_dataset import BaseAutoDataset
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import InputDataKeys
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.compatibility import accelerator_connector
@@ -53,7 +53,7 @@ else:
 class RemapLabels(Learn2LearnRemapLabels):
     def remap(self, data, mapping):
         # remap needs to be adapted to Flash API.
-        data[DefaultDataKeys.TARGET] = mapping(data[DefaultDataKeys.TARGET])
+        data[InputDataKeys.TARGET] = mapping(data[InputDataKeys.TARGET])
         return data
 
 
@@ -208,7 +208,7 @@ class Learn2LearnAdapter(Adapter):
     def _labels_to_indices(data):
         out = defaultdict(list)
         for idx, sample in enumerate(data):
-            label = sample[DefaultDataKeys.TARGET]
+            label = sample[InputDataKeys.TARGET]
             if torch.is_tensor(label):
                 label = label.item()
             out[label].append(idx)
@@ -312,25 +312,25 @@ class Learn2LearnAdapter(Adapter):
         return cls(task, backbone, head, algorithm, **kwargs)
 
     def training_step(self, batch, batch_idx) -> Any:
-        input = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        input = (batch[InputDataKeys.INPUT], batch[InputDataKeys.TARGET])
         return self.model.training_step(input, batch_idx)
 
     def validation_step(self, batch, batch_idx):
         # Should be True only for trainer.validate
         if self.trainer.state.fn == TrainerFn.VALIDATING:
             self._algorithm_has_validated = True
-        input = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        input = (batch[InputDataKeys.INPUT], batch[InputDataKeys.TARGET])
         return self.model.validation_step(input, batch_idx)
 
     def validation_epoch_end(self, outpus: Any):
         self.model.validation_epoch_end(outpus)
 
     def test_step(self, batch, batch_idx):
-        input = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        input = (batch[InputDataKeys.INPUT], batch[InputDataKeys.TARGET])
         return self.model.test_step(input, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        return self.model.predict_step(batch[DefaultDataKeys.INPUT], batch_idx, dataloader_idx=dataloader_idx)
+        return self.model.predict_step(batch[InputDataKeys.INPUT], batch_idx, dataloader_idx=dataloader_idx)
 
     def _sanetize_batch_size(self, batch_size: int) -> int:
         if batch_size != 1:
@@ -506,20 +506,20 @@ class DefaultAdapter(Adapter):
         return cls(task, backbone, head)
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        batch = (batch[InputDataKeys.INPUT], batch[InputDataKeys.TARGET])
         return Task.training_step(self._task.task, batch, batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        batch = (batch[InputDataKeys.INPUT], batch[InputDataKeys.TARGET])
         return Task.validation_step(self._task.task, batch, batch_idx)
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        batch = (batch[InputDataKeys.INPUT], batch[InputDataKeys.TARGET])
         return Task.test_step(self._task.task, batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch[DefaultDataKeys.PREDS] = Task.predict_step(
-            self._task.task, (batch[DefaultDataKeys.INPUT]), batch_idx, dataloader_idx=dataloader_idx
+        batch[InputDataKeys.PREDS] = Task.predict_step(
+            self._task.task, (batch[InputDataKeys.INPUT]), batch_idx, dataloader_idx=dataloader_idx
         )
         return batch
 

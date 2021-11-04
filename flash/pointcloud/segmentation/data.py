@@ -1,14 +1,14 @@
 from typing import Any, Callable, Dict, Optional, Tuple
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
+from flash.core.data.io.input import Input, InputDataKeys, InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.process import Deserializer
 from flash.core.utilities.imports import requires
 from flash.pointcloud.segmentation.open3d_ml.sequences_dataset import SequencesDataset
 
 
-class PointCloudSegmentationDatasetDataSource(DataSource):
+class PointCloudSegmentationDatasetInput(Input):
     def load_data(
         self,
         data: Any,
@@ -25,12 +25,12 @@ class PointCloudSegmentationDatasetDataSource(DataSource):
         sample = dataset.dataset[index]
 
         return {
-            DefaultDataKeys.INPUT: sample["data"],
-            DefaultDataKeys.METADATA: sample["attr"],
+            InputDataKeys.INPUT: sample["data"],
+            InputDataKeys.METADATA: sample["attr"],
         }
 
 
-class PointCloudSegmentationFoldersDataSource(DataSource):
+class PointCloudSegmentationFoldersInput(Input):
     @requires("pointcloud")
     def load_data(
         self,
@@ -48,8 +48,8 @@ class PointCloudSegmentationFoldersDataSource(DataSource):
         sample = dataset.dataset[index]
 
         return {
-            DefaultDataKeys.INPUT: sample["data"],
-            DefaultDataKeys.METADATA: sample["attr"],
+            InputDataKeys.INPUT: sample["data"],
+            InputDataKeys.METADATA: sample["attr"],
         }
 
 
@@ -71,11 +71,11 @@ class PointCloudSegmentationInputTransform(InputTransform):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.DATASETS: PointCloudSegmentationDatasetDataSource(),
-                DefaultDataSources.FOLDERS: PointCloudSegmentationFoldersDataSource(),
+                InputFormat.DATASETS: PointCloudSegmentationDatasetInput(),
+                InputFormat.FOLDERS: PointCloudSegmentationFoldersInput(),
             },
             deserializer=deserializer,
-            default_data_source=DefaultDataSources.FOLDERS,
+            default_data_source=InputFormat.FOLDERS,
         )
 
     def get_state_dict(self):

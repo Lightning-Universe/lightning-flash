@@ -24,15 +24,15 @@ DATA_TYPE = TypeVar("DATA_TYPE")
 
 
 class BaseAutoDataset(Generic[DATA_TYPE]):
-    """The ``BaseAutoDataset`` class wraps the output of a call to :meth:`~flash.core.data.data_source.DataSource.load_data`
-    and a :class:`~fash.data.data_source.DataSource` and provides the ``_call_load_sample`` method to call
-    :meth:`~flash.core.data.data_source.DataSource.load_sample` with the correct
+    """The ``BaseAutoDataset`` class wraps the output of a call to :meth:`~flash.core.data.io.input.Input.load_data`
+    and a :class:`~fash.data.data_source.Input` and provides the ``_call_load_sample`` method to call
+    :meth:`~flash.core.data.io.input.Input.load_sample` with the correct
     :class:`~flash.core.data.utils.CurrentRunningStageFuncContext` for the current ``running_stage``.
     Inheriting classes are responsible for extracting samples from ``data`` to be given to ``_call_load_sample``.
 
     Args:
-        data: The output of a call to :meth:`~flash.core.data.data_source.DataSource.load_data`.
-        data_source: The :class:`~flash.core.data.data_source.DataSource` which has the ``load_sample`` method.
+        data: The output of a call to :meth:`~flash.core.data.io.input.Input.load_data`.
+        data_source: The :class:`~flash.core.data.io.input.Input` which has the ``load_sample`` method.
         running_stage: The current running stage.
     """
 
@@ -41,7 +41,7 @@ class BaseAutoDataset(Generic[DATA_TYPE]):
     def __init__(
         self,
         data: DATA_TYPE,
-        data_source: "flash.core.data.data_source.DataSource",
+        data_source: "flash.core.data.io.input.Input",
         running_stage: RunningStage,
     ) -> None:
         super().__init__()
@@ -59,7 +59,7 @@ class BaseAutoDataset(Generic[DATA_TYPE]):
     @running_stage.setter
     def running_stage(self, running_stage: RunningStage) -> None:
         from flash.core.data.data_pipeline import DataPipeline  # noqa F811
-        from flash.core.data.data_source import DataSource  # noqa F811 # TODO: something better than this
+        from flash.core.data.io.input import Input  # noqa F811 # TODO: something better than this
 
         self._running_stage = running_stage
 
@@ -71,7 +71,7 @@ class BaseAutoDataset(Generic[DATA_TYPE]):
                 "load_sample",
                 self.data_source,
                 self.running_stage,
-                DataSource,
+                Input,
             ),
         )
 

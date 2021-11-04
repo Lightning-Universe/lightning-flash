@@ -15,7 +15,7 @@ from typing import Any, Callable, Dict, List, Tuple
 
 from torch import nn
 
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import InputDataKeys
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE, requires
 
 if _ICEVISION_AVAILABLE:
@@ -41,7 +41,7 @@ if _ICEVISION_AVAILABLE:
 def to_icevision_record(sample: Dict[str, Any]):
     record = BaseRecord([])
 
-    metadata = sample.get(DefaultDataKeys.METADATA, None) or {}
+    metadata = sample.get(InputDataKeys.METADATA, None) or {}
 
     if "image_id" in metadata:
         record_id_component = RecordIDRecordComponent()
@@ -51,31 +51,31 @@ def to_icevision_record(sample: Dict[str, Any]):
     component.set_class_map(metadata.get("class_map", None))
     record.add_component(component)
 
-    if "labels" in sample[DefaultDataKeys.TARGET]:
+    if "labels" in sample[InputDataKeys.TARGET]:
         labels_component = InstancesLabelsRecordComponent()
-        labels_component.add_labels_by_id(sample[DefaultDataKeys.TARGET]["labels"])
+        labels_component.add_labels_by_id(sample[InputDataKeys.TARGET]["labels"])
         record.add_component(labels_component)
 
-    if "bboxes" in sample[DefaultDataKeys.TARGET]:
+    if "bboxes" in sample[InputDataKeys.TARGET]:
         bboxes = [
             BBox.from_xywh(bbox["xmin"], bbox["ymin"], bbox["width"], bbox["height"])
-            for bbox in sample[DefaultDataKeys.TARGET]["bboxes"]
+            for bbox in sample[InputDataKeys.TARGET]["bboxes"]
         ]
         component = BBoxesRecordComponent()
         component.set_bboxes(bboxes)
         record.add_component(component)
 
-    if "masks" in sample[DefaultDataKeys.TARGET]:
-        mask_array = MaskArray(sample[DefaultDataKeys.TARGET]["masks"])
+    if "masks" in sample[InputDataKeys.TARGET]:
+        mask_array = MaskArray(sample[InputDataKeys.TARGET]["masks"])
         component = MasksRecordComponent()
         component.set_masks(mask_array)
         record.add_component(component)
 
-    if "keypoints" in sample[DefaultDataKeys.TARGET]:
+    if "keypoints" in sample[InputDataKeys.TARGET]:
         keypoints = []
 
         for keypoints_list, keypoints_metadata in zip(
-            sample[DefaultDataKeys.TARGET]["keypoints"], sample[DefaultDataKeys.TARGET]["keypoints_metadata"]
+            sample[InputDataKeys.TARGET]["keypoints"], sample[InputDataKeys.TARGET]["keypoints_metadata"]
         ):
             xyv = []
             for keypoint in keypoints_list:
@@ -86,9 +86,9 @@ def to_icevision_record(sample: Dict[str, Any]):
         component.set_keypoints(keypoints)
         record.add_component(component)
 
-    if isinstance(sample[DefaultDataKeys.INPUT], str):
+    if isinstance(sample[InputDataKeys.INPUT], str):
         input_component = FilepathRecordComponent()
-        input_component.set_filepath(sample[DefaultDataKeys.INPUT])
+        input_component.set_filepath(sample[InputDataKeys.INPUT])
     else:
         if "filepath" in metadata:
             input_component = FilepathRecordComponent()
@@ -96,7 +96,7 @@ def to_icevision_record(sample: Dict[str, Any]):
         else:
             input_component = ImageRecordComponent()
         input_component.composite = record
-        input_component.set_img(sample[DefaultDataKeys.INPUT])
+        input_component.set_img(sample[InputDataKeys.INPUT])
     record.add_component(input_component)
 
     return record
@@ -161,29 +161,29 @@ def from_icevision_detection(record: "BaseRecord"):
 
 def from_icevision_record(record: "BaseRecord"):
     sample = {
-        DefaultDataKeys.METADATA: {
+        InputDataKeys.METADATA: {
             "size": (record.height, record.width),
         }
     }
 
     if getattr(record, "record_id", None) is not None:
-        sample[DefaultDataKeys.METADATA]["image_id"] = record.record_id
+        sample[InputDataKeys.METADATA]["image_id"] = record.record_id
 
     if getattr(record, "filepath", None) is not None:
-        sample[DefaultDataKeys.METADATA]["filepath"] = record.filepath
+        sample[InputDataKeys.METADATA]["filepath"] = record.filepath
 
     if record.img is not None:
-        sample[DefaultDataKeys.INPUT] = record.img
+        sample[InputDataKeys.INPUT] = record.img
         filepath = getattr(record, "filepath", None)
         if filepath is not None:
-            sample[DefaultDataKeys.METADATA]["filepath"] = filepath
+            sample[InputDataKeys.METADATA]["filepath"] = filepath
     elif record.filepath is not None:
-        sample[DefaultDataKeys.INPUT] = record.filepath
+        sample[InputDataKeys.INPUT] = record.filepath
 
-    sample[DefaultDataKeys.TARGET] = from_icevision_detection(record)
+    sample[InputDataKeys.TARGET] = from_icevision_detection(record)
 
     if getattr(record.detection, "class_map", None) is not None:
-        sample[DefaultDataKeys.METADATA]["class_map"] = record.detection.class_map
+        sample[InputDataKeys.METADATA]["class_map"] = record.detection.class_map
 
     return sample
 

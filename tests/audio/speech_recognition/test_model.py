@@ -23,7 +23,7 @@ from flash import Trainer
 from flash.__main__ import main
 from flash.audio import SpeechRecognition
 from flash.audio.speech_recognition.data import SpeechRecognitionInputTransform, SpeechRecognitionOutputTransform
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import InputDataKeys
 from flash.core.utilities.imports import _AUDIO_AVAILABLE
 from tests.helpers.utils import _AUDIO_TESTING, _SERVE_TESTING
 
@@ -33,9 +33,9 @@ from tests.helpers.utils import _AUDIO_TESTING, _SERVE_TESTING
 class DummyDataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
         return {
-            DefaultDataKeys.INPUT: np.random.randn(86631),
-            DefaultDataKeys.TARGET: "some target text",
-            DefaultDataKeys.METADATA: {"sampling_rate": 16000},
+            InputDataKeys.INPUT: np.random.randn(86631),
+            InputDataKeys.TARGET: "some target text",
+            InputDataKeys.METADATA: {"sampling_rate": 16000},
         }
 
     def __len__(self) -> int:

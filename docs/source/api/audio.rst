@@ -34,10 +34,10 @@ __________________
     speech_recognition.data.SpeechRecognitionInputTransform
     speech_recognition.data.SpeechRecognitionBackboneState
     speech_recognition.data.SpeechRecognitionOutputTransform
-    speech_recognition.data.SpeechRecognitionCSVDataSource
-    speech_recognition.data.SpeechRecognitionJSONDataSource
+    speech_recognition.data.SpeechRecognitionCSVInput
+    speech_recognition.data.SpeechRecognitionJSONInput
     speech_recognition.data.BaseSpeechRecognition
-    speech_recognition.data.SpeechRecognitionFileDataSource
-    speech_recognition.data.SpeechRecognitionPathsDataSource
-    speech_recognition.data.SpeechRecognitionDatasetDataSource
+    speech_recognition.data.SpeechRecognitionFileInput
+    speech_recognition.data.SpeechRecognitionPathsInput
+    speech_recognition.data.SpeechRecognitionDatasetInput
     speech_recognition.data.SpeechRecognitionDeserializer

@@ -21,7 +21,7 @@ if _TORCH_AVAILABLE:
 
     from flash.core.data.callback import FlashCallback
     from flash.core.data.data_module import DataModule  # noqa: E402
-    from flash.core.data.data_source import DataSource
+    from flash.core.data.io.input import Input
     from flash.core.data.datasets import FlashDataset, FlashIterableDataset
     from flash.core.data.io.input_transform import InputTransform
     from flash.core.data.io.output import Output
@@ -41,7 +41,7 @@ if _TORCH_AVAILABLE:
         seed_everything(42)
 
     __all__ = [
-        "DataSource",
+        "Input",
         "DataModule",
         "FlashCallback",
         "FlashDataset",

@@ -38,7 +38,7 @@ from torch.utils.data import DataLoader, Sampler
 import flash
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
-from flash.core.data.data_source import DataSource
+from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import OutputTransform
@@ -741,7 +741,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
         if isinstance(data_source, str):
             if input_transform is None:
-                data_source = DataSource()  # TODO: warn the user that we are not using the specified data source
+                data_source = Input()  # TODO: warn the user that we are not using the specified data source
             else:
                 data_source = input_transform.data_source_of_name(data_source)
 

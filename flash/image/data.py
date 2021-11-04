@@ -21,13 +21,13 @@ import numpy as np
 import torch
 
 import flash
-from flash.core.data.data_source import (
-    DefaultDataKeys,
-    FiftyOneDataSource,
+from flash.core.data.io.input import (
+    InputDataKeys,
+    FiftyOneInput,
     has_file_allowed_extension,
-    NumpyDataSource,
-    PathsDataSource,
-    TensorDataSource,
+    NumpyInput,
+    PathsInput,
+    TensorInput,
 )
 from flash.core.data.process import Deserializer
 from flash.core.data.utils import image_default_loader
@@ -64,7 +64,7 @@ class ImageDeserializer(Deserializer):
         buffer = BytesIO(img)
         img = Image.open(buffer, mode="r")
         return {
-            DefaultDataKeys.INPUT: img,
+            InputDataKeys.INPUT: img,
         }
 
     @property
@@ -76,51 +76,51 @@ class ImageDeserializer(Deserializer):
 def _labels_to_indices(data):
     out = defaultdict(list)
     for idx, sample in enumerate(data):
-        label = sample[DefaultDataKeys.TARGET]
+        label = sample[InputDataKeys.TARGET]
         if torch.is_tensor(label):
             label = label.item()
         out[label].append(idx)
     return out
 
 
-class ImagePathsDataSource(PathsDataSource):
+class ImagePathsInput(PathsInput):
     def __init__(self):
         super().__init__(loader=image_loader, extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
 
     @requires("image")
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         sample = super().load_sample(sample, dataset)
-        w, h = sample[DefaultDataKeys.INPUT].size  # WxH
-        sample[DefaultDataKeys.METADATA]["size"] = (h, w)
+        w, h = sample[InputDataKeys.INPUT].size  # WxH
+        sample[InputDataKeys.METADATA]["size"] = (h, w)
         return sample
 
 
-class ImageTensorDataSource(TensorDataSource):
+class ImageTensorInput(TensorInput):
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        img = to_pil_image(sample[DefaultDataKeys.INPUT])
-        sample[DefaultDataKeys.INPUT] = img
+        img = to_pil_image(sample[InputDataKeys.INPUT])
+        sample[InputDataKeys.INPUT] = img
         w, h = img.size  # WxH
-        sample[DefaultDataKeys.METADATA] = {"size": (h, w)}
+        sample[InputDataKeys.METADATA] = {"size": (h, w)}
         return sample
 
 
-class ImageNumpyDataSource(NumpyDataSource):
+class ImageNumpyInput(NumpyInput):
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        img = to_pil_image(torch.from_numpy(sample[DefaultDataKeys.INPUT]))
-        sample[DefaultDataKeys.INPUT] = img
+        img = to_pil_image(torch.from_numpy(sample[InputDataKeys.INPUT]))
+        sample[InputDataKeys.INPUT] = img
         w, h = img.size  # WxH
-        sample[DefaultDataKeys.METADATA] = {"size": (h, w)}
+        sample[InputDataKeys.METADATA] = {"size": (h, w)}
         return sample
 
 
-class ImageFiftyOneDataSource(FiftyOneDataSource):
+class ImageFiftyOneInput(FiftyOneInput):
     @staticmethod
     def load_sample(sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        img_path = sample[DefaultDataKeys.INPUT]
+        img_path = sample[InputDataKeys.INPUT]
         img = image_default_loader(img_path)
-        sample[DefaultDataKeys.INPUT] = img
+        sample[InputDataKeys.INPUT] = img
         w, h = img.size  # WxH
-        sample[DefaultDataKeys.METADATA] = {
+        sample[InputDataKeys.METADATA] = {
             "filepath": img_path,
             "size": (h, w),
         }

@@ -20,7 +20,7 @@ import pytest
 import torch
 import torch.nn as nn
 
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import InputDataKeys
 from flash.core.data.transforms import ApplyToKeys, merge_transforms
 from flash.core.utilities.imports import (
     _ALBUMENTATIONS_AVAILABLE,
@@ -229,8 +229,8 @@ def test_from_filepaths_splits(tmpdir):
 
     _to_tensor = {
         "to_tensor_transform": nn.Sequential(
-            ApplyToKeys(DefaultDataKeys.INPUT, torchvision.transforms.ToTensor()),
-            ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor),
+            ApplyToKeys(InputDataKeys.INPUT, torchvision.transforms.ToTensor()),
+            ApplyToKeys(InputDataKeys.TARGET, torch.as_tensor),
         ),
     }
 
@@ -467,19 +467,19 @@ def test_from_datasets():
 
     # check training data
     data = next(iter(img_data.train_dataloader()))
-    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+    imgs, labels = data[InputDataKeys.INPUT], data[InputDataKeys.TARGET]
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2,)
 
     # check validation data
     data = next(iter(img_data.val_dataloader()))
-    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+    imgs, labels = data[InputDataKeys.INPUT], data[InputDataKeys.TARGET]
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2,)
 
     # check test data
     data = next(iter(img_data.test_dataloader()))
-    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+    imgs, labels = data[InputDataKeys.INPUT], data[InputDataKeys.TARGET]
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2,)
 
@@ -515,7 +515,7 @@ def test_from_csv_single_target(single_target_csv):
 
     # check training data
     data = next(iter(img_data.train_dataloader()))
-    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+    imgs, labels = data[InputDataKeys.INPUT], data[InputDataKeys.TARGET]
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2,)
 
@@ -543,7 +543,7 @@ def test_from_csv_multi_target(multi_target_csv):
 
     # check training data
     data = next(iter(img_data.train_dataloader()))
-    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+    imgs, labels = data[InputDataKeys.INPUT], data[InputDataKeys.TARGET]
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2, 2)
 

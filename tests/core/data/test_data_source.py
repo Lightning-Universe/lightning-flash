@@ -11,13 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from flash.core.data.data_source import DatasetDataSource, DefaultDataKeys
+from flash.core.data.io.input import DatasetInput, InputDataKeys
 
 
 def test_dataset_data_source():
-    data_source = DatasetDataSource()
+    data_source = DatasetInput()
 
     input, target = "test", 3
 
-    assert data_source.load_sample((input, target)) == {DefaultDataKeys.INPUT: input, DefaultDataKeys.TARGET: target}
-    assert data_source.load_sample(input) == {DefaultDataKeys.INPUT: input}
+    assert data_source.load_sample((input, target)) == {InputDataKeys.INPUT: input, InputDataKeys.TARGET: target}
+    assert data_source.load_sample(input) == {InputDataKeys.INPUT: input}

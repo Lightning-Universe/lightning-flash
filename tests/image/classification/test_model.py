@@ -21,7 +21,7 @@ import torch
 from flash import Trainer
 from flash.__main__ import main
 from flash.core.classification import Probabilities
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import InputDataKeys
 from flash.core.utilities.imports import _IMAGE_AVAILABLE
 from flash.image import ImageClassifier
 from flash.image.classification.data import ImageClassificationInputTransform
@@ -33,8 +33,8 @@ from tests.helpers.utils import _IMAGE_TESTING, _SERVE_TESTING
 class DummyDataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
         return {
-            DefaultDataKeys.INPUT: torch.rand(3, 224, 224),
-            DefaultDataKeys.TARGET: torch.randint(10, size=(1,)).item(),
+            InputDataKeys.INPUT: torch.rand(3, 224, 224),
+            InputDataKeys.TARGET: torch.randint(10, size=(1,)).item(),
         }
 
     def __len__(self) -> int:
@@ -47,8 +47,8 @@ class DummyMultiLabelDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         return {
-            DefaultDataKeys.INPUT: torch.rand(3, 224, 224),
-            DefaultDataKeys.TARGET: torch.randint(0, 2, (self.num_classes,)),
+            InputDataKeys.INPUT: torch.rand(3, 224, 224),
+            InputDataKeys.TARGET: torch.randint(0, 2, (self.num_classes,)),
         }
 
     def __len__(self) -> int:
@@ -108,8 +108,8 @@ def test_multilabel(tmpdir):
     train_dl = torch.utils.data.DataLoader(ds, batch_size=2)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.finetune(model, train_dl, strategy="freeze_unfreeze")
-    image, label = ds[0][DefaultDataKeys.INPUT], ds[0][DefaultDataKeys.TARGET]
-    predictions = model.predict([{DefaultDataKeys.INPUT: image}])
+    image, label = ds[0][InputDataKeys.INPUT], ds[0][InputDataKeys.TARGET]
+    predictions = model.predict([{InputDataKeys.INPUT: image}])
     assert (torch.tensor(predictions) > 1).sum() == 0
     assert (torch.tensor(predictions) < 0).sum() == 0
     assert len(predictions[0]) == num_classes == len(label)
