@@ -17,7 +17,7 @@ import flash
 from flash.core.integrations.fiftyone import visualize
 from flash.core.utilities.imports import example_requires
 from flash.image import ObjectDetectionData, ObjectDetector
-from flash.image.detection.serialization import FiftyOneDetectionLabels
+from flash.image.detection.output import FiftyOneDetectionLabels
 
 example_requires("image")
 

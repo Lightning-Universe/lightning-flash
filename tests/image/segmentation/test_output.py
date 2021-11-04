@@ -16,7 +16,7 @@ import torch
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE
-from flash.image.segmentation.serialization import FiftyOneSegmentationLabels, SegmentationLabels
+from flash.image.segmentation.output import FiftyOneSegmentationLabels, SegmentationLabels
 from tests.helpers.utils import _IMAGE_TESTING
 
 

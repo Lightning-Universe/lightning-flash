@@ -34,7 +34,7 @@ from flash.core.utilities.types import (
 )
 from flash.image.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 from flash.image.segmentation.heads import SEMANTIC_SEGMENTATION_HEADS
-from flash.image.segmentation.serialization import SegmentationLabels
+from flash.image.segmentation.output import SegmentationLabels
 
 if _KORNIA_AVAILABLE:
     import kornia as K

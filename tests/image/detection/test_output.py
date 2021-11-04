@@ -4,7 +4,7 @@ import torch
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE
-from flash.image.detection.serialization import FiftyOneDetectionLabels
+from flash.image.detection.output import FiftyOneDetectionLabels
 
 
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
