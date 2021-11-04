@@ -51,7 +51,7 @@ class TabularRegressor(RegressionTask):
         self,
         num_features: int,
         embedding_sizes: List[Tuple[int, int]] = None,
-        loss_fn: Callable = F.cross_entropy,
+        loss_fn: Callable = F.mse_loss,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: METRICS_TYPE = None,
@@ -87,7 +87,7 @@ class TabularRegressor(RegressionTask):
         # TabNet takes single input, x_in is composed of (categorical, numerical)
         xs = [x for x in x_in if x.numel()]
         x = torch.cat(xs, dim=1)
-        return self.model(x)[0]
+        return self.model(x)[0].flatten()
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
