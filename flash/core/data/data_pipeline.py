@@ -18,22 +18,38 @@ from functools import partial
 from typing import Any, Callable, Dict, Optional, Sequence, Set, Tuple, Type, TYPE_CHECKING, Union
 
 import torch
-from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from pytorch_lightning.utilities.model_helpers import is_overridden
 from torch.utils.data import DataLoader, IterableDataset
 
+import flash
 from flash.core.data.auto_dataset import IterableAutoDataset
 from flash.core.data.batch import _DeserializeProcessor, _Postprocessor, _Preprocessor, _Sequential, _SerializeProcessor
 from flash.core.data.data_source import DataSource
 from flash.core.data.process import DefaultPreprocess, Deserializer, Postprocess, Preprocess, Serializer
 from flash.core.data.properties import ProcessState
 from flash.core.data.utils import _POSTPROCESS_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
-from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_4_3
+from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_4_3, _PL_GREATER_EQUAL_1_5_0
 from flash.core.utilities.stages import _RUNNING_STAGE_MAPPING, RunningStage
+
+if not _PL_GREATER_EQUAL_1_5_0:
+    from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 
 if TYPE_CHECKING:
     from flash.core.model import Task
+
+
+class DataLoaderGetter:
+    """A utility class to be used when patching the ``{stage}_dataloader`` attribute of a LightningModule."""
+
+    def __init__(self, dataloader):
+        self.dataloader = dataloader
+
+        # Dummy `__code__` attribute to trick is_overridden
+        self.__code__ = self.__call__.__code__
+
+    def __call__(self):
+        return self.dataloader
 
 
 class DataPipelineState:
@@ -316,15 +332,18 @@ class DataPipeline:
             attr_name = loader_name
 
         elif model.trainer and hasattr(model.trainer, "datamodule") and model.trainer.datamodule:
-            dataloader = getattr(model, f"trainer.datamodule.{loader_name}", None)
-            attr_name = f"trainer.datamodule.{loader_name}"
+            if is_overridden(loader_name, model.trainer.datamodule, flash.DataModule):
+                dataloader = getattr(model.trainer.datamodule, loader_name, None)
+                attr_name = f"trainer.datamodule.{loader_name}"
 
         return dataloader, attr_name
 
     @staticmethod
     def _patch_dataloader(model: "Task", dataloader: Union[Callable, DataLoader], stage: RunningStage):
         if isinstance(dataloader, DataLoader):
-            if _PL_GREATER_EQUAL_1_4_3:
+            if _PL_GREATER_EQUAL_1_5_0:
+                dataloader = DataLoaderGetter(dataloader)
+            elif _PL_GREATER_EQUAL_1_4_3:
                 dataloader = _PatchDataLoader(dataloader, _STAGES_PREFIX[stage])
                 dataloader.patch(model)
             else:
@@ -369,7 +388,7 @@ class DataPipeline:
             if not dataloader:
                 continue
 
-            if isinstance(dataloader, (_PatchDataLoader, Callable)):
+            if callable(dataloader):
                 dataloader = dataloader()
 
             if dataloader is None:
@@ -504,9 +523,7 @@ class DataPipeline:
             if not dataloader:
                 continue
 
-            if isinstance(dataloader, _PatchDataLoader):
-                dataloader = dataloader()
-            elif isinstance(dataloader, Callable):
+            if callable(dataloader):
                 dataloader = dataloader()
 
             if isinstance(dataloader, Sequence):

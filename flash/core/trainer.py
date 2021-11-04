@@ -29,7 +29,7 @@ from torch.utils.data import DataLoader
 
 import flash
 from flash.core.finetuning import _DEFAULTS_FINETUNE_STRATEGIES, instantiate_default_finetuning_callbacks
-from flash.core.utilities.imports import _SERVE_AVAILABLE
+from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_5_0, _SERVE_AVAILABLE
 
 
 def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs):
@@ -286,5 +286,8 @@ class Trainer(PlTrainer):
             dataloader = self.call_hook(hook, pl_module=model)
         if isinstance(dataloader, tuple):
             dataloader = list(dataloader)
-        self.accelerator.barrier("get_dataloaders")
+        if _PL_GREATER_EQUAL_1_5_0:
+            self.training_type_plugin.barrier("get_dataloaders")
+        else:
+            self.accelerator.barrier("get_dataloaders")
         return dataloader
