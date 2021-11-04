@@ -33,9 +33,7 @@ class RegressionMixin:
         return metrics, loss_fn
 
     def to_metrics_format(self, x: torch.Tensor) -> torch.Tensor:
-        if getattr(self.hparams, "multi_label", False):
-            return torch.sigmoid(x)
-        return torch.softmax(x, dim=1)
+        return x
 
 
 class RegressionTask(Task, RegressionMixin):
