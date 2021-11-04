@@ -277,13 +277,20 @@ class Trainer(PlTrainer):
             The dataloader
         """
         model, stage, is_legacy = self._parse_request_dataloader_args(args, kwargs)
+        dataloader = None
         if is_legacy:
             self.call_hook(f"on_{stage}_dataloader")
             dataloader = getattr(model, f"{stage}_dataloader")()
-        else:
+        elif _PL_GREATER_EQUAL_1_5_0:
+            source = getattr(self._data_connector, f"_{stage.dataloader_prefix}_dataloader_source")
+            if not source.is_module():
+                dataloader = source.dataloader()
+
+        if dataloader is None:
             hook = f"{stage.dataloader_prefix}_dataloader"
             self.call_hook("on_" + hook, pl_module=model)
             dataloader = self.call_hook(hook, pl_module=model)
+
         if isinstance(dataloader, tuple):
             dataloader = list(dataloader)
         if _PL_GREATER_EQUAL_1_5_0:
