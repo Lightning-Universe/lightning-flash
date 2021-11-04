@@ -23,7 +23,9 @@ You can pass in a sample of data (image file path, a string of text, etc) to the
     download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
     # 2. Load the model from a checkpoint
-    model = ImageClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/image_classification_model.pt")
+    model = ImageClassifier.load_from_checkpoint(
+        "https://flash-weights.s3.amazonaws.com/0.5.2/image_classification_model.pt"
+    )
 
     # 3. Predict whether the image contains an ant or a bee
     predictions = model.predict("data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg")
@@ -43,7 +45,9 @@ Predict on a csv file
     download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "data/")
 
     # 2. Load the model from a checkpoint
-    model = TabularClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/tabnet_classification_model.pt")
+    model = TabularClassifier.load_from_checkpoint(
+        "https://flash-weights.s3.amazonaws.com/0.5.2/tabular_classification_model.pt"
+    )
 
     # 3. Generate predictions from a csv file! Who would survive?
     predictions = model.predict("data/titanic/titanic.csv")
@@ -69,7 +73,9 @@ reference below).
     download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
     # 2. Load the model from a checkpoint
-    model = ImageClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/image_classification_model.pt")
+    model = ImageClassifier.load_from_checkpoint(
+        "https://flash-weights.s3.amazonaws.com/0.5.2/image_classification_model.pt"
+    )
 
     # 3. Attach the Output
     model.serializer = Probabilities()
