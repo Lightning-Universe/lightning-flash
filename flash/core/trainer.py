@@ -28,6 +28,8 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader
 
 import flash
+from flash.core.data.data_module import DataModule
+from flash.core.data.new_data_module import DataModule as NewDataModule
 from flash.core.finetuning import _DEFAULTS_FINETUNE_STRATEGIES, instantiate_default_finetuning_callbacks
 from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_5_0, _SERVE_AVAILABLE
 
@@ -283,7 +285,11 @@ class Trainer(PlTrainer):
             dataloader = getattr(model, f"{stage}_dataloader")()
         elif _PL_GREATER_EQUAL_1_5_0:
             source = getattr(self._data_connector, f"_{stage.dataloader_prefix}_dataloader_source")
-            if not source.is_module():
+            if (
+                not source.is_module()
+                or not isinstance(source.instance, DataModule)
+                or isinstance(source.instance, NewDataModule)
+            ):
                 dataloader = source.dataloader()
 
         if dataloader is None:
