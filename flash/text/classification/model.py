@@ -57,7 +57,7 @@ class TextClassifier(ClassificationTask):
     def __init__(
         self,
         num_classes: int,
-        backbone: str = "prajjwal1/bert-medium",
+        backbone: str = "prajjwal1/bert-tiny",
         loss_fn: LOSS_FN_TYPE = None,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
