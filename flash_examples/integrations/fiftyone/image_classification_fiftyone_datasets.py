@@ -66,7 +66,9 @@ trainer.finetune(
 trainer.save_checkpoint("image_classification_model.pt")
 
 # 5 Predict from checkpoint on data with ground truth
-model = ImageClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/image_classification_model.pt")
+model = ImageClassifier.load_from_checkpoint(
+    "https://flash-weights.s3.amazonaws.com/0.5.2/image_classification_model.pt"
+)
 model.serializer = FiftyOneLabels(return_filepath=False)  # output FiftyOne format
 datamodule = ImageClassificationData.from_fiftyone(predict_dataset=test_dataset)
 predictions = trainer.predict(model, datamodule=datamodule)
