@@ -58,8 +58,6 @@ def test_from_filepaths_smoke(tmpdir):
         num_workers=0,
     )
     assert spectrograms_data.train_dataloader() is not None
-    assert spectrograms_data.val_dataloader() is None
-    assert spectrograms_data.test_dataloader() is None
 
     data = next(iter(spectrograms_data.train_dataloader()))
     imgs, labels = data["input"], data["target"]
@@ -130,8 +128,6 @@ def test_from_filepaths_numpy(tmpdir):
         num_workers=0,
     )
     assert spectrograms_data.train_dataloader() is not None
-    assert spectrograms_data.val_dataloader() is None
-    assert spectrograms_data.test_dataloader() is None
 
     data = next(iter(spectrograms_data.train_dataloader()))
     imgs, labels = data["input"], data["target"]
@@ -322,9 +318,6 @@ def test_from_folders_only_train(tmpdir):
     imgs, labels = data["input"], data["target"]
     assert imgs.shape == (1, 3, 128, 128)
     assert labels.shape == (1,)
-
-    assert spectrograms_data.val_dataloader() is None
-    assert spectrograms_data.test_dataloader() is None
 
 
 @pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
