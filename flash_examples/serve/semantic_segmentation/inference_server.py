@@ -15,7 +15,7 @@ from flash.image import SemanticSegmentation
 from flash.image.segmentation.serialization import SegmentationLabels
 
 model = SemanticSegmentation.load_from_checkpoint(
-    "https://flash-weights.s3.amazonaws.com/semantic_segmentation_model.pt"
+    "https://flash-weights.s3.amazonaws.com/0.5.2/semantic_segmentation_model.pt"
 )
 model.serializer = SegmentationLabels(visualize=False)
 model.serve()

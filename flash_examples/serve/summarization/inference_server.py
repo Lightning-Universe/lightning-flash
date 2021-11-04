@@ -13,5 +13,7 @@
 # limitations under the License.
 from flash.text import SummarizationTask
 
-model = SummarizationTask.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/summarization_model_xsum.pt")
+model = SummarizationTask.load_from_checkpoint(
+    "https://flash-weights.s3.amazonaws.com/0.5.2/summarization_model_xsum.pt"
+)
 model.serve()

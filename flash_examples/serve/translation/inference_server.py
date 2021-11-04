@@ -13,5 +13,5 @@
 # limitations under the License.
 from flash.text import TranslationTask
 
-model = TranslationTask.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/translation_model_en_ro.pt")
+model = TranslationTask.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/0.5.2/translation_model_en_ro.pt")
 model.serve()

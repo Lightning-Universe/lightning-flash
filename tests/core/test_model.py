@@ -32,18 +32,15 @@ from torch.utils.data import DataLoader
 from torchmetrics import Accuracy
 
 import flash
+from flash.audio import SpeechRecognition
 from flash.core.adapter import Adapter
 from flash.core.classification import ClassificationTask
 from flash.core.data.process import DefaultPreprocess, Postprocess
-from flash.core.utilities.imports import _TABULAR_AVAILABLE, _TORCH_OPTIMIZER_AVAILABLE, _TRANSFORMERS_AVAILABLE, Image
-from flash.image import ImageClassificationData, ImageClassifier
-from tests.helpers.utils import _IMAGE_TESTING, _TABULAR_TESTING
-
-if _TABULAR_AVAILABLE:
-    from flash.tabular import TabularClassifier
-else:
-    TabularClassifier = None
-
+from flash.core.utilities.imports import _TORCH_OPTIMIZER_AVAILABLE, _TRANSFORMERS_AVAILABLE, Image
+from flash.image import ImageClassificationData, ImageClassifier, SemanticSegmentation
+from flash.tabular import TabularClassifier
+from flash.text import SummarizationTask, TextClassifier, TranslationTask
+from tests.helpers.utils import _AUDIO_TESTING, _IMAGE_TESTING, _TABULAR_TESTING, _TEXT_TESTING
 
 # ======== Mock functions ========
 
@@ -251,21 +248,60 @@ def test_task_datapipeline_save(tmpdir):
 @pytest.mark.parametrize(
     ["cls", "filename"],
     [
-        # needs to be updated.
-        # pytest.param(
-        #    ImageClassifier,
-        #    "image_classification_model.pt",
-        #    marks=pytest.mark.skipif(
-        #        not _IMAGE_TESTING,
-        #        reason="image packages aren't installed",
-        #    ),
-        # ),
+        pytest.param(
+            ImageClassifier,
+            "0.5.2/image_classification_model.pt",
+            marks=pytest.mark.skipif(
+                not _IMAGE_TESTING,
+                reason="image packages aren't installed",
+            ),
+        ),
+        pytest.param(
+            SemanticSegmentation,
+            "0.5.2/semantic_segmentation_model.pt",
+            marks=pytest.mark.skipif(
+                not _IMAGE_TESTING,
+                reason="image packages aren't installed",
+            ),
+        ),
+        pytest.param(
+            SpeechRecognition,
+            "0.5.2/speech_recognition_model.pt",
+            marks=pytest.mark.skipif(
+                not _AUDIO_TESTING,
+                reason="audio packages aren't installed",
+            ),
+        ),
         pytest.param(
             TabularClassifier,
-            "tabular_classification_model.pt",
+            "0.5.2/tabular_classification_model.pt",
             marks=pytest.mark.skipif(
                 not _TABULAR_TESTING,
                 reason="tabular packages aren't installed",
+            ),
+        ),
+        pytest.param(
+            TextClassifier,
+            "0.5.2/text_classification_model.pt",
+            marks=pytest.mark.skipif(
+                not _TEXT_TESTING,
+                reason="text packages aren't installed",
+            ),
+        ),
+        pytest.param(
+            SummarizationTask,
+            "0.5.2/summarization_model_xsum.pt",
+            marks=pytest.mark.skipif(
+                not _TEXT_TESTING,
+                reason="text packages aren't installed",
+            ),
+        ),
+        pytest.param(
+            TranslationTask,
+            "0.5.2/translation_model_en_ro.pt",
+            marks=pytest.mark.skipif(
+                not _TEXT_TESTING,
+                reason="text packages aren't installed",
             ),
         ),
     ],
