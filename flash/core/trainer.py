@@ -283,18 +283,20 @@ class Trainer(PlTrainer):
         if is_legacy:
             self.call_hook(f"on_{stage}_dataloader")
             dataloader = getattr(model, f"{stage}_dataloader")()
-        elif _PL_GREATER_EQUAL_1_5_0:
+        else:
+            hook = f"{stage.dataloader_prefix}_dataloader"
+            self.call_hook("on_" + hook, pl_module=model)
+
+        if _PL_GREATER_EQUAL_1_5_0:
             source = getattr(self._data_connector, f"_{stage.dataloader_prefix}_dataloader_source")
             if (
                 not source.is_module()
                 or not isinstance(source.instance, DataModule)
-                or isinstance(source.instance, NewDataModule)
+                or isinstance(source.instance, (LightningModule, NewDataModule))
             ):
                 dataloader = source.dataloader()
 
         if dataloader is None:
-            hook = f"{stage.dataloader_prefix}_dataloader"
-            self.call_hook("on_" + hook, pl_module=model)
             dataloader = self.call_hook(hook, pl_module=model)
 
         if isinstance(dataloader, tuple):
