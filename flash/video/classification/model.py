@@ -146,13 +146,21 @@ class VideoClassifier(ClassificationTask):
         )
 
     def on_train_start(self) -> None:
-        if self.trainer.accelerator_connector.is_distributed:
+        if hasattr(self.trainer, "accelerator_connector"):
+            accelerator_connector = self.trainer.accelerator_connector
+        else:
+            accelerator_connector = self.trainer._accelerator_connector
+        if accelerator_connector.is_distributed:
             encoded_dataset = self.trainer.train_dataloader.loaders.dataset.dataset
             encoded_dataset._video_sampler = DistributedSampler(encoded_dataset._labeled_videos)
         super().on_train_start()
 
     def on_train_epoch_start(self) -> None:
-        if self.trainer.accelerator_connector.is_distributed:
+        if hasattr(self.trainer, "accelerator_connector"):
+            accelerator_connector = self.trainer.accelerator_connector
+        else:
+            accelerator_connector = self.trainer._accelerator_connector
+        if accelerator_connector.is_distributed:
             encoded_dataset = self.trainer.train_dataloader.loaders.dataset.dataset
             encoded_dataset._video_sampler.set_epoch(self.trainer.current_epoch)
         super().on_train_epoch_start()

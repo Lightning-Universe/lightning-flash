@@ -268,7 +268,11 @@ class Learn2LearnAdapter(Adapter):
             devices = 1
             if isinstance(trainer.training_type_plugin, DataParallelPlugin):
                 # when using DP, we need to sample n tasks, so it can splitted across multiple devices.
-                devices = trainer.accelerator_connector.devices
+                if hasattr(trainer, "accelerator_connector"):
+                    accelerator_connector = trainer.accelerator_connector
+                else:
+                    accelerator_connector = trainer._accelerator_connector
+                devices = accelerator_connector.devices
             dataset = TaskDataParallel(taskset, epoch_length=epoch_length, devices=devices, collate_fn=None)
             self.trainer.accumulated_grad_batches = self.meta_batch_size / devices
 
