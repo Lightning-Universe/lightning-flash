@@ -624,10 +624,10 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
     @torch.jit.unused
     @output.setter
-    def output(self, serializer: Union[Output, Mapping[str, Output]]):
-        if isinstance(serializer, Mapping):
-            serializer = OutputMapping(serializer)
-        self._output = serializer
+    def output(self, output: Union[Output, Mapping[str, Output]]):
+        if isinstance(output, Mapping):
+            output = OutputMapping(output)
+        self._output = output
 
     def build_data_pipeline(
         self,
