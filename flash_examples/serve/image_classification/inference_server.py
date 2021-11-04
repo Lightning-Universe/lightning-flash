@@ -13,5 +13,7 @@
 # limitations under the License.
 from flash.image import ImageClassifier
 
-model = ImageClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/image_classification_model.pt")
+model = ImageClassifier.load_from_checkpoint(
+    "https://flash-weights.s3.amazonaws.com/0.5.2/image_classification_model.pt"
+)
 model.serve()
