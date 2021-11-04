@@ -331,10 +331,25 @@ class DataPipeline:
             dataloader = getattr(model, loader_name)
             attr_name = loader_name
 
-        elif model.trainer and hasattr(model.trainer, "datamodule") and model.trainer.datamodule:
-            if is_overridden(loader_name, model.trainer.datamodule, flash.DataModule):
-                dataloader = getattr(model.trainer.datamodule, loader_name, None)
-                attr_name = f"trainer.datamodule.{loader_name}"
+        elif (
+            model.trainer
+            and hasattr(model.trainer, "datamodule")
+            and model.trainer.datamodule
+            and is_overridden(loader_name, model.trainer.datamodule, flash.DataModule)
+        ):
+            dataloader = getattr(model.trainer.datamodule, loader_name, None)
+            attr_name = f"trainer.datamodule.{loader_name}"
+
+        elif _PL_GREATER_EQUAL_1_5_0 and model.trainer:
+            source = getattr(model.trainer._data_connector, f"_{loader_name}_source")
+            if not source.is_module():
+                dataloader = source.dataloader()
+                attr_name = loader_name
+
+                if dataloader is not None:
+                    # Update source as wrapped loader will be attached to model
+                    source.instance = model
+                    source.name = loader_name
 
         return dataloader, attr_name
 
