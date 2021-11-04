@@ -107,5 +107,5 @@ class TabularRegressor(RegressionTask):
 
     @classmethod
     def from_data(cls, datamodule, **kwargs) -> "TabularRegressor":
-        model = cls(datamodule.num_features, datamodule.num_classes, datamodule.embedding_sizes, **kwargs)
+        model = cls(datamodule.num_features, datamodule.embedding_sizes, **kwargs)
         return model
