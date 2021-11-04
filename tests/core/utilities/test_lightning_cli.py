@@ -19,7 +19,7 @@ from pytorch_lightning import Callback, LightningDataModule, LightningModule, Tr
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.plugins.environments import SLURMEnvironment
 
-from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_5_0, _TORCHVISION_AVAILABLE
 from flash.core.utilities.lightning_cli import (
     instantiate_class,
     LightningArgumentParser,
@@ -83,21 +83,6 @@ def test_add_argparse_args_redefined(cli_args):
         ("--limit_train_batches=100", dict(limit_train_batches=100)),
         ("--limit_train_batches 0.8", dict(limit_train_batches=0.8)),
         ("--weights_summary=null", dict(weights_summary=None)),
-        (
-            "",
-            dict(
-                # These parameters are marked as Optional[...] in Trainer.__init__,
-                # with None as default. They should not be changed by the argparse
-                # interface.
-                min_steps=None,
-                max_steps=None,
-                log_gpu_memory=None,
-                distributed_backend=None,
-                weights_save_path=None,
-                resume_from_checkpoint=None,
-                profiler=None,
-            ),
-        ),
     ],
 )
 def test_parse_args_parsing(cli_args, expected):
@@ -277,6 +262,7 @@ def test_lightning_cli_configurable_callbacks(tmpdir):
     assert callback[0].logging_interval == "epoch"
 
 
+@pytest.mark.skipif(_PL_GREATER_EQUAL_1_5_0, reason="accelerator_connector not present in PL 1.5")
 def test_lightning_cli_args_cluster_environments(tmpdir):
     plugins = [dict(class_path="pytorch_lightning.plugins.environments.SLURMEnvironment")]
 
