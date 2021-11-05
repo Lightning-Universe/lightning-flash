@@ -40,10 +40,10 @@ datamodule = TabularRegressionData.from_csv(
 )
 
 # 2. Build the task
-model = TabularRegressor.from_data(datamodule)
+model = TabularRegressor.from_data(datamodule, learning_rate=0.1)
 
 # 3. Create the trainer and train the model
-trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
+trainer = flash.Trainer(max_epochs=1, gpus=torch.cuda.device_count())
 trainer.fit(model, datamodule=datamodule)
 
 # 4. Generate predictions from a CSV
