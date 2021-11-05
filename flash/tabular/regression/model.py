@@ -19,7 +19,7 @@ from torch.nn import functional as F
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.regression import RegressionTask
 from flash.core.utilities.imports import _TABULAR_AVAILABLE
-from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, SERIALIZER_TYPE
+from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 
 if _TABULAR_AVAILABLE:
     from pytorch_tabnet.tab_network import TabNet
@@ -56,7 +56,7 @@ class TabularRegressor(RegressionTask):
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-2,
-        serializer: SERIALIZER_TYPE = None,
+        output: OUTPUT_TYPE = None,
         **tabnet_kwargs,
     ):
         self.save_hyperparameters()
@@ -78,7 +78,7 @@ class TabularRegressor(RegressionTask):
             lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
-            serializer=serializer,
+            output=output,
         )
 
         self.save_hyperparameters()
