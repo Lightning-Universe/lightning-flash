@@ -17,7 +17,7 @@ from pytorch_lightning.utilities import rank_zero_info
 
 from flash.core.adapter import AdapterTask
 from flash.core.data.data_pipeline import DataPipeline
-from flash.core.data.serialization import Preds
+from flash.core.data.output import Preds
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 from flash.image.instance_segmentation.backbones import INSTANCE_SEGMENTATION_HEADS
