@@ -22,6 +22,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple, Type, Un
 import pytorch_lightning as pl
 import torch
 import torchmetrics
+from deprecate import deprecated
 from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.trainer.optimizers import _get_default_scheduler_config
@@ -632,6 +633,22 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         if isinstance(output, Mapping):
             output = OutputMapping(output)
         self._output = output
+
+    @torch.jit.unused
+    @property
+    @deprecated(None, "0.6.0", "0.7.0")
+    def serializer(self) -> Optional[Output]:
+        """Deprecated.
+
+        Use ``Task.output`` instead.
+        """
+        return self.output
+
+    @torch.jit.unused
+    @serializer.setter
+    @deprecated(None, "0.6.0", "0.7.0")
+    def serializer(self, serializer: Union[Output, Mapping[str, Output]]):
+        self.output = serializer
 
     def build_data_pipeline(
         self,

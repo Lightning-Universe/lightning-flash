@@ -14,6 +14,7 @@
 from typing import Any, Mapping
 
 import torch
+from deprecate import deprecated
 
 import flash
 from flash.core.data.properties import Properties
@@ -52,6 +53,30 @@ class Output(Properties):
         if self._is_enabled:
             return self.transform(sample)
         return sample
+
+
+class Serializer(Output):
+    """Deprecated.
+
+    Use ``Output`` instead.
+    """
+
+    @deprecated(Output, "0.6.0", "0.7.0")
+    def __init__(self):
+        super().__init__()
+        self._is_enabled = True
+
+    @staticmethod
+    @deprecated(Output.transform, "0.6.0", "0.7.0")
+    def serialize(sample: Any) -> Any:
+        """Deprecated.
+
+        Use ``Output.transform`` instead.
+        """
+        return sample
+
+    def transform(self, sample: Any) -> Any:
+        return self.serialize(sample)
 
 
 class OutputMapping(Output):
