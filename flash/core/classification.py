@@ -39,8 +39,8 @@ def binary_cross_entropy_with_logits(x: torch.Tensor, y: torch.Tensor) -> torch.
 
 
 class ClassificationMixin:
+    @staticmethod
     def _build(
-        self,
         num_classes: Optional[int] = None,
         loss_fn: Optional[Callable] = None,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
@@ -72,7 +72,7 @@ class ClassificationTask(Task, ClassificationMixin):
         **kwargs,
     ) -> None:
 
-        metrics, loss_fn = ClassificationMixin._build(self, num_classes, loss_fn, metrics, multi_label)
+        metrics, loss_fn = ClassificationMixin._build(num_classes, loss_fn, metrics, multi_label)
 
         super().__init__(
             *args,
@@ -95,7 +95,7 @@ class ClassificationAdapterTask(AdapterTask, ClassificationMixin):
         **kwargs,
     ) -> None:
 
-        metrics, loss_fn = ClassificationMixin._build(self, num_classes, loss_fn, metrics, multi_label)
+        metrics, loss_fn = ClassificationMixin._build(num_classes, loss_fn, metrics, multi_label)
 
         super().__init__(
             *args,
@@ -257,7 +257,7 @@ class FiftyOneLabels(ClassificationOutput):
     def transform(
         self,
         sample: Any,
-    ) -> Union[Classification, Classifications, Dict[str, Any], Dict[str, Any]]:
+    ) -> Union[Classification, Classifications, Dict[str, Any]]:
         pred = sample[DefaultDataKeys.PREDS] if isinstance(sample, Dict) else sample
         pred = torch.tensor(pred)
 

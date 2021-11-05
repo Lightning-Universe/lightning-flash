@@ -45,7 +45,7 @@ from flash.core.optimizers.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.registry import FlashRegistry
 from flash.core.serve.composition import Composition
 from flash.core.utilities.apply_func import get_callable_dict
-from flash.core.utilities.imports import requires
+from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_5_0, requires
 from flash.core.utilities.providers import _HUGGINGFACE
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import (
@@ -393,6 +393,10 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         for name, metric in metrics.items():
             if isinstance(metric, torchmetrics.metric.Metric):
                 metric(y_hat, y)
+                # PL 1.4.0 -> 1.4.9 tries to deepcopy the metric.
+                # Sometimes _forward_cache is not a leaf, so we convert it to one.
+                if not metric._forward_cache.is_leaf and not _PL_GREATER_EQUAL_1_5_0:
+                    metric._forward_cache = metric._forward_cache.clone().detach()
                 logs[name] = metric  # log the metric itself if it is of type Metric
             else:
                 logs[name] = metric(y_hat, y)

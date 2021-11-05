@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Optional, Tuple, Type, TYPE_CHECKING, Union
+from typing import Any, Optional, Tuple, Type, Union
 
 import pytorch_lightning as pl
 import torch
@@ -30,13 +30,7 @@ from flash.core.data.data_pipeline import DefaultPreprocess, Postprocess
 from flash.core.data.datasets import BaseDataset
 from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
 from flash.core.utilities.stages import RunningStage
-
-if _FIFTYONE_AVAILABLE and TYPE_CHECKING:
-    from fiftyone.core.collections import SampleCollection
-else:
-    SampleCollection = None
 
 
 class DataModule(DataModule):

@@ -28,6 +28,7 @@ __________
     :nosignatures:
     :template: classtemplate.rst
 
+    ~regression.model.TabularRegressor
     ~regression.data.TabularRegressionData
 
 Forecasting

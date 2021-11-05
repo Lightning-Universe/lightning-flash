@@ -80,8 +80,6 @@ def test_from_filepaths_smoke(tmpdir):
         num_workers=0,
     )
     assert img_data.train_dataloader() is not None
-    assert img_data.val_dataloader() is None
-    assert img_data.test_dataloader() is None
 
     data = next(iter(img_data.train_dataloader()))
     imgs, labels = data["input"], data["target"]
@@ -274,9 +272,6 @@ def test_from_folders_only_train(tmpdir):
     imgs, labels = data["input"], data["target"]
     assert imgs.shape == (1, 3, 196, 196)
     assert labels.shape == (1,)
-
-    assert img_data.val_dataloader() is None
-    assert img_data.test_dataloader() is None
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")

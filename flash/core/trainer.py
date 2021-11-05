@@ -25,11 +25,12 @@ from pytorch_lightning.loops.fit_loop import FitLoop
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.argparse import add_argparse_args, get_init_arguments_and_types, parse_env_variables
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from pytorch_lightning.utilities.model_helpers import is_overridden
 from torch.utils.data import DataLoader
 
 import flash
 from flash.core.finetuning import _DEFAULTS_FINETUNE_STRATEGIES, instantiate_default_finetuning_callbacks
-from flash.core.utilities.imports import _SERVE_AVAILABLE
+from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_5_0, _SERVE_AVAILABLE
 
 
 def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs):
@@ -277,14 +278,24 @@ class Trainer(PlTrainer):
             The dataloader
         """
         model, stage, is_legacy = self._parse_request_dataloader_args(args, kwargs)
+
         if is_legacy:
             self.call_hook(f"on_{stage}_dataloader")
             dataloader = getattr(model, f"{stage}_dataloader")()
         else:
             hook = f"{stage.dataloader_prefix}_dataloader"
             self.call_hook("on_" + hook, pl_module=model)
-            dataloader = self.call_hook(hook, pl_module=model)
+
+            if is_overridden(hook, model):
+                dataloader = self.call_hook(hook, pl_module=model)
+            elif _PL_GREATER_EQUAL_1_5_0:
+                source = getattr(self._data_connector, f"_{stage.dataloader_prefix}_dataloader_source")
+                dataloader = source.dataloader()
+
         if isinstance(dataloader, tuple):
             dataloader = list(dataloader)
-        self.accelerator.barrier("get_dataloaders")
+        if _PL_GREATER_EQUAL_1_5_0:
+            self.training_type_plugin.barrier("get_dataloaders")
+        else:
+            self.accelerator.barrier("get_dataloaders")
         return dataloader
