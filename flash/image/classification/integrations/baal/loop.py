@@ -20,6 +20,7 @@ from pytorch_lightning.loops import Loop
 from pytorch_lightning.loops.fit_loop import FitLoop
 from pytorch_lightning.trainer.progress import Progress
 from pytorch_lightning.trainer.states import TrainerFn, TrainerStatus
+from pytorch_lightning.utilities.model_helpers import is_overridden
 
 import flash
 from flash.core.data.data_pipeline import DataLoaderGetter
@@ -166,7 +167,11 @@ class ActiveLearningLoop(Loop):
     def _reset_dataloader_for_stage(self, running_state: RunningStage):
         dataloader_name = f"{_STAGES_PREFIX[running_state]}_dataloader"
         # If the dataloader exists, we reset it.
-        dataloader = getattr(self.trainer.datamodule, dataloader_name, None)
+        dataloader = (
+            getattr(self.trainer.datamodule, dataloader_name)
+            if is_overridden(dataloader_name, self.trainer.datamodule)
+            else None
+        )
         if dataloader:
             if _PL_GREATER_EQUAL_1_5_0:
                 setattr(
