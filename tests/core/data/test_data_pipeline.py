@@ -18,12 +18,12 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 import torch
-from pytorch_lightning import Trainer
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor, tensor
 from torch.utils.data import DataLoader
 from torch.utils.data._utils.collate import default_collate
 
+from flash import Trainer
 from flash.core.data.auto_dataset import IterableAutoDataset
 from flash.core.data.batch import _Postprocessor, _Preprocessor
 from flash.core.data.data_module import DataModule
