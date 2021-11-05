@@ -399,7 +399,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         for name, metric in metrics.items():
             if isinstance(metric, torchmetrics.metric.Metric):
                 metric(y_hat, y)
-                # Sometimes _forward_cache is not a leaf and PL attempts to deepcopy it
+                # Sometimes _forward_cache is not a leaf and PL tries to deepcopy it, so we convert it to a leaf
                 if not metric._forward_cache.is_leaf:
                     metric._forward_cache = metric._forward_cache.clone().detach()
                 logs[name] = metric  # log the metric itself if it is of type Metric
