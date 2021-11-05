@@ -15,18 +15,23 @@ from copy import deepcopy
 from typing import Any, Dict, Optional
 
 import torch
+from pytorch_lightning import LightningModule
 from pytorch_lightning.loops import Loop
 from pytorch_lightning.loops.fit_loop import FitLoop
-from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 from pytorch_lightning.trainer.progress import Progress
 from pytorch_lightning.trainer.states import TrainerFn, TrainerStatus
+from pytorch_lightning.utilities.model_helpers import is_overridden
 
 import flash
+from flash.core.data.data_pipeline import DataLoaderGetter
 from flash.core.data.utils import _STAGES_PREFIX
-from flash.core.utilities.imports import requires
+from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_5_0, requires
 from flash.core.utilities.stages import RunningStage
 from flash.image.classification.integrations.baal.data import ActiveLearningDataModule
 from flash.image.classification.integrations.baal.dropout import InferenceMCDropoutTask
+
+if not _PL_GREATER_EQUAL_1_5_0:
+    from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
 
 
 class ActiveLearningLoop(Loop):
@@ -133,35 +138,52 @@ class ActiveLearningLoop(Loop):
             return getattr(self.fit_loop, key)
         return self.__dict__[key]
 
+    def _connect(self, model: LightningModule):
+        if _PL_GREATER_EQUAL_1_5_0:
+            self.trainer.training_type_plugin.connect(model)
+        else:
+            self.trainer.accelerator.connect(model)
+
     def _reset_fitting(self):
         self.trainer.state.fn = TrainerFn.FITTING
         self.trainer.training = True
         self.trainer.lightning_module.on_train_dataloader()
-        self.trainer.accelerator.connect(self._lightning_module)
+        self._connect(self._lightning_module)
         self.fit_loop.epoch_progress = Progress()
 
     def _reset_predicting(self):
         self.trainer.state.fn = TrainerFn.PREDICTING
         self.trainer.predicting = True
         self.trainer.lightning_module.on_predict_dataloader()
-        self.trainer.accelerator.connect(self.inference_model)
+        self._connect(self.inference_model)
 
     def _reset_testing(self):
         self.trainer.state.fn = TrainerFn.TESTING
         self.trainer.state.status = TrainerStatus.RUNNING
         self.trainer.testing = True
         self.trainer.lightning_module.on_test_dataloader()
-        self.trainer.accelerator.connect(self._lightning_module)
+        self._connect(self._lightning_module)
 
     def _reset_dataloader_for_stage(self, running_state: RunningStage):
         dataloader_name = f"{_STAGES_PREFIX[running_state]}_dataloader"
         # If the dataloader exists, we reset it.
-        dataloader = getattr(self.trainer.datamodule, dataloader_name, None)
+        dataloader = (
+            getattr(self.trainer.datamodule, dataloader_name)
+            if is_overridden(dataloader_name, self.trainer.datamodule)
+            else None
+        )
         if dataloader:
-            setattr(
-                self.trainer.lightning_module,
-                dataloader_name,
-                _PatchDataLoader(dataloader(), running_state),
-            )
+            if _PL_GREATER_EQUAL_1_5_0:
+                setattr(
+                    self.trainer.lightning_module,
+                    dataloader_name,
+                    DataLoaderGetter(dataloader()),
+                )
+            else:
+                setattr(
+                    self.trainer.lightning_module,
+                    dataloader_name,
+                    _PatchDataLoader(dataloader(), running_state),
+                )
             setattr(self.trainer, dataloader_name, None)
             getattr(self.trainer, f"reset_{dataloader_name}")(self.trainer.lightning_module)
