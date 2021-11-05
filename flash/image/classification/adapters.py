@@ -186,7 +186,7 @@ class Learn2LearnAdapter(Adapter):
         self.model = self.algorithm_cls(**algorithm_kwargs)
 
         # Patch log to avoid error with learn2learn and PL 1.5
-        self.model.log = functools.partial(self.model.log)
+        self.model.log = functools.partial(self._patch_log, self.model.log)
 
         # this algorithm requires a special treatment
         self._algorithm_has_validated = self.algorithm_cls != l2l.algorithms.LightningPrototypicalNetworks
