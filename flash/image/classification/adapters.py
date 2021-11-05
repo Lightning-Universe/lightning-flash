@@ -32,6 +32,7 @@ from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
+from flash.core.utilities.compatibility import accelerator_connector
 from flash.core.utilities.imports import _LEARN2LEARN_AVAILABLE
 from flash.core.utilities.providers import _LEARN2LEARN
 from flash.core.utilities.url_error import catch_url_error
@@ -277,11 +278,7 @@ class Learn2LearnAdapter(Adapter):
             devices = 1
             if isinstance(trainer.training_type_plugin, DataParallelPlugin):
                 # when using DP, we need to sample n tasks, so it can splitted across multiple devices.
-                if hasattr(trainer, "accelerator_connector"):
-                    accelerator_connector = trainer.accelerator_connector
-                else:
-                    accelerator_connector = trainer._accelerator_connector
-                devices = accelerator_connector.devices
+                devices = accelerator_connector(trainer).devices
             dataset = TaskDataParallel(taskset, epoch_length=epoch_length, devices=devices, collate_fn=None)
             self.trainer.accumulated_grad_batches = self.meta_batch_size / devices
 

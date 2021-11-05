@@ -17,6 +17,7 @@ import torch
 from pytorch_lightning.core.hooks import ModelHooks
 
 import flash
+from flash.core.utilities.compatibility import accelerator_connector
 from flash.core.utilities.imports import _VISSL_AVAILABLE
 
 if _VISSL_AVAILABLE:
@@ -48,11 +49,7 @@ class TrainingSetupHook(ClassyHook):
 
         # get around vissl distributed training by setting MockTask flags
         num_nodes = lightning_module.trainer.num_nodes
-        if hasattr(lightning_module.trainer, "accelerator_connector"):
-            accelerator_connector = lightning_module.trainer.accelerator_connector
-        else:
-            accelerator_connector = lightning_module.trainer._accelerator_connector
-        accelerators_ids = accelerator_connector.parallel_device_ids
+        accelerators_ids = accelerator_connector(lightning_module.trainer).parallel_device_ids
         accelerator_per_node = len(accelerators_ids) if accelerators_ids is not None else 1
         task.world_size = num_nodes * accelerator_per_node
 

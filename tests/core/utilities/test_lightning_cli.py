@@ -19,7 +19,8 @@ from pytorch_lightning import Callback, LightningDataModule, LightningModule, Tr
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.plugins.environments import SLURMEnvironment
 
-from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_5_0, _TORCHVISION_AVAILABLE
+from flash.core.utilities.compatibility import accelerator_connector
+from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 from flash.core.utilities.lightning_cli import (
     instantiate_class,
     LightningArgumentParser,
@@ -262,14 +263,13 @@ def test_lightning_cli_configurable_callbacks(tmpdir):
     assert callback[0].logging_interval == "epoch"
 
 
-@pytest.mark.skipif(_PL_GREATER_EQUAL_1_5_0, reason="accelerator_connector not present in PL 1.5")
 def test_lightning_cli_args_cluster_environments(tmpdir):
     plugins = [dict(class_path="pytorch_lightning.plugins.environments.SLURMEnvironment")]
 
     class TestModel(BoringModel):
         def on_fit_start(self):
             # Ensure SLURMEnvironment is set, instead of default LightningEnvironment
-            assert isinstance(self.trainer.accelerator_connector._cluster_environment, SLURMEnvironment)
+            assert isinstance(accelerator_connector(self.trainer)._cluster_environment, SLURMEnvironment)
             self.trainer.ran_asserts = True
 
     with mock.patch("sys.argv", ["any.py", f"--trainer.plugins={json.dumps(plugins)}"]):
