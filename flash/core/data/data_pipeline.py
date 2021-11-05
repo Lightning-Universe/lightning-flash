@@ -340,7 +340,7 @@ class DataPipeline:
             dataloader = getattr(model.trainer.datamodule, loader_name, None)
             attr_name = f"trainer.datamodule.{loader_name}"
 
-        elif _PL_GREATER_EQUAL_1_5_0 and model.trainer:
+        elif _PL_GREATER_EQUAL_1_5_0 and model.trainer is not None:
             source = getattr(model.trainer._data_connector, f"_{loader_name}_source")
             if not source.is_module():
                 dataloader = source.dataloader()
