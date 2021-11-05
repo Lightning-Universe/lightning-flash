@@ -17,7 +17,7 @@ import pytorch_lightning as pl
 import torch
 
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.process import Serializer
+from flash.core.data.io.output import Output
 from flash.core.finetuning import FlashBaseFinetuning
 from flash.core.model import Task
 from flash.core.utilities.imports import _FASTFACE_AVAILABLE
@@ -26,8 +26,8 @@ from flash.core.utilities.types import (
     LR_SCHEDULER_TYPE,
     METRICS_TYPE,
     OPTIMIZER_TYPE,
+    OUTPUT_TYPE,
     PREPROCESS_TYPE,
-    SERIALIZER_TYPE,
 )
 from flash.image.face_detection.backbones import FACE_DETECTION_BACKBONES
 from flash.image.face_detection.data import FaceDetectionPreprocess
@@ -44,10 +44,10 @@ class FaceDetectionFineTuning(FlashBaseFinetuning):
         self.freeze(modules=pl_module.model.backbone, train_bn=self.train_bn)
 
 
-class DetectionLabels(Serializer):
-    """A :class:`.Serializer` which extracts predictions from sample dict."""
+class DetectionLabels(Output):
+    """A :class:`.Output` which extracts predictions from sample dict."""
 
-    def serialize(self, sample: Any) -> Dict[str, Any]:
+    def transform(self, sample: Any) -> Dict[str, Any]:
         return sample[DefaultDataKeys.PREDS] if isinstance(sample, Dict) else sample
 
 
@@ -78,7 +78,7 @@ class FaceDetector(Task):
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         learning_rate: float = 1e-4,
-        serializer: SERIALIZER_TYPE = None,
+        output: OUTPUT_TYPE = None,
         preprocess: PREPROCESS_TYPE = None,
         **kwargs: Any,
     ):
@@ -96,7 +96,7 @@ class FaceDetector(Task):
             learning_rate=learning_rate,
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
-            serializer=serializer or DetectionLabels(),
+            output=output or DetectionLabels(),
             preprocess=preprocess or FaceDetectionPreprocess(),
         )
 

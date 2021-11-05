@@ -14,9 +14,9 @@
 from typing import Any, Dict, List, Optional
 
 from flash.core.adapter import AdapterTask
-from flash.core.data.serialization import Preds
+from flash.core.data.output import Preds
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE, SERIALIZER_TYPE
+from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 from flash.image.detection.backbones import OBJECT_DETECTION_HEADS
 
 
@@ -42,7 +42,7 @@ class ObjectDetector(AdapterTask):
         pretrained: Whether the model from torchvision should be loaded with it's pretrained weights.
             Has no effect for custom models.
         learning_rate: The learning rate to use for training
-        serializer: A instance of :class:`~flash.core.data.process.Serializer` or a mapping consisting of such
+        output: A instance of :class:`~flash.core.data.io.output.Output` or a mapping consisting of such
             to use when serializing prediction outputs.
         kwargs: additional kwargs nessesary for initializing the backbone task
     """
@@ -60,7 +60,7 @@ class ObjectDetector(AdapterTask):
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         learning_rate: float = 5e-3,
-        serializer: SERIALIZER_TYPE = None,
+        output: OUTPUT_TYPE = None,
         **kwargs: Any,
     ):
         self.save_hyperparameters()
@@ -80,7 +80,7 @@ class ObjectDetector(AdapterTask):
             learning_rate=learning_rate,
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
-            serializer=serializer or Preds(),
+            output=output or Preds(),
         )
 
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]) -> None:

@@ -28,7 +28,7 @@ from flash.core.data.utils import (
 from flash.core.utilities.stages import RunningStage
 
 if TYPE_CHECKING:
-    from flash.core.data.process import Deserializer, Preprocess, Serializer
+    from flash.core.data.process import Deserializer, Preprocess
 
 
 class _Sequential(torch.nn.Module):
@@ -133,18 +133,6 @@ class _DeserializeProcessor(torch.nn.Module):
                 self.callback.on_to_tensor_transform(sample, RunningStage.PREDICTING)
 
         return sample
-
-
-class _SerializeProcessor(torch.nn.Module):
-    def __init__(
-        self,
-        serializer: "Serializer",
-    ):
-        super().__init__()
-        self.serializer = convert_to_modules(serializer)
-
-    def forward(self, sample):
-        return self.serializer(sample)
 
 
 class _Preprocessor(torch.nn.Module):
@@ -274,7 +262,7 @@ class _Postprocessor(torch.nn.Module):
         uncollate_fn: Callable,
         per_batch_transform: Callable,
         per_sample_transform: Callable,
-        serializer: Optional[Callable],
+        output: Optional[Callable],
         save_fn: Optional[Callable] = None,
         save_per_sample: bool = False,
         is_serving: bool = False,
@@ -283,7 +271,7 @@ class _Postprocessor(torch.nn.Module):
         self.uncollate_fn = convert_to_modules(uncollate_fn)
         self.per_batch_transform = convert_to_modules(per_batch_transform)
         self.per_sample_transform = convert_to_modules(per_sample_transform)
-        self.serializer = convert_to_modules(serializer)
+        self.output = convert_to_modules(output)
         self.save_fn = convert_to_modules(save_fn)
         self.save_per_sample = convert_to_modules(save_per_sample)
         self.is_serving = is_serving
@@ -304,8 +292,8 @@ class _Postprocessor(torch.nn.Module):
 
         final_preds = [self.per_sample_transform(sample) for sample in uncollated]
 
-        if self.serializer is not None:
-            final_preds = [self.serializer(sample) for sample in final_preds]
+        if self.output is not None:
+            final_preds = [self.output(sample) for sample in final_preds]
 
         if isinstance(uncollated, Tensor) and isinstance(final_preds[0], Tensor):
             final_preds = torch.stack(final_preds)
@@ -326,7 +314,7 @@ class _Postprocessor(torch.nn.Module):
             f"\t(per_batch_transform): {str(self.per_batch_transform)}\n"
             f"\t(uncollate_fn): {str(self.uncollate_fn)}\n"
             f"\t(per_sample_transform): {str(self.per_sample_transform)}\n"
-            f"\t(serializer): {str(self.serializer)}"
+            f"\t(output): {str(self.output)}"
         )
 
 

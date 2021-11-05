@@ -19,7 +19,7 @@ from torch.nn import functional as F
 from flash.core.classification import ClassificationTask, Probabilities
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _TABULAR_AVAILABLE
-from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, SERIALIZER_TYPE
+from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 
 if _TABULAR_AVAILABLE:
     from pytorch_tabnet.tab_network import TabNet
@@ -42,7 +42,7 @@ class TabularClassifier(ClassificationTask):
             `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training.
         multi_label: Whether the targets are multi-label or not.
-        serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
+        output: The :class:`~flash.core.data.io.output.Output` to use when serializing prediction outputs.
         **tabnet_kwargs: Optional additional arguments for the TabNet model, see
             `pytorch_tabnet <https://dreamquark-ai.github.io/tabnet/_modules/pytorch_tabnet/tab_network.html#TabNet>`_.
     """
@@ -60,7 +60,7 @@ class TabularClassifier(ClassificationTask):
         metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-2,
         multi_label: bool = False,
-        serializer: SERIALIZER_TYPE = None,
+        output: OUTPUT_TYPE = None,
         **tabnet_kwargs,
     ):
         self.save_hyperparameters()
@@ -83,7 +83,7 @@ class TabularClassifier(ClassificationTask):
             metrics=metrics,
             learning_rate=learning_rate,
             multi_label=multi_label,
-            serializer=serializer or Probabilities(),
+            output=output or Probabilities(),
         )
 
         self.save_hyperparameters()

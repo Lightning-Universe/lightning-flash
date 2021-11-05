@@ -17,8 +17,8 @@ import torch
 import torch.nn.functional as F
 import torchmetrics
 
-from flash.core.data.process import Serializer
 from flash.core.model import Task
+from flash.core.utilities.types import OUTPUT_TYPE
 
 
 class RegressionMixin:
@@ -42,7 +42,7 @@ class RegressionTask(Task, RegressionMixin):
         *args,
         loss_fn: Optional[Callable] = None,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
-        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
+        output: OUTPUT_TYPE = None,
         **kwargs,
     ) -> None:
 
@@ -52,6 +52,6 @@ class RegressionTask(Task, RegressionMixin):
             *args,
             loss_fn=loss_fn,
             metrics=metrics,
-            serializer=serializer,
+            output=output,
             **kwargs,
         )

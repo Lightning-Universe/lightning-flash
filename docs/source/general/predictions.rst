@@ -57,8 +57,8 @@ Predict on a csv file
 Serializing predictions
 =======================
 
-To change how predictions are serialized you can attach a :class:`~flash.core.data.process.Serializer` to your
-:class:`~flash.core.model.Task`. For example, you can choose to serialize outputs as probabilities (for more options see the API
+To change the output format of predictions you can attach an :class:`~flash.core.data.io.output.Output` to your
+:class:`~flash.core.model.Task`. For example, you can choose to output probabilities (for more options see the API
 reference below).
 
 
@@ -77,8 +77,8 @@ reference below).
         "https://flash-weights.s3.amazonaws.com/0.5.2/image_classification_model.pt"
     )
 
-    # 3. Attach the Serializer
-    model.serializer = Probabilities()
+    # 3. Attach the Output
+    model.output = Probabilities()
 
     # 4. Predict whether the image contains an ant or a bee
     predictions = model.predict("data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg")

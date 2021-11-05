@@ -45,7 +45,7 @@ ________________
     detection.data.FiftyOneParser
     detection.data.ObjectDetectionFiftyOneDataSource
     detection.data.ObjectDetectionPreprocess
-    detection.serialization.FiftyOneDetectionLabels
+    detection.output.FiftyOneDetectionLabels
 
 Keypoint Detection
 __________________
@@ -102,8 +102,8 @@ ____________
     segmentation.data.SemanticSegmentationFiftyOneDataSource
     segmentation.data.SemanticSegmentationDeserializer
     segmentation.model.SemanticSegmentationPostprocess
-    segmentation.serialization.FiftyOneSegmentationLabels
-    segmentation.serialization.SegmentationLabels
+    segmentation.output.FiftyOneSegmentationLabels
+    segmentation.output.SegmentationLabels
 
 .. autosummary::
     :toctree: generated/

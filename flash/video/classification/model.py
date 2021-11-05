@@ -32,7 +32,7 @@ from flash.core.registry import FlashRegistry
 from flash.core.utilities.compatibility import accelerator_connector
 from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE
 from flash.core.utilities.providers import _PYTORCHVIDEO
-from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, SERIALIZER_TYPE
+from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 
 _VIDEO_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
 
@@ -93,7 +93,7 @@ class VideoClassifier(ClassificationTask):
         head: either a `nn.Module` or a callable function that converts the features extrated from the backbone
             into class log probabilities (assuming default loss function). If `None`, will default to using
             a single linear layer.
-        serializer: A instance of :class:`~flash.core.data.process.Serializer` that determines how the output
+        output: A instance of :class:`~flash.core.data.io.output.Output` that determines how the output
             should be serialized e.g. convert the model output into the desired output format when predicting.
     """
 
@@ -113,7 +113,7 @@ class VideoClassifier(ClassificationTask):
         metrics: METRICS_TYPE = Accuracy(),
         learning_rate: float = 1e-3,
         head: Optional[Union[FunctionType, nn.Module]] = None,
-        serializer: SERIALIZER_TYPE = None,
+        output: OUTPUT_TYPE = None,
     ):
         super().__init__(
             model=None,
@@ -122,7 +122,7 @@ class VideoClassifier(ClassificationTask):
             lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
-            serializer=serializer or Labels(),
+            output=output or Labels(),
         )
 
         self.save_hyperparameters()
