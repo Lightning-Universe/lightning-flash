@@ -11,12 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import functools
 import inspect
 import os
 from abc import ABC, abstractclassmethod, abstractmethod
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union
 
 import torch
+from _warnings import warn
+from deprecate import deprecated
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 from torch.utils.data._utils.collate import default_collate
@@ -25,6 +28,7 @@ import flash
 from flash.core.data.batch import default_uncollate
 from flash.core.data.callback import FlashCallback
 from flash.core.data.data_source import DatasetDataSource, DataSource, DefaultDataKeys, DefaultDataSources
+from flash.core.data.io.output import Output
 from flash.core.data.properties import ProcessState, Properties
 from flash.core.data.states import (
     CollateFn,
@@ -614,3 +618,41 @@ class DeserializerMapping(Deserializer):
     def attach_data_pipeline_state(self, data_pipeline_state: "flash.core.data.data_pipeline.DataPipelineState"):
         for deserializer in self._deserializers.values():
             deserializer.attach_data_pipeline_state(data_pipeline_state)
+
+
+class Serializer(Output):
+    """Deprecated.
+
+    Use ``Output`` instead.
+    """
+
+    @deprecated(
+        None,
+        "0.6.0",
+        "0.7.0",
+        template_mgs="`Serializer` was deprecated in v%(deprecated_in)s in favor of `Output`. "
+        "It will be removed in v%(remove_in)s.",
+        stream=functools.partial(warn, category=FutureWarning),
+    )
+    def __init__(self):
+        super().__init__()
+        self._is_enabled = True
+
+    @staticmethod
+    @deprecated(
+        None,
+        "0.6.0",
+        "0.7.0",
+        template_mgs="`Serializer` was deprecated in v%(deprecated_in)s in favor of `Output`. "
+        "It will be removed in v%(remove_in)s.",
+        stream=functools.partial(warn, category=FutureWarning),
+    )
+    def serialize(sample: Any) -> Any:
+        """Deprecated.
+
+        Use ``Output.transform`` instead.
+        """
+        return sample
+
+    def transform(self, sample: Any) -> Any:
+        return self.serialize(sample)

@@ -11,12 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import functools
 from typing import Any, Mapping
-from warnings import warn
 
 import torch
-from deprecate import deprecated
 
 import flash
 from flash.core.data.properties import Properties
@@ -55,44 +52,6 @@ class Output(Properties):
         if self._is_enabled:
             return self.transform(sample)
         return sample
-
-
-class Serializer(Output):
-    """Deprecated.
-
-    Use ``Output`` instead.
-    """
-
-    @deprecated(
-        None,
-        "0.6.0",
-        "0.7.0",
-        template_mgs="`Serializer` was deprecated in v%(deprecated_in)s in favor of `Output`. "
-        "It will be removed in v%(remove_in)s.",
-        stream=functools.partial(warn, category=FutureWarning),
-    )
-    def __init__(self):
-        super().__init__()
-        self._is_enabled = True
-
-    @staticmethod
-    @deprecated(
-        None,
-        "0.6.0",
-        "0.7.0",
-        template_mgs="`Serializer` was deprecated in v%(deprecated_in)s in favor of `Output`. "
-        "It will be removed in v%(remove_in)s.",
-        stream=functools.partial(warn, category=FutureWarning),
-    )
-    def serialize(sample: Any) -> Any:
-        """Deprecated.
-
-        Use ``Output.transform`` instead.
-        """
-        return sample
-
-    def transform(self, sample: Any) -> Any:
-        return self.serialize(sample)
 
 
 class OutputMapping(Output):
