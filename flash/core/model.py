@@ -18,6 +18,7 @@ from abc import ABCMeta
 from copy import deepcopy
 from importlib import import_module
 from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple, Type, Union
+from warnings import warn
 
 import pytorch_lightning as pl
 import torch
@@ -642,6 +643,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         "0.7.0",
         template_mgs="`Task.serializer` was deprecated in v%(deprecated_in)s in favor of `Task.output`. "
         "It will be removed in v%(remove_in)s.",
+        stream=functools.partial(warn, category=FutureWarning),
     )
     def serializer(self) -> Optional[Output]:
         """Deprecated.
@@ -658,6 +660,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         "0.7.0",
         template_mgs="`Task.serializer` was deprecated in v%(deprecated_in)s in favor of `Task.output`. "
         "It will be removed in v%(remove_in)s.",
+        stream=functools.partial(warn, category=FutureWarning),
     )
     def serializer(self, serializer: Union[Output, Mapping[str, Output]]):
         self.output = serializer

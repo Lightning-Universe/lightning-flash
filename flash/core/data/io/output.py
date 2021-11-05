@@ -11,7 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import functools
 from typing import Any, Mapping
+from warnings import warn
 
 import torch
 from deprecate import deprecated
@@ -67,6 +69,7 @@ class Serializer(Output):
         "0.7.0",
         template_mgs="`Serializer` was deprecated in v%(deprecated_in)s in favor of `Output`. "
         "It will be removed in v%(remove_in)s.",
+        stream=functools.partial(warn, category=FutureWarning),
     )
     def __init__(self):
         super().__init__()
@@ -79,6 +82,7 @@ class Serializer(Output):
         "0.7.0",
         template_mgs="`Serializer` was deprecated in v%(deprecated_in)s in favor of `Output`. "
         "It will be removed in v%(remove_in)s.",
+        stream=functools.partial(warn, category=FutureWarning),
     )
     def serialize(sample: Any) -> Any:
         """Deprecated.
