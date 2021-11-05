@@ -636,7 +636,13 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
     @torch.jit.unused
     @property
-    @deprecated(None, "0.6.0", "0.7.0")
+    @deprecated(
+        None,
+        "0.6.0",
+        "0.7.0",
+        template_mgs="`Task.serializer` was deprecated in v%(deprecated_in)s in favor of `Task.output`. "
+        "It will be removed in v%(remove_in)s.",
+    )
     def serializer(self) -> Optional[Output]:
         """Deprecated.
 
@@ -646,7 +652,13 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
     @torch.jit.unused
     @serializer.setter
-    @deprecated(None, "0.6.0", "0.7.0")
+    @deprecated(
+        None,
+        "0.6.0",
+        "0.7.0",
+        template_mgs="`Task.serializer` was deprecated in v%(deprecated_in)s in favor of `Task.output`. "
+        "It will be removed in v%(remove_in)s.",
+    )
     def serializer(self, serializer: Union[Output, Mapping[str, Output]]):
         self.output = serializer
 

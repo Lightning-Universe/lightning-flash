@@ -61,13 +61,25 @@ class Serializer(Output):
     Use ``Output`` instead.
     """
 
-    @deprecated(Output, "0.6.0", "0.7.0")
+    @deprecated(
+        None,
+        "0.6.0",
+        "0.7.0",
+        template_mgs="`Serializer` was deprecated in v%(deprecated_in)s in favor of `Output`. "
+        "It will be removed in v%(remove_in)s.",
+    )
     def __init__(self):
         super().__init__()
         self._is_enabled = True
 
     @staticmethod
-    @deprecated(Output.transform, "0.6.0", "0.7.0")
+    @deprecated(
+        None,
+        "0.6.0",
+        "0.7.0",
+        template_mgs="`Serializer` was deprecated in v%(deprecated_in)s in favor of `Output`. "
+        "It will be removed in v%(remove_in)s.",
+    )
     def serialize(sample: Any) -> Any:
         """Deprecated.
 
