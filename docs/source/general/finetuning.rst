@@ -139,8 +139,6 @@ For example, to unfreeze after epoch 7:
 
 .. testcode:: strategies
 
-    from flash.core.finetuning import FreezeUnfreeze
-
     trainer.finetune(model, datamodule, strategy=("freeze_unfreeze", 7))
 
 Under the hood, the pseudocode looks like:
@@ -252,7 +250,8 @@ For even more customization, create your own finetuning callback. Learn more abo
     import flash
     from flash.core.data.utils import download_data
     from flash.image import ImageClassificationData, ImageClassifier
-	from flash.core.finetuning import FlashBaseFinetuning
+    from flash.core.finetuning import FlashBaseFinetuning
+    from torch.optim import Optimizer
 
     download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
