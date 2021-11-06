@@ -127,14 +127,8 @@ Every finetune strategy can also be customized.
 
 freeze_unfreeze
 ---------------
-By default, in this strategy the backbone is frozen for 5 epochs then unfrozen:
+The freeze_unfreeze strategy keeps the backbone frozen until a certain epoch (provided through the input) after which the backbone unfrozen.
 
-
-.. testcode:: strategies
-
-    trainer.finetune(model, datamodule, strategy="freeze_unfreeze")
-
-Or we can customize it unfreeze the backbone after a different epoch.
 For example, to unfreeze after epoch 7:
 
 .. testcode:: strategies
@@ -220,6 +214,7 @@ Here's an example where:
     from flash import Trainer
     from flash.core.data.utils import download_data
     from flash.text import QuestionAnsweringData, QuestionAnsweringTask
+    from torch.optim import Optimizer
 
     download_data("https://pl-flash-data.s3.amazonaws.com/squad_tiny.zip", "./data/")
 
@@ -251,7 +246,6 @@ For even more customization, create your own finetuning callback. Learn more abo
     from flash.core.data.utils import download_data
     from flash.image import ImageClassificationData, ImageClassifier
     from flash.core.finetuning import FlashBaseFinetuning
-    from torch.optim import Optimizer
 
     download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
