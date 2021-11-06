@@ -104,7 +104,7 @@ def test_multilabel(tmpdir):
 
     num_classes = 4
     ds = DummyMultiLabelDataset(num_classes)
-    model = ImageClassifier(num_classes, multi_label=True, serializer=Probabilities(multi_label=True))
+    model = ImageClassifier(num_classes, multi_label=True, output=Probabilities(multi_label=True))
     train_dl = torch.utils.data.DataLoader(ds, batch_size=2)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.finetune(model, train_dl, strategy="freeze_unfreeze")

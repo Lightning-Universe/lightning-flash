@@ -47,8 +47,8 @@ semantic segmentation tasks. Doing so is as easy as updating your model to use
 one of the following serializers:
 
 * :class:`FiftyOneLabels(return_filepath=True)<flash.core.classification.FiftyOneLabels>`
-* :class:`FiftyOneSegmentationLabels(return_filepath=True)<flash.image.segmentation.serialization.FiftyOneSegmentationLabels>`
-* :class:`FiftyOneDetectionLabels(return_filepath=True)<flash.image.detection.serialization.FiftyOneDetectionLabels>`
+* :class:`FiftyOneSegmentationLabels(return_filepath=True)<flash.image.segmentation.output.FiftyOneSegmentationLabels>`
+* :class:`FiftyOneDetectionLabels(return_filepath=True)<flash.image.detection.output.FiftyOneDetectionLabels>`
 
 The :func:`~flash.core.integrations.fiftyone.visualize` function then lets you visualize
 your predictions in the

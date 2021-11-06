@@ -25,11 +25,11 @@ datamodule = TextClassificationData.from_csv(
     "sentiment",
     train_file="data/imdb/train.csv",
     val_file="data/imdb/valid.csv",
-    backbone="prajjwal1/bert-medium",
+    backbone="prajjwal1/bert-tiny",
 )
 
 # 2. Build the task
-model = TextClassifier(backbone="prajjwal1/bert-medium", num_classes=datamodule.num_classes)
+model = TextClassifier(backbone=datamodule.backbone, num_classes=datamodule.num_classes)
 
 # 3. Create the trainer and finetune the model
 trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())

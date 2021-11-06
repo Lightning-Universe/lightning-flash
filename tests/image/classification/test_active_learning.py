@@ -92,7 +92,7 @@ def test_active_learning_training(simple_datamodule, initial_num_labels, query_s
     )
 
     model = ImageClassifier(
-        backbone="resnet18", head=head, num_classes=active_learning_dm.num_classes, serializer=Probabilities()
+        backbone="resnet18", head=head, num_classes=active_learning_dm.num_classes, output=Probabilities()
     )
     trainer = flash.Trainer(max_epochs=3)
     active_learning_loop = ActiveLearningLoop(label_epoch_frequency=1, inference_iteration=3)
@@ -144,7 +144,7 @@ def test_no_validation_loop(simple_datamodule):
     )
 
     model = ImageClassifier(
-        backbone="resnet18", head=head, num_classes=active_learning_dm.num_classes, serializer=Probabilities()
+        backbone="resnet18", head=head, num_classes=active_learning_dm.num_classes, output=Probabilities()
     )
     trainer = flash.Trainer(max_epochs=3)
     active_learning_loop = ActiveLearningLoop(label_epoch_frequency=1, inference_iteration=3)

@@ -45,9 +45,9 @@ class TabularForecastingDataFrameDataSource(DataSource[DataFrame]):
     @requires("tabular")
     def __init__(
         self,
-        time_idx: str,
-        target: Union[str, List[str]],
-        group_ids: List[str],
+        time_idx: Optional[str] = None,
+        target: Optional[Union[str, List[str]]] = None,
+        group_ids: Optional[List[str]] = None,
         parameters: Optional[Dict[str, Any]] = None,
         **data_source_kwargs: Any,
     ):
@@ -125,12 +125,14 @@ class TabularForecastingPreprocess(Preprocess):
 
 
 class TabularForecastingData(DataModule):
-    """Data module for tabular tasks."""
+    """Data module for the tabular forecasting task."""
 
     preprocess_cls = TabularForecastingPreprocess
 
     @property
     def parameters(self) -> Optional[Dict[str, Any]]:
+        """The parameters dictionary from the ``TimeSeriesDataSet`` object created from the train data when
+        constructing the ``TabularForecastingData`` object."""
         return getattr(self.train_dataset, "parameters", None)
 
     @classmethod
@@ -155,12 +157,24 @@ class TabularForecastingData(DataModule):
         num_workers: Optional[int] = None,
         **preprocess_kwargs: Any,
     ):
-        """Creates a :class:`~flash.tabular.data.TabularClassificationData` object from the given data frames.
+        """Creates a :class:`~flash.tabular.forecasting.data.TabularForecastingData` object from the given data
+        frames.
+
+        .. note::
+
+            The ``time_idx``, ``target``, and ``group_ids`` do not need to be provided if ``parameters`` are passed
+            instead. These can be obtained from the
+            :attr:`~flash.tabular.forecasting.data.TabularForecastingData.parameters` attribute of the
+            :class:`~flash.tabular.forecasting.data.TabularForecastingData` object that contains your training data.
 
         Args:
-            group_ids:
-            target:
             time_idx:
+            target: Column denoting the target or list of columns denoting the target.
+            group_ids: List of column names identifying a time series. This means that the group_ids identify a sample
+                together with the time_idx. If you have only one timeseries, set this to the name of column that is
+                constant.
+            parameters: Parameters to use for the timeseries if ``time_idx``, ``target``, and ``group_ids`` are not
+                provided (e.g. when loading data for inference or validation).
             train_data_frame: The pandas ``DataFrame`` containing the training data.
             val_data_frame: The pandas ``DataFrame`` containing the validation data.
             test_data_frame: The pandas ``DataFrame`` containing the testing data.
@@ -189,10 +203,10 @@ class TabularForecastingData(DataModule):
 
         Examples::
 
-            data_module = TabularClassificationData.from_data_frame(
-                "categorical_input",
-                "numerical_input",
-                "target",
+            data_module = TabularForecastingData.from_data_frame(
+                time_idx="time_idx",
+                target="value",
+                group_ids=["series"],
                 train_data_frame=train_data,
             )
         """

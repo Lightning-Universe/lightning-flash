@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional, TYPE_CHECKING, Union
 from pytorch_lightning.utilities import rank_zero_warn
 
 from flash.core.data.data_source import DefaultDataKeys, LabelsState
-from flash.core.data.process import Serializer
+from flash.core.data.io.output import Output
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 
 Detections = None
@@ -28,8 +28,8 @@ else:
     fo = None
 
 
-class FiftyOneDetectionLabels(Serializer):
-    """A :class:`.Serializer` which converts model outputs to FiftyOne detection format.
+class FiftyOneDetectionLabels(Output):
+    """A :class:`.Output` which converts model outputs to FiftyOne detection format.
 
     Args:
         labels: A list of labels, assumed to map the class index to the label for that class. If ``labels`` is not
@@ -55,9 +55,9 @@ class FiftyOneDetectionLabels(Serializer):
         if labels is not None:
             self.set_state(LabelsState(labels))
 
-    def serialize(self, sample: Dict[str, Any]) -> Union[Detections, Dict[str, Any]]:
+    def transform(self, sample: Dict[str, Any]) -> Union[Detections, Dict[str, Any]]:
         if DefaultDataKeys.METADATA not in sample:
-            raise ValueError("sample requires DefaultDataKeys.METADATA to use a FiftyOneDetectionLabels serializer.")
+            raise ValueError("sample requires DefaultDataKeys.METADATA to use a FiftyOneDetectionLabels output.")
 
         labels = None
         if self._labels is not None:

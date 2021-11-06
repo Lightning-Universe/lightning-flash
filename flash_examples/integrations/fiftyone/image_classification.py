@@ -36,7 +36,7 @@ datamodule = ImageClassificationData.from_folders(
 model = ImageClassifier(
     backbone="resnet18",
     num_classes=datamodule.num_classes,
-    serializer=Labels(),
+    output=Labels(),
 )
 trainer = flash.Trainer(
     max_epochs=1,
@@ -52,8 +52,10 @@ trainer.finetune(
 trainer.save_checkpoint("image_classification_model.pt")
 
 # 4 Predict from checkpoint
-model = ImageClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/image_classification_model.pt")
-model.serializer = FiftyOneLabels(return_filepath=True)  # output FiftyOne format
+model = ImageClassifier.load_from_checkpoint(
+    "https://flash-weights.s3.amazonaws.com/0.5.2/image_classification_model.pt"
+)
+model.output = FiftyOneLabels(return_filepath=True)  # output FiftyOne format
 predictions = trainer.predict(model, datamodule=datamodule)
 predictions = list(chain.from_iterable(predictions))  # flatten batches
 

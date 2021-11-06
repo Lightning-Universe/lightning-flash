@@ -30,7 +30,7 @@ trainer.save_checkpoint("image_classification_model.pt")
 
 # 4. Predict from checkpoint
 model = ImageClassifier.load_from_checkpoint("image_classification_model.pt")
-model.serializer = Labels()
+model.output = Labels()
 
 predictions = model.predict(
     [

@@ -74,7 +74,7 @@ def test_postprocessor_str():
         "\t(per_batch_transform): FuncModule(relu)\n"
         "\t(uncollate_fn): FuncModule(default_uncollate)\n"
         "\t(per_sample_transform): FuncModule(softmax)\n"
-        "\t(serializer): None"
+        "\t(output): None"
     )
 
 

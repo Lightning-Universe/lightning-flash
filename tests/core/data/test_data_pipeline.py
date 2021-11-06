@@ -18,18 +18,19 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 import torch
-from pytorch_lightning import Trainer
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor, tensor
 from torch.utils.data import DataLoader
 from torch.utils.data._utils.collate import default_collate
 
+from flash import Trainer
 from flash.core.data.auto_dataset import IterableAutoDataset
 from flash.core.data.batch import _Postprocessor, _Preprocessor
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import _StageOrchestrator, DataPipeline, DataPipelineState
 from flash.core.data.data_source import DataSource
-from flash.core.data.process import DefaultPreprocess, Deserializer, Postprocess, Preprocess, Serializer
+from flash.core.data.io.output import Output
+from flash.core.data.process import DefaultPreprocess, Deserializer, Postprocess, Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.data.states import PerBatchTransformOnDevice, ToTensorTransform
 from flash.core.model import Task
@@ -73,12 +74,12 @@ def test_data_pipeline_str():
         data_source=cast(DataSource, "data_source"),
         preprocess=cast(Preprocess, "preprocess"),
         postprocess=cast(Postprocess, "postprocess"),
-        serializer=cast(Serializer, "serializer"),
+        output=cast(Output, "output"),
         deserializer=cast(Deserializer, "deserializer"),
     )
 
     expected = "data_source=data_source, deserializer=deserializer, "
-    expected += "preprocess=preprocess, postprocess=postprocess, serializer=serializer"
+    expected += "preprocess=preprocess, postprocess=postprocess, output=output"
     assert str(data_pipeline) == (f"DataPipeline({expected})")
 
 

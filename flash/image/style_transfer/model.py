@@ -20,7 +20,7 @@ from flash.core.data.data_source import DefaultDataKeys
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _IMAGE_AVAILABLE
-from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE, SERIALIZER_TYPE
+from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 from flash.image.style_transfer import STYLE_TRANSFER_BACKBONES
 
 if _IMAGE_AVAILABLE:
@@ -61,7 +61,7 @@ class StyleTransfer(Task):
         optimizer: Optimizer to use for training.
         lr_scheduler: The LR scheduler to use during training.
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
-        serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
+        output: The :class:`~flash.core.data.io.output.Output` to use when serializing prediction outputs.
     """
 
     backbones: FlashRegistry = STYLE_TRANSFER_BACKBONES
@@ -80,7 +80,7 @@ class StyleTransfer(Task):
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         learning_rate: float = 1e-3,
-        serializer: SERIALIZER_TYPE = None,
+        output: OUTPUT_TYPE = None,
     ):
         self.save_hyperparameters(ignore="style_image")
 
@@ -110,7 +110,7 @@ class StyleTransfer(Task):
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
             learning_rate=learning_rate,
-            serializer=serializer,
+            output=output,
         )
 
         self.perceptual_loss = perceptual_loss

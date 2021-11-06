@@ -209,7 +209,7 @@ model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer="Adam", lr
 model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer="Adam", lr_scheduler=functools.partial(CyclicLR, step_size_up=1500, mode='exp_range', gamma=0.5))
 
 # - Tuple[string, dict]: (The dict takes in the scheduler kwargs)
-model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer="Adam", lr_scheduler=("StepLR", {"step_size": 10]))
+model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer="Adam", lr_scheduler=("StepLR", {"step_size": 10}))
 ```
 
 You can also register you own custom scheduler recipes beforeahand and use them shown as above:
@@ -238,10 +238,8 @@ The example also uses our [`merge_transforms`](https://lightning-flash.readthedo
 
 ```py
 import torch
-from typing import Any
 import numpy as np
 import albumentations
-from torchvision import transforms as T
 from flash.core.data.transforms import ApplyToKeys, merge_transforms
 from flash.image import ImageClassificationData
 from flash.image.classification.transforms import default_transforms, AlbumentationsAdapter

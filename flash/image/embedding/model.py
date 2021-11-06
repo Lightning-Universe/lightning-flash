@@ -72,7 +72,7 @@ class ImageEmbedder(AdapterTask):
     backbones: FlashRegistry = IMAGE_EMBEDDER_BACKBONES
     transforms: FlashRegistry = IMAGE_EMBEDDER_TRANSFORMS
 
-    required_extras: List[str] = ["image", "vissl"]
+    required_extras: List[str] = ["image", "vissl", "fairscale"]
 
     def __init__(
         self,
@@ -148,7 +148,7 @@ class ImageEmbedder(AdapterTask):
         self.adapter.on_train_batch_end(outputs, batch, batch_idx, dataloader_idx)
 
     @classmethod
-    @requires(["image", "vissl"])
+    @requires(["image", "vissl", "fairscale"])
     def available_training_strategies(cls) -> List[str]:
         registry: Optional[FlashRegistry] = getattr(cls, "training_strategies", None)
         if registry is None:
