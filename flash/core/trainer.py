@@ -200,6 +200,8 @@ class Trainer(PlTrainer):
         train_bn: bool = True,
     ):
         """This function is used to select the `BaseFinetuning` to be used for finetuning."""
+        if isinstance(strategy, str) and strategy == "no_freeze":
+            warnings.warn("The model contains a default finetune callback.", UserWarning)
         finetuning_callback = model.configure_finetune_callback(strategy=strategy, train_bn=train_bn)
         if len(finetuning_callback) > 1:
             raise MisconfigurationException("Create a list with only 1 finetuning callback.")
