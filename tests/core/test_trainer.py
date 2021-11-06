@@ -118,21 +118,12 @@ def test_resolve_callbacks_multi_error(tmpdir):
         trainer._resolve_callbacks(task, None)
 
 
-class FinetuneClassificationTask(ClassificationTask):
-    def configure_finetune_callback(
-        self,
-        strategy: Union[str, BaseFinetuning, Tuple[str, int], Tuple[str, Tuple[int, int]]] = "no_freeze",
-        train_bn: bool = True,
-    ):
-        return [NoFreeze()]
-
-
 def test_resolve_callbacks_override_warning(tmpdir):
     model = DummyClassifier()
     trainer = Trainer(fast_dev_run=True, default_root_dir=tmpdir)
-    task = FinetuneClassificationTask(model, loss_fn=F.nll_loss)
+    task = ClassificationTask(model, loss_fn=F.nll_loss)
     with pytest.warns(UserWarning, match="The model contains a default finetune callback"):
-        trainer._resolve_callbacks(task, "test")
+        trainer._resolve_callbacks(task, strategy="no_freeze")
 
 
 def test_add_argparse_args():
