@@ -166,15 +166,14 @@ unfreeze_milestones
 This strategy allows you to unfreeze part of the backbone at predetermined intervals
 
 Here's an example where:
-- backbone starts frozen
-- at epoch 3 the last 2 layers unfreeze
-- at epoch 8 the full backbone unfreezes
+
+* backbone starts frozen
+* at epoch 3 the last 2 layers unfreeze
+* at epoch 8 the full backbone unfreezes
 
 |
 
 .. testcode:: strategies
-
-    from flash.core.finetuning import UnfreezeMilestones
 
     trainer.finetune(model, datamodule, strategy=("unfreeze_milestones", ((3, 8), 2)))
 
@@ -203,11 +202,68 @@ Under the hood, the pseudocode looks like:
 
 Custom Strategy
 ===============
+Flash provides customizability for finetuning in two ways.
+
+custom
+------
+This strategy allows you to implement a custom finetuning logic using the freezing logic provided by Flash out of the box.
+The previosly mentioned strategies either unfreezes the complete backbone or just a fixed fraction of the backbone.
+This stratgey provides you much more control on that logic during finetuning.
+
+Here's an example where:
+
+* a distilbert for question answering backbone starts frozen
+* at epoch 2 just the transformer unfreezes
+
+|
+
+.. testcode:: strategies
+
+    from flash import Trainer
+    from flash.core.data.utils import download_data
+    from flash.text import QuestionAnsweringData, QuestionAnsweringTask
+
+    download_data("https://pl-flash-data.s3.amazonaws.com/squad_tiny.zip", "./data/")
+
+    datamodule = QuestionAnsweringData.from_squad_v2(
+        train_file="./data/squad_tiny/train.json",
+        val_file="./data/squad_tiny/val.json",
+    )
+
+
+    class MyCustomQuestionAnsweringTask(QuestionAnsweringTask):
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
+
+        def finetune_backbone(self, epoch: int, optimizer: Optimizer, opt_idx: int) -> None:
+            if epoch == 2:
+                self.model.distilbert.transformer.requires_grad_(False)
+
+
+    model = MyCustomQuestionAnsweringTask(backbone="distilbert-base-uncased")
+    trainer = Trainer(max_epochs=3, limit_train_batches=1, limit_val_batches=1)
+    trainer.finetune(model, datamodule=datamodule, strategy="custom")
+
+
 For even more customization, create your own finetuning callback. Learn more about callbacks `here <https://pytorch-lightning.readthedocs.io/en/stable/callbacks.html>`_.
 
 .. testcode:: strategies
 
-    from flash.core.finetuning import FlashBaseFinetuning
+    import flash
+    from flash.core.data.utils import download_data
+    from flash.image import ImageClassificationData, ImageClassifier
+	from flash.core.finetuning import FlashBaseFinetuning
+
+    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
+
+    datamodule = ImageClassificationData.from_files(
+        train_files=["data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg"],
+        train_targets=[0],
+        batch_size=1,
+        num_workers=0,
+    )
+
+    model = ImageClassifier(backbone="resnet18", num_classes=2)
 
     # Create a finetuning callback
     class FeatureExtractorFreezeUnfreeze(FlashBaseFinetuning):

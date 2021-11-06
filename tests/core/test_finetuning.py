@@ -23,6 +23,7 @@ from torch import Tensor
 from torch.nn import Flatten
 from torch.nn import functional as F
 from torch.nn import Linear, LogSoftmax, Module
+from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 import flash
@@ -68,6 +69,18 @@ class TestTaskWithFinetuning(Task):
 
     def get_backbone_for_finetuning(self) -> Optional[Union[Module, Iterable[Union[Module, Iterable]]]]:
         return [self.model.layer, self.model.layer1]
+
+
+class TestTaskWithCustomFinetuning(Task):
+    def __init__(self, **kwargs):
+        super().__init__(model=TestModel(), **kwargs)
+
+    def get_backbone_for_finetuning(self) -> Optional[Union[Module, Iterable[Union[Module, Iterable]]]]:
+        return [self.model.layer, self.model.layer1]
+
+    def finetune_backbone(self, epoch: int, optimizer: Optimizer, opt_idx: int) -> None:
+        if epoch == 1:
+            self.model.layer.weight.requires_grad = True
 
 
 # Using `ModelCheckpoint` callback because they are the last callback to be called and hence freezing of layers should
@@ -123,6 +136,18 @@ class UnfreezeMilestonesStrategyChecking(ModelCheckpoint):
                     assert not parameter.requires_grad
 
 
+class CustomStrategyChecking(ModelCheckpoint):
+    def __init__(self, check_epoch: int, **kwargs):
+        super().__init__(**kwargs)
+        self.check_epoch = check_epoch
+
+    def on_train_epoch_start(self, trainer, pl_module):
+        super().on_train_epoch_start(trainer, pl_module)
+        current_epoch = trainer.current_epoch
+        if current_epoch >= self.check_epoch:
+            assert pl_module.model.layer.weight.requires_grad
+
+
 @pytest.mark.parametrize(
     "strategy",
     [
@@ -158,6 +183,14 @@ def test_finetuning(tmpdir, strategy, checker_class, checker_class_data):
     trainer = flash.Trainer(max_epochs=5, limit_train_batches=10, callbacks=callbacks)
     ds = DummyDataset()
     trainer.finetune(task, train_dataloader=DataLoader(ds), strategy=strategy)
+
+
+def test_custom_finetuning(tmpdir):
+    task = TestTaskWithCustomFinetuning(loss_fn=F.nll_loss)
+    callbacks = [CustomStrategyChecking(check_epoch=1)]
+    trainer = flash.Trainer(max_epochs=5, limit_train_batches=10, callbacks=callbacks)
+    ds = DummyDataset()
+    trainer.finetune(task, train_dataloader=DataLoader(ds), strategy="custom")
 
 
 @pytest.mark.parametrize(

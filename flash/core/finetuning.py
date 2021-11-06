@@ -21,11 +21,6 @@ from torch.optim import Optimizer
 
 from flash.core.registry import FlashRegistry
 
-# Handle None case and just take one module using a single hook.
-
-# Take a function that return the backbone(s).
-# Use it again and again.
-
 
 class FinetuningStrategies(LightningEnum):
     """The ``FinetuningStrategies`` enum contains the keys that are used internally by the ``FlashBaseFinetuning``
@@ -35,6 +30,7 @@ class FinetuningStrategies(LightningEnum):
     FREEZE = "freeze"
     FREEZE_UNFREEZE = "freeze_unfreeze"
     UNFREEZE_MILESTONES = "unfreeze_milestones"
+    CUSTOM = "custom"
 
     # TODO: Create a FlashEnum class???
     def __hash__(self) -> int:
@@ -154,12 +150,21 @@ class FlashBaseFinetuning(BaseFinetuning):
             self._freeze_unfreeze_function(pl_module, epoch, optimizer, opt_idx, self.strategy_metadata)
         elif self.strategy == FinetuningStrategies.UNFREEZE_MILESTONES:
             self._unfreeze_milestones_function(pl_module, epoch, optimizer, opt_idx, self.strategy_metadata)
+        elif self.strategy == FinetuningStrategies.CUSTOM:
+            finetune_backbone = getattr(pl_module, "finetune_backbone", None)
+            if finetune_backbone is None:
+                raise AttributeError(
+                    "Lightning Module missing instance method 'finetune_backbone'."
+                    "Please, implement the method which performs the necessary finetuning of the backbone."
+                )
+            finetune_backbone(epoch, optimizer, opt_idx)
         else:
             pass
 
 
 # Used for properly verifying input and providing neat and helpful error messages for users.
 _DEFAULTS_FINETUNE_STRATEGIES = [
+    "custom",
     "no_freeze",
     "freeze",
     "freeze_unfreeze",

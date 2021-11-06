@@ -44,7 +44,7 @@ from flash.core.data.io.output import Output, OutputMapping
 from flash.core.data.process import Deserializer, DeserializerMapping, Postprocess, Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.finetuning import _DEFAULTS_FINETUNE_STRATEGIES, _FINETUNING_STRATEGIES_REGISTRY
-from flash.core.hooks import FineTuningHook
+from flash.core.hooks import FineTuningHooks
 from flash.core.optimizers.optimizers import _OPTIMIZERS_REGISTRY
 from flash.core.optimizers.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.registry import FlashRegistry
@@ -305,7 +305,7 @@ class OutputKeys(LightningEnum):
         return hash(self.value)
 
 
-class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHook, metaclass=CheckDependenciesMeta):
+class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks, metaclass=CheckDependenciesMeta):
     """A general Task.
 
     Args:
@@ -575,7 +575,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHook,
             return [strategy]
 
         if isinstance(strategy, str):
-            if strategy not in _DEFAULTS_FINETUNE_STRATEGIES[:2]:
+            if strategy not in _DEFAULTS_FINETUNE_STRATEGIES[:3]:
                 raise MisconfigurationException(
                     f"Please provide a valid strategy from {_DEFAULTS_FINETUNE_STRATEGIES}."
                 )
@@ -583,7 +583,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHook,
             finetuning_strategy_metadata = {"strategy_metadata": None, "train_bn": True}
 
         elif isinstance(strategy, Tuple):
-            if not isinstance(strategy[0], str) or strategy[0] not in _DEFAULTS_FINETUNE_STRATEGIES[2:]:
+            if not isinstance(strategy[0], str) or strategy[0] not in _DEFAULTS_FINETUNE_STRATEGIES[3:]:
                 raise MisconfigurationException(
                     "First input of `strategy` should be a string within `freeze_unfreeze`, `unfreeze_milestones`"
                 )

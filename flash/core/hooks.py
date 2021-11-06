@@ -14,9 +14,16 @@
 from typing import Iterable, Optional, Union
 
 from torch.nn import Module
+from torch.optim import Optimizer
 
 
-class FineTuningHook:
+class FineTuningHooks:
+    """Hooks to be used in Task and FlashBaseTuning."""
+
     def get_backbone_for_finetuning(self) -> Optional[Union[Module, Iterable[Union[Module, Iterable]]]]:
         """Return the name(s) of the module attributes of the model to be frozen."""
         return None
+
+    def finetune_backbone(self, epoch: int, optimizer: Optimizer, opt_idx: int) -> None:
+        """Override this method to use with pre-existing backbone freezing code for a task."""
+        pass

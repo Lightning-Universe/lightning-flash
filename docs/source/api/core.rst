@@ -44,6 +44,7 @@ _____________________
     :template: classtemplate.rst
 
     ~flash.core.finetuning.FlashBaseFinetuning
+    ~flash.core.hooks.FineTuningHooks
 
 flash.core.integrations.fiftyone
 ________________________________
