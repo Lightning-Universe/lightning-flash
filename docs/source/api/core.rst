@@ -44,9 +44,6 @@ _____________________
     :template: classtemplate.rst
 
     ~flash.core.finetuning.FlashBaseFinetuning
-    ~flash.core.finetuning.FreezeUnfreeze
-    ~flash.core.finetuning.NoFreeze
-    ~flash.core.finetuning.UnfreezeMilestones
 
 flash.core.integrations.fiftyone
 ________________________________

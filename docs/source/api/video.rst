@@ -24,4 +24,3 @@ ______________
     classification.data.VideoClassificationFiftyOneDataSource
     classification.data.VideoClassificationPathsDataSource
     classification.data.VideoClassificationPreprocess
-    classification.model.VideoClassifierFinetuning

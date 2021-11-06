@@ -35,14 +35,6 @@ if _FASTFACE_AVAILABLE:
     import fastface as ff
 
 
-# class FaceDetectionFineTuning(FlashBaseFinetuning):
-#     def __init__(self, train_bn: bool = True) -> None:
-#         super().__init__(train_bn=train_bn)
-
-#     def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
-#         self.freeze(modules=pl_module.model.backbone, train_bn=self.train_bn)
-
-
 class DetectionLabels(Output):
     """A :class:`.Output` which extracts predictions from sample dict."""
 
@@ -190,9 +182,6 @@ class FaceDetector(Task):
         images = batch[DefaultDataKeys.INPUT]
         batch[DefaultDataKeys.PREDS] = self(images)
         return batch
-
-    # def configure_finetune_callback(self):
-    #     return [FaceDetectionFineTuning()]
 
     def get_backbone_for_finetuning(self) -> Union[Module, Iterable[Union[Module, Iterable]]]:
         """Return the module attributes of the model to be frozen."""

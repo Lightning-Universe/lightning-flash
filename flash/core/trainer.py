@@ -23,6 +23,7 @@ from pytorch_lightning import Trainer as PlTrainer
 from pytorch_lightning.callbacks import BaseFinetuning
 from pytorch_lightning.loops.fit_loop import FitLoop
 from pytorch_lightning.utilities.argparse import add_argparse_args, get_init_arguments_and_types, parse_env_variables
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from pytorch_lightning.utilities.model_helpers import is_overridden
 from torch.utils.data import DataLoader
 
@@ -200,6 +201,8 @@ class Trainer(PlTrainer):
     ):
         """This function is used to select the `BaseFinetuning` to be used for finetuning."""
         finetuning_callback = model.configure_finetune_callback(strategy=strategy, train_bn=train_bn)
+        if len(finetuning_callback) > 1:
+            raise MisconfigurationException("Create a list with only 1 finetuning callback.")
         self.callbacks = self._merge_callbacks(self.callbacks, finetuning_callback)
 
     @staticmethod

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from argparse import ArgumentParser
-from typing import Any
+from typing import Any, Tuple, Union
 
 import pytest
 import torch
@@ -102,7 +102,11 @@ def test_resolve_callbacks_invalid_strategy(tmpdir):
 
 
 class MultiFinetuneClassificationTask(ClassificationTask):
-    def configure_finetune_callback(self):
+    def configure_finetune_callback(
+        self,
+        strategy: Union[str, BaseFinetuning, Tuple[str, int], Tuple[str, Tuple[int, int]]] = "no_freeze",
+        train_bn: bool = True,
+    ):
         return [NoFreeze(), NoFreeze()]
 
 
@@ -110,12 +114,16 @@ def test_resolve_callbacks_multi_error(tmpdir):
     model = DummyClassifier()
     trainer = Trainer(fast_dev_run=True, default_root_dir=tmpdir)
     task = MultiFinetuneClassificationTask(model, loss_fn=F.nll_loss)
-    with pytest.raises(MisconfigurationException, match="should create a list with only 1 callback"):
+    with pytest.raises(MisconfigurationException):
         trainer._resolve_callbacks(task, None)
 
 
 class FinetuneClassificationTask(ClassificationTask):
-    def configure_finetune_callback(self):
+    def configure_finetune_callback(
+        self,
+        strategy: Union[str, BaseFinetuning, Tuple[str, int], Tuple[str, Tuple[int, int]]] = "no_freeze",
+        train_bn: bool = True,
+    ):
         return [NoFreeze()]
 
 
