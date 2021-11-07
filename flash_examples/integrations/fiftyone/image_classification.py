@@ -54,7 +54,7 @@ trainer.save_checkpoint("image_classification_model.pt")
 
 # 4 Predict from checkpoint
 model = ImageClassifier.load_from_checkpoint(
-    "https://flash-weights.s3.amazonaws.com/0.5.2/image_classification_model.pt"
+    "https://flash-weights.s3.amazonaws.com/0.6.0/image_classification_model.pt"
 )
 model.output = FiftyOneLabels(return_filepath=True)  # output FiftyOne format
 predictions = trainer.predict(model, datamodule=datamodule)
