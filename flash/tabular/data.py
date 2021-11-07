@@ -18,11 +18,12 @@ import numpy as np
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data.sampler import Sampler
 
+from flash import OutputTransform
 from flash.core.classification import LabelsState
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
-from flash.core.data.process import Deserializer, Postprocess, Preprocess
+from flash.core.data.process import Deserializer, Preprocess
 from flash.core.utilities.imports import _PANDAS_AVAILABLE
 from flash.tabular.classification.utils import (
     _compute_normalization,
@@ -234,7 +235,7 @@ class TabularPreprocess(Preprocess):
         return cls(**state_dict)
 
 
-class TabularPostprocess(Postprocess):
+class TabularOutputTransform(OutputTransform):
     def uncollate(self, batch: Any) -> Any:
         return batch
 
@@ -243,7 +244,7 @@ class TabularData(DataModule):
     """Data module for tabular tasks."""
 
     preprocess_cls = TabularPreprocess
-    postprocess_cls = TabularPostprocess
+    output_transform_cls = TabularOutputTransform
 
     is_regression: bool = False
 

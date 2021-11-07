@@ -13,7 +13,6 @@
 # limitations under the License.
 import functools
 import inspect
-import os
 from abc import ABC, abstractclassmethod, abstractmethod
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union
 
@@ -25,7 +24,6 @@ from torch import Tensor
 from torch.utils.data._utils.collate import default_collate
 
 import flash
-from flash.core.data.batch import default_uncollate
 from flash.core.data.callback import FlashCallback
 from flash.core.data.data_source import DatasetDataSource, DataSource, DefaultDataKeys, DefaultDataSources
 from flash.core.data.io.output import Output
@@ -528,62 +526,6 @@ class DefaultPreprocess(Preprocess):
     @classmethod
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
         return cls(**state_dict)
-
-
-class Postprocess(Properties):
-    """The :class:`~flash.core.data.process.Postprocess` encapsulates all the data processing logic that should run
-    after the model."""
-
-    def __init__(self, save_path: Optional[str] = None):
-        super().__init__()
-        self._saved_samples = 0
-        self._save_path = save_path
-
-    @staticmethod
-    def per_batch_transform(batch: Any) -> Any:
-        """Transforms to apply on a whole batch before uncollation to individual samples.
-
-        Can involve both CPU and Device transforms as this is not applied in separate workers.
-        """
-        return batch
-
-    @staticmethod
-    def per_sample_transform(sample: Any) -> Any:
-        """Transforms to apply to a single sample after splitting up the batch.
-
-        Can involve both CPU and Device transforms as this is not applied in separate workers.
-        """
-        return sample
-
-    @staticmethod
-    def uncollate(batch: Any) -> Any:
-        """Uncollates a batch into single samples.
-
-        Tries to preserve the type whereever possible.
-        """
-        return default_uncollate(batch)
-
-    @staticmethod
-    def save_data(data: Any, path: str) -> None:
-        """Saves all data together to a single path."""
-        torch.save(data, path)
-
-    @staticmethod
-    def save_sample(sample: Any, path: str) -> None:
-        """Saves each sample individually to a given path."""
-        torch.save(sample, path)
-
-    # TODO: Are those needed ?
-    def format_sample_save_path(self, path: str) -> str:
-        path = os.path.join(path, f"sample_{self._saved_samples}.ptl")
-        self._saved_samples += 1
-        return path
-
-    def _save_data(self, data: Any) -> None:
-        self.save_data(data, self._save_path)
-
-    def _save_sample(self, sample: Any) -> None:
-        self.save_sample(sample, self.format_sample_save_path(self._save_path))
 
 
 class Deserializer(Properties):

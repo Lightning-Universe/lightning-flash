@@ -23,11 +23,12 @@ from pytorch_lightning.utilities.model_helpers import is_overridden
 from torch.utils.data import DataLoader, IterableDataset
 
 import flash
+from flash import OutputTransform
 from flash.core.data.auto_dataset import IterableAutoDataset
 from flash.core.data.batch import _DeserializeProcessor, _Postprocessor, _Preprocessor, _Sequential
 from flash.core.data.data_source import DataSource
 from flash.core.data.io.output import _OutputProcessor, Output
-from flash.core.data.process import DefaultPreprocess, Deserializer, Postprocess, Preprocess
+from flash.core.data.process import DefaultPreprocess, Deserializer, Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.data.utils import _POSTPROCESS_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
 from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_4_3, _PL_GREATER_EQUAL_1_5_0
@@ -76,15 +77,15 @@ class DataPipelineState:
 class DataPipeline:
     """
     DataPipeline holds the engineering logic to connect
-    :class:`~flash.core.data.process.Preprocess` and/or :class:`~flash.core.data.process.Postprocess` objects to
-    the ``DataModule``, Flash ``Task`` and ``Trainer``.
+    :class:`~flash.core.data.process.Preprocess` and/or :class:`~flash.core.data.io.output_transform.OutputTransform`
+    objects to the ``DataModule``, Flash ``Task`` and ``Trainer``.
 
     Example::
 
         class CustomPreprocess(Preprocess):
             pass
 
-        class CustomPostprocess(Postprocess):
+        class CustomPostprocess(OutputTransform):
             pass
 
         custom_data_pipeline = DataPipeline(CustomPreprocess(), CustomPostprocess())
@@ -102,21 +103,21 @@ class DataPipeline:
         self,
         data_source: Optional[DataSource] = None,
         preprocess: Optional[Preprocess] = None,
-        postprocess: Optional[Postprocess] = None,
+        output_transform: Optional[OutputTransform] = None,
         deserializer: Optional[Deserializer] = None,
         output: Optional[Output] = None,
     ) -> None:
         self.data_source = data_source
 
         self._preprocess_pipeline = preprocess or DefaultPreprocess()
-        self._postprocess_pipeline = postprocess or Postprocess()
+        self._postprocess_pipeline = output_transform or OutputTransform()
         self._output = output or Output()
         self._deserializer = deserializer or Deserializer()
         self._running_stage = None
 
     def initialize(self, data_pipeline_state: Optional[DataPipelineState] = None) -> DataPipelineState:
         """Creates the :class:`.DataPipelineState` and gives the reference to the: :class:`.Preprocess`,
-        :class:`.Postprocess`, and :class:`.Output`. Once this has been called, any attempt to add new state will
+        :class:`.OutputTransform`, and :class:`.Output`. Once this has been called, any attempt to add new state will
         give a warning."""
         data_pipeline_state = data_pipeline_state or DataPipelineState()
         if self.data_source is not None:
@@ -456,17 +457,17 @@ class DataPipeline:
         save_per_sample = None
         save_fn = None
 
-        postprocess: Postprocess = self._postprocess_pipeline
+        postprocess: OutputTransform = self._postprocess_pipeline
 
         func_names: Dict[str, str] = {
-            k: self._resolve_function_hierarchy(k, postprocess, stage, object_type=Postprocess)
+            k: self._resolve_function_hierarchy(k, postprocess, stage, object_type=OutputTransform)
             for k in self.POSTPROCESS_FUNCS
         }
 
         # since postprocessing is exclusive for prediction, we don't have to check the resolution hierarchy here.
         if postprocess._save_path:
             save_per_sample: bool = self._is_overriden_recursive(
-                "save_sample", postprocess, Postprocess, prefix=_STAGES_PREFIX[stage]
+                "save_sample", postprocess, OutputTransform, prefix=_STAGES_PREFIX[stage]
             )
 
             if save_per_sample:
@@ -588,7 +589,7 @@ class DataPipeline:
     def __str__(self) -> str:
         data_source: DataSource = self.data_source
         preprocess: Preprocess = self._preprocess_pipeline
-        postprocess: Postprocess = self._postprocess_pipeline
+        postprocess: OutputTransform = self._postprocess_pipeline
         output: Output = self._output
         deserializer: Deserializer = self._deserializer
         return (

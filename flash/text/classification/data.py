@@ -20,11 +20,12 @@ from torch import Tensor
 from torch.utils.data.sampler import Sampler
 
 import flash
+from flash import OutputTransform
 from flash.core.data.auto_dataset import AutoDataset
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources, LabelsState
-from flash.core.data.process import Deserializer, Postprocess, Preprocess
+from flash.core.data.process import Deserializer, Preprocess
 from flash.core.integrations.labelstudio.data_source import LabelStudioTextClassificationDataSource
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 
@@ -312,7 +313,7 @@ class TextClassificationPreprocess(Preprocess):
         return default_data_collator(samples)
 
 
-class TextClassificationPostprocess(Postprocess):
+class TextClassificationOutputTransform(OutputTransform):
     def per_batch_transform(self, batch: Any) -> Any:
         if isinstance(batch, SequenceClassifierOutput):
             batch = batch.logits
@@ -323,7 +324,7 @@ class TextClassificationData(DataModule):
     """Data Module for text classification tasks."""
 
     preprocess_cls = TextClassificationPreprocess
-    postprocess_cls = TextClassificationPostprocess
+    output_transform_cls = TextClassificationOutputTransform
 
     @property
     def backbone(self) -> Optional[str]:

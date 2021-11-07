@@ -11,7 +11,7 @@ Inside `data.py <https://github.com/PyTorchLightning/lightning-flash/blob/master
 #. a :class:`~flash.core.data.process.Preprocess`
 #. a :class:`~flash.core.data.data_module.DataModule`
 #. a :class:`~flash.core.data.base_viz.BaseVisualization` *(optional)*
-#. a :class:`~flash.core.data.process.Postprocess` *(optional)*
+#. a :class:`~flash.core.data.io.output_transform.OutputTransform` *(optional)*
 
 DataSource
 ^^^^^^^^^^
@@ -196,19 +196,19 @@ We can configure our custom visualization in the ``TemplateData`` using :meth:`~
     :dedent: 4
     :pyobject: TemplateData.configure_data_fetcher
 
-Postprocess
+OutputTransform
 ^^^^^^^^^^^
 
-:class:`~flash.core.data.process.Postprocess` contains any transforms that need to be applied *after* the model.
+:class:`~flash.core.data.io.output_transform.OutputTransform` contains any transforms that need to be applied *after* the model.
 You may want to use it for: converting tokens back into text, applying an inverse normalization to an output image, resizing a generated image back to the size of the input, etc.
-As an example, here's the :class:`~text.classification.data.TextClassificationPostprocess` which gets the logits from a ``SequenceClassifierOutput``:
+As an example, here's the :class:`~text.classification.data.TextClassificationOutputTransform` which gets the logits from a ``SequenceClassifierOutput``:
 
 .. literalinclude:: ../../../flash/text/classification/data.py
     :language: python
-    :pyobject: TextClassificationPostprocess
+    :pyobject: TextClassificationOutputTransform
 
 In your :class:`~flash.core.data.data_source.DataSource` or :class:`~flash.core.data.process.Preprocess`, you can add metadata to the batch using the :attr:`~flash.core.data.data_source.DefaultDataKeys.METADATA` key.
-Your :class:`~flash.core.data.process.Postprocess` can then use this metadata in its transforms.
+Your :class:`~flash.core.data.io.output_transform.OutputTransform` can then use this metadata in its transforms.
 You should use this approach if your postprocessing depends on the state of the input before the :class:`~flash.core.data.process.Preprocess` transforms.
 For example, if you want to resize the predictions to the original size of the inputs you should add the original image size in the :attr:`~flash.core.data.data_source.DefaultDataKeys.METADATA`.
 Here's an example from the :class:`~flash.image.segmentation.SemanticSegmentationNumpyDataSource`:
@@ -218,13 +218,13 @@ Here's an example from the :class:`~flash.image.segmentation.SemanticSegmentatio
     :dedent: 4
     :pyobject: SemanticSegmentationNumpyDataSource.load_sample
 
-The :attr:`~flash.core.data.data_source.DefaultDataKeys.METADATA` can now be referenced in your :class:`~flash.core.data.process.Postprocess`.
-For example, here's the code for the ``per_sample_transform`` method of the :class:`~flash.image.segmentation.model.SemanticSegmentationPostprocess`:
+The :attr:`~flash.core.data.data_source.DefaultDataKeys.METADATA` can now be referenced in your :class:`~flash.core.data.io.output_transform.OutputTransform`.
+For example, here's the code for the ``per_sample_transform`` method of the :class:`~flash.image.segmentation.model.SemanticSegmentationOutputTransform`:
 
 .. literalinclude:: ../../../flash/image/segmentation/model.py
     :language: python
     :dedent: 4
-    :pyobject: SemanticSegmentationPostprocess.per_sample_transform
+    :pyobject: SemanticSegmentationOutputTransform.per_sample_transform
 
 ------
 

@@ -26,7 +26,7 @@ Here are common terms you need to be familiar with:
    * - :class:`~flash.core.data.data_module.DataModule`
      - The :class:`~flash.core.data.data_module.DataModule` contains the datasets, transforms and dataloaders.
    * - :class:`~flash.core.data.data_pipeline.DataPipeline`
-     - The :class:`~flash.core.data.data_pipeline.DataPipeline` is Flash internal object to manage :class:`~flash.core.data.Deserializer`, :class:`~flash.core.data.data_source.DataSource`, :class:`~flash.core.data.process.Preprocess`, :class:`~flash.core.data.process.Postprocess`, and :class:`~flash.core.data.io.output.Output` objects.
+     - The :class:`~flash.core.data.data_pipeline.DataPipeline` is Flash internal object to manage :class:`~flash.core.data.Deserializer`, :class:`~flash.core.data.data_source.DataSource`, :class:`~flash.core.data.process.Preprocess`, :class:`~flash.core.data.io.output_transform.OutputTransform`, and :class:`~flash.core.data.io.output.Output` objects.
    * - :class:`~flash.core.data.data_source.DataSource`
      - The :class:`~flash.core.data.data_source.DataSource` provides :meth:`~flash.core.data.data_source.DataSource.load_data` and :meth:`~flash.core.data.data_source.DataSource.load_sample` hooks for creating data sets from metadata (such as folder names).
    * - :class:`~flash.core.data.process.Preprocess`
@@ -34,11 +34,11 @@ Here are common terms you need to be familiar with:
         These hooks (such as :meth:`~flash.core.data.process.Preprocess.pre_tensor_transform`) enable transformations to be applied to your data at every point along the pipeline (including on the device).
         The :class:`~flash.core.data.data_pipeline.DataPipeline` contains a system to call the right hooks when needed.
         The :class:`~flash.core.data.process.Preprocess` hooks can be either overridden directly or provided as a dictionary of transforms (mapping hook name to callable transform).
-   * - :class:`~flash.core.data.process.Postprocess`
-     - The :class:`~flash.core.data.process.Postprocess` provides a simple hook-based API to encapsulate your post-processing logic.
-        The :class:`~flash.core.data.process.Postprocess` hooks cover from model outputs to predictions export.
+   * - :class:`~flash.core.data.io.output_transform.OutputTransform`
+     - The :class:`~flash.core.data.io.output_transform.OutputTransform` provides a simple hook-based API to encapsulate your post-processing logic.
+        The :class:`~flash.core.data.io.output_transform.OutputTransform` hooks cover from model outputs to predictions export.
    * - :class:`~flash.core.data.io.output.Output`
-     - The :class:`~flash.core.data.io.output.Output` provides a single :meth:`~flash.core.data.io.output.Output.serialize` method that is used to convert model outputs (after the :class:`~flash.core.data.process.Postprocess`) to the desired output format during prediction.
+     - The :class:`~flash.core.data.io.output.Output` provides a single :meth:`~flash.core.data.io.output.Output.serialize` method that is used to convert model outputs (after the :class:`~flash.core.data.io.output_transform.OutputTransform`) to the desired output format during prediction.
 
 
 *******************************************
@@ -58,8 +58,8 @@ However, after model training, it requires a lot of engineering overhead to make
 Usually, extra processing logic should be added to bridge the gap between training data and raw data.
 
 The :class:`~flash.core.data.data_source.DataSource` class can be used to generate data sets from multiple sources (e.g. folders, numpy, etc.), that can then all be transformed in the same way.
-The :class:`~flash.core.data.process.Preprocess` and :class:`~flash.core.data.process.Postprocess` classes can be used to manage the preprocessing and postprocessing transforms.
-The :class:`~flash.core.data.io.output.Output` class provides the logic for converting :class:`~flash.core.data.process.Postprocess` outputs to the desired predict format (e.g. classes, labels, probabilities, etc.).
+The :class:`~flash.core.data.process.Preprocess` and :class:`~flash.core.data.io.output_transform.OutputTransform` classes can be used to manage the preprocessing and postprocessing transforms.
+The :class:`~flash.core.data.io.output.Output` class provides the logic for converting :class:`~flash.core.data.io.output_transform.OutputTransform` outputs to the desired predict format (e.g. classes, labels, probabilities, etc.).
 
 By providing a series of hooks that can be overridden with custom data processing logic (or just targeted with transforms),
 Flash gives the user much more granular control over their data processing flow.
@@ -72,7 +72,7 @@ Here are the primary advantages:
 
 
 To change the processing behavior only on specific stages for a given hook,
-you can prefix each of the :class:`~flash.core.data.process.Preprocess` and  :class:`~flash.core.data.process.Postprocess`
+you can prefix each of the :class:`~flash.core.data.process.Preprocess` and  :class:`~flash.core.data.io.output_transform.OutputTransform`
 hooks by adding ``train``, ``val``, ``test`` or ``predict``.
 
 Check out :class:`~flash.core.data.process.Preprocess` for some examples.
@@ -383,17 +383,17 @@ Example::
     predictions = lightning_module(data)
 
 
-Postprocess and Output
+OutputTransform and Output
 __________________________
 
 
 Once the predictions have been generated by the Flash :class:`~flash.core.model.Task`, the Flash
-:class:`~flash.core.data.data_pipeline.DataPipeline` will execute the :class:`~flash.core.data.process.Postprocess` hooks and the
+:class:`~flash.core.data.data_pipeline.DataPipeline` will execute the :class:`~flash.core.data.io.output_transform.OutputTransform` hooks and the
 :class:`~flash.core.data.io.output.Output` behind the scenes.
 
-First, the :meth:`~flash.core.data.process.Postprocess.per_batch_transform` hooks will be applied on the batch predictions.
-Then, the :meth:`~flash.core.data.process.Postprocess.uncollate` will split the batch into individual predictions.
-Next, the :meth:`~flash.core.data.process.Postprocess.per_sample_transform` will be applied on each prediction.
+First, the :meth:`~flash.core.data.io.output_transform.OutputTransform.per_batch_transform` hooks will be applied on the batch predictions.
+Then, the :meth:`~flash.core.data.io.output_transform.OutputTransform.uncollate` will split the batch into individual predictions.
+Next, the :meth:`~flash.core.data.io.output_transform.OutputTransform.per_sample_transform` will be applied on each prediction.
 Finally, the :meth:`~flash.core.data.io.output.Output.serialize` method will be called to serialize the predictions.
 
 .. note:: The transform can be applied either on device or ``CPU``.

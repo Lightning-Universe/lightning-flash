@@ -17,8 +17,9 @@ import torch
 import torch.nn as nn
 from torch.utils.data import Dataset
 
+from flash import OutputTransform
 from flash.core.data.data_source import DatasetDataSource, DefaultDataKeys, DefaultDataSources
-from flash.core.data.process import Postprocess, Preprocess
+from flash.core.data.process import Preprocess
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _FASTFACE_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.image.data import ImagePathsDataSource
@@ -146,7 +147,7 @@ class FaceDetectionPreprocess(Preprocess):
         }
 
 
-class FaceDetectionPostProcess(Postprocess):
+class FaceDetectionPostProcess(OutputTransform):
     """Generates preds from model output."""
 
     @staticmethod
@@ -169,4 +170,4 @@ class FaceDetectionPostProcess(Postprocess):
 
 class FaceDetectionData(ObjectDetectionData):
     preprocess_cls = FaceDetectionPreprocess
-    postprocess_cls = FaceDetectionPostProcess
+    output_transform_cls = FaceDetectionPostProcess

@@ -123,7 +123,7 @@ _______________________
     ~flash.core.data.process.DefaultPreprocess
     ~flash.core.data.process.DeserializerMapping
     ~flash.core.data.process.Deserializer
-    ~flash.core.data.process.Postprocess
+    ~flash.core.data.io.output_transform.OutputTransform
     ~flash.core.data.process.Preprocess
 
 flash.core.data.properties

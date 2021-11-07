@@ -32,10 +32,11 @@ from torch.utils.data import DataLoader
 from torchmetrics import Accuracy
 
 import flash
+from flash import OutputTransform
 from flash.audio import SpeechRecognition
 from flash.core.adapter import Adapter
 from flash.core.classification import ClassificationTask
-from flash.core.data.process import DefaultPreprocess, Postprocess
+from flash.core.data.process import DefaultPreprocess
 from flash.core.utilities.imports import _TORCH_OPTIMIZER_AVAILABLE, _TRANSFORMERS_AVAILABLE, Image
 from flash.image import ImageClassificationData, ImageClassifier, SemanticSegmentation
 from flash.tabular import TabularClassifier
@@ -64,7 +65,7 @@ class PredictDummyDataset(DummyDataset):
         return torch.rand(1, 28, 28)
 
 
-class DummyPostprocess(Postprocess):
+class DummyOutputTransform(OutputTransform):
 
     pass
 
@@ -222,7 +223,7 @@ def test_classification_task_trainer_predict(tmpdir):
 def test_task_datapipeline_save(tmpdir):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
     train_dl = torch.utils.data.DataLoader(DummyDataset())
-    task = ClassificationTask(model, loss_fn=F.nll_loss, postprocess=DummyPostprocess())
+    task = ClassificationTask(model, loss_fn=F.nll_loss, postprocess=DummyOutputTransform())
 
     # to check later
     task.postprocess.test = True
@@ -242,7 +243,7 @@ def test_task_datapipeline_save(tmpdir):
 
     # load from file
     task = ClassificationTask.load_from_checkpoint(path, model=model)
-    assert task.postprocess.test
+    assert task.output_transform.test
 
 
 @pytest.mark.parametrize(

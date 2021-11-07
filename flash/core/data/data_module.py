@@ -36,10 +36,11 @@ from torch.utils.data.dataset import IterableDataset, Subset
 from torch.utils.data.sampler import Sampler
 
 import flash
+from flash import OutputTransform
 from flash.core.data.auto_dataset import BaseAutoDataset, IterableAutoDataset
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
-from flash.core.data.data_pipeline import DataPipeline, DefaultPreprocess, Postprocess, Preprocess
+from flash.core.data.data_pipeline import DataPipeline, DefaultPreprocess, Preprocess
 from flash.core.data.data_source import DataSource, DefaultDataSources
 from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX
@@ -55,7 +56,8 @@ else:
 class DataModule(pl.LightningDataModule):
     """A basic DataModule class for all Flash tasks. This class includes references to a
     :class:`~flash.core.data.data_source.DataSource`, :class:`~flash.core.data.process.Preprocess`,
-    :class:`~flash.core.data.process.Postprocess`, and a :class:`~flash.core.data.callback.BaseDataFetcher`.
+    :class:`~flash.core.data.io.output_transform.OutputTransform`, and a
+    :class:`~flash.core.data.callback.BaseDataFetcher`.
 
     Args:
         train_dataset: Dataset for training. Defaults to None.
@@ -66,9 +68,9 @@ class DataModule(pl.LightningDataModule):
         preprocess: The :class:`~flash.core.data.process.Preprocess` to use when constructing the
             :class:`~flash.core.data.data_pipeline.DataPipeline`. If ``None``, a
             :class:`~flash.core.data.process.DefaultPreprocess` will be used.
-        postprocess: The :class:`~flash.core.data.process.Postprocess` to use when constructing the
+        output_transform: The :class:`~flash.core.data.io.output_transform.OutputTransform` to use when constructing the
             :class:`~flash.core.data.data_pipeline.DataPipeline`. If ``None``, a plain
-            :class:`~flash.core.data.process.Postprocess` will be used.
+            :class:`~flash.core.data.io.output_transform.OutputTransform` will be used.
         data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to attach to the
             :class:`~flash.core.data.process.Preprocess`. If ``None``, the output from
             :meth:`~flash.core.data.data_module.DataModule.configure_data_fetcher` will be used.
@@ -83,7 +85,7 @@ class DataModule(pl.LightningDataModule):
     """
 
     preprocess_cls = DefaultPreprocess
-    postprocess_cls = Postprocess
+    output_transform_cls = OutputTransform
 
     def __init__(
         self,
@@ -93,7 +95,7 @@ class DataModule(pl.LightningDataModule):
         predict_dataset: Optional[Dataset] = None,
         data_source: Optional[DataSource] = None,
         preprocess: Optional[Preprocess] = None,
-        postprocess: Optional[Postprocess] = None,
+        output_transform: Optional[OutputTransform] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
@@ -108,7 +110,7 @@ class DataModule(pl.LightningDataModule):
 
         self._data_source: DataSource = data_source
         self._preprocess: Optional[Preprocess] = preprocess
-        self._postprocess: Optional[Postprocess] = postprocess
+        self._output_transform: Optional[OutputTransform] = output_transform
         self._viz: Optional[BaseVisualization] = None
         self._data_fetcher: Optional[BaseDataFetcher] = data_fetcher or self.configure_data_fetcher()
 
@@ -433,15 +435,16 @@ class DataModule(pl.LightningDataModule):
         return self._preprocess or self.preprocess_cls()
 
     @property
-    def postprocess(self) -> Postprocess:
-        """Property that returns the postprocessing class used on the input data."""
-        return self._postprocess or self.postprocess_cls()
+    def output_transform(self) -> OutputTransform:
+        """Property that returns the :class:`~flash.core.data.io.output_transform.OutputTransform` used to
+        output_transform the model outputs."""
+        return self._output_transform or self.output_transform_cls()
 
     @property
     def data_pipeline(self) -> DataPipeline:
         """Property that returns the full data pipeline including the data source, preprocessing and
         postprocessing."""
-        return DataPipeline(self.data_source, self.preprocess, self.postprocess)
+        return DataPipeline(self.data_source, self.preprocess, self.output_transform)
 
     def available_data_sources(self) -> Sequence[str]:
         """Get the list of available data source names for use with this

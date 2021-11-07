@@ -23,14 +23,14 @@ from torch import Tensor, tensor
 from torch.utils.data import DataLoader
 from torch.utils.data._utils.collate import default_collate
 
-from flash import Trainer
+from flash import OutputTransform, Trainer
 from flash.core.data.auto_dataset import IterableAutoDataset
 from flash.core.data.batch import _Postprocessor, _Preprocessor
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import _StageOrchestrator, DataPipeline, DataPipelineState
 from flash.core.data.data_source import DataSource
 from flash.core.data.io.output import Output
-from flash.core.data.process import DefaultPreprocess, Deserializer, Postprocess, Preprocess
+from flash.core.data.process import DefaultPreprocess, Deserializer, Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.data.states import PerBatchTransformOnDevice, ToTensorTransform
 from flash.core.model import Task
@@ -73,13 +73,13 @@ def test_data_pipeline_str():
     data_pipeline = DataPipeline(
         data_source=cast(DataSource, "data_source"),
         preprocess=cast(Preprocess, "preprocess"),
-        postprocess=cast(Postprocess, "postprocess"),
+        output_transform=cast(OutputTransform, "output_transform"),
         output=cast(Output, "output"),
         deserializer=cast(Deserializer, "deserializer"),
     )
 
     expected = "data_source=data_source, deserializer=deserializer, "
-    expected += "preprocess=preprocess, postprocess=postprocess, output=output"
+    expected += "preprocess=preprocess, output_transform=output_transform, output=output"
     assert str(data_pipeline) == (f"DataPipeline({expected})")
 
 
@@ -87,9 +87,9 @@ def test_data_pipeline_str():
 @pytest.mark.parametrize("use_postprocess", [False, True])
 def test_data_pipeline_init_and_assignement(use_preprocess, use_postprocess, tmpdir):
     class CustomModel(Task):
-        def __init__(self, postprocess: Optional[Postprocess] = None):
+        def __init__(self, output_transform: Optional[OutputTransform] = None):
             super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
-            self._postprocess = postprocess
+            self._postprocess = output_transform
 
         def train_dataloader(self) -> Any:
             return DataLoader(DummyDataset())
@@ -97,17 +97,17 @@ def test_data_pipeline_init_and_assignement(use_preprocess, use_postprocess, tmp
     class SubPreprocess(DefaultPreprocess):
         pass
 
-    class SubPostprocess(Postprocess):
+    class SubOutputTransform(OutputTransform):
         pass
 
     data_pipeline = DataPipeline(
         preprocess=SubPreprocess() if use_preprocess else None,
-        postprocess=SubPostprocess() if use_postprocess else None,
+        output_transform=SubOutputTransform() if use_postprocess else None,
     )
     assert isinstance(data_pipeline._preprocess_pipeline, SubPreprocess if use_preprocess else DefaultPreprocess)
-    assert isinstance(data_pipeline._postprocess_pipeline, SubPostprocess if use_postprocess else Postprocess)
+    assert isinstance(data_pipeline._postprocess_pipeline, SubOutputTransform if use_postprocess else OutputTransform)
 
-    model = CustomModel(postprocess=Postprocess())
+    model = CustomModel(output_transform=OutputTransform())
     model.data_pipeline = data_pipeline
     # TODO: the line below should make the same effect but it's not
     # data_pipeline._attach_to_model(model)
@@ -118,9 +118,9 @@ def test_data_pipeline_init_and_assignement(use_preprocess, use_postprocess, tmp
         assert model._preprocess is None or isinstance(model._preprocess, Preprocess)
 
     if use_postprocess:
-        assert isinstance(model._postprocess, SubPostprocess)
+        assert isinstance(model._postprocess, SubOutputTransform)
     else:
-        assert model._postprocess is None or isinstance(model._postprocess, Postprocess)
+        assert model._postprocess is None or isinstance(model._postprocess, OutputTransform)
 
 
 def test_data_pipeline_is_overriden_and_resolve_function_hierarchy(tmpdir):
@@ -294,9 +294,9 @@ def test_data_pipeline_predict_worker_preprocessor_and_device_preprocessor():
 
 def test_detach_preprocessing_from_model(tmpdir):
     class CustomModel(Task):
-        def __init__(self, postprocess: Optional[Postprocess] = None):
+        def __init__(self, output_transform: Optional[OutputTransform] = None):
             super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
-            self._postprocess = postprocess
+            self._postprocess = output_transform
 
         def train_dataloader(self) -> Any:
             return DataLoader(DummyDataset())
@@ -355,7 +355,7 @@ def test_attaching_datapipeline_to_model(tmpdir):
     class CustomModel(Task):
         def __init__(self):
             super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
-            self._postprocess = Postprocess()
+            self._postprocess = OutputTransform()
 
         def training_step(self, batch: Any, batch_idx: int) -> Any:
             pass

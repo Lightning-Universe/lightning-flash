@@ -36,11 +36,12 @@ from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader, Sampler
 
 import flash
+from flash import OutputTransform
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
 from flash.core.data.data_source import DataSource
 from flash.core.data.io.output import Output, OutputMapping
-from flash.core.data.process import Deserializer, DeserializerMapping, Postprocess, Preprocess
+from flash.core.data.process import Deserializer, DeserializerMapping, Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.optimizers.optimizers import _OPTIMIZERS_REGISTRY
 from flash.core.optimizers.schedulers import _SCHEDULERS_REGISTRY
@@ -318,7 +319,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         deserializer: Either a single :class:`~flash.core.data.process.Deserializer` or a mapping of these to
             deserialize the input
         preprocess: :class:`~flash.core.data.process.Preprocess` to use as the default for this task.
-        postprocess: :class:`~flash.core.data.process.Postprocess` to use as the default for this task.
+        output_transform: :class:`~flash.core.data.io.output_transform.OutputTransform` to use as the default for this
+            task.
         output: Either a single :class:`~flash.core.data.io.output.Output` or a mapping of these to
             serialize the output e.g. convert the model output into the desired output format when predicting.
     """
@@ -338,7 +340,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         metrics: METRICS_TYPE = None,
         deserializer: DESERIALIZER_TYPE = None,
         preprocess: PREPROCESS_TYPE = None,
-        postprocess: POSTPROCESS_TYPE = None,
+        output_transform: POSTPROCESS_TYPE = None,
         output: OUTPUT_TYPE = None,
     ):
         super().__init__()
@@ -357,7 +359,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
         self._deserializer: Optional[Deserializer] = None
         self._preprocess: Optional[Preprocess] = preprocess
-        self._postprocess: Optional[Postprocess] = postprocess
+        self._output_transform: Optional[OutputTransform] = output_transform
         self._output: Optional[Output] = None
 
         # Explicitly set the output to call the setter
@@ -569,29 +571,31 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
     def _resolve(
         old_deserializer: Optional[Deserializer],
         old_preprocess: Optional[Preprocess],
-        old_postprocess: Optional[Postprocess],
+        old_output_transform: Optional[OutputTransform],
         old_output: Optional[Output],
         new_deserializer: Optional[Deserializer],
         new_preprocess: Optional[Preprocess],
-        new_postprocess: Optional[Postprocess],
+        new_output_transform: Optional[OutputTransform],
         new_output: Optional[Output],
-    ) -> Tuple[Optional[Deserializer], Optional[Preprocess], Optional[Postprocess], Optional[Output]]:
-        """Resolves the correct :class:`~flash.core.data.process.Preprocess`, :class:`~flash.core.data.process.Postprocess`, and
-        :class:`~flash.core.data.io.output.Output` to use, choosing ``new_*`` if it is not None or a base class
-        (:class:`~flash.core.data.process.Preprocess`, :class:`~flash.core.data.process.Postprocess`, or
-        :class:`~flash.core.data.io.output.Output`) and ``old_*`` otherwise.
+    ) -> Tuple[Optional[Deserializer], Optional[Preprocess], Optional[OutputTransform], Optional[Output]]:
+        """Resolves the correct :class:`~flash.core.data.process.Preprocess`,
+        :class:`~flash.core.data.io.output_transform.OutputTransform`, and :class:`~flash.core.data.io.output.Output` to
+        use, choosing ``new_*`` if it is not None or a base class (:class:`~flash.core.data.process.Preprocess`,
+        :class:`~flash.core.data.io.output_transform.OutputTransform`, or :class:`~flash.core.data.io.output.Output`)
+        and ``old_*`` otherwise.
 
         Args:
             old_preprocess: :class:`~flash.core.data.process.Preprocess` to be overridden.
-            old_postprocess: :class:`~flash.core.data.process.Postprocess` to be overridden.
+            old_output_transform: :class:`~flash.core.data.io.output_transform.OutputTransform` to be overridden.
             old_output: :class:`~flash.core.data.io.output.Output` to be overridden.
             new_preprocess: :class:`~flash.core.data.process.Preprocess` to override with.
-            new_postprocess: :class:`~flash.core.data.process.Postprocess` to override with.
+            new_output_transform: :class:`~flash.core.data.io.output_transform.OutputTransform` to override with.
             new_output: :class:`~flash.core.data.io.output.Output` to override with.
 
         Returns:
-            The resolved :class:`~flash.core.data.process.Preprocess`, :class:`~flash.core.data.process.Postprocess`,
-            and :class:`~flash.core.data.io.output.Output`.
+            The resolved :class:`~flash.core.data.process.Preprocess`,
+            :class:`~flash.core.data.io.output_transform.OutputTransform`, and
+            :class:`~flash.core.data.io.output.Output`.
         """
         deserializer = old_deserializer
         if new_deserializer is not None and type(new_deserializer) != Deserializer:
@@ -601,9 +605,9 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         if new_preprocess is not None and type(new_preprocess) != Preprocess:
             preprocess = new_preprocess
 
-        postprocess = old_postprocess
-        if new_postprocess is not None and type(new_postprocess) != Postprocess:
-            postprocess = new_postprocess
+        postprocess = old_output_transform
+        if new_output_transform is not None and type(new_output_transform) != OutputTransform:
+            postprocess = new_output_transform
 
         output = old_output
         if new_output is not None and type(new_output) != Output:
@@ -672,7 +676,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         data_pipeline: Optional[DataPipeline] = None,
     ) -> Optional[DataPipeline]:
         """Build a :class:`.DataPipeline` incorporating available
-        :class:`~flash.core.data.process.Preprocess` and :class:`~flash.core.data.process.Postprocess`
+        :class:`~flash.core.data.process.Preprocess` and :class:`~flash.core.data.io.output_transform.OutputTransform`
         objects. These will be overridden in the following resolution order (lowest priority first):
 
         - Lightning ``Datamodule``, either attached to the :class:`.Trainer` or to the :class:`.Task`.
@@ -685,7 +689,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
                 the current data source format used.
             deserializer: deserializer to use
             data_pipeline: Optional highest priority source of
-                :class:`~flash.core.data.process.Preprocess` and :class:`~flash.core.data.process.Postprocess`.
+                :class:`~flash.core.data.process.Preprocess` and
+                :class:`~flash.core.data.io.output_transform.OutputTransform`.
 
         Returns:
             The fully resolved :class:`.DataPipeline`.
@@ -714,7 +719,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
             output,
             self._deserializer,
             self._preprocess,
-            self._postprocess,
+            self._output_transform,
             self._output,
         )
 
@@ -766,10 +771,10 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
     @torch.jit.unused
     @data_pipeline.setter
     def data_pipeline(self, data_pipeline: Optional[DataPipeline]) -> None:
-        self._deserializer, self._preprocess, self._postprocess, self.output = Task._resolve(
+        self._deserializer, self._preprocess, self._output_transform, self.output = Task._resolve(
             self._deserializer,
             self._preprocess,
-            self._postprocess,
+            self._output_transform,
             self._output,
             getattr(data_pipeline, "_deserializer", None),
             getattr(data_pipeline, "_preprocess_pipeline", None),
@@ -788,7 +793,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
     @torch.jit.unused
     @property
-    def postprocess(self) -> Postprocess:
+    def postprocess(self) -> OutputTransform:
         return getattr(self.data_pipeline, "_postprocess_pipeline", None)
 
     def on_train_dataloader(self) -> None:

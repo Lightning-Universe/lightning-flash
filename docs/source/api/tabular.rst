@@ -59,4 +59,4 @@ __________________
     ~data.TabularCSVDataSource
     ~data.TabularDeserializer
     ~data.TabularPreprocess
-    ~data.TabularPostprocess
+    ~data.TabularOutputTransform

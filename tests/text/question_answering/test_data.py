@@ -158,8 +158,8 @@ def test_from_files(tmpdir):
 
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_postprocess_tokenizer(tmpdir):
-    """Tests that the tokenizer property in ``QuestionAnsweringPostprocess`` resolves correctly when a different
-    backbone is used."""
+    """Tests that the tokenizer property in ``QuestionAnsweringOutputTransform`` resolves correctly when a
+    different backbone is used."""
     backbone = "allenai/longformer-base-4096"
     json_path = json_data(tmpdir, TEST_JSON_DATA)
     dm = QuestionAnsweringData.from_json(
