@@ -16,5 +16,5 @@ LR_SCHEDULER_TYPE = Optional[
 METRICS_TYPE = Union[Metric, Mapping, Sequence, None]
 DESERIALIZER_TYPE = Optional[Union[Deserializer, Mapping[str, Deserializer]]]
 PREPROCESS_TYPE = Optional[Preprocess]
-POSTPROCESS_TYPE = Optional[OutputTransform]
+OUTPUT_TRANSFORM_TYPE = Optional[OutputTransform]
 OUTPUT_TYPE = Optional[Union[Output, Mapping[str, Output]]]

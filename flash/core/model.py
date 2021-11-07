@@ -58,8 +58,8 @@ from flash.core.utilities.types import (
     METRICS_TYPE,
     MODEL_TYPE,
     OPTIMIZER_TYPE,
+    OUTPUT_TRANSFORM_TYPE,
     OUTPUT_TYPE,
-    POSTPROCESS_TYPE,
     PREPROCESS_TYPE,
 )
 
@@ -340,7 +340,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         metrics: METRICS_TYPE = None,
         deserializer: DESERIALIZER_TYPE = None,
         preprocess: PREPROCESS_TYPE = None,
-        output_transform: POSTPROCESS_TYPE = None,
+        output_transform: OUTPUT_TRANSFORM_TYPE = None,
         output: OUTPUT_TYPE = None,
     ):
         super().__init__()
@@ -605,15 +605,15 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         if new_preprocess is not None and type(new_preprocess) != Preprocess:
             preprocess = new_preprocess
 
-        postprocess = old_output_transform
+        output_transform = old_output_transform
         if new_output_transform is not None and type(new_output_transform) != OutputTransform:
-            postprocess = new_output_transform
+            output_transform = new_output_transform
 
         output = old_output
         if new_output is not None and type(new_output) != Output:
             output = new_output
 
-        return deserializer, preprocess, postprocess, output
+        return deserializer, preprocess, output_transform, output
 
     @torch.jit.unused
     @property
@@ -695,7 +695,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         Returns:
             The fully resolved :class:`.DataPipeline`.
         """
-        deserializer, old_data_source, preprocess, postprocess, output = None, None, None, None, None
+        deserializer, old_data_source, preprocess, output_transform, output = None, None, None, None, None
 
         # Datamodule
         datamodule = None
@@ -707,15 +707,15 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         if getattr(datamodule, "data_pipeline", None) is not None:
             old_data_source = getattr(datamodule.data_pipeline, "data_source", None)
             preprocess = getattr(datamodule.data_pipeline, "_preprocess_pipeline", None)
-            postprocess = getattr(datamodule.data_pipeline, "_postprocess_pipeline", None)
+            output_transform = getattr(datamodule.data_pipeline, "_output_transform", None)
             output = getattr(datamodule.data_pipeline, "_output", None)
             deserializer = getattr(datamodule.data_pipeline, "_deserializer", None)
 
         # Defaults / task attributes
-        deserializer, preprocess, postprocess, output = Task._resolve(
+        deserializer, preprocess, output_transform, output = Task._resolve(
             deserializer,
             preprocess,
-            postprocess,
+            output_transform,
             output,
             self._deserializer,
             self._preprocess,
@@ -725,14 +725,14 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
         # Datapipeline
         if data_pipeline is not None:
-            deserializer, preprocess, postprocess, output = Task._resolve(
+            deserializer, preprocess, output_transform, output = Task._resolve(
                 deserializer,
                 preprocess,
-                postprocess,
+                output_transform,
                 output,
                 getattr(data_pipeline, "_deserializer", None),
                 getattr(data_pipeline, "_preprocess_pipeline", None),
-                getattr(data_pipeline, "_postprocess_pipeline", None),
+                getattr(data_pipeline, "_output_transform", None),
                 getattr(data_pipeline, "_output", None),
             )
 
@@ -747,7 +747,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         if deserializer is None or type(deserializer) is Deserializer:
             deserializer = getattr(preprocess, "deserializer", deserializer)
 
-        data_pipeline = DataPipeline(data_source, preprocess, postprocess, deserializer, output)
+        data_pipeline = DataPipeline(data_source, preprocess, output_transform, deserializer, output)
         self._data_pipeline_state = self._data_pipeline_state or DataPipelineState()
         self.attach_data_pipeline_state(self._data_pipeline_state)
         self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)
@@ -778,7 +778,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
             self._output,
             getattr(data_pipeline, "_deserializer", None),
             getattr(data_pipeline, "_preprocess_pipeline", None),
-            getattr(data_pipeline, "_postprocess_pipeline", None),
+            getattr(data_pipeline, "_output_transform", None),
             getattr(data_pipeline, "_output", None),
         )
 
@@ -793,8 +793,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
     @torch.jit.unused
     @property
-    def postprocess(self) -> OutputTransform:
-        return getattr(self.data_pipeline, "_postprocess_pipeline", None)
+    def output_transform(self) -> OutputTransform:
+        return getattr(self.data_pipeline, "_output_transform", None)
 
     def on_train_dataloader(self) -> None:
         if self.data_pipeline is not None:

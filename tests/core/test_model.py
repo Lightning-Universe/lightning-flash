@@ -223,10 +223,10 @@ def test_classification_task_trainer_predict(tmpdir):
 def test_task_datapipeline_save(tmpdir):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
     train_dl = torch.utils.data.DataLoader(DummyDataset())
-    task = ClassificationTask(model, loss_fn=F.nll_loss, postprocess=DummyOutputTransform())
+    task = ClassificationTask(model, loss_fn=F.nll_loss, output_transform=DummyOutputTransform())
 
     # to check later
-    task.postprocess.test = True
+    task.output_transform.test = True
 
     # generate a checkpoint
     trainer = pl.Trainer(

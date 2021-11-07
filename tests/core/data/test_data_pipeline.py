@@ -84,12 +84,12 @@ def test_data_pipeline_str():
 
 
 @pytest.mark.parametrize("use_preprocess", [False, True])
-@pytest.mark.parametrize("use_postprocess", [False, True])
-def test_data_pipeline_init_and_assignement(use_preprocess, use_postprocess, tmpdir):
+@pytest.mark.parametrize("use_output_transform", [False, True])
+def test_data_pipeline_init_and_assignement(use_preprocess, use_output_transform, tmpdir):
     class CustomModel(Task):
         def __init__(self, output_transform: Optional[OutputTransform] = None):
             super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
-            self._postprocess = output_transform
+            self._output_transform = output_transform
 
         def train_dataloader(self) -> Any:
             return DataLoader(DummyDataset())
@@ -102,10 +102,10 @@ def test_data_pipeline_init_and_assignement(use_preprocess, use_postprocess, tmp
 
     data_pipeline = DataPipeline(
         preprocess=SubPreprocess() if use_preprocess else None,
-        output_transform=SubOutputTransform() if use_postprocess else None,
+        output_transform=SubOutputTransform() if use_output_transform else None,
     )
     assert isinstance(data_pipeline._preprocess_pipeline, SubPreprocess if use_preprocess else DefaultPreprocess)
-    assert isinstance(data_pipeline._postprocess_pipeline, SubOutputTransform if use_postprocess else OutputTransform)
+    assert isinstance(data_pipeline._output_transform, SubOutputTransform if use_output_transform else OutputTransform)
 
     model = CustomModel(output_transform=OutputTransform())
     model.data_pipeline = data_pipeline
@@ -117,10 +117,10 @@ def test_data_pipeline_init_and_assignement(use_preprocess, use_postprocess, tmp
     else:
         assert model._preprocess is None or isinstance(model._preprocess, Preprocess)
 
-    if use_postprocess:
-        assert isinstance(model._postprocess, SubOutputTransform)
+    if use_output_transform:
+        assert isinstance(model._output_transform, SubOutputTransform)
     else:
-        assert model._postprocess is None or isinstance(model._postprocess, OutputTransform)
+        assert model._output_transform is None or isinstance(model._output_transform, OutputTransform)
 
 
 def test_data_pipeline_is_overriden_and_resolve_function_hierarchy(tmpdir):
@@ -296,7 +296,7 @@ def test_detach_preprocessing_from_model(tmpdir):
     class CustomModel(Task):
         def __init__(self, output_transform: Optional[OutputTransform] = None):
             super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
-            self._postprocess = output_transform
+            self._output_transform = output_transform
 
         def train_dataloader(self) -> Any:
             return DataLoader(DummyDataset())
@@ -355,7 +355,7 @@ def test_attaching_datapipeline_to_model(tmpdir):
     class CustomModel(Task):
         def __init__(self):
             super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
-            self._postprocess = OutputTransform()
+            self._output_transform = OutputTransform()
 
         def training_step(self, batch: Any, batch_idx: int) -> Any:
             pass
@@ -494,16 +494,16 @@ def test_stage_orchestrator_state_attach_detach(tmpdir):
     _original_predict_step = model.predict_step
 
     class CustomDataPipeline(DataPipeline):
-        def _attach_postprocess_to_model(self, model: "Task", _postprocesssor: _Postprocessor) -> "Task":
+        def _attach_output_transform_to_model(self, model: "Task", _postprocesssor: _Postprocessor) -> "Task":
             model.predict_step = self._model_predict_step_wrapper(model.predict_step, _postprocesssor, model)
             return model
 
     data_pipeline = CustomDataPipeline(preprocess=preprocess)
     _postprocesssor = data_pipeline._create_uncollate_postprocessors(RunningStage.PREDICTING)
-    data_pipeline._attach_postprocess_to_model(model, _postprocesssor)
+    data_pipeline._attach_output_transform_to_model(model, _postprocesssor)
     assert model.predict_step._original == _original_predict_step
     assert model.predict_step._stage_mapping[RunningStage.PREDICTING] == _postprocesssor
-    data_pipeline._detach_postprocess_from_model(model)
+    data_pipeline._detach_output_transform_from_model(model)
     assert model.predict_step == _original_predict_step
 
 

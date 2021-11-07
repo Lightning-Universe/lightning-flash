@@ -147,7 +147,7 @@ class FaceDetectionPreprocess(Preprocess):
         }
 
 
-class FaceDetectionPostProcess(OutputTransform):
+class FaceDetectionOutputTransform(OutputTransform):
     """Generates preds from model output."""
 
     @staticmethod
@@ -170,4 +170,4 @@ class FaceDetectionPostProcess(OutputTransform):
 
 class FaceDetectionData(ObjectDetectionData):
     preprocess_cls = FaceDetectionPreprocess
-    output_transform_cls = FaceDetectionPostProcess
+    output_transform_cls = FaceDetectionOutputTransform

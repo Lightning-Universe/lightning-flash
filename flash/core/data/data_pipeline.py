@@ -30,7 +30,7 @@ from flash.core.data.data_source import DataSource
 from flash.core.data.io.output import _OutputProcessor, Output
 from flash.core.data.process import DefaultPreprocess, Deserializer, Preprocess
 from flash.core.data.properties import ProcessState
-from flash.core.data.utils import _POSTPROCESS_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
+from flash.core.data.utils import _OUTPUT_TRANSFORM_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
 from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_4_3, _PL_GREATER_EQUAL_1_5_0
 from flash.core.utilities.stages import _RUNNING_STAGE_MAPPING, RunningStage
 
@@ -97,7 +97,7 @@ class DataPipeline:
     """
 
     PREPROCESS_FUNCS: Set[str] = _PREPROCESS_FUNCS
-    POSTPROCESS_FUNCS: Set[str] = _POSTPROCESS_FUNCS
+    OUTPUT_TRANSFORM_FUNCS: Set[str] = _OUTPUT_TRANSFORM_FUNCS
 
     def __init__(
         self,
@@ -110,7 +110,7 @@ class DataPipeline:
         self.data_source = data_source
 
         self._preprocess_pipeline = preprocess or DefaultPreprocess()
-        self._postprocess_pipeline = output_transform or OutputTransform()
+        self._output_transform = output_transform or OutputTransform()
         self._output = output or Output()
         self._deserializer = deserializer or Deserializer()
         self._running_stage = None
@@ -123,7 +123,7 @@ class DataPipeline:
         if self.data_source is not None:
             self.data_source.attach_data_pipeline_state(data_pipeline_state)
         self._preprocess_pipeline.attach_data_pipeline_state(data_pipeline_state)
-        self._postprocess_pipeline.attach_data_pipeline_state(data_pipeline_state)
+        self._output_transform.attach_data_pipeline_state(data_pipeline_state)
         self._output.attach_data_pipeline_state(data_pipeline_state)
         return data_pipeline_state
 
@@ -457,35 +457,35 @@ class DataPipeline:
         save_per_sample = None
         save_fn = None
 
-        postprocess: OutputTransform = self._postprocess_pipeline
+        output_transform: OutputTransform = self._output_transform
 
         func_names: Dict[str, str] = {
-            k: self._resolve_function_hierarchy(k, postprocess, stage, object_type=OutputTransform)
-            for k in self.POSTPROCESS_FUNCS
+            k: self._resolve_function_hierarchy(k, output_transform, stage, object_type=OutputTransform)
+            for k in self.OUTPUT_TRANSFORM_FUNCS
         }
 
         # since postprocessing is exclusive for prediction, we don't have to check the resolution hierarchy here.
-        if postprocess._save_path:
+        if output_transform._save_path:
             save_per_sample: bool = self._is_overriden_recursive(
-                "save_sample", postprocess, OutputTransform, prefix=_STAGES_PREFIX[stage]
+                "save_sample", output_transform, OutputTransform, prefix=_STAGES_PREFIX[stage]
             )
 
             if save_per_sample:
-                save_per_sample: Callable = getattr(postprocess, func_names["save_sample"])
+                save_per_sample: Callable = getattr(output_transform, func_names["save_sample"])
             else:
-                save_fn: Callable = getattr(postprocess, func_names["save_data"])
+                save_fn: Callable = getattr(output_transform, func_names["save_data"])
 
         return _Postprocessor(
-            getattr(postprocess, func_names["uncollate"]),
-            getattr(postprocess, func_names["per_batch_transform"]),
-            getattr(postprocess, func_names["per_sample_transform"]),
+            getattr(output_transform, func_names["uncollate"]),
+            getattr(output_transform, func_names["per_batch_transform"]),
+            getattr(output_transform, func_names["per_sample_transform"]),
             output=None if is_serving else self._output,
             save_fn=save_fn,
             save_per_sample=save_per_sample,
             is_serving=is_serving,
         )
 
-    def _attach_postprocess_to_model(
+    def _attach_output_transform_to_model(
         self,
         model: "Task",
         stage: RunningStage,
@@ -506,13 +506,13 @@ class DataPipeline:
         self._attach_preprocess_to_model(model, stage)
 
         if not stage or stage == RunningStage.PREDICTING:
-            self._attach_postprocess_to_model(model, RunningStage.PREDICTING, is_serving=is_serving)
+            self._attach_output_transform_to_model(model, RunningStage.PREDICTING, is_serving=is_serving)
 
     def _detach_from_model(self, model: "Task", stage: Optional[RunningStage] = None):
         self._detach_preprocessing_from_model(model, stage)
 
         if not stage or stage == RunningStage.PREDICTING:
-            self._detach_postprocess_from_model(model)
+            self._detach_output_transform_from_model(model)
 
     def _detach_preprocessing_from_model(self, model: "Task", stage: Optional[RunningStage] = None):
         if not stage:
@@ -579,7 +579,7 @@ class DataPipeline:
             self._set_loader(model, whole_attr_name, dataloader)
 
     @staticmethod
-    def _detach_postprocess_from_model(model: "Task"):
+    def _detach_output_transform_from_model(model: "Task"):
 
         if hasattr(model.predict_step, "_original"):
             # don't delete the predict_step here since we don't know
@@ -589,7 +589,7 @@ class DataPipeline:
     def __str__(self) -> str:
         data_source: DataSource = self.data_source
         preprocess: Preprocess = self._preprocess_pipeline
-        postprocess: OutputTransform = self._postprocess_pipeline
+        output_transform: OutputTransform = self._output_transform
         output: Output = self._output
         deserializer: Deserializer = self._deserializer
         return (
@@ -597,7 +597,7 @@ class DataPipeline:
             f"data_source={str(data_source)}, "
             f"deserializer={deserializer}, "
             f"preprocess={preprocess}, "
-            f"postprocess={postprocess}, "
+            f"output_transform={output_transform}, "
             f"output={output})"
         )
 

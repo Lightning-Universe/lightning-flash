@@ -29,8 +29,8 @@ from flash.core.utilities.types import (
     LR_SCHEDULER_TYPE,
     METRICS_TYPE,
     OPTIMIZER_TYPE,
+    OUTPUT_TRANSFORM_TYPE,
     OUTPUT_TYPE,
-    POSTPROCESS_TYPE,
 )
 from flash.image.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 from flash.image.segmentation.heads import SEMANTIC_SEGMENTATION_HEADS
@@ -95,7 +95,7 @@ class SemanticSegmentation(ClassificationTask):
         learning_rate: float = 1e-3,
         multi_label: bool = False,
         output: OUTPUT_TYPE = None,
-        output_transform: POSTPROCESS_TYPE = None,
+        output_transform: OUTPUT_TRANSFORM_TYPE = None,
     ) -> None:
         if metrics is None:
             metrics = IoU(num_classes=num_classes)
@@ -115,7 +115,7 @@ class SemanticSegmentation(ClassificationTask):
             metrics=metrics,
             learning_rate=learning_rate,
             output=output or SegmentationLabels(),
-            postprocess=output_transform or self.output_transform_cls(),
+            output_transform=output_transform or self.output_transform_cls(),
         )
 
         self.save_hyperparameters()
