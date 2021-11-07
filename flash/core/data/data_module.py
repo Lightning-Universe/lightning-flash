@@ -36,12 +36,12 @@ from torch.utils.data.dataset import IterableDataset, Subset
 from torch.utils.data.sampler import Sampler
 
 import flash
-from flash import OutputTransform
 from flash.core.data.auto_dataset import BaseAutoDataset, IterableAutoDataset
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_pipeline import DataPipeline, DefaultPreprocess, Preprocess
 from flash.core.data.data_source import DataSource, DefaultDataSources
+from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, requires

@@ -17,8 +17,8 @@ import torch
 import torch.nn as nn
 from torch.utils.data import Dataset
 
-from flash import OutputTransform
 from flash.core.data.data_source import DatasetDataSource, DefaultDataKeys, DefaultDataSources
+from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.process import Preprocess
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _FASTFACE_AVAILABLE, _TORCHVISION_AVAILABLE

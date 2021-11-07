@@ -23,13 +23,13 @@ from torch.utils.data.dataset import IterableDataset
 from torch.utils.data.sampler import Sampler
 
 import flash
-from flash import OutputTransform
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DefaultPreprocess
 from flash.core.data.datasets import BaseDataset
 from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
+from flash.core.data.io.output_transform import OutputTransform
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.stages import RunningStage
 

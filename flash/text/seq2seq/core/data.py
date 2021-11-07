@@ -19,9 +19,9 @@ import torch
 from torch import Tensor
 
 import flash
-from flash import OutputTransform
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataSources
+from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.process import Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires

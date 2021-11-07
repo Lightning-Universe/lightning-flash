@@ -27,10 +27,10 @@ from torch import Tensor
 from torch.utils.data.sampler import Sampler
 
 import flash
-from flash import OutputTransform
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
+from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.process import Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires

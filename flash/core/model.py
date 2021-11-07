@@ -36,11 +36,11 @@ from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader, Sampler
 
 import flash
-from flash import OutputTransform
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
 from flash.core.data.data_source import DataSource
 from flash.core.data.io.output import Output, OutputMapping
+from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.process import Deserializer, DeserializerMapping, Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.optimizers.optimizers import _OPTIMIZERS_REGISTRY

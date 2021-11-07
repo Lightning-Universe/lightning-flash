@@ -32,10 +32,10 @@ from torch.utils.data import DataLoader
 from torchmetrics import Accuracy
 
 import flash
-from flash import OutputTransform
 from flash.audio import SpeechRecognition
 from flash.core.adapter import Adapter
 from flash.core.classification import ClassificationTask
+from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.process import DefaultPreprocess
 from flash.core.utilities.imports import _TORCH_OPTIMIZER_AVAILABLE, _TRANSFORMERS_AVAILABLE, Image
 from flash.image import ImageClassificationData, ImageClassifier, SemanticSegmentation

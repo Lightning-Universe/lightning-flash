@@ -18,9 +18,9 @@ from torch import nn
 from torch.nn import functional as F
 from torchmetrics import IoU
 
-from flash import OutputTransform
 from flash.core.classification import ClassificationTask
 from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.output_transform import OutputTransform
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _KORNIA_AVAILABLE
 from flash.core.utilities.isinstance import _isinstance

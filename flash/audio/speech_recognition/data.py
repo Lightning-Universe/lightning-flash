@@ -22,7 +22,6 @@ import torch
 from torch.utils.data import Dataset
 
 import flash
-from flash import OutputTransform
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import (
     DatasetDataSource,
@@ -31,6 +30,7 @@ from flash.core.data.data_source import (
     DefaultDataSources,
     PathsDataSource,
 )
+from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.process import Deserializer, Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _AUDIO_AVAILABLE, requires

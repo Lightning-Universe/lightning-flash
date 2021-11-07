@@ -23,11 +23,11 @@ from pytorch_lightning.utilities.model_helpers import is_overridden
 from torch.utils.data import DataLoader, IterableDataset
 
 import flash
-from flash import OutputTransform
 from flash.core.data.auto_dataset import IterableAutoDataset
 from flash.core.data.batch import _DeserializeProcessor, _Postprocessor, _Preprocessor, _Sequential
 from flash.core.data.data_source import DataSource
 from flash.core.data.io.output import _OutputProcessor, Output
+from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.process import DefaultPreprocess, Deserializer, Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.data.utils import _OUTPUT_TRANSFORM_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX

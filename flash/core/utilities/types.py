@@ -3,8 +3,8 @@ from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Unio
 from torch import nn
 from torchmetrics import Metric
 
-from flash import OutputTransform
 from flash.core.data.io.output import Output
+from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.process import Deserializer, Preprocess
 
 MODEL_TYPE = Optional[nn.Module]
