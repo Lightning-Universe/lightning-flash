@@ -26,15 +26,15 @@ class FlashInputs(BaseType):
 class FlashOutputs(BaseType):
     def __init__(
         self,
-        serializer: Callable,
+        output: Callable,
     ):
-        self._serializer = serializer
+        self._output = output
 
     def serialize(self, outputs) -> Any:  # pragma: no cover
         results = []
         if isinstance(outputs, (list, torch.Tensor)):
             for output in outputs:
-                result = self._serializer(output)
+                result = self._output(output)
                 if isinstance(result, Mapping):
                     result = result[DefaultDataKeys.PREDS]
                 results.append(result)
@@ -64,7 +64,7 @@ def build_flash_serve_model_component(model):
 
         @expose(
             inputs={"inputs": FlashInputs(data_pipeline.deserialize_processor())},
-            outputs={"outputs": FlashOutputs(data_pipeline.serialize_processor())},
+            outputs={"outputs": FlashOutputs(data_pipeline.output_processor())},
         )
         def predict(self, inputs):
             with torch.no_grad():

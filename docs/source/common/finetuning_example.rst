@@ -55,8 +55,8 @@ Once you've finetuned, use the model to predict:
 
 .. testcode:: finetune
 
-    # Serialize predictions as labels, automatically inferred from the training data in part 2.
-    model.serializer = Labels()
+    # Output predictions as labels, automatically inferred from the training data in part 2.
+    model.output = Labels()
 
     predictions = model.predict(
         [

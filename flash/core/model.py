@@ -18,10 +18,12 @@ from abc import ABCMeta
 from copy import deepcopy
 from importlib import import_module
 from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple, Type, Union
+from warnings import warn
 
 import pytorch_lightning as pl
 import torch
 import torchmetrics
+from deprecate import deprecated
 from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.trainer.optimizers import _get_default_scheduler_config
@@ -37,21 +39,15 @@ import flash
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
 from flash.core.data.data_source import DataSource
-from flash.core.data.process import (
-    Deserializer,
-    DeserializerMapping,
-    Postprocess,
-    Preprocess,
-    Serializer,
-    SerializerMapping,
-)
+from flash.core.data.io.output import Output, OutputMapping
+from flash.core.data.process import Deserializer, DeserializerMapping, Postprocess, Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.optimizers.optimizers import _OPTIMIZERS_REGISTRY
 from flash.core.optimizers.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.registry import FlashRegistry
 from flash.core.serve.composition import Composition
 from flash.core.utilities.apply_func import get_callable_dict
-from flash.core.utilities.imports import requires
+from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_5_0, requires
 from flash.core.utilities.providers import _HUGGINGFACE
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import (
@@ -61,9 +57,9 @@ from flash.core.utilities.types import (
     METRICS_TYPE,
     MODEL_TYPE,
     OPTIMIZER_TYPE,
+    OUTPUT_TYPE,
     POSTPROCESS_TYPE,
     PREPROCESS_TYPE,
-    SERIALIZER_TYPE,
 )
 
 
@@ -323,7 +319,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
             deserialize the input
         preprocess: :class:`~flash.core.data.process.Preprocess` to use as the default for this task.
         postprocess: :class:`~flash.core.data.process.Postprocess` to use as the default for this task.
-        serializer: Either a single :class:`~flash.core.data.process.Serializer` or a mapping of these to
+        output: Either a single :class:`~flash.core.data.io.output.Output` or a mapping of these to
             serialize the output e.g. convert the model output into the desired output format when predicting.
     """
 
@@ -343,7 +339,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         deserializer: DESERIALIZER_TYPE = None,
         preprocess: PREPROCESS_TYPE = None,
         postprocess: POSTPROCESS_TYPE = None,
-        serializer: SERIALIZER_TYPE = None,
+        output: OUTPUT_TYPE = None,
     ):
         super().__init__()
         if model is not None:
@@ -362,11 +358,11 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         self._deserializer: Optional[Deserializer] = None
         self._preprocess: Optional[Preprocess] = preprocess
         self._postprocess: Optional[Postprocess] = postprocess
-        self._serializer: Optional[Serializer] = None
+        self._output: Optional[Output] = None
 
-        # Explicitly set the serializer to call the setter
+        # Explicitly set the output to call the setter
         self.deserializer = deserializer
-        self.serializer = serializer
+        self.output = output
 
     def step(self, batch: Any, batch_idx: int, metrics: nn.ModuleDict) -> Any:
         """Implement the core logic for the training/validation/test step. By default this includes:
@@ -399,6 +395,10 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         for name, metric in metrics.items():
             if isinstance(metric, torchmetrics.metric.Metric):
                 metric(y_hat, y)
+                # PL 1.4.0 -> 1.4.9 tries to deepcopy the metric.
+                # Sometimes _forward_cache is not a leaf, so we convert it to one.
+                if not metric._forward_cache.is_leaf and not _PL_GREATER_EQUAL_1_5_0:
+                    metric._forward_cache = metric._forward_cache.clone().detach()
                 logs[name] = metric  # log the metric itself if it is of type Metric
             else:
                 logs[name] = metric(y_hat, y)
@@ -570,28 +570,28 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         old_deserializer: Optional[Deserializer],
         old_preprocess: Optional[Preprocess],
         old_postprocess: Optional[Postprocess],
-        old_serializer: Optional[Serializer],
+        old_output: Optional[Output],
         new_deserializer: Optional[Deserializer],
         new_preprocess: Optional[Preprocess],
         new_postprocess: Optional[Postprocess],
-        new_serializer: Optional[Serializer],
-    ) -> Tuple[Optional[Deserializer], Optional[Preprocess], Optional[Postprocess], Optional[Serializer]]:
+        new_output: Optional[Output],
+    ) -> Tuple[Optional[Deserializer], Optional[Preprocess], Optional[Postprocess], Optional[Output]]:
         """Resolves the correct :class:`~flash.core.data.process.Preprocess`, :class:`~flash.core.data.process.Postprocess`, and
-        :class:`~flash.core.data.process.Serializer` to use, choosing ``new_*`` if it is not None or a base class
+        :class:`~flash.core.data.io.output.Output` to use, choosing ``new_*`` if it is not None or a base class
         (:class:`~flash.core.data.process.Preprocess`, :class:`~flash.core.data.process.Postprocess`, or
-        :class:`~flash.core.data.process.Serializer`) and ``old_*`` otherwise.
+        :class:`~flash.core.data.io.output.Output`) and ``old_*`` otherwise.
 
         Args:
             old_preprocess: :class:`~flash.core.data.process.Preprocess` to be overridden.
             old_postprocess: :class:`~flash.core.data.process.Postprocess` to be overridden.
-            old_serializer: :class:`~flash.core.data.process.Serializer` to be overridden.
+            old_output: :class:`~flash.core.data.io.output.Output` to be overridden.
             new_preprocess: :class:`~flash.core.data.process.Preprocess` to override with.
             new_postprocess: :class:`~flash.core.data.process.Postprocess` to override with.
-            new_serializer: :class:`~flash.core.data.process.Serializer` to override with.
+            new_output: :class:`~flash.core.data.io.output.Output` to override with.
 
         Returns:
             The resolved :class:`~flash.core.data.process.Preprocess`, :class:`~flash.core.data.process.Postprocess`,
-            and :class:`~flash.core.data.process.Serializer`.
+            and :class:`~flash.core.data.io.output.Output`.
         """
         deserializer = old_deserializer
         if new_deserializer is not None and type(new_deserializer) != Deserializer:
@@ -605,11 +605,11 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         if new_postprocess is not None and type(new_postprocess) != Postprocess:
             postprocess = new_postprocess
 
-        serializer = old_serializer
-        if new_serializer is not None and type(new_serializer) != Serializer:
-            serializer = new_serializer
+        output = old_output
+        if new_output is not None and type(new_output) != Output:
+            output = new_output
 
-        return deserializer, preprocess, postprocess, serializer
+        return deserializer, preprocess, postprocess, output
 
     @torch.jit.unused
     @property
@@ -624,20 +624,46 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
     @torch.jit.unused
     @property
-    def serializer(self) -> Optional[Serializer]:
-        """The current :class:`.Serializer` associated with this model.
+    def output(self) -> Optional[Output]:
+        """The current :class:`.Output` associated with this model."""
+        return self._output
 
-        If this property was set to a mapping
-        (e.g. ``.serializer = {'output1': SerializerOne()}``) then this will be a :class:`.MappingSerializer`.
+    @torch.jit.unused
+    @output.setter
+    def output(self, output: Union[Output, Mapping[str, Output]]):
+        if isinstance(output, Mapping):
+            output = OutputMapping(output)
+        self._output = output
+
+    @torch.jit.unused
+    @property
+    @deprecated(
+        None,
+        "0.6.0",
+        "0.7.0",
+        template_mgs="`Task.serializer` was deprecated in v%(deprecated_in)s in favor of `Task.output`. "
+        "It will be removed in v%(remove_in)s.",
+        stream=functools.partial(warn, category=FutureWarning),
+    )
+    def serializer(self) -> Optional[Output]:
+        """Deprecated.
+
+        Use ``Task.output`` instead.
         """
-        return self._serializer
+        return self.output
 
     @torch.jit.unused
     @serializer.setter
-    def serializer(self, serializer: Union[Serializer, Mapping[str, Serializer]]):
-        if isinstance(serializer, Mapping):
-            serializer = SerializerMapping(serializer)
-        self._serializer = serializer
+    @deprecated(
+        None,
+        "0.6.0",
+        "0.7.0",
+        template_mgs="`Task.serializer` was deprecated in v%(deprecated_in)s in favor of `Task.output`. "
+        "It will be removed in v%(remove_in)s.",
+        stream=functools.partial(warn, category=FutureWarning),
+    )
+    def serializer(self, serializer: Union[Output, Mapping[str, Output]]):
+        self.output = serializer
 
     def build_data_pipeline(
         self,
@@ -664,7 +690,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         Returns:
             The fully resolved :class:`.DataPipeline`.
         """
-        deserializer, old_data_source, preprocess, postprocess, serializer = None, None, None, None, None
+        deserializer, old_data_source, preprocess, postprocess, output = None, None, None, None, None
 
         # Datamodule
         datamodule = None
@@ -677,32 +703,32 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
             old_data_source = getattr(datamodule.data_pipeline, "data_source", None)
             preprocess = getattr(datamodule.data_pipeline, "_preprocess_pipeline", None)
             postprocess = getattr(datamodule.data_pipeline, "_postprocess_pipeline", None)
-            serializer = getattr(datamodule.data_pipeline, "_serializer", None)
+            output = getattr(datamodule.data_pipeline, "_output", None)
             deserializer = getattr(datamodule.data_pipeline, "_deserializer", None)
 
         # Defaults / task attributes
-        deserializer, preprocess, postprocess, serializer = Task._resolve(
+        deserializer, preprocess, postprocess, output = Task._resolve(
             deserializer,
             preprocess,
             postprocess,
-            serializer,
+            output,
             self._deserializer,
             self._preprocess,
             self._postprocess,
-            self._serializer,
+            self._output,
         )
 
         # Datapipeline
         if data_pipeline is not None:
-            deserializer, preprocess, postprocess, serializer = Task._resolve(
+            deserializer, preprocess, postprocess, output = Task._resolve(
                 deserializer,
                 preprocess,
                 postprocess,
-                serializer,
+                output,
                 getattr(data_pipeline, "_deserializer", None),
                 getattr(data_pipeline, "_preprocess_pipeline", None),
                 getattr(data_pipeline, "_postprocess_pipeline", None),
-                getattr(data_pipeline, "_serializer", None),
+                getattr(data_pipeline, "_output", None),
             )
 
         data_source = data_source or old_data_source
@@ -716,7 +742,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         if deserializer is None or type(deserializer) is Deserializer:
             deserializer = getattr(preprocess, "deserializer", deserializer)
 
-        data_pipeline = DataPipeline(data_source, preprocess, postprocess, deserializer, serializer)
+        data_pipeline = DataPipeline(data_source, preprocess, postprocess, deserializer, output)
         self._data_pipeline_state = self._data_pipeline_state or DataPipelineState()
         self.attach_data_pipeline_state(self._data_pipeline_state)
         self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)
@@ -740,15 +766,15 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
     @torch.jit.unused
     @data_pipeline.setter
     def data_pipeline(self, data_pipeline: Optional[DataPipeline]) -> None:
-        self._deserializer, self._preprocess, self._postprocess, self.serializer = Task._resolve(
+        self._deserializer, self._preprocess, self._postprocess, self.output = Task._resolve(
             self._deserializer,
             self._preprocess,
             self._postprocess,
-            self._serializer,
+            self._output,
             getattr(data_pipeline, "_deserializer", None),
             getattr(data_pipeline, "_preprocess_pipeline", None),
             getattr(data_pipeline, "_postprocess_pipeline", None),
-            getattr(data_pipeline, "_serializer", None),
+            getattr(data_pipeline, "_output", None),
         )
 
         # self._preprocess.state_dict()

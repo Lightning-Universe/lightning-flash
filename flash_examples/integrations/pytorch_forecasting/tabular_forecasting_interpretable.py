@@ -49,7 +49,11 @@ datamodule = TabularForecastingData.from_data_frame(
 )
 
 # 2. Build the task
-model = TabularForecaster(datamodule.parameters, backbone="n_beats", widths=[32, 512], backcast_loss_ratio=0.1)
+model = TabularForecaster(
+    datamodule.parameters,
+    backbone="n_beats",
+    backbone_kwargs={"widths": [32, 512], "backcast_loss_ratio": 0.1},
+)
 
 # 3. Create the trainer and train the model
 trainer = flash.Trainer(max_epochs=1, gpus=torch.cuda.device_count(), gradient_clip_val=0.01)
@@ -59,16 +63,12 @@ trainer.fit(model, datamodule=datamodule)
 predictions = model.predict(data)
 print(predictions)
 
-# Convert predictions
+# Plot with PyTorch Forecasting!
 predictions, inputs = convert_predictions(predictions)
 
-# Plot predictions
-for idx in range(10):  # plot 10 examples
-    model.pytorch_forecasting_model.plot_prediction(inputs, predictions, idx=idx, add_loss_to_title=True)
+fig, axs = plt.subplots(2, 3, sharex="col")
 
-# Plot interpretation
-for idx in range(10):  # plot 10 examples
-    model.pytorch_forecasting_model.plot_interpretation(inputs, predictions, idx=idx)
+for idx in range(3):
+    model.pytorch_forecasting_model.plot_interpretation(inputs, predictions, idx=idx, ax=[axs[0][idx], axs[1][idx]])
 
-# Show the plots!
 plt.show()

@@ -22,7 +22,7 @@ from flash.core.classification import ClassificationTask, Labels
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
-from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, SERIALIZER_TYPE
+from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 from flash.text.classification.backbones import TEXT_CLASSIFIER_BACKBONES
 from flash.text.ort_callback import ORTCallback
 
@@ -46,7 +46,7 @@ class TextClassifier(ClassificationTask):
             `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training, defaults to `1e-3`
         multi_label: Whether the targets are multi-label or not.
-        serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
+        output: The :class:`~flash.core.data.io.output.Output` to use when serializing prediction outputs.
         enable_ort: Enable Torch ONNX Runtime Optimization: https://onnxruntime.ai/docs/#onnx-runtime-for-training
     """
 
@@ -57,14 +57,14 @@ class TextClassifier(ClassificationTask):
     def __init__(
         self,
         num_classes: int,
-        backbone: str = "prajjwal1/bert-medium",
+        backbone: str = "prajjwal1/bert-tiny",
         loss_fn: LOSS_FN_TYPE = None,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-2,
         multi_label: bool = False,
-        serializer: SERIALIZER_TYPE = None,
+        output: OUTPUT_TYPE = None,
         enable_ort: bool = False,
     ):
         self.save_hyperparameters()
@@ -84,7 +84,7 @@ class TextClassifier(ClassificationTask):
             metrics=metrics,
             learning_rate=learning_rate,
             multi_label=multi_label,
-            serializer=serializer or Labels(multi_label=multi_label),
+            output=output or Labels(multi_label=multi_label),
         )
         self.enable_ort = enable_ort
         self.model = self.backbones.get(backbone)(num_labels=num_classes)

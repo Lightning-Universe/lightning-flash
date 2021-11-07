@@ -44,7 +44,7 @@ from flash.core.utilities.imports import (
 )
 from flash.core.utilities.stages import RunningStage
 from flash.image.data import ImageDeserializer, IMG_EXTENSIONS
-from flash.image.segmentation.serialization import SegmentationLabels
+from flash.image.segmentation.output import SegmentationLabels
 from flash.image.segmentation.transforms import default_transforms, predict_default_transforms, train_default_transforms
 
 SampleCollection = None

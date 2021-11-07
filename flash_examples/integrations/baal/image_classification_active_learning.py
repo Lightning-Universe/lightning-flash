@@ -34,7 +34,7 @@ head = torch.nn.Sequential(
     torch.nn.Dropout(p=0.1),
     torch.nn.Linear(512, datamodule.num_classes),
 )
-model = ImageClassifier(backbone="resnet18", head=head, num_classes=datamodule.num_classes, serializer=Probabilities())
+model = ImageClassifier(backbone="resnet18", head=head, num_classes=datamodule.num_classes, output=Probabilities())
 
 
 # 3.1 Create the trainer

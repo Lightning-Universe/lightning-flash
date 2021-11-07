@@ -47,7 +47,11 @@ datamodule = TabularForecastingData.from_data_frame(
 )
 
 # 2. Build the task
-model = TabularForecaster(datamodule.parameters, backbone="n_beats", widths=[32, 512], backcast_loss_ratio=0.1)
+model = TabularForecaster(
+    datamodule.parameters,
+    backbone="n_beats",
+    backbone_kwargs={"widths": [32, 512], "backcast_loss_ratio": 0.1},
+)
 
 # 3. Create the trainer and train the model
 trainer = flash.Trainer(max_epochs=1, gpus=torch.cuda.device_count(), gradient_clip_val=0.01)

@@ -156,9 +156,6 @@ def test_image_detector_data_from_coco(tmpdir):
     sample = data[0]
     assert sample[DefaultDataKeys.INPUT].shape == (128, 128, 3)
 
-    assert datamodule.val_dataloader() is None
-    assert datamodule.test_dataloader() is None
-
     datamodule = ObjectDetectionData.from_coco(
         train_folder=train_folder,
         train_ann_file=coco_ann_path,
@@ -192,9 +189,6 @@ def test_image_detector_data_from_fiftyone(tmpdir):
     data = next(iter(datamodule.train_dataloader()))
     sample = data[0]
     assert sample[DefaultDataKeys.INPUT].shape == (128, 128, 3)
-
-    assert datamodule.val_dataloader() is None
-    assert datamodule.test_dataloader() is None
 
     datamodule = ObjectDetectionData.from_fiftyone(
         train_dataset=train_dataset,
