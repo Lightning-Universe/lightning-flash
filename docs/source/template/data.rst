@@ -197,7 +197,7 @@ We can configure our custom visualization in the ``TemplateData`` using :meth:`~
     :pyobject: TemplateData.configure_data_fetcher
 
 OutputTransform
-^^^^^^^^^^^
+^^^^^^^^^^^^^^^
 
 :class:`~flash.core.data.io.output_transform.OutputTransform` contains any transforms that need to be applied *after* the model.
 You may want to use it for: converting tokens back into text, applying an inverse normalization to an output image, resizing a generated image back to the size of the input, etc.
