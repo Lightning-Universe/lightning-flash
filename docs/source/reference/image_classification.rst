@@ -103,7 +103,7 @@ Custom Transformations
 **********************
 
 Flash automatically applies some default image transformations and augmentations, but you may wish to customize these for your own use case.
-The base :class:`~flash.core.data.process.Preprocess` defines 7 hooks for different stages in the data loading pipeline.
+The base :class:`~flash.core.data.io.input_transform.InputTransform` defines 7 hooks for different stages in the data loading pipeline.
 To apply image augmentations you can directly import the ``default_transforms`` from ``flash.image.classification.transforms`` and then merge your custom image transformations with them using the :func:`~flash.core.data.transforms.merge_transforms` helper function.
 Here's an example where we load the default transforms and merge with custom `torchvision` transformations.
 We use the `post_tensor_transform` hook to apply the transformations after the image has been converted to a `torch.Tensor`.

@@ -23,7 +23,7 @@ def from_tu_dataset(
     val_split: float = 0.1,
     batch_size: int = 4,
     num_workers: int = 0,
-    **preprocess_kwargs,
+    **input_transform_kwargs,
 ) -> GraphClassificationData:
     """Downloads and loads the TU Dataset."""
     from flash.core.utilities.imports import _TORCH_GEOMETRIC_AVAILABLE
@@ -40,7 +40,7 @@ def from_tu_dataset(
         val_split=val_split,
         batch_size=batch_size,
         num_workers=num_workers,
-        **preprocess_kwargs,
+        **input_transform_kwargs,
     )
 
 

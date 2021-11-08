@@ -13,10 +13,10 @@
 # limitations under the License.
 from typing import Callable, Dict, Optional, Union
 
-from flash.text.seq2seq.core.data import Seq2SeqData, Seq2SeqOutputTransform, Seq2SeqPreprocess
+from flash.text.seq2seq.core.data import Seq2SeqData, Seq2SeqOutputTransform, Seq2SeqInputTransform
 
 
-class SummarizationPreprocess(Seq2SeqPreprocess):
+class SummarizationInputTransform(Seq2SeqInputTransform):
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -44,5 +44,5 @@ class SummarizationPreprocess(Seq2SeqPreprocess):
 
 class SummarizationData(Seq2SeqData):
 
-    preprocess_cls = SummarizationPreprocess
+    input_transform_cls = SummarizationInputTransform
     output_transform_cls = Seq2SeqOutputTransform

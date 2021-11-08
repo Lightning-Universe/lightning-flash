@@ -19,7 +19,7 @@ from torch import nn
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources
-from flash.core.data.process import Preprocess
+from flash.core.data.process import InputTransform
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 from flash.image.classification import ImageClassificationData
@@ -29,7 +29,7 @@ from flash.image.style_transfer.utils import raise_not_supported
 if _TORCHVISION_AVAILABLE:
     from torchvision import transforms as T
 
-__all__ = ["StyleTransferPreprocess", "StyleTransferData"]
+__all__ = ["StyleTransferInputTransform", "StyleTransferData"]
 
 
 def _apply_to_input(
@@ -46,7 +46,7 @@ def _apply_to_input(
     return wrapper
 
 
-class StyleTransferPreprocess(Preprocess):
+class StyleTransferInputTransform(InputTransform):
     def __init__(
         self,
         train_transform: Optional[Union[Dict[str, Callable]]] = None,
@@ -107,7 +107,7 @@ class StyleTransferPreprocess(Preprocess):
 
 
 class StyleTransferData(ImageClassificationData):
-    preprocess_cls = StyleTransferPreprocess
+    input_transform_cls = StyleTransferInputTransform
 
     @classmethod
     def from_folders(
@@ -116,7 +116,7 @@ class StyleTransferData(ImageClassificationData):
         predict_folder: Optional[Union[str, pathlib.Path]] = None,
         train_transform: Optional[Union[str, Dict]] = None,
         predict_transform: Optional[Union[str, Dict]] = None,
-        preprocess: Optional[Preprocess] = None,
+        input_transform: Optional[InputTransform] = None,
         **kwargs: Any,
     ) -> "DataModule":
 
@@ -126,7 +126,7 @@ class StyleTransferData(ImageClassificationData):
         if any(param in kwargs and kwargs[param] is not None for param in ("test_folder", "test_transform")):
             raise_not_supported("test")
 
-        preprocess = preprocess or cls.preprocess_cls(
+        input_transform = input_transform or cls.input_transform_cls(
             train_transform=train_transform,
             predict_transform=predict_transform,
         )
@@ -135,6 +135,6 @@ class StyleTransferData(ImageClassificationData):
             DefaultDataSources.FOLDERS,
             train_data=train_folder,
             predict_data=predict_folder,
-            preprocess=preprocess,
+            input_transform=input_transform,
             **kwargs,
         )

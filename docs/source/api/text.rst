@@ -21,7 +21,7 @@ ______________
     ~classification.data.TextClassificationData
 
     classification.data.TextClassificationOutputTransform
-    classification.data.TextClassificationPreprocess
+    classification.data.TextClassificationInputTransform
     classification.data.TextDeserializer
     classification.data.TextDataSource
     classification.data.TextCSVDataSource
@@ -48,8 +48,13 @@ __________________
     question_answering.data.QuestionAnsweringDictionaryDataSource
     question_answering.data.QuestionAnsweringFileDataSource
     question_answering.data.QuestionAnsweringJSONDataSource
+<<<<<<< HEAD
     question_answering.data.QuestionAnsweringOutputTransform
     question_answering.data.QuestionAnsweringPreprocess
+=======
+    question_answering.data.QuestionAnsweringPostprocess
+    question_answering.data.QuestionAnsweringInputTransform
+>>>>>>> rename
     question_answering.data.SQuADDataSource
 
 
@@ -64,7 +69,7 @@ _____________
     ~seq2seq.summarization.model.SummarizationTask
     ~seq2seq.summarization.data.SummarizationData
 
-    seq2seq.summarization.data.SummarizationPreprocess
+    seq2seq.summarization.data.SummarizationInputTransform
 
 Translation
 ___________
@@ -77,7 +82,7 @@ ___________
     ~seq2seq.translation.model.TranslationTask
     ~seq2seq.translation.data.TranslationData
 
-    seq2seq.translation.data.TranslationPreprocess
+    seq2seq.translation.data.TranslationInputTransform
 
 General Seq2Seq
 _______________
@@ -96,8 +101,13 @@ _______________
     seq2seq.core.data.Seq2SeqDataSource
     seq2seq.core.data.Seq2SeqFileDataSource
     seq2seq.core.data.Seq2SeqJSONDataSource
+<<<<<<< HEAD
     seq2seq.core.data.Seq2SeqOutputTransform
     seq2seq.core.data.Seq2SeqPreprocess
+=======
+    seq2seq.core.data.Seq2SeqPostprocess
+    seq2seq.core.data.Seq2SeqInputTransform
+>>>>>>> rename
     seq2seq.core.data.Seq2SeqSentencesDataSource
     seq2seq.core.metrics.BLEUScore
     seq2seq.core.metrics.RougeBatchAggregator

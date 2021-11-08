@@ -36,7 +36,8 @@ from flash.audio import SpeechRecognition
 from flash.core.adapter import Adapter
 from flash.core.classification import ClassificationTask
 from flash.core.data.io.output_transform import OutputTransform
-from flash.core.data.process import DefaultPreprocess
+from flash.core.data.io.input_transform import DefaultInputTransform
+
 from flash.core.utilities.imports import _TORCH_OPTIMIZER_AVAILABLE, _TRANSFORMERS_AVAILABLE, Image
 from flash.image import ImageClassificationData, ImageClassifier, SemanticSegmentation
 from flash.tabular import TabularClassifier
@@ -176,7 +177,7 @@ def test_nested_tasks(tmpdir, task):
 
 def test_classificationtask_task_predict():
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
-    task = ClassificationTask(model, preprocess=DefaultPreprocess())
+    task = ClassificationTask(model, input_transform=DefaultInputTransform())
     ds = DummyDataset()
     expected = list(range(10))
     # single item

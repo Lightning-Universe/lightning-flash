@@ -42,7 +42,7 @@ ___________
     ~forecasting.model.TabularForecaster
     ~forecasting.data.TabularForecastingData
 
-    forecasting.data.TabularForecastingPreprocess
+    forecasting.data.TabularForecastingInputTransform
     forecasting.data.TabularForecastingDataFrameDataSource
     forecasting.data.TimeSeriesDataSetParametersState
 
@@ -58,5 +58,5 @@ __________________
     ~data.TabularDataFrameDataSource
     ~data.TabularCSVDataSource
     ~data.TabularDeserializer
-    ~data.TabularPreprocess
     ~data.TabularOutputTransform
+    ~data.TabularInputTransform

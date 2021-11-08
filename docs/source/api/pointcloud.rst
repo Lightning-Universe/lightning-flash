@@ -20,7 +20,7 @@ ____________
     ~segmentation.model.PointCloudSegmentation
     ~segmentation.data.PointCloudSegmentationData
 
-    segmentation.data.PointCloudSegmentationPreprocess
+    segmentation.data.PointCloudSegmentationInputTransform
     segmentation.data.PointCloudSegmentationFoldersDataSource
     segmentation.data.PointCloudSegmentationDatasetDataSource
 
@@ -35,6 +35,6 @@ ________________
     ~detection.model.PointCloudObjectDetector
     ~detection.data.PointCloudObjectDetectorData
 
-    detection.data.PointCloudObjectDetectorPreprocess
+    detection.data.PointCloudObjectDetectorInputTransform
     detection.data.PointCloudObjectDetectorFoldersDataSource
     detection.data.PointCloudObjectDetectorDatasetDataSource

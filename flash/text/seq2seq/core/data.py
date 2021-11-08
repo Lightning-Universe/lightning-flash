@@ -22,6 +22,7 @@ import flash
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataSources
 from flash.core.data.io.output_transform import OutputTransform
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.process import Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
@@ -242,14 +243,14 @@ class Seq2SeqSentencesDataSource(Seq2SeqDataSource):
 @dataclass(unsafe_hash=True, frozen=True)
 class Seq2SeqBackboneState(ProcessState):
     """The ``Seq2SeqBackboneState`` stores the backbone in use by the
-    :class:`~flash.text.seq2seq.core.data.Seq2SeqPreprocess`
+    :class:`~flash.text.seq2seq.core.data.Seq2SeqInputTransform`
     """
 
     backbone: str
     backbone_kwargs: Dict[str, Any] = field(default_factory=dict)
 
 
-class Seq2SeqPreprocess(Preprocess):
+class Seq2SeqInputTransform(InputTransform):
     @requires("text")
     def __init__(
         self,
@@ -360,5 +361,5 @@ class Seq2SeqOutputTransform(OutputTransform):
 class Seq2SeqData(DataModule):
     """Data module for Seq2Seq tasks."""
 
-    preprocess_cls = Seq2SeqPreprocess
+    input_transform_cls = Seq2SeqInputTransform
     output_transform_cls = Seq2SeqOutputTransform

@@ -22,10 +22,10 @@ from flash.core.utilities.stages import RunningStage
 
 
 class BaseVisualization(BaseDataFetcher):
-    """This Base Class is used to create visualization tool on top of :class:`~flash.core.data.process.Preprocess`
+    """This Base Class is used to create visualization tool on top of :class:`~flash.core.data.io.input_transform.InputTransform`
     hooks.
 
-    Override any of the ``show_{preprocess_hook_name}`` to receive the associated data and visualize them.
+    Override any of the ``show_{_hook_name}`` to receive the associated data and visualize them.
 
     Example::
 
@@ -102,7 +102,7 @@ class BaseVisualization(BaseDataFetcher):
 
     .. note::
 
-        As the :class:`~flash.core.data.process.Preprocess` hooks are injected within
+        As the :class:`~flash.core.data.io.input_transform.InputTransform` hooks are injected within
         the threaded workers of the DataLoader,
         the data won't be accessible when using ``num_workers > 0``.
     """
@@ -123,25 +123,25 @@ class BaseVisualization(BaseDataFetcher):
                 getattr(self, hook_name)(batch[func_name], running_stage)
 
     def show_load_sample(self, samples: List[Any], running_stage: RunningStage):
-        """Override to visualize preprocess ``load_sample`` output data."""
+        """Override to visualize  ``load_sample`` output data."""
 
     def show_pre_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
-        """Override to visualize preprocess ``pre_tensor_transform`` output data."""
+        """Override to visualize  ``pre_tensor_transform`` output data."""
 
     def show_to_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
-        """Override to visualize preprocess ``to_tensor_transform`` output data."""
+        """Override to visualize  ``to_tensor_transform`` output data."""
 
     def show_post_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
-        """Override to visualize preprocess ``post_tensor_transform`` output data."""
+        """Override to visualize  ``post_tensor_transform`` output data."""
 
     def show_collate(self, batch: List[Any], running_stage: RunningStage) -> None:
-        """Override to visualize preprocess ``collate`` output data."""
+        """Override to visualize  ``collate`` output data."""
 
     def show_per_batch_transform(self, batch: List[Any], running_stage: RunningStage) -> None:
-        """Override to visualize preprocess ``per_batch_transform`` output data."""
+        """Override to visualize  ``per_batch_transform`` output data."""
 
     def show_per_sample_transform_on_device(self, samples: List[Any], running_stage: RunningStage) -> None:
-        """Override to visualize preprocess ``per_sample_transform_on_device`` output data."""
+        """Override to visualize  ``per_sample_transform_on_device`` output data."""
 
     def show_per_batch_transform_on_device(self, batch: List[Any], running_stage: RunningStage) -> None:
-        """Override to visualize preprocess ``per_batch_transform_on_device`` output data."""
+        """Override to visualize  ``per_batch_transform_on_device`` output data."""

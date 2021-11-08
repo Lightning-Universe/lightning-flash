@@ -8,7 +8,7 @@ The first step to contributing a task is to implement the classes we need to loa
 Inside `data.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash/template/classification/data.py>`_ you should implement:
 
 #. some :class:`~flash.core.data.data_source.DataSource` classes *(optional)*
-#. a :class:`~flash.core.data.process.Preprocess`
+#. a :class:`~flash.core.data.io.input_transform.InputTransform`
 #. a :class:`~flash.core.data.data_module.DataModule`
 #. a :class:`~flash.core.data.base_viz.BaseVisualization` *(optional)*
 #. a :class:`~flash.core.data.io.output_transform.OutputTransform` *(optional)*
@@ -74,7 +74,7 @@ DataSource vs Dataset
 ~~~~~~~~~~~~~~~~~~~~~
 
 A :class:`~flash.core.data.data_source.DataSource` is not the same as a :class:`torch.utils.data.Dataset`.
-When a ``from_*`` method is called on your :class:`~flash.core.data.data_module.DataModule`, it gets the :class:`~flash.core.data.data_source.DataSource` to use from the :class:`~flash.core.data.process.Preprocess`.
+When a ``from_*`` method is called on your :class:`~flash.core.data.data_module.DataModule`, it gets the :class:`~flash.core.data.data_source.DataSource` to use from the :class:`~flash.core.data.io.input_transform.InputTransform`.
 A :class:`~torch.utils.data.Dataset` is then created from the :class:`~flash.core.data.data_source.DataSource` for each stage (`train`, `val`, `test`, `predict`) using the provided metadata (e.g. folder name, numpy array etc.).
 
 The output of the :meth:`~flash.core.data.data_source.DataSource.load_data` can just be a :class:`torch.utils.data.Dataset` instance.
@@ -87,14 +87,14 @@ Here's how it looks (from `video/classification.data.py <https://github.com/PyTo
     :dedent: 4
     :pyobject: BaseVideoClassification.load_data
 
-Preprocess
+InputTransform
 ^^^^^^^^^^
 
-The :class:`~flash.core.data.process.Preprocess` object contains all the data transforms.
-Internally we inject the :class:`~flash.core.data.process.Preprocess` transforms at several points along the pipeline.
+The :class:`~flash.core.data.io.input_transform.InputTransform` object contains all the data transforms.
+Internally we inject the :class:`~flash.core.data.io.input_transform.InputTransform` transforms at several points along the pipeline.
 
-Defining the standard transforms (typically at least a ``to_tensor_transform`` should be defined) for your :class:`~flash.core.data.process.Preprocess` is as simple as implementing the ``default_transforms`` method.
-The :class:`~flash.core.data.process.Preprocess` must take ``train_transform``, ``val_transform``, ``test_transform``, and ``predict_transform`` arguments in the ``__init__``.
+Defining the standard transforms (typically at least a ``to_tensor_transform`` should be defined) for your :class:`~flash.core.data.io.input_transform.InputTransform` is as simple as implementing the ``default_transforms`` method.
+The :class:`~flash.core.data.io.input_transform.InputTransform` must take ``train_transform``, ``val_transform``, ``test_transform``, and ``predict_transform`` arguments in the ``__init__``.
 These arguments can be provided by the user (when creating the :class:`~flash.core.data.data_module.DataModule`) to override the default transforms.
 Any additional arguments are up to you.
 
@@ -108,20 +108,20 @@ You should also provide a ``default_data_source``.
 This is the name of the data source to use by default when predicting.
 It'd be cool if we could get predictions just from a numpy array, so we'll use :attr:`~flash.core.data.data_source.DefaultDataSources.NUMPY` as the default.
 
-Here's our ``TemplatePreprocess.__init__``:
+Here's our ``TemplateInputTransform.__init__``:
 
 .. literalinclude:: ../../../flash/template/classification/data.py
     :language: python
     :dedent: 4
-    :pyobject: TemplatePreprocess.__init__
+    :pyobject: TemplateInputTransform.__init__
 
-For our ``TemplatePreprocess``, we'll just configure a default ``to_tensor_transform``.
+For our ``TemplateInputTransform``, we'll just configure a default ``to_tensor_transform``.
 Let's first define the transform as a ``staticmethod``:
 
 .. literalinclude:: ../../../flash/template/classification/data.py
     :language: python
     :dedent: 4
-    :pyobject: TemplatePreprocess.input_to_tensor
+    :pyobject: TemplateInputTransform.input_to_tensor
 
 Our inputs samples will be dictionaries whose keys are in the :class:`~flash.core.data.data_source.DefaultDataKeys`.
 You can map each key to different transforms using :class:`~flash.core.data.transforms.ApplyToKeys`.
@@ -130,7 +130,7 @@ Here's our ``default_transforms`` method:
 .. literalinclude:: ../../../flash/template/classification/data.py
     :language: python
     :dedent: 4
-    :pyobject: TemplatePreprocess.default_transforms
+    :pyobject: TemplateInputTransform.default_transforms
 
 .. _contributing_data_module:
 
@@ -141,20 +141,20 @@ The :class:`~flash.core.data.data_module.DataModule` is responsible for creating
 When the user calls a ``from_*`` method (such as :meth:`~flash.core.data.data_module.DataModule.from_numpy`), the following steps take place:
 
 #. The :meth:`~flash.core.data.data_module.DataModule.from_data_source` method is called with the name of the :class:`~flash.core.data.data_source.DataSource` to use and the inputs to provide to :meth:`~flash.core.data.data_source.DataSource.load_data` for each stage.
-#. The :class:`~flash.core.data.process.Preprocess` is created from ``cls.preprocess_cls`` (if it wasn't provided by the user) with any provided transforms.
-#. The :class:`~flash.core.data.data_source.DataSource` of the provided name is retrieved from the :class:`~flash.core.data.process.Preprocess`.
+#. The :class:`~flash.core.data.io.input_transform.InputTransform` is created from ``cls.input_transform_cls`` (if it wasn't provided by the user) with any provided transforms.
+#. The :class:`~flash.core.data.data_source.DataSource` of the provided name is retrieved from the :class:`~flash.core.data.io.input_transform.InputTransform`.
 #. A :class:`~flash.core.data.auto_dataset.BaseAutoDataset` is created from the :class:`~flash.core.data.data_source.DataSource` for each stage.
 #. The :class:`~flash.core.data.data_module.DataModule` is instantiated with the data sets.
 
 |
 
-To create our ``TemplateData`` :class:`~flash.core.data.data_module.DataModule`, we first need to attach out preprocess class like this:
+To create our ``TemplateData`` :class:`~flash.core.data.data_module.DataModule`, we first need to attach our input transform class like this:
 
 .. code-block:: python
 
-    preprocess_cls = TemplatePreprocess
+    input_transform_cls = TemplateInputTransform
 
-Since we provided a :attr:`~flash.core.data.data_source.DefaultDataSources.NUMPY` :class:`~flash.core.data.data_source.DataSource` in the ``TemplatePreprocess``, :meth:`~flash.core.data.data_module.DataModule.from_numpy` will now work with our ``TemplateData``.
+Since we provided a :attr:`~flash.core.data.data_source.DefaultDataSources.NUMPY` :class:`~flash.core.data.data_source.DataSource` in the ``TemplateInputTransform``, :meth:`~flash.core.data.data_module.DataModule.from_numpy` will now work with our ``TemplateData``.
 
 If you've defined a fully custom :class:`~flash.core.data.data_source.DataSource` (like our ``TemplateSKLearnDataSource``), then you will need to write a ``from_*`` method for each.
 Here's the ``from_sklearn`` method for our ``TemplateData``:
@@ -207,9 +207,9 @@ As an example, here's the :class:`~text.classification.data.TextClassificationOu
     :language: python
     :pyobject: TextClassificationOutputTransform
 
-In your :class:`~flash.core.data.data_source.DataSource` or :class:`~flash.core.data.process.Preprocess`, you can add metadata to the batch using the :attr:`~flash.core.data.data_source.DefaultDataKeys.METADATA` key.
+In your :class:`~flash.core.data.data_source.DataSource` or :class:`~flash.core.data.io.input_transform.InputTransform`, you can add metadata to the batch using the :attr:`~flash.core.data.data_source.DefaultDataKeys.METADATA` key.
 Your :class:`~flash.core.data.io.output_transform.OutputTransform` can then use this metadata in its transforms.
-You should use this approach if your postprocessing depends on the state of the input before the :class:`~flash.core.data.process.Preprocess` transforms.
+You should use this approach if your postprocessing depends on the state of the input before the :class:`~flash.core.data.io.input_transform.InputTransform` transforms.
 For example, if you want to resize the predictions to the original size of the inputs you should add the original image size in the :attr:`~flash.core.data.data_source.DefaultDataKeys.METADATA`.
 Here's an example from the :class:`~flash.image.segmentation.SemanticSegmentationNumpyDataSource`:
 

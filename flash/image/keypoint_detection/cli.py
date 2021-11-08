@@ -29,7 +29,7 @@ def from_biwi(
     batch_size: int = 4,
     num_workers: int = 0,
     parser: Optional[Callable] = None,
-    **preprocess_kwargs,
+    **input_transform_kwargs,
 ) -> KeypointDetectionData:
     """Downloads and loads the BIWI data set from icedata."""
     data_dir = icedata.biwi.load_data()
@@ -43,7 +43,7 @@ def from_biwi(
         batch_size=batch_size,
         num_workers=num_workers,
         parser=parser,
-        **preprocess_kwargs,
+        **input_transform_kwargs,
     )
 
 

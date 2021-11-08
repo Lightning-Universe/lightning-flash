@@ -22,7 +22,7 @@ from flash.core.data.base_viz import BaseVisualization  # for viz
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources, LoaderDataFrameDataSource
-from flash.core.data.process import Deserializer, Preprocess
+from flash.core.data.process import Deserializer, InputTransform
 from flash.core.integrations.labelstudio.data_source import LabelStudioImageClassificationDataSource
 from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, Image, requires
 from flash.core.utilities.stages import RunningStage
@@ -54,7 +54,7 @@ class ImageClassificationDataFrameDataSource(LoaderDataFrameDataSource):
         return sample
 
 
-class ImageClassificationPreprocess(Preprocess):
+class ImageClassificationInputTransform(InputTransform):
     """Preprocssing of data of image classification.
 
     Args::
@@ -115,7 +115,7 @@ class ImageClassificationPreprocess(Preprocess):
 class ImageClassificationData(DataModule):
     """Data module for image classification tasks."""
 
-    preprocess_cls = ImageClassificationPreprocess
+    input_transform_cls = ImageClassificationInputTransform
 
     @classmethod
     def from_data_frame(
@@ -139,12 +139,12 @@ class ImageClassificationData(DataModule):
         test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
-        preprocess: Optional[Preprocess] = None,
+        input_transform: Optional[InputTransform] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
-        **preprocess_kwargs: Any,
+        **input_transform_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.image.classification.data.ImageClassificationData` object from the given pandas
         ``DataFrame`` objects.
@@ -173,24 +173,24 @@ class ImageClassificationData(DataModule):
             predict_resolver: The function to use to resolve filenames given the ``predict_images_root`` and IDs from
                 the ``input_field`` column.
             train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
                 :class:`~flash.core.data.data_module.DataModule`.
-            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+            input_transform: The :class:`~flash.core.data.data.InputTransform` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
                 will be constructed and used.
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             sampler: The ``sampler`` to use for the ``train_dataloader``.
-            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
-                if ``preprocess = None``.
+            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform. Will only be used
+                if ``input_transform = None``.
 
         Returns:
             The constructed data module.
@@ -206,12 +206,12 @@ class ImageClassificationData(DataModule):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_fetcher=data_fetcher,
-            preprocess=preprocess,
+            input_transform=input_transform,
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
             sampler=sampler,
-            **preprocess_kwargs,
+            **input_transform_kwargs,
         )
 
     @classmethod
@@ -236,17 +236,17 @@ class ImageClassificationData(DataModule):
         test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
-        preprocess: Optional[Preprocess] = None,
+        input_transform: Optional[InputTransform] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
-        **preprocess_kwargs: Any,
+        **input_transform_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.image.classification.data.ImageClassificationData` object from the given CSV
         files using the :class:`~flash.core.data.data_source.DataSource` of name
         :attr:`~flash.core.data.data_source.DefaultDataSources.CSV` from the passed or constructed
-        :class:`~flash.core.data.process.Preprocess`.
+        :class:`~flash.core.data.io.input_transform.InputTransform`.
 
         Args:
             input_field: The field (column) in the CSV file to use for the input.
@@ -272,24 +272,24 @@ class ImageClassificationData(DataModule):
             predict_resolver: The function to use to resolve filenames given the ``predict_images_root`` and IDs from
                 the ``input_field`` column.
             train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
                 :class:`~flash.core.data.data_module.DataModule`.
-            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+            input_transform: The :class:`~flash.core.data.data.InputTransform` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
                 will be constructed and used.
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             sampler: The ``sampler`` to use for the ``train_dataloader``.
-            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
-                if ``preprocess = None``.
+            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform. Will only be used
+                if ``input_transform = None``.
 
         Returns:
             The constructed data module.
@@ -305,12 +305,12 @@ class ImageClassificationData(DataModule):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_fetcher=data_fetcher,
-            preprocess=preprocess,
+            input_transform=input_transform,
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
             sampler=sampler,
-            **preprocess_kwargs,
+            **input_transform_kwargs,
         )
 
     def set_block_viz_window(self, value: bool) -> None:

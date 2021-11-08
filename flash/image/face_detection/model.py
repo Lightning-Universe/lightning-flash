@@ -27,10 +27,10 @@ from flash.core.utilities.types import (
     METRICS_TYPE,
     OPTIMIZER_TYPE,
     OUTPUT_TYPE,
-    PREPROCESS_TYPE,
+    INPUT_TRANSFORM_TYPE,
 )
 from flash.image.face_detection.backbones import FACE_DETECTION_BACKBONES
-from flash.image.face_detection.data import FaceDetectionPreprocess
+from flash.image.face_detection.data import FaceDetectionInputTransform
 
 if _FASTFACE_AVAILABLE:
     import fastface as ff
@@ -81,7 +81,7 @@ class FaceDetector(Task):
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         learning_rate: float = 1e-4,
         output: OUTPUT_TYPE = None,
-        preprocess: PREPROCESS_TYPE = None,
+        input_transform: INPUT_TRANSFORM_TYPE= None,
         **kwargs: Any,
     ):
         self.save_hyperparameters()
@@ -99,7 +99,7 @@ class FaceDetector(Task):
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
             output=output or DetectionLabels(),
-            preprocess=preprocess or FaceDetectionPreprocess(),
+            input_transform=input_transform or FaceDetectionInputTransform(),
         )
 
     @staticmethod
@@ -112,7 +112,7 @@ class FaceDetector(Task):
 
         # following steps are required since `get_model` needs to return `torch.nn.Module`
         # moving some required parameters from `fastface.FaceDetector` to `torch.nn.Module`
-        # set preprocess params
+        # set input_transform params
         model.register_buffer("normalizer", getattr(pl_model, "normalizer"))
         model.register_buffer("mean", getattr(pl_model, "mean"))
         model.register_buffer("std", getattr(pl_model, "std"))

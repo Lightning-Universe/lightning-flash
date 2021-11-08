@@ -10,7 +10,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from flash import Trainer
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE
-from flash.image import SemanticSegmentation, SemanticSegmentationData, SemanticSegmentationPreprocess
+from flash.image import SemanticSegmentation, SemanticSegmentationData, SemanticSegmentationInputTransform
 from tests.helpers.utils import _IMAGE_TESTING
 
 if _PIL_AVAILABLE:
@@ -47,11 +47,11 @@ def create_random_data(image_files: List[str], label_files: List[str], size: Tup
         _rand_labels(size, num_classes).save(label_file)
 
 
-class TestSemanticSegmentationPreprocess:
+class TestSemanticSegmentationInputTransform:
     @staticmethod
     @pytest.mark.xfail(reaspn="parameters are marked as optional but it returns Misconficg error.")
     def test_smoke():
-        prep = SemanticSegmentationPreprocess(num_classes=1)
+        prep = SemanticSegmentationInputTransform(num_classes=1)
         assert prep is not None
 
 

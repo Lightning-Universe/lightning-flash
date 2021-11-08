@@ -18,11 +18,11 @@ import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_pipeline import DefaultPreprocess
+from flash.core.data.io.input_transform import DefaultInputTransform
 from flash.core.data.data_source import DefaultDataSources
 
 
-class CustomPreprocess(DefaultPreprocess):
+class CustomInputTransform(DefaultInputTransform):
     def __init__(self):
         super().__init__(
             data_sources={
@@ -34,25 +34,25 @@ class CustomPreprocess(DefaultPreprocess):
 
 
 def test_data_source_of_name():
-    preprocess = CustomPreprocess()
+    input_transform = CustomInputTransform()
 
-    assert preprocess.data_source_of_name("test")() == "test"
-    assert preprocess.data_source_of_name(DefaultDataSources.TENSORS)() == "tensors"
-    assert preprocess.data_source_of_name("tensors")() == "tensors"
-    assert preprocess.data_source_of_name("default")() == "test"
+    assert input_transform.data_source_of_name("test")() == "test"
+    assert input_transform.data_source_of_name(DefaultDataSources.TENSORS)() == "tensors"
+    assert input_transform.data_source_of_name("tensors")() == "tensors"
+    assert input_transform.data_source_of_name("default")() == "test"
 
     with pytest.raises(MisconfigurationException, match="available data sources are: test, tensor"):
-        preprocess.data_source_of_name("not available")
+        input_transform.data_source_of_name("not available")
 
 
 def test_available_data_sources():
-    preprocess = CustomPreprocess()
+    input_transform = CustomInputTransform()
 
-    assert DefaultDataSources.TENSORS in preprocess.available_data_sources()
-    assert "test" in preprocess.available_data_sources()
-    assert len(preprocess.available_data_sources()) == 3
+    assert DefaultDataSources.TENSORS in input_transform.available_data_sources()
+    assert "test" in input_transform.available_data_sources()
+    assert len(input_transform.available_data_sources()) == 3
 
-    data_module = DataModule(preprocess=preprocess)
+    data_module = DataModule(input_transform=input_transform)
 
     assert DefaultDataSources.TENSORS in data_module.available_data_sources()
     assert "test" in data_module.available_data_sources()
@@ -61,5 +61,5 @@ def test_available_data_sources():
 
 def test_check_transforms():
     transform = torch.nn.Identity()
-    DefaultPreprocess(train_transform=transform)
-    DefaultPreprocess(train_transform=[transform])
+    DefaultInputTransform(train_transform=transform)
+    DefaultInputTransform(train_transform=[transform])

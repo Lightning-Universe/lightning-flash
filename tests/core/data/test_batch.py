@@ -18,13 +18,14 @@ import torch
 from torch.testing import assert_allclose
 from torch.utils.data._utils.collate import default_collate
 
-from flash.core.data.batch import _Preprocessor, _Sequential, default_uncollate
+from flash.core.data.batch import default_uncollate
+from flash.core.data.io.input_transform import _InputTransformPreprocessor, _InputTransformSequential
 from flash.core.utilities.stages import RunningStage
 
 
 def test_sequential_str():
-    sequential = _Sequential(
-        Mock(name="preprocess"),
+    sequential = _InputTransformSequential(
+        Mock(name="input_transform"),
         torch.softmax,
         torch.as_tensor,
         torch.relu,
@@ -32,7 +33,7 @@ def test_sequential_str():
         True,
     )
     assert str(sequential) == (
-        "_Sequential:\n"
+        "_InputTransformSequential:\n"
         "\t(pre_tensor_transform): FuncModule(softmax)\n"
         "\t(to_tensor_transform): FuncModule(as_tensor)\n"
         "\t(post_tensor_transform): FuncModule(relu)\n"
@@ -42,8 +43,8 @@ def test_sequential_str():
 
 
 def test_preprocessor_str():
-    preprocessor = _Preprocessor(
-        Mock(name="preprocess"),
+    input_transform_preprocessor = _InputTransformPreprocessor(
+        Mock(name="input_transform"),
         default_collate,
         torch.relu,
         torch.softmax,
@@ -51,8 +52,8 @@ def test_preprocessor_str():
         False,
         True,
     )
-    assert str(preprocessor) == (
-        "_Preprocessor:\n"
+    assert str(input_transform_preprocessor) == (
+        "_InputTransformPreprocessor:\n"
         "\t(per_sample_transform): FuncModule(relu)\n"
         "\t(collate_fn): FuncModule(default_collate)\n"
         "\t(per_batch_transform): FuncModule(softmax)\n"
