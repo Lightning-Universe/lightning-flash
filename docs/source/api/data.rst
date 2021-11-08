@@ -16,7 +16,6 @@ _________________________
     :template: classtemplate.rst
 
     ~flash.core.data.io.output.Output
-    ~flash.core.data.io.output.OutputMapping
 
 flash.core.data.auto_dataset
 ____________________________

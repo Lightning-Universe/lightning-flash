@@ -39,7 +39,7 @@ import flash
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
 from flash.core.data.data_source import DataSource
-from flash.core.data.io.output import Output, OutputMapping
+from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.process import Deserializer, DeserializerMapping, Preprocess
 from flash.core.data.properties import ProcessState
@@ -321,8 +321,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         preprocess: :class:`~flash.core.data.process.Preprocess` to use as the default for this task.
         output_transform: :class:`~flash.core.data.io.output_transform.OutputTransform` to use as the default for this
             task.
-        output: Either a single :class:`~flash.core.data.io.output.Output` or a mapping of these to
-            serialize the output e.g. convert the model output into the desired output format when predicting.
+        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
     """
 
     optimizers: FlashRegistry = _OPTIMIZERS_REGISTRY
@@ -634,9 +633,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
     @torch.jit.unused
     @output.setter
-    def output(self, output: Union[Output, Mapping[str, Output]]):
-        if isinstance(output, Mapping):
-            output = OutputMapping(output)
+    def output(self, output: Output):
         self._output = output
 
     @torch.jit.unused
@@ -666,7 +663,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         "It will be removed in v%(remove_in)s.",
         stream=functools.partial(warn, category=FutureWarning),
     )
-    def serializer(self, serializer: Union[Output, Mapping[str, Output]]):
+    def serializer(self, serializer: Output):
         self.output = serializer
 
     def build_data_pipeline(
