@@ -575,17 +575,18 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             return [strategy]
 
         if isinstance(strategy, str):
-            if strategy not in _DEFAULTS_FINETUNE_STRATEGIES[:3]:
+            if strategy not in self.available_finetuning_strategies():
                 raise MisconfigurationException(
-                    f"Please provide a valid strategy from {_DEFAULTS_FINETUNE_STRATEGIES}."
+                    f"Please provide a valid strategy from {_DEFAULTS_FINETUNE_STRATEGIES[:3]}."
                 )
             finetuning_strategy_fn: Callable = self.finetuning_strategies.get(key=strategy)
             finetuning_strategy_metadata = {"strategy_metadata": None, "train_bn": True}
 
         elif isinstance(strategy, Tuple):
-            if not isinstance(strategy[0], str) or strategy[0] not in _DEFAULTS_FINETUNE_STRATEGIES[3:]:
+            if not isinstance(strategy[0], str) or strategy[0] not in self.available_finetuning_strategies():
                 raise MisconfigurationException(
-                    "First input of `strategy` should be a string within `freeze_unfreeze`, `unfreeze_milestones`"
+                    f"First input of `strategy` in a tuple configuration should be a string within"
+                    f" {_DEFAULTS_FINETUNE_STRATEGIES[3:]}"
                 )
             if strategy[0] == "freeze_unfreeze" and not isinstance(strategy[1], int):
                 raise MisconfigurationException(
@@ -608,8 +609,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         else:
             raise MisconfigurationException(
                 "strategy should be a ``pytorch_lightning.callbacks.BaseFinetuning``"
-                f"callback or a str within {list(_DEFAULTS_FINETUNE_STRATEGIES[:2])}"
-                f"or a tuple configuration with {list(_DEFAULTS_FINETUNE_STRATEGIES[2:])}"
+                f"callback or a str within {list(_DEFAULTS_FINETUNE_STRATEGIES[:3])}"
+                f"or a tuple configuration with {list(_DEFAULTS_FINETUNE_STRATEGIES[3:])}"
             )
 
         return [finetuning_strategy_fn(**finetuning_strategy_metadata)]
