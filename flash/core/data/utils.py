@@ -23,7 +23,13 @@ from pytorch_lightning.utilities.apply_func import apply_to_collection
 from torch import Tensor
 from tqdm.auto import tqdm as tq
 
+from flash.core.utilities.imports import _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.core.utilities.stages import RunningStage
+
+if _PIL_AVAILABLE:
+    from PIL.Image import Image
+if _TORCHVISION_AVAILABLE:
+    from torchvision.datasets.folder import default_loader
 
 _STAGES_PREFIX = {
     RunningStage.TRAINING: "train",
@@ -207,3 +213,10 @@ def convert_to_modules(transforms: Optional[Dict[str, Callable]]):
         transforms, Iterable, torch.nn.ModuleList, wrong_dtype=(torch.nn.ModuleList, torch.nn.ModuleDict)
     )
     return transforms
+
+
+def image_default_loader(file_path: str, drop_alpha: bool = True) -> Image:
+    img = default_loader(file_path)
+    if img.mode == "RGBA" and drop_alpha:
+        img = img.convert("RGB")
+    return img
