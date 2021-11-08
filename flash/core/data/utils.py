@@ -30,7 +30,7 @@ if _PIL_AVAILABLE:
     from PIL.Image import Image
 else:
     Image = object
-    
+
 if _TORCHVISION_AVAILABLE:
     from torchvision.datasets.folder import default_loader
 
