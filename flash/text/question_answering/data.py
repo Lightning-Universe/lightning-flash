@@ -30,7 +30,8 @@ import flash
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
-from flash.core.data.process import Postprocess, Preprocess
+from flash.core.data.io.output_transform import OutputTransform
+from flash.core.data.process import Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 from flash.core.utilities.stages import RunningStage
@@ -589,7 +590,7 @@ class QuestionAnsweringPreprocess(Preprocess):
         return default_data_collator(samples)
 
 
-class QuestionAnsweringPostprocess(Postprocess):
+class QuestionAnsweringOutputTransform(OutputTransform):
     @requires("text")
     def __init__(self):
         super().__init__()
@@ -638,7 +639,7 @@ class QuestionAnsweringData(DataModule):
     """Data module for QuestionAnswering task."""
 
     preprocess_cls = QuestionAnsweringPreprocess
-    postprocess_cls = QuestionAnsweringPostprocess
+    output_transform_cls = QuestionAnsweringOutputTransform
 
     @classmethod
     def from_squad_v2(

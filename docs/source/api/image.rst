@@ -101,7 +101,7 @@ ____________
     segmentation.data.SemanticSegmentationPathsDataSource
     segmentation.data.SemanticSegmentationFiftyOneDataSource
     segmentation.data.SemanticSegmentationDeserializer
-    segmentation.model.SemanticSegmentationPostprocess
+    segmentation.model.SemanticSegmentationOutputTransform
     segmentation.output.FiftyOneSegmentationLabels
     segmentation.output.SegmentationLabels
 

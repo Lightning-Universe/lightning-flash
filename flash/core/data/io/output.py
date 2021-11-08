@@ -28,7 +28,7 @@ class Output(Properties):
         """Convert the given sample into the desired output format.
 
         Args:
-            sample: The output from the :class:`.Postprocess`.
+            sample: The output from the :class:`.OutputTransform`.
 
         Returns:
             The converted output.

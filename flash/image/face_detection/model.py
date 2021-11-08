@@ -115,11 +115,11 @@ class FaceDetector(Task):
         model.register_buffer("mean", getattr(pl_model, "mean"))
         model.register_buffer("std", getattr(pl_model, "std"))
 
-        # copy pasting `_postprocess` function from `fastface.FaceDetector` to `torch.nn.Module`
-        # set postprocess function
+        # copy pasting `_output_transform` function from `fastface.FaceDetector` to `torch.nn.Module`
+        # set output_transform function
         # this is called from FaceDetector lightning module form fastface itself
         # https://github.com/borhanMorphy/fastface/blob/master/fastface/module.py#L200
-        setattr(model, "_postprocess", getattr(pl_model, "_postprocess"))
+        setattr(model, "_output_transform", getattr(pl_model, "_output_transform"))
 
         return model
 

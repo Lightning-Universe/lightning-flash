@@ -53,7 +53,7 @@ _CALLBACK_FUNCS: Set[str] = {
     *_PREPROCESS_FUNCS,
 }
 
-_POSTPROCESS_FUNCS: Set[str] = {
+_OUTPUT_TRANSFORM_FUNCS: Set[str] = {
     "per_batch_transform",
     "uncollate",
     "per_sample_transform",

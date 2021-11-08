@@ -157,9 +157,9 @@ def test_from_files(tmpdir):
 
 
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_postprocess_tokenizer(tmpdir):
-    """Tests that the tokenizer property in ``QuestionAnsweringPostprocess`` resolves correctly when a different
-    backbone is used."""
+def test_output_transform_tokenizer(tmpdir):
+    """Tests that the tokenizer property in ``QuestionAnsweringOutputTransform`` resolves correctly when a
+    different backbone is used."""
     backbone = "allenai/longformer-base-4096"
     json_path = json_data(tmpdir, TEST_JSON_DATA)
     dm = QuestionAnsweringData.from_json(
@@ -172,8 +172,8 @@ def test_postprocess_tokenizer(tmpdir):
     )
     pipeline = dm.data_pipeline
     pipeline.initialize()
-    assert pipeline._postprocess_pipeline.backbone == backbone
-    assert pipeline._postprocess_pipeline.tokenizer is not None
+    assert pipeline._output_transform.backbone == backbone
+    assert pipeline._output_transform.tokenizer is not None
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
