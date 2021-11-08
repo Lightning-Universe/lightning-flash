@@ -41,7 +41,6 @@ class PointCloudObjectDetector(Task):
     pointcloud data.
 
     Args:
-        num_features: The number of features (elements) in the input data.
         num_classes: The number of classes (outputs) for this :class:`~flash.core.model.Task`.
         backbone: The backbone name (or a tuple of ``nn.Module``, output size) to use.
         backbone_kwargs: Any additional kwargs to pass to the backbone constructor.
@@ -52,7 +51,6 @@ class PointCloudObjectDetector(Task):
         metrics: Any metrics to use with this :class:`~flash.core.model.Task`. If ``None``, a default will be selected
             by the :class:`~flash.core.classification.ClassificationTask` depending on the ``multi_label`` argument.
         learning_rate: The learning rate for the optimizer.
-        multi_label: If ``True``, this will be treated as a multi-label classification problem.
         output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
         lambda_loss_cls: The value to scale the loss classification.
         lambda_loss_bbox: The value to scale the bounding boxes loss.
@@ -67,7 +65,6 @@ class PointCloudObjectDetector(Task):
         num_classes: int,
         backbone: Union[str, Tuple[nn.Module, int]] = "pointpillars_kitti",
         backbone_kwargs: Optional[Dict] = None,
-        head: Optional[nn.Module] = None,
         loss_fn: LOSS_FN_TYPE = None,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,

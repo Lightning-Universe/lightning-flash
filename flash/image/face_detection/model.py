@@ -45,17 +45,19 @@ class DetectionLabels(Output):
 class FaceDetector(Task):
     """The ``FaceDetector`` is a :class:`~flash.Task` for detecting faces in images.
 
-    For more details, see
-    :ref:`face_detection`.
+    For more details, see :ref:`face_detection`.
+
     Args:
         model: a string of :attr`_models`. Defaults to 'lffd_slim'.
         pretrained: Whether the model from fastface should be loaded with it's pretrained weights.
-        loss: the function(s) to update the model with. Has no effect for fastface models.
+        loss_fn: the function(s) to update the model with. Has no effect for fastface models.
         metrics: The provided metrics. All metrics here will be logged to progress bar and the respective logger.
             Changing this argument currently has no effect.
         optimizer: Optimizer to use for training.
         lr_scheduler: The LR scheduler to use during training.
-        learning_rate: The learning rate to use for training
+        learning_rate: The learning rate to use for training.
+        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
+        kwargs: additional kwargs nessesary for initializing face detector backbone
     """
 
     required_extras: str = "image"
