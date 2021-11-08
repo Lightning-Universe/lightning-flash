@@ -30,7 +30,8 @@ from flash.core.data.data_source import (
     DefaultDataSources,
     PathsDataSource,
 )
-from flash.core.data.process import Deserializer, Postprocess, Preprocess
+from flash.core.data.io.output_transform import OutputTransform
+from flash.core.data.process import Deserializer, Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _AUDIO_AVAILABLE, requires
 
@@ -190,13 +191,13 @@ class SpeechRecognitionPreprocess(Preprocess):
 @dataclass(unsafe_hash=True, frozen=True)
 class SpeechRecognitionBackboneState(ProcessState):
     """The ``SpeechRecognitionBackboneState`` stores the backbone in use by the
-    :class:`~flash.audio.speech_recognition.data.SpeechRecognitionPostprocess`
+    :class:`~flash.audio.speech_recognition.data.SpeechRecognitionOutputTransform`
     """
 
     backbone: str
 
 
-class SpeechRecognitionPostprocess(Postprocess):
+class SpeechRecognitionOutputTransform(OutputTransform):
     @requires("audio")
     def __init__(self):
         super().__init__()
@@ -237,4 +238,4 @@ class SpeechRecognitionData(DataModule):
     """Data Module for text classification tasks."""
 
     preprocess_cls = SpeechRecognitionPreprocess
-    postprocess_cls = SpeechRecognitionPostprocess
+    output_transform_cls = SpeechRecognitionOutputTransform

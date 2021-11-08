@@ -26,9 +26,10 @@ import flash
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_pipeline import DefaultPreprocess, Postprocess
+from flash.core.data.data_pipeline import DefaultPreprocess
 from flash.core.data.datasets import BaseDataset
 from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
+from flash.core.data.io.output_transform import OutputTransform
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.stages import RunningStage
 
@@ -56,7 +57,7 @@ class DataModule(DataModule):
     """
 
     preprocess_cls = DefaultPreprocess
-    postprocess_cls = Postprocess
+    output_transform_cls = OutputTransform
     flash_datasets_registry = FlashRegistry("datasets")
 
     def __init__(
@@ -80,7 +81,7 @@ class DataModule(DataModule):
         if flash._IS_TESTING and torch.cuda.is_available():
             batch_size = 16
 
-        self._postprocess: Optional[Postprocess] = None
+        self._output_transform: Optional[OutputTransform] = None
         self._viz: Optional[BaseVisualization] = None
         self._data_fetcher: Optional[BaseDataFetcher] = data_fetcher or self.configure_data_fetcher()
 

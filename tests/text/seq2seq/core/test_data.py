@@ -22,7 +22,7 @@ from flash.text.seq2seq.core.data import (
     Seq2SeqDataSource,
     Seq2SeqFileDataSource,
     Seq2SeqJSONDataSource,
-    Seq2SeqPostprocess,
+    Seq2SeqOutputTransform,
     Seq2SeqSentencesDataSource,
 )
 from tests.helpers.utils import _TEXT_TESTING
@@ -41,7 +41,7 @@ if _TEXT_AVAILABLE:
         (Seq2SeqCSVDataSource, {"backbone": "sshleifer/tiny-mbart"}),
         (Seq2SeqJSONDataSource, {"backbone": "sshleifer/tiny-mbart"}),
         (Seq2SeqSentencesDataSource, {"backbone": "sshleifer/tiny-mbart"}),
-        (Seq2SeqPostprocess, {}),
+        (Seq2SeqOutputTransform, {}),
     ],
 )
 def test_tokenizer_state(cls, kwargs):

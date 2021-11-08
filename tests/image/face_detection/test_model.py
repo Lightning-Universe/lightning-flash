@@ -46,7 +46,7 @@ def test_fastface_forward():
     model = FaceDetector(model="lffd_slim")
     mock_batch = torch.randn(2, 3, 256, 256)
 
-    # test model forward (tests: _prepare_batch, logits_to_preds, _postprocess from ff)
+    # test model forward (tests: _prepare_batch, logits_to_preds, _output_transform from ff)
     model(mock_batch)
 
 

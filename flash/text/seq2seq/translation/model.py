@@ -83,7 +83,7 @@ class TranslationTask(Seq2SeqTask):
         tgt_lns = self.tokenize_labels(batch["labels"])
         # wrap targets in list as score expects a list of potential references
         tgt_lns = [[reference] for reference in tgt_lns]
-        result = self.bleu(self._postprocess.uncollate(generated_tokens), tgt_lns)
+        result = self.bleu(self._output_transform.uncollate(generated_tokens), tgt_lns)
         self.log(f"{prefix}_bleu_score", result, on_step=False, on_epoch=True, prog_bar=True)
 
     @staticmethod
