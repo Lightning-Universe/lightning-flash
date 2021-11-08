@@ -25,12 +25,12 @@ from torch.utils.data._utils.collate import default_collate
 
 from flash import Trainer
 from flash.core.data.auto_dataset import IterableAutoDataset
-from flash.core.data.batch import _Postprocessor, _Preprocessor
+from flash.core.data.batch import _Preprocessor
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import _StageOrchestrator, DataPipeline, DataPipelineState
 from flash.core.data.data_source import DataSource
 from flash.core.data.io.output import Output
-from flash.core.data.io.output_transform import OutputTransform
+from flash.core.data.io.output_transform import _OutputTransformProcessor, OutputTransform
 from flash.core.data.process import DefaultPreprocess, Deserializer, Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.data.states import PerBatchTransformOnDevice, ToTensorTransform
@@ -462,7 +462,7 @@ def test_attaching_datapipeline_to_model(tmpdir):
             assert isinstance(self.predict_step, _StageOrchestrator)
             self._assert_stage_orchestrator_state(self.transfer_batch_to_device._stage_mapping, current_running_stage)
             self._assert_stage_orchestrator_state(
-                self.predict_step._stage_mapping, current_running_stage, cls=_Postprocessor
+                self.predict_step._stage_mapping, current_running_stage, cls=_OutputTransformProcessor
             )
 
         def on_fit_end(self) -> None:
@@ -495,15 +495,19 @@ def test_stage_orchestrator_state_attach_detach(tmpdir):
     _original_predict_step = model.predict_step
 
     class CustomDataPipeline(DataPipeline):
-        def _attach_output_transform_to_model(self, model: "Task", _postprocesssor: _Postprocessor) -> "Task":
-            model.predict_step = self._model_predict_step_wrapper(model.predict_step, _postprocesssor, model)
+        def _attach_output_transform_to_model(
+            self, model: "Task", _output_transform_processor: _OutputTransformProcessor
+        ) -> "Task":
+            model.predict_step = self._model_predict_step_wrapper(
+                model.predict_step, _output_transform_processor, model
+            )
             return model
 
     data_pipeline = CustomDataPipeline(preprocess=preprocess)
-    _postprocesssor = data_pipeline._create_uncollate_postprocessors(RunningStage.PREDICTING)
-    data_pipeline._attach_output_transform_to_model(model, _postprocesssor)
+    _output_transform_processor = data_pipeline._create_output_transform_processor(RunningStage.PREDICTING)
+    data_pipeline._attach_output_transform_to_model(model, _output_transform_processor)
     assert model.predict_step._original == _original_predict_step
-    assert model.predict_step._stage_mapping[RunningStage.PREDICTING] == _postprocesssor
+    assert model.predict_step._stage_mapping[RunningStage.PREDICTING] == _output_transform_processor
     data_pipeline._detach_output_transform_from_model(model)
     assert model.predict_step == _original_predict_step
 

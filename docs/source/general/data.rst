@@ -402,7 +402,7 @@ Here is the pseudo-code:
 
 Example::
 
-    # This will be wrapped into a :class:`~flash.core.data.batch._Postprocessor`
+    # This will be wrapped into a :class:`~flash.core.data.batch._OutputTransformProcessor`
     def uncollate_fn(batch: Any) -> Any:
 
         batch = per_batch_transform(batch)

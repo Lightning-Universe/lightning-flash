@@ -24,10 +24,10 @@ from torch.utils.data import DataLoader, IterableDataset
 
 import flash
 from flash.core.data.auto_dataset import IterableAutoDataset
-from flash.core.data.batch import _DeserializeProcessor, _Postprocessor, _Preprocessor, _Sequential
+from flash.core.data.batch import _DeserializeProcessor, _Preprocessor, _Sequential
 from flash.core.data.data_source import DataSource
 from flash.core.data.io.output import _OutputProcessor, Output
-from flash.core.data.io.output_transform import OutputTransform
+from flash.core.data.io.output_transform import _OutputTransformProcessor, OutputTransform
 from flash.core.data.process import DefaultPreprocess, Deserializer, Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.data.utils import _OUTPUT_TRANSFORM_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
@@ -79,21 +79,6 @@ class DataPipeline:
     DataPipeline holds the engineering logic to connect
     :class:`~flash.core.data.process.Preprocess` and/or :class:`~flash.core.data.io.output_transform.OutputTransform`
     objects to the ``DataModule``, Flash ``Task`` and ``Trainer``.
-
-    Example::
-
-        class CustomPreprocess(Preprocess):
-            pass
-
-        class CustomPostprocess(OutputTransform):
-            pass
-
-        custom_data_pipeline = DataPipeline(CustomPreprocess(), CustomPostprocess())
-
-        # And it can attached to both the datamodule and model.
-
-        datamodule.data_pipeline = custom_data_pipeline
-        model.data_pipeline = custom_data_pipeline
     """
 
     PREPROCESS_FUNCS: Set[str] = _PREPROCESS_FUNCS
@@ -180,8 +165,8 @@ class DataPipeline:
     def device_preprocessor(self, running_stage: RunningStage) -> _Preprocessor:
         return self._create_collate_preprocessors(running_stage)[2]
 
-    def postprocessor(self, running_stage: RunningStage, is_serving=False) -> _Postprocessor:
-        return self._create_uncollate_postprocessors(running_stage, is_serving=is_serving)
+    def output_transform_processor(self, running_stage: RunningStage, is_serving=False) -> _OutputTransformProcessor:
+        return self._create_output_transform_processor(running_stage, is_serving=is_serving)
 
     def output_processor(self) -> _OutputProcessor:
         return _OutputProcessor(self._output)
@@ -316,13 +301,15 @@ class DataPipeline:
         return func
 
     @staticmethod
-    def _model_predict_step_wrapper(func: Callable, postprocessor: _Postprocessor, model: "Task") -> Callable:
+    def _model_predict_step_wrapper(
+        func: Callable, output_transform_processor: _OutputTransformProcessor, model: "Task"
+    ) -> Callable:
 
         if not isinstance(func, _StageOrchestrator):
             _original = func
             func = _StageOrchestrator(func, model)
             func._original = _original
-        func.register_additional_stage(RunningStage.PREDICTING, postprocessor)
+        func.register_additional_stage(RunningStage.PREDICTING, output_transform_processor)
 
         return func
 
@@ -449,11 +436,11 @@ class DataPipeline:
                 model.transfer_batch_to_device, device_collate_fn, model, stage
             )
 
-    def _create_uncollate_postprocessors(
+    def _create_output_transform_processor(
         self,
         stage: RunningStage,
         is_serving: bool = False,
-    ) -> _Postprocessor:
+    ) -> _OutputTransformProcessor:
         save_per_sample = None
         save_fn = None
 
@@ -475,7 +462,7 @@ class DataPipeline:
             else:
                 save_fn: Callable = getattr(output_transform, func_names["save_data"])
 
-        return _Postprocessor(
+        return _OutputTransformProcessor(
             getattr(output_transform, func_names["uncollate"]),
             getattr(output_transform, func_names["per_batch_transform"]),
             getattr(output_transform, func_names["per_sample_transform"]),
@@ -492,7 +479,7 @@ class DataPipeline:
         is_serving: bool = False,
     ) -> "Task":
         model.predict_step = self._model_predict_step_wrapper(
-            model.predict_step, self._create_uncollate_postprocessors(stage, is_serving=is_serving), model
+            model.predict_step, self._create_output_transform_processor(stage, is_serving=is_serving), model
         )
         return model
 
