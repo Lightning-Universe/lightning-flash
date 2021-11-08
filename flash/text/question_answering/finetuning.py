@@ -11,27 +11,24 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Union
 
-from pytorch_lightning.core.lightning import LightningModule
-
-from flash.core.model import Task
+from torch.nn import Module
 
 
-def _get_question_answering_bacbones_for_freezing(pl_module: Union[Task, LightningModule]):
+def _get_question_answering_bacbones_for_freezing(pl_module: Module):
     model_type = pl_module.config.model_type
 
     if model_type in ["albert", "reformer"]:
         if model_type == "albert":
-            model = pl_module.model.albert
+            model = pl_module.albert
         elif model_type == "reformer":
-            model = pl_module.model.reformer
+            model = pl_module.reformer
 
     elif model_type in ["bart", "bigbird_pegasus", "led", "mbart"]:
         if model_type in ["bart", "bigbird_pegasus", "mbart"]:
-            model = pl_module.model.model
+            model = pl_module.model
         elif model_type == "led":
-            model = pl_module.model.led
+            model = pl_module.led
 
     elif model_type == [
         "bert",
@@ -48,47 +45,47 @@ def _get_question_answering_bacbones_for_freezing(pl_module: Union[Task, Lightni
         "xlm-roberta",
     ]:
         if model_type in ["bert", "big_bird", "megatron-bert"]:
-            model = pl_module.model.bert
+            model = pl_module.bert
         elif model_type in ["camembert", "roberta", "xlm-roberta"]:
-            model = pl_module.model.roberta
+            model = pl_module.roberta
         elif model_type == "ibert":
-            model = pl_module.model.ibert
+            model = pl_module.ibert
         elif model_type == "longformer":
-            model = pl_module.model.longformer
+            model = pl_module.longformer
         elif model_type == "lxmert":
-            model = pl_module.model.lxmert
+            model = pl_module.lxmert
         elif model_type == "mpnet":
-            model = pl_module.model.mpnet
+            model = pl_module.mpnet
         elif model_type == "mobilebert":
-            model = pl_module.model.mobilebert
+            model = pl_module.mobilebert
         elif model_type == "squeezebert":
-            model = pl_module.model.transformer
+            model = pl_module.transformer
 
     elif model_type == "canine":
-        model = pl_module.model.canine
+        model = pl_module.canine
 
     elif model_type in ["convbert", "electra", "roformer"]:
         if model_type == "convbert":
-            model = pl_module.model.convbert
+            model = pl_module.convbert
         elif model_type == "electra":
-            model = pl_module.model.electra
+            model = pl_module.electra
         elif model_type == "roformer":
-            model = pl_module.model.roformer
+            model = pl_module.roformer
 
     elif model_type in ["deberta", "deberta-v2"]:
-        model = pl_module.model.deberta
+        model = pl_module.deberta
 
     elif model_type == "distilbert":
-        model = pl_module.model.distilbert
+        model = pl_module.distilbert
 
     elif model_type in ["flaubert", "xlm"]:
-        model = pl_module.model.transformer
+        model = pl_module.transformer
 
     elif model_type == "funnel":
-        model = pl_module.model.funnel
+        model = pl_module.funnel
 
     elif model_type == "xlnet":
-        model = pl_module.model.transformer
+        model = pl_module.transformer
     else:
         # TODO: Is this the right way to exit the if statement ?
         model = None
