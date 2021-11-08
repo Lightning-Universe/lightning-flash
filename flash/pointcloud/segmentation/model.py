@@ -55,7 +55,7 @@ class PointCloudSegmentation(ClassificationTask):
             by the :class:`~flash.core.classification.ClassificationTask` depending on the ``multi_label`` argument.
         learning_rate: The learning rate for the optimizer.
         multi_label: If ``True``, this will be treated as a multi-label classification problem.
-        output: The :class:`~flash.core.data.io.output.Output` to use for prediction outputs.
+        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
     """
 
     backbones: FlashRegistry = POINTCLOUD_SEGMENTATION_BACKBONES
