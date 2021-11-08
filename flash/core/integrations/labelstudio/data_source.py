@@ -8,11 +8,9 @@ from pytorch_lightning.utilities.cloud_io import get_filesystem
 
 from flash.core.data.auto_dataset import AutoDataset, IterableAutoDataset
 from flash.core.data.data_source import DataSource, DefaultDataKeys, has_len
-from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE, _TEXT_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.data.utils import image_default_loader
+from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE, _TEXT_AVAILABLE
 from flash.core.utilities.stages import RunningStage
-
-if _TORCHVISION_AVAILABLE:
-    from torchvision.datasets.folder import default_loader
 
 if _TEXT_AVAILABLE:
     from transformers import AutoTokenizer
@@ -188,7 +186,7 @@ class LabelStudioImageClassificationDataSource(LabelStudioDataSource):
         """Load 1 sample from dataset."""
         p = sample["file_upload"]
         # loading image
-        image = default_loader(p)
+        image = image_default_loader(p)
         result = {DefaultDataKeys.INPUT: image, DefaultDataKeys.TARGET: self._get_labels_from_sample(sample["label"])}
         return result
 

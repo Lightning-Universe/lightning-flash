@@ -21,13 +21,13 @@ from flash.core.data.data_source import DatasetDataSource, DefaultDataKeys, Defa
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.process import Preprocess
 from flash.core.data.transforms import ApplyToKeys
+from flash.core.data.utils import image_default_loader
 from flash.core.utilities.imports import _FASTFACE_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.image.data import ImagePathsDataSource
 from flash.image.detection import ObjectDetectionData
 
 if _TORCHVISION_AVAILABLE:
     import torchvision
-    from torchvision.datasets.folder import default_loader
 
 if _FASTFACE_AVAILABLE:
     import fastface as ff
@@ -86,7 +86,7 @@ class FastFaceDataSource(DatasetDataSource):
 
     def load_sample(self, sample: Any, dataset: Optional[Any] = None) -> Mapping[str, Any]:
         filepath = sample[DefaultDataKeys.INPUT]
-        img = default_loader(filepath)
+        img = image_default_loader(filepath)
         sample[DefaultDataKeys.INPUT] = img
 
         w, h = img.size  # WxH

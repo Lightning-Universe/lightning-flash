@@ -25,17 +25,14 @@ from flash.core.data.data_source import (
     PathsDataSource,
 )
 from flash.core.data.process import Deserializer, Preprocess
-from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
+from flash.core.data.utils import image_default_loader
 from flash.image.classification.data import ImageClassificationData
 from flash.image.data import ImageDeserializer, IMG_EXTENSIONS, NP_EXTENSIONS
-
-if _TORCHVISION_AVAILABLE:
-    from torchvision.datasets.folder import default_loader
 
 
 def spectrogram_loader(filepath: str):
     if has_file_allowed_extension(filepath, IMG_EXTENSIONS):
-        img = default_loader(filepath)
+        img = image_default_loader(filepath)
         data = np.array(img)
     else:
         data = np.load(filepath)
