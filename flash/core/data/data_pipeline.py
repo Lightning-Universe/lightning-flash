@@ -441,9 +441,6 @@ class DataPipeline:
         stage: RunningStage,
         is_serving: bool = False,
     ) -> _OutputTransformProcessor:
-        save_per_sample = None
-        save_fn = None
-
         output_transform: OutputTransform = self._output_transform
 
         func_names: Dict[str, str] = {
@@ -451,24 +448,11 @@ class DataPipeline:
             for k in self.OUTPUT_TRANSFORM_FUNCS
         }
 
-        # since postprocessing is exclusive for prediction, we don't have to check the resolution hierarchy here.
-        if output_transform._save_path:
-            save_per_sample: bool = self._is_overriden_recursive(
-                "save_sample", output_transform, OutputTransform, prefix=_STAGES_PREFIX[stage]
-            )
-
-            if save_per_sample:
-                save_per_sample: Callable = getattr(output_transform, func_names["save_sample"])
-            else:
-                save_fn: Callable = getattr(output_transform, func_names["save_data"])
-
         return _OutputTransformProcessor(
             getattr(output_transform, func_names["uncollate"]),
             getattr(output_transform, func_names["per_batch_transform"]),
             getattr(output_transform, func_names["per_sample_transform"]),
             output=None if is_serving else self._output,
-            save_fn=save_fn,
-            save_per_sample=save_per_sample,
             is_serving=is_serving,
         )
 

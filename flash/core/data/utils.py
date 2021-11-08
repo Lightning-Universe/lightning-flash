@@ -66,8 +66,6 @@ _OUTPUT_TRANSFORM_FUNCS: Set[str] = {
     "per_batch_transform",
     "uncollate",
     "per_sample_transform",
-    "save_sample",
-    "save_data",
 }
 
 
