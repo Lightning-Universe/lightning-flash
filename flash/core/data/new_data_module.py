@@ -11,12 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Optional, Tuple, Type, TYPE_CHECKING, Union
+from typing import Any, Optional, Tuple, Type, Union
 
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning import LightningDataModule
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader
@@ -27,16 +26,12 @@ import flash
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_pipeline import DefaultPreprocess, Postprocess
+from flash.core.data.data_pipeline import DefaultPreprocess
 from flash.core.data.datasets import BaseDataset
-from flash.core.data.preprocess_transform import PREPROCESS_TRANSFORM_TYPE, PreprocessTransform
+from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
+from flash.core.data.io.output_transform import OutputTransform
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
-
-if _FIFTYONE_AVAILABLE and TYPE_CHECKING:
-    from fiftyone.core.collections import SampleCollection
-else:
-    SampleCollection = None
+from flash.core.utilities.stages import RunningStage
 
 
 class DataModule(DataModule):
@@ -62,7 +57,7 @@ class DataModule(DataModule):
     """
 
     preprocess_cls = DefaultPreprocess
-    postprocess_cls = Postprocess
+    output_transform_cls = OutputTransform
     flash_datasets_registry = FlashRegistry("datasets")
 
     def __init__(
@@ -86,7 +81,7 @@ class DataModule(DataModule):
         if flash._IS_TESTING and torch.cuda.is_available():
             batch_size = 16
 
-        self._postprocess: Optional[Postprocess] = None
+        self._output_transform: Optional[OutputTransform] = None
         self._viz: Optional[BaseVisualization] = None
         self._data_fetcher: Optional[BaseDataFetcher] = data_fetcher or self.configure_data_fetcher()
 
@@ -267,10 +262,10 @@ class DataModule(DataModule):
         val_data: Optional[Any] = None,
         test_data: Optional[Any] = None,
         predict_data: Optional[Any] = None,
-        train_transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
-        val_transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
-        test_transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
-        predict_transform: Optional[PREPROCESS_TRANSFORM_TYPE] = None,
+        train_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
+        val_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
+        test_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
+        predict_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
         **flash_dataset_kwargs,
     ) -> Tuple[Optional[BaseDataset]]:
         cls._verify_flash_dataset_enum(enum)
@@ -311,7 +306,7 @@ class DataModule(DataModule):
         flash_dataset_cls,
         *load_data_args,
         running_stage: RunningStage,
-        transform: Optional[PreprocessTransform],
+        transform: Optional[InputTransform],
         **kwargs,
     ) -> Optional[BaseDataset]:
         if load_data_args[0] is not None:

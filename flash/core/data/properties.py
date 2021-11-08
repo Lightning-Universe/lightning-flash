@@ -14,9 +14,8 @@
 from dataclasses import dataclass
 from typing import Dict, Optional, Type, TypeVar
 
-from pytorch_lightning.trainer.states import RunningStage
-
 import flash
+from flash.core.utilities.stages import RunningStage
 
 
 @dataclass(unsafe_hash=True, frozen=True)
@@ -81,6 +80,17 @@ class Properties:
             self._running_stage = None
 
     @property
+    def validating(self) -> bool:
+        return self._running_stage == RunningStage.VALIDATING
+
+    @validating.setter
+    def validating(self, val: bool) -> None:
+        if val:
+            self._running_stage = RunningStage.VALIDATING
+        elif self.validating:
+            self._running_stage = None
+
+    @property
     def testing(self) -> bool:
         return self._running_stage == RunningStage.TESTING
 
@@ -103,12 +113,12 @@ class Properties:
             self._running_stage = None
 
     @property
-    def validating(self) -> bool:
-        return self._running_stage == RunningStage.VALIDATING
+    def serving(self) -> bool:
+        return self._running_stage == RunningStage.SERVING
 
-    @validating.setter
-    def validating(self, val: bool) -> None:
+    @serving.setter
+    def serving(self, val: bool) -> None:
         if val:
-            self._running_stage = RunningStage.VALIDATING
-        elif self.validating:
+            self._running_stage = RunningStage.SERVING
+        elif self.serving:
             self._running_stage = None

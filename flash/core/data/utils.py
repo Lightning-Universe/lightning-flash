@@ -19,10 +19,11 @@ from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Set, Type
 
 import requests
 import torch
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.apply_func import apply_to_collection
 from torch import Tensor
 from tqdm.auto import tqdm as tq
+
+from flash.core.utilities.stages import RunningStage
 
 _STAGES_PREFIX = {
     RunningStage.TRAINING: "train",
@@ -52,7 +53,7 @@ _CALLBACK_FUNCS: Set[str] = {
     *_PREPROCESS_FUNCS,
 }
 
-_POSTPROCESS_FUNCS: Set[str] = {
+_OUTPUT_TRANSFORM_FUNCS: Set[str] = {
     "per_batch_transform",
     "uncollate",
     "per_sample_transform",

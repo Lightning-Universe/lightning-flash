@@ -16,9 +16,9 @@ import os
 from pathlib import Path
 
 import pytest
-from pytorch_lightning import Trainer
 
 import flash
+from flash import Trainer
 from flash.audio import SpeechRecognition, SpeechRecognitionData
 from tests.helpers.utils import _AUDIO_TESTING
 

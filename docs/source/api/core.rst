@@ -27,12 +27,12 @@ _________________________
     :template: classtemplate.rst
 
     ~flash.core.classification.Classes
-    ~flash.core.classification.ClassificationSerializer
+    ~flash.core.classification.ClassificationOutput
     ~flash.core.classification.ClassificationTask
     ~flash.core.classification.FiftyOneLabels
     ~flash.core.classification.Labels
     ~flash.core.classification.Logits
-    ~flash.core.classification.PredsClassificationSerializer
+    ~flash.core.classification.PredsClassificationOutput
     ~flash.core.classification.Probabilities
 
 flash.core.finetuning
@@ -67,6 +67,15 @@ _________________________________
     ~flash.core.integrations.icevision.transforms.IceVisionTransformAdapter
     ~flash.core.integrations.icevision.transforms.default_transforms
     ~flash.core.integrations.icevision.transforms.train_default_transforms
+
+flash.core.integrations.pytorch_forecasting
+___________________________________________
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    ~flash.core.integrations.pytorch_forecasting.transforms.convert_predictions
 
 flash.core.model
 ________________

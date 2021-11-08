@@ -15,13 +15,13 @@ from typing import Callable
 
 import torch
 from pytorch_lightning import seed_everything
-from pytorch_lightning.trainer.states import RunningStage
 from torch.utils.data.dataloader import default_collate
 
 from flash import Task, Trainer
 from flash.core.data.datasets import FlashDataset
+from flash.core.data.input_transform import InputTransform
 from flash.core.data.new_data_module import DataModule
-from flash.core.data.preprocess_transform import PreprocessTransform
+from flash.core.utilities.stages import RunningStage
 
 
 def test_data_module():
@@ -42,7 +42,7 @@ def test_data_module():
     class TestDataset(FlashDataset):
         pass
 
-    class TestTransform(PreprocessTransform):
+    class TestTransform(InputTransform):
         def configure_collate(self, *args, **kwargs) -> Callable:
             return default_collate
 

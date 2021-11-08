@@ -7,6 +7,16 @@ flash.core.data
     :local:
     :backlinks: top
 
+flash.core.data.io.output
+_________________________
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: classtemplate.rst
+
+    ~flash.core.data.io.output.Output
+
 flash.core.data.auto_dataset
 ____________________________
 
@@ -112,10 +122,8 @@ _______________________
     ~flash.core.data.process.DefaultPreprocess
     ~flash.core.data.process.DeserializerMapping
     ~flash.core.data.process.Deserializer
-    ~flash.core.data.process.Postprocess
+    ~flash.core.data.io.output_transform.OutputTransform
     ~flash.core.data.process.Preprocess
-    ~flash.core.data.process.SerializerMapping
-    ~flash.core.data.process.Serializer
 
 flash.core.data.properties
 __________________________

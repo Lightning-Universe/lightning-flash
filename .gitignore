@@ -168,3 +168,4 @@ timit/
 urban8k_images/
 __MACOSX
 *-v2.0.json
+cifar-10*

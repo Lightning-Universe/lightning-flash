@@ -12,17 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import warnings
-from typing import Any, Dict, List, Optional, Type, Union
-
-import torch
-from torch.optim.lr_scheduler import _LRScheduler
+from typing import Any, Dict, List, Optional
 
 from flash.core.adapter import AdapterTask
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.states import CollateFn, PostTensorTransform, PreTensorTransform, ToTensorTransform
+from flash.core.data.states import (
+    CollateFn,
+    PerBatchTransform,
+    PerBatchTransformOnDevice,
+    PerSampleTransformOnDevice,
+    PostTensorTransform,
+    PreTensorTransform,
+    ToTensorTransform,
+)
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _VISSL_AVAILABLE
+from flash.core.utilities.imports import _VISSL_AVAILABLE, requires
+from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE
 
 if _VISSL_AVAILABLE:
     import classy_vision
@@ -54,10 +60,8 @@ class ImageEmbedder(AdapterTask):
             'moco_transform', or 'barlow_twins_transform'.
         backbone: VISSL backbone, defaults to ``resnet``.
         pretrained: Use a pretrained backbone, defaults to ``False``.
-        optimizer: Optimizer to use for training and finetuning, defaults to :class:`torch.optim.SGD`.
-        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
-        scheduler: The scheduler or scheduler class to use.
-        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
         backbone_kwargs: arguments to be passed to VISSL backbones, i.e. ``vision_transformer`` and ``resnet``.
         training_strategy_kwargs: arguments passed to VISSL loss function, projection head and training hooks.
@@ -68,7 +72,7 @@ class ImageEmbedder(AdapterTask):
     backbones: FlashRegistry = IMAGE_EMBEDDER_BACKBONES
     transforms: FlashRegistry = IMAGE_EMBEDDER_TRANSFORMS
 
-    required_extras: str = "image"
+    required_extras: List[str] = ["image", "vissl", "fairscale"]
 
     def __init__(
         self,
@@ -77,10 +81,8 @@ class ImageEmbedder(AdapterTask):
         pretraining_transform: str,
         backbone: str = "resnet",
         pretrained: bool = False,
-        optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
-        optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
         learning_rate: float = 1e-3,
         backbone_kwargs: Optional[Dict[str, Any]] = None,
         training_strategy_kwargs: Optional[Dict[str, Any]] = None,
@@ -93,6 +95,9 @@ class ImageEmbedder(AdapterTask):
 
         if training_strategy_kwargs is None:
             training_strategy_kwargs = {}
+
+        if pretraining_transform_kwargs is None:
+            pretraining_transform_kwargs = {}
 
         backbone, _ = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
 
@@ -110,9 +115,7 @@ class ImageEmbedder(AdapterTask):
         super().__init__(
             adapter=adapter,
             optimizer=optimizer,
-            optimizer_kwargs=optimizer_kwargs,
-            scheduler=scheduler,
-            scheduler_kwargs=scheduler_kwargs,
+            lr_scheduler=lr_scheduler,
             learning_rate=learning_rate,
         )
 
@@ -126,6 +129,9 @@ class ImageEmbedder(AdapterTask):
         self.adapter.set_state(ToTensorTransform(to_tensor_transform))
         self.adapter.set_state(PostTensorTransform(None))
         self.adapter.set_state(PreTensorTransform(None))
+        self.adapter.set_state(PerSampleTransformOnDevice(None))
+        self.adapter.set_state(PerBatchTransform(None))
+        self.adapter.set_state(PerBatchTransformOnDevice(None))
 
         warnings.warn(
             "Warning: VISSL ImageEmbedder overrides any user provided transforms"
@@ -142,6 +148,7 @@ class ImageEmbedder(AdapterTask):
         self.adapter.on_train_batch_end(outputs, batch, batch_idx, dataloader_idx)
 
     @classmethod
+    @requires(["image", "vissl", "fairscale"])
     def available_training_strategies(cls) -> List[str]:
         registry: Optional[FlashRegistry] = getattr(cls, "training_strategies", None)
         if registry is None:
