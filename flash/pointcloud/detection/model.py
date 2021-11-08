@@ -53,7 +53,7 @@ class PointCloudObjectDetector(Task):
             by the :class:`~flash.core.classification.ClassificationTask` depending on the ``multi_label`` argument.
         learning_rate: The learning rate for the optimizer.
         multi_label: If ``True``, this will be treated as a multi-label classification problem.
-        output: The :class:`~flash.core.data.io.output.Output` to use for prediction outputs.
+        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
         lambda_loss_cls: The value to scale the loss classification.
         lambda_loss_bbox: The value to scale the bounding boxes loss.
         lambda_loss_dir: The value to scale the bounding boxes direction loss.

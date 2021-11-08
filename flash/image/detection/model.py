@@ -42,8 +42,7 @@ class ObjectDetector(AdapterTask):
         pretrained: Whether the model from torchvision should be loaded with it's pretrained weights.
             Has no effect for custom models.
         learning_rate: The learning rate to use for training
-        output: A instance of :class:`~flash.core.data.io.output.Output` or a mapping consisting of such
-            to use when serializing prediction outputs.
+        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
         kwargs: additional kwargs nessesary for initializing the backbone task
     """
 
