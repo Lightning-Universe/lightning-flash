@@ -25,8 +25,8 @@ from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_
 if _GRAPH_AVAILABLE:
     from torch_geometric.nn import BatchNorm, GCNConv, global_mean_pool, MessagePassing
 else:
-    MessagePassing = None
-    GCNConv = None
+    MessagePassing = object
+    GCNConv = object
 
 
 class GraphBlock(nn.Module):
