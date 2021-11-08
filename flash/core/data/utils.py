@@ -30,7 +30,7 @@ if _PIL_AVAILABLE:
     from PIL.Image import Image
 else:
     Image = object
-    
+
 if _TORCHVISION_AVAILABLE:
     from torchvision.datasets.folder import default_loader
 
@@ -219,6 +219,12 @@ def convert_to_modules(transforms: Optional[Dict[str, Callable]]):
 
 
 def image_default_loader(file_path: str, drop_alpha: bool = True) -> Image:
+    """Default loader for images.
+
+    Args:
+        file_path: The image file to load.
+        drop_alpha: If ``True`` (default) then any alpha channels will be silently removed.
+    """
     img = default_loader(file_path)
     if img.mode == "RGBA" and drop_alpha:
         img = img.convert("RGB")
