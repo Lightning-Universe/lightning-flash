@@ -57,7 +57,9 @@ def build_flash_serve_model_component(model):
             self.data_pipeline = model.build_data_pipeline()
             self.worker_preprocessor = self.data_pipeline.worker_preprocessor(RunningStage.PREDICTING, is_serving=True)
             self.device_preprocessor = self.data_pipeline.device_preprocessor(RunningStage.PREDICTING)
-            self.postprocessor = self.data_pipeline.postprocessor(RunningStage.PREDICTING, is_serving=True)
+            self.output_transform_processor = self.data_pipeline.output_transform_processor(
+                RunningStage.PREDICTING, is_serving=True
+            )
             # todo (tchaton) Remove this hack
             self.extra_arguments = len(inspect.signature(self.model.transfer_batch_to_device).parameters) == 3
             self.device = self.model.device
@@ -75,7 +77,7 @@ def build_flash_serve_model_component(model):
                     inputs = self.model.transfer_batch_to_device(inputs, self.device)
                 inputs = self.device_preprocessor(inputs)
                 preds = self.model.predict_step(inputs, 0)
-                preds = self.postprocessor(preds)
+                preds = self.output_transform_processor(preds)
                 return preds
 
     return FlashServeModelComponent(model)

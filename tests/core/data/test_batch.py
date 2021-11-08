@@ -18,7 +18,7 @@ import torch
 from torch.testing import assert_allclose
 from torch.utils.data._utils.collate import default_collate
 
-from flash.core.data.batch import _Postprocessor, _Preprocessor, _Sequential, default_uncollate
+from flash.core.data.batch import _Preprocessor, _Sequential, default_uncollate
 from flash.core.utilities.stages import RunningStage
 
 
@@ -59,22 +59,6 @@ def test_preprocessor_str():
         "\t(apply_per_sample_transform): False\n"
         "\t(on_device): True\n"
         "\t(stage): RunningStage.TRAINING"
-    )
-
-
-def test_postprocessor_str():
-    postprocessor = _Postprocessor(
-        default_uncollate,
-        torch.relu,
-        torch.softmax,
-        None,
-    )
-    assert str(postprocessor) == (
-        "_Postprocessor:\n"
-        "\t(per_batch_transform): FuncModule(relu)\n"
-        "\t(uncollate_fn): FuncModule(default_uncollate)\n"
-        "\t(per_sample_transform): FuncModule(softmax)\n"
-        "\t(output): None"
     )
 
 

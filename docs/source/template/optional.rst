@@ -23,7 +23,7 @@ Here's how we create our transforms in the :class:`~flash.image.classification.d
 Add outputs to your Task
 ========================
 
-We recommend that you do most of the heavy lifting in the :class:`~flash.core.data.process.Postprocess`.
+We recommend that you do most of the heavy lifting in the :class:`~flash.core.data.io.output_transform.OutputTransform`.
 Specifically, it should include any formatting and transforms that should always be applied to the predictions.
 If you want to support different use cases that require different prediction formats, you should add some :class:`~flash.core.data.io.output.Output` implementations in an ``output.py`` file.
 
