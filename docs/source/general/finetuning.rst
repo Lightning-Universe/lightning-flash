@@ -209,7 +209,7 @@ Here's an example where:
 
 |
 
-.. testsetup:: custom_strategy
+.. code-block:: python
 
     from flash import Trainer
     from flash.core.data.utils import download_data
@@ -234,9 +234,6 @@ Here's an example where:
 
     model = MyCustomQuestionAnsweringTask(backbone="distilbert-base-uncased")
     trainer = Trainer(max_epochs=1, checkpoint_callback=False)
-
-.. testcode:: custom_strategy
-
     trainer.finetune(model, datamodule=datamodule, strategy="custom")
 
 

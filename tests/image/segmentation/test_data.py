@@ -393,4 +393,4 @@ class TestSemanticSegmentationData:
         # now train with `fast_dev_run`
         model = SemanticSegmentation(num_classes=2, backbone="resnet50", head="fpn")
         trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-        trainer.finetune(model, dm, strategy="freeze_unfreeze")
+        trainer.finetune(model, dm, strategy="freeze")
