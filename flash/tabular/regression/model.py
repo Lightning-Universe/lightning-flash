@@ -40,7 +40,7 @@ class TabularRegressor(RegressionTask):
             `metric(preds,target)` and return a single scalar tensor.
         learning_rate: Learning rate to use for training.
         multi_label: Whether the targets are multi-label or not.
-        serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
+        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
         **tabnet_kwargs: Optional additional arguments for the TabNet model, see
             `pytorch_tabnet <https://dreamquark-ai.github.io/tabnet/_modules/pytorch_tabnet/tab_network.html#TabNet>`_.
     """

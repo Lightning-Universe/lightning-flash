@@ -68,7 +68,7 @@ class SemanticSegmentation(ClassificationTask):
             `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.IOU`.
         learning_rate: Learning rate to use for training.
         multi_label: Whether the targets are multi-label or not.
-        output: The :class:`~flash.core.data.io.output.Output` to use when serializing prediction outputs.
+        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
         postprocess: :class:`~flash.core.data.process.Postprocess` use for post processing samples.
     """
 
