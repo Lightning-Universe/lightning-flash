@@ -209,7 +209,7 @@ Here's an example where:
 
 |
 
-.. testcode:: strategies
+.. testsetup:: custom_strategy
 
     from flash import Trainer
     from flash.core.data.utils import download_data
@@ -229,12 +229,14 @@ Here's an example where:
             super().__init__(**kwargs)
 
         def finetune_backbone(self, epoch: int, optimizer: Optimizer, opt_idx: int) -> None:
-            if epoch == 2:
-                self.model.distilbert.transformer.requires_grad_(False)
+            self.model.distilbert.transformer.requires_grad_(False)
 
 
     model = MyCustomQuestionAnsweringTask(backbone="distilbert-base-uncased")
-    trainer = Trainer(max_epochs=3, limit_train_batches=1, limit_val_batches=1)
+    trainer = Trainer(max_epochs=1, checkpoint_callback=False)
+
+.. testcode:: custom_strategy
+
     trainer.finetune(model, datamodule=datamodule, strategy="custom")
 
 
@@ -242,21 +244,7 @@ For even more customization, create your own finetuning callback. Learn more abo
 
 .. testcode:: strategies
 
-    import flash
-    from flash.core.data.utils import download_data
-    from flash.image import ImageClassificationData, ImageClassifier
     from flash.core.finetuning import FlashBaseFinetuning
-
-    download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
-
-    datamodule = ImageClassificationData.from_files(
-        train_files=["data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg"],
-        train_targets=[0],
-        batch_size=1,
-        num_workers=0,
-    )
-
-    model = ImageClassifier(backbone="resnet18", num_classes=2)
 
     # Create a finetuning callback
     class FeatureExtractorFreezeUnfreeze(FlashBaseFinetuning):
