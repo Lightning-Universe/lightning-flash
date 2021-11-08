@@ -250,7 +250,7 @@ def test_task_datapipeline_save(tmpdir):
     [
         pytest.param(
             ImageClassifier,
-            "0.5.2/image_classification_model.pt",
+            "0.6.0/image_classification_model.pt",
             marks=pytest.mark.skipif(
                 not _IMAGE_TESTING,
                 reason="image packages aren't installed",
@@ -258,7 +258,7 @@ def test_task_datapipeline_save(tmpdir):
         ),
         pytest.param(
             SemanticSegmentation,
-            "0.5.2/semantic_segmentation_model.pt",
+            "0.6.0/semantic_segmentation_model.pt",
             marks=pytest.mark.skipif(
                 not _IMAGE_TESTING,
                 reason="image packages aren't installed",
@@ -266,7 +266,7 @@ def test_task_datapipeline_save(tmpdir):
         ),
         pytest.param(
             SpeechRecognition,
-            "0.5.2/speech_recognition_model.pt",
+            "0.6.0/speech_recognition_model.pt",
             marks=pytest.mark.skipif(
                 not _AUDIO_TESTING,
                 reason="audio packages aren't installed",
@@ -274,7 +274,7 @@ def test_task_datapipeline_save(tmpdir):
         ),
         pytest.param(
             TabularClassifier,
-            "0.5.2/tabular_classification_model.pt",
+            "0.6.0/tabular_classification_model.pt",
             marks=pytest.mark.skipif(
                 not _TABULAR_TESTING,
                 reason="tabular packages aren't installed",
@@ -282,7 +282,7 @@ def test_task_datapipeline_save(tmpdir):
         ),
         pytest.param(
             TextClassifier,
-            "0.5.2/text_classification_model.pt",
+            "0.6.0/text_classification_model.pt",
             marks=pytest.mark.skipif(
                 not _TEXT_TESTING,
                 reason="text packages aren't installed",
@@ -290,7 +290,7 @@ def test_task_datapipeline_save(tmpdir):
         ),
         pytest.param(
             SummarizationTask,
-            "0.5.2/summarization_model_xsum.pt",
+            "0.6.0/summarization_model_xsum.pt",
             marks=pytest.mark.skipif(
                 not _TEXT_TESTING,
                 reason="text packages aren't installed",
@@ -298,7 +298,7 @@ def test_task_datapipeline_save(tmpdir):
         ),
         pytest.param(
             TranslationTask,
-            "0.5.2/translation_model_en_ro.pt",
+            "0.6.0/translation_model_en_ro.pt",
             marks=pytest.mark.skipif(
                 not _TEXT_TESTING,
                 reason="text packages aren't installed",
