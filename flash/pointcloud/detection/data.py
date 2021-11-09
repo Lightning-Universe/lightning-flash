@@ -7,7 +7,7 @@ from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import BaseDataFormat, Input, InputDataKeys, InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.process import Deserializer
-from flash.pointcloud.detection.open3d_ml.data_sources import (
+from flash.pointcloud.detection.open3d_ml.inputs import (
     PointCloudObjectDetectionDataFormat,
     PointCloudObjectDetectorFoldersInput,
 )

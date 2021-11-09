@@ -14,7 +14,7 @@ Inside `data.py <https://github.com/PyTorchLightning/lightning-flash/blob/master
 #. a :class:`~flash.core.data.io.output_transform.OutputTransform` *(optional)*
 
 Input
-^^^^^^^^^^
+^^^^^
 
 The :class:`~flash.core.data.io.input.Input` class contains the logic for data loading from different sources such as folders, files, tensors, etc.
 Every Flash :class:`~flash.core.data.data_module.DataModule` can be instantiated with :meth:`~flash.core.data.data_module.DataModule.from_datasets`.
@@ -71,7 +71,7 @@ We can implement ``predict_load_data`` like this:
     :pyobject: TemplateSKLearnInput.predict_load_data
 
 Input vs Dataset
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 A :class:`~flash.core.data.io.input.Input` is not the same as a :class:`torch.utils.data.Dataset`.
 When a ``from_*`` method is called on your :class:`~flash.core.data.data_module.DataModule`, it gets the :class:`~flash.core.data.io.input.Input` to use from the :class:`~flash.core.data.io.input_transform.InputTransform`.

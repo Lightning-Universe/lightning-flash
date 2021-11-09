@@ -292,7 +292,7 @@ How it works behind the scenes
 ******************************
 
 Input
-__________
+_____
 
 .. note::
     The :meth:`~flash.core.data.io.input.Input.load_data` and
