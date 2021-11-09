@@ -961,9 +961,9 @@ def test_input_transform_transforms(tmpdir):
     assert input_transform._test_collate_in_worker_from_transform is None
     assert input_transform._predict_collate_in_worker_from_transform is False
 
-    train_input_transform_preprocessor = DataPipeline(preprocess=input_transform).worker_input_transform_preprocessor(
-        RunningStage.TRAINING
-    )
+    train_input_transform_preprocessor = DataPipeline(
+        input_transform=input_transform
+    ).worker_input_transform_preprocessor(RunningStage.TRAINING)
     val_input_transform_preprocessor = DataPipeline(
         input_transform=input_transform
     ).worker_input_transform_preprocessor(RunningStage.VALIDATING)

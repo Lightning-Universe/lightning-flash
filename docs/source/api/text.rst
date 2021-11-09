@@ -48,13 +48,8 @@ __________________
     question_answering.data.QuestionAnsweringDictionaryDataSource
     question_answering.data.QuestionAnsweringFileDataSource
     question_answering.data.QuestionAnsweringJSONDataSource
-<<<<<<< HEAD
     question_answering.data.QuestionAnsweringOutputTransform
-    question_answering.data.QuestionAnsweringPreprocess
-=======
-    question_answering.data.QuestionAnsweringPostprocess
     question_answering.data.QuestionAnsweringInputTransform
->>>>>>> rename
     question_answering.data.SQuADDataSource
 
 
@@ -101,13 +96,8 @@ _______________
     seq2seq.core.data.Seq2SeqDataSource
     seq2seq.core.data.Seq2SeqFileDataSource
     seq2seq.core.data.Seq2SeqJSONDataSource
-<<<<<<< HEAD
     seq2seq.core.data.Seq2SeqOutputTransform
-    seq2seq.core.data.Seq2SeqPreprocess
-=======
-    seq2seq.core.data.Seq2SeqPostprocess
     seq2seq.core.data.Seq2SeqInputTransform
->>>>>>> rename
     seq2seq.core.data.Seq2SeqSentencesDataSource
     seq2seq.core.metrics.BLEUScore
     seq2seq.core.metrics.RougeBatchAggregator

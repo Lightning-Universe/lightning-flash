@@ -78,7 +78,7 @@ def test_jit(tmpdir):
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = TranslationTask(TEST_BACKBONE)
-    # TODO: Currently only servable once a preprocess and output_transform have been attached
+    # TODO: Currently only servable once a input_transform and output_transform have been attached
     model._input_transform = TranslationInputTransform(backbone=TEST_BACKBONE)
     model._output_transform = Seq2SeqOutputTransform()
 

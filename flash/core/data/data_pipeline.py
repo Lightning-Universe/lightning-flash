@@ -83,7 +83,8 @@ class DataPipelineState:
 class DataPipeline:
     """
     DataPipeline holds the engineering logic to connect
-    :class:`~flash.core.data.process.Preprocess` and/or :class:`~flash.core.data.io.output_transform.OutputTransform`
+    :class:`~flash.core.data.io.input_transform.InputTransform` and/or
+    :class:`~flash.core.data.io.output_transform.OutputTransform`
     objects to the ``DataModule``, Flash ``Task`` and ``Trainer``.
     """
 
@@ -302,12 +303,12 @@ class DataPipeline:
 
     @staticmethod
     def _model_transfer_to_device_wrapper(
-        func: Callable, preprocessor: _InputTransformPreprocessor, model: "Task", stage: RunningStage
+        func: Callable, input_transform: _InputTransformPreprocessor, model: "Task", stage: RunningStage
     ) -> Callable:
 
         if not isinstance(func, _StageOrchestrator):
             func = _StageOrchestrator(func, model)
-        func.register_additional_stage(stage, preprocessor)
+        func.register_additional_stage(stage, input_transform)
 
         return func
 

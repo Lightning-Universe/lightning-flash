@@ -26,7 +26,7 @@ if _TORCH_AVAILABLE:
     from flash.core.data.input_transform import InputTransform
     from flash.core.data.io.output import Output
     from flash.core.data.io.output_transform import OutputTransform
-    from flash.core.data.process import Preprocess, Serializer
+    from flash.core.data.process import Serializer
     from flash.core.model import Task  # noqa: E402
     from flash.core.trainer import Trainer  # noqa: E402
 
@@ -49,7 +49,6 @@ if _TORCH_AVAILABLE:
         "InputTransform",
         "Output",
         "OutputTransform",
-        "Preprocess",
         "Serializer",
         "Task",
         "Trainer",

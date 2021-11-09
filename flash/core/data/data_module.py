@@ -56,7 +56,7 @@ else:
 
 class DataModule(pl.LightningDataModule):
     """A basic DataModule class for all Flash tasks. This class includes references to a
-    :class:`~flash.core.data.data_source.DataSource`, :class:`~flash.core.data.process.Preprocess`,
+    :class:`~flash.core.data.data_source.DataSource`, :class:`~flash.core.data.io.input_transform.InputTransform`,
     :class:`~flash.core.data.io.output_transform.OutputTransform`, and a
     :class:`~flash.core.data.callback.BaseDataFetcher`.
 

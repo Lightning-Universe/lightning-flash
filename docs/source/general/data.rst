@@ -26,32 +26,19 @@ Here are common terms you need to be familiar with:
    * - :class:`~flash.core.data.data_module.DataModule`
      - The :class:`~flash.core.data.data_module.DataModule` contains the datasets, transforms and dataloaders.
    * - :class:`~flash.core.data.data_pipeline.DataPipeline`
-<<<<<<< HEAD
-     - The :class:`~flash.core.data.data_pipeline.DataPipeline` is Flash internal object to manage :class:`~flash.core.data.Deserializer`, :class:`~flash.core.data.data_source.DataSource`, :class:`~flash.core.data.process.Preprocess`, :class:`~flash.core.data.io.output_transform.OutputTransform`, and :class:`~flash.core.data.io.output.Output` objects.
-=======
-     - The :class:`~flash.core.data.data_pipeline.DataPipeline` is Flash internal object to manage :class:`~flash.core.data.Deserializer`, :class:`~flash.core.data.data_source.DataSource`, :class:`~flash.core.data.io.input_transform.InputTransform`, :class:`~flash.core.data.process.Postprocess`, and :class:`~flash.core.data.process.Serializer` objects.
->>>>>>> rename
+     - The :class:`~flash.core.data.data_pipeline.DataPipeline` is Flash internal object to manage :class:`~flash.core.data.Deserializer`, :class:`~flash.core.data.data_source.DataSource`, :class:`~flash.core.data.io.input_transform.InputTransform`, :class:`~flash.core.data.io.output_transform.OutputTransform`, and :class:`~flash.core.data.io.output.Output` objects.
    * - :class:`~flash.core.data.data_source.DataSource`
      - The :class:`~flash.core.data.data_source.DataSource` provides :meth:`~flash.core.data.data_source.DataSource.load_data` and :meth:`~flash.core.data.data_source.DataSource.load_sample` hooks for creating data sets from metadata (such as folder names).
    * - :class:`~flash.core.data.io.input_transform.InputTransform`
      - The :class:`~flash.core.data.io.input_transform.InputTransform` provides a simple hook-based API to encapsulate your pre-processing logic.
         These hooks (such as :meth:`~flash.core.data.io.input_transform.InputTransform.pre_tensor_transform`) enable transformations to be applied to your data at every point along the pipeline (including on the device).
         The :class:`~flash.core.data.data_pipeline.DataPipeline` contains a system to call the right hooks when needed.
-<<<<<<< HEAD
-        The :class:`~flash.core.data.process.Preprocess` hooks can be either overridden directly or provided as a dictionary of transforms (mapping hook name to callable transform).
+        The :class:`~flash.core.data.io.input_transform.InputTransform` hooks can be either overridden directly or provided as a dictionary of transforms (mapping hook name to callable transform).
    * - :class:`~flash.core.data.io.output_transform.OutputTransform`
      - The :class:`~flash.core.data.io.output_transform.OutputTransform` provides a simple hook-based API to encapsulate your post-processing logic.
         The :class:`~flash.core.data.io.output_transform.OutputTransform` hooks cover from model outputs to predictions export.
    * - :class:`~flash.core.data.io.output.Output`
      - The :class:`~flash.core.data.io.output.Output` provides a single :meth:`~flash.core.data.io.output.Output.serialize` method that is used to convert model outputs (after the :class:`~flash.core.data.io.output_transform.OutputTransform`) to the desired output format during prediction.
-=======
-        The :class:`~flash.core.data.io.input_transform.InputTransform` hooks can be either overridden directly or provided as a dictionary of transforms (mapping hook name to callable transform).
-   * - :class:`~flash.core.data.process.Postprocess`
-     - The :class:`~flash.core.data.process.Postprocess` provides a simple hook-based API to encapsulate your post-processing logic.
-        The :class:`~flash.core.data.process.Postprocess` hooks cover from model outputs to predictions export.
-   * - :class:`~flash.core.data.process.Serializer`
-     - The :class:`~flash.core.data.process.Serializer` provides a single :meth:`~flash.core.data.process.Serializer.serialize` method that is used to convert model outputs (after the :class:`~flash.core.data.process.Postprocess`) to the desired output format during prediction.
->>>>>>> rename
 
 
 *******************************************
@@ -86,11 +73,7 @@ Here are the primary advantages:
 
 
 To change the processing behavior only on specific stages for a given hook,
-<<<<<<< HEAD
-you can prefix each of the :class:`~flash.core.data.process.Preprocess` and  :class:`~flash.core.data.io.output_transform.OutputTransform`
-=======
-you can prefix each of the :class:`~flash.core.data.io.input_transform.InputTransform` and  :class:`~flash.core.data.process.Postprocess`
->>>>>>> rename
+you can prefix each of the :class:`~flash.core.data.io.input_transform.InputTransform` and  :class:`~flash.core.data.io.output_transform.OutputTransform`
 hooks by adding ``train``, ``val``, ``test`` or ``predict``.
 
 Check out :class:`~flash.core.data.io.input_transform.InputTransform` for some examples.
