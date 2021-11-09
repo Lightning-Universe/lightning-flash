@@ -18,8 +18,8 @@ import torch.nn as nn
 from torch.utils.data import Dataset
 
 from flash.core.data.data_source import DatasetDataSource, DefaultDataKeys, DefaultDataSources
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
-from flash.core.data.process import Preprocess
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import image_default_loader
 from flash.core.utilities.imports import _FASTFACE_AVAILABLE, _TORCHVISION_AVAILABLE
@@ -98,7 +98,7 @@ class FastFaceDataSource(DatasetDataSource):
         return sample
 
 
-class FaceDetectionPreprocess(Preprocess):
+class FaceDetectionInputTransform(InputTransform):
     """Applies default transform and collate_fn for fastface on FastFaceDataSource."""
 
     def __init__(
@@ -169,5 +169,5 @@ class FaceDetectionOutputTransform(OutputTransform):
 
 
 class FaceDetectionData(ObjectDetectionData):
-    preprocess_cls = FaceDetectionPreprocess
+    input_transform_cls = FaceDetectionInputTransform
     output_transform_cls = FaceDetectionOutputTransform

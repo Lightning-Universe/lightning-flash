@@ -22,7 +22,7 @@ from flash.core.data.data_pipeline import DataPipeline
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _SKLEARN_AVAILABLE
 from flash.template import TemplateSKLearnClassifier
-from flash.template.classification.data import TemplatePreprocess
+from flash.template.classification.data import TemplateInputTransform
 
 if _SKLEARN_AVAILABLE:
     from sklearn import datasets
@@ -105,7 +105,7 @@ def test_predict_numpy():
     """Tests that we can generate predictions from a numpy array."""
     row = np.random.rand(1, DummyDataset.num_features)
     model = TemplateSKLearnClassifier(num_features=DummyDataset.num_features, num_classes=DummyDataset.num_classes)
-    data_pipe = DataPipeline(preprocess=TemplatePreprocess())
+    data_pipe = DataPipeline(input_transform=TemplateInputTransform())
     out = model.predict(row, data_pipeline=data_pipe)
     assert isinstance(out[0], int)
 
@@ -115,7 +115,7 @@ def test_predict_sklearn():
     """Tests that we can generate predictions from a scikit-learn ``Bunch``."""
     bunch = datasets.load_iris()
     model = TemplateSKLearnClassifier(num_features=DummyDataset.num_features, num_classes=DummyDataset.num_classes)
-    data_pipe = DataPipeline(preprocess=TemplatePreprocess())
+    data_pipe = DataPipeline(input_transform=TemplateInputTransform())
     out = model.predict(bunch, data_source="sklearn", data_pipeline=data_pipe)
     assert isinstance(out[0], int)
 

@@ -18,7 +18,7 @@ ______________
     :template: classtemplate.rst
 
     ~classification.data.AudioClassificationData
-    ~classification.data.AudioClassificationPreprocess
+    ~classification.data.AudioClassificationInputTransform
 
 Speech Recognition
 __________________
@@ -31,7 +31,7 @@ __________________
     ~speech_recognition.data.SpeechRecognitionData
     ~speech_recognition.model.SpeechRecognition
 
-    speech_recognition.data.SpeechRecognitionPreprocess
+    speech_recognition.data.SpeechRecognitionInputTransform
     speech_recognition.data.SpeechRecognitionBackboneState
     speech_recognition.data.SpeechRecognitionOutputTransform
     speech_recognition.data.SpeechRecognitionCSVDataSource

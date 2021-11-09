@@ -23,7 +23,7 @@ def from_wmt_en_ro(
     backbone: str = "Helsinki-NLP/opus-mt-en-ro",
     batch_size: int = 4,
     num_workers: int = 0,
-    **preprocess_kwargs,
+    **input_transform_kwargs,
 ) -> TranslationData:
     """Downloads and loads the WMT EN RO data set."""
     download_data("https://pl-flash-data.s3.amazonaws.com/wmt_en_ro.zip", "./data")
@@ -35,7 +35,7 @@ def from_wmt_en_ro(
         backbone=backbone,
         batch_size=batch_size,
         num_workers=num_workers,
-        **preprocess_kwargs,
+        **input_transform_kwargs,
     )
 
 

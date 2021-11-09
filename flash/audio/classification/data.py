@@ -24,7 +24,8 @@ from flash.core.data.data_source import (
     NumpyDataSource,
     PathsDataSource,
 )
-from flash.core.data.process import Deserializer, Preprocess
+from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.process import Deserializer
 from flash.core.data.utils import image_default_loader
 from flash.image.classification.data import ImageClassificationData
 from flash.image.data import ImageDeserializer, IMG_EXTENSIONS, NP_EXTENSIONS
@@ -61,7 +62,7 @@ class AudioClassificationDataFrameDataSource(LoaderDataFrameDataSource):
         super().__init__(spectrogram_loader)
 
 
-class AudioClassificationPreprocess(Preprocess):
+class AudioClassificationInputTransform(InputTransform):
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -116,4 +117,4 @@ class AudioClassificationPreprocess(Preprocess):
 class AudioClassificationData(ImageClassificationData):
     """Data module for audio classification."""
 
-    preprocess_cls = AudioClassificationPreprocess
+    input_transform_cls = AudioClassificationInputTransform

@@ -20,8 +20,8 @@ from torch.utils.data import DataLoader
 from flash.core.classification import Labels
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
 from flash.core.data.data_source import LabelsState
+from flash.core.data.io.input_transform import DefaultInputTransform
 from flash.core.data.io.output import Output
-from flash.core.data.process import DefaultPreprocess
 from flash.core.model import Task
 from flash.core.trainer import Trainer
 
@@ -47,10 +47,10 @@ def test_saving_with_output(tmpdir):
     output = Labels(["a", "b"])
     model = CustomModel()
     trainer = Trainer(fast_dev_run=True)
-    data_pipeline = DataPipeline(preprocess=DefaultPreprocess(), output=output)
+    data_pipeline = DataPipeline(input_transform=DefaultInputTransform(), output=output)
     data_pipeline.initialize()
     model.data_pipeline = data_pipeline
-    assert isinstance(model.preprocess, DefaultPreprocess)
+    assert isinstance(model.input_transform, DefaultInputTransform)
     dummy_data = DataLoader(list(zip(torch.arange(10, dtype=torch.float), torch.arange(10, dtype=torch.float))))
     trainer.fit(model, train_dataloader=dummy_data)
     trainer.save_checkpoint(checkpoint_file)

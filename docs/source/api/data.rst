@@ -118,12 +118,13 @@ _______________________
     :nosignatures:
     :template: classtemplate.rst
 
-    ~flash.core.data.process.BasePreprocess
-    ~flash.core.data.process.DefaultPreprocess
+    ~flash.core.data.io.input_transform.BaseInputTransform
+    ~flash.core.data.io.input_transform.DefaultInputTransform
     ~flash.core.data.process.DeserializerMapping
     ~flash.core.data.process.Deserializer
     ~flash.core.data.io.output_transform.OutputTransform
-    ~flash.core.data.process.Preprocess
+    ~flash.core.data.io.input_transform.InputTransform
+    ~flash.core.data.process.Serializer
 
 flash.core.data.properties
 __________________________

@@ -168,7 +168,7 @@ def test_iterable_autodataset_smoke():
         False,
     ],
 )
-def test_preprocessing_data_source_with_running_stage(with_dataset):
+def test_input_transforming_data_source_with_running_stage(with_dataset):
     data_source = _AutoDatasetTestDataSource(with_dataset)
     running_stage = RunningStage.TRAINING
 

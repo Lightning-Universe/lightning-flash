@@ -106,8 +106,8 @@ def test_serve():
         pd.DataFrame.from_dict(train_data),
     )
     model = TabularClassifier.from_data(datamodule)
-    # TODO: Currently only servable once a preprocess has been attached
-    model._preprocess = datamodule.preprocess
+    # TODO: Currently only servable once a input_transform has been attached
+    model._input_transform = datamodule.input_transform
     model.eval()
     model.serve()
 
