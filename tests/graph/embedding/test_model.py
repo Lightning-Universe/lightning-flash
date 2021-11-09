@@ -17,7 +17,7 @@ import torch
 from flash import Trainer
 from flash.core.data.data_pipeline import DataPipeline
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
-from flash.graph.classification.data import GraphClassificationPreprocess
+from flash.graph.classification.data import GraphClassificationInputTransform
 from flash.graph.classification.model import GraphClassifier
 from flash.graph.embedding.model import GraphEmbedder
 from tests.helpers.utils import _GRAPH_TESTING
@@ -38,7 +38,7 @@ def test_not_trainable(tmpdir):
     """Tests that the model gives an error when training, validating, or testing."""
     tudataset = datasets.TUDataset(root=tmpdir, name="KKI")
     model = GraphEmbedder(GraphClassifier(num_features=1, num_classes=1).backbone)
-    model.data_pipeline = DataPipeline(preprocess=GraphClassificationPreprocess())
+    model.data_pipeline = DataPipeline(input_transform=GraphClassificationInputTransform())
     dl = torch.utils.data.DataLoader(tudataset, batch_size=4)
     trainer = Trainer(default_root_dir=tmpdir, num_sanity_val_steps=0)
     with pytest.raises(NotImplementedError, match="Training a `GraphEmbedder` is not supported."):
@@ -58,6 +58,6 @@ def test_predict_dataset(tmpdir):
     model = GraphEmbedder(
         GraphClassifier(num_features=tudataset.num_features, num_classes=tudataset.num_classes).backbone
     )
-    data_pipe = DataPipeline(preprocess=GraphClassificationPreprocess())
+    data_pipe = DataPipeline(input_transform=GraphClassificationInputTransform())
     out = model.predict(tudataset, data_source="datasets", data_pipeline=data_pipe)
     assert isinstance(out[0], torch.Tensor)
