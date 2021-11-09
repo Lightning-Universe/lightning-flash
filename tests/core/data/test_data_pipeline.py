@@ -28,7 +28,7 @@ from flash.core.data.auto_dataset import IterableAutoDataset
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import _StageOrchestrator, DataPipeline, DataPipelineState
 from flash.core.data.data_source import DataSource
-from flash.core.data.io.input_transform import _InputTransformPreprocessor, DefaultInputTransform, InputTransform
+from flash.core.data.io.input_transform import _InputTransformProcessor, DefaultInputTransform, InputTransform
 from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import _OutputTransformProcessor, OutputTransform
 from flash.core.data.process import Deserializer
@@ -213,40 +213,38 @@ def test_data_pipeline_is_overriden_and_resolve_function_hierarchy(tmpdir):
     assert test_func_names["per_batch_transform_on_device"] == "test_per_batch_transform_on_device"
     assert predict_func_names["per_batch_transform_on_device"] == "per_batch_transform_on_device"
 
-    train_worker_input_transform_preprocessor = data_pipeline.worker_input_transform_preprocessor(RunningStage.TRAINING)
-    val_worker_input_transform_preprocessor = data_pipeline.worker_input_transform_preprocessor(RunningStage.VALIDATING)
-    test_worker_input_transform_preprocessor = data_pipeline.worker_input_transform_preprocessor(RunningStage.TESTING)
-    predict_worker_input_transform_preprocessor = data_pipeline.worker_input_transform_preprocessor(
-        RunningStage.PREDICTING
-    )
+    train_worker_input_transform_processor = data_pipeline.worker_input_transform_processor(RunningStage.TRAINING)
+    val_worker_input_transform_processor = data_pipeline.worker_input_transform_processor(RunningStage.VALIDATING)
+    test_worker_input_transform_processor = data_pipeline.worker_input_transform_processor(RunningStage.TESTING)
+    predict_worker_input_transform_processor = data_pipeline.worker_input_transform_processor(RunningStage.PREDICTING)
 
-    _seq = train_worker_input_transform_preprocessor.per_sample_transform
+    _seq = train_worker_input_transform_processor.per_sample_transform
     assert _seq.pre_tensor_transform.func == input_transform.pre_tensor_transform
     assert _seq.to_tensor_transform.func == input_transform.to_tensor_transform
     assert _seq.post_tensor_transform.func == input_transform.train_post_tensor_transform
-    assert train_worker_input_transform_preprocessor.collate_fn.func == input_transform.collate
-    assert train_worker_input_transform_preprocessor.per_batch_transform.func == input_transform.per_batch_transform
+    assert train_worker_input_transform_processor.collate_fn.func == input_transform.collate
+    assert train_worker_input_transform_processor.per_batch_transform.func == input_transform.per_batch_transform
 
-    _seq = val_worker_input_transform_preprocessor.per_sample_transform
+    _seq = val_worker_input_transform_processor.per_sample_transform
     assert _seq.pre_tensor_transform.func == input_transform.val_pre_tensor_transform
     assert _seq.to_tensor_transform.func == input_transform.to_tensor_transform
     assert _seq.post_tensor_transform.func == input_transform.post_tensor_transform
-    assert val_worker_input_transform_preprocessor.collate_fn.func == DataPipeline._identity
-    assert val_worker_input_transform_preprocessor.per_batch_transform.func == input_transform.per_batch_transform
+    assert val_worker_input_transform_processor.collate_fn.func == DataPipeline._identity
+    assert val_worker_input_transform_processor.per_batch_transform.func == input_transform.per_batch_transform
 
-    _seq = test_worker_input_transform_preprocessor.per_sample_transform
+    _seq = test_worker_input_transform_processor.per_sample_transform
     assert _seq.pre_tensor_transform.func == input_transform.pre_tensor_transform
     assert _seq.to_tensor_transform.func == input_transform.to_tensor_transform
     assert _seq.post_tensor_transform.func == input_transform.post_tensor_transform
-    assert test_worker_input_transform_preprocessor.collate_fn.func == input_transform.test_collate
-    assert test_worker_input_transform_preprocessor.per_batch_transform.func == input_transform.per_batch_transform
+    assert test_worker_input_transform_processor.collate_fn.func == input_transform.test_collate
+    assert test_worker_input_transform_processor.per_batch_transform.func == input_transform.per_batch_transform
 
-    _seq = predict_worker_input_transform_preprocessor.per_sample_transform
+    _seq = predict_worker_input_transform_processor.per_sample_transform
     assert _seq.pre_tensor_transform.func == input_transform.pre_tensor_transform
     assert _seq.to_tensor_transform.func == input_transform.predict_to_tensor_transform
     assert _seq.post_tensor_transform.func == input_transform.post_tensor_transform
-    assert predict_worker_input_transform_preprocessor.collate_fn.func == input_transform.collate
-    assert predict_worker_input_transform_preprocessor.per_batch_transform.func == input_transform.per_batch_transform
+    assert predict_worker_input_transform_processor.collate_fn.func == input_transform.collate
+    assert predict_worker_input_transform_processor.per_batch_transform.func == input_transform.per_batch_transform
 
 
 class CustomInputTransform(DefaultInputTransform):
@@ -284,20 +282,20 @@ class CustomInputTransform(DefaultInputTransform):
         pass
 
 
-def test_data_pipeline_predict_worker_input_transform_preprocessor_and_device_input_transform_preprocessor():
+def test_data_pipeline_predict_worker_input_transform_processor_and_device_input_transform_processor():
 
     input_transform = CustomInputTransform()
     data_pipeline = DataPipeline(input_transform=input_transform)
 
-    data_pipeline.worker_input_transform_preprocessor(RunningStage.TRAINING)
+    data_pipeline.worker_input_transform_processor(RunningStage.TRAINING)
     with pytest.raises(MisconfigurationException, match="are mutually exclusive"):
-        data_pipeline.worker_input_transform_preprocessor(RunningStage.VALIDATING)
+        data_pipeline.worker_input_transform_processor(RunningStage.VALIDATING)
     with pytest.raises(MisconfigurationException, match="are mutually exclusive"):
-        data_pipeline.worker_input_transform_preprocessor(RunningStage.TESTING)
-    data_pipeline.worker_input_transform_preprocessor(RunningStage.PREDICTING)
+        data_pipeline.worker_input_transform_processor(RunningStage.TESTING)
+    data_pipeline.worker_input_transform_processor(RunningStage.PREDICTING)
 
 
-def test_detach_preprocessing_from_model(tmpdir):
+def test_detach_input_transform_from_model(tmpdir):
     class CustomModel(Task):
         def __init__(self, output_transform: Optional[OutputTransform] = None):
             super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
@@ -314,7 +312,7 @@ def test_detach_preprocessing_from_model(tmpdir):
     assert model.train_dataloader().collate_fn == default_collate
     assert model.transfer_batch_to_device.__self__ == model
     model.on_train_dataloader()
-    assert isinstance(model.train_dataloader().collate_fn, _InputTransformPreprocessor)
+    assert isinstance(model.train_dataloader().collate_fn, _InputTransformProcessor)
     assert isinstance(model.transfer_batch_to_device, _StageOrchestrator)
     model.on_fit_end()
     assert model.transfer_batch_to_device.__self__ == model
@@ -407,7 +405,7 @@ def test_attaching_datapipeline_to_model(tmpdir):
 
         @staticmethod
         def _assert_stage_orchestrator_state(
-            stage_mapping: Dict, current_running_stage: RunningStage, cls=_InputTransformPreprocessor
+            stage_mapping: Dict, current_running_stage: RunningStage, cls=_InputTransformProcessor
         ):
             assert isinstance(stage_mapping[current_running_stage], cls)
             assert stage_mapping[current_running_stage]
@@ -422,7 +420,7 @@ def test_attaching_datapipeline_to_model(tmpdir):
             collate_fn = self.train_dataloader().collate_fn  # noqa F811
             assert collate_fn.stage == current_running_stage
             self._compare_pre_processor(
-                collate_fn, self.data_pipeline.worker_input_transform_preprocessor(current_running_stage)
+                collate_fn, self.data_pipeline.worker_input_transform_processor(current_running_stage)
             )
             assert isinstance(self.transfer_batch_to_device, _StageOrchestrator)
             self._assert_stage_orchestrator_state(self.transfer_batch_to_device._stage_mapping, current_running_stage)
@@ -437,7 +435,7 @@ def test_attaching_datapipeline_to_model(tmpdir):
             collate_fn = self.val_dataloader().collate_fn  # noqa F811
             assert collate_fn.stage == current_running_stage
             self._compare_pre_processor(
-                collate_fn, self.data_pipeline.worker_input_transform_preprocessor(current_running_stage)
+                collate_fn, self.data_pipeline.worker_input_transform_processor(current_running_stage)
             )
             assert isinstance(self.transfer_batch_to_device, _StageOrchestrator)
             self._assert_stage_orchestrator_state(self.transfer_batch_to_device._stage_mapping, current_running_stage)
@@ -452,7 +450,7 @@ def test_attaching_datapipeline_to_model(tmpdir):
             collate_fn = self.test_dataloader().collate_fn  # noqa F811
             assert collate_fn.stage == current_running_stage
             self._compare_pre_processor(
-                collate_fn, self.data_pipeline.worker_input_transform_preprocessor(current_running_stage)
+                collate_fn, self.data_pipeline.worker_input_transform_processor(current_running_stage)
             )
             assert isinstance(self.transfer_batch_to_device, _StageOrchestrator)
             self._assert_stage_orchestrator_state(self.transfer_batch_to_device._stage_mapping, current_running_stage)
@@ -468,7 +466,7 @@ def test_attaching_datapipeline_to_model(tmpdir):
             collate_fn = self.predict_dataloader().collate_fn  # noqa F811
             assert collate_fn.stage == current_running_stage
             self._compare_pre_processor(
-                collate_fn, self.data_pipeline.worker_input_transform_preprocessor(current_running_stage)
+                collate_fn, self.data_pipeline.worker_input_transform_processor(current_running_stage)
             )
             assert isinstance(self.transfer_batch_to_device, _StageOrchestrator)
             assert isinstance(self.predict_step, _StageOrchestrator)
@@ -961,23 +959,23 @@ def test_input_transform_transforms(tmpdir):
     assert input_transform._test_collate_in_worker_from_transform is None
     assert input_transform._predict_collate_in_worker_from_transform is False
 
-    train_input_transform_preprocessor = DataPipeline(
-        input_transform=input_transform
-    ).worker_input_transform_preprocessor(RunningStage.TRAINING)
-    val_input_transform_preprocessor = DataPipeline(
-        input_transform=input_transform
-    ).worker_input_transform_preprocessor(RunningStage.VALIDATING)
-    test_input_transform_preprocessor = DataPipeline(
-        input_transform=input_transform
-    ).worker_input_transform_preprocessor(RunningStage.TESTING)
-    predict_input_transform_preprocessor = DataPipeline(
-        input_transform=input_transform
-    ).worker_input_transform_preprocessor(RunningStage.PREDICTING)
+    train_input_transform_processor = DataPipeline(input_transform=input_transform).worker_input_transform_processor(
+        RunningStage.TRAINING
+    )
+    val_input_transform_processor = DataPipeline(input_transform=input_transform).worker_input_transform_processor(
+        RunningStage.VALIDATING
+    )
+    test_input_transform_processor = DataPipeline(input_transform=input_transform).worker_input_transform_processor(
+        RunningStage.TESTING
+    )
+    predict_input_transform_processor = DataPipeline(input_transform=input_transform).worker_input_transform_processor(
+        RunningStage.PREDICTING
+    )
 
-    assert train_input_transform_preprocessor.collate_fn.func == input_transform.collate
-    assert val_input_transform_preprocessor.collate_fn.func == input_transform.collate
-    assert test_input_transform_preprocessor.collate_fn.func == input_transform.collate
-    assert predict_input_transform_preprocessor.collate_fn.func == DataPipeline._identity
+    assert train_input_transform_processor.collate_fn.func == input_transform.collate
+    assert val_input_transform_processor.collate_fn.func == input_transform.collate
+    assert test_input_transform_processor.collate_fn.func == input_transform.collate
+    assert predict_input_transform_processor.collate_fn.func == DataPipeline._identity
 
     class CustomInputTransform(DefaultInputTransform):
         def per_sample_transform_on_device(self, sample: Any) -> Any:
@@ -998,15 +996,15 @@ def test_input_transform_transforms(tmpdir):
 
     data_pipeline = DataPipeline(input_transform=input_transform)
 
-    train_input_transform_preprocessor = data_pipeline.worker_input_transform_preprocessor(RunningStage.TRAINING)
+    train_input_transform_processor = data_pipeline.worker_input_transform_processor(RunningStage.TRAINING)
     with pytest.raises(MisconfigurationException, match="`per_batch_transform` and `per_sample_transform_on_device`"):
-        val_input_transform_preprocessor = data_pipeline.worker_input_transform_preprocessor(RunningStage.VALIDATING)
+        val_input_transform_processor = data_pipeline.worker_input_transform_processor(RunningStage.VALIDATING)
     with pytest.raises(MisconfigurationException, match="`per_batch_transform` and `per_sample_transform_on_device`"):
-        test_input_transform_preprocessor = data_pipeline.worker_input_transform_preprocessor(RunningStage.TESTING)
-    predict_input_transform_preprocessor = data_pipeline.worker_input_transform_preprocessor(RunningStage.PREDICTING)
+        test_input_transform_processor = data_pipeline.worker_input_transform_processor(RunningStage.TESTING)
+    predict_input_transform_processor = data_pipeline.worker_input_transform_processor(RunningStage.PREDICTING)
 
-    assert train_input_transform_preprocessor.collate_fn.func == input_transform.collate
-    assert predict_input_transform_preprocessor.collate_fn.func == DataPipeline._identity
+    assert train_input_transform_processor.collate_fn.func == input_transform.collate
+    assert predict_input_transform_processor.collate_fn.func == DataPipeline._identity
 
 
 def test_iterable_auto_dataset(tmpdir):

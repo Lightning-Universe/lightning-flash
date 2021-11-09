@@ -27,7 +27,7 @@ from flash.core.data.auto_dataset import IterableAutoDataset
 from flash.core.data.batch import _DeserializeProcessor
 from flash.core.data.data_source import DataSource
 from flash.core.data.io.input_transform import (
-    _InputTransformPreprocessor,
+    _InputTransformProcessor,
     _InputTransformSequential,
     DefaultInputTransform,
     InputTransform,
@@ -162,17 +162,17 @@ class DataPipeline:
         return samples
 
     def deserialize_processor(self) -> _DeserializeProcessor:
-        return self._create_collate_input_transform_preprocessors(RunningStage.PREDICTING)[0]
+        return self._create_collate_input_transform_processors(RunningStage.PREDICTING)[0]
 
-    def worker_input_transform_preprocessor(
+    def worker_input_transform_processor(
         self, running_stage: RunningStage, collate_fn: Optional[Callable] = None, is_serving: bool = False
-    ) -> _InputTransformPreprocessor:
-        return self._create_collate_input_transform_preprocessors(
+    ) -> _InputTransformProcessor:
+        return self._create_collate_input_transform_processors(
             running_stage, collate_fn=collate_fn, is_serving=is_serving
         )[1]
 
-    def device_input_transform_preprocessor(self, running_stage: RunningStage) -> _InputTransformPreprocessor:
-        return self._create_collate_input_transform_preprocessors(running_stage)[2]
+    def device_input_transform_processor(self, running_stage: RunningStage) -> _InputTransformProcessor:
+        return self._create_collate_input_transform_processors(running_stage)[2]
 
     def output_transform_processor(self, running_stage: RunningStage, is_serving=False) -> _OutputTransformProcessor:
         return self._create_output_transform_processor(running_stage, is_serving=is_serving)
@@ -211,12 +211,12 @@ class DataPipeline:
             return self._identity, collate
         return collate, self._identity
 
-    def _create_collate_input_transform_preprocessors(
+    def _create_collate_input_transform_processors(
         self,
         stage: RunningStage,
         collate_fn: Optional[Callable] = None,
         is_serving: bool = False,
-    ) -> Tuple[_DeserializeProcessor, _InputTransformPreprocessor, _InputTransformPreprocessor]:
+    ) -> Tuple[_DeserializeProcessor, _InputTransformProcessor, _InputTransformProcessor]:
 
         original_collate_fn = collate_fn
 
@@ -261,7 +261,7 @@ class DataPipeline:
 
         worker_collate_fn = (
             worker_collate_fn.collate_fn
-            if isinstance(worker_collate_fn, _InputTransformPreprocessor)
+            if isinstance(worker_collate_fn, _InputTransformProcessor)
             else worker_collate_fn
         )
 
@@ -275,7 +275,7 @@ class DataPipeline:
             getattr(input_transform, func_names["pre_tensor_transform"]),
             getattr(input_transform, func_names["to_tensor_transform"]),
         )
-        worker_input_transform_preprocessor = _InputTransformPreprocessor(
+        worker_input_transform_processor = _InputTransformProcessor(
             input_transform,
             worker_collate_fn,
             _InputTransformSequential(
@@ -289,8 +289,8 @@ class DataPipeline:
             getattr(input_transform, func_names["per_batch_transform"]),
             stage,
         )
-        worker_input_transform_preprocessor._original_collate_fn = original_collate_fn
-        device_input_transform_preprocessor = _InputTransformPreprocessor(
+        worker_input_transform_processor._original_collate_fn = original_collate_fn
+        device_input_transform_processor = _InputTransformProcessor(
             input_transform,
             device_collate_fn,
             getattr(input_transform, func_names["per_sample_transform_on_device"]),
@@ -299,11 +299,11 @@ class DataPipeline:
             apply_per_sample_transform=device_collate_fn != self._identity,
             on_device=True,
         )
-        return deserialize_processor, worker_input_transform_preprocessor, device_input_transform_preprocessor
+        return deserialize_processor, worker_input_transform_processor, device_input_transform_processor
 
     @staticmethod
     def _model_transfer_to_device_wrapper(
-        func: Callable, input_transform: _InputTransformPreprocessor, model: "Task", stage: RunningStage
+        func: Callable, input_transform: _InputTransformProcessor, model: "Task", stage: RunningStage
     ) -> Callable:
 
         if not isinstance(func, _StageOrchestrator):
@@ -380,7 +380,7 @@ class DataPipeline:
         setattr(curr_attr, final_name, new_loader)
         setattr(model, final_name, new_loader)
 
-    def _attach_preprocess_to_model(
+    def _attach_input_transform_to_model(
         self,
         model: "Task",
         stage: Optional[RunningStage] = None,
@@ -421,7 +421,7 @@ class DataPipeline:
                 if isinstance(loader, DataLoader):
                     dl_args = {k: v for k, v in vars(loader).items() if not k.startswith("_")}
 
-                    _, dl_args["collate_fn"], device_collate_fn = self._create_collate_input_transform_preprocessors(
+                    _, dl_args["collate_fn"], device_collate_fn = self._create_collate_input_transform_processors(
                         stage=stage, collate_fn=dl_args["collate_fn"], is_serving=is_serving
                     )
 
@@ -486,18 +486,18 @@ class DataPipeline:
         is_serving: bool = False,
     ):
         # not necessary to detach. preprocessing and postprocessing for stage will be overwritten.
-        self._attach_preprocess_to_model(model, stage)
+        self._attach_input_transform_to_model(model, stage)
 
         if not stage or stage == RunningStage.PREDICTING:
             self._attach_output_transform_to_model(model, RunningStage.PREDICTING, is_serving=is_serving)
 
     def _detach_from_model(self, model: "Task", stage: Optional[RunningStage] = None):
-        self._detach_preprocessing_from_model(model, stage)
+        self._detach_input_transform_from_model(model, stage)
 
         if not stage or stage == RunningStage.PREDICTING:
             self._detach_output_transform_from_model(model)
 
-    def _detach_preprocessing_from_model(self, model: "Task", stage: Optional[RunningStage] = None):
+    def _detach_input_transform_from_model(self, model: "Task", stage: Optional[RunningStage] = None):
         if not stage:
             stages = [RunningStage.TRAINING, RunningStage.VALIDATING, RunningStage.TESTING, RunningStage.PREDICTING]
         elif isinstance(stage, RunningStage):
@@ -542,7 +542,7 @@ class DataPipeline:
                         if default_collate:
                             dl_args["collate_fn"] = default_collate
 
-                    if isinstance(dl_args["collate_fn"], _InputTransformPreprocessor):
+                    if isinstance(dl_args["collate_fn"], _InputTransformProcessor):
                         dl_args["collate_fn"] = dl_args["collate_fn"]._original_collate_fn
 
                         if isinstance(dl_args["dataset"], (IterableAutoDataset, IterableDataset)):

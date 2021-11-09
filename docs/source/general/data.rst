@@ -337,7 +337,7 @@ Flash takes care of calling the right hooks for each stage.
 
 Example::
 
-    # This will be wrapped into a :class:`~flash.core.data.io.input_transform.flash.core.data.io.input_transform._InputTransformPreprocessor`.
+    # This will be wrapped into a :class:`~flash.core.data.io.input_transform.flash.core.data.io.input_transform._InputTransformProcessor`.
     def collate_fn(samples: Sequence[Any]) -> Any:
 
         # This will be wrapped into a :class:`~flash.core.data.io.input_transform._InputTransformSequential`
@@ -367,7 +367,7 @@ Flash takes care of calling the right hooks for each stage.
 
 Example::
 
-    # This will be wrapped into a :class:`~flash.core.data.io.input_transform._InputTransformPreprocessor`
+    # This will be wrapped into a :class:`~flash.core.data.io.input_transform._InputTransformProcessor`
     def collate_fn(samples: Sequence[Any]) -> Any:
 
         # if ``per_batch_transform`` hook is overridden, those functions below will be no-ops

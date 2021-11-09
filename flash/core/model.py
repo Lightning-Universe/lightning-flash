@@ -492,13 +492,13 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         dataset = data_pipeline.data_source.generate_dataset(x, running_stage)
         dataloader = self.process_predict_dataset(dataset)
         x = list(dataloader.dataset)
-        x = data_pipeline.worker_input_transform_preprocessor(running_stage, collate_fn=dataloader.collate_fn)(x)
+        x = data_pipeline.worker_input_transform_processor(running_stage, collate_fn=dataloader.collate_fn)(x)
         # todo (tchaton): Remove this when sync with Lightning master.
         if len(inspect.signature(self.transfer_batch_to_device).parameters) == 3:
             x = self.transfer_batch_to_device(x, self.device, 0)
         else:
             x = self.transfer_batch_to_device(x, self.device)
-        x = data_pipeline.device_input_transform_preprocessor(running_stage)(x)
+        x = data_pipeline.device_input_transform_processor(running_stage)(x)
         x = x[0] if isinstance(x, list) else x
         predictions = self.predict_step(x, 0)  # batch_idx is always 0 when running with `model.predict`
         predictions = data_pipeline.output_transform_processor(running_stage)(predictions)

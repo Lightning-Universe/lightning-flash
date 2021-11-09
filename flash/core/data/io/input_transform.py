@@ -535,8 +535,8 @@ class DefaultInputTransform(InputTransform):
 
 
 class _InputTransformSequential(torch.nn.Module):
-    """This class is used to chain 3 functions together for the _InputTransformPreprocessor
-    ``per_sample_transform`` function.
+    """This class is used to chain 3 functions together for the _InputTransformProcessor ``per_sample_transform``
+    function.
 
     1. ``pre_tensor_transform``
     2. ``to_tensor_transform``
@@ -604,7 +604,7 @@ class _InputTransformSequential(torch.nn.Module):
         )
 
 
-class _InputTransformPreprocessor(torch.nn.Module):
+class _InputTransformProcessor(torch.nn.Module):
     """
     This class is used to encapsultate the following functions of a InputTransformInputTransform Object:
     Inside a worker:
@@ -703,7 +703,7 @@ class _InputTransformPreprocessor(torch.nn.Module):
     def __str__(self) -> str:
         # todo: define repr function which would take object and string attributes to be shown
         return (
-            "_InputTransformPreprocessor:\n"
+            "_InputTransformProcessor:\n"
             f"\t(per_sample_transform): {str(self.per_sample_transform)}\n"
             f"\t(collate_fn): {str(self.collate_fn)}\n"
             f"\t(per_batch_transform): {str(self.per_batch_transform)}\n"

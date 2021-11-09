@@ -281,7 +281,7 @@ class DataModule(pl.LightningDataModule):
 
     def _resolve_collate_fn(self, dataset: Dataset, running_stage: RunningStage) -> Optional[Callable]:
         if isinstance(dataset, (BaseAutoDataset, SplitDataset)):
-            return self.data_pipeline.worker_input_transform_preprocessor(running_stage)
+            return self.data_pipeline.worker_input_transform_processor(running_stage)
 
     def _train_dataloader(self) -> DataLoader:
         """Configure the train dataloader of the datamodule."""

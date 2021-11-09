@@ -16,10 +16,16 @@ from unittest.mock import Mock
 import pytest
 import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from torch.utils.data._utils.collate import default_collate
 
-from flash.core.data.data_module import DataModule
+from flash import DataModule
 from flash.core.data.data_source import DefaultDataSources
-from flash.core.data.io.input_transform import DefaultInputTransform
+from flash.core.data.io.input_transform import (
+    _InputTransformProcessor,
+    _InputTransformSequential,
+    DefaultInputTransform,
+)
+from flash.core.utilities.stages import RunningStage
 
 
 class CustomInputTransform(DefaultInputTransform):
@@ -31,6 +37,46 @@ class CustomInputTransform(DefaultInputTransform):
             },
             default_data_source="test",
         )
+
+
+def test_input_transform_processor_str():
+    input_transform_processor = _InputTransformProcessor(
+        Mock(name="input_transform"),
+        default_collate,
+        torch.relu,
+        torch.softmax,
+        RunningStage.TRAINING,
+        False,
+        True,
+    )
+    assert str(input_transform_processor) == (
+        "_InputTransformProcessor:\n"
+        "\t(per_sample_transform): FuncModule(relu)\n"
+        "\t(collate_fn): FuncModule(default_collate)\n"
+        "\t(per_batch_transform): FuncModule(softmax)\n"
+        "\t(apply_per_sample_transform): False\n"
+        "\t(on_device): True\n"
+        "\t(stage): RunningStage.TRAINING"
+    )
+
+
+def test_sequential_str():
+    sequential = _InputTransformSequential(
+        Mock(name="input_transform"),
+        torch.softmax,
+        torch.as_tensor,
+        torch.relu,
+        RunningStage.TRAINING,
+        True,
+    )
+    assert str(sequential) == (
+        "_InputTransformSequential:\n"
+        "\t(pre_tensor_transform): FuncModule(softmax)\n"
+        "\t(to_tensor_transform): FuncModule(as_tensor)\n"
+        "\t(post_tensor_transform): FuncModule(relu)\n"
+        "\t(assert_contains_tensor): True\n"
+        "\t(stage): RunningStage.TRAINING"
+    )
 
 
 def test_data_source_of_name():
