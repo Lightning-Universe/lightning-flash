@@ -273,7 +273,7 @@ def test_Input_labelstudio_video():
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/video_data.zip")
     data = {"data_folder": "data/upload/", "export_json": "data/project.json", "multi_label": True}
     input_transform = VideoClassificationInputTransform()
-    ds = input_transform._of_name(InputFormat.LABELSTUDIO)
+    ds = input_transform.input_of_name(InputFormat.LABELSTUDIO)
     train, val, test, predict = ds.to_datasets(train_data=data, test_data=data)
     sample_iter = iter(train)
     sample = next(sample_iter)

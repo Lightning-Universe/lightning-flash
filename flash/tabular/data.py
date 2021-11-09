@@ -249,19 +249,19 @@ class TabularData(DataModule):
 
     @property
     def codes(self) -> Dict[str, str]:
-        return self._.codes
+        return self._input.codes
 
     @property
     def num_classes(self) -> int:
-        return self._.num_classes
+        return self._input.num_classes
 
     @property
     def cat_cols(self) -> Optional[List[str]]:
-        return self._.cat_cols
+        return self._input.cat_cols
 
     @property
     def num_cols(self) -> Optional[List[str]]:
-        return self._.num_cols
+        return self._input.num_cols
 
     @property
     def num_features(self) -> int:
