@@ -68,7 +68,7 @@ class DataModule(pl.LightningDataModule):
         data_source: The :class:`~flash.core.data.data_source.DataSource` that was used to create the datasets.
         input_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` to use when constructing the
             :class:`~flash.core.data.data_pipeline.DataPipeline`. If ``None``, a
-            :class:`~flash.core.data.process.DefaultInputTransform` will be used.
+            :class:`~flash.core.data.io.input_transform.DefaultInputTransform` will be used.
         output_transform: The :class:`~flash.core.data.io.output_transform.OutputTransform` to use when constructing the
             :class:`~flash.core.data.data_pipeline.DataPipeline`. If ``None``, a plain
             :class:`~flash.core.data.io.output_transform.OutputTransform` will be used.

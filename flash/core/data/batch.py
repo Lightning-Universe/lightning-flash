@@ -60,18 +60,6 @@ class _DeserializeProcessor(torch.nn.Module):
         return sample
 
 
-class _SerializeProcessor(torch.nn.Module):
-    def __init__(
-        self,
-        serializer: "Serializer",
-    ):
-        super().__init__()
-        self.serializer = convert_to_modules(serializer)
-
-    def forward(self, sample):
-        return self.serializer(sample)
-
-
 def default_uncollate(batch: Any):
     """
     This function is used to uncollate a batch into samples.
