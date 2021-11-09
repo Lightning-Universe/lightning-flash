@@ -35,14 +35,8 @@ class GraphEmbedder(Task):
 
     required_extras: str = "graph"
 
-    def __init__(
-        self,
-        backbone: nn.Module,
-    ):
-        super().__init__(
-            model=None,
-            preprocess=GraphClassificationPreprocess(),
-        )
+    def __init__(self, backbone: nn.Module):
+        super().__init__(model=None, preprocess=GraphClassificationPreprocess())
 
         self.save_hyperparameters()
 
