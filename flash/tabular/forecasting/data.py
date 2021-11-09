@@ -20,7 +20,8 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
-from flash.core.data.process import Deserializer, InputTransform
+from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.process import Deserializer
 from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _FORECASTING_AVAILABLE, _PANDAS_AVAILABLE, requires
 

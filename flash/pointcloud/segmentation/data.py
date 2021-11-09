@@ -2,7 +2,8 @@ from typing import Any, Callable, Dict, Optional, Tuple
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
-from flash.core.data.process import Deserializer, InputTransform
+from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.process import Deserializer
 from flash.core.utilities.imports import requires
 from flash.pointcloud.segmentation.open3d_ml.sequences_dataset import SequencesDataset
 

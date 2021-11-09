@@ -5,7 +5,8 @@ from torch.utils.data import Sampler
 from flash.core.data.base_viz import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import BaseDataFormat, DataSource, DefaultDataKeys, DefaultDataSources
-from flash.core.data.process import Deserializer, InputTransform
+from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.process import Deserializer
 from flash.pointcloud.detection.open3d_ml.data_sources import (
     PointCloudObjectDetectionDataFormat,
     PointCloudObjectDetectorFoldersDataSource,
