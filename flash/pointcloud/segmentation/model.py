@@ -11,26 +11,25 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import torch
-import torchmetrics
 from pytorch_lightning import Callback, LightningModule
 from torch import nn
 from torch.nn import functional as F
 from torch.optim import Optimizer
-from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader, Sampler
 from torchmetrics import IoU
 
 from flash.core.classification import ClassificationTask
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.process import Serializer
+from flash.core.data.io.output import Output
 from flash.core.data.states import CollateFn
 from flash.core.finetuning import BaseFinetuning
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
+from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 from flash.pointcloud.segmentation.backbones import POINTCLOUD_SEGMENTATION_BACKBONES
 
 if _POINTCLOUD_AVAILABLE:
@@ -64,7 +63,7 @@ class PointCloudSegmentationFinetuning(BaseFinetuning):
         )
 
 
-class PointCloudSegmentationSerializer(Serializer):
+class PointCloudSegmentationOutput(Output):
     pass
 
 
@@ -73,21 +72,20 @@ class PointCloudSegmentation(ClassificationTask):
     pointcloud data.
 
     Args:
-        num_features: The number of features (elements) in the input data.
         num_classes: The number of classes (outputs) for this :class:`~flash.core.model.Task`.
         backbone: The backbone name (or a tuple of ``nn.Module``, output size) to use.
         backbone_kwargs: Any additional kwargs to pass to the backbone constructor.
+        head: a `nn.Module` to use on top of the backbone. The output dimension should match the `num_classes`
+            argument. If not set will default to a single linear layer.
         loss_fn: The loss function to use. If ``None``, a default will be selected by the
             :class:`~flash.core.classification.ClassificationTask` depending on the ``multi_label`` argument.
-        optimizer: The optimizer or optimizer class to use.
-        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
-        scheduler: The scheduler or scheduler class to use.
-        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
         metrics: Any metrics to use with this :class:`~flash.core.model.Task`. If ``None``, a default will be selected
             by the :class:`~flash.core.classification.ClassificationTask` depending on the ``multi_label`` argument.
         learning_rate: The learning rate for the optimizer.
         multi_label: If ``True``, this will be treated as a multi-label classification problem.
-        serializer: The :class:`~flash.core.data.process.Serializer` to use for prediction outputs.
+        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
     """
 
     backbones: FlashRegistry = POINTCLOUD_SEGMENTATION_BACKBONES
@@ -100,15 +98,13 @@ class PointCloudSegmentation(ClassificationTask):
         backbone: Union[str, Tuple[nn.Module, int]] = "RandLANet",
         backbone_kwargs: Optional[Dict] = None,
         head: Optional[nn.Module] = None,
-        loss_fn: Optional[Callable] = torch.nn.functional.cross_entropy,
-        optimizer: Union[Type[torch.optim.Optimizer], torch.optim.Optimizer] = torch.optim.Adam,
-        optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
-        metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
+        loss_fn: LOSS_FN_TYPE = torch.nn.functional.cross_entropy,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
+        metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-2,
         multi_label: bool = False,
-        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = PointCloudSegmentationSerializer(),
+        output: OUTPUT_TYPE = PointCloudSegmentationOutput(),
     ):
         import flash
 
@@ -119,13 +115,11 @@ class PointCloudSegmentation(ClassificationTask):
             model=None,
             loss_fn=loss_fn,
             optimizer=optimizer,
-            optimizer_kwargs=optimizer_kwargs,
-            scheduler=scheduler,
-            scheduler_kwargs=scheduler_kwargs,
+            lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
             multi_label=multi_label,
-            serializer=serializer,
+            output=output,
         )
 
         self.save_hyperparameters()
@@ -192,6 +186,7 @@ class PointCloudSegmentation(ClassificationTask):
         shuffle: bool = False,
         drop_last: bool = True,
         sampler: Optional[Sampler] = None,
+        **kwargs
     ) -> DataLoader:
 
         if not _POINTCLOUD_AVAILABLE:

@@ -133,6 +133,19 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-${{ matrix.python-version }}-${{ join(matrix.topic,'-') }}-${{ matrix.requires }}-pip-
 
+    - name: Install vissl
+      if: matrix.topic[1] == 'image_extras'
+      run: |
+        pip install git+https://github.com/facebookresearch/ClassyVision.git
+        pip install git+https://github.com/facebookresearch/vissl.git
+
+    - name: Install graph test dependencies
+      if: matrix.topic[0] == 'graph'
+      run: |
+        pip install torch==1.9.0+cpu torchvision==0.10.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+        pip install torch-scatter -f https://data.pyg.org/whl/torch-1.9.0+cpu.html
+        pip install torch-sparse -f https://data.pyg.org/whl/torch-1.9.0+cpu.html
+
     - name: Install dependencies
       run: |
         python --version
@@ -147,7 +160,8 @@ jobs:
     - name: Install serve test dependencies
       if: matrix.topic[0] == 'serve'
       run: |
-        pip install '.[all]' --upgrade
+        sudo apt-get install libsndfile1
+        pip install '.[all,audio]' --upgrade
 
     - name: Install audio test dependencies
       if: matrix.topic[0] == 'audio'
@@ -160,8 +174,8 @@ jobs:
       uses: actions/cache@v2
       with:
         path: data # This path is specific to Ubuntu
-        key: lightning-flash-datasets-${{ hashFiles('tests/examples/test_scripts.py') }}
-        restore-keys: lightning-flash-datasets-
+        key: flash-datasets-${{ hashFiles('tests/examples/test_scripts.py') }}
+        restore-keys: flash-datasets-
 
     - name: Tests
       env:

@@ -62,7 +62,9 @@ def json_data_with_field(tmpdir):
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_csv(tmpdir):
     csv_path = csv_data(tmpdir)
-    dm = SummarizationData.from_csv("input", "target", backbone=TEST_BACKBONE, train_file=csv_path, batch_size=1)
+    dm = SummarizationData.from_csv(
+        "input", "target", backbone=TEST_BACKBONE, train_file=csv_path, batch_size=1, src_lang="en_XX", tgt_lang="ro_RO"
+    )
     batch = next(iter(dm.train_dataloader()))
     assert "labels" in batch
     assert "input_ids" in batch
@@ -80,6 +82,8 @@ def test_from_files(tmpdir):
         val_file=csv_path,
         test_file=csv_path,
         batch_size=1,
+        src_lang="en_XX",
+        tgt_lang="ro_RO",
     )
     batch = next(iter(dm.val_dataloader()))
     assert "labels" in batch
@@ -91,29 +95,33 @@ def test_from_files(tmpdir):
 
 
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_postprocess_tokenizer(tmpdir):
-    """Tests that the tokenizer property in ``SummarizationPostprocess`` resolves correctly when a different
+def test_output_transform_tokenizer(tmpdir):
+    """Tests that the tokenizer property in ``SummarizationOutputTransform`` resolves correctly when a different
     backbone is used."""
     backbone = "sshleifer/bart-tiny-random"
     csv_path = csv_data(tmpdir)
     dm = SummarizationData.from_csv(
-        "input",
-        "target",
-        backbone=backbone,
-        train_file=csv_path,
-        batch_size=1,
+        "input", "target", backbone=backbone, train_file=csv_path, batch_size=1, src_lang="en_XX", tgt_lang="ro_RO"
     )
     pipeline = dm.data_pipeline
     pipeline.initialize()
-    assert pipeline._postprocess_pipeline.backbone == backbone
-    assert pipeline._postprocess_pipeline.tokenizer is not None
+    assert pipeline._output_transform.backbone_state.backbone == backbone
+    assert pipeline._output_transform.tokenizer is not None
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_json(tmpdir):
     json_path = json_data(tmpdir)
-    dm = SummarizationData.from_json("input", "target", backbone=TEST_BACKBONE, train_file=json_path, batch_size=1)
+    dm = SummarizationData.from_json(
+        "input",
+        "target",
+        backbone=TEST_BACKBONE,
+        train_file=json_path,
+        batch_size=1,
+        src_lang="en_XX",
+        tgt_lang="ro_RO",
+    )
     batch = next(iter(dm.train_dataloader()))
     assert "labels" in batch
     assert "input_ids" in batch
@@ -124,7 +132,14 @@ def test_from_json(tmpdir):
 def test_from_json_with_field(tmpdir):
     json_path = json_data_with_field(tmpdir)
     dm = SummarizationData.from_json(
-        "input", "target", backbone=TEST_BACKBONE, train_file=json_path, batch_size=1, field="data"
+        "input",
+        "target",
+        backbone=TEST_BACKBONE,
+        train_file=json_path,
+        batch_size=1,
+        field="data",
+        src_lang="en_XX",
+        tgt_lang="ro_RO",
     )
     batch = next(iter(dm.train_dataloader()))
     assert "labels" in batch

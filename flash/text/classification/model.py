@@ -13,19 +13,20 @@
 # limitations under the License.
 import os
 import warnings
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Dict, List
 
 import torch
 from pytorch_lightning import Callback
-from torchmetrics import Metric
 
 from flash.core.classification import ClassificationTask, Labels
-from flash.core.data.process import Serializer
-from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.core.data.data_source import DefaultDataKeys
+from flash.core.registry import FlashRegistry
+from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
+from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
+from flash.text.classification.backbones import TEXT_CLASSIFIER_BACKBONES
 from flash.text.ort_callback import ORTCallback
 
-if _TEXT_AVAILABLE:
-    from transformers import AutoModelForSequenceClassification
+if _TRANSFORMERS_AVAILABLE:
     from transformers.modeling_outputs import Seq2SeqSequenceClassifierOutput, SequenceClassifierOutput
 
 
@@ -37,29 +38,33 @@ class TextClassifier(ClassificationTask):
     Args:
         num_classes: Number of classes to classify.
         backbone: A model to use to compute text features can be any BERT model from HuggingFace/transformersimage .
-        optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
         metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
             package, a custom metric inherenting from `torchmetrics.Metric`, a callable function or a list/dict
             containing a combination of the aforementioned. In all cases, each metric needs to have the signature
             `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training, defaults to `1e-3`
         multi_label: Whether the targets are multi-label or not.
-        serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
+        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
         enable_ort: Enable Torch ONNX Runtime Optimization: https://onnxruntime.ai/docs/#onnx-runtime-for-training
     """
 
     required_extras: str = "text"
 
+    backbones: FlashRegistry = TEXT_CLASSIFIER_BACKBONES
+
     def __init__(
         self,
         num_classes: int,
-        backbone: str = "prajjwal1/bert-medium",
-        loss_fn: Optional[Callable] = None,
-        optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-        metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
+        backbone: str = "prajjwal1/bert-tiny",
+        loss_fn: LOSS_FN_TYPE = None,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
+        metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-2,
         multi_label: bool = False,
-        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
+        output: OUTPUT_TYPE = None,
         enable_ort: bool = False,
     ):
         self.save_hyperparameters()
@@ -75,13 +80,14 @@ class TextClassifier(ClassificationTask):
             model=None,
             loss_fn=loss_fn,
             optimizer=optimizer,
+            lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
             multi_label=multi_label,
-            serializer=serializer or Labels(multi_label=multi_label),
+            output=output or Labels(multi_label=multi_label),
         )
         self.enable_ort = enable_ort
-        self.model = AutoModelForSequenceClassification.from_pretrained(backbone, num_labels=num_classes)
+        self.model = self.backbones.get(backbone)(num_labels=num_classes)
         self.save_hyperparameters()
 
     @property
@@ -102,7 +108,7 @@ class TextClassifier(ClassificationTask):
         return super().to_metrics_format(x)
 
     def step(self, batch, batch_idx, metrics) -> dict:
-        target = batch.pop("labels")
+        target = batch.pop(DefaultDataKeys.TARGET)
         batch = (batch, target)
         return super().step(batch, batch_idx, metrics)
 

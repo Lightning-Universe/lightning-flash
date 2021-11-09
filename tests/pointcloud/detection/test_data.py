@@ -54,5 +54,5 @@ def test_pointcloud_object_detection_data(tmpdir):
     model.eval()
 
     predictions = model.predict([join(predict_path, "scans/000000.bin")])
-    assert torch.stack(predictions[0][DefaultDataKeys.INPUT]).shape[1] == 4
+    assert predictions[0][DefaultDataKeys.INPUT].shape[1] == 4
     assert len(predictions[0][DefaultDataKeys.PREDS]) == 158

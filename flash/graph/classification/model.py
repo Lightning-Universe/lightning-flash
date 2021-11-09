@@ -11,44 +11,74 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, List, Mapping, Sequence, Type, Union
+from typing import Any, Callable, List, Optional, Type, Union
 
 import torch
-from torch import nn
+from torch import nn, Tensor
 from torch.nn import functional as F
 from torch.nn import Linear
 
 from flash.core.classification import ClassificationTask
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
+from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 
 if _GRAPH_AVAILABLE:
     from torch_geometric.nn import BatchNorm, GCNConv, global_mean_pool, MessagePassing
 else:
-    MessagePassing = None
-    GCNConv = None
+    MessagePassing = object
+    GCNConv = object
 
 
 class GraphBlock(nn.Module):
-    def __init__(self, nc_input, nc_output, conv_cls, act=nn.ReLU(), **conv_kwargs):
+    """Graph convolutional block.
+
+    Args:
+        nc_input: number of input channels
+        nc_output: number of output channels
+        conv_cls: graph convolutional class to use
+        act: activation function to use
+        **conv_kwargs: additional kwargs used for initialization of convolutional operator
+    """
+
+    def __init__(
+        self,
+        nc_input: int,
+        nc_output: int,
+        conv_cls: nn.Module,
+        act: Union[Callable, nn.Module] = nn.ReLU(),
+        **conv_kwargs
+    ):
         super().__init__()
         self.conv = conv_cls(nc_input, nc_output, **conv_kwargs)
         self.norm = BatchNorm(nc_output)
         self.act = act
 
-    def forward(self, x, edge_index, edge_weight):
+    def forward(self, x: Tensor, edge_index: Tensor, edge_weight: Optional[Tensor] = None) -> Tensor:
         x = self.conv(x, edge_index, edge_weight=edge_weight)
         x = self.norm(x)
         return self.act(x)
 
 
 class BaseGraphModel(nn.Module):
+    """Base convolutional graph model.
+
+    Args:
+        num_features: number of input features
+        hidden_channels: list of integers with the number of channels in all the hidden layers.
+            The length of the list determines the depth of the network.
+        num_classes: integer determining the number of classes
+        conv_cls: graph convolutional class to use as building blocks
+        act: activation function to use between layers
+        **conv_kwargs: additional kwargs used for initialization of convolutional operator
+    """
+
     def __init__(
         self,
         num_features: int,
         hidden_channels: List[int],
         num_classes: int,
         conv_cls: Type[MessagePassing],
-        act=nn.ReLU(),
+        act: Union[Callable, nn.Module] = nn.ReLU(),
         **conv_kwargs: Any
     ):
         super().__init__()
@@ -66,7 +96,7 @@ class BaseGraphModel(nn.Module):
 
         self.lin = Linear(nc_output, num_classes)
 
-    def forward(self, data):
+    def forward(self, data: Any) -> Tensor:
         x, edge_index, edge_weight = data.x, data.edge_index, data.edge_attr
         # 1. Obtain node embeddings
         for block in self.blocks:
@@ -89,12 +119,13 @@ class GraphClassifier(ClassificationTask):
         num_features: Number of columns in table (not including target column).
         num_classes: Number of classes to classify.
         hidden_channels: Hidden dimension sizes.
-        loss_fn: Loss function for training, defaults to cross entropy.
-        optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
-        metrics: Metrics to compute for training and evaluation.
         learning_rate: Learning rate to use for training, defaults to `1e-3`
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
+        metrics: Metrics to compute for training and evaluation.
         model: GraphNN used, defaults to BaseGraphModel.
         conv_cls: kind of convolution used in model, defaults to GCNConv
+        **conv_kwargs: additional kwargs used for initialization of convolutional operator
     """
 
     required_extras = "graph"
@@ -104,11 +135,12 @@ class GraphClassifier(ClassificationTask):
         num_features: int,
         num_classes: int,
         hidden_channels: Union[List[int], int] = 512,
-        loss_fn: Callable = F.cross_entropy,
-        optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-        metrics: Union[Callable, Mapping, Sequence, None] = None,
-        learning_rate: float = 1e-3,
         model: torch.nn.Module = None,
+        loss_fn: LOSS_FN_TYPE = F.cross_entropy,
+        learning_rate: float = 1e-3,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
+        metrics: METRICS_TYPE = None,
         conv_cls: Type[MessagePassing] = GCNConv,
         **conv_kwargs
     ):
@@ -125,6 +157,7 @@ class GraphClassifier(ClassificationTask):
             model=model,
             loss_fn=loss_fn,
             optimizer=optimizer,
+            lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
         )

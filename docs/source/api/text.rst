@@ -20,14 +20,16 @@ ______________
     ~classification.model.TextClassifier
     ~classification.data.TextClassificationData
 
-    classification.data.TextClassificationPostprocess
+    classification.data.TextClassificationOutputTransform
     classification.data.TextClassificationPreprocess
-    classification.data.TextCSVDataSource
-    classification.data.TextDataSource
     classification.data.TextDeserializer
-    classification.data.TextFileDataSource
+    classification.data.TextDataSource
+    classification.data.TextCSVDataSource
     classification.data.TextJSONDataSource
-    classification.data.TextSentencesDataSource
+    classification.data.TextDataFrameDataSource
+    classification.data.TextParquetDataSource
+    classification.data.TextHuggingFaceDatasetDataSource
+    classification.data.TextListDataSource
 
 Question Answering
 __________________
@@ -37,10 +39,19 @@ __________________
     :nosignatures:
     :template: classtemplate.rst
 
-    ~seq2seq.question_answering.model.QuestionAnsweringTask
-    ~seq2seq.question_answering.data.QuestionAnsweringData
+    ~question_answering.model.QuestionAnsweringTask
+    ~question_answering.data.QuestionAnsweringData
 
-    seq2seq.question_answering.data.QuestionAnsweringPreprocess
+    question_answering.data.QuestionAnsweringBackboneState
+    question_answering.data.QuestionAnsweringCSVDataSource
+    question_answering.data.QuestionAnsweringDataSource
+    question_answering.data.QuestionAnsweringDictionaryDataSource
+    question_answering.data.QuestionAnsweringFileDataSource
+    question_answering.data.QuestionAnsweringJSONDataSource
+    question_answering.data.QuestionAnsweringOutputTransform
+    question_answering.data.QuestionAnsweringPreprocess
+    question_answering.data.SQuADDataSource
+
 
 Summarization
 _____________
@@ -85,7 +96,7 @@ _______________
     seq2seq.core.data.Seq2SeqDataSource
     seq2seq.core.data.Seq2SeqFileDataSource
     seq2seq.core.data.Seq2SeqJSONDataSource
-    seq2seq.core.data.Seq2SeqPostprocess
+    seq2seq.core.data.Seq2SeqOutputTransform
     seq2seq.core.data.Seq2SeqPreprocess
     seq2seq.core.data.Seq2SeqSentencesDataSource
     seq2seq.core.metrics.BLEUScore

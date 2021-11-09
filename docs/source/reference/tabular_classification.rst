@@ -1,3 +1,9 @@
+.. customcarditem::
+   :header: Tabular Classification
+   :card_description: Learn to classify tabular records with Flash and build an example model to predict survival rates on the Titanic.
+   :image: https://pl-flash-data.s3.amazonaws.com/assets/thumbnails/tabular_classification.svg
+   :tags: Tabular,Classification
+
 .. _tabular_classification:
 
 ######################

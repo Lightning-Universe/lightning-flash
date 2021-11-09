@@ -15,7 +15,6 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 import torch
-from pytorch_lightning.trainer.states import RunningStage
 from torch import nn
 
 from flash.core.data.base_viz import BaseVisualization
@@ -25,6 +24,7 @@ from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources, Lab
 from flash.core.data.process import Preprocess
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _SKLEARN_AVAILABLE
+from flash.core.utilities.stages import RunningStage
 
 if _SKLEARN_AVAILABLE:
     from sklearn.utils import Bunch
@@ -176,7 +176,7 @@ class TemplateData(DataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         **preprocess_kwargs: Any,
     ):
         """This is our custom ``from_*`` method. It expects scikit-learn ``Bunch`` objects as input and passes them

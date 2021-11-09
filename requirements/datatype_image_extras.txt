@@ -1,2 +1,13 @@
 matplotlib
 fiftyone
+classy_vision
+vissl>=0.1.5
+icevision>=0.8
+icedata
+effdet
+albumentations
+learn2learn
+structlog==21.1.0   # remove when baal resolved its dependency.
+baal
+fastface
+fairscale

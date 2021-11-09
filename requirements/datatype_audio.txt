@@ -1,4 +1,4 @@
 torchaudio
-soundfile>=0.10.2
+librosa>=0.8.1
 transformers>=4.5
 datasets>=1.8

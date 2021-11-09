@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Optional
 
 from flash.audio import AudioClassificationData
 from flash.core.data.utils import download_data
@@ -23,7 +22,7 @@ __all__ = ["audio_classification"]
 
 def from_urban8k(
     batch_size: int = 4,
-    num_workers: Optional[int] = None,
+    num_workers: int = 0,
     **preprocess_kwargs,
 ) -> AudioClassificationData:
     """Downloads and loads the Urban 8k sounds images data set."""

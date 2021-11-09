@@ -11,12 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Tuple
+from typing import Any, Callable, Dict, List, Tuple
 
 from torch import nn
 
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE, requires_extras
+from flash.core.utilities.imports import _ICEVISION_AVAILABLE, requires
 
 if _ICEVISION_AVAILABLE:
     from icevision.core import tasks
@@ -34,6 +34,7 @@ if _ICEVISION_AVAILABLE:
         MasksRecordComponent,
         RecordIDRecordComponent,
     )
+    from icevision.data.prediction import Prediction
     from icevision.tfms import A
 
 
@@ -101,51 +102,38 @@ def to_icevision_record(sample: Dict[str, Any]):
     return record
 
 
-def from_icevision_record(record: "BaseRecord"):
-    sample = {
-        DefaultDataKeys.METADATA: {
-            "image_id": record.record_id,
-        }
-    }
+def from_icevision_detection(record: "BaseRecord"):
+    detection = record.detection
 
-    if record.img is not None:
-        sample[DefaultDataKeys.INPUT] = record.img
-        filepath = getattr(record, "filepath", None)
-        if filepath is not None:
-            sample[DefaultDataKeys.METADATA]["filepath"] = filepath
-    elif record.filepath is not None:
-        sample[DefaultDataKeys.INPUT] = record.filepath
+    result = {}
 
-    sample[DefaultDataKeys.TARGET] = {}
-
-    if hasattr(record.detection, "bboxes"):
-        sample[DefaultDataKeys.TARGET]["bboxes"] = []
-        for bbox in record.detection.bboxes:
-            bbox_list = list(bbox.xywh)
-            bbox_dict = {
-                "xmin": bbox_list[0],
-                "ymin": bbox_list[1],
-                "width": bbox_list[2],
-                "height": bbox_list[3],
+    if hasattr(detection, "bboxes"):
+        result["bboxes"] = [
+            {
+                "xmin": bbox.xmin,
+                "ymin": bbox.ymin,
+                "width": bbox.width,
+                "height": bbox.height,
             }
-            sample[DefaultDataKeys.TARGET]["bboxes"].append(bbox_dict)
+            for bbox in detection.bboxes
+        ]
 
-    if hasattr(record.detection, "masks"):
-        masks = record.detection.masks
+    if hasattr(detection, "masks"):
+        masks = detection.masks
 
         if isinstance(masks, EncodedRLEs):
             masks = masks.to_mask(record.height, record.width)
 
         if isinstance(masks, MaskArray):
-            sample[DefaultDataKeys.TARGET]["masks"] = masks.data
+            result["masks"] = masks.data
         else:
             raise RuntimeError("Masks are expected to be a MaskArray or EncodedRLEs.")
 
-    if hasattr(record.detection, "keypoints"):
-        keypoints = record.detection.keypoints
+    if hasattr(detection, "keypoints"):
+        keypoints = detection.keypoints
 
-        sample[DefaultDataKeys.TARGET]["keypoints"] = []
-        sample[DefaultDataKeys.TARGET]["keypoints_metadata"] = []
+        result["keypoints"] = []
+        result["keypoints_metadata"] = []
 
         for keypoint in keypoints:
             keypoints_list = []
@@ -157,13 +145,42 @@ def from_icevision_record(record: "BaseRecord"):
                         "visible": v,
                     }
                 )
-            sample[DefaultDataKeys.TARGET]["keypoints"].append(keypoints_list)
+            result["keypoints"].append(keypoints_list)
 
             # TODO: Unpack keypoints_metadata
-            sample[DefaultDataKeys.TARGET]["keypoints_metadata"].append(keypoint.metadata)
+            result["keypoints_metadata"].append(keypoint.metadata)
 
-    if getattr(record.detection, "label_ids", None) is not None:
-        sample[DefaultDataKeys.TARGET]["labels"] = list(record.detection.label_ids)
+    if getattr(detection, "label_ids", None) is not None:
+        result["labels"] = list(detection.label_ids)
+
+    if getattr(detection, "scores", None) is not None:
+        result["scores"] = list(detection.scores)
+
+    return result
+
+
+def from_icevision_record(record: "BaseRecord"):
+    sample = {
+        DefaultDataKeys.METADATA: {
+            "size": (record.height, record.width),
+        }
+    }
+
+    if getattr(record, "record_id", None) is not None:
+        sample[DefaultDataKeys.METADATA]["image_id"] = record.record_id
+
+    if getattr(record, "filepath", None) is not None:
+        sample[DefaultDataKeys.METADATA]["filepath"] = record.filepath
+
+    if record.img is not None:
+        sample[DefaultDataKeys.INPUT] = record.img
+        filepath = getattr(record, "filepath", None)
+        if filepath is not None:
+            sample[DefaultDataKeys.METADATA]["filepath"] = filepath
+    elif record.filepath is not None:
+        sample[DefaultDataKeys.INPUT] = record.filepath
+
+    sample[DefaultDataKeys.TARGET] = from_icevision_detection(record)
 
     if getattr(record.detection, "class_map", None) is not None:
         sample[DefaultDataKeys.METADATA]["class_map"] = record.detection.class_map
@@ -171,8 +188,21 @@ def from_icevision_record(record: "BaseRecord"):
     return sample
 
 
+def from_icevision_predictions(predictions: List["Prediction"]):
+    result = []
+    for prediction in predictions:
+        result.append(from_icevision_detection(prediction.pred))
+    return result
+
+
 class IceVisionTransformAdapter(nn.Module):
-    def __init__(self, transform):
+    """
+    Args:
+        transform: list of transformation functions to apply
+
+    """
+
+    def __init__(self, transform: List[Callable]):
         super().__init__()
         self.transform = A.Adapter(transform)
 
@@ -182,7 +212,7 @@ class IceVisionTransformAdapter(nn.Module):
         return from_icevision_record(record)
 
 
-@requires_extras("image")
+@requires(["image", "icevision"])
 def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
     """The default transforms from IceVision."""
     return {
@@ -190,7 +220,7 @@ def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
     }
 
 
-@requires_extras("image")
+@requires(["image", "icevision"])
 def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
     """The default augmentations from IceVision."""
     return {

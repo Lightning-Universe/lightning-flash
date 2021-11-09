@@ -1,3 +1,8 @@
+.. customcarditem::
+   :header: Object Detection
+   :card_description: Learn to detect objects in images with Flash and build an example detector with the COCO data set.
+   :image: https://pl-flash-data.s3.amazonaws.com/assets/thumbnails/object_detection.svg
+   :tags: Image,Detection
 
 .. _object_detection:
 
@@ -68,3 +73,35 @@ To view configuration options and options for running the object detector with y
 .. code-block:: bash
 
     flash object_detection --help
+
+------
+
+**********************
+Custom Transformations
+**********************
+
+Flash automatically applies some default image / mask transformations and augmentations, but you may wish to customize these for your own use case.
+The base :class:`~flash.core.data.process.Preprocess` defines 7 hooks for different stages in the data loading pipeline.
+For object-detection tasks, you can leverage the transformations from `Albumentations <https://github.com/albumentations-team/albumentations>`__ with the :class:`~flash.core.integrations.icevision.transforms.IceVisionTransformAdapter`.
+
+.. code-block:: python
+
+    import albumentations as alb
+    from icevision.tfms import A
+
+    from flash.core.integrations.icevision.transforms import IceVisionTransformAdapter
+    from flash.image import ObjectDetectionData
+
+    train_transform = {
+        "pre_tensor_transform": transforms.IceVisionTransformAdapter(
+            [*A.resize_and_pad(128), A.Normalize(), A.Flip(0.4), alb.RandomBrightnessContrast()]
+        )
+    }
+
+    datamodule = ObjectDetectionData.from_coco(
+        train_folder="data/coco128/images/train2017/",
+        train_ann_file="data/coco128/annotations/instances_train2017.json",
+        val_split=0.1,
+        image_size=128,
+        train_transform=train_transform,
+    )

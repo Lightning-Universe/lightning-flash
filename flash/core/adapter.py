@@ -14,6 +14,7 @@
 from abc import abstractmethod
 from typing import Any, Callable, Optional
 
+import torch.jit
 from torch import nn
 from torch.utils.data import DataLoader, Sampler
 
@@ -59,6 +60,10 @@ class Adapter(DatasetProcessor, ModuleWrapperBase, nn.Module):
         pass
 
 
+def identity_collate_fn(x):
+    return x
+
+
 class AdapterTask(Task):
     """The ``AdapterTask`` is a :class:`~flash.core.model.Task` which wraps an :class:`~flash.core.adapter.Adapter`
     and forwards all of the hooks.
@@ -73,11 +78,12 @@ class AdapterTask(Task):
 
         self.adapter = adapter
 
+    @torch.jit.unused
     @property
     def backbone(self) -> nn.Module:
         return self.adapter.backbone
 
-    def forward(self, x: Any) -> Any:
+    def forward(self, x: torch.Tensor) -> Any:
         return self.adapter.forward(x)
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
@@ -104,6 +110,7 @@ class AdapterTask(Task):
     def process_train_dataset(
         self,
         dataset: BaseAutoDataset,
+        trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -113,12 +120,21 @@ class AdapterTask(Task):
         sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         return self.adapter.process_train_dataset(
-            dataset, batch_size, num_workers, pin_memory, collate_fn, shuffle, drop_last, sampler
+            dataset,
+            trainer,
+            batch_size,
+            num_workers,
+            pin_memory,
+            collate_fn,
+            shuffle,
+            drop_last,
+            sampler,
         )
 
     def process_val_dataset(
         self,
         dataset: BaseAutoDataset,
+        trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -128,12 +144,21 @@ class AdapterTask(Task):
         sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         return self.adapter.process_val_dataset(
-            dataset, batch_size, num_workers, pin_memory, collate_fn, shuffle, drop_last, sampler
+            dataset,
+            trainer,
+            batch_size,
+            num_workers,
+            pin_memory,
+            collate_fn,
+            shuffle,
+            drop_last,
+            sampler,
         )
 
     def process_test_dataset(
         self,
         dataset: BaseAutoDataset,
+        trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -143,7 +168,15 @@ class AdapterTask(Task):
         sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         return self.adapter.process_test_dataset(
-            dataset, batch_size, num_workers, pin_memory, collate_fn, shuffle, drop_last, sampler
+            dataset,
+            trainer,
+            batch_size,
+            num_workers,
+            pin_memory,
+            collate_fn,
+            shuffle,
+            drop_last,
+            sampler,
         )
 
     def process_predict_dataset(
@@ -152,11 +185,18 @@ class AdapterTask(Task):
         batch_size: int = 1,
         num_workers: int = 0,
         pin_memory: bool = False,
-        collate_fn: Callable = lambda x: x,
+        collate_fn: Callable = identity_collate_fn,
         shuffle: bool = False,
         drop_last: bool = True,
         sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         return self.adapter.process_predict_dataset(
-            dataset, batch_size, num_workers, pin_memory, collate_fn, shuffle, drop_last, sampler
+            dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
         )

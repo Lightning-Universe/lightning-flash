@@ -17,11 +17,7 @@ from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataSources
 from flash.core.data.process import Preprocess
-from flash.core.integrations.icevision.data import (
-    IceDataParserDataSource,
-    IceVisionParserDataSource,
-    IceVisionPathsDataSource,
-)
+from flash.core.integrations.icevision.data import IceVisionParserDataSource, IceVisionPathsDataSource
 from flash.core.integrations.icevision.transforms import default_transforms
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
 
@@ -51,7 +47,7 @@ class KeypointDetectionPreprocess(Preprocess):
             data_sources={
                 "coco": IceVisionParserDataSource(parser=COCOKeyPointsParser),
                 DefaultDataSources.FILES: IceVisionPathsDataSource(),
-                DefaultDataSources.FOLDERS: IceDataParserDataSource(parser=parser),
+                DefaultDataSources.FOLDERS: IceVisionParserDataSource(parser=parser),
             },
             default_data_source=DefaultDataSources.FILES,
         )
@@ -94,7 +90,7 @@ class KeypointDetectionData(DataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         **preprocess_kwargs: Any,
     ):
         """Creates a :class:`~flash.image.keypoint_detection.data.KeypointDetectionData` object from the given data

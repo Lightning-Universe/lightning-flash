@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 import warnings
-from typing import Any, Callable, Dict, Mapping, Optional, Type, Union
+from typing import Any, Dict
 
 import torch
 import torch.nn as nn
@@ -21,17 +21,28 @@ import torch.nn as nn
 from flash.audio.speech_recognition.backbone import SPEECH_RECOGNITION_BACKBONES
 from flash.audio.speech_recognition.collate import DataCollatorCTCWithPadding
 from flash.audio.speech_recognition.data import SpeechRecognitionBackboneState
-from flash.core.data.process import Serializer
 from flash.core.data.states import CollateFn
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _AUDIO_AVAILABLE
+from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 
 if _AUDIO_AVAILABLE:
-    from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
+    from transformers import Wav2Vec2Processor
 
 
 class SpeechRecognition(Task):
+    """The ``SpeechRecognition`` task is a :class:`~flash.Task` for converting speech to text. For more details, see
+    :ref:`speech_recognition`.
+
+    Args:
+        backbone: Any speech recognition model from `HuggingFace/transformers
+            <https://huggingface.co/models?pipeline_tag=automatic-speech-recognition>`_.
+        learning_rate: Learning rate to use for training, defaults to ``1e-5``.
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
+        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
+    """
 
     backbones: FlashRegistry = SPEECH_RECOGNITION_BACKBONES
 
@@ -40,10 +51,10 @@ class SpeechRecognition(Task):
     def __init__(
         self,
         backbone: str = "facebook/wav2vec2-base-960h",
-        loss_fn: Optional[Callable] = None,
-        optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
         learning_rate: float = 1e-5,
-        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
+        output: OUTPUT_TYPE = None,
     ):
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
         # disable HF thousand warnings
@@ -51,15 +62,13 @@ class SpeechRecognition(Task):
         # set os environ variable for multiprocesses
         os.environ["PYTHONWARNINGS"] = "ignore"
 
-        model = (
-            self.backbones.get(backbone)() if backbone in self.backbones else Wav2Vec2ForCTC.from_pretrained(backbone)
-        )
+        model = self.backbones.get(backbone)()
         super().__init__(
             model=model,
-            loss_fn=loss_fn,
             optimizer=optimizer,
+            lr_scheduler=lr_scheduler,
             learning_rate=learning_rate,
-            serializer=serializer,
+            output=output,
         )
 
         self.save_hyperparameters()

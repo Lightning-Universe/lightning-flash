@@ -39,7 +39,6 @@ from typing import (
 import numpy as np
 import pandas as pd
 import torch
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.enums import LightningEnum
 from torch.nn import Module
 from torch.utils.data.dataset import Dataset
@@ -49,6 +48,7 @@ from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableA
 from flash.core.data.properties import ProcessState, Properties
 from flash.core.data.utils import CurrentRunningStageFuncContext
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
+from flash.core.utilities.stages import RunningStage
 
 SampleCollection = None
 if _FIFTYONE_AVAILABLE:
@@ -158,8 +158,13 @@ class DefaultDataSources(LightningEnum):
     TENSORS = "tensors"
     CSV = "csv"
     JSON = "json"
+    PARQUET = "parquet"
     DATASETS = "datasets"
+    HUGGINGFACE_DATASET = "hf_dataset"
     FIFTYONE = "fiftyone"
+    DATAFRAME = "data_frame"
+    LISTS = "lists"
+    LABELSTUDIO = "labelstudio"
 
     # TODO: Create a FlashEnum class???
     def __hash__(self) -> int:
@@ -464,6 +469,9 @@ class PathsDataSource(SequenceDataSource):
 
             data = make_dataset(data, class_to_idx, extensions=self.extensions)
             return [{DefaultDataKeys.INPUT: input, DefaultDataKeys.TARGET: target} for input, target in data]
+        elif dataset is not None:
+            dataset.num_classes = len(np.unique(data[1]))
+
         return list(
             filter(
                 lambda sample: has_file_allowed_extension(sample[DefaultDataKeys.INPUT], self.extensions),
@@ -598,13 +606,12 @@ class LoaderDataFrameDataSource(
                 }
                 for _, row in data_frame.iterrows()
             ]
-        else:
-            return [
-                {
-                    DefaultDataKeys.INPUT: row[input_key],
-                }
-                for _, row in data_frame.iterrows()
-            ]
+        return [
+            {
+                DefaultDataKeys.INPUT: row[input_key],
+            }
+            for _, row in data_frame.iterrows()
+        ]
 
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         # TODO: simplify this duplicated code from PathsDataSource
@@ -622,6 +629,16 @@ class LoaderDataFrameDataSource(
 class TensorDataSource(SequenceDataSource[torch.Tensor]):
     """The ``TensorDataSource`` is a ``SequenceDataSource`` which expects the input to
     :meth:`~flash.core.data.data_source.DataSource.load_data` to be a sequence of ``torch.Tensor`` objects."""
+
+    def load_data(
+        self,
+        data: Tuple[Sequence[SEQUENCE_DATA_TYPE], Optional[Sequence]],
+        dataset: Optional[Any] = None,
+    ) -> Sequence[Mapping[str, Any]]:
+        # TODO: Bring back the code to work out how many classes there are
+        if len(data) == 2:
+            dataset.num_classes = len(torch.unique(torch.tensor(data[1])))
+        return super().load_data(data, dataset)
 
 
 class NumpyDataSource(SequenceDataSource[np.ndarray]):

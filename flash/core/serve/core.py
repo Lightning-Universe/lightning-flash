@@ -8,7 +8,7 @@ import torch
 
 from flash.core.serve.types.base import BaseType
 from flash.core.serve.utils import download_file
-from flash.core.utilities.imports import _PYDANTIC_AVAILABLE, requires_extras
+from flash.core.utilities.imports import _PYDANTIC_AVAILABLE, requires
 
 if _PYDANTIC_AVAILABLE:
     from pydantic import FilePath, HttpUrl, parse_obj_as, ValidationError
@@ -102,7 +102,7 @@ class Servable:
     *  How to handle ``__init__`` args not recorded in hparams of ``pl.LightningModule``
     """
 
-    @requires_extras("serve")
+    @requires("serve")
     def __init__(
         self,
         *args: ServableValidArgs_T,

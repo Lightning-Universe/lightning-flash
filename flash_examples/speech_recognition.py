@@ -17,7 +17,7 @@ import flash
 from flash.audio import SpeechRecognition, SpeechRecognitionData
 from flash.core.data.utils import download_data
 
-# # 1. Create the DataModule
+# 1. Create the DataModule
 download_data("https://pl-flash-data.s3.amazonaws.com/timit_data.zip", "./data")
 
 datamodule = SpeechRecognitionData.from_json(

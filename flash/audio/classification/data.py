@@ -17,27 +17,38 @@ import numpy as np
 
 from flash.audio.classification.transforms import default_transforms, train_default_transforms
 from flash.core.data.data_source import (
+    DefaultDataKeys,
     DefaultDataSources,
     has_file_allowed_extension,
     LoaderDataFrameDataSource,
+    NumpyDataSource,
     PathsDataSource,
 )
 from flash.core.data.process import Deserializer, Preprocess
-from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
+from flash.core.data.utils import image_default_loader
 from flash.image.classification.data import ImageClassificationData
 from flash.image.data import ImageDeserializer, IMG_EXTENSIONS, NP_EXTENSIONS
-
-if _TORCHVISION_AVAILABLE:
-    from torchvision.datasets.folder import default_loader
 
 
 def spectrogram_loader(filepath: str):
     if has_file_allowed_extension(filepath, IMG_EXTENSIONS):
-        img = default_loader(filepath)
+        img = image_default_loader(filepath)
         data = np.array(img)
     else:
         data = np.load(filepath)
     return data
+
+
+class AudioClassificationNumpyDataSource(NumpyDataSource):
+    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
+        sample[DefaultDataKeys.INPUT] = np.transpose(sample[DefaultDataKeys.INPUT], (1, 2, 0))
+        return sample
+
+
+class AudioClassificationTensorDataSource(AudioClassificationNumpyDataSource):
+    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
+        sample[DefaultDataKeys.INPUT] = sample[DefaultDataKeys.INPUT].numpy()
+        return super().load_sample(sample, dataset=dataset)
 
 
 class AudioClassificationPathsDataSource(PathsDataSource):
@@ -58,8 +69,8 @@ class AudioClassificationPreprocess(Preprocess):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         spectrogram_size: Tuple[int, int] = (128, 128),
-        time_mask_param: int = 80,
-        freq_mask_param: int = 80,
+        time_mask_param: Optional[int] = None,
+        freq_mask_param: Optional[int] = None,
         deserializer: Optional["Deserializer"] = None,
     ):
         self.spectrogram_size = spectrogram_size
@@ -76,6 +87,8 @@ class AudioClassificationPreprocess(Preprocess):
                 DefaultDataSources.FOLDERS: AudioClassificationPathsDataSource(),
                 "data_frame": AudioClassificationDataFrameDataSource(),
                 DefaultDataSources.CSV: AudioClassificationDataFrameDataSource(),
+                DefaultDataSources.NUMPY: AudioClassificationNumpyDataSource(),
+                DefaultDataSources.TENSORS: AudioClassificationTensorDataSource(),
             },
             deserializer=deserializer or ImageDeserializer(),
             default_data_source=DefaultDataSources.FILES,

@@ -30,12 +30,13 @@ from flash.core.data.data_source import (
     DefaultDataSources,
     PathsDataSource,
 )
-from flash.core.data.process import Deserializer, Postprocess, Preprocess
+from flash.core.data.io.output_transform import OutputTransform
+from flash.core.data.process import Deserializer, Preprocess
 from flash.core.data.properties import ProcessState
-from flash.core.utilities.imports import _AUDIO_AVAILABLE, requires_extras
+from flash.core.utilities.imports import _AUDIO_AVAILABLE, requires
 
 if _AUDIO_AVAILABLE:
-    import soundfile as sf
+    import librosa
     from datasets import Dataset as HFDataset
     from datasets import load_dataset
     from transformers import Wav2Vec2CTCTokenizer
@@ -44,11 +45,16 @@ else:
 
 
 class SpeechRecognitionDeserializer(Deserializer):
+    def __init__(self, sampling_rate: int):
+        super().__init__()
+
+        self.sampling_rate = sampling_rate
+
     def deserialize(self, sample: Any) -> Dict:
         encoded_with_padding = (sample + "===").encode("ascii")
         audio = base64.b64decode(encoded_with_padding)
         buffer = io.BytesIO(audio)
-        data, sampling_rate = sf.read(buffer)
+        data, sampling_rate = librosa.load(buffer, sr=self.sampling_rate)
         return {
             DefaultDataKeys.INPUT: data,
             DefaultDataKeys.METADATA: {"sampling_rate": sampling_rate},
@@ -61,7 +67,8 @@ class SpeechRecognitionDeserializer(Deserializer):
 
 
 class BaseSpeechRecognition:
-    def _load_sample(self, sample: Dict[str, Any]) -> Any:
+    @staticmethod
+    def _load_sample(sample: Dict[str, Any], sampling_rate: int) -> Any:
         path = sample[DefaultDataKeys.INPUT]
         if (
             not os.path.isabs(path)
@@ -69,16 +76,17 @@ class BaseSpeechRecognition:
             and "root" in sample[DefaultDataKeys.METADATA]
         ):
             path = os.path.join(sample[DefaultDataKeys.METADATA]["root"], path)
-        speech_array, sampling_rate = sf.read(path)
+        speech_array, sampling_rate = librosa.load(path, sr=sampling_rate)
         sample[DefaultDataKeys.INPUT] = speech_array
         sample[DefaultDataKeys.METADATA] = {"sampling_rate": sampling_rate}
         return sample
 
 
 class SpeechRecognitionFileDataSource(DataSource, BaseSpeechRecognition):
-    def __init__(self, filetype: Optional[str] = None):
+    def __init__(self, sampling_rate: int, filetype: Optional[str] = None):
         super().__init__()
         self.filetype = filetype
+        self.sampling_rate = sampling_rate
 
     def load_data(
         self,
@@ -107,42 +115,55 @@ class SpeechRecognitionFileDataSource(DataSource, BaseSpeechRecognition):
         ]
 
     def load_sample(self, sample: Dict[str, Any], dataset: Any = None) -> Any:
-        return self._load_sample(sample)
+        return self._load_sample(sample, self.sampling_rate)
 
 
 class SpeechRecognitionCSVDataSource(SpeechRecognitionFileDataSource):
-    def __init__(self):
-        super().__init__(filetype="csv")
+    def __init__(self, sampling_rate: int):
+        super().__init__(sampling_rate, filetype="csv")
 
 
 class SpeechRecognitionJSONDataSource(SpeechRecognitionFileDataSource):
-    def __init__(self):
-        super().__init__(filetype="json")
+    def __init__(self, sampling_rate: int):
+        super().__init__(sampling_rate, filetype="json")
 
 
 class SpeechRecognitionDatasetDataSource(DatasetDataSource, BaseSpeechRecognition):
+    def __init__(self, sampling_rate: int):
+        super().__init__()
+
+        self.sampling_rate = sampling_rate
+
     def load_data(self, data: Dataset, dataset: Optional[Any] = None) -> Union[Sequence[Mapping[str, Any]]]:
         if isinstance(data, HFDataset):
             data = list(zip(data["file"], data["text"]))
         return super().load_data(data, dataset)
 
+    def load_sample(self, sample: Dict[str, Any], dataset: Any = None) -> Any:
+        if isinstance(sample[DefaultDataKeys.INPUT], (str, Path)):
+            sample = self._load_sample(sample, self.sampling_rate)
+        return sample
+
 
 class SpeechRecognitionPathsDataSource(PathsDataSource, BaseSpeechRecognition):
-    def __init__(self):
-        super().__init__(("wav", "ogg", "flac", "mat"))
+    def __init__(self, sampling_rate: int):
+        super().__init__(("wav", "ogg", "flac", "mat", "mp3"))
+
+        self.sampling_rate = sampling_rate
 
     def load_sample(self, sample: Dict[str, Any], dataset: Any = None) -> Any:
-        return self._load_sample(sample)
+        return self._load_sample(sample, self.sampling_rate)
 
 
 class SpeechRecognitionPreprocess(Preprocess):
-    @requires_extras("audio")
+    @requires("audio")
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
+        sampling_rate: int = 16000,
     ):
         super().__init__(
             train_transform=train_transform,
@@ -150,13 +171,13 @@ class SpeechRecognitionPreprocess(Preprocess):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_sources={
-                DefaultDataSources.CSV: SpeechRecognitionCSVDataSource(),
-                DefaultDataSources.JSON: SpeechRecognitionJSONDataSource(),
-                DefaultDataSources.FILES: SpeechRecognitionPathsDataSource(),
-                DefaultDataSources.DATASETS: SpeechRecognitionDatasetDataSource(),
+                DefaultDataSources.CSV: SpeechRecognitionCSVDataSource(sampling_rate),
+                DefaultDataSources.JSON: SpeechRecognitionJSONDataSource(sampling_rate),
+                DefaultDataSources.FILES: SpeechRecognitionPathsDataSource(sampling_rate),
+                DefaultDataSources.DATASETS: SpeechRecognitionDatasetDataSource(sampling_rate),
             },
             default_data_source=DefaultDataSources.FILES,
-            deserializer=SpeechRecognitionDeserializer(),
+            deserializer=SpeechRecognitionDeserializer(sampling_rate),
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
@@ -170,14 +191,14 @@ class SpeechRecognitionPreprocess(Preprocess):
 @dataclass(unsafe_hash=True, frozen=True)
 class SpeechRecognitionBackboneState(ProcessState):
     """The ``SpeechRecognitionBackboneState`` stores the backbone in use by the
-    :class:`~flash.audio.speech_recognition.data.SpeechRecognitionPostprocess`
+    :class:`~flash.audio.speech_recognition.data.SpeechRecognitionOutputTransform`
     """
 
     backbone: str
 
 
-class SpeechRecognitionPostprocess(Postprocess):
-    @requires_extras("audio")
+class SpeechRecognitionOutputTransform(OutputTransform):
+    @requires("audio")
     def __init__(self):
         super().__init__()
 
@@ -217,4 +238,4 @@ class SpeechRecognitionData(DataModule):
     """Data Module for text classification tasks."""
 
     preprocess_cls = SpeechRecognitionPreprocess
-    postprocess_cls = SpeechRecognitionPostprocess
+    output_transform_cls = SpeechRecognitionOutputTransform

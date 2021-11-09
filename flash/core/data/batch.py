@@ -14,7 +14,6 @@
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, TYPE_CHECKING, Union
 
 import torch
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 
@@ -26,9 +25,10 @@ from flash.core.data.utils import (
     CurrentFuncContext,
     CurrentRunningStageContext,
 )
+from flash.core.utilities.stages import RunningStage
 
 if TYPE_CHECKING:
-    from flash.core.data.process import Deserializer, Preprocess, Serializer
+    from flash.core.data.process import Deserializer, Preprocess
 
 
 class _Sequential(torch.nn.Module):
@@ -133,18 +133,6 @@ class _DeserializeProcessor(torch.nn.Module):
                 self.callback.on_to_tensor_transform(sample, RunningStage.PREDICTING)
 
         return sample
-
-
-class _SerializeProcessor(torch.nn.Module):
-    def __init__(
-        self,
-        serializer: "Serializer",
-    ):
-        super().__init__()
-        self.serializer = convert_to_modules(serializer)
-
-    def forward(self, sample):
-        return self.serializer(sample)
 
 
 class _Preprocessor(torch.nn.Module):
@@ -256,80 +244,6 @@ class _Preprocessor(torch.nn.Module):
         )
 
 
-class _Postprocessor(torch.nn.Module):
-    """This class is used to encapsultate the following functions of a Postprocess Object:
-
-    Inside main process:
-        per_batch_transform: Function to transform a batch
-        per_sample_transform: Function to transform an individual sample
-        uncollate_fn: Function to split a batch into samples
-        per_sample_transform: Function to transform an individual sample
-        save_fn: Function to save all data
-        save_per_sample: Function to save an individual sample
-        is_serving: Whether the Postprocessor is used in serving mode.
-    """
-
-    def __init__(
-        self,
-        uncollate_fn: Callable,
-        per_batch_transform: Callable,
-        per_sample_transform: Callable,
-        serializer: Optional[Callable],
-        save_fn: Optional[Callable] = None,
-        save_per_sample: bool = False,
-        is_serving: bool = False,
-    ):
-        super().__init__()
-        self.uncollate_fn = convert_to_modules(uncollate_fn)
-        self.per_batch_transform = convert_to_modules(per_batch_transform)
-        self.per_sample_transform = convert_to_modules(per_sample_transform)
-        self.serializer = convert_to_modules(serializer)
-        self.save_fn = convert_to_modules(save_fn)
-        self.save_per_sample = convert_to_modules(save_per_sample)
-        self.is_serving = is_serving
-
-    @staticmethod
-    def _extract_metadata(batch: Any) -> Tuple[Any, Optional[Any]]:
-        metadata = None
-        if isinstance(batch, Mapping) and DefaultDataKeys.METADATA in batch:
-            metadata = batch.pop(DefaultDataKeys.METADATA, None)
-        return batch, metadata
-
-    def forward(self, batch: Sequence[Any]):
-        batch, metadata = self._extract_metadata(batch)
-        uncollated = self.uncollate_fn(self.per_batch_transform(batch))
-        if metadata:
-            for sample, sample_metadata in zip(uncollated, metadata):
-                sample[DefaultDataKeys.METADATA] = sample_metadata
-
-        final_preds = [self.per_sample_transform(sample) for sample in uncollated]
-
-        if self.serializer is not None:
-            final_preds = [self.serializer(sample) for sample in final_preds]
-
-        if isinstance(uncollated, Tensor) and isinstance(final_preds[0], Tensor):
-            final_preds = torch.stack(final_preds)
-        else:
-            final_preds = type(final_preds)(final_preds)
-
-        if self.save_fn:
-            if self.save_per_sample:
-                for pred in final_preds:
-                    self.save_fn(pred)
-            else:
-                self.save_fn(final_preds)
-        return final_preds
-
-    def __str__(self) -> str:
-        return (
-            "_Postprocessor:\n"
-            f"\t(per_batch_transform): {str(self.per_batch_transform)}\n"
-            f"\t(uncollate_fn): {str(self.uncollate_fn)}\n"
-            f"\t(per_sample_transform): {str(self.per_sample_transform)}\n"
-            f"\t(serializer): {str(self.serializer)}"
-        )
-
-
 def default_uncollate(batch: Any):
     """
     This function is used to uncollate a batch into samples.
@@ -344,13 +258,13 @@ def default_uncollate(batch: Any):
             return batch
         return list(torch.unbind(batch, 0))
 
-    if isinstance(batch, Mapping):
+    if isinstance(batch, dict):
         return [batch_type(dict(zip(batch, default_uncollate(t)))) for t in zip(*batch.values())]
 
     if isinstance(batch, tuple) and hasattr(batch, "_fields"):  # namedtuple
-        return [batch_type(*default_uncollate(sample)) for sample in zip(*batch)]
+        return [batch_type(*sample) for sample in zip(*batch)]
 
     if isinstance(batch, Sequence) and not isinstance(batch, str):
-        return [default_uncollate(sample) for sample in batch]
+        return [sample for sample in batch]
 
     return batch

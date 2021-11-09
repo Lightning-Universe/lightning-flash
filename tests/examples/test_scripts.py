@@ -18,7 +18,7 @@ from unittest import mock
 import pytest
 
 import flash
-from flash.core.utilities.imports import _SKLEARN_AVAILABLE
+from flash.core.utilities.imports import _LEARN2LEARN_AVAILABLE, _SKLEARN_AVAILABLE
 from tests.examples.utils import run_test
 from tests.helpers.utils import (
     _AUDIO_TESTING,
@@ -36,9 +36,6 @@ from tests.helpers.utils import (
     "file",
     [
         pytest.param(
-            "custom_task.py", marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
-        ),
-        pytest.param(
             "audio_classification.py",
             marks=pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed"),
         ),
@@ -54,7 +51,17 @@ from tests.helpers.utils import (
             "image_classification_multi_label.py",
             marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed"),
         ),
+        pytest.param(
+            "image_classification_meta_learning.py.py",
+            marks=pytest.mark.skipif(
+                not (_IMAGE_TESTING and _LEARN2LEARN_AVAILABLE), reason="image/learn2learn libraries aren't installed"
+            ),
+        ),
         # pytest.param("finetuning", "object_detection.py"),  # TODO: takes too long.
+        pytest.param(
+            "question_answering.py",
+            marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed"),
+        ),
         pytest.param(
             "semantic_segmentation.py",
             marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed"),
@@ -67,6 +74,10 @@ from tests.helpers.utils import (
         ),
         pytest.param(
             "tabular_classification.py",
+            marks=pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed"),
+        ),
+        pytest.param(
+            "tabular_regression.py",
             marks=pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed"),
         ),
         pytest.param("template.py", marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")),

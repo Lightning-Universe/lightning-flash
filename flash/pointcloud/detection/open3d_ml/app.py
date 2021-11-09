@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import numpy as np
-import torch
 from torch.utils.data.dataset import Dataset
 
 import flash
@@ -157,7 +156,7 @@ if _POINTCLOUD_AVAILABLE:
 
                 for pred in predictions:
                     data = {
-                        "points": torch.stack(pred[DefaultDataKeys.INPUT])[:, :3],
+                        "points": pred[DefaultDataKeys.INPUT][:, :3],
                         "name": pred[DefaultDataKeys.METADATA],
                     }
                     bounding_box = pred[DefaultDataKeys.PREDS]

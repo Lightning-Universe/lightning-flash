@@ -1,3 +1,9 @@
+.. customcarditem::
+   :header: Translation
+   :card_description: Learn to translate text with Flash and build an example model which translates from English to Romanian.
+   :image: https://pl-flash-data.s3.amazonaws.com/assets/thumbnails/translation.svg
+   :tags: Text,Translation,NLP
+
 .. _translation:
 
 ###########
@@ -87,6 +93,8 @@ You can now perform inference from your client like this:
     :lines: 14-
 
 ------
+
+.. _translation_ort:
 
 **********************************************
 Accelerate Training & Inference with Torch ORT

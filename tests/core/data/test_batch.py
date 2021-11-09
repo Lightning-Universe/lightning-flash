@@ -15,11 +15,11 @@ from collections import namedtuple
 from unittest.mock import Mock
 
 import torch
-from pytorch_lightning.trainer.states import RunningStage
 from torch.testing import assert_allclose
 from torch.utils.data._utils.collate import default_collate
 
-from flash.core.data.batch import _Postprocessor, _Preprocessor, _Sequential, default_uncollate
+from flash.core.data.batch import _Preprocessor, _Sequential, default_uncollate
+from flash.core.utilities.stages import RunningStage
 
 
 def test_sequential_str():
@@ -62,22 +62,6 @@ def test_preprocessor_str():
     )
 
 
-def test_postprocessor_str():
-    postprocessor = _Postprocessor(
-        default_uncollate,
-        torch.relu,
-        torch.softmax,
-        None,
-    )
-    assert str(postprocessor) == (
-        "_Postprocessor:\n"
-        "\t(per_batch_transform): FuncModule(relu)\n"
-        "\t(uncollate_fn): FuncModule(default_uncollate)\n"
-        "\t(per_sample_transform): FuncModule(softmax)\n"
-        "\t(serializer): None"
-    )
-
-
 class TestDefaultUncollate:
 
     BATCH_SIZE = 3
@@ -113,9 +97,9 @@ class TestDefaultUncollate:
 
         for sample in output:
             assert list(sample.keys()) == ["a", "b", "c"]
-            assert isinstance(sample["a"], list)
+            assert isinstance(sample["a"], torch.Tensor)
             assert len(sample["a"]) == 4
-            assert isinstance(sample["b"], list)
+            assert isinstance(sample["b"], torch.Tensor)
             assert len(sample["b"]) == 2
             assert isinstance(sample["c"], torch.Tensor)
             assert len(sample["c"].shape) == 0
@@ -130,7 +114,7 @@ class TestDefaultUncollate:
 
         for sample in output:
             assert isinstance(sample, Batch)
-            assert isinstance(sample.x, list)
+            assert isinstance(sample.x, torch.Tensor)
             assert len(sample.x) == 4
             assert isinstance(sample.y, torch.Tensor)
             assert len(sample.y.shape) == 0

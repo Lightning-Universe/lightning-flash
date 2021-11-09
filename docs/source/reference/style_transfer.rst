@@ -1,3 +1,8 @@
+.. customcarditem::
+   :header: Style Transfer
+   :card_description: Learn about image style transfer with Flash and build an example which transfers style from The Starry Night to images from the COCO data set.
+   :image: https://pl-flash-data.s3.amazonaws.com/assets/thumbnails/style_transfer.svg
+   :tags: Image,Style-Transfer
 
 .. _style_transfer:
 

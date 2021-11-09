@@ -39,9 +39,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -U pip wheel
-        pip install -e .
-        pip install --requirement requirements/devel.txt --pre --upgrade --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
-        pip install --requirement requirements/notebooks.txt --quiet --upgrade-strategy only-if-needed
+        pip install -e .[notebooks,image,tabular,text] --upgrade --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
 
     - name: Cache datasets
       uses: actions/cache@v2
@@ -60,9 +58,12 @@ jobs:
     - name: Run Notebooks
       env:
           FIFTYONE_DO_NOT_TRACK: true
+          FLASH_TESTING: 1
       run: |
-        # jupyter nbconvert --to script flash_notebooks/image_classification.ipynb
+        jupyter nbconvert --to script flash_notebooks/image_classification.ipynb
         jupyter nbconvert --to script flash_notebooks/tabular_classification.ipynb
+        jupyter nbconvert --to script flash_notebooks/text_classification.ipynb
 
-        # ipython flash_notebooks/image_classification.py
+        ipython flash_notebooks/image_classification.py
         ipython flash_notebooks/tabular_classification.py
+        ipython flash_notebooks/text_classification.py

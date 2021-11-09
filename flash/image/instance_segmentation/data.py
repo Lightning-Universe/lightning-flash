@@ -15,13 +15,10 @@ from typing import Any, Callable, Dict, Optional, Tuple
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DefaultDataSources
+from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources
+from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.process import Preprocess
-from flash.core.integrations.icevision.data import (
-    IceDataParserDataSource,
-    IceVisionParserDataSource,
-    IceVisionPathsDataSource,
-)
+from flash.core.integrations.icevision.data import IceVisionParserDataSource, IceVisionPathsDataSource
 from flash.core.integrations.icevision.transforms import default_transforms
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
 
@@ -53,7 +50,7 @@ class InstanceSegmentationPreprocess(Preprocess):
                 "coco": IceVisionParserDataSource(parser=COCOMaskParser),
                 "voc": IceVisionParserDataSource(parser=VOCMaskParser),
                 DefaultDataSources.FILES: IceVisionPathsDataSource(),
-                DefaultDataSources.FOLDERS: IceDataParserDataSource(parser=parser),
+                DefaultDataSources.FOLDERS: IceVisionParserDataSource(parser=parser),
             },
             default_data_source=DefaultDataSources.FILES,
         )
@@ -74,9 +71,16 @@ class InstanceSegmentationPreprocess(Preprocess):
         return default_transforms(self.image_size)
 
 
+class InstanceSegmentationOutputTransform(OutputTransform):
+    @staticmethod
+    def uncollate(batch: Any) -> Any:
+        return batch[DefaultDataKeys.PREDS]
+
+
 class InstanceSegmentationData(DataModule):
 
     preprocess_cls = InstanceSegmentationPreprocess
+    output_transform_cls = InstanceSegmentationOutputTransform
 
     @classmethod
     def from_coco(
@@ -96,7 +100,7 @@ class InstanceSegmentationData(DataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         **preprocess_kwargs: Any,
     ):
         """Creates a :class:`~flash.image.instance_segmentation.data.InstanceSegmentationData` object from the
@@ -175,7 +179,7 @@ class InstanceSegmentationData(DataModule):
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         **preprocess_kwargs: Any,
     ):
         """Creates a :class:`~flash.image.instance_segmentation.data.InstanceSegmentationData` object from the

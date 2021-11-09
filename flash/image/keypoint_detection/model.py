@@ -11,44 +11,35 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, List, Mapping, Optional, Type, Union
-
-import torch
-from torch.optim import Optimizer
+from typing import Any, Dict, List, Optional
 
 from flash.core.adapter import AdapterTask
-from flash.core.data.process import Serializer
+from flash.core.data.output import Preds
 from flash.core.registry import FlashRegistry
+from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 from flash.image.keypoint_detection.backbones import KEYPOINT_DETECTION_HEADS
 
 
 class KeypointDetector(AdapterTask):
-    """The ``ObjectDetector`` is a :class:`~flash.Task` for detecting objects in images. For more details, see
-    :ref:`object_detection`.
+    """The ``KeypointDetector`` is a :class:`~flash.Task` for detecting keypoints in images. For more details, see
+    :ref:`keypoint_detection`.
 
     Args:
-        num_classes: the number of classes for detection, including background
-        model: a string of :attr`_models`. Defaults to 'fasterrcnn'.
-        backbone: Pretained backbone CNN architecture. Constructs a model with a
-            ResNet-50-FPN backbone when no backbone is specified.
-        fpn: If True, creates a Feature Pyramind Network on top of Resnet based CNNs.
-        pretrained: if true, returns a model pre-trained on COCO train2017
-        pretrained_backbone: if true, returns a model with backbone pre-trained on Imagenet
-        trainable_backbone_layers: number of trainable resnet layers starting from final block.
-            Only applicable for `fasterrcnn`.
-        loss: the function(s) to update the model with. Has no effect for torchvision detection models.
-        metrics: The provided metrics. All metrics here will be logged to progress bar and the respective logger.
-            Changing this argument currently has no effect.
-        optimizer: The optimizer to use for training. Can either be the actual class or the class name.
-        pretrained: Whether the model from torchvision should be loaded with it's pretrained weights.
-            Has no effect for custom models.
-        learning_rate: The learning rate to use for training
-
+        num_keypoints: Number of keypoints to detect.
+        num_classes: The number of keypoint classes.
+        backbone: String indicating the backbone CNN architecture to use.
+        head: String indicating the head module to use on top of the backbone.
+        pretrained: Whether the model should be loaded with it's pretrained weights.
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
+        learning_rate: The learning rate to use for training.
+        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
+        **kwargs: additional kwargs used for initializing the task
     """
 
     heads: FlashRegistry = KEYPOINT_DETECTION_HEADS
 
-    required_extras: str = "image"
+    required_extras: List[str] = ["image", "icevision"]
 
     def __init__(
         self,
@@ -57,9 +48,10 @@ class KeypointDetector(AdapterTask):
         backbone: Optional[str] = "resnet18_fpn",
         head: Optional[str] = "keypoint_rcnn",
         pretrained: bool = True,
-        optimizer: Type[Optimizer] = torch.optim.Adam,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
         learning_rate: float = 5e-4,
-        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
+        output: OUTPUT_TYPE = None,
         **kwargs: Any,
     ):
         self.save_hyperparameters()
@@ -79,7 +71,8 @@ class KeypointDetector(AdapterTask):
             adapter,
             learning_rate=learning_rate,
             optimizer=optimizer,
-            serializer=serializer,
+            lr_scheduler=lr_scheduler,
+            output=output or Preds(),
         )
 
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]) -> None:

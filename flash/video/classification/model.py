@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from types import FunctionType
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Dict, List, Optional, Union
 
 import torch
 from pytorch_lightning import LightningModule
@@ -23,15 +23,16 @@ from torch import nn
 from torch.nn import functional as F
 from torch.optim import Optimizer
 from torch.utils.data import DistributedSampler
-from torchmetrics import Accuracy, Metric
+from torchmetrics import Accuracy
 
 import flash
 from flash.core.classification import ClassificationTask, Labels
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.process import Serializer
 from flash.core.registry import FlashRegistry
+from flash.core.utilities.compatibility import accelerator_connector
 from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE
 from flash.core.utilities.providers import _PYTORCHVIDEO
+from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 
 _VIDEO_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
 
@@ -81,11 +82,18 @@ class VideoClassifier(ClassificationTask):
         pretrained: Use a pretrained backbone, defaults to ``True``.
         loss_fn: Loss function for training, defaults to :func:`torch.nn.functional.cross_entropy`.
         optimizer: Optimizer to use for training, defaults to :class:`torch.optim.SGD`.
+
+        lr_scheduler: The scheduler or scheduler class to use.
+
         metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
             package, a custom metric inherenting from `torchmetrics.Metric`, a callable function or a list/dict
             containing a combination of the aforementioned. In all cases, each metric needs to have the signature
             `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
+        head: either a `nn.Module` or a callable function that converts the features extrated from the backbone
+            into class log probabilities (assuming default loss function). If `None`, will default to using
+            a single linear layer.
+        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
     """
 
     backbones: FlashRegistry = _VIDEO_CLASSIFIER_BACKBONES
@@ -98,20 +106,22 @@ class VideoClassifier(ClassificationTask):
         backbone: Union[str, nn.Module] = "x3d_xs",
         backbone_kwargs: Optional[Dict] = None,
         pretrained: bool = True,
-        loss_fn: Callable = F.cross_entropy,
-        optimizer: Type[torch.optim.Optimizer] = torch.optim.SGD,
-        metrics: Union[Metric, Callable, Mapping, Sequence, None] = Accuracy(),
+        loss_fn: LOSS_FN_TYPE = F.cross_entropy,
+        optimizer: OPTIMIZER_TYPE = "SGD",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
+        metrics: METRICS_TYPE = Accuracy(),
         learning_rate: float = 1e-3,
         head: Optional[Union[FunctionType, nn.Module]] = None,
-        serializer: Optional[Serializer] = None,
+        output: OUTPUT_TYPE = None,
     ):
         super().__init__(
             model=None,
             loss_fn=loss_fn,
             optimizer=optimizer,
+            lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
-            serializer=serializer or Labels(),
+            output=output or Labels(),
         )
 
         self.save_hyperparameters()
@@ -136,13 +146,13 @@ class VideoClassifier(ClassificationTask):
         )
 
     def on_train_start(self) -> None:
-        if self.trainer.accelerator_connector.is_distributed:
+        if accelerator_connector(self.trainer).is_distributed:
             encoded_dataset = self.trainer.train_dataloader.loaders.dataset.dataset
             encoded_dataset._video_sampler = DistributedSampler(encoded_dataset._labeled_videos)
         super().on_train_start()
 
     def on_train_epoch_start(self) -> None:
-        if self.trainer.accelerator_connector.is_distributed:
+        if accelerator_connector(self.trainer).is_distributed:
             encoded_dataset = self.trainer.train_dataloader.loaders.dataset.dataset
             encoded_dataset._video_sampler.set_epoch(self.trainer.current_epoch)
         super().on_train_epoch_start()

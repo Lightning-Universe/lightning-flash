@@ -12,7 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import glob
 import os
+from functools import partial
 from importlib.util import module_from_spec, spec_from_file_location
 
 from setuptools import find_packages, setup
@@ -42,27 +44,32 @@ long_description = setup_tools._load_readme_description(
     ver=about.__version__,
 )
 
-extras = {
-    "docs": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="docs.txt"),
-    "notebooks": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="notebooks.txt"),
-    "test": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="test.txt"),
-    "text": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_text.txt"),
-    "tabular": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_tabular.txt"),
-    "image": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_image.txt"),
-    "image_extras": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_image_extras.txt"),
-    "video": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_video.txt"),
-    "pointcloud": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_pointcloud.txt"),
-    "video_extras": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_video_extras.txt"),
-    "serve": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="serve.txt"),
-    "audio": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_audio.txt"),
-    "graph": setup_tools._load_requirements(path_dir=_PATH_REQUIRE, file_name="datatype_graph.txt"),
-}
 
-extras["vision"] = list(set(extras["image"] + extras["video"]))
-extras["all"] = list(
-    set(extras["vision"] + extras["tabular"] + extras["text"])
-)  # + extras["pointcloud"] dependencies conflicts
-extras["dev"] = list(set(extras["all"] + extras["test"] + extras["docs"]))
+base_req = setup_tools._load_requirements(path_dir=_PATH_ROOT, file_name="requirements.txt")
+# find all extra requirements
+_load_req = partial(setup_tools._load_requirements, path_dir=_PATH_REQUIRE)
+SKIP_REQ_FILES = "devel.txt"
+found_req_files = sorted(os.path.basename(p) for p in glob.glob(os.path.join(_PATH_REQUIRE, "*.txt")))
+# filter unwanted files
+found_req_files = [n for n in found_req_files if n not in SKIP_REQ_FILES]
+found_req_names = [os.path.splitext(req)[0].replace("datatype_", "") for req in found_req_files]
+# define basic and extra extras
+extras_req = {
+    name: _load_req(file_name=fname) for name, fname in zip(found_req_names, found_req_files) if "_" not in name
+}
+extras_req.update(
+    {
+        name: extras_req[name.split("_")[0]] + _load_req(file_name=fname)
+        for name, fname in zip(found_req_names, found_req_files)
+        if "_" in name
+    }
+)
+# some extra combinations
+extras_req["vision"] = extras_req["image"] + extras_req["video"]
+extras_req["all"] = extras_req["vision"] + extras_req["tabular"] + extras_req["text"]
+extras_req["dev"] = extras_req["all"] + extras_req["test"] + extras_req["docs"]
+# filter the uniques
+extras_req = {n: list(set(req)) for n, req in extras_req.items()}
 
 # https://packaging.python.org/discussions/install-requires-vs-requirements /
 # keep the meta-data here for simplicity in reading this file... it's not obvious
@@ -82,14 +89,14 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     include_package_data=True,
-    extras_require=extras,
+    extras_require=extras_req,
     entry_points={
         "console_scripts": ["flash=flash.__main__:main"],
     },
     zip_safe=False,
     keywords=["deep learning", "pytorch", "AI"],
     python_requires=">=3.6",
-    install_requires=setup_tools._load_requirements(_PATH_ROOT, file_name="requirements.txt"),
+    install_requires=base_req,
     project_urls={
         "Bug Tracker": "https://github.com/PyTorchLightning/lightning-flash/issues",
         "Documentation": "https://lightning-flash.rtfd.io/en/latest/",
@@ -100,7 +107,7 @@ setup(
         "Natural Language :: English",
         # How mature is this project? Common values are
         #   3 - Alpha, 4 - Beta, 5 - Production/Stable
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         # Indicate who your project is intended for
         "Intended Audience :: Developers",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
@@ -115,5 +122,7 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
     ],
 )

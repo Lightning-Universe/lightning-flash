@@ -1,8 +1,8 @@
+.. _serve:
+
 ###########
 Flash Serve
 ###########
-
-.. _serve:
 
 Flash Serve is a library to easily serve models in production.
 

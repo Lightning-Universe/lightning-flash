@@ -86,9 +86,9 @@ class App:
             for pred in predictions:
                 predictions_visualizations.append(
                     {
-                        "points": torch.stack(pred[DefaultDataKeys.INPUT]),
-                        "labels": torch.stack(pred[DefaultDataKeys.TARGET]),
-                        "predictions": torch.argmax(torch.stack(pred[DefaultDataKeys.PREDS]), axis=-1) + 1,
+                        "points": pred[DefaultDataKeys.INPUT],
+                        "labels": pred[DefaultDataKeys.TARGET],
+                        "predictions": torch.argmax(pred[DefaultDataKeys.PREDS], axis=-1) + 1,
                         "name": pred[DefaultDataKeys.METADATA]["name"],
                     }
                 )

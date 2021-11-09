@@ -13,7 +13,7 @@
 # limitations under the License.
 from typing import Callable, Dict, Optional, Union
 
-from flash.text.seq2seq.core.data import Seq2SeqData, Seq2SeqPostprocess, Seq2SeqPreprocess
+from flash.text.seq2seq.core.data import Seq2SeqData, Seq2SeqOutputTransform, Seq2SeqPreprocess
 
 
 class SummarizationPreprocess(Seq2SeqPreprocess):
@@ -27,6 +27,7 @@ class SummarizationPreprocess(Seq2SeqPreprocess):
         max_source_length: int = 128,
         max_target_length: int = 128,
         padding: Union[str, bool] = "max_length",
+        **kwargs,
     ):
         super().__init__(
             train_transform=train_transform,
@@ -37,10 +38,11 @@ class SummarizationPreprocess(Seq2SeqPreprocess):
             max_source_length=max_source_length,
             max_target_length=max_target_length,
             padding=padding,
+            **kwargs,
         )
 
 
 class SummarizationData(Seq2SeqData):
 
     preprocess_cls = SummarizationPreprocess
-    postprocess_cls = Seq2SeqPostprocess
+    output_transform_cls = Seq2SeqOutputTransform

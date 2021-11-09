@@ -32,7 +32,6 @@ class BLEUScore(_BLEUScore):
     def __init__(self, n_gram: int = 4, smooth: bool = False):
         void(n_gram, smooth)
 
-
 class RougeMetric(_ROUGEScore):
     @_deprecated_text_metrics(target=_ROUGEScore)
     def __init__(

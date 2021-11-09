@@ -16,7 +16,6 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, U
 import numpy as np
 import pandas as pd
 import torch
-from pytorch_lightning.trainer.states import RunningStage
 from torch.utils.data.sampler import Sampler
 
 from flash.core.data.base_viz import BaseVisualization  # for viz
@@ -24,7 +23,9 @@ from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources, LoaderDataFrameDataSource
 from flash.core.data.process import Deserializer, Preprocess
-from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, Image, requires, requires_extras
+from flash.core.integrations.labelstudio.data_source import LabelStudioImageClassificationDataSource
+from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, Image, requires
+from flash.core.utilities.stages import RunningStage
 from flash.image.classification.transforms import default_transforms, train_default_transforms
 from flash.image.data import (
     image_loader,
@@ -45,7 +46,7 @@ class ImageClassificationDataFrameDataSource(LoaderDataFrameDataSource):
     def __init__(self):
         super().__init__(image_loader)
 
-    @requires_extras("image")
+    @requires("image")
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         sample = super().load_sample(sample, dataset)
         w, h = sample[DefaultDataKeys.INPUT].size  # WxH
@@ -54,6 +55,18 @@ class ImageClassificationDataFrameDataSource(LoaderDataFrameDataSource):
 
 
 class ImageClassificationPreprocess(Preprocess):
+    """Preprocssing of data of image classification.
+
+    Args::
+        train_transfor:m
+        val_transform:
+        test_transform:
+        predict_transform:
+        image_size: tuple with the (heigh, width) of the images
+        deserializer:
+        data_source_kwargs: Additional kwargs for the data source initializer
+    """
+
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -79,6 +92,7 @@ class ImageClassificationPreprocess(Preprocess):
                 DefaultDataSources.TENSORS: ImageTensorDataSource(),
                 "data_frame": ImageClassificationDataFrameDataSource(),
                 DefaultDataSources.CSV: ImageClassificationDataFrameDataSource(),
+                DefaultDataSources.LABELSTUDIO: LabelStudioImageClassificationDataSource(),
             },
             deserializer=deserializer or ImageDeserializer(),
             default_data_source=DefaultDataSources.FILES,
@@ -120,15 +134,15 @@ class ImageClassificationData(DataModule):
         predict_data_frame: Optional[pd.DataFrame] = None,
         predict_images_root: Optional[str] = None,
         predict_resolver: Optional[Callable[[str, str], str]] = None,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
+        train_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
@@ -217,15 +231,15 @@ class ImageClassificationData(DataModule):
         predict_file: Optional[str] = None,
         predict_images_root: Optional[str] = None,
         predict_resolver: Optional[Callable[[str, str], str]] = None,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
+        train_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
+        test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
         preprocess: Optional[Preprocess] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
+        num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
         **preprocess_kwargs: Any,
     ) -> "DataModule":
@@ -315,7 +329,7 @@ class MatplotlibVisualization(BaseVisualization):
     block_viz_window: bool = True  # parameter to allow user to block visualisation windows
 
     @staticmethod
-    @requires_extras("image")
+    @requires("image")
     def _to_numpy(img: Union[np.ndarray, torch.Tensor, Image.Image]) -> np.ndarray:
         out: np.ndarray
         if isinstance(img, np.ndarray):

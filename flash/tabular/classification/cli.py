@@ -11,18 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Optional
 
 from flash.core.data.utils import download_data
 from flash.core.utilities.flash_cli import FlashCLI
-from flash.tabular import TabularClassificationData, TabularClassifier
+from flash.tabular.classification.data import TabularClassificationData
+from flash.tabular.classification.model import TabularClassifier
 
 __all__ = ["tabular_classification"]
 
 
 def from_titanic(
     batch_size: int = 4,
-    num_workers: Optional[int] = None,
+    num_workers: int = 0,
     **preprocess_kwargs,
 ) -> TabularClassificationData:
     """Downloads and loads the Titanic data set."""

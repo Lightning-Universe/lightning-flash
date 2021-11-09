@@ -17,10 +17,15 @@ import pytest
 import torch
 
 import flash
-from flash.core.utilities.imports import _COCO_AVAILABLE, _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _PIL_AVAILABLE
+from flash.core.utilities.imports import (
+    _COCO_AVAILABLE,
+    _FIFTYONE_AVAILABLE,
+    _ICEVISION_AVAILABLE,
+    _IMAGE_AVAILABLE,
+    _PIL_AVAILABLE,
+)
 from flash.image import ObjectDetector
 from flash.image.detection import ObjectDetectionData
-from tests.helpers.utils import _IMAGE_TESTING
 
 if _PIL_AVAILABLE:
     from PIL import Image
@@ -34,7 +39,8 @@ if _FIFTYONE_AVAILABLE:
     from tests.image.detection.test_data import _create_synth_fiftyone_dataset
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _ICEVISION_AVAILABLE, reason="IceVision is not installed for testing")
 @pytest.mark.parametrize(["head", "backbone"], [("retinanet", "resnet18_fpn")])
 def test_detection(tmpdir, head, backbone):
 

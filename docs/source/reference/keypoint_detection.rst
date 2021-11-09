@@ -1,3 +1,8 @@
+.. customcarditem::
+   :header: Keypoint Detection
+   :card_description: Learn to detect keypoints in images with Flash and build a network to detect facial keypoints with the BIWI data set.
+   :image: https://pl-flash-data.s3.amazonaws.com/assets/thumbnails/keypoint_detection.svg
+   :tags: Image,Keypoint,Detection
 
 .. _keypoint_detection:
 

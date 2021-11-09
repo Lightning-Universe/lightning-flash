@@ -6,15 +6,20 @@
 Lightning Flash
 ===============
 
+.. tutoriallist::
+
+.. raw:: html
+
+   <div style="display:none">
+
 .. toctree::
    :maxdepth: 1
    :caption: Getting started
 
    quickstart
    installation
-   custom_task
-   reference/flash_to_pl
-   reference/flash_to_production
+   general/flash_zero
+   general/production
 
 .. toctree::
    :maxdepth: 1
@@ -26,8 +31,9 @@ Lightning Flash
    general/jit
    general/data
    general/registry
-   general/flash_zero
    general/serve
+   general/backbones
+   general/optimization
 
 .. toctree::
    :maxdepth: 1
@@ -55,6 +61,7 @@ Lightning Flash
    :caption: Tabular
 
    reference/tabular_classification
+   reference/tabular_forecasting
 
 .. toctree::
    :maxdepth: 1
@@ -62,6 +69,7 @@ Lightning Flash
 
    reference/text_classification
    reference/text_classification_multi_label
+   reference/question_answering
    reference/summarization
    reference/translation
 
@@ -83,8 +91,12 @@ Lightning Flash
    :caption: Integrations
 
    integrations/providers
+   integrations/baal
    integrations/fiftyone
    integrations/icevision
+   integrations/learn2learn
+   integrations/pytorch_forecasting
+   integrations/vissl
 
 .. toctree::
    :maxdepth: 1
@@ -128,9 +140,12 @@ Lightning Flash
 
    reference/template
 
+.. raw:: html
+
+   </div>
+
 Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`

@@ -1,3 +1,9 @@
+.. customcarditem::
+   :header: Graph Classification
+   :card_description: Learn to classify graphs with Flash and build an example classifier for the KKI data set.
+   :image: https://pl-flash-data.s3.amazonaws.com/assets/thumbnails/graph_classification.svg
+   :tags: Graph,Classification
+
 .. _graph_classification:
 
 ####################

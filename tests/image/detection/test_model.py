@@ -25,10 +25,6 @@ from flash.__main__ import main
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE
 from flash.image import ObjectDetector
-from tests.helpers.utils import _IMAGE_TESTING
-
-if _ICEVISION_AVAILABLE:
-    from icevision.data import Prediction
 
 
 def collate_fn(samples):
@@ -71,7 +67,8 @@ class DummyDetectionDataset(Dataset):
         return sample
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _ICEVISION_AVAILABLE, reason="IceVision is not installed for testing")
 def test_init():
     model = ObjectDetector(num_classes=2)
     model.eval()
@@ -81,19 +78,23 @@ def test_init():
     dl = model.process_predict_dataset(ds, batch_size=batch_size)
     data = next(iter(dl))
 
-    out = model(data)
+    out = model.forward(data[DefaultDataKeys.INPUT])
 
     assert len(out) == batch_size
-    assert all(isinstance(res, Prediction) for res in out)
+    assert all(isinstance(res, dict) for res in out)
+    assert all("bboxes" in res for res in out)
+    assert all("labels" in res for res in out)
+    assert all("scores" in res for res in out)
 
 
 @pytest.mark.parametrize("head", ["faster_rcnn", "retinanet"])
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _ICEVISION_AVAILABLE, reason="IceVision is not installed for testing")
 def test_training(tmpdir, head):
     model = ObjectDetector(num_classes=2, head=head, pretrained=False)
     ds = DummyDetectionDataset((128, 128, 3), 1, 2, 10)
-    dl = model.process_train_dataset(ds, 2, 0, False, None)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
+    dl = model.process_train_dataset(ds, trainer, 2, 0, False, None)
     trainer.fit(model, dl)
 
 
@@ -124,7 +125,8 @@ def test_load_from_checkpoint_dependency_error():
         ObjectDetector.load_from_checkpoint("not_a_real_checkpoint.pt")
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _ICEVISION_AVAILABLE, reason="IceVision is not installed for testing")
 def test_cli():
     cli_args = ["flash", "object_detection", "--trainer.fast_dev_run", "True"]
     with mock.patch("sys.argv", cli_args):

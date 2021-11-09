@@ -39,19 +39,26 @@ class ApplyToKeys(nn.Sequential):
     def forward(self, x: Mapping[str, Any]) -> Mapping[str, Any]:
         keys = list(filter(lambda key: key in x, self.keys))
         inputs = [x[key] for key in keys]
-        if len(inputs) > 0:
-            if len(inputs) == 1:
-                inputs = inputs[0]
-            outputs = super().forward(inputs)
-            if not isinstance(outputs, Sequence):
-                outputs = (outputs,)
 
-            result = {}
-            result.update(x)
+        result = {}
+        result.update(x)
+
+        if len(inputs) == 1:
+            result[keys[0]] = super().forward(inputs[0])
+        elif len(inputs) > 1:
+            try:
+                outputs = super().forward(inputs)
+            except TypeError as e:
+                raise Exception(
+                    "Failed to apply transforms to multiple keys at the same time,"
+                    " try using KorniaParallelTransforms."
+                ) from e
+
             for i, key in enumerate(keys):
                 result[key] = outputs[i]
-            return result
-        return x
+
+        # result is simply returned if len(inputs) == 0
+        return result
 
     def __repr__(self):
         transform = list(self.children())
@@ -104,6 +111,8 @@ def kornia_collate(samples: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
     This function removes that dimension and then
     applies ``torch.utils.data._utils.collate.default_collate``.
     """
+    if len(samples) == 1 and isinstance(samples[0], list):
+        samples = samples[0]
     for sample in samples:
         for key in sample.keys():
             if torch.is_tensor(sample[key]) and sample[key].ndim == 4:

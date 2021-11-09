@@ -52,10 +52,6 @@ Standard best practices
 ^^^^^^^^^^^^^^^^^^^^^^^
 Flash tasks implement the standard best practices for a variety of different models and domains, to save you time digging through different implementations. Flash abstracts even more details than Lightning, allowing deep learning experts to share their tips and tricks for solving scoped deep learning problems.
 
-.. tip::
-
-    Read :doc:`here <reference/flash_to_pl>` to understand when to use Flash vs Lightning.
-
 ------
 
 Tasks
@@ -95,7 +91,7 @@ Here's an example of inference:
     from flash.text import TextClassifier
 
     # 1. Init the finetuned task from URL
-    model = TextClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/text_classification_model.pt")
+    model = TextClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/0.6.0/text_classification_model.pt")
 
     # 2. Perform inference from list of sequences
     predictions = model.predict(

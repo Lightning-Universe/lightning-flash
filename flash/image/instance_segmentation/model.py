@@ -11,15 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, List, Mapping, Optional, Type, Union
+from typing import Any, Dict, List, Optional
 
-import torch
-from torch.optim import Optimizer
+from pytorch_lightning.utilities import rank_zero_info
 
 from flash.core.adapter import AdapterTask
-from flash.core.data.process import Serializer
+from flash.core.data.data_pipeline import DataPipeline
+from flash.core.data.output import Preds
 from flash.core.registry import FlashRegistry
+from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 from flash.image.instance_segmentation.backbones import INSTANCE_SEGMENTATION_HEADS
+from flash.image.instance_segmentation.data import InstanceSegmentationOutputTransform, InstanceSegmentationPreprocess
 
 
 class InstanceSegmentation(AdapterTask):
@@ -27,28 +29,20 @@ class InstanceSegmentation(AdapterTask):
     :ref:`object_detection`.
 
     Args:
-        num_classes: the number of classes for detection, including background
-        model: a string of :attr`_models`. Defaults to 'fasterrcnn'.
-        backbone: Pretained backbone CNN architecture. Constructs a model with a
-            ResNet-50-FPN backbone when no backbone is specified.
-        fpn: If True, creates a Feature Pyramind Network on top of Resnet based CNNs.
-        pretrained: if true, returns a model pre-trained on COCO train2017
-        pretrained_backbone: if true, returns a model with backbone pre-trained on Imagenet
-        trainable_backbone_layers: number of trainable resnet layers starting from final block.
-            Only applicable for `fasterrcnn`.
-        loss: the function(s) to update the model with. Has no effect for torchvision detection models.
-        metrics: The provided metrics. All metrics here will be logged to progress bar and the respective logger.
-            Changing this argument currently has no effect.
-        optimizer: The optimizer to use for training. Can either be the actual class or the class name.
-        pretrained: Whether the model from torchvision should be loaded with it's pretrained weights.
-            Has no effect for custom models.
-        learning_rate: The learning rate to use for training
-
+        num_classes: The number of object classes.
+        backbone: String indicating the backbone CNN architecture to use.
+        head: String indicating the head module to use on top of the backbone.
+        pretrained: Whether the model should be loaded with it's pretrained weights.
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
+        learning_rate: The learning rate to use for training.
+        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
+        **kwargs: additional kwargs used for initializing the task
     """
 
     heads: FlashRegistry = INSTANCE_SEGMENTATION_HEADS
 
-    required_extras: str = "image"
+    required_extras: List[str] = ["image", "icevision"]
 
     def __init__(
         self,
@@ -56,9 +50,10 @@ class InstanceSegmentation(AdapterTask):
         backbone: Optional[str] = "resnet18_fpn",
         head: Optional[str] = "mask_rcnn",
         pretrained: bool = True,
-        optimizer: Type[Optimizer] = torch.optim.Adam,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
         learning_rate: float = 5e-4,
-        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
+        output: OUTPUT_TYPE = None,
         **kwargs: Any,
     ):
         self.save_hyperparameters()
@@ -77,9 +72,23 @@ class InstanceSegmentation(AdapterTask):
             adapter,
             learning_rate=learning_rate,
             optimizer=optimizer,
-            serializer=serializer,
+            lr_scheduler=lr_scheduler,
+            output=output or Preds(),
         )
 
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]) -> None:
         """This function is used only for debugging usage with CI."""
         # todo
+
+    def on_load_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
+        super().on_load_checkpoint(checkpoint)
+        # todo: currently the data pipeline for icevision is not serializable, so we re-create the pipeline.
+        if "data_pipeline" not in checkpoint:
+            rank_zero_info(
+                "Assigned Segmentation Data Pipeline for data processing. This is because a data-pipeline stored in "
+                "the model due to pickling issues. "
+                "If you'd like to change this, extend the InstanceSegmentation Task and override `on_load_checkpoint`."
+            )
+            self.data_pipeline = DataPipeline(
+                preprocess=InstanceSegmentationPreprocess(), output_transform=InstanceSegmentationOutputTransform()
+            )

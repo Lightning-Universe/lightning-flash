@@ -7,7 +7,7 @@ import torch
 
 from flash.core.serve.core import ParameterContainer, Servable
 from flash.core.serve.decorators import BoundMeta, UnboundMeta
-from flash.core.utilities.imports import _CYTOOLZ_AVAILABLE, _SERVE_AVAILABLE, requires_extras
+from flash.core.utilities.imports import _CYTOOLZ_AVAILABLE, _SERVE_AVAILABLE, requires
 
 if _CYTOOLZ_AVAILABLE:
     from cytoolz import first, isiterable, valfilter
@@ -145,7 +145,7 @@ def _validate_config_args(config: Optional[Dict[str, Union[str, int, float, byte
 class FlashServeMeta(type):
     """We keep a mapping of externally used names to classes."""
 
-    @requires_extras("serve")
+    @requires("serve")
     def __new__(cls, name, bases, namespace):
         # create new instance of cls in order to apply any @expose class decorations.
         _tmp_cls = super().__new__(cls, name, bases, namespace)
