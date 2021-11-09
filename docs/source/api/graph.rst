@@ -22,6 +22,16 @@ ______________
 
     classification.data.GraphClassificationInputTransform
 
+Embedding
+_________
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: classtemplate.rst
+
+    ~embedding.model.GraphEmbedder
+
 flash.graph.data
 ________________
 
