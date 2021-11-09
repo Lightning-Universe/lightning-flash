@@ -14,11 +14,11 @@
 import pytest
 
 from flash.core.data.transforms import merge_transforms
-from flash.core.utilities.imports import _TORCH_GEOMETRIC_AVAILABLE
+from flash.core.utilities.imports import _GRAPH_AVAILABLE
 from flash.graph.classification.data import GraphClassificationData, GraphClassificationInputTransform
 from tests.helpers.utils import _GRAPH_TESTING
 
-if _TORCH_GEOMETRIC_AVAILABLE:
+if _GRAPH_AVAILABLE:
     from torch_geometric.datasets import TUDataset
     from torch_geometric.transforms import OneHotDegree
 

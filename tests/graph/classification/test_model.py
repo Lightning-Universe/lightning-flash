@@ -19,12 +19,12 @@ import torch
 from flash import Trainer
 from flash.__main__ import main
 from flash.core.data.data_pipeline import DataPipeline
-from flash.core.utilities.imports import _TORCH_GEOMETRIC_AVAILABLE
+from flash.core.utilities.imports import _GRAPH_AVAILABLE
 from flash.graph.classification import GraphClassifier
 from flash.graph.classification.data import GraphClassificationInputTransform
 from tests.helpers.utils import _GRAPH_TESTING
 
-if _TORCH_GEOMETRIC_AVAILABLE:
+if _GRAPH_AVAILABLE:
     from torch_geometric import datasets
 
 
