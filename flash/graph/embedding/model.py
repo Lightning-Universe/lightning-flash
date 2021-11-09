@@ -35,7 +35,8 @@ class GraphEmbedder(Task):
     def __init__(self, backbone: nn.Module, pooling_fn: Optional[Union[str, Callable]] = "mean"):
         super().__init__(model=None, input_transform=GraphClassificationInputTransform())
 
-        self.save_hyperparameters()
+        # Don't save backbone or pooling_fn if it is not a string
+        self.save_hyperparameters(ignore=["backbone"] if isinstance(pooling_fn, str) else ["backbone", "pooling_fn"])
 
         self.backbone = backbone
 
