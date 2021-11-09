@@ -11,9 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, TYPE_CHECKING
+from typing import Any, Sequence, Callable, TYPE_CHECKING
 
 import torch
+from torch import Tensor
 
 from flash.core.data.callback import ControlFlow
 from flash.core.data.utils import convert_to_modules, CurrentFuncContext, CurrentRunningStageContext
@@ -57,3 +58,29 @@ class _DeserializeProcessor(torch.nn.Module):
                 self.callback.on_to_tensor_transform(sample, RunningStage.PREDICTING)
 
         return sample
+
+
+def default_uncollate(batch: Any):
+    """
+    This function is used to uncollate a batch into samples.
+    Examples:
+        >>> a, b = default_uncollate(torch.rand((2,1)))
+    """
+
+    batch_type = type(batch)
+
+    if isinstance(batch, Tensor):
+        if len(batch.shape) == 0:  # 0 shape tensors
+            return batch
+        return list(torch.unbind(batch, 0))
+
+    if isinstance(batch, dict):
+        return [batch_type(dict(zip(batch, default_uncollate(t)))) for t in zip(*batch.values())]
+
+    if isinstance(batch, tuple) and hasattr(batch, "_fields"):  # namedtuple
+        return [batch_type(*sample) for sample in zip(*batch)]
+
+    if isinstance(batch, Sequence) and not isinstance(batch, str):
+        return [sample for sample in batch]
+
+    return batch
