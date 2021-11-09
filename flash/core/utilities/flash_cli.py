@@ -126,7 +126,7 @@ class FlashCLI(LightningCLI):
             datamodule_class: The :class:`~flash.data.data_module.DataModule` class.
             trainer_class: An optional extension of the :class:`pytorch_lightning.Trainer` class.
             trainer_fn: The trainer function to run.
-            datasource: Use this if your ``DataModule`` is created using a classmethod. Any of:
+            input: Use this if your ``DataModule`` is created using a classmethod. Any of:
                 - ``None``. The ``datamodule_class.__init__`` signature will be used.
                 - ``str``. One of :class:`~flash.data.io.input.InputFormat`. This will use the signature of
                     the corresponding ``DataModule.from_*`` method.
