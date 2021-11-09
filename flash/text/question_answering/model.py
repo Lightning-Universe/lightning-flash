@@ -125,7 +125,7 @@ class QuestionAnsweringTask(Task):
         self._initialize_model_specific_parameters()
 
         self.rouge = RougeMetric(
-            rouge_newline_sep=rouge_newline_sep,
+            newline_sep=rouge_newline_sep,
             use_stemmer=use_stemmer,
         )
 

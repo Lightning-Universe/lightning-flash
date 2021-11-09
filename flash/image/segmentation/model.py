@@ -20,7 +20,7 @@ from torchmetrics import IoU
 
 from flash.core.classification import ClassificationTask
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.process import Postprocess
+from flash.core.data.io.output_transform import OutputTransform
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _KORNIA_AVAILABLE
 from flash.core.utilities.isinstance import _isinstance
@@ -29,8 +29,8 @@ from flash.core.utilities.types import (
     LR_SCHEDULER_TYPE,
     METRICS_TYPE,
     OPTIMIZER_TYPE,
+    OUTPUT_TRANSFORM_TYPE,
     OUTPUT_TYPE,
-    POSTPROCESS_TYPE,
 )
 from flash.image.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 from flash.image.segmentation.heads import SEMANTIC_SEGMENTATION_HEADS
@@ -40,7 +40,7 @@ if _KORNIA_AVAILABLE:
     import kornia as K
 
 
-class SemanticSegmentationPostprocess(Postprocess):
+class SemanticSegmentationOutputTransform(OutputTransform):
     def per_sample_transform(self, sample: Any) -> Any:
         resize = K.geometry.Resize(sample[DefaultDataKeys.METADATA]["size"][-2:], interpolation="bilinear")
         sample[DefaultDataKeys.PREDS] = resize(sample[DefaultDataKeys.PREDS])
@@ -68,11 +68,11 @@ class SemanticSegmentation(ClassificationTask):
             `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.IOU`.
         learning_rate: Learning rate to use for training.
         multi_label: Whether the targets are multi-label or not.
-        output: The :class:`~flash.core.data.io.output.Output` to use when serializing prediction outputs.
-        postprocess: :class:`~flash.core.data.process.Postprocess` use for post processing samples.
+        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
+        output_transform: :class:`~flash.core.data.io.output_transform.OutputTransform` use for post processing samples.
     """
 
-    postprocess_cls = SemanticSegmentationPostprocess
+    output_transform_cls = SemanticSegmentationOutputTransform
 
     backbones: FlashRegistry = SEMANTIC_SEGMENTATION_BACKBONES
 
@@ -95,7 +95,7 @@ class SemanticSegmentation(ClassificationTask):
         learning_rate: float = 1e-3,
         multi_label: bool = False,
         output: OUTPUT_TYPE = None,
-        postprocess: POSTPROCESS_TYPE = None,
+        output_transform: OUTPUT_TRANSFORM_TYPE = None,
     ) -> None:
         if metrics is None:
             metrics = IoU(num_classes=num_classes)
@@ -115,7 +115,7 @@ class SemanticSegmentation(ClassificationTask):
             metrics=metrics,
             learning_rate=learning_rate,
             output=output or SegmentationLabels(),
-            postprocess=postprocess or self.postprocess_cls(),
+            output_transform=output_transform or self.output_transform_cls(),
         )
 
         self.save_hyperparameters()

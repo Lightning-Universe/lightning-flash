@@ -23,7 +23,16 @@ from pytorch_lightning.utilities.apply_func import apply_to_collection
 from torch import Tensor
 from tqdm.auto import tqdm as tq
 
+from flash.core.utilities.imports import _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.core.utilities.stages import RunningStage
+
+if _PIL_AVAILABLE:
+    from PIL.Image import Image
+else:
+    Image = object
+
+if _TORCHVISION_AVAILABLE:
+    from torchvision.datasets.folder import default_loader
 
 _STAGES_PREFIX = {
     RunningStage.TRAINING: "train",
@@ -53,12 +62,10 @@ _CALLBACK_FUNCS: Set[str] = {
     *_PREPROCESS_FUNCS,
 }
 
-_POSTPROCESS_FUNCS: Set[str] = {
+_OUTPUT_TRANSFORM_FUNCS: Set[str] = {
     "per_batch_transform",
     "uncollate",
     "per_sample_transform",
-    "save_sample",
-    "save_data",
 }
 
 
@@ -207,3 +214,16 @@ def convert_to_modules(transforms: Optional[Dict[str, Callable]]):
         transforms, Iterable, torch.nn.ModuleList, wrong_dtype=(torch.nn.ModuleList, torch.nn.ModuleDict)
     )
     return transforms
+
+
+def image_default_loader(file_path: str, drop_alpha: bool = True) -> Image:
+    """Default loader for images.
+
+    Args:
+        file_path: The image file to load.
+        drop_alpha: If ``True`` (default) then any alpha channels will be silently removed.
+    """
+    img = default_loader(file_path)
+    if img.mode == "RGBA" and drop_alpha:
+        img = img.convert("RGB")
+    return img

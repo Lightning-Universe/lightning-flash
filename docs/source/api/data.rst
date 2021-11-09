@@ -16,7 +16,6 @@ _________________________
     :template: classtemplate.rst
 
     ~flash.core.data.io.output.Output
-    ~flash.core.data.io.output.OutputMapping
 
 flash.core.data.auto_dataset
 ____________________________
@@ -123,7 +122,7 @@ _______________________
     ~flash.core.data.process.DefaultPreprocess
     ~flash.core.data.process.DeserializerMapping
     ~flash.core.data.process.Deserializer
-    ~flash.core.data.process.Postprocess
+    ~flash.core.data.io.output_transform.OutputTransform
     ~flash.core.data.process.Preprocess
 
 flash.core.data.properties

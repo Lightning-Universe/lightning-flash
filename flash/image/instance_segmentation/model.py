@@ -21,7 +21,7 @@ from flash.core.data.output import Preds
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 from flash.image.instance_segmentation.backbones import INSTANCE_SEGMENTATION_HEADS
-from flash.image.instance_segmentation.data import InstanceSegmentationPostProcess, InstanceSegmentationPreprocess
+from flash.image.instance_segmentation.data import InstanceSegmentationOutputTransform, InstanceSegmentationPreprocess
 
 
 class InstanceSegmentation(AdapterTask):
@@ -29,24 +29,15 @@ class InstanceSegmentation(AdapterTask):
     :ref:`object_detection`.
 
     Args:
-        num_classes: the number of classes for detection, including background
-        model: a string of :attr`_models`. Defaults to 'fasterrcnn'.
-        backbone: Pretained backbone CNN architecture. Constructs a model with a
-            ResNet-50-FPN backbone when no backbone is specified.
-        fpn: If True, creates a Feature Pyramind Network on top of Resnet based CNNs.
-        pretrained: if true, returns a model pre-trained on COCO train2017
-        pretrained_backbone: if true, returns a model with backbone pre-trained on Imagenet
-        trainable_backbone_layers: number of trainable resnet layers starting from final block.
-            Only applicable for `fasterrcnn`.
-        loss: the function(s) to update the model with. Has no effect for torchvision detection models.
-        metrics: The provided metrics. All metrics here will be logged to progress bar and the respective logger.
-            Changing this argument currently has no effect.
+        num_classes: The number of object classes.
+        backbone: String indicating the backbone CNN architecture to use.
+        head: String indicating the head module to use on top of the backbone.
+        pretrained: Whether the model should be loaded with it's pretrained weights.
         optimizer: Optimizer to use for training.
         lr_scheduler: The LR scheduler to use during training.
-        pretrained: Whether the model from torchvision should be loaded with it's pretrained weights.
-            Has no effect for custom models.
-        learning_rate: The learning rate to use for training
-
+        learning_rate: The learning rate to use for training.
+        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
+        **kwargs: additional kwargs used for initializing the task
     """
 
     heads: FlashRegistry = INSTANCE_SEGMENTATION_HEADS
@@ -99,5 +90,5 @@ class InstanceSegmentation(AdapterTask):
                 "If you'd like to change this, extend the InstanceSegmentation Task and override `on_load_checkpoint`."
             )
             self.data_pipeline = DataPipeline(
-                preprocess=InstanceSegmentationPreprocess(), postprocess=InstanceSegmentationPostProcess()
+                preprocess=InstanceSegmentationPreprocess(), output_transform=InstanceSegmentationOutputTransform()
             )

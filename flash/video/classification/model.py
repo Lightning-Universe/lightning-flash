@@ -93,8 +93,7 @@ class VideoClassifier(ClassificationTask):
         head: either a `nn.Module` or a callable function that converts the features extrated from the backbone
             into class log probabilities (assuming default loss function). If `None`, will default to using
             a single linear layer.
-        output: A instance of :class:`~flash.core.data.io.output.Output` that determines how the output
-            should be serialized e.g. convert the model output into the desired output format when predicting.
+        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
     """
 
     backbones: FlashRegistry = _VIDEO_CLASSIFIER_BACKBONES

@@ -54,17 +54,19 @@ class DetectionLabels(Output):
 class FaceDetector(Task):
     """The ``FaceDetector`` is a :class:`~flash.Task` for detecting faces in images.
 
-    For more details, see
-    :ref:`face_detection`.
+    For more details, see :ref:`face_detection`.
+
     Args:
         model: a string of :attr`_models`. Defaults to 'lffd_slim'.
         pretrained: Whether the model from fastface should be loaded with it's pretrained weights.
-        loss: the function(s) to update the model with. Has no effect for fastface models.
+        loss_fn: the function(s) to update the model with. Has no effect for fastface models.
         metrics: The provided metrics. All metrics here will be logged to progress bar and the respective logger.
             Changing this argument currently has no effect.
         optimizer: Optimizer to use for training.
         lr_scheduler: The LR scheduler to use during training.
-        learning_rate: The learning rate to use for training
+        learning_rate: The learning rate to use for training.
+        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
+        kwargs: additional kwargs nessesary for initializing face detector backbone
     """
 
     required_extras: str = "image"
@@ -115,11 +117,11 @@ class FaceDetector(Task):
         model.register_buffer("mean", getattr(pl_model, "mean"))
         model.register_buffer("std", getattr(pl_model, "std"))
 
-        # copy pasting `_postprocess` function from `fastface.FaceDetector` to `torch.nn.Module`
-        # set postprocess function
+        # copy pasting `_output_transform` function from `fastface.FaceDetector` to `torch.nn.Module`
+        # set output_transform function
         # this is called from FaceDetector lightning module form fastface itself
         # https://github.com/borhanMorphy/fastface/blob/master/fastface/module.py#L200
-        setattr(model, "_postprocess", getattr(pl_model, "_postprocess"))
+        setattr(model, "_output_transform", getattr(pl_model, "_output_transform"))
 
         return model
 
