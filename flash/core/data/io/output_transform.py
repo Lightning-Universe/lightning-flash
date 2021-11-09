@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
 from typing import Any, Callable, Mapping, Optional, Sequence, Tuple
 
 import torch
@@ -26,11 +25,6 @@ from flash.core.data.utils import convert_to_modules
 class OutputTransform(Properties):
     """The :class:`~flash.core.data.io.output_transform.OutputTransform` encapsulates all the data processing logic
     that should run after the model."""
-
-    def __init__(self, save_path: Optional[str] = None):
-        super().__init__()
-        self._saved_samples = 0
-        self._save_path = save_path
 
     @staticmethod
     def per_batch_transform(batch: Any) -> Any:
@@ -56,28 +50,6 @@ class OutputTransform(Properties):
         """
         return default_uncollate(batch)
 
-    @staticmethod
-    def save_data(data: Any, path: str) -> None:
-        """Saves all data together to a single path."""
-        torch.save(data, path)
-
-    @staticmethod
-    def save_sample(sample: Any, path: str) -> None:
-        """Saves each sample individually to a given path."""
-        torch.save(sample, path)
-
-    # TODO: Are those needed ?
-    def format_sample_save_path(self, path: str) -> str:
-        path = os.path.join(path, f"sample_{self._saved_samples}.ptl")
-        self._saved_samples += 1
-        return path
-
-    def _save_data(self, data: Any) -> None:
-        self.save_data(data, self._save_path)
-
-    def _save_sample(self, sample: Any) -> None:
-        self.save_sample(sample, self.format_sample_save_path(self._save_path))
-
 
 class _OutputTransformProcessor(torch.nn.Module):
     """This class is used to encapsultate the following functions of a OutputTransform Object:
@@ -87,8 +59,6 @@ class _OutputTransformProcessor(torch.nn.Module):
         per_sample_transform: Function to transform an individual sample
         uncollate_fn: Function to split a batch into samples
         per_sample_transform: Function to transform an individual sample
-        save_fn: Function to save all data
-        save_per_sample: Function to save an individual sample
         is_serving: Whether the Postprocessor is used in serving mode.
     """
 
@@ -98,8 +68,6 @@ class _OutputTransformProcessor(torch.nn.Module):
         per_batch_transform: Callable,
         per_sample_transform: Callable,
         output: Optional[Callable],
-        save_fn: Optional[Callable] = None,
-        save_per_sample: bool = False,
         is_serving: bool = False,
     ):
         super().__init__()
@@ -107,8 +75,6 @@ class _OutputTransformProcessor(torch.nn.Module):
         self.per_batch_transform = convert_to_modules(per_batch_transform)
         self.per_sample_transform = convert_to_modules(per_sample_transform)
         self.output = convert_to_modules(output)
-        self.save_fn = convert_to_modules(save_fn)
-        self.save_per_sample = convert_to_modules(save_per_sample)
         self.is_serving = is_serving
 
     @staticmethod
@@ -131,17 +97,8 @@ class _OutputTransformProcessor(torch.nn.Module):
             final_preds = [self.output(sample) for sample in final_preds]
 
         if isinstance(uncollated, Tensor) and isinstance(final_preds[0], Tensor):
-            final_preds = torch.stack(final_preds)
-        else:
-            final_preds = type(final_preds)(final_preds)
-
-        if self.save_fn:
-            if self.save_per_sample:
-                for pred in final_preds:
-                    self.save_fn(pred)
-            else:
-                self.save_fn(final_preds)
-        return final_preds
+            return torch.stack(final_preds)
+        return type(final_preds)(final_preds)
 
     def __str__(self) -> str:
         return (
