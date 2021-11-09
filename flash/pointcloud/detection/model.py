@@ -159,7 +159,7 @@ class PointCloudObjectDetector(Task):
         if not _POINTCLOUD_AVAILABLE:
             raise ModuleNotFoundError("Please, run `pip install flash[pointcloud]`.")
 
-        dataset.input_transform_fn = self.model.input_transform
+        dataset.input_transform_fn = self.model.preprocess
         dataset.transform_fn = self.model.transform
 
         return DataLoader(
