@@ -13,8 +13,7 @@
 # limitations under the License.
 from typing import Any, Dict, List, Optional
 
-import torch
-from torchmetrics import BLEUScore, Metric
+from torchmetrics import BLEUScore
 
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.text.seq2seq.core.model import Seq2SeqTask
