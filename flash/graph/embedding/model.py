@@ -17,12 +17,8 @@ import torch
 from torch import nn
 
 from flash.core.model import Task
-from flash.core.utilities.imports import _GRAPH_AVAILABLE
 from flash.graph.classification.data import GraphClassificationInputTransform
 from flash.graph.classification.model import GraphClassifier, POOLING_FUNCTIONS
-
-if _GRAPH_AVAILABLE:
-    from torch_geometric.nn import global_mean_pool
 
 
 class GraphEmbedder(Task):
@@ -31,6 +27,7 @@ class GraphEmbedder(Task):
 
     Args:
         backbone: A model to use to extract image features.
+        pooling_fn: The global pooling operation to use (one of: "max", "max", "add" or a callable).
     """
 
     required_extras: str = "graph"
@@ -46,7 +43,7 @@ class GraphEmbedder(Task):
 
     def forward(self, data) -> torch.Tensor:
         x = self.backbone(data.x, data.edge_index)
-        x = global_mean_pool(x, data.batch)
+        x = self.pooling_fn(x, data.batch)
         return x
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:

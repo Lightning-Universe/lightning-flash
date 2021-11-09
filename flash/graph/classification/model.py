@@ -42,7 +42,7 @@ class GraphClassifier(ClassificationTask):
         backbone: Name of the backbone to use.
         backbone_kwargs: Dictionary dependent on the backbone, containing for example in_channels, out_channels,
             hidden_channels or depth (number of layers).
-        pooling_fn: The global pooling operation to use (one of: "max", "max", "add").
+        pooling_fn: The global pooling operation to use (one of: "max", "max", "add" or a callable).
         head: The head to use.
         loss_fn: Loss function for training, defaults to cross entropy.
         learning_rate: Learning rate to use for training.
