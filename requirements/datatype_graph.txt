@@ -1,3 +1,5 @@
 torch-scatter
 torch-sparse
-torch-geometric
+torch-geometric>=2.0.0
+torch-cluster
+networkx

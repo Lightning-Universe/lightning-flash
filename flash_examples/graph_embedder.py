@@ -11,11 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import torch
-
-import flash
 from flash.core.utilities.imports import example_requires
-from flash.graph import GraphClassificationData, GraphClassifier
+from flash.graph import GraphEmbedder
 
 example_requires("graph")
 
@@ -24,23 +21,9 @@ from torch_geometric.datasets import TUDataset  # noqa: E402
 # 1. Create the DataModule
 dataset = TUDataset(root="data", name="KKI")
 
-datamodule = GraphClassificationData.from_datasets(
-    train_dataset=dataset,
-    val_split=0.1,
-)
-# 2. Build the task
-backbone_kwargs = {"hidden_channels": 512, "num_layers": 4}
-model = GraphClassifier(
-    num_features=datamodule.num_features, num_classes=datamodule.num_classes, backbone_kwargs=backbone_kwargs
-)
+# 2. Load a previously trained GraphClassifier
+model = GraphEmbedder.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/0.6.0/graph_classification_model.pt")
 
-# 3. Create the trainer and fit the model
-trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
-trainer.fit(model, datamodule=datamodule)
-
-# 4. Classify some graphs!
+# 3. Generate embeddings for the first 3 graphs
 predictions = model.predict(dataset[:3])
 print(predictions)
-
-# 5. Save the model!
-trainer.save_checkpoint("graph_classification_model.pt")
