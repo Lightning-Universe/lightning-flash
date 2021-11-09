@@ -19,7 +19,7 @@ from torch import nn
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources
-from flash.core.data.process import InputTransform
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 from flash.image.classification import ImageClassificationData

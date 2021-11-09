@@ -15,7 +15,7 @@ from typing import Any, Callable, Dict, Optional
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataSources
-from flash.core.data.process import InputTransform
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
 from flash.graph.data import GraphDatasetDataSource
 

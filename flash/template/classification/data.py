@@ -21,7 +21,7 @@ from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources, LabelsState, NumpyDataSource
-from flash.core.data.process import InputTransform
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _SKLEARN_AVAILABLE
 from flash.core.utilities.stages import RunningStage

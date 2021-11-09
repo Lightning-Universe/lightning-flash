@@ -16,7 +16,7 @@ from typing import Any, Callable, Dict, Optional, Tuple
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataSources
-from flash.core.data.process import InputTransform
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.integrations.icevision.data import IceVisionParserDataSource, IceVisionPathsDataSource
 from flash.core.integrations.icevision.transforms import default_transforms
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
