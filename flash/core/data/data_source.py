@@ -167,7 +167,6 @@ class DefaultDataSources(LightningEnum):
     LISTS = "lists"
     LABELSTUDIO = "labelstudio"
 
-
     # TODO: Create a FlashEnum class???
     def __hash__(self) -> int:
         return hash(self.value)
