@@ -191,9 +191,9 @@ class PointCloudObjectDetectorFoldersDataSource(DataSource):
 
         data, metadata = self.loader.load_sample(metadata, dataset)
 
-        preprocess_fn = getattr(dataset, "preprocess_fn", None)
-        if preprocess_fn:
-            data = preprocess_fn(data, metadata)
+        input_transform_fn = getattr(dataset, "input_transform_fn", None)
+        if input_transform_fn:
+            data = input_transform_fn(data, metadata)
 
         transform_fn = getattr(dataset, "transform_fn", None)
         if transform_fn:
@@ -230,9 +230,9 @@ class PointCloudObjectDetectorFoldersDataSource(DataSource):
 
         data, metadata = self.loader.predict_load_sample(metadata, dataset)
 
-        preprocess_fn = getattr(dataset, "preprocess_fn", None)
-        if preprocess_fn:
-            data = preprocess_fn(data, metadata)
+        input_transform_fn = getattr(dataset, "input_transform_fn", None)
+        if input_transform_fn:
+            data = input_transform_fn(data, metadata)
 
         transform_fn = getattr(dataset, "transform_fn", None)
         if transform_fn:

@@ -17,7 +17,7 @@ import torch
 from torch import nn
 from torch.utils.data._utils.collate import default_collate
 
-from flash.core.data.utils import _PREPROCESS_FUNCS, convert_to_modules
+from flash.core.data.utils import _INPUT_TRANSFORM_FUNCS, convert_to_modules
 
 
 class ApplyToKeys(nn.Sequential):
@@ -135,7 +135,7 @@ def merge_transforms(
         The new dictionary of transforms.
     """
     transforms = {}
-    for hook in _PREPROCESS_FUNCS:
+    for hook in _INPUT_TRANSFORM_FUNCS:
         if hook in base_transforms and hook in additional_transforms:
             transforms[hook] = nn.Sequential(
                 convert_to_modules(base_transforms[hook]),

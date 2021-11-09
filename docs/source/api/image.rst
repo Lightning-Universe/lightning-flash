@@ -19,7 +19,7 @@ ______________
 
     ~classification.model.ImageClassifier
     ~classification.data.ImageClassificationData
-    ~classification.data.ImageClassificationPreprocess
+    ~classification.data.ImageClassificationInputTransform
 
     classification.data.MatplotlibVisualization
 
@@ -44,8 +44,8 @@ ________________
 
     detection.data.FiftyOneParser
     detection.data.ObjectDetectionFiftyOneDataSource
-    detection.data.ObjectDetectionPreprocess
     detection.output.FiftyOneDetectionLabels
+    detection.data.ObjectDetectionInputTransform
 
 Keypoint Detection
 __________________
@@ -58,7 +58,7 @@ __________________
     ~keypoint_detection.model.KeypointDetector
     ~keypoint_detection.data.KeypointDetectionData
 
-    keypoint_detection.data.KeypointDetectionPreprocess
+    keypoint_detection.data.KeypointDetectionInputTransform
 
 Instance Segmentation
 _____________________
@@ -71,7 +71,7 @@ _____________________
     ~instance_segmentation.model.InstanceSegmentation
     ~instance_segmentation.data.InstanceSegmentationData
 
-    instance_segmentation.data.InstanceSegmentationPreprocess
+    instance_segmentation.data.InstanceSegmentationInputTransform
 
 Embedding
 _________
@@ -93,7 +93,7 @@ ____________
 
     ~segmentation.model.SemanticSegmentation
     ~segmentation.data.SemanticSegmentationData
-    ~segmentation.data.SemanticSegmentationPreprocess
+    ~segmentation.data.SemanticSegmentationInputTransform
 
     segmentation.data.SegmentationMatplotlibVisualization
     segmentation.data.SemanticSegmentationNumpyDataSource
@@ -123,7 +123,7 @@ ______________
 
     ~style_transfer.model.StyleTransfer
     ~style_transfer.data.StyleTransferData
-    ~style_transfer.data.StyleTransferPreprocess
+    ~style_transfer.data.StyleTransferInputTransform
 
 .. autosummary::
     :toctree: generated/

@@ -16,20 +16,20 @@ import pytest
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _SKLEARN_AVAILABLE
-from flash.template.classification.data import TemplateData, TemplatePreprocess
+from flash.template.classification.data import TemplateData, TemplateInputTransform
 
 if _SKLEARN_AVAILABLE:
     from sklearn import datasets
 
 
 @pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
-class TestTemplatePreprocess:
-    """Tests ``TemplatePreprocess``."""
+class TestTemplateInputTransform:
+    """Tests ``TemplateInputTransform``."""
 
     @staticmethod
     def test_smoke():
         """A simple test that the class can be instantiated."""
-        prep = TemplatePreprocess()
+        prep = TemplateInputTransform()
         assert prep is not None
 
 

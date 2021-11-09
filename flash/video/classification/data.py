@@ -27,7 +27,7 @@ from flash.core.data.data_source import (
     LabelsState,
     PathsDataSource,
 )
-from flash.core.data.process import Preprocess
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.integrations.labelstudio.data_source import LabelStudioVideoClassificationDataSource
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, lazy_import
 
@@ -269,7 +269,7 @@ class VideoClassificationFiftyOneDataSource(
         return ds
 
 
-class VideoClassificationPreprocess(Preprocess):
+class VideoClassificationInputTransform(InputTransform):
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -352,7 +352,7 @@ class VideoClassificationPreprocess(Preprocess):
         }
 
     @classmethod
-    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool) -> "VideoClassificationPreprocess":
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool) -> "VideoClassificationInputTransform":
         return cls(**state_dict)
 
     def default_transforms(self) -> Dict[str, Callable]:
@@ -393,4 +393,4 @@ class VideoClassificationPreprocess(Preprocess):
 class VideoClassificationData(DataModule):
     """Data module for Video classification tasks."""
 
-    preprocess_cls = VideoClassificationPreprocess
+    input_transform_cls = VideoClassificationInputTransform

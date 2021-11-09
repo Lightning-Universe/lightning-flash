@@ -20,7 +20,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from torch.utils.data.dataloader import DataLoader
 
 from flash.core.data.data_pipeline import DataPipeline
-from flash.core.data.process import DefaultPreprocess
+from flash.core.data.io.input_transform import DefaultInputTransform
 from flash.core.model import Task
 
 
@@ -29,7 +29,7 @@ class CustomModel(Task):
         super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
 
 
-class CustomPreprocess(DefaultPreprocess):
+class CustomInputTransform(DefaultInputTransform):
     @classmethod
     def load_data(cls, data):
         return data
@@ -50,22 +50,22 @@ def test_serialization_data_pipeline(tmpdir):
     loaded_model = CustomModel.load_from_checkpoint(checkpoint_file)
     assert loaded_model.data_pipeline
 
-    model.data_pipeline = DataPipeline(preprocess=CustomPreprocess())
-    assert isinstance(model.preprocess, CustomPreprocess)
+    model.data_pipeline = DataPipeline(input_transform=CustomInputTransform())
+    assert isinstance(model.input_transform, CustomInputTransform)
 
     trainer.fit(model, dummy_data)
     assert model.data_pipeline
-    assert isinstance(model.preprocess, CustomPreprocess)
+    assert isinstance(model.input_transform, CustomInputTransform)
     trainer.save_checkpoint(checkpoint_file)
 
     def fn(*args, **kwargs):
         return "0.0.2"
 
-    CustomPreprocess.version = fn
+    CustomInputTransform.version = fn
 
     loaded_model = CustomModel.load_from_checkpoint(checkpoint_file)
     assert loaded_model.data_pipeline
-    assert isinstance(loaded_model.preprocess, CustomPreprocess)
+    assert isinstance(loaded_model.input_transform, CustomInputTransform)
     for file in os.listdir(tmpdir):
         if file.endswith(".ckpt"):
             os.remove(os.path.join(tmpdir, file))

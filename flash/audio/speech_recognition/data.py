@@ -30,8 +30,9 @@ from flash.core.data.data_source import (
     DefaultDataSources,
     PathsDataSource,
 )
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
-from flash.core.data.process import Deserializer, Preprocess
+from flash.core.data.process import Deserializer
 from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _AUDIO_AVAILABLE, requires
 
@@ -92,7 +93,7 @@ class SpeechRecognitionFileDataSource(DataSource, BaseSpeechRecognition):
         self,
         data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
         dataset: Optional[Any] = None,
-    ) -> Union[Sequence[Mapping[str, Any]]]:
+    ) -> Sequence[Mapping[str, Any]]:
         if self.filetype == "json":
             file, input_key, target_key, field = data
         else:
@@ -134,7 +135,7 @@ class SpeechRecognitionDatasetDataSource(DatasetDataSource, BaseSpeechRecognitio
 
         self.sampling_rate = sampling_rate
 
-    def load_data(self, data: Dataset, dataset: Optional[Any] = None) -> Union[Sequence[Mapping[str, Any]]]:
+    def load_data(self, data: Dataset, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
         if isinstance(data, HFDataset):
             data = list(zip(data["file"], data["text"]))
         return super().load_data(data, dataset)
@@ -155,7 +156,7 @@ class SpeechRecognitionPathsDataSource(PathsDataSource, BaseSpeechRecognition):
         return self._load_sample(sample, self.sampling_rate)
 
 
-class SpeechRecognitionPreprocess(Preprocess):
+class SpeechRecognitionInputTransform(InputTransform):
     @requires("audio")
     def __init__(
         self,
@@ -237,5 +238,5 @@ class SpeechRecognitionOutputTransform(OutputTransform):
 class SpeechRecognitionData(DataModule):
     """Data Module for text classification tasks."""
 
-    preprocess_cls = SpeechRecognitionPreprocess
+    input_transform_cls = SpeechRecognitionInputTransform
     output_transform_cls = SpeechRecognitionOutputTransform

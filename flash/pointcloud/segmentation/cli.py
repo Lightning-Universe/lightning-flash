@@ -22,7 +22,7 @@ __all__ = ["pointcloud_segmentation"]
 def from_kitti(
     batch_size: int = 4,
     num_workers: int = 0,
-    **preprocess_kwargs,
+    **input_transform_kwargs,
 ) -> PointCloudSegmentationData:
     """Downloads and loads the semantic KITTI data set."""
     download_data("https://pl-flash-data.s3.amazonaws.com/SemanticKittiTiny.zip", "data/")
@@ -31,7 +31,7 @@ def from_kitti(
         val_folder="data/SemanticKittiTiny/val",
         batch_size=batch_size,
         num_workers=num_workers,
-        **preprocess_kwargs,
+        **input_transform_kwargs,
     )
 
 
