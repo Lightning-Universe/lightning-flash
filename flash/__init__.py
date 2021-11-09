@@ -23,7 +23,7 @@ if _TORCH_AVAILABLE:
     from flash.core.data.data_module import DataModule  # noqa: E402
     from flash.core.data.data_source import DataSource
     from flash.core.data.datasets import FlashDataset, FlashIterableDataset
-    from flash.core.data.input_transform import InputTransform
+    from flash.core.data.io.input_transform import InputTransform
     from flash.core.data.io.output import Output
     from flash.core.data.io.output_transform import OutputTransform
     from flash.core.data.process import Serializer
