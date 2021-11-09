@@ -11,8 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from types import FunctionType
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 import torch
 from torch import nn
@@ -26,7 +25,11 @@ from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_
 from flash.graph.backbones import GRAPH_BACKBONES
 
 if _GRAPH_AVAILABLE:
-    from torch_geometric.nn import global_mean_pool
+    from torch_geometric.nn import global_add_pool, global_max_pool, global_mean_pool
+
+    POOLING_FUNCTIONS = {"mean": global_mean_pool, "add": global_add_pool, "max": global_max_pool}
+else:
+    POOLING_FUNCTIONS = {}
 
 
 class GraphClassifier(ClassificationTask):
@@ -36,12 +39,13 @@ class GraphClassifier(ClassificationTask):
     Args:
         num_features (int): The number of features in the input.
         num_classes (int): Number of classes to classify.
-        backbone: Name of the backbone to use, defaults to ``"GCN"``.
+        backbone: Name of the backbone to use.
         backbone_kwargs: Dictionary dependent on the backbone, containing for example in_channels, out_channels,
             hidden_channels or depth (number of layers).
+        pooling_fn: The global pooling operation to use (one of: "max", "max", "add").
         head: The head to use.
         loss_fn: Loss function for training, defaults to cross entropy.
-        learning_rate: Learning rate to use for training, defaults to `1e-3`
+        learning_rate: Learning rate to use for training.
         optimizer: Optimizer to use for training.
         lr_scheduler: The LR scheduler to use during training.
         metrics: Metrics to compute for training and evaluation.
@@ -57,7 +61,8 @@ class GraphClassifier(ClassificationTask):
         num_classes: int,
         backbone: Union[str, Tuple[nn.Module, int]] = "GCN",
         backbone_kwargs: Optional[Dict] = {},
-        head: Optional[Union[FunctionType, nn.Module]] = None,
+        pooling_fn: Optional[Union[str, Callable]] = "mean",
+        head: Optional[Union[Callable, nn.Module]] = None,
         loss_fn: LOSS_FN_TYPE = F.cross_entropy,
         learning_rate: float = 1e-3,
         optimizer: OPTIMIZER_TYPE = "Adam",
@@ -83,6 +88,8 @@ class GraphClassifier(ClassificationTask):
             self.backbone = self.backbones.get(backbone)(in_channels=num_features, **backbone_kwargs)
             num_out_features = self.backbone.hidden_channels
 
+        self.pooling_fn = POOLING_FUNCTIONS[pooling_fn] if isinstance(pooling_fn, str) else pooling_fn
+
         if head is not None:
             self.head = head
         else:
@@ -105,7 +112,7 @@ class GraphClassifier(ClassificationTask):
 
     def forward(self, data) -> torch.Tensor:
         x = self.backbone(data.x, data.edge_index)
-        x = global_mean_pool(x, data.batch)
+        x = self.pooling_fn(x, data.batch)
         return self.head(x)
 
 

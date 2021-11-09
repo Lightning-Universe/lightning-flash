@@ -19,7 +19,7 @@ from torch import nn
 from flash.core.model import Task
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
 from flash.graph.classification.data import GraphClassificationInputTransform
-from flash.graph.classification.model import GraphClassifier
+from flash.graph.classification.model import GraphClassifier, POOLING_FUNCTIONS
 
 if _GRAPH_AVAILABLE:
     from torch_geometric.nn import global_mean_pool
@@ -35,12 +35,14 @@ class GraphEmbedder(Task):
 
     required_extras: str = "graph"
 
-    def __init__(self, backbone: nn.Module):
+    def __init__(self, backbone: nn.Module, pooling_fn: Optional[Union[str, Callable]] = "mean"):
         super().__init__(model=None, input_transform=GraphClassificationInputTransform())
 
         self.save_hyperparameters()
 
         self.backbone = backbone
+
+        self.pooling_fn = POOLING_FUNCTIONS[pooling_fn] if isinstance(pooling_fn, str) else pooling_fn
 
     def forward(self, data) -> torch.Tensor:
         x = self.backbone(data.x, data.edge_index)
@@ -76,4 +78,4 @@ class GraphEmbedder(Task):
             **kwargs,
         )
 
-        return cls(classifier.backbone)
+        return cls(classifier.backbone, classifier.pooling_fn)
