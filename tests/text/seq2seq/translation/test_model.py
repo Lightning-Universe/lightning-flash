@@ -21,7 +21,6 @@ import torch
 from flash import Trainer
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import TranslationTask
-
 from flash.text.seq2seq.core.data import Seq2SeqOutputTransform
 from flash.text.seq2seq.translation.data import TranslationInputTransform
 from tests.helpers.utils import _SERVE_TESTING, _TEXT_TESTING

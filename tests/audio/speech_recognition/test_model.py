@@ -22,8 +22,7 @@ import torch
 from flash import Trainer
 from flash.__main__ import main
 from flash.audio import SpeechRecognition
-
-from flash.audio.speech_recognition.data import SpeechRecognitionOutputTransform, SpeechRecognitionInputTransform
+from flash.audio.speech_recognition.data import SpeechRecognitionInputTransform, SpeechRecognitionOutputTransform
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _AUDIO_AVAILABLE
 from tests.helpers.utils import _AUDIO_TESTING, _SERVE_TESTING

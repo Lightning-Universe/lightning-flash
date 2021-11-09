@@ -55,8 +55,12 @@ def build_flash_serve_model_component(model):
             self.model = model
             self.model.eval()
             self.data_pipeline = model.build_data_pipeline()
-            self.worker_input_transform_preprocessor = self.data_pipeline.worker_input_transform_preprocessor(RunningStage.PREDICTING, is_serving=True)
-            self.device_input_transform_preprocessor = self.data_pipeline.device_input_transform_preprocessor(RunningStage.PREDICTING)
+            self.worker_input_transform_preprocessor = self.data_pipeline.worker_input_transform_preprocessor(
+                RunningStage.PREDICTING, is_serving=True
+            )
+            self.device_input_transform_preprocessor = self.data_pipeline.device_input_transform_preprocessor(
+                RunningStage.PREDICTING
+            )
             self.output_transform_processor = self.data_pipeline.output_transform_processor(
                 RunningStage.PREDICTING, is_serving=True
             )

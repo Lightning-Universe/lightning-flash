@@ -33,8 +33,8 @@ from flash.core.data.data_source import (
     PathsDataSource,
     TensorDataSource,
 )
-from flash.core.data.process import Deserializer
 from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.process import Deserializer
 from flash.core.data.utils import image_default_loader
 from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,
@@ -415,8 +415,8 @@ class SemanticSegmentationData(DataModule):
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_classes: Number of classes within the segmentation mask.
             labels_map: Mapping between a class_id and its corresponding color.
-            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform. Will only be used
-                if ``input_transform = None``.
+            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
+                Will only be used if ``input_transform = None``.
 
         Returns:
             The constructed data module.

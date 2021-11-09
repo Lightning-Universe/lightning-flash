@@ -11,14 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import functools
 from abc import abstractmethod
 from typing import Any, Mapping
 from warnings import warn
+
 from deprecate import deprecated
 
 import flash
-import functools
-
 from flash.core.data.io.output import Output
 from flash.core.data.properties import Properties
 

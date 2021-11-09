@@ -24,15 +24,19 @@ from torch.utils.data import DataLoader, IterableDataset
 
 import flash
 from flash.core.data.auto_dataset import IterableAutoDataset
-from flash.core.data.batch import _DeserializeProcessor, _Preprocessor, _Sequential
+from flash.core.data.batch import _DeserializeProcessor
 from flash.core.data.data_source import DataSource
+from flash.core.data.io.input_transform import (
+    _InputTransformPreprocessor,
+    _InputTransformSequential,
+    DefaultInputTransform,
+    InputTransform,
+)
 from flash.core.data.io.output import _OutputProcessor, Output
 from flash.core.data.io.output_transform import _OutputTransformProcessor, OutputTransform
-from flash.core.data.io.input_transform import InputTransform, DefaultInputTransform
-from flash.core.data.io.input_transform import _InputTransformPreprocessor, _InputTransformSequential
 from flash.core.data.process import Deserializer
 from flash.core.data.properties import ProcessState
-from flash.core.data.utils import _OUTPUT_TRANSFORM_FUNCS, _INPUT_TRANSFORM_FUNCS, _STAGES_PREFIX
+from flash.core.data.utils import _INPUT_TRANSFORM_FUNCS, _OUTPUT_TRANSFORM_FUNCS, _STAGES_PREFIX
 from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_4_3, _PL_GREATER_EQUAL_1_5_0
 from flash.core.utilities.stages import _RUNNING_STAGE_MAPPING, RunningStage
 
@@ -162,7 +166,9 @@ class DataPipeline:
     def worker_input_transform_preprocessor(
         self, running_stage: RunningStage, collate_fn: Optional[Callable] = None, is_serving: bool = False
     ) -> _InputTransformPreprocessor:
-        return self._create_collate_input_transform_preprocessors(running_stage, collate_fn=collate_fn, is_serving=is_serving)[1]
+        return self._create_collate_input_transform_preprocessors(
+            running_stage, collate_fn=collate_fn, is_serving=is_serving
+        )[1]
 
     def device_input_transform_preprocessor(self, running_stage: RunningStage) -> _InputTransformPreprocessor:
         return self._create_collate_input_transform_preprocessors(running_stage)[2]
@@ -220,7 +226,8 @@ class DataPipeline:
             input_transform._default_collate = collate_fn
 
         func_names: Dict[str, str] = {
-            k: self._resolve_function_hierarchy(k, input_transform, stage, InputTransform) for k in self.INPUT_TRANSFORM_FUNCS
+            k: self._resolve_function_hierarchy(k, input_transform, stage, InputTransform)
+            for k in self.INPUT_TRANSFORM_FUNCS
         }
 
         collate_fn: Callable = getattr(input_transform, func_names["collate"])
@@ -252,7 +259,9 @@ class DataPipeline:
             )
 
         worker_collate_fn = (
-            worker_collate_fn.collate_fn if isinstance(worker_collate_fn, _InputTransformPreprocessor) else worker_collate_fn
+            worker_collate_fn.collate_fn
+            if isinstance(worker_collate_fn, _InputTransformPreprocessor)
+            else worker_collate_fn
         )
 
         assert_contains_tensor = self._is_overriden_recursive(

@@ -39,10 +39,10 @@ import flash
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
 from flash.core.data.data_source import DataSource
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import OutputTransform
-from flash.core.data.io.input_transform import InputTransform
-from flash.core.data.process import Deserializer
+from flash.core.data.process import Deserializer, DeserializerMapping
 from flash.core.data.properties import ProcessState
 from flash.core.optimizers.optimizers import _OPTIMIZERS_REGISTRY
 from flash.core.optimizers.schedulers import _SCHEDULERS_REGISTRY
@@ -54,6 +54,7 @@ from flash.core.utilities.providers import _HUGGINGFACE
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import (
     DESERIALIZER_TYPE,
+    INPUT_TRANSFORM_TYPE,
     LOSS_FN_TYPE,
     LR_SCHEDULER_TYPE,
     METRICS_TYPE,
@@ -61,7 +62,6 @@ from flash.core.utilities.types import (
     OPTIMIZER_TYPE,
     OUTPUT_TRANSFORM_TYPE,
     OUTPUT_TYPE,
-    INPUT_TRANSFORM_TYPE,
 )
 
 
@@ -319,7 +319,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
             `metric(preds,target)` and return a single scalar tensor.
         deserializer: Either a single :class:`~flash.core.data.process.Deserializer` or a mapping of these to
             deserialize the input
-        input_transform: :class:`~flash.core.data.io.input_transform.InputTransform` to use as the default for this task.
+        input_transform: :class:`~flash.core.data.io.input_transform.InputTransform` to use as the default
+            for this task.
         output_transform: :class:`~flash.core.data.io.output_transform.OutputTransform` to use as the default for this
             task.
         output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
@@ -339,7 +340,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: METRICS_TYPE = None,
         deserializer: DESERIALIZER_TYPE = None,
-        input_transform: INPUT_TRANSFORM_TYPE= None,
+        input_transform: INPUT_TRANSFORM_TYPE = None,
         output_transform: OUTPUT_TRANSFORM_TYPE = None,
         output: OUTPUT_TYPE = None,
     ):
@@ -579,8 +580,9 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         new_output: Optional[Output],
     ) -> Tuple[Optional[Deserializer], Optional[InputTransform], Optional[OutputTransform], Optional[Output]]:
         """Resolves the correct :class:`~flash.core.data.io.input_transform.InputTransform`,
-        :class:`~flash.core.data.io.output_transform.OutputTransform`, and :class:`~flash.core.data.io.output.Output` to
-        use, choosing ``new_*`` if it is not None or a base class (:class:`~flash.core.data.io.input_transform.InputTransform`,
+        :class:`~flash.core.data.io.output_transform.OutputTransform`, and :class:`~flash.core.data.io.output.Output`
+        to use, choosing ``new_*`` if it is not None or a base class
+        (:class:`~flash.core.data.io.input_transform.InputTransform`,
         :class:`~flash.core.data.io.output_transform.OutputTransform`, or :class:`~flash.core.data.io.output.Output`)
         and ``old_*`` otherwise.
 
@@ -674,7 +676,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         data_pipeline: Optional[DataPipeline] = None,
     ) -> Optional[DataPipeline]:
         """Build a :class:`.DataPipeline` incorporating available
-        :class:`~flash.core.data.io.input_transform.InputTransform` and :class:`~flash.core.data.io.output_transform.OutputTransform`
+        :class:`~flash.core.data.io.input_transform.InputTransform` and
+        :class:`~flash.core.data.io.output_transform.OutputTransform`
         objects. These will be overridden in the following resolution order (lowest priority first):
 
         - Lightning ``Datamodule``, either attached to the :class:`.Trainer` or to the :class:`.Task`.
@@ -1064,7 +1067,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
             except (ModuleNotFoundError, KeyError):
                 meta = state_dict["input_transform.state_dict"]["_meta"]
                 raise MisconfigurationException(
-                    f"The `InputTransform` {meta['module']}.{meta['class_name']} has been moved and couldn't be imported."
+                    f"The `InputTransform` {meta['module']}.{meta['class_name']}"
+                    "has been moved and couldn't be imported."
                 )
 
         super()._load_from_state_dict(

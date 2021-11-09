@@ -124,8 +124,8 @@ class PointCloudObjectDetectorData(DataModule):
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             sampler: The ``sampler`` to use for the ``train_dataloader``.
-            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform. Will only be used
-                if ``input_transform = None``.
+            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
+                Will only be used if ``input_transform = None``.
             scans_folder_name: The name of the pointcloud scan folder
             labels_folder_name: The name of the pointcloud scan labels folder
             calibrations_folder_name: The name of the pointcloud scan calibration folder

@@ -22,8 +22,8 @@ from flash.core.utilities.stages import RunningStage
 
 
 class BaseVisualization(BaseDataFetcher):
-    """This Base Class is used to create visualization tool on top of :class:`~flash.core.data.io.input_transform.InputTransform`
-    hooks.
+    """This Base Class is used to create visualization tool on top of
+    :class:`~flash.core.data.io.input_transform.InputTransform` hooks.
 
     Override any of the ``show_{_hook_name}`` to receive the associated data and visualize them.
 

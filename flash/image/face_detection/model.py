@@ -22,12 +22,12 @@ from flash.core.finetuning import FlashBaseFinetuning
 from flash.core.model import Task
 from flash.core.utilities.imports import _FASTFACE_AVAILABLE
 from flash.core.utilities.types import (
+    INPUT_TRANSFORM_TYPE,
     LOSS_FN_TYPE,
     LR_SCHEDULER_TYPE,
     METRICS_TYPE,
     OPTIMIZER_TYPE,
     OUTPUT_TYPE,
-    INPUT_TRANSFORM_TYPE,
 )
 from flash.image.face_detection.backbones import FACE_DETECTION_BACKBONES
 from flash.image.face_detection.data import FaceDetectionInputTransform
@@ -81,7 +81,7 @@ class FaceDetector(Task):
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         learning_rate: float = 1e-4,
         output: OUTPUT_TYPE = None,
-        input_transform: INPUT_TRANSFORM_TYPE= None,
+        input_transform: INPUT_TRANSFORM_TYPE = None,
         **kwargs: Any,
     ):
         self.save_hyperparameters()

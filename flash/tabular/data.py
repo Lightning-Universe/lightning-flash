@@ -22,9 +22,9 @@ from flash.core.classification import LabelsState
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
-from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.io.input_transform import InputTransform
-from flash.core.data.process import Deserializer, Preprocess
+from flash.core.data.io.output_transform import OutputTransform
+from flash.core.data.process import Deserializer
 from flash.core.utilities.imports import _PANDAS_AVAILABLE
 from flash.tabular.classification.utils import (
     _compute_normalization,
@@ -377,8 +377,8 @@ class TabularData(DataModule):
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             sampler: The ``sampler`` to use for the ``train_dataloader``.
-            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform. Will only be used
-                if ``input_transform = None``.
+            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
+                Will only be used if ``input_transform = None``.
 
         Returns:
             The constructed data module.
@@ -487,8 +487,8 @@ class TabularData(DataModule):
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             sampler: The ``sampler`` to use for the ``train_dataloader``.
-            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform. Will only be used
-                if ``input_transform = None``.
+            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
+                Will only be used if ``input_transform = None``.
 
         Returns:
             The constructed data module.

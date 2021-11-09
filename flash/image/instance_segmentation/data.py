@@ -16,8 +16,8 @@ from typing import Any, Callable, Dict, Optional, Tuple
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources
-from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.io.output_transform import OutputTransform
 from flash.core.integrations.icevision.data import IceVisionParserDataSource, IceVisionPathsDataSource
 from flash.core.integrations.icevision.transforms import default_transforms
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
@@ -130,8 +130,8 @@ class InstanceSegmentationData(DataModule):
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform. Will only be used
-                if ``input_transform = None``.
+            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
+                Will only be used if ``input_transform = None``.
 
         Returns:
             The constructed data module.
@@ -209,8 +209,8 @@ class InstanceSegmentationData(DataModule):
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform. Will only be used
-                if ``input_transform = None``.
+            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
+                Will only be used if ``input_transform = None``.
 
         Returns:
             The constructed data module.

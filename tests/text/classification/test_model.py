@@ -23,8 +23,7 @@ from flash.__main__ import main
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import TextClassifier
-
-from flash.text.classification.data import TextClassificationOutputTransform, TextClassificationInputTransform
+from flash.text.classification.data import TextClassificationInputTransform, TextClassificationOutputTransform
 from tests.helpers.utils import _SERVE_TESTING, _TEXT_TESTING
 
 # ======== Mock functions ========

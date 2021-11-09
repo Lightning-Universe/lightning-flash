@@ -204,7 +204,9 @@ class FlashCLI(LightningCLI):
         input_transform_function = class_from_function(drop_kwargs(self.local_datamodule_class.input_transform_cls))
         subcommand.add_class_arguments(datamodule_function, fail_untyped=False)
         subcommand.add_class_arguments(
-            input_transform_function, fail_untyped=False, skip=get_overlapping_args(datamodule_function, input_transform_function)
+            input_transform_function,
+            fail_untyped=False,
+            skip=get_overlapping_args(datamodule_function, input_transform_function),
         )
         subcommand_name = function_name or function.__name__
         subcommands.add_subcommand(subcommand_name, subcommand)

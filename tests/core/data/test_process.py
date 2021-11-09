@@ -18,8 +18,8 @@ import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input_transform import DefaultInputTransform
 from flash.core.data.data_source import DefaultDataSources
+from flash.core.data.io.input_transform import DefaultInputTransform
 
 
 class CustomInputTransform(DefaultInputTransform):

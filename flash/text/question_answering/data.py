@@ -30,8 +30,8 @@ import flash
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
-from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 from flash.core.utilities.stages import RunningStage
@@ -678,8 +678,8 @@ class QuestionAnsweringData(DataModule):
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform. Will only be used
-                if ``input_transform = None``.
+            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
+                Will only be used if ``input_transform = None``.
 
         Returns:
             The constructed data module.
@@ -755,8 +755,8 @@ class QuestionAnsweringData(DataModule):
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             sampler: The ``sampler`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             field: To specify the field that holds the data in the JSON file.
-            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform. Will only be used
-                if ``input_transform = None``.
+            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
+                Will only be used if ``input_transform = None``.
 
         .. note:: The following keyword arguments can be passed through to the input_transform_kwargs
 
@@ -856,8 +856,8 @@ class QuestionAnsweringData(DataModule):
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             sampler: The ``sampler`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform. Will only be used
-                if ``input_transform = None``.
+            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
+                Will only be used if ``input_transform = None``.
 
         .. note:: The following keyword arguments can be passed through to the input_transform_kwargs
 

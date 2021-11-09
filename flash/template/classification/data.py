@@ -151,8 +151,8 @@ class TemplateInputTransform(InputTransform):
 
 
 class TemplateData(DataModule):
-    """Creating our :class:`~flash.core.data.data_module.DataModule` is as easy as setting the ``input_transform_cls``
-    attribute.
+    """Creating our :class:`~flash.core.data.data_module.DataModule` is as easy as setting the
+    ``input_transform_cls`` attribute.
 
     We get the ``from_numpy`` method for free as we've configured a ``DefaultDataSources.NUMPY`` data source. We'll also
     add a ``from_sklearn`` method so that we can use our ``TemplateSKLearnDataSource. Finally, we define the
@@ -203,8 +203,8 @@ class TemplateData(DataModule):
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform. Will only be used
-                if ``input_transform = None``.
+            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
+                Will only be used if ``input_transform = None``.
 
         Returns:
             The constructed data module.

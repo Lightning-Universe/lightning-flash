@@ -11,33 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
-
-import torch
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
-
-from flash.core.data.callback import ControlFlow
-from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.input_transform import InputTransform
-from flash.core.data.utils import (
-    _contains_any_tensor,
-    convert_to_modules,
-    CurrentFuncContext,
-    CurrentRunningStageContext,
-)
-from flash.core.utilities.stages import RunningStage
-
-
 import inspect
 from abc import ABC, abstractclassmethod, abstractmethod
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 from torch.utils.data._utils.collate import default_collate
 
-from flash.core.data.callback import FlashCallback
+from flash.core.data.callback import ControlFlow, FlashCallback
 from flash.core.data.data_source import DatasetDataSource, DataSource, DefaultDataKeys, DefaultDataSources
 from flash.core.data.process import Deserializer
 from flash.core.data.properties import ProcessState, Properties
@@ -51,7 +34,15 @@ from flash.core.data.states import (
     ToTensorTransform,
 )
 from flash.core.data.transforms import ApplyToKeys
-from flash.core.data.utils import _INPUT_TRANSFORM_FUNCS, _STAGES_PREFIX, convert_to_modules, CurrentRunningStageFuncContext
+from flash.core.data.utils import (
+    _contains_any_tensor,
+    _INPUT_TRANSFORM_FUNCS,
+    _STAGES_PREFIX,
+    convert_to_modules,
+    CurrentFuncContext,
+    CurrentRunningStageContext,
+    CurrentRunningStageFuncContext,
+)
 from flash.core.utilities.stages import RunningStage
 
 
@@ -66,10 +57,10 @@ class BaseInputTransform(ABC):
 
 
 class InputTransform(BaseInputTransform, Properties):
-    """The :class:`~flash.core.data.io.input_transform.InputTransform` encapsulates all the data processing logic that should run
-    before the data is passed to the model. It is particularly useful when you want to provide an end to end
-    implementation which works with 4 different stages: ``train``, ``validation``, ``test``,  and inference
-    (``predict``).
+    """The :class:`~flash.core.data.io.input_transform.InputTransform` encapsulates all the data processing logic
+    that should run before the data is passed to the model. It is particularly useful when you want to provide an
+    end to end implementation which works with 4 different stages: ``train``, ``validation``, ``test``,  and
+    inference (``predict``).
 
     The :class:`~flash.core.data.io.input_transform.InputTransform` supports the following hooks:
 
@@ -140,8 +131,8 @@ class InputTransform(BaseInputTransform, Properties):
     Data processing can be configured by overriding hooks or through transforms. The input transforms are given as
     a mapping from hook names to callables. Default transforms can be configured by overriding the
     ``default_transforms`` or ``{train,val,test,predict}_default_transforms`` methods. These can then be overridden by
-    the user with the ``{train,val,test,predict}_transform`` arguments to the ``InputTransform``. All of the hooks can be
-    used in the transform mappings.
+    the user with the ``{train,val,test,predict}_transform`` arguments to the ``InputTransform``.
+    All of the hooks can be used in the transform mappings.
 
     Example::
 
@@ -283,7 +274,8 @@ class InputTransform(BaseInputTransform, Properties):
 
         if not isinstance(transform, Dict):
             raise MisconfigurationException(
-                "Transform should be a dict. " f"Here are the available keys for your transforms: {_INPUT_TRANSFORM_FUNCS}."
+                "Transform should be a dict. "
+                f"Here are the available keys for your transforms: {_INPUT_TRANSFORM_FUNCS}."
             )
 
         keys_diff = set(transform.keys()).difference(_INPUT_TRANSFORM_FUNCS)
@@ -335,7 +327,8 @@ class InputTransform(BaseInputTransform, Properties):
 
     @property
     def transforms(self) -> Dict[str, Optional[Dict[str, Callable]]]:
-        """The transforms currently being used by this :class:`~flash.core.data.io.input_transform.InputTransform`."""
+        """The transforms currently being used by this
+        :class:`~flash.core.data.io.input_transform.InputTransform`."""
         return {
             "train_transform": self.train_transform,
             "val_transform": self.val_transform,
@@ -542,7 +535,8 @@ class DefaultInputTransform(InputTransform):
 
 
 class _InputTransformSequential(torch.nn.Module):
-    """This class is used to chain 3 functions together for the _InputTransformPreprocessor ``per_sample_transform`` function.
+    """This class is used to chain 3 functions together for the _InputTransformPreprocessor
+    ``per_sample_transform`` function.
 
     1. ``pre_tensor_transform``
     2. ``to_tensor_transform``

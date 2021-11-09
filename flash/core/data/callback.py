@@ -167,7 +167,7 @@ class BaseDataFetcher(FlashCallback):
 
     def __init__(self, enabled: bool = False):
         self.enabled = enabled
-        self._ = None
+        self._input_transform = None
         self.reset()
 
     def _store(self, data: Any, fn_name: str, running_stage: RunningStage) -> None:
@@ -207,9 +207,9 @@ class BaseDataFetcher(FlashCallback):
         yield
         self.enabled = False
 
-    def attach_to_(self, : "flash.core.data.io.input_transform.InputTransform") -> None:
-        .add_callbacks([self])
-        self._ = 
+    def attach_to_(self, input_transform: "flash.core.data.io.input_transform.InputTransform") -> None:
+        input_transform.add_callbacks([self])
+        self._input_transform = input_transform
 
     def reset(self):
         self.batches = {k: {} for k in _STAGES_PREFIX.values()}
