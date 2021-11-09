@@ -38,10 +38,11 @@ from flash.core.classification import ClassificationTask
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.process import DefaultPreprocess
 from flash.core.utilities.imports import _TORCH_OPTIMIZER_AVAILABLE, _TRANSFORMERS_AVAILABLE, Image
+from flash.graph import GraphClassifier, GraphEmbedder
 from flash.image import ImageClassificationData, ImageClassifier, SemanticSegmentation
 from flash.tabular import TabularClassifier
 from flash.text import SummarizationTask, TextClassifier, TranslationTask
-from tests.helpers.utils import _AUDIO_TESTING, _IMAGE_TESTING, _TABULAR_TESTING, _TEXT_TESTING
+from tests.helpers.utils import _AUDIO_TESTING, _GRAPH_TESTING, _IMAGE_TESTING, _TABULAR_TESTING, _TEXT_TESTING
 
 # ======== Mock functions ========
 
@@ -303,6 +304,22 @@ def test_task_datapipeline_save(tmpdir):
             marks=pytest.mark.skipif(
                 not _TEXT_TESTING,
                 reason="text packages aren't installed",
+            ),
+        ),
+        pytest.param(
+            GraphClassifier,
+            "0.6.0/graph_classification_model.pt",
+            marks=pytest.mark.skipif(
+                not _GRAPH_TESTING,
+                reason="graph packages aren't installed",
+            ),
+        ),
+        pytest.param(
+            GraphEmbedder,
+            "0.6.0/graph_classification_model.pt",
+            marks=pytest.mark.skipif(
+                not _GRAPH_TESTING,
+                reason="graph packages aren't installed",
             ),
         ),
     ],

@@ -15,6 +15,7 @@ from functools import partial
 
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
+from flash.core.utilities.providers import _PYTORCH_GEOMETRIC
 
 if _GRAPH_AVAILABLE:
     from torch_geometric.nn.models import GAT, GCN, GIN, GraphSAGE
@@ -37,4 +38,4 @@ def _load_graph_backbone(
 
 
 for model_name in MODELS.keys():
-    GRAPH_BACKBONES(name=model_name, namespace="graph")(partial(_load_graph_backbone, model_name))
+    GRAPH_BACKBONES(name=model_name, providers=_PYTORCH_GEOMETRIC)(partial(_load_graph_backbone, model_name))

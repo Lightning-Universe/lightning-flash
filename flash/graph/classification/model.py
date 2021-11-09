@@ -12,18 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from types import FunctionType
-from typing import Any, Callable, List, Optional, Type, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 import torch
-from torch import nn, Tensor
+from torch import nn
 from torch.nn import functional as F
 from torch.nn import Linear
 
 from flash.core.classification import ClassificationTask
-from flash.core.data.data_source import DefaultDataKeys
 from flash.core.registry import FlashRegistry
-from flash.graph.backbones import GRAPH_BACKBONES
+from flash.core.utilities.imports import _GRAPH_AVAILABLE
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
+from flash.graph.backbones import GRAPH_BACKBONES
+
+if _GRAPH_AVAILABLE:
+    from torch_geometric.nn import global_mean_pool
 
 
 class GraphClassifier(ClassificationTask):
@@ -83,7 +86,7 @@ class GraphClassifier(ClassificationTask):
         if head is not None:
             self.head = head
         else:
-            self.head = default_head(num_out_features, num_classes)
+            self.head = DefaultGraphHead(num_out_features, num_classes)
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch, batch.y)
@@ -98,18 +101,17 @@ class GraphClassifier(ClassificationTask):
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch[DefaultDataKeys.PREDS] = super().predict_step(
-            (batch[DefaultDataKeys.INPUT]), batch_idx, dataloader_idx=dataloader_idx
-        )
-        return batch
+        return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
 
-    def forward(self, x) -> torch.Tensor:
-        x = self.backbone(x.x, x.edge_index)
+    def forward(self, data) -> torch.Tensor:
+        x = self.backbone(data.x, data.edge_index)
+        x = global_mean_pool(x, data.batch)
         return self.head(x)
 
 
-class default_head(torch.nn.Module):
+class DefaultGraphHead(torch.nn.Module):
     def __init__(self, hidden_channels, num_classes, dropout=0.5):
+        super().__init__()
         self.lin1 = Linear(hidden_channels, hidden_channels)
         self.lin2 = Linear(hidden_channels, num_classes)
         self.dropout = dropout
@@ -121,5 +123,4 @@ class default_head(torch.nn.Module):
     def forward(self, x):
         x = F.relu(self.lin1(x))
         x = F.dropout(x, p=self.dropout, training=self.training)
-        x = self.lin2(x)
-        return F.log_softmax(x, dim=-1)
+        return self.lin2(x)
