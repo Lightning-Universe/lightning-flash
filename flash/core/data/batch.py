@@ -11,16 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Sequence, TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING
 
 import torch
 
 from flash.core.data.callback import ControlFlow
-from flash.core.data.utils import (
-    convert_to_modules,
-    CurrentFuncContext,
-    CurrentRunningStageContext,
-)
+from flash.core.data.utils import convert_to_modules, CurrentFuncContext, CurrentRunningStageContext
 from flash.core.utilities.stages import RunningStage
 
 if TYPE_CHECKING:

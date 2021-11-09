@@ -7,7 +7,7 @@ import torch
 from pytorch_lightning.utilities.cloud_io import get_filesystem
 
 from flash.core.data.auto_dataset import AutoDataset, IterableAutoDataset
-from flash.core.data.io.input import Input, InputDataKeys, has_len
+from flash.core.data.io.input import has_len, Input, InputDataKeys
 from flash.core.data.utils import image_default_loader
 from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE, _TEXT_AVAILABLE
 from flash.core.utilities.stages import RunningStage

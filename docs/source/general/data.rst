@@ -307,15 +307,15 @@ Here is the :class:`~flash.core.data.auto_dataset.AutoDataset` pseudo-code.
         def __init__(
             self,
             data: List[Any],  # output of `Input.load_data`
-            : Input,
+            input: Input,
             running_stage: RunningStage,
         ):
 
             self.data = data
-            self. = 
+            self.input = input
 
         def __getitem__(self, index: int):
-            return self..load_sample(self.data[index])
+            return self.input.load_sample(self.data[index])
 
         def __len__(self):
             return len(self.data)

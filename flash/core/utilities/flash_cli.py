@@ -186,9 +186,7 @@ class FlashCLI(LightningCLI):
             if isinstance(input, InputFormat):
                 input = input.value
             if hasattr(self.local_datamodule_class, f"from_{input}"):
-                self.add_subcommand_from_function(
-                    subcommands, getattr(self.local_datamodule_class, f"from_{input}")
-                )
+                self.add_subcommand_from_function(subcommands, getattr(self.local_datamodule_class, f"from_{input}"))
 
         for datamodule_builder in self.additional_datamodule_builders:
             self.add_subcommand_from_function(subcommands, datamodule_builder)

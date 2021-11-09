@@ -61,10 +61,7 @@ class AutoDataSources(Directive):
                 return None
 
         input_transform = PatchedInputTransform()
-        inputs = {
-            : input_transform._of_name()
-            for  in input_transform.available_inputs()
-        }
+        inputs = {input: input_transform.input_of_name(input) for input in input_transform.available_inputs()}
 
         ENVIRONMENT.get_template("base.rst")
 

@@ -23,13 +23,7 @@ from torch.utils.data import Dataset
 
 import flash
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import (
-    DatasetInput,
-    Input,
-    InputDataKeys,
-    InputFormat,
-    PathsInput,
-)
+from flash.core.data.io.input import DatasetInput, Input, InputDataKeys, InputFormat, PathsInput
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.process import Deserializer
