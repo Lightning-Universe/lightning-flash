@@ -27,7 +27,7 @@ from flash.core.data.io.input import Input, InputDataKeys, InputFormat, LabelsSt
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.process import Deserializer
-from flash.core.integrations.labelstudio.data_source import LabelStudioTextClassificationInput
+from flash.core.integrations.labelstudio.input import LabelStudioTextClassificationInput
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 
 if _TEXT_AVAILABLE:
@@ -272,7 +272,7 @@ class TextClassificationInputTransform(InputTransform):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
+            inputs={
                 InputFormat.CSV: TextCSVInput(self.backbone, max_length=max_length),
                 InputFormat.JSON: TextJSONInput(self.backbone, max_length=max_length),
                 InputFormat.PARQUET: TextParquetInput(self.backbone, max_length=max_length),
@@ -283,7 +283,7 @@ class TextClassificationInputTransform(InputTransform):
                     backbone=self.backbone, max_length=max_length
                 ),
             },
-            default_data_source=InputFormat.LISTS,
+            default_=InputFormat.LISTS,
             deserializer=TextDeserializer(backbone, max_length),
         )
 
@@ -383,7 +383,7 @@ class TextClassificationData(DataModule):
         Returns:
             The constructed data module.
         """
-        return cls.from_data_source(
+        return cls.from_(
             InputFormat.DATAFRAME,
             (train_data_frame, input_field, target_fields),
             (val_data_frame, input_field, target_fields),
@@ -461,7 +461,7 @@ class TextClassificationData(DataModule):
         Returns:
             The constructed data module.
         """
-        return cls.from_data_source(
+        return cls.from_(
             InputFormat.LISTS,
             (train_data, train_targets),
             (val_data, val_targets),
@@ -547,7 +547,7 @@ class TextClassificationData(DataModule):
                 },
             )
         """
-        return cls.from_data_source(
+        return cls.from_(
             InputFormat.PARQUET,
             (train_file, input_field, target_fields),
             (val_file, input_field, target_fields),
@@ -620,7 +620,7 @@ class TextClassificationData(DataModule):
         Returns:
             The constructed data module.
         """
-        return cls.from_data_source(
+        return cls.from_(
             InputFormat.HUGGINGFACE_DATASET,
             (train_hf_dataset, input_field, target_fields),
             (val_hf_dataset, input_field, target_fields),

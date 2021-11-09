@@ -37,10 +37,10 @@ class GraphClassificationInputTransform(InputTransform):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
+            inputs={
                 InputFormat.DATASETS: GraphDatasetInput(),
             },
-            default_data_source=InputFormat.DATASETS,
+            default_=InputFormat.DATASETS,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:

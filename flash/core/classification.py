@@ -125,7 +125,7 @@ class ClassificationOutput(Output):
 
 class PredsClassificationOutput(ClassificationOutput):
     """A :class:`~flash.core.classification.ClassificationOutput` which gets the
-    :attr:`~flash.core.data.data_source.DefaultDataKeys.PREDS` from the sample.
+    :attr:`~flash.core.data.io.input.InputFormat.PREDS` from the sample.
     """
 
     def transform(self, sample: Any) -> Any:

@@ -167,13 +167,13 @@ class SpeechRecognitionInputTransform(InputTransform):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
+            inputs={
                 InputFormat.CSV: SpeechRecognitionCSVInput(sampling_rate),
                 InputFormat.JSON: SpeechRecognitionJSONInput(sampling_rate),
                 InputFormat.FILES: SpeechRecognitionPathsInput(sampling_rate),
                 InputFormat.DATASETS: SpeechRecognitionDatasetInput(sampling_rate),
             },
-            default_data_source=InputFormat.FILES,
+            default_=InputFormat.FILES,
             deserializer=SpeechRecognitionDeserializer(sampling_rate),
         )
 

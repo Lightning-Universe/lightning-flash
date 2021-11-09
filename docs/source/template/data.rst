@@ -104,7 +104,7 @@ Data sources should be given as a dictionary which maps data source name to data
 The name can be anything, but if you want to take advantage of our built-in ``from_*`` classmethods, you should use :class:`~flash.core.data.io.input.InputFormat` as the names.
 In our case, we have both a :attr:`~flash.core.data.io.input.InputFormat.NUMPY` and a custom scikit-learn data source (which we'll call `"sklearn"`).
 
-You should also provide a ``default_data_source``.
+You should also provide a ``default_``.
 This is the name of the data source to use by default when predicting.
 It'd be cool if we could get predictions just from a numpy array, so we'll use :attr:`~flash.core.data.io.input.InputFormat.NUMPY` as the default.
 
@@ -140,7 +140,7 @@ DataModule
 The :class:`~flash.core.data.data_module.DataModule` is responsible for creating the :class:`~torch.utils.data.DataLoader` and injecting the transforms for each stage.
 When the user calls a ``from_*`` method (such as :meth:`~flash.core.data.data_module.DataModule.from_numpy`), the following steps take place:
 
-#. The :meth:`~flash.core.data.data_module.DataModule.from_data_source` method is called with the name of the :class:`~flash.core.data.io.input.Input` to use and the inputs to provide to :meth:`~flash.core.data.io.input.Input.load_data` for each stage.
+#. The :meth:`~flash.core.data.data_module.DataModule.from_` method is called with the name of the :class:`~flash.core.data.io.input.Input` to use and the inputs to provide to :meth:`~flash.core.data.io.input.Input.load_data` for each stage.
 #. The :class:`~flash.core.data.io.input_transform.InputTransform` is created from ``cls.input_transform_cls`` (if it wasn't provided by the user) with any provided transforms.
 #. The :class:`~flash.core.data.io.input.Input` of the provided name is retrieved from the :class:`~flash.core.data.io.input_transform.InputTransform`.
 #. A :class:`~flash.core.data.auto_dataset.BaseAutoDataset` is created from the :class:`~flash.core.data.io.input.Input` for each stage.

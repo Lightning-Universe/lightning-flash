@@ -70,14 +70,14 @@ class StyleTransferInputTransform(InputTransform):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
+            inputs={
                 InputFormat.FILES: ImagePathsInput(),
                 InputFormat.FOLDERS: ImagePathsInput(),
                 InputFormat.NUMPY: ImageNumpyInput(),
                 InputFormat.TENSORS: ImageTensorInput(),
                 InputFormat.TENSORS: ImageTensorInput(),
             },
-            default_data_source=InputFormat.FILES,
+            default_=InputFormat.FILES,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
@@ -131,7 +131,7 @@ class StyleTransferData(ImageClassificationData):
             predict_transform=predict_transform,
         )
 
-        return cls.from_data_source(
+        return cls.from_(
             InputFormat.FOLDERS,
             train_data=train_folder,
             predict_data=predict_folder,

@@ -44,7 +44,7 @@ class PointCloudObjectDetectorInputTransform(InputTransform):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         deserializer: Optional[Deserializer] = None,
-        **data_source_kwargs,
+        **_kwargs,
     ):
 
         super().__init__(
@@ -52,12 +52,12 @@ class PointCloudObjectDetectorInputTransform(InputTransform):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
-                InputFormat.DATASETS: PointCloudObjectDetectorDatasetInput(**data_source_kwargs),
-                InputFormat.FOLDERS: PointCloudObjectDetectorFoldersInput(**data_source_kwargs),
+            inputs={
+                InputFormat.DATASETS: PointCloudObjectDetectorDatasetInput(**_kwargs),
+                InputFormat.FOLDERS: PointCloudObjectDetectorFoldersInput(**_kwargs),
             },
             deserializer=deserializer,
-            default_data_source=InputFormat.FOLDERS,
+            default_=InputFormat.FOLDERS,
         )
 
     def get_state_dict(self):
@@ -99,15 +99,9 @@ class PointCloudObjectDetectorData(DataModule):
         **input_transform_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given folders using the
-<<<<<<< HEAD
-        :class:`~flash.core.data.data_source.DataSource` of name
-        :attr:`~flash.core.data.data_source.DefaultDataSources.FOLDERS`
-        from the passed or constructed :class:`~flash.core.data.io.input_transform.InputTransform`.
-=======
         :class:`~flash.core.data.io.input.Input` of name
         :attr:`~flash.core.data.io.input.InputFormat.FOLDERS`
-        from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
->>>>>>> rename
+        from the passed or constructed :class:`~flash.core.data.io.input_transform.InputTransform`.
 
         Args:
             train_folder: The folder containing the train data.
@@ -150,7 +144,7 @@ class PointCloudObjectDetectorData(DataModule):
                 },
             )
         """
-        return cls.from_data_source(
+        return cls.from_(
             InputFormat.FOLDERS,
             train_folder,
             val_folder,

@@ -107,7 +107,7 @@ def test_predict_tensor():
     img = torch.rand(1, 3, 64, 64)
     model = SemanticSegmentation(2, backbone="mobilenetv3_large_100")
     data_pipe = DataPipeline(input_transform=SemanticSegmentationInputTransform(num_classes=1))
-    out = model.predict(img, data_source="tensors", data_pipeline=data_pipe)
+    out = model.predict(img, ="tensors", data_pipeline=data_pipe)
     assert isinstance(out[0], list)
     assert len(out[0]) == 64
     assert len(out[0][0]) == 64
@@ -118,7 +118,7 @@ def test_predict_numpy():
     img = np.ones((1, 3, 64, 64))
     model = SemanticSegmentation(2, backbone="mobilenetv3_large_100")
     data_pipe = DataPipeline(input_transform=SemanticSegmentationInputTransform(num_classes=1))
-    out = model.predict(img, data_source="numpy", data_pipeline=data_pipe)
+    out = model.predict(img, ="numpy", data_pipeline=data_pipe)
     assert isinstance(out[0], list)
     assert len(out[0]) == 64
     assert len(out[0][0]) == 64

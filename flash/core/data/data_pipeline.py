@@ -93,13 +93,13 @@ class DataPipeline:
 
     def __init__(
         self,
-        data_source: Optional[Input] = None,
+        input: Optional[Input] = None,
         input_transform: Optional[InputTransform] = None,
         output_transform: Optional[OutputTransform] = None,
         deserializer: Optional[Deserializer] = None,
         output: Optional[Output] = None,
     ) -> None:
-        self.data_source = data_source
+        self.input = input
 
         self._input_transform_pipeline = input_transform or DefaultInputTransform()
         self._output_transform = output_transform or OutputTransform()
@@ -112,8 +112,8 @@ class DataPipeline:
         :class:`.OutputTransform`, and :class:`.Output`. Once this has been called, any attempt to add new state will
         give a warning."""
         data_pipeline_state = data_pipeline_state or DataPipelineState()
-        if self.data_source is not None:
-            self.data_source.attach_data_pipeline_state(data_pipeline_state)
+        if self.input is not None:
+            self.input.attach_data_pipeline_state(data_pipeline_state)
         self._input_transform_pipeline.attach_data_pipeline_state(data_pipeline_state)
         self._output_transform.attach_data_pipeline_state(data_pipeline_state)
         self._output.attach_data_pipeline_state(data_pipeline_state)
@@ -570,14 +570,14 @@ class DataPipeline:
             model.predict_step = model.predict_step._original
 
     def __str__(self) -> str:
-        data_source: Input = self.data_source
+        input: Input = self.input
         input_transform: InputTransform = self._input_transform_pipeline
         output_transform: OutputTransform = self._output_transform
         output: Output = self._output
         deserializer: Deserializer = self._deserializer
         return (
             f"{self.__class__.__name__}("
-            f"data_source={str(data_source)}, "
+            f"input={str(input)}, "
             f"deserializer={deserializer}, "
             f"input_transform={input_transform}, "
             f"output_transform={output_transform}, "

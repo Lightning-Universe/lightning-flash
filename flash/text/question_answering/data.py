@@ -521,7 +521,7 @@ class QuestionAnsweringInputTransform(InputTransform):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
+            inputs={
                 InputFormat.CSV: QuestionAnsweringCSVInput(
                     self.backbone,
                     max_source_length=max_source_length,
@@ -560,7 +560,7 @@ class QuestionAnsweringInputTransform(InputTransform):
                     doc_stride=doc_stride,
                 ),
             },
-            default_data_source="dict",
+            default_="dict",
         )
 
         self.set_state(QuestionAnsweringBackboneState(self.backbone))
@@ -691,7 +691,7 @@ class QuestionAnsweringData(DataModule):
                 doc_stride=128,
             )
         """
-        return cls.from_data_source(
+        return cls.from_(
             "squad_v2",
             train_file,
             val_file,
@@ -789,7 +789,7 @@ class QuestionAnsweringData(DataModule):
                 doc_stride=128
             )
         """
-        return cls.from_data_source(
+        return cls.from_(
             InputFormat.JSON,
             (train_file, field),
             (val_file, field),
@@ -892,7 +892,7 @@ class QuestionAnsweringData(DataModule):
                 doc_stride=128
             )
         """
-        return cls.from_data_source(
+        return cls.from_(
             InputFormat.CSV,
             train_file,
             val_file,

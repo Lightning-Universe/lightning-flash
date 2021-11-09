@@ -273,7 +273,7 @@ class Seq2SeqInputTransform(InputTransform):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
+            inputs={
                 InputFormat.CSV: Seq2SeqCSVInput(
                     self.backbone,
                     max_source_length=max_source_length,
@@ -296,7 +296,7 @@ class Seq2SeqInputTransform(InputTransform):
                     **backbone_kwargs,
                 ),
             },
-            default_data_source="sentences",
+            default_="sentences",
             deserializer=TextDeserializer(backbone, max_source_length),
         )
 

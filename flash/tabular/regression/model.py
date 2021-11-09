@@ -16,7 +16,7 @@ from typing import Any, Callable, List, Tuple
 import torch
 from torch.nn import functional as F
 
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data. import DefaultDataKeys
 from flash.core.regression import RegressionTask
 from flash.core.utilities.imports import _TABULAR_AVAILABLE
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE

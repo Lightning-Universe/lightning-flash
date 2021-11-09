@@ -192,7 +192,7 @@ class TabularInputTransform(InputTransform):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
+            inputs={
                 InputFormat.CSV: TabularCSVInput(
                     cat_cols, num_cols, target_col, mean, std, codes, target_codes, classes, is_regression
                 ),
@@ -200,7 +200,7 @@ class TabularInputTransform(InputTransform):
                     cat_cols, num_cols, target_col, mean, std, codes, target_codes, classes, is_regression
                 ),
             },
-            default_data_source=InputFormat.CSV,
+            default_=InputFormat.CSV,
             deserializer=deserializer
             or TabularDeserializer(
                 cat_cols=cat_cols,
@@ -249,19 +249,19 @@ class TabularData(DataModule):
 
     @property
     def codes(self) -> Dict[str, str]:
-        return self._data_source.codes
+        return self._.codes
 
     @property
     def num_classes(self) -> int:
-        return self._data_source.num_classes
+        return self._.num_classes
 
     @property
     def cat_cols(self) -> Optional[List[str]]:
-        return self._data_source.cat_cols
+        return self._.cat_cols
 
     @property
     def num_cols(self) -> Optional[List[str]]:
-        return self._data_source.num_cols
+        return self._.num_cols
 
     @property
     def num_features(self) -> int:
@@ -406,7 +406,7 @@ class TabularData(DataModule):
             categorical_fields=categorical_fields,
         )
 
-        return cls.from_data_source(
+        return cls.from_(
             "data_frame",
             train_data_frame,
             val_data_frame,

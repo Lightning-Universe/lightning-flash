@@ -104,11 +104,11 @@ class TemplateInputTransform(InputTransform):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
+            inputs={
                 InputFormat.NUMPY: TemplateNumpyInput(),
                 "sklearn": TemplateSKLearnInput(),
             },
-            default_data_source=InputFormat.NUMPY,
+            default_=InputFormat.NUMPY,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
@@ -180,7 +180,7 @@ class TemplateData(DataModule):
         **input_transform_kwargs: Any,
     ):
         """This is our custom ``from_*`` method. It expects scikit-learn ``Bunch`` objects as input and passes them
-        through to the :meth:`~flash.core.data.data_module.DataModule.from_data_source` method underneath.
+        through to the :meth:`~flash.core.data.data_module.DataModule.from_` method underneath.
 
         Args:
             train_bunch: The scikit-learn ``Bunch`` containing the train data.
@@ -209,7 +209,7 @@ class TemplateData(DataModule):
         Returns:
             The constructed data module.
         """
-        return super().from_data_source(
+        return super().from_(
             "sklearn",
             train_bunch,
             val_bunch,

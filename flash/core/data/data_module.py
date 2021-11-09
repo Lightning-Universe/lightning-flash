@@ -65,7 +65,7 @@ class DataModule(pl.LightningDataModule):
         val_dataset: Dataset for validating model performance during training. Defaults to None.
         test_dataset: Dataset to test model performance. Defaults to None.
         predict_dataset: Dataset for predicting. Defaults to None.
-        data_source: The :class:`~flash.core.data.io.input.Input` that was used to create the datasets.
+        input: The :class:`~flash.core.data.io.input.Input` that was used to create the datasets.
         input_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` to use when constructing the
             :class:`~flash.core.data.data_pipeline.DataPipeline`. If ``None``, a
             :class:`~flash.core.data.io.input_transform.DefaultInputTransform` will be used.
@@ -94,7 +94,7 @@ class DataModule(pl.LightningDataModule):
         val_dataset: Optional[Dataset] = None,
         test_dataset: Optional[Dataset] = None,
         predict_dataset: Optional[Dataset] = None,
-        data_source: Optional[Input] = None,
+        input: Optional[Input] = None,
         input_transform: Optional[InputTransform] = None,
         output_transform: Optional[OutputTransform] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
@@ -109,7 +109,7 @@ class DataModule(pl.LightningDataModule):
         if flash._IS_TESTING and torch.cuda.is_available():
             batch_size = 16
 
-        self._data_source: Input = data_source
+        self._input: Input = input
         self._input_tranform: Optional[InputTransform] = input_transform
         self._output_transform: Optional[OutputTransform] = output_transform
         self._viz: Optional[BaseVisualization] = None
@@ -426,9 +426,9 @@ class DataModule(pl.LightningDataModule):
         return multi_label_train or multi_label_val or multi_label_test
 
     @property
-    def data_source(self) -> Optional[Input]:
+    def input(self) -> Optional[Input]:
         """Property that returns the data source."""
-        return self._data_source
+        return self._input
 
     @property
     def input_transform(self) -> InputTransform:
@@ -445,16 +445,16 @@ class DataModule(pl.LightningDataModule):
     def data_pipeline(self) -> DataPipeline:
         """Property that returns the full data pipeline including the data source, input transform and
         postprocessing."""
-        return DataPipeline(self.data_source, self.input_transform, self.output_transform)
+        return DataPipeline(self.input, self.input_transform, self.output_transform)
 
-    def available_data_sources(self) -> Sequence[str]:
+    def available_inputs(self) -> Sequence[str]:
         """Get the list of available data source names for use with this
         :class:`~flash.core.data.data_module.DataModule`.
 
         Returns:
             The list of data source names.
         """
-        return self.input_transform.available_data_sources()
+        return self.input_transform.available_inputs()
 
     @staticmethod
     def _split_train_val(
@@ -492,9 +492,9 @@ class DataModule(pl.LightningDataModule):
         )
 
     @classmethod
-    def from_data_source(
+    def from_input(
         cls,
-        data_source: str,
+        input: str,
         train_data: Any = None,
         val_data: Any = None,
         test_data: Any = None,
@@ -515,10 +515,10 @@ class DataModule(pl.LightningDataModule):
         :meth:`~flash.core.data.io.input.Input.load_data` (``train_data``, ``val_data``, ``test_data``,
         ``predict_data``). The data source will be resolved from the instantiated
         :class:`~flash.core.data.io.input_transform.InputTransform`
-        using :meth:`~flash.core.data.io.input_transform.InputTransform.data_source_of_name`.
+        using :meth:`~flash.core.data.io.input_transform.InputTransform.input_of_name`.
 
         Args:
-            data_source: The name of the data source to use for the
+            input: The name of the data source to use for the
                 :meth:`~flash.core.data.io.input.Input.load_data`.
             train_data: The input to :meth:`~flash.core.data.io.input.Input.load_data` to use when creating
                 the train dataset.
@@ -553,7 +553,7 @@ class DataModule(pl.LightningDataModule):
 
         Examples::
 
-            data_module = DataModule.from_data_source(
+            data_module = DataModule.from_input(
                 InputFormat.FOLDERS,
                 train_data="train_folder",
                 train_transform={
@@ -570,9 +570,9 @@ class DataModule(pl.LightningDataModule):
             **input_transform_kwargs,
         )
 
-        data_source = input_transform.data_source_of_name(data_source)
+        input = input_transform.input_of_name(input)
 
-        train_dataset, val_dataset, test_dataset, predict_dataset = data_source.to_datasets(
+        train_dataset, val_dataset, test_dataset, predict_dataset = input.to_datasets(
             train_data,
             val_data,
             test_data,
@@ -584,7 +584,7 @@ class DataModule(pl.LightningDataModule):
             val_dataset,
             test_dataset,
             predict_dataset,
-            data_source=data_source,
+            input=input,
             input_transform=input_transform,
             data_fetcher=data_fetcher,
             val_split=val_split,
@@ -645,7 +645,7 @@ class DataModule(pl.LightningDataModule):
         Returns:
             The constructed data module.
         """
-        return cls.from_data_source(
+        return cls.from_input(
             InputFormat.FOLDERS,
             train_folder,
             val_folder,
@@ -722,7 +722,7 @@ class DataModule(pl.LightningDataModule):
         Returns:
             The constructed data module.
         """
-        return cls.from_data_source(
+        return cls.from_input(
             InputFormat.FILES,
             (train_files, train_targets),
             (val_files, val_targets),
@@ -809,7 +809,7 @@ class DataModule(pl.LightningDataModule):
                 },
             )
         """
-        return cls.from_data_source(
+        return cls.from_input(
             InputFormat.TENSORS,
             (train_data, train_targets),
             (val_data, val_targets),
@@ -896,7 +896,7 @@ class DataModule(pl.LightningDataModule):
                 },
             )
         """
-        return cls.from_data_source(
+        return cls.from_input(
             InputFormat.NUMPY,
             (train_data, train_targets),
             (val_data, val_targets),
@@ -1006,7 +1006,7 @@ class DataModule(pl.LightningDataModule):
                 feild="data"
             )
         """
-        return cls.from_data_source(
+        return cls.from_input(
             InputFormat.JSON,
             (train_file, input_fields, target_fields, field),
             (val_file, input_fields, target_fields, field),
@@ -1092,7 +1092,7 @@ class DataModule(pl.LightningDataModule):
                 },
             )
         """
-        return cls.from_data_source(
+        return cls.from_input(
             InputFormat.CSV,
             (train_file, input_fields, target_fields),
             (val_file, input_fields, target_fields),
@@ -1172,7 +1172,7 @@ class DataModule(pl.LightningDataModule):
                 },
             )
         """
-        return cls.from_data_source(
+        return cls.from_input(
             InputFormat.DATASETS,
             train_dataset,
             val_dataset,
@@ -1256,7 +1256,7 @@ class DataModule(pl.LightningDataModule):
                 },
             )
         """
-        return cls.from_data_source(
+        return cls.from_input(
             InputFormat.FIFTYONE,
             train_dataset,
             val_dataset,
@@ -1381,7 +1381,7 @@ class DataModule(pl.LightningDataModule):
                 "export_json": predict_export_json,
                 "multi_label": input_transform_kwargs.get("multi_label", False),
             }
-        return cls.from_data_source(
+        return cls.from_input(
             InputFormat.LABELSTUDIO,
             train_data=train_data if train_data else data,
             val_data=val_data,

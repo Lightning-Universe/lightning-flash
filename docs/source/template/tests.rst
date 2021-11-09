@@ -76,7 +76,7 @@ These tests are very similar to ``test_train``, but here they are for completene
 
 We also include tests for prediction named ``test_predict_*`` for each of our data sources.
 In our case, we have ``test_predict_numpy`` and ``test_predict_sklearn``.
-These tests should use the ``data_source`` argument to :meth:`~flash.core.model.Task.predict` to select the required :class:`~flash.core.data.Input`.
+These tests should use the ```` argument to :meth:`~flash.core.model.Task.predict` to select the required :class:`~flash.core.data.Input`.
 Here's ``test_predict_sklearn`` as an example:
 
 .. literalinclude:: ../../../tests/template/classification/test_model.py

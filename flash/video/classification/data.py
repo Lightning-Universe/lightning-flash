@@ -28,7 +28,7 @@ from flash.core.data.io.input import (
     PathsInput,
 )
 from flash.core.data.io.input_transform import InputTransform
-from flash.core.integrations.labelstudio.data_source import LabelStudioVideoClassificationInput
+from flash.core.integrations.labelstudio.input import LabelStudioVideoClassificationInput
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, lazy_import
 
 SampleCollection = None
@@ -282,7 +282,7 @@ class VideoClassificationInputTransform(InputTransform):
         video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
         decode_audio: bool = True,
         decoder: str = "pyav",
-        **data_source_kwargs: Any,
+        **_kwargs: Any,
     ):
         self.clip_sampler = clip_sampler
         self.clip_duration = clip_duration
@@ -309,7 +309,7 @@ class VideoClassificationInputTransform(InputTransform):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
+            inputs={
                 InputFormat.FILES: VideoClassificationListInput(
                     clip_sampler,
                     video_sampler=video_sampler,
@@ -327,17 +327,17 @@ class VideoClassificationInputTransform(InputTransform):
                     video_sampler=video_sampler,
                     decode_audio=decode_audio,
                     decoder=decoder,
-                    **data_source_kwargs,
+                    **_kwargs,
                 ),
                 InputFormat.LABELSTUDIO: LabelStudioVideoClassificationInput(
                     clip_sampler=clip_sampler,
                     video_sampler=video_sampler,
                     decode_audio=decode_audio,
                     decoder=decoder,
-                    **data_source_kwargs,
+                    **_kwargs,
                 ),
             },
-            default_data_source=InputFormat.FILES,
+            default_=InputFormat.FILES,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:

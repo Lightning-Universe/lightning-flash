@@ -31,7 +31,7 @@ def test_flash_callback(_, __, tmpdir):
     callback_mock = MagicMock()
 
     inputs = [[torch.rand(1), torch.rand(1)]]
-    dm = DataModule.from_data_source(
+    dm = DataModule.from_(
         "default", inputs, inputs, inputs, None, input_transform=DefaultInputTransform(), batch_size=1, num_workers=0
     )
     dm.input_transform.callbacks += [callback_mock]
@@ -58,7 +58,7 @@ def test_flash_callback(_, __, tmpdir):
         limit_train_batches=1,
         progress_bar_refresh_rate=0,
     )
-    dm = DataModule.from_data_source(
+    dm = DataModule.from_(
         "default", inputs, inputs, inputs, None, input_transform=DefaultInputTransform(), batch_size=1, num_workers=0
     )
     dm.input_transform.callbacks += [callback_mock]

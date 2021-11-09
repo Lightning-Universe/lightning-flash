@@ -96,7 +96,7 @@ class BaseDataFetcher(FlashCallback):
 
             def __init__(**kwargs):
                 super().__init__(
-                    data_sources = {"inputs": Input()},
+                    inputs = {"inputs": Input()},
                     **kwargs,
                 )
 
@@ -121,7 +121,7 @@ class BaseDataFetcher(FlashCallback):
                 test_data: Any,
                 predict_data: Any,
             ) -> "CustomDataModule":
-                return cls.from_data_source(
+                return cls.from_(
                     "inputs",
                     train_data=train_data,
                     val_data=val_data,

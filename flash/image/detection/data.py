@@ -142,7 +142,7 @@ class ObjectDetectionInputTransform(InputTransform):
         predict_transform: Optional[Dict[str, Callable]] = None,
         image_size: Tuple[int, int] = (128, 128),
         parser: Optional[Callable] = None,
-        **data_source_kwargs: Any,
+        **_kwargs: Any,
     ):
         self.image_size = image_size
 
@@ -151,15 +151,15 @@ class ObjectDetectionInputTransform(InputTransform):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
+            inputs={
                 "coco": IceVisionParserInput(parser=COCOBBoxParser),
                 "via": IceVisionParserInput(parser=VIABBoxParser),
                 "voc": IceVisionParserInput(parser=VOCBBoxParser),
                 InputFormat.FILES: IceVisionPathsInput(),
                 InputFormat.FOLDERS: IceVisionParserInput(parser=parser),
-                InputFormat.FIFTYONE: ObjectDetectionFiftyOneInput(**data_source_kwargs),
+                InputFormat.FIFTYONE: ObjectDetectionFiftyOneInput(**_kwargs),
             },
-            default_data_source=InputFormat.FILES,
+            default_=InputFormat.FILES,
         )
 
         self._default_collate = self._identity
@@ -243,7 +243,7 @@ class ObjectDetectionData(DataModule):
                 train_ann_file="annotations.json",
             )
         """
-        return cls.from_data_source(
+        return cls.from_(
             "coco",
             (train_folder, train_ann_file) if train_folder else None,
             (val_folder, val_ann_file) if val_folder else None,
@@ -322,7 +322,7 @@ class ObjectDetectionData(DataModule):
                 train_ann_file="annotations.json",
             )
         """
-        return cls.from_data_source(
+        return cls.from_(
             "voc",
             (train_folder, train_ann_file) if train_folder else None,
             (val_folder, val_ann_file) if val_folder else None,
@@ -401,7 +401,7 @@ class ObjectDetectionData(DataModule):
                 train_ann_file="annotations.json",
             )
         """
-        return cls.from_data_source(
+        return cls.from_(
             "via",
             (train_folder, train_ann_file) if train_folder else None,
             (val_folder, val_ann_file) if val_folder else None,

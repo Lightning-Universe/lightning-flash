@@ -253,10 +253,10 @@ Next, implement your custom ``ImageClassificationInputTransform`` with some defa
                 val_transform=val_transform,
                 test_transform=test_transform,
                 predict_transform=predict_transform,
-                data_sources={
+                inputs={
                     InputFormat.FOLDERS: ImageClassificationFoldersInput(),
                 },
-                default_data_source=InputFormat.FOLDERS,
+                default_=InputFormat.FOLDERS,
             )
 
         def get_state_dict(self) -> Dict[str, Any]:
@@ -307,15 +307,15 @@ Here is the :class:`~flash.core.data.auto_dataset.AutoDataset` pseudo-code.
         def __init__(
             self,
             data: List[Any],  # output of `Input.load_data`
-            data_source: Input,
+            : Input,
             running_stage: RunningStage,
         ):
 
             self.data = data
-            self.data_source = data_source
+            self. = 
 
         def __getitem__(self, index: int):
-            return self.data_source.load_sample(self.data[index])
+            return self..load_sample(self.data[index])
 
         def __len__(self):
             return len(self.data)

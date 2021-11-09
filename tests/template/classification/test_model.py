@@ -116,7 +116,7 @@ def test_predict_sklearn():
     bunch = datasets.load_iris()
     model = TemplateSKLearnClassifier(num_features=DummyDataset.num_features, num_classes=DummyDataset.num_classes)
     data_pipe = DataPipeline(input_transform=TemplateInputTransform())
-    out = model.predict(bunch, data_source="sklearn", data_pipeline=data_pipe)
+    out = model.predict(bunch, input="sklearn", data_pipeline=data_pipe)
     assert isinstance(out[0], int)
 
 

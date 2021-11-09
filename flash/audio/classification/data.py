@@ -83,7 +83,7 @@ class AudioClassificationInputTransform(InputTransform):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
+            inputs={
                 InputFormat.FILES: AudioClassificationPathsInput(),
                 InputFormat.FOLDERS: AudioClassificationPathsInput(),
                 "data_frame": AudioClassificationDataFrameInput(),
@@ -92,7 +92,7 @@ class AudioClassificationInputTransform(InputTransform):
                 InputFormat.TENSORS: AudioClassificationTensorInput(),
             },
             deserializer=deserializer or ImageDeserializer(),
-            default_data_source=InputFormat.FILES,
+            default_=InputFormat.FILES,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:

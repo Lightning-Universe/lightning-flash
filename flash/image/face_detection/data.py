@@ -116,12 +116,12 @@ class FaceDetectionInputTransform(InputTransform):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
+            inputs={
                 InputFormat.FILES: ImagePathsInput(),
                 InputFormat.FOLDERS: ImagePathsInput(),
                 InputFormat.DATASETS: FastFaceInput(),
             },
-            default_data_source=InputFormat.FILES,
+            default_input=InputFormat.FILES,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:

@@ -229,7 +229,7 @@ class SemanticSegmentationInputTransform(InputTransform):
         deserializer: Optional["Deserializer"] = None,
         num_classes: int = None,
         labels_map: Dict[int, Tuple[int, int, int]] = None,
-        **data_source_kwargs: Any,
+        **input_kwargs: Any,
     ) -> None:
         """InputTransform pipeline for semantic segmentation tasks.
 
@@ -239,7 +239,7 @@ class SemanticSegmentationInputTransform(InputTransform):
             test_transform: Dictionary with the set of transforms to apply during testing.
             predict_transform: Dictionary with the set of transforms to apply during prediction.
             image_size: A tuple with the expected output image size.
-            **data_source_kwargs: Additional arguments passed on to the data source constructors.
+            **input_kwargs: Additional arguments passed on to the data source constructors.
         """
         self.image_size = image_size
         self.num_classes = num_classes
@@ -251,15 +251,15 @@ class SemanticSegmentationInputTransform(InputTransform):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
-                InputFormat.FIFTYONE: SemanticSegmentationFiftyOneInput(**data_source_kwargs),
+            inputs={
+                InputFormat.FIFTYONE: SemanticSegmentationFiftyOneInput(**input_kwargs),
                 InputFormat.FILES: SemanticSegmentationPathsInput(),
                 InputFormat.FOLDERS: SemanticSegmentationPathsInput(),
                 InputFormat.TENSORS: SemanticSegmentationTensorInput(),
                 InputFormat.NUMPY: SemanticSegmentationNumpyInput(),
             },
             deserializer=deserializer or SemanticSegmentationDeserializer(),
-            default_data_source=InputFormat.FILES,
+            default_input=InputFormat.FILES,
         )
 
         if labels_map:
@@ -305,9 +305,9 @@ class SemanticSegmentationData(DataModule):
         self.data_fetcher.block_viz_window = value
 
     @classmethod
-    def from_data_source(
+    def from_input(
         cls,
-        data_source: str,
+        input: str,
         train_data: Any = None,
         val_data: Any = None,
         test_data: Any = None,
@@ -338,8 +338,8 @@ class SemanticSegmentationData(DataModule):
         if flash._IS_TESTING:
             data_fetcher.block_viz_window = True
 
-        dm = super().from_data_source(
-            data_source=data_source,
+        dm = super().from_input(
+            input=input,
             train_data=train_data,
             val_data=val_data,
             test_data=test_data,
@@ -428,7 +428,7 @@ class SemanticSegmentationData(DataModule):
                 train_target_folder="train_masks",
             )
         """
-        return cls.from_data_source(
+        return cls.from_input(
             InputFormat.FOLDERS,
             (train_folder, train_target_folder),
             (val_folder, val_target_folder),

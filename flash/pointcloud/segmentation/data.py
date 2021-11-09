@@ -70,12 +70,12 @@ class PointCloudSegmentationInputTransform(InputTransform):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
+            inputs={
                 InputFormat.DATASETS: PointCloudSegmentationDatasetInput(),
                 InputFormat.FOLDERS: PointCloudSegmentationFoldersInput(),
             },
             deserializer=deserializer,
-            default_data_source=InputFormat.FOLDERS,
+            default_=InputFormat.FOLDERS,
         )
 
     def get_state_dict(self):

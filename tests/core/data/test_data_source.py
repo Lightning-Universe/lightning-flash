@@ -14,10 +14,10 @@
 from flash.core.data.io.input import DatasetInput, InputDataKeys
 
 
-def test_dataset_data_source():
-    data_source = DatasetInput()
+def test_dataset_input():
+    input = DatasetInput()
 
     input, target = "test", 3
 
-    assert data_source.load_sample((input, target)) == {InputDataKeys.INPUT: input, InputDataKeys.TARGET: target}
-    assert data_source.load_sample(input) == {InputDataKeys.INPUT: input}
+    assert input.load_sample((input, target)) == {InputDataKeys.INPUT: input, InputDataKeys.TARGET: target}
+    assert input.load_sample(input) == {InputDataKeys.INPUT: input}

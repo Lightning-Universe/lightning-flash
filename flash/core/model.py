@@ -470,7 +470,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
     def predict(
         self,
         x: Any,
-        data_source: Optional[str] = None,
+        input: Optional[str] = None,
         deserializer: Optional[Deserializer] = None,
         data_pipeline: Optional[DataPipeline] = None,
     ) -> Any:
@@ -478,7 +478,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
         Args:
             x: Input to predict. Can be raw data or processed data. If str, assumed to be a folder of data.
-            data_source: A string that indicates the format of the data source to use which will override
+            input: A string that indicates the format of the data source to use which will override
                 the current data source format used
             deserializer: A single :class:`~flash.core.data.process.Deserializer` to deserialize the input
             data_pipeline: Use this to override the current data pipeline
@@ -488,8 +488,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         """
         running_stage = RunningStage.PREDICTING
 
-        data_pipeline = self.build_data_pipeline(data_source or "default", deserializer, data_pipeline)
-        dataset = data_pipeline.data_source.generate_dataset(x, running_stage)
+        data_pipeline = self.build_data_pipeline(input or "default", deserializer, data_pipeline)
+        dataset = data_pipeline.input.generate_dataset(x, running_stage)
         dataloader = self.process_predict_dataset(dataset)
         x = list(dataloader.dataset)
         x = data_pipeline.worker_input_transform_processor(running_stage, collate_fn=dataloader.collate_fn)(x)
@@ -671,7 +671,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
 
     def build_data_pipeline(
         self,
-        data_source: Optional[str] = None,
+        input: Optional[str] = None,
         deserializer: Optional[Deserializer] = None,
         data_pipeline: Optional[DataPipeline] = None,
     ) -> Optional[DataPipeline]:
@@ -686,7 +686,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         - :class:`.DataPipeline` passed to this method.
 
         Args:
-            data_source: A string that indicates the format of the data source to use which will override
+            input: A string that indicates the format of the data source to use which will override
                 the current data source format used.
             deserializer: deserializer to use
             data_pipeline: Optional highest priority source of
@@ -696,7 +696,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         Returns:
             The fully resolved :class:`.DataPipeline`.
         """
-        deserializer, old_data_source, input_transform, output_transform, output = None, None, None, None, None
+        deserializer, old_input, input_transform, output_transform, output = None, None, None, None, None
 
         # Datamodule
         datamodule = None
@@ -706,7 +706,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
             datamodule = self.datamodule
 
         if getattr(datamodule, "data_pipeline", None) is not None:
-            old_data_source = getattr(datamodule.data_pipeline, "data_source", None)
+            old_input = getattr(datamodule.data_pipeline, "input", None)
             input_transform = getattr(datamodule.data_pipeline, "_input_transform_pipeline", None)
             output_transform = getattr(datamodule.data_pipeline, "_output_transform", None)
             output = getattr(datamodule.data_pipeline, "_output", None)
@@ -737,18 +737,18 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
                 getattr(data_pipeline, "_output", None),
             )
 
-        data_source = data_source or old_data_source
+        input = input or old_input
 
-        if isinstance(data_source, str):
+        if isinstance(input, str):
             if input_transform is None:
-                data_source = Input()  # TODO: warn the user that we are not using the specified data source
+                input = Input()  # TODO: warn the user that we are not using the specified data source
             else:
-                data_source = input_transform.data_source_of_name(data_source)
+                input = input_transform.input_of_name(input)
 
         if deserializer is None or type(deserializer) is Deserializer:
             deserializer = getattr(input_transform, "deserializer", deserializer)
 
-        data_pipeline = DataPipeline(data_source, input_transform, output_transform, deserializer, output)
+        data_pipeline = DataPipeline(input, input_transform, output_transform, deserializer, output)
         self._data_pipeline_state = self._data_pipeline_state or DataPipelineState()
         self.attach_data_pipeline_state(self._data_pipeline_state)
         self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)

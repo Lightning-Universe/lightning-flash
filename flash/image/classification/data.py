@@ -24,7 +24,7 @@ from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import InputDataKeys, InputFormat, LoaderDataFrameInput
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.process import Deserializer
-from flash.core.integrations.labelstudio.data_source import LabelStudioImageClassificationInput
+from flash.core.integrations.labelstudio.input import LabelStudioImageClassificationInput
 from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, Image, requires
 from flash.core.utilities.stages import RunningStage
 from flash.image.classification.transforms import default_transforms, train_default_transforms
@@ -65,7 +65,7 @@ class ImageClassificationInputTransform(InputTransform):
         predict_transform:
         image_size: tuple with the (heigh, width) of the images
         deserializer:
-        data_source_kwargs: Additional kwargs for the data source initializer
+        input_kwargs: Additional kwargs for the data source initializer
     """
 
     def __init__(
@@ -76,7 +76,7 @@ class ImageClassificationInputTransform(InputTransform):
         predict_transform: Optional[Dict[str, Callable]] = None,
         image_size: Tuple[int, int] = (196, 196),
         deserializer: Optional[Deserializer] = None,
-        **data_source_kwargs: Any,
+        **input_kwargs: Any,
     ):
         self.image_size = image_size
 
@@ -85,8 +85,8 @@ class ImageClassificationInputTransform(InputTransform):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
-                InputFormat.FIFTYONE: ImageFiftyOneInput(**data_source_kwargs),
+            inputs={
+                InputFormat.FIFTYONE: ImageFiftyOneInput(**input_kwargs),
                 InputFormat.FILES: ImagePathsInput(),
                 InputFormat.FOLDERS: ImagePathsInput(),
                 InputFormat.NUMPY: ImageNumpyInput(),
@@ -96,7 +96,7 @@ class ImageClassificationInputTransform(InputTransform):
                 InputFormat.LABELSTUDIO: LabelStudioImageClassificationInput(),
             },
             deserializer=deserializer or ImageDeserializer(),
-            default_data_source=InputFormat.FILES,
+            default_input=InputFormat.FILES,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
@@ -196,7 +196,7 @@ class ImageClassificationData(DataModule):
         Returns:
             The constructed data module.
         """
-        return cls.from_data_source(
+        return cls.from_input(
             "data_frame",
             (train_data_frame, input_field, target_fields, train_images_root, train_resolver),
             (val_data_frame, input_field, target_fields, val_images_root, val_resolver),
@@ -295,7 +295,7 @@ class ImageClassificationData(DataModule):
         Returns:
             The constructed data module.
         """
-        return cls.from_data_source(
+        return cls.from_input(
             InputFormat.CSV,
             (train_file, input_field, target_fields, train_images_root, train_resolver),
             (val_file, input_field, target_fields, val_images_root, val_resolver),

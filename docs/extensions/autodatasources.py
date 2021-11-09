@@ -61,9 +61,9 @@ class AutoDataSources(Directive):
                 return None
 
         input_transform = PatchedInputTransform()
-        data_sources = {
-            data_source: input_transform.data_source_of_name(data_source)
-            for data_source in input_transform.available_data_sources()
+        inputs = {
+            : input_transform._of_name()
+            for  in input_transform.available_inputs()
         }
 
         ENVIRONMENT.get_template("base.rst")
@@ -71,7 +71,7 @@ class AutoDataSources(Directive):
         rendered_content = ENVIRONMENT.get_template(data_module_name).render(
             data_module=f":class:`~{data_module_path}.{data_module_name}`",
             data_module_raw=data_module_name,
-            data_sources=data_sources,
+            inputs=inputs,
         )
 
         node = nodes.section()
