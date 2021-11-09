@@ -141,7 +141,7 @@ class VideoClassifier(ClassificationTask):
         batch[DefaultDataKeys.PREDS] = predictions
         return batch
 
-    def get_backbone_for_finetuning(self) -> Union[nn.Module, Iterable[Union[nn.Module, Iterable]]]:
+    def backbone(self) -> Union[nn.Module, Iterable[Union[nn.Module, Iterable]]]:
         """Return the module attributes of the model to be frozen."""
         return list(self.backbone.children())
 

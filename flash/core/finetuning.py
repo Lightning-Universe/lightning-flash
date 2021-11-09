@@ -30,7 +30,6 @@ class FinetuningStrategies(LightningEnum):
     FREEZE = "freeze"
     FREEZE_UNFREEZE = "freeze_unfreeze"
     UNFREEZE_MILESTONES = "unfreeze_milestones"
-    CUSTOM = "custom"
 
     # TODO: Create a FlashEnum class???
     def __hash__(self) -> int:
@@ -43,7 +42,7 @@ class FlashBaseFinetuning(BaseFinetuning):
     def __init__(
         self,
         strategy_key: FinetuningStrategies,
-        strategy_metadata: Optional[Union[int, Tuple[int, int]]] = None,
+        strategy_metadata: Optional[Union[int, Tuple[Tuple[int, int], int]]] = None,
         train_bn: bool = True,
     ):
         """
@@ -58,18 +57,18 @@ class FlashBaseFinetuning(BaseFinetuning):
         super().__init__()
 
         self.strategy: FinetuningStrategies = strategy_key
-        self.strategy_metadata: Optional[Union[int, Tuple[int, int]]] = strategy_metadata
+        self.strategy_metadata: Optional[Union[int, Tuple[Tuple[int, int], int]]] = strategy_metadata
         self.train_bn: bool = train_bn
 
     def freeze_before_training(self, pl_module: Union[Module, Iterable[Union[Module, Iterable]]]) -> None:
         if self.strategy != FinetuningStrategies.NO_FREEZE:
-            get_backbone_for_finetuning = getattr(pl_module, "get_backbone_for_finetuning", None)
-            if get_backbone_for_finetuning is None:
+            backbone = getattr(pl_module, "backbone", None)
+            if backbone is None:
                 raise AttributeError(
-                    "Lightning Module missing instance method 'get_backbone_for_finetuning'."
+                    "Lightning Module missing instance method 'backbone'."
                     "Please, implement the method which returns NoneType or a Module or an Iterable of Modules."
                 )
-            modules = get_backbone_for_finetuning()
+            modules = backbone()
             if modules is not None:
                 if isinstance(modules, Module):
                     modules = [modules]
@@ -87,14 +86,14 @@ class FlashBaseFinetuning(BaseFinetuning):
         if epoch != unfreeze_epoch:
             return
 
-        get_backbone_for_finetuning = getattr(pl_module, "get_backbone_for_finetuning", None)
-        if get_backbone_for_finetuning is None:
+        backbone = getattr(pl_module, "backbone", None)
+        if backbone is None:
             raise AttributeError(
-                "Lightning Module missing instance method 'get_backbone_for_finetuning'."
+                "Lightning Module missing instance method 'backbone'."
                 "Please, implement the method which returns NoneType or a Module or an Iterable of Modules."
             )
 
-        modules = get_backbone_for_finetuning()
+        modules = backbone()
         if modules is not None:
             self.unfreeze_and_add_param_group(
                 modules=modules,
@@ -113,13 +112,13 @@ class FlashBaseFinetuning(BaseFinetuning):
         unfreeze_milestones: Tuple[int, int] = strategy_metadata[0]
         num_layers: int = strategy_metadata[1]
 
-        get_backbone_for_finetuning = getattr(pl_module, "get_backbone_for_finetuning", None)
-        if get_backbone_for_finetuning is None:
+        backbone = getattr(pl_module, "backbone", None)
+        if backbone is None:
             raise AttributeError(
-                "Lightning Module missing instance method 'get_backbone_for_finetuning'."
+                "Lightning Module missing instance method 'backbone'."
                 "Please, implement the method which returns NoneType or a Module or an Iterable of Modules."
             )
-        modules = get_backbone_for_finetuning()
+        modules = backbone()
         if modules is not None:
             if epoch == unfreeze_milestones[0]:
                 # unfreeze num_layers last layers
@@ -150,21 +149,12 @@ class FlashBaseFinetuning(BaseFinetuning):
             self._freeze_unfreeze_function(pl_module, epoch, optimizer, opt_idx, self.strategy_metadata)
         elif self.strategy == FinetuningStrategies.UNFREEZE_MILESTONES:
             self._unfreeze_milestones_function(pl_module, epoch, optimizer, opt_idx, self.strategy_metadata)
-        elif self.strategy == FinetuningStrategies.CUSTOM:
-            finetune_backbone = getattr(pl_module, "finetune_backbone", None)
-            if finetune_backbone is None:
-                raise AttributeError(
-                    "Lightning Module missing instance method 'finetune_backbone'."
-                    "Please, implement the method which performs the necessary finetuning of the backbone."
-                )
-            finetune_backbone(epoch, optimizer, opt_idx)
         else:
             pass
 
 
 # Used for properly verifying input and providing neat and helpful error messages for users.
 _DEFAULTS_FINETUNE_STRATEGIES = [
-    "custom",
     "no_freeze",
     "freeze",
     "freeze_unfreeze",
@@ -177,3 +167,31 @@ for strategy in FinetuningStrategies:
         name=strategy.value,
         fn=partial(FlashBaseFinetuning, strategy_key=strategy),
     )
+
+
+class NoFreeze(FlashBaseFinetuning):
+    def __init__(self, train_bn: bool = True):
+        super().__init__(FinetuningStrategies.NO_FREEZE, train_bn)
+
+
+class Freeze(FlashBaseFinetuning):
+    def __init__(self, train_bn: bool = True):
+        super().__init__(FinetuningStrategies.FREEZE, train_bn)
+
+
+class FreezeUnfreeze(FlashBaseFinetuning):
+    def __init__(
+        self,
+        strategy_metadata: int,
+        train_bn: bool = True,
+    ):
+        super().__init__(FinetuningStrategies.FREEZE_UNFREEZE, strategy_metadata, train_bn)
+
+
+class UnFreezeMilestones(FlashBaseFinetuning):
+    def __init__(
+        self,
+        strategy_metadata: Tuple[Tuple[int, int], int],
+        train_bn: bool = True,
+    ):
+        super().__init__(FinetuningStrategies.UNFREEZE_MILESTONES, strategy_metadata, train_bn)

@@ -296,7 +296,7 @@ class QuestionAnsweringTask(Task):
             rank_zero_info(f"Overriding model paramameters for {self.task} as defined within the model:\n {pars}")
             self.model.config.update(pars)
 
-    def get_backbone_for_finetuning(self) -> Union[Module, Iterable[Union[Module, Iterable]]]:
+    def backbone(self) -> Union[Module, Iterable[Union[Module, Iterable]]]:
         """Return the module attributes of the model to be frozen."""
         return _get_question_answering_bacbones_for_freezing(self.model)
 

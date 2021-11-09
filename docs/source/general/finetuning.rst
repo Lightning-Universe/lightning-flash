@@ -194,49 +194,6 @@ Under the hood, the pseudocode looks like:
 
 Custom Strategy
 ===============
-Flash provides customizability for finetuning in two ways.
-
-custom
-------
-This strategy allows you to implement a custom finetuning logic using the freezing logic provided by Flash out of the box.
-The previosly mentioned strategies either unfreezes the complete backbone or just a fixed fraction of the backbone.
-This stratgey provides you much more control on that logic during finetuning.
-
-Here's an example where:
-
-* a distilbert for question answering backbone starts frozen
-* at epoch 2 just the transformer unfreezes
-
-|
-
-.. code-block:: python
-
-    from flash import Trainer
-    from flash.core.data.utils import download_data
-    from flash.text import QuestionAnsweringData, QuestionAnsweringTask
-    from torch.optim import Optimizer
-
-    download_data("https://pl-flash-data.s3.amazonaws.com/squad_tiny.zip", "./data/")
-
-    datamodule = QuestionAnsweringData.from_squad_v2(
-        train_file="./data/squad_tiny/train.json",
-        val_file="./data/squad_tiny/val.json",
-    )
-
-
-    class MyCustomQuestionAnsweringTask(QuestionAnsweringTask):
-        def __init__(self, **kwargs):
-            super().__init__(**kwargs)
-
-        def finetune_backbone(self, epoch: int, optimizer: Optimizer, opt_idx: int) -> None:
-            self.model.distilbert.transformer.requires_grad_(False)
-
-
-    model = MyCustomQuestionAnsweringTask(backbone="distilbert-base-uncased")
-    trainer = Trainer(max_epochs=1, checkpoint_callback=False)
-    trainer.finetune(model, datamodule=datamodule, strategy="custom")
-
-
 For even more customization, create your own finetuning callback. Learn more about callbacks `here <https://pytorch-lightning.readthedocs.io/en/stable/callbacks.html>`_.
 
 .. testcode:: strategies

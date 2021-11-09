@@ -23,7 +23,6 @@ from torch import Tensor
 from torch.nn import Flatten
 from torch.nn import functional as F
 from torch.nn import Linear, LogSoftmax, Module
-from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 import flash
@@ -59,7 +58,7 @@ class TestTaskWithoutFinetuning(Task):
     def __init__(self, **kwargs):
         super().__init__(model=TestModel(), **kwargs)
 
-    def get_backbone_for_finetuning(self) -> Optional[Union[Module, Iterable[Union[Module, Iterable]]]]:
+    def backbone(self) -> Optional[Union[Module, Iterable[Union[Module, Iterable]]]]:
         return None
 
 
@@ -67,20 +66,8 @@ class TestTaskWithFinetuning(Task):
     def __init__(self, **kwargs):
         super().__init__(model=TestModel(), **kwargs)
 
-    def get_backbone_for_finetuning(self) -> Optional[Union[Module, Iterable[Union[Module, Iterable]]]]:
+    def backbone(self) -> Optional[Union[Module, Iterable[Union[Module, Iterable]]]]:
         return [self.model.layer, self.model.layer1]
-
-
-class TestTaskWithCustomFinetuning(Task):
-    def __init__(self, **kwargs):
-        super().__init__(model=TestModel(), **kwargs)
-
-    def get_backbone_for_finetuning(self) -> Optional[Union[Module, Iterable[Union[Module, Iterable]]]]:
-        return [self.model.layer, self.model.layer1]
-
-    def finetune_backbone(self, epoch: int, optimizer: Optimizer, opt_idx: int) -> None:
-        if epoch == 1:
-            self.model.layer.weight.requires_grad = True
 
 
 # Using `ModelCheckpoint` callback because they are the last callback to be called and hence freezing of layers should
@@ -183,14 +170,6 @@ def test_finetuning(tmpdir, strategy, checker_class, checker_class_data):
     trainer = flash.Trainer(max_epochs=5, limit_train_batches=10, callbacks=callbacks)
     ds = DummyDataset()
     trainer.finetune(task, train_dataloader=DataLoader(ds), strategy=strategy)
-
-
-def test_custom_finetuning(tmpdir):
-    task = TestTaskWithCustomFinetuning(loss_fn=F.nll_loss)
-    callbacks = [CustomStrategyChecking(check_epoch=1)]
-    trainer = flash.Trainer(max_epochs=5, limit_train_batches=10, callbacks=callbacks)
-    ds = DummyDataset()
-    trainer.finetune(task, train_dataloader=DataLoader(ds), strategy="custom")
 
 
 @pytest.mark.parametrize(
