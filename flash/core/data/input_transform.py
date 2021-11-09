@@ -21,7 +21,7 @@ from torch.utils.data._utils.collate import default_collate
 
 from flash.core.data.data_pipeline import DataPipeline
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.io.input_transform import _InputTransformInputTransformor
+from flash.core.data.io.input_transform import _InputTransformPreprocessor
 from flash.core.data.properties import Properties
 from flash.core.data.states import CollateFn
 from flash.core.data.utils import _INPUT_TRANSFORM_FUNCS, _STAGES_PREFIX
@@ -399,18 +399,18 @@ class InputTransform(Properties):
 
         worker_collate_fn = (
             worker_collate_fn.collate_fn
-            if isinstance(worker_collate_fn, _InputTransformInputTransformor)
+            if isinstance(worker_collate_fn, _InputTransformPreprocessor)
             else worker_collate_fn
         )
 
-        worker_input_transform_preprocessor = _InputTransformInputTransformor(
+        worker_input_transform_preprocessor = _InputTransformPreprocessor(
             self,
             worker_collate_fn,
             getattr(self, func_names["per_sample_transform"]),
             getattr(self, func_names["per_batch_transform"]),
             self.running_stage,
         )
-        device_input_transform_preprocessor = _InputTransformInputTransformor(
+        device_input_transform_preprocessor = _InputTransformPreprocessor(
             self,
             device_collate_fn,
             getattr(self, func_names["per_sample_transform_on_device"]),
