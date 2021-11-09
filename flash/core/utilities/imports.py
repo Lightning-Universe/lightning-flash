@@ -95,9 +95,9 @@ _TORCH_SPARSE_AVAILABLE = _module_available("torch_sparse")
 _TORCH_GEOMETRIC_AVAILABLE = _module_available("torch_geometric")
 _NETWORKX_AVAILABLE = _module_available("networkx")
 _TORCHAUDIO_AVAILABLE = _module_available("torchaudio")
-_ROUGE_SCORE_AVAILABLE = _module_available("rouge_score")
 _SENTENCEPIECE_AVAILABLE = _module_available("sentencepiece")
 _DATASETS_AVAILABLE = _module_available("datasets")
+_TM_TEXT_AVAILABLE: bool = _module_available("torchmetrics.text")
 _ICEVISION_AVAILABLE = _module_available("icevision")
 _ICEDATA_AVAILABLE = _module_available("icedata")
 _LEARN2LEARN_AVAILABLE = _module_available("learn2learn") and _compare_version("learn2learn", operator.ge, "0.1.6")
@@ -124,9 +124,9 @@ if Version:
 _TEXT_AVAILABLE = all(
     [
         _TRANSFORMERS_AVAILABLE,
-        _ROUGE_SCORE_AVAILABLE,
         _SENTENCEPIECE_AVAILABLE,
         _DATASETS_AVAILABLE,
+        _TM_TEXT_AVAILABLE,
     ]
 )
 _TABULAR_AVAILABLE = _TABNET_AVAILABLE and _PANDAS_AVAILABLE and _FORECASTING_AVAILABLE
