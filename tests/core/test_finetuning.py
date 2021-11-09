@@ -58,7 +58,7 @@ class TestTaskWithoutFinetuning(Task):
     def __init__(self, **kwargs):
         super().__init__(model=TestModel(), **kwargs)
 
-    def get_backbone_for_finetuning(self) -> Optional[Union[Module, Iterable[Union[Module, Iterable]]]]:
+    def modules_to_freeze(self) -> Optional[Union[Module, Iterable[Union[Module, Iterable]]]]:
         return None
 
 
@@ -66,7 +66,7 @@ class TestTaskWithFinetuning(Task):
     def __init__(self, **kwargs):
         super().__init__(model=TestModel(), **kwargs)
 
-    def get_backbone_for_finetuning(self) -> Optional[Union[Module, Iterable[Union[Module, Iterable]]]]:
+    def modules_to_freeze(self) -> Optional[Union[Module, Iterable[Union[Module, Iterable]]]]:
         return [self.model.layer, self.model.layer1]
 
 

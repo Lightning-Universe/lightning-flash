@@ -19,6 +19,6 @@ from torch.nn import Module
 class FineTuningHooks:
     """Hooks to be used in Task and FlashBaseTuning."""
 
-    def get_backbone_for_finetuning(self) -> Optional[Union[Module, Iterable[Union[Module, Iterable]]]]:
+    def modules_to_freeze(self) -> Optional[Union[Module, Iterable[Union[Module, Iterable]]]]:
         """Return the name(s) of the module attributes of the model to be frozen."""
         return None
