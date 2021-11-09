@@ -15,9 +15,9 @@ from flash.core.data.io.input import DatasetInput, InputDataKeys
 
 
 def test_dataset_input():
-    input = DatasetInput()
+    dataset_input = DatasetInput()
 
     input, target = "test", 3
 
-    assert input.load_sample((input, target)) == {InputDataKeys.INPUT: input, InputDataKeys.TARGET: target}
-    assert input.load_sample(input) == {InputDataKeys.INPUT: input}
+    assert dataset_input.load_sample((input, target)) == {InputDataKeys.INPUT: input, InputDataKeys.TARGET: target}
+    assert dataset_input.load_sample(input) == {InputDataKeys.INPUT: input}
