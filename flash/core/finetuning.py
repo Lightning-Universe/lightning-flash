@@ -62,13 +62,13 @@ class FlashBaseFinetuning(BaseFinetuning):
 
     def freeze_before_training(self, pl_module: Union[Module, Iterable[Union[Module, Iterable]]]) -> None:
         if self.strategy != FinetuningStrategies.NO_FREEZE:
-            backbone = getattr(pl_module, "backbone", None)
-            if backbone is None:
+            get_backbone_for_finetuning = getattr(pl_module, "get_backbone_for_finetuning", None)
+            if get_backbone_for_finetuning is None:
                 raise AttributeError(
-                    "Lightning Module missing instance method 'backbone'."
+                    "Lightning Module missing instance method 'get_backbone_for_finetuning'."
                     "Please, implement the method which returns NoneType or a Module or an Iterable of Modules."
                 )
-            modules = backbone()
+            modules = get_backbone_for_finetuning()
             if modules is not None:
                 if isinstance(modules, Module):
                     modules = [modules]
@@ -86,14 +86,14 @@ class FlashBaseFinetuning(BaseFinetuning):
         if epoch != unfreeze_epoch:
             return
 
-        backbone = getattr(pl_module, "backbone", None)
-        if backbone is None:
+        get_backbone_for_finetuning = getattr(pl_module, "get_backbone_for_finetuning", None)
+        if get_backbone_for_finetuning is None:
             raise AttributeError(
-                "Lightning Module missing instance method 'backbone'."
+                "Lightning Module missing instance method 'get_backbone_for_finetuning'."
                 "Please, implement the method which returns NoneType or a Module or an Iterable of Modules."
             )
 
-        modules = backbone()
+        modules = get_backbone_for_finetuning()
         if modules is not None:
             self.unfreeze_and_add_param_group(
                 modules=modules,
@@ -112,13 +112,13 @@ class FlashBaseFinetuning(BaseFinetuning):
         unfreeze_milestones: Tuple[int, int] = strategy_metadata[0]
         num_layers: int = strategy_metadata[1]
 
-        backbone = getattr(pl_module, "backbone", None)
-        if backbone is None:
+        get_backbone_for_finetuning = getattr(pl_module, "get_backbone_for_finetuning", None)
+        if get_backbone_for_finetuning is None:
             raise AttributeError(
-                "Lightning Module missing instance method 'backbone'."
+                "Lightning Module missing instance method 'get_backbone_for_finetuning'."
                 "Please, implement the method which returns NoneType or a Module or an Iterable of Modules."
             )
-        modules = backbone()
+        modules = get_backbone_for_finetuning()
         if modules is not None:
             if epoch == unfreeze_milestones[0]:
                 # unfreeze num_layers last layers

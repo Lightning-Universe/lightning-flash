@@ -185,6 +185,6 @@ class FaceDetector(Task):
         batch[DefaultDataKeys.PREDS] = self(images)
         return batch
 
-    def backbone(self) -> Union[Module, Iterable[Union[Module, Iterable]]]:
+    def get_backbone_for_finetuning(self) -> Union[Module, Iterable[Union[Module, Iterable]]]:
         """Return the module attributes of the model to be frozen."""
         return self.model.backbone
