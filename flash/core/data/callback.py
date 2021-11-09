@@ -207,7 +207,7 @@ class BaseDataFetcher(FlashCallback):
         yield
         self.enabled = False
 
-    def attach_to_(self, input_transform: "flash.core.data.io.input_transform.InputTransform") -> None:
+    def attach_to_input_transform(self, input_transform: "flash.core.data.io.input_transform.InputTransform") -> None:
         input_transform.add_callbacks([self])
         self._input_transform = input_transform
 

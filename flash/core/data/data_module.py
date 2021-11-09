@@ -116,7 +116,7 @@ class DataModule(pl.LightningDataModule):
         self._data_fetcher: Optional[BaseDataFetcher] = data_fetcher or self.configure_data_fetcher()
 
         # TODO: InputTransform can change
-        self.data_fetcher.attach_to_preprocess(self.input_transform)
+        self.data_fetcher.attach_to_input_transform(self.input_transform)
 
         self._train_ds = train_dataset
         self._val_ds = val_dataset
