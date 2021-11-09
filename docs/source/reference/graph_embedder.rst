@@ -1,8 +1,8 @@
-.. _graph_classification:
+.. _graph_embedder:
 
-####################
-Graph Embedding
-####################
+##############
+Graph Embedder
+##############
 
 ********
 The Task
@@ -16,14 +16,13 @@ The :class:`~flash.graph.classification.model.GraphEmbedder` and :class:`~flash.
 Example
 *******
 
-Let's look at the task of classifying graphs from the KKI data set from `TU Dortmund University <https://chrsmrrs.github.io/datasets>`_.
+Let's look at generating embeddings of graphs from the KKI data set from `TU Dortmund University <https://chrsmrrs.github.io/datasets>`_.
 
-Once we've created the `TUDataset <https://pytorch-geometric.readthedocs.io/en/latest/_modules/torch_geometric/datasets/tu_dataset.html#TUDataset>`, we create the :class:`~flash.graph.classification.data.GraphClassificationData`.
-We then create our :class:`~flash.graph.classification.model.GraphEmbedder`.
-Then, we load a trained :class:`~flash.graph.classification.model.GraphEmbedder` (for example from a previously trained :class:`~flash.graph.classification.model.GraphClassifier`).
+We start by creating the `TUDataset <https://pytorch-geometric.readthedocs.io/en/latest/_modules/torch_geometric/datasets/tu_dataset.html#TUDataset>`.
+Next, we load a trained :class:`~flash.graph.classification.model.GraphEmbedder` (from a previously trained :class:`~flash.graph.classification.model.GraphClassifier`).
 Finally, we save the model.
 Here's the full example:
 
-.. literalinclude:: ../../../flash_examples/graph_embedding.py
+.. literalinclude:: ../../../flash_examples/graph_embedder.py
     :language: python
     :lines: 14
