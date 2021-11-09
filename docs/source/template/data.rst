@@ -88,7 +88,7 @@ Here's how it looks (from `video/classification.data.py <https://github.com/PyTo
     :pyobject: BaseVideoClassification.load_data
 
 InputTransform
-^^^^^^^^^^
+^^^^^^^^^^^^^^
 
 The :class:`~flash.core.data.io.input_transform.InputTransform` object contains all the data transforms.
 Internally we inject the :class:`~flash.core.data.io.input_transform.InputTransform` transforms at several points along the pipeline.

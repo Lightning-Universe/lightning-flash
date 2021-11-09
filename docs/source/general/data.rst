@@ -145,9 +145,9 @@ Alternatively, the user may directly override the hooks for their needs like thi
     )
 
 
-*****************************************
+*********************************************
 Create your own InputTransform and DataModule
-*****************************************
+*********************************************
 
 The example below shows a very simple ``ImageClassificationInputTransform`` with a single ``ImageClassificationFoldersDataSource`` and an ``ImageClassificationDataModule``.
 
@@ -228,7 +228,7 @@ Here's the full ``ImageClassificationFoldersDataSource``:
 .. note:: We return samples as dictionaries using the :class:`~flash.core.data.data_source.DefaultDataKeys` by convention. This is the recommended (although not required) way to represent data in Flash.
 
 3. The InputTransform
-__________________
+_____________________
 
 Next, implement your custom ``ImageClassificationInputTransform`` with some default transforms and a reference to the data source:
 
@@ -321,7 +321,7 @@ Here is the :class:`~flash.core.data.auto_dataset.AutoDataset` pseudo-code.
             return len(self.data)
 
 InputTransform
-__________
+______________
 
 .. note::
 
