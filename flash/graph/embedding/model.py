@@ -18,7 +18,7 @@ from torch import nn
 
 from flash.core.model import Task
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
-from flash.graph.classification.data import GraphClassificationPreprocess
+from flash.graph.classification.data import GraphClassificationInputTransform
 from flash.graph.classification.model import GraphClassifier
 
 if _GRAPH_AVAILABLE:
@@ -36,7 +36,7 @@ class GraphEmbedder(Task):
     required_extras: str = "graph"
 
     def __init__(self, backbone: nn.Module):
-        super().__init__(model=None, preprocess=GraphClassificationPreprocess())
+        super().__init__(model=None, input_transform=GraphClassificationInputTransform())
 
         self.save_hyperparameters()
 
