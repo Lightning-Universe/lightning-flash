@@ -17,9 +17,7 @@ import torch
 from torch import nn
 
 from flash.core.model import Task
-from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
-from flash.graph.backbones import GRAPH_BACKBONES
 from flash.graph.classification.data import GraphClassificationPreprocess
 from flash.graph.classification.model import GraphClassifier
 
@@ -34,8 +32,6 @@ class GraphEmbedder(Task):
     Args:
         backbone: A model to use to extract image features.
     """
-
-    backbones: FlashRegistry = GRAPH_BACKBONES
 
     required_extras: str = "graph"
 
