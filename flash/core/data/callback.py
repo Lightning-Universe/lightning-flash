@@ -121,7 +121,7 @@ class BaseDataFetcher(FlashCallback):
                 test_data: Any,
                 predict_data: Any,
             ) -> "CustomDataModule":
-                return cls.from_(
+                return cls.from_input(
                     "inputs",
                     train_data=train_data,
                     val_data=val_data,

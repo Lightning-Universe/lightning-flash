@@ -144,7 +144,7 @@ class PointCloudObjectDetectorData(DataModule):
                 },
             )
         """
-        return cls.from_(
+        return cls.from_input(
             InputFormat.FOLDERS,
             train_folder,
             val_folder,

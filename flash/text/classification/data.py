@@ -383,7 +383,7 @@ class TextClassificationData(DataModule):
         Returns:
             The constructed data module.
         """
-        return cls.from_(
+        return cls.from_input(
             InputFormat.DATAFRAME,
             (train_data_frame, input_field, target_fields),
             (val_data_frame, input_field, target_fields),
@@ -461,7 +461,7 @@ class TextClassificationData(DataModule):
         Returns:
             The constructed data module.
         """
-        return cls.from_(
+        return cls.from_input(
             InputFormat.LISTS,
             (train_data, train_targets),
             (val_data, val_targets),
@@ -547,7 +547,7 @@ class TextClassificationData(DataModule):
                 },
             )
         """
-        return cls.from_(
+        return cls.from_input(
             InputFormat.PARQUET,
             (train_file, input_field, target_fields),
             (val_file, input_field, target_fields),
@@ -620,7 +620,7 @@ class TextClassificationData(DataModule):
         Returns:
             The constructed data module.
         """
-        return cls.from_(
+        return cls.from_input(
             InputFormat.HUGGINGFACE_DATASET,
             (train_hf_dataset, input_field, target_fields),
             (val_hf_dataset, input_field, target_fields),

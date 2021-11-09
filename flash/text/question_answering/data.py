@@ -691,7 +691,7 @@ class QuestionAnsweringData(DataModule):
                 doc_stride=128,
             )
         """
-        return cls.from_(
+        return cls.from_input(
             "squad_v2",
             train_file,
             val_file,
@@ -789,7 +789,7 @@ class QuestionAnsweringData(DataModule):
                 doc_stride=128
             )
         """
-        return cls.from_(
+        return cls.from_input(
             InputFormat.JSON,
             (train_file, field),
             (val_file, field),
@@ -892,7 +892,7 @@ class QuestionAnsweringData(DataModule):
                 doc_stride=128
             )
         """
-        return cls.from_(
+        return cls.from_input(
             InputFormat.CSV,
             train_file,
             val_file,

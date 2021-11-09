@@ -108,7 +108,7 @@ class TemplateInputTransform(InputTransform):
                 InputFormat.NUMPY: TemplateNumpyInput(),
                 "sklearn": TemplateSKLearnInput(),
             },
-            default_=InputFormat.NUMPY,
+            default_input=InputFormat.NUMPY,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
@@ -209,7 +209,7 @@ class TemplateData(DataModule):
         Returns:
             The constructed data module.
         """
-        return super().from_(
+        return super().from_input(
             "sklearn",
             train_bunch,
             val_bunch,

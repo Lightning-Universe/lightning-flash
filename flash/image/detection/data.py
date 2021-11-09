@@ -243,7 +243,7 @@ class ObjectDetectionData(DataModule):
                 train_ann_file="annotations.json",
             )
         """
-        return cls.from_(
+        return cls.from_input(
             "coco",
             (train_folder, train_ann_file) if train_folder else None,
             (val_folder, val_ann_file) if val_folder else None,
@@ -322,7 +322,7 @@ class ObjectDetectionData(DataModule):
                 train_ann_file="annotations.json",
             )
         """
-        return cls.from_(
+        return cls.from_input(
             "voc",
             (train_folder, train_ann_file) if train_folder else None,
             (val_folder, val_ann_file) if val_folder else None,
@@ -401,7 +401,7 @@ class ObjectDetectionData(DataModule):
                 train_ann_file="annotations.json",
             )
         """
-        return cls.from_(
+        return cls.from_input(
             "via",
             (train_folder, train_ann_file) if train_folder else None,
             (val_folder, val_ann_file) if val_folder else None,

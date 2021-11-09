@@ -406,7 +406,7 @@ class TabularData(DataModule):
             categorical_fields=categorical_fields,
         )
 
-        return cls.from_(
+        return cls.from_input(
             "data_frame",
             train_data_frame,
             val_data_frame,

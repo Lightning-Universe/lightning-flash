@@ -131,7 +131,7 @@ class StyleTransferData(ImageClassificationData):
             predict_transform=predict_transform,
         )
 
-        return cls.from_(
+        return cls.from_input(
             InputFormat.FOLDERS,
             train_data=train_folder,
             predict_data=predict_folder,
