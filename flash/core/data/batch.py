@@ -22,7 +22,7 @@ from flash.core.utilities.stages import RunningStage
 
 if TYPE_CHECKING:
     from flash.core.data.io.input_transform import InputTransform
-    from flash.core.data.process import Deserializer, Serializer
+    from flash.core.data.process import Deserializer
 
 
 class _DeserializeProcessor(torch.nn.Module):
