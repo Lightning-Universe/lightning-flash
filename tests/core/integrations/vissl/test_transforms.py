@@ -14,53 +14,28 @@
 import pytest
 
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.process import DefaultPreprocess
-from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, _VISSL_AVAILABLE
-from flash.image import ImageClassificationData
-
-if _TORCHVISION_AVAILABLE:
-    from torchvision.datasets import FakeData
-
-if _VISSL_AVAILABLE:
-    from classy_vision.dataset.transforms import TRANSFORM_REGISTRY
-
-    from flash.core.integrations.vissl.transforms import vissl_collate_fn
+from tests.image.embedding.utils import ssl_datamodule
 
 
 @pytest.mark.skipif(not (_TORCHVISION_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
 def test_multicrop_input_transform():
     batch_size = 8
-    total_crops = 6
+    total_num_crops = 6
     num_crops = [2, 4]
     size_crops = [160, 96]
     crop_scales = [[0.4, 1], [0.05, 0.4]]
 
-    multi_crop_transform = TRANSFORM_REGISTRY["multicrop_ssl_transform"](
-        total_crops, num_crops, size_crops, crop_scales
-    )
-
-    to_tensor_transform = ApplyToKeys(
-        DefaultDataKeys.INPUT,
-        multi_crop_transform,
-    )
-    preprocess = DefaultPreprocess(
-        train_transform={
-            "to_tensor_transform": to_tensor_transform,
-            "collate": vissl_collate_fn,
-        }
-    )
-
-    datamodule = ImageClassificationData.from_datasets(
-        train_dataset=FakeData(),
-        preprocess=preprocess,
+    train_dataloader = ssl_datamodule(
         batch_size=batch_size,
-    )
-
-    train_dataloader = datamodule._train_dataloader()
+        total_num_crops=total_num_crops,
+        num_crops=num_crops,
+        size_crops=size_crops,
+        crop_scales=crop_scales,
+    )._train_dataloader()
     batch = next(iter(train_dataloader))
 
-    assert len(batch[DefaultDataKeys.INPUT]) == total_crops
+    assert len(batch[DefaultDataKeys.INPUT]) == total_num_crops
     assert batch[DefaultDataKeys.INPUT][0].shape == (batch_size, 3, size_crops[0], size_crops[0])
     assert batch[DefaultDataKeys.INPUT][-1].shape == (batch_size, 3, size_crops[-1], size_crops[-1])
     assert list(batch[DefaultDataKeys.TARGET].shape) == [batch_size]

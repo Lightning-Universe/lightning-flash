@@ -15,7 +15,8 @@ from typing import Any, Callable, Dict, Optional, Tuple
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DefaultDataSources
+from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources
+from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.process import Preprocess
 from flash.core.integrations.icevision.data import IceVisionParserDataSource, IceVisionPathsDataSource
 from flash.core.integrations.icevision.transforms import default_transforms
@@ -70,9 +71,16 @@ class InstanceSegmentationPreprocess(Preprocess):
         return default_transforms(self.image_size)
 
 
+class InstanceSegmentationOutputTransform(OutputTransform):
+    @staticmethod
+    def uncollate(batch: Any) -> Any:
+        return batch[DefaultDataKeys.PREDS]
+
+
 class InstanceSegmentationData(DataModule):
 
     preprocess_cls = InstanceSegmentationPreprocess
+    output_transform_cls = InstanceSegmentationOutputTransform
 
     @classmethod
     def from_coco(

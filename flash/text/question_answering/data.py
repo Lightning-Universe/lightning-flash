@@ -23,7 +23,6 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import torch
-from pytorch_lightning.trainer.states import RunningStage
 from torch import Tensor
 from torch.utils.data.sampler import Sampler
 
@@ -31,9 +30,11 @@ import flash
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
-from flash.core.data.process import Postprocess, Preprocess
+from flash.core.data.io.output_transform import OutputTransform
+from flash.core.data.process import Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
+from flash.core.utilities.stages import RunningStage
 
 if _TEXT_AVAILABLE:
     import datasets
@@ -87,8 +88,16 @@ class QuestionAnsweringDataSource(DataSource):
 
         if stage == RunningStage.TRAINING:
             # Preprocess function for training
-            tokenized_samples = self._prepare_train_features(samples, tokenized_samples)
+            tokenized_samples, _, _ = self._prepare_train_features(samples, tokenized_samples)
         elif self._running_stage.evaluating or stage == RunningStage.PREDICTING:
+            if self._running_stage.evaluating:
+                tokenized_samples, _sample_mapping, _offset_mapping = self._prepare_train_features(
+                    samples, tokenized_samples
+                )
+
+                tokenized_samples["overflow_to_sample_mapping"] = _sample_mapping
+                tokenized_samples["offset_mapping"] = _offset_mapping
+
             # Preprocess function for eval or predict
             tokenized_samples = self._prepare_val_features(samples, tokenized_samples)
 
@@ -169,7 +178,7 @@ class QuestionAnsweringDataSource(DataSource):
                         token_end_index -= 1
                     tokenized_samples["end_positions"].append(token_end_index + 1)
 
-        return tokenized_samples
+        return tokenized_samples, sample_mapping, offset_mapping
 
     def _prepare_val_features(self, samples: Any, tokenized_samples: Any):
         # Since one example might give us several features if it has a long context, we need a map from a feature to
@@ -581,7 +590,7 @@ class QuestionAnsweringPreprocess(Preprocess):
         return default_data_collator(samples)
 
 
-class QuestionAnsweringPostprocess(Postprocess):
+class QuestionAnsweringOutputTransform(OutputTransform):
     @requires("text")
     def __init__(self):
         super().__init__()
@@ -630,7 +639,7 @@ class QuestionAnsweringData(DataModule):
     """Data module for QuestionAnswering task."""
 
     preprocess_cls = QuestionAnsweringPreprocess
-    postprocess_cls = QuestionAnsweringPostprocess
+    output_transform_cls = QuestionAnsweringOutputTransform
 
     @classmethod
     def from_squad_v2(

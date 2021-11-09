@@ -12,17 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from types import FunctionType
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
-from torch.optim.lr_scheduler import _LRScheduler
-from torchmetrics import Metric
 
 from flash.core.classification import ClassificationAdapterTask, Labels
-from flash.core.data.process import Serializer
 from flash.core.registry import FlashRegistry
+from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 from flash.image.classification.adapters import TRAINING_STRATEGIES
 from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES
 
@@ -55,17 +52,18 @@ class ImageClassifier(ClassificationAdapterTask):
         pretrained: A bool or string to specify the pretrained weights of the backbone, defaults to ``True``
             which loads the default supervised pretrained weights.
         loss_fn: Loss function for training, defaults to :func:`torch.nn.functional.cross_entropy`.
-        optimizer: Optimizer to use for training, defaults to :class:`torch.optim.SGD`.
-        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
-        scheduler: The scheduler or scheduler class to use.
-        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
         metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
             package, a custom metric inheriting from `torchmetrics.Metric`, a callable function or a list/dict
             containing a combination of the aforementioned. In all cases, each metric needs to have the signature
             `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
         multi_label: Whether the targets are multi-label or not.
-        serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
+        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
+        training_strategy: string indicating the training strategy. Adjust if you want to use `learn2learn`
+            for doing meta-learning research
+        training_strategy_kwargs: Additional kwargs for setting the training strategy
     """
 
     backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES
@@ -80,15 +78,13 @@ class ImageClassifier(ClassificationAdapterTask):
         backbone_kwargs: Optional[Dict] = None,
         head: Optional[Union[FunctionType, nn.Module]] = None,
         pretrained: Union[bool, str] = True,
-        loss_fn: Optional[Callable] = None,
-        optimizer: Union[Type[torch.optim.Optimizer], torch.optim.Optimizer] = torch.optim.Adam,
-        optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
-        metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
+        loss_fn: LOSS_FN_TYPE = None,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
+        metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-3,
         multi_label: bool = False,
-        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
+        output: OUTPUT_TYPE = None,
         training_strategy: Optional[str] = "default",
         training_strategy_kwargs: Optional[Dict[str, Any]] = None,
     ):
@@ -138,11 +134,9 @@ class ImageClassifier(ClassificationAdapterTask):
             metrics=metrics,
             learning_rate=learning_rate,
             optimizer=optimizer,
-            optimizer_kwargs=optimizer_kwargs,
-            scheduler=scheduler,
-            scheduler_kwargs=scheduler_kwargs,
+            lr_scheduler=lr_scheduler,
             multi_label=multi_label,
-            serializer=serializer or Labels(multi_label=multi_label),
+            output=output or Labels(multi_label=multi_label),
         )
 
     @classmethod

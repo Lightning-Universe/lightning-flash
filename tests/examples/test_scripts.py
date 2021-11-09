@@ -76,6 +76,10 @@ from tests.helpers.utils import (
             "tabular_classification.py",
             marks=pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed"),
         ),
+        pytest.param(
+            "tabular_regression.py",
+            marks=pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed"),
+        ),
         pytest.param("template.py", marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")),
         pytest.param(
             "text_classification.py",

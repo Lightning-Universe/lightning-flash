@@ -11,13 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Dict, List, Optional
 
-import torch
-from torch.optim.lr_scheduler import _LRScheduler
-from torchmetrics import Metric
+from torchmetrics import BLEUScore
 
-from flash.text.seq2seq.core.metrics import BLEUScore
+from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.text.seq2seq.core.model import Seq2SeqTask
 
 
@@ -35,10 +33,8 @@ class TranslationTask(Seq2SeqTask):
     Args:
         backbone: backbone model to use for the task.
         loss_fn: Loss function for training.
-        optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
-        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
-        scheduler: The scheduler or scheduler class to use.
-        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
         metrics: Metrics to compute for training and evaluation. Defauls to calculating the BLEU metric.
             Changing this argument currently has no effect.
         learning_rate: Learning rate to use for training, defaults to `1e-5`
@@ -52,12 +48,10 @@ class TranslationTask(Seq2SeqTask):
     def __init__(
         self,
         backbone: str = "t5-small",
-        loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
-        optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-        optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
-        metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
+        loss_fn: LOSS_FN_TYPE = None,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
+        metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-5,
         val_target_max_length: Optional[int] = 128,
         num_beams: Optional[int] = 4,
@@ -70,9 +64,7 @@ class TranslationTask(Seq2SeqTask):
             backbone=backbone,
             loss_fn=loss_fn,
             optimizer=optimizer,
-            optimizer_kwargs=optimizer_kwargs,
-            scheduler=scheduler,
-            scheduler_kwargs=scheduler_kwargs,
+            lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
             val_target_max_length=val_target_max_length,
@@ -92,7 +84,7 @@ class TranslationTask(Seq2SeqTask):
         tgt_lns = self.tokenize_labels(batch["labels"])
         # wrap targets in list as score expects a list of potential references
         tgt_lns = [[reference] for reference in tgt_lns]
-        result = self.bleu(self._postprocess.uncollate(generated_tokens), tgt_lns)
+        result = self.bleu(self._output_transform.uncollate(generated_tokens), tgt_lns)
         self.log(f"{prefix}_bleu_score", result, on_step=False, on_epoch=True, prog_bar=True)
 
     @staticmethod

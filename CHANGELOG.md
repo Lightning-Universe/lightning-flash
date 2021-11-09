@@ -4,21 +4,76 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased] - YYYY-MM-DD
+## [Unreleased] - YYYY-DD-MM
 
 ### Added
 
-
 - Added from_folders and from_sequence datasources to graph task ([599](https://github.com/PyTorchLightning/lightning-flash/pull/599))
+
 - Added support for (input, target) style datasets (e.g. torchvision) to the from_datasets method ([#552](https://github.com/PyTorchLightning/lightning-flash/pull/552))
+
+### Changed
+
+- Changed classes named `*Serializer` and properties / variables named `serializer` to be `*Output` and `output` respectively ([#927](https://github.com/PyTorchLightning/lightning-flash/pull/927))
+
+- Changed `Postprocess` to `OutputTransform` ([#942](https://github.com/PyTorchLightning/lightning-flash/pull/942))
+
+- Changed loading of RGBA images to drop alpha channel by default ([#946](https://github.com/PyTorchLightning/lightning-flash/pull/946))
+
+### Deprecated
+
+- Deprecated `flash.core.data.process.Serializer` in favour of `flash.core.data.io.output.Output` ([#927](https://github.com/PyTorchLightning/lightning-flash/pull/927))
+
+- Deprecated `Task.serializer` in favour of `Task.output` ([#927](https://github.com/PyTorchLightning/lightning-flash/pull/927))
+
+- Deprecated `flash.text.seq2seq.core.metrics` in favour of `torchmetrics[text]` ([#648](https://github.com/PyTorchLightning/lightning-flash/pull/648))
+
+### Fixed
+
+### Removed
+
+- Removed `OutputMapping` ([#939](https://github.com/PyTorchLightning/lightning-flash/pull/939))
+
+- Removed `Output.enable` and `Output.disable` ([#939](https://github.com/PyTorchLightning/lightning-flash/pull/939))
+
+- Removed `OutputTransform.save_sample` and `save_data` hooks ([#948](https://github.com/PyTorchLightning/lightning-flash/pull/948))
+
+## [0.5.2] - 2021-11-05
+
+### Added
+
+- Added a `TabularForecaster` task based on PyTorch Forecasting ([#647](https://github.com/PyTorchLightning/lightning-flash/pull/647))
+- Added a `TabularRegressor` task ([#892](https://github.com/PyTorchLightning/lightning-flash/pull/892))
+
+### Fixed
+
+- Fixed a bug where test metrics were not logged correctly with active learning ([#879](https://github.com/PyTorchLightning/lightning-flash/pull/879))
+- Fixed a bug where validation metrics could be aggregated together with test metrics in some cases ([#900](https://github.com/PyTorchLightning/lightning-flash/pull/900))
+- Fixed a bug where the latest versions of torchmetrics and Lightning Flash could not be installed together ([#902](https://github.com/PyTorchLightning/lightning-flash/pull/902))
+- Fixed compatibility with PyTorch-Lightning 1.5 ([#933](https://github.com/PyTorchLightning/lightning-flash/pull/933))
+
+
+## [0.5.1] - 2021-10-26
+
+### Added
+
+- Added `LabelStudio` integration ([#554](https://github.com/PyTorchLightning/lightning-flash/pull/554))
 - Added support `learn2learn` training_strategy for `ImageClassifier` ([#737](https://github.com/PyTorchLightning/lightning-flash/pull/737))
+- Added `vissl` training_strategies for `ImageEmbedder` ([#682](https://github.com/PyTorchLightning/lightning-flash/pull/682))
+- Added support for `from_data_frame` to `TextClassificationData` ([#785](https://github.com/PyTorchLightning/lightning-flash/pull/785))
+- Added `FastFace` integration ([#606](https://github.com/PyTorchLightning/lightning-flash/pull/606))
+- Added support for `from_lists` to `TextClassificationData` ([#805](https://github.com/PyTorchLightning/lightning-flash/pull/805))
 
 
 ### Changed
 
 - Changed the default `num_workers` on linux to `0` (matching the default for other OS) ([#759](https://github.com/PyTorchLightning/lightning-flash/pull/759))
+- Optimizer and LR Scheduler registry are used to get the respective inputs to the Task using a string (or a callable). ([#777](https://github.com/PyTorchLightning/lightning-flash/pull/777))
 
 ### Fixed
+
+- Fixed a bug where additional kwargs (e.g. sampler) passed to tabular data would be ignored ([#792](https://github.com/PyTorchLightning/lightning-flash/pull/792))
+- Fixed a bug where loading text data with additional non-numeric columns (not input or target) would give an error ([#888](https://github.com/PyTorchLightning/lightning-flash/pull/888))
 
 
 ## [0.5.0] - 2021-09-07

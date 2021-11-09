@@ -90,30 +90,6 @@ def test_embedding_sizes():
 
 
 @pytest.mark.skipif(not _PANDAS_AVAILABLE, reason="pandas is required")
-def test_tabular_data(tmpdir):
-    train_data_frame = TEST_DF_1.copy()
-    val_data_frame = TEST_DF_2.copy()
-    test_data_frame = TEST_DF_2.copy()
-    dm = TabularClassificationData.from_data_frame(
-        categorical_fields=["category"],
-        numerical_fields=["scalar_a", "scalar_b"],
-        target_fields="label",
-        train_data_frame=train_data_frame,
-        val_data_frame=val_data_frame,
-        test_data_frame=test_data_frame,
-        num_workers=0,
-        batch_size=1,
-    )
-    for dl in [dm.train_dataloader(), dm.val_dataloader(), dm.test_dataloader()]:
-        data = next(iter(dl))
-        (cat, num) = data[DefaultDataKeys.INPUT]
-        target = data[DefaultDataKeys.TARGET]
-        assert cat.shape == (1, 1)
-        assert num.shape == (1, 2)
-        assert target.shape == (1,)
-
-
-@pytest.mark.skipif(not _PANDAS_AVAILABLE, reason="pandas is required")
 def test_categorical_target(tmpdir):
     train_data_frame = TEST_DF_1.copy()
     val_data_frame = TEST_DF_2.copy()

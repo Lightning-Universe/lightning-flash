@@ -18,13 +18,13 @@ import numpy as np
 import pytest
 import torch
 from pytorch_lightning import seed_everything
-from pytorch_lightning.trainer.states import RunningStage
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.utils import _CALLBACK_FUNCS, _STAGES_PREFIX
 from flash.core.utilities.imports import _PIL_AVAILABLE
+from flash.core.utilities.stages import RunningStage
 from flash.image import ImageClassificationData
 from tests.helpers.utils import _IMAGE_TESTING
 

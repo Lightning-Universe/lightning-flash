@@ -77,10 +77,7 @@ datamodule = ImageClassificationData.from_tensors(
 
 model = ImageClassifier(
     backbone="resnet18",
-    pretrained=False,
     training_strategy="prototypicalnetworks",
-    optimizer=torch.optim.Adam,
-    optimizer_kwargs={"lr": 0.001},
     training_strategy_kwargs={
         "epoch_length": 10 * 16,
         "meta_batch_size": 4,
@@ -92,12 +89,14 @@ model = ImageClassifier(
         "test_shots": 1,
         "test_queries": 15,
     },
+    optimizer=torch.optim.Adam,
+    optimizer_kwargs={"lr": 0.001},
 )
 
 trainer = flash.Trainer(
     max_epochs=200,
     gpus=2,
-    acceletator="ddp_shared",
+    accelerator="ddp_shared",
     precision=16,
 )
 trainer.finetune(model, datamodule=datamodule, strategy="no_freeze")

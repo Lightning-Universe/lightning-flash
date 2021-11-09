@@ -95,8 +95,8 @@ def test_from_files(tmpdir):
 
 
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_postprocess_tokenizer(tmpdir):
-    """Tests that the tokenizer property in ``SummarizationPostprocess`` resolves correctly when a different
+def test_output_transform_tokenizer(tmpdir):
+    """Tests that the tokenizer property in ``SummarizationOutputTransform`` resolves correctly when a different
     backbone is used."""
     backbone = "sshleifer/bart-tiny-random"
     csv_path = csv_data(tmpdir)
@@ -105,8 +105,8 @@ def test_postprocess_tokenizer(tmpdir):
     )
     pipeline = dm.data_pipeline
     pipeline.initialize()
-    assert pipeline._postprocess_pipeline.backbone_state.backbone == backbone
-    assert pipeline._postprocess_pipeline.tokenizer is not None
+    assert pipeline._output_transform.backbone_state.backbone == backbone
+    assert pipeline._output_transform.tokenizer is not None
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")

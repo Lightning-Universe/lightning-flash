@@ -33,7 +33,7 @@ __________________
 
     speech_recognition.data.SpeechRecognitionPreprocess
     speech_recognition.data.SpeechRecognitionBackboneState
-    speech_recognition.data.SpeechRecognitionPostprocess
+    speech_recognition.data.SpeechRecognitionOutputTransform
     speech_recognition.data.SpeechRecognitionCSVDataSource
     speech_recognition.data.SpeechRecognitionJSONDataSource
     speech_recognition.data.BaseSpeechRecognition

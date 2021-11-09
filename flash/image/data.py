@@ -30,10 +30,11 @@ from flash.core.data.data_source import (
     TensorDataSource,
 )
 from flash.core.data.process import Deserializer
+from flash.core.data.utils import image_default_loader
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, Image, requires
 
 if _TORCHVISION_AVAILABLE:
-    from torchvision.datasets.folder import default_loader, IMG_EXTENSIONS
+    from torchvision.datasets.folder import IMG_EXTENSIONS
     from torchvision.transforms.functional import to_pil_image
 else:
     IMG_EXTENSIONS = (".jpg", ".jpeg", ".png", ".ppm", ".bmp", ".pgm", ".tif", ".tiff", ".webp")
@@ -44,7 +45,7 @@ NP_EXTENSIONS = (".npy",)
 
 def image_loader(filepath: str):
     if has_file_allowed_extension(filepath, IMG_EXTENSIONS):
-        img = default_loader(filepath)
+        img = image_default_loader(filepath)
     elif has_file_allowed_extension(filepath, NP_EXTENSIONS):
         img = Image.fromarray(np.load(filepath).astype("uint8"), "RGB")
     else:
@@ -116,7 +117,7 @@ class ImageFiftyOneDataSource(FiftyOneDataSource):
     @staticmethod
     def load_sample(sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         img_path = sample[DefaultDataKeys.INPUT]
-        img = default_loader(img_path)
+        img = image_default_loader(img_path)
         sample[DefaultDataKeys.INPUT] = img
         w, h = img.size  # WxH
         sample[DefaultDataKeys.METADATA] = {

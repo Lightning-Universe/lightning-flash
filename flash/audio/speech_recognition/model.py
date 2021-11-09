@@ -13,20 +13,19 @@
 # limitations under the License.
 import os
 import warnings
-from typing import Any, Dict, Mapping, Optional, Type, Union
+from typing import Any, Dict
 
 import torch
 import torch.nn as nn
-from torch.optim.lr_scheduler import _LRScheduler
 
 from flash.audio.speech_recognition.backbone import SPEECH_RECOGNITION_BACKBONES
 from flash.audio.speech_recognition.collate import DataCollatorCTCWithPadding
 from flash.audio.speech_recognition.data import SpeechRecognitionBackboneState
-from flash.core.data.process import Serializer
 from flash.core.data.states import CollateFn
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _AUDIO_AVAILABLE
+from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 
 if _AUDIO_AVAILABLE:
     from transformers import Wav2Vec2Processor
@@ -39,12 +38,10 @@ class SpeechRecognition(Task):
     Args:
         backbone: Any speech recognition model from `HuggingFace/transformers
             <https://huggingface.co/models?pipeline_tag=automatic-speech-recognition>`_.
+        learning_rate: Learning rate to use for training, defaults to ``1e-5``.
         optimizer: Optimizer to use for training.
-        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
-        scheduler: The scheduler or scheduler class to use.
-        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
-        learning_rate: Learning rate to use for training, defaults to ``1e-3``.
-        serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
+        lr_scheduler: The LR scheduler to use during training.
+        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
     """
 
     backbones: FlashRegistry = SPEECH_RECOGNITION_BACKBONES
@@ -54,12 +51,10 @@ class SpeechRecognition(Task):
     def __init__(
         self,
         backbone: str = "facebook/wav2vec2-base-960h",
-        optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-        optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
         learning_rate: float = 1e-5,
-        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
+        output: OUTPUT_TYPE = None,
     ):
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
         # disable HF thousand warnings
@@ -71,11 +66,9 @@ class SpeechRecognition(Task):
         super().__init__(
             model=model,
             optimizer=optimizer,
-            optimizer_kwargs=optimizer_kwargs,
-            scheduler=scheduler,
-            scheduler_kwargs=scheduler_kwargs,
+            lr_scheduler=lr_scheduler,
             learning_rate=learning_rate,
-            serializer=serializer,
+            output=output,
         )
 
         self.save_hyperparameters()

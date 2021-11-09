@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import functools
 import inspect
 import os
 from collections import defaultdict
@@ -31,6 +32,7 @@ from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
+from flash.core.utilities.compatibility import accelerator_connector
 from flash.core.utilities.imports import _LEARN2LEARN_AVAILABLE
 from flash.core.utilities.providers import _LEARN2LEARN
 from flash.core.utilities.url_error import catch_url_error
@@ -183,8 +185,16 @@ class Learn2LearnAdapter(Adapter):
 
         self.model = self.algorithm_cls(**algorithm_kwargs)
 
+        # Patch log to avoid error with learn2learn and PL 1.5
+        self.model.log = functools.partial(self._patch_log, self.model.log)
+
         # this algorithm requires a special treatment
         self._algorithm_has_validated = self.algorithm_cls != l2l.algorithms.LightningPrototypicalNetworks
+
+    def _patch_log(self, log, *args, on_step: Optional[bool] = None, on_epoch: Optional[bool] = None, **kwargs):
+        if not on_step and not on_epoch:
+            on_epoch = True
+        return log(*args, on_step=on_step, on_epoch=on_epoch, **kwargs)
 
     def _default_transform(self, dataset, ways: int, shots: int, queries) -> List[Callable]:
         return [
@@ -206,7 +216,7 @@ class Learn2LearnAdapter(Adapter):
 
     def _convert_dataset(
         self,
-        trainer: flash.Trainer,
+        trainer: "flash.Trainer",
         dataset: BaseAutoDataset,
         ways: int,
         shots: int,
@@ -268,7 +278,7 @@ class Learn2LearnAdapter(Adapter):
             devices = 1
             if isinstance(trainer.training_type_plugin, DataParallelPlugin):
                 # when using DP, we need to sample n tasks, so it can splitted across multiple devices.
-                devices = trainer.accelerator_connector.devices
+                devices = accelerator_connector(trainer).devices
             dataset = TaskDataParallel(taskset, epoch_length=epoch_length, devices=devices, collate_fn=None)
             self.trainer.accumulated_grad_batches = self.meta_batch_size / devices
 
@@ -334,14 +344,14 @@ class Learn2LearnAdapter(Adapter):
     def process_train_dataset(
         self,
         dataset: BaseAutoDataset,
-        trainer: flash.Trainer,
+        trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
         collate_fn: Callable,
-        shuffle: bool,
-        drop_last: bool,
-        sampler: Optional[Sampler],
+        shuffle: bool = False,
+        drop_last: bool = False,
+        sampler: Optional[Sampler] = None,
     ) -> DataLoader:
         dataset = self._convert_dataset(
             trainer=trainer,
@@ -366,13 +376,12 @@ class Learn2LearnAdapter(Adapter):
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
-            persistent_workers=True,
         )
 
     def process_val_dataset(
         self,
         dataset: BaseAutoDataset,
-        trainer: flash.Trainer,
+        trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -404,13 +413,12 @@ class Learn2LearnAdapter(Adapter):
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
-            persistent_workers=True,
         )
 
     def process_test_dataset(
         self,
         dataset: BaseAutoDataset,
-        trainer: flash.Trainer,
+        trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -442,7 +450,6 @@ class Learn2LearnAdapter(Adapter):
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
-            persistent_workers=True,
         )
 
     def process_predict_dataset(

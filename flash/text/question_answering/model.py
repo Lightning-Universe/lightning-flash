@@ -19,15 +19,13 @@
 import collections
 import os
 import warnings
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Type, Union
+from typing import Any, Callable, List, Mapping, Optional, Sequence, Union
 
 import numpy as np
 import torch
 from pytorch_lightning import Callback
 from pytorch_lightning.utilities import rank_zero_info
 from torch import Tensor
-from torch.optim.lr_scheduler import _LRScheduler
-from torchmetrics import Metric
 
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.finetuning import FlashBaseFinetuning
@@ -35,6 +33,7 @@ from flash.core.model import Task
 from flash.core.registry import ExternalRegistry, FlashRegistry
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.core.utilities.providers import _HUGGINGFACE
+from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.text.ort_callback import ORTCallback
 from flash.text.question_answering.finetuning import QuestionAnsweringFreezeEmbeddings
 from flash.text.seq2seq.core.metrics import RougeMetric
@@ -68,10 +67,8 @@ class QuestionAnsweringTask(Task):
     Args:
         backbone: backbone model to use for the task.
         loss_fn: Loss function for training.
-        optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
-        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
-        scheduler: The scheduler or scheduler class to use.
-        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
         metrics: Metrics to compute for training and evaluation. Defauls to calculating the ROUGE metric.
             Changing this argument currently has no effect.
         learning_rate: Learning rate to use for training, defaults to `3e-4`
@@ -95,11 +92,9 @@ class QuestionAnsweringTask(Task):
         self,
         backbone: str = "distilbert-base-uncased",
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
-        optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-        optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
-        metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
+        metrics: METRICS_TYPE = None,
         learning_rate: float = 5e-5,
         enable_ort: bool = False,
         n_best_size: int = 20,
@@ -117,9 +112,7 @@ class QuestionAnsweringTask(Task):
         super().__init__(
             loss_fn=loss_fn,
             optimizer=optimizer,
-            optimizer_kwargs=optimizer_kwargs,
-            scheduler=scheduler,
-            scheduler_kwargs=scheduler_kwargs,
+            lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
         )
@@ -132,7 +125,7 @@ class QuestionAnsweringTask(Task):
         self._initialize_model_specific_parameters()
 
         self.rouge = RougeMetric(
-            rouge_newline_sep=rouge_newline_sep,
+            newline_sep=rouge_newline_sep,
             use_stemmer=use_stemmer,
         )
 
@@ -251,12 +244,13 @@ class QuestionAnsweringTask(Task):
     def forward(self, batch: Any) -> Any:
         metadata = batch.pop(DefaultDataKeys.METADATA)
         outputs = self.model(**batch)
+        loss = outputs.loss
         start_logits = outputs.start_logits
         end_logits = outputs.end_logits
 
         generated_answers = self._generate_answers(start_logits, end_logits, metadata)
         batch[DefaultDataKeys.METADATA] = metadata
-        return generated_answers
+        return loss, generated_answers
 
     def training_step(self, batch: Any, batch_idx: int) -> Tensor:
         outputs = self.model(**batch)
@@ -265,9 +259,10 @@ class QuestionAnsweringTask(Task):
         return loss
 
     def common_step(self, prefix: str, batch: Any) -> torch.Tensor:
-        generated_answers = self(batch)
+        loss, generated_answers = self(batch)
         result = self.compute_metrics(generated_answers, batch[DefaultDataKeys.METADATA])
-        self.log_dict(result, on_step=False, on_epoch=True, prog_bar=True)
+        self.log(f"{prefix}_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log_dict(result, on_step=False, on_epoch=True, prog_bar=False)
 
     def compute_metrics(self, generated_tokens, batch):
         for example in batch:
@@ -285,7 +280,7 @@ class QuestionAnsweringTask(Task):
         self.common_step("test", batch)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        generated_answers = self(batch)
+        _, generated_answers = self(batch)
         return generated_answers
 
     @property

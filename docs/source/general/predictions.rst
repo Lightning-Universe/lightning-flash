@@ -23,7 +23,9 @@ You can pass in a sample of data (image file path, a string of text, etc) to the
     download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
     # 2. Load the model from a checkpoint
-    model = ImageClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/image_classification_model.pt")
+    model = ImageClassifier.load_from_checkpoint(
+        "https://flash-weights.s3.amazonaws.com/0.6.0/image_classification_model.pt"
+    )
 
     # 3. Predict whether the image contains an ant or a bee
     predictions = model.predict("data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg")
@@ -43,7 +45,9 @@ Predict on a csv file
     download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "data/")
 
     # 2. Load the model from a checkpoint
-    model = TabularClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/tabnet_classification_model.pt")
+    model = TabularClassifier.load_from_checkpoint(
+        "https://flash-weights.s3.amazonaws.com/0.6.0/tabular_classification_model.pt"
+    )
 
     # 3. Generate predictions from a csv file! Who would survive?
     predictions = model.predict("data/titanic/titanic.csv")
@@ -53,8 +57,8 @@ Predict on a csv file
 Serializing predictions
 =======================
 
-To change how predictions are serialized you can attach a :class:`~flash.core.data.process.Serializer` to your
-:class:`~flash.core.model.Task`. For example, you can choose to serialize outputs as probabilities (for more options see the API
+To change the output format of predictions you can attach an :class:`~flash.core.data.io.output.Output` to your
+:class:`~flash.core.model.Task`. For example, you can choose to output probabilities (for more options see the API
 reference below).
 
 
@@ -69,10 +73,12 @@ reference below).
     download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
 
     # 2. Load the model from a checkpoint
-    model = ImageClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/image_classification_model.pt")
+    model = ImageClassifier.load_from_checkpoint(
+        "https://flash-weights.s3.amazonaws.com/0.6.0/image_classification_model.pt"
+    )
 
-    # 3. Attach the Serializer
-    model.serializer = Probabilities()
+    # 3. Attach the Output
+    model.output = Probabilities()
 
     # 4. Predict whether the image contains an ant or a bee
     predictions = model.predict("data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg")
