@@ -22,7 +22,7 @@ from flash.core.utilities.stages import RunningStage
 
 if TYPE_CHECKING:
     from flash.core.data.io.input_transform import InputTransform
-    from flash.core.data.process import Deserializer, Serializer
+    from flash.core.data.process import Deserializer
 
 
 class _DeserializeProcessor(torch.nn.Module):
@@ -58,18 +58,6 @@ class _DeserializeProcessor(torch.nn.Module):
                 self.callback.on_to_tensor_transform(sample, RunningStage.PREDICTING)
 
         return sample
-
-
-class _SerializeProcessor(torch.nn.Module):
-    def __init__(
-        self,
-        serializer: "Serializer",
-    ):
-        super().__init__()
-        self.serializer = convert_to_modules(serializer)
-
-    def forward(self, sample):
-        return self.serializer(sample)
 
 
 def default_uncollate(batch: Any):
