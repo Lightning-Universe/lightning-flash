@@ -196,7 +196,7 @@ class PointCloudSegmentation(ClassificationTask):
 
             dataset.dataset = TorchDataloader(
                 dataset.dataset,
-                input_transform=self.backbone.preprocess,
+                preprocess=self.backbone.preprocess,
                 transform=self.backbone.transform,
                 use_cache=False,
             )
