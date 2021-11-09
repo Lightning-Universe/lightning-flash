@@ -20,7 +20,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from torch.utils.data.dataloader import DataLoader
 
 from flash.core.data.data_pipeline import DataPipeline
-from flash.core.data.process import DefaultInputTransform
+from flash.core.data.io.input_transform import DefaultInputTransform
 from flash.core.model import Task
 
 
