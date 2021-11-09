@@ -175,6 +175,53 @@ In detail, the following methods are currently implemented:
 * **[metaoptnet](https://github.com/learnables/learn2learn/blob/master/learn2learn/algorithms/lightning/lightning_metaoptnet.py)** : from Lee *et al.* 2019, [Meta-Learning with Differentiable Convex Optimization](https://arxiv.org/abs/1904.03758)
 * **[anil](https://github.com/learnables/learn2learn/blob/master/learn2learn/algorithms/lightning/lightning_anil.py)** : from Raghu *et al.* 2020, [Rapid Learning or Feature Reuse? Towards Understanding the Effectiveness of MAML](https://arxiv.org/abs/1909.09157)
 
+
+### Flash Optimizers / Schedulers
+
+With Flash, swapping among 40+ optimizers and 15 + schedulers recipes are simple. Find the list of available optimizers, schedulers as follows:
+
+```py
+ImageClassifier.available_optimizers()
+# ['A2GradExp', ..., 'Yogi']
+
+ImageClassifier.available_schedulers()
+# ['CosineAnnealingLR', 'CosineAnnealingWarmRestarts', ..., 'polynomial_decay_schedule_with_warmup']
+```
+
+Once you've chosen, create the model:
+
+```py
+#### The optimizer of choice can be passed as a
+# - String value
+model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer="Adam", lr_scheduler=None)
+
+# - Callable
+model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer=functools.partial(torch.optim.Adadelta, eps=0.5), lr_scheduler=None)
+
+# - Tuple[string, dict]: (The dict takes in the optimizer kwargs)
+model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer=("Adadelta", {"epa": 0.5}), lr_scheduler=None)
+
+#### The scheduler of choice can be passed as a
+# - String value
+model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer="Adam", lr_scheduler="constant_schedule")
+
+# - Callable
+model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer="Adam", lr_scheduler=functools.partial(CyclicLR, step_size_up=1500, mode='exp_range', gamma=0.5))
+
+# - Tuple[string, dict]: (The dict takes in the scheduler kwargs)
+model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer="Adam", lr_scheduler=("StepLR", {"step_size": 10}))
+```
+
+You can also register you own custom scheduler recipes beforeahand and use them shown as above:
+
+```py
+@ImageClassifier.lr_schedulers
+def my_steplr_recipe(optimizer):
+    return torch.optim.lr_scheduler.StepLR(optimizer, step_size=10)
+
+model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer="Adam", lr_scheduler="my_steplr_recipe")
+```
+
 ### Flash Transforms
 
 
@@ -191,10 +238,8 @@ The example also uses our [`merge_transforms`](https://lightning-flash.readthedo
 
 ```py
 import torch
-from typing import Any
 import numpy as np
 import albumentations
-from torchvision import transforms as T
 from flash.core.data.transforms import ApplyToKeys, merge_transforms
 from flash.image import ImageClassificationData
 from flash.image.classification.transforms import default_transforms, AlbumentationsAdapter

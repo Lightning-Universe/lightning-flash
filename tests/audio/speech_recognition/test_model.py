@@ -22,7 +22,7 @@ import torch
 from flash import Trainer
 from flash.__main__ import main
 from flash.audio import SpeechRecognition
-from flash.audio.speech_recognition.data import SpeechRecognitionPostprocess, SpeechRecognitionPreprocess
+from flash.audio.speech_recognition.data import SpeechRecognitionOutputTransform, SpeechRecognitionPreprocess
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _AUDIO_AVAILABLE
 from tests.helpers.utils import _AUDIO_TESTING, _SERVE_TESTING
@@ -79,9 +79,9 @@ def test_jit(tmpdir):
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = SpeechRecognition(backbone=TEST_BACKBONE)
-    # TODO: Currently only servable once a preprocess and postprocess have been attached
+    # TODO: Currently only servable once a preprocess and output_transform have been attached
     model._preprocess = SpeechRecognitionPreprocess()
-    model._postprocess = SpeechRecognitionPostprocess()
+    model._output_transform = SpeechRecognitionOutputTransform()
     model.eval()
     model.serve()
 

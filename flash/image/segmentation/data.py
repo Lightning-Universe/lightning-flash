@@ -34,6 +34,7 @@ from flash.core.data.data_source import (
     TensorDataSource,
 )
 from flash.core.data.process import Deserializer, Preprocess
+from flash.core.data.utils import image_default_loader
 from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,
     _MATPLOTLIB_AVAILABLE,
@@ -44,7 +45,7 @@ from flash.core.utilities.imports import (
 )
 from flash.core.utilities.stages import RunningStage
 from flash.image.data import ImageDeserializer, IMG_EXTENSIONS
-from flash.image.segmentation.serialization import SegmentationLabels
+from flash.image.segmentation.output import SegmentationLabels
 from flash.image.segmentation.transforms import default_transforms, predict_default_transforms, train_default_transforms
 
 SampleCollection = None
@@ -63,7 +64,7 @@ else:
 if _TORCHVISION_AVAILABLE:
     import torchvision
     import torchvision.transforms.functional as FT
-    from torchvision.datasets.folder import default_loader, has_file_allowed_extension
+    from torchvision.datasets.folder import has_file_allowed_extension
 
 
 class SemanticSegmentationNumpyDataSource(NumpyDataSource):
@@ -138,7 +139,7 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
         img_labels_path = sample[DefaultDataKeys.TARGET]
 
         # load images directly to torch tensors
-        img: torch.Tensor = FT.to_tensor(default_loader(img_path))  # CxHxW
+        img: torch.Tensor = FT.to_tensor(image_default_loader(img_path))  # CxHxW
         img_labels: torch.Tensor = torchvision.io.read_image(img_labels_path)  # CxHxW
         img_labels = img_labels[0]  # HxW
 
@@ -153,7 +154,7 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
     @staticmethod
     def predict_load_sample(sample: Mapping[str, Any]) -> Mapping[str, Any]:
         img_path = sample[DefaultDataKeys.INPUT]
-        img = FT.to_tensor(default_loader(img_path)).float()
+        img = FT.to_tensor(image_default_loader(img_path)).float()
 
         sample[DefaultDataKeys.INPUT] = img
         sample[DefaultDataKeys.METADATA] = {
@@ -184,7 +185,7 @@ class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
         img_path = sample[DefaultDataKeys.INPUT]
         fo_sample = _fo_dataset[img_path]
 
-        img: torch.Tensor = FT.to_tensor(default_loader(img_path))  # CxHxW
+        img: torch.Tensor = FT.to_tensor(image_default_loader(img_path))  # CxHxW
         img_labels: torch.Tensor = torch.from_numpy(fo_sample[self.label_field].mask)  # HxW
 
         sample[DefaultDataKeys.INPUT] = img.float()
@@ -198,7 +199,7 @@ class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
     @staticmethod
     def predict_load_sample(sample: Mapping[str, Any]) -> Mapping[str, Any]:
         img_path = sample[DefaultDataKeys.INPUT]
-        img = FT.to_tensor(default_loader(img_path)).float()
+        img = FT.to_tensor(image_default_loader(img_path)).float()
 
         sample[DefaultDataKeys.INPUT] = img
         sample[DefaultDataKeys.METADATA] = {

@@ -13,7 +13,7 @@
 # limitations under the License.
 from typing import Callable, Dict, Optional, Union
 
-from flash.text.seq2seq.core.data import Seq2SeqData, Seq2SeqPostprocess, Seq2SeqPreprocess
+from flash.text.seq2seq.core.data import Seq2SeqData, Seq2SeqOutputTransform, Seq2SeqPreprocess
 
 
 class SummarizationPreprocess(Seq2SeqPreprocess):
@@ -45,4 +45,4 @@ class SummarizationPreprocess(Seq2SeqPreprocess):
 class SummarizationData(Seq2SeqData):
 
     preprocess_cls = SummarizationPreprocess
-    postprocess_cls = Seq2SeqPostprocess
+    output_transform_cls = Seq2SeqOutputTransform

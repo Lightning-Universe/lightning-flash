@@ -11,22 +11,32 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import functools
 import inspect
-import os
 from abc import ABC, abstractclassmethod, abstractmethod
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union
 
 import torch
+from _warnings import warn
+from deprecate import deprecated
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 from torch.utils.data._utils.collate import default_collate
 
 import flash
-from flash.core.data.batch import default_uncollate
 from flash.core.data.callback import FlashCallback
 from flash.core.data.data_source import DatasetDataSource, DataSource, DefaultDataKeys, DefaultDataSources
-from flash.core.data.properties import Properties
-from flash.core.data.states import CollateFn
+from flash.core.data.io.output import Output
+from flash.core.data.properties import ProcessState, Properties
+from flash.core.data.states import (
+    CollateFn,
+    PerBatchTransform,
+    PerBatchTransformOnDevice,
+    PerSampleTransformOnDevice,
+    PostTensorTransform,
+    PreTensorTransform,
+    ToTensorTransform,
+)
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX, convert_to_modules, CurrentRunningStageFuncContext
 from flash.core.utilities.stages import RunningStage
@@ -346,17 +356,62 @@ class Preprocess(BasePreprocess, Properties):
             return [self.current_transform(s) for s in sample]
         return self.current_transform(sample)
 
+    def _apply_batch_transform(self, batch: Any):
+        return self.current_transform(batch)
+
+    def _apply_transform_on_sample(self, sample: Any, transform: Callable):
+        if isinstance(sample, list):
+            return [transform(s) for s in sample]
+
+        return transform(sample)
+
+    def _apply_transform_on_batch(self, batch: Any, transform: Callable):
+        return transform(batch)
+
+    def _apply_process_state_transform(
+        self,
+        process_state: ProcessState,
+        sample: Optional[Any] = None,
+        batch: Optional[Any] = None,
+    ):
+        # assert both sample and batch are not None
+        if sample is None:
+            assert batch is not None, "sample not provided, batch should not be None"
+            mode = "batch"
+        else:
+            assert batch is None, "sample provided, batch should be None"
+            mode = "sample"
+
+        process_state_transform = self.get_state(process_state)
+
+        if process_state_transform is not None:
+            if process_state_transform.transform is not None:
+                if mode == "sample":
+                    return self._apply_transform_on_sample(sample, process_state_transform.transform)
+                else:
+                    return self._apply_transform_on_batch(batch, process_state_transform.transform)
+            else:
+                if mode == "sample":
+                    return sample
+                else:
+                    return batch
+        else:
+            if mode == "sample":
+                return self._apply_sample_transform(sample)
+            else:
+                return self._apply_batch_transform(batch)
+
     def pre_tensor_transform(self, sample: Any) -> Any:
         """Transforms to apply on a single object."""
-        return self._apply_sample_transform(sample)
+        return self._apply_process_state_transform(PreTensorTransform, sample=sample)
 
     def to_tensor_transform(self, sample: Any) -> Tensor:
         """Transforms to convert single object to a tensor."""
-        return self._apply_sample_transform(sample)
+        return self._apply_process_state_transform(ToTensorTransform, sample=sample)
 
     def post_tensor_transform(self, sample: Tensor) -> Tensor:
         """Transforms to apply on a tensor."""
-        return self._apply_sample_transform(sample)
+        return self._apply_process_state_transform(PostTensorTransform, sample=sample)
 
     def per_batch_transform(self, batch: Any) -> Any:
         """Transforms to apply to a whole batch (if possible use this for efficiency).
@@ -366,7 +421,7 @@ class Preprocess(BasePreprocess, Properties):
             This option is mutually exclusive with :meth:`per_sample_transform_on_device`,
             since if both are specified, uncollation has to be applied.
         """
-        return self.current_transform(batch)
+        return self._apply_process_state_transform(PerBatchTransform, batch=batch)
 
     def collate(self, samples: Sequence, metadata=None) -> Any:
         """Transform to convert a sequence of samples to a collated batch."""
@@ -400,7 +455,7 @@ class Preprocess(BasePreprocess, Properties):
             This function won't be called within the dataloader workers, since to make that happen
             each of the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
         """
-        return self.current_transform(sample)
+        return self._apply_process_state_transform(PerSampleTransformOnDevice, sample=sample)
 
     def per_batch_transform_on_device(self, batch: Any) -> Any:
         """Transforms to apply to a whole batch (if possible use this for efficiency).
@@ -410,7 +465,7 @@ class Preprocess(BasePreprocess, Properties):
             This function won't be called within the dataloader workers, since to make that happen
             each of the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
         """
-        return self.current_transform(batch)
+        return self._apply_process_state_transform(PerBatchTransformOnDevice, batch=batch)
 
     def available_data_sources(self) -> Sequence[str]:
         """Get the list of available data source names for use with this
@@ -473,115 +528,6 @@ class DefaultPreprocess(Preprocess):
         return cls(**state_dict)
 
 
-class Postprocess(Properties):
-    """The :class:`~flash.core.data.process.Postprocess` encapsulates all the data processing logic that should run
-    after the model."""
-
-    def __init__(self, save_path: Optional[str] = None):
-        super().__init__()
-        self._saved_samples = 0
-        self._save_path = save_path
-
-    @staticmethod
-    def per_batch_transform(batch: Any) -> Any:
-        """Transforms to apply on a whole batch before uncollation to individual samples.
-
-        Can involve both CPU and Device transforms as this is not applied in separate workers.
-        """
-        return batch
-
-    @staticmethod
-    def per_sample_transform(sample: Any) -> Any:
-        """Transforms to apply to a single sample after splitting up the batch.
-
-        Can involve both CPU and Device transforms as this is not applied in separate workers.
-        """
-        return sample
-
-    @staticmethod
-    def uncollate(batch: Any) -> Any:
-        """Uncollates a batch into single samples.
-
-        Tries to preserve the type whereever possible.
-        """
-        return default_uncollate(batch)
-
-    @staticmethod
-    def save_data(data: Any, path: str) -> None:
-        """Saves all data together to a single path."""
-        torch.save(data, path)
-
-    @staticmethod
-    def save_sample(sample: Any, path: str) -> None:
-        """Saves each sample individually to a given path."""
-        torch.save(sample, path)
-
-    # TODO: Are those needed ?
-    def format_sample_save_path(self, path: str) -> str:
-        path = os.path.join(path, f"sample_{self._saved_samples}.ptl")
-        self._saved_samples += 1
-        return path
-
-    def _save_data(self, data: Any) -> None:
-        self.save_data(data, self._save_path)
-
-    def _save_sample(self, sample: Any) -> None:
-        self.save_sample(sample, self.format_sample_save_path(self._save_path))
-
-
-class Serializer(Properties):
-    """A :class:`.Serializer` encapsulates a single ``serialize`` method which is used to convert the model output
-    into the desired output format when predicting."""
-
-    def __init__(self):
-        super().__init__()
-        self._is_enabled = True
-
-    def enable(self):
-        """Enable serialization."""
-        self._is_enabled = True
-
-    def disable(self):
-        """Disable serialization."""
-        self._is_enabled = False
-
-    @staticmethod
-    def serialize(sample: Any) -> Any:
-        """Serialize the given sample into the desired output format.
-
-        Args:
-            sample: The output from the :class:`.Postprocess`.
-
-        Returns:
-            The serialized output.
-        """
-        return sample
-
-    def __call__(self, sample: Any) -> Any:
-        if self._is_enabled:
-            return self.serialize(sample)
-        return sample
-
-
-class SerializerMapping(Serializer):
-    """If the model output is a dictionary, then the :class:`.SerializerMapping` enables each entry in the
-    dictionary to be passed to it's own :class:`.Serializer`."""
-
-    def __init__(self, serializers: Mapping[str, Serializer]):
-        super().__init__()
-
-        self._serializers = serializers
-
-    def serialize(self, sample: Any) -> Any:
-        if isinstance(sample, Mapping):
-            return {key: serializer.serialize(sample[key]) for key, serializer in self._serializers.items()}
-        raise ValueError("The model output must be a mapping when using a SerializerMapping.")
-
-    def attach_data_pipeline_state(self, data_pipeline_state: "flash.core.data.data_pipeline.DataPipelineState"):
-        for serializer in self._serializers.values():
-            serializer.attach_data_pipeline_state(data_pipeline_state)
-
-
 class Deserializer(Properties):
     """Deserializer."""
 
@@ -598,7 +544,7 @@ class Deserializer(Properties):
 
 
 class DeserializerMapping(Deserializer):
-    # TODO: This is essentially a duplicate of SerializerMapping, should be abstracted away somewhere
+    # TODO: This is essentially a duplicate of OutputMapping, should be abstracted away somewhere
     """Deserializer Mapping."""
 
     def __init__(self, deserializers: Mapping[str, Deserializer]):
@@ -614,3 +560,41 @@ class DeserializerMapping(Deserializer):
     def attach_data_pipeline_state(self, data_pipeline_state: "flash.core.data.data_pipeline.DataPipelineState"):
         for deserializer in self._deserializers.values():
             deserializer.attach_data_pipeline_state(data_pipeline_state)
+
+
+class Serializer(Output):
+    """Deprecated.
+
+    Use ``Output`` instead.
+    """
+
+    @deprecated(
+        None,
+        "0.6.0",
+        "0.7.0",
+        template_mgs="`Serializer` was deprecated in v%(deprecated_in)s in favor of `Output`. "
+        "It will be removed in v%(remove_in)s.",
+        stream=functools.partial(warn, category=FutureWarning),
+    )
+    def __init__(self):
+        super().__init__()
+        self._is_enabled = True
+
+    @staticmethod
+    @deprecated(
+        None,
+        "0.6.0",
+        "0.7.0",
+        template_mgs="`Serializer` was deprecated in v%(deprecated_in)s in favor of `Output`. "
+        "It will be removed in v%(remove_in)s.",
+        stream=functools.partial(warn, category=FutureWarning),
+    )
+    def serialize(sample: Any) -> Any:
+        """Deprecated.
+
+        Use ``Output.transform`` instead.
+        """
+        return sample
+
+    def transform(self, sample: Any) -> Any:
+        return self.serialize(sample)

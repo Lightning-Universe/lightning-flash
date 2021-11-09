@@ -70,6 +70,7 @@ _BOLTS_AVAILABLE = _module_available("pl_bolts") and _compare_version("torch", o
 _PANDAS_AVAILABLE = _module_available("pandas")
 _SKLEARN_AVAILABLE = _module_available("sklearn")
 _TABNET_AVAILABLE = _module_available("pytorch_tabnet")
+_FORECASTING_AVAILABLE = _module_available("pytorch_forecasting")
 _KORNIA_AVAILABLE = _module_available("kornia")
 _COCO_AVAILABLE = _module_available("pycocotools")
 _TIMM_AVAILABLE = _module_available("timm")
@@ -87,7 +88,7 @@ _UVICORN_AVAILABLE = _module_available("uvicorn")
 _PIL_AVAILABLE = _module_available("PIL")
 _OPEN3D_AVAILABLE = _module_available("open3d")
 _SEGMENTATION_MODELS_AVAILABLE = _module_available("segmentation_models_pytorch")
-_FASTFACE_AVAILABLE = _module_available("fastface")
+_FASTFACE_AVAILABLE = _module_available("fastface") and _compare_version("pytorch_lightning", operator.lt, "1.5.0")
 _LIBROSA_AVAILABLE = _module_available("librosa")
 _TORCH_SCATTER_AVAILABLE = _module_available("torch_scatter")
 _TORCH_SPARSE_AVAILABLE = _module_available("torch_sparse")
@@ -104,6 +105,8 @@ _TORCH_ORT_AVAILABLE = _module_available("torch_ort")
 _VISSL_AVAILABLE = _module_available("vissl") and _module_available("classy_vision")
 _ALBUMENTATIONS_AVAILABLE = _module_available("albumentations")
 _BAAL_AVAILABLE = _module_available("baal")
+_TORCH_OPTIMIZER_AVAILABLE = _module_available("torch_optimizer")
+
 
 if _PIL_AVAILABLE:
     from PIL import Image  # noqa: F401
@@ -116,6 +119,7 @@ else:
 if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
     _PL_GREATER_EQUAL_1_4_3 = _compare_version("pytorch_lightning", operator.ge, "1.4.3")
+    _PL_GREATER_EQUAL_1_5_0 = _compare_version("pytorch_lightning", operator.ge, "1.5.0")
 
 _TEXT_AVAILABLE = all(
     [
@@ -125,7 +129,7 @@ _TEXT_AVAILABLE = all(
         _DATASETS_AVAILABLE,
     ]
 )
-_TABULAR_AVAILABLE = _TABNET_AVAILABLE and _PANDAS_AVAILABLE
+_TABULAR_AVAILABLE = _TABNET_AVAILABLE and _PANDAS_AVAILABLE and _FORECASTING_AVAILABLE
 _VIDEO_AVAILABLE = _TORCHVISION_AVAILABLE and _PIL_AVAILABLE and _PYTORCHVIDEO_AVAILABLE and _KORNIA_AVAILABLE
 _IMAGE_AVAILABLE = all(
     [

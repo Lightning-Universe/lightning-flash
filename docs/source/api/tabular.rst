@@ -28,7 +28,23 @@ __________
     :nosignatures:
     :template: classtemplate.rst
 
+    ~regression.model.TabularRegressor
     ~regression.data.TabularRegressionData
+
+Forecasting
+___________
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: classtemplate.rst
+
+    ~forecasting.model.TabularForecaster
+    ~forecasting.data.TabularForecastingData
+
+    forecasting.data.TabularForecastingPreprocess
+    forecasting.data.TabularForecastingDataFrameDataSource
+    forecasting.data.TimeSeriesDataSetParametersState
 
 flash.tabular.data
 __________________
@@ -43,4 +59,4 @@ __________________
     ~data.TabularCSVDataSource
     ~data.TabularDeserializer
     ~data.TabularPreprocess
-    ~data.TabularPostprocess
+    ~data.TabularOutputTransform

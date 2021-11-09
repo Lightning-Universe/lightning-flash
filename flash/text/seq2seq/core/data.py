@@ -21,7 +21,8 @@ from torch import Tensor
 import flash
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_source import DataSource, DefaultDataSources
-from flash.core.data.process import Postprocess, Preprocess
+from flash.core.data.io.output_transform import OutputTransform
+from flash.core.data.process import Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 from flash.text.classification.data import TextDeserializer
@@ -319,7 +320,7 @@ class Seq2SeqPreprocess(Preprocess):
         return default_data_collator(samples)
 
 
-class Seq2SeqPostprocess(Postprocess):
+class Seq2SeqOutputTransform(OutputTransform):
     @requires("text")
     def __init__(self):
         super().__init__()
@@ -360,4 +361,4 @@ class Seq2SeqData(DataModule):
     """Data module for Seq2Seq tasks."""
 
     preprocess_cls = Seq2SeqPreprocess
-    postprocess_cls = Seq2SeqPostprocess
+    output_transform_cls = Seq2SeqOutputTransform

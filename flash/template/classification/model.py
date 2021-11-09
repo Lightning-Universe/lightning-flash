@@ -11,17 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 import torch
-import torchmetrics
 from torch import nn
-from torch.optim.lr_scheduler import _LRScheduler
 
 from flash.core.classification import ClassificationTask, Labels
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.process import Serializer
 from flash.core.registry import FlashRegistry
+from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 from flash.template.classification.backbones import TEMPLATE_BACKBONES
 
 
@@ -36,15 +34,13 @@ class TemplateSKLearnClassifier(ClassificationTask):
         backbone_kwargs: Any additional kwargs to pass to the backbone constructor.
         loss_fn: The loss function to use. If ``None``, a default will be selected by the
             :class:`~flash.core.classification.ClassificationTask` depending on the ``multi_label`` argument.
-        optimizer: The optimizer or optimizer class to use.
-        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
-        scheduler: The scheduler or scheduler class to use.
-        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
         metrics: Any metrics to use with this :class:`~flash.core.model.Task`. If ``None``, a default will be selected
             by the :class:`~flash.core.classification.ClassificationTask` depending on the ``multi_label`` argument.
         learning_rate: The learning rate for the optimizer.
         multi_label: If ``True``, this will be treated as a multi-label classification problem.
-        serializer: The :class:`~flash.core.data.process.Serializer` to use for prediction outputs.
+        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
     """
 
     backbones: FlashRegistry = TEMPLATE_BACKBONES
@@ -55,27 +51,23 @@ class TemplateSKLearnClassifier(ClassificationTask):
         num_classes: int,
         backbone: Union[str, Tuple[nn.Module, int]] = "mlp-128",
         backbone_kwargs: Optional[Dict] = None,
-        loss_fn: Optional[Callable] = None,
-        optimizer: Union[Type[torch.optim.Optimizer], torch.optim.Optimizer] = torch.optim.Adam,
-        optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
-        metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
+        loss_fn: LOSS_FN_TYPE = None,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
+        metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-2,
         multi_label: bool = False,
-        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
+        output: OUTPUT_TYPE = None,
     ):
         super().__init__(
             model=None,
             loss_fn=loss_fn,
             optimizer=optimizer,
-            optimizer_kwargs=optimizer_kwargs,
-            scheduler=scheduler,
-            scheduler_kwargs=scheduler_kwargs,
+            lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
             multi_label=multi_label,
-            serializer=serializer or Labels(),
+            output=output or Labels(),
         )
 
         self.save_hyperparameters()

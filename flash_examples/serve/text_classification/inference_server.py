@@ -13,5 +13,5 @@
 # limitations under the License.
 from flash.text import TextClassifier
 
-model = TextClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/text_classification_model.pt")
+model = TextClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/0.6.0/text_classification_model.pt")
 model.serve()

@@ -18,19 +18,22 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 import torch
-from pytorch_lightning import Trainer
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor, tensor
 from torch.utils.data import DataLoader
 from torch.utils.data._utils.collate import default_collate
 
+from flash import Trainer
 from flash.core.data.auto_dataset import IterableAutoDataset
-from flash.core.data.batch import _Postprocessor, _Preprocessor
+from flash.core.data.batch import _Preprocessor
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import _StageOrchestrator, DataPipeline, DataPipelineState
 from flash.core.data.data_source import DataSource
-from flash.core.data.process import DefaultPreprocess, Deserializer, Postprocess, Preprocess, Serializer
+from flash.core.data.io.output import Output
+from flash.core.data.io.output_transform import _OutputTransformProcessor, OutputTransform
+from flash.core.data.process import DefaultPreprocess, Deserializer, Preprocess
 from flash.core.data.properties import ProcessState
+from flash.core.data.states import PerBatchTransformOnDevice, ToTensorTransform
 from flash.core.model import Task
 from flash.core.utilities.imports import _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.core.utilities.stages import RunningStage
@@ -58,17 +61,8 @@ class TestDataPipelineState:
         state.set_state(ProcessState())
 
         assert str(state) == (
-            "DataPipelineState(initialized=False, "
-            "state={<class 'flash.core.data.properties.ProcessState'>: ProcessState()})"
+            "DataPipelineState(state={<class 'flash.core.data.properties.ProcessState'>: ProcessState()})"
         )
-
-    @staticmethod
-    def test_warning():
-        state = DataPipelineState()
-        state._initialized = True
-
-        with pytest.warns(UserWarning, match="data pipeline has already been initialized"):
-            state.set_state(ProcessState())
 
     @staticmethod
     def test_get_state():
@@ -80,23 +74,23 @@ def test_data_pipeline_str():
     data_pipeline = DataPipeline(
         data_source=cast(DataSource, "data_source"),
         preprocess=cast(Preprocess, "preprocess"),
-        postprocess=cast(Postprocess, "postprocess"),
-        serializer=cast(Serializer, "serializer"),
+        output_transform=cast(OutputTransform, "output_transform"),
+        output=cast(Output, "output"),
         deserializer=cast(Deserializer, "deserializer"),
     )
 
     expected = "data_source=data_source, deserializer=deserializer, "
-    expected += "preprocess=preprocess, postprocess=postprocess, serializer=serializer"
+    expected += "preprocess=preprocess, output_transform=output_transform, output=output"
     assert str(data_pipeline) == (f"DataPipeline({expected})")
 
 
 @pytest.mark.parametrize("use_preprocess", [False, True])
-@pytest.mark.parametrize("use_postprocess", [False, True])
-def test_data_pipeline_init_and_assignement(use_preprocess, use_postprocess, tmpdir):
+@pytest.mark.parametrize("use_output_transform", [False, True])
+def test_data_pipeline_init_and_assignement(use_preprocess, use_output_transform, tmpdir):
     class CustomModel(Task):
-        def __init__(self, postprocess: Optional[Postprocess] = None):
+        def __init__(self, output_transform: Optional[OutputTransform] = None):
             super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
-            self._postprocess = postprocess
+            self._output_transform = output_transform
 
         def train_dataloader(self) -> Any:
             return DataLoader(DummyDataset())
@@ -104,17 +98,17 @@ def test_data_pipeline_init_and_assignement(use_preprocess, use_postprocess, tmp
     class SubPreprocess(DefaultPreprocess):
         pass
 
-    class SubPostprocess(Postprocess):
+    class SubOutputTransform(OutputTransform):
         pass
 
     data_pipeline = DataPipeline(
         preprocess=SubPreprocess() if use_preprocess else None,
-        postprocess=SubPostprocess() if use_postprocess else None,
+        output_transform=SubOutputTransform() if use_output_transform else None,
     )
     assert isinstance(data_pipeline._preprocess_pipeline, SubPreprocess if use_preprocess else DefaultPreprocess)
-    assert isinstance(data_pipeline._postprocess_pipeline, SubPostprocess if use_postprocess else Postprocess)
+    assert isinstance(data_pipeline._output_transform, SubOutputTransform if use_output_transform else OutputTransform)
 
-    model = CustomModel(postprocess=Postprocess())
+    model = CustomModel(output_transform=OutputTransform())
     model.data_pipeline = data_pipeline
     # TODO: the line below should make the same effect but it's not
     # data_pipeline._attach_to_model(model)
@@ -124,10 +118,10 @@ def test_data_pipeline_init_and_assignement(use_preprocess, use_postprocess, tmp
     else:
         assert model._preprocess is None or isinstance(model._preprocess, Preprocess)
 
-    if use_postprocess:
-        assert isinstance(model._postprocess, SubPostprocess)
+    if use_output_transform:
+        assert isinstance(model._output_transform, SubOutputTransform)
     else:
-        assert model._postprocess is None or isinstance(model._postprocess, Postprocess)
+        assert model._output_transform is None or isinstance(model._output_transform, OutputTransform)
 
 
 def test_data_pipeline_is_overriden_and_resolve_function_hierarchy(tmpdir):
@@ -301,9 +295,9 @@ def test_data_pipeline_predict_worker_preprocessor_and_device_preprocessor():
 
 def test_detach_preprocessing_from_model(tmpdir):
     class CustomModel(Task):
-        def __init__(self, postprocess: Optional[Postprocess] = None):
+        def __init__(self, output_transform: Optional[OutputTransform] = None):
             super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
-            self._postprocess = postprocess
+            self._output_transform = output_transform
 
         def train_dataloader(self) -> Any:
             return DataLoader(DummyDataset())
@@ -362,7 +356,7 @@ def test_attaching_datapipeline_to_model(tmpdir):
     class CustomModel(Task):
         def __init__(self):
             super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
-            self._postprocess = Postprocess()
+            self._output_transform = OutputTransform()
 
         def training_step(self, batch: Any, batch_idx: int) -> Any:
             pass
@@ -468,7 +462,7 @@ def test_attaching_datapipeline_to_model(tmpdir):
             assert isinstance(self.predict_step, _StageOrchestrator)
             self._assert_stage_orchestrator_state(self.transfer_batch_to_device._stage_mapping, current_running_stage)
             self._assert_stage_orchestrator_state(
-                self.predict_step._stage_mapping, current_running_stage, cls=_Postprocessor
+                self.predict_step._stage_mapping, current_running_stage, cls=_OutputTransformProcessor
             )
 
         def on_fit_end(self) -> None:
@@ -501,16 +495,20 @@ def test_stage_orchestrator_state_attach_detach(tmpdir):
     _original_predict_step = model.predict_step
 
     class CustomDataPipeline(DataPipeline):
-        def _attach_postprocess_to_model(self, model: "Task", _postprocesssor: _Postprocessor) -> "Task":
-            model.predict_step = self._model_predict_step_wrapper(model.predict_step, _postprocesssor, model)
+        def _attach_output_transform_to_model(
+            self, model: "Task", _output_transform_processor: _OutputTransformProcessor
+        ) -> "Task":
+            model.predict_step = self._model_predict_step_wrapper(
+                model.predict_step, _output_transform_processor, model
+            )
             return model
 
     data_pipeline = CustomDataPipeline(preprocess=preprocess)
-    _postprocesssor = data_pipeline._create_uncollate_postprocessors(RunningStage.PREDICTING)
-    data_pipeline._attach_postprocess_to_model(model, _postprocesssor)
+    _output_transform_processor = data_pipeline._create_output_transform_processor(RunningStage.PREDICTING)
+    data_pipeline._attach_output_transform_to_model(model, _output_transform_processor)
     assert model.predict_step._original == _original_predict_step
-    assert model.predict_step._stage_mapping[RunningStage.PREDICTING] == _postprocesssor
-    data_pipeline._detach_postprocess_from_model(model)
+    assert model.predict_step._stage_mapping[RunningStage.PREDICTING] == _output_transform_processor
+    data_pipeline._detach_output_transform_from_model(model)
     assert model.predict_step == _original_predict_step
 
 
@@ -731,6 +729,84 @@ def test_datapipeline_transformations(tmpdir):
     assert preprocess.test_to_tensor_transform_called
     assert preprocess.test_post_tensor_transform_called
     assert data_source.predict_load_data_called
+
+
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+def test_datapipeline_transformations_overridden_by_task():
+    # define preprocess transforms
+    class ImageDataSource(DataSource):
+        def load_data(self, folder: str):
+            # from folder -> return files paths
+            return ["a.jpg", "b.jpg"]
+
+        def load_sample(self, path: str) -> Image.Image:
+            # from a file path, load the associated image
+            return np.random.uniform(0, 1, (64, 64, 3))
+
+    class ImageClassificationPreprocess(DefaultPreprocess):
+        def __init__(
+            self,
+            train_transform=None,
+            val_transform=None,
+            test_transform=None,
+            predict_transform=None,
+        ):
+            super().__init__(
+                train_transform=train_transform,
+                val_transform=val_transform,
+                test_transform=test_transform,
+                predict_transform=predict_transform,
+                data_sources={"default": ImageDataSource()},
+            )
+
+        def default_transforms(self):
+            return {
+                "to_tensor_transform": T.Compose([T.ToTensor()]),
+                "per_batch_transform_on_device": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+            }
+
+    # define task which overrides transforms using set_state
+    class CustomModel(Task):
+        def __init__(self):
+            super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
+
+            # override default transform to resize images
+            self.set_state(ToTensorTransform(T.Compose([T.ToTensor(), T.Resize(128)])))
+
+            # remove normalization, => image still in [0, 1] range
+            self.set_state(PerBatchTransformOnDevice(None))
+
+        def training_step(self, batch, batch_idx):
+            assert batch.shape == torch.Size([2, 3, 128, 128])
+            assert torch.max(batch) <= 1.0
+            assert torch.min(batch) >= 0.0
+
+        def validation_step(self, batch, batch_idx):
+            assert batch.shape == torch.Size([2, 3, 128, 128])
+            assert torch.max(batch) <= 1.0
+            assert torch.min(batch) >= 0.0
+
+    class CustomDataModule(DataModule):
+
+        preprocess_cls = ImageClassificationPreprocess
+
+    datamodule = CustomDataModule.from_data_source(
+        "default",
+        "train_folder",
+        "val_folder",
+        None,
+        batch_size=2,
+    )
+
+    # call trainer
+    model = CustomModel()
+    trainer = Trainer(
+        max_epochs=1,
+        limit_train_batches=2,
+        limit_val_batches=1,
+        num_sanity_val_steps=1,
+    )
+    trainer.fit(model, datamodule=datamodule)
 
 
 def test_is_overriden_recursive(tmpdir):

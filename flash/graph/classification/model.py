@@ -12,18 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from types import FunctionType
-from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, List, Optional, Type, Union
 
 import torch
-from torch import nn
+from torch import nn, Tensor
 from torch.nn import functional as F
 from torch.nn import Linear
-from torch.optim.lr_scheduler import _LRScheduler
 
 from flash.core.classification import ClassificationTask
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.registry import FlashRegistry
 from flash.graph.backbones import GRAPH_BACKBONES
+from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 
 
 class GraphClassifier(ClassificationTask):
@@ -38,14 +38,10 @@ class GraphClassifier(ClassificationTask):
             hidden_channels or depth (number of layers).
         head: The head to use.
         loss_fn: Loss function for training, defaults to cross entropy.
-        optimizer: Optimizer to use for training, defaults to `torch.optim.Adam`.
-        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
-        scheduler: The scheduler or scheduler class to use.
-        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
-        metrics: Metrics to compute for training and evaluation.
         learning_rate: Learning rate to use for training, defaults to `1e-3`
-        model: GraphNN used, defaults to BaseGraphModel.
-        conv_cls: kind of convolution used in model, defaults to GCNConv
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
+        metrics: Metrics to compute for training and evaluation.
     """
 
     backbones: FlashRegistry = GRAPH_BACKBONES
@@ -59,13 +55,11 @@ class GraphClassifier(ClassificationTask):
         backbone: Union[str, Tuple[nn.Module, int]] = "GCN",
         backbone_kwargs: Optional[Dict] = {},
         head: Optional[Union[FunctionType, nn.Module]] = None,
-        loss_fn: Callable = F.cross_entropy,
-        optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-        optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
-        metrics: Union[Callable, Mapping, Sequence, None] = None,
+        loss_fn: LOSS_FN_TYPE = F.cross_entropy,
         learning_rate: float = 1e-3,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
+        metrics: METRICS_TYPE = None,
     ):
 
         self.save_hyperparameters()
@@ -73,9 +67,7 @@ class GraphClassifier(ClassificationTask):
         super().__init__(
             loss_fn=loss_fn,
             optimizer=optimizer,
-            optimizer_kwargs=optimizer_kwargs,
-            scheduler=scheduler,
-            scheduler_kwargs=scheduler_kwargs,
+            lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
         )

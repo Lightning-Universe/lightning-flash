@@ -16,7 +16,7 @@ from flash.core.serve.types.base import BaseType
 
 @dataclass(unsafe_hash=True)
 class Image(BaseType):
-    """Image serializer.
+    """Image output.
 
     Notes
     -----

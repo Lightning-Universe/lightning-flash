@@ -11,20 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, List, Mapping, Optional, Type, Union
+from typing import Any, Dict, List, Optional
 
-import torch
 from pytorch_lightning.utilities import rank_zero_info
-from torch.optim import Optimizer
-from torch.optim.lr_scheduler import _LRScheduler
 
 from flash.core.adapter import AdapterTask
 from flash.core.data.data_pipeline import DataPipeline
-from flash.core.data.process import Serializer
-from flash.core.data.serialization import Preds
+from flash.core.data.output import Preds
 from flash.core.registry import FlashRegistry
+from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 from flash.image.instance_segmentation.backbones import INSTANCE_SEGMENTATION_HEADS
-from flash.image.instance_segmentation.data import InstanceSegmentationPostProcess, InstanceSegmentationPreprocess
+from flash.image.instance_segmentation.data import InstanceSegmentationOutputTransform, InstanceSegmentationPreprocess
 
 
 class InstanceSegmentation(AdapterTask):
@@ -32,26 +29,15 @@ class InstanceSegmentation(AdapterTask):
     :ref:`object_detection`.
 
     Args:
-        num_classes: the number of classes for detection, including background
-        model: a string of :attr`_models`. Defaults to 'fasterrcnn'.
-        backbone: Pretained backbone CNN architecture. Constructs a model with a
-            ResNet-50-FPN backbone when no backbone is specified.
-        fpn: If True, creates a Feature Pyramind Network on top of Resnet based CNNs.
-        pretrained: if true, returns a model pre-trained on COCO train2017
-        pretrained_backbone: if true, returns a model with backbone pre-trained on Imagenet
-        trainable_backbone_layers: number of trainable resnet layers starting from final block.
-            Only applicable for `fasterrcnn`.
-        loss: the function(s) to update the model with. Has no effect for torchvision detection models.
-        metrics: The provided metrics. All metrics here will be logged to progress bar and the respective logger.
-            Changing this argument currently has no effect.
-        optimizer: The optimizer to use for training. Can either be the actual class or the class name.
-        optimizer_kwargs: Additional kwargs to use when creating the optimizer (if not passed as an instance).
-        scheduler: The scheduler or scheduler class to use.
-        scheduler_kwargs: Additional kwargs to use when creating the scheduler (if not passed as an instance).
-        pretrained: Whether the model from torchvision should be loaded with it's pretrained weights.
-            Has no effect for custom models.
-        learning_rate: The learning rate to use for training
-
+        num_classes: The number of object classes.
+        backbone: String indicating the backbone CNN architecture to use.
+        head: String indicating the head module to use on top of the backbone.
+        pretrained: Whether the model should be loaded with it's pretrained weights.
+        optimizer: Optimizer to use for training.
+        lr_scheduler: The LR scheduler to use during training.
+        learning_rate: The learning rate to use for training.
+        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
+        **kwargs: additional kwargs used for initializing the task
     """
 
     heads: FlashRegistry = INSTANCE_SEGMENTATION_HEADS
@@ -64,12 +50,10 @@ class InstanceSegmentation(AdapterTask):
         backbone: Optional[str] = "resnet18_fpn",
         head: Optional[str] = "mask_rcnn",
         pretrained: bool = True,
-        optimizer: Type[Optimizer] = torch.optim.Adam,
-        optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
         learning_rate: float = 5e-4,
-        serializer: Optional[Union[Serializer, Mapping[str, Serializer]]] = None,
+        output: OUTPUT_TYPE = None,
         **kwargs: Any,
     ):
         self.save_hyperparameters()
@@ -88,10 +72,8 @@ class InstanceSegmentation(AdapterTask):
             adapter,
             learning_rate=learning_rate,
             optimizer=optimizer,
-            optimizer_kwargs=optimizer_kwargs,
-            scheduler=scheduler,
-            scheduler_kwargs=scheduler_kwargs,
-            serializer=serializer or Preds(),
+            lr_scheduler=lr_scheduler,
+            output=output or Preds(),
         )
 
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]) -> None:
@@ -108,5 +90,5 @@ class InstanceSegmentation(AdapterTask):
                 "If you'd like to change this, extend the InstanceSegmentation Task and override `on_load_checkpoint`."
             )
             self.data_pipeline = DataPipeline(
-                preprocess=InstanceSegmentationPreprocess(), postprocess=InstanceSegmentationPostProcess()
+                preprocess=InstanceSegmentationPreprocess(), output_transform=InstanceSegmentationOutputTransform()
             )

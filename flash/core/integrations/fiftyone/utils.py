@@ -21,7 +21,7 @@ def visualize(
     wait: Optional[bool] = False,
     **kwargs
 ) -> Optional[Session]:
-    """Visualizes predictions from a model with a FiftyOne Serializer in the
+    """Visualizes predictions from a model with a FiftyOne Output in the
     :ref:`FiftyOne App <fiftyone:fiftyone-app>`.
 
     This method can be used in all of the following environments:

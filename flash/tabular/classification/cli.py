@@ -14,7 +14,8 @@
 
 from flash.core.data.utils import download_data
 from flash.core.utilities.flash_cli import FlashCLI
-from flash.tabular import TabularClassificationData, TabularClassifier
+from flash.tabular.classification.data import TabularClassificationData
+from flash.tabular.classification.model import TabularClassifier
 
 __all__ = ["tabular_classification"]
 
