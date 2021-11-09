@@ -283,7 +283,7 @@ class TextClassificationInputTransform(InputTransform):
                     backbone=self.backbone, max_length=max_length
                 ),
             },
-            default_=InputFormat.LISTS,
+            default_input=InputFormat.LISTS,
             deserializer=TextDeserializer(backbone, max_length),
         )
 

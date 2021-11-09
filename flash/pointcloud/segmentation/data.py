@@ -75,7 +75,7 @@ class PointCloudSegmentationInputTransform(InputTransform):
                 InputFormat.FOLDERS: PointCloudSegmentationFoldersInput(),
             },
             deserializer=deserializer,
-            default_=InputFormat.FOLDERS,
+            default_input=InputFormat.FOLDERS,
         )
 
     def get_state_dict(self):

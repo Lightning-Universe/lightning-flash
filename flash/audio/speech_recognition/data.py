@@ -167,7 +167,7 @@ class SpeechRecognitionInputTransform(InputTransform):
                 InputFormat.FILES: SpeechRecognitionPathsInput(sampling_rate),
                 InputFormat.DATASETS: SpeechRecognitionDatasetInput(sampling_rate),
             },
-            default_=InputFormat.FILES,
+            default_input=InputFormat.FILES,
             deserializer=SpeechRecognitionDeserializer(sampling_rate),
         )
 

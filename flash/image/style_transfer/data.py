@@ -77,7 +77,7 @@ class StyleTransferInputTransform(InputTransform):
                 InputFormat.TENSORS: ImageTensorInput(),
                 InputFormat.TENSORS: ImageTensorInput(),
             },
-            default_=InputFormat.FILES,
+            default_input=InputFormat.FILES,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:

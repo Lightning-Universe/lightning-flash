@@ -200,7 +200,7 @@ class TabularInputTransform(InputTransform):
                     cat_cols, num_cols, target_col, mean, std, codes, target_codes, classes, is_regression
                 ),
             },
-            default_=InputFormat.CSV,
+            default_input=InputFormat.CSV,
             deserializer=deserializer
             or TabularDeserializer(
                 cat_cols=cat_cols,

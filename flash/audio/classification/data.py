@@ -92,7 +92,7 @@ class AudioClassificationInputTransform(InputTransform):
                 InputFormat.TENSORS: AudioClassificationTensorInput(),
             },
             deserializer=deserializer or ImageDeserializer(),
-            default_=InputFormat.FILES,
+            default_input=InputFormat.FILES,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:

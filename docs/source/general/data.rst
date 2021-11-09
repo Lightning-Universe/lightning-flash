@@ -256,7 +256,7 @@ Next, implement your custom ``ImageClassificationInputTransform`` with some defa
                 inputs={
                     InputFormat.FOLDERS: ImageClassificationFoldersInput(),
                 },
-                default_=InputFormat.FOLDERS,
+                default_input=InputFormat.FOLDERS,
             )
 
         def get_state_dict(self) -> Dict[str, Any]:

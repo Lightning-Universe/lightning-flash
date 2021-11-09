@@ -296,7 +296,7 @@ class Seq2SeqInputTransform(InputTransform):
                     **backbone_kwargs,
                 ),
             },
-            default_="sentences",
+            default_input="sentences",
             deserializer=TextDeserializer(backbone, max_source_length),
         )
 

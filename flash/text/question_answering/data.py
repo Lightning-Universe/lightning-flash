@@ -560,7 +560,7 @@ class QuestionAnsweringInputTransform(InputTransform):
                     doc_stride=doc_stride,
                 ),
             },
-            default_="dict",
+            default_input="dict",
         )
 
         self.set_state(QuestionAnsweringBackboneState(self.backbone))

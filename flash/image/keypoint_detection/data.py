@@ -49,7 +49,7 @@ class KeypointDetectionInputTransform(InputTransform):
                 InputFormat.FILES: IceVisionPathsInput(),
                 InputFormat.FOLDERS: IceVisionParserInput(parser=parser),
             },
-            default_=InputFormat.FILES,
+            default_input=InputFormat.FILES,
         )
 
         self._default_collate = self._identity

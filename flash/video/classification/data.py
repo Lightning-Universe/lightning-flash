@@ -331,7 +331,7 @@ class VideoClassificationInputTransform(InputTransform):
                     **_kwargs,
                 ),
             },
-            default_=InputFormat.FILES,
+            default_input=InputFormat.FILES,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:

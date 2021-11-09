@@ -57,7 +57,7 @@ class PointCloudObjectDetectorInputTransform(InputTransform):
                 InputFormat.FOLDERS: PointCloudObjectDetectorFoldersInput(**_kwargs),
             },
             deserializer=deserializer,
-            default_=InputFormat.FOLDERS,
+            default_input=InputFormat.FOLDERS,
         )
 
     def get_state_dict(self):

@@ -159,7 +159,7 @@ class ObjectDetectionInputTransform(InputTransform):
                 InputFormat.FOLDERS: IceVisionParserInput(parser=parser),
                 InputFormat.FIFTYONE: ObjectDetectionFiftyOneInput(**_kwargs),
             },
-            default_=InputFormat.FILES,
+            default_input=InputFormat.FILES,
         )
 
         self._default_collate = self._identity
