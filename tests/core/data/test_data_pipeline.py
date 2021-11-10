@@ -27,7 +27,7 @@ from flash import Trainer
 from flash.core.data.auto_dataset import IterableAutoDataset
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import _StageOrchestrator, DataPipeline, DataPipelineState
-from flash.core.data.data_source import DataSource
+from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import _InputTransformProcessor, DefaultInputTransform, InputTransform
 from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import _OutputTransformProcessor, OutputTransform
@@ -72,14 +72,14 @@ class TestDataPipelineState:
 
 def test_data_pipeline_str():
     data_pipeline = DataPipeline(
-        data_source=cast(DataSource, "data_source"),
+        input=cast(Input, "input"),
         input_transform=cast(InputTransform, "input_transform"),
         output_transform=cast(OutputTransform, "output_transform"),
         output=cast(Output, "output"),
         deserializer=cast(Deserializer, "deserializer"),
     )
 
-    expected = "data_source=data_source, deserializer=deserializer, "
+    expected = "input=input, deserializer=deserializer, "
     expected += "input_transform=input_transform, output_transform=output_transform, output=output"
     assert str(data_pipeline) == (f"DataPipeline({expected})")
 
@@ -533,7 +533,7 @@ class LamdaDummyDataset(torch.utils.data.Dataset):
         return 5
 
 
-class TestInputTransformationsDataSource(DataSource):
+class TestInputTransformationsInput(Input):
     def __init__(self):
         super().__init__()
 
@@ -593,7 +593,7 @@ class TestInputTransformationsDataSource(DataSource):
 
 class TestInputTransformations(DefaultInputTransform):
     def __init__(self):
-        super().__init__(data_sources={"default": TestInputTransformationsDataSource()})
+        super().__init__(inputs={"default": TestInputTransformationsInput()})
 
         self.train_pre_tensor_transform_called = False
         self.train_collate_called = False
@@ -691,7 +691,7 @@ class CustomModel(Task):
 
 def test_datapipeline_transformations(tmpdir):
 
-    datamodule = DataModule.from_data_source(
+    datamodule = DataModule.from_input(
         "default", 1, 1, 1, 1, batch_size=2, num_workers=0, input_transform=TestInputTransformations()
     )
 
@@ -704,7 +704,7 @@ def test_datapipeline_transformations(tmpdir):
     with pytest.raises(MisconfigurationException, match="When ``to_tensor_transform``"):
         batch = next(iter(datamodule.val_dataloader()))
 
-    datamodule = DataModule.from_data_source(
+    datamodule = DataModule.from_input(
         "default", 1, 1, 1, 1, batch_size=2, num_workers=0, input_transform=TestInputTransformations2()
     )
     batch = next(iter(datamodule.val_dataloader()))
@@ -725,26 +725,26 @@ def test_datapipeline_transformations(tmpdir):
     trainer.predict(model)
 
     input_transform = model._input_transform
-    data_source = input_transform.data_source_of_name("default")
-    assert data_source.train_load_data_called
+    input = input_transform.input_of_name("default")
+    assert input.train_load_data_called
     assert input_transform.train_pre_tensor_transform_called
     assert input_transform.train_collate_called
     assert input_transform.train_per_batch_transform_on_device_called
-    assert data_source.val_load_data_called
-    assert data_source.val_load_sample_called
+    assert input.val_load_data_called
+    assert input.val_load_sample_called
     assert input_transform.val_to_tensor_transform_called
     assert input_transform.val_collate_called
     assert input_transform.val_per_batch_transform_on_device_called
-    assert data_source.test_load_data_called
+    assert input.test_load_data_called
     assert input_transform.test_to_tensor_transform_called
     assert input_transform.test_post_tensor_transform_called
-    assert data_source.predict_load_data_called
+    assert input.predict_load_data_called
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_datapipeline_transformations_overridden_by_task():
     # define input transforms
-    class ImageDataSource(DataSource):
+    class ImageInput(Input):
         def load_data(self, folder: str):
             # from folder -> return files paths
             return ["a.jpg", "b.jpg"]
@@ -766,7 +766,7 @@ def test_datapipeline_transformations_overridden_by_task():
                 val_transform=val_transform,
                 test_transform=test_transform,
                 predict_transform=predict_transform,
-                data_sources={"default": ImageDataSource()},
+                inputs={"default": ImageInput()},
             )
 
         def default_transforms(self):
@@ -800,7 +800,7 @@ def test_datapipeline_transformations_overridden_by_task():
 
         input_transform_cls = ImageClassificationInputTransform
 
-    datamodule = CustomDataModule.from_data_source(
+    datamodule = CustomDataModule.from_input(
         "default",
         "train_folder",
         "val_folder",
@@ -841,7 +841,7 @@ def test_is_overriden_recursive(tmpdir):
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 @patch("torch.save")  # need to mock torch.save or we get pickle error
 def test_dummy_example(tmpdir):
-    class ImageDataSource(DataSource):
+    class ImageInput(Input):
         def load_data(self, folder: str):
             # from folder -> return files paths
             return ["a.jpg", "b.jpg"]
@@ -866,7 +866,7 @@ def test_dummy_example(tmpdir):
                 val_transform=val_transform,
                 test_transform=test_transform,
                 predict_transform=predict_transform,
-                data_sources={"default": ImageDataSource()},
+                inputs={"default": ImageInput()},
             )
             self._to_tensor = to_tensor_transform
             self._train_per_sample_transform_on_device = train_per_sample_transform_on_device
@@ -896,7 +896,7 @@ def test_dummy_example(tmpdir):
 
         input_transform_cls = ImageClassificationInputTransform
 
-    datamodule = CustomDataModule.from_data_source(
+    datamodule = CustomDataModule.from_input(
         "default",
         "train_folder",
         "val_folder",
@@ -1008,11 +1008,11 @@ def test_input_transform_transforms(tmpdir):
 
 
 def test_iterable_auto_dataset(tmpdir):
-    class CustomDataSource(DataSource):
+    class CustomInput(Input):
         def load_sample(self, index: int) -> Dict[str, int]:
             return {"index": index}
 
-    ds = IterableAutoDataset(range(10), data_source=CustomDataSource(), running_stage=RunningStage.TRAINING)
+    ds = IterableAutoDataset(range(10), input=CustomInput(), running_stage=RunningStage.TRAINING)
 
     for index, v in enumerate(ds):
         assert v == {"index": index}

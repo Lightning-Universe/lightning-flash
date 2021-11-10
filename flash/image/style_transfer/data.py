@@ -18,12 +18,12 @@ from typing import Any, Callable, Dict, Optional, Sequence, Union
 from torch import nn
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources
+from flash.core.data.io.input import DataKeys, InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 from flash.image.classification import ImageClassificationData
-from flash.image.data import ImageNumpyDataSource, ImagePathsDataSource, ImageTensorDataSource
+from flash.image.data import ImageNumpyInput, ImagePathsInput, ImageTensorInput
 from flash.image.style_transfer.utils import raise_not_supported
 
 if _TORCHVISION_AVAILABLE:
@@ -33,7 +33,7 @@ __all__ = ["StyleTransferInputTransform", "StyleTransferData"]
 
 
 def _apply_to_input(
-    default_transforms_fn, keys: Union[Sequence[DefaultDataKeys], DefaultDataKeys]
+    default_transforms_fn, keys: Union[Sequence[DataKeys], DataKeys]
 ) -> Callable[..., Dict[str, ApplyToKeys]]:
     @functools.wraps(default_transforms_fn)
     def wrapper(*args: Any, **kwargs: Any) -> Optional[Dict[str, ApplyToKeys]]:
@@ -49,10 +49,10 @@ def _apply_to_input(
 class StyleTransferInputTransform(InputTransform):
     def __init__(
         self,
-        train_transform: Optional[Union[Dict[str, Callable]]] = None,
-        val_transform: Optional[Union[Dict[str, Callable]]] = None,
-        test_transform: Optional[Union[Dict[str, Callable]]] = None,
-        predict_transform: Optional[Union[Dict[str, Callable]]] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
         image_size: int = 256,
     ):
         if val_transform:
@@ -70,14 +70,14 @@ class StyleTransferInputTransform(InputTransform):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
-                DefaultDataSources.FILES: ImagePathsDataSource(),
-                DefaultDataSources.FOLDERS: ImagePathsDataSource(),
-                DefaultDataSources.NUMPY: ImageNumpyDataSource(),
-                DefaultDataSources.TENSORS: ImageTensorDataSource(),
-                DefaultDataSources.TENSORS: ImageTensorDataSource(),
+            inputs={
+                InputFormat.FILES: ImagePathsInput(),
+                InputFormat.FOLDERS: ImagePathsInput(),
+                InputFormat.NUMPY: ImageNumpyInput(),
+                InputFormat.TENSORS: ImageTensorInput(),
+                InputFormat.TENSORS: ImageTensorInput(),
             },
-            default_data_source=DefaultDataSources.FILES,
+            default_input=InputFormat.FILES,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
@@ -87,7 +87,7 @@ class StyleTransferInputTransform(InputTransform):
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
         return cls(**state_dict)
 
-    @functools.partial(_apply_to_input, keys=DefaultDataKeys.INPUT)
+    @functools.partial(_apply_to_input, keys=DataKeys.INPUT)
     def default_transforms(self) -> Optional[Dict[str, Callable]]:
         if self.training:
             return dict(
@@ -131,8 +131,8 @@ class StyleTransferData(ImageClassificationData):
             predict_transform=predict_transform,
         )
 
-        return cls.from_data_source(
-            DefaultDataSources.FOLDERS,
+        return cls.from_input(
+            InputFormat.FOLDERS,
             train_data=train_folder,
             predict_data=predict_folder,
             input_transform=input_transform,

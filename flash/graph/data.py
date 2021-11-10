@@ -15,7 +15,7 @@ from typing import Any, Mapping, Optional
 
 from torch.utils.data import Dataset
 
-from flash.core.data.data_source import DatasetDataSource
+from flash.core.data.io.input import DatasetInput
 from flash.core.utilities.imports import _GRAPH_AVAILABLE, requires
 
 if _GRAPH_AVAILABLE:
@@ -23,7 +23,7 @@ if _GRAPH_AVAILABLE:
     from torch_geometric.data import Dataset as TorchGeometricDataset
 
 
-class GraphDatasetDataSource(DatasetDataSource):
+class GraphDatasetInput(DatasetInput):
     @requires("graph")
     def load_data(self, data: Dataset, dataset: Any = None) -> Dataset:
         data = super().load_data(data, dataset=dataset)

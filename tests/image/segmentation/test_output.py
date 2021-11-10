@@ -14,7 +14,7 @@
 import pytest
 import torch
 
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE
 from flash.image.segmentation.output import FiftyOneSegmentationLabels, SegmentationLabels
 from tests.helpers.utils import _IMAGE_TESTING
@@ -51,7 +51,7 @@ class TestSemanticSegmentationLabels:
         sample[1, 1, 2] = 1  # add peak in class 2
         sample[3, 0, 1] = 1  # add peak in class 4
 
-        classes = serial.transform({DefaultDataKeys.PREDS: sample})
+        classes = serial.serialize({DataKeys.PREDS: sample})
         assert torch.tensor(classes)[1, 2] == 1
         assert torch.tensor(classes)[0, 1] == 3
 
@@ -67,8 +67,8 @@ class TestSemanticSegmentationLabels:
         preds[3, 0, 1] = 1  # add peak in class 4
 
         sample = {
-            DefaultDataKeys.PREDS: preds,
-            DefaultDataKeys.METADATA: {"filepath": "something"},
+            DataKeys.PREDS: preds,
+            DataKeys.METADATA: {"filepath": "something"},
         }
 
         segmentation = serial.transform(sample)

@@ -26,9 +26,9 @@ Here are common terms you need to be familiar with:
    * - :class:`~flash.core.data.data_module.DataModule`
      - The :class:`~flash.core.data.data_module.DataModule` contains the datasets, transforms and dataloaders.
    * - :class:`~flash.core.data.data_pipeline.DataPipeline`
-     - The :class:`~flash.core.data.data_pipeline.DataPipeline` is Flash internal object to manage :class:`~flash.core.data.Deserializer`, :class:`~flash.core.data.data_source.DataSource`, :class:`~flash.core.data.io.input_transform.InputTransform`, :class:`~flash.core.data.io.output_transform.OutputTransform`, and :class:`~flash.core.data.io.output.Output` objects.
-   * - :class:`~flash.core.data.data_source.DataSource`
-     - The :class:`~flash.core.data.data_source.DataSource` provides :meth:`~flash.core.data.data_source.DataSource.load_data` and :meth:`~flash.core.data.data_source.DataSource.load_sample` hooks for creating data sets from metadata (such as folder names).
+     - The :class:`~flash.core.data.data_pipeline.DataPipeline` is Flash internal object to manage :class:`~flash.core.data.Deserializer`, :class:`~flash.core.data.io.input.Input`, :class:`~flash.core.data.io.input_transform.InputTransform`, :class:`~flash.core.data.io.output_transform.OutputTransform`, and :class:`~flash.core.data.io.output.Output` objects.
+   * - :class:`~flash.core.data.io.input.Input`
+     - The :class:`~flash.core.data.io.input.Input` provides :meth:`~flash.core.data.io.input.Input.load_data` and :meth:`~flash.core.data.io.input.Input.load_sample` hooks for creating data sets from metadata (such as folder names).
    * - :class:`~flash.core.data.io.input_transform.InputTransform`
      - The :class:`~flash.core.data.io.input_transform.InputTransform` provides a simple hook-based API to encapsulate your pre-processing logic.
         These hooks (such as :meth:`~flash.core.data.io.input_transform.InputTransform.pre_tensor_transform`) enable transformations to be applied to your data at every point along the pipeline (including on the device).
@@ -57,7 +57,7 @@ and provide it to a :class:`torch.utils.data.DataLoader`.
 However, after model training, it requires a lot of engineering overhead to make inference on raw data and deploy the model in production environment.
 Usually, extra processing logic should be added to bridge the gap between training data and raw data.
 
-The :class:`~flash.core.data.data_source.DataSource` class can be used to generate data sets from multiple sources (e.g. folders, numpy, etc.), that can then all be transformed in the same way.
+The :class:`~flash.core.data.io.input.Input` class can be used to generate data sets from multiple sources (e.g. folders, numpy, etc.), that can then all be transformed in the same way.
 
 The :class:`~flash.core.data.io.input_transform.InputTransform` and :class:`~flash.core.data.io.output_transform.OutputTransform` classes can be used to manage the input and output transforms.
 The :class:`~flash.core.data.io.output.Output` class provides the logic for converting :class:`~flash.core.data.io.output_transform.OutputTransform` outputs to the desired predict format (e.g. classes, labels, probabilities, etc.).
@@ -94,8 +94,8 @@ Any Flash :class:`~flash.core.data.data_module.DataModule` can be created direct
 
 
 The :class:`~flash.core.data.data_module.DataModule` provides additional ``classmethod`` helpers (``from_*``) for loading data from various sources.
-In each ``from_*`` method, the :class:`~flash.core.data.data_module.DataModule` internally retrieves the correct :class:`~flash.core.data.data_source.DataSource` to use from the :class:`~flash.core.data.io.input_transform.InputTransform`.
-Flash :class:`~flash.core.data.auto_dataset.AutoDataset` instances are created from the :class:`~flash.core.data.data_source.DataSource` for train, val, test, and predict.
+In each ``from_*`` method, the :class:`~flash.core.data.data_module.DataModule` internally retrieves the correct :class:`~flash.core.data.io.input.Input` to use from the :class:`~flash.core.data.io.input_transform.InputTransform`.
+Flash :class:`~flash.core.data.auto_dataset.AutoDataset` instances are created from the :class:`~flash.core.data.io.input.Input` for train, val, test, and predict.
 The :class:`~flash.core.data.data_module.DataModule` populates the ``DataLoader`` for each stage with the corresponding :class:`~flash.core.data.auto_dataset.AutoDataset`.
 
 **************************************
@@ -149,7 +149,7 @@ Alternatively, the user may directly override the hooks for their needs like thi
 Create your own InputTransform and DataModule
 *********************************************
 
-The example below shows a very simple ``ImageClassificationInputTransform`` with a single ``ImageClassificationFoldersDataSource`` and an ``ImageClassificationDataModule``.
+The example below shows a very simple ``ImageClassificationInputTransform`` with a single ``ImageClassificationFoldersInput`` and an ``ImageClassificationDataModule``.
 
 1. User-Facing API design
 _________________________
@@ -180,23 +180,23 @@ Example::
 
     trainer.fit(model, dm)
 
-2. The DataSource
+2. The Input
 _________________
 
-We start by implementing the ``ImageClassificationFoldersDataSource``.
+We start by implementing the ``ImageClassificationFoldersInput``.
 The ``load_data`` method will produce a list of files and targets from the given directory.
 The ``load_sample`` method will load the given file as a ``PIL.Image``.
-Here's the full ``ImageClassificationFoldersDataSource``:
+Here's the full ``ImageClassificationFoldersInput``:
 
 .. code-block:: python
 
     from PIL import Image
     from torchvision.datasets.folder import make_dataset
     from typing import Any, Dict
-    from flash.core.data.data_source import DataSource, DefaultDataKeys
+    from flash.core.data.io.input import Input, DataKeys
 
 
-    class ImageClassificationFoldersDataSource(DataSource):
+    class ImageClassificationFoldersInput(Input):
         def load_data(self, folder: str, dataset: Any) -> Iterable:
             # The dataset is optional but can be useful to save some metadata.
 
@@ -211,21 +211,21 @@ Here's the full ``ImageClassificationFoldersDataSource``:
 
             return [
                 {
-                    DefaultDataKeys.INPUT: file,
-                    DefaultDataKeys.TARGET: target,
+                    DataKeys.INPUT: file,
+                    DataKeys.TARGET: target,
                 }
                 for file, target in metadata
             ]
 
         def predict_load_data(self, predict_folder: str) -> Iterable:
             # This returns [image_path_1, ... image_path_m].
-            return [{DefaultDataKeys.INPUT: file} for file in os.listdir(folder)]
+            return [{DataKeys.INPUT: file} for file in os.listdir(folder)]
 
         def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-            sample[DefaultDataKeys.INPUT] = Image.open(sample[DefaultDataKeys.INPUT])
+            sample[DataKeys.INPUT] = Image.open(sample[DataKeys.INPUT])
             return sample
 
-.. note:: We return samples as dictionaries using the :class:`~flash.core.data.data_source.DefaultDataKeys` by convention. This is the recommended (although not required) way to represent data in Flash.
+.. note:: We return samples as dictionaries using the :class:`~flash.core.data.io.input.DataKeys` by convention. This is the recommended (although not required) way to represent data in Flash.
 
 3. The InputTransform
 _____________________
@@ -235,7 +235,7 @@ Next, implement your custom ``ImageClassificationInputTransform`` with some defa
 .. code-block:: python
 
     from typing import Any, Callable, Dict, Optional
-    from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources
+    from flash.core.data.io.input import DataKeys, InputFormat
     from flash.core.data.io.input_transform import InputTransform
     import torchvision.transforms.functional as T
 
@@ -253,10 +253,10 @@ Next, implement your custom ``ImageClassificationInputTransform`` with some defa
                 val_transform=val_transform,
                 test_transform=test_transform,
                 predict_transform=predict_transform,
-                data_sources={
-                    DefaultDataSources.FOLDERS: ImageClassificationFoldersDataSource(),
+                inputs={
+                    InputFormat.FOLDERS: ImageClassificationFoldersInput(),
                 },
-                default_data_source=DefaultDataSources.FOLDERS,
+                default_input=InputFormat.FOLDERS,
             )
 
         def get_state_dict(self) -> Dict[str, Any]:
@@ -267,13 +267,13 @@ Next, implement your custom ``ImageClassificationInputTransform`` with some defa
             return cls(**state_dict)
 
         def default_transforms(self) -> Dict[str, Callable]:
-            return {"to_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, T.to_tensor)}
+            return {"to_tensor_transform": ApplyToKeys(DataKeys.INPUT, T.to_tensor)}
 
 4. The DataModule
 _________________
 
 Finally, let's implement the ``ImageClassificationDataModule``.
-We get the ``from_folders`` classmethod for free as we've registered a ``DefaultDataSources.FOLDERS`` data source in our ``ImageClassificationInputTransform``.
+We get the ``from_folders`` classmethod for free as we've registered a ``InputFormat.FOLDERS`` data source in our ``ImageClassificationInputTransform``.
 All we need to do is attach our :class:`~flash.core.data.io.input_transform.InputTransform` class like this:
 
 .. code-block:: python
@@ -291,12 +291,12 @@ All we need to do is attach our :class:`~flash.core.data.io.input_transform.Inpu
 How it works behind the scenes
 ******************************
 
-DataSource
-__________
+Input
+_____
 
 .. note::
-    The :meth:`~flash.core.data.data_source.DataSource.load_data` and
-    :meth:`~flash.core.data.data_source.DataSource.load_sample` will be used to generate an
+    The :meth:`~flash.core.data.io.input.Input.load_data` and
+    :meth:`~flash.core.data.io.input.Input.load_sample` will be used to generate an
     :class:`~flash.core.data.auto_dataset.AutoDataset` object.
 
 Here is the :class:`~flash.core.data.auto_dataset.AutoDataset` pseudo-code.
@@ -306,16 +306,16 @@ Here is the :class:`~flash.core.data.auto_dataset.AutoDataset` pseudo-code.
     class AutoDataset:
         def __init__(
             self,
-            data: List[Any],  # output of `DataSource.load_data`
-            data_source: DataSource,
+            data: List[Any],  # output of `Input.load_data`
+            input: Input,
             running_stage: RunningStage,
         ):
 
             self.data = data
-            self.data_source = data_source
+            self.input = input
 
         def __getitem__(self, index: int):
-            return self.data_source.load_sample(self.data[index])
+            return self.input.load_sample(self.data[index])
 
         def __len__(self):
             return len(self.data)

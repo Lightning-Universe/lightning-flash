@@ -23,13 +23,7 @@ from torch.utils.data import Dataset
 
 import flash
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import (
-    DatasetDataSource,
-    DataSource,
-    DefaultDataKeys,
-    DefaultDataSources,
-    PathsDataSource,
-)
+from flash.core.data.io.input import DataKeys, DatasetInput, Input, InputFormat, PathsInput
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.process import Deserializer
@@ -57,8 +51,8 @@ class SpeechRecognitionDeserializer(Deserializer):
         buffer = io.BytesIO(audio)
         data, sampling_rate = librosa.load(buffer, sr=self.sampling_rate)
         return {
-            DefaultDataKeys.INPUT: data,
-            DefaultDataKeys.METADATA: {"sampling_rate": sampling_rate},
+            DataKeys.INPUT: data,
+            DataKeys.METADATA: {"sampling_rate": sampling_rate},
         }
 
     @property
@@ -70,20 +64,16 @@ class SpeechRecognitionDeserializer(Deserializer):
 class BaseSpeechRecognition:
     @staticmethod
     def _load_sample(sample: Dict[str, Any], sampling_rate: int) -> Any:
-        path = sample[DefaultDataKeys.INPUT]
-        if (
-            not os.path.isabs(path)
-            and DefaultDataKeys.METADATA in sample
-            and "root" in sample[DefaultDataKeys.METADATA]
-        ):
-            path = os.path.join(sample[DefaultDataKeys.METADATA]["root"], path)
+        path = sample[DataKeys.INPUT]
+        if not os.path.isabs(path) and DataKeys.METADATA in sample and "root" in sample[DataKeys.METADATA]:
+            path = os.path.join(sample[DataKeys.METADATA]["root"], path)
         speech_array, sampling_rate = librosa.load(path, sr=sampling_rate)
-        sample[DefaultDataKeys.INPUT] = speech_array
-        sample[DefaultDataKeys.METADATA] = {"sampling_rate": sampling_rate}
+        sample[DataKeys.INPUT] = speech_array
+        sample[DataKeys.METADATA] = {"sampling_rate": sampling_rate}
         return sample
 
 
-class SpeechRecognitionFileDataSource(DataSource, BaseSpeechRecognition):
+class SpeechRecognitionFileInput(Input, BaseSpeechRecognition):
     def __init__(self, sampling_rate: int, filetype: Optional[str] = None):
         super().__init__()
         self.filetype = filetype
@@ -108,9 +98,9 @@ class SpeechRecognitionFileDataSource(DataSource, BaseSpeechRecognition):
         meta = {"root": os.path.dirname(file)}
         return [
             {
-                DefaultDataKeys.INPUT: input_file,
-                DefaultDataKeys.TARGET: target,
-                DefaultDataKeys.METADATA: meta,
+                DataKeys.INPUT: input_file,
+                DataKeys.TARGET: target,
+                DataKeys.METADATA: meta,
             }
             for input_file, target in zip(dataset[input_key], dataset[target_key])
         ]
@@ -119,17 +109,17 @@ class SpeechRecognitionFileDataSource(DataSource, BaseSpeechRecognition):
         return self._load_sample(sample, self.sampling_rate)
 
 
-class SpeechRecognitionCSVDataSource(SpeechRecognitionFileDataSource):
+class SpeechRecognitionCSVInput(SpeechRecognitionFileInput):
     def __init__(self, sampling_rate: int):
         super().__init__(sampling_rate, filetype="csv")
 
 
-class SpeechRecognitionJSONDataSource(SpeechRecognitionFileDataSource):
+class SpeechRecognitionJSONInput(SpeechRecognitionFileInput):
     def __init__(self, sampling_rate: int):
         super().__init__(sampling_rate, filetype="json")
 
 
-class SpeechRecognitionDatasetDataSource(DatasetDataSource, BaseSpeechRecognition):
+class SpeechRecognitionDatasetInput(DatasetInput, BaseSpeechRecognition):
     def __init__(self, sampling_rate: int):
         super().__init__()
 
@@ -141,12 +131,12 @@ class SpeechRecognitionDatasetDataSource(DatasetDataSource, BaseSpeechRecognitio
         return super().load_data(data, dataset)
 
     def load_sample(self, sample: Dict[str, Any], dataset: Any = None) -> Any:
-        if isinstance(sample[DefaultDataKeys.INPUT], (str, Path)):
+        if isinstance(sample[DataKeys.INPUT], (str, Path)):
             sample = self._load_sample(sample, self.sampling_rate)
         return sample
 
 
-class SpeechRecognitionPathsDataSource(PathsDataSource, BaseSpeechRecognition):
+class SpeechRecognitionPathsInput(PathsInput, BaseSpeechRecognition):
     def __init__(self, sampling_rate: int):
         super().__init__(("wav", "ogg", "flac", "mat", "mp3"))
 
@@ -171,13 +161,13 @@ class SpeechRecognitionInputTransform(InputTransform):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
-                DefaultDataSources.CSV: SpeechRecognitionCSVDataSource(sampling_rate),
-                DefaultDataSources.JSON: SpeechRecognitionJSONDataSource(sampling_rate),
-                DefaultDataSources.FILES: SpeechRecognitionPathsDataSource(sampling_rate),
-                DefaultDataSources.DATASETS: SpeechRecognitionDatasetDataSource(sampling_rate),
+            inputs={
+                InputFormat.CSV: SpeechRecognitionCSVInput(sampling_rate),
+                InputFormat.JSON: SpeechRecognitionJSONInput(sampling_rate),
+                InputFormat.FILES: SpeechRecognitionPathsInput(sampling_rate),
+                InputFormat.DATASETS: SpeechRecognitionDatasetInput(sampling_rate),
             },
-            default_data_source=DefaultDataSources.FILES,
+            default_input=InputFormat.FILES,
             deserializer=SpeechRecognitionDeserializer(sampling_rate),
         )
 

@@ -17,7 +17,7 @@ import torch
 from torch import Tensor
 
 from flash.core.data.batch import default_uncollate
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.data.properties import Properties
 from flash.core.data.utils import convert_to_modules
 
@@ -80,8 +80,8 @@ class _OutputTransformProcessor(torch.nn.Module):
     @staticmethod
     def _extract_metadata(batch: Any) -> Tuple[Any, Optional[Any]]:
         metadata = None
-        if isinstance(batch, Mapping) and DefaultDataKeys.METADATA in batch:
-            metadata = batch.pop(DefaultDataKeys.METADATA, None)
+        if isinstance(batch, Mapping) and DataKeys.METADATA in batch:
+            metadata = batch.pop(DataKeys.METADATA, None)
         return batch, metadata
 
     def forward(self, batch: Sequence[Any]):
@@ -89,7 +89,7 @@ class _OutputTransformProcessor(torch.nn.Module):
         uncollated = self.uncollate_fn(self.per_batch_transform(batch))
         if metadata:
             for sample, sample_metadata in zip(uncollated, metadata):
-                sample[DefaultDataKeys.METADATA] = sample_metadata
+                sample[DataKeys.METADATA] = sample_metadata
 
         final_preds = [self.per_sample_transform(sample) for sample in uncollated]
 

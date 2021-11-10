@@ -13,7 +13,7 @@
 # limitations under the License.
 import torch
 
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 
 
 def vissl_collate_helper(samples):
@@ -22,7 +22,7 @@ def vissl_collate_helper(samples):
     for batch_ele in samples:
         _batch_ele_dict = {}
         _batch_ele_dict.update(batch_ele)
-        _batch_ele_dict[DefaultDataKeys.INPUT] = -1
+        _batch_ele_dict[DataKeys.INPUT] = -1
 
         result.append(_batch_ele_dict)
 
@@ -32,13 +32,13 @@ def vissl_collate_helper(samples):
 def multicrop_collate_fn(samples):
     """Multi-crop collate function for VISSL integration.
 
-    Run custom collate on a single key since VISSL transforms affect only DefaultDataKeys.INPUT
+    Run custom collate on a single key since VISSL transforms affect only DataKeys.INPUT
     """
     result = vissl_collate_helper(samples)
 
-    inputs = [[] for _ in range(len(samples[0][DefaultDataKeys.INPUT]))]
+    inputs = [[] for _ in range(len(samples[0][DataKeys.INPUT]))]
     for batch_ele in samples:
-        multi_crop_imgs = batch_ele[DefaultDataKeys.INPUT]
+        multi_crop_imgs = batch_ele[DataKeys.INPUT]
 
         for idx, crop in enumerate(multi_crop_imgs):
             inputs[idx].append(crop)
@@ -46,7 +46,7 @@ def multicrop_collate_fn(samples):
     for idx, ele in enumerate(inputs):
         inputs[idx] = torch.stack(ele)
 
-    result[DefaultDataKeys.INPUT] = inputs
+    result[DataKeys.INPUT] = inputs
 
     return result
 
@@ -54,21 +54,21 @@ def multicrop_collate_fn(samples):
 def simclr_collate_fn(samples):
     """Multi-crop collate function for VISSL integration.
 
-    Run custom collate on a single key since VISSL transforms affect only DefaultDataKeys.INPUT
+    Run custom collate on a single key since VISSL transforms affect only DataKeys.INPUT
     """
     result = vissl_collate_helper(samples)
 
     inputs = []
-    num_views = len(samples[0][DefaultDataKeys.INPUT])
+    num_views = len(samples[0][DataKeys.INPUT])
     view_idx = 0
     while view_idx < num_views:
         for batch_ele in samples:
-            imgs = batch_ele[DefaultDataKeys.INPUT]
+            imgs = batch_ele[DataKeys.INPUT]
             inputs.append(imgs[view_idx])
 
         view_idx += 1
 
-    result[DefaultDataKeys.INPUT] = torch.stack(inputs)
+    result[DataKeys.INPUT] = torch.stack(inputs)
 
     return result
 
@@ -76,15 +76,15 @@ def simclr_collate_fn(samples):
 def moco_collate_fn(samples):
     """MOCO collate function for VISSL integration.
 
-    Run custom collate on a single key since VISSL transforms affect only DefaultDataKeys.INPUT
+    Run custom collate on a single key since VISSL transforms affect only DataKeys.INPUT
     """
     result = vissl_collate_helper(samples)
 
     inputs = []
     for batch_ele in samples:
-        inputs.append(torch.stack(batch_ele[DefaultDataKeys.INPUT]))
+        inputs.append(torch.stack(batch_ele[DataKeys.INPUT]))
 
-    result[DefaultDataKeys.INPUT] = torch.stack(inputs).squeeze()[:, 0, :, :, :].squeeze()
+    result[DataKeys.INPUT] = torch.stack(inputs).squeeze()[:, 0, :, :, :].squeeze()
     result["data_momentum"] = torch.stack(inputs).squeeze()[:, 1, :, :, :].squeeze()
 
     return result

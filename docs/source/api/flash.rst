@@ -7,7 +7,7 @@ flash
     :nosignatures:
     :template: classtemplate.rst
 
-    ~flash.core.data.data_source.DataSource
+    ~flash.core.data.io.input.Input
     ~flash.core.data.data_module.DataModule
     ~flash.core.data.callback.FlashCallback
     ~flash.core.data.io.output_transform.OutputTransform

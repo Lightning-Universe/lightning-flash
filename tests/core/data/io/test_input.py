@@ -11,14 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, List, Union
-
-from flash.core.data.io.input import DataKeys
-from flash.core.data.io.output import Output
+from flash.core.data.io.input import DataKeys, DatasetInput
 
 
-class Preds(Output):
-    """A :class:`~flash.core.data.io.output.Output` which returns the "preds" from the model outputs."""
+def test_dataset_input():
+    dataset_input = DatasetInput()
 
-    def transform(self, sample: Any) -> Union[int, List[int]]:
-        return sample.get(DataKeys.PREDS, sample) if isinstance(sample, dict) else sample
+    input, target = "test", 3
+
+    assert dataset_input.load_sample((input, target)) == {DataKeys.INPUT: input, DataKeys.TARGET: target}
+    assert dataset_input.load_sample(input) == {DataKeys.INPUT: input}

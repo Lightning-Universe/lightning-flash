@@ -23,7 +23,7 @@ class App:
     def show_tasks(self, predictions, export_json=None):
         """Converts predictions to tasks format."""
         results = self.show_predictions(predictions)
-        ds = self.datamodule.data_source
+        ds = self.datamodule.input
         data_type = list(ds.data_types)[0]
         meta = {"ids": [], "data": [], "meta": [], "max_predictions_id": 0, "project": None}
         if export_json:
@@ -69,7 +69,7 @@ class App:
 
     def construct_result(self, pred):
         """Construction Label Studio result from data source and prediction values."""
-        ds = self.datamodule.data_source
+        ds = self.datamodule.input
         # get label
         if isinstance(pred, list):
             label = [list(ds.classes)[p] for p in pred]

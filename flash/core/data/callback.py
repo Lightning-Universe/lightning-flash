@@ -89,14 +89,14 @@ class BaseDataFetcher(FlashCallback):
 
         from flash.core.data.callback import BaseDataFetcher
         from flash.core.data.data_module import DataModule
-        from flash.core.data.data_source import DataSource
+        from flash.core.data.io.input import Input
         from flash.core.data.io.input_transform import InputTransform
 
         class CustomInputTransform(InputTransform):
 
             def __init__(**kwargs):
                 super().__init__(
-                    data_sources = {"inputs": DataSource()},
+                    inputs = {"inputs": Input()},
                     **kwargs,
                 )
 
@@ -121,7 +121,7 @@ class BaseDataFetcher(FlashCallback):
                 test_data: Any,
                 predict_data: Any,
             ) -> "CustomDataModule":
-                return cls.from_data_source(
+                return cls.from_input(
                     "inputs",
                     train_data=train_data,
                     val_data=val_data,

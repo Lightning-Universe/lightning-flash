@@ -16,7 +16,7 @@ from typing import Callable, Dict, Tuple
 import torch
 import torch.nn as nn
 
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _KORNIA_AVAILABLE, _TORCHVISION_AVAILABLE
 
 if _KORNIA_AVAILABLE:
@@ -39,11 +39,11 @@ def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
     return {
         "post_tensor_transform": nn.Sequential(
             ApplyToKeys(
-                [DefaultDataKeys.INPUT, DefaultDataKeys.TARGET],
+                [DataKeys.INPUT, DataKeys.TARGET],
                 KorniaParallelTransforms(K.geometry.Resize(image_size, interpolation="nearest")),
             ),
         ),
-        "collate": Compose([kornia_collate, ApplyToKeys(DefaultDataKeys.TARGET, prepare_target)]),
+        "collate": Compose([kornia_collate, ApplyToKeys(DataKeys.TARGET, prepare_target)]),
     }
 
 
@@ -55,7 +55,7 @@ def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]
         {
             "post_tensor_transform": nn.Sequential(
                 ApplyToKeys(
-                    [DefaultDataKeys.INPUT, DefaultDataKeys.TARGET],
+                    [DataKeys.INPUT, DataKeys.TARGET],
                     KorniaParallelTransforms(K.augmentation.RandomHorizontalFlip(p=0.5)),
                 ),
             ),
@@ -64,11 +64,11 @@ def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]
 
 
 def predict_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
-    """During predict, we apply the default transforms only on DefaultDataKeys.INPUT."""
+    """During predict, we apply the default transforms only on DataKeys.INPUT."""
     return {
         "post_tensor_transform": nn.Sequential(
             ApplyToKeys(
-                DefaultDataKeys.INPUT,
+                DataKeys.INPUT,
                 K.geometry.Resize(image_size, interpolation="nearest"),
             ),
         ),

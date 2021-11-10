@@ -45,7 +45,7 @@ def test_base_data_fetcher(tmpdir):
 
             input_transform = DefaultInputTransform()
 
-            return cls.from_data_source(
+            return cls.from_input(
                 "default",
                 train_data=train_data,
                 val_data=val_data,
