@@ -30,15 +30,13 @@ class DefaultDataKeys(LightningEnum, metaclass=OnAccessEnumMeta):
     METADATA = "metadata"
 
     def __new__(cls, value):
-        member = object.__new__(cls)
-        member._value_ = value
+        member = str.__new__(cls, value)
         member._on_access = member.deprecate
         return member
 
     def deprecate(self):
         warnings.warn(
-            "The `DefaultDataKeys` enum is deprecated since 0.6.0 and will be removed in 0.7.0. Use `flash.DataKeys` "
-            "instead.",
+            "`DefaultDataKeys` was deprecated in 0.6.0 and will be removed in 0.7.0. Use `flash.DataKeys` instead.",
             FutureWarning,
         )
 

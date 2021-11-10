@@ -14,8 +14,11 @@
 import torch
 
 import flash
+from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.utils import download_data
 from flash.image import ImageClassificationData, ImageClassifier
+
+print(DefaultDataKeys.INPUT)
 
 # 1. Create the DataModule
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./data")
