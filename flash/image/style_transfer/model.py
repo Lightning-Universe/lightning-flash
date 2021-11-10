@@ -16,7 +16,7 @@ from typing import Any, cast, List, NoReturn, Optional, Sequence, Tuple, Union
 import torch
 from torch import nn
 
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _IMAGE_AVAILABLE
@@ -153,7 +153,7 @@ class StyleTransfer(Task):
         return loss.PerceptualLoss(content_loss, style_loss)
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
-        input_image = batch[DefaultDataKeys.INPUT]
+        input_image = batch[DataKeys.INPUT]
         self.perceptual_loss.set_content_image(input_image)
         output_image = self(input_image)
         return self.perceptual_loss(output_image).total()
@@ -165,5 +165,5 @@ class StyleTransfer(Task):
         raise_not_supported("test")
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        input_image = batch[DefaultDataKeys.INPUT]
+        input_image = batch[DataKeys.INPUT]
         return self(input_image)

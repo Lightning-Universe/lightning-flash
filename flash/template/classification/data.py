@@ -20,7 +20,7 @@ from torch import nn
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources, LabelsState, NumpyDataSource
+from flash.core.data.io.input import DataKeys, InputFormat, LabelsState, NumpyInput
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _SKLEARN_AVAILABLE
@@ -32,11 +32,11 @@ else:
     Bunch = object
 
 
-class TemplateNumpyDataSource(NumpyDataSource):
+class TemplateNumpyInput(NumpyInput):
     """An example data source that records ``num_features`` on the dataset.
 
     We extend
-    :class:`~flash.core.data.data_source.NumpyDataSource` so that we can use ``super().load_data``.
+    :class:`~flash.core.data.io.input.NumpyInput` so that we can use ``super().load_data``.
     """
 
     def load_data(self, data: Tuple[np.ndarray, Sequence[Any]], dataset: Any) -> Sequence[Mapping[str, Any]]:
@@ -53,7 +53,7 @@ class TemplateNumpyDataSource(NumpyDataSource):
         return super().load_data(data, dataset)
 
 
-class TemplateSKLearnDataSource(TemplateNumpyDataSource):
+class TemplateSKLearnInput(TemplateNumpyInput):
     """An example data source that loads data from an sklearn data ``Bunch``."""
 
     def load_data(self, data: Bunch, dataset: Any) -> Sequence[Mapping[str, Any]]:
@@ -104,11 +104,11 @@ class TemplateInputTransform(InputTransform):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
-                DefaultDataSources.NUMPY: TemplateNumpyDataSource(),
-                "sklearn": TemplateSKLearnDataSource(),
+            inputs={
+                InputFormat.NUMPY: TemplateNumpyInput(),
+                "sklearn": TemplateSKLearnInput(),
             },
-            default_data_source=DefaultDataSources.NUMPY,
+            default_input=InputFormat.NUMPY,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
@@ -140,8 +140,8 @@ class TemplateInputTransform(InputTransform):
         """
         return {
             "to_tensor_transform": nn.Sequential(
-                ApplyToKeys(DefaultDataKeys.INPUT, self.input_to_tensor),
-                ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor),
+                ApplyToKeys(DataKeys.INPUT, self.input_to_tensor),
+                ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
             ),
         }
 
@@ -154,9 +154,9 @@ class TemplateData(DataModule):
     """Creating our :class:`~flash.core.data.data_module.DataModule` is as easy as setting the
     ``input_transform_cls`` attribute.
 
-    We get the ``from_numpy`` method for free as we've configured a ``DefaultDataSources.NUMPY`` data source. We'll also
-    add a ``from_sklearn`` method so that we can use our ``TemplateSKLearnDataSource. Finally, we define the
-    ``num_features`` property for convenience.
+    We get the ``from_numpy`` method for free as we've configured a ``InputFormat.NUMPY`` data source. We'll also add a
+    ``from_sklearn`` method so that we can use our ``TemplateSKLearnInput. Finally, we define the ``num_features``
+    property for convenience.
     """
 
     input_transform_cls = TemplateInputTransform
@@ -180,7 +180,7 @@ class TemplateData(DataModule):
         **input_transform_kwargs: Any,
     ):
         """This is our custom ``from_*`` method. It expects scikit-learn ``Bunch`` objects as input and passes them
-        through to the :meth:`~flash.core.data.data_module.DataModule.from_data_source` method underneath.
+        through to the :meth:`~flash.core.data.data_module.DataModule.from_` method underneath.
 
         Args:
             train_bunch: The scikit-learn ``Bunch`` containing the train data.
@@ -209,7 +209,7 @@ class TemplateData(DataModule):
         Returns:
             The constructed data module.
         """
-        return super().from_data_source(
+        return super().from_input(
             "sklearn",
             train_bunch,
             val_bunch,

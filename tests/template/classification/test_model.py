@@ -19,7 +19,7 @@ import torch
 
 from flash import Trainer
 from flash.core.data.data_pipeline import DataPipeline
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _SKLEARN_AVAILABLE
 from flash.template import TemplateSKLearnClassifier
 from flash.template.classification.data import TemplateInputTransform
@@ -38,8 +38,8 @@ class DummyDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         return {
-            DefaultDataKeys.INPUT: torch.randn(self.num_features),
-            DefaultDataKeys.TARGET: torch.randint(self.num_classes - 1, (1,))[0],
+            DataKeys.INPUT: torch.randn(self.num_features),
+            DataKeys.TARGET: torch.randint(self.num_classes - 1, (1,))[0],
         }
 
     def __len__(self) -> int:
@@ -116,7 +116,7 @@ def test_predict_sklearn():
     bunch = datasets.load_iris()
     model = TemplateSKLearnClassifier(num_features=DummyDataset.num_features, num_classes=DummyDataset.num_classes)
     data_pipe = DataPipeline(input_transform=TemplateInputTransform())
-    out = model.predict(bunch, data_source="sklearn", data_pipeline=data_pipe)
+    out = model.predict(bunch, input="sklearn", data_pipeline=data_pipe)
     assert isinstance(out[0], int)
 
 

@@ -29,7 +29,7 @@ from torch.utils.data.sampler import Sampler
 import flash
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
+from flash.core.data.io.input import DataKeys, Input, InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.properties import ProcessState
@@ -42,7 +42,7 @@ if _TEXT_AVAILABLE:
     from transformers import AutoTokenizer, DataCollatorWithPadding, default_data_collator
 
 
-class QuestionAnsweringDataSource(DataSource):
+class QuestionAnsweringInput(Input):
     @requires("text")
     def __init__(
         self,
@@ -106,14 +106,14 @@ class QuestionAnsweringDataSource(DataSource):
             contexts = tokenized_samples.pop("context")
             answers = tokenized_samples.pop("answer")
 
-            tokenized_samples[DefaultDataKeys.METADATA] = []
+            tokenized_samples[DataKeys.METADATA] = []
             for offset_mapping, example_id, context in zip(offset_mappings, example_ids, contexts):
-                tokenized_samples[DefaultDataKeys.METADATA].append(
+                tokenized_samples[DataKeys.METADATA].append(
                     {"context": context, "offset_mapping": offset_mapping, "example_id": example_id}
                 )
             if self._running_stage.evaluating:
                 for index, answer in enumerate(answers):
-                    tokenized_samples[DefaultDataKeys.METADATA][index]["answer"] = answer
+                    tokenized_samples[DataKeys.METADATA][index]["answer"] = answer
 
             del offset_mappings
             del example_ids
@@ -238,7 +238,7 @@ class QuestionAnsweringDataSource(DataSource):
         return self._doc_stride
 
 
-class QuestionAnsweringFileDataSource(QuestionAnsweringDataSource):
+class QuestionAnsweringFileInput(QuestionAnsweringInput):
     def __init__(
         self,
         filetype: str,
@@ -344,7 +344,7 @@ class QuestionAnsweringFileDataSource(QuestionAnsweringDataSource):
         self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
-class QuestionAnsweringCSVDataSource(QuestionAnsweringFileDataSource):
+class QuestionAnsweringCSVInput(QuestionAnsweringFileInput):
     def __init__(
         self,
         backbone: str,
@@ -378,7 +378,7 @@ class QuestionAnsweringCSVDataSource(QuestionAnsweringFileDataSource):
         self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
-class QuestionAnsweringJSONDataSource(QuestionAnsweringFileDataSource):
+class QuestionAnsweringJSONInput(QuestionAnsweringFileInput):
     def __init__(
         self,
         backbone: str,
@@ -412,7 +412,7 @@ class QuestionAnsweringJSONDataSource(QuestionAnsweringFileDataSource):
         self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
-class QuestionAnsweringDictionaryDataSource(QuestionAnsweringDataSource):
+class QuestionAnsweringDictionaryInput(QuestionAnsweringInput):
     def load_data(self, data: Any, columns: List[str] = None) -> "datasets.Dataset":
         stage = self._running_stage.value
 
@@ -434,7 +434,7 @@ class QuestionAnsweringDictionaryDataSource(QuestionAnsweringDataSource):
         self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
-class SQuADDataSource(QuestionAnsweringDataSource):
+class SQuADInput(QuestionAnsweringInput):
     def load_data(self, data: str, dataset: Optional[Any] = None) -> "datasets.Dataset":
         stage = self._running_stage.value
 
@@ -521,8 +521,8 @@ class QuestionAnsweringInputTransform(InputTransform):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
-                DefaultDataSources.CSV: QuestionAnsweringCSVDataSource(
+            inputs={
+                InputFormat.CSV: QuestionAnsweringCSVInput(
                     self.backbone,
                     max_source_length=max_source_length,
                     max_target_length=max_target_length,
@@ -532,7 +532,7 @@ class QuestionAnsweringInputTransform(InputTransform):
                     answer_column_name=answer_column_name,
                     doc_stride=doc_stride,
                 ),
-                DefaultDataSources.JSON: QuestionAnsweringJSONDataSource(
+                InputFormat.JSON: QuestionAnsweringJSONInput(
                     self.backbone,
                     max_source_length=max_source_length,
                     max_target_length=max_target_length,
@@ -542,7 +542,7 @@ class QuestionAnsweringInputTransform(InputTransform):
                     answer_column_name=answer_column_name,
                     doc_stride=doc_stride,
                 ),
-                "dict": QuestionAnsweringDictionaryDataSource(
+                "dict": QuestionAnsweringDictionaryInput(
                     self.backbone,
                     max_source_length=max_source_length,
                     max_target_length=max_target_length,
@@ -552,7 +552,7 @@ class QuestionAnsweringInputTransform(InputTransform):
                     answer_column_name=answer_column_name,
                     doc_stride=doc_stride,
                 ),
-                "squad_v2": SQuADDataSource(
+                "squad_v2": SQuADInput(
                     self.backbone,
                     max_source_length=max_source_length,
                     max_target_length=max_target_length,
@@ -560,7 +560,7 @@ class QuestionAnsweringInputTransform(InputTransform):
                     doc_stride=doc_stride,
                 ),
             },
-            default_data_source="dict",
+            default_input="dict",
         )
 
         self.set_state(QuestionAnsweringBackboneState(self.backbone))
@@ -691,7 +691,7 @@ class QuestionAnsweringData(DataModule):
                 doc_stride=128,
             )
         """
-        return cls.from_data_source(
+        return cls.from_input(
             "squad_v2",
             train_file,
             val_file,
@@ -728,8 +728,8 @@ class QuestionAnsweringData(DataModule):
         **input_transform_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.text.question_answering.QuestionAnsweringData` object from the given JSON files
-        using the :class:`~flash.text.question_answering.QuestionAnsweringDataSource`of name
-        :attr:`~flash.core.data.data_source.DefaultDataSources.JSON` from the passed or constructed
+        using the :class:`~flash.text.question_answering.QuestionAnsweringInput`of name
+        :attr:`~flash.core.data.io.input.InputFormat.JSON` from the passed or constructed
         :class:`~flash.text.question_answering.QuestionAnsweringInputTransform`.
 
         Args:
@@ -789,8 +789,8 @@ class QuestionAnsweringData(DataModule):
                 doc_stride=128
             )
         """
-        return cls.from_data_source(
-            DefaultDataSources.JSON,
+        return cls.from_input(
+            InputFormat.JSON,
             (train_file, field),
             (val_file, field),
             (test_file, field),
@@ -828,8 +828,8 @@ class QuestionAnsweringData(DataModule):
         **input_transform_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given CSV files using the
-        :class:`~flash.core.data.data_source.DataSource`
-        of name :attr:`~flash.core.data.data_source.DefaultDataSources.CSV`
+        :class:`~flash.core.data.io.input.Input`
+        of name :attr:`~flash.core.data.io.input.InputFormat.CSV`
         from the passed or constructed :class:`~flash.core.data.io.input_transform.InputTransform`.
 
         Args:
@@ -892,8 +892,8 @@ class QuestionAnsweringData(DataModule):
                 doc_stride=128
             )
         """
-        return cls.from_data_source(
-            DefaultDataSources.CSV,
+        return cls.from_input(
+            InputFormat.CSV,
             train_file,
             val_file,
             test_file,

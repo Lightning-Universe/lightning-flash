@@ -21,7 +21,7 @@ from torch import Tensor
 from torch.utils.data._utils.collate import default_collate
 
 from flash.core.data.callback import ControlFlow, FlashCallback
-from flash.core.data.data_source import DatasetDataSource, DataSource, DefaultDataKeys, DefaultDataSources
+from flash.core.data.io.input import DataKeys, DatasetInput, Input, InputFormat
 from flash.core.data.process import Deserializer
 from flash.core.data.properties import ProcessState, Properties
 from flash.core.data.states import (
@@ -196,9 +196,9 @@ class InputTransform(BaseInputTransform, Properties):
         val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         predict_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
-        data_sources: Optional[Dict[str, "DataSource"]] = None,
+        inputs: Optional[Dict[str, "Input"]] = None,
         deserializer: Optional["Deserializer"] = None,
-        default_data_source: Optional[str] = None,
+        default_input: Optional[str] = None,
     ):
         super().__init__()
 
@@ -225,12 +225,12 @@ class InputTransform(BaseInputTransform, Properties):
         self._test_transform = convert_to_modules(self.test_transform)
         self._predict_transform = convert_to_modules(self.predict_transform)
 
-        if DefaultDataSources.DATASETS not in data_sources:
-            data_sources[DefaultDataSources.DATASETS] = DatasetDataSource()
+        if InputFormat.DATASETS not in inputs:
+            inputs[InputFormat.DATASETS] = DatasetInput()
 
-        self._data_sources = data_sources
+        self._inputs = inputs
         self._deserializer = deserializer
-        self._default_data_source = default_data_source
+        self._default_input = default_input
         self._callbacks: List[FlashCallback] = []
         self._default_collate: Callable = default_collate
 
@@ -268,9 +268,9 @@ class InputTransform(BaseInputTransform, Properties):
             return transform
 
         if isinstance(transform, list):
-            transform = {"pre_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, torch.nn.Sequential(*transform))}
+            transform = {"pre_tensor_transform": ApplyToKeys(DataKeys.INPUT, torch.nn.Sequential(*transform))}
         elif callable(transform):
-            transform = {"pre_tensor_transform": ApplyToKeys(DefaultDataKeys.INPUT, transform)}
+            transform = {"pre_tensor_transform": ApplyToKeys(DataKeys.INPUT, transform)}
 
         if not isinstance(transform, Dict):
             raise MisconfigurationException(
@@ -444,7 +444,7 @@ class InputTransform(BaseInputTransform, Properties):
             # return collate_fn.collate_fn(samples)
 
         parameters = inspect.signature(collate_fn).parameters
-        if len(parameters) > 1 and DefaultDataKeys.METADATA in parameters:
+        if len(parameters) > 1 and DataKeys.METADATA in parameters:
             return collate_fn(samples, metadata)
         return collate_fn(samples)
 
@@ -473,37 +473,37 @@ class InputTransform(BaseInputTransform, Properties):
         """
         return self._apply_process_state_transform(PerBatchTransformOnDevice, batch=batch)
 
-    def available_data_sources(self) -> Sequence[str]:
+    def available_inputs(self) -> Sequence[str]:
         """Get the list of available data source names for use with this
         :class:`~flash.core.data.io.input_transform.InputTransform`.
 
         Returns:
             The list of data source names.
         """
-        return list(self._data_sources.keys())
+        return list(self._inputs.keys())
 
-    def data_source_of_name(self, data_source_name: str) -> DataSource:
-        """Get the :class:`~flash.core.data.data_source.DataSource` of the given name from the
+    def input_of_name(self, input_name: str) -> Input:
+        """Get the :class:`~flash.core.data.io.input.Input` of the given name from the
         :class:`~flash.core.data.io.input_transform.InputTransform`.
 
         Args:
-            data_source_name: The name of the data source to look up.
+            input_name: The name of the data source to look up.
 
         Returns:
-            The :class:`~flash.core.data.data_source.DataSource` of the given name.
+            The :class:`~flash.core.data.io.input.Input` of the given name.
 
         Raises:
             MisconfigurationException: If the requested data source is not configured by this
                 :class:`~flash.core.data.io.input_transform.InputTransform`.
         """
-        if data_source_name == "default":
-            data_source_name = self._default_data_source
-        data_sources = self._data_sources
-        if data_source_name in data_sources:
-            return data_sources[data_source_name]
+        if input_name == "default":
+            input_name = self._default_input
+        inputs = self._inputs
+        if input_name in inputs:
+            return inputs[input_name]
         raise MisconfigurationException(
-            f"No '{data_source_name}' data source is available for use with the {type(self)}. The available data "
-            f"sources are: {', '.join(self.available_data_sources())}."
+            f"No '{input_name}' data source is available for use with the {type(self)}. The available data "
+            f"sources are: {', '.join(self.available_inputs())}."
         )
 
 
@@ -514,16 +514,16 @@ class DefaultInputTransform(InputTransform):
         val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         predict_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
-        data_sources: Optional[Dict[str, "DataSource"]] = None,
-        default_data_source: Optional[str] = None,
+        inputs: Optional[Dict[str, "Input"]] = None,
+        default_input: Optional[str] = None,
     ):
         super().__init__(
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources=data_sources or {"default": DataSource()},
-            default_data_source=default_data_source or "default",
+            inputs=inputs or {"default": Input()},
+            default_input=default_input or "default",
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
@@ -655,7 +655,7 @@ class _InputTransformProcessor(torch.nn.Module):
     def _extract_metadata(
         samples: List[Dict[str, Any]],
     ) -> Tuple[List[Dict[str, Any]], Optional[List[Dict[str, Any]]]]:
-        metadata = [s.pop(DefaultDataKeys.METADATA, None) if isinstance(s, Mapping) else None for s in samples]
+        metadata = [s.pop(DataKeys.METADATA, None) if isinstance(s, Mapping) else None for s in samples]
         return samples, metadata if any(m is not None for m in metadata) else None
 
     def forward(self, samples: Sequence[Any]) -> Any:
@@ -689,7 +689,7 @@ class _InputTransformProcessor(torch.nn.Module):
                     except TypeError:
                         samples = self.collate_fn(samples)
                     if metadata and isinstance(samples, dict):
-                        samples[DefaultDataKeys.METADATA] = metadata
+                        samples[DataKeys.METADATA] = metadata
                     self.callback.on_collate(samples, self.stage)
 
             with self._per_batch_transform_context:

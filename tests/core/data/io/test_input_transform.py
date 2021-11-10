@@ -19,7 +19,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data._utils.collate import default_collate
 
 from flash import DataModule
-from flash.core.data.data_source import DefaultDataSources
+from flash.core.data.io.input import InputFormat
 from flash.core.data.io.input_transform import (
     _InputTransformProcessor,
     _InputTransformSequential,
@@ -31,11 +31,11 @@ from flash.core.utilities.stages import RunningStage
 class CustomInputTransform(DefaultInputTransform):
     def __init__(self):
         super().__init__(
-            data_sources={
+            inputs={
                 "test": Mock(return_value="test"),
-                DefaultDataSources.TENSORS: Mock(return_value="tensors"),
+                InputFormat.TENSORS: Mock(return_value="tensors"),
             },
-            default_data_source="test",
+            default_input="test",
         )
 
 
@@ -79,30 +79,30 @@ def test_sequential_str():
     )
 
 
-def test_data_source_of_name():
+def test_input_of_name():
     input_transform = CustomInputTransform()
 
-    assert input_transform.data_source_of_name("test")() == "test"
-    assert input_transform.data_source_of_name(DefaultDataSources.TENSORS)() == "tensors"
-    assert input_transform.data_source_of_name("tensors")() == "tensors"
-    assert input_transform.data_source_of_name("default")() == "test"
+    assert input_transform.input_of_name("test")() == "test"
+    assert input_transform.input_of_name(InputFormat.TENSORS)() == "tensors"
+    assert input_transform.input_of_name("tensors")() == "tensors"
+    assert input_transform.input_of_name("default")() == "test"
 
     with pytest.raises(MisconfigurationException, match="available data sources are: test, tensor"):
-        input_transform.data_source_of_name("not available")
+        input_transform.input_of_name("not available")
 
 
-def test_available_data_sources():
+def test_available_inputs():
     input_transform = CustomInputTransform()
 
-    assert DefaultDataSources.TENSORS in input_transform.available_data_sources()
-    assert "test" in input_transform.available_data_sources()
-    assert len(input_transform.available_data_sources()) == 3
+    assert InputFormat.TENSORS in input_transform.available_inputs()
+    assert "test" in input_transform.available_inputs()
+    assert len(input_transform.available_inputs()) == 3
 
     data_module = DataModule(input_transform=input_transform)
 
-    assert DefaultDataSources.TENSORS in data_module.available_data_sources()
-    assert "test" in data_module.available_data_sources()
-    assert len(data_module.available_data_sources()) == 3
+    assert InputFormat.TENSORS in data_module.available_inputs()
+    assert "test" in data_module.available_inputs()
+    assert len(data_module.available_inputs()) == 3
 
 
 def test_check_transforms():

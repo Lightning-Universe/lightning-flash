@@ -15,10 +15,10 @@ from typing import Any, Callable, Dict, Optional, Tuple
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DefaultDataKeys, DefaultDataSources
+from flash.core.data.io.input import DataKeys, InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
-from flash.core.integrations.icevision.data import IceVisionParserDataSource, IceVisionPathsDataSource
+from flash.core.integrations.icevision.data import IceVisionParserInput, IceVisionPathsInput
 from flash.core.integrations.icevision.transforms import default_transforms
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
 
@@ -46,13 +46,13 @@ class InstanceSegmentationInputTransform(InputTransform):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
-                "coco": IceVisionParserDataSource(parser=COCOMaskParser),
-                "voc": IceVisionParserDataSource(parser=VOCMaskParser),
-                DefaultDataSources.FILES: IceVisionPathsDataSource(),
-                DefaultDataSources.FOLDERS: IceVisionParserDataSource(parser=parser),
+            inputs={
+                "coco": IceVisionParserInput(parser=COCOMaskParser),
+                "voc": IceVisionParserInput(parser=VOCMaskParser),
+                InputFormat.FILES: IceVisionPathsInput(),
+                InputFormat.FOLDERS: IceVisionParserInput(parser=parser),
             },
-            default_data_source=DefaultDataSources.FILES,
+            default_input=InputFormat.FILES,
         )
 
         self._default_collate = self._identity
@@ -74,7 +74,7 @@ class InstanceSegmentationInputTransform(InputTransform):
 class InstanceSegmentationOutputTransform(OutputTransform):
     @staticmethod
     def uncollate(batch: Any) -> Any:
-        return batch[DefaultDataKeys.PREDS]
+        return batch[DataKeys.PREDS]
 
 
 class InstanceSegmentationData(DataModule):
@@ -143,7 +143,7 @@ class InstanceSegmentationData(DataModule):
                 train_ann_file="annotations.json",
             )
         """
-        return cls.from_data_source(
+        return cls.from_input(
             "coco",
             (train_folder, train_ann_file) if train_folder else None,
             (val_folder, val_ann_file) if val_folder else None,
@@ -222,7 +222,7 @@ class InstanceSegmentationData(DataModule):
                 train_ann_file="annotations.json",
             )
         """
-        return cls.from_data_source(
+        return cls.from_input(
             "voc",
             (train_folder, train_ann_file) if train_folder else None,
             (val_folder, val_ann_file) if val_folder else None,

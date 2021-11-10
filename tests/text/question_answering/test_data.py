@@ -18,7 +18,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.text import QuestionAnsweringData
 from tests.helpers.utils import _TEXT_TESTING
 
@@ -138,22 +138,22 @@ def test_from_files(tmpdir):
     assert "attention_mask" in batch
     assert "start_positions" in batch
     assert "end_positions" in batch
-    assert DefaultDataKeys.METADATA in batch
-    assert "context" in batch[DefaultDataKeys.METADATA][0]
-    assert "answer" in batch[DefaultDataKeys.METADATA][0]
-    assert "example_id" in batch[DefaultDataKeys.METADATA][0]
-    assert "offset_mapping" in batch[DefaultDataKeys.METADATA][0]
+    assert DataKeys.METADATA in batch
+    assert "context" in batch[DataKeys.METADATA][0]
+    assert "answer" in batch[DataKeys.METADATA][0]
+    assert "example_id" in batch[DataKeys.METADATA][0]
+    assert "offset_mapping" in batch[DataKeys.METADATA][0]
 
     batch = next(iter(dm.test_dataloader()))
     assert "input_ids" in batch
     assert "attention_mask" in batch
     assert "start_positions" in batch
     assert "end_positions" in batch
-    assert DefaultDataKeys.METADATA in batch
-    assert "context" in batch[DefaultDataKeys.METADATA][0]
-    assert "answer" in batch[DefaultDataKeys.METADATA][0]
-    assert "example_id" in batch[DefaultDataKeys.METADATA][0]
-    assert "offset_mapping" in batch[DefaultDataKeys.METADATA][0]
+    assert DataKeys.METADATA in batch
+    assert "context" in batch[DataKeys.METADATA][0]
+    assert "answer" in batch[DataKeys.METADATA][0]
+    assert "example_id" in batch[DataKeys.METADATA][0]
+    assert "offset_mapping" in batch[DataKeys.METADATA][0]
 
 
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
