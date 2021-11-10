@@ -44,7 +44,7 @@ This section shows you how to augment your existing Lightning Flash workflows
 with a couple of lines of code that let you visualize predictions in FiftyOne.
 You can visualize predictions for classification, object detection, and
 semantic segmentation tasks. Doing so is as easy as updating your model to use
-one of the following serializers:
+one of the following outputs:
 
 * :class:`FiftyOneLabels(return_filepath=True)<flash.core.classification.FiftyOneLabels>`
 * :class:`FiftyOneSegmentationLabels(return_filepath=True)<flash.image.segmentation.output.FiftyOneSegmentationLabels>`
@@ -54,7 +54,7 @@ The :func:`~flash.core.integrations.fiftyone.visualize` function then lets you v
 your predictions in the
 :ref:`FiftyOne App <fiftyone:fiftyone-app>`. This function accepts a list of
 dictionaries containing :ref:`FiftyOne Label <fiftyone:using-labels>` objects
-and filepaths, which is exactly the output of the FiftyOne serializers when the
+and filepaths, which is exactly the output of the FiftyOne outputs when the
 ``return_filepath=True`` option is specified.
 
 .. literalinclude:: ../../../flash_examples/integrations/fiftyone/image_classification.py
