@@ -16,7 +16,7 @@ from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Type
 
 import numpy as np
 
-from flash.core.data.io.input import InputDataKeys, LabelsState
+from flash.core.data.io.input import DataKeys, LabelsState
 from flash.core.integrations.icevision.transforms import from_icevision_record
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
 from flash.image.data import ImagePathsInput
@@ -33,17 +33,17 @@ class IceVisionPathsInput(ImagePathsInput):
         return super().predict_load_data(data, dataset)
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        record = sample[InputDataKeys.INPUT].load()
+        record = sample[DataKeys.INPUT].load()
         return from_icevision_record(record)
 
     def predict_load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        if isinstance(sample[InputDataKeys.INPUT], BaseRecord):
+        if isinstance(sample[DataKeys.INPUT], BaseRecord):
             # load the data via IceVision Base Record
             return self.load_sample(sample)
         # load the data using numpy
-        filepath = sample[InputDataKeys.INPUT]
+        filepath = sample[DataKeys.INPUT]
         sample = super().load_sample(sample)
-        image = np.array(sample[InputDataKeys.INPUT])
+        image = np.array(sample[DataKeys.INPUT])
 
         record = BaseRecord([FilepathRecordComponent()])
         record.filepath = filepath
@@ -69,7 +69,7 @@ class IceVisionParserInput(IceVisionPathsInput):
             dataset.num_classes = parser.class_map.num_classes
             self.set_state(LabelsState([parser.class_map.get_by_id(i) for i in range(dataset.num_classes)]))
             records = parser.parse(data_splitter=SingleSplitSplitter())
-            return [{InputDataKeys.INPUT: record} for record in records[0]]
+            return [{DataKeys.INPUT: record} for record in records[0]]
         raise ValueError("The parser argument must be provided.")
 
     def predict_load_data(self, data: Any, dataset: Optional[Any] = None) -> Sequence[Dict[str, Any]]:

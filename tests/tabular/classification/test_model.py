@@ -19,7 +19,7 @@ import pytest
 import torch
 from pytorch_lightning import Trainer
 
-from flash.core.data.io.input import InputDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _TABULAR_AVAILABLE
 from flash.tabular.classification.data import TabularClassificationData
 from flash.tabular.classification.model import TabularClassifier
@@ -38,7 +38,7 @@ class DummyDataset(torch.utils.data.Dataset):
         target = torch.randint(0, 10, size=(1,)).item()
         cat_vars = torch.randint(0, 10, size=(self.num_cat,))
         num_vars = torch.rand(self.num_num)
-        return {InputDataKeys.INPUT: (cat_vars, num_vars), InputDataKeys.TARGET: target}
+        return {DataKeys.INPUT: (cat_vars, num_vars), DataKeys.TARGET: target}
 
     def __len__(self) -> int:
         return 100

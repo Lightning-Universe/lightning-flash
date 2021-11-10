@@ -23,7 +23,7 @@ import flash
 from flash.core.data.auto_dataset import AutoDataset
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import Input, InputDataKeys, InputFormat, LabelsState
+from flash.core.data.io.input import DataKeys, Input, InputFormat, LabelsState
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.process import Deserializer
@@ -86,7 +86,7 @@ class TextInput(Input):
     @staticmethod
     def _multilabel_target(targets: List[str], element: Dict[str, Any]) -> Dict[str, Any]:
         targets = [element.pop(target) for target in targets]
-        element[InputDataKeys.TARGET] = targets
+        element[DataKeys.TARGET] = targets
         return element
 
     def _to_hf_dataset(self, data) -> Sequence[Mapping[str, Any]]:
@@ -132,10 +132,10 @@ class TextInput(Input):
                     hf_dataset = hf_dataset.map(partial(self._transform_label, label_to_class_mapping, target))
 
                 # rename label column
-                hf_dataset = hf_dataset.rename_column(target, InputDataKeys.TARGET)
+                hf_dataset = hf_dataset.rename_column(target, DataKeys.TARGET)
 
         # remove extra columns
-        extra_columns = set(hf_dataset.column_names) - {input, InputDataKeys.TARGET}
+        extra_columns = set(hf_dataset.column_names) - {input, DataKeys.TARGET}
         hf_dataset = hf_dataset.remove_columns(extra_columns)
 
         # tokenize
@@ -202,11 +202,11 @@ class TextListInput(TextInput):
             input_list, target_list = data
             # NOTE: here we already deal with multilabels
             # NOTE: here we already rename to correct column names
-            hf_dataset = Dataset.from_dict({InputDataKeys.INPUT: input_list, InputDataKeys.TARGET: target_list})
+            hf_dataset = Dataset.from_dict({DataKeys.INPUT: input_list, DataKeys.TARGET: target_list})
             return hf_dataset, target_list
 
         # predicting
-        hf_dataset = Dataset.from_dict({InputDataKeys.INPUT: data})
+        hf_dataset = Dataset.from_dict({DataKeys.INPUT: data})
 
         return (hf_dataset,)
 
@@ -228,7 +228,7 @@ class TextListInput(TextInput):
             else:
                 dataset.multi_label = False
                 if self.training:
-                    labels = list(sorted(list(set(hf_dataset[InputDataKeys.TARGET]))))
+                    labels = list(sorted(list(set(hf_dataset[DataKeys.TARGET]))))
                     dataset.num_classes = len(labels)
                     self.set_state(LabelsState(labels))
 
@@ -239,15 +239,13 @@ class TextListInput(TextInput):
                     labels = labels.labels
                     label_to_class_mapping = {v: k for k, v in enumerate(labels)}
                     # happens in-place and keeps the target column name
-                    hf_dataset = hf_dataset.map(
-                        partial(self._transform_label, label_to_class_mapping, InputDataKeys.TARGET)
-                    )
+                    hf_dataset = hf_dataset.map(partial(self._transform_label, label_to_class_mapping, DataKeys.TARGET))
 
         # tokenize
-        hf_dataset = hf_dataset.map(partial(self._tokenize_fn, input=InputDataKeys.INPUT), batched=True)
+        hf_dataset = hf_dataset.map(partial(self._tokenize_fn, input=DataKeys.INPUT), batched=True)
 
         # set format
-        hf_dataset = hf_dataset.remove_columns([InputDataKeys.INPUT])  # just leave the numerical columns
+        hf_dataset = hf_dataset.remove_columns([DataKeys.INPUT])  # just leave the numerical columns
         hf_dataset.set_format("torch")
 
         return hf_dataset

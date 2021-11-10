@@ -19,7 +19,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import Input, InputDataKeys, InputFormat
+from flash.core.data.io.input import DataKeys, Input, InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.process import Deserializer
 from flash.core.data.properties import ProcessState
@@ -91,7 +91,7 @@ class TabularForecastingDataFrameInput(Input[DataFrame]):
         return time_series_dataset
 
     def load_sample(self, sample: Mapping[str, Any], dataset: Optional[Any] = None) -> Any:
-        return {InputDataKeys.INPUT: sample[0], InputDataKeys.TARGET: sample[1]}
+        return {DataKeys.INPUT: sample[0], DataKeys.TARGET: sample[1]}
 
 
 class TabularForecastingInputTransform(InputTransform):

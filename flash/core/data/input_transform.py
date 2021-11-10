@@ -20,7 +20,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data._utils.collate import default_collate
 
 from flash.core.data.data_pipeline import DataPipeline
-from flash.core.data.io.input import InputDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import _InputTransformProcessor
 from flash.core.data.properties import Properties
 from flash.core.data.states import CollateFn
@@ -157,7 +157,7 @@ class InputTransform(Properties):
             # return collate_fn.collate_fn(samples)
 
         parameters = inspect.signature(collate_fn).parameters
-        if len(parameters) > 1 and InputDataKeys.METADATA in parameters:
+        if len(parameters) > 1 and DataKeys.METADATA in parameters:
             return collate_fn(samples, metadata)
         return collate_fn(samples)
 

@@ -17,7 +17,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import Dataset
 
-from flash.core.data.io.input import DatasetInput, InputDataKeys, InputFormat
+from flash.core.data.io.input import DataKeys, DatasetInput, InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.transforms import ApplyToKeys
@@ -40,15 +40,13 @@ def fastface_collate_fn(samples: Sequence[Dict[str, Any]]) -> Dict[str, Sequence
     """
     samples = {key: [sample[key] for sample in samples] for key in samples[0]}
 
-    images, scales, paddings = ff.utils.preprocess.prepare_batch(
-        samples[InputDataKeys.INPUT], None, adaptive_batch=True
-    )
+    images, scales, paddings = ff.utils.preprocess.prepare_batch(samples[DataKeys.INPUT], None, adaptive_batch=True)
 
     samples["scales"] = scales
     samples["paddings"] = paddings
 
-    if InputDataKeys.TARGET in samples.keys():
-        targets = samples[InputDataKeys.TARGET]
+    if DataKeys.TARGET in samples.keys():
+        targets = samples[DataKeys.TARGET]
         targets = [{"target_boxes": target["boxes"]} for target in targets]
 
         for i, (target, scale, padding) in enumerate(zip(targets, scales, paddings)):
@@ -57,8 +55,8 @@ def fastface_collate_fn(samples: Sequence[Dict[str, Any]]) -> Dict[str, Sequence
             target["target_boxes"][:, [1, 3]] += padding[1]
             targets[i]["target_boxes"] = target["target_boxes"]
 
-        samples[InputDataKeys.TARGET] = targets
-    samples[InputDataKeys.INPUT] = images
+        samples[DataKeys.TARGET] = targets
+    samples[DataKeys.INPUT] = images
 
     return samples
 
@@ -85,12 +83,12 @@ class FastFaceInput(DatasetInput):
         return new_data
 
     def load_sample(self, sample: Any, dataset: Optional[Any] = None) -> Mapping[str, Any]:
-        filepath = sample[InputDataKeys.INPUT]
+        filepath = sample[DataKeys.INPUT]
         img = image_default_loader(filepath)
-        sample[InputDataKeys.INPUT] = img
+        sample[DataKeys.INPUT] = img
 
         w, h = img.size  # WxH
-        sample[InputDataKeys.METADATA] = {
+        sample[DataKeys.METADATA] = {
             "filepath": filepath,
             "size": (h, w),
         }
@@ -134,9 +132,9 @@ class FaceDetectionInputTransform(InputTransform):
     def default_transforms(self) -> Dict[str, Callable]:
         return {
             "to_tensor_transform": nn.Sequential(
-                ApplyToKeys(InputDataKeys.INPUT, torchvision.transforms.ToTensor()),
+                ApplyToKeys(DataKeys.INPUT, torchvision.transforms.ToTensor()),
                 ApplyToKeys(
-                    InputDataKeys.TARGET,
+                    DataKeys.TARGET,
                     nn.Sequential(
                         ApplyToKeys("boxes", torch.as_tensor),
                         ApplyToKeys("labels", torch.as_tensor),
@@ -158,12 +156,12 @@ class FaceDetectionOutputTransform(OutputTransform):
         batch.pop("scales", None)
         batch.pop("paddings", None)
 
-        preds = batch[InputDataKeys.PREDS]
+        preds = batch[DataKeys.PREDS]
 
         # preds: list of torch.Tensor(N, 5) as x1, y1, x2, y2, score
         preds = [preds[preds[:, 5] == batch_idx, :5] for batch_idx in range(len(preds))]
         preds = ff.utils.preprocess.adjust_results(preds, scales, paddings)
-        batch[InputDataKeys.PREDS] = preds
+        batch[DataKeys.PREDS] = preds
 
         return batch
 

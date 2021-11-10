@@ -15,7 +15,7 @@ from typing import Any, Callable, Dict, Hashable, Optional, Sequence, Tuple, TYP
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import FiftyOneInput, InputDataKeys, InputFormat
+from flash.core.data.io.input import DataKeys, FiftyOneInput, InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.integrations.icevision.data import IceVisionParserInput, IceVisionPathsInput
 from flash.core.integrations.icevision.transforms import default_transforms
@@ -125,12 +125,12 @@ class ObjectDetectionFiftyOneInput(IceVisionPathsInput, FiftyOneInput):
 
         parser = FiftyOneParser(data, class_map, self.label_field, self.iscrowd)
         records = parser.parse(data_splitter=SingleSplitSplitter())
-        return [{InputDataKeys.INPUT: record} for record in records[0]]
+        return [{DataKeys.INPUT: record} for record in records[0]]
 
     @staticmethod
     @requires("fiftyone")
     def predict_load_data(data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Dict[str, Any]]:
-        return [{InputDataKeys.INPUT: f} for f in data.values("filepath")]
+        return [{DataKeys.INPUT: f} for f in data.values("filepath")]
 
 
 class ObjectDetectionInputTransform(InputTransform):

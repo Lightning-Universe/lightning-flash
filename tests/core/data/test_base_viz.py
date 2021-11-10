@@ -21,7 +21,7 @@ from pytorch_lightning import seed_everything
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.base_viz import BaseVisualization
-from flash.core.data.io.input import InputDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.data.utils import _CALLBACK_FUNCS, _STAGES_PREFIX
 from flash.core.utilities.imports import _PIL_AVAILABLE
 from flash.core.utilities.stages import RunningStage
@@ -118,7 +118,7 @@ class TestBaseViz:
             is_predict = stage == "predict"
 
             def _extract_data(data):
-                return data[0][InputDataKeys.INPUT]
+                return data[0][DataKeys.INPUT]
 
             def _get_result(function_name: str):
                 return dm.data_fetcher.batches[stage][function_name]
@@ -129,7 +129,7 @@ class TestBaseViz:
 
             if not is_predict:
                 res = _get_result("load_sample")
-                assert isinstance(res[0][InputDataKeys.TARGET], int)
+                assert isinstance(res[0][DataKeys.TARGET], int)
 
             res = _get_result("to_tensor_transform")
             assert len(res) == B
@@ -137,21 +137,21 @@ class TestBaseViz:
 
             if not is_predict:
                 res = _get_result("to_tensor_transform")
-                assert isinstance(res[0][InputDataKeys.TARGET], torch.Tensor)
+                assert isinstance(res[0][DataKeys.TARGET], torch.Tensor)
 
             res = _get_result("collate")
             assert _extract_data(res).shape == (B, 3, 196, 196)
 
             if not is_predict:
                 res = _get_result("collate")
-                assert res[0][InputDataKeys.TARGET].shape == torch.Size([2])
+                assert res[0][DataKeys.TARGET].shape == torch.Size([2])
 
             res = _get_result("per_batch_transform")
             assert _extract_data(res).shape == (B, 3, 196, 196)
 
             if not is_predict:
                 res = _get_result("per_batch_transform")
-                assert res[0][InputDataKeys.TARGET].shape == (B,)
+                assert res[0][DataKeys.TARGET].shape == (B,)
 
             assert dm.data_fetcher.show_load_sample_called
             assert dm.data_fetcher.show_pre_tensor_transform_called

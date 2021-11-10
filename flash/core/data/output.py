@@ -13,7 +13,7 @@
 # limitations under the License.
 from typing import Any, List, Union
 
-from flash.core.data.io.input import InputDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.data.io.output import Output
 
 
@@ -21,4 +21,4 @@ class Preds(Output):
     """A :class:`~flash.core.data.io.output.Output` which returns the "preds" from the model outputs."""
 
     def transform(self, sample: Any) -> Union[int, List[int]]:
-        return sample.get(InputDataKeys.PREDS, sample) if isinstance(sample, dict) else sample
+        return sample.get(DataKeys.PREDS, sample) if isinstance(sample, dict) else sample

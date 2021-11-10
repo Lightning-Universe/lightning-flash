@@ -17,7 +17,7 @@ import torch
 from torch import nn
 
 from flash.core.classification import ClassificationTask, Labels
-from flash.core.data.io.input import InputDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 from flash.template.classification.backbones import TEMPLATE_BACKBONES
@@ -83,30 +83,30 @@ class TemplateSKLearnClassifier(ClassificationTask):
         self.head = nn.Linear(out_features, num_classes)
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
-        """For the training step, we just extract the :attr:`~flash.core.data.io.input.InputDataKeys.INPUT` and
-        :attr:`~flash.core.data.io.input.InputDataKeys.TARGET` keys from the input and forward them to the
+        """For the training step, we just extract the :attr:`~flash.core.data.io.input.DataKeys.INPUT` and
+        :attr:`~flash.core.data.io.input.DataKeys.TARGET` keys from the input and forward them to the
         :meth:`~flash.core.model.Task.training_step`."""
-        batch = (batch[InputDataKeys.INPUT], batch[InputDataKeys.TARGET])
+        batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
         return super().training_step(batch, batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        """For the validation step, we just extract the :attr:`~flash.core.data.io.input.InputDataKeys.INPUT` and
-        :attr:`~flash.core.data.io.input.InputDataKeys.TARGET` keys from the input and forward them to the
+        """For the validation step, we just extract the :attr:`~flash.core.data.io.input.DataKeys.INPUT` and
+        :attr:`~flash.core.data.io.input.DataKeys.TARGET` keys from the input and forward them to the
         :meth:`~flash.core.model.Task.validation_step`."""
-        batch = (batch[InputDataKeys.INPUT], batch[InputDataKeys.TARGET])
+        batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
         return super().validation_step(batch, batch_idx)
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
-        """For the test step, we just extract the :attr:`~flash.core.data.io.input.InputDataKeys.INPUT` and
-        :attr:`~flash.core.data.io.input.InputDataKeys.TARGET` keys from the input and forward them to the
+        """For the test step, we just extract the :attr:`~flash.core.data.io.input.DataKeys.INPUT` and
+        :attr:`~flash.core.data.io.input.DataKeys.TARGET` keys from the input and forward them to the
         :meth:`~flash.core.model.Task.test_step`."""
-        batch = (batch[InputDataKeys.INPUT], batch[InputDataKeys.TARGET])
+        batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        """For the predict step, we just extract the :attr:`~flash.core.data.io.input.InputDataKeys.INPUT` key from
-        the input and forward it to the :meth:`~flash.core.model.Task.predict_step`."""
-        batch = batch[InputDataKeys.INPUT]
+        """For the predict step, we just extract the :attr:`~flash.core.data.io.input.DataKeys.INPUT` key from the
+        input and forward it to the :meth:`~flash.core.model.Task.predict_step`."""
+        batch = batch[DataKeys.INPUT]
         return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
 
     def forward(self, x) -> torch.Tensor:

@@ -23,7 +23,7 @@ import torch
 from flash import Trainer
 from flash.__main__ import main
 from flash.core.data.data_pipeline import DataPipeline
-from flash.core.data.io.input import InputDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _IMAGE_AVAILABLE
 from flash.image import SemanticSegmentation
 from flash.image.segmentation.data import SemanticSegmentationInputTransform
@@ -38,8 +38,8 @@ class DummyDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         return {
-            InputDataKeys.INPUT: torch.rand(3, *self.size),
-            InputDataKeys.TARGET: torch.randint(self.num_classes - 1, self.size),
+            DataKeys.INPUT: torch.rand(3, *self.size),
+            DataKeys.TARGET: torch.randint(self.num_classes - 1, self.size),
         }
 
     def __len__(self) -> int:

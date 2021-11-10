@@ -20,7 +20,7 @@ from torch import nn
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import InputDataKeys, InputFormat, LabelsState, NumpyInput
+from flash.core.data.io.input import DataKeys, InputFormat, LabelsState, NumpyInput
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _SKLEARN_AVAILABLE
@@ -140,8 +140,8 @@ class TemplateInputTransform(InputTransform):
         """
         return {
             "to_tensor_transform": nn.Sequential(
-                ApplyToKeys(InputDataKeys.INPUT, self.input_to_tensor),
-                ApplyToKeys(InputDataKeys.TARGET, torch.as_tensor),
+                ApplyToKeys(DataKeys.INPUT, self.input_to_tensor),
+                ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
             ),
         }
 

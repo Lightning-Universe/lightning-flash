@@ -24,7 +24,7 @@ import torchvision
 from torch import nn
 
 import flash
-from flash.core.data.io.input import InputDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.data.transforms import ApplyToKeys, kornia_collate
 from flash.image import ImageClassificationData, ImageClassifier
 
@@ -37,11 +37,11 @@ test_dataset = l2l.vision.datasets.MiniImagenet(root="data", mode="test", downlo
 
 train_transform = {
     "to_tensor_transform": nn.Sequential(
-        ApplyToKeys(InputDataKeys.INPUT, torchvision.transforms.ToTensor()),
-        ApplyToKeys(InputDataKeys.TARGET, torch.as_tensor),
+        ApplyToKeys(DataKeys.INPUT, torchvision.transforms.ToTensor()),
+        ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
     ),
     "post_tensor_transform": ApplyToKeys(
-        InputDataKeys.INPUT,
+        DataKeys.INPUT,
         Kg.Resize((196, 196)),
         # SPATIAL
         Ka.RandomHorizontalFlip(p=0.25),
@@ -58,7 +58,7 @@ train_transform = {
     ),
     "collate": kornia_collate,
     "per_batch_transform_on_device": ApplyToKeys(
-        InputDataKeys.INPUT,
+        DataKeys.INPUT,
         Ka.RandomHorizontalFlip(p=0.25),
     ),
 }

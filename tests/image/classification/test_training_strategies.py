@@ -19,7 +19,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from flash import Trainer
-from flash.core.data.io.input import InputDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _LEARN2LEARN_AVAILABLE
 from flash.image import ImageClassificationData, ImageClassifier
 from flash.image.classification.adapters import TRAINING_STRATEGIES
@@ -32,8 +32,8 @@ from tests.image.classification.test_data import _rand_image
 class DummyDataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
         return {
-            InputDataKeys.INPUT: torch.rand(3, 96, 96),
-            InputDataKeys.TARGET: torch.randint(10, size=(1,)).item(),
+            DataKeys.INPUT: torch.rand(3, 96, 96),
+            DataKeys.TARGET: torch.randint(10, size=(1,)).item(),
         }
 
     def __len__(self) -> int:

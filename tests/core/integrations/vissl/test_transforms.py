@@ -13,7 +13,7 @@
 # limitations under the License.
 import pytest
 
-from flash.core.data.io.input import InputDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, _VISSL_AVAILABLE
 from tests.image.embedding.utils import ssl_datamodule
 
@@ -35,7 +35,7 @@ def test_multicrop_input_transform():
     )._train_dataloader()
     batch = next(iter(train_dataloader))
 
-    assert len(batch[InputDataKeys.INPUT]) == total_num_crops
-    assert batch[InputDataKeys.INPUT][0].shape == (batch_size, 3, size_crops[0], size_crops[0])
-    assert batch[InputDataKeys.INPUT][-1].shape == (batch_size, 3, size_crops[-1], size_crops[-1])
-    assert list(batch[InputDataKeys.TARGET].shape) == [batch_size]
+    assert len(batch[DataKeys.INPUT]) == total_num_crops
+    assert batch[DataKeys.INPUT][0].shape == (batch_size, 3, size_crops[0], size_crops[0])
+    assert batch[DataKeys.INPUT][-1].shape == (batch_size, 3, size_crops[-1], size_crops[-1])
+    assert list(batch[DataKeys.TARGET].shape) == [batch_size]

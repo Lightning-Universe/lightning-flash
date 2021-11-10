@@ -193,7 +193,7 @@ Here's the full ``ImageClassificationFoldersInput``:
     from PIL import Image
     from torchvision.datasets.folder import make_dataset
     from typing import Any, Dict
-    from flash.core.data.io.input import Input, InputDataKeys
+    from flash.core.data.io.input import Input, DataKeys
 
 
     class ImageClassificationFoldersInput(Input):
@@ -211,21 +211,21 @@ Here's the full ``ImageClassificationFoldersInput``:
 
             return [
                 {
-                    InputDataKeys.INPUT: file,
-                    InputDataKeys.TARGET: target,
+                    DataKeys.INPUT: file,
+                    DataKeys.TARGET: target,
                 }
                 for file, target in metadata
             ]
 
         def predict_load_data(self, predict_folder: str) -> Iterable:
             # This returns [image_path_1, ... image_path_m].
-            return [{InputDataKeys.INPUT: file} for file in os.listdir(folder)]
+            return [{DataKeys.INPUT: file} for file in os.listdir(folder)]
 
         def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-            sample[InputDataKeys.INPUT] = Image.open(sample[InputDataKeys.INPUT])
+            sample[DataKeys.INPUT] = Image.open(sample[DataKeys.INPUT])
             return sample
 
-.. note:: We return samples as dictionaries using the :class:`~flash.core.data.io.input.InputDataKeys` by convention. This is the recommended (although not required) way to represent data in Flash.
+.. note:: We return samples as dictionaries using the :class:`~flash.core.data.io.input.DataKeys` by convention. This is the recommended (although not required) way to represent data in Flash.
 
 3. The InputTransform
 _____________________
@@ -235,7 +235,7 @@ Next, implement your custom ``ImageClassificationInputTransform`` with some defa
 .. code-block:: python
 
     from typing import Any, Callable, Dict, Optional
-    from flash.core.data.io.input import InputDataKeys, InputFormat
+    from flash.core.data.io.input import DataKeys, InputFormat
     from flash.core.data.io.input_transform import InputTransform
     import torchvision.transforms.functional as T
 
@@ -267,7 +267,7 @@ Next, implement your custom ``ImageClassificationInputTransform`` with some defa
             return cls(**state_dict)
 
         def default_transforms(self) -> Dict[str, Callable]:
-            return {"to_tensor_transform": ApplyToKeys(InputDataKeys.INPUT, T.to_tensor)}
+            return {"to_tensor_transform": ApplyToKeys(DataKeys.INPUT, T.to_tensor)}
 
 4. The DataModule
 _________________

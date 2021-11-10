@@ -19,7 +19,7 @@ import torchmetrics
 from pytorch_lightning.utilities import rank_zero_warn
 
 from flash.core.adapter import AdapterTask
-from flash.core.data.io.input import InputDataKeys, LabelsState
+from flash.core.data.io.input import DataKeys, LabelsState
 from flash.core.data.io.output import Output
 from flash.core.model import Task
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
@@ -129,8 +129,8 @@ class PredsClassificationOutput(ClassificationOutput):
     """
 
     def transform(self, sample: Any) -> Any:
-        if isinstance(sample, Mapping) and InputDataKeys.PREDS in sample:
-            sample = sample[InputDataKeys.PREDS]
+        if isinstance(sample, Mapping) and DataKeys.PREDS in sample:
+            sample = sample[DataKeys.PREDS]
         if not isinstance(sample, torch.Tensor):
             sample = torch.tensor(sample)
         return sample
@@ -258,7 +258,7 @@ class FiftyOneLabels(ClassificationOutput):
         self,
         sample: Any,
     ) -> Union[Classification, Classifications, Dict[str, Any]]:
-        pred = sample[InputDataKeys.PREDS] if isinstance(sample, Dict) else sample
+        pred = sample[DataKeys.PREDS] if isinstance(sample, Dict) else sample
         pred = torch.tensor(pred)
 
         labels = None
@@ -335,6 +335,6 @@ class FiftyOneLabels(ClassificationOutput):
                     )
 
         if self.return_filepath:
-            filepath = sample[InputDataKeys.METADATA]["filepath"]
+            filepath = sample[DataKeys.METADATA]["filepath"]
             return {"filepath": filepath, "predictions": fo_predictions}
         return fo_predictions

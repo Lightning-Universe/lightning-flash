@@ -171,8 +171,8 @@ class InputFormat(LightningEnum):
         return hash(self.value)
 
 
-class InputDataKeys(LightningEnum):
-    """The ``nputDataKeys`` enum contains the keys that are used by built-in data sources to refer to inputs and
+class DataKeys(LightningEnum):
+    """The ``DataKeys`` enum contains the keys that are used by built-in data sources to refer to inputs and
     targets."""
 
     INPUT = "input"
@@ -365,8 +365,8 @@ class DatasetInput(Input[Dataset]):
 
     def load_sample(self, sample: Any, dataset: Optional[Any] = None) -> Mapping[str, Any]:
         if isinstance(sample, tuple) and len(sample) == 2:
-            return {InputDataKeys.INPUT: sample[0], InputDataKeys.TARGET: sample[1]}
-        return {InputDataKeys.INPUT: sample}
+            return {DataKeys.INPUT: sample[0], DataKeys.TARGET: sample[1]}
+        return {DataKeys.INPUT: sample}
 
 
 class SequenceInput(
@@ -399,11 +399,11 @@ class SequenceInput(
         inputs, targets = data
         if targets is None:
             return self.predict_load_data(data)
-        return [{InputDataKeys.INPUT: input, InputDataKeys.TARGET: target} for input, target in zip(inputs, targets)]
+        return [{DataKeys.INPUT: input, DataKeys.TARGET: target} for input, target in zip(inputs, targets)]
 
     @staticmethod
     def predict_load_data(data: Sequence[SEQUENCE_DATA_TYPE]) -> Sequence[Mapping[str, Any]]:
-        return [{InputDataKeys.INPUT: input} for input in data]
+        return [{DataKeys.INPUT: input} for input in data]
 
 
 class PathsInput(SequenceInput):
@@ -464,13 +464,13 @@ class PathsInput(SequenceInput):
                 dataset.num_classes = len(classes)
 
             data = make_dataset(data, class_to_idx, extensions=self.extensions)
-            return [{InputDataKeys.INPUT: input, InputDataKeys.TARGET: target} for input, target in data]
+            return [{DataKeys.INPUT: input, DataKeys.TARGET: target} for input, target in data]
         elif dataset is not None:
             dataset.num_classes = len(np.unique(data[1]))
 
         return list(
             filter(
-                lambda sample: has_file_allowed_extension(sample[InputDataKeys.INPUT], self.extensions),
+                lambda sample: has_file_allowed_extension(sample[DataKeys.INPUT], self.extensions),
                 super().load_data(data, dataset),
             )
         )
@@ -484,22 +484,22 @@ class PathsInput(SequenceInput):
         if not isinstance(data, list):
             data = [data]
 
-        data = [{InputDataKeys.INPUT: input} for input in data]
+        data = [{DataKeys.INPUT: input} for input in data]
 
         return list(
             filter(
-                lambda sample: has_file_allowed_extension(sample[InputDataKeys.INPUT], self.extensions),
+                lambda sample: has_file_allowed_extension(sample[DataKeys.INPUT], self.extensions),
                 data,
             )
         )
 
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        path = sample[InputDataKeys.INPUT]
+        path = sample[DataKeys.INPUT]
 
         if self.loader is not None:
-            sample[InputDataKeys.INPUT] = self.loader(path)
+            sample[DataKeys.INPUT] = self.loader(path)
 
-        sample[InputDataKeys.METADATA] = {
+        sample[DataKeys.METADATA] = {
             "filepath": path,
         }
         return sample
@@ -595,26 +595,26 @@ class LoaderDataFrameInput(Input[Tuple[pd.DataFrame, str, Union[str, List[str]],
 
             return [
                 {
-                    InputDataKeys.INPUT: row[input_key],
-                    InputDataKeys.TARGET: row[target_keys],
+                    DataKeys.INPUT: row[input_key],
+                    DataKeys.TARGET: row[target_keys],
                 }
                 for _, row in data_frame.iterrows()
             ]
         return [
             {
-                InputDataKeys.INPUT: row[input_key],
+                DataKeys.INPUT: row[input_key],
             }
             for _, row in data_frame.iterrows()
         ]
 
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         # TODO: simplify this duplicated code from PathsInput
-        path = sample[InputDataKeys.INPUT]
+        path = sample[DataKeys.INPUT]
 
         if self.loader is not None:
-            sample[InputDataKeys.INPUT] = self.loader(path)
+            sample[DataKeys.INPUT] = self.loader(path)
 
-        sample[InputDataKeys.METADATA] = {
+        sample[DataKeys.METADATA] = {
             "filepath": path,
         }
         return sample
@@ -681,8 +681,8 @@ class FiftyOneInput(Input[SampleCollection]):
 
         return [
             {
-                InputDataKeys.INPUT: f,
-                InputDataKeys.TARGET: to_idx(t),
+                DataKeys.INPUT: f,
+                DataKeys.TARGET: to_idx(t),
             }
             for f, t in zip(filepaths, targets)
         ]
@@ -690,7 +690,7 @@ class FiftyOneInput(Input[SampleCollection]):
     @staticmethod
     @requires("fiftyone")
     def predict_load_data(data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
-        return [{InputDataKeys.INPUT: f} for f in data.values("filepath")]
+        return [{DataKeys.INPUT: f} for f in data.values("filepath")]
 
     def _validate(self, data):
         label_type = data._get_label_field_type(self.label_field)

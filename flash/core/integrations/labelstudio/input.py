@@ -7,7 +7,7 @@ import torch
 from pytorch_lightning.utilities.cloud_io import get_filesystem
 
 from flash.core.data.auto_dataset import AutoDataset, IterableAutoDataset
-from flash.core.data.io.input import has_len, Input, InputDataKeys
+from flash.core.data.io.input import DataKeys, has_len, Input
 from flash.core.data.utils import image_default_loader
 from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE, _TEXT_AVAILABLE
 from flash.core.utilities.stages import RunningStage
@@ -72,8 +72,8 @@ class LabelStudioInput(Input):
         # delete label from input data
         del sample["label"]
         result = {
-            InputDataKeys.INPUT: sample,
-            InputDataKeys.TARGET: label,
+            DataKeys.INPUT: sample,
+            DataKeys.TARGET: label,
         }
         return result
 
@@ -187,7 +187,7 @@ class LabelStudioImageClassificationInput(LabelStudioInput):
         p = sample["file_upload"]
         # loading image
         image = image_default_loader(p)
-        result = {InputDataKeys.INPUT: image, InputDataKeys.TARGET: self._get_labels_from_sample(sample["label"])}
+        result = {DataKeys.INPUT: image, DataKeys.TARGET: self._get_labels_from_sample(sample["label"])}
         return result
 
 

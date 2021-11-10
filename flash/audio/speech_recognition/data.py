@@ -23,7 +23,7 @@ from torch.utils.data import Dataset
 
 import flash
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import DatasetInput, Input, InputDataKeys, InputFormat, PathsInput
+from flash.core.data.io.input import DataKeys, DatasetInput, Input, InputFormat, PathsInput
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.process import Deserializer
@@ -51,8 +51,8 @@ class SpeechRecognitionDeserializer(Deserializer):
         buffer = io.BytesIO(audio)
         data, sampling_rate = librosa.load(buffer, sr=self.sampling_rate)
         return {
-            InputDataKeys.INPUT: data,
-            InputDataKeys.METADATA: {"sampling_rate": sampling_rate},
+            DataKeys.INPUT: data,
+            DataKeys.METADATA: {"sampling_rate": sampling_rate},
         }
 
     @property
@@ -64,12 +64,12 @@ class SpeechRecognitionDeserializer(Deserializer):
 class BaseSpeechRecognition:
     @staticmethod
     def _load_sample(sample: Dict[str, Any], sampling_rate: int) -> Any:
-        path = sample[InputDataKeys.INPUT]
-        if not os.path.isabs(path) and InputDataKeys.METADATA in sample and "root" in sample[InputDataKeys.METADATA]:
-            path = os.path.join(sample[InputDataKeys.METADATA]["root"], path)
+        path = sample[DataKeys.INPUT]
+        if not os.path.isabs(path) and DataKeys.METADATA in sample and "root" in sample[DataKeys.METADATA]:
+            path = os.path.join(sample[DataKeys.METADATA]["root"], path)
         speech_array, sampling_rate = librosa.load(path, sr=sampling_rate)
-        sample[InputDataKeys.INPUT] = speech_array
-        sample[InputDataKeys.METADATA] = {"sampling_rate": sampling_rate}
+        sample[DataKeys.INPUT] = speech_array
+        sample[DataKeys.METADATA] = {"sampling_rate": sampling_rate}
         return sample
 
 
@@ -98,9 +98,9 @@ class SpeechRecognitionFileInput(Input, BaseSpeechRecognition):
         meta = {"root": os.path.dirname(file)}
         return [
             {
-                InputDataKeys.INPUT: input_file,
-                InputDataKeys.TARGET: target,
-                InputDataKeys.METADATA: meta,
+                DataKeys.INPUT: input_file,
+                DataKeys.TARGET: target,
+                DataKeys.METADATA: meta,
             }
             for input_file, target in zip(dataset[input_key], dataset[target_key])
         ]
@@ -131,7 +131,7 @@ class SpeechRecognitionDatasetInput(DatasetInput, BaseSpeechRecognition):
         return super().load_data(data, dataset)
 
     def load_sample(self, sample: Dict[str, Any], dataset: Any = None) -> Any:
-        if isinstance(sample[InputDataKeys.INPUT], (str, Path)):
+        if isinstance(sample[DataKeys.INPUT], (str, Path)):
             sample = self._load_sample(sample, self.sampling_rate)
         return sample
 

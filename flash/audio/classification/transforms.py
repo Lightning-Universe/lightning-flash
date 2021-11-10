@@ -17,7 +17,7 @@ import torch
 from torch import nn
 from torch.utils.data._utils.collate import default_collate
 
-from flash.core.data.io.input import InputDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.data.transforms import ApplyToKeys, merge_transforms
 from flash.core.utilities.imports import _TORCHAUDIO_AVAILABLE, _TORCHVISION_AVAILABLE
 
@@ -34,10 +34,10 @@ def default_transforms(spectrogram_size: Tuple[int, int]) -> Dict[str, Callable]
     spectrogram and target to a tensor, and collate the batch."""
     return {
         "to_tensor_transform": nn.Sequential(
-            ApplyToKeys(InputDataKeys.INPUT, torchvision.transforms.ToTensor()),
-            ApplyToKeys(InputDataKeys.TARGET, torch.as_tensor),
+            ApplyToKeys(DataKeys.INPUT, torchvision.transforms.ToTensor()),
+            ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
         ),
-        "post_tensor_transform": ApplyToKeys(InputDataKeys.INPUT, T.Resize(spectrogram_size)),
+        "post_tensor_transform": ApplyToKeys(DataKeys.INPUT, T.Resize(spectrogram_size)),
         "collate": default_collate,
     }
 
@@ -49,10 +49,10 @@ def train_default_transforms(
     augs = []
 
     if time_mask_param is not None:
-        augs.append(ApplyToKeys(InputDataKeys.INPUT, TAudio.TimeMasking(time_mask_param=time_mask_param)))
+        augs.append(ApplyToKeys(DataKeys.INPUT, TAudio.TimeMasking(time_mask_param=time_mask_param)))
 
     if freq_mask_param is not None:
-        augs.append(ApplyToKeys(InputDataKeys.INPUT, TAudio.FrequencyMasking(freq_mask_param=freq_mask_param)))
+        augs.append(ApplyToKeys(DataKeys.INPUT, TAudio.FrequencyMasking(freq_mask_param=freq_mask_param)))
 
     if len(augs) > 0:
         return merge_transforms(default_transforms(spectrogram_size), {"post_tensor_transform": nn.Sequential(*augs)})

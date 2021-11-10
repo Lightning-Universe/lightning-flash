@@ -91,7 +91,7 @@ ___________________________
 
     ~flash.core.data.io.input.DatasetInput
     ~flash.core.data.io.input.Input
-    ~flash.core.data.io.input.InputDataKeys
+    ~flash.core.data.io.input.DataKeys
     ~flash.core.data.io.input.InputFormat
     ~flash.core.data.io.input.FiftyOneInput
     ~flash.core.data.io.input.ImageLabelsMap

@@ -21,7 +21,7 @@ from torch.utils.data.sampler import Sampler
 from flash.core.classification import LabelsState
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import Input, InputDataKeys, InputFormat
+from flash.core.data.io.input import DataKeys, Input, InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.process import Deserializer
@@ -94,11 +94,11 @@ class TabularDataFrameInput(Input[DataFrame]):
     def load_data(self, data: DataFrame, dataset: Optional[Any] = None):
         df, cat_vars, num_vars = self.common_load_data(data, dataset=dataset)
         target = df[self.target_col].to_numpy().astype(np.float32 if self.is_regression else np.int64)
-        return [{InputDataKeys.INPUT: (c, n), InputDataKeys.TARGET: t} for c, n, t in zip(cat_vars, num_vars, target)]
+        return [{DataKeys.INPUT: (c, n), DataKeys.TARGET: t} for c, n, t in zip(cat_vars, num_vars, target)]
 
     def predict_load_data(self, data: DataFrame, dataset: Optional[Any] = None):
         _, cat_vars, num_vars = self.common_load_data(data, dataset=dataset)
-        return [{InputDataKeys.INPUT: (c, n)} for c, n in zip(cat_vars, num_vars)]
+        return [{DataKeys.INPUT: (c, n)} for c, n in zip(cat_vars, num_vars)]
 
 
 class TabularCSVInput(TabularDataFrameInput):
@@ -145,7 +145,7 @@ class TabularDeserializer(Deserializer):
         cat_vars = np.stack(cat_vars, 1)
         num_vars = np.stack(num_vars, 1)
 
-        return [{InputDataKeys.INPUT: [c, n]} for c, n in zip(cat_vars, num_vars)]
+        return [{DataKeys.INPUT: [c, n]} for c, n in zip(cat_vars, num_vars)]
 
     @property
     def example_input(self) -> str:

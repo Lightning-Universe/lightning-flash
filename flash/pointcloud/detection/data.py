@@ -4,7 +4,7 @@ from torch.utils.data import Sampler
 
 from flash.core.data.base_viz import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import BaseDataFormat, Input, InputDataKeys, InputFormat
+from flash.core.data.io.input import BaseDataFormat, DataKeys, Input, InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.process import Deserializer
 from flash.pointcloud.detection.open3d_ml.inputs import (
@@ -31,8 +31,8 @@ class PointCloudObjectDetectorDatasetInput(Input):
         sample = dataset.dataset[index]
 
         return {
-            InputDataKeys.INPUT: sample["data"],
-            InputDataKeys.METADATA: sample["attr"],
+            DataKeys.INPUT: sample["data"],
+            DataKeys.METADATA: sample["attr"],
         }
 
 

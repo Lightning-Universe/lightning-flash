@@ -21,7 +21,7 @@ from torch import Tensor
 from torch.utils.data._utils.collate import default_collate
 
 from flash.core.data.callback import ControlFlow, FlashCallback
-from flash.core.data.io.input import DatasetInput, Input, InputDataKeys, InputFormat
+from flash.core.data.io.input import DataKeys, DatasetInput, Input, InputFormat
 from flash.core.data.process import Deserializer
 from flash.core.data.properties import ProcessState, Properties
 from flash.core.data.states import (
@@ -268,9 +268,9 @@ class InputTransform(BaseInputTransform, Properties):
             return transform
 
         if isinstance(transform, list):
-            transform = {"pre_tensor_transform": ApplyToKeys(InputDataKeys.INPUT, torch.nn.Sequential(*transform))}
+            transform = {"pre_tensor_transform": ApplyToKeys(DataKeys.INPUT, torch.nn.Sequential(*transform))}
         elif callable(transform):
-            transform = {"pre_tensor_transform": ApplyToKeys(InputDataKeys.INPUT, transform)}
+            transform = {"pre_tensor_transform": ApplyToKeys(DataKeys.INPUT, transform)}
 
         if not isinstance(transform, Dict):
             raise MisconfigurationException(
@@ -444,7 +444,7 @@ class InputTransform(BaseInputTransform, Properties):
             # return collate_fn.collate_fn(samples)
 
         parameters = inspect.signature(collate_fn).parameters
-        if len(parameters) > 1 and InputDataKeys.METADATA in parameters:
+        if len(parameters) > 1 and DataKeys.METADATA in parameters:
             return collate_fn(samples, metadata)
         return collate_fn(samples)
 
@@ -655,7 +655,7 @@ class _InputTransformProcessor(torch.nn.Module):
     def _extract_metadata(
         samples: List[Dict[str, Any]],
     ) -> Tuple[List[Dict[str, Any]], Optional[List[Dict[str, Any]]]]:
-        metadata = [s.pop(InputDataKeys.METADATA, None) if isinstance(s, Mapping) else None for s in samples]
+        metadata = [s.pop(DataKeys.METADATA, None) if isinstance(s, Mapping) else None for s in samples]
         return samples, metadata if any(m is not None for m in metadata) else None
 
     def forward(self, samples: Sequence[Any]) -> Any:
@@ -689,7 +689,7 @@ class _InputTransformProcessor(torch.nn.Module):
                     except TypeError:
                         samples = self.collate_fn(samples)
                     if metadata and isinstance(samples, dict):
-                        samples[InputDataKeys.METADATA] = metadata
+                        samples[DataKeys.METADATA] = metadata
                     self.callback.on_collate(samples, self.stage)
 
             with self._per_batch_transform_context:

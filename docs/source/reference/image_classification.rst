@@ -120,13 +120,13 @@ We use the `post_tensor_transform` hook to apply the transformations after the i
     from torchvision import transforms as T
 
     import flash
-    from flash.core.data.io.input import InputDataKeys
+    from flash.core.data.io.input import DataKeys
     from flash.core.data.transforms import ApplyToKeys, merge_transforms
     from flash.image import ImageClassificationData, ImageClassifier
     from flash.image.classification.transforms import default_transforms
 
     post_tensor_transform = ApplyToKeys(
-        InputDataKeys.INPUT,
+        DataKeys.INPUT,
         T.Compose([T.RandomHorizontalFlip(), T.ColorJitter(), T.RandomAutocontrast(), T.RandomPerspective()]),
     )
 

@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from flash.core.data.io.input import DatasetInput, InputDataKeys
+from flash.core.data.io.input import DataKeys, DatasetInput
 
 
 def test_dataset_input():
@@ -19,5 +19,5 @@ def test_dataset_input():
 
     input, target = "test", 3
 
-    assert dataset_input.load_sample((input, target)) == {InputDataKeys.INPUT: input, InputDataKeys.TARGET: target}
-    assert dataset_input.load_sample(input) == {InputDataKeys.INPUT: input}
+    assert dataset_input.load_sample((input, target)) == {DataKeys.INPUT: input, DataKeys.TARGET: target}
+    assert dataset_input.load_sample(input) == {DataKeys.INPUT: input}

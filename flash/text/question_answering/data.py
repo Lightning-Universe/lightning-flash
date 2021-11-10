@@ -29,7 +29,7 @@ from torch.utils.data.sampler import Sampler
 import flash
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import Input, InputDataKeys, InputFormat
+from flash.core.data.io.input import DataKeys, Input, InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.properties import ProcessState
@@ -106,14 +106,14 @@ class QuestionAnsweringInput(Input):
             contexts = tokenized_samples.pop("context")
             answers = tokenized_samples.pop("answer")
 
-            tokenized_samples[InputDataKeys.METADATA] = []
+            tokenized_samples[DataKeys.METADATA] = []
             for offset_mapping, example_id, context in zip(offset_mappings, example_ids, contexts):
-                tokenized_samples[InputDataKeys.METADATA].append(
+                tokenized_samples[DataKeys.METADATA].append(
                     {"context": context, "offset_mapping": offset_mapping, "example_id": example_id}
                 )
             if self._running_stage.evaluating:
                 for index, answer in enumerate(answers):
-                    tokenized_samples[InputDataKeys.METADATA][index]["answer"] = answer
+                    tokenized_samples[DataKeys.METADATA][index]["answer"] = answer
 
             del offset_mappings
             del example_ids

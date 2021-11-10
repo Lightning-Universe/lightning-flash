@@ -17,8 +17,8 @@ import numpy as np
 
 from flash.audio.classification.transforms import default_transforms, train_default_transforms
 from flash.core.data.io.input import (
+    DataKeys,
     has_file_allowed_extension,
-    InputDataKeys,
     InputFormat,
     LoaderDataFrameInput,
     NumpyInput,
@@ -42,13 +42,13 @@ def spectrogram_loader(filepath: str):
 
 class AudioClassificationNumpyInput(NumpyInput):
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        sample[InputDataKeys.INPUT] = np.transpose(sample[InputDataKeys.INPUT], (1, 2, 0))
+        sample[DataKeys.INPUT] = np.transpose(sample[DataKeys.INPUT], (1, 2, 0))
         return sample
 
 
 class AudioClassificationTensorInput(AudioClassificationNumpyInput):
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        sample[InputDataKeys.INPUT] = sample[InputDataKeys.INPUT].numpy()
+        sample[DataKeys.INPUT] = sample[DataKeys.INPUT].numpy()
         return super().load_sample(sample, dataset=dataset)
 
 

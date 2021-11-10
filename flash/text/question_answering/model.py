@@ -27,7 +27,7 @@ from pytorch_lightning import Callback
 from pytorch_lightning.utilities import rank_zero_info
 from torch import Tensor
 
-from flash.core.data.io.input import InputDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.finetuning import FlashBaseFinetuning
 from flash.core.model import Task
 from flash.core.registry import ExternalRegistry, FlashRegistry
@@ -242,14 +242,14 @@ class QuestionAnsweringTask(Task):
         return all_predictions
 
     def forward(self, batch: Any) -> Any:
-        metadata = batch.pop(InputDataKeys.METADATA)
+        metadata = batch.pop(DataKeys.METADATA)
         outputs = self.model(**batch)
         loss = outputs.loss
         start_logits = outputs.start_logits
         end_logits = outputs.end_logits
 
         generated_answers = self._generate_answers(start_logits, end_logits, metadata)
-        batch[InputDataKeys.METADATA] = metadata
+        batch[DataKeys.METADATA] = metadata
         return loss, generated_answers
 
     def training_step(self, batch: Any, batch_idx: int) -> Tensor:
@@ -260,7 +260,7 @@ class QuestionAnsweringTask(Task):
 
     def common_step(self, prefix: str, batch: Any) -> torch.Tensor:
         loss, generated_answers = self(batch)
-        result = self.compute_metrics(generated_answers, batch[InputDataKeys.METADATA])
+        result = self.compute_metrics(generated_answers, batch[DataKeys.METADATA])
         self.log(f"{prefix}_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log_dict(result, on_step=False, on_epoch=True, prog_bar=False)
 

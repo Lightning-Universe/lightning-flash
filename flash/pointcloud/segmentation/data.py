@@ -1,7 +1,7 @@
 from typing import Any, Callable, Dict, Optional, Tuple
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import Input, InputDataKeys, InputFormat
+from flash.core.data.io.input import DataKeys, Input, InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.process import Deserializer
 from flash.core.utilities.imports import requires
@@ -25,8 +25,8 @@ class PointCloudSegmentationDatasetInput(Input):
         sample = dataset.dataset[index]
 
         return {
-            InputDataKeys.INPUT: sample["data"],
-            InputDataKeys.METADATA: sample["attr"],
+            DataKeys.INPUT: sample["data"],
+            DataKeys.METADATA: sample["attr"],
         }
 
 
@@ -48,8 +48,8 @@ class PointCloudSegmentationFoldersInput(Input):
         sample = dataset.dataset[index]
 
         return {
-            InputDataKeys.INPUT: sample["data"],
-            InputDataKeys.METADATA: sample["attr"],
+            DataKeys.INPUT: sample["data"],
+            DataKeys.METADATA: sample["attr"],
         }
 
 

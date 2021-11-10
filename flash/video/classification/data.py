@@ -20,7 +20,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Sampler
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import FiftyOneInput, InputDataKeys, InputFormat, LabelsState, PathsInput
+from flash.core.data.io.input import DataKeys, FiftyOneInput, InputFormat, LabelsState, PathsInput
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.integrations.labelstudio.input import LabelStudioVideoClassificationInput
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, lazy_import
@@ -76,9 +76,9 @@ class BaseVideoClassification:
         return sample
 
     def predict_load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        video_path = sample[InputDataKeys.INPUT]
+        video_path = sample[DataKeys.INPUT]
         sample.update(self._encoded_video_to_dict(EncodedVideo.from_path(video_path)))
-        sample[InputDataKeys.METADATA] = {"filepath": video_path}
+        sample[DataKeys.METADATA] = {"filepath": video_path}
         return sample
 
     def _encoded_video_to_dict(self, video, annotation: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:

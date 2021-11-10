@@ -16,7 +16,7 @@ from typing import Any, Callable, List, Tuple
 import torch
 from torch.nn import functional as F
 
-from flash.core.data.io.input import InputDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.regression import RegressionTask
 from flash.core.utilities.imports import _TABULAR_AVAILABLE
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
@@ -90,19 +90,19 @@ class TabularRegressor(RegressionTask):
         return self.model(x)[0].flatten()
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[InputDataKeys.INPUT], batch[InputDataKeys.TARGET])
+        batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
         return super().training_step(batch, batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[InputDataKeys.INPUT], batch[InputDataKeys.TARGET])
+        batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
         return super().validation_step(batch, batch_idx)
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[InputDataKeys.INPUT], batch[InputDataKeys.TARGET])
+        batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch = batch[InputDataKeys.INPUT]
+        batch = batch[DataKeys.INPUT]
         return self(batch)
 
     @classmethod

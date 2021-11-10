@@ -18,7 +18,7 @@ from typing import Any, Callable, Dict, Optional, Sequence, Union
 from torch import nn
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import InputDataKeys, InputFormat
+from flash.core.data.io.input import DataKeys, InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
@@ -33,7 +33,7 @@ __all__ = ["StyleTransferInputTransform", "StyleTransferData"]
 
 
 def _apply_to_input(
-    default_transforms_fn, keys: Union[Sequence[InputDataKeys], InputDataKeys]
+    default_transforms_fn, keys: Union[Sequence[DataKeys], DataKeys]
 ) -> Callable[..., Dict[str, ApplyToKeys]]:
     @functools.wraps(default_transforms_fn)
     def wrapper(*args: Any, **kwargs: Any) -> Optional[Dict[str, ApplyToKeys]]:
@@ -87,7 +87,7 @@ class StyleTransferInputTransform(InputTransform):
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
         return cls(**state_dict)
 
-    @functools.partial(_apply_to_input, keys=InputDataKeys.INPUT)
+    @functools.partial(_apply_to_input, keys=DataKeys.INPUT)
     def default_transforms(self) -> Optional[Dict[str, Callable]]:
         if self.training:
             return dict(

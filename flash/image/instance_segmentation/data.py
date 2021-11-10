@@ -15,7 +15,7 @@ from typing import Any, Callable, Dict, Optional, Tuple
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import InputDataKeys, InputFormat
+from flash.core.data.io.input import DataKeys, InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.integrations.icevision.data import IceVisionParserInput, IceVisionPathsInput
@@ -74,7 +74,7 @@ class InstanceSegmentationInputTransform(InputTransform):
 class InstanceSegmentationOutputTransform(OutputTransform):
     @staticmethod
     def uncollate(batch: Any) -> Any:
-        return batch[InputDataKeys.PREDS]
+        return batch[DataKeys.PREDS]
 
 
 class InstanceSegmentationData(DataModule):

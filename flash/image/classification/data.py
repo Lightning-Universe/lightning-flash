@@ -21,7 +21,7 @@ from torch.utils.data.sampler import Sampler
 from flash.core.data.base_viz import BaseVisualization  # for viz
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import InputDataKeys, InputFormat, LoaderDataFrameInput
+from flash.core.data.io.input import DataKeys, InputFormat, LoaderDataFrameInput
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.process import Deserializer
 from flash.core.integrations.labelstudio.input import LabelStudioImageClassificationInput
@@ -50,8 +50,8 @@ class ImageClassificationDataFrameInput(LoaderDataFrameInput):
     @requires("image")
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         sample = super().load_sample(sample, dataset)
-        w, h = sample[InputDataKeys.INPUT].size  # WxH
-        sample[InputDataKeys.METADATA]["size"] = (h, w)
+        w, h = sample[DataKeys.INPUT].size  # WxH
+        sample[DataKeys.METADATA]["size"] = (h, w)
         return sample
 
 
@@ -359,9 +359,9 @@ class MatplotlibVisualization(BaseVisualization):
         for i, ax in enumerate(axs):
             # unpack images and labels
             if isinstance(data, list):
-                _img, _label = data[i][InputDataKeys.INPUT], data[i].get(InputDataKeys.TARGET, "")
+                _img, _label = data[i][DataKeys.INPUT], data[i].get(DataKeys.TARGET, "")
             elif isinstance(data, dict):
-                _img, _label = data[InputDataKeys.INPUT][i], data.get(InputDataKeys.TARGET, [""] * (i + 1))[i]
+                _img, _label = data[DataKeys.INPUT][i], data.get(DataKeys.TARGET, [""] * (i + 1))[i]
             else:
                 raise TypeError(f"Unknown data type. Got: {type(data)}.")
             # convert images to numpy
@@ -392,4 +392,4 @@ class MatplotlibVisualization(BaseVisualization):
 
     def show_per_batch_transform(self, batch: List[Any], running_stage):
         win_title: str = f"{running_stage} - show_per_batch_transform"
-        self._show_images_and_labels(batch[0], batch[0][InputDataKeys.INPUT].shape[0], win_title)
+        self._show_images_and_labels(batch[0], batch[0][DataKeys.INPUT].shape[0], win_title)
