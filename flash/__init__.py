@@ -41,11 +41,11 @@ if _TORCH_AVAILABLE:
         seed_everything(42)
 
     __all__ = [
-        "Input",
         "DataModule",
         "FlashCallback",
         "FlashDataset",
         "FlashIterableDataset",
+        "Input",
         "InputTransform",
         "Output",
         "OutputTransform",
