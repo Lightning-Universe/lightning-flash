@@ -24,7 +24,7 @@ from flash.core.classification import Probabilities
 from flash.core.data.data_source import DefaultDataKeys
 from flash.core.utilities.imports import _IMAGE_AVAILABLE
 from flash.image import ImageClassifier
-from flash.image.classification.data import ImageClassificationPreprocess
+from flash.image.classification.data import ImageClassificationInputTransform
 from tests.helpers.utils import _IMAGE_TESTING, _SERVE_TESTING
 
 # ======== Mock functions ========
@@ -138,8 +138,8 @@ def test_jit(tmpdir, jitter, args):
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = ImageClassifier(2)
-    # TODO: Currently only servable once a preprocess has been attached
-    model._preprocess = ImageClassificationPreprocess()
+    # TODO: Currently only servable once a input_transform has been attached
+    model._input_transform = ImageClassificationInputTransform()
     model.eval()
     model.serve()
 

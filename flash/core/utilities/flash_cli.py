@@ -180,7 +180,7 @@ class FlashCLI(LightningCLI):
     def add_arguments_to_parser(self, parser) -> None:
         subcommands = parser.add_subcommands()
 
-        data_sources = self.local_datamodule_class.preprocess_cls().available_data_sources()
+        data_sources = self.local_datamodule_class.input_transform_cls().available_data_sources()
 
         for data_source in data_sources:
             if isinstance(data_source, DefaultDataSources):
@@ -201,10 +201,12 @@ class FlashCLI(LightningCLI):
     def add_subcommand_from_function(self, subcommands, function, function_name=None):
         subcommand = ArgumentParser()
         datamodule_function = class_from_function(drop_kwargs(function))
-        preprocess_function = class_from_function(drop_kwargs(self.local_datamodule_class.preprocess_cls))
+        input_transform_function = class_from_function(drop_kwargs(self.local_datamodule_class.input_transform_cls))
         subcommand.add_class_arguments(datamodule_function, fail_untyped=False)
         subcommand.add_class_arguments(
-            preprocess_function, fail_untyped=False, skip=get_overlapping_args(datamodule_function, preprocess_function)
+            input_transform_function,
+            fail_untyped=False,
+            skip=get_overlapping_args(datamodule_function, input_transform_function),
         )
         subcommand_name = function_name or function.__name__
         subcommands.add_subcommand(subcommand_name, subcommand)

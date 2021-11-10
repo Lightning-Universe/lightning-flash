@@ -47,3 +47,4 @@ _OPEN3D_ML = Provider("Intelligent Systems Lab Org/Open3D-ML", "https://github.c
 _PYTORCHVIDEO = Provider("Facebook Research/PyTorchVideo", "https://github.com/facebookresearch/pytorchvideo")
 _VISSL = Provider("Facebook Research/vissl", "https://github.com/facebookresearch/vissl")
 _PYTORCH_FORECASTING = Provider("jdb78/PyTorch-Forecasting", "https://github.com/jdb78/pytorch-forecasting")
+_PYTORCH_GEOMETRIC = Provider("PyG/PyTorch Geometric", "https://github.com/pyg-team/pytorch_geometric")

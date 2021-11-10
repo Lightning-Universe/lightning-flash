@@ -30,7 +30,7 @@ def from_pets(
     batch_size: int = 4,
     num_workers: int = 0,
     parser: Optional[Callable] = None,
-    **preprocess_kwargs,
+    **input_transform_kwargs,
 ) -> InstanceSegmentationData:
     """Downloads and loads the pets data set from icedata."""
     data_dir = icedata.pets.load_data()
@@ -44,7 +44,7 @@ def from_pets(
         batch_size=batch_size,
         num_workers=num_workers,
         parser=parser,
-        **preprocess_kwargs,
+        **input_transform_kwargs,
     )
 
 

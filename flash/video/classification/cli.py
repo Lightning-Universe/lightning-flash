@@ -26,7 +26,7 @@ def from_kinetics(
     decode_audio: bool = False,
     batch_size: int = 4,
     num_workers: int = 0,
-    **preprocess_kwargs,
+    **input_transform_kwargs,
 ) -> VideoClassificationData:
     """Downloads and loads the Kinetics data set."""
     download_data("https://pl-flash-data.s3.amazonaws.com/kinetics.zip", "./data")
@@ -38,7 +38,7 @@ def from_kinetics(
         decode_audio=decode_audio,
         batch_size=batch_size,
         num_workers=num_workers,
-        **preprocess_kwargs,
+        **input_transform_kwargs,
     )
 
 

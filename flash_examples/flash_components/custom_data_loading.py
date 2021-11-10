@@ -21,9 +21,9 @@ from PIL import Image
 from pytorch_lightning import seed_everything
 from torch.utils.data._utils.collate import default_collate
 
-from flash import _PACKAGE_ROOT, FlashDataset, InputTransform
+from flash import _PACKAGE_ROOT, FlashDataset
 from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE
+from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
 from flash.core.data.new_data_module import DataModule
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import download_data

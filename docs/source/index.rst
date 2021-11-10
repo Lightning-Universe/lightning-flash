@@ -85,6 +85,7 @@ Lightning Flash
    :caption: Graph
 
    reference/graph_classification
+   reference/graph_embedder
 
 .. toctree::
    :maxdepth: 1

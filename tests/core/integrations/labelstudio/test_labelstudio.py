@@ -10,7 +10,7 @@ from flash.core.integrations.labelstudio.data_source import (
 from flash.core.integrations.labelstudio.visualizer import launch_app
 from flash.image.classification.data import ImageClassificationData
 from flash.text.classification.data import TextClassificationData
-from flash.video.classification.data import VideoClassificationData, VideoClassificationPreprocess
+from flash.video.classification.data import VideoClassificationData, VideoClassificationInputTransform
 from tests.helpers.utils import _IMAGE_TESTING, _TEXT_TESTING, _VIDEO_TESTING
 
 
@@ -272,8 +272,8 @@ def test_datasource_labelstudio_video():
     """Test creation of LabelStudioVideoClassificationDataSource from video."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/video_data.zip")
     data = {"data_folder": "data/upload/", "export_json": "data/project.json", "multi_label": True}
-    preprocess = VideoClassificationPreprocess()
-    ds = preprocess.data_source_of_name(DefaultDataSources.LABELSTUDIO)
+    input_transform = VideoClassificationInputTransform()
+    ds = input_transform.data_source_of_name(DefaultDataSources.LABELSTUDIO)
     train, val, test, predict = ds.to_datasets(train_data=data, test_data=data)
     sample_iter = iter(train)
     sample = next(sample_iter)

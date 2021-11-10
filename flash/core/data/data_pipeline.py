@@ -24,13 +24,19 @@ from torch.utils.data import DataLoader, IterableDataset
 
 import flash
 from flash.core.data.auto_dataset import IterableAutoDataset
-from flash.core.data.batch import _DeserializeProcessor, _Preprocessor, _Sequential
+from flash.core.data.batch import _DeserializeProcessor
 from flash.core.data.data_source import DataSource
+from flash.core.data.io.input_transform import (
+    _InputTransformProcessor,
+    _InputTransformSequential,
+    DefaultInputTransform,
+    InputTransform,
+)
 from flash.core.data.io.output import _OutputProcessor, Output
 from flash.core.data.io.output_transform import _OutputTransformProcessor, OutputTransform
-from flash.core.data.process import DefaultPreprocess, Deserializer, Preprocess
+from flash.core.data.process import Deserializer
 from flash.core.data.properties import ProcessState
-from flash.core.data.utils import _OUTPUT_TRANSFORM_FUNCS, _PREPROCESS_FUNCS, _STAGES_PREFIX
+from flash.core.data.utils import _INPUT_TRANSFORM_FUNCS, _OUTPUT_TRANSFORM_FUNCS, _STAGES_PREFIX
 from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_4_3, _PL_GREATER_EQUAL_1_5_0
 from flash.core.utilities.stages import _RUNNING_STAGE_MAPPING, RunningStage
 
@@ -77,37 +83,38 @@ class DataPipelineState:
 class DataPipeline:
     """
     DataPipeline holds the engineering logic to connect
-    :class:`~flash.core.data.process.Preprocess` and/or :class:`~flash.core.data.io.output_transform.OutputTransform`
+    :class:`~flash.core.data.io.input_transform.InputTransform` and/or
+    :class:`~flash.core.data.io.output_transform.OutputTransform`
     objects to the ``DataModule``, Flash ``Task`` and ``Trainer``.
     """
 
-    PREPROCESS_FUNCS: Set[str] = _PREPROCESS_FUNCS
+    INPUT_TRANSFORM_FUNCS: Set[str] = _INPUT_TRANSFORM_FUNCS
     OUTPUT_TRANSFORM_FUNCS: Set[str] = _OUTPUT_TRANSFORM_FUNCS
 
     def __init__(
         self,
         data_source: Optional[DataSource] = None,
-        preprocess: Optional[Preprocess] = None,
+        input_transform: Optional[InputTransform] = None,
         output_transform: Optional[OutputTransform] = None,
         deserializer: Optional[Deserializer] = None,
         output: Optional[Output] = None,
     ) -> None:
         self.data_source = data_source
 
-        self._preprocess_pipeline = preprocess or DefaultPreprocess()
+        self._input_transform_pipeline = input_transform or DefaultInputTransform()
         self._output_transform = output_transform or OutputTransform()
         self._output = output or Output()
         self._deserializer = deserializer or Deserializer()
         self._running_stage = None
 
     def initialize(self, data_pipeline_state: Optional[DataPipelineState] = None) -> DataPipelineState:
-        """Creates the :class:`.DataPipelineState` and gives the reference to the: :class:`.Preprocess`,
+        """Creates the :class:`.DataPipelineState` and gives the reference to the: :class:`.InputTransform`,
         :class:`.OutputTransform`, and :class:`.Output`. Once this has been called, any attempt to add new state will
         give a warning."""
         data_pipeline_state = data_pipeline_state or DataPipelineState()
         if self.data_source is not None:
             self.data_source.attach_data_pipeline_state(data_pipeline_state)
-        self._preprocess_pipeline.attach_data_pipeline_state(data_pipeline_state)
+        self._input_transform_pipeline.attach_data_pipeline_state(data_pipeline_state)
         self._output_transform.attach_data_pipeline_state(data_pipeline_state)
         self._output.attach_data_pipeline_state(data_pipeline_state)
         return data_pipeline_state
@@ -155,15 +162,17 @@ class DataPipeline:
         return samples
 
     def deserialize_processor(self) -> _DeserializeProcessor:
-        return self._create_collate_preprocessors(RunningStage.PREDICTING)[0]
+        return self._create_collate_input_transform_processors(RunningStage.PREDICTING)[0]
 
-    def worker_preprocessor(
+    def worker_input_transform_processor(
         self, running_stage: RunningStage, collate_fn: Optional[Callable] = None, is_serving: bool = False
-    ) -> _Preprocessor:
-        return self._create_collate_preprocessors(running_stage, collate_fn=collate_fn, is_serving=is_serving)[1]
+    ) -> _InputTransformProcessor:
+        return self._create_collate_input_transform_processors(
+            running_stage, collate_fn=collate_fn, is_serving=is_serving
+        )[1]
 
-    def device_preprocessor(self, running_stage: RunningStage) -> _Preprocessor:
-        return self._create_collate_preprocessors(running_stage)[2]
+    def device_input_transform_processor(self, running_stage: RunningStage) -> _InputTransformProcessor:
+        return self._create_collate_input_transform_processors(running_stage)[2]
 
     def output_transform_processor(self, running_stage: RunningStage, is_serving=False) -> _OutputTransformProcessor:
         return self._create_output_transform_processor(running_stage, is_serving=is_serving)
@@ -176,7 +185,7 @@ class DataPipeline:
         cls, function_name, process_obj, stage: RunningStage, object_type: Optional[Type] = None
     ) -> str:
         if object_type is None:
-            object_type = Preprocess
+            object_type = InputTransform
 
         prefixes = []
 
@@ -202,37 +211,38 @@ class DataPipeline:
             return self._identity, collate
         return collate, self._identity
 
-    def _create_collate_preprocessors(
+    def _create_collate_input_transform_processors(
         self,
         stage: RunningStage,
         collate_fn: Optional[Callable] = None,
         is_serving: bool = False,
-    ) -> Tuple[_DeserializeProcessor, _Preprocessor, _Preprocessor]:
+    ) -> Tuple[_DeserializeProcessor, _InputTransformProcessor, _InputTransformProcessor]:
 
         original_collate_fn = collate_fn
 
-        preprocess: Preprocess = self._preprocess_pipeline
+        input_transform: InputTransform = self._input_transform_pipeline
         prefix: str = _STAGES_PREFIX[stage]
 
         if collate_fn is not None:
-            preprocess._default_collate = collate_fn
+            input_transform._default_collate = collate_fn
 
         func_names: Dict[str, str] = {
-            k: self._resolve_function_hierarchy(k, preprocess, stage, Preprocess) for k in self.PREPROCESS_FUNCS
+            k: self._resolve_function_hierarchy(k, input_transform, stage, InputTransform)
+            for k in self.INPUT_TRANSFORM_FUNCS
         }
 
-        collate_fn: Callable = getattr(preprocess, func_names["collate"])
+        collate_fn: Callable = getattr(input_transform, func_names["collate"])
 
         per_batch_transform_overriden: bool = self._is_overriden_recursive(
-            "per_batch_transform", preprocess, Preprocess, prefix=prefix
+            "per_batch_transform", input_transform, InputTransform, prefix=prefix
         )
 
         per_sample_transform_on_device_overriden: bool = self._is_overriden_recursive(
-            "per_sample_transform_on_device", preprocess, Preprocess, prefix=prefix
+            "per_sample_transform_on_device", input_transform, InputTransform, prefix=prefix
         )
 
         collate_in_worker_from_transform: Optional[bool] = getattr(
-            preprocess, f"_{prefix}_collate_in_worker_from_transform", None
+            input_transform, f"_{prefix}_collate_in_worker_from_transform", None
         )
 
         is_per_overriden = per_batch_transform_overriden and per_sample_transform_on_device_overriden
@@ -250,53 +260,55 @@ class DataPipeline:
             )
 
         worker_collate_fn = (
-            worker_collate_fn.collate_fn if isinstance(worker_collate_fn, _Preprocessor) else worker_collate_fn
+            worker_collate_fn.collate_fn
+            if isinstance(worker_collate_fn, _InputTransformProcessor)
+            else worker_collate_fn
         )
 
         assert_contains_tensor = self._is_overriden_recursive(
-            "to_tensor_transform", preprocess, Preprocess, prefix=_STAGES_PREFIX[stage]
+            "to_tensor_transform", input_transform, InputTransform, prefix=_STAGES_PREFIX[stage]
         )
 
         deserialize_processor = _DeserializeProcessor(
             self._deserializer,
-            preprocess,
-            getattr(preprocess, func_names["pre_tensor_transform"]),
-            getattr(preprocess, func_names["to_tensor_transform"]),
+            input_transform,
+            getattr(input_transform, func_names["pre_tensor_transform"]),
+            getattr(input_transform, func_names["to_tensor_transform"]),
         )
-        worker_preprocessor = _Preprocessor(
-            preprocess,
+        worker_input_transform_processor = _InputTransformProcessor(
+            input_transform,
             worker_collate_fn,
-            _Sequential(
-                preprocess,
-                None if is_serving else getattr(preprocess, func_names["pre_tensor_transform"]),
-                None if is_serving else getattr(preprocess, func_names["to_tensor_transform"]),
-                getattr(preprocess, func_names["post_tensor_transform"]),
+            _InputTransformSequential(
+                input_transform,
+                None if is_serving else getattr(input_transform, func_names["pre_tensor_transform"]),
+                None if is_serving else getattr(input_transform, func_names["to_tensor_transform"]),
+                getattr(input_transform, func_names["post_tensor_transform"]),
                 stage,
                 assert_contains_tensor=assert_contains_tensor,
             ),
-            getattr(preprocess, func_names["per_batch_transform"]),
+            getattr(input_transform, func_names["per_batch_transform"]),
             stage,
         )
-        worker_preprocessor._original_collate_fn = original_collate_fn
-        device_preprocessor = _Preprocessor(
-            preprocess,
+        worker_input_transform_processor._original_collate_fn = original_collate_fn
+        device_input_transform_processor = _InputTransformProcessor(
+            input_transform,
             device_collate_fn,
-            getattr(preprocess, func_names["per_sample_transform_on_device"]),
-            getattr(preprocess, func_names["per_batch_transform_on_device"]),
+            getattr(input_transform, func_names["per_sample_transform_on_device"]),
+            getattr(input_transform, func_names["per_batch_transform_on_device"]),
             stage,
             apply_per_sample_transform=device_collate_fn != self._identity,
             on_device=True,
         )
-        return deserialize_processor, worker_preprocessor, device_preprocessor
+        return deserialize_processor, worker_input_transform_processor, device_input_transform_processor
 
     @staticmethod
     def _model_transfer_to_device_wrapper(
-        func: Callable, preprocessor: _Preprocessor, model: "Task", stage: RunningStage
+        func: Callable, input_transform: _InputTransformProcessor, model: "Task", stage: RunningStage
     ) -> Callable:
 
         if not isinstance(func, _StageOrchestrator):
             func = _StageOrchestrator(func, model)
-        func.register_additional_stage(stage, preprocessor)
+        func.register_additional_stage(stage, input_transform)
 
         return func
 
@@ -368,7 +380,7 @@ class DataPipeline:
         setattr(curr_attr, final_name, new_loader)
         setattr(model, final_name, new_loader)
 
-    def _attach_preprocess_to_model(
+    def _attach_input_transform_to_model(
         self,
         model: "Task",
         stage: Optional[RunningStage] = None,
@@ -409,7 +421,7 @@ class DataPipeline:
                 if isinstance(loader, DataLoader):
                     dl_args = {k: v for k, v in vars(loader).items() if not k.startswith("_")}
 
-                    _, dl_args["collate_fn"], device_collate_fn = self._create_collate_preprocessors(
+                    _, dl_args["collate_fn"], device_collate_fn = self._create_collate_input_transform_processors(
                         stage=stage, collate_fn=dl_args["collate_fn"], is_serving=is_serving
                     )
 
@@ -474,18 +486,18 @@ class DataPipeline:
         is_serving: bool = False,
     ):
         # not necessary to detach. preprocessing and postprocessing for stage will be overwritten.
-        self._attach_preprocess_to_model(model, stage)
+        self._attach_input_transform_to_model(model, stage)
 
         if not stage or stage == RunningStage.PREDICTING:
             self._attach_output_transform_to_model(model, RunningStage.PREDICTING, is_serving=is_serving)
 
     def _detach_from_model(self, model: "Task", stage: Optional[RunningStage] = None):
-        self._detach_preprocessing_from_model(model, stage)
+        self._detach_input_transform_from_model(model, stage)
 
         if not stage or stage == RunningStage.PREDICTING:
             self._detach_output_transform_from_model(model)
 
-    def _detach_preprocessing_from_model(self, model: "Task", stage: Optional[RunningStage] = None):
+    def _detach_input_transform_from_model(self, model: "Task", stage: Optional[RunningStage] = None):
         if not stage:
             stages = [RunningStage.TRAINING, RunningStage.VALIDATING, RunningStage.TESTING, RunningStage.PREDICTING]
         elif isinstance(stage, RunningStage):
@@ -530,7 +542,7 @@ class DataPipeline:
                         if default_collate:
                             dl_args["collate_fn"] = default_collate
 
-                    if isinstance(dl_args["collate_fn"], _Preprocessor):
+                    if isinstance(dl_args["collate_fn"], _InputTransformProcessor):
                         dl_args["collate_fn"] = dl_args["collate_fn"]._original_collate_fn
 
                         if isinstance(dl_args["dataset"], (IterableAutoDataset, IterableDataset)):
@@ -559,7 +571,7 @@ class DataPipeline:
 
     def __str__(self) -> str:
         data_source: DataSource = self.data_source
-        preprocess: Preprocess = self._preprocess_pipeline
+        input_transform: InputTransform = self._input_transform_pipeline
         output_transform: OutputTransform = self._output_transform
         output: Output = self._output
         deserializer: Deserializer = self._deserializer
@@ -567,7 +579,7 @@ class DataPipeline:
             f"{self.__class__.__name__}("
             f"data_source={str(data_source)}, "
             f"deserializer={deserializer}, "
-            f"preprocess={preprocess}, "
+            f"input_transform={input_transform}, "
             f"output_transform={output_transform}, "
             f"output={output})"
         )

@@ -23,4 +23,4 @@ ______________
     classification.data.BaseVideoClassification
     classification.data.VideoClassificationFiftyOneDataSource
     classification.data.VideoClassificationPathsDataSource
-    classification.data.VideoClassificationPreprocess
+    classification.data.VideoClassificationInputTransform

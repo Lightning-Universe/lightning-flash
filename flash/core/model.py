@@ -40,9 +40,10 @@ import flash
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
 from flash.core.data.data_source import DataSource
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import OutputTransform
-from flash.core.data.process import Deserializer, DeserializerMapping, Preprocess
+from flash.core.data.process import Deserializer, DeserializerMapping
 from flash.core.data.properties import ProcessState
 from flash.core.finetuning import _DEFAULTS_FINETUNE_STRATEGIES, _FINETUNING_STRATEGIES_REGISTRY
 from flash.core.hooks import FineTuningHooks
@@ -56,6 +57,7 @@ from flash.core.utilities.providers import _HUGGINGFACE
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import (
     DESERIALIZER_TYPE,
+    INPUT_TRANSFORM_TYPE,
     LOSS_FN_TYPE,
     LR_SCHEDULER_TYPE,
     METRICS_TYPE,
@@ -63,7 +65,6 @@ from flash.core.utilities.types import (
     OPTIMIZER_TYPE,
     OUTPUT_TRANSFORM_TYPE,
     OUTPUT_TYPE,
-    PREPROCESS_TYPE,
 )
 
 
@@ -321,7 +322,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             `metric(preds,target)` and return a single scalar tensor.
         deserializer: Either a single :class:`~flash.core.data.process.Deserializer` or a mapping of these to
             deserialize the input
-        preprocess: :class:`~flash.core.data.process.Preprocess` to use as the default for this task.
+        input_transform: :class:`~flash.core.data.io.input_transform.InputTransform` to use as the default
+            for this task.
         output_transform: :class:`~flash.core.data.io.output_transform.OutputTransform` to use as the default for this
             task.
         output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
@@ -342,7 +344,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: METRICS_TYPE = None,
         deserializer: DESERIALIZER_TYPE = None,
-        preprocess: PREPROCESS_TYPE = None,
+        input_transform: INPUT_TRANSFORM_TYPE = None,
         output_transform: OUTPUT_TRANSFORM_TYPE = None,
         output: OUTPUT_TYPE = None,
     ):
@@ -361,7 +363,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         self.save_hyperparameters("learning_rate", "optimizer")
 
         self._deserializer: Optional[Deserializer] = None
-        self._preprocess: Optional[Preprocess] = preprocess
+        self._input_transform: Optional[InputTransform] = input_transform
         self._output_transform: Optional[OutputTransform] = output_transform
         self._output: Optional[Output] = None
 
@@ -494,13 +496,13 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         dataset = data_pipeline.data_source.generate_dataset(x, running_stage)
         dataloader = self.process_predict_dataset(dataset)
         x = list(dataloader.dataset)
-        x = data_pipeline.worker_preprocessor(running_stage, collate_fn=dataloader.collate_fn)(x)
+        x = data_pipeline.worker_input_transform_processor(running_stage, collate_fn=dataloader.collate_fn)(x)
         # todo (tchaton): Remove this when sync with Lightning master.
         if len(inspect.signature(self.transfer_batch_to_device).parameters) == 3:
             x = self.transfer_batch_to_device(x, self.device, 0)
         else:
             x = self.transfer_batch_to_device(x, self.device)
-        x = data_pipeline.device_preprocessor(running_stage)(x)
+        x = data_pipeline.device_input_transform_processor(running_stage)(x)
         x = x[0] if isinstance(x, list) else x
         predictions = self.predict_step(x, 0)  # batch_idx is always 0 when running with `model.predict`
         predictions = data_pipeline.output_transform_processor(running_stage)(predictions)
@@ -619,30 +621,31 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
     @staticmethod
     def _resolve(
         old_deserializer: Optional[Deserializer],
-        old_preprocess: Optional[Preprocess],
+        old_input_transform: Optional[InputTransform],
         old_output_transform: Optional[OutputTransform],
         old_output: Optional[Output],
         new_deserializer: Optional[Deserializer],
-        new_preprocess: Optional[Preprocess],
+        new_input_transform: Optional[InputTransform],
         new_output_transform: Optional[OutputTransform],
         new_output: Optional[Output],
-    ) -> Tuple[Optional[Deserializer], Optional[Preprocess], Optional[OutputTransform], Optional[Output]]:
-        """Resolves the correct :class:`~flash.core.data.process.Preprocess`,
-        :class:`~flash.core.data.io.output_transform.OutputTransform`, and :class:`~flash.core.data.io.output.Output` to
-        use, choosing ``new_*`` if it is not None or a base class (:class:`~flash.core.data.process.Preprocess`,
+    ) -> Tuple[Optional[Deserializer], Optional[InputTransform], Optional[OutputTransform], Optional[Output]]:
+        """Resolves the correct :class:`~flash.core.data.io.input_transform.InputTransform`,
+        :class:`~flash.core.data.io.output_transform.OutputTransform`, and :class:`~flash.core.data.io.output.Output`
+        to use, choosing ``new_*`` if it is not None or a base class
+        (:class:`~flash.core.data.io.input_transform.InputTransform`,
         :class:`~flash.core.data.io.output_transform.OutputTransform`, or :class:`~flash.core.data.io.output.Output`)
         and ``old_*`` otherwise.
 
         Args:
-            old_preprocess: :class:`~flash.core.data.process.Preprocess` to be overridden.
+            old_input_transform: :class:`~flash.core.data.io.input_transform.InputTransform` to be overridden.
             old_output_transform: :class:`~flash.core.data.io.output_transform.OutputTransform` to be overridden.
             old_output: :class:`~flash.core.data.io.output.Output` to be overridden.
-            new_preprocess: :class:`~flash.core.data.process.Preprocess` to override with.
+            new_input_transform: :class:`~flash.core.data.io.input_transform.InputTransform` to override with.
             new_output_transform: :class:`~flash.core.data.io.output_transform.OutputTransform` to override with.
             new_output: :class:`~flash.core.data.io.output.Output` to override with.
 
         Returns:
-            The resolved :class:`~flash.core.data.process.Preprocess`,
+            The resolved :class:`~flash.core.data.io.input_transform.InputTransform`,
             :class:`~flash.core.data.io.output_transform.OutputTransform`, and
             :class:`~flash.core.data.io.output.Output`.
         """
@@ -650,9 +653,9 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         if new_deserializer is not None and type(new_deserializer) != Deserializer:
             deserializer = new_deserializer
 
-        preprocess = old_preprocess
-        if new_preprocess is not None and type(new_preprocess) != Preprocess:
-            preprocess = new_preprocess
+        input_transform = old_input_transform
+        if new_input_transform is not None and type(new_input_transform) != InputTransform:
+            input_transform = new_input_transform
 
         output_transform = old_output_transform
         if new_output_transform is not None and type(new_output_transform) != OutputTransform:
@@ -662,7 +665,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         if new_output is not None and type(new_output) != Output:
             output = new_output
 
-        return deserializer, preprocess, output_transform, output
+        return deserializer, input_transform, output_transform, output
 
     @torch.jit.unused
     @property
@@ -723,7 +726,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         data_pipeline: Optional[DataPipeline] = None,
     ) -> Optional[DataPipeline]:
         """Build a :class:`.DataPipeline` incorporating available
-        :class:`~flash.core.data.process.Preprocess` and :class:`~flash.core.data.io.output_transform.OutputTransform`
+        :class:`~flash.core.data.io.input_transform.InputTransform` and
+        :class:`~flash.core.data.io.output_transform.OutputTransform`
         objects. These will be overridden in the following resolution order (lowest priority first):
 
         - Lightning ``Datamodule``, either attached to the :class:`.Trainer` or to the :class:`.Task`.
@@ -736,13 +740,13 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
                 the current data source format used.
             deserializer: deserializer to use
             data_pipeline: Optional highest priority source of
-                :class:`~flash.core.data.process.Preprocess` and
+                :class:`~flash.core.data.io.input_transform.InputTransform` and
                 :class:`~flash.core.data.io.output_transform.OutputTransform`.
 
         Returns:
             The fully resolved :class:`.DataPipeline`.
         """
-        deserializer, old_data_source, preprocess, output_transform, output = None, None, None, None, None
+        deserializer, old_data_source, input_transform, output_transform, output = None, None, None, None, None
 
         # Datamodule
         datamodule = None
@@ -753,32 +757,32 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
         if getattr(datamodule, "data_pipeline", None) is not None:
             old_data_source = getattr(datamodule.data_pipeline, "data_source", None)
-            preprocess = getattr(datamodule.data_pipeline, "_preprocess_pipeline", None)
+            input_transform = getattr(datamodule.data_pipeline, "_input_transform_pipeline", None)
             output_transform = getattr(datamodule.data_pipeline, "_output_transform", None)
             output = getattr(datamodule.data_pipeline, "_output", None)
             deserializer = getattr(datamodule.data_pipeline, "_deserializer", None)
 
         # Defaults / task attributes
-        deserializer, preprocess, output_transform, output = Task._resolve(
+        deserializer, input_transform, output_transform, output = Task._resolve(
             deserializer,
-            preprocess,
+            input_transform,
             output_transform,
             output,
             self._deserializer,
-            self._preprocess,
+            self._input_transform,
             self._output_transform,
             self._output,
         )
 
         # Datapipeline
         if data_pipeline is not None:
-            deserializer, preprocess, output_transform, output = Task._resolve(
+            deserializer, input_transform, output_transform, output = Task._resolve(
                 deserializer,
-                preprocess,
+                input_transform,
                 output_transform,
                 output,
                 getattr(data_pipeline, "_deserializer", None),
-                getattr(data_pipeline, "_preprocess_pipeline", None),
+                getattr(data_pipeline, "_input_transform_pipeline", None),
                 getattr(data_pipeline, "_output_transform", None),
                 getattr(data_pipeline, "_output", None),
             )
@@ -786,15 +790,15 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         data_source = data_source or old_data_source
 
         if isinstance(data_source, str):
-            if preprocess is None:
+            if input_transform is None:
                 data_source = DataSource()  # TODO: warn the user that we are not using the specified data source
             else:
-                data_source = preprocess.data_source_of_name(data_source)
+                data_source = input_transform.data_source_of_name(data_source)
 
         if deserializer is None or type(deserializer) is Deserializer:
-            deserializer = getattr(preprocess, "deserializer", deserializer)
+            deserializer = getattr(input_transform, "deserializer", deserializer)
 
-        data_pipeline = DataPipeline(data_source, preprocess, output_transform, deserializer, output)
+        data_pipeline = DataPipeline(data_source, input_transform, output_transform, deserializer, output)
         self._data_pipeline_state = self._data_pipeline_state or DataPipelineState()
         self.attach_data_pipeline_state(self._data_pipeline_state)
         self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)
@@ -818,25 +822,25 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
     @torch.jit.unused
     @data_pipeline.setter
     def data_pipeline(self, data_pipeline: Optional[DataPipeline]) -> None:
-        self._deserializer, self._preprocess, self._output_transform, self.output = Task._resolve(
+        self._deserializer, self._input_transform, self._output_transform, self.output = Task._resolve(
             self._deserializer,
-            self._preprocess,
+            self._input_transform,
             self._output_transform,
             self._output,
             getattr(data_pipeline, "_deserializer", None),
-            getattr(data_pipeline, "_preprocess_pipeline", None),
+            getattr(data_pipeline, "_input_transform_pipeline", None),
             getattr(data_pipeline, "_output_transform", None),
             getattr(data_pipeline, "_output", None),
         )
 
-        # self._preprocess.state_dict()
-        if getattr(self._preprocess, "_ddp_params_and_buffers_to_ignore", None):
-            self._ddp_params_and_buffers_to_ignore = self._preprocess._ddp_params_and_buffers_to_ignore
+        # self._input_transform.state_dict()
+        if getattr(self._input_transform, "_ddp_params_and_buffers_to_ignore", None):
+            self._ddp_params_and_buffers_to_ignore = self._input_transform._ddp_params_and_buffers_to_ignore
 
     @torch.jit.unused
     @property
-    def preprocess(self) -> Preprocess:
-        return getattr(self.data_pipeline, "_preprocess_pipeline", None)
+    def input_transform(self) -> InputTransform:
+        return getattr(self.data_pipeline, "_input_transform_pipeline", None)
 
     @torch.jit.unused
     @property
@@ -1105,22 +1109,23 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
     def _load_from_state_dict(
         self, state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs
     ):
-        if "preprocess.state_dict" in state_dict:
+        if "input_transform.state_dict" in state_dict:
             try:
-                preprocess_state_dict = state_dict["preprocess.state_dict"]
-                meta = preprocess_state_dict["_meta"]
+                input_transform_state_dict = state_dict["input_transform.state_dict"]
+                meta = input_transform_state_dict["_meta"]
                 cls = getattr(import_module(meta["module"]), meta["class_name"])
-                self._preprocess = cls.load_state_dict(
-                    {k: v for k, v in preprocess_state_dict.items() if k != "_meta"},
+                self._input_transform = cls.load_state_dict(
+                    {k: v for k, v in input_transform_state_dict.items() if k != "_meta"},
                     strict=strict,
                 )
-                self._preprocess._state = meta["_state"]
-                del state_dict["preprocess.state_dict"]
-                del preprocess_state_dict["_meta"]
+                self._input_transform._state = meta["_state"]
+                del state_dict["input_transform.state_dict"]
+                del input_transform_state_dict["_meta"]
             except (ModuleNotFoundError, KeyError):
-                meta = state_dict["preprocess.state_dict"]["_meta"]
+                meta = state_dict["input_transform.state_dict"]["_meta"]
                 raise MisconfigurationException(
-                    f"The `Preprocess` {meta['module']}.{meta['class_name']} has been moved and couldn't be imported."
+                    f"The `InputTransform` {meta['module']}.{meta['class_name']}"
+                    "has been moved and couldn't be imported."
                 )
 
         super()._load_from_state_dict(

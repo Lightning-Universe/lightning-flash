@@ -13,10 +13,10 @@
 # limitations under the License.
 from typing import Callable, Dict, Optional, Union
 
-from flash.text.seq2seq.core.data import Seq2SeqData, Seq2SeqOutputTransform, Seq2SeqPreprocess
+from flash.text.seq2seq.core.data import Seq2SeqData, Seq2SeqInputTransform, Seq2SeqOutputTransform
 
 
-class TranslationPreprocess(Seq2SeqPreprocess):
+class TranslationInputTransform(Seq2SeqInputTransform):
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -45,5 +45,5 @@ class TranslationPreprocess(Seq2SeqPreprocess):
 class TranslationData(Seq2SeqData):
     """Data module for Translation tasks."""
 
-    preprocess_cls = TranslationPreprocess
+    input_transform_cls = TranslationInputTransform
     output_transform_cls = Seq2SeqOutputTransform
