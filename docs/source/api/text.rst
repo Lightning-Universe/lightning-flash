@@ -99,6 +99,3 @@ _______________
     seq2seq.core.data.Seq2SeqOutputTransform
     seq2seq.core.data.Seq2SeqInputTransform
     seq2seq.core.data.Seq2SeqSentencesInput
-    seq2seq.core.metrics.BLEUScore
-    seq2seq.core.metrics.RougeBatchAggregator
-    seq2seq.core.metrics.RougeMetric
