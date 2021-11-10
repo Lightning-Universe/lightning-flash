@@ -32,6 +32,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Deprecated `flash.text.seq2seq.core.metrics` in favour of `torchmetrics[text]` ([#648](https://github.com/PyTorchLightning/lightning-flash/pull/648))
 
+- Deprecated `flash.core.data.data_source.DefaultDataKeys` in favour of `flash.DataKeys` ([#929](https://github.com/PyTorchLightning/lightning-flash/pull/929))
+
+- Deprecated `data_source` argument to `flash.Task.predict` in favour of `input` ([#929](https://github.com/PyTorchLightning/lightning-flash/pull/929))
+
 ### Fixed
 
 ### Removed
