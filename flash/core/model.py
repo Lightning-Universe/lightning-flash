@@ -14,6 +14,7 @@
 import functools
 import inspect
 import pickle
+import warnings
 from abc import ABCMeta
 from copy import deepcopy
 from importlib import import_module
@@ -471,6 +472,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         self,
         x: Any,
         input: Optional[str] = None,
+        data_source: Optional[str] = None,
         deserializer: Optional[Deserializer] = None,
         data_pipeline: Optional[DataPipeline] = None,
     ) -> Any:
@@ -486,6 +488,13 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         Returns:
             The post-processed model predictions
         """
+        if data_source is not None:
+            warnings.warn(
+                "The `data_source` argument has been deprecated since 0.6.0 and will be removed in 0.7.0. Use `input` "
+                "instead.",
+                FutureWarning,
+            )
+            input = data_source
         running_stage = RunningStage.PREDICTING
 
         data_pipeline = self.build_data_pipeline(input or "default", deserializer, data_pipeline)
