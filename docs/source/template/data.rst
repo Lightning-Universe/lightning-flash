@@ -52,7 +52,7 @@ We override our ``TemplateNumpyInput`` so that we can call ``super`` with the da
 We perform two additional steps here to improve the user experience:
 
 1. We set the ``num_classes`` attribute on the ``dataset``. If ``num_classes`` is set, it is automatically made available as a property of the :class:`~flash.core.data.data_module.DataModule`.
-2. We create and set a :class:`~flash.core.data.io.input.LabelsState`. The labels provided here will be shared with the :class:`~flash.core.classification.Labels` serializer, so the user doesn't need to provide them.
+2. We create and set a :class:`~flash.core.data.io.input.LabelsState`. The labels provided here will be shared with the :class:`~flash.core.classification.Labels` output, so the user doesn't need to provide them.
 
 Here's the code for the ``TemplateSKLearnInput.load_data`` method:
 

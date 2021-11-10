@@ -124,7 +124,6 @@ _______________________
     ~flash.core.data.process.Deserializer
     ~flash.core.data.io.output_transform.OutputTransform
     ~flash.core.data.io.input_transform.InputTransform
-    ~flash.core.data.process.Serializer
 
 flash.core.data.properties
 __________________________
