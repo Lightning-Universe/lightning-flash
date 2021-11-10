@@ -471,8 +471,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
     def predict(
         self,
         x: Any,
-        input: Optional[str] = None,
         data_source: Optional[str] = None,
+        input: Optional[str] = None,
         deserializer: Optional[Deserializer] = None,
         data_pipeline: Optional[DataPipeline] = None,
     ) -> Any:
