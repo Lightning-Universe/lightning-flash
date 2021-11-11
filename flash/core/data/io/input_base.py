@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Generic, Iterable, MutableMapping, Sequence, TypeVar
+from typing import Any, Generic, GenericMeta, Iterable, MutableMapping, Sequence, TypeVar
 
 from pytorch_lightning.utilities.model_helpers import is_overridden
 from torch.utils.data import Dataset, IterableDataset
@@ -98,7 +98,7 @@ def _check_init(input_cls):
         )
 
 
-class _InputMeta(type):
+class _InputMeta(GenericMeta):
     def __new__(mcs, name, bases, dct):
         input_cls = super().__new__(mcs, name, bases, dct)
         _check_init(input_cls)
