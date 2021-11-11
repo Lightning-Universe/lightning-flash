@@ -118,10 +118,10 @@ class DataModule(pl.LightningDataModule):
         # TODO: InputTransform can change
         self.data_fetcher.attach_to_input_transform(self.input_transform)
 
-        self._train_ds = train_dataset
-        self._val_ds = val_dataset
-        self._test_ds = test_dataset
-        self._predict_ds = predict_dataset
+        self._train_ds = train_dataset or None
+        self._val_ds = val_dataset or None
+        self._test_ds = test_dataset or None
+        self._predict_ds = predict_dataset or None
 
         if self._train_ds is not None and (val_split is not None and self._val_ds is None):
             self._train_ds, self._val_ds = self._split_train_val(self._train_ds, val_split)
