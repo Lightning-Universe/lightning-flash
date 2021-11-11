@@ -503,7 +503,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, metaclass=Check
         # <hack> Temporary fix to support new `Input` object
         input = data_pipeline._input_transform_pipeline.input_of_name(input or "default")
 
-        if issubclass(input, NewInputBase):
+        if inspect.isclass(input) and issubclass(input, NewInputBase):
             dataset = input(running_stage, x)
         else:
             dataset = input.generate_dataset(x, running_stage)
