@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Generic, GenericMeta, Iterable, MutableMapping, Sequence, TypeVar
+import sys
+from typing import Any, Generic, Iterable, MutableMapping, Sequence, TypeVar
 
 from pytorch_lightning.utilities.model_helpers import is_overridden
 from torch.utils.data import Dataset, IterableDataset
@@ -19,6 +20,11 @@ from torch.utils.data import Dataset, IterableDataset
 from flash.core.data.data_pipeline import DataPipeline
 from flash.core.data.properties import Properties
 from flash.core.utilities.stages import RunningStage
+
+if sys.version_info < (3, 7):
+    from typing import GenericMeta
+else:
+    GenericMeta = type
 
 T = TypeVar("T", Sequence[MutableMapping[str, Any]], Iterable[MutableMapping[str, Any]])
 
