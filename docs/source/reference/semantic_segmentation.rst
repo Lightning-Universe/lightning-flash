@@ -81,9 +81,9 @@ Loading Data
     {% block from_folders %}
     Construct the {{ data_module }} from folders.
 
-    {% if data_sources['folders'].extensions is defined %}
-    The supported file extensions are: {{ data_sources['folders'].extensions|join(', ') }}.
-    {% set extension = data_sources['folders'].extensions[0] %}
+    {% if inputs['folders'].extensions is defined %}
+    The supported file extensions are: {{ inputs['folders'].extensions|join(', ') }}.
+    {% set extension = inputs['folders'].extensions[0] %}
     {% else %}
     {% set extension = '' %}
     {% endif %}
@@ -124,9 +124,9 @@ Loading Data
     {% block from_files %}
     Construct the {{ data_module }} from lists of input images and corresponding list of target images.
 
-    {% if data_sources['files'].extensions is defined %}
-    The supported file extensions are: {{ data_sources['files'].extensions|join(', ') }}.
-    {% set extension = data_sources['files'].extensions[0] %}
+    {% if inputs['files'].extensions is defined %}
+    The supported file extensions are: {{ inputs['files'].extensions|join(', ') }}.
+    {% set extension = inputs['files'].extensions[0] %}
     {% else %}
     {% set extension = '' %}
     {% endif %}

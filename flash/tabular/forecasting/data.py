@@ -19,7 +19,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
+from flash.core.data.io.input import DataKeys, Input, InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.process import Deserializer
 from flash.core.data.properties import ProcessState
@@ -42,7 +42,7 @@ class TimeSeriesDataSetParametersState(ProcessState):
     time_series_dataset_parameters: Optional[Dict[str, Any]]
 
 
-class TabularForecastingDataFrameDataSource(DataSource[DataFrame]):
+class TabularForecastingDataFrameInput(Input[DataFrame]):
     @requires("tabular")
     def __init__(
         self,
@@ -50,20 +50,20 @@ class TabularForecastingDataFrameDataSource(DataSource[DataFrame]):
         target: Optional[Union[str, List[str]]] = None,
         group_ids: Optional[List[str]] = None,
         parameters: Optional[Dict[str, Any]] = None,
-        **data_source_kwargs: Any,
+        **input_kwargs: Any,
     ):
         super().__init__()
         self.time_idx = time_idx
         self.target = target
         self.group_ids = group_ids
-        self.data_source_kwargs = data_source_kwargs
+        self.input_kwargs = input_kwargs
 
         self.set_state(TimeSeriesDataSetParametersState(parameters))
 
     def load_data(self, data: DataFrame, dataset: Optional[Any] = None):
         if self.training:
             time_series_dataset = TimeSeriesDataSet(
-                data, time_idx=self.time_idx, group_ids=self.group_ids, target=self.target, **self.data_source_kwargs
+                data, time_idx=self.time_idx, group_ids=self.group_ids, target=self.target, **self.input_kwargs
             )
             parameters = time_series_dataset.get_parameters()
 
@@ -91,7 +91,7 @@ class TabularForecastingDataFrameDataSource(DataSource[DataFrame]):
         return time_series_dataset
 
     def load_sample(self, sample: Mapping[str, Any], dataset: Optional[Any] = None) -> Any:
-        return {DefaultDataKeys.INPUT: sample[0], DefaultDataKeys.TARGET: sample[1]}
+        return {DataKeys.INPUT: sample[0], DataKeys.TARGET: sample[1]}
 
 
 class TabularForecastingInputTransform(InputTransform):
@@ -102,23 +102,23 @@ class TabularForecastingInputTransform(InputTransform):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         deserializer: Optional[Deserializer] = None,
-        **data_source_kwargs: Any,
+        **input_kwargs: Any,
     ):
-        self.data_source_kwargs = data_source_kwargs
+        self.input_kwargs = input_kwargs
         super().__init__(
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
-                DefaultDataSources.DATAFRAME: TabularForecastingDataFrameDataSource(**data_source_kwargs),
+            inputs={
+                InputFormat.DATAFRAME: TabularForecastingDataFrameInput(**input_kwargs),
             },
             deserializer=deserializer,
-            default_data_source=DefaultDataSources.DATAFRAME,
+            default_input=InputFormat.DATAFRAME,
         )
 
     def get_state_dict(self, strict: bool = False) -> Dict[str, Any]:
-        return {**self.transforms, **self.data_source_kwargs}
+        return {**self.transforms, **self.input_kwargs}
 
     @classmethod
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = True) -> "InputTransform":
@@ -212,12 +212,12 @@ class TabularForecastingData(DataModule):
             )
         """
 
-        return cls.from_data_source(
+        return cls.from_input(
             time_idx=time_idx,
             target=target,
             group_ids=group_ids,
             parameters=parameters,
-            data_source=DefaultDataSources.DATAFRAME,
+            input=InputFormat.DATAFRAME,
             train_data=train_data_frame,
             val_data=val_data_frame,
             test_data=test_data_frame,

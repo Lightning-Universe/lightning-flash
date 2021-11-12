@@ -21,7 +21,7 @@ from torch.utils.data.sampler import Sampler
 from flash.core.classification import LabelsState
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
+from flash.core.data.io.input import DataKeys, Input, InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.process import Deserializer
@@ -41,7 +41,7 @@ else:
     DataFrame = object
 
 
-class TabularDataFrameDataSource(DataSource[DataFrame]):
+class TabularDataFrameInput(Input[DataFrame]):
     def __init__(
         self,
         cat_cols: Optional[List[str]] = None,
@@ -94,16 +94,14 @@ class TabularDataFrameDataSource(DataSource[DataFrame]):
     def load_data(self, data: DataFrame, dataset: Optional[Any] = None):
         df, cat_vars, num_vars = self.common_load_data(data, dataset=dataset)
         target = df[self.target_col].to_numpy().astype(np.float32 if self.is_regression else np.int64)
-        return [
-            {DefaultDataKeys.INPUT: (c, n), DefaultDataKeys.TARGET: t} for c, n, t in zip(cat_vars, num_vars, target)
-        ]
+        return [{DataKeys.INPUT: (c, n), DataKeys.TARGET: t} for c, n, t in zip(cat_vars, num_vars, target)]
 
     def predict_load_data(self, data: DataFrame, dataset: Optional[Any] = None):
         _, cat_vars, num_vars = self.common_load_data(data, dataset=dataset)
-        return [{DefaultDataKeys.INPUT: (c, n)} for c, n in zip(cat_vars, num_vars)]
+        return [{DataKeys.INPUT: (c, n)} for c, n in zip(cat_vars, num_vars)]
 
 
-class TabularCSVDataSource(TabularDataFrameDataSource):
+class TabularCSVInput(TabularDataFrameInput):
     def load_data(self, data: str, dataset: Optional[Any] = None):
         return super().load_data(pd.read_csv(data), dataset=dataset)
 
@@ -147,7 +145,7 @@ class TabularDeserializer(Deserializer):
         cat_vars = np.stack(cat_vars, 1)
         num_vars = np.stack(num_vars, 1)
 
-        return [{DefaultDataKeys.INPUT: [c, n]} for c, n in zip(cat_vars, num_vars)]
+        return [{DataKeys.INPUT: [c, n]} for c, n in zip(cat_vars, num_vars)]
 
     @property
     def example_input(self) -> str:
@@ -194,15 +192,15 @@ class TabularInputTransform(InputTransform):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
-                DefaultDataSources.CSV: TabularCSVDataSource(
+            inputs={
+                InputFormat.CSV: TabularCSVInput(
                     cat_cols, num_cols, target_col, mean, std, codes, target_codes, classes, is_regression
                 ),
-                "data_frame": TabularDataFrameDataSource(
+                "data_frame": TabularDataFrameInput(
                     cat_cols, num_cols, target_col, mean, std, codes, target_codes, classes, is_regression
                 ),
             },
-            default_data_source=DefaultDataSources.CSV,
+            default_input=InputFormat.CSV,
             deserializer=deserializer
             or TabularDeserializer(
                 cat_cols=cat_cols,
@@ -251,19 +249,19 @@ class TabularData(DataModule):
 
     @property
     def codes(self) -> Dict[str, str]:
-        return self._data_source.codes
+        return self._input.codes
 
     @property
     def num_classes(self) -> int:
-        return self._data_source.num_classes
+        return self._input.num_classes
 
     @property
     def cat_cols(self) -> Optional[List[str]]:
-        return self._data_source.cat_cols
+        return self._input.cat_cols
 
     @property
     def num_cols(self) -> Optional[List[str]]:
-        return self._data_source.num_cols
+        return self._input.num_cols
 
     @property
     def num_features(self) -> int:
@@ -300,9 +298,7 @@ class TabularData(DataModule):
     ) -> Tuple[float, float, List[str], Dict[str, Any], Dict[str, Any]]:
 
         if train_data_frame is None:
-            raise MisconfigurationException(
-                "train_data_frame is required to instantiate the TabularDataFrameDataSource"
-            )
+            raise MisconfigurationException("train_data_frame is required to instantiate the TabularDataFrameInput")
 
         data_frames = [train_data_frame]
 
@@ -410,7 +406,7 @@ class TabularData(DataModule):
             categorical_fields=categorical_fields,
         )
 
-        return cls.from_data_source(
+        return cls.from_input(
             "data_frame",
             train_data_frame,
             val_data_frame,

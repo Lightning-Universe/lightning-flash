@@ -23,7 +23,7 @@ import torch
 from flash import Trainer
 from flash.__main__ import main
 from flash.core.data.data_pipeline import DataPipeline
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _IMAGE_AVAILABLE
 from flash.image import SemanticSegmentation
 from flash.image.segmentation.data import SemanticSegmentationInputTransform
@@ -38,8 +38,8 @@ class DummyDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         return {
-            DefaultDataKeys.INPUT: torch.rand(3, *self.size),
-            DefaultDataKeys.TARGET: torch.randint(self.num_classes - 1, self.size),
+            DataKeys.INPUT: torch.rand(3, *self.size),
+            DataKeys.TARGET: torch.randint(self.num_classes - 1, self.size),
         }
 
     def __len__(self) -> int:
@@ -107,7 +107,7 @@ def test_predict_tensor():
     img = torch.rand(1, 3, 64, 64)
     model = SemanticSegmentation(2, backbone="mobilenetv3_large_100")
     data_pipe = DataPipeline(input_transform=SemanticSegmentationInputTransform(num_classes=1))
-    out = model.predict(img, data_source="tensors", data_pipeline=data_pipe)
+    out = model.predict(img, input="tensors", data_pipeline=data_pipe)
     assert isinstance(out[0], list)
     assert len(out[0]) == 64
     assert len(out[0][0]) == 64
@@ -118,7 +118,7 @@ def test_predict_numpy():
     img = np.ones((1, 3, 64, 64))
     model = SemanticSegmentation(2, backbone="mobilenetv3_large_100")
     data_pipe = DataPipeline(input_transform=SemanticSegmentationInputTransform(num_classes=1))
-    out = model.predict(img, data_source="numpy", data_pipeline=data_pipe)
+    out = model.predict(img, input="numpy", data_pipeline=data_pipe)
     assert isinstance(out[0], list)
     assert len(out[0]) == 64
     assert len(out[0][0]) == 64

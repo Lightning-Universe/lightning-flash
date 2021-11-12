@@ -14,10 +14,10 @@
 from typing import Any, Callable, Dict, Optional
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DefaultDataSources
+from flash.core.data.io.input import InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
-from flash.graph.data import GraphDatasetDataSource
+from flash.graph.data import GraphDatasetInput
 
 if _GRAPH_AVAILABLE:
     from torch_geometric.data.batch import Batch
@@ -37,10 +37,10 @@ class GraphClassificationInputTransform(InputTransform):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
-                DefaultDataSources.DATASETS: GraphDatasetDataSource(),
+            inputs={
+                InputFormat.DATASETS: GraphDatasetInput(),
             },
-            default_data_source=DefaultDataSources.DATASETS,
+            default_input=InputFormat.DATASETS,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:

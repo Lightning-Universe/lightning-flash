@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Changed `DataSource` to `Input` ([#929](https://github.com/PyTorchLightning/lightning-flash/pull/929))
+
 - Changed `Preprocess` to `InputTransform` ([#951](https://github.com/PyTorchLightning/lightning-flash/pull/951))
 
 - Changed classes named `*Serializer` and properties / variables named `serializer` to be `*Output` and `output` respectively ([#927](https://github.com/PyTorchLightning/lightning-flash/pull/927))
@@ -31,6 +33,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Deprecated `Task.serializer` in favour of `Task.output` ([#927](https://github.com/PyTorchLightning/lightning-flash/pull/927))
 
 - Deprecated `flash.text.seq2seq.core.metrics` in favour of `torchmetrics[text]` ([#648](https://github.com/PyTorchLightning/lightning-flash/pull/648))
+
+- Deprecated `flash.core.data.data_source.DefaultDataKeys` in favour of `flash.DataKeys` ([#929](https://github.com/PyTorchLightning/lightning-flash/pull/929))
+
+- Deprecated `data_source` argument to `flash.Task.predict` in favour of `input` ([#929](https://github.com/PyTorchLightning/lightning-flash/pull/929))
 
 ### Fixed
 

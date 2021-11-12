@@ -319,7 +319,7 @@ class DataModule(DataModule):
         if not cls.flash_datasets_registry or not isinstance(cls.flash_datasets_registry, FlashRegistry):
             raise MisconfigurationException(
                 "The ``AutoContainer`` should have ``flash_datasets_registry`` (FlashRegistry) populated "
-                "with datasource class and ``default_flash_dataset_enum`` (LightningEnum) class attributes. "
+                "with Input class and ``default_flash_dataset_enum`` (LightningEnum) class attributes. "
             )
 
         if enum not in cls.flash_datasets_registry.available_keys():

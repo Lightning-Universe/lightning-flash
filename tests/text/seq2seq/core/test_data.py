@@ -18,12 +18,12 @@ import pytest
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text.seq2seq.core.data import (
     Seq2SeqBackboneState,
-    Seq2SeqCSVDataSource,
-    Seq2SeqDataSource,
-    Seq2SeqFileDataSource,
-    Seq2SeqJSONDataSource,
+    Seq2SeqCSVInput,
+    Seq2SeqFileInput,
+    Seq2SeqInput,
+    Seq2SeqJSONInput,
     Seq2SeqOutputTransform,
-    Seq2SeqSentencesDataSource,
+    Seq2SeqSentencesInput,
 )
 from tests.helpers.utils import _TEXT_TESTING
 
@@ -36,11 +36,11 @@ if _TEXT_AVAILABLE:
 @pytest.mark.parametrize(
     "cls, kwargs",
     [
-        (Seq2SeqDataSource, {"backbone": "sshleifer/tiny-mbart"}),
-        (Seq2SeqFileDataSource, {"backbone": "sshleifer/tiny-mbart", "filetype": "csv"}),
-        (Seq2SeqCSVDataSource, {"backbone": "sshleifer/tiny-mbart"}),
-        (Seq2SeqJSONDataSource, {"backbone": "sshleifer/tiny-mbart"}),
-        (Seq2SeqSentencesDataSource, {"backbone": "sshleifer/tiny-mbart"}),
+        (Seq2SeqInput, {"backbone": "sshleifer/tiny-mbart"}),
+        (Seq2SeqFileInput, {"backbone": "sshleifer/tiny-mbart", "filetype": "csv"}),
+        (Seq2SeqCSVInput, {"backbone": "sshleifer/tiny-mbart"}),
+        (Seq2SeqJSONInput, {"backbone": "sshleifer/tiny-mbart"}),
+        (Seq2SeqSentencesInput, {"backbone": "sshleifer/tiny-mbart"}),
         (Seq2SeqOutputTransform, {}),
     ],
 )

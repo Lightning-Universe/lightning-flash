@@ -21,6 +21,6 @@ ______________
     ~classification.data.VideoClassificationData
 
     classification.data.BaseVideoClassification
-    classification.data.VideoClassificationFiftyOneDataSource
-    classification.data.VideoClassificationPathsDataSource
+    classification.data.VideoClassificationFiftyOneInput
+    classification.data.VideoClassificationPathsInput
     classification.data.VideoClassificationInputTransform

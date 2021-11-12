@@ -19,7 +19,7 @@ from torch.utils.data import DataLoader
 
 from flash.core.classification import Labels
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
-from flash.core.data.data_source import LabelsState
+from flash.core.data.io.input import LabelsState
 from flash.core.data.io.input_transform import DefaultInputTransform
 from flash.core.data.io.output import Output
 from flash.core.model import Task

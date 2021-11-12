@@ -59,5 +59,5 @@ def test_predict_dataset(tmpdir):
         GraphClassifier(num_features=tudataset.num_features, num_classes=tudataset.num_classes).backbone
     )
     data_pipe = DataPipeline(input_transform=GraphClassificationInputTransform())
-    out = model.predict(tudataset, data_source="datasets", data_pipeline=data_pipe)
+    out = model.predict(tudataset, input="datasets", data_pipeline=data_pipe)
     assert isinstance(out[0], torch.Tensor)

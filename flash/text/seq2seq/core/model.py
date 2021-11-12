@@ -150,7 +150,7 @@ class Seq2SeqTask(Task):
 
     @property
     def tokenizer(self) -> "PreTrainedTokenizerBase":
-        return self.data_pipeline.data_source.tokenizer
+        return self.data_pipeline.input.tokenizer
 
     def tokenize_labels(self, labels: Tensor) -> List[str]:
         label_str = self.tokenizer.batch_decode(labels, skip_special_tokens=True)

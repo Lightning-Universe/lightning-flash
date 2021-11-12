@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import DefaultInputTransform
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, _VISSL_AVAILABLE
@@ -38,7 +38,7 @@ def ssl_datamodule(
     )
 
     to_tensor_transform = ApplyToKeys(
-        DefaultDataKeys.INPUT,
+        DataKeys.INPUT,
         multi_crop_transform,
     )
     input_transform = DefaultInputTransform(

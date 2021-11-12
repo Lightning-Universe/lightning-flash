@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _COCO_AVAILABLE, _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _PIL_AVAILABLE
 from flash.image.detection.data import ObjectDetectionData
 
@@ -154,7 +154,7 @@ def test_image_detector_data_from_coco(tmpdir):
 
     data = next(iter(datamodule.train_dataloader()))
     sample = data[0]
-    assert sample[DefaultDataKeys.INPUT].shape == (128, 128, 3)
+    assert sample[DataKeys.INPUT].shape == (128, 128, 3)
 
     datamodule = ObjectDetectionData.from_coco(
         train_folder=train_folder,
@@ -171,11 +171,11 @@ def test_image_detector_data_from_coco(tmpdir):
     data = next(iter(datamodule.val_dataloader()))
 
     sample = data[0]
-    assert sample[DefaultDataKeys.INPUT].shape == (128, 128, 3)
+    assert sample[DataKeys.INPUT].shape == (128, 128, 3)
 
     data = next(iter(datamodule.test_dataloader()))
     sample = data[0]
-    assert sample[DefaultDataKeys.INPUT].shape == (128, 128, 3)
+    assert sample[DataKeys.INPUT].shape == (128, 128, 3)
 
 
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
@@ -188,7 +188,7 @@ def test_image_detector_data_from_fiftyone(tmpdir):
 
     data = next(iter(datamodule.train_dataloader()))
     sample = data[0]
-    assert sample[DefaultDataKeys.INPUT].shape == (128, 128, 3)
+    assert sample[DataKeys.INPUT].shape == (128, 128, 3)
 
     datamodule = ObjectDetectionData.from_fiftyone(
         train_dataset=train_dataset,
@@ -201,8 +201,8 @@ def test_image_detector_data_from_fiftyone(tmpdir):
 
     data = next(iter(datamodule.val_dataloader()))
     sample = data[0]
-    assert sample[DefaultDataKeys.INPUT].shape == (128, 128, 3)
+    assert sample[DataKeys.INPUT].shape == (128, 128, 3)
 
     data = next(iter(datamodule.test_dataloader()))
     sample = data[0]
-    assert sample[DefaultDataKeys.INPUT].shape == (128, 128, 3)
+    assert sample[DataKeys.INPUT].shape == (128, 128, 3)
