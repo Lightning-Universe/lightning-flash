@@ -11,8 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import abc
 import functools
-import sys
 from typing import Any, Generic, Iterable, MutableMapping, Sequence, TypeVar, Union
 
 from torch.utils.data import Dataset, IterableDataset
@@ -21,12 +21,7 @@ from flash.core.data.data_pipeline import DataPipeline
 from flash.core.data.properties import Properties
 from flash.core.utilities.stages import RunningStage
 
-if sys.version_info < (3, 7):
-    from typing import GenericMeta
-else:
-    GenericMeta = type
-
-T = TypeVar("T", Sequence[MutableMapping[str, Any]], Iterable[MutableMapping[str, Any]])
+T = TypeVar("T")
 
 
 def _has_len(data: Union[Sequence, Iterable]) -> bool:
@@ -58,7 +53,7 @@ def _wrap_init(dct):
         dct["__init__"] = wrapper
 
 
-class _InputMeta(GenericMeta):
+class _InputMeta(abc.ABCMeta):
     def __new__(mcs, name, bases, dct):
         _wrap_init(dct)
         return super().__new__(mcs, name, bases, dct)
