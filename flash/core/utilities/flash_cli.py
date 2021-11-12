@@ -198,7 +198,7 @@ class FlashCLI(LightningCLI):
 
     def add_subcommand_from_function(self, subcommands, function, function_name=None):
         subcommand = ArgumentParser()
-        datamodule_function = class_from_function(drop_kwargs(function))
+        datamodule_function = class_from_function(drop_kwargs(function), return_type=self.local_datamodule_class)
         input_transform_function = class_from_function(drop_kwargs(self.local_datamodule_class.input_transform_cls))
         subcommand.add_class_arguments(datamodule_function, fail_untyped=False)
         subcommand.add_class_arguments(
