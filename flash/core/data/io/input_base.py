@@ -52,10 +52,9 @@ def _validate_input(input: "InputBase") -> None:
         RuntimeError: If the ``input`` is of type ``IterableInput`` and it's ``data`` attribute does support ``len``.
     """
     if input.data is not None:
-        has_len = _has_len(input.data)
-        if isinstance(input, Input) and not has_len:
+        if isinstance(input, Input) and not _has_len(input.data):
             raise RuntimeError("`Input.data` is not a sequence with a defined length. Use `IterableInput` instead.")
-        elif isinstance(input, IterableInput) and has_len:
+        elif isinstance(input, IterableInput) and _has_len(input.data):
             raise RuntimeError("`IterableInput.data` is a sequence with a defined length. Use `Input` instead.")
 
 
