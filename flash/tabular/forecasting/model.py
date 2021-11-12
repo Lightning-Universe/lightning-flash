@@ -37,8 +37,7 @@ class TabularForecaster(AdapterTask):
         metrics: Union[torchmetrics.Metric, List[torchmetrics.Metric]] = None,
         learning_rate: float = 4e-3,
     ):
-
-        self.save_hyperparameters()
+        self.save_hyperparameters(ignore="parameters")
 
         if backbone_kwargs is None:
             backbone_kwargs = {}
