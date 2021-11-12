@@ -88,10 +88,10 @@ def visualize(
 
 
 class FiftyOneLabelUtilities:
-    def __init__(self, label_field: str = "ground_truth", label_cls=fol.Label):
+    def __init__(self, label_field: str = "ground_truth", label_cls=None):
         super().__init__()
         self.label_field = label_field
-        self.label_cls = label_cls
+        self.label_cls = label_cls or fol.Label
 
     def validate(self, sample_collection: SampleCollection):
         label_type = sample_collection._get_label_field_type(self.label_field)
