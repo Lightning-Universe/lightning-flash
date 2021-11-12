@@ -17,7 +17,6 @@ from typing import Any, cast, Dict, Iterable, MutableMapping, Sequence, Tuple, U
 
 from torch.utils.data import Dataset, IterableDataset
 
-from flash.core.data.data_pipeline import DataPipeline
 from flash.core.data.properties import Properties
 from flash.core.utilities.stages import RunningStage
 
@@ -120,12 +119,16 @@ class InputBase(Properties, metaclass=_InputMeta):
             self.data = self._call_load_data(*args, **kwargs)
 
     def _call_load_data(self, *args: Any, **kwargs: Any) -> Union[Sequence, Iterable]:
+        from flash.core.data.data_pipeline import DataPipeline
+
         load_data = getattr(
             self, DataPipeline._resolve_function_hierarchy("load_data", self, self.running_stage, InputBase)
         )
         return load_data(*args, **kwargs)
 
     def _call_load_sample(self, sample: Any) -> Any:
+        from flash.core.data.data_pipeline import DataPipeline
+
         load_sample = getattr(
             self,
             DataPipeline._resolve_function_hierarchy(
@@ -179,6 +182,10 @@ class InputBase(Properties, metaclass=_InputMeta):
         self.__dict__.update(newstate)
 
     def __bool__(self):
+        """If ``self.data`` is ``None`` then the ``InputBase`` is considered falsey.
+
+        This allows for quickly checking whether or not the ``InputBase`` is populated with data.
+        """
         return self.data is not None
 
 
