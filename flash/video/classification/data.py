@@ -226,7 +226,7 @@ class VideoClassificationFiftyOneInput(VideoClassificationInput):
         class_to_label_mapping = {c: lab for lab, c in label_to_class_mapping.items()}
 
         filepaths = sample_collection.values("filepath")
-        labels = sample_collection.values(self.label_field + ".label")
+        labels = sample_collection.values(label_field + ".label")
         targets = [class_to_label_mapping[lab] for lab in labels]
 
         dataset = LabeledVideoDataset(
@@ -237,9 +237,6 @@ class VideoClassificationFiftyOneInput(VideoClassificationInput):
             decoder=decoder,
         )
         return super().load_data(dataset)
-
-    def predict_load_data(self, *args, **kwargs) -> "LabeledVideoDataset":
-        return self.load_data(*args, **kwargs)
 
 
 class VideoClassificationInputTransform(InputTransform):

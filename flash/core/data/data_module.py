@@ -281,7 +281,7 @@ class DataModule(pl.LightningDataModule):
             self.set_dataset_attribute(self._predict_ds, "running_stage", RunningStage.PREDICTING)
 
     def _resolve_collate_fn(self, dataset: Dataset, running_stage: RunningStage) -> Optional[Callable]:
-        if isinstance(dataset, (BaseAutoDataset, SplitDataset)):
+        if isinstance(dataset, (BaseAutoDataset, SplitDataset, InputBase)):
             return self.data_pipeline.worker_input_transform_processor(running_stage)
 
     def _train_dataloader(self) -> DataLoader:
