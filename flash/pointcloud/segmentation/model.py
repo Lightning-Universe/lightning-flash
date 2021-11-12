@@ -190,8 +190,8 @@ class PointCloudSegmentation(ClassificationTask):
     ) -> DataLoader:
         if not isinstance(dataset.data, TorchDataloader):
 
-            dataset.data = TorchDataloader(
-                dataset.data,
+            dataset.dataset = TorchDataloader(
+                dataset.dataset,
                 preprocess=self.backbone.preprocess,
                 transform=self.backbone.transform,
                 use_cache=False,
