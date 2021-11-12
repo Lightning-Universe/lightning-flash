@@ -13,7 +13,7 @@
 # limitations under the License.
 import functools
 import sys
-from typing import Any, Iterable, MutableMapping, Sequence, Union
+from typing import Any, cast, Dict, Iterable, MutableMapping, Sequence, Tuple, Union
 
 from torch.utils.data import Dataset, IterableDataset
 
@@ -28,6 +28,11 @@ else:
 
 
 def _has_len(data: Union[Sequence, Iterable]) -> bool:
+    """Duck typing check to see if the argument supports getting the length.
+
+    Args:
+        data: The object to check for length support.
+    """
     try:
         len(data)
         return True
@@ -35,7 +40,17 @@ def _has_len(data: Union[Sequence, Iterable]) -> bool:
         return False
 
 
-def _validate_input(input: "InputBase"):
+def _validate_input(input: "InputBase") -> None:
+    """Helper function to validate that the type of an ``InputBase.data`` is appropriate for the type of
+    ``InputBase`` being used.
+
+    Args:
+        input: The ``InputBase`` instance to validate.
+
+    Raises:
+        RuntimeError: If the ``input`` is of type ``Input`` and it's ``data`` attribute does not support ``len``.
+        RuntimeError: If the ``input`` is of type ``IterableInput`` and it's ``data`` attribute does support ``len``.
+    """
     if input.data is not None:
         has_len = _has_len(input.data)
         if isinstance(input, Input) and not has_len:
@@ -44,27 +59,39 @@ def _validate_input(input: "InputBase"):
             raise RuntimeError("`IterableInput.data` is a sequence with a defined length. Use `Input` instead.")
 
 
-def _wrap_init(dct):
-    if "__init__" in dct:
-        fn = dct["__init__"]
+def _wrap_init(class_dict: Dict[str, Any]) -> None:
+    """Helper function to wrap the ``__init__`` (if present) from a class construction dict to apply the
+    ``_validate_input`` function after instantiation. Modifies the dict inplace.
+
+    Args:
+        class_dict: The class construction dict, optionally containing an init to wrap.
+    """
+    if "__init__" in class_dict:
+        fn = class_dict["__init__"]
 
         @functools.wraps(fn)
         def wrapper(self, *args, **kwargs):
             fn(self, *args, **kwargs)
             _validate_input(self)
 
-        dct["__init__"] = wrapper
+        class_dict["__init__"] = wrapper
 
 
 class _InputMeta(GenericMeta):
-    def __new__(mcs, name, bases, dct):
-        _wrap_init(dct)
-        return super().__new__(mcs, name, bases, dct)
+    """Metaclass for the ``InputBase`` which wraps any init defined in a subclass with the ``_validate_input``
+    helper."""
+
+    def __new__(mcs, name: str, bases: Tuple, class_dict: Dict[str, Any]) -> "_InputMeta":
+        _wrap_init(class_dict)
+        return cast(_InputMeta, super().__new__(mcs, name, bases, class_dict))
 
 
 class _IterableInputMeta(_InputMeta, type(IterableDataset)):
-    def __new__(mcs, name, bases, dct):
-        return super().__new__(mcs, name, bases, dct)
+    """Metaclass for the ``IterableInput`` which extends ``_InputMeta`` and avoids metaclass conflict with
+    ``IterableDataset``."""
+
+    def __new__(mcs, name: str, bases: Tuple, class_dict: Dict[str, Any]) -> "_IterableInputMeta":
+        return cast(_IterableInputMeta, super().__new__(mcs, name, bases, class_dict))
 
 
 class InputBase(Properties, metaclass=_InputMeta):

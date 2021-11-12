@@ -427,13 +427,13 @@ class DataModule(pl.LightningDataModule):
         return multi_label_train or multi_label_val or multi_label_test
 
     @property
-    def input(self) -> Optional[Input]:
-        """Property that returns the data source."""
+    def inputs(self) -> Optional[Union[Input, List[InputBase]]]:
+        """Property that returns the inputs associated with this ``DataModule``."""
         datasets = [self.train_dataset, self.val_dataset, self.test_dataset, self.predict_dataset]
-        input = [dataset for dataset in datasets if isinstance(dataset, InputBase)]
-        if len(input) == 0:
-            input = self._input
-        return input
+        inputs = [dataset for dataset in datasets if isinstance(dataset, InputBase)]
+        if len(inputs) == 0:
+            inputs = self._input
+        return inputs
 
     @property
     def input_transform(self) -> InputTransform:
@@ -450,7 +450,7 @@ class DataModule(pl.LightningDataModule):
     def data_pipeline(self) -> DataPipeline:
         """Property that returns the full data pipeline including the data source, input transform and
         postprocessing."""
-        return DataPipeline(self.input, self.input_transform, self.output_transform)
+        return DataPipeline(self.inputs, self.input_transform, self.output_transform)
 
     def available_inputs(self) -> Sequence[str]:
         """Get the list of available data source names for use with this
