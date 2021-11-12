@@ -29,9 +29,11 @@ from flash.pointcloud.detection.open3d_ml.inputs import (
 
 class PointCloudObjectDetectorDatasetInput(Input):
     def load_data(self, dataset: Dataset) -> Any:
-        return dataset
+        self.dataset = dataset
+        return range(len(self.dataset))
 
-    def load_sample(self, sample: Any) -> Any:
+    def load_sample(self, index: int) -> Any:
+        sample = self.dataset[index]
         return {
             DataKeys.INPUT: sample["data"],
             DataKeys.METADATA: sample["attr"],
