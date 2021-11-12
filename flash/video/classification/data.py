@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pathlib
-from typing import Any, Callable, Dict, List, Optional, Type, TYPE_CHECKING, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Type, TYPE_CHECKING, Union
 
 import numpy as np
 import torch
@@ -20,10 +20,20 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Sampler
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import DataKeys, FiftyOneInput, InputFormat, LabelsState, PathsInput
+from flash.core.data.io.input import DataKeys, InputFormat, LabelsState
+from flash.core.data.io.input_base import Input, IterableInput
 from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.utilities.paths import list_valid_files
+from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
 from flash.core.integrations.labelstudio.input import LabelStudioVideoClassificationInput
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, lazy_import
+from flash.core.utilities.imports import (
+    _FIFTYONE_AVAILABLE,
+    _KORNIA_AVAILABLE,
+    _PYTORCHVIDEO_AVAILABLE,
+    lazy_import,
+    requires,
+)
+from flash.core.utilities.stages import RunningStage
 
 SampleCollection = None
 if _FIFTYONE_AVAILABLE:
@@ -51,54 +61,63 @@ _PYTORCHVIDEO_DATA = Dict[str, Union[str, torch.Tensor, int, float, List]]
 Label = Union[int, List[int]]
 
 
-class BaseVideoClassification:
-    def __init__(
-        self,
-        clip_sampler: "ClipSampler",
-        video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
-        decode_audio: bool = True,
-        decoder: str = "pyav",
-    ):
-        self.clip_sampler = clip_sampler
-        self.video_sampler = video_sampler
-        self.decode_audio = decode_audio
-        self.decoder = decoder
+def _make_clip_sampler(
+    clip_sampler: Union[str, "ClipSampler"] = "random",
+    clip_duration: float = 2,
+    clip_sampler_kwargs: Dict[str, Any] = None,
+) -> "ClipSampler":
+    if clip_sampler_kwargs is None:
+        clip_sampler_kwargs = {}
+    return make_clip_sampler(clip_sampler, clip_duration, **clip_sampler_kwargs)
 
-    def load_data(self, data: str, dataset: Optional[Any] = None) -> "LabeledVideoDataset":
-        ds = self._make_encoded_video_dataset(data)
+
+class VideoClassificationInput(IterableInput):
+    def load_data(self, dataset: "LabeledVideoDataset") -> "LabeledVideoDataset":
         if self.training:
-            label_to_class_mapping = {p[1]: p[0].split("/")[-2] for p in ds._labeled_videos._paths_and_labels}
+            label_to_class_mapping = {p[1]: p[0].split("/")[-2] for p in dataset._labeled_videos._paths_and_labels}
             self.set_state(LabelsState(label_to_class_mapping))
-            dataset.num_classes = len(np.unique([s[1]["label"] for s in ds._labeled_videos]))
-        return ds
+            self.num_classes = len(np.unique([s[1]["label"] for s in dataset._labeled_videos]))
+        return dataset
 
     def load_sample(self, sample):
         return sample
 
-    def predict_load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        video_path = sample[DataKeys.INPUT]
-        sample.update(self._encoded_video_to_dict(EncodedVideo.from_path(video_path)))
-        sample[DataKeys.METADATA] = {"filepath": video_path}
-        return sample
 
-    def _encoded_video_to_dict(self, video, annotation: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+class VideoClassificationPathsPredictInput(Input):
+    def predict_load_data(
+        self,
+        paths: List[str],
+        clip_sampler: Union[str, "ClipSampler"] = "random",
+        clip_duration: float = 2,
+        clip_sampler_kwargs: Dict[str, Any] = None,
+        decode_audio: bool = False,
+        decoder: str = "pyav",
+    ) -> Iterable[Tuple[str, Any]]:
+        paths = list_valid_files(paths, valid_extensions=("mp4", "avi"))
+        self._clip_sampler = _make_clip_sampler(clip_sampler, clip_duration, clip_sampler_kwargs)
+        self._decode_audio = decode_audio
+        self._decoder = decoder
+        return paths
+
+    def predict_load_sample(self, sample: str) -> Dict[str, Any]:
+        video = EncodedVideo.from_path(sample, decode_audio=self._decode_audio, decoder=self._decoder)
         (
             clip_start,
             clip_end,
             clip_index,
             aug_index,
             is_last_clip,
-        ) = self.clip_sampler(0.0, video.duration, annotation)
+        ) = self._clip_sampler(0.0, video.duration, None)
 
         loaded_clip = video.get_clip(clip_start, clip_end)
 
         clip_is_null = (
-            loaded_clip is None or loaded_clip["video"] is None or (loaded_clip["audio"] is None and self.decode_audio)
+            loaded_clip is None or loaded_clip["video"] is None or (loaded_clip["audio"] is None and self._decode_audio)
         )
 
         if clip_is_null:
             raise MisconfigurationException(
-                f"The provided video is too short {video.duration} to be clipped at {self.clip_sampler._clip_duration}"
+                f"The provided video is too short {video.duration} to be clipped at {self._clip_sampler._clip_duration}"
             )
 
         frames = loaded_clip["video"]
@@ -110,78 +129,57 @@ class BaseVideoClassification:
             "clip_index": clip_index,
             "aug_index": aug_index,
             **({"audio": audio_samples} if audio_samples is not None else {}),
+            DataKeys.METADATA: {"filepath": sample},
         }
 
-    def _make_encoded_video_dataset(self, data) -> "LabeledVideoDataset":
-        raise NotImplementedError("Subclass must implement _make_encoded_video_dataset()")
 
-
-class VideoClassificationPathsInput(BaseVideoClassification, PathsInput):
-    def __init__(
+class VideoClassificationFoldersInput(VideoClassificationInput):
+    def load_data(
         self,
-        clip_sampler: "ClipSampler",
+        path: str,
+        clip_sampler: Union[str, "ClipSampler"] = "random",
+        clip_duration: float = 2,
+        clip_sampler_kwargs: Dict[str, Any] = None,
         video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
-        decode_audio: bool = True,
+        decode_audio: bool = False,
         decoder: str = "pyav",
-    ):
-        super().__init__(
-            clip_sampler,
+    ) -> "LabeledVideoDataset":
+        dataset = labeled_video_dataset(
+            pathlib.Path(path),
+            _make_clip_sampler(clip_sampler, clip_duration, clip_sampler_kwargs),
             video_sampler=video_sampler,
             decode_audio=decode_audio,
             decoder=decoder,
         )
-        PathsInput.__init__(
-            self,
-            extensions=("mp4", "avi"),
-        )
-
-    def _make_encoded_video_dataset(self, data) -> "LabeledVideoDataset":
-        ds: LabeledVideoDataset = labeled_video_dataset(
-            pathlib.Path(data),
-            self.clip_sampler,
-            video_sampler=self.video_sampler,
-            decode_audio=self.decode_audio,
-            decoder=self.decoder,
-        )
-        return ds
+        return super().load_data(dataset)
 
 
-class VideoClassificationListInput(BaseVideoClassification, PathsInput):
-    def __init__(
-        self,
-        clip_sampler: "ClipSampler",
-        video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
-        decode_audio: bool = True,
-        decoder: str = "pyav",
-    ):
-        super().__init__(
-            clip_sampler,
-            video_sampler=video_sampler,
-            decode_audio=decode_audio,
-            decoder=decoder,
-        )
-        PathsInput.__init__(
-            self,
-            extensions=("mp4", "avi"),
-        )
-
+class VideoClassificationFilesInput(VideoClassificationInput):
     def _to_multi_hot(self, label_list: List[int]) -> torch.Tensor:
         v = torch.zeros(len(self.labels_set))
         for label in label_list:
             v[label] = 1
         return v
 
-    def _make_encoded_video_dataset(self, data) -> "LabeledVideoDataset":
-        [paths, str_labels] = data
-        self.is_multilabel = any(isinstance(label, list) for label in str_labels)
+    def load_data(
+        self,
+        paths: List[str],
+        labels: List[Union[str, List]],
+        clip_sampler: Union[str, "ClipSampler"] = "random",
+        clip_duration: float = 2,
+        clip_sampler_kwargs: Dict[str, Any] = None,
+        video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
+        decode_audio: bool = False,
+        decoder: str = "pyav",
+    ) -> "LabeledVideoDataset":
+        self.is_multilabel = any(isinstance(label, list) for label in labels)
         if self.is_multilabel:
-            self.labels_set = {label for label_list in str_labels for label in label_list}
+            self.labels_set = {label for label_list in labels for label in label_list}
             self.label_to_id = {label: i for i, label in enumerate(sorted(self.labels_set))}
             self.id_to_label = {i: label for label, i in self.label_to_id.items()}
 
             encoded_labels = [
-                self._to_multi_hot([self.label_to_id[classname] for classname in label_list])
-                for label_list in str_labels
+                self._to_multi_hot([self.label_to_id[classname] for classname in label_list]) for label_list in labels
             ]
 
             data = list(
@@ -191,76 +189,57 @@ class VideoClassificationListInput(BaseVideoClassification, PathsInput):
                 )
             )
         else:
-            self.labels_set = set(str_labels)
+            self.labels_set = set(labels)
             self.label_to_id = {label: i for i, label in enumerate(sorted(self.labels_set))}
             self.id_to_label = {i: label for label, i in self.label_to_id.items()}
-            data = list(
-                zip(paths, [self.label_to_id[classname] for classname in str_labels])
-            )  # List[Lists] -> List[Tuples]
-        labeled_video_paths = LabeledVideoPaths(data)
-        ds = LabeledVideoDataset(
-            labeled_video_paths,
-            self.clip_sampler,
-            video_sampler=self.video_sampler,
-            decode_audio=self.decode_audio,
-            decoder=self.decoder,
-        )
-        return ds
+            data = list(zip(paths, [self.label_to_id[classname] for classname in labels]))
 
-    def load_data(self, data: str, dataset: Optional[Any] = None) -> "LabeledVideoDataset":
-        ds = self._make_encoded_video_dataset(data)
-
-        if self.training:
-            self.set_state(LabelsState(self.id_to_label))
-            dataset.num_classes = len(self.labels_set)
-        return ds
-
-
-class VideoClassificationFiftyOneInput(
-    BaseVideoClassification,
-    FiftyOneInput,
-):
-    def __init__(
-        self,
-        clip_sampler: "ClipSampler",
-        video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
-        decode_audio: bool = True,
-        decoder: str = "pyav",
-        label_field: str = "ground_truth",
-    ):
-        super().__init__(
-            clip_sampler=clip_sampler,
+        dataset = LabeledVideoDataset(
+            LabeledVideoPaths(data),
+            _make_clip_sampler(clip_sampler, clip_duration, clip_sampler_kwargs),
             video_sampler=video_sampler,
             decode_audio=decode_audio,
             decoder=decoder,
         )
-        FiftyOneInput.__init__(
-            self,
-            label_field=label_field,
-        )
+        if self.training:
+            self.set_state(LabelsState(self.id_to_label))
+            self.num_classes = len(self.labels_set)
+        return dataset
 
-    @property
-    def label_cls(self):
-        return fol.Classification
 
-    def _make_encoded_video_dataset(self, data: SampleCollection) -> "LabeledVideoDataset":
-        classes = self._get_classes(data)
+class VideoClassificationFiftyOneInput(VideoClassificationInput):
+    def load_data(
+        self,
+        sample_collection: SampleCollection,
+        clip_sampler: Union[str, "ClipSampler"] = "random",
+        clip_duration: float = 2,
+        clip_sampler_kwargs: Dict[str, Any] = None,
+        video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
+        decode_audio: bool = False,
+        decoder: str = "pyav",
+        label_field: str = "ground_truth",
+    ) -> "LabeledVideoDataset":
+        label_utilities = FiftyOneLabelUtilities(label_field, fol.Classification)
+        label_utilities.validate(sample_collection)
+        classes = label_utilities.get_classes(sample_collection)
         label_to_class_mapping = dict(enumerate(classes))
         class_to_label_mapping = {c: lab for lab, c in label_to_class_mapping.items()}
 
-        filepaths = data.values("filepath")
-        labels = data.values(self.label_field + ".label")
+        filepaths = sample_collection.values("filepath")
+        labels = sample_collection.values(self.label_field + ".label")
         targets = [class_to_label_mapping[lab] for lab in labels]
-        labeled_video_paths = LabeledVideoPaths(list(zip(filepaths, targets)))
 
-        ds: LabeledVideoDataset = LabeledVideoDataset(
-            labeled_video_paths,
-            self.clip_sampler,
-            video_sampler=self.video_sampler,
-            decode_audio=self.decode_audio,
-            decoder=self.decoder,
+        dataset = LabeledVideoDataset(
+            LabeledVideoPaths(list(zip(filepaths, targets))),
+            _make_clip_sampler(clip_sampler, clip_duration, clip_sampler_kwargs),
+            video_sampler=video_sampler,
+            decode_audio=decode_audio,
+            decoder=decoder,
         )
-        return ds
+        return super().load_data(dataset)
+
+    def predict_load_data(self, *args, **kwargs) -> "LabeledVideoDataset":
+        return self.load_data(*args, **kwargs)
 
 
 class VideoClassificationInputTransform(InputTransform):
@@ -274,7 +253,7 @@ class VideoClassificationInputTransform(InputTransform):
         clip_duration: float = 2,
         clip_sampler_kwargs: Dict[str, Any] = None,
         video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
-        decode_audio: bool = True,
+        decode_audio: bool = False,
         decoder: str = "pyav",
         **_kwargs: Any,
     ):
@@ -304,25 +283,9 @@ class VideoClassificationInputTransform(InputTransform):
             test_transform=test_transform,
             predict_transform=predict_transform,
             inputs={
-                InputFormat.FILES: VideoClassificationListInput(
-                    clip_sampler,
-                    video_sampler=video_sampler,
-                    decode_audio=decode_audio,
-                    decoder=decoder,
-                ),
-                InputFormat.FOLDERS: VideoClassificationPathsInput(
-                    clip_sampler,
-                    video_sampler=video_sampler,
-                    decode_audio=decode_audio,
-                    decoder=decoder,
-                ),
-                InputFormat.FIFTYONE: VideoClassificationFiftyOneInput(
-                    clip_sampler,
-                    video_sampler=video_sampler,
-                    decode_audio=decode_audio,
-                    decoder=decoder,
-                    **_kwargs,
-                ),
+                InputFormat.FILES: VideoClassificationPathsPredictInput,
+                InputFormat.FOLDERS: VideoClassificationPathsPredictInput,
+                InputFormat.FIFTYONE: VideoClassificationFiftyOneInput,
                 InputFormat.LABELSTUDIO: LabelStudioVideoClassificationInput(
                     clip_sampler=clip_sampler,
                     video_sampler=video_sampler,
@@ -388,3 +351,220 @@ class VideoClassificationData(DataModule):
     """Data module for Video classification tasks."""
 
     input_transform_cls = VideoClassificationInputTransform
+
+    @classmethod
+    def from_files(
+        cls,
+        train_files: Optional[Sequence[str]] = None,
+        train_targets: Optional[Sequence[Any]] = None,
+        val_files: Optional[Sequence[str]] = None,
+        val_targets: Optional[Sequence[Any]] = None,
+        test_files: Optional[Sequence[str]] = None,
+        test_targets: Optional[Sequence[Any]] = None,
+        predict_files: Optional[Sequence[str]] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        clip_sampler: Union[str, "ClipSampler"] = "random",
+        clip_duration: float = 2,
+        clip_sampler_kwargs: Dict[str, Any] = None,
+        video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
+        decode_audio: bool = False,
+        decoder: str = "pyav",
+        **data_module_kwargs,
+    ) -> "VideoClassificationData":
+        return cls(
+            VideoClassificationFilesInput(
+                RunningStage.TRAINING,
+                train_files,
+                train_targets,
+                clip_sampler=clip_sampler,
+                clip_duration=clip_duration,
+                clip_sampler_kwargs=clip_sampler_kwargs,
+                video_sampler=video_sampler,
+                decode_audio=decode_audio,
+                decoder=decoder,
+            ),
+            VideoClassificationFilesInput(
+                RunningStage.VALIDATING,
+                val_files,
+                val_targets,
+                clip_sampler=clip_sampler,
+                clip_duration=clip_duration,
+                clip_sampler_kwargs=clip_sampler_kwargs,
+                video_sampler=video_sampler,
+                decode_audio=decode_audio,
+                decoder=decoder,
+            ),
+            VideoClassificationFilesInput(
+                RunningStage.TESTING,
+                test_files,
+                test_targets,
+                clip_sampler=clip_sampler,
+                clip_duration=clip_duration,
+                clip_sampler_kwargs=clip_sampler_kwargs,
+                video_sampler=video_sampler,
+                decode_audio=decode_audio,
+                decoder=decoder,
+            ),
+            VideoClassificationPathsPredictInput(
+                RunningStage.PREDICTING,
+                predict_files,
+                clip_sampler=clip_sampler,
+                clip_duration=clip_duration,
+                clip_sampler_kwargs=clip_sampler_kwargs,
+                decode_audio=decode_audio,
+                decoder=decoder,
+            ),
+            input_transform=cls.input_transform_cls(
+                train_transform,
+                val_transform,
+                test_transform,
+                predict_transform,
+            ),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_folders(
+        cls,
+        train_folder: Optional[str] = None,
+        val_folder: Optional[str] = None,
+        test_folder: Optional[str] = None,
+        predict_folder: Optional[str] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        clip_sampler: Union[str, "ClipSampler"] = "random",
+        clip_duration: float = 2,
+        clip_sampler_kwargs: Dict[str, Any] = None,
+        video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
+        decode_audio: bool = False,
+        decoder: str = "pyav",
+        **data_module_kwargs,
+    ) -> "VideoClassificationData":
+        return cls(
+            VideoClassificationFoldersInput(
+                RunningStage.TRAINING,
+                train_folder,
+                clip_sampler=clip_sampler,
+                clip_duration=clip_duration,
+                clip_sampler_kwargs=clip_sampler_kwargs,
+                video_sampler=video_sampler,
+                decode_audio=decode_audio,
+                decoder=decoder,
+            ),
+            VideoClassificationFoldersInput(
+                RunningStage.VALIDATING,
+                val_folder,
+                clip_sampler=clip_sampler,
+                clip_duration=clip_duration,
+                clip_sampler_kwargs=clip_sampler_kwargs,
+                video_sampler=video_sampler,
+                decode_audio=decode_audio,
+                decoder=decoder,
+            ),
+            VideoClassificationFoldersInput(
+                RunningStage.TESTING,
+                test_folder,
+                clip_sampler=clip_sampler,
+                clip_duration=clip_duration,
+                clip_sampler_kwargs=clip_sampler_kwargs,
+                video_sampler=video_sampler,
+                decode_audio=decode_audio,
+                decoder=decoder,
+            ),
+            VideoClassificationPathsPredictInput(
+                RunningStage.PREDICTING,
+                predict_folder,
+                clip_sampler=clip_sampler,
+                clip_duration=clip_duration,
+                clip_sampler_kwargs=clip_sampler_kwargs,
+                decode_audio=decode_audio,
+                decoder=decoder,
+            ),
+            input_transform=cls.input_transform_cls(
+                train_transform,
+                val_transform,
+                test_transform,
+                predict_transform,
+            ),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    @requires("fiftyone")
+    def from_fiftyone(
+        cls,
+        train_dataset: Optional[SampleCollection] = None,
+        val_dataset: Optional[SampleCollection] = None,
+        test_dataset: Optional[SampleCollection] = None,
+        predict_dataset: Optional[SampleCollection] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        clip_sampler: Union[str, "ClipSampler"] = "random",
+        clip_duration: float = 2,
+        clip_sampler_kwargs: Dict[str, Any] = None,
+        video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
+        decode_audio: bool = False,
+        decoder: str = "pyav",
+        label_field: str = "ground_truth",
+        **data_module_kwargs,
+    ) -> "VideoClassificationData":
+        return cls(
+            VideoClassificationFiftyOneInput(
+                RunningStage.TRAINING,
+                train_dataset,
+                clip_sampler=clip_sampler,
+                clip_duration=clip_duration,
+                clip_sampler_kwargs=clip_sampler_kwargs,
+                video_sampler=video_sampler,
+                decode_audio=decode_audio,
+                decoder=decoder,
+                label_field=label_field,
+            ),
+            VideoClassificationFiftyOneInput(
+                RunningStage.VALIDATING,
+                val_dataset,
+                clip_sampler=clip_sampler,
+                clip_duration=clip_duration,
+                clip_sampler_kwargs=clip_sampler_kwargs,
+                video_sampler=video_sampler,
+                decode_audio=decode_audio,
+                decoder=decoder,
+                label_field=label_field,
+            ),
+            VideoClassificationFiftyOneInput(
+                RunningStage.TESTING,
+                test_dataset,
+                clip_sampler=clip_sampler,
+                clip_duration=clip_duration,
+                clip_sampler_kwargs=clip_sampler_kwargs,
+                video_sampler=video_sampler,
+                decode_audio=decode_audio,
+                decoder=decoder,
+                label_field=label_field,
+            ),
+            VideoClassificationFiftyOneInput(
+                RunningStage.PREDICTING,
+                predict_dataset,
+                clip_sampler=clip_sampler,
+                clip_duration=clip_duration,
+                clip_sampler_kwargs=clip_sampler_kwargs,
+                video_sampler=video_sampler,
+                decode_audio=decode_audio,
+                decoder=decoder,
+                label_field=label_field,
+            ),
+            input_transform=cls.input_transform_cls(
+                train_transform,
+                val_transform,
+                test_transform,
+                predict_transform,
+            ),
+            **data_module_kwargs,
+        )

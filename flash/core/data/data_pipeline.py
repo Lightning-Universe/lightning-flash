@@ -113,7 +113,10 @@ class DataPipeline:
         give a warning."""
         data_pipeline_state = data_pipeline_state or DataPipelineState()
         if self.input is not None:
-            self.input.attach_data_pipeline_state(data_pipeline_state)
+            if isinstance(self.input, list):
+                [input.attach_data_pipeline_state(data_pipeline_state) for input in self.input]
+            else:
+                self.input.attach_data_pipeline_state(data_pipeline_state)
         self._input_transform_pipeline.attach_data_pipeline_state(data_pipeline_state)
         self._output_transform.attach_data_pipeline_state(data_pipeline_state)
         self._output.attach_data_pipeline_state(data_pipeline_state)

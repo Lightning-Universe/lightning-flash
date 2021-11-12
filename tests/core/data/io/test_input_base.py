@@ -14,16 +14,44 @@
 import pytest
 
 from flash.core.data.io.input_base import Input, IterableInput
+from flash.core.utilities.stages import RunningStage
 
 
-@pytest.mark.parametrize("base", [Input, IterableInput])
-def test_input_init_override_error(base):
-    with pytest.raises(RuntimeError, match="should not override `__init__`."):
+def test_input_validation():
+    with pytest.raises(RuntimeError, match="Use `IterableInput` instead."):
 
-        class InputWithInitOverride(base):
+        class InvalidInput(Input):
             def __init__(self, *args, **kwargs):
                 super().__init__(*args, **kwargs)
 
-    class InputWithoutInitOverride(base):
+                self.data = iter([1, 2, 3])
 
-        testing = True
+        InvalidInput(RunningStage.TRAINING)
+
+    class ValidInput(Input):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+
+            self.data = [1, 2, 3]
+
+    ValidInput(RunningStage.TRAINING)
+
+
+def test_iterable_input_validation():
+    with pytest.raises(RuntimeError, match="Use `Input` instead."):
+
+        class InvalidIterableInput(IterableInput):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+
+                self.data = [1, 2, 3]
+
+        InvalidIterableInput(RunningStage.TRAINING)
+
+    class ValidIterableInput(IterableInput):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+
+            self.data = iter([1, 2, 3])
+
+    ValidIterableInput(RunningStage.TRAINING)

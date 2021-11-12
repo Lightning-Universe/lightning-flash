@@ -41,6 +41,7 @@ from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_pipeline import DataPipeline
 from flash.core.data.io.input import Input, InputFormat
+from flash.core.data.io.input_base import InputBase, IterableInput
 from flash.core.data.io.input_transform import DefaultInputTransform, InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.splits import SplitDataset
@@ -288,7 +289,7 @@ class DataModule(pl.LightningDataModule):
         train_ds: Dataset = self._train_ds() if isinstance(self._train_ds, Callable) else self._train_ds
         shuffle: bool = False
         collate_fn = self._resolve_collate_fn(train_ds, RunningStage.TRAINING)
-        if isinstance(train_ds, IterableAutoDataset):
+        if isinstance(train_ds, (IterableAutoDataset, IterableInput)):
             drop_last = False
         else:
             drop_last = len(train_ds) > self.batch_size
@@ -297,7 +298,7 @@ class DataModule(pl.LightningDataModule):
 
         if self.sampler is None:
             sampler = None
-            shuffle = not isinstance(train_ds, (IterableDataset, IterableAutoDataset))
+            shuffle = not isinstance(train_ds, (IterableDataset, IterableAutoDataset, InputBase))
         else:
             sampler = self.sampler(train_ds)
 
@@ -382,7 +383,7 @@ class DataModule(pl.LightningDataModule):
         """Configure the prediction dataloader of the datamodule."""
         predict_ds: Dataset = self._predict_ds() if isinstance(self._predict_ds, Callable) else self._predict_ds
 
-        if isinstance(predict_ds, IterableAutoDataset):
+        if isinstance(predict_ds, (IterableAutoDataset, IterableInput)):
             batch_size = self.batch_size
         else:
             batch_size = min(self.batch_size, len(predict_ds) if len(predict_ds) > 0 else 1)
@@ -428,7 +429,11 @@ class DataModule(pl.LightningDataModule):
     @property
     def input(self) -> Optional[Input]:
         """Property that returns the data source."""
-        return self._input
+        datasets = [self.train_dataset, self.val_dataset, self.test_dataset, self.predict_dataset]
+        input = [dataset for dataset in datasets if isinstance(dataset, InputBase)]
+        if len(input) == 0:
+            input = self._input
+        return input
 
     @property
     def input_transform(self) -> InputTransform:
@@ -476,7 +481,7 @@ class DataModule(pl.LightningDataModule):
         if not isinstance(val_split, float) or (isinstance(val_split, float) and val_split > 1 or val_split < 0):
             raise MisconfigurationException(f"`val_split` should be a float between 0 and 1. Found {val_split}.")
 
-        if isinstance(train_dataset, IterableAutoDataset):
+        if isinstance(train_dataset, (IterableAutoDataset, IterableInput)):
             raise MisconfigurationException(
                 "`val_split` should be `None` when the dataset is built with an IterableDataset."
             )
