@@ -149,6 +149,9 @@ class InputBase(Generic[T], Properties, metaclass=_InputMeta):
         newstate["data"] = None
         self.__dict__.update(newstate)
 
+    def __bool__(self):
+        return self.data is not None
+
 
 class Input(InputBase[Sequence], Dataset):
     def __getitem__(self, index: int) -> Any:
