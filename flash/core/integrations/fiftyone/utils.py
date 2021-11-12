@@ -1,10 +1,10 @@
 from itertools import chain
-from typing import Dict, List, Optional, TYPE_CHECKING, Union
+from typing import Dict, List, Optional, Type, TYPE_CHECKING, Union
 
 import flash
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 
-Label, Session, SampleCollection = None, None, None
+Label, Session, SampleCollection = object, object, object
 if _FIFTYONE_AVAILABLE:
     fo = lazy_import("fiftyone")
     fol = lazy_import("fiftyone.core.labels")
@@ -88,7 +88,15 @@ def visualize(
 
 
 class FiftyOneLabelUtilities:
-    def __init__(self, label_field: str = "ground_truth", label_cls=None):
+    """Helper class providing useful methods for working with ``SampleCollection`` datasets from FiftyOne.
+
+    Args:
+        label_field: The field in the ``SampleCollection`` containing the ground truth labels.
+        label_cls: The ``FiftyOne.Label`` subclass to expect ground truth labels to be instances of. If ``None``,
+            defaults to ``FiftyOne.Label``.
+    """
+
+    def __init__(self, label_field: str = "ground_truth", label_cls: Optional[Type[Label]] = None):
         super().__init__()
         self.label_field = label_field
         self.label_cls = label_cls or fol.Label
