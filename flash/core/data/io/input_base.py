@@ -13,15 +13,13 @@
 # limitations under the License.
 import abc
 import functools
-from typing import Any, Generic, Iterable, MutableMapping, Sequence, TypeVar, Union
+from typing import Any, Iterable, MutableMapping, Sequence, Union
 
 from torch.utils.data import Dataset, IterableDataset
 
 from flash.core.data.data_pipeline import DataPipeline
 from flash.core.data.properties import Properties
 from flash.core.utilities.stages import RunningStage
-
-T = TypeVar("T")
 
 
 def _has_len(data: Union[Sequence, Iterable]) -> bool:
@@ -64,7 +62,7 @@ class _IterableInputMeta(_InputMeta, type(IterableDataset)):
         return super().__new__(mcs, name, bases, dct)
 
 
-class InputBase(Generic[T], Properties, metaclass=_InputMeta):
+class InputBase(Properties, metaclass=_InputMeta):
     """``InputBase`` is the base class for the :class:`~flash.core.data.io.input_base.Input` and
     :class:`~flash.core.data.io.input_base.IterableInput` dataset implementations in Flash. These datasets are
     constructed via the ``load_data`` and ``load_sample`` hooks, which allow a single dataset object to include custom
@@ -90,7 +88,7 @@ class InputBase(Generic[T], Properties, metaclass=_InputMeta):
         if len(args) >= 1 and args[0] is not None:
             self.data = self._call_load_data(*args, **kwargs)
 
-    def _call_load_data(self, *args: Any, **kwargs: Any) -> T:
+    def _call_load_data(self, *args: Any, **kwargs: Any) -> Union[Sequence, Iterable]:
         load_data = getattr(
             self, DataPipeline._resolve_function_hierarchy("load_data", self, self.running_stage, InputBase)
         )
@@ -109,7 +107,7 @@ class InputBase(Generic[T], Properties, metaclass=_InputMeta):
         return load_sample(sample)
 
     @staticmethod
-    def load_data(*args: Any, **kwargs: Any) -> T:
+    def load_data(*args: Any, **kwargs: Any) -> Union[Sequence, Iterable]:
         """The ``load_data`` hook should return a collection of samples. To reduce the memory footprint, these
         samples should typically not have been loaded. For example, an input which loads images from disk would
         only return the list of filenames here rather than the loaded images.
@@ -153,7 +151,7 @@ class InputBase(Generic[T], Properties, metaclass=_InputMeta):
         return self.data is not None
 
 
-class Input(InputBase[Sequence], Dataset):
+class Input(InputBase, Dataset):
     def __getitem__(self, index: int) -> Any:
         return self._call_load_sample(self.data[index])
 
@@ -161,7 +159,7 @@ class Input(InputBase[Sequence], Dataset):
         return len(self.data) if self.data is not None else 0
 
 
-class IterableInput(InputBase[Iterable], IterableDataset, metaclass=_IterableInputMeta):
+class IterableInput(InputBase, IterableDataset, metaclass=_IterableInputMeta):
     def __iter__(self):
         self.data_iter = iter(self.data)
         return self
