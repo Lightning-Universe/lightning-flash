@@ -41,6 +41,7 @@ import flash
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
 from flash.core.data.io.input import Input
+from flash.core.data.io.input_base import InputBase as NewInputBase
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import OutputTransform
@@ -501,8 +502,17 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             input = data_source
         running_stage = RunningStage.PREDICTING
 
-        data_pipeline = self.build_data_pipeline(input or "default", deserializer, data_pipeline)
-        dataset = data_pipeline.input.generate_dataset(x, running_stage)
+        data_pipeline = self.build_data_pipeline(None, deserializer, data_pipeline)
+
+        # <hack> Temporary fix to support new `Input` object
+        input = data_pipeline._input_transform_pipeline.input_of_name(input or "default")
+
+        if inspect.isclass(input) and issubclass(input, NewInputBase):
+            dataset = input(running_stage, x)
+        else:
+            dataset = input.generate_dataset(x, running_stage)
+        # </hack>
+
         dataloader = self.process_predict_dataset(dataset)
         x = list(dataloader.dataset)
         x = data_pipeline.worker_input_transform_processor(running_stage, collate_fn=dataloader.collate_fn)(x)

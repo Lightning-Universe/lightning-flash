@@ -13,10 +13,13 @@
 # limitations under the License.
 from typing import Any, Callable, Dict, Optional
 
+from torch.utils.data import Dataset
+
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
+from flash.core.utilities.stages import RunningStage
 from flash.graph.data import GraphDatasetInput
 
 if _GRAPH_AVAILABLE:
@@ -37,9 +40,7 @@ class GraphClassificationInputTransform(InputTransform):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            inputs={
-                InputFormat.DATASETS: GraphDatasetInput(),
-            },
+            inputs={InputFormat.DATASETS: GraphDatasetInput},
             default_input=InputFormat.DATASETS,
         )
 
@@ -59,6 +60,33 @@ class GraphClassificationData(DataModule):
     """Data module for graph classification tasks."""
 
     input_transform_cls = GraphClassificationInputTransform
+
+    @classmethod
+    def from_datasets(
+        cls,
+        train_dataset: Optional[Dataset] = None,
+        val_dataset: Optional[Dataset] = None,
+        test_dataset: Optional[Dataset] = None,
+        predict_dataset: Optional[Dataset] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        **data_module_kwargs,
+    ) -> "GraphClassificationData":
+        return cls(
+            GraphDatasetInput(RunningStage.TRAINING, train_dataset),
+            GraphDatasetInput(RunningStage.VALIDATING, val_dataset),
+            GraphDatasetInput(RunningStage.TESTING, test_dataset),
+            GraphDatasetInput(RunningStage.PREDICTING, predict_dataset),
+            input_transform=cls.input_transform_cls(
+                train_transform,
+                val_transform,
+                test_transform,
+                predict_transform,
+            ),
+            **data_module_kwargs,
+        )
 
     @property
     def num_features(self):

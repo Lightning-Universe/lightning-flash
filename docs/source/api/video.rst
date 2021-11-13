@@ -20,7 +20,9 @@ ______________
     ~classification.model.VideoClassifier
     ~classification.data.VideoClassificationData
 
-    classification.data.BaseVideoClassification
+    classification.data.VideoClassificationInput
     classification.data.VideoClassificationFiftyOneInput
-    classification.data.VideoClassificationPathsInput
+    classification.data.VideoClassificationPathsPredictInput
+    classification.data.VideoClassificationFoldersInput
+    classification.data.VideoClassificationFilesInput
     classification.data.VideoClassificationInputTransform

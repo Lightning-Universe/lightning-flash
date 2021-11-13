@@ -20,8 +20,8 @@ from torch.utils.data import DataLoader, Sampler
 from torchmetrics import IoU
 
 from flash.core.classification import ClassificationTask
-from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.io.input import DataKeys
+from flash.core.data.io.input_base import Input
 from flash.core.data.io.output import Output
 from flash.core.data.states import CollateFn
 from flash.core.registry import FlashRegistry
@@ -149,7 +149,7 @@ class PointCloudSegmentation(ClassificationTask):
 
     def _process_dataset(
         self,
-        dataset: BaseAutoDataset,
+        dataset: Input,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -159,11 +159,7 @@ class PointCloudSegmentation(ClassificationTask):
         sampler: Optional[Sampler] = None,
         **kwargs
     ) -> DataLoader:
-
-        if not _POINTCLOUD_AVAILABLE:
-            raise ModuleNotFoundError("Please, run `pip install flash[pointcloud]`.")
-
-        if not isinstance(dataset.dataset, TorchDataloader):
+        if not isinstance(dataset.data, TorchDataloader):
 
             dataset.dataset = TorchDataloader(
                 dataset.dataset,

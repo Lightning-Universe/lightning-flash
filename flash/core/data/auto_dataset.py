@@ -41,7 +41,7 @@ class BaseAutoDataset(Generic[DATA_TYPE]):
     def __init__(
         self,
         data: DATA_TYPE,
-        input: "flash.core.data.io.input.Input",
+        input: "flash.core.data.io.inputs.Input",
         running_stage: RunningStage,
     ) -> None:
         super().__init__()

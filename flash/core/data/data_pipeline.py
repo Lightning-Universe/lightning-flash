@@ -15,7 +15,7 @@ import functools
 import inspect
 import weakref
 from functools import partial
-from typing import Any, Callable, Dict, Optional, Sequence, Set, Tuple, Type, TYPE_CHECKING, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Tuple, Type, TYPE_CHECKING, Union
 
 import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -26,6 +26,7 @@ import flash
 from flash.core.data.auto_dataset import IterableAutoDataset
 from flash.core.data.batch import _DeserializeProcessor
 from flash.core.data.io.input import Input
+from flash.core.data.io.input_base import InputBase
 from flash.core.data.io.input_transform import (
     _InputTransformProcessor,
     _InputTransformSequential,
@@ -93,7 +94,7 @@ class DataPipeline:
 
     def __init__(
         self,
-        input: Optional[Input] = None,
+        input: Optional[Union[Input, List[InputBase]]] = None,
         input_transform: Optional[InputTransform] = None,
         output_transform: Optional[OutputTransform] = None,
         deserializer: Optional[Deserializer] = None,
@@ -113,7 +114,10 @@ class DataPipeline:
         give a warning."""
         data_pipeline_state = data_pipeline_state or DataPipelineState()
         if self.input is not None:
-            self.input.attach_data_pipeline_state(data_pipeline_state)
+            if isinstance(self.input, list):
+                [input.attach_data_pipeline_state(data_pipeline_state) for input in self.input]
+            else:
+                self.input.attach_data_pipeline_state(data_pipeline_state)
         self._input_transform_pipeline.attach_data_pipeline_state(data_pipeline_state)
         self._output_transform.attach_data_pipeline_state(data_pipeline_state)
         self._output.attach_data_pipeline_state(data_pipeline_state)

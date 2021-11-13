@@ -18,14 +18,13 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader, Sampler
 
-from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.io.input import DataKeys
+from flash.core.data.io.input_base import Input
 from flash.core.data.io.output import Output
 from flash.core.data.states import CollateFn
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.apply_func import get_callable_dict
-from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 from flash.pointcloud.detection.backbones import POINTCLOUD_OBJECT_DETECTION_BACKBONES
 
@@ -145,7 +144,7 @@ class PointCloudObjectDetector(Task):
 
     def _process_dataset(
         self,
-        dataset: BaseAutoDataset,
+        dataset: Input,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -155,10 +154,6 @@ class PointCloudObjectDetector(Task):
         sampler: Optional[Sampler] = None,
         **kwargs
     ) -> DataLoader:
-
-        if not _POINTCLOUD_AVAILABLE:
-            raise ModuleNotFoundError("Please, run `pip install flash[pointcloud]`.")
-
         dataset.input_transform_fn = self.model.preprocess
         dataset.transform_fn = self.model.transform
 
