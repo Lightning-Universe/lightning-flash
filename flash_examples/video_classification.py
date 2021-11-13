@@ -11,8 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
-
 import torch
 
 import flash
@@ -24,8 +22,8 @@ from flash.video import VideoClassificationData, VideoClassifier
 download_data("https://pl-flash-data.s3.amazonaws.com/kinetics.zip", "./data")
 
 datamodule = VideoClassificationData.from_folders(
-    train_folder=os.path.join(os.getcwd(), "data/kinetics/train"),
-    val_folder=os.path.join(os.getcwd(), "data/kinetics/val"),
+    train_folder="data/kinetics/train",
+    val_folder="data/kinetics/val",
     clip_sampler="uniform",
     clip_duration=1,
     decode_audio=False,
@@ -39,7 +37,7 @@ trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Make a prediction
-predictions = model.predict(os.path.join(os.getcwd(), "data/kinetics/predict"))
+predictions = model.predict("data/kinetics/predict")
 print(predictions)
 
 # 5. Save the model!

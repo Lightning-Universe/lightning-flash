@@ -79,13 +79,13 @@ A :class:`~torch.utils.data.Dataset` is then created from the :class:`~flash.cor
 
 The output of the :meth:`~flash.core.data.io.input.Input.load_data` can just be a :class:`torch.utils.data.Dataset` instance.
 If the library that your :class:`~flash.core.data.model.Task` is based on provides a custom dataset, you don't need to re-write it as a :class:`~flash.core.data.io.input.Input`.
-For example, the :meth:`~flash.core.data.io.input.Input.load_data` of the ``VideoClassificationPathsInput`` just creates an :class:`~pytorchvideo.data.EncodedVideoDataset` from the given folder.
+For example, the :meth:`~flash.core.data.io.input.Input.load_data` of the ``VideoClassificationFoldersInput`` just creates an :class:`~pytorchvideo.data.EncodedVideoDataset` from the given folder.
 Here's how it looks (from `video/classification.data.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash/video/classification/data.py>`_):
 
 .. literalinclude:: ../../../flash/video/classification/data.py
     :language: python
     :dedent: 4
-    :pyobject: BaseVideoClassification.load_data
+    :pyobject: VideoClassificationFoldersInput.load_data
 
 InputTransform
 ^^^^^^^^^^^^^^

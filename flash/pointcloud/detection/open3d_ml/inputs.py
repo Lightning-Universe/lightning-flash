@@ -13,13 +13,13 @@
 # limitations under the License.
 import os
 from os.path import basename, dirname, exists, isdir, isfile, join
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Type, Union
 
 import yaml
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
-from flash.core.data.auto_dataset import BaseAutoDataset
-from flash.core.data.io.input import BaseDataFormat, Input
+from flash.core.data.io.input import BaseDataFormat
+from flash.core.data.io.input_base import Input
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
 
 if _POINTCLOUD_AVAILABLE:
@@ -31,8 +31,22 @@ class PointCloudObjectDetectionDataFormat(BaseDataFormat):
 
 
 class BasePointCloudObjectDetectorLoader:
+    # TODO: Do we need this?
 
-    pass
+    def __init__(self, image_size: tuple = (375, 1242), **loader_kwargs):
+        self.image_size = image_size
+
+    def load_data(self, folder: str, dataset: Input):
+        raise NotImplementedError
+
+    def load_sample(self, metadata: Dict[str, str], has_label: bool = True) -> Any:
+        raise NotImplementedError
+
+    def predict_load_data(self, data: Union[str, List[str]], dataset: Input):
+        raise NotImplementedError
+
+    def predict_load_sample(self, metadata: Any):
+        raise NotImplementedError
 
 
 class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
@@ -42,15 +56,13 @@ class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
         scans_folder_name: Optional[str] = "scans",
         labels_folder_name: Optional[str] = "labels",
         calibrations_folder_name: Optional[str] = "calibs",
-        **kwargs,
     ):
-
-        self.image_size = image_size
+        super().__init__(image_size)
         self.scans_folder_name = scans_folder_name
         self.labels_folder_name = labels_folder_name
         self.calibrations_folder_name = calibrations_folder_name
 
-    def load_meta(self, root_dir, dataset: Optional[BaseAutoDataset]):
+    def load_meta(self, root_dir, dataset: Input):
         meta_file = join(root_dir, "meta.yaml")
         if not exists(meta_file):
             raise MisconfigurationException(f"The {root_dir} should contain a `meta.yaml` file about the classes.")
@@ -67,7 +79,7 @@ class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
         dataset.label_to_names = self.meta["label_to_names"]
         dataset.color_map = self.meta["color_map"]
 
-    def load_data(self, folder: str, dataset: Optional[BaseAutoDataset]):
+    def load_data(self, folder: str, dataset: Input):
         sub_directories = os.listdir(folder)
         if len(sub_directories) != 3:
             raise MisconfigurationException(
@@ -98,22 +110,20 @@ class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
             for scan_path, label_path, calibration_path, in zip(scan_paths, label_paths, calibration_paths)
         ]
 
-    def load_sample(
-        self, sample: Dict[str, str], dataset: Optional[BaseAutoDataset] = None, has_label: bool = True
-    ) -> Any:
-        pc = KITTI.read_lidar(sample["scan_path"])
-        calib = KITTI.read_calib(sample["calibration_path"])
+    def load_sample(self, metadata: Dict[str, str], has_label: bool = True) -> Any:
+        pc = KITTI.read_lidar(metadata["scan_path"])
+        calib = KITTI.read_calib(metadata["calibration_path"])
         label = None
         if has_label:
-            label = KITTI.read_label(sample["label_path"], calib)
+            label = KITTI.read_label(metadata["label_path"], calib)
 
         reduced_pc = DataProcessing.remove_outside_points(pc, calib["world_cam"], calib["cam_img"], self.image_size)
 
         attr = {
-            "name": basename(sample["scan_path"]),
-            "path": sample["scan_path"],
-            "calibration_path": sample["calibration_path"],
-            "label_path": sample["label_path"] if has_label else None,
+            "name": basename(metadata["scan_path"]),
+            "path": metadata["scan_path"],
+            "calibration_path": metadata["calibration_path"],
+            "label_path": metadata["label_path"] if has_label else None,
             "split": "val",
         }
 
@@ -127,7 +137,7 @@ class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
         }
         return data, attr
 
-    def load_files(self, scan_paths: Union[str, List[str]], dataset: Optional[BaseAutoDataset] = None):
+    def load_files(self, scan_paths: Union[str, List[str]], dataset: Input):
         if isinstance(scan_paths, str):
             scan_paths = [scan_paths]
 
@@ -138,36 +148,31 @@ class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
 
         return [{"scan_path": scan_path, "calibration_path": clean_fn(scan_path)} for scan_path in scan_paths]
 
-    def predict_load_data(self, data, dataset: Optional[BaseAutoDataset] = None):
+    def predict_load_data(self, data, dataset: Input):
         if (isinstance(data, str) and isfile(data)) or (isinstance(data, list) and all(isfile(p) for p in data)):
             return self.load_files(data, dataset)
         if isinstance(data, str) and isdir(data):
             raise NotImplementedError
 
-    def predict_load_sample(self, data, dataset: Optional[BaseAutoDataset] = None):
-        data, attr = self.load_sample(data, dataset, has_label=False)
+    def predict_load_sample(self, metadata: Dict[str, str]):
+        metadata, attr = self.load_sample(metadata, has_label=False)
         # hack to prevent manipulation of labels
         attr["split"] = "test"
-        return data, attr
+        return metadata, attr
 
 
 class PointCloudObjectDetectorFoldersInput(Input):
-    def __init__(
-        self,
-        data_format: Optional[BaseDataFormat] = None,
-        image_size: tuple = (375, 1242),
-        **loader_kwargs,
-    ):
-        super().__init__()
 
-        self.loaders = {
-            PointCloudObjectDetectionDataFormat.KITTI: KITTIPointCloudObjectDetectorLoader(
-                **loader_kwargs, image_size=image_size
-            )
-        }
+    loaders: Dict[PointCloudObjectDetectionDataFormat, Type[BasePointCloudObjectDetectorLoader]] = {
+        PointCloudObjectDetectionDataFormat.KITTI: KITTIPointCloudObjectDetectorLoader
+    }
 
-        self.data_format = data_format or PointCloudObjectDetectionDataFormat.KITTI
-        self.loader = self.loaders[self.data_format]
+    def _get_loader(
+        self, data_format: Optional[BaseDataFormat] = None, image_size: tuple = (375, 1242), **loader_kwargs: Any
+    ) -> BasePointCloudObjectDetectorLoader:
+        return self.loaders[data_format or PointCloudObjectDetectionDataFormat.KITTI](
+            image_size=image_size, **loader_kwargs
+        )
 
     def _validate_data(self, folder: str) -> None:
         msg = f"The provided dataset for stage {self._running_stage} should be a folder. Found {folder}."
@@ -179,23 +184,23 @@ class PointCloudObjectDetectorFoldersInput(Input):
 
     def load_data(
         self,
-        data: Any,
-        dataset: Optional[BaseAutoDataset] = None,
+        folder: str,
+        data_format: Optional[BaseDataFormat] = None,
+        image_size: tuple = (375, 1242),
+        **loader_kwargs: Any,
     ) -> Any:
+        self._validate_data(folder)
+        self.loader = self._get_loader(data_format, image_size, **loader_kwargs)
+        return self.loader.load_data(folder, self)
 
-        self._validate_data(data)
+    def load_sample(self, metadata: Dict[str, str]) -> Any:
+        data, metadata = self.loader.load_sample(metadata)
 
-        return self.loader.load_data(data, dataset)
-
-    def load_sample(self, metadata: Dict[str, str], dataset: Optional[BaseAutoDataset] = None) -> Any:
-
-        data, metadata = self.loader.load_sample(metadata, dataset)
-
-        input_transform_fn = getattr(dataset, "input_transform_fn", None)
+        input_transform_fn = getattr(self, "input_transform_fn", None)
         if input_transform_fn:
             data = input_transform_fn(data, metadata)
 
-        transform_fn = getattr(dataset, "transform_fn", None)
+        transform_fn = getattr(self, "transform_fn", None)
         if transform_fn:
             data = transform_fn(data, metadata)
 
@@ -214,27 +219,24 @@ class PointCloudObjectDetectorFoldersInput(Input):
 
     def predict_load_data(
         self,
-        data: Any,
-        dataset: Optional[BaseAutoDataset] = None,
+        data: Union[str, List[str]],
+        data_format: Optional[BaseDataFormat] = None,
+        image_size: tuple = (375, 1242),
+        **loader_kwargs: Any,
     ) -> Any:
-
         self._validate_predict_data(data)
+        self.loader = self._get_loader(data_format, image_size, **loader_kwargs)
+        return self.loader.predict_load_data(data, self)
 
-        return self.loader.predict_load_data(data, dataset)
+    def predict_load_sample(self, metadata: Dict[str, str]) -> Any:
 
-    def predict_load_sample(
-        self,
-        metadata: Any,
-        dataset: Optional[BaseAutoDataset] = None,
-    ) -> Any:
+        data, metadata = self.loader.predict_load_sample(metadata)
 
-        data, metadata = self.loader.predict_load_sample(metadata, dataset)
-
-        input_transform_fn = getattr(dataset, "input_transform_fn", None)
+        input_transform_fn = getattr(self, "input_transform_fn", None)
         if input_transform_fn:
             data = input_transform_fn(data, metadata)
 
-        transform_fn = getattr(dataset, "transform_fn", None)
+        transform_fn = getattr(self, "transform_fn", None)
         if transform_fn:
             data = transform_fn(data, metadata)
 

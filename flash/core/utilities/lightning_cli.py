@@ -22,12 +22,13 @@ from pytorch_lightning.utilities.seed import seed_everything
 from pytorch_lightning.utilities.types import LRSchedulerType, LRSchedulerTypeTuple
 from torch.optim import Optimizer
 
-from flash.core.data.data_module import DataModule
-
 set_config_read_mode(fsspec_enabled=True)
 
 
-def class_from_function(func: Callable[..., ClassType]) -> Type[ClassType]:
+def class_from_function(
+    func: Callable[..., ClassType],
+    return_type: Optional[Type[ClassType]] = None,
+) -> Type[ClassType]:
     """Creates a dynamic class which if instantiated is equivalent to calling func.
 
     Args:
@@ -38,10 +39,11 @@ def class_from_function(func: Callable[..., ClassType]) -> Type[ClassType]:
     def __new__(cls, *args, **kwargs):
         return func(*args, **kwargs)
 
-    return_type = inspect.signature(func).return_annotation
+    if return_type is None:
+        return_type = inspect.signature(func).return_annotation
+
     if isinstance(return_type, str):
-        if return_type == "DataModule":
-            return_type = DataModule
+        raise RuntimeError("Classmethod instantiation is not supported when the return type annotation is a string.")
 
     class ClassFromFunction(return_type, ClassFromFunctionBase):  # type: ignore
         pass
