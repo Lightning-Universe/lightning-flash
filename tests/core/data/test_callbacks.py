@@ -18,7 +18,7 @@ from torch import tensor
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.process import DefaultPreprocess
+from flash.core.data.io.input_transform import DefaultInputTransform
 from flash.core.utilities.stages import RunningStage
 
 
@@ -43,15 +43,15 @@ def test_base_data_fetcher(tmpdir):
         @classmethod
         def from_inputs(cls, train_data: Any, val_data: Any, test_data: Any, predict_data: Any) -> "CustomDataModule":
 
-            preprocess = DefaultPreprocess()
+            input_transform = DefaultInputTransform()
 
-            return cls.from_data_source(
+            return cls.from_input(
                 "default",
                 train_data=train_data,
                 val_data=val_data,
                 test_data=test_data,
                 predict_data=predict_data,
-                preprocess=preprocess,
+                input_transform=input_transform,
                 batch_size=5,
             )
 

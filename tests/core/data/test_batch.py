@@ -12,54 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from collections import namedtuple
-from unittest.mock import Mock
 
 import torch
 from torch.testing import assert_allclose
-from torch.utils.data._utils.collate import default_collate
 
-from flash.core.data.batch import _Preprocessor, _Sequential, default_uncollate
-from flash.core.utilities.stages import RunningStage
-
-
-def test_sequential_str():
-    sequential = _Sequential(
-        Mock(name="preprocess"),
-        torch.softmax,
-        torch.as_tensor,
-        torch.relu,
-        RunningStage.TRAINING,
-        True,
-    )
-    assert str(sequential) == (
-        "_Sequential:\n"
-        "\t(pre_tensor_transform): FuncModule(softmax)\n"
-        "\t(to_tensor_transform): FuncModule(as_tensor)\n"
-        "\t(post_tensor_transform): FuncModule(relu)\n"
-        "\t(assert_contains_tensor): True\n"
-        "\t(stage): RunningStage.TRAINING"
-    )
-
-
-def test_preprocessor_str():
-    preprocessor = _Preprocessor(
-        Mock(name="preprocess"),
-        default_collate,
-        torch.relu,
-        torch.softmax,
-        RunningStage.TRAINING,
-        False,
-        True,
-    )
-    assert str(preprocessor) == (
-        "_Preprocessor:\n"
-        "\t(per_sample_transform): FuncModule(relu)\n"
-        "\t(collate_fn): FuncModule(default_collate)\n"
-        "\t(per_batch_transform): FuncModule(softmax)\n"
-        "\t(apply_per_sample_transform): False\n"
-        "\t(on_device): True\n"
-        "\t(stage): RunningStage.TRAINING"
-    )
+from flash.core.data.batch import default_uncollate
 
 
 class TestDefaultUncollate:

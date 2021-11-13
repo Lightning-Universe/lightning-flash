@@ -23,7 +23,7 @@ def from_coco_128(
     val_split: float = 0.1,
     batch_size: int = 4,
     num_workers: int = 0,
-    **preprocess_kwargs,
+    **input_transform_kwargs,
 ) -> ObjectDetectionData:
     """Downloads and loads the COCO 128 data set."""
     download_data("https://github.com/zhiqwang/yolov5-rt-stack/releases/download/v0.3.0/coco128.zip", "data/")
@@ -33,7 +33,7 @@ def from_coco_128(
         val_split=val_split,
         batch_size=batch_size,
         num_workers=num_workers,
-        **preprocess_kwargs,
+        **input_transform_kwargs,
     )
 
 

@@ -7,18 +7,18 @@ Optional Extras
 Organize your transforms in transforms.py
 =========================================
 
-If you have a lot of default transforms, it can be useful to put them all in a ``transforms.py`` file, to be referenced in your :class:`~flash.core.data.process.Preprocess`.
+If you have a lot of default transforms, it can be useful to put them all in a ``transforms.py`` file, to be referenced in your :class:`~flash.core.data.io.input_transform.InputTransform`.
 Here's an example from `image/classification/transforms.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash/image/classification/transforms.py>`_ which creates some default transforms given the desired image size:
 
 .. literalinclude:: ../../../flash/image/classification/transforms.py
     :language: python
     :pyobject: default_transforms
 
-Here's how we create our transforms in the :class:`~flash.image.classification.data.ImageClassificationPreprocess`:
+Here's how we create our transforms in the :class:`~flash.image.classification.data.ImageClassificationInputTransform`:
 
 .. literalinclude:: ../../../flash/image/classification/data.py
     :language: python
-    :pyobject: ImageClassificationPreprocess.default_transforms
+    :pyobject: ImageClassificationInputTransform.default_transforms
 
 Add outputs to your Task
 ========================

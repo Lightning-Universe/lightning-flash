@@ -1,6 +1,6 @@
 from flash.image.classification import (  # noqa: F401
     ImageClassificationData,
-    ImageClassificationPreprocess,
+    ImageClassificationInputTransform,
     ImageClassifier,
 )
 from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES  # noqa: F401
@@ -12,6 +12,6 @@ from flash.image.keypoint_detection import KeypointDetectionData, KeypointDetect
 from flash.image.segmentation import (  # noqa: F401
     SemanticSegmentation,
     SemanticSegmentationData,
-    SemanticSegmentationPreprocess,
+    SemanticSegmentationInputTransform,
 )
-from flash.image.style_transfer import StyleTransfer, StyleTransferData, StyleTransferPreprocess  # noqa: F401
+from flash.image.style_transfer import StyleTransfer, StyleTransferData, StyleTransferInputTransform  # noqa: F401

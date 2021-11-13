@@ -19,7 +19,7 @@ from torch import nn
 from torch.utils.data import DataLoader, Sampler
 
 from flash.core.data.auto_dataset import BaseAutoDataset
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.data.io.output import Output
 from flash.core.data.states import CollateFn
 from flash.core.model import Task
@@ -132,9 +132,9 @@ class PointCloudObjectDetector(Task):
         results = self.model(batch)
         boxes = self.model.inference_end(results, batch)
         return {
-            DefaultDataKeys.INPUT: getattr(batch, "point", None),
-            DefaultDataKeys.PREDS: boxes,
-            DefaultDataKeys.METADATA: [a["name"] for a in batch.attr],
+            DataKeys.INPUT: getattr(batch, "point", None),
+            DataKeys.PREDS: boxes,
+            DataKeys.METADATA: [a["name"] for a in batch.attr],
         }
 
     def forward(self, x) -> torch.Tensor:
@@ -159,7 +159,7 @@ class PointCloudObjectDetector(Task):
         if not _POINTCLOUD_AVAILABLE:
             raise ModuleNotFoundError("Please, run `pip install flash[pointcloud]`.")
 
-        dataset.preprocess_fn = self.model.preprocess
+        dataset.input_transform_fn = self.model.preprocess
         dataset.transform_fn = self.model.transform
 
         return DataLoader(

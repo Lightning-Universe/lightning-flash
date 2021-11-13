@@ -19,7 +19,7 @@ import pytest
 import torch
 from pytorch_lightning import Trainer
 
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _TABULAR_AVAILABLE
 from flash.tabular.classification.data import TabularClassificationData
 from flash.tabular.classification.model import TabularClassifier
@@ -38,7 +38,7 @@ class DummyDataset(torch.utils.data.Dataset):
         target = torch.randint(0, 10, size=(1,)).item()
         cat_vars = torch.randint(0, 10, size=(self.num_cat,))
         num_vars = torch.rand(self.num_num)
-        return {DefaultDataKeys.INPUT: (cat_vars, num_vars), DefaultDataKeys.TARGET: target}
+        return {DataKeys.INPUT: (cat_vars, num_vars), DataKeys.TARGET: target}
 
     def __len__(self) -> int:
         return 100
@@ -106,8 +106,8 @@ def test_serve():
         pd.DataFrame.from_dict(train_data),
     )
     model = TabularClassifier.from_data(datamodule)
-    # TODO: Currently only servable once a preprocess has been attached
-    model._preprocess = datamodule.preprocess
+    # TODO: Currently only servable once a input_transform has been attached
+    model._input_transform = datamodule.input_transform
     model.eval()
     model.serve()
 

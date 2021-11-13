@@ -15,7 +15,7 @@ import warnings
 from typing import Any, Dict, List, Optional
 
 from flash.core.adapter import AdapterTask
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.data.states import (
     CollateFn,
     PerBatchTransform,
@@ -121,7 +121,7 @@ class ImageEmbedder(AdapterTask):
 
         transform, collate_fn = self.transforms.get(pretraining_transform)(**pretraining_transform_kwargs)
         to_tensor_transform = ApplyToKeys(
-            DefaultDataKeys.INPUT,
+            DataKeys.INPUT,
             transform,
         )
 

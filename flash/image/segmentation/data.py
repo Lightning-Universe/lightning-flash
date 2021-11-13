@@ -24,16 +24,17 @@ from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.base_viz import BaseVisualization  # for viz
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import (
-    DefaultDataKeys,
-    DefaultDataSources,
-    FiftyOneDataSource,
+from flash.core.data.io.input import (
+    DataKeys,
+    FiftyOneInput,
     ImageLabelsMap,
-    NumpyDataSource,
-    PathsDataSource,
-    TensorDataSource,
+    InputFormat,
+    NumpyInput,
+    PathsInput,
+    TensorInput,
 )
-from flash.core.data.process import Deserializer, Preprocess
+from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.process import Deserializer
 from flash.core.data.utils import image_default_loader
 from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,
@@ -67,23 +68,23 @@ if _TORCHVISION_AVAILABLE:
     from torchvision.datasets.folder import has_file_allowed_extension
 
 
-class SemanticSegmentationNumpyDataSource(NumpyDataSource):
+class SemanticSegmentationNumpyInput(NumpyInput):
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        img = torch.from_numpy(sample[DefaultDataKeys.INPUT]).float()
-        sample[DefaultDataKeys.INPUT] = img
-        sample[DefaultDataKeys.METADATA] = {"size": img.shape}
+        img = torch.from_numpy(sample[DataKeys.INPUT]).float()
+        sample[DataKeys.INPUT] = img
+        sample[DataKeys.METADATA] = {"size": img.shape}
         return sample
 
 
-class SemanticSegmentationTensorDataSource(TensorDataSource):
+class SemanticSegmentationTensorInput(TensorInput):
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        img = sample[DefaultDataKeys.INPUT].float()
-        sample[DefaultDataKeys.INPUT] = img
-        sample[DefaultDataKeys.METADATA] = {"size": img.shape}
+        img = sample[DataKeys.INPUT].float()
+        sample[DataKeys.INPUT] = img
+        sample[DataKeys.METADATA] = {"size": img.shape}
         return sample
 
 
-class SemanticSegmentationPathsDataSource(PathsDataSource):
+class SemanticSegmentationPathsInput(PathsInput):
     def __init__(self):
         super().__init__(IMG_EXTENSIONS)
 
@@ -126,7 +127,7 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
             zip(input_data, target_data),
         )
 
-        data = [{DefaultDataKeys.INPUT: input, DefaultDataKeys.TARGET: target} for input, target in data]
+        data = [{DataKeys.INPUT: input, DataKeys.TARGET: target} for input, target in data]
 
         return data
 
@@ -135,17 +136,17 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
 
     def load_sample(self, sample: Mapping[str, Any]) -> Mapping[str, Union[torch.Tensor, torch.Size]]:
         # unpack data paths
-        img_path = sample[DefaultDataKeys.INPUT]
-        img_labels_path = sample[DefaultDataKeys.TARGET]
+        img_path = sample[DataKeys.INPUT]
+        img_labels_path = sample[DataKeys.TARGET]
 
         # load images directly to torch tensors
         img: torch.Tensor = FT.to_tensor(image_default_loader(img_path))  # CxHxW
         img_labels: torch.Tensor = torchvision.io.read_image(img_labels_path)  # CxHxW
         img_labels = img_labels[0]  # HxW
 
-        sample[DefaultDataKeys.INPUT] = img.float()
-        sample[DefaultDataKeys.TARGET] = img_labels.float()
-        sample[DefaultDataKeys.METADATA] = {
+        sample[DataKeys.INPUT] = img.float()
+        sample[DataKeys.TARGET] = img_labels.float()
+        sample[DataKeys.METADATA] = {
             "filepath": img_path,
             "size": img.shape,
         }
@@ -153,18 +154,18 @@ class SemanticSegmentationPathsDataSource(PathsDataSource):
 
     @staticmethod
     def predict_load_sample(sample: Mapping[str, Any]) -> Mapping[str, Any]:
-        img_path = sample[DefaultDataKeys.INPUT]
+        img_path = sample[DataKeys.INPUT]
         img = FT.to_tensor(image_default_loader(img_path)).float()
 
-        sample[DefaultDataKeys.INPUT] = img
-        sample[DefaultDataKeys.METADATA] = {
+        sample[DataKeys.INPUT] = img
+        sample[DataKeys.METADATA] = {
             "filepath": img_path,
             "size": img.shape,
         }
         return sample
 
 
-class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
+class SemanticSegmentationFiftyOneInput(FiftyOneInput):
     def __init__(self, label_field: str = "ground_truth"):
         super().__init__(label_field=label_field)
         self._fo_dataset_name = None
@@ -177,20 +178,20 @@ class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
         self._validate(data)
 
         self._fo_dataset_name = data.name
-        return [{DefaultDataKeys.INPUT: f} for f in data.values("filepath")]
+        return [{DataKeys.INPUT: f} for f in data.values("filepath")]
 
     def load_sample(self, sample: Mapping[str, str]) -> Mapping[str, Union[torch.Tensor, torch.Size]]:
         _fo_dataset = fo.load_dataset(self._fo_dataset_name)
 
-        img_path = sample[DefaultDataKeys.INPUT]
+        img_path = sample[DataKeys.INPUT]
         fo_sample = _fo_dataset[img_path]
 
         img: torch.Tensor = FT.to_tensor(image_default_loader(img_path))  # CxHxW
         img_labels: torch.Tensor = torch.from_numpy(fo_sample[self.label_field].mask)  # HxW
 
-        sample[DefaultDataKeys.INPUT] = img.float()
-        sample[DefaultDataKeys.TARGET] = img_labels.float()
-        sample[DefaultDataKeys.METADATA] = {
+        sample[DataKeys.INPUT] = img.float()
+        sample[DataKeys.TARGET] = img_labels.float()
+        sample[DataKeys.METADATA] = {
             "filepath": img_path,
             "size": img.shape,
         }
@@ -198,11 +199,11 @@ class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
 
     @staticmethod
     def predict_load_sample(sample: Mapping[str, Any]) -> Mapping[str, Any]:
-        img_path = sample[DefaultDataKeys.INPUT]
+        img_path = sample[DataKeys.INPUT]
         img = FT.to_tensor(image_default_loader(img_path)).float()
 
-        sample[DefaultDataKeys.INPUT] = img
-        sample[DefaultDataKeys.METADATA] = {
+        sample[DataKeys.INPUT] = img
+        sample[DataKeys.METADATA] = {
             "filepath": img_path,
             "size": img.shape,
         }
@@ -212,12 +213,12 @@ class SemanticSegmentationFiftyOneDataSource(FiftyOneDataSource):
 class SemanticSegmentationDeserializer(ImageDeserializer):
     def deserialize(self, data: str) -> torch.Tensor:
         result = super().deserialize(data)
-        result[DefaultDataKeys.INPUT] = FT.to_tensor(result[DefaultDataKeys.INPUT])
-        result[DefaultDataKeys.METADATA] = {"size": result[DefaultDataKeys.INPUT].shape}
+        result[DataKeys.INPUT] = FT.to_tensor(result[DataKeys.INPUT])
+        result[DataKeys.METADATA] = {"size": result[DataKeys.INPUT].shape}
         return result
 
 
-class SemanticSegmentationPreprocess(Preprocess):
+class SemanticSegmentationInputTransform(InputTransform):
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -228,9 +229,9 @@ class SemanticSegmentationPreprocess(Preprocess):
         deserializer: Optional["Deserializer"] = None,
         num_classes: int = None,
         labels_map: Dict[int, Tuple[int, int, int]] = None,
-        **data_source_kwargs: Any,
+        **input_kwargs: Any,
     ) -> None:
-        """Preprocess pipeline for semantic segmentation tasks.
+        """InputTransform pipeline for semantic segmentation tasks.
 
         Args:
             train_transform: Dictionary with the set of transforms to apply during training.
@@ -238,7 +239,7 @@ class SemanticSegmentationPreprocess(Preprocess):
             test_transform: Dictionary with the set of transforms to apply during testing.
             predict_transform: Dictionary with the set of transforms to apply during prediction.
             image_size: A tuple with the expected output image size.
-            **data_source_kwargs: Additional arguments passed on to the data source constructors.
+            **input_kwargs: Additional arguments passed on to the data source constructors.
         """
         self.image_size = image_size
         self.num_classes = num_classes
@@ -250,15 +251,15 @@ class SemanticSegmentationPreprocess(Preprocess):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
-                DefaultDataSources.FIFTYONE: SemanticSegmentationFiftyOneDataSource(**data_source_kwargs),
-                DefaultDataSources.FILES: SemanticSegmentationPathsDataSource(),
-                DefaultDataSources.FOLDERS: SemanticSegmentationPathsDataSource(),
-                DefaultDataSources.TENSORS: SemanticSegmentationTensorDataSource(),
-                DefaultDataSources.NUMPY: SemanticSegmentationNumpyDataSource(),
+            inputs={
+                InputFormat.FIFTYONE: SemanticSegmentationFiftyOneInput(**input_kwargs),
+                InputFormat.FILES: SemanticSegmentationPathsInput(),
+                InputFormat.FOLDERS: SemanticSegmentationPathsInput(),
+                InputFormat.TENSORS: SemanticSegmentationTensorInput(),
+                InputFormat.NUMPY: SemanticSegmentationNumpyInput(),
             },
             deserializer=deserializer or SemanticSegmentationDeserializer(),
-            default_data_source=DefaultDataSources.FILES,
+            default_input=InputFormat.FILES,
         )
 
         if labels_map:
@@ -291,7 +292,7 @@ class SemanticSegmentationPreprocess(Preprocess):
 class SemanticSegmentationData(DataModule):
     """Data module for semantic segmentation tasks."""
 
-    preprocess_cls = SemanticSegmentationPreprocess
+    input_transform_cls = SemanticSegmentationInputTransform
 
     @staticmethod
     def configure_data_fetcher(
@@ -304,9 +305,9 @@ class SemanticSegmentationData(DataModule):
         self.data_fetcher.block_viz_window = value
 
     @classmethod
-    def from_data_source(
+    def from_input(
         cls,
-        data_source: str,
+        input: str,
         train_data: Any = None,
         val_data: Any = None,
         test_data: Any = None,
@@ -316,19 +317,19 @@ class SemanticSegmentationData(DataModule):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
-        preprocess: Optional[Preprocess] = None,
+        input_transform: Optional[InputTransform] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: int = 0,
-        **preprocess_kwargs: Any,
+        **input_transform_kwargs: Any,
     ) -> "DataModule":
 
-        if "num_classes" not in preprocess_kwargs:
+        if "num_classes" not in input_transform_kwargs:
             raise MisconfigurationException("`num_classes` should be provided during instantiation.")
 
-        num_classes = preprocess_kwargs["num_classes"]
+        num_classes = input_transform_kwargs["num_classes"]
 
-        labels_map = getattr(preprocess_kwargs, "labels_map", None) or SegmentationLabels.create_random_labels_map(
+        labels_map = getattr(input_transform_kwargs, "labels_map", None) or SegmentationLabels.create_random_labels_map(
             num_classes
         )
 
@@ -337,8 +338,8 @@ class SemanticSegmentationData(DataModule):
         if flash._IS_TESTING:
             data_fetcher.block_viz_window = True
 
-        dm = super().from_data_source(
-            data_source=data_source,
+        dm = super().from_input(
+            input=input,
             train_data=train_data,
             val_data=val_data,
             test_data=test_data,
@@ -348,11 +349,11 @@ class SemanticSegmentationData(DataModule):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_fetcher=data_fetcher,
-            preprocess=preprocess,
+            input_transform=input_transform,
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
-            **preprocess_kwargs,
+            **input_transform_kwargs,
         )
 
         if dm.train_dataset is not None:
@@ -374,13 +375,13 @@ class SemanticSegmentationData(DataModule):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
-        preprocess: Optional[Preprocess] = None,
+        input_transform: Optional[InputTransform] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: int = 0,
         num_classes: Optional[int] = None,
         labels_map: Dict[int, Tuple[int, int, int]] = None,
-        **preprocess_kwargs,
+        **input_transform_kwargs,
     ) -> "DataModule":
         """Creates a :class:`~flash.image.segmentation.data.SemanticSegmentationData` object from the given data
         folders and corresponding target folders.
@@ -397,25 +398,25 @@ class SemanticSegmentationData(DataModule):
                 corresponding inputs).
             predict_folder: The folder containing the predict data.
             train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
                 :class:`~flash.core.data.data_module.DataModule`.
-            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+            input_transform: The :class:`~flash.core.data.data.InputTransform` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
                 will be constructed and used.
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_classes: Number of classes within the segmentation mask.
             labels_map: Mapping between a class_id and its corresponding color.
-            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
-                if ``preprocess = None``.
+            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
+                Will only be used if ``input_transform = None``.
 
         Returns:
             The constructed data module.
@@ -427,8 +428,8 @@ class SemanticSegmentationData(DataModule):
                 train_target_folder="train_masks",
             )
         """
-        return cls.from_data_source(
-            DefaultDataSources.FOLDERS,
+        return cls.from_input(
+            InputFormat.FOLDERS,
             (train_folder, train_target_folder),
             (val_folder, val_target_folder),
             (test_folder, test_target_folder),
@@ -438,13 +439,13 @@ class SemanticSegmentationData(DataModule):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_fetcher=data_fetcher,
-            preprocess=preprocess,
+            input_transform=input_transform,
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
             num_classes=num_classes,
             labels_map=labels_map,
-            **preprocess_kwargs,
+            **input_transform_kwargs,
         )
 
 
@@ -484,8 +485,8 @@ class SegmentationMatplotlibVisualization(BaseVisualization):
             # unpack images and labels
             sample = data[i]
             if isinstance(sample, dict):
-                image = sample[DefaultDataKeys.INPUT]
-                label = sample[DefaultDataKeys.TARGET]
+                image = sample[DataKeys.INPUT]
+                label = sample[DataKeys.TARGET]
             elif isinstance(sample, tuple):
                 image = sample[0]
                 label = sample[1]

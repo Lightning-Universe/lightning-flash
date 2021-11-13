@@ -1,1 +1,1 @@
-from flash.audio.classification.data import AudioClassificationData, AudioClassificationPreprocess  # noqa: F401
+from flash.audio.classification.data import AudioClassificationData, AudioClassificationInputTransform  # noqa: F401

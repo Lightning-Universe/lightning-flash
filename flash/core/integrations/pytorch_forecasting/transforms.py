@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Tuple
 
 from torch.utils.data._utils.collate import default_collate
 
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 
 
 def convert_predictions(predictions: List[Dict[str, Any]]) -> Tuple[Dict[str, Any], List]:
@@ -26,5 +26,5 @@ def convert_predictions(predictions: List[Dict[str, Any]]) -> Tuple[Dict[str, An
             unrolled_predictions.extend(prediction_batch)
         predictions = unrolled_predictions
     result = default_collate(predictions)
-    inputs = result.pop(DefaultDataKeys.INPUT)
+    inputs = result.pop(DataKeys.INPUT)
     return result, inputs

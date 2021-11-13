@@ -12,44 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pytest
-import torch
-import yaml
 
 from flash.core.data.transforms import merge_transforms
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
-from flash.graph.classification.data import GraphClassificationData, GraphClassificationPreprocess
+from flash.graph.classification.data import GraphClassificationData, GraphClassificationInputTransform
 from tests.helpers.utils import _GRAPH_TESTING
 
 if _GRAPH_AVAILABLE:
-    import networkx as nx
-    from networkx.readwrite import (
-        adjacency_data,
-        cytoscape_data,
-        jit_data,
-        node_link_data,
-        tree_data,
-        write_adjlist,
-        write_edgelist,
-        write_gexf,
-        write_gml,
-        write_gpickle,
-        write_graphml,
-        write_pajek,
-    )
-    from networkx.readwrite.nx_shp import write_shp
-    from torch_geometric.data.data import Data as PyGData
     from torch_geometric.datasets import TUDataset
     from torch_geometric.transforms import OneHotDegree
-    from torch_geometric.utils import from_networkx
 
 
 @pytest.mark.skipif(not _GRAPH_TESTING, reason="graph libraries aren't installed.")
-class TestGraphClassificationPreprocess:
-    """Tests ``GraphClassificationPreprocess``."""
+class TestGraphClassificationInputTransform:
+    """Tests ``GraphClassificationInputTransform``."""
 
     def test_smoke(self):
         """A simple test that the class can be instantiated."""
-        prep = GraphClassificationPreprocess()
+        prep = GraphClassificationInputTransform()
         assert prep is not None
 
 
@@ -114,19 +94,19 @@ class TestGraphClassificationData:
             test_dataset=test_dataset,
             predict_dataset=predict_dataset,
             train_transform=merge_transforms(
-                GraphClassificationPreprocess.default_transforms(),
+                GraphClassificationInputTransform.default_transforms(),
                 {"pre_tensor_transform": OneHotDegree(tudataset.num_features - 1)},
             ),
             val_transform=merge_transforms(
-                GraphClassificationPreprocess.default_transforms(),
+                GraphClassificationInputTransform.default_transforms(),
                 {"pre_tensor_transform": OneHotDegree(tudataset.num_features - 1)},
             ),
             test_transform=merge_transforms(
-                GraphClassificationPreprocess.default_transforms(),
+                GraphClassificationInputTransform.default_transforms(),
                 {"pre_tensor_transform": OneHotDegree(tudataset.num_features - 1)},
             ),
             predict_transform=merge_transforms(
-                GraphClassificationPreprocess.default_transforms(),
+                GraphClassificationInputTransform.default_transforms(),
                 {"pre_tensor_transform": OneHotDegree(tudataset.num_features - 1)},
             ),
             batch_size=2,
@@ -150,58 +130,3 @@ class TestGraphClassificationData:
         data = next(iter(dm.test_dataloader()))
         assert list(data.x.size())[1] == tudataset.num_features * 2
         assert list(data.y.size()) == [2]
-
-    def test_from_folder(self, tmpdir):
-        G = nx.karate_club_graph()
-
-        write_adjlist(G, tmpdir / "data.adjlist")
-        GraphClassificationData.from_folders(train_folder=tmpdir)
-
-        write_edgelist(G, tmpdir / "data.edgelist")
-        GraphClassificationData.from_folders(train_folder=tmpdir)
-
-        write_gexf(G, tmpdir / "data.gexf")
-        GraphClassificationData.from_folders(train_folder=tmpdir)
-
-        write_gml(G, tmpdir / "data.gml")
-        GraphClassificationData.from_folders(train_folder=tmpdir)
-
-        write_graphml(G, tmpdir / "data.graphml")
-        GraphClassificationData.from_folders(train_folder=tmpdir)
-
-        write_gpickle(G, tmpdir / "data.gpickle")
-        GraphClassificationData.from_folders(train_folder=tmpdir)
-
-        write_pajek(G, tmpdir / "data.net")
-        GraphClassificationData.from_folders(train_folder=tmpdir)
-
-        write_shp(G, tmpdir / "data.shp")
-        GraphClassificationData.from_folders(train_folder=tmpdir)
-
-        yaml.dump(G, tmpdir / "data.yaml")
-        GraphClassificationData.from_folders(train_folder=tmpdir)
-
-        node_link_data(G, tmpdir / "data.json")
-        GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type="node_link")
-
-        adjacency_data(G, tmpdir / "data.json")
-        GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type="adjacency")
-
-        cytoscape_data(G, tmpdir / "data.json")
-        GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type="cytoscape")
-
-        tree_data(G, tmpdir / "data.json")
-        GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type="tree")
-
-        jit_data(G, tmpdir / "data.json")
-        GraphClassificationData.from_folders(train_folder=tmpdir, json_data_type="jit")
-
-    def test_from_data_sequence(self):
-        G = nx.karate_club_graph()
-        data = from_networkx(G)
-        data_x_list = []
-        for key in list(G.nodes(data=True))[0][1].keys():
-            data_x_list.append(data.__dict__[key])
-        data.x = torch.cat(data_x_list, dim=-1)
-        data_list = [data, data, data]
-        GraphClassificationData.from_data_sequence(data_list)

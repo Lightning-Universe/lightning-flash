@@ -16,7 +16,7 @@ from torch.utils.data.dataset import Dataset
 
 import flash
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
 
 if _POINTCLOUD_AVAILABLE:
@@ -78,24 +78,22 @@ if _POINTCLOUD_AVAILABLE:
                 # will not be loaded until now.
                 self._update_bounding_boxes()
 
-                self._update_datasource_combobox()
+                self._update_Input_combobox()
                 self._update_shaders_combobox()
 
                 # Display "colors" by default if available, "points" if not
                 available_attrs = self._get_available_attrs()
                 self._set_shader(self.SOLID_NAME, force_update=True)
                 if "colors" in available_attrs:
-                    self._datasource_combobox.selected_text = "colors"
+                    self._Input_combobox.selected_text = "colors"
                 elif "points" in available_attrs:
-                    self._datasource_combobox.selected_text = "points"
+                    self._Input_combobox.selected_text = "points"
 
                 self._dont_update_geometry = True
-                self._on_datasource_changed(
-                    self._datasource_combobox.selected_text, self._datasource_combobox.selected_index
-                )
+                self._on_Input_changed(self._Input_combobox.selected_text, self._Input_combobox.selected_index)
                 self._update_geometry_colors()
                 self._dont_update_geometry = False
-                # _datasource_combobox was empty, now isn't, re-layout.
+                # _Input_combobox was empty, now isn't, re-layout.
                 self.window.set_needs_layout()
 
                 self._update_geometry()
@@ -156,10 +154,10 @@ if _POINTCLOUD_AVAILABLE:
 
                 for pred in predictions:
                     data = {
-                        "points": pred[DefaultDataKeys.INPUT][:, :3],
-                        "name": pred[DefaultDataKeys.METADATA],
+                        "points": pred[DataKeys.INPUT][:, :3],
+                        "name": pred[DataKeys.METADATA],
                     }
-                    bounding_box = pred[DefaultDataKeys.PREDS]
+                    bounding_box = pred[DataKeys.PREDS]
 
                     viz.visualize([data], bounding_boxes=bounding_box)
 

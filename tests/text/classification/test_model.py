@@ -20,10 +20,10 @@ import torch
 
 from flash import Trainer
 from flash.__main__ import main
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import TextClassifier
-from flash.text.classification.data import TextClassificationOutputTransform, TextClassificationPreprocess
+from flash.text.classification.data import TextClassificationInputTransform, TextClassificationOutputTransform
 from tests.helpers.utils import _SERVE_TESTING, _TEXT_TESTING
 
 # ======== Mock functions ========
@@ -33,7 +33,7 @@ class DummyDataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
         return {
             "input_ids": torch.randint(1000, size=(100,)),
-            DefaultDataKeys.TARGET: torch.randint(2, size=(1,)).item(),
+            DataKeys.TARGET: torch.randint(2, size=(1,)).item(),
         }
 
     def __len__(self) -> int:
@@ -77,8 +77,9 @@ def test_jit(tmpdir):
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = TextClassifier(2, TEST_BACKBONE)
-    # TODO: Currently only servable once a preprocess and output_transform have been attached
-    model._preprocess = TextClassificationPreprocess(backbone=TEST_BACKBONE)
+
+    # TODO: Currently only servable once a input_transform and postprocess have been attached
+    model._input_transform = TextClassificationInputTransform(backbone=TEST_BACKBONE)
     model._output_transform = TextClassificationOutputTransform()
     model.eval()
     model.serve()

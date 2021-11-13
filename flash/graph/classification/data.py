@@ -14,17 +14,17 @@
 from typing import Any, Callable, Dict, Optional
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DefaultDataSources
-from flash.core.data.process import Preprocess
-from flash.core.utilities.imports import _GRAPH_AVAILABLE, requires_extras
-from flash.graph.data import GraphDatasetDataSource, GraphPathsDataSource, GraphSequenceDataSource
+from flash.core.data.io.input import InputFormat
+from flash.core.data.io.input_transform import InputTransform
+from flash.core.utilities.imports import _GRAPH_AVAILABLE
+from flash.graph.data import GraphDatasetInput
 
 if _GRAPH_AVAILABLE:
     from torch_geometric.data.batch import Batch
     from torch_geometric.transforms import NormalizeFeatures
 
 
-class GraphClassificationPreprocess(Preprocess):
+class GraphClassificationInputTransform(InputTransform):
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -37,12 +37,10 @@ class GraphClassificationPreprocess(Preprocess):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
-                DefaultDataSources.DATASET: GraphDatasetDataSource(),
-                DefaultDataSources.SEQUENCE: GraphSequenceDataSource(),
-                DefaultDataSources.FOLDERS: GraphPathsDataSource(),
+            inputs={
+                InputFormat.DATASETS: GraphDatasetInput(),
             },
-            default_data_source=DefaultDataSources.SEQUENCE,
+            default_input=InputFormat.DATASETS,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
@@ -60,7 +58,7 @@ class GraphClassificationPreprocess(Preprocess):
 class GraphClassificationData(DataModule):
     """Data module for graph classification tasks."""
 
-    preprocess_cls = GraphClassificationPreprocess
+    input_transform_cls = GraphClassificationInputTransform
 
     @property
     def num_features(self):

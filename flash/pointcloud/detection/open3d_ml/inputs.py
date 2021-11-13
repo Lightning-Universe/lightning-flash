@@ -19,7 +19,7 @@ import yaml
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.auto_dataset import BaseAutoDataset
-from flash.core.data.data_source import BaseDataFormat, DataSource
+from flash.core.data.io.input import BaseDataFormat, Input
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
 
 if _POINTCLOUD_AVAILABLE:
@@ -151,7 +151,7 @@ class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
         return data, attr
 
 
-class PointCloudObjectDetectorFoldersDataSource(DataSource):
+class PointCloudObjectDetectorFoldersInput(Input):
     def __init__(
         self,
         data_format: Optional[BaseDataFormat] = None,
@@ -191,9 +191,9 @@ class PointCloudObjectDetectorFoldersDataSource(DataSource):
 
         data, metadata = self.loader.load_sample(metadata, dataset)
 
-        preprocess_fn = getattr(dataset, "preprocess_fn", None)
-        if preprocess_fn:
-            data = preprocess_fn(data, metadata)
+        input_transform_fn = getattr(dataset, "input_transform_fn", None)
+        if input_transform_fn:
+            data = input_transform_fn(data, metadata)
 
         transform_fn = getattr(dataset, "transform_fn", None)
         if transform_fn:
@@ -230,9 +230,9 @@ class PointCloudObjectDetectorFoldersDataSource(DataSource):
 
         data, metadata = self.loader.predict_load_sample(metadata, dataset)
 
-        preprocess_fn = getattr(dataset, "preprocess_fn", None)
-        if preprocess_fn:
-            data = preprocess_fn(data, metadata)
+        input_transform_fn = getattr(dataset, "input_transform_fn", None)
+        if input_transform_fn:
+            data = input_transform_fn(data, metadata)
 
         transform_fn = getattr(dataset, "transform_fn", None)
         if transform_fn:

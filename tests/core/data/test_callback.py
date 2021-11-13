@@ -17,7 +17,7 @@ from unittest.mock import ANY, call, MagicMock
 import torch
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.process import DefaultPreprocess
+from flash.core.data.io.input_transform import DefaultInputTransform
 from flash.core.model import Task
 from flash.core.trainer import Trainer
 from flash.core.utilities.stages import RunningStage
@@ -31,10 +31,10 @@ def test_flash_callback(_, __, tmpdir):
     callback_mock = MagicMock()
 
     inputs = [[torch.rand(1), torch.rand(1)]]
-    dm = DataModule.from_data_source(
-        "default", inputs, inputs, inputs, None, preprocess=DefaultPreprocess(), batch_size=1, num_workers=0
+    dm = DataModule.from_input(
+        "default", inputs, inputs, inputs, None, input_transform=DefaultInputTransform(), batch_size=1, num_workers=0
     )
-    dm.preprocess.callbacks += [callback_mock]
+    dm.input_transform.callbacks += [callback_mock]
 
     _ = next(iter(dm.train_dataloader()))
 
@@ -58,10 +58,10 @@ def test_flash_callback(_, __, tmpdir):
         limit_train_batches=1,
         progress_bar_refresh_rate=0,
     )
-    dm = DataModule.from_data_source(
-        "default", inputs, inputs, inputs, None, preprocess=DefaultPreprocess(), batch_size=1, num_workers=0
+    dm = DataModule.from_input(
+        "default", inputs, inputs, inputs, None, input_transform=DefaultInputTransform(), batch_size=1, num_workers=0
     )
-    dm.preprocess.callbacks += [callback_mock]
+    dm.input_transform.callbacks += [callback_mock]
     trainer.fit(CustomModel(), datamodule=dm)
 
     assert callback_mock.method_calls == [

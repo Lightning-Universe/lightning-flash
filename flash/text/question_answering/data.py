@@ -29,9 +29,9 @@ from torch.utils.data.sampler import Sampler
 import flash
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
+from flash.core.data.io.input import DataKeys, Input, InputFormat
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
-from flash.core.data.process import Preprocess
 from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 from flash.core.utilities.stages import RunningStage
@@ -42,7 +42,7 @@ if _TEXT_AVAILABLE:
     from transformers import AutoTokenizer, DataCollatorWithPadding, default_data_collator
 
 
-class QuestionAnsweringDataSource(DataSource):
+class QuestionAnsweringInput(Input):
     @requires("text")
     def __init__(
         self,
@@ -87,7 +87,7 @@ class QuestionAnsweringDataSource(DataSource):
         )
 
         if stage == RunningStage.TRAINING:
-            # Preprocess function for training
+            # InputTransform function for training
             tokenized_samples, _, _ = self._prepare_train_features(samples, tokenized_samples)
         elif self._running_stage.evaluating or stage == RunningStage.PREDICTING:
             if self._running_stage.evaluating:
@@ -98,7 +98,7 @@ class QuestionAnsweringDataSource(DataSource):
                 tokenized_samples["overflow_to_sample_mapping"] = _sample_mapping
                 tokenized_samples["offset_mapping"] = _offset_mapping
 
-            # Preprocess function for eval or predict
+            # InputTransform function for eval or predict
             tokenized_samples = self._prepare_val_features(samples, tokenized_samples)
 
             offset_mappings = tokenized_samples.pop("offset_mapping")
@@ -106,14 +106,14 @@ class QuestionAnsweringDataSource(DataSource):
             contexts = tokenized_samples.pop("context")
             answers = tokenized_samples.pop("answer")
 
-            tokenized_samples[DefaultDataKeys.METADATA] = []
+            tokenized_samples[DataKeys.METADATA] = []
             for offset_mapping, example_id, context in zip(offset_mappings, example_ids, contexts):
-                tokenized_samples[DefaultDataKeys.METADATA].append(
+                tokenized_samples[DataKeys.METADATA].append(
                     {"context": context, "offset_mapping": offset_mapping, "example_id": example_id}
                 )
             if self._running_stage.evaluating:
                 for index, answer in enumerate(answers):
-                    tokenized_samples[DefaultDataKeys.METADATA][index]["answer"] = answer
+                    tokenized_samples[DataKeys.METADATA][index]["answer"] = answer
 
             del offset_mappings
             del example_ids
@@ -238,7 +238,7 @@ class QuestionAnsweringDataSource(DataSource):
         return self._doc_stride
 
 
-class QuestionAnsweringFileDataSource(QuestionAnsweringDataSource):
+class QuestionAnsweringFileInput(QuestionAnsweringInput):
     def __init__(
         self,
         filetype: str,
@@ -344,7 +344,7 @@ class QuestionAnsweringFileDataSource(QuestionAnsweringDataSource):
         self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
-class QuestionAnsweringCSVDataSource(QuestionAnsweringFileDataSource):
+class QuestionAnsweringCSVInput(QuestionAnsweringFileInput):
     def __init__(
         self,
         backbone: str,
@@ -378,7 +378,7 @@ class QuestionAnsweringCSVDataSource(QuestionAnsweringFileDataSource):
         self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
-class QuestionAnsweringJSONDataSource(QuestionAnsweringFileDataSource):
+class QuestionAnsweringJSONInput(QuestionAnsweringFileInput):
     def __init__(
         self,
         backbone: str,
@@ -412,7 +412,7 @@ class QuestionAnsweringJSONDataSource(QuestionAnsweringFileDataSource):
         self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
-class QuestionAnsweringDictionaryDataSource(QuestionAnsweringDataSource):
+class QuestionAnsweringDictionaryInput(QuestionAnsweringInput):
     def load_data(self, data: Any, columns: List[str] = None) -> "datasets.Dataset":
         stage = self._running_stage.value
 
@@ -434,7 +434,7 @@ class QuestionAnsweringDictionaryDataSource(QuestionAnsweringDataSource):
         self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
-class SQuADDataSource(QuestionAnsweringDataSource):
+class SQuADInput(QuestionAnsweringInput):
     def load_data(self, data: str, dataset: Optional[Any] = None) -> "datasets.Dataset":
         stage = self._running_stage.value
 
@@ -484,13 +484,13 @@ class SQuADDataSource(QuestionAnsweringDataSource):
 @dataclass(unsafe_hash=True, frozen=True)
 class QuestionAnsweringBackboneState(ProcessState):
     """The ``QuestionAnsweringBackboneState`` stores the backbone in use by the
-    :class:`~flash.text.question_answering.data.QuestionAnsweringPreprocess`
+    :class:`~flash.text.question_answering.data.QuestionAnsweringInputTransform`
     """
 
     backbone: str
 
 
-class QuestionAnsweringPreprocess(Preprocess):
+class QuestionAnsweringInputTransform(InputTransform):
     @requires("text")
     def __init__(
         self,
@@ -521,8 +521,8 @@ class QuestionAnsweringPreprocess(Preprocess):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
-                DefaultDataSources.CSV: QuestionAnsweringCSVDataSource(
+            inputs={
+                InputFormat.CSV: QuestionAnsweringCSVInput(
                     self.backbone,
                     max_source_length=max_source_length,
                     max_target_length=max_target_length,
@@ -532,7 +532,7 @@ class QuestionAnsweringPreprocess(Preprocess):
                     answer_column_name=answer_column_name,
                     doc_stride=doc_stride,
                 ),
-                DefaultDataSources.JSON: QuestionAnsweringJSONDataSource(
+                InputFormat.JSON: QuestionAnsweringJSONInput(
                     self.backbone,
                     max_source_length=max_source_length,
                     max_target_length=max_target_length,
@@ -542,7 +542,7 @@ class QuestionAnsweringPreprocess(Preprocess):
                     answer_column_name=answer_column_name,
                     doc_stride=doc_stride,
                 ),
-                "dict": QuestionAnsweringDictionaryDataSource(
+                "dict": QuestionAnsweringDictionaryInput(
                     self.backbone,
                     max_source_length=max_source_length,
                     max_target_length=max_target_length,
@@ -552,7 +552,7 @@ class QuestionAnsweringPreprocess(Preprocess):
                     answer_column_name=answer_column_name,
                     doc_stride=doc_stride,
                 ),
-                "squad_v2": SQuADDataSource(
+                "squad_v2": SQuADInput(
                     self.backbone,
                     max_source_length=max_source_length,
                     max_target_length=max_target_length,
@@ -560,7 +560,7 @@ class QuestionAnsweringPreprocess(Preprocess):
                     doc_stride=doc_stride,
                 ),
             },
-            default_data_source="dict",
+            default_input="dict",
         )
 
         self.set_state(QuestionAnsweringBackboneState(self.backbone))
@@ -638,7 +638,7 @@ class QuestionAnsweringOutputTransform(OutputTransform):
 class QuestionAnsweringData(DataModule):
     """Data module for QuestionAnswering task."""
 
-    preprocess_cls = QuestionAnsweringPreprocess
+    input_transform_cls = QuestionAnsweringInputTransform
     output_transform_cls = QuestionAnsweringOutputTransform
 
     @classmethod
@@ -651,11 +651,11 @@ class QuestionAnsweringData(DataModule):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
-        preprocess: Optional[Preprocess] = None,
+        input_transform: Optional[InputTransform] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: int = 0,
-        **preprocess_kwargs: Any,
+        **input_transform_kwargs: Any,
     ):
         """Creates a :class:`~flash.text.question_answering.data.QuestionAnsweringData` object from the given data
         JSON files in the SQuAD2.0 format.
@@ -665,21 +665,21 @@ class QuestionAnsweringData(DataModule):
             val_file: The JSON file containing the validation data.
             test_file: The JSON file containing the testing data.
             train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
                 :class:`~flash.core.data.data_module.DataModule`.
-            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+            input_transform: The :class:`~flash.core.data.data.InputTransform` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
                 will be constructed and used.
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
-                if ``preprocess = None``.
+            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
+                Will only be used if ``input_transform = None``.
 
         Returns:
             The constructed data module.
@@ -691,7 +691,7 @@ class QuestionAnsweringData(DataModule):
                 doc_stride=128,
             )
         """
-        return cls.from_data_source(
+        return cls.from_input(
             "squad_v2",
             train_file,
             val_file,
@@ -700,11 +700,11 @@ class QuestionAnsweringData(DataModule):
             val_transform=val_transform,
             test_transform=test_transform,
             data_fetcher=data_fetcher,
-            preprocess=preprocess,
+            input_transform=input_transform,
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
-            **preprocess_kwargs,
+            **input_transform_kwargs,
         )
 
     @classmethod
@@ -719,18 +719,18 @@ class QuestionAnsweringData(DataModule):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
-        preprocess: Optional[Preprocess] = None,
+        input_transform: Optional[InputTransform] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: int = 0,
         sampler: Optional[Sampler] = None,
         field: Optional[str] = None,
-        **preprocess_kwargs: Any,
+        **input_transform_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.text.question_answering.QuestionAnsweringData` object from the given JSON files
-        using the :class:`~flash.text.question_answering.QuestionAnsweringDataSource`of name
-        :attr:`~flash.core.data.data_source.DefaultDataSources.JSON` from the passed or constructed
-        :class:`~flash.text.question_answering.QuestionAnsweringPreprocess`.
+        using the :class:`~flash.text.question_answering.QuestionAnsweringInput`of name
+        :attr:`~flash.core.data.io.input.InputFormat.JSON` from the passed or constructed
+        :class:`~flash.text.question_answering.QuestionAnsweringInputTransform`.
 
         Args:
             train_file: The JSON file containing the training data.
@@ -738,27 +738,27 @@ class QuestionAnsweringData(DataModule):
             test_file: The JSON file containing the testing data.
             predict_file: The JSON file containing the data to use when predicting.
             train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
                 :class:`~flash.core.data.data_module.DataModule`.
-            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+            input_transform: The :class:`~flash.core.data.data.InputTransform` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
                 will be constructed and used.
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             sampler: The ``sampler`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             field: To specify the field that holds the data in the JSON file.
-            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
-                if ``preprocess = None``.
+            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
+                Will only be used if ``input_transform = None``.
 
-        .. note:: The following keyword arguments can be passed through to the preprocess_kwargs
+        .. note:: The following keyword arguments can be passed through to the input_transform_kwargs
 
             - backbone: The HF model to be used for the task.
             - max_source_length: Max length of the sequence to be considered during tokenization.
@@ -789,8 +789,8 @@ class QuestionAnsweringData(DataModule):
                 doc_stride=128
             )
         """
-        return cls.from_data_source(
-            DefaultDataSources.JSON,
+        return cls.from_input(
+            InputFormat.JSON,
             (train_file, field),
             (val_file, field),
             (test_file, field),
@@ -800,12 +800,12 @@ class QuestionAnsweringData(DataModule):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_fetcher=data_fetcher,
-            preprocess=preprocess,
+            input_transform=input_transform,
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
             sampler=sampler,
-            **preprocess_kwargs,
+            **input_transform_kwargs,
         )
 
     @classmethod
@@ -820,17 +820,17 @@ class QuestionAnsweringData(DataModule):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
-        preprocess: Optional[Preprocess] = None,
+        input_transform: Optional[InputTransform] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: int = 0,
         sampler: Optional[Sampler] = None,
-        **preprocess_kwargs: Any,
+        **input_transform_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given CSV files using the
-        :class:`~flash.core.data.data_source.DataSource`
-        of name :attr:`~flash.core.data.data_source.DefaultDataSources.CSV`
-        from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
+        :class:`~flash.core.data.io.input.Input`
+        of name :attr:`~flash.core.data.io.input.InputFormat.CSV`
+        from the passed or constructed :class:`~flash.core.data.io.input_transform.InputTransform`.
 
         Args:
             input_fields: The field or fields (columns) in the CSV file to use for the input.
@@ -840,26 +840,26 @@ class QuestionAnsweringData(DataModule):
             test_file: The CSV file containing the testing data.
             predict_file: The CSV file containing the data to use when predicting.
             train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
                 :class:`~flash.core.data.data_module.DataModule`.
-            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+            input_transform: The :class:`~flash.core.data.data.InputTransform` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
                 will be constructed and used.
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             sampler: The ``sampler`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
-                if ``preprocess = None``.
+            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
+                Will only be used if ``input_transform = None``.
 
-        .. note:: The following keyword arguments can be passed through to the preprocess_kwargs
+        .. note:: The following keyword arguments can be passed through to the input_transform_kwargs
 
             - backbone: The HF model to be used for the task.
             - max_source_length: Max length of the sequence to be considered during tokenization.
@@ -892,8 +892,8 @@ class QuestionAnsweringData(DataModule):
                 doc_stride=128
             )
         """
-        return cls.from_data_source(
-            DefaultDataSources.CSV,
+        return cls.from_input(
+            InputFormat.CSV,
             train_file,
             val_file,
             test_file,
@@ -903,10 +903,10 @@ class QuestionAnsweringData(DataModule):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_fetcher=data_fetcher,
-            preprocess=preprocess,
+            input_transform=input_transform,
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
             sampler=sampler,
-            **preprocess_kwargs,
+            **input_transform_kwargs,
         )

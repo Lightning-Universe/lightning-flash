@@ -17,11 +17,11 @@ import pytest
 
 from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.core.data.callback import FlashCallback
-from flash.core.data.data_source import DataSource
+from flash.core.data.io.input import Input
 from flash.core.utilities.stages import RunningStage
 
 
-class _AutoDatasetTestDataSource(DataSource):
+class _AutoDatasetTestInput(Input):
     def __init__(self, with_dset: bool):
         self._callbacks: List[FlashCallback] = []
         self.load_data_count = 0
@@ -87,14 +87,14 @@ class _AutoDatasetTestDataSource(DataSource):
 @pytest.mark.parametrize("running_stage", [RunningStage.TRAINING, RunningStage.TESTING, RunningStage.VALIDATING])
 def test_base_autodataset_smoke(running_stage):
     dt = range(10)
-    ds = DataSource()
-    dset = BaseAutoDataset(data=dt, data_source=ds, running_stage=running_stage)
+    ds = Input()
+    dset = BaseAutoDataset(data=dt, input=ds, running_stage=running_stage)
     assert dset is not None
     assert dset.running_stage == running_stage
 
     # check on members
     assert dset.data == dt
-    assert dset.data_source == ds
+    assert dset.input == ds
 
     # test set the running stage
     dset.running_stage = RunningStage.PREDICTING
@@ -108,15 +108,15 @@ def test_base_autodataset_smoke(running_stage):
 def test_autodataset_smoke():
     num_samples = 20
     dt = range(num_samples)
-    ds = DataSource()
+    ds = Input()
 
-    dset = AutoDataset(data=dt, data_source=ds, running_stage=RunningStage.TRAINING)
+    dset = AutoDataset(data=dt, input=ds, running_stage=RunningStage.TRAINING)
     assert dset is not None
     assert dset.running_stage == RunningStage.TRAINING
 
     # check on members
     assert dset.data == dt
-    assert dset.data_source == ds
+    assert dset.input == ds
 
     # test set the running stage
     dset.running_stage = RunningStage.PREDICTING
@@ -136,15 +136,15 @@ def test_autodataset_smoke():
 def test_iterable_autodataset_smoke():
     num_samples = 20
     dt = range(num_samples)
-    ds = DataSource()
+    ds = Input()
 
-    dset = IterableAutoDataset(data=dt, data_source=ds, running_stage=RunningStage.TRAINING)
+    dset = IterableAutoDataset(data=dt, input=ds, running_stage=RunningStage.TRAINING)
     assert dset is not None
     assert dset.running_stage == RunningStage.TRAINING
 
     # check on members
     assert dset.data == dt
-    assert dset.data_source == ds
+    assert dset.input == ds
 
     # test set the running stage
     dset.running_stage = RunningStage.PREDICTING
@@ -168,11 +168,11 @@ def test_iterable_autodataset_smoke():
         False,
     ],
 )
-def test_preprocessing_data_source_with_running_stage(with_dataset):
-    data_source = _AutoDatasetTestDataSource(with_dataset)
+def test_input_transforming_input_with_running_stage(with_dataset):
+    input = _AutoDatasetTestInput(with_dataset)
     running_stage = RunningStage.TRAINING
 
-    dataset = data_source.generate_dataset(range(10), running_stage=running_stage)
+    dataset = input.generate_dataset(range(10), running_stage=running_stage)
 
     assert len(dataset) == 10
 
@@ -182,8 +182,8 @@ def test_preprocessing_data_source_with_running_stage(with_dataset):
     if with_dataset:
         assert dataset.train_load_sample_was_called
         assert dataset.train_load_data_was_called
-        assert data_source.train_load_sample_with_dataset_count == len(dataset)
-        assert data_source.train_load_data_with_dataset_count == 1
+        assert input.train_load_sample_with_dataset_count == len(dataset)
+        assert input.train_load_data_with_dataset_count == 1
     else:
-        assert data_source.train_load_sample_count == len(dataset)
-        assert data_source.train_load_data_count == 1
+        assert input.train_load_sample_count == len(dataset)
+        assert input.train_load_data_count == 1

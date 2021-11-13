@@ -39,8 +39,9 @@ import flash
 from flash.core.data.auto_dataset import BaseAutoDataset, IterableAutoDataset
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
-from flash.core.data.data_pipeline import DataPipeline, DefaultPreprocess, Preprocess
-from flash.core.data.data_source import DataSource, DefaultDataSources
+from flash.core.data.data_pipeline import DataPipeline
+from flash.core.data.io.input import Input, InputFormat
+from flash.core.data.io.input_transform import DefaultInputTransform, InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX
@@ -55,7 +56,7 @@ else:
 
 class DataModule(pl.LightningDataModule):
     """A basic DataModule class for all Flash tasks. This class includes references to a
-    :class:`~flash.core.data.data_source.DataSource`, :class:`~flash.core.data.process.Preprocess`,
+    :class:`~flash.core.data.io.input.Input`, :class:`~flash.core.data.io.input_transform.InputTransform`,
     :class:`~flash.core.data.io.output_transform.OutputTransform`, and a
     :class:`~flash.core.data.callback.BaseDataFetcher`.
 
@@ -64,15 +65,15 @@ class DataModule(pl.LightningDataModule):
         val_dataset: Dataset for validating model performance during training. Defaults to None.
         test_dataset: Dataset to test model performance. Defaults to None.
         predict_dataset: Dataset for predicting. Defaults to None.
-        data_source: The :class:`~flash.core.data.data_source.DataSource` that was used to create the datasets.
-        preprocess: The :class:`~flash.core.data.process.Preprocess` to use when constructing the
+        input: The :class:`~flash.core.data.io.input.Input` that was used to create the datasets.
+        input_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` to use when constructing the
             :class:`~flash.core.data.data_pipeline.DataPipeline`. If ``None``, a
-            :class:`~flash.core.data.process.DefaultPreprocess` will be used.
+            :class:`~flash.core.data.io.input_transform.DefaultInputTransform` will be used.
         output_transform: The :class:`~flash.core.data.io.output_transform.OutputTransform` to use when constructing the
             :class:`~flash.core.data.data_pipeline.DataPipeline`. If ``None``, a plain
             :class:`~flash.core.data.io.output_transform.OutputTransform` will be used.
         data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to attach to the
-            :class:`~flash.core.data.process.Preprocess`. If ``None``, the output from
+            :class:`~flash.core.data.io.input_transform.InputTransform`. If ``None``, the output from
             :meth:`~flash.core.data.data_module.DataModule.configure_data_fetcher` will be used.
         val_split: An optional float which gives the relative amount of the training dataset to use for the validation
             dataset.
@@ -84,7 +85,7 @@ class DataModule(pl.LightningDataModule):
             Will be passed to the DataLoader for the training dataset. Defaults to None.
     """
 
-    preprocess_cls = DefaultPreprocess
+    input_transform_cls = DefaultInputTransform
     output_transform_cls = OutputTransform
 
     def __init__(
@@ -93,8 +94,8 @@ class DataModule(pl.LightningDataModule):
         val_dataset: Optional[Dataset] = None,
         test_dataset: Optional[Dataset] = None,
         predict_dataset: Optional[Dataset] = None,
-        data_source: Optional[DataSource] = None,
-        preprocess: Optional[Preprocess] = None,
+        input: Optional[Input] = None,
+        input_transform: Optional[InputTransform] = None,
         output_transform: Optional[OutputTransform] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
         val_split: Optional[float] = None,
@@ -108,14 +109,14 @@ class DataModule(pl.LightningDataModule):
         if flash._IS_TESTING and torch.cuda.is_available():
             batch_size = 16
 
-        self._data_source: DataSource = data_source
-        self._preprocess: Optional[Preprocess] = preprocess
+        self._input: Input = input
+        self._input_tranform: Optional[InputTransform] = input_transform
         self._output_transform: Optional[OutputTransform] = output_transform
         self._viz: Optional[BaseVisualization] = None
         self._data_fetcher: Optional[BaseDataFetcher] = data_fetcher or self.configure_data_fetcher()
 
-        # TODO: Preprocess can change
-        self.data_fetcher.attach_to_preprocess(self.preprocess)
+        # TODO: InputTransform can change
+        self.data_fetcher.attach_to_input_transform(self.input_transform)
 
         self._train_ds = train_dataset
         self._val_ds = val_dataset
@@ -280,7 +281,7 @@ class DataModule(pl.LightningDataModule):
 
     def _resolve_collate_fn(self, dataset: Dataset, running_stage: RunningStage) -> Optional[Callable]:
         if isinstance(dataset, (BaseAutoDataset, SplitDataset)):
-            return self.data_pipeline.worker_preprocessor(running_stage)
+            return self.data_pipeline.worker_input_transform_processor(running_stage)
 
     def _train_dataloader(self) -> DataLoader:
         """Configure the train dataloader of the datamodule."""
@@ -425,14 +426,14 @@ class DataModule(pl.LightningDataModule):
         return multi_label_train or multi_label_val or multi_label_test
 
     @property
-    def data_source(self) -> Optional[DataSource]:
+    def input(self) -> Optional[Input]:
         """Property that returns the data source."""
-        return self._data_source
+        return self._input
 
     @property
-    def preprocess(self) -> Preprocess:
-        """Property that returns the preprocessing class used on input data."""
-        return self._preprocess or self.preprocess_cls()
+    def input_transform(self) -> InputTransform:
+        """Property that returns the input transform class used on input data."""
+        return self._input_tranform or self.input_transform_cls()
 
     @property
     def output_transform(self) -> OutputTransform:
@@ -442,18 +443,18 @@ class DataModule(pl.LightningDataModule):
 
     @property
     def data_pipeline(self) -> DataPipeline:
-        """Property that returns the full data pipeline including the data source, preprocessing and
+        """Property that returns the full data pipeline including the data source, input transform and
         postprocessing."""
-        return DataPipeline(self.data_source, self.preprocess, self.output_transform)
+        return DataPipeline(self.input, self.input_transform, self.output_transform)
 
-    def available_data_sources(self) -> Sequence[str]:
+    def available_inputs(self) -> Sequence[str]:
         """Get the list of available data source names for use with this
         :class:`~flash.core.data.data_module.DataModule`.
 
         Returns:
             The list of data source names.
         """
-        return self.preprocess.available_data_sources()
+        return self.input_transform.available_inputs()
 
     @staticmethod
     def _split_train_val(
@@ -491,9 +492,9 @@ class DataModule(pl.LightningDataModule):
         )
 
     @classmethod
-    def from_data_source(
+    def from_input(
         cls,
-        data_source: str,
+        input: str,
         train_data: Any = None,
         val_data: Any = None,
         test_data: Any = None,
@@ -503,57 +504,57 @@ class DataModule(pl.LightningDataModule):
         test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
-        preprocess: Optional[Preprocess] = None,
+        input_transform: Optional[InputTransform] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
-        **preprocess_kwargs: Any,
+        **input_transform_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given inputs to
-        :meth:`~flash.core.data.data_source.DataSource.load_data` (``train_data``, ``val_data``, ``test_data``,
+        :meth:`~flash.core.data.io.input.Input.load_data` (``train_data``, ``val_data``, ``test_data``,
         ``predict_data``). The data source will be resolved from the instantiated
-        :class:`~flash.core.data.process.Preprocess`
-        using :meth:`~flash.core.data.process.Preprocess.data_source_of_name`.
+        :class:`~flash.core.data.io.input_transform.InputTransform`
+        using :meth:`~flash.core.data.io.input_transform.InputTransform.input_of_name`.
 
         Args:
-            data_source: The name of the data source to use for the
-                :meth:`~flash.core.data.data_source.DataSource.load_data`.
-            train_data: The input to :meth:`~flash.core.data.data_source.DataSource.load_data` to use when creating
+            input: The name of the data source to use for the
+                :meth:`~flash.core.data.io.input.Input.load_data`.
+            train_data: The input to :meth:`~flash.core.data.io.input.Input.load_data` to use when creating
                 the train dataset.
-            val_data: The input to :meth:`~flash.core.data.data_source.DataSource.load_data` to use when creating
+            val_data: The input to :meth:`~flash.core.data.io.input.Input.load_data` to use when creating
                 the validation dataset.
-            test_data: The input to :meth:`~flash.core.data.data_source.DataSource.load_data` to use when creating
+            test_data: The input to :meth:`~flash.core.data.io.input.Input.load_data` to use when creating
                 the test dataset.
-            predict_data: The input to :meth:`~flash.core.data.data_source.DataSource.load_data` to use when creating
+            predict_data: The input to :meth:`~flash.core.data.io.input.Input.load_data` to use when creating
                 the predict dataset.
             train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
                 :class:`~flash.core.data.data_module.DataModule`.
-            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls`` will be
+            input_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls`` will be
                 constructed and used.
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             sampler: The ``sampler`` to use for the ``train_dataloader``.
-            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
-                if ``preprocess = None``.
+            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
+                Will only be used if ``input_transform = None``.
 
         Returns:
             The constructed data module.
 
         Examples::
 
-            data_module = DataModule.from_data_source(
-                DefaultDataSources.FOLDERS,
+            data_module = DataModule.from_input(
+                InputFormat.FOLDERS,
                 train_data="train_folder",
                 train_transform={
                     "to_tensor_transform": torch.as_tensor,
@@ -561,17 +562,17 @@ class DataModule(pl.LightningDataModule):
             )
         """
 
-        preprocess = preprocess or cls.preprocess_cls(
+        input_transform = input_transform or cls.input_transform_cls(
             train_transform,
             val_transform,
             test_transform,
             predict_transform,
-            **preprocess_kwargs,
+            **input_transform_kwargs,
         )
 
-        data_source = preprocess.data_source_of_name(data_source)
+        input = input_transform.input_of_name(input)
 
-        train_dataset, val_dataset, test_dataset, predict_dataset = data_source.to_datasets(
+        train_dataset, val_dataset, test_dataset, predict_dataset = input.to_datasets(
             train_data,
             val_data,
             test_data,
@@ -583,8 +584,8 @@ class DataModule(pl.LightningDataModule):
             val_dataset,
             test_dataset,
             predict_dataset,
-            data_source=data_source,
-            preprocess=preprocess,
+            input=input,
+            input_transform=input_transform,
             data_fetcher=data_fetcher,
             val_split=val_split,
             batch_size=batch_size,
@@ -604,17 +605,17 @@ class DataModule(pl.LightningDataModule):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
-        preprocess: Optional[Preprocess] = None,
+        input_transform: Optional[InputTransform] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
-        **preprocess_kwargs: Any,
+        **input_transform_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given folders using the
-        :class:`~flash.core.data.data_source.DataSource` of name
-        :attr:`~flash.core.data.data_source.DefaultDataSources.FOLDERS`
-        from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
+        :class:`~flash.core.data.io.input.Input` of name
+        :attr:`~flash.core.data.io.input.InputFormat.FOLDERS`
+        from the passed or constructed :class:`~flash.core.data.io.input_transform.InputTransform`.
 
         Args:
             train_folder: The folder containing the train data.
@@ -622,30 +623,30 @@ class DataModule(pl.LightningDataModule):
             test_folder: The folder containing the test data.
             predict_folder: The folder containing the predict data.
             train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
                 :class:`~flash.core.data.data_module.DataModule`.
-            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+            input_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
                 will be constructed and used.
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             sampler: The ``sampler`` to use for the ``train_dataloader``.
-            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
-                if ``preprocess = None``.
+            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
+                Will only be used if ``input_transform = None``.
 
         Returns:
             The constructed data module.
         """
-        return cls.from_data_source(
-            DefaultDataSources.FOLDERS,
+        return cls.from_input(
+            InputFormat.FOLDERS,
             train_folder,
             val_folder,
             test_folder,
@@ -655,12 +656,12 @@ class DataModule(pl.LightningDataModule):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_fetcher=data_fetcher,
-            preprocess=preprocess,
+            input_transform=input_transform,
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
             sampler=sampler,
-            **preprocess_kwargs,
+            **input_transform_kwargs,
         )
 
     @classmethod
@@ -678,17 +679,17 @@ class DataModule(pl.LightningDataModule):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
-        preprocess: Optional[Preprocess] = None,
+        input_transform: Optional[InputTransform] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
-        **preprocess_kwargs: Any,
+        **input_transform_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given sequences of files
-        using the :class:`~flash.core.data.data_source.DataSource` of name
-        :attr:`~flash.core.data.data_source.DefaultDataSources.FILES` from the passed or constructed
-        :class:`~flash.core.data.process.Preprocess`.
+        using the :class:`~flash.core.data.io.input.Input` of name
+        :attr:`~flash.core.data.io.input.InputFormat.FILES` from the passed or constructed
+        :class:`~flash.core.data.io.input_transform.InputTransform`.
 
         Args:
             train_files: A sequence of files to use as the train inputs.
@@ -699,30 +700,30 @@ class DataModule(pl.LightningDataModule):
             test_targets: A sequence of targets (one per test file) to use as the test targets.
             predict_files: A sequence of files to use when predicting.
             train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
                 :class:`~flash.core.data.data_module.DataModule`.
-            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+            input_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
                 will be constructed and used.
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             sampler: The ``sampler`` to use for the ``train_dataloader``.
-            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
-                if ``preprocess = None``.
+            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
+                Will only be used if ``input_transform = None``.
 
         Returns:
             The constructed data module.
         """
-        return cls.from_data_source(
-            DefaultDataSources.FILES,
+        return cls.from_input(
+            InputFormat.FILES,
             (train_files, train_targets),
             (val_files, val_targets),
             (test_files, test_targets),
@@ -732,12 +733,12 @@ class DataModule(pl.LightningDataModule):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_fetcher=data_fetcher,
-            preprocess=preprocess,
+            input_transform=input_transform,
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
             sampler=sampler,
-            **preprocess_kwargs,
+            **input_transform_kwargs,
         )
 
     @classmethod
@@ -755,17 +756,17 @@ class DataModule(pl.LightningDataModule):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
-        preprocess: Optional[Preprocess] = None,
+        input_transform: Optional[InputTransform] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
-        **preprocess_kwargs: Any,
+        **input_transform_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given tensors using the
-        :class:`~flash.core.data.data_source.DataSource`
-        of name :attr:`~flash.core.data.data_source.DefaultDataSources.TENSOR`
-        from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
+        :class:`~flash.core.data.io.input.Input`
+        of name :attr:`~flash.core.data.io.input.InputFormat.TENSOR`
+        from the passed or constructed :class:`~flash.core.data.io.input_transform.InputTransform`.
 
         Args:
             train_data: A tensor or collection of tensors to use as the train inputs.
@@ -776,24 +777,24 @@ class DataModule(pl.LightningDataModule):
             test_targets: A sequence of targets (one per test input) to use as the test targets.
             predict_data: A tensor or collection of tensors to use when predicting.
             train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
                 :class:`~flash.core.data.data_module.DataModule`.
-            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+            input_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
                 will be constructed and used.
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             sampler: The ``sampler`` to use for the ``train_dataloader``.
-            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
-                if ``preprocess = None``.
+            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
+                Will only be used if ``input_transform = None``.
 
         Returns:
             The constructed data module.
@@ -808,8 +809,8 @@ class DataModule(pl.LightningDataModule):
                 },
             )
         """
-        return cls.from_data_source(
-            DefaultDataSources.TENSORS,
+        return cls.from_input(
+            InputFormat.TENSORS,
             (train_data, train_targets),
             (val_data, val_targets),
             (test_data, test_targets),
@@ -819,12 +820,12 @@ class DataModule(pl.LightningDataModule):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_fetcher=data_fetcher,
-            preprocess=preprocess,
+            input_transform=input_transform,
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
             sampler=sampler,
-            **preprocess_kwargs,
+            **input_transform_kwargs,
         )
 
     @classmethod
@@ -930,17 +931,17 @@ class DataModule(pl.LightningDataModule):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
-        preprocess: Optional[Preprocess] = None,
+        input_transform: Optional[InputTransform] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
-        **preprocess_kwargs: Any,
+        **input_transform_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given numpy array using the
-        :class:`~flash.core.data.data_source.DataSource`
-        of name :attr:`~flash.core.data.data_source.DefaultDataSources.NUMPY`
-        from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
+        :class:`~flash.core.data.io.input.Input`
+        of name :attr:`~flash.core.data.io.input.InputFormat.NUMPY`
+        from the passed or constructed :class:`~flash.core.data.io.input_transform.InputTransform`.
 
         Args:
             train_data: A numpy array to use as the train inputs.
@@ -951,24 +952,24 @@ class DataModule(pl.LightningDataModule):
             test_targets: A sequence of targets (one per test input) to use as the test targets.
             predict_data: A numpy array to use when predicting.
             train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
                 :class:`~flash.core.data.data_module.DataModule`.
-            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+            input_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
                 will be constructed and used.
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             sampler: The ``sampler`` to use for the ``train_dataloader``.
-            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
-                if ``preprocess = None``.
+            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
+                Will only be used if ``input_transform = None``.
 
         Returns:
             The constructed data module.
@@ -983,8 +984,8 @@ class DataModule(pl.LightningDataModule):
                 },
             )
         """
-        return cls.from_data_source(
-            DefaultDataSources.NUMPY,
+        return cls.from_input(
+            InputFormat.NUMPY,
             (train_data, train_targets),
             (val_data, val_targets),
             (test_data, test_targets),
@@ -994,12 +995,12 @@ class DataModule(pl.LightningDataModule):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_fetcher=data_fetcher,
-            preprocess=preprocess,
+            input_transform=input_transform,
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
             sampler=sampler,
-            **preprocess_kwargs,
+            **input_transform_kwargs,
         )
 
     @classmethod
@@ -1016,18 +1017,18 @@ class DataModule(pl.LightningDataModule):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
-        preprocess: Optional[Preprocess] = None,
+        input_transform: Optional[InputTransform] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
         field: Optional[str] = None,
-        **preprocess_kwargs: Any,
+        **input_transform_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given JSON files using the
-        :class:`~flash.core.data.data_source.DataSource`
-        of name :attr:`~flash.core.data.data_source.DefaultDataSources.JSON`
-        from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
+        :class:`~flash.core.data.io.input.Input`
+        of name :attr:`~flash.core.data.io.input.InputFormat.JSON`
+        from the passed or constructed :class:`~flash.core.data.io.input_transform.InputTransform`.
 
         Args:
             input_fields: The field or fields in the JSON objects to use for the input.
@@ -1037,25 +1038,25 @@ class DataModule(pl.LightningDataModule):
             test_file: The JSON file containing the testing data.
             predict_file: The JSON file containing the data to use when predicting.
             train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
                 :class:`~flash.core.data.data_module.DataModule`.
-            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+            input_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
                 will be constructed and used.
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             sampler: The ``sampler`` to use for the ``train_dataloader``.
             field: To specify the field that holds the data in the JSON file.
-            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
-                if ``preprocess = None``.
+            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
+                Will only be used if ``input_transform = None``.
 
         Returns:
             The constructed data module.
@@ -1093,8 +1094,8 @@ class DataModule(pl.LightningDataModule):
                 feild="data"
             )
         """
-        return cls.from_data_source(
-            DefaultDataSources.JSON,
+        return cls.from_input(
+            InputFormat.JSON,
             (train_file, input_fields, target_fields, field),
             (val_file, input_fields, target_fields, field),
             (test_file, input_fields, target_fields, field),
@@ -1104,12 +1105,12 @@ class DataModule(pl.LightningDataModule):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_fetcher=data_fetcher,
-            preprocess=preprocess,
+            input_transform=input_transform,
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
             sampler=sampler,
-            **preprocess_kwargs,
+            **input_transform_kwargs,
         )
 
     @classmethod
@@ -1126,17 +1127,17 @@ class DataModule(pl.LightningDataModule):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
-        preprocess: Optional[Preprocess] = None,
+        input_transform: Optional[InputTransform] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
-        **preprocess_kwargs: Any,
+        **input_transform_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given CSV files using the
-        :class:`~flash.core.data.data_source.DataSource`
-        of name :attr:`~flash.core.data.data_source.DefaultDataSources.CSV`
-        from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
+        :class:`~flash.core.data.io.input.Input`
+        of name :attr:`~flash.core.data.io.input.InputFormat.CSV`
+        from the passed or constructed :class:`~flash.core.data.io.input_transform.InputTransform`.
 
         Args:
             input_fields: The field or fields (columns) in the CSV file to use for the input.
@@ -1146,24 +1147,24 @@ class DataModule(pl.LightningDataModule):
             test_file: The CSV file containing the testing data.
             predict_file: The CSV file containing the data to use when predicting.
             train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
                 :class:`~flash.core.data.data_module.DataModule`.
-            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+            input_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
                 will be constructed and used.
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             sampler: The ``sampler`` to use for the ``train_dataloader``.
-            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
-                if ``preprocess = None``.
+            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
+                Will only be used if ``input_transform = None``.
 
         Returns:
             The constructed data module.
@@ -1179,8 +1180,8 @@ class DataModule(pl.LightningDataModule):
                 },
             )
         """
-        return cls.from_data_source(
-            DefaultDataSources.CSV,
+        return cls.from_input(
+            InputFormat.CSV,
             (train_file, input_fields, target_fields),
             (val_file, input_fields, target_fields),
             (test_file, input_fields, target_fields),
@@ -1190,12 +1191,12 @@ class DataModule(pl.LightningDataModule):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_fetcher=data_fetcher,
-            preprocess=preprocess,
+            input_transform=input_transform,
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
             sampler=sampler,
-            **preprocess_kwargs,
+            **input_transform_kwargs,
         )
 
     @classmethod
@@ -1210,17 +1211,17 @@ class DataModule(pl.LightningDataModule):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
-        preprocess: Optional[Preprocess] = None,
+        input_transform: Optional[InputTransform] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
-        **preprocess_kwargs: Any,
+        **input_transform_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given datasets using the
-        :class:`~flash.core.data.data_source.DataSource`
-        of name :attr:`~flash.core.data.data_source.DefaultDataSources.DATASETS`
-        from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
+        :class:`~flash.core.data.io.input.Input`
+        of name :attr:`~flash.core.data.io.input.InputFormat.DATASETS`
+        from the passed or constructed :class:`~flash.core.data.io.input_transform.InputTransform`.
 
         Args:
             train_dataset: Dataset used during training.
@@ -1228,24 +1229,24 @@ class DataModule(pl.LightningDataModule):
             test_dataset: Dataset used during testing.
             predict_dataset: Dataset used during predicting.
             train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
                 :class:`~flash.core.data.data_module.DataModule`.
-            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+            input_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
                 will be constructed and used.
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             sampler: The ``sampler`` to use for the ``train_dataloader``.
-            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
-                if ``preprocess = None``.
+            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
+                Will only be used if ``input_transform = None``.
 
         Returns:
             The constructed data module.
@@ -1259,8 +1260,8 @@ class DataModule(pl.LightningDataModule):
                 },
             )
         """
-        return cls.from_data_source(
-            DefaultDataSources.DATASETS,
+        return cls.from_input(
+            InputFormat.DATASETS,
             train_dataset,
             val_dataset,
             test_dataset,
@@ -1270,12 +1271,12 @@ class DataModule(pl.LightningDataModule):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_fetcher=data_fetcher,
-            preprocess=preprocess,
+            input_transform=input_transform,
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
             sampler=sampler,
-            **preprocess_kwargs,
+            **input_transform_kwargs,
         )
 
     @classmethod
@@ -1291,17 +1292,17 @@ class DataModule(pl.LightningDataModule):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
-        preprocess: Optional[Preprocess] = None,
+        input_transform: Optional[InputTransform] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: int = 0,
-        **preprocess_kwargs: Any,
+        **input_transform_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object
         from the given FiftyOne Datasets using the
-        :class:`~flash.core.data.data_source.DataSource` of name
-        :attr:`~flash.core.data.data_source.DefaultDataSources.FIFTYONE`
-        from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
+        :class:`~flash.core.data.io.input.Input` of name
+        :attr:`~flash.core.data.io.input.InputFormat.FIFTYONE`
+        from the passed or constructed :class:`~flash.core.data.io.input_transform.InputTransform`.
 
         Args:
             train_dataset: The ``fiftyone.core.collections.SampleCollection`` containing the train data.
@@ -1309,23 +1310,23 @@ class DataModule(pl.LightningDataModule):
             test_dataset: The ``fiftyone.core.collections.SampleCollection`` containing the test data.
             predict_dataset: The ``fiftyone.core.collections.SampleCollection`` containing the predict data.
             train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
                 :class:`~flash.core.data.data_module.DataModule`.
-            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+            input_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
                 will be constructed and used.
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
-                if ``preprocess = None``.
+            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
+                Will only be used if ``input_transform = None``.
 
         Returns:
             The constructed data module.
@@ -1343,8 +1344,8 @@ class DataModule(pl.LightningDataModule):
                 },
             )
         """
-        return cls.from_data_source(
-            DefaultDataSources.FIFTYONE,
+        return cls.from_input(
+            InputFormat.FIFTYONE,
             train_dataset,
             val_dataset,
             test_dataset,
@@ -1354,11 +1355,11 @@ class DataModule(pl.LightningDataModule):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_fetcher=data_fetcher,
-            preprocess=preprocess,
+            input_transform=input_transform,
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
-            **preprocess_kwargs,
+            **input_transform_kwargs,
         )
 
     @classmethod
@@ -1379,17 +1380,17 @@ class DataModule(pl.LightningDataModule):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
-        preprocess: Optional[Preprocess] = None,
+        input_transform: Optional[InputTransform] = None,
         val_split: Optional[float] = None,
         batch_size: int = 4,
         num_workers: Optional[int] = None,
-        **preprocess_kwargs: Any,
+        **input_transform_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object
         from the given export file and data directory using the
-        :class:`~flash.core.data.data_source.DataSource` of name
-        :attr:`~flash.core.data.data_source.DefaultDataSources.FOLDERS`
-        from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
+        :class:`~flash.core.data.io.input.Input` of name
+        :attr:`~flash.core.data.io.input.InputFormat.FOLDERS`
+        from the passed or constructed :class:`~flash.core.data.io.input_transform.InputTransform`.
 
         Args:
             export_json: path to label studio export file
@@ -1405,23 +1406,23 @@ class DataModule(pl.LightningDataModule):
             test_data_folder: path to label studio data folder for test data
             predict_data_folder: path to label studio data folder for predict data
             train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
                 :class:`~flash.core.data.data_module.DataModule`.
-            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
+            input_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
                 will be constructed and used.
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
-                if ``preprocess = None``.
+            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
+                Will only be used if ``input_transform = None``.
 
         Returns:
             The constructed data module.
@@ -1438,7 +1439,7 @@ class DataModule(pl.LightningDataModule):
             "data_folder": data_folder,
             "export_json": export_json,
             "split": val_split,
-            "multi_label": preprocess_kwargs.get("multi_label", False),
+            "multi_label": input_transform_kwargs.get("multi_label", False),
         }
         train_data = None
         val_data = None
@@ -1448,28 +1449,28 @@ class DataModule(pl.LightningDataModule):
             train_data = {
                 "data_folder": train_data_folder or data_folder,
                 "export_json": train_export_json,
-                "multi_label": preprocess_kwargs.get("multi_label", False),
+                "multi_label": input_transform_kwargs.get("multi_label", False),
             }
         if (val_data_folder or data_folder) and val_export_json:
             val_data = {
                 "data_folder": val_data_folder or data_folder,
                 "export_json": val_export_json,
-                "multi_label": preprocess_kwargs.get("multi_label", False),
+                "multi_label": input_transform_kwargs.get("multi_label", False),
             }
         if (test_data_folder or data_folder) and test_export_json:
             test_data = {
                 "data_folder": test_data_folder or data_folder,
                 "export_json": test_export_json,
-                "multi_label": preprocess_kwargs.get("multi_label", False),
+                "multi_label": input_transform_kwargs.get("multi_label", False),
             }
         if (predict_data_folder or data_folder) and predict_export_json:
             predict_data = {
                 "data_folder": predict_data_folder or data_folder,
                 "export_json": predict_export_json,
-                "multi_label": preprocess_kwargs.get("multi_label", False),
+                "multi_label": input_transform_kwargs.get("multi_label", False),
             }
-        return cls.from_data_source(
-            DefaultDataSources.LABELSTUDIO,
+        return cls.from_input(
+            InputFormat.LABELSTUDIO,
             train_data=train_data if train_data else data,
             val_data=val_data,
             test_data=test_data,
@@ -1479,9 +1480,9 @@ class DataModule(pl.LightningDataModule):
             test_transform=test_transform,
             predict_transform=predict_transform,
             data_fetcher=data_fetcher,
-            preprocess=preprocess,
+            input_transform=input_transform,
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
-            **preprocess_kwargs,
+            **input_transform_kwargs,
         )

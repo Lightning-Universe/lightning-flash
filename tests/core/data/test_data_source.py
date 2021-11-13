@@ -11,13 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from flash.core.data.data_source import DatasetDataSource, DefaultDataKeys
+import pytest
+
+from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 
 
-def test_dataset_data_source():
-    data_source = DatasetDataSource()
+def test_default_data_keys_deprecation():
+    with pytest.warns(FutureWarning, match="`DefaultDataKeys` was deprecated in 0.6.0"):
+        _ = DefaultDataKeys.INPUT
 
-    input, target = "test", 3
-
-    assert data_source.load_sample((input, target)) == {DefaultDataKeys.INPUT: input, DefaultDataKeys.TARGET: target}
-    assert data_source.load_sample(input) == {DefaultDataKeys.INPUT: input}
+    assert DefaultDataKeys.INPUT == DataKeys.INPUT

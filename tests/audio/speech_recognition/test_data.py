@@ -19,7 +19,7 @@ import pytest
 
 import flash
 from flash.audio import SpeechRecognitionData
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _AUDIO_AVAILABLE
 from tests.helpers.utils import _AUDIO_TESTING
 
@@ -54,8 +54,8 @@ def test_from_csv(tmpdir):
     csv_path = csv_data(tmpdir)
     dm = SpeechRecognitionData.from_csv("file", "text", train_file=csv_path, batch_size=1, num_workers=0)
     batch = next(iter(dm.train_dataloader()))
-    assert DefaultDataKeys.INPUT in batch
-    assert DefaultDataKeys.TARGET in batch
+    assert DataKeys.INPUT in batch
+    assert DataKeys.TARGET in batch
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -66,12 +66,12 @@ def test_stage_test_and_valid(tmpdir):
         "file", "text", train_file=csv_path, val_file=csv_path, test_file=csv_path, batch_size=1, num_workers=0
     )
     batch = next(iter(dm.val_dataloader()))
-    assert DefaultDataKeys.INPUT in batch
-    assert DefaultDataKeys.TARGET in batch
+    assert DataKeys.INPUT in batch
+    assert DataKeys.TARGET in batch
 
     batch = next(iter(dm.test_dataloader()))
-    assert DefaultDataKeys.INPUT in batch
-    assert DefaultDataKeys.TARGET in batch
+    assert DataKeys.INPUT in batch
+    assert DataKeys.TARGET in batch
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -80,8 +80,8 @@ def test_from_json(tmpdir):
     json_path = json_data(tmpdir)
     dm = SpeechRecognitionData.from_json("file", "text", train_file=json_path, batch_size=1, num_workers=0)
     batch = next(iter(dm.train_dataloader()))
-    assert DefaultDataKeys.INPUT in batch
-    assert DefaultDataKeys.TARGET in batch
+    assert DataKeys.INPUT in batch
+    assert DataKeys.TARGET in batch
 
 
 @pytest.mark.skipif(_AUDIO_AVAILABLE, reason="audio libraries are installed.")

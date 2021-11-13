@@ -11,8 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.process import DefaultPreprocess
+from flash.core.data.io.input import DataKeys
+from flash.core.data.io.input_transform import DefaultInputTransform
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, _VISSL_AVAILABLE
 from flash.image import ImageClassificationData
@@ -38,10 +38,10 @@ def ssl_datamodule(
     )
 
     to_tensor_transform = ApplyToKeys(
-        DefaultDataKeys.INPUT,
+        DataKeys.INPUT,
         multi_crop_transform,
     )
-    preprocess = DefaultPreprocess(
+    input_transform = DefaultInputTransform(
         train_transform={
             "to_tensor_transform": to_tensor_transform,
             "collate": collate_fn,
@@ -50,7 +50,7 @@ def ssl_datamodule(
 
     datamodule = ImageClassificationData.from_datasets(
         train_dataset=FakeData(),
-        preprocess=preprocess,
+        input_transform=input_transform,
         batch_size=batch_size,
     )
 
