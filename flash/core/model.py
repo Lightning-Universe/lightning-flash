@@ -622,7 +622,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
                 and isinstance(strategy[1][0][1], int)
             ):
                 raise MisconfigurationException(
-                    "`unfreeze_milestones` stratgey only accepts the format Tuple[Tuple[int, int], int]. HINT example: "
+                    "`unfreeze_milestones` strategy only accepts the format Tuple[Tuple[int, int], int]. HINT example: "
                     "((5, 10), 15)."
                 )
             finetuning_strategy_fn: Callable = self.finetuning_strategies.get(key=strategy[0])

@@ -127,7 +127,7 @@ Every finetune strategy can also be customized.
 
 freeze_unfreeze
 ---------------
-The freeze_unfreeze strategy keeps the backbone frozen until a certain epoch (provided through the input) after which the backbone unfrozen.
+The ``freeze_unfreeze`` strategy keeps the backbone frozen until a certain epoch (provided in a tuple to the ``strategy`` argument) after which the backbone will be unfrozen.
 
 For example, to unfreeze after epoch 7:
 

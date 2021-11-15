@@ -47,10 +47,10 @@ class FlashBaseFinetuning(BaseFinetuning):
     ):
         """
         Args:
-            strategy_key: The finetuning strategy to be used. (Check :meth"`Trainer.finetune` for the available
-             strategies.)
+            strategy_key: The finetuning strategy to be used. See :meth:`~flash.core.trainer.Trainer.finetune`
+                        for the available strategies.
             strategy_metadata: Data that accompanies certain finetuning strategies like epoch number or number of
-             layers.
+                        layers.
             attr_names: Name(s) of the module attributes of the model to be frozen.
             train_bn: Whether to train Batch Norm layer
         """
@@ -188,7 +188,7 @@ class FreezeUnfreeze(FlashBaseFinetuning):
         super().__init__(FinetuningStrategies.FREEZE_UNFREEZE, strategy_metadata, train_bn)
 
 
-class UnFreezeMilestones(FlashBaseFinetuning):
+class UnfreezeMilestones(FlashBaseFinetuning):
     def __init__(
         self,
         strategy_metadata: Tuple[Tuple[int, int], int],

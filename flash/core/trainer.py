@@ -182,11 +182,12 @@ class Trainer(PlTrainer):
 
                 - ``"no_freeze"``
                 - ``"freeze"``
-                - ``("freeze_unfreeze", integer)``
-                - ``("unfreeze_milestones", ((integer, integer), integer))``
+                - ``("freeze_unfreeze", integer: unfreeze_epoch)``
+                - ``("unfreeze_milestones", ((integer: unfreeze_epoch_num_layers, integer: unfreeze_epoch_all_layers),
+                  integer: num_layers))``
 
                 where ``integer`` can be any integer.
-                By default, "no_freeze" strategy will be used.
+                By default, ``no_freeze`` strategy will be used.
 
             train_bn: Whether to train Batch Norm layer
         """
