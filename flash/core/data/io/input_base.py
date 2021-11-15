@@ -13,9 +13,9 @@
 # limitations under the License.
 import functools
 import sys
-from typing import Any, cast, Dict, Iterable, MutableMapping, Sequence, Tuple, Union
+from typing import Any, cast, Dict, Iterable, MutableMapping, Sequence, Tuple, TYPE_CHECKING, Union
 
-from torch.utils.data import Dataset, IterableDataset
+from torch.utils.data import Dataset
 
 from flash.core.data.properties import Properties
 from flash.core.utilities.stages import RunningStage
@@ -24,6 +24,12 @@ if sys.version_info < (3, 7):
     from typing import GenericMeta
 else:
     GenericMeta = type
+
+
+if not TYPE_CHECKING:
+    from torch.utils.data import IterableDataset
+else:
+    IterableDataset = object
 
 
 def _has_len(data: Union[Sequence, Iterable]) -> bool:
