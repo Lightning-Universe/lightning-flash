@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import functools
+import os
 import sys
-from typing import Any, cast, Dict, Iterable, MutableMapping, Sequence, Tuple, TYPE_CHECKING, Union
+from typing import Any, cast, Dict, Iterable, MutableMapping, Sequence, Tuple, Union
 
 from torch.utils.data import Dataset
 
@@ -26,7 +27,7 @@ else:
     GenericMeta = type
 
 
-if not TYPE_CHECKING:
+if not os.environ.get("READTHEDOCS", False):
     from torch.utils.data import IterableDataset
 else:
     IterableDataset = object
