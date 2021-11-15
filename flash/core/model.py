@@ -602,32 +602,15 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
                     f"Please provide a valid strategy from {_DEFAULTS_FINETUNE_STRATEGIES[:3]}."
                 )
             finetuning_strategy_fn: Callable = self.finetuning_strategies.get(key=strategy)
-            finetuning_strategy_metadata = {"strategy_metadata": None, "train_bn": True}
-
+            finetuning_strategy_metadata = {"strategy_metadata": None, "train_bn": train_bn}
         elif isinstance(strategy, Tuple):
             if not isinstance(strategy[0], str) or strategy[0] not in self.available_finetuning_strategies():
                 raise MisconfigurationException(
                     f"First input of `strategy` in a tuple configuration should be a string within"
                     f" {_DEFAULTS_FINETUNE_STRATEGIES[3:]}"
                 )
-            if strategy[0] == "freeze_unfreeze" and not isinstance(strategy[1], int):
-                raise MisconfigurationException(
-                    "`freeze_unfreeze` stratgey only accepts one integer denoting the epoch number to switch."
-                )
-            if strategy[0] == "unfreeze_milestones" and not (
-                isinstance(strategy[1], Tuple)
-                and isinstance(strategy[1][0], Tuple)
-                and isinstance(strategy[1][1], int)
-                and isinstance(strategy[1][0][0], int)
-                and isinstance(strategy[1][0][1], int)
-            ):
-                raise MisconfigurationException(
-                    "`unfreeze_milestones` strategy only accepts the format Tuple[Tuple[int, int], int]. HINT example: "
-                    "((5, 10), 15)."
-                )
             finetuning_strategy_fn: Callable = self.finetuning_strategies.get(key=strategy[0])
             finetuning_strategy_metadata = {"strategy_metadata": strategy[1], "train_bn": train_bn}
-
         else:
             raise MisconfigurationException(
                 "strategy should be a ``pytorch_lightning.callbacks.BaseFinetuning``"

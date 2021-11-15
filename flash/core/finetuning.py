@@ -16,6 +16,7 @@ from typing import Iterable, Optional, Tuple, Union
 
 from pytorch_lightning.callbacks import BaseFinetuning
 from pytorch_lightning.utilities.enums import LightningEnum
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.nn import Module
 from torch.optim import Optimizer
 
@@ -59,6 +60,22 @@ class FlashBaseFinetuning(BaseFinetuning):
         self.strategy: FinetuningStrategies = strategy_key
         self.strategy_metadata: Optional[Union[int, Tuple[Tuple[int, int], int]]] = strategy_metadata
         self.train_bn: bool = train_bn
+
+        if self.strategy == "freeze_unfreeze" and not isinstance(self.strategy_metadata, int):
+            raise MisconfigurationException(
+                "`freeze_unfreeze` stratgey only accepts one integer denoting the epoch number to switch."
+            )
+        if self.strategy == "unfreeze_milestones" and not (
+            isinstance(self.strategy_metadata, Tuple)
+            and isinstance(self.strategy_metadata[0], Tuple)
+            and isinstance(self.strategy_metadata[1], int)
+            and isinstance(self.strategy_metadata[0][0], int)
+            and isinstance(self.strategy_metadata[0][1], int)
+        ):
+            raise MisconfigurationException(
+                "`unfreeze_milestones` strategy only accepts the format Tuple[Tuple[int, int], int]. HINT example: "
+                "((5, 10), 15)."
+            )
 
     def freeze_before_training(self, pl_module: Union[Module, Iterable[Union[Module, Iterable]]]) -> None:
         if self.strategy != FinetuningStrategies.NO_FREEZE:
