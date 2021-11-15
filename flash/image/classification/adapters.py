@@ -289,7 +289,7 @@ class Learn2LearnAdapter(Adapter):
                 "This is equivalent to the number of sample per label to select within a task."
             )
         adapter = cls(backbone, head, algorithm, **kwargs)
-        adapter["_task"] = task
+        adapter.__dict__["_task"] = task
         return adapter
 
     def training_step(self, batch, batch_idx) -> Any:
