@@ -38,6 +38,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Fixed a bug where using image classification with DDP spawn would trigger an infinite recursion ([#969](https://github.com/PyTorchLightning/lightning-flash/pull/969))
+
 ### Removed
 
 - Removed `OutputMapping` ([#939](https://github.com/PyTorchLightning/lightning-flash/pull/939))
