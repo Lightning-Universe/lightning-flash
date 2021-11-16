@@ -30,6 +30,8 @@ else:
 if not os.environ.get("READTHEDOCS", False):
     from torch.utils.data import IterableDataset
 else:
+    # ReadTheDocs mocks the `IterableDataset` import so it's type cannot be used as a base for a metaclass, so we
+    # replace it here.
     IterableDataset = object
 
 
