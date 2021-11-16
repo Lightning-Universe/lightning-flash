@@ -199,7 +199,7 @@ class TabularDeserializer(Deserializer):
             parameters["std"],
             parameters["target_field"],
             parameters["target_codes"],
-        )[0]
+        )
 
         cat_vars = _to_cat_vars_numpy(df, parameters["categorical_fields"])
         num_vars = _to_num_vars_numpy(df, parameters["numerical_fields"])
