@@ -108,6 +108,7 @@ def test_serve():
     model = TabularClassifier.from_data(datamodule)
     # TODO: Currently only servable once a input_transform has been attached
     model._input_transform = datamodule.input_transform
+    model._input_transform._state = datamodule.train_dataset._state
     model.eval()
     model.serve()
 
