@@ -103,11 +103,12 @@ def test_serve():
         "cat_col",
         "num_col",
         "target",
-        pd.DataFrame.from_dict(train_data),
+        train_data_frame=pd.DataFrame.from_dict(train_data),
     )
     model = TabularClassifier.from_data(datamodule)
     # TODO: Currently only servable once a input_transform has been attached
     model._input_transform = datamodule.input_transform
+    model._input_transform._state = datamodule.train_dataset._state
     model.eval()
     model.serve()
 

@@ -24,67 +24,45 @@ else:
     DataFrame = None
 
 
-def _impute(dfs: List, num_cols: List) -> list:
-    dfs = [df.copy() for df in dfs]
+def _impute(df: DataFrame, num_cols: List) -> DataFrame:
     for col in num_cols:
-        for df in dfs:
-            df[col] = df[col].fillna(dfs[0][col].median())
-    return dfs
+        df[col] = df[col].fillna(df[col].median())
+    return df
 
 
 def _compute_normalization(df: DataFrame, num_cols: List) -> Tuple:
     return df[num_cols].mean(), df[num_cols].std()
 
 
-def _normalize(dfs: List[DataFrame], num_cols: List, mean: DataFrame = None, std: DataFrame = None) -> list:
-    no_normalization = mean is None and std is None
-    if no_normalization:
-        mean, std = _compute_normalization(dfs[0], num_cols)
-    dfs = [df.copy() for df in dfs]
-    for df in dfs:
-        df[num_cols] = (df[num_cols] - mean) / std
-    if no_normalization:
-        return dfs, mean, std
-    return dfs
+def _normalize(df: DataFrame, num_cols: List, mean: DataFrame, std: DataFrame) -> DataFrame:
+    df[num_cols] = (df[num_cols] - mean) / std
+    return df
 
 
-def _generate_codes(dfs: List, cat_cols: List) -> dict:
-    # combine all dfs together so categories are the same
-    tmp = pd.concat([df.copy() for df in dfs], keys=range(len(dfs)))
+def _generate_codes(df: DataFrame, cat_cols: List) -> dict:
+    tmp = df.copy()
     for col in cat_cols:
         tmp[col] = tmp[col].astype("category").cat.as_ordered()
 
     # list of categories for each column (always a column for None)
-    codes = {col: [None] + list(tmp[col].cat.categories) for col in cat_cols}
+    codes = {col: list(tmp[col].cat.categories) for col in cat_cols}
 
     return codes
 
 
-def _categorize(dfs: List, cat_cols: List, codes: Dict = None) -> list:
-    # combine all dfs together so categories are the same
-    tmp = pd.concat([df.copy() for df in dfs], keys=range(len(dfs)))
-    for col in cat_cols:
-        tmp[col] = tmp[col].astype("category").cat.as_ordered()
-
-    no_codes = codes is None
-    if no_codes:
-        codes = {col: [None] + list(tmp[col].cat.categories) for col in cat_cols}
-
+def _categorize(df: DataFrame, cat_cols: List, codes) -> DataFrame:
     # apply codes to each column
-    tmp[cat_cols] = tmp[cat_cols].apply(lambda x: x.cat.codes)
+    for col in cat_cols:
+        df[col] = pd.Categorical(df[col], categories=codes[col], ordered=True)
+    df[cat_cols] = df[cat_cols].apply(lambda x: x.cat.codes)
 
     # we add one here as Nones are -1, so they turn into 0's
-    tmp[cat_cols] = tmp[cat_cols] + 1
-
-    # split dfs
-    dfs = [tmp.xs(i) for i in range(len(dfs))]
-    if no_codes:
-        return dfs, codes
-    return dfs
+    df[cat_cols] = df[cat_cols] + 1
+    return df
 
 
 def _pre_transform(
-    dfs: List,
+    df: DataFrame,
     num_cols: List[str],
     cat_cols: List[str],
     codes: Dict,
@@ -92,22 +70,18 @@ def _pre_transform(
     std: DataFrame,
     target: str = None,
     target_codes: Dict = None,
-):
-    dfs = _impute(dfs, num_cols)
-    dfs = _normalize(dfs, num_cols, mean=mean, std=std)
-    dfs = _categorize(dfs, cat_cols, codes=codes)
+) -> DataFrame:
+    df = _impute(df, num_cols)
+    df = _normalize(df, num_cols, mean=mean, std=std)
+    df = _categorize(df, cat_cols, codes=codes)
     if target_codes and target:
-        dfs = _categorize(dfs, [target], codes=target_codes)
-    return dfs
+        df = _categorize(df, [target], codes=target_codes)
+    return df
 
 
-def _to_cat_vars_numpy(df, cat_cols: List[str]) -> list:
-    if isinstance(df, list) and len(df) == 1:
-        df = df[0]
+def _to_cat_vars_numpy(df: DataFrame, cat_cols: List[str]) -> list:
     return [c.to_numpy().astype(np.int64) for n, c in df[cat_cols].items()]
 
 
-def _to_num_vars_numpy(df, num_cols: List[str]) -> list:
-    if isinstance(df, list) and len(df) == 1:
-        df = df[0]
+def _to_num_vars_numpy(df: DataFrame, num_cols: List[str]) -> list:
     return [c.to_numpy().astype(np.float32) for n, c in df[num_cols].items()]

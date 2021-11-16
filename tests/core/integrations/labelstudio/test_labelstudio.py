@@ -291,7 +291,6 @@ def test_datamodule_labelstudio_video():
     datamodule = VideoClassificationData.from_labelstudio(
         export_json="data/project.json",
         data_folder="data/upload/",
-        val_split=0.2,
         clip_sampler="uniform",
         clip_duration=1,
         decode_audio=False,
