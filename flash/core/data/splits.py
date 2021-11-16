@@ -26,7 +26,7 @@ class SplitDataset(Properties, Dataset):
     def __init__(self, dataset: Any, indices: List[int] = None, use_duplicated_indices: bool = False) -> None:
         kwargs = {}
         if isinstance(dataset, Properties):
-            kwargs = {"running_stage": dataset._running_stage, "data_pipeline_state": dataset._data_pipeline_state}
+            kwargs = {"running_stage": dataset._running_stage, "state": dataset._state}
         super().__init__(**kwargs)
 
         if indices is None:
@@ -46,7 +46,7 @@ class SplitDataset(Properties, Dataset):
         self.indices = indices
 
     def __getattr__(self, key: str):
-        if hasattr(self, "dataset"):
+        if key != "dataset":
             return getattr(self.dataset, key)
         raise AttributeError
 

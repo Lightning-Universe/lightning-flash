@@ -31,13 +31,14 @@ class Properties:
         self,
         running_stage: Optional[RunningStage] = None,
         data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None,
+        state: Dict[Type[ProcessState], ProcessState] = None,
     ):
         super().__init__()
 
         self._running_stage = running_stage
         self._current_fn: Optional[str] = None
         self._data_pipeline_state = data_pipeline_state
-        self._state: Dict[Type[ProcessState], ProcessState] = {}
+        self._state: Dict[Type[ProcessState], ProcessState] = {} if state is None else state
 
     def get_state(self, state_type: Type[STATE_TYPE]) -> Optional[STATE_TYPE]:
         if state_type in self._state:

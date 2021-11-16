@@ -434,8 +434,7 @@ class DataModule(pl.LightningDataModule):
             dataset
             for dataset in datasets
             if isinstance(dataset, InputBase)
-            or isinstance(dataset, SplitDataset)
-            and isinstance(dataset.dataset, InputBase)
+            or (isinstance(dataset, SplitDataset) and isinstance(dataset.dataset, InputBase))
         ]
         if len(inputs) == 0:
             inputs = self._input
