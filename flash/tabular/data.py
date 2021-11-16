@@ -11,21 +11,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from dataclasses import dataclass
 from io import StringIO
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torch.utils.data.sampler import Sampler
 
 from flash.core.classification import LabelsState
-from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import DataKeys, Input, InputFormat
+from flash.core.data.io.input import DataKeys, InputFormat
+from flash.core.data.io.input_base import Input
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.process import Deserializer
+from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _PANDAS_AVAILABLE
+from flash.core.utilities.stages import RunningStage
 from flash.tabular.classification.utils import (
     _compute_normalization,
     _generate_codes,
@@ -41,106 +43,166 @@ else:
     DataFrame = object
 
 
-class TabularDataFrameInput(Input[DataFrame]):
-    def __init__(
-        self,
-        cat_cols: Optional[List[str]] = None,
-        num_cols: Optional[List[str]] = None,
-        target_col: Optional[str] = None,
-        mean: Optional[DataFrame] = None,
-        std: Optional[DataFrame] = None,
-        codes: Optional[Dict[str, Any]] = None,
-        target_codes: Optional[Dict[str, Any]] = None,
-        classes: Optional[List[str]] = None,
-        is_regression: bool = True,
+@dataclass(unsafe_hash=True, frozen=True)
+class TabularParametersState(ProcessState):
+    """A :class:`~flash.core.data.properties.ProcessState` containing tabular data ``parameters``."""
+
+    parameters: Optional[Dict[str, Any]]
+
+
+class TabularDataFrameInput(Input):
+    @staticmethod
+    def _sanetize_fields(
+        categorical_fields: Optional[Union[str, List[str]]], numerical_fields: Optional[Union[str, List[str]]]
     ):
-        super().__init__()
+        if categorical_fields is None and numerical_fields is None:
+            raise RuntimeError("Both `categorical_fields` and `numerical_fields` are None!")
 
-        self.cat_cols = cat_cols
-        self.num_cols = num_cols
-        self.target_col = target_col
-        self.mean = mean
-        self.std = std
-        self.codes = codes
-        self.target_codes = target_codes
-        self.is_regression = is_regression
+        categorical_fields = categorical_fields or []
+        numerical_fields = numerical_fields or []
 
-        self.set_state(LabelsState(classes))
-        self.num_classes = len(classes)
+        if not isinstance(categorical_fields, list):
+            categorical_fields = [categorical_fields]
 
-    def common_load_data(
-        self,
-        df: DataFrame,
-        dataset: Optional[Any] = None,
-    ):
-        # impute_data
-        # compute train dataset stats
-        dfs = _pre_transform(
-            [df], self.num_cols, self.cat_cols, self.codes, self.mean, self.std, self.target_col, self.target_codes
+        if not isinstance(numerical_fields, list):
+            numerical_fields = [numerical_fields]
+
+        return categorical_fields, numerical_fields
+
+    @staticmethod
+    def compute_parameters(
+        train_data_frame: DataFrame,
+        target_field: str,
+        numerical_fields: List[str],
+        categorical_fields: List[str],
+        is_regression: bool,
+    ) -> Dict[str, Any]:
+
+        mean, std = _compute_normalization(train_data_frame, numerical_fields)
+
+        classes = list(train_data_frame[target_field].unique())
+
+        if train_data_frame[target_field].dtype == object:
+            # if the target_fields is a category, not an int
+            target_codes = _generate_codes(train_data_frame, [target_field])
+        else:
+            target_codes = None
+        codes = _generate_codes(train_data_frame, categorical_fields)
+
+        return dict(
+            mean=mean,
+            std=std,
+            classes=classes,
+            codes=codes,
+            target_codes=target_codes,
+            target_field=target_field,
+            numerical_fields=numerical_fields,
+            categorical_fields=categorical_fields,
+            is_regression=is_regression,
         )
 
-        df = dfs[0]
+    def load_data(
+        self,
+        df: DataFrame,
+        categorical_fields: Optional[List[str]] = None,
+        numerical_fields: Optional[List[str]] = None,
+        target_field: Optional[str] = None,
+        is_regression: bool = True,
+        parameters: Dict[str, Any] = None,
+    ):
+        if self.training:
+            categorical_fields, numerical_fields = self._sanetize_fields(categorical_fields, numerical_fields)
+            parameters = self.compute_parameters(df, target_field, numerical_fields, categorical_fields, is_regression)
 
-        if dataset is not None:
-            dataset.num_samples = len(df)
+            self.set_state(TabularParametersState(parameters))
+            self.set_state(LabelsState(parameters["classes"]))
+        else:
+            parameters_state = self.get_state(TabularParametersState)
+            parameters = parameters or (parameters_state.parameters if parameters_state is not None else None)
+            if parameters is None:
+                raise MisconfigurationException(
+                    "Loading tabular data for evaluation or inference requires parameters from the train data. Either "
+                    "construct the train data at the same time as evaluation and inference or provide the train "
+                    "`datamodule.parameters` in the `parameters` argument."
+                )
 
-        cat_vars = _to_cat_vars_numpy(df, self.cat_cols)
-        num_vars = _to_num_vars_numpy(df, self.num_cols)
+        self.parameters = parameters
+        self.num_classes = len(parameters["classes"])
 
-        cat_vars = np.stack(cat_vars, 1)  # if len(cat_vars) else np.zeros((len(self), 0))
-        num_vars = np.stack(num_vars, 1)  # if len(num_vars) else np.zeros((len(self), 0))
-        return df, cat_vars, num_vars
+        # impute and normalize data
+        df = _pre_transform(
+            df,
+            parameters["numerical_fields"],
+            parameters["categorical_fields"],
+            parameters["codes"],
+            parameters["mean"],
+            parameters["std"],
+            parameters["target_field"],
+            parameters["target_codes"],
+        )
 
-    def load_data(self, data: DataFrame, dataset: Optional[Any] = None):
-        df, cat_vars, num_vars = self.common_load_data(data, dataset=dataset)
-        target = df[self.target_col].to_numpy().astype(np.float32 if self.is_regression else np.int64)
-        return [{DataKeys.INPUT: (c, n), DataKeys.TARGET: t} for c, n, t in zip(cat_vars, num_vars, target)]
+        cat_vars = _to_cat_vars_numpy(df, parameters["categorical_fields"])
+        num_vars = _to_num_vars_numpy(df, parameters["numerical_fields"])
 
-    def predict_load_data(self, data: DataFrame, dataset: Optional[Any] = None):
-        _, cat_vars, num_vars = self.common_load_data(data, dataset=dataset)
-        return [{DataKeys.INPUT: (c, n)} for c, n in zip(cat_vars, num_vars)]
+        num_samples = len(df)
+        cat_vars = np.stack(cat_vars, 1) if len(cat_vars) else np.zeros((num_samples, 0))
+        num_vars = np.stack(num_vars, 1) if len(num_vars) else np.zeros((num_samples, 0))
+
+        if self.predicting:
+            return [{DataKeys.INPUT: (c, n)} for c, n in zip(cat_vars, num_vars)]
+        else:
+            target = (
+                df[parameters["target_field"]]
+                .to_numpy()
+                .astype(np.float32 if parameters["is_regression"] else np.int64)
+            )
+            return [{DataKeys.INPUT: (c, n), DataKeys.TARGET: t} for c, n, t in zip(cat_vars, num_vars, target)]
 
 
 class TabularCSVInput(TabularDataFrameInput):
-    def load_data(self, data: str, dataset: Optional[Any] = None):
-        return super().load_data(pd.read_csv(data), dataset=dataset)
-
-    def predict_load_data(self, data: str, dataset: Optional[Any] = None):
-        return super().predict_load_data(pd.read_csv(data), dataset=dataset)
+    def load_data(
+        self,
+        file: Optional[str],
+        categorical_fields: Optional[List[str]] = None,
+        numerical_fields: Optional[List[str]] = None,
+        target_field: Optional[str] = None,
+        parameters: Dict[str, Any] = None,
+        is_regression: bool = True,
+    ):
+        if file is not None:
+            return super().load_data(
+                pd.read_csv(file), categorical_fields, numerical_fields, target_field, is_regression, parameters
+            )
 
 
 class TabularDeserializer(Deserializer):
-    def __init__(
-        self,
-        cat_cols: Optional[List[str]] = None,
-        num_cols: Optional[List[str]] = None,
-        target_col: Optional[str] = None,
-        mean: Optional[DataFrame] = None,
-        std: Optional[DataFrame] = None,
-        codes: Optional[Dict[str, Any]] = None,
-        target_codes: Optional[Dict[str, Any]] = None,
-        classes: Optional[List[str]] = None,
-        is_regression: bool = True,
-    ):
-        super().__init__()
-        self.cat_cols = cat_cols
-        self.num_cols = num_cols
-        self.target_col = target_col
-        self.mean = mean
-        self.std = std
-        self.codes = codes
-        self.target_codes = target_codes
-        self.classes = classes
-        self.is_regression = is_regression
+    @property
+    def parameters(self) -> Dict[str, Any]:
+        parameters_state = self.get_state(TabularParametersState)
+        if parameters_state is None or parameters_state.parameters is None:
+            raise MisconfigurationException(
+                "Tabular tasks must previously have been trained in order to support serving as parameters from the "
+                "train data are required."
+            )
+        return parameters_state.parameters
 
     def deserialize(self, data: str) -> Any:
+        parameters = self.parameters
+
         df = pd.read_csv(StringIO(data))
         df = _pre_transform(
-            [df], self.num_cols, self.cat_cols, self.codes, self.mean, self.std, self.target_col, self.target_codes
-        )[0]
+            df,
+            parameters["numerical_fields"],
+            parameters["categorical_fields"],
+            parameters["codes"],
+            parameters["mean"],
+            parameters["std"],
+            parameters["target_field"],
+            parameters["target_codes"],
+        )
 
-        cat_vars = _to_cat_vars_numpy(df, self.cat_cols)
-        num_vars = _to_num_vars_numpy(df, self.num_cols)
+        cat_vars = _to_cat_vars_numpy(df, parameters["categorical_fields"])
+        num_vars = _to_num_vars_numpy(df, parameters["numerical_fields"])
 
         cat_vars = np.stack(cat_vars, 1)
         num_vars = np.stack(num_vars, 1)
@@ -149,10 +211,12 @@ class TabularDeserializer(Deserializer):
 
     @property
     def example_input(self) -> str:
+        parameters = self.parameters
+
         row = {}
-        for cat_col in self.cat_cols:
+        for cat_col in parameters["categorical_fields"]:
             row[cat_col] = ["test"]
-        for num_col in self.num_cols:
+        for num_col in parameters["numerical_fields"]:
             row[num_col] = [0]
         return str(DataFrame.from_dict(row).to_csv())
 
@@ -164,70 +228,23 @@ class TabularInputTransform(InputTransform):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        cat_cols: Optional[List[str]] = None,
-        num_cols: Optional[List[str]] = None,
-        target_col: Optional[str] = None,
-        mean: Optional[DataFrame] = None,
-        std: Optional[DataFrame] = None,
-        codes: Optional[Dict[str, Any]] = None,
-        target_codes: Optional[Dict[str, Any]] = None,
-        classes: Optional[List[str]] = None,
-        is_regression: bool = True,
         deserializer: Optional[Deserializer] = None,
     ):
-        classes = classes or []
-
-        self.cat_cols = cat_cols
-        self.num_cols = num_cols
-        self.target_col = target_col
-        self.mean = mean
-        self.std = std
-        self.codes = codes
-        self.target_codes = target_codes
-        self.classes = classes
-        self.is_regression = is_regression
-
         super().__init__(
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
             inputs={
-                InputFormat.CSV: TabularCSVInput(
-                    cat_cols, num_cols, target_col, mean, std, codes, target_codes, classes, is_regression
-                ),
-                "data_frame": TabularDataFrameInput(
-                    cat_cols, num_cols, target_col, mean, std, codes, target_codes, classes, is_regression
-                ),
+                InputFormat.CSV: TabularCSVInput,
+                InputFormat.DATAFRAME: TabularDataFrameInput,
             },
             default_input=InputFormat.CSV,
-            deserializer=deserializer
-            or TabularDeserializer(
-                cat_cols=cat_cols,
-                num_cols=num_cols,
-                target_col=target_col,
-                mean=mean,
-                std=std,
-                codes=codes,
-                target_codes=target_codes,
-                classes=classes,
-                is_regression=is_regression,
-            ),
+            deserializer=deserializer or TabularDeserializer(),
         )
 
     def get_state_dict(self, strict: bool = False) -> Dict[str, Any]:
-        return {
-            **self.transforms,
-            "cat_cols": self.cat_cols,
-            "num_cols": self.num_cols,
-            "target_col": self.target_col,
-            "mean": self.mean,
-            "std": self.std,
-            "codes": self.codes,
-            "target_codes": self.target_codes,
-            "classes": self.classes,
-            "is_regression": self.is_regression,
-        }
+        return self.transforms
 
     @classmethod
     def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = True) -> "InputTransform":
@@ -248,24 +265,25 @@ class TabularData(DataModule):
     is_regression: bool = False
 
     @property
+    def parameters(self) -> Optional[Dict[str, Any]]:
+        """The parameters dictionary created from the train data when constructing the ``TabularData`` object."""
+        return getattr(self.train_dataset, "parameters", None)
+
+    @property
     def codes(self) -> Dict[str, str]:
-        return self._input.codes
+        return self.parameters["codes"]
 
     @property
-    def num_classes(self) -> int:
-        return self._input.num_classes
+    def categorical_fields(self) -> Optional[List[str]]:
+        return self.parameters["categorical_fields"]
 
     @property
-    def cat_cols(self) -> Optional[List[str]]:
-        return self._input.cat_cols
-
-    @property
-    def num_cols(self) -> Optional[List[str]]:
-        return self._input.num_cols
+    def numerical_fields(self) -> Optional[List[str]]:
+        return self.parameters["numerical_fields"]
 
     @property
     def num_features(self) -> int:
-        return len(self.cat_cols) + len(self.num_cols)
+        return len(self.categorical_fields) + len(self.numerical_fields)
 
     @property
     def embedding_sizes(self) -> list:
@@ -274,62 +292,17 @@ class TabularData(DataModule):
         # https://developers.googleblog.com/2017/11/introducing-tensorflow-feature-columns.html
         # The following "formula" provides a general rule of thumb about the number of embedding dimensions:
         # embedding_dimensions =  number_of_categories**0.25
-        num_classes = [len(self.codes[cat]) for cat in self.cat_cols]
+        num_classes = [len(self.codes[cat]) + 1 for cat in self.categorical_fields]
         emb_dims = [max(int(n ** 0.25), 16) for n in num_classes]
         return list(zip(num_classes, emb_dims))
-
-    @staticmethod
-    def _sanetize_cols(cat_cols: Optional[Union[str, List[str]]], num_cols: Optional[Union[str, List[str]]]):
-        if cat_cols is None and num_cols is None:
-            raise RuntimeError("Both `cat_cols` and `num_cols` are None!")
-
-        return cat_cols or [], num_cols or []
-
-    @classmethod
-    def compute_state(
-        cls,
-        train_data_frame: DataFrame,
-        val_data_frame: Optional[DataFrame],
-        test_data_frame: Optional[DataFrame],
-        predict_data_frame: Optional[DataFrame],
-        target_fields: str,
-        numerical_fields: List[str],
-        categorical_fields: List[str],
-    ) -> Tuple[float, float, List[str], Dict[str, Any], Dict[str, Any]]:
-
-        if train_data_frame is None:
-            raise MisconfigurationException("train_data_frame is required to instantiate the TabularDataFrameInput")
-
-        data_frames = [train_data_frame]
-
-        if val_data_frame is not None:
-            data_frames += [val_data_frame]
-
-        if test_data_frame is not None:
-            data_frames += [test_data_frame]
-
-        if predict_data_frame is not None:
-            data_frames += [predict_data_frame]
-
-        mean, std = _compute_normalization(data_frames[0], numerical_fields)
-
-        classes = list(data_frames[0][target_fields].unique())
-
-        if data_frames[0][target_fields].dtype == object:
-            # if the target_fields is a category, not an int
-            target_codes = _generate_codes(data_frames, [target_fields])
-        else:
-            target_codes = None
-        codes = _generate_codes(data_frames, categorical_fields)
-
-        return mean, std, classes, codes, target_codes
 
     @classmethod
     def from_data_frame(
         cls,
-        categorical_fields: Optional[Union[str, List[str]]],
-        numerical_fields: Optional[Union[str, List[str]]],
+        categorical_fields: Optional[Union[str, List[str]]] = None,
+        numerical_fields: Optional[Union[str, List[str]]] = None,
         target_fields: Optional[str] = None,
+        parameters: Optional[Dict[str, Any]] = None,
         train_data_frame: Optional[DataFrame] = None,
         val_data_frame: Optional[DataFrame] = None,
         test_data_frame: Optional[DataFrame] = None,
@@ -338,108 +311,33 @@ class TabularData(DataModule):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        data_fetcher: Optional[BaseDataFetcher] = None,
-        input_transform: Optional[InputTransform] = None,
-        val_split: Optional[float] = None,
-        batch_size: int = 4,
-        num_workers: int = 0,
-        sampler: Optional[Type[Sampler]] = None,
-        **input_transform_kwargs: Any,
-    ):
-        """Creates a :class:`~flash.tabular.data.TabularData` object from the given data frames.
-
-        Args:
-            categorical_fields: The field or fields (columns) in the CSV file containing categorical inputs.
-            numerical_fields: The field or fields (columns) in the CSV file containing numerical inputs.
-            target_fields: The field or fields (columns) in the CSV file to use for the target.
-            train_data_frame: The pandas ``DataFrame`` containing the training data.
-            val_data_frame: The pandas ``DataFrame`` containing the validation data.
-            test_data_frame: The pandas ``DataFrame`` containing the testing data.
-            predict_data_frame: The pandas ``DataFrame`` containing the data to use when predicting.
-            train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`.
-            input_transform: The :class:`~flash.core.data.data.InputTransform` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
-                will be constructed and used.
-            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            sampler: The ``sampler`` to use for the ``train_dataloader``.
-            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
-                Will only be used if ``input_transform = None``.
-
-        Returns:
-            The constructed data module.
-
-        Examples::
-
-            data_module = TabularData.from_data_frame(
-                "categorical_input",
-                "numerical_input",
-                "target",
-                train_data_frame=train_data,
-            )
-        """
-        categorical_fields, numerical_fields = cls._sanetize_cols(categorical_fields, numerical_fields)
-
-        if not isinstance(categorical_fields, list):
-            categorical_fields = [categorical_fields]
-
-        if not isinstance(numerical_fields, list):
-            numerical_fields = [numerical_fields]
-
-        mean, std, classes, codes, target_codes = cls.compute_state(
-            train_data_frame=train_data_frame,
-            val_data_frame=val_data_frame,
-            test_data_frame=test_data_frame,
-            predict_data_frame=predict_data_frame,
-            target_fields=target_fields,
-            numerical_fields=numerical_fields,
-            categorical_fields=categorical_fields,
-        )
-
-        return cls.from_input(
-            "data_frame",
+        **data_module_kwargs: Any,
+    ) -> "TabularData":
+        train_input = TabularDataFrameInput(
+            RunningStage.TRAINING,
             train_data_frame,
-            val_data_frame,
-            test_data_frame,
-            predict_data_frame,
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
-            data_fetcher=data_fetcher,
-            input_transform=input_transform,
-            val_split=val_split,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            sampler=sampler,
-            cat_cols=categorical_fields,
-            num_cols=numerical_fields,
-            target_col=target_fields,
-            mean=mean,
-            std=std,
-            codes=codes,
-            target_codes=target_codes,
-            classes=classes,
+            categorical_fields=categorical_fields,
+            numerical_fields=numerical_fields,
+            target_field=target_fields,
             is_regression=cls.is_regression,
-            **input_transform_kwargs,
+        )
+        parameters = train_input.parameters if train_input else parameters
+        return cls(
+            train_input,
+            TabularDataFrameInput(RunningStage.VALIDATING, val_data_frame, parameters=parameters),
+            TabularDataFrameInput(RunningStage.TESTING, test_data_frame, parameters=parameters),
+            TabularDataFrameInput(RunningStage.PREDICTING, predict_data_frame, parameters=parameters),
+            input_transform=cls.input_transform_cls(train_transform, val_transform, test_transform, predict_transform),
+            **data_module_kwargs,
         )
 
     @classmethod
     def from_csv(
         cls,
-        categorical_fields: Optional[Union[str, List[str]]],
-        numerical_fields: Optional[Union[str, List[str]]],
+        categorical_fields: Optional[Union[str, List[str]]] = None,
+        numerical_fields: Optional[Union[str, List[str]]] = None,
         target_fields: Optional[str] = None,
+        parameters: Optional[Dict[str, Any]] = None,
         train_file: Optional[str] = None,
         val_file: Optional[str] = None,
         test_file: Optional[str] = None,
@@ -448,68 +346,22 @@ class TabularData(DataModule):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        data_fetcher: Optional[BaseDataFetcher] = None,
-        input_transform: Optional[InputTransform] = None,
-        val_split: Optional[float] = None,
-        batch_size: int = 4,
-        num_workers: int = 0,
-        sampler: Optional[Type[Sampler]] = None,
-        **input_transform_kwargs: Any,
-    ) -> "DataModule":
-        """Creates a :class:`~flash.tabular.data.TabularData` object from the given CSV files.
-
-        Args:
-            categorical_fields: The field or fields (columns) in the CSV file containing categorical inputs.
-            numerical_fields: The field or fields (columns) in the CSV file containing numerical inputs.
-            target_fields: The field or fields (columns) in the CSV file to use for the target.
-            train_file: The CSV file containing the training data.
-            val_file: The CSV file containing the validation data.
-            test_file: The CSV file containing the testing data.
-            predict_file: The CSV file containing the data to use when predicting.
-            train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`.
-            input_transform: The :class:`~flash.core.data.data.InputTransform` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
-                will be constructed and used.
-            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            sampler: The ``sampler`` to use for the ``train_dataloader``.
-            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
-                Will only be used if ``input_transform = None``.
-
-        Returns:
-            The constructed data module.
-
-        Examples::
-
-            data_module = TabularData.from_csv(
-                "categorical_input",
-                "numerical_input",
-                "target",
-                train_file="train_data.csv",
-            )
-        """
-        return cls.from_data_frame(
+        **data_module_kwargs: Any,
+    ) -> "TabularData":
+        train_input = TabularCSVInput(
+            RunningStage.TRAINING,
+            train_file,
             categorical_fields=categorical_fields,
             numerical_fields=numerical_fields,
-            target_fields=target_fields,
-            train_data_frame=pd.read_csv(train_file) if train_file is not None else None,
-            val_data_frame=pd.read_csv(val_file) if val_file is not None else None,
-            test_data_frame=pd.read_csv(test_file) if test_file is not None else None,
-            predict_data_frame=pd.read_csv(predict_file) if predict_file is not None else None,
-            input_transform=input_transform,
-            val_split=val_split,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            sampler=sampler,
-            **input_transform_kwargs,
+            target_field=target_fields,
+            is_regression=cls.is_regression,
+        )
+        parameters = train_input.parameters if train_input else parameters
+        return cls(
+            train_input,
+            TabularCSVInput(RunningStage.VALIDATING, val_file, parameters=parameters),
+            TabularCSVInput(RunningStage.TESTING, test_file, parameters=parameters),
+            TabularCSVInput(RunningStage.PREDICTING, predict_file, parameters=parameters),
+            input_transform=cls.input_transform_cls(train_transform, val_transform, test_transform, predict_transform),
+            **data_module_kwargs,
         )
