@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import functools
+import os
 import sys
 from typing import Any, cast, Dict, Iterable, MutableMapping, Optional, Sequence, Tuple, Union
 
-from torch.utils.data import Dataset, IterableDataset
+from torch.utils.data import Dataset
 
 import flash
 from flash.core.data.properties import Properties
@@ -25,6 +26,14 @@ if sys.version_info < (3, 7):
     from typing import GenericMeta
 else:
     GenericMeta = type
+
+
+if not os.environ.get("READTHEDOCS", False):
+    from torch.utils.data import IterableDataset
+else:
+    # ReadTheDocs mocks the `IterableDataset` import so it's type cannot be used as a base for a metaclass, so we
+    # replace it here.
+    IterableDataset = object
 
 
 def _has_len(data: Union[Sequence, Iterable]) -> bool:
