@@ -4,8 +4,10 @@ import numpy as np
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Dataset
 
+from flash.core.data.properties import Properties
 
-class SplitDataset(Dataset):
+
+class SplitDataset(Properties, Dataset):
     """SplitDataset is used to create Dataset Subset using indices.
 
     Args:
@@ -21,9 +23,12 @@ class SplitDataset(Dataset):
         split_ds = SplitDataset(dataset, indices=[10, 10, 10, 14, 25], use_duplicated_indices=True)
     """
 
-    _INTERNAL_KEYS = ("dataset", "indices", "data")
-
     def __init__(self, dataset: Any, indices: List[int] = None, use_duplicated_indices: bool = False) -> None:
+        kwargs = {}
+        if isinstance(dataset, Properties):
+            kwargs = {"running_stage": dataset._running_stage, "data_pipeline_state": dataset._data_pipeline_state}
+        super().__init__(**kwargs)
+
         if indices is None:
             indices = []
         if not isinstance(indices, list):
@@ -41,15 +46,9 @@ class SplitDataset(Dataset):
         self.indices = indices
 
     def __getattr__(self, key: str):
-        if key not in self._INTERNAL_KEYS:
-            return self.dataset.__getattribute__(key)
+        if hasattr(self, "dataset"):
+            return getattr(self.dataset, key)
         raise AttributeError
-
-    def __setattr__(self, name: str, value: Any) -> None:
-        if name in self._INTERNAL_KEYS:
-            self.__dict__[name] = value
-        else:
-            setattr(self.dataset, name, value)
 
     def __getitem__(self, index: int) -> Any:
         return self.dataset[self.indices[index]]

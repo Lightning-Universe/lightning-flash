@@ -124,7 +124,7 @@ class DataModule(pl.LightningDataModule):
         self._test_ds = test_dataset
         self._predict_ds = predict_dataset
 
-        if self._train_ds is not None and (val_split is not None and self._val_ds is None):
+        if self._train_ds and (val_split is not None and not self._val_ds):
             self._train_ds, self._val_ds = self._split_train_val(self._train_ds, val_split)
 
         if self._train_ds:
@@ -298,7 +298,7 @@ class DataModule(pl.LightningDataModule):
 
         if self.sampler is None:
             sampler = None
-            shuffle = not isinstance(train_ds, (IterableDataset, IterableAutoDataset, InputBase))
+            shuffle = not isinstance(train_ds, (IterableDataset, IterableAutoDataset, IterableInput))
         else:
             sampler = self.sampler(train_ds)
 
@@ -430,7 +430,13 @@ class DataModule(pl.LightningDataModule):
     def inputs(self) -> Optional[Union[Input, List[InputBase]]]:
         """Property that returns the inputs associated with this ``DataModule``."""
         datasets = [self.train_dataset, self.val_dataset, self.test_dataset, self.predict_dataset]
-        inputs = [dataset for dataset in datasets if isinstance(dataset, InputBase)]
+        inputs = [
+            dataset
+            for dataset in datasets
+            if isinstance(dataset, InputBase)
+            or isinstance(dataset, SplitDataset)
+            and isinstance(dataset.dataset, InputBase)
+        ]
         if len(inputs) == 0:
             inputs = self._input
         return inputs
