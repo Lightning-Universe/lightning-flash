@@ -13,10 +13,11 @@
 # limitations under the License.
 import functools
 import sys
-from typing import Any, cast, Dict, Iterable, MutableMapping, Sequence, Tuple, Union
+from typing import Any, cast, Dict, Iterable, MutableMapping, Optional, Sequence, Tuple, Union
 
 from torch.utils.data import Dataset, IterableDataset
 
+import flash
 from flash.core.data.properties import Properties
 from flash.core.utilities.stages import RunningStage
 
@@ -108,11 +109,10 @@ class InputBase(Properties, metaclass=_InputMeta):
         self,
         running_stage: RunningStage,
         *args: Any,
+        data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None,
         **kwargs: Any,
     ) -> None:
-        super().__init__()
-
-        self._running_stage = running_stage
+        super().__init__(running_stage=running_stage, data_pipeline_state=data_pipeline_state)
 
         self.data = None
         if len(args) >= 1 and args[0] is not None:

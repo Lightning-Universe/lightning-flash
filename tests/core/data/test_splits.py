@@ -31,6 +31,7 @@ def test_split_dataset():
         def __init__(self):
             self.data = [0, 1, 2]
             self.name = "something"
+            self.is_passed_down = False
 
         def __getitem__(self, index):
             return self.data[index]
@@ -41,10 +42,8 @@ def test_split_dataset():
     split_dataset = SplitDataset(Dataset(), indices=[0])
     assert split_dataset.name == "something"
 
-    assert split_dataset._INTERNAL_KEYS == ("dataset", "indices", "data")
-
     split_dataset.is_passed_down = True
-    assert split_dataset.dataset.is_passed_down
+    assert not split_dataset.dataset.is_passed_down
 
 
 def test_misconfiguration():
