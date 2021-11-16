@@ -299,9 +299,10 @@ class TabularData(DataModule):
     @classmethod
     def from_data_frame(
         cls,
-        categorical_fields: Optional[Union[str, List[str]]],
-        numerical_fields: Optional[Union[str, List[str]]],
+        categorical_fields: Optional[Union[str, List[str]]] = None,
+        numerical_fields: Optional[Union[str, List[str]]] = None,
         target_fields: Optional[str] = None,
+        parameters: Optional[Dict[str, Any]] = None,
         train_data_frame: Optional[DataFrame] = None,
         val_data_frame: Optional[DataFrame] = None,
         test_data_frame: Optional[DataFrame] = None,
@@ -320,11 +321,12 @@ class TabularData(DataModule):
             target_field=target_fields,
             is_regression=cls.is_regression,
         )
+        parameters = train_input.parameters if train_input else parameters
         return cls(
             train_input,
-            TabularDataFrameInput(RunningStage.VALIDATING, val_data_frame, parameters=train_input.parameters),
-            TabularDataFrameInput(RunningStage.TESTING, test_data_frame, parameters=train_input.parameters),
-            TabularDataFrameInput(RunningStage.PREDICTING, predict_data_frame, parameters=train_input.parameters),
+            TabularDataFrameInput(RunningStage.VALIDATING, val_data_frame, parameters=parameters),
+            TabularDataFrameInput(RunningStage.TESTING, test_data_frame, parameters=parameters),
+            TabularDataFrameInput(RunningStage.PREDICTING, predict_data_frame, parameters=parameters),
             input_transform=cls.input_transform_cls(train_transform, val_transform, test_transform, predict_transform),
             **data_module_kwargs,
         )
@@ -332,9 +334,10 @@ class TabularData(DataModule):
     @classmethod
     def from_csv(
         cls,
-        categorical_fields: Optional[Union[str, List[str]]],
-        numerical_fields: Optional[Union[str, List[str]]],
+        categorical_fields: Optional[Union[str, List[str]]] = None,
+        numerical_fields: Optional[Union[str, List[str]]] = None,
         target_fields: Optional[str] = None,
+        parameters: Optional[Dict[str, Any]] = None,
         train_file: Optional[str] = None,
         val_file: Optional[str] = None,
         test_file: Optional[str] = None,
@@ -353,11 +356,12 @@ class TabularData(DataModule):
             target_field=target_fields,
             is_regression=cls.is_regression,
         )
+        parameters = train_input.parameters if train_input else parameters
         return cls(
             train_input,
-            TabularCSVInput(RunningStage.VALIDATING, val_file, parameters=train_input.parameters),
-            TabularCSVInput(RunningStage.TESTING, test_file, parameters=train_input.parameters),
-            TabularCSVInput(RunningStage.PREDICTING, predict_file, parameters=train_input.parameters),
+            TabularCSVInput(RunningStage.VALIDATING, val_file, parameters=parameters),
+            TabularCSVInput(RunningStage.TESTING, test_file, parameters=parameters),
+            TabularCSVInput(RunningStage.PREDICTING, predict_file, parameters=parameters),
             input_transform=cls.input_transform_cls(train_transform, val_transform, test_transform, predict_transform),
             **data_module_kwargs,
         )
