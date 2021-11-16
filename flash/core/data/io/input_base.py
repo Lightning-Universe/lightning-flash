@@ -13,10 +13,11 @@
 # limitations under the License.
 import functools
 import sys
-from typing import Any, cast, Dict, Iterable, MutableMapping, Optional, Sequence, Tuple, TYPE_CHECKING, Union
+from typing import Any, cast, Dict, Iterable, MutableMapping, Optional, Sequence, Tuple, Union
 
 from torch.utils.data import Dataset, IterableDataset
 
+import flash
 from flash.core.data.properties import Properties
 from flash.core.utilities.stages import RunningStage
 
@@ -24,9 +25,6 @@ if sys.version_info < (3, 7):
     from typing import GenericMeta
 else:
     GenericMeta = type
-
-if TYPE_CHECKING:
-    from flash.core.data.data_pipeline import DataPipelineState
 
 
 def _has_len(data: Union[Sequence, Iterable]) -> bool:
@@ -111,7 +109,7 @@ class InputBase(Properties, metaclass=_InputMeta):
         self,
         running_stage: RunningStage,
         *args: Any,
-        data_pipeline_state: Optional["DataPipelineState"] = None,
+        data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(running_stage=running_stage, data_pipeline_state=data_pipeline_state)

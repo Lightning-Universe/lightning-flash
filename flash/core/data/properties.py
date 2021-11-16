@@ -12,13 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
-from typing import Dict, Optional, Type, TYPE_CHECKING, TypeVar
+from typing import Dict, Optional, Type, TypeVar
 
 import flash
 from flash.core.utilities.stages import RunningStage
-
-if TYPE_CHECKING:
-    from flash.core.data.data_pipeline import DataPipelineState
 
 
 @dataclass(unsafe_hash=True, frozen=True)
@@ -31,7 +28,9 @@ STATE_TYPE = TypeVar("STATE_TYPE", bound=ProcessState)
 
 class Properties:
     def __init__(
-        self, running_stage: Optional[RunningStage] = None, data_pipeline_state: Optional["DataPipelineState"] = None
+        self,
+        running_stage: Optional[RunningStage] = None,
+        data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None,
     ):
         super().__init__()
 
