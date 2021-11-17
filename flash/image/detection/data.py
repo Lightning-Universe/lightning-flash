@@ -138,7 +138,6 @@ class ObjectDetectionInputTransform(InputTransform):
         predict_transform: Optional[Dict[str, Callable]] = None,
         image_size: Tuple[int, int] = (128, 128),
         parser: Optional[Callable] = None,
-        **_kwargs: Any,
     ):
         self.image_size = image_size
 
