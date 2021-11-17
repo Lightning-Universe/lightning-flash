@@ -115,6 +115,7 @@ class ObjectDetectionFiftyOneInput(IceVisionInput):
     ) -> Sequence[Dict[str, Any]]:
         label_utilities = FiftyOneLabelUtilities(label_field, fol.Detections)
         label_utilities.validate(sample_collection)
+        sample_collection.compute_metadata()
         classes = label_utilities.get_classes(sample_collection)
         class_map = ClassMap(classes)
         self.num_classes = len(class_map)
@@ -199,7 +200,7 @@ class ObjectDetectionData(DataModule):
             IceVisionInput(RunningStage.TRAINING, train_folder, train_ann_file, parser=parser),
             IceVisionInput(RunningStage.VALIDATING, val_folder, val_ann_file, parser=parser),
             IceVisionInput(RunningStage.TESTING, test_folder, test_ann_file, parser=parser),
-            IceVisionInput(RunningStage.PREDICTING, predict_folder),
+            IceVisionInput(RunningStage.PREDICTING, predict_folder, parser=parser),
             input_transform=cls.input_transform_cls(
                 train_transform,
                 val_transform,

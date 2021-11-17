@@ -106,7 +106,7 @@ class InstanceSegmentationData(DataModule):
             IceVisionInput(RunningStage.TRAINING, train_folder, train_ann_file, parser=parser),
             IceVisionInput(RunningStage.VALIDATING, val_folder, val_ann_file, parser=parser),
             IceVisionInput(RunningStage.TESTING, test_folder, test_ann_file, parser=parser),
-            IceVisionInput(RunningStage.PREDICTING, predict_folder),
+            IceVisionInput(RunningStage.PREDICTING, predict_folder, parser=parser),
             input_transform=cls.input_transform_cls(
                 train_transform,
                 val_transform,

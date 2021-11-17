@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import inspect
-from typing import Any, Callable, Dict, List, Optional, Sequence, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 import numpy as np
 
@@ -36,7 +36,7 @@ class IceVisionInput(Input):
         root: str,
         ann_file: Optional[str] = None,
         parser: Optional[Type["Parser"]] = None,
-    ) -> Sequence[Dict[str, Any]]:
+    ) -> List[Dict[str, Any]]:
         if inspect.isclass(parser) and issubclass(parser, Parser):
             parser = parser(ann_file, root)
         elif isinstance(parser, Callable):
@@ -48,8 +48,11 @@ class IceVisionInput(Input):
         records = parser.parse(data_splitter=SingleSplitSplitter())
         return [{DataKeys.INPUT: record} for record in records[0]]
 
-    def predict_load_data(self, paths: Union[str, List[str]], **kwargs) -> List[Dict[str, Any]]:
-        # TODO: Error here if not predicting
+    def predict_load_data(
+        self, paths: Union[str, List[str]], ann_file: Optional[str] = None, parser: Optional[Type["Parser"]] = None
+    ) -> List[Dict[str, Any]]:
+        if parser is not None:
+            return self.load_data(paths, ann_file, parser)
         paths = list_valid_files(paths, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
         return [{DataKeys.INPUT: path} for path in paths]
 
@@ -58,6 +61,8 @@ class IceVisionInput(Input):
         return from_icevision_record(record)
 
     def predict_load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+        if isinstance(sample[DataKeys.INPUT], BaseRecord):
+            return self.load_sample(sample)
         filepath = sample[DataKeys.INPUT]
         image = np.array(image_loader(filepath))
 
