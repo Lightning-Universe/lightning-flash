@@ -21,9 +21,7 @@ __all__ = ["graph_classification"]
 def from_tu_dataset(
     name: str = "KKI",
     val_split: float = 0.1,
-    batch_size: int = 4,
-    num_workers: int = 0,
-    **input_transform_kwargs,
+    **data_module_kwargs,
 ) -> GraphClassificationData:
     """Downloads and loads the TU Dataset."""
     from flash.core.utilities.imports import _TORCH_GEOMETRIC_AVAILABLE
@@ -38,9 +36,7 @@ def from_tu_dataset(
     return GraphClassificationData.from_datasets(
         train_dataset=dataset,
         val_split=val_split,
-        batch_size=batch_size,
-        num_workers=num_workers,
-        **input_transform_kwargs,
+        **data_module_kwargs,
     )
 
 

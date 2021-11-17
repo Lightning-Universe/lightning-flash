@@ -51,6 +51,7 @@ def semantic_segmentation():
         default_arguments={
             "trainer.max_epochs": 3,
         },
+        legacy=True,
     )
 
     cli.trainer.save_checkpoint("semantic_segmentation_model.pt")
