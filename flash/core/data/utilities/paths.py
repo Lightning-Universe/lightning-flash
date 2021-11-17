@@ -116,29 +116,3 @@ def list_valid_files(paths: Union[str, List[str]], valid_extensions: Optional[Tu
             paths,
         )
     )
-
-
-# def make_dataset_from_paths(
-#     paths: Union[str, List[str]],
-#     valid_extensions: Optional[Tuple[str, ...]]
-# ) -> List[Dict[str, Any]]:
-#     if isdir(paths):
-#         classes, class_to_idx = find_classes(paths)
-#         if not classes:
-#             return list_valid_files(paths, valid_extensions)
-#         # self.set_state(LabelsState(classes))
-#
-#         # if dataset is not None:
-#         #     dataset.num_classes = len(classes)
-#
-#         data = make_dataset(paths, class_to_idx, extensions=valid_extensions)
-#         return [{DataKeys.INPUT: input, DataKeys.TARGET: target} for input, target in data]
-#     elif dataset is not None:
-#         dataset.num_classes = len(np.unique(data[1]))
-#
-#     return list(
-#         filter(
-#             lambda sample: has_file_allowed_extension(sample[DataKeys.INPUT], self.extensions),
-#             super().load_data(data, dataset),
-#         )
-#     )
