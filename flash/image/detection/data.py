@@ -11,15 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Hashable, Optional, Sequence, Tuple, TYPE_CHECKING
+from functools import partial
+from typing import Any, Callable, Dict, Hashable, Optional, Sequence, Tuple, Type, TYPE_CHECKING, Union
 
-from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import DataKeys, FiftyOneInput, InputFormat
+from flash.core.data.io.input import DataKeys, InputFormat
 from flash.core.data.io.input_transform import InputTransform
-from flash.core.integrations.icevision.data import IceVisionParserInput, IceVisionPathsInput
+from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
+from flash.core.integrations.icevision.data import IceVisionInput
 from flash.core.integrations.icevision.transforms import default_transforms
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _ICEVISION_AVAILABLE, lazy_import, requires
+from flash.core.utilities.stages import RunningStage
 
 SampleCollection = None
 if _FIFTYONE_AVAILABLE:
@@ -103,34 +105,29 @@ class FiftyOneParser(Parser):
         return output_bbox
 
 
-class ObjectDetectionFiftyOneInput(IceVisionPathsInput, FiftyOneInput):
-    def __init__(self, label_field: str = "ground_truth", iscrowd: str = "iscrowd"):
-        super().__init__()
-        self.label_field = label_field
-        self.iscrowd = iscrowd
-
-    @property
+class ObjectDetectionFiftyOneInput(IceVisionInput):
     @requires("fiftyone")
-    def label_cls(self):
-        return fol.Detections
-
-    @requires("fiftyone")
-    def load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Dict[str, Any]]:
-        self._validate(data)
-
-        data.compute_metadata()
-        classes = self._get_classes(data)
+    def load_data(
+        self,
+        sample_collection: SampleCollection,
+        label_field: str = "ground_truth",
+        iscrowd: str = "iscrowd",
+    ) -> Sequence[Dict[str, Any]]:
+        label_utilities = FiftyOneLabelUtilities(label_field, fol.Detections)
+        label_utilities.validate(sample_collection)
+        sample_collection.compute_metadata()
+        classes = label_utilities.get_classes(sample_collection)
         class_map = ClassMap(classes)
-        dataset.num_classes = len(class_map)
+        self.num_classes = len(class_map)
 
-        parser = FiftyOneParser(data, class_map, self.label_field, self.iscrowd)
+        parser = FiftyOneParser(sample_collection, class_map, label_field, iscrowd)
         records = parser.parse(data_splitter=SingleSplitSplitter())
         return [{DataKeys.INPUT: record} for record in records[0]]
 
     @staticmethod
     @requires("fiftyone")
-    def predict_load_data(data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Dict[str, Any]]:
-        return [{DataKeys.INPUT: f} for f in data.values("filepath")]
+    def predict_load_data(sample_collection: SampleCollection) -> Sequence[Dict[str, Any]]:
+        return [{DataKeys.INPUT: f} for f in sample_collection.values("filepath")]
 
 
 class ObjectDetectionInputTransform(InputTransform):
@@ -142,7 +139,6 @@ class ObjectDetectionInputTransform(InputTransform):
         predict_transform: Optional[Dict[str, Callable]] = None,
         image_size: Tuple[int, int] = (128, 128),
         parser: Optional[Callable] = None,
-        **_kwargs: Any,
     ):
         self.image_size = image_size
 
@@ -152,12 +148,12 @@ class ObjectDetectionInputTransform(InputTransform):
             test_transform=test_transform,
             predict_transform=predict_transform,
             inputs={
-                "coco": IceVisionParserInput(parser=COCOBBoxParser),
-                "via": IceVisionParserInput(parser=VIABBoxParser),
-                "voc": IceVisionParserInput(parser=VOCBBoxParser),
-                InputFormat.FILES: IceVisionPathsInput(),
-                InputFormat.FOLDERS: IceVisionParserInput(parser=parser),
-                InputFormat.FIFTYONE: ObjectDetectionFiftyOneInput(**_kwargs),
+                "coco": partial(IceVisionInput, parser=COCOBBoxParser),
+                "via": partial(IceVisionInput, parser=VIABBoxParser),
+                "voc": partial(IceVisionInput, parser=VOCBBoxParser),
+                InputFormat.FILES: IceVisionInput,
+                InputFormat.FOLDERS: partial(IceVisionInput, parser=parser),
+                InputFormat.FIFTYONE: ObjectDetectionFiftyOneInput,
             },
             default_input=InputFormat.FILES,
         )
@@ -183,6 +179,39 @@ class ObjectDetectionData(DataModule):
     input_transform_cls = ObjectDetectionInputTransform
 
     @classmethod
+    def from_folders(
+        cls,
+        train_folder: Optional[str] = None,
+        train_ann_file: Optional[str] = None,
+        val_folder: Optional[str] = None,
+        val_ann_file: Optional[str] = None,
+        test_folder: Optional[str] = None,
+        test_ann_file: Optional[str] = None,
+        predict_folder: Optional[str] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        image_size: Tuple[int, int] = (128, 128),
+        parser: Optional[Union[Callable, Type[Parser]]] = None,
+        **data_module_kwargs,
+    ) -> "ObjectDetectionData":
+        return cls(
+            IceVisionInput(RunningStage.TRAINING, train_folder, train_ann_file, parser=parser),
+            IceVisionInput(RunningStage.VALIDATING, val_folder, val_ann_file, parser=parser),
+            IceVisionInput(RunningStage.TESTING, test_folder, test_ann_file, parser=parser),
+            IceVisionInput(RunningStage.PREDICTING, predict_folder, parser=parser),
+            input_transform=cls.input_transform_cls(
+                train_transform,
+                val_transform,
+                test_transform,
+                predict_transform,
+                image_size=image_size,
+            ),
+            **data_module_kwargs,
+        )
+
+    @classmethod
     def from_coco(
         cls,
         train_folder: Optional[str] = None,
@@ -196,13 +225,9 @@ class ObjectDetectionData(DataModule):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        data_fetcher: Optional[BaseDataFetcher] = None,
-        input_transform: Optional[InputTransform] = None,
-        val_split: Optional[float] = None,
-        batch_size: int = 4,
-        num_workers: int = 0,
-        **input_transform_kwargs: Any,
-    ):
+        image_size: Tuple[int, int] = (128, 128),
+        **data_module_kwargs: Any,
+    ) -> "ObjectDetectionData":
         """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders
         and annotation files in the COCO format.
 
@@ -222,43 +247,23 @@ class ObjectDetectionData(DataModule):
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`.
-            input_transform: The :class:`~flash.core.data.data.InputTransform` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
-                will be constructed and used.
-            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
-                Will only be used if ``input_transform = None``.
-
-        Returns:
-            The constructed data module.
-
-        Examples::
-
-            data_module = ObjectDetectionData.from_coco(
-                train_folder="train_folder",
-                train_ann_file="annotations.json",
-            )
+            image_size: The size to resize images (and their bounding boxes) to.
         """
-        return cls.from_input(
-            "coco",
-            (train_folder, train_ann_file) if train_folder else None,
-            (val_folder, val_ann_file) if val_folder else None,
-            (test_folder, test_ann_file) if test_folder else None,
-            predict_folder,
+        return cls.from_folders(
+            train_folder=train_folder,
+            train_ann_file=train_ann_file,
+            val_folder=val_folder,
+            val_ann_file=val_ann_file,
+            test_folder=test_folder,
+            test_ann_file=test_ann_file,
+            predict_folder=predict_folder,
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_fetcher=data_fetcher,
-            input_transform=input_transform,
-            val_split=val_split,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            **input_transform_kwargs,
+            image_size=image_size,
+            parser=COCOBBoxParser,
+            **data_module_kwargs,
         )
 
     @classmethod
@@ -275,13 +280,9 @@ class ObjectDetectionData(DataModule):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        data_fetcher: Optional[BaseDataFetcher] = None,
-        input_transform: Optional[InputTransform] = None,
-        val_split: Optional[float] = None,
-        batch_size: int = 4,
-        num_workers: int = 0,
-        **input_transform_kwargs: Any,
-    ):
+        image_size: Tuple[int, int] = (128, 128),
+        **data_module_kwargs: Any,
+    ) -> "ObjectDetectionData":
         """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders
         and annotation files in the VOC format.
 
@@ -301,43 +302,23 @@ class ObjectDetectionData(DataModule):
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`.
-            input_transform: The :class:`~flash.core.data.data.InputTransform` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
-                will be constructed and used.
-            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
-                Will only be used if ``input_transform = None``.
-
-        Returns:
-            The constructed data module.
-
-        Examples::
-
-            data_module = ObjectDetectionData.from_voc(
-                train_folder="train_folder",
-                train_ann_file="annotations.json",
-            )
+            image_size: The size to resize images (and their bounding boxes) to.
         """
-        return cls.from_input(
-            "voc",
-            (train_folder, train_ann_file) if train_folder else None,
-            (val_folder, val_ann_file) if val_folder else None,
-            (test_folder, test_ann_file) if test_folder else None,
-            predict_folder,
+        return cls.from_folders(
+            train_folder=train_folder,
+            train_ann_file=train_ann_file,
+            val_folder=val_folder,
+            val_ann_file=val_ann_file,
+            test_folder=test_folder,
+            test_ann_file=test_ann_file,
+            predict_folder=predict_folder,
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_fetcher=data_fetcher,
-            input_transform=input_transform,
-            val_split=val_split,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            **input_transform_kwargs,
+            image_size=image_size,
+            parser=VOCBBoxParser,
+            **data_module_kwargs,
         )
 
     @classmethod
@@ -354,13 +335,9 @@ class ObjectDetectionData(DataModule):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        data_fetcher: Optional[BaseDataFetcher] = None,
-        input_transform: Optional[InputTransform] = None,
-        val_split: Optional[float] = None,
-        batch_size: int = 4,
-        num_workers: int = 0,
-        **input_transform_kwargs: Any,
-    ):
+        image_size: Tuple[int, int] = (128, 128),
+        **data_module_kwargs: Any,
+    ) -> "ObjectDetectionData":
         """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders
         and annotation files in the VIA format.
 
@@ -380,41 +357,53 @@ class ObjectDetectionData(DataModule):
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`.
-            input_transform: The :class:`~flash.core.data.data.InputTransform` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
-                will be constructed and used.
-            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
-                Will only be used if ``input_transform = None``.
-
-        Returns:
-            The constructed data module.
-
-        Examples::
-
-            data_module = ObjectDetectionData.from_via(
-                train_folder="train_folder",
-                train_ann_file="annotations.json",
-            )
+            image_size: The size to resize images (and their bounding boxes) to.
         """
-        return cls.from_input(
-            "via",
-            (train_folder, train_ann_file) if train_folder else None,
-            (val_folder, val_ann_file) if val_folder else None,
-            (test_folder, test_ann_file) if test_folder else None,
-            predict_folder,
+        return cls.from_folders(
+            train_folder=train_folder,
+            train_ann_file=train_ann_file,
+            val_folder=val_folder,
+            val_ann_file=val_ann_file,
+            test_folder=test_folder,
+            test_ann_file=test_ann_file,
+            predict_folder=predict_folder,
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_fetcher=data_fetcher,
-            input_transform=input_transform,
-            val_split=val_split,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            **input_transform_kwargs,
+            image_size=image_size,
+            parser=VIABBoxParser,
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    @requires("fiftyone")
+    def from_fiftyone(
+        cls,
+        train_dataset: Optional[SampleCollection] = None,
+        val_dataset: Optional[SampleCollection] = None,
+        test_dataset: Optional[SampleCollection] = None,
+        predict_dataset: Optional[SampleCollection] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        label_field: str = "ground_truth",
+        iscrowd: str = "iscrowd",
+        image_size: Tuple[int, int] = (128, 128),
+        **data_module_kwargs,
+    ) -> "ObjectDetectionData":
+        return cls(
+            ObjectDetectionFiftyOneInput(RunningStage.TRAINING, train_dataset, label_field, iscrowd),
+            ObjectDetectionFiftyOneInput(RunningStage.VALIDATING, val_dataset, label_field, iscrowd),
+            ObjectDetectionFiftyOneInput(RunningStage.TESTING, test_dataset, label_field, iscrowd),
+            ObjectDetectionFiftyOneInput(RunningStage.PREDICTING, predict_dataset, label_field, iscrowd),
+            input_transform=cls.input_transform_cls(
+                train_transform,
+                val_transform,
+                test_transform,
+                predict_transform,
+                image_size=image_size,
+            ),
+            **data_module_kwargs,
         )
