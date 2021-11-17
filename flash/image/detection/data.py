@@ -194,7 +194,7 @@ class ObjectDetectionData(DataModule):
         predict_transform: Optional[Dict[str, Callable]] = None,
         image_size: Tuple[int, int] = (128, 128),
         **data_module_kwargs: Any,
-    ):
+    ) -> "ObjectDetectionData":
         """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders
         and annotation files in the COCO format.
 
@@ -247,7 +247,7 @@ class ObjectDetectionData(DataModule):
         predict_transform: Optional[Dict[str, Callable]] = None,
         image_size: Tuple[int, int] = (128, 128),
         **data_module_kwargs: Any,
-    ):
+    ) -> "ObjectDetectionData":
         """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders
         and annotation files in the VOC format.
 
@@ -300,7 +300,7 @@ class ObjectDetectionData(DataModule):
         predict_transform: Optional[Dict[str, Callable]] = None,
         image_size: Tuple[int, int] = (128, 128),
         **data_module_kwargs: Any,
-    ):
+    ) -> "ObjectDetectionData":
         """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders
         and annotation files in the VIA format.
 
