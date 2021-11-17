@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import partial
-from typing import Any, Callable, Dict, Hashable, Optional, Sequence, Tuple, TYPE_CHECKING
+from typing import Any, Callable, Dict, Hashable, Optional, Sequence, Tuple, Type, TYPE_CHECKING, Union
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import DataKeys, InputFormat
@@ -179,6 +179,39 @@ class ObjectDetectionData(DataModule):
     input_transform_cls = ObjectDetectionInputTransform
 
     @classmethod
+    def from_folders(
+        cls,
+        train_folder: Optional[str] = None,
+        train_ann_file: Optional[str] = None,
+        val_folder: Optional[str] = None,
+        val_ann_file: Optional[str] = None,
+        test_folder: Optional[str] = None,
+        test_ann_file: Optional[str] = None,
+        predict_folder: Optional[str] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        image_size: Tuple[int, int] = (128, 128),
+        parser: Optional[Union[Callable, Type[Parser]]] = None,
+        **data_module_kwargs,
+    ) -> "ObjectDetectionData":
+        return cls(
+            IceVisionInput(RunningStage.TRAINING, train_folder, train_ann_file, parser=parser),
+            IceVisionInput(RunningStage.VALIDATING, val_folder, val_ann_file, parser=parser),
+            IceVisionInput(RunningStage.TESTING, test_folder, test_ann_file, parser=parser),
+            IceVisionInput(RunningStage.PREDICTING, predict_folder),
+            input_transform=cls.input_transform_cls(
+                train_transform,
+                val_transform,
+                test_transform,
+                predict_transform,
+                image_size=image_size,
+            ),
+            **data_module_kwargs,
+        )
+
+    @classmethod
     def from_coco(
         cls,
         train_folder: Optional[str] = None,
@@ -216,18 +249,20 @@ class ObjectDetectionData(DataModule):
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             image_size: The size to resize images (and their bounding boxes) to.
         """
-        return cls(
-            IceVisionInput(RunningStage.TRAINING, train_folder, train_ann_file, COCOBBoxParser),
-            IceVisionInput(RunningStage.VALIDATING, val_folder, val_ann_file, COCOBBoxParser),
-            IceVisionInput(RunningStage.TESTING, test_folder, test_ann_file, COCOBBoxParser),
-            IceVisionInput(RunningStage.PREDICTING, predict_folder),
-            input_transform=cls.input_transform_cls(
-                train_transform,
-                val_transform,
-                test_transform,
-                predict_transform,
-                image_size=image_size,
-            ),
+        return cls.from_folders(
+            train_folder=train_folder,
+            train_ann_file=train_ann_file,
+            val_folder=val_folder,
+            val_ann_file=val_ann_file,
+            test_folder=test_folder,
+            test_ann_file=test_ann_file,
+            predict_folder=predict_folder,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            image_size=image_size,
+            parser=COCOBBoxParser,
             **data_module_kwargs,
         )
 
@@ -269,18 +304,20 @@ class ObjectDetectionData(DataModule):
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             image_size: The size to resize images (and their bounding boxes) to.
         """
-        return cls(
-            IceVisionInput(RunningStage.TRAINING, train_folder, train_ann_file, VOCBBoxParser),
-            IceVisionInput(RunningStage.VALIDATING, val_folder, val_ann_file, VOCBBoxParser),
-            IceVisionInput(RunningStage.TESTING, test_folder, test_ann_file, VOCBBoxParser),
-            IceVisionInput(RunningStage.PREDICTING, predict_folder),
-            input_transform=cls.input_transform_cls(
-                train_transform,
-                val_transform,
-                test_transform,
-                predict_transform,
-                image_size=image_size,
-            ),
+        return cls.from_folders(
+            train_folder=train_folder,
+            train_ann_file=train_ann_file,
+            val_folder=val_folder,
+            val_ann_file=val_ann_file,
+            test_folder=test_folder,
+            test_ann_file=test_ann_file,
+            predict_folder=predict_folder,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            image_size=image_size,
+            parser=VOCBBoxParser,
             **data_module_kwargs,
         )
 
@@ -322,11 +359,45 @@ class ObjectDetectionData(DataModule):
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             image_size: The size to resize images (and their bounding boxes) to.
         """
+        return cls.from_folders(
+            train_folder=train_folder,
+            train_ann_file=train_ann_file,
+            val_folder=val_folder,
+            val_ann_file=val_ann_file,
+            test_folder=test_folder,
+            test_ann_file=test_ann_file,
+            predict_folder=predict_folder,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            image_size=image_size,
+            parser=VIABBoxParser,
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    @requires("fiftyone")
+    def from_fiftyone(
+        cls,
+        train_dataset: Optional[SampleCollection] = None,
+        val_dataset: Optional[SampleCollection] = None,
+        test_dataset: Optional[SampleCollection] = None,
+        predict_dataset: Optional[SampleCollection] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        label_field: str = "ground_truth",
+        iscrowd: str = "iscrowd",
+        image_size: Tuple[int, int] = (128, 128),
+        **data_module_kwargs,
+    ) -> "ObjectDetectionData":
         return cls(
-            IceVisionInput(RunningStage.TRAINING, train_folder, train_ann_file, VIABBoxParser),
-            IceVisionInput(RunningStage.VALIDATING, val_folder, val_ann_file, VIABBoxParser),
-            IceVisionInput(RunningStage.TESTING, test_folder, test_ann_file, VIABBoxParser),
-            IceVisionInput(RunningStage.PREDICTING, predict_folder),
+            ObjectDetectionFiftyOneInput(RunningStage.TRAINING, train_dataset, label_field, iscrowd),
+            ObjectDetectionFiftyOneInput(RunningStage.VALIDATING, val_dataset, label_field, iscrowd),
+            ObjectDetectionFiftyOneInput(RunningStage.TESTING, test_dataset, label_field, iscrowd),
+            ObjectDetectionFiftyOneInput(RunningStage.PREDICTING, predict_dataset, label_field, iscrowd),
             input_transform=cls.input_transform_cls(
                 train_transform,
                 val_transform,

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import inspect
-from typing import Any, Callable, Dict, List, Sequence, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Type, Union
 
 import numpy as np
 
@@ -34,8 +34,8 @@ class IceVisionInput(Input):
     def load_data(
         self,
         root: str,
-        ann_file: str,
-        parser: Type["Parser"],
+        ann_file: Optional[str] = None,
+        parser: Optional[Type["Parser"]] = None,
     ) -> Sequence[Dict[str, Any]]:
         if inspect.isclass(parser) and issubclass(parser, Parser):
             parser = parser(ann_file, root)
