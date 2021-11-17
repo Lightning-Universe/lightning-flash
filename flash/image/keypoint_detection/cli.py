@@ -57,6 +57,7 @@ def keypoint_detection():
             "model.num_keypoints": 1,
             "trainer.max_epochs": 3,
         },
+        legacy=True,
     )
 
     cli.trainer.save_checkpoint("keypoint_detection_model.pt")

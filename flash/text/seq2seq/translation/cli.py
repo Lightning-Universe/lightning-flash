@@ -49,6 +49,7 @@ def translation():
             "trainer.max_epochs": 3,
             "model.backbone": "Helsinki-NLP/opus-mt-en-ro",
         },
+        legacy=True,
     )
 
     cli.trainer.save_checkpoint("translation_model_en_ro.pt")
