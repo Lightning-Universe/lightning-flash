@@ -46,6 +46,7 @@ def object_detection():
         default_arguments={
             "trainer.max_epochs": 3,
         },
+        legacy=True,
     )
 
     cli.trainer.save_checkpoint("object_detection_model.pt")
