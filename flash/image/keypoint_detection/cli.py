@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, Optional
+from typing import Callable, Optional, Tuple
 
 from flash.core.utilities.flash_cli import FlashCLI
 from flash.core.utilities.imports import _ICEDATA_AVAILABLE, requires
@@ -26,10 +26,9 @@ __all__ = ["keypoint_detection"]
 @requires("image")
 def from_biwi(
     val_split: float = 0.1,
-    batch_size: int = 4,
-    num_workers: int = 0,
+    image_size: Tuple[int, int] = (128, 128),
     parser: Optional[Callable] = None,
-    **input_transform_kwargs,
+    **data_module_kwargs,
 ) -> KeypointDetectionData:
     """Downloads and loads the BIWI data set from icedata."""
     data_dir = icedata.biwi.load_data()
@@ -40,10 +39,9 @@ def from_biwi(
     return KeypointDetectionData.from_folders(
         train_folder=data_dir,
         val_split=val_split,
-        batch_size=batch_size,
-        num_workers=num_workers,
+        image_size=image_size,
         parser=parser,
-        **input_transform_kwargs,
+        **data_module_kwargs,
     )
 
 
