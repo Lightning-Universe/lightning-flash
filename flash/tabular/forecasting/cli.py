@@ -72,6 +72,7 @@ def tabular_forecasting():
         },
         finetune=False,
         datamodule_attributes={"parameters"},
+        legacy=True,
     )
 
     cli.trainer.save_checkpoint("tabular_forecasting_model.pt")

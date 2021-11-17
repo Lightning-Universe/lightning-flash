@@ -71,6 +71,7 @@ def text_classification():
             "trainer.max_epochs": 3,
         },
         datamodule_attributes={"num_classes", "multi_label", "backbone"},
+        legacy=True,
     )
 
     cli.trainer.save_checkpoint("text_classification_model.pt")

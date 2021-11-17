@@ -23,8 +23,10 @@ import pytorch_lightning as pl
 from jsonargparse import ArgumentParser
 from jsonargparse.signatures import get_class_signature_functions
 from pytorch_lightning import LightningModule, Trainer
+from pytorch_lightning.utilities.model_helpers import is_overridden
 
 import flash
+from flash import DataModule
 from flash.core.data.io.input import InputFormat
 from flash.core.utilities.lightning_cli import (
     class_from_function,
@@ -117,6 +119,7 @@ class FlashCLI(LightningCLI):
         default_arguments=None,
         finetune=True,
         datamodule_attributes=None,
+        legacy: bool = False,
         **kwargs: Any,
     ) -> None:
         """Flash's extension of the :class:`pytorch_lightning.utilities.cli.LightningCLI`
@@ -141,6 +144,7 @@ class FlashCLI(LightningCLI):
         self.additional_datamodule_builders = additional_datamodule_builders or []
         self.default_arguments = default_arguments or {}
         self.finetune = finetune
+        self.legacy = legacy
 
         model_class = make_args_optional(model_class, self.datamodule_attributes)
         self.local_datamodule_class = datamodule_class
@@ -185,8 +189,17 @@ class FlashCLI(LightningCLI):
         for input in inputs:
             if isinstance(input, InputFormat):
                 input = input.value
-            if hasattr(self.local_datamodule_class, f"from_{input}"):
-                self.add_subcommand_from_function(subcommands, getattr(self.local_datamodule_class, f"from_{input}"))
+            function = f"from_{input}"
+            if (
+                (hasattr(self.local_datamodule_class, function) and self.legacy)
+                or (
+                    hasattr(DataModule, function)
+                    and is_overridden(function, self.local_datamodule_class, DataModule)
+                    and not self.legacy
+                )
+                or (not hasattr(DataModule, function) and not self.legacy)
+            ):
+                self.add_subcommand_from_function(subcommands, getattr(self.local_datamodule_class, function))
 
         for datamodule_builder in self.additional_datamodule_builders:
             self.add_subcommand_from_function(subcommands, datamodule_builder)
@@ -199,13 +212,21 @@ class FlashCLI(LightningCLI):
     def add_subcommand_from_function(self, subcommands, function, function_name=None):
         subcommand = ArgumentParser()
         datamodule_function = class_from_function(drop_kwargs(function), return_type=self.local_datamodule_class)
-        input_transform_function = class_from_function(drop_kwargs(self.local_datamodule_class.input_transform_cls))
         subcommand.add_class_arguments(datamodule_function, fail_untyped=False)
-        subcommand.add_class_arguments(
-            input_transform_function,
-            fail_untyped=False,
-            skip=get_overlapping_args(datamodule_function, input_transform_function),
-        )
+        if self.legacy:
+            input_transform_function = class_from_function(drop_kwargs(self.local_datamodule_class.input_transform_cls))
+            subcommand.add_class_arguments(
+                input_transform_function,
+                fail_untyped=False,
+                skip=get_overlapping_args(datamodule_function, input_transform_function),
+            )
+        else:
+            base_datamodule_function = class_from_function(drop_kwargs(self.local_datamodule_class))
+            subcommand.add_class_arguments(
+                base_datamodule_function,
+                fail_untyped=False,
+                skip=get_overlapping_args(datamodule_function, base_datamodule_function),
+            )
         subcommand_name = function_name or function.__name__
         subcommands.add_subcommand(subcommand_name, subcommand)
         self._subcommand_builders[subcommand_name] = function

@@ -47,6 +47,7 @@ def style_transfer():
             "model.style_image": os.path.join(flash.ASSETS_ROOT, "starry_night.jpg"),
         },
         finetune=False,
+        legacy=True,
     )
 
     cli.trainer.save_checkpoint("style_transfer_model.pt")
