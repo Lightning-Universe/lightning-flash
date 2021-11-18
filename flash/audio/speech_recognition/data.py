@@ -153,7 +153,7 @@ class SpeechRecognitionPathsInput(BaseSpeechRecognition):
     @requires("audio")
     def load_data(self, paths: Union[str, List[str]], sampling_rate: int = 16000) -> Sequence:
         self.sampling_rate = sampling_rate
-        return list_valid_files(paths, ("wav", "ogg", "flac", "mat", "mp3"))
+        return [{DataKeys.INPUT: file} for file in list_valid_files(paths, ("wav", "ogg", "flac", "mat", "mp3"))]
 
     def load_sample(self, sample: Dict[str, Any]) -> Any:
         return super().load_sample(sample, self.sampling_rate)
