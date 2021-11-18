@@ -77,6 +77,7 @@ class BaseSpeechRecognition(Input):
 
 
 class SpeechRecognitionFileInput(BaseSpeechRecognition):
+    @requires("audio")
     def load_data(
         self,
         data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
@@ -111,6 +112,7 @@ class SpeechRecognitionFileInput(BaseSpeechRecognition):
 
 
 class SpeechRecognitionCSVInput(SpeechRecognitionFileInput):
+    @requires("audio")
     def load_data(
         self,
         data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
@@ -120,6 +122,7 @@ class SpeechRecognitionCSVInput(SpeechRecognitionFileInput):
 
 
 class SpeechRecognitionJSONInput(SpeechRecognitionFileInput):
+    @requires("audio")
     def load_data(
         self,
         data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
@@ -129,6 +132,7 @@ class SpeechRecognitionJSONInput(SpeechRecognitionFileInput):
 
 
 class SpeechRecognitionDatasetInput(BaseSpeechRecognition):
+    @requires("audio")
     def load_data(self, data: Dataset, sampling_rate: int = 16000) -> Sequence[Mapping[str, Any]]:
         self.sampling_rate = sampling_rate
         if isinstance(data, HFDataset):
@@ -142,6 +146,7 @@ class SpeechRecognitionDatasetInput(BaseSpeechRecognition):
 
 
 class SpeechRecognitionPathsInput(BaseSpeechRecognition):
+    @requires("audio")
     def load_data(self, paths: Union[str, List[str]], sampling_rate: int = 16000) -> Sequence:
         self.sampling_rate = sampling_rate
         return list_valid_files(paths, ("wav", "ogg", "flac", "mat", "mp3"))
