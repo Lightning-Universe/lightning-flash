@@ -17,7 +17,6 @@ from unittest import mock
 
 import pytest
 
-import flash
 from flash.core.utilities.imports import _LEARN2LEARN_AVAILABLE, _SKLEARN_AVAILABLE
 from tests.examples.utils import run_test
 from tests.helpers.utils import (
@@ -115,7 +114,7 @@ from tests.helpers.utils import (
     ],
 )
 def test_example(tmpdir, file):
-    run_test(str(Path(flash.PROJECT_ROOT) / "flash_examples" / file))
+    run_test(str(Path(__file__) / "../../flash_examples" / file))
 
 
 @mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
@@ -129,4 +128,4 @@ def test_example(tmpdir, file):
     ],
 )
 def test_example_2(tmpdir, file):
-    run_test(str(Path(flash.PROJECT_ROOT) / "flash_examples" / file))
+    run_test(str(Path(__file__) / "../../flash_examples" / file))

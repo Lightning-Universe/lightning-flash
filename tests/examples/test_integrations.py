@@ -42,4 +42,4 @@ root = Path(__file__).parent.parent.parent
     ],
 )
 def test_integrations(tmpdir, folder, file):
-    run_test(str(root / "flash_examples" / "integrations" / folder / file))
+    run_test(str(Path(__file__) / "../../flash_examples" / "integrations" / folder / file))
