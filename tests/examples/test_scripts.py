@@ -29,6 +29,8 @@ from tests.helpers.utils import (
     _VIDEO_TESTING,
 )
 
+root = Path(__file__).parent.parent.parent
+
 
 @mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
 @pytest.mark.parametrize(
@@ -114,7 +116,7 @@ from tests.helpers.utils import (
     ],
 )
 def test_example(tmpdir, file):
-    run_test(str(Path(__file__) / "../../flash_examples" / file))
+    run_test(str(root / "flash_examples" / file))
 
 
 @mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
@@ -128,4 +130,4 @@ def test_example(tmpdir, file):
     ],
 )
 def test_example_2(tmpdir, file):
-    run_test(str(Path(__file__) / "../../flash_examples" / file))
+    run_test(str(root / "flash_examples" / file))

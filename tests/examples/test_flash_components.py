@@ -35,4 +35,4 @@ root = Path(__file__).parent.parent.parent
     ],
 )
 def test_components(folder, file):
-    run_test(str(Path(__file__) / "../../flash_examples" / folder / file))
+    run_test(str(root / "flash_examples" / folder / file))
