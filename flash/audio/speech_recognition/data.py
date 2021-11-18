@@ -16,7 +16,7 @@ import io
 import os.path
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union
 
 import torch
 from torch.utils.data import Dataset
@@ -80,16 +80,15 @@ class SpeechRecognitionFileInput(BaseSpeechRecognition):
     @requires("audio")
     def load_data(
         self,
-        data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
+        file: str,
+        input_key: str,
+        target_key: str,
+        field: Optional[str] = None,
         sampling_rate: int = 16000,
         filetype: Optional[str] = None,
     ) -> Sequence[Mapping[str, Any]]:
         self.sampling_rate = sampling_rate
 
-        if filetype == "json":
-            file, input_key, target_key, field = data
-        else:
-            file, input_key, target_key = data
         stage = self.running_stage.value
         if filetype == "json" and field is not None:
             dataset_dict = load_dataset(filetype, data_files={stage: str(file)}, field=field)
@@ -115,29 +114,34 @@ class SpeechRecognitionCSVInput(SpeechRecognitionFileInput):
     @requires("audio")
     def load_data(
         self,
-        data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
+        file: str,
+        input_key: str,
+        target_key: str,
         sampling_rate: int = 16000,
     ):
-        return super().load_data(data, sampling_rate, filetype="csv")
+        return super().load_data(file, input_key, target_key, sampling_rate=sampling_rate, filetype="csv")
 
 
 class SpeechRecognitionJSONInput(SpeechRecognitionFileInput):
     @requires("audio")
     def load_data(
         self,
-        data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
+        file: str,
+        input_key: str,
+        target_key: str,
+        field: Optional[str] = None,
         sampling_rate: int = 16000,
     ):
-        return super().load_data(data, sampling_rate, filetype="json")
+        return super().load_data(file, input_key, target_key, field, sampling_rate=sampling_rate, filetype="json")
 
 
 class SpeechRecognitionDatasetInput(BaseSpeechRecognition):
     @requires("audio")
-    def load_data(self, data: Dataset, sampling_rate: int = 16000) -> Sequence[Mapping[str, Any]]:
+    def load_data(self, dataset: Dataset, sampling_rate: int = 16000) -> Sequence[Mapping[str, Any]]:
         self.sampling_rate = sampling_rate
-        if isinstance(data, HFDataset):
-            data = list(zip(data["file"], data["text"]))
-        return super().load_data(data)
+        if isinstance(dataset, HFDataset):
+            dataset = list(zip(dataset["file"], dataset["text"]))
+        return super().load_data(dataset)
 
     def load_sample(self, sample: Any) -> Any:
         if isinstance(sample[DataKeys.INPUT], (str, Path)):
@@ -284,11 +288,16 @@ class SpeechRecognitionData(DataModule):
         sampling_rate: int = 16000,
         **data_module_kwargs: Any,
     ) -> "SpeechRecognitionData":
+        dataset_kwargs = dict(
+            input_key=input_fields,
+            target_key=target_fields,
+            sampling_rate=sampling_rate,
+        )
         return cls(
-            SpeechRecognitionCSVInput(RunningStage.TRAINING, train_file, sampling_rate=sampling_rate),
-            SpeechRecognitionCSVInput(RunningStage.VALIDATING, val_file, sampling_rate=sampling_rate),
-            SpeechRecognitionCSVInput(RunningStage.TESTING, test_file, sampling_rate=sampling_rate),
-            SpeechRecognitionCSVInput(RunningStage.PREDICTING, predict_file, sampling_rate=sampling_rate),
+            SpeechRecognitionCSVInput(RunningStage.TRAINING, train_file, **dataset_kwargs),
+            SpeechRecognitionCSVInput(RunningStage.VALIDATING, val_file, **dataset_kwargs),
+            SpeechRecognitionCSVInput(RunningStage.TESTING, test_file, **dataset_kwargs),
+            SpeechRecognitionCSVInput(RunningStage.PREDICTING, predict_file, **dataset_kwargs),
             input_transform=cls.input_transform_cls(
                 train_transform, val_transform, test_transform, predict_transform, sampling_rate
             ),
@@ -308,14 +317,21 @@ class SpeechRecognitionData(DataModule):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
+        field: Optional[str] = None,
         sampling_rate: int = 16000,
         **data_module_kwargs: Any,
     ) -> "SpeechRecognitionData":
+        dataset_kwargs = dict(
+            input_key=input_fields,
+            target_key=target_fields,
+            sampling_rate=sampling_rate,
+            field=field,
+        )
         return cls(
-            SpeechRecognitionJSONInput(RunningStage.TRAINING, train_file, sampling_rate=sampling_rate),
-            SpeechRecognitionJSONInput(RunningStage.VALIDATING, val_file, sampling_rate=sampling_rate),
-            SpeechRecognitionJSONInput(RunningStage.TESTING, test_file, sampling_rate=sampling_rate),
-            SpeechRecognitionJSONInput(RunningStage.PREDICTING, predict_file, sampling_rate=sampling_rate),
+            SpeechRecognitionJSONInput(RunningStage.TRAINING, train_file, **dataset_kwargs),
+            SpeechRecognitionJSONInput(RunningStage.VALIDATING, val_file, **dataset_kwargs),
+            SpeechRecognitionJSONInput(RunningStage.TESTING, test_file, **dataset_kwargs),
+            SpeechRecognitionJSONInput(RunningStage.PREDICTING, predict_file, **dataset_kwargs),
             input_transform=cls.input_transform_cls(
                 train_transform, val_transform, test_transform, predict_transform, sampling_rate
             ),
