@@ -49,7 +49,6 @@ def speech_recognition():
             "trainer.max_epochs": 3,
         },
         finetune=False,
-        legacy=True,
     )
 
     cli.trainer.save_checkpoint("speech_recognition_model.pt")

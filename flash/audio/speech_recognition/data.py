@@ -23,12 +23,15 @@ from torch.utils.data import Dataset
 
 import flash
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import DataKeys, DatasetInput, Input, InputFormat, PathsInput
+from flash.core.data.io.input import DataKeys, InputFormat
+from flash.core.data.io.input_base import Input
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.process import Deserializer
 from flash.core.data.properties import ProcessState
+from flash.core.data.utilities.paths import list_valid_files
 from flash.core.utilities.imports import _AUDIO_AVAILABLE, requires
+from flash.core.utilities.stages import RunningStage
 
 if _AUDIO_AVAILABLE:
     import librosa
@@ -40,7 +43,7 @@ else:
 
 
 class SpeechRecognitionDeserializer(Deserializer):
-    def __init__(self, sampling_rate: int):
+    def __init__(self, sampling_rate: int = 16000):
         super().__init__()
 
         self.sampling_rate = sampling_rate
@@ -61,9 +64,9 @@ class SpeechRecognitionDeserializer(Deserializer):
             return base64.b64encode(f.read()).decode("UTF-8")
 
 
-class BaseSpeechRecognition:
+class BaseSpeechRecognition(Input):
     @staticmethod
-    def _load_sample(sample: Dict[str, Any], sampling_rate: int) -> Any:
+    def load_sample(sample: Dict[str, Any], sampling_rate: int = 16000) -> Any:
         path = sample[DataKeys.INPUT]
         if not os.path.isabs(path) and DataKeys.METADATA in sample and "root" in sample[DataKeys.METADATA]:
             path = os.path.join(sample[DataKeys.METADATA]["root"], path)
@@ -73,26 +76,24 @@ class BaseSpeechRecognition:
         return sample
 
 
-class SpeechRecognitionFileInput(Input, BaseSpeechRecognition):
-    def __init__(self, sampling_rate: int, filetype: Optional[str] = None):
-        super().__init__()
-        self.filetype = filetype
-        self.sampling_rate = sampling_rate
-
+class SpeechRecognitionFileInput(BaseSpeechRecognition):
     def load_data(
         self,
         data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
-        dataset: Optional[Any] = None,
+        sampling_rate: int = 16000,
+        filetype: Optional[str] = None,
     ) -> Sequence[Mapping[str, Any]]:
-        if self.filetype == "json":
+        self.sampling_rate = sampling_rate
+
+        if filetype == "json":
             file, input_key, target_key, field = data
         else:
             file, input_key, target_key = data
         stage = self.running_stage.value
-        if self.filetype == "json" and field is not None:
-            dataset_dict = load_dataset(self.filetype, data_files={stage: str(file)}, field=field)
+        if filetype == "json" and field is not None:
+            dataset_dict = load_dataset(filetype, data_files={stage: str(file)}, field=field)
         else:
-            dataset_dict = load_dataset(self.filetype, data_files={stage: str(file)})
+            dataset_dict = load_dataset(filetype, data_files={stage: str(file)})
 
         dataset = dataset_dict[stage]
         meta = {"root": os.path.dirname(file)}
@@ -105,45 +106,48 @@ class SpeechRecognitionFileInput(Input, BaseSpeechRecognition):
             for input_file, target in zip(dataset[input_key], dataset[target_key])
         ]
 
-    def load_sample(self, sample: Dict[str, Any], dataset: Any = None) -> Any:
-        return self._load_sample(sample, self.sampling_rate)
+    def load_sample(self, sample: Dict[str, Any]) -> Any:
+        return super().load_sample(sample, self.sampling_rate)
 
 
 class SpeechRecognitionCSVInput(SpeechRecognitionFileInput):
-    def __init__(self, sampling_rate: int):
-        super().__init__(sampling_rate, filetype="csv")
+    def load_data(
+        self,
+        data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
+        sampling_rate: int = 16000,
+    ):
+        return super().load_data(data, sampling_rate, filetype="csv")
 
 
 class SpeechRecognitionJSONInput(SpeechRecognitionFileInput):
-    def __init__(self, sampling_rate: int):
-        super().__init__(sampling_rate, filetype="json")
+    def load_data(
+        self,
+        data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
+        sampling_rate: int = 16000,
+    ):
+        return super().load_data(data, sampling_rate, filetype="json")
 
 
-class SpeechRecognitionDatasetInput(DatasetInput, BaseSpeechRecognition):
-    def __init__(self, sampling_rate: int):
-        super().__init__()
-
+class SpeechRecognitionDatasetInput(BaseSpeechRecognition):
+    def load_data(self, data: Dataset, sampling_rate: int = 16000) -> Sequence[Mapping[str, Any]]:
         self.sampling_rate = sampling_rate
-
-    def load_data(self, data: Dataset, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
         if isinstance(data, HFDataset):
             data = list(zip(data["file"], data["text"]))
-        return super().load_data(data, dataset)
+        return super().load_data(data)
 
-    def load_sample(self, sample: Dict[str, Any], dataset: Any = None) -> Any:
+    def load_sample(self, sample: Any) -> Any:
         if isinstance(sample[DataKeys.INPUT], (str, Path)):
-            sample = self._load_sample(sample, self.sampling_rate)
+            sample = super().load_sample(sample, self.sampling_rate)
         return sample
 
 
-class SpeechRecognitionPathsInput(PathsInput, BaseSpeechRecognition):
-    def __init__(self, sampling_rate: int):
-        super().__init__(("wav", "ogg", "flac", "mat", "mp3"))
-
+class SpeechRecognitionPathsInput(BaseSpeechRecognition):
+    def load_data(self, paths: Union[str, List[str]], sampling_rate: int = 16000) -> Sequence:
         self.sampling_rate = sampling_rate
+        return list_valid_files(paths, ("wav", "ogg", "flac", "mat", "mp3"))
 
-    def load_sample(self, sample: Dict[str, Any], dataset: Any = None) -> Any:
-        return self._load_sample(sample, self.sampling_rate)
+    def load_sample(self, sample: Dict[str, Any]) -> Any:
+        return super().load_sample(sample, self.sampling_rate)
 
 
 class SpeechRecognitionInputTransform(InputTransform):
@@ -162,10 +166,10 @@ class SpeechRecognitionInputTransform(InputTransform):
             test_transform=test_transform,
             predict_transform=predict_transform,
             inputs={
-                InputFormat.CSV: SpeechRecognitionCSVInput(sampling_rate),
-                InputFormat.JSON: SpeechRecognitionJSONInput(sampling_rate),
-                InputFormat.FILES: SpeechRecognitionPathsInput(sampling_rate),
-                InputFormat.DATASETS: SpeechRecognitionDatasetInput(sampling_rate),
+                InputFormat.CSV: SpeechRecognitionCSVInput,
+                InputFormat.JSON: SpeechRecognitionJSONInput,
+                InputFormat.FILES: SpeechRecognitionPathsInput,
+                InputFormat.DATASETS: SpeechRecognitionDatasetInput,
             },
             default_input=InputFormat.FILES,
             deserializer=SpeechRecognitionDeserializer(sampling_rate),
@@ -230,3 +234,110 @@ class SpeechRecognitionData(DataModule):
 
     input_transform_cls = SpeechRecognitionInputTransform
     output_transform_cls = SpeechRecognitionOutputTransform
+
+    @classmethod
+    def from_files(
+        cls,
+        train_files: Optional[Sequence[str]] = None,
+        train_targets: Optional[Sequence[Any]] = None,
+        val_files: Optional[Sequence[str]] = None,
+        val_targets: Optional[Sequence[Any]] = None,
+        test_files: Optional[Sequence[str]] = None,
+        test_targets: Optional[Sequence[Any]] = None,
+        predict_files: Optional[Sequence[str]] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        sampling_rate: int = 16000,
+        **data_module_kwargs,
+    ) -> "SpeechRecognitionData":
+        return cls(
+            SpeechRecognitionPathsInput(RunningStage.TRAINING, train_files, train_targets, sampling_rate=sampling_rate),
+            SpeechRecognitionPathsInput(RunningStage.VALIDATING, val_files, val_targets, sampling_rate=sampling_rate),
+            SpeechRecognitionPathsInput(RunningStage.TESTING, test_files, test_targets, sampling_rate=sampling_rate),
+            SpeechRecognitionPathsInput(RunningStage.PREDICTING, predict_files, sampling_rate=sampling_rate),
+            input_transform=cls.input_transform_cls(
+                train_transform, val_transform, test_transform, predict_transform, sampling_rate
+            ),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_csv(
+        cls,
+        input_fields: Union[str, Sequence[str]],
+        target_fields: Optional[str] = None,
+        train_file: Optional[str] = None,
+        val_file: Optional[str] = None,
+        test_file: Optional[str] = None,
+        predict_file: Optional[str] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        sampling_rate: int = 16000,
+        **data_module_kwargs: Any,
+    ) -> "SpeechRecognitionData":
+        return cls(
+            SpeechRecognitionCSVInput(RunningStage.TRAINING, train_file, sampling_rate=sampling_rate),
+            SpeechRecognitionCSVInput(RunningStage.VALIDATING, val_file, sampling_rate=sampling_rate),
+            SpeechRecognitionCSVInput(RunningStage.TESTING, test_file, sampling_rate=sampling_rate),
+            SpeechRecognitionCSVInput(RunningStage.PREDICTING, predict_file, sampling_rate=sampling_rate),
+            input_transform=cls.input_transform_cls(
+                train_transform, val_transform, test_transform, predict_transform, sampling_rate
+            ),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_json(
+        cls,
+        input_fields: Union[str, Sequence[str]],
+        target_fields: Optional[str] = None,
+        train_file: Optional[str] = None,
+        val_file: Optional[str] = None,
+        test_file: Optional[str] = None,
+        predict_file: Optional[str] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        sampling_rate: int = 16000,
+        **data_module_kwargs: Any,
+    ) -> "SpeechRecognitionData":
+        return cls(
+            SpeechRecognitionJSONInput(RunningStage.TRAINING, train_file, sampling_rate=sampling_rate),
+            SpeechRecognitionJSONInput(RunningStage.VALIDATING, val_file, sampling_rate=sampling_rate),
+            SpeechRecognitionJSONInput(RunningStage.TESTING, test_file, sampling_rate=sampling_rate),
+            SpeechRecognitionJSONInput(RunningStage.PREDICTING, predict_file, sampling_rate=sampling_rate),
+            input_transform=cls.input_transform_cls(
+                train_transform, val_transform, test_transform, predict_transform, sampling_rate
+            ),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_datasets(
+        cls,
+        train_dataset: Optional[Dataset] = None,
+        val_dataset: Optional[Dataset] = None,
+        test_dataset: Optional[Dataset] = None,
+        predict_dataset: Optional[Dataset] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        sampling_rate: int = 16000,
+        **data_module_kwargs,
+    ) -> "SpeechRecognitionData":
+        return cls(
+            SpeechRecognitionDatasetInput(RunningStage.TRAINING, train_dataset, sampling_rate=sampling_rate),
+            SpeechRecognitionDatasetInput(RunningStage.VALIDATING, val_dataset, sampling_rate=sampling_rate),
+            SpeechRecognitionDatasetInput(RunningStage.TESTING, test_dataset, sampling_rate=sampling_rate),
+            SpeechRecognitionDatasetInput(RunningStage.PREDICTING, predict_dataset, sampling_rate=sampling_rate),
+            input_transform=cls.input_transform_cls(
+                train_transform, val_transform, test_transform, predict_transform, sampling_rate
+            ),
+            **data_module_kwargs,
+        )
