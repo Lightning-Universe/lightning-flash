@@ -95,17 +95,10 @@ class TextClassifier(ClassificationTask):
         return self.model.base_model
 
     def forward(self, batch: Dict[str, torch.Tensor]):
-        return self.model(input_ids=batch.get("input_ids", None), attention_mask=batch.get("attention_mask", None))
-
-    def to_loss_format(self, x) -> torch.Tensor:
-        if isinstance(x, (SequenceClassifierOutput, Seq2SeqSequenceClassifierOutput)):
-            x = x.logits
-        return super().to_loss_format(x)
-
-    def to_metrics_format(self, x) -> torch.Tensor:
-        if isinstance(x, (SequenceClassifierOutput, Seq2SeqSequenceClassifierOutput)):
-            x = x.logits
-        return super().to_metrics_format(x)
+        result = self.model(input_ids=batch.get("input_ids", None), attention_mask=batch.get("attention_mask", None))
+        if isinstance(result, (SequenceClassifierOutput, Seq2SeqSequenceClassifierOutput)):
+            result = result.logits
+        return result
 
     def step(self, batch, batch_idx, metrics) -> dict:
         target = batch.pop(DataKeys.TARGET)
