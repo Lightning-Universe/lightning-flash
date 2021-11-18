@@ -48,6 +48,7 @@ def question_answering():
             "trainer.max_epochs": 3,
             "model.backbone": "distilbert-base-uncased",
         },
+        legacy=True,
     )
 
     cli.trainer.save_checkpoint("question_answering_model.pt")

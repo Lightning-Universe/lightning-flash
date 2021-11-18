@@ -508,7 +508,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         input = data_pipeline._input_transform_pipeline.input_of_name(input or "default")
 
         if inspect.isclass(input) and issubclass(input, NewInputBase):
-            dataset = input(running_stage, x)
+            dataset = input(running_stage, x, data_pipeline_state=self._data_pipeline_state)
         else:
             dataset = input.generate_dataset(x, running_stage)
         # </hack>

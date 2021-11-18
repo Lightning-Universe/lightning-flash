@@ -118,6 +118,7 @@ class DataPipeline:
                 [input.attach_data_pipeline_state(data_pipeline_state) for input in self.input]
             else:
                 self.input.attach_data_pipeline_state(data_pipeline_state)
+        self._deserializer.attach_data_pipeline_state(data_pipeline_state)
         self._input_transform_pipeline.attach_data_pipeline_state(data_pipeline_state)
         self._output_transform.attach_data_pipeline_state(data_pipeline_state)
         self._output.attach_data_pipeline_state(data_pipeline_state)
