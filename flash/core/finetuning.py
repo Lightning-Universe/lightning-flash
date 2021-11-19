@@ -78,20 +78,6 @@ class FlashBaseFinetuning(BaseFinetuning):
                 "((5, 10), 15)."
             )
 
-    def freeze_before_training(self, pl_module: Union[Module, Iterable[Union[Module, Iterable]]]) -> None:
-        if self.strategy != FinetuningStrategies.NO_FREEZE:
-            modules_to_freeze = getattr(pl_module, "modules_to_freeze", None)
-            if modules_to_freeze is None:
-                raise AttributeError(
-                    "LightningModule missing instance method 'modules_to_freeze'."
-                    "Please, implement the method which returns NoneType or a Module or an Iterable of Modules."
-                )
-            modules = modules_to_freeze()
-            if modules is not None:
-                if isinstance(modules, Module):
-                    modules = [modules]
-                self.freeze(modules=modules, train_bn=self.train_bn)
-
     def _get_modules_to_freeze(self, pl_module: LightningModule) -> Union[Module, Iterable[Union[Module, Iterable]]]:
         modules_to_freeze = getattr(pl_module, "modules_to_freeze", None)
         if modules_to_freeze is None:
@@ -100,6 +86,14 @@ class FlashBaseFinetuning(BaseFinetuning):
                 "Please, implement the method which returns NoneType or a Module or an Iterable of Modules."
             )
         return modules_to_freeze()
+
+    def freeze_before_training(self, pl_module: Union[Module, Iterable[Union[Module, Iterable]]]) -> None:
+        if self.strategy != FinetuningStrategies.NO_FREEZE:
+            modules = self._get_modules_to_freeze(pl_module=pl_module)
+            if modules is not None:
+                if isinstance(modules, Module):
+                    modules = [modules]
+                self.freeze(modules=modules, train_bn=self.train_bn)
 
     def _freeze_unfreeze_function(
         self,
