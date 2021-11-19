@@ -68,7 +68,7 @@ def test_jit(tmpdir):
     torch.jit.save(model, path)
     model = torch.jit.load(path)
 
-    out = model(sample_input)["logits"]
+    out = model(sample_input)
     assert isinstance(out, torch.Tensor)
     assert out.shape == torch.Size([1, 2])
 
