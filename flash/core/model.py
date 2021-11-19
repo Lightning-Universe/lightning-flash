@@ -613,7 +613,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             finetuning_strategy_metadata = {"strategy_metadata": strategy[1], "train_bn": train_bn}
         else:
             raise MisconfigurationException(
-                "strategy should be a ``pytorch_lightning.callbacks.BaseFinetuning``"
+                "`strategy` should be a ``pytorch_lightning.callbacks.BaseFinetuning``"
                 f"callback or a str within {list(_DEFAULTS_FINETUNE_STRATEGIES[:3])}"
                 f"or a tuple configuration with {list(_DEFAULTS_FINETUNE_STRATEGIES[3:])}"
             )
@@ -942,6 +942,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
     @classmethod
     def available_optimizers(cls) -> List[str]:
+        """Returns a list containing the keys of the available Optimizers."""
         registry: Optional[FlashRegistry] = getattr(cls, "optimizers", None)
         if registry is None:
             return []
@@ -949,6 +950,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
     @classmethod
     def available_lr_schedulers(cls) -> List[str]:
+        """Returns a list containing the keys of the available LR schedulers."""
         registry: Optional[FlashRegistry] = getattr(cls, "lr_schedulers", None)
         if registry is None:
             return []
@@ -956,6 +958,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
     @classmethod
     def available_finetuning_strategies(cls) -> List[str]:
+        """Returns a list containing the keys of the available Finetuning Strategies."""
         registry: Optional[FlashRegistry] = getattr(cls, "finetuning_strategies", None)
         if registry is None:
             return []

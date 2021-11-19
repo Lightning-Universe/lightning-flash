@@ -14,6 +14,7 @@
 from functools import partial
 from typing import Iterable, Optional, Tuple, Union
 
+from pytorch_lightning import LightningModule
 from pytorch_lightning.callbacks import BaseFinetuning
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -82,7 +83,7 @@ class FlashBaseFinetuning(BaseFinetuning):
             modules_to_freeze = getattr(pl_module, "modules_to_freeze", None)
             if modules_to_freeze is None:
                 raise AttributeError(
-                    "Lightning Module missing instance method 'modules_to_freeze'."
+                    "LightningModule missing instance method 'modules_to_freeze'."
                     "Please, implement the method which returns NoneType or a Module or an Iterable of Modules."
                 )
             modules = modules_to_freeze()
@@ -90,6 +91,15 @@ class FlashBaseFinetuning(BaseFinetuning):
                 if isinstance(modules, Module):
                     modules = [modules]
                 self.freeze(modules=modules, train_bn=self.train_bn)
+
+    def _get_modules_to_freeze(self, pl_module: LightningModule) -> Union[Module, Iterable[Union[Module, Iterable]]]:
+        modules_to_freeze = getattr(pl_module, "modules_to_freeze", None)
+        if modules_to_freeze is None:
+            raise AttributeError(
+                "LightningModule missing instance method 'modules_to_freeze'."
+                "Please, implement the method which returns NoneType or a Module or an Iterable of Modules."
+            )
+        return modules_to_freeze()
 
     def _freeze_unfreeze_function(
         self,
@@ -103,14 +113,7 @@ class FlashBaseFinetuning(BaseFinetuning):
         if epoch != unfreeze_epoch:
             return
 
-        modules_to_freeze = getattr(pl_module, "modules_to_freeze", None)
-        if modules_to_freeze is None:
-            raise AttributeError(
-                "Lightning Module missing instance method 'modules_to_freeze'."
-                "Please, implement the method which returns NoneType or a Module or an Iterable of Modules."
-            )
-
-        modules = modules_to_freeze()
+        modules = self._get_modules_to_freeze(pl_module=pl_module)
         if modules is not None:
             self.unfreeze_and_add_param_group(
                 modules=modules,
@@ -129,13 +132,7 @@ class FlashBaseFinetuning(BaseFinetuning):
         unfreeze_milestones: Tuple[int, int] = strategy_metadata[0]
         num_layers: int = strategy_metadata[1]
 
-        modules_to_freeze = getattr(pl_module, "modules_to_freeze", None)
-        if modules_to_freeze is None:
-            raise AttributeError(
-                "Lightning Module missing instance method 'modules_to_freeze'."
-                "Please, implement the method which returns NoneType or a Module or an Iterable of Modules."
-            )
-        modules = modules_to_freeze()
+        modules = self._get_modules_to_freeze(pl_module=pl_module)
         if modules is not None:
             if epoch == unfreeze_milestones[0]:
                 # unfreeze num_layers last layers
