@@ -50,7 +50,6 @@ def _expand_reqs(extras: dict, keys: list) -> list:
     return list(chain(*[extras[ex] for ex in keys]))
 
 
-
 base_req = setup_tools._load_requirements(path_dir=_PATH_ROOT, file_name="requirements.txt")
 # find all extra requirements
 _load_req = partial(setup_tools._load_requirements, path_dir=_PATH_REQUIRE)
