@@ -13,15 +13,15 @@
 # limitations under the License.
 import functools
 from abc import abstractmethod
-from typing import Any, Mapping, Optional, MutableMapping
+from typing import Any, Mapping, MutableMapping, Optional
 from warnings import warn
 
 from deprecate import deprecated
 
 import flash
+from flash.core.data.io.input_base import InputBase
 from flash.core.data.io.output import Output
 from flash.core.data.properties import Properties
-from flash.core.data.io.input_base import InputBase
 from flash.core.utilities.stages import RunningStage
 
 
@@ -34,10 +34,7 @@ class ServeInput(InputBase):
     ) -> None:
 
         super().__init__(
-            running_stage=RunningStage.PREDICTING,
-            *args,
-            data_pipeline_state=data_pipeline_state,
-            **kwargs
+            running_stage=RunningStage.PREDICTING, *args, data_pipeline_state=data_pipeline_state, **kwargs
         )
 
     # TODO: keep load_sample, no load_data
