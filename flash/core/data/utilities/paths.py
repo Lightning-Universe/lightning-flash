@@ -17,7 +17,7 @@ from typing import Any, Callable, cast, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 
-from flash.core.utilities.types import PATH_TYPE
+PATH_TYPE = Union[str, bytes, os.PathLike]
 
 
 # adapted from torchvision:
