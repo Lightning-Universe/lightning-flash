@@ -26,6 +26,7 @@ from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.process import Deserializer
 from flash.core.data.properties import ProcessState
+from flash.core.data.utilities.paths import read_csv
 from flash.core.utilities.imports import _PANDAS_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 from flash.tabular.classification.utils import (
@@ -37,7 +38,6 @@ from flash.tabular.classification.utils import (
 )
 
 if _PANDAS_AVAILABLE:
-    import pandas as pd
     from pandas.core.frame import DataFrame
 else:
     DataFrame = object
@@ -171,7 +171,7 @@ class TabularCSVInput(TabularDataFrameInput):
     ):
         if file is not None:
             return super().load_data(
-                pd.read_csv(file), categorical_fields, numerical_fields, target_field, is_regression, parameters
+                read_csv(file), categorical_fields, numerical_fields, target_field, is_regression, parameters
             )
 
 
@@ -189,7 +189,7 @@ class TabularDeserializer(Deserializer):
     def deserialize(self, data: str) -> Any:
         parameters = self.parameters
 
-        df = pd.read_csv(StringIO(data))
+        df = read_csv(StringIO(data))
         df = _pre_transform(
             df,
             parameters["numerical_fields"],
