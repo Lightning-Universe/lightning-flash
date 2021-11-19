@@ -17,6 +17,8 @@ from typing import Any, Callable, cast, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 
+from flash.core.utilities.imports import _PANDAS_GREATER_EQUAL_1_3_0
+
 PATH_TYPE = Union[str, bytes, os.PathLike]
 
 
@@ -151,4 +153,7 @@ def read_csv(file: PATH_TYPE) -> pd.DataFrame:
         return pd.read_csv(file, encoding="utf-8")
     except UnicodeDecodeError:
         warnings.warn("A UnicodeDecodeError was raised when reading the CSV. This error will be ignored.")
-        return pd.read_csv(file, encoding="utf-8", encoding_errors="ignore")
+        if _PANDAS_GREATER_EQUAL_1_3_0:
+            return pd.read_csv(file, encoding="utf-8", encoding_errors="ignore")
+        else:
+            return pd.read_csv(file, encoding=None, engine="python")
