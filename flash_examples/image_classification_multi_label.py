@@ -18,7 +18,7 @@ from flash.core.data.utils import download_data
 from flash.image import ImageClassificationData, ImageClassifier
 
 # 1. Create the DataModule
-# Data set from the paper “Movie Genre Classification based on Poster Images with Deep Neural Networks”.
+# Data set from the paper "Movie Genre Classification based on Poster Images with Deep Neural Networks".
 # More info here: https://www.cs.ccu.edu.tw/~wtchu/projects/MoviePoster/
 download_data("https://pl-flash-data.s3.amazonaws.com/movie_posters.zip")
 
