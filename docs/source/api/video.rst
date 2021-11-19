@@ -26,4 +26,3 @@ ______________
     classification.data.VideoClassificationFoldersInput
     classification.data.VideoClassificationFilesInput
     classification.data.VideoClassificationInputTransform
-    classification.model.VideoClassifierFinetuning

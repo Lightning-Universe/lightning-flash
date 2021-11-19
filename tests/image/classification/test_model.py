@@ -74,7 +74,7 @@ def test_init_train(tmpdir, backbone, metrics):
     model = ImageClassifier(10, backbone=backbone, metrics=metrics)
     train_dl = torch.utils.data.DataLoader(DummyDataset())
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    trainer.finetune(model, train_dl, strategy="freeze_unfreeze")
+    trainer.finetune(model, train_dl, strategy="freeze")
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
@@ -106,8 +106,8 @@ def test_multilabel(tmpdir):
     ds = DummyMultiLabelDataset(num_classes)
     model = ImageClassifier(num_classes, multi_label=True, output=Probabilities(multi_label=True))
     train_dl = torch.utils.data.DataLoader(ds, batch_size=2)
-    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    trainer.finetune(model, train_dl, strategy="freeze_unfreeze")
+    trainer = Trainer(default_root_dir=tmpdir, max_epochs=2, limit_train_batches=5)
+    trainer.finetune(model, train_dl, strategy=("freeze_unfreeze", 1))
     image, label = ds[0][DataKeys.INPUT], ds[0][DataKeys.TARGET]
     predictions = model.predict([{DataKeys.INPUT: image}])
     assert (torch.tensor(predictions) > 1).sum() == 0

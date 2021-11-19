@@ -88,7 +88,6 @@ _______________
 
     ~seq2seq.core.model.Seq2SeqTask
     ~seq2seq.core.data.Seq2SeqData
-    ~seq2seq.core.finetuning.Seq2SeqFreezeEmbeddings
 
     seq2seq.core.data.Seq2SeqBackboneState
     seq2seq.core.data.Seq2SeqCSVInput

@@ -11,14 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, List
+from typing import Any, Dict, Iterable, List, Union
 
-import pytorch_lightning as pl
 import torch
+from torch.nn import Module
 
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.output import Output
-from flash.core.finetuning import FlashBaseFinetuning
 from flash.core.model import Task
 from flash.core.utilities.imports import _FASTFACE_AVAILABLE
 from flash.core.utilities.types import (
@@ -34,14 +33,6 @@ from flash.image.face_detection.data import FaceDetectionInputTransform
 
 if _FASTFACE_AVAILABLE:
     import fastface as ff
-
-
-class FaceDetectionFineTuning(FlashBaseFinetuning):
-    def __init__(self, train_bn: bool = True) -> None:
-        super().__init__(train_bn=train_bn)
-
-    def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
-        self.freeze(modules=pl_module.model.backbone, train_bn=self.train_bn)
 
 
 class DetectionLabels(Output):
@@ -87,7 +78,7 @@ class FaceDetector(Task):
         self.save_hyperparameters()
 
         if model in ff.list_pretrained_models():
-            model = FaceDetector.get_model(model, pretrained, **kwargs)
+            self.model = FaceDetector.get_model(model, pretrained, **kwargs)
         else:
             ValueError(model + f" is not supported yet, please select one from {ff.list_pretrained_models()}")
 
@@ -194,5 +185,6 @@ class FaceDetector(Task):
         batch[DataKeys.PREDS] = self(images)
         return batch
 
-    def configure_finetune_callback(self):
-        return [FaceDetectionFineTuning()]
+    def modules_to_freeze(self) -> Union[Module, Iterable[Union[Module, Iterable]]]:
+        """Return the module attributes of the model to be frozen."""
+        return self.model.backbone
