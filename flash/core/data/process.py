@@ -13,7 +13,7 @@
 # limitations under the License.
 import functools
 from abc import abstractmethod
-from typing import Any, Mapping
+from typing import Any, Mapping, Optional, MutableMapping
 from warnings import warn
 
 from deprecate import deprecated
@@ -21,6 +21,31 @@ from deprecate import deprecated
 import flash
 from flash.core.data.io.output import Output
 from flash.core.data.properties import Properties
+from flash.core.data.io.input_base import InputBase
+from flash.core.utilities.stages import RunningStage
+
+
+class ServeInput(InputBase):
+    def __init__(
+        self,
+        data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None,
+        *args: Any,
+        **kwargs: Any
+    ) -> None:
+
+        super().__init__(
+            running_stage=RunningStage.PREDICTING,
+            *args,
+            data_pipeline_state=data_pipeline_state,
+            **kwargs
+        )
+
+    # TODO: keep load_sample, no load_data
+
+    @property
+    @abstractmethod
+    def example_input(self) -> str:
+        raise NotImplementedError
 
 
 class Deserializer(Properties):
