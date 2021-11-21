@@ -25,7 +25,6 @@ from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_
 from flash.graph.backbones import GRAPH_BACKBONES
 
 
-
 class GraphNodeClassifier(ClassificationTask):
     """The ``GraphNodeClassifier`` is a :class:`~flash.Task` for classifying nodes in graphs. For more details, see
     :ref:`graph_node_classification`.
@@ -121,4 +120,4 @@ class DefaultGraphHead(torch.nn.Module):
     def forward(self, x):
         x = F.relu(self.lin1(x))
         x = F.dropout(x, p=self.dropout, training=self.training)
-        return self.num_classes*self.lin2(x)
+        return self.num_classes * self.lin2(x)
