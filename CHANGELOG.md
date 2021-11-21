@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [0.6.0] - 2021-13-12
 
+- Added `GraphNodeClassifier` task ([#986](https://github.com/PyTorchLightning/lightning-flash/pull/986))
+
 ### Added
 
 - Added `TextEmbedder` task ([#996](https://github.com/PyTorchLightning/lightning-flash/pull/996))
