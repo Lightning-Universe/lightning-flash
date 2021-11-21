@@ -19,6 +19,7 @@ import pytest
 import torch
 from pytorch_lightning import Trainer
 
+from flash.__main__ import main
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _TABULAR_AVAILABLE
 from flash.tabular.classification.data import TabularClassificationData
@@ -103,11 +104,12 @@ def test_serve():
         "cat_col",
         "num_col",
         "target",
-        pd.DataFrame.from_dict(train_data),
+        train_data_frame=pd.DataFrame.from_dict(train_data),
     )
     model = TabularClassifier.from_data(datamodule)
     # TODO: Currently only servable once a input_transform has been attached
     model._input_transform = datamodule.input_transform
+    model._input_transform._state = datamodule.train_dataset._state
     model.eval()
     model.serve()
 
@@ -116,3 +118,13 @@ def test_serve():
 def test_load_from_checkpoint_dependency_error():
     with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[tabular]'")):
         TabularClassifier.load_from_checkpoint("not_a_real_checkpoint.pt")
+
+
+@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
+def test_cli():
+    cli_args = ["flash", "tabular_classification", "--trainer.fast_dev_run", "True"]
+    with mock.patch("sys.argv", cli_args):
+        try:
+            main()
+        except SystemExit:
+            pass

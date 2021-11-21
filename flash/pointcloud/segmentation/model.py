@@ -11,13 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, Optional, Tuple, Union
 
 import torch
-from pytorch_lightning import Callback, LightningModule
 from torch import nn
 from torch.nn import functional as F
-from torch.optim import Optimizer
 from torch.utils.data import DataLoader, Sampler
 from torchmetrics import IoU
 
@@ -26,7 +24,6 @@ from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_base import Input
 from flash.core.data.io.output import Output
 from flash.core.data.states import CollateFn
-from flash.core.finetuning import BaseFinetuning
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
@@ -35,32 +32,6 @@ from flash.pointcloud.segmentation.backbones import POINTCLOUD_SEGMENTATION_BACK
 if _POINTCLOUD_AVAILABLE:
     from open3d._ml3d.torch.modules.losses.semseg_loss import filter_valid_label
     from open3d.ml.torch.dataloaders import TorchDataloader
-
-
-class PointCloudSegmentationFinetuning(BaseFinetuning):
-    def __init__(self, num_layers: int = 5, train_bn: bool = True, unfreeze_epoch: int = 1):
-        super().__init__()
-        self.num_layers = num_layers
-        self.train_bn = train_bn
-        self.unfreeze_epoch = unfreeze_epoch
-
-    def freeze_before_training(self, pl_module: LightningModule) -> None:
-        self.freeze(modules=list(pl_module.backbone.children())[: -self.num_layers], train_bn=self.train_bn)
-
-    def finetune_function(
-        self,
-        pl_module: LightningModule,
-        epoch: int,
-        optimizer: Optimizer,
-        opt_idx: int,
-    ) -> None:
-        if epoch != self.unfreeze_epoch:
-            return
-        self.unfreeze_and_add_param_group(
-            modules=list(pl_module.backbone.children())[-self.num_layers :],
-            optimizer=optimizer,
-            train_bn=self.train_bn,
-        )
 
 
 class PointCloudSegmentationOutput(Output):
@@ -208,5 +179,6 @@ class PointCloudSegmentation(ClassificationTask):
             sampler=sampler,
         )
 
-    def configure_finetune_callback(self) -> List[Callback]:
-        return [PointCloudSegmentationFinetuning()]
+    def modules_to_freeze(self) -> Union[nn.Module, Iterable[Union[nn.Module, Iterable]]]:
+        """Return the module attributes of the model to be frozen."""
+        return list(self.backbone.children())

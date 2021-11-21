@@ -19,7 +19,6 @@ import torch
 import flash
 from flash.core.classification import FiftyOneLabels, Labels
 from flash.core.data.utils import download_data
-from flash.core.finetuning import FreezeUnfreeze
 from flash.image import ImageClassificationData, ImageClassifier
 
 # 1 Download data
@@ -61,7 +60,7 @@ trainer = flash.Trainer(
 trainer.finetune(
     model,
     datamodule=datamodule,
-    strategy=FreezeUnfreeze(unfreeze_epoch=1),
+    strategy=("freeze_unfreeze", 1),
 )
 trainer.save_checkpoint("image_classification_model.pt")
 

@@ -46,6 +46,7 @@ from tqdm import tqdm
 
 from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.core.data.properties import ProcessState, Properties
+from flash.core.data.utilities.paths import read_csv
 from flash.core.data.utils import CurrentRunningStageFuncContext
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 from flash.core.utilities.stages import RunningStage
@@ -556,7 +557,7 @@ class LoaderDataFrameInput(Input[Tuple[pd.DataFrame, str, Union[str, List[str]],
 
         if isinstance(data, (str, Path)):
             data = str(data)
-            data_frame = pd.read_csv(data)
+            data_frame = read_csv(data)
             if root is None:
                 root = os.path.dirname(data)
         else:

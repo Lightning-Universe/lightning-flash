@@ -49,6 +49,7 @@ def summarization():
             "trainer.max_epochs": 3,
             "model.backbone": "sshleifer/distilbart-xsum-1-1",
         },
+        legacy=True,
     )
 
     cli.trainer.save_checkpoint("summarization_model_xsum.pt")

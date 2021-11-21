@@ -77,7 +77,7 @@ def test_init_train(tmpdir):
     model = SemanticSegmentation(num_classes=10)
     train_dl = torch.utils.data.DataLoader(DummyDataset())
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    trainer.finetune(model, train_dl, strategy="freeze_unfreeze")
+    trainer.finetune(model, train_dl, strategy="freeze")
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
