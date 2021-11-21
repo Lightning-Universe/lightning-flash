@@ -70,6 +70,7 @@ _BOLTS_AVAILABLE = _module_available("pl_bolts") and _compare_version("torch", o
 _PANDAS_AVAILABLE = _module_available("pandas")
 _SKLEARN_AVAILABLE = _module_available("sklearn")
 _TABNET_AVAILABLE = _module_available("pytorch_tabnet")
+_PYTORCHTABULAR_AVAILABLE = _module_available("pytorch_tabular")
 _FORECASTING_AVAILABLE = _module_available("pytorch_forecasting")
 _KORNIA_AVAILABLE = _module_available("kornia")
 _COCO_AVAILABLE = _module_available("pycocotools")
