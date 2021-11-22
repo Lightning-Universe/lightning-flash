@@ -81,10 +81,14 @@ class TranslationTask(Seq2SeqTask):
         return "translation"
 
     def compute_metrics(self, generated_tokens, batch, prefix):
-        tgt_lns = self.tokenize_labels(batch["labels"])
+        reference_corpus = self.tokenize_labels(batch["labels"])
         # wrap targets in list as score expects a list of potential references
-        tgt_lns = [[reference] for reference in tgt_lns]
-        result = self.bleu(self._output_transform.uncollate(generated_tokens), tgt_lns)
+        reference_corpus = [[reference.split()] for reference in reference_corpus]
+
+        translate_corpus = self._output_transform.uncollate(generated_tokens)
+        translate_corpus = [line.split() for line in translate_corpus]
+
+        result = self.bleu(reference_corpus, translate_corpus)
         self.log(f"{prefix}_bleu_score", result, on_step=False, on_epoch=True, prog_bar=True)
 
     @staticmethod
