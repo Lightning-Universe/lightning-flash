@@ -16,7 +16,7 @@ from typing import Any, Callable, Dict, List, Tuple
 from torch import nn
 
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE, requires
+from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _ICEVISION_GREATER_EQUAL_0_11_0, requires
 
 if _ICEVISION_AVAILABLE:
     from icevision.core import tasks
@@ -31,11 +31,15 @@ if _ICEVISION_AVAILABLE:
         ImageRecordComponent,
         InstancesLabelsRecordComponent,
         KeyPointsRecordComponent,
-        MasksRecordComponent,
         RecordIDRecordComponent,
     )
     from icevision.data.prediction import Prediction
     from icevision.tfms import A
+
+if _ICEVISION_AVAILABLE and _ICEVISION_GREATER_EQUAL_0_11_0:
+    from icevision.core.record_components import BaseMasksRecordComponent
+elif _ICEVISION_AVAILABLE:
+    from icevision.core.record_components import MasksRecordComponent as BaseMasksRecordComponent
 
 
 def to_icevision_record(sample: Dict[str, Any]):
@@ -67,7 +71,7 @@ def to_icevision_record(sample: Dict[str, Any]):
 
     if "masks" in sample[DataKeys.TARGET]:
         mask_array = MaskArray(sample[DataKeys.TARGET]["masks"])
-        component = MasksRecordComponent()
+        component = BaseMasksRecordComponent()
         component.set_masks(mask_array)
         record.add_component(component)
 
