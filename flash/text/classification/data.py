@@ -51,15 +51,6 @@ class TextDeserializer(Deserializer):
     def example_input(self) -> str:
         return "An example input"
 
-    def __getstate__(self):  # TODO: Find out why this is being pickled
-        state = self.__dict__.copy()
-        state.pop("tokenizer")
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
-
 
 class TextInput(Input):
     @requires("text")
@@ -148,15 +139,6 @@ class TextInput(Input):
 
     def predict_load_data(self, data: Any, dataset: AutoDataset):
         return self.load_data(data, dataset)
-
-    def __getstate__(self):  # TODO: Find out why this is being pickled
-        state = self.__dict__.copy()
-        state.pop("tokenizer")
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
 class TextCSVInput(TextInput):
