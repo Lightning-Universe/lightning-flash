@@ -89,4 +89,4 @@ class SummarizationTask(Seq2SeqTask):
     @staticmethod
     def _ci_benchmark_fn(history: List[Dict[str, Any]]):
         """This function is used only for debugging usage with CI."""
-        assert history[-1]["rouge1_recall"] > 0.2
+        assert history[-1]["rouge1_recall"] > 0.2, history[-1]["rouge1_recall"]
