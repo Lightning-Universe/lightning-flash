@@ -84,5 +84,5 @@ class KeypointDetector(AdapterTask):
         # todo
 
     def set_predict_kwargs(self, value):
-        """This function is used to update the kwargs used for the prediction step"""
+        """This function is used to update the kwargs used for the prediction step."""
         self.adapter.predict_kwargs = value
