@@ -200,8 +200,9 @@ class IceVisionAdapter(Adapter):
         return batch
 
     def forward(self, batch: Any) -> Any:
-        return from_icevision_predictions(self.model_type.predict_from_dl(self.model, [batch], show_pbar=False,
-                                                                          **self.predict_kwargs))
+        return from_icevision_predictions(
+            self.model_type.predict_from_dl(self.model, [batch], show_pbar=False, **self.predict_kwargs)
+        )
 
     def training_epoch_end(self, outputs) -> None:
         return self.icevision_adapter.training_epoch_end(outputs)
