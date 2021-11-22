@@ -66,6 +66,7 @@ def _compare_version(package: str, op, version) -> bool:
 
 
 _TORCH_AVAILABLE = _module_available("torch")
+_PL_AVAILABLE = _module_available("pytorch_lightning")
 _BOLTS_AVAILABLE = _module_available("pl_bolts") and _compare_version("torch", operator.lt, "1.9.0")
 _PANDAS_AVAILABLE = _module_available("pandas")
 _SKLEARN_AVAILABLE = _module_available("sklearn")
