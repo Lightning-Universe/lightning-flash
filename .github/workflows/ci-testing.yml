@@ -43,11 +43,6 @@ jobs:
             release: 'stable'
           - os: ubuntu-20.04
             python-version: 3.8
-            requires: 'minimal'
-            topic: [ 'image','image_extras' ]
-            release: 'stable'
-          - os: ubuntu-20.04
-            python-version: 3.8
             requires: 'latest'
             topic: ['video']
             release: 'stable'
