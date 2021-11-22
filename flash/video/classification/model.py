@@ -12,22 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from types import FunctionType
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, Union
 
 import torch
-from pytorch_lightning import LightningModule
-from pytorch_lightning.callbacks import Callback
-from pytorch_lightning.callbacks.finetuning import BaseFinetuning
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.nn import functional as F
-from torch.optim import Optimizer
 from torch.utils.data import DistributedSampler
 from torchmetrics import Accuracy
 
 import flash
 from flash.core.classification import ClassificationTask, Labels
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.compatibility import accelerator_connector
 from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE
@@ -44,32 +40,6 @@ if _PYTORCHVIDEO_AVAILABLE:
             fn = getattr(hub, fn_name)
             if isinstance(fn, FunctionType):
                 _VIDEO_CLASSIFIER_BACKBONES(fn=fn, providers=_PYTORCHVIDEO)
-
-
-class VideoClassifierFinetuning(BaseFinetuning):
-    def __init__(self, num_layers: int = 5, train_bn: bool = True, unfreeze_epoch: int = 1):
-        super().__init__()
-        self.num_layers = num_layers
-        self.train_bn = train_bn
-        self.unfreeze_epoch = unfreeze_epoch
-
-    def freeze_before_training(self, pl_module: LightningModule) -> None:
-        self.freeze(modules=list(pl_module.backbone.children())[: -self.num_layers], train_bn=self.train_bn)
-
-    def finetune_function(
-        self,
-        pl_module: LightningModule,
-        epoch: int,
-        optimizer: Optimizer,
-        opt_idx: int,
-    ) -> None:
-        if epoch != self.unfreeze_epoch:
-            return
-        self.unfreeze_and_add_param_group(
-            modules=list(pl_module.backbone.children())[-self.num_layers :],
-            optimizer=optimizer,
-            train_bn=self.train_bn,
-        )
 
 
 class VideoClassifier(ClassificationTask):
@@ -93,8 +63,7 @@ class VideoClassifier(ClassificationTask):
         head: either a `nn.Module` or a callable function that converts the features extrated from the backbone
             into class log probabilities (assuming default loss function). If `None`, will default to using
             a single linear layer.
-        output: A instance of :class:`~flash.core.data.io.output.Output` that determines how the output
-            should be serialized e.g. convert the model output into the desired output format when predicting.
+        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
     """
 
     backbones: FlashRegistry = _VIDEO_CLASSIFIER_BACKBONES
@@ -169,11 +138,12 @@ class VideoClassifier(ClassificationTask):
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         predictions = self(batch["video"])
-        batch[DefaultDataKeys.PREDS] = predictions
+        batch[DataKeys.PREDS] = predictions
         return batch
 
-    def configure_finetune_callback(self) -> List[Callback]:
-        return [VideoClassifierFinetuning()]
+    def modules_to_freeze(self) -> Union[nn.Module, Iterable[Union[nn.Module, Iterable]]]:
+        """Return the module attributes of the model to be frozen."""
+        return list(self.backbone.children())
 
     @staticmethod
     def _ci_benchmark_fn(history: List[Dict[str, Any]]):

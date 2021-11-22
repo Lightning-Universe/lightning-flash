@@ -11,60 +11,53 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, List
+from typing import Any, Dict, Iterable, List, Union
 
-import pytorch_lightning as pl
 import torch
+from torch.nn import Module
 
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.data.io.output import Output
-from flash.core.finetuning import FlashBaseFinetuning
 from flash.core.model import Task
 from flash.core.utilities.imports import _FASTFACE_AVAILABLE
 from flash.core.utilities.types import (
+    INPUT_TRANSFORM_TYPE,
     LOSS_FN_TYPE,
     LR_SCHEDULER_TYPE,
     METRICS_TYPE,
     OPTIMIZER_TYPE,
     OUTPUT_TYPE,
-    PREPROCESS_TYPE,
 )
 from flash.image.face_detection.backbones import FACE_DETECTION_BACKBONES
-from flash.image.face_detection.data import FaceDetectionPreprocess
+from flash.image.face_detection.data import FaceDetectionInputTransform
 
 if _FASTFACE_AVAILABLE:
     import fastface as ff
-
-
-class FaceDetectionFineTuning(FlashBaseFinetuning):
-    def __init__(self, train_bn: bool = True) -> None:
-        super().__init__(train_bn=train_bn)
-
-    def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
-        self.freeze(modules=pl_module.model.backbone, train_bn=self.train_bn)
 
 
 class DetectionLabels(Output):
     """A :class:`.Output` which extracts predictions from sample dict."""
 
     def transform(self, sample: Any) -> Dict[str, Any]:
-        return sample[DefaultDataKeys.PREDS] if isinstance(sample, Dict) else sample
+        return sample[DataKeys.PREDS] if isinstance(sample, Dict) else sample
 
 
 class FaceDetector(Task):
     """The ``FaceDetector`` is a :class:`~flash.Task` for detecting faces in images.
 
-    For more details, see
-    :ref:`face_detection`.
+    For more details, see :ref:`face_detection`.
+
     Args:
         model: a string of :attr`_models`. Defaults to 'lffd_slim'.
         pretrained: Whether the model from fastface should be loaded with it's pretrained weights.
-        loss: the function(s) to update the model with. Has no effect for fastface models.
+        loss_fn: the function(s) to update the model with. Has no effect for fastface models.
         metrics: The provided metrics. All metrics here will be logged to progress bar and the respective logger.
             Changing this argument currently has no effect.
         optimizer: Optimizer to use for training.
         lr_scheduler: The LR scheduler to use during training.
-        learning_rate: The learning rate to use for training
+        learning_rate: The learning rate to use for training.
+        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
+        kwargs: additional kwargs nessesary for initializing face detector backbone
     """
 
     required_extras: str = "image"
@@ -79,13 +72,13 @@ class FaceDetector(Task):
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         learning_rate: float = 1e-4,
         output: OUTPUT_TYPE = None,
-        preprocess: PREPROCESS_TYPE = None,
+        input_transform: INPUT_TRANSFORM_TYPE = None,
         **kwargs: Any,
     ):
         self.save_hyperparameters()
 
         if model in ff.list_pretrained_models():
-            model = FaceDetector.get_model(model, pretrained, **kwargs)
+            self.model = FaceDetector.get_model(model, pretrained, **kwargs)
         else:
             ValueError(model + f" is not supported yet, please select one from {ff.list_pretrained_models()}")
 
@@ -97,7 +90,7 @@ class FaceDetector(Task):
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
             output=output or DetectionLabels(),
-            preprocess=preprocess or FaceDetectionPreprocess(),
+            input_transform=input_transform or FaceDetectionInputTransform(),
         )
 
     @staticmethod
@@ -110,16 +103,16 @@ class FaceDetector(Task):
 
         # following steps are required since `get_model` needs to return `torch.nn.Module`
         # moving some required parameters from `fastface.FaceDetector` to `torch.nn.Module`
-        # set preprocess params
+        # set input_transform params
         model.register_buffer("normalizer", getattr(pl_model, "normalizer"))
         model.register_buffer("mean", getattr(pl_model, "mean"))
         model.register_buffer("std", getattr(pl_model, "std"))
 
-        # copy pasting `_postprocess` function from `fastface.FaceDetector` to `torch.nn.Module`
-        # set postprocess function
+        # copy pasting `_output_transform` function from `fastface.FaceDetector` to `torch.nn.Module`
+        # set output_transform function
         # this is called from FaceDetector lightning module form fastface itself
         # https://github.com/borhanMorphy/fastface/blob/master/fastface/module.py#L200
-        setattr(model, "_postprocess", getattr(pl_model, "_postprocess"))
+        setattr(model, "_output_transform", getattr(pl_model, "_output_transform"))
 
         return model
 
@@ -152,7 +145,7 @@ class FaceDetector(Task):
             metric.update(pred_boxes, target_boxes)
 
     def __shared_step(self, batch, train=False) -> Any:
-        images, targets = batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET]
+        images, targets = batch[DataKeys.INPUT], batch[DataKeys.TARGET]
         images = self._prepare_batch(images)
         logits = self.model(images)
         loss = self.model.compute_loss(logits, targets)
@@ -188,9 +181,10 @@ class FaceDetector(Task):
         self.log_dict({f"test_{k}": v for k, v in metric_results.items()}, on_epoch=True)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        images = batch[DefaultDataKeys.INPUT]
-        batch[DefaultDataKeys.PREDS] = self(images)
+        images = batch[DataKeys.INPUT]
+        batch[DataKeys.PREDS] = self(images)
         return batch
 
-    def configure_finetune_callback(self):
-        return [FaceDetectionFineTuning()]
+    def modules_to_freeze(self) -> Union[Module, Iterable[Union[Module, Iterable]]]:
+        """Return the module attributes of the model to be frozen."""
+        return self.model.backbone

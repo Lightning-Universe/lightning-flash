@@ -22,14 +22,13 @@ from pytorch_lightning import LightningDataModule, LightningModule
 from pytorch_lightning import Trainer as PlTrainer
 from pytorch_lightning.callbacks import BaseFinetuning
 from pytorch_lightning.loops.fit_loop import FitLoop
-from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.argparse import add_argparse_args, get_init_arguments_and_types, parse_env_variables
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from pytorch_lightning.utilities.model_helpers import is_overridden
 from torch.utils.data import DataLoader
 
 import flash
-from flash.core.finetuning import _DEFAULTS_FINETUNE_STRATEGIES, instantiate_default_finetuning_callbacks
+from flash.core.model import Task
 from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_5_0, _SERVE_AVAILABLE
 
 
@@ -157,7 +156,8 @@ class Trainer(PlTrainer):
         train_dataloader: Optional[DataLoader] = None,
         val_dataloaders: Optional[Union[DataLoader, List[DataLoader]]] = None,
         datamodule: Optional[LightningDataModule] = None,
-        strategy: Optional[Union[str, BaseFinetuning]] = None,
+        strategy: Union[str, BaseFinetuning, Tuple[str, int], Tuple[str, Tuple[int, int]]] = "no_freeze",
+        train_bn: bool = True,
     ):
         r"""
 
@@ -175,48 +175,38 @@ class Trainer(PlTrainer):
 
             datamodule: A instance of :class:`LightningDataModule`.
 
-            strategy: Should either be a string or a finetuning callback subclassing
+            strategy: Should either be a string, or a Tuple, or a finetuning callback subclassing
                 :class:`pytorch_lightning.callbacks.BaseFinetuning`.
 
-                Default strategies can be enabled with these strings:
+                Default strategies can be enabled with these inputs:
 
-                - ``"no_freeze"``,
-                - ``"freeze"``,
-                - ``"freeze_unfreeze"``,
-                - ``"unfreeze_milestones"``.
+                - ``"no_freeze"``
+                - ``"freeze"``
+                - ``("freeze_unfreeze", integer: unfreeze_epoch)``
+                - ``("unfreeze_milestones", ((integer: unfreeze_epoch_num_layers, integer: unfreeze_epoch_all_layers),
+                  integer: num_layers))``
+
+                where ``integer`` can be any integer.
+                By default, ``no_freeze`` strategy will be used.
+
+            train_bn: Whether to train Batch Norm layer
         """
-        self._resolve_callbacks(model, strategy)
+        self._resolve_callbacks(model, strategy, train_bn=train_bn)
         return super().fit(model, train_dataloader, val_dataloaders, datamodule)
 
-    def _resolve_callbacks(self, model: LightningModule, strategy: Optional[Union[str, BaseFinetuning]] = None) -> None:
+    def _resolve_callbacks(
+        self,
+        model: Task,
+        strategy: Union[str, BaseFinetuning, Tuple[str, int], Tuple[str, Tuple[int, int]]] = "no_freeze",
+        train_bn: bool = True,
+    ):
         """This function is used to select the `BaseFinetuning` to be used for finetuning."""
-        if strategy is not None and not isinstance(strategy, (str, BaseFinetuning)):
-            raise MisconfigurationException(
-                "strategy should be a ``pytorch_lightning.callbacks.BaseFinetuning``"
-                f"callback or a str within {list(_DEFAULTS_FINETUNE_STRATEGIES.keys())}"
-            )
-
-        if isinstance(strategy, BaseFinetuning):
-            callback = [strategy]
-        else:
-            # todo: change to ``configure_callbacks`` when merged to Lightning.
-            model_callback = model.configure_finetune_callback()
-            if len(model_callback) > 1:
-                raise MisconfigurationException(
-                    f"{model} configure_finetune_callback should create a list with only 1 callback"
-                )
-            if len(model_callback) == 1:
-                if strategy is not None:
-                    rank_zero_warn(
-                        "The model contains a default finetune callback. The provided {strategy} will be overriden.\n"
-                        " HINT: Provide a `BaseFinetuning` callback as strategy to make it prioritized. ",
-                        UserWarning,
-                    )
-                callback = model_callback
-            else:
-                callback = instantiate_default_finetuning_callbacks(strategy)
-
-        self.callbacks = self._merge_callbacks(self.callbacks, callback)
+        if isinstance(strategy, str) and strategy == "no_freeze":
+            warnings.warn("The model contains a default finetune callback.", UserWarning)
+        finetuning_callback = model.configure_finetune_callback(strategy=strategy, train_bn=train_bn)
+        if len(finetuning_callback) > 1:
+            raise MisconfigurationException("Create a list with only 1 finetuning callback.")
+        self.callbacks = self._merge_callbacks(self.callbacks, finetuning_callback)
 
     @staticmethod
     def _merge_callbacks(old_callbacks: List, new_callbacks: List) -> List:

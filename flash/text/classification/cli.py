@@ -23,7 +23,7 @@ def from_imdb(
     backbone: str = "prajjwal1/bert-medium",
     batch_size: int = 4,
     num_workers: int = 0,
-    **preprocess_kwargs,
+    **input_transform_kwargs,
 ) -> TextClassificationData:
     """Downloads and loads the IMDB sentiment classification data set."""
     download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", "./data/")
@@ -35,7 +35,7 @@ def from_imdb(
         backbone=backbone,
         batch_size=batch_size,
         num_workers=num_workers,
-        **preprocess_kwargs,
+        **input_transform_kwargs,
     )
 
 
@@ -44,7 +44,7 @@ def from_toxic(
     val_split: float = 0.1,
     batch_size: int = 4,
     num_workers: int = 0,
-    **preprocess_kwargs,
+    **input_transform_kwargs,
 ) -> TextClassificationData:
     """Downloads and loads the Jigsaw toxic comments data set."""
     download_data("https://pl-flash-data.s3.amazonaws.com/jigsaw_toxic_comments.zip", "./data")
@@ -56,7 +56,7 @@ def from_toxic(
         val_split=val_split,
         batch_size=batch_size,
         num_workers=num_workers,
-        **preprocess_kwargs,
+        **input_transform_kwargs,
     )
 
 
@@ -71,6 +71,7 @@ def text_classification():
             "trainer.max_epochs": 3,
         },
         datamodule_attributes={"num_classes", "multi_label", "backbone"},
+        legacy=True,
     )
 
     cli.trainer.save_checkpoint("text_classification_model.pt")

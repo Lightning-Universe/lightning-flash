@@ -14,7 +14,7 @@
 import torch
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
 
 if _POINTCLOUD_AVAILABLE:
@@ -86,10 +86,10 @@ class App:
             for pred in predictions:
                 predictions_visualizations.append(
                     {
-                        "points": pred[DefaultDataKeys.INPUT],
-                        "labels": pred[DefaultDataKeys.TARGET],
-                        "predictions": torch.argmax(pred[DefaultDataKeys.PREDS], axis=-1) + 1,
-                        "name": pred[DefaultDataKeys.METADATA]["name"],
+                        "points": pred[DataKeys.INPUT],
+                        "labels": pred[DataKeys.TARGET],
+                        "predictions": torch.argmax(pred[DataKeys.PREDS], axis=-1) + 1,
+                        "name": pred[DataKeys.METADATA]["name"],
                     }
                 )
 

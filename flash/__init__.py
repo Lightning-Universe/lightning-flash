@@ -20,14 +20,15 @@ from flash.core.utilities.imports import _TORCH_AVAILABLE
 if _TORCH_AVAILABLE:
 
     from flash.core.data.callback import FlashCallback
-    from flash.core.data.data_module import DataModule  # noqa: E402
-    from flash.core.data.data_source import DataSource
+    from flash.core.data.data_module import DataModule
     from flash.core.data.datasets import FlashDataset, FlashIterableDataset
-    from flash.core.data.input_transform import InputTransform
+    from flash.core.data.io.input import DataKeys, Input
+    from flash.core.data.io.input_transform import InputTransform
     from flash.core.data.io.output import Output
-    from flash.core.data.process import Postprocess, Preprocess, Serializer
-    from flash.core.model import Task  # noqa: E402
-    from flash.core.trainer import Trainer  # noqa: E402
+    from flash.core.data.io.output_transform import OutputTransform
+    from flash.core.data.process import Serializer
+    from flash.core.model import Task
+    from flash.core.trainer import Trainer
 
     _PACKAGE_ROOT = os.path.dirname(__file__)
     ASSETS_ROOT = os.path.join(_PACKAGE_ROOT, "assets")
@@ -40,15 +41,15 @@ if _TORCH_AVAILABLE:
         seed_everything(42)
 
     __all__ = [
-        "DataSource",
+        "DataKeys",
         "DataModule",
         "FlashCallback",
         "FlashDataset",
         "FlashIterableDataset",
+        "Input",
         "InputTransform",
         "Output",
-        "Postprocess",
-        "Preprocess",
+        "OutputTransform",
         "Serializer",
         "Task",
         "Trainer",

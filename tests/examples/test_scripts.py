@@ -17,7 +17,6 @@ from unittest import mock
 
 import pytest
 
-import flash
 from flash.core.utilities.imports import _LEARN2LEARN_AVAILABLE, _SKLEARN_AVAILABLE
 from tests.examples.utils import run_test
 from tests.helpers.utils import (
@@ -29,6 +28,8 @@ from tests.helpers.utils import (
     _TEXT_TESTING,
     _VIDEO_TESTING,
 )
+
+root = Path(__file__).parent.parent.parent
 
 
 @mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
@@ -108,10 +109,14 @@ from tests.helpers.utils import (
             "graph_classification.py",
             marks=pytest.mark.skipif(not _GRAPH_TESTING, reason="graph libraries aren't installed"),
         ),
+        pytest.param(
+            "graph_embedder.py",
+            marks=pytest.mark.skipif(not _GRAPH_TESTING, reason="graph libraries aren't installed"),
+        ),
     ],
 )
 def test_example(tmpdir, file):
-    run_test(str(Path(flash.PROJECT_ROOT) / "flash_examples" / file))
+    run_test(str(root / "flash_examples" / file))
 
 
 @mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
@@ -125,4 +130,4 @@ def test_example(tmpdir, file):
     ],
 )
 def test_example_2(tmpdir, file):
-    run_test(str(Path(flash.PROJECT_ROOT) / "flash_examples" / file))
+    run_test(str(root / "flash_examples" / file))

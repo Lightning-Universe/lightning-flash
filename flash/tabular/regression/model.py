@@ -16,7 +16,7 @@ from typing import Any, Callable, List, Tuple
 import torch
 from torch.nn import functional as F
 
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.regression import RegressionTask
 from flash.core.utilities.imports import _TABULAR_AVAILABLE
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
@@ -40,7 +40,7 @@ class TabularRegressor(RegressionTask):
             `metric(preds,target)` and return a single scalar tensor.
         learning_rate: Learning rate to use for training.
         multi_label: Whether the targets are multi-label or not.
-        serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
+        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
         **tabnet_kwargs: Optional additional arguments for the TabNet model, see
             `pytorch_tabnet <https://dreamquark-ai.github.io/tabnet/_modules/pytorch_tabnet/tab_network.html#TabNet>`_.
     """
@@ -90,19 +90,19 @@ class TabularRegressor(RegressionTask):
         return self.model(x)[0].flatten()
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
         return super().training_step(batch, batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
         return super().validation_step(batch, batch_idx)
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch = batch[DefaultDataKeys.INPUT]
+        batch = batch[DataKeys.INPUT]
         return self(batch)
 
     @classmethod

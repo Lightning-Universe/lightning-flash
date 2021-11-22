@@ -22,8 +22,8 @@ import torch
 from flash import Trainer
 from flash.__main__ import main
 from flash.audio import SpeechRecognition
-from flash.audio.speech_recognition.data import SpeechRecognitionPostprocess, SpeechRecognitionPreprocess
-from flash.core.data.data_source import DefaultDataKeys
+from flash.audio.speech_recognition.data import SpeechRecognitionInputTransform, SpeechRecognitionOutputTransform
+from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _AUDIO_AVAILABLE
 from tests.helpers.utils import _AUDIO_TESTING, _SERVE_TESTING
 
@@ -33,9 +33,9 @@ from tests.helpers.utils import _AUDIO_TESTING, _SERVE_TESTING
 class DummyDataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
         return {
-            DefaultDataKeys.INPUT: np.random.randn(86631),
-            DefaultDataKeys.TARGET: "some target text",
-            DefaultDataKeys.METADATA: {"sampling_rate": 16000},
+            DataKeys.INPUT: np.random.randn(86631),
+            DataKeys.TARGET: "some target text",
+            DataKeys.METADATA: {"sampling_rate": 16000},
         }
 
     def __len__(self) -> int:
@@ -79,9 +79,10 @@ def test_jit(tmpdir):
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = SpeechRecognition(backbone=TEST_BACKBONE)
-    # TODO: Currently only servable once a preprocess and postprocess have been attached
-    model._preprocess = SpeechRecognitionPreprocess()
-    model._postprocess = SpeechRecognitionPostprocess()
+
+    # TODO: Currently only servable once a input_transform and postprocess have been attached
+    model._input_transform = SpeechRecognitionInputTransform()
+    model._output_transform = SpeechRecognitionOutputTransform()
     model.eval()
     model.serve()
 

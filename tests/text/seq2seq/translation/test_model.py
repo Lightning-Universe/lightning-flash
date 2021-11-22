@@ -21,8 +21,8 @@ import torch
 from flash import Trainer
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import TranslationTask
-from flash.text.seq2seq.core.data import Seq2SeqPostprocess
-from flash.text.seq2seq.translation.data import TranslationPreprocess
+from flash.text.seq2seq.core.data import Seq2SeqOutputTransform
+from flash.text.seq2seq.translation.data import TranslationInputTransform
 from tests.helpers.utils import _SERVE_TESTING, _TEXT_TESTING
 
 # ======== Mock functions ========
@@ -78,9 +78,10 @@ def test_jit(tmpdir):
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = TranslationTask(TEST_BACKBONE)
-    # TODO: Currently only servable once a preprocess and postprocess have been attached
-    model._preprocess = TranslationPreprocess(backbone=TEST_BACKBONE)
-    model._postprocess = Seq2SeqPostprocess()
+    # TODO: Currently only servable once a input_transform and output_transform have been attached
+    model._input_transform = TranslationInputTransform(backbone=TEST_BACKBONE)
+    model._output_transform = Seq2SeqOutputTransform()
+
     model.eval()
     model.serve()
 

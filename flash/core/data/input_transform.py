@@ -19,11 +19,12 @@ from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data._utils.collate import default_collate
 
-from flash.core.data.data_pipeline import _Preprocessor, DataPipeline
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.data_pipeline import DataPipeline
+from flash.core.data.io.input import DataKeys
+from flash.core.data.io.input_transform import _InputTransformProcessor
 from flash.core.data.properties import Properties
 from flash.core.data.states import CollateFn
-from flash.core.data.utils import _PREPROCESS_FUNCS, _STAGES_PREFIX
+from flash.core.data.utils import _INPUT_TRANSFORM_FUNCS, _STAGES_PREFIX
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.stages import RunningStage
 
@@ -119,7 +120,8 @@ class InputTransform(Properties):
 
     @property
     def transforms(self) -> Dict[str, Optional[Dict[str, Callable]]]:
-        """The transforms currently being used by this :class:`~flash.core.data.process.Preprocess`."""
+        """The transforms currently being used by this
+        :class:`~flash.core.data.io.input_transform.InputTransform`."""
         return {
             "transform": self.transform,
         }
@@ -155,7 +157,7 @@ class InputTransform(Properties):
             # return collate_fn.collate_fn(samples)
 
         parameters = inspect.signature(collate_fn).parameters
-        if len(parameters) > 1 and DefaultDataKeys.METADATA in parameters:
+        if len(parameters) > 1 and DataKeys.METADATA in parameters:
             return collate_fn(samples, metadata)
         return collate_fn(samples)
 
@@ -288,7 +290,7 @@ class InputTransform(Properties):
 
         if len(keys_diff) > 0:
             raise MisconfigurationException(
-                f"{stage}_transform contains {keys_diff}. Only {_PREPROCESS_FUNCS} keys are supported."
+                f"{stage}_transform contains {keys_diff}. Only {_INPUT_TRANSFORM_FUNCS} keys are supported."
             )
 
         is_per_batch_transform_in = "per_batch_transform" in transform
@@ -354,14 +356,14 @@ class InputTransform(Properties):
     @property
     def dataloader_collate_fn(self):
         """Generate the function to be injected within the DataLoader as the collate_fn."""
-        return self._create_collate_preprocessors()[0]
+        return self._create_collate_input_transform_processors()[0]
 
     @property
     def on_after_batch_transfer_fn(self):
         """Generate the function to be injected after the on_after_batch_transfer from the LightningModule."""
-        return self._create_collate_preprocessors()[1]
+        return self._create_collate_input_transform_processors()[1]
 
-    def _create_collate_preprocessors(self) -> Tuple[Any]:
+    def _create_collate_input_transform_processors(self) -> Tuple[Any]:
         prefix: str = _STAGES_PREFIX[self.running_stage]
 
         func_names: Dict[str, str] = {
@@ -396,17 +398,19 @@ class InputTransform(Properties):
             )
 
         worker_collate_fn = (
-            worker_collate_fn.collate_fn if isinstance(worker_collate_fn, _Preprocessor) else worker_collate_fn
+            worker_collate_fn.collate_fn
+            if isinstance(worker_collate_fn, _InputTransformProcessor)
+            else worker_collate_fn
         )
 
-        worker_preprocessor = _Preprocessor(
+        worker_input_transform_processor = _InputTransformProcessor(
             self,
             worker_collate_fn,
             getattr(self, func_names["per_sample_transform"]),
             getattr(self, func_names["per_batch_transform"]),
             self.running_stage,
         )
-        device_preprocessor = _Preprocessor(
+        device_input_transform_processor = _InputTransformProcessor(
             self,
             device_collate_fn,
             getattr(self, func_names["per_sample_transform_on_device"]),
@@ -415,4 +419,4 @@ class InputTransform(Properties):
             apply_per_sample_transform=device_collate_fn != self._identity,
             on_device=True,
         )
-        return worker_preprocessor, device_preprocessor
+        return worker_input_transform_processor, device_input_transform_processor

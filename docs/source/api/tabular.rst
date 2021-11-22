@@ -42,8 +42,8 @@ ___________
     ~forecasting.model.TabularForecaster
     ~forecasting.data.TabularForecastingData
 
-    forecasting.data.TabularForecastingPreprocess
-    forecasting.data.TabularForecastingDataFrameDataSource
+    forecasting.data.TabularForecastingInputTransform
+    forecasting.data.TabularForecastingDataFrameInput
     forecasting.data.TimeSeriesDataSetParametersState
 
 flash.tabular.data
@@ -55,8 +55,8 @@ __________________
     :template: classtemplate.rst
 
     ~data.TabularData
-    ~data.TabularDataFrameDataSource
-    ~data.TabularCSVDataSource
+    ~data.TabularDataFrameInput
+    ~data.TabularCSVInput
     ~data.TabularDeserializer
-    ~data.TabularPreprocess
-    ~data.TabularPostprocess
+    ~data.TabularOutputTransform
+    ~data.TabularInputTransform

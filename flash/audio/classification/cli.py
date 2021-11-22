@@ -23,7 +23,7 @@ __all__ = ["audio_classification"]
 def from_urban8k(
     batch_size: int = 4,
     num_workers: int = 0,
-    **preprocess_kwargs,
+    **input_transform_kwargs,
 ) -> AudioClassificationData:
     """Downloads and loads the Urban 8k sounds images data set."""
     download_data("https://pl-flash-data.s3.amazonaws.com/urban8k_images.zip", "./data")
@@ -32,7 +32,7 @@ def from_urban8k(
         val_folder="data/urban8k_images/val",
         batch_size=batch_size,
         num_workers=num_workers,
-        **preprocess_kwargs,
+        **input_transform_kwargs,
     )
 
 
@@ -45,6 +45,7 @@ def audio_classification():
         default_arguments={
             "trainer.max_epochs": 3,
         },
+        legacy=True,
     )
 
     cli.trainer.save_checkpoint("audio_classification_model.pt")

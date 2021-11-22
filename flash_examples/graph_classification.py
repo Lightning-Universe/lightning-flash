@@ -28,9 +28,11 @@ datamodule = GraphClassificationData.from_datasets(
     train_dataset=dataset,
     val_split=0.1,
 )
-
 # 2. Build the task
-model = GraphClassifier(num_features=datamodule.num_features, num_classes=datamodule.num_classes)
+backbone_kwargs = {"hidden_channels": 512, "num_layers": 4}
+model = GraphClassifier(
+    num_features=datamodule.num_features, num_classes=datamodule.num_classes, backbone_kwargs=backbone_kwargs
+)
 
 # 3. Create the trainer and fit the model
 trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
@@ -41,4 +43,4 @@ predictions = model.predict(dataset[:3])
 print(predictions)
 
 # 5. Save the model!
-trainer.save_checkpoint("graph_classification.pt")
+trainer.save_checkpoint("graph_classification_model.pt")

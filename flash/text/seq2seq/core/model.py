@@ -13,21 +13,20 @@
 # limitations under the License.
 import os
 import warnings
-from typing import Any, List, Optional
+from typing import Any, Iterable, List, Optional, Union
 
 import torch
 from pytorch_lightning import Callback
 from pytorch_lightning.utilities import rank_zero_info
 from torch import Tensor
+from torch.nn import Module
 
-from flash.core.finetuning import FlashBaseFinetuning
 from flash.core.model import Task
 from flash.core.registry import ExternalRegistry, FlashRegistry
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.core.utilities.providers import _HUGGINGFACE
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.text.ort_callback import ORTCallback
-from flash.text.seq2seq.core.finetuning import Seq2SeqFreezeEmbeddings
 
 if _TEXT_AVAILABLE:
     from transformers import AutoModelForSeq2SeqLM, PreTrainedTokenizerBase
@@ -151,14 +150,26 @@ class Seq2SeqTask(Task):
 
     @property
     def tokenizer(self) -> "PreTrainedTokenizerBase":
-        return self.data_pipeline.data_source.tokenizer
+        return self.data_pipeline.input.tokenizer
 
     def tokenize_labels(self, labels: Tensor) -> List[str]:
         label_str = self.tokenizer.batch_decode(labels, skip_special_tokens=True)
         return [str.strip(s) for s in label_str]
 
-    def configure_finetune_callback(self) -> List[FlashBaseFinetuning]:
-        return [Seq2SeqFreezeEmbeddings(self.model.config.model_type, train_bn=True)]
+    def modules_to_freeze(self) -> Union[Module, Iterable[Union[Module, Iterable]]]:
+        """Return the module attributes of the model to be frozen."""
+        model_type = self.model.config.model_type
+
+        _modules = []
+
+        is_t5 = model_type in ["t5", "mt5"]
+        model = self.model if is_t5 else self.model.model
+        _modules.append(model.shared)
+        for layer in (model.encoder, model.decoder):
+            _modules.append(layer.embed_tokens)
+            if not is_t5:
+                _modules.append(layer.embed_positions)
+        return _modules
 
     def configure_callbacks(self) -> List[Callback]:
         callbacks = super().configure_callbacks() or []

@@ -24,7 +24,7 @@ __all__ = ["style_transfer"]
 def from_coco_128(
     batch_size: int = 4,
     num_workers: int = 0,
-    **preprocess_kwargs,
+    **input_transform_kwargs,
 ) -> StyleTransferData:
     """Downloads and loads the COCO 128 data set."""
     download_data("https://github.com/zhiqwang/yolov5-rt-stack/releases/download/v0.3.0/coco128.zip", "data/")
@@ -32,7 +32,7 @@ def from_coco_128(
         train_folder="data/coco128/images/train2017/",
         batch_size=batch_size,
         num_workers=num_workers,
-        **preprocess_kwargs,
+        **input_transform_kwargs,
     )
 
 
@@ -47,6 +47,7 @@ def style_transfer():
             "model.style_image": os.path.join(flash.ASSETS_ROOT, "starry_night.jpg"),
         },
         finetune=False,
+        legacy=True,
     )
 
     cli.trainer.save_checkpoint("style_transfer_model.pt")

@@ -23,7 +23,7 @@ def from_squad(
     backbone: str = "distilbert-base-uncased",
     batch_size: int = 4,
     num_workers: int = 0,
-    **preprocess_kwargs,
+    **input_transform_kwargs,
 ) -> QuestionAnsweringData:
     """Downloads and loads a tiny subset of the squad V2 data set."""
     download_data("https://pl-flash-data.s3.amazonaws.com/squad_tiny.zip", "./data/")
@@ -34,7 +34,7 @@ def from_squad(
         backbone=backbone,
         batch_size=batch_size,
         num_workers=num_workers,
-        **preprocess_kwargs,
+        **input_transform_kwargs,
     )
 
 
@@ -48,6 +48,7 @@ def question_answering():
             "trainer.max_epochs": 3,
             "model.backbone": "distilbert-base-uncased",
         },
+        legacy=True,
     )
 
     cli.trainer.save_checkpoint("question_answering_model.pt")

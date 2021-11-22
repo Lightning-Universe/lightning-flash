@@ -15,7 +15,7 @@ from flash.core.classification import Labels
 from flash.tabular import TabularClassifier
 
 model = TabularClassifier.load_from_checkpoint(
-    "https://flash-weights.s3.amazonaws.com/0.5.2/tabular_classification_model.pt"
+    "https://flash-weights.s3.amazonaws.com/0.6.0/tabular_classification_model.pt"
 )
 model.output = Labels(["Did not survive", "Survived"])
 model.serve()

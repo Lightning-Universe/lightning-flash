@@ -53,25 +53,22 @@ class AutoDataSources(Directive):
 
         data_module = getattr(importlib.import_module(data_module_path), data_module_name)
 
-        class PatchedPreprocess(data_module.preprocess_cls):
+        class PatchedInputTransform(data_module.input_transform_cls):
             """TODO: This is a hack to prevent default transforms form being created"""
 
             @staticmethod
             def _resolve_transforms(_):
                 return None
 
-        preprocess = PatchedPreprocess()
-        data_sources = {
-            data_source: preprocess.data_source_of_name(data_source)
-            for data_source in preprocess.available_data_sources()
-        }
+        input_transform = PatchedInputTransform()
+        inputs = {input: input_transform.input_of_name(input) for input in input_transform.available_inputs()}
 
         ENVIRONMENT.get_template("base.rst")
 
         rendered_content = ENVIRONMENT.get_template(data_module_name).render(
             data_module=f":class:`~{data_module_path}.{data_module_name}`",
             data_module_raw=data_module_name,
-            data_sources=data_sources,
+            inputs=inputs,
         )
 
         node = nodes.section()

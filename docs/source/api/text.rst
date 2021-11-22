@@ -20,16 +20,16 @@ ______________
     ~classification.model.TextClassifier
     ~classification.data.TextClassificationData
 
-    classification.data.TextClassificationPostprocess
-    classification.data.TextClassificationPreprocess
+    classification.data.TextClassificationOutputTransform
+    classification.data.TextClassificationInputTransform
     classification.data.TextDeserializer
-    classification.data.TextDataSource
-    classification.data.TextCSVDataSource
-    classification.data.TextJSONDataSource
-    classification.data.TextDataFrameDataSource
-    classification.data.TextParquetDataSource
-    classification.data.TextHuggingFaceDatasetDataSource
-    classification.data.TextListDataSource
+    classification.data.TextInput
+    classification.data.TextCSVInput
+    classification.data.TextJSONInput
+    classification.data.TextDataFrameInput
+    classification.data.TextParquetInput
+    classification.data.TextHuggingFaceDatasetInput
+    classification.data.TextListInput
 
 Question Answering
 __________________
@@ -43,15 +43,14 @@ __________________
     ~question_answering.data.QuestionAnsweringData
 
     question_answering.data.QuestionAnsweringBackboneState
-    question_answering.data.QuestionAnsweringCSVDataSource
-    question_answering.data.QuestionAnsweringDataSource
-    question_answering.data.QuestionAnsweringDictionaryDataSource
-    question_answering.data.QuestionAnsweringFileDataSource
-    question_answering.data.QuestionAnsweringJSONDataSource
-    question_answering.data.QuestionAnsweringPostprocess
-    question_answering.data.QuestionAnsweringPreprocess
-    question_answering.data.SQuADDataSource
-
+    question_answering.data.QuestionAnsweringCSVInput
+    question_answering.data.QuestionAnsweringInput
+    question_answering.data.QuestionAnsweringDictionaryInput
+    question_answering.data.QuestionAnsweringFileInput
+    question_answering.data.QuestionAnsweringJSONInput
+    question_answering.data.QuestionAnsweringOutputTransform
+    question_answering.data.QuestionAnsweringInputTransform
+    question_answering.data.SQuADInput
 
 Summarization
 _____________
@@ -64,7 +63,7 @@ _____________
     ~seq2seq.summarization.model.SummarizationTask
     ~seq2seq.summarization.data.SummarizationData
 
-    seq2seq.summarization.data.SummarizationPreprocess
+    seq2seq.summarization.data.SummarizationInputTransform
 
 Translation
 ___________
@@ -77,7 +76,7 @@ ___________
     ~seq2seq.translation.model.TranslationTask
     ~seq2seq.translation.data.TranslationData
 
-    seq2seq.translation.data.TranslationPreprocess
+    seq2seq.translation.data.TranslationInputTransform
 
 General Seq2Seq
 _______________
@@ -89,16 +88,12 @@ _______________
 
     ~seq2seq.core.model.Seq2SeqTask
     ~seq2seq.core.data.Seq2SeqData
-    ~seq2seq.core.finetuning.Seq2SeqFreezeEmbeddings
 
     seq2seq.core.data.Seq2SeqBackboneState
-    seq2seq.core.data.Seq2SeqCSVDataSource
-    seq2seq.core.data.Seq2SeqDataSource
-    seq2seq.core.data.Seq2SeqFileDataSource
-    seq2seq.core.data.Seq2SeqJSONDataSource
-    seq2seq.core.data.Seq2SeqPostprocess
-    seq2seq.core.data.Seq2SeqPreprocess
-    seq2seq.core.data.Seq2SeqSentencesDataSource
-    seq2seq.core.metrics.BLEUScore
-    seq2seq.core.metrics.RougeBatchAggregator
-    seq2seq.core.metrics.RougeMetric
+    seq2seq.core.data.Seq2SeqCSVInput
+    seq2seq.core.data.Seq2SeqInput
+    seq2seq.core.data.Seq2SeqFileInput
+    seq2seq.core.data.Seq2SeqJSONInput
+    seq2seq.core.data.Seq2SeqOutputTransform
+    seq2seq.core.data.Seq2SeqInputTransform
+    seq2seq.core.data.Seq2SeqSentencesInput

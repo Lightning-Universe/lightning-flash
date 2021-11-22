@@ -18,7 +18,6 @@ import torch
 import flash
 from flash.core.classification import FiftyOneLabels, Labels
 from flash.core.data.utils import download_data
-from flash.core.finetuning import FreezeUnfreeze
 from flash.core.integrations.fiftyone import visualize
 from flash.image import ImageClassificationData, ImageClassifier
 
@@ -48,13 +47,13 @@ trainer = flash.Trainer(
 trainer.finetune(
     model,
     datamodule=datamodule,
-    strategy=FreezeUnfreeze(unfreeze_epoch=1),
+    strategy=("freeze_unfreeze", 1),
 )
 trainer.save_checkpoint("image_classification_model.pt")
 
 # 4 Predict from checkpoint
 model = ImageClassifier.load_from_checkpoint(
-    "https://flash-weights.s3.amazonaws.com/0.5.2/image_classification_model.pt"
+    "https://flash-weights.s3.amazonaws.com/0.6.0/image_classification_model.pt"
 )
 model.output = FiftyOneLabels(return_filepath=True)  # output FiftyOne format
 predictions = trainer.predict(model, datamodule=datamodule)

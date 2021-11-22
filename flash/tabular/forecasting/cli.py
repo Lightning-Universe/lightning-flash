@@ -32,9 +32,7 @@ def from_synthetic_ar_data(
     n_series: int = 100,
     max_encoder_length: int = 60,
     max_prediction_length: int = 20,
-    batch_size: int = 32,
-    num_workers: int = 0,
-    **preprocess_kwargs,
+    **data_module_kwargs,
 ) -> TabularForecastingData:
     """Creates and loads a synthetic auto-regressive (AR) data set."""
     data = generate_ar_data(seasonality=seasonality, timesteps=timesteps, n_series=n_series, seed=42)
@@ -53,9 +51,7 @@ def from_synthetic_ar_data(
         max_prediction_length=max_prediction_length,
         train_data_frame=data[lambda x: x.time_idx <= training_cutoff],
         val_data_frame=data,
-        batch_size=batch_size,
-        num_workers=num_workers,
-        **preprocess_kwargs,
+        **data_module_kwargs,
     )
 
 

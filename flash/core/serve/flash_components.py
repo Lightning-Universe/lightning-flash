@@ -3,7 +3,7 @@ from typing import Any, Callable, Mapping
 
 import torch
 
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.serve import expose, ModelComponent
 from flash.core.serve.types.base import BaseType
 from flash.core.utilities.stages import RunningStage
@@ -36,7 +36,7 @@ class FlashOutputs(BaseType):
             for output in outputs:
                 result = self._output(output)
                 if isinstance(result, Mapping):
-                    result = result[DefaultDataKeys.PREDS]
+                    result = result[DataKeys.PREDS]
                 results.append(result)
         if len(results) == 1:
             return results[0]
@@ -55,9 +55,15 @@ def build_flash_serve_model_component(model):
             self.model = model
             self.model.eval()
             self.data_pipeline = model.build_data_pipeline()
-            self.worker_preprocessor = self.data_pipeline.worker_preprocessor(RunningStage.PREDICTING, is_serving=True)
-            self.device_preprocessor = self.data_pipeline.device_preprocessor(RunningStage.PREDICTING)
-            self.postprocessor = self.data_pipeline.postprocessor(RunningStage.PREDICTING, is_serving=True)
+            self.worker_input_transform_processor = self.data_pipeline.worker_input_transform_processor(
+                RunningStage.PREDICTING, is_serving=True
+            )
+            self.device_input_transform_processor = self.data_pipeline.device_input_transform_processor(
+                RunningStage.PREDICTING
+            )
+            self.output_transform_processor = self.data_pipeline.output_transform_processor(
+                RunningStage.PREDICTING, is_serving=True
+            )
             # todo (tchaton) Remove this hack
             self.extra_arguments = len(inspect.signature(self.model.transfer_batch_to_device).parameters) == 3
             self.device = self.model.device
@@ -68,14 +74,14 @@ def build_flash_serve_model_component(model):
         )
         def predict(self, inputs):
             with torch.no_grad():
-                inputs = self.worker_preprocessor(inputs)
+                inputs = self.worker_input_transform_processor(inputs)
                 if self.extra_arguments:
                     inputs = self.model.transfer_batch_to_device(inputs, self.device, 0)
                 else:
                     inputs = self.model.transfer_batch_to_device(inputs, self.device)
-                inputs = self.device_preprocessor(inputs)
+                inputs = self.device_input_transform_processor(inputs)
                 preds = self.model.predict_step(inputs, 0)
-                preds = self.postprocessor(preds)
+                preds = self.output_transform_processor(preds)
                 return preds
 
     return FlashServeModelComponent(model)

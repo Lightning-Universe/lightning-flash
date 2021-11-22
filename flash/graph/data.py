@@ -11,11 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Mapping, Optional
+from typing import Any, Mapping
 
 from torch.utils.data import Dataset
 
-from flash.core.data.data_source import DatasetDataSource
+from flash.core.data.io.input_base import Input
 from flash.core.utilities.imports import _GRAPH_AVAILABLE, requires
 
 if _GRAPH_AVAILABLE:
@@ -23,17 +23,16 @@ if _GRAPH_AVAILABLE:
     from torch_geometric.data import Dataset as TorchGeometricDataset
 
 
-class GraphDatasetDataSource(DatasetDataSource):
+class GraphDatasetInput(Input):
     @requires("graph")
-    def load_data(self, data: Dataset, dataset: Any = None) -> Dataset:
-        data = super().load_data(data, dataset=dataset)
+    def load_data(self, dataset: Dataset) -> Dataset:
         if not self.predicting:
-            if isinstance(data, TorchGeometricDataset):
-                dataset.num_classes = data.num_classes
-                dataset.num_features = data.num_features
-        return data
+            if isinstance(dataset, TorchGeometricDataset):
+                self.num_classes = dataset.num_classes
+                self.num_features = dataset.num_features
+        return dataset
 
-    def load_sample(self, sample: Any, dataset: Optional[Any] = None) -> Mapping[str, Any]:
+    def load_sample(self, sample: Any) -> Mapping[str, Any]:
         if isinstance(sample, Data):
             return sample
-        return super().load_sample(sample, dataset=dataset)
+        return super().load_sample(sample)

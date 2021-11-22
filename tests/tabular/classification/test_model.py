@@ -19,7 +19,8 @@ import pytest
 import torch
 from pytorch_lightning import Trainer
 
-from flash.core.data.data_source import DefaultDataKeys
+from flash.__main__ import main
+from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _TABULAR_AVAILABLE
 from flash.tabular.classification.data import TabularClassificationData
 from flash.tabular.classification.model import TabularClassifier
@@ -38,7 +39,7 @@ class DummyDataset(torch.utils.data.Dataset):
         target = torch.randint(0, 10, size=(1,)).item()
         cat_vars = torch.randint(0, 10, size=(self.num_cat,))
         num_vars = torch.rand(self.num_num)
-        return {DefaultDataKeys.INPUT: (cat_vars, num_vars), DefaultDataKeys.TARGET: target}
+        return {DataKeys.INPUT: (cat_vars, num_vars), DataKeys.TARGET: target}
 
     def __len__(self) -> int:
         return 100
@@ -103,11 +104,12 @@ def test_serve():
         "cat_col",
         "num_col",
         "target",
-        pd.DataFrame.from_dict(train_data),
+        train_data_frame=pd.DataFrame.from_dict(train_data),
     )
     model = TabularClassifier.from_data(datamodule)
-    # TODO: Currently only servable once a preprocess has been attached
-    model._preprocess = datamodule.preprocess
+    # TODO: Currently only servable once a input_transform has been attached
+    model._input_transform = datamodule.input_transform
+    model._input_transform._state = datamodule.train_dataset._state
     model.eval()
     model.serve()
 
@@ -116,3 +118,13 @@ def test_serve():
 def test_load_from_checkpoint_dependency_error():
     with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[tabular]'")):
         TabularClassifier.load_from_checkpoint("not_a_real_checkpoint.pt")
+
+
+@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
+def test_cli():
+    cli_args = ["flash", "tabular_classification", "--trainer.fast_dev_run", "True"]
+    with mock.patch("sys.argv", cli_args):
+        try:
+            main()
+        except SystemExit:
+            pass

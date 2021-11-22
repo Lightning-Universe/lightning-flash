@@ -23,10 +23,10 @@ import torch
 from flash import Trainer
 from flash.__main__ import main
 from flash.core.data.data_pipeline import DataPipeline
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _IMAGE_AVAILABLE
 from flash.image import SemanticSegmentation
-from flash.image.segmentation.data import SemanticSegmentationPreprocess
+from flash.image.segmentation.data import SemanticSegmentationInputTransform
 from tests.helpers.utils import _IMAGE_TESTING, _SERVE_TESTING
 
 # ======== Mock functions ========
@@ -38,8 +38,8 @@ class DummyDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         return {
-            DefaultDataKeys.INPUT: torch.rand(3, *self.size),
-            DefaultDataKeys.TARGET: torch.randint(self.num_classes - 1, self.size),
+            DataKeys.INPUT: torch.rand(3, *self.size),
+            DataKeys.TARGET: torch.randint(self.num_classes - 1, self.size),
         }
 
     def __len__(self) -> int:
@@ -77,7 +77,7 @@ def test_init_train(tmpdir):
     model = SemanticSegmentation(num_classes=10)
     train_dl = torch.utils.data.DataLoader(DummyDataset())
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    trainer.finetune(model, train_dl, strategy="freeze_unfreeze")
+    trainer.finetune(model, train_dl, strategy="freeze")
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
@@ -106,8 +106,8 @@ def test_unfreeze():
 def test_predict_tensor():
     img = torch.rand(1, 3, 64, 64)
     model = SemanticSegmentation(2, backbone="mobilenetv3_large_100")
-    data_pipe = DataPipeline(preprocess=SemanticSegmentationPreprocess(num_classes=1))
-    out = model.predict(img, data_source="tensors", data_pipeline=data_pipe)
+    data_pipe = DataPipeline(input_transform=SemanticSegmentationInputTransform(num_classes=1))
+    out = model.predict(img, input="tensors", data_pipeline=data_pipe)
     assert isinstance(out[0], list)
     assert len(out[0]) == 64
     assert len(out[0][0]) == 64
@@ -117,8 +117,8 @@ def test_predict_tensor():
 def test_predict_numpy():
     img = np.ones((1, 3, 64, 64))
     model = SemanticSegmentation(2, backbone="mobilenetv3_large_100")
-    data_pipe = DataPipeline(preprocess=SemanticSegmentationPreprocess(num_classes=1))
-    out = model.predict(img, data_source="numpy", data_pipeline=data_pipe)
+    data_pipe = DataPipeline(input_transform=SemanticSegmentationInputTransform(num_classes=1))
+    out = model.predict(img, input="numpy", data_pipeline=data_pipe)
     assert isinstance(out[0], list)
     assert len(out[0]) == 64
     assert len(out[0][0]) == 64
@@ -146,8 +146,8 @@ def test_jit(tmpdir, jitter, args):
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = SemanticSegmentation(2)
-    # TODO: Currently only servable once a preprocess has been attached
-    model._preprocess = SemanticSegmentationPreprocess()
+    # TODO: Currently only servable once a input_transform has been attached
+    model._input_transform = SemanticSegmentationInputTransform()
     model.eval()
     model.serve()
 

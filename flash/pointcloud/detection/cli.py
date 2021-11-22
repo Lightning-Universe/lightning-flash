@@ -20,18 +20,14 @@ __all__ = ["pointcloud_detection"]
 
 
 def from_kitti(
-    batch_size: int = 4,
-    num_workers: int = 0,
-    **preprocess_kwargs,
+    **data_module_kwargs,
 ) -> PointCloudObjectDetectorData:
     """Downloads and loads the KITTI data set."""
     download_data("https://pl-flash-data.s3.amazonaws.com/KITTI_tiny.zip", "data/")
     return PointCloudObjectDetectorData.from_folders(
         train_folder="data/KITTI_Tiny/Kitti/train",
         val_folder="data/KITTI_Tiny/Kitti/val",
-        batch_size=batch_size,
-        num_workers=num_workers,
-        **preprocess_kwargs,
+        **data_module_kwargs,
     )
 
 

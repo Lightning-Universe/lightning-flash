@@ -1,16 +1,19 @@
 from itertools import chain
-from typing import Dict, List, Optional, TYPE_CHECKING, Union
+from typing import Dict, List, Optional, Type, TYPE_CHECKING, Union
 
 import flash
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 
-Label, Session = None, None
+Label, Session, SampleCollection = object, object, object
 if _FIFTYONE_AVAILABLE:
     fo = lazy_import("fiftyone")
+    fol = lazy_import("fiftyone.core.labels")
     if TYPE_CHECKING:
         from fiftyone import Label, Session
+        from fiftyone.core.collections import SampleCollection
 else:
     fo = None
+    fol = None
 
 
 @requires("fiftyone")
@@ -19,7 +22,7 @@ def visualize(
     filepaths: Optional[List[str]] = None,
     label_field: Optional[str] = "predictions",
     wait: Optional[bool] = False,
-    **kwargs
+    **kwargs,
 ) -> Optional[Session]:
     """Visualizes predictions from a model with a FiftyOne Output in the
     :ref:`FiftyOne App <fiftyone:fiftyone-app>`.
@@ -82,3 +85,35 @@ def visualize(
         session.wait()
 
     return session
+
+
+class FiftyOneLabelUtilities:
+    """Helper class providing useful methods for working with ``SampleCollection`` datasets from FiftyOne.
+
+    Args:
+        label_field: The field in the ``SampleCollection`` containing the ground truth labels.
+        label_cls: The ``FiftyOne.Label`` subclass to expect ground truth labels to be instances of. If ``None``,
+            defaults to ``FiftyOne.Label``.
+    """
+
+    def __init__(self, label_field: str = "ground_truth", label_cls: Optional[Type[Label]] = None):
+        super().__init__()
+        self.label_field = label_field
+        self.label_cls = label_cls or fol.Label
+
+    def validate(self, sample_collection: SampleCollection):
+        label_type = sample_collection._get_label_field_type(self.label_field)
+        if not issubclass(label_type, self.label_cls):
+            raise ValueError(f"Expected field '{self.label_field}' to have type {self.label_cls}; found {label_type}")
+
+    def get_classes(self, sample_collection: SampleCollection):
+        classes = sample_collection.classes.get(self.label_field, None)
+
+        if not classes:
+            classes = sample_collection.default_classes
+
+        if not classes:
+            label_path = sample_collection._get_label_field_path(self.label_field, "label")[1]
+            classes = sample_collection.distinct(label_path)
+
+        return classes

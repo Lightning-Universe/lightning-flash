@@ -26,9 +26,10 @@ import flash
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_pipeline import DefaultPreprocess, Postprocess
 from flash.core.data.datasets import BaseDataset
 from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
+from flash.core.data.io.input_transform import DefaultInputTransform
+from flash.core.data.io.output_transform import OutputTransform
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.stages import RunningStage
 
@@ -43,7 +44,7 @@ class DataModule(DataModule):
         test_dataset: Dataset to test model performance. Defaults to None.
         predict_dataset: Dataset for predicting. Defaults to None.
         data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to attach to the
-            :class:`~flash.core.data.process.Preprocess`. If ``None``, the output from
+            :class:`~flash.core.data.io.input_transform.InputTransform`. If ``None``, the output from
             :meth:`~flash.core.data.data_module.DataModule.configure_data_fetcher` will be used.
         val_split: An optional float which gives the relative amount of the training dataset to use for the validation
             dataset.
@@ -55,8 +56,8 @@ class DataModule(DataModule):
             Will be passed to the DataLoader for the training dataset. Defaults to None.
     """
 
-    preprocess_cls = DefaultPreprocess
-    postprocess_cls = Postprocess
+    input_transform_cls = DefaultInputTransform
+    output_transform_cls = OutputTransform
     flash_datasets_registry = FlashRegistry("datasets")
 
     def __init__(
@@ -80,7 +81,7 @@ class DataModule(DataModule):
         if flash._IS_TESTING and torch.cuda.is_available():
             batch_size = 16
 
-        self._postprocess: Optional[Postprocess] = None
+        self._output_transform: Optional[OutputTransform] = None
         self._viz: Optional[BaseVisualization] = None
         self._data_fetcher: Optional[BaseDataFetcher] = data_fetcher or self.configure_data_fetcher()
 
@@ -318,7 +319,7 @@ class DataModule(DataModule):
         if not cls.flash_datasets_registry or not isinstance(cls.flash_datasets_registry, FlashRegistry):
             raise MisconfigurationException(
                 "The ``AutoContainer`` should have ``flash_datasets_registry`` (FlashRegistry) populated "
-                "with datasource class and ``default_flash_dataset_enum`` (LightningEnum) class attributes. "
+                "with Input class and ``default_flash_dataset_enum`` (LightningEnum) class attributes. "
             )
 
         if enum not in cls.flash_datasets_registry.available_keys():

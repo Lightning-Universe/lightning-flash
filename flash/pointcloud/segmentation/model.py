@@ -11,22 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, Optional, Tuple, Union
 
 import torch
-from pytorch_lightning import Callback, LightningModule
 from torch import nn
 from torch.nn import functional as F
-from torch.optim import Optimizer
 from torch.utils.data import DataLoader, Sampler
 from torchmetrics import IoU
 
 from flash.core.classification import ClassificationTask
-from flash.core.data.auto_dataset import BaseAutoDataset
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
+from flash.core.data.io.input_base import Input
 from flash.core.data.io.output import Output
 from flash.core.data.states import CollateFn
-from flash.core.finetuning import BaseFinetuning
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
@@ -35,32 +32,6 @@ from flash.pointcloud.segmentation.backbones import POINTCLOUD_SEGMENTATION_BACK
 if _POINTCLOUD_AVAILABLE:
     from open3d._ml3d.torch.modules.losses.semseg_loss import filter_valid_label
     from open3d.ml.torch.dataloaders import TorchDataloader
-
-
-class PointCloudSegmentationFinetuning(BaseFinetuning):
-    def __init__(self, num_layers: int = 5, train_bn: bool = True, unfreeze_epoch: int = 1):
-        super().__init__()
-        self.num_layers = num_layers
-        self.train_bn = train_bn
-        self.unfreeze_epoch = unfreeze_epoch
-
-    def freeze_before_training(self, pl_module: LightningModule) -> None:
-        self.freeze(modules=list(pl_module.backbone.children())[: -self.num_layers], train_bn=self.train_bn)
-
-    def finetune_function(
-        self,
-        pl_module: LightningModule,
-        epoch: int,
-        optimizer: Optimizer,
-        opt_idx: int,
-    ) -> None:
-        if epoch != self.unfreeze_epoch:
-            return
-        self.unfreeze_and_add_param_group(
-            modules=list(pl_module.backbone.children())[-self.num_layers :],
-            optimizer=optimizer,
-            train_bn=self.train_bn,
-        )
 
 
 class PointCloudSegmentationOutput(Output):
@@ -72,10 +43,11 @@ class PointCloudSegmentation(ClassificationTask):
     pointcloud data.
 
     Args:
-        num_features: The number of features (elements) in the input data.
         num_classes: The number of classes (outputs) for this :class:`~flash.core.model.Task`.
         backbone: The backbone name (or a tuple of ``nn.Module``, output size) to use.
         backbone_kwargs: Any additional kwargs to pass to the backbone constructor.
+        head: a `nn.Module` to use on top of the backbone. The output dimension should match the `num_classes`
+            argument. If not set will default to a single linear layer.
         loss_fn: The loss function to use. If ``None``, a default will be selected by the
             :class:`~flash.core.classification.ClassificationTask` depending on the ``multi_label`` argument.
         optimizer: Optimizer to use for training.
@@ -84,7 +56,7 @@ class PointCloudSegmentation(ClassificationTask):
             by the :class:`~flash.core.classification.ClassificationTask` depending on the ``multi_label`` argument.
         learning_rate: The learning rate for the optimizer.
         multi_label: If ``True``, this will be treated as a multi-label classification problem.
-        output: The :class:`~flash.core.data.io.output.Output` to use for prediction outputs.
+        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
     """
 
     backbones: FlashRegistry = POINTCLOUD_SEGMENTATION_BACKBONES
@@ -148,22 +120,22 @@ class PointCloudSegmentation(ClassificationTask):
         return x.reshape(-1, x.shape[-1])
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.INPUT]["labels"].view(-1))
+        batch = (batch[DataKeys.INPUT], batch[DataKeys.INPUT]["labels"].view(-1))
         return super().training_step(batch, batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.INPUT]["labels"].view(-1))
+        batch = (batch[DataKeys.INPUT], batch[DataKeys.INPUT]["labels"].view(-1))
         return super().validation_step(batch, batch_idx)
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.INPUT]["labels"].view(-1))
+        batch = (batch[DataKeys.INPUT], batch[DataKeys.INPUT]["labels"].view(-1))
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch[DefaultDataKeys.PREDS] = self(batch[DefaultDataKeys.INPUT])
-        batch[DefaultDataKeys.TARGET] = batch[DefaultDataKeys.INPUT]["labels"]
+        batch[DataKeys.PREDS] = self(batch[DataKeys.INPUT])
+        batch[DataKeys.TARGET] = batch[DataKeys.INPUT]["labels"]
         # drop sub-sampled pointclouds
-        batch[DefaultDataKeys.INPUT] = batch[DefaultDataKeys.INPUT]["xyz"][0]
+        batch[DataKeys.INPUT] = batch[DataKeys.INPUT]["xyz"][0]
         return batch
 
     def forward(self, x) -> torch.Tensor:
@@ -177,7 +149,7 @@ class PointCloudSegmentation(ClassificationTask):
 
     def _process_dataset(
         self,
-        dataset: BaseAutoDataset,
+        dataset: Input,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -187,11 +159,7 @@ class PointCloudSegmentation(ClassificationTask):
         sampler: Optional[Sampler] = None,
         **kwargs
     ) -> DataLoader:
-
-        if not _POINTCLOUD_AVAILABLE:
-            raise ModuleNotFoundError("Please, run `pip install flash[pointcloud]`.")
-
-        if not isinstance(dataset.dataset, TorchDataloader):
+        if not isinstance(dataset.data, TorchDataloader):
 
             dataset.dataset = TorchDataloader(
                 dataset.dataset,
@@ -211,5 +179,6 @@ class PointCloudSegmentation(ClassificationTask):
             sampler=sampler,
         )
 
-    def configure_finetune_callback(self) -> List[Callback]:
-        return [PointCloudSegmentationFinetuning()]
+    def modules_to_freeze(self) -> Union[nn.Module, Iterable[Union[nn.Module, Iterable]]]:
+        """Return the module attributes of the model to be frozen."""
+        return list(self.backbone.children())

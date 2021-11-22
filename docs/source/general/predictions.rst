@@ -24,7 +24,7 @@ You can pass in a sample of data (image file path, a string of text, etc) to the
 
     # 2. Load the model from a checkpoint
     model = ImageClassifier.load_from_checkpoint(
-        "https://flash-weights.s3.amazonaws.com/0.5.2/image_classification_model.pt"
+        "https://flash-weights.s3.amazonaws.com/0.6.0/image_classification_model.pt"
     )
 
     # 3. Predict whether the image contains an ant or a bee
@@ -46,7 +46,7 @@ Predict on a csv file
 
     # 2. Load the model from a checkpoint
     model = TabularClassifier.load_from_checkpoint(
-        "https://flash-weights.s3.amazonaws.com/0.5.2/tabular_classification_model.pt"
+        "https://flash-weights.s3.amazonaws.com/0.6.0/tabular_classification_model.pt"
     )
 
     # 3. Generate predictions from a csv file! Who would survive?
@@ -74,7 +74,7 @@ reference below).
 
     # 2. Load the model from a checkpoint
     model = ImageClassifier.load_from_checkpoint(
-        "https://flash-weights.s3.amazonaws.com/0.5.2/image_classification_model.pt"
+        "https://flash-weights.s3.amazonaws.com/0.6.0/image_classification_model.pt"
     )
 
     # 3. Attach the Output

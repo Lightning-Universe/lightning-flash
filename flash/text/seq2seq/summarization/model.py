@@ -14,9 +14,9 @@
 from typing import Any, Dict, List, Optional
 
 import torch
+from torchmetrics import ROUGEScore
 
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
-from flash.text.seq2seq.core.metrics import RougeMetric
 from flash.text.seq2seq.core.model import Seq2SeqTask
 
 
@@ -72,8 +72,8 @@ class SummarizationTask(Seq2SeqTask):
             num_beams=num_beams,
             enable_ort=enable_ort,
         )
-        self.rouge = RougeMetric(
-            rouge_newline_sep=rouge_newline_sep,
+        self.rouge = ROUGEScore(
+            newline_sep=rouge_newline_sep,
             use_stemmer=use_stemmer,
         )
 
@@ -83,7 +83,7 @@ class SummarizationTask(Seq2SeqTask):
 
     def compute_metrics(self, generated_tokens: torch.Tensor, batch: Dict, prefix: str) -> None:
         tgt_lns = self.tokenize_labels(batch["labels"])
-        result = self.rouge(self._postprocess.uncollate(generated_tokens), tgt_lns)
+        result = self.rouge(self._output_transform.uncollate(generated_tokens), tgt_lns)
         self.log_dict(result, on_step=False, on_epoch=True, prog_bar=True)
 
     @staticmethod

@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, List, Type, Union
+from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 import torch
 from torch import nn
@@ -19,67 +19,17 @@ from torch.nn import functional as F
 from torch.nn import Linear
 
 from flash.core.classification import ClassificationTask
+from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
+from flash.graph.backbones import GRAPH_BACKBONES
 
 if _GRAPH_AVAILABLE:
-    from torch_geometric.nn import BatchNorm, GCNConv, global_mean_pool, MessagePassing
+    from torch_geometric.nn import global_add_pool, global_max_pool, global_mean_pool
+
+    POOLING_FUNCTIONS = {"mean": global_mean_pool, "add": global_add_pool, "max": global_max_pool}
 else:
-    MessagePassing = None
-    GCNConv = None
-
-
-class GraphBlock(nn.Module):
-    def __init__(self, nc_input, nc_output, conv_cls, act=nn.ReLU(), **conv_kwargs):
-        super().__init__()
-        self.conv = conv_cls(nc_input, nc_output, **conv_kwargs)
-        self.norm = BatchNorm(nc_output)
-        self.act = act
-
-    def forward(self, x, edge_index, edge_weight):
-        x = self.conv(x, edge_index, edge_weight=edge_weight)
-        x = self.norm(x)
-        return self.act(x)
-
-
-class BaseGraphModel(nn.Module):
-    def __init__(
-        self,
-        num_features: int,
-        hidden_channels: List[int],
-        num_classes: int,
-        conv_cls: Type[MessagePassing],
-        act=nn.ReLU(),
-        **conv_kwargs: Any
-    ):
-        super().__init__()
-
-        self.blocks = nn.ModuleList()
-        hidden_channels = [num_features] + hidden_channels
-
-        nc_output = num_features
-
-        for idx in range(len(hidden_channels) - 1):
-            nc_input = hidden_channels[idx]
-            nc_output = hidden_channels[idx + 1]
-            graph_block = GraphBlock(nc_input, nc_output, conv_cls, act, **conv_kwargs)
-            self.blocks.append(graph_block)
-
-        self.lin = Linear(nc_output, num_classes)
-
-    def forward(self, data):
-        x, edge_index, edge_weight = data.x, data.edge_index, data.edge_attr
-        # 1. Obtain node embeddings
-        for block in self.blocks:
-            x = block(x, edge_index, edge_weight)
-
-        # 2. Readout layer
-        x = global_mean_pool(x, data.batch)  # [batch_size, hidden_channels]
-
-        # 3. Apply a final classifier
-        x = F.dropout(x, p=0.5, training=self.training)
-        x = self.lin(x)
-        return x
+    POOLING_FUNCTIONS = {}
 
 
 class GraphClassifier(ClassificationTask):
@@ -87,50 +37,63 @@ class GraphClassifier(ClassificationTask):
     :ref:`graph_classification`.
 
     Args:
-        num_features: Number of columns in table (not including target column).
-        num_classes: Number of classes to classify.
-        hidden_channels: Hidden dimension sizes.
-        learning_rate: Learning rate to use for training, defaults to `1e-3`
+        num_features (int): The number of features in the input.
+        num_classes (int): Number of classes to classify.
+        backbone: Name of the backbone to use.
+        backbone_kwargs: Dictionary dependent on the backbone, containing for example in_channels, out_channels,
+            hidden_channels or depth (number of layers).
+        pooling_fn: The global pooling operation to use (one of: "max", "max", "add" or a callable).
+        head: The head to use.
+        loss_fn: Loss function for training, defaults to cross entropy.
+        learning_rate: Learning rate to use for training.
         optimizer: Optimizer to use for training.
         lr_scheduler: The LR scheduler to use during training.
         metrics: Metrics to compute for training and evaluation.
-        model: GraphNN used, defaults to BaseGraphModel.
-        conv_cls: kind of convolution used in model, defaults to GCNConv
     """
 
-    required_extras = "graph"
+    backbones: FlashRegistry = GRAPH_BACKBONES
+
+    required_extras: str = "graph"
 
     def __init__(
         self,
         num_features: int,
         num_classes: int,
-        hidden_channels: Union[List[int], int] = 512,
-        model: torch.nn.Module = None,
+        backbone: Union[str, Tuple[nn.Module, int]] = "GCN",
+        backbone_kwargs: Optional[Dict] = {},
+        pooling_fn: Optional[Union[str, Callable]] = "mean",
+        head: Optional[Union[Callable, nn.Module]] = None,
         loss_fn: LOSS_FN_TYPE = F.cross_entropy,
         learning_rate: float = 1e-3,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: METRICS_TYPE = None,
-        conv_cls: Type[MessagePassing] = GCNConv,
-        **conv_kwargs
     ):
 
         self.save_hyperparameters()
 
-        if isinstance(hidden_channels, int):
-            hidden_channels = [hidden_channels]
-
-        if not model:
-            model = BaseGraphModel(num_features, hidden_channels, num_classes, conv_cls, **conv_kwargs)
-
         super().__init__(
-            model=model,
             loss_fn=loss_fn,
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
         )
+
+        self.save_hyperparameters()
+
+        if isinstance(backbone, tuple):
+            self.backbone, num_out_features = backbone
+        else:
+            self.backbone = self.backbones.get(backbone)(in_channels=num_features, **backbone_kwargs)
+            num_out_features = self.backbone.hidden_channels
+
+        self.pooling_fn = POOLING_FUNCTIONS[pooling_fn] if isinstance(pooling_fn, str) else pooling_fn
+
+        if head is not None:
+            self.head = head
+        else:
+            self.head = DefaultGraphHead(num_out_features, num_classes)
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch, batch.y)
@@ -146,3 +109,25 @@ class GraphClassifier(ClassificationTask):
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
+
+    def forward(self, data) -> torch.Tensor:
+        x = self.backbone(data.x, data.edge_index)
+        x = self.pooling_fn(x, data.batch)
+        return self.head(x)
+
+
+class DefaultGraphHead(torch.nn.Module):
+    def __init__(self, hidden_channels, num_classes, dropout=0.5):
+        super().__init__()
+        self.lin1 = Linear(hidden_channels, hidden_channels)
+        self.lin2 = Linear(hidden_channels, num_classes)
+        self.dropout = dropout
+
+    def reset_parameters(self):
+        self.lin1.reset_parameters()
+        self.lin2.reset_parameters()
+
+    def forward(self, x):
+        x = F.relu(self.lin1(x))
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        return self.lin2(x)

@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import Tuple
 
 from flash.core.data.utils import download_data
 from flash.core.utilities.flash_cli import FlashCLI
@@ -21,9 +22,8 @@ __all__ = ["object_detection"]
 
 def from_coco_128(
     val_split: float = 0.1,
-    batch_size: int = 4,
-    num_workers: int = 0,
-    **preprocess_kwargs,
+    image_size: Tuple[int, int] = (128, 128),
+    **data_module_kwargs,
 ) -> ObjectDetectionData:
     """Downloads and loads the COCO 128 data set."""
     download_data("https://github.com/zhiqwang/yolov5-rt-stack/releases/download/v0.3.0/coco128.zip", "data/")
@@ -31,9 +31,8 @@ def from_coco_128(
         train_folder="data/coco128/images/train2017/",
         train_ann_file="data/coco128/annotations/instances_train2017.json",
         val_split=val_split,
-        batch_size=batch_size,
-        num_workers=num_workers,
-        **preprocess_kwargs,
+        image_size=image_size,
+        **data_module_kwargs,
     )
 
 
