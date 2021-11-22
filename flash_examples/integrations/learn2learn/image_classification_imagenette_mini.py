@@ -90,7 +90,7 @@ model = ImageClassifier(
         "test_queries": 15,
     },
     optimizer=torch.optim.Adam,
-    optimizer_kwargs={"lr": 0.001},
+    learning_rate=0.001,
 )
 
 trainer = flash.Trainer(
