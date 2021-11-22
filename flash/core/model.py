@@ -535,6 +535,15 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             batch = torch.stack(batch)
         return self(batch)
 
+    def modules_to_freeze(self) -> Optional[Union[nn.Module]]:
+        """By default, we try to get the ``backbone`` attribute from the task and return it or ``None`` if not
+        present.
+
+        Returns:
+            The backbone ``Module`` to freeze or ``None`` if this task does not have a ``backbone`` attribute.
+        """
+        return getattr(self, "backbone", None)
+
     def _get_optimizer_class_from_registry(self, optimizer_key: str) -> Optimizer:
         if optimizer_key.lower() not in self.available_optimizers():
             raise KeyError(
