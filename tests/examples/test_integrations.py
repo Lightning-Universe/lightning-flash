@@ -17,7 +17,7 @@ from unittest import mock
 
 import pytest
 
-from flash.core.utilities.imports import _BAAL_AVAILABLE, _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _BAAL_AVAILABLE, _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _LEARN2LEARN_AVAILABLE
 from tests.examples.utils import run_test
 
 root = Path(__file__).parent.parent.parent
@@ -38,6 +38,13 @@ root = Path(__file__).parent.parent.parent
             "baal",
             "image_classification_active_learning.py",
             marks=pytest.mark.skipif(not (_IMAGE_AVAILABLE and _BAAL_AVAILABLE), reason="baal library isn't installed"),
+        ),
+        pytest.param(
+            "learn2learn",
+            "image_classification_imagenette_mini.py",
+            marks=pytest.mark.skipif(
+                not (_IMAGE_AVAILABLE and _LEARN2LEARN_AVAILABLE), reason="learn2learn isn't installed"
+            ),
         ),
     ],
 )
