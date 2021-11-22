@@ -134,3 +134,20 @@ def test_cli():
             main()
         except SystemExit:
             pass
+
+
+@pytest.mark.parametrize("head", ["retinanet"])
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _ICEVISION_AVAILABLE, reason="IceVision is not installed for testing")
+def test_predict(tmpdir, head):
+    model = ObjectDetector(num_classes=2, head=head, pretrained=False)
+    ds = DummyDetectionDataset((128, 128, 3), 1, 2, 10)
+    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
+    dl = model.process_train_dataset(ds, trainer, 2, 0, False, None)
+    trainer.fit(model, dl)
+    dl = model.process_predict_dataset(ds, batch_size=2)
+    predictions = trainer.predict(model, dl)
+    assert len(predictions[0][0]["bboxes"]) > 0
+    model.set_predict_kwargs({"detection_threshold": 2})
+    predictions = trainer.predict(model, dl)
+    assert len(predictions[0][0]["bboxes"]) == 0
