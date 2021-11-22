@@ -40,6 +40,7 @@ class InstanceSegmentation(AdapterTask):
         lr_scheduler: The LR scheduler to use during training.
         learning_rate: The learning rate to use for training.
         output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
+        predict_kwargs: dictionary containing parameters that will be used during the prediction phase.
         **kwargs: additional kwargs used for initializing the task
     """
 
@@ -57,10 +58,12 @@ class InstanceSegmentation(AdapterTask):
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         learning_rate: float = 5e-4,
         output: OUTPUT_TYPE = None,
+        predict_kwargs: Dict = None,
         **kwargs: Any,
     ):
         self.save_hyperparameters()
 
+        predict_kwargs = predict_kwargs if predict_kwargs else {}
         metadata = self.heads.get(head, with_metadata=True)
         adapter = metadata["metadata"]["adapter"].from_task(
             self,
@@ -68,6 +71,7 @@ class InstanceSegmentation(AdapterTask):
             backbone=backbone,
             head=head,
             pretrained=pretrained,
+            predict_kwargs=predict_kwargs,
             **kwargs,
         )
 
@@ -96,3 +100,7 @@ class InstanceSegmentation(AdapterTask):
                 input_transform=InstanceSegmentationInputTransform(),
                 output_transform=InstanceSegmentationOutputTransform(),
             )
+
+    def set_predict_kwargs(self, value):
+        """This function is used to update the kwargs used for the prediction step"""
+        self.adapter.predict_kwargs = value
