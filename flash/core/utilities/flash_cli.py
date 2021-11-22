@@ -26,7 +26,7 @@ from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.utilities.model_helpers import is_overridden
 
 import flash
-from flash import DataModule
+from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import InputFormat
 from flash.core.utilities.lightning_cli import (
     class_from_function,
