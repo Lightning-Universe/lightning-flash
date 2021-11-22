@@ -157,8 +157,6 @@ class FlashBaseFinetuning(BaseFinetuning):
             self._freeze_unfreeze_function(pl_module, epoch, optimizer, opt_idx, self.strategy_metadata)
         elif self.strategy == FinetuningStrategies.UNFREEZE_MILESTONES:
             self._unfreeze_milestones_function(pl_module, epoch, optimizer, opt_idx, self.strategy_metadata)
-        else:
-            pass
 
 
 # Used for properly verifying input and providing neat and helpful error messages for users.
