@@ -71,7 +71,6 @@ datamodule = ImageClassificationData.from_tensors(
     val_targets=torch.from_numpy(val_dataset.y.astype(int)),
     test_data=test_dataset.x,
     test_targets=torch.from_numpy(test_dataset.y.astype(int)),
-    num_workers=4,
     train_transform=train_transform,
 )
 
