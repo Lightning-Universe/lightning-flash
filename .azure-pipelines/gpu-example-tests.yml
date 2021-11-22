@@ -1,9 +1,9 @@
 trigger:
   branches:
-    include: ["main"]
+    include: ["master"]
 pr:
   branches:
-    include: ["main"]
+    include: ["master"]
   autoCancel: true
   drafts: true
 
