@@ -30,7 +30,7 @@ model = SummarizationTask()
 
 # 3. Create the trainer and finetune the model
 trainer = Trainer(max_epochs=3)
-trainer.finetune(model, datamodule=datamodule)
+trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Summarize some text!
 predictions = model.predict(

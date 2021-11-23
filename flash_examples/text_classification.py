@@ -25,7 +25,7 @@ datamodule = TextClassificationData.from_csv(
     "sentiment",
     train_file="data/imdb/train.csv",
     val_file="data/imdb/valid.csv",
-    backbone="prajjwal1/bert-tiny",
+    backbone="prajjwal1/bert-medium",
 )
 
 # 2. Build the task

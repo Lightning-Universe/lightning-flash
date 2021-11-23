@@ -44,6 +44,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Fixed a bug where Flash could not be used with IceVision 0.11.0 ([#989](https://github.com/PyTorchLightning/lightning-flash/pull/989))
 
+- Fixed a bug where backbone weights were sometimes not frozen correctly ([#992](https://github.com/PyTorchLightning/lightning-flash/pull/992))
+
+- Fixed a bug where translation metrics were not computed correctly ([#992](https://github.com/PyTorchLightning/lightning-flash/pull/992))
+
 ### Removed
 
 - Removed `OutputMapping` ([#939](https://github.com/PyTorchLightning/lightning-flash/pull/939))

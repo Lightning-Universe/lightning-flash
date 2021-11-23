@@ -33,7 +33,6 @@ warnings.simplefilter("ignore")
 # download MiniImagenet
 train_dataset = l2l.vision.datasets.MiniImagenet(root="data", mode="train", download=True)
 val_dataset = l2l.vision.datasets.MiniImagenet(root="data", mode="validation", download=True)
-test_dataset = l2l.vision.datasets.MiniImagenet(root="data", mode="test", download=True)
 
 train_transform = {
     "to_tensor_transform": nn.Sequential(
@@ -69,9 +68,6 @@ datamodule = ImageClassificationData.from_tensors(
     train_targets=torch.from_numpy(train_dataset.y.astype(int)),
     val_data=val_dataset.x,
     val_targets=torch.from_numpy(val_dataset.y.astype(int)),
-    test_data=test_dataset.x,
-    test_targets=torch.from_numpy(test_dataset.y.astype(int)),
-    num_workers=4,
     train_transform=train_transform,
 )
 
@@ -90,7 +86,7 @@ model = ImageClassifier(
         "test_queries": 15,
     },
     optimizer=torch.optim.Adam,
-    optimizer_kwargs={"lr": 0.001},
+    learning_rate=0.001,
 )
 
 trainer = flash.Trainer(
