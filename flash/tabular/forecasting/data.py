@@ -62,7 +62,7 @@ class TabularForecastingDataFrameInput(Input):
             parameters = time_series_dataset.get_parameters()
 
             # Add some sample data so that we can recreate the `TimeSeriesDataSet` later on
-            parameters["data_sample"] = data.iloc[[0]]
+            parameters["data_sample"] = data.iloc[[0]].to_dict()
 
             self.set_state(TimeSeriesDataSetParametersState(parameters))
             self.parameters = parameters
