@@ -83,6 +83,11 @@ class KeypointDetector(AdapterTask):
         """This function is used only for debugging usage with CI."""
         # todo
 
-    def set_predict_kwargs(self, value):
-        """This function is used to update the kwargs used for the prediction step."""
-        self.adapter.predict_kwargs = value
+    @property
+    def predict_kwargs(self) -> Dict[str, Any]:
+        """The kwargs used for the prediction step."""
+        return self.adapter.predict_kwargs
+
+    @predict_kwargs.setter
+    def predict_kwargs(self, predict_kwargs: Dict[str, Any]):
+        self.adapter.predict_kwargs = predict_kwargs

@@ -148,6 +148,6 @@ def test_predict(tmpdir, head):
     dl = model.process_predict_dataset(ds, batch_size=2)
     predictions = trainer.predict(model, dl)
     assert len(predictions[0][0]["bboxes"]) > 0
-    model.set_predict_kwargs({"detection_threshold": 2})
+    model.predict_kwargs = {"detection_threshold": 2}
     predictions = trainer.predict(model, dl)
     assert len(predictions[0][0]["bboxes"]) == 0
