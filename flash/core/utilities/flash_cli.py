@@ -211,9 +211,9 @@ class FlashCLI(LightningCLI):
 
     def add_subcommand_from_function(self, subcommands, function, function_name=None):
         subcommand = ArgumentParser()
-        datamodule_function = class_from_function(drop_kwargs(function), return_type=self.local_datamodule_class)
-        subcommand.add_class_arguments(datamodule_function, fail_untyped=False)
         if self.legacy:
+            datamodule_function = class_from_function(drop_kwargs(function), return_type=self.local_datamodule_class)
+            subcommand.add_class_arguments(datamodule_function, fail_untyped=False)
             input_transform_function = class_from_function(drop_kwargs(self.local_datamodule_class.input_transform_cls))
             subcommand.add_class_arguments(
                 input_transform_function,
@@ -221,12 +221,8 @@ class FlashCLI(LightningCLI):
                 skip=get_overlapping_args(datamodule_function, input_transform_function),
             )
         else:
-            base_datamodule_function = class_from_function(drop_kwargs(self.local_datamodule_class))
-            subcommand.add_class_arguments(
-                base_datamodule_function,
-                fail_untyped=False,
-                skip=get_overlapping_args(datamodule_function, base_datamodule_function),
-            )
+            datamodule_function = class_from_function(function, return_type=self.local_datamodule_class)
+            subcommand.add_class_arguments(datamodule_function, fail_untyped=False)
         subcommand_name = function_name or function.__name__
         subcommands.add_subcommand(subcommand_name, subcommand)
         self._subcommand_builders[subcommand_name] = function
