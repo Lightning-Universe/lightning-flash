@@ -73,8 +73,7 @@ class SentenceEmbedder(Task):
         warnings.simplefilter("ignore")
         # set os environ variable for multiprocesses
         os.environ["PYTHONWARNINGS"] = "ignore"
-        super().__init__(
-        )
+        super().__init__()
         self.model = self.backbones.get(backbone)()
 
     def generate_embeddings(
