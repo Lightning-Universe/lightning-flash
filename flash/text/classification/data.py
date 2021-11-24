@@ -259,7 +259,7 @@ class TextClassificationInputTransform(InputTransform):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        backbone: str = "prajjwal1/bert-tiny",
+        backbone: str = "prajjwal1/bert-medium",
         max_length: int = 128,
     ):
         self.backbone = backbone

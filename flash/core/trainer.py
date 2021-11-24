@@ -85,6 +85,9 @@ class Trainer(PlTrainer):
                 kwargs["fast_dev_run"] = False
             else:
                 kwargs["fast_dev_run"] = True
+                kwargs["gpus"] = None
+                kwargs["accelerator"] = None
+                kwargs["precision"] = 32
         super().__init__(*args, **kwargs)
 
         self.serve_sanity_check = serve_sanity_check
