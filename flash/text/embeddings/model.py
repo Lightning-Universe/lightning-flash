@@ -65,13 +65,6 @@ class SentenceEmbedder(Task):
     def __init__(
         self,
         backbone: str = "all-MiniLM-L6-v2",
-        loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
-        optimizer: Type[torch.optim.Optimizer] = torch.optim.Adam,
-        optimizer_kwargs: Optional[Dict[str, Any]] = None,
-        scheduler: Optional[Union[Type[_LRScheduler], str, _LRScheduler]] = None,
-        scheduler_kwargs: Optional[Dict[str, Any]] = None,
-        metrics: Union[Metric, Callable, Mapping, Sequence, None] = None,
-        learning_rate: float = 5e-5,
         enable_ort: bool = False,
     ):
 
@@ -81,13 +74,6 @@ class SentenceEmbedder(Task):
         # set os environ variable for multiprocesses
         os.environ["PYTHONWARNINGS"] = "ignore"
         super().__init__(
-            loss_fn=loss_fn,
-            optimizer=optimizer,
-            optimizer_kwargs=optimizer_kwargs,
-            scheduler=scheduler,
-            scheduler_kwargs=scheduler_kwargs,
-            metrics=metrics,
-            learning_rate=learning_rate,
         )
         self.model = self.backbones.get(backbone)()
 
