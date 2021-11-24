@@ -104,33 +104,6 @@ class SentenceEmbedder(Task):
     def backbone(self):
         return self.model.base_model
 
-    def training_step(self, batch: Any, batch_idx: int) -> Any:
-        """For the training step, we just extract the :attr:`~flash.core.data.data_source.DefaultDataKeys.INPUT` and
-        :attr:`~flash.core.data.data_source.DefaultDataKeys.TARGET` keys from the input and forward them to the
-        :meth:`~flash.core.model.Task.training_step`."""
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
-        return super().training_step(batch, batch_idx)
-
-    def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        """For the validation step, we just extract the :attr:`~flash.core.data.data_source.DefaultDataKeys.INPUT` and
-        :attr:`~flash.core.data.data_source.DefaultDataKeys.TARGET` keys from the input and forward them to the
-        :meth:`~flash.core.model.Task.validation_step`."""
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
-        return super().validation_step(batch, batch_idx)
-
-    def test_step(self, batch: Any, batch_idx: int) -> Any:
-        """For the test step, we just extract the :attr:`~flash.core.data.data_source.DefaultDataKeys.INPUT` and
-        :attr:`~flash.core.data.data_source.DefaultDataKeys.TARGET` keys from the input and forward them to the
-        :meth:`~flash.core.model.Task.test_step`."""
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
-        return super().test_step(batch, batch_idx)
-
-    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        """For the predict step, we just extract the :attr:`~flash.core.data.data_source.DefaultDataKeys.INPUT` key
-        from the input and forward it to the :meth:`~flash.core.model.Task.predict_step`."""
-        batch = batch[DefaultDataKeys.INPUT]
-        return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
-
     def forward(self, x) -> torch.Tensor:
         """First call the backbone, then the model head."""
         x = self.backbone(x)
