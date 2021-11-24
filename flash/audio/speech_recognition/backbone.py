@@ -20,7 +20,7 @@ from flash.core.utilities.providers import _FAIRSEQ, _HUGGINGFACE
 SPEECH_RECOGNITION_BACKBONES = FlashRegistry("backbones")
 
 if _AUDIO_AVAILABLE:
-    from transformers import Wav2Vec2ForCTC
+    from transformers import AutoModelForCTC, Wav2Vec2ForCTC
 
     WAV2VEC_MODELS = ["facebook/wav2vec2-base-960h", "facebook/wav2vec2-large-960h-lv60"]
 
@@ -31,6 +31,6 @@ if _AUDIO_AVAILABLE:
             providers=[_HUGGINGFACE, _FAIRSEQ],
         )
 
-    HUGGINGFACE_BACKBONES = ExternalRegistry(Wav2Vec2ForCTC.from_pretrained, "backbones", providers=_HUGGINGFACE)
+    HUGGINGFACE_BACKBONES = ExternalRegistry(AutoModelForCTC.from_pretrained, "backbones", providers=_HUGGINGFACE)
 
     SPEECH_RECOGNITION_BACKBONES += HUGGINGFACE_BACKBONES
