@@ -380,7 +380,7 @@ class SequenceInput(
     Generic[SEQUENCE_DATA_TYPE],
     Input[Tuple[Sequence[SEQUENCE_DATA_TYPE], Optional[Sequence]]],
 ):
-    """The ``ClassificationInput`` implements default behaviours for data sources which expect the input to
+    """The ``SequenceInput`` implements default behaviours for data sources which expect the input to
     :meth:`~flash.core.data.io.input.Input.load_data` to be a sequence of tuples (``(input, target)``
     where target can be ``None``).
 
@@ -628,7 +628,7 @@ class LoaderDataFrameInput(Input[Tuple[pd.DataFrame, str, Union[str, List[str]],
 
 
 class TensorInput(SequenceInput[torch.Tensor]):
-    """The ``TensorInput`` is a ``ClassificationInput`` which expects the input to
+    """The ``TensorInput`` is a ``SequenceInput`` which expects the input to
     :meth:`~flash.core.data.io.input.Input.load_data` to be a sequence of ``torch.Tensor`` objects."""
 
     def load_data(
@@ -643,7 +643,7 @@ class TensorInput(SequenceInput[torch.Tensor]):
 
 
 class NumpyInput(SequenceInput[np.ndarray]):
-    """The ``NumpyInput`` is a ``ClassificationInput`` which expects the input to
+    """The ``NumpyInput`` is a ``SequenceInput`` which expects the input to
     :meth:`~flash.core.data.io.input.Input.load_data` to be a sequence of ``np.ndarray`` objects."""
 
 
