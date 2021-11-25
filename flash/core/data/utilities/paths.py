@@ -149,7 +149,7 @@ def filter_valid_files(
         The filtered lists.
     """
     if valid_extensions is None:
-        return files, *additional_lists
+        return (files,) + additional_lists
     filtered = list(
         filter(lambda sample: has_file_allowed_extension(sample[0], valid_extensions), zip(files, *additional_lists))
     )
