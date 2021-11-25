@@ -13,13 +13,15 @@
 # limitations under the License.
 import os
 import warnings
-from typing import Any, Callable, cast, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, cast, Dict, List, Optional, Tuple, TypeVar, Union
 
 import pandas as pd
 
 from flash.core.utilities.imports import _PANDAS_GREATER_EQUAL_1_3_0
 
 PATH_TYPE = Union[str, bytes, os.PathLike]
+
+T = TypeVar("T")
 
 
 # adapted from torchvision:
@@ -97,19 +99,16 @@ def isdir(path: Any) -> bool:
         return False
 
 
-def find_classes(dir: PATH_TYPE) -> Tuple[List[str], Dict[str, int]]:
-    """Finds the class folders in a dataset. Ensures that no class is a subdirectory of another.
+def list_subdirs(dir: PATH_TYPE) -> List[str]:
+    """List the subdirectories of a given directory.
 
     Args:
-        dir: Root directory path.
+        dir: The directory to scan.
 
     Returns:
-        (classes, class_to_idx) where classes are relative to (dir), and class_to_idx is a dictionary.
+        The list of subdirectories.
     """
-    classes = [d.name for d in os.scandir(str(dir)) if d.is_dir()]
-    classes.sort()
-    class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}
-    return classes, class_to_idx
+    return [d.name for d in os.scandir(str(dir)) if d.is_dir()]
 
 
 def list_valid_files(
@@ -132,12 +131,29 @@ def list_valid_files(
 
     if valid_extensions is None:
         return paths
-    return list(
-        filter(
-            lambda file: has_file_allowed_extension(file, valid_extensions),
-            paths,
-        )
+    return [path for path in paths if has_file_allowed_extension(path, valid_extensions)]
+
+
+def filter_valid_files(
+    files: List[PATH_TYPE], *additional_lists: List[Any], valid_extensions: Optional[Tuple[str, ...]] = None
+) -> Tuple[List[Any], ...]:
+    """Filter the given list of files and any additional lists to include only the entries that contain a file with
+    a valid extension.
+
+    Args:
+        files: The list of files to filter by.
+        additional_lists: Any additional lists to be filtered together with files.
+        valid_extensions: The tuple of valid file extensions.
+
+    Returns:
+        The filtered lists.
+    """
+    if valid_extensions is None:
+        return files, *additional_lists
+    filtered = list(
+        filter(lambda sample: has_file_allowed_extension(sample[0], valid_extensions), zip(files, *additional_lists))
     )
+    return tuple(zip(*filtered))
 
 
 def read_csv(file: PATH_TYPE) -> pd.DataFrame:

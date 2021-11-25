@@ -140,7 +140,7 @@ ________________
     :template: classtemplate.rst
 
     ~data.ImageDeserializer
-    ~data.ImageFiftyOneInput
+    ~data.ImageClassificationFiftyOneInput
     ~data.ImageNumpyInput
     ~data.ImagePathsInput
     ~data.ImageTensorInput

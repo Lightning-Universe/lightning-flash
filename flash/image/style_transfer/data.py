@@ -23,7 +23,8 @@ from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 from flash.image.classification import ImageClassificationData
-from flash.image.data import ImageNumpyInput, ImagePathsInput, ImageTensorInput
+from flash.image.classification.data import ImageClassificationFilesInput, ImageClassificationFolderInput
+from flash.image.data import ImageNumpyInput, ImageTensorInput
 from flash.image.style_transfer.utils import raise_not_supported
 
 if _TORCHVISION_AVAILABLE:
@@ -71,11 +72,10 @@ class StyleTransferInputTransform(InputTransform):
             test_transform=test_transform,
             predict_transform=predict_transform,
             inputs={
-                InputFormat.FILES: ImagePathsInput(),
-                InputFormat.FOLDERS: ImagePathsInput(),
-                InputFormat.NUMPY: ImageNumpyInput(),
-                InputFormat.TENSORS: ImageTensorInput(),
-                InputFormat.TENSORS: ImageTensorInput(),
+                InputFormat.FILES: ImageClassificationFilesInput,
+                InputFormat.FOLDERS: ImageClassificationFolderInput,
+                InputFormat.NUMPY: ImageNumpyInput,
+                InputFormat.TENSORS: ImageTensorInput,
             },
             default_input=InputFormat.FILES,
         )

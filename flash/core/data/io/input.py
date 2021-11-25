@@ -46,6 +46,7 @@ from tqdm import tqdm
 
 from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
 from flash.core.data.properties import ProcessState, Properties
+from flash.core.data.utilities.labels import LabelDetails
 from flash.core.data.utilities.paths import read_csv
 from flash.core.data.utils import CurrentRunningStageFuncContext
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
@@ -141,6 +142,11 @@ class LabelsState(ProcessState):
     label."""
 
     labels: Optional[Sequence[str]]
+    is_multilabel: Optional[bool] = None
+
+    @classmethod
+    def from_label_details(cls, label_details: LabelDetails):
+        return cls(label_details.labels, is_multilabel=label_details.is_multilabel)
 
 
 @dataclass(unsafe_hash=True, frozen=True)
@@ -374,7 +380,7 @@ class SequenceInput(
     Generic[SEQUENCE_DATA_TYPE],
     Input[Tuple[Sequence[SEQUENCE_DATA_TYPE], Optional[Sequence]]],
 ):
-    """The ``SequenceInput`` implements default behaviours for data sources which expect the input to
+    """The ``ClassificationInput`` implements default behaviours for data sources which expect the input to
     :meth:`~flash.core.data.io.input.Input.load_data` to be a sequence of tuples (``(input, target)``
     where target can be ``None``).
 
@@ -622,7 +628,7 @@ class LoaderDataFrameInput(Input[Tuple[pd.DataFrame, str, Union[str, List[str]],
 
 
 class TensorInput(SequenceInput[torch.Tensor]):
-    """The ``TensorInput`` is a ``SequenceInput`` which expects the input to
+    """The ``TensorInput`` is a ``ClassificationInput`` which expects the input to
     :meth:`~flash.core.data.io.input.Input.load_data` to be a sequence of ``torch.Tensor`` objects."""
 
     def load_data(
@@ -637,7 +643,7 @@ class TensorInput(SequenceInput[torch.Tensor]):
 
 
 class NumpyInput(SequenceInput[np.ndarray]):
-    """The ``NumpyInput`` is a ``SequenceInput`` which expects the input to
+    """The ``NumpyInput`` is a ``ClassificationInput`` which expects the input to
     :meth:`~flash.core.data.io.input.Input.load_data` to be a sequence of ``np.ndarray`` objects."""
 
 

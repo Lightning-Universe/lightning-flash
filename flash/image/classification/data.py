@@ -18,29 +18,98 @@ import pandas as pd
 import torch
 from torch.utils.data.sampler import Sampler
 
-from flash.core.data.base_viz import BaseVisualization  # for viz
+from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import DataKeys, InputFormat, LoaderDataFrameInput
+from flash.core.data.io.classification_input import ClassificationInput
+from flash.core.data.io.input import DataKeys, InputFormat, LabelsState, LoaderDataFrameInput
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.process import Deserializer
+from flash.core.data.utilities.labels import get_label_details, LabelDetails
+from flash.core.data.utilities.paths import filter_valid_files, list_subdirs, list_valid_files, make_dataset, PATH_TYPE
+from flash.core.data.utils import image_default_loader
+from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
 from flash.core.integrations.labelstudio.input import LabelStudioImageClassificationInput
 from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, Image, requires
 from flash.core.utilities.stages import RunningStage
 from flash.image.classification.transforms import default_transforms, train_default_transforms
 from flash.image.data import (
+    fol,
     image_loader,
     ImageDeserializer,
-    ImageFiftyOneInput,
+    ImageInput,
     ImageNumpyInput,
-    ImagePathsInput,
     ImageTensorInput,
+    IMG_EXTENSIONS,
+    NP_EXTENSIONS,
+    SampleCollection,
 )
 
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
 else:
     plt = None
+
+
+class ImageClassificationFiftyOneInput(ClassificationInput):
+    @requires("fiftyone")
+    def load_data(self, sample_collection: SampleCollection, label_field: str = "ground_truth") -> List[Dict[str, Any]]:
+        label_utilities = FiftyOneLabelUtilities(label_field, fol.Label)
+        label_utilities.validate(sample_collection)
+
+        label_path = sample_collection._get_label_field_path(label_field, "label")[1]
+
+        filepaths = sample_collection.values("filepath")
+        targets = sample_collection.values(label_path)
+
+        return super().load_data(filepaths, targets)
+
+    @staticmethod
+    @requires("fiftyone")
+    def predict_load_data(data: SampleCollection) -> List[Dict[str, Any]]:
+        return super().load_data(data.values("filepath"))
+
+    @staticmethod
+    def load_sample(sample: Dict[str, Any]) -> Dict[str, Any]:
+        img_path = sample[DataKeys.INPUT]
+        img = image_default_loader(img_path)
+        sample[DataKeys.INPUT] = img
+        w, h = img.size  # WxH
+        sample[DataKeys.METADATA] = {
+            "filepath": img_path,
+            "size": (h, w),
+        }
+        return sample
+
+
+class ImageClassificationFolderInput(ImageInput):
+    def load_data(self, folder: PATH_TYPE) -> List[Dict[str, Any]]:
+        subdirs = list_subdirs(folder)
+
+        label_details = get_label_details(subdirs)
+        self.set_state(LabelsState.from_label_details(label_details))
+        self.num_classes = label_details.num_classes
+
+        dataset = make_dataset(folder, label_details.label_to_idx, extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
+        return [{DataKeys.INPUT: input, DataKeys.TARGET: target} for input, target in dataset]
+
+    def predict_load_data(self, folder: PATH_TYPE) -> List[Dict[str, Any]]:
+        return [{DataKeys.INPUT: file} for file in list_valid_files(folder, IMG_EXTENSIONS + NP_EXTENSIONS)]
+
+
+class ImageClassificationFilesInput(ClassificationInput, ImageInput):
+    def load_data(
+        self,
+        files: List[PATH_TYPE],
+        targets: Optional[List[Any]] = None,
+        label_details: Optional[LabelDetails] = None,
+    ) -> List[Dict[str, Any]]:
+        if targets is None:
+            files = filter_valid_files(files, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
+        else:
+            files, targets = filter_valid_files(files, targets, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
+
+        return super(ClassificationInput).load_data(files, targets)
 
 
 class ImageClassificationDataFrameInput(LoaderDataFrameInput):
@@ -55,6 +124,14 @@ class ImageClassificationDataFrameInput(LoaderDataFrameInput):
         return sample
 
 
+class ImageClassificationTensorInput(ImageTensorInput, ClassificationInput):
+    """"""
+
+
+class ImageClassificationNumpyInput(ImageNumpyInput, ClassificationInput):
+    """"""
+
+
 class ImageClassificationInputTransform(InputTransform):
     """Preprocssing of data of image classification.
 
@@ -65,7 +142,6 @@ class ImageClassificationInputTransform(InputTransform):
         predict_transform:
         image_size: tuple with the (heigh, width) of the images
         deserializer:
-        input_kwargs: Additional kwargs for the data source initializer
     """
 
     def __init__(
@@ -76,7 +152,6 @@ class ImageClassificationInputTransform(InputTransform):
         predict_transform: Optional[Dict[str, Callable]] = None,
         image_size: Tuple[int, int] = (196, 196),
         deserializer: Optional[Deserializer] = None,
-        **input_kwargs: Any,
     ):
         self.image_size = image_size
 
@@ -86,11 +161,11 @@ class ImageClassificationInputTransform(InputTransform):
             test_transform=test_transform,
             predict_transform=predict_transform,
             inputs={
-                InputFormat.FIFTYONE: ImageFiftyOneInput(**input_kwargs),
-                InputFormat.FILES: ImagePathsInput(),
-                InputFormat.FOLDERS: ImagePathsInput(),
-                InputFormat.NUMPY: ImageNumpyInput(),
-                InputFormat.TENSORS: ImageTensorInput(),
+                InputFormat.FIFTYONE: ImageClassificationFiftyOneInput,
+                InputFormat.FILES: ImageClassificationFilesInput,
+                InputFormat.FOLDERS: ImageClassificationFolderInput,
+                InputFormat.NUMPY: ImageClassificationNumpyInput,
+                InputFormat.TENSORS: ImageClassificationTensorInput,
                 "data_frame": ImageClassificationDataFrameInput(),
                 InputFormat.CSV: ImageClassificationDataFrameInput(),
                 InputFormat.LABELSTUDIO: LabelStudioImageClassificationInput(),
