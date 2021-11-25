@@ -99,7 +99,7 @@ ___________________________
     ~flash.core.data.io.input.MockDataset
     ~flash.core.data.io.input.NumpyInput
     ~flash.core.data.io.input.PathsInput
-    ~flash.core.data.io.input.ClassificationInput
+    ~flash.core.data.io.input.SequenceInput
     ~flash.core.data.io.input.TensorInput
 
 .. autosummary::
