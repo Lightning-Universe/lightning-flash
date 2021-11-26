@@ -45,9 +45,9 @@ from torch.utils.data.dataset import Dataset
 from tqdm import tqdm
 
 from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
+from flash.core.data.io.classification_input import ClassificationState
 from flash.core.data.properties import ProcessState, Properties
-from flash.core.data.utilities.labels import LabelDetails
-from flash.core.data.utilities.paths import read_csv
+from flash.core.data.utilities.data_frame import read_csv
 from flash.core.data.utils import CurrentRunningStageFuncContext
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 from flash.core.utilities.stages import RunningStage
@@ -73,7 +73,7 @@ def has_file_allowed_extension(filename: str, extensions: Tuple[str, ...]) -> bo
     Returns:
         bool: True if the filename ends with one of given extensions
     """
-    return filename.lower().endswith(extensions)
+    return str(filename).lower().endswith(extensions)
 
 
 # Credit to the PyTorchVision Team:
@@ -134,19 +134,6 @@ def has_len(data: Union[Sequence[Any], Iterable[Any]]) -> bool:
         return True
     except (TypeError, NotImplementedError):
         return False
-
-
-@dataclass(unsafe_hash=True, frozen=True)
-class LabelsState(ProcessState):
-    """A :class:`~flash.core.data.properties.ProcessState` containing ``labels``, a mapping from class index to
-    label."""
-
-    labels: Optional[Sequence[str]]
-    is_multilabel: Optional[bool] = None
-
-    @classmethod
-    def from_label_details(cls, label_details: LabelDetails):
-        return cls(label_details.labels, is_multilabel=label_details.is_multilabel)
 
 
 @dataclass(unsafe_hash=True, frozen=True)
@@ -367,7 +354,7 @@ class DatasetInput(Input[Dataset]):
 
     Args:
         labels: Optionally pass the labels as a mapping from class index to label string. These will then be set as the
-            :class:`~flash.core.data.io.input.LabelsState`.
+            :class:`~flash.core.data.io.input.ClassificationState`.
     """
 
     def load_sample(self, sample: Any, dataset: Optional[Any] = None) -> Mapping[str, Any]:
@@ -386,7 +373,7 @@ class SequenceInput(
 
     Args:
         labels: Optionally pass the labels as a mapping from class index to label string. These will then be set as the
-            :class:`~flash.core.data.io.input.LabelsState`.
+            :class:`~flash.core.data.io.input.ClassificationState`.
     """
 
     def __init__(self, labels: Optional[Sequence[str]] = None):
@@ -395,7 +382,7 @@ class SequenceInput(
         self.labels = labels
 
         if self.labels is not None:
-            self.set_state(LabelsState(self.labels))
+            self.set_state(ClassificationState(self.labels))
 
     def load_data(
         self,
@@ -421,7 +408,7 @@ class PathsInput(SequenceInput):
     Args:
         extensions: The file extensions supported by this data source (e.g. ``(".jpg", ".png")``).
         labels: Optionally pass the labels as a mapping from class index to label string. These will then be set as the
-            :class:`~flash.core.data.io.input.LabelsState`.
+            :class:`~flash.core.data.io.input.ClassificationState`.
     """
 
     def __init__(
@@ -465,7 +452,7 @@ class PathsInput(SequenceInput):
             classes, class_to_idx = self.find_classes(data)
             if not classes:
                 return self.predict_load_data(data)
-            self.set_state(LabelsState(classes))
+            self.set_state(ClassificationState(classes))
 
             if dataset is not None:
                 dataset.num_classes = len(classes)
@@ -583,7 +570,7 @@ class LoaderDataFrameInput(Input[Tuple[pd.DataFrame, str, Union[str, List[str]],
             if isinstance(target_keys, List):
                 dataset.multi_label = True
                 dataset.num_classes = len(target_keys)
-                self.set_state(LabelsState(target_keys))
+                self.set_state(ClassificationState(target_keys))
                 data_frame = data_frame.apply(partial(self._resolve_multi_target, target_keys), axis=1)
                 target_keys = target_keys[0]
             else:
@@ -591,9 +578,9 @@ class LoaderDataFrameInput(Input[Tuple[pd.DataFrame, str, Union[str, List[str]],
                 if self.training:
                     labels = list(sorted(data_frame[target_keys].unique()))
                     dataset.num_classes = len(labels)
-                    self.set_state(LabelsState(labels))
+                    self.set_state(ClassificationState(labels))
 
-                labels = self.get_state(LabelsState)
+                labels = self.get_state(ClassificationState)
 
                 if labels is not None:
                     labels = labels.labels

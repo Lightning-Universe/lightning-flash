@@ -12,12 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-import warnings
-from typing import Any, Callable, cast, Dict, List, Optional, Tuple, TypeVar, Union
-
-import pandas as pd
-
-from flash.core.utilities.imports import _PANDAS_GREATER_EQUAL_1_3_0
+from typing import Any, Callable, cast, List, Optional, Tuple, TypeVar, Union
 
 PATH_TYPE = Union[str, bytes, os.PathLike]
 
@@ -39,19 +34,17 @@ def has_file_allowed_extension(filename: PATH_TYPE, extensions: Tuple[str, ...])
     return str(filename).lower().endswith(extensions)
 
 
-# Copied from torchvision:
+# Adapted from torchvision:
 # https://github.com/pytorch/vision/blob/master/torchvision/datasets/folder.py#L48
 def make_dataset(
     directory: PATH_TYPE,
-    class_to_idx: Dict[str, int],
     extensions: Optional[Tuple[str, ...]] = None,
     is_valid_file: Optional[Callable[[str], bool]] = None,
-) -> List[Tuple[str, int]]:
+) -> Tuple[List[str], List[str]]:
     """Generates a list of samples of a form (path_to_sample, class).
 
     Args:
         directory (str): root dataset directory
-        class_to_idx (Dict[str, int]): dictionary mapping class name to class index
         extensions (optional): A list of allowed extensions.
             Either extensions or is_valid_file should be passed. Defaults to None.
         is_valid_file (optional): A function that takes path of a file
@@ -63,9 +56,9 @@ def make_dataset(
         ValueError: In case ``extensions`` and ``is_valid_file`` are None or both are not None.
 
     Returns:
-        List[Tuple[str, int]]: samples of a form (path_to_sample, class)
+        (files, targets) Tuple containing the list of files and corresponding list of targets.
     """
-    instances = []
+    files, targets = [], []
     directory = os.path.expanduser(str(directory))
     both_none = extensions is None and is_valid_file is None
     both_something = extensions is not None and is_valid_file is not None
@@ -77,8 +70,7 @@ def make_dataset(
             return has_file_allowed_extension(x, cast(Tuple[str, ...], extensions))
 
     is_valid_file = cast(Callable[[str], bool], is_valid_file)
-    for target_class in sorted(class_to_idx.keys()):
-        class_index = class_to_idx[target_class]
+    for target_class in list_subdirs(directory):
         target_dir = os.path.join(directory, target_class)
         if not os.path.isdir(target_dir):
             continue
@@ -86,9 +78,9 @@ def make_dataset(
             for fname in sorted(fnames):
                 path = os.path.join(root, fname)
                 if is_valid_file(path):
-                    item = path, class_index
-                    instances.append(item)
-    return instances
+                    files.append(path)
+                    targets.append(target_class)
+    return files, targets
 
 
 def isdir(path: Any) -> bool:
@@ -136,7 +128,7 @@ def list_valid_files(
 
 def filter_valid_files(
     files: List[PATH_TYPE], *additional_lists: List[Any], valid_extensions: Optional[Tuple[str, ...]] = None
-) -> Tuple[List[Any], ...]:
+) -> Union[List[Any], Tuple[List[Any], ...]]:
     """Filter the given list of files and any additional lists to include only the entries that contain a file with
     a valid extension.
 
@@ -153,23 +145,6 @@ def filter_valid_files(
     filtered = list(
         filter(lambda sample: has_file_allowed_extension(sample[0], valid_extensions), zip(files, *additional_lists))
     )
-    return tuple(zip(*filtered))
-
-
-def read_csv(file: PATH_TYPE) -> pd.DataFrame:
-    """A wrapper for ``pd.read_csv`` which tries to handle errors gracefully.
-
-    Args:
-        file: The CSV file to read.
-
-    Returns:
-        A ``DataFrame`` containing the contents of the file.
-    """
-    try:
-        return pd.read_csv(file, encoding="utf-8")
-    except UnicodeDecodeError:
-        warnings.warn("A UnicodeDecodeError was raised when reading the CSV. This error will be ignored.")
-        if _PANDAS_GREATER_EQUAL_1_3_0:
-            return pd.read_csv(file, encoding="utf-8", encoding_errors="ignore")
-        else:
-            return pd.read_csv(file, encoding=None, engine="python")
+    if len(additional_lists) > 0:
+        return tuple(zip(*filtered))
+    return [f[0] for f in filtered]

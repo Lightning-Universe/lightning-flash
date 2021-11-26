@@ -14,6 +14,7 @@
 import functools
 import os
 import sys
+from copy import copy
 from typing import Any, cast, Dict, Iterable, MutableMapping, Optional, Sequence, Tuple, Union
 
 from torch.utils.data import Dataset
@@ -147,7 +148,7 @@ class InputBase(Properties, metaclass=_InputMeta):
                 InputBase,
             ),
         )
-        return load_sample(sample)
+        return load_sample(copy(sample))
 
     @staticmethod
     def load_data(*args: Any, **kwargs: Any) -> Union[Sequence, Iterable]:

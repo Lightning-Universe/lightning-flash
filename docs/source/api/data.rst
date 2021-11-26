@@ -95,7 +95,7 @@ ___________________________
     ~flash.core.data.io.input.InputFormat
     ~flash.core.data.io.input.FiftyOneInput
     ~flash.core.data.io.input.ImageLabelsMap
-    ~flash.core.data.io.input.LabelsState
+    ~flash.core.data.io.input.ClassificationState
     ~flash.core.data.io.input.MockDataset
     ~flash.core.data.io.input.NumpyInput
     ~flash.core.data.io.input.PathsInput

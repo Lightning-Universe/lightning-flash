@@ -15,7 +15,8 @@ from typing import Any, Dict, List, Optional, TYPE_CHECKING, Union
 
 from pytorch_lightning.utilities import rank_zero_warn
 
-from flash.core.data.io.input import DataKeys, LabelsState
+from flash.core.data.io.classification_input import ClassificationState
+from flash.core.data.io.input import DataKeys
 from flash.core.data.io.output import Output
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 
@@ -33,7 +34,7 @@ class FiftyOneDetectionLabels(Output):
 
     Args:
         labels: A list of labels, assumed to map the class index to the label for that class. If ``labels`` is not
-            provided, will attempt to get them from the :class:`.LabelsState`.
+            provided, will attempt to get them from the :class:`.ClassificationState`.
         threshold: a score threshold to apply to candidate detections.
         return_filepath: Boolean determining whether to return a dict
             containing filepath and FiftyOne labels (True) or only a
@@ -53,7 +54,7 @@ class FiftyOneDetectionLabels(Output):
         self.return_filepath = return_filepath
 
         if labels is not None:
-            self.set_state(LabelsState(labels))
+            self.set_state(ClassificationState(labels))
 
     def transform(self, sample: Dict[str, Any]) -> Union[Detections, Dict[str, Any]]:
         if DataKeys.METADATA not in sample:
@@ -63,11 +64,13 @@ class FiftyOneDetectionLabels(Output):
         if self._labels is not None:
             labels = self._labels
         else:
-            state = self.get_state(LabelsState)
+            state = self.get_state(ClassificationState)
             if state is not None:
                 labels = state.labels
             else:
-                rank_zero_warn("No LabelsState was found, int targets will be used as label strings", UserWarning)
+                rank_zero_warn(
+                    "No ClassificationState was found, int targets will be used as label strings", UserWarning
+                )
 
         height, width = sample[DataKeys.METADATA]["size"]
 

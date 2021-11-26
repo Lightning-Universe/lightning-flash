@@ -14,7 +14,6 @@
 from typing import Any, Dict, List, Optional, TypeVar
 
 from flash.core.data.io.input import DataKeys
-from flash.core.data.utilities.labels import LabelDetails
 
 T = TypeVar("T")
 
@@ -32,18 +31,3 @@ def to_samples(inputs: List[Any], targets: Optional[List[Any]] = None) -> List[D
     if targets is None:
         return [{DataKeys.INPUT: input} for input in inputs]
     return [{DataKeys.INPUT: input, DataKeys.TARGET: target} for input, target in zip(inputs, targets)]
-
-
-def format_targets(samples: List[Dict[str, Any]], label_details: LabelDetails) -> List[Dict[str, Any]]:
-    """Use the provided ``LabelDetails`` to format all of the targets in the given list of samples.
-
-    Args:
-        samples: The list of samples containing targets to format.
-        label_details: The ``LabelDetails`` to format targets with.
-
-    Returns:
-        The list of samples with formatted targets.
-    """
-    for sample in samples:
-        sample[DataKeys.TARGET] = label_details.format_target(sample[DataKeys.TARGET])
-    return samples

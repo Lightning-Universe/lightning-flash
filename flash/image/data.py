@@ -20,9 +20,10 @@ import numpy as np
 import torch
 
 import flash
-from flash.core.data.io.input import DataKeys, has_file_allowed_extension
+from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_base import Input
 from flash.core.data.process import Deserializer
+from flash.core.data.utilities.paths import has_file_allowed_extension
 from flash.core.data.utils import image_default_loader
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _TORCHVISION_AVAILABLE, Image, lazy_import, requires
 
@@ -77,23 +78,30 @@ class ImageInput(Input):
     @requires("image")
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         w, h = sample[DataKeys.INPUT].size  # WxH
+        if DataKeys.METADATA not in sample:
+            sample[DataKeys.METADATA] = {}
         sample[DataKeys.METADATA]["size"] = (h, w)
         return sample
 
 
-class ImageTensorInput(Input):
+class ImageFilesInput(ImageInput):
+    def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+        filepath = sample[DataKeys.INPUT]
+        sample[DataKeys.INPUT] = image_loader(filepath)
+        sample = super().load_sample(sample)
+        sample[DataKeys.METADATA]["filepath"] = filepath
+        return sample
+
+
+class ImageTensorInput(ImageInput):
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         img = to_pil_image(sample[DataKeys.INPUT])
         sample[DataKeys.INPUT] = img
-        w, h = img.size  # WxH
-        sample[DataKeys.METADATA] = {"size": (h, w)}
-        return sample
+        return super().load_sample(sample)
 
 
-class ImageNumpyInput(Input):
+class ImageNumpyInput(ImageInput):
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         img = to_pil_image(torch.from_numpy(sample[DataKeys.INPUT]))
         sample[DataKeys.INPUT] = img
-        w, h = img.size  # WxH
-        sample[DataKeys.METADATA] = {"size": (h, w)}
-        return sample
+        return super().load_sample(sample)

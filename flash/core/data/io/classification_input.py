@@ -11,27 +11,68 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
+from functools import lru_cache
+from typing import Any, List, Optional, Sequence
 
-from flash.core.data.io.input import LabelsState
 from flash.core.data.io.input_base import Input
-from flash.core.data.utilities.labels import get_label_details, LabelDetails
-from flash.core.data.utilities.samples import format_targets, to_samples
+from flash.core.data.properties import ProcessState
+from flash.core.data.utilities.classification import (
+    get_target_details,
+    get_target_formatter,
+    get_target_mode,
+    TargetFormatter,
+)
+
+
+@dataclass(unsafe_hash=True)
+class ClassificationState(ProcessState):
+    """A :class:`~flash.core.data.properties.ProcessState` containing ``labels`` (a mapping from class index to
+    label) and ``num_classes``."""
+
+    labels: Optional[Sequence[str]]
+    num_classes: Optional[int] = None
 
 
 class ClassificationInput(Input):
-    def load_data(
-        self, inputs: List[Any], targets: Optional[List[Any]] = None, label_details: Optional[LabelDetails] = None
-    ) -> List[Dict[str, Any]]:
-        samples = to_samples(inputs, targets=targets)
-        if targets is not None:
-            if self.training:
-                label_details = get_label_details(targets)
-                self.set_state(LabelsState.from_label_details(label_details))
-                self.num_classes = label_details.num_classes
-                self.label_details = label_details
-            elif label_details is None:
-                raise ValueError("In order to format evaluation targets correctly, ``label_details`` must be provided.")
+    """The ``ClassificationInput`` class provides utility methods for handling classification targets.
+    :class:`~flash.core.data.io.input_base.Input` objects that extend ``ClassificationInput`` should do the following:
 
-            samples = format_targets(samples, label_details)
-        return samples
+    * In the ``load_data`` method, include a call to ``load_target_metadata``. This will determine the format of the
+      targets and store metadata like ``labels`` and ``num_classes``.
+    * In the ``load_sample`` method, use ``format_target`` to convert the target to a standard format for use with our
+      tasks.
+    """
+
+    @property
+    @lru_cache(maxsize=None)
+    def target_formatter(self) -> TargetFormatter:
+        """Get the :class:`~flash.core.data.utiltiies.classification.TargetFormatter` to use when formatting
+        targets.
+
+        This property uses ``functools.lru_cache`` so that we only instantiate the formatter once.
+        """
+        classification_state = self.get_state(ClassificationState)
+        return get_target_formatter(self.target_mode, classification_state.labels, classification_state.num_classes)
+
+    def load_target_metadata(self, targets: List[Any]) -> None:
+        """Determine the target format and store the ``labels`` and ``num_classes``.
+
+        Args:
+            targets: The list of targets.
+        """
+        self.target_mode = get_target_mode(targets)
+        if self.training:
+            self.labels, self.num_classes = get_target_details(targets, self.target_mode)
+            self.set_state(ClassificationState(self.labels, self.num_classes))
+
+    def format_target(self, target: Any) -> Any:
+        """Format a single target according to the previously computed target format and metadata.
+
+        Args:
+            target: The target to format.
+
+        Returns:
+            The formatted target.
+        """
+        return self.target_formatter(target)
