@@ -86,7 +86,7 @@ class TextClassifier(ClassificationTask):
 
         if self.pretrained:
             if vocab_size:
-                print("`pretrained=True`, ignoring `vocab_size` argument.")
+                rank_zero_log("`pretrained=True`, ignoring `vocab_size` argument.")
             self.vocab_size = self.model.config.vocab_size
 
         else:
