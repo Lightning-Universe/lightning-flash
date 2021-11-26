@@ -99,6 +99,42 @@ class TextInput(Input):
 
         return (hf_dataset, *other)
 
+    def _encode_target(self, hf_dataset, dataset, target) -> Sequence[Mapping[str, Any]]:
+        if isinstance(target, list):
+            # multi-target
+            dataset.multi_label = True
+            hf_dataset = hf_dataset.map(partial(self._multilabel_target, target))  # NOTE: renames target column
+            dataset.num_classes = len(target)
+            self.set_state(LabelsState(target))
+        else:
+            dataset.multi_label = False
+            if self.training:
+                labels = list(sorted(list(set(hf_dataset[target]))))
+                dataset.num_classes = len(labels)
+                self.set_state(LabelsState(labels))
+
+            labels = self.get_state(LabelsState)
+
+            # convert labels to ids (note: the target column get overwritten)
+            if labels is not None:
+                labels = labels.labels
+                label_to_class_mapping = {v: k for k, v in enumerate(labels)}
+                hf_dataset = hf_dataset.map(partial(self._transform_label, label_to_class_mapping, target))
+
+            # rename label column
+            hf_dataset = hf_dataset.rename_column(target, DataKeys.TARGET)
+
+        return hf_dataset
+
+    def _encode_input(self, hf_dataset, input) -> Sequence[Mapping[str, Any]]:
+        # tokenize
+        if not self.tokenizer.is_fitted:
+            self.tokenizer.fit(hf_dataset, input=input)
+        hf_dataset = hf_dataset.map(partial(self._tokenize_fn, input=input), batched=True)
+        hf_dataset = hf_dataset.remove_columns([input])  # just leave the numerical columns
+
+        return hf_dataset
+
     def load_data(
         self,
         data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
@@ -110,39 +146,9 @@ class TextInput(Input):
 
         if not self.predicting:
             target: Union[str, List[str]] = other.pop()
-            if isinstance(target, List):
-                # multi-target
-                dataset.multi_label = True
-                hf_dataset = hf_dataset.map(partial(self._multilabel_target, target))  # NOTE: renames target column
-                dataset.num_classes = len(target)
-                self.set_state(LabelsState(target))
-            else:
-                dataset.multi_label = False
-                if self.training:
-                    labels = list(sorted(list(set(hf_dataset[target]))))
-                    dataset.num_classes = len(labels)
-                    self.set_state(LabelsState(labels))
+            hf_dataset = self._encode_target(hf_dataset, dataset, target)
 
-                labels = self.get_state(LabelsState)
-
-                # convert labels to ids (note: the target column get overwritten)
-                if labels is not None:
-                    labels = labels.labels
-                    label_to_class_mapping = {v: k for k, v in enumerate(labels)}
-                    hf_dataset = hf_dataset.map(partial(self._transform_label, label_to_class_mapping, target))
-
-                # rename label column
-                hf_dataset = hf_dataset.rename_column(target, DataKeys.TARGET)
-
-        # remove extra columns
-        extra_columns = set(hf_dataset.column_names) - {input, DataKeys.TARGET}
-        hf_dataset = hf_dataset.remove_columns(extra_columns)
-
-        # tokenize
-        hf_dataset = hf_dataset.map(partial(self._tokenize_fn, input=input), batched=True, remove_columns=[input])
-
-        # set format
-        hf_dataset.set_format("torch")
+        hf_dataset = self._encode_input(hf_dataset, input)
 
         return hf_dataset
 
@@ -160,93 +166,81 @@ class TextInput(Input):
 
 
 class TextCSVInput(TextInput):
-    def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, str]:
-        file, *other = data
+    def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, Optional[List[str]]]:
+        file, input, *other = data
         dataset_dict = load_dataset("csv", data_files={"train": str(file)})
-        return (dataset_dict["train"], *other)
+        return (dataset_dict["train"], input, *other)
 
 
 class TextJSONInput(TextInput):
-    def to_hf_dataset(self, data: Tuple[str, str, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, str]:
-        file, *other, field = data
+    def to_hf_dataset(
+        self, data: Tuple[str, str, str, str]
+    ) -> Tuple[Sequence[Mapping[str, Any]], str, Optional[List[str]]]:
+        file, input, *other, field = data
         dataset_dict = load_dataset("json", data_files={"train": str(file)}, field=field)
-        return (dataset_dict["train"], *other)
+        return (dataset_dict["train"], input, *other)
 
 
 class TextDataFrameInput(TextInput):
-    def to_hf_dataset(self, data: Tuple[DataFrame, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, str]:
-        df, *other = data
+    def to_hf_dataset(
+        self, data: Tuple[DataFrame, str, str]
+    ) -> Tuple[Sequence[Mapping[str, Any]], str, Optional[List[str]]]:
+        df, input, *other = data
         hf_dataset = Dataset.from_pandas(df)
-        return (hf_dataset, *other)
+        return (hf_dataset, input, *other)
 
 
 class TextParquetInput(TextInput):
-    def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, str]:
-        file, *other = data
+    def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, Optional[List[str]]]:
+        file, input, *other = data
         hf_dataset = Dataset.from_parquet(str(file))
-        return (hf_dataset, *other)
+        return (hf_dataset, input, *other)
 
 
 class TextHuggingFaceDatasetInput(TextInput):
-    def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, str]:
-        hf_dataset, *other = data
-        return (hf_dataset, *other)
+    def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, Optional[List[str]]]:
+        hf_dataset, input, *other = data
+        return (hf_dataset, input, *other)
 
 
 class TextListInput(TextInput):
     def to_hf_dataset(
         self, data: Union[Tuple[List[str], List[str]], List[str]]
-    ) -> Tuple[Sequence[Mapping[str, Any]], Optional[List[str]]]:
+    ) -> Tuple[Sequence[Mapping[str, Any]], str, Optional[List[str]]]:
 
         if isinstance(data, tuple):
             input_list, target_list = data
             # NOTE: here we already deal with multilabels
             # NOTE: here we already rename to correct column names
             hf_dataset = Dataset.from_dict({DataKeys.INPUT: input_list, DataKeys.TARGET: target_list})
-            return hf_dataset, target_list
+            return hf_dataset, DataKeys.INPUT, target_list
 
         # predicting
         hf_dataset = Dataset.from_dict({DataKeys.INPUT: data})
 
-        return (hf_dataset,)
+        return (hf_dataset, DataKeys.INPUT)
 
-    def load_data(
-        self,
-        data: Tuple[List[str], Union[List[Any], List[List[Any]]]],
-        dataset: Optional[Any] = None,
-    ) -> Sequence[Mapping[str, Any]]:
+    def _encode_target(self, hf_dataset, dataset, target) -> Sequence[Mapping[str, Any]]:
+        if isinstance(target[0], List):
+            # multi-target
+            dataset.multi_label = True
+            dataset.num_classes = len(target[0])
+            self.set_state(LabelsState(target))
+        else:
+            dataset.multi_label = False
+            if self.training:
+                labels = list(sorted(list(set(hf_dataset[DataKeys.TARGET]))))
+                dataset.num_classes = len(labels)
+                self.set_state(LabelsState(labels))
 
-        hf_dataset, *other = self._to_hf_dataset(data)
+            labels = self.get_state(LabelsState)
 
-        if not self.predicting:
-            target_list = other.pop()
-            if isinstance(target_list[0], List):
-                # multi-target_list
-                dataset.multi_label = True
-                dataset.num_classes = len(target_list[0])
-                self.set_state(LabelsState(target_list))
-            else:
-                dataset.multi_label = False
-                if self.training:
-                    labels = list(sorted(list(set(hf_dataset[DataKeys.TARGET]))))
-                    dataset.num_classes = len(labels)
-                    self.set_state(LabelsState(labels))
-
-                labels = self.get_state(LabelsState)
-
-                # convert labels to ids
-                if labels is not None:
-                    labels = labels.labels
-                    label_to_class_mapping = {v: k for k, v in enumerate(labels)}
-                    # happens in-place and keeps the target column name
-                    hf_dataset = hf_dataset.map(partial(self._transform_label, label_to_class_mapping, DataKeys.TARGET))
-
-        # tokenize
-        hf_dataset = hf_dataset.map(partial(self._tokenize_fn, input=DataKeys.INPUT), batched=True)
-
-        # set format
-        hf_dataset = hf_dataset.remove_columns([DataKeys.INPUT])  # just leave the numerical columns
-        hf_dataset.set_format("torch")
+            # convert labels to ids
+            if labels is not None:
+                labels = labels.labels
+                label_to_class_mapping = {v: k for k, v in enumerate(labels)}
+                # happens in-place and keeps the target column name
+                hf_dataset = hf_dataset.map(partial(self._transform_label, label_to_class_mapping, DataKeys.TARGET))
 
         return hf_dataset
 
