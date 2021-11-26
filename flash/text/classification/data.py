@@ -222,9 +222,7 @@ class TextListInput(TextInput):
                 labels = labels.labels
                 label_to_class_mapping = {v: k for k, v in enumerate(labels)}
                 # happens in-place and keeps the target column name
-                hf_dataset = hf_dataset.map(
-                    partial(self._transform_label, label_to_class_mapping, DataKeys.TARGET)
-                )
+                hf_dataset = hf_dataset.map(partial(self._transform_label, label_to_class_mapping, DataKeys.TARGET))
 
         return hf_dataset
 
