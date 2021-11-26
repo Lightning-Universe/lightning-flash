@@ -255,7 +255,7 @@ class TextClassificationInputTransform(InputTransform):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
+            inputs={
                 InputFormat.CSV: TextCSVInput(self.tokenizer),
                 InputFormat.JSON: TextJSONInput(self.tokenizer),
                 InputFormat.PARQUET: TextParquetInput(self.tokenizer),
@@ -264,7 +264,7 @@ class TextClassificationInputTransform(InputTransform):
                 InputFormat.LISTS: TextListInput(self.tokenizer),
                 InputFormat.LABELSTUDIO: LabelStudioTextClassificationInput(self.tokenizer),
             },
-            default_data_source=InputFormat.LISTS,
+            default_input=InputFormat.LISTS,
             deserializer=TextDeserializer(self.tokenizer),
         )
 
