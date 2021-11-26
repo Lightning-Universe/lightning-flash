@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import inspect
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Type
+from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 import numpy as np
 
-from flash.core.data.data_source import DefaultDataKeys, LabelsState
+from flash.core.data.io.input import DataKeys, LabelsState
+from flash.core.data.io.input_base import Input
+from flash.core.data.utilities.paths import list_valid_files
 from flash.core.integrations.icevision.transforms import from_icevision_record
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
-from flash.image.data import ImagePathsDataSource
+from flash.image.data import image_loader, IMG_EXTENSIONS, NP_EXTENSIONS
 
 if _ICEVISION_AVAILABLE:
     from icevision.core.record import BaseRecord
@@ -28,52 +30,44 @@ if _ICEVISION_AVAILABLE:
     from icevision.parsers.parser import Parser
 
 
-class IceVisionPathsDataSource(ImagePathsDataSource):
-    def predict_load_data(self, data: Tuple[str, str], dataset: Optional[Any] = None) -> Sequence[Dict[str, Any]]:
-        return super().predict_load_data(data, dataset)
+class IceVisionInput(Input):
+    def load_data(
+        self,
+        root: str,
+        ann_file: Optional[str] = None,
+        parser: Optional[Type["Parser"]] = None,
+    ) -> List[Dict[str, Any]]:
+        if inspect.isclass(parser) and issubclass(parser, Parser):
+            parser = parser(ann_file, root)
+        elif isinstance(parser, Callable):
+            parser = parser(root)
+        else:
+            raise ValueError("The parser must be a callable or an IceVision Parser type.")
+        self.num_classes = parser.class_map.num_classes
+        self.set_state(LabelsState([parser.class_map.get_by_id(i) for i in range(self.num_classes)]))
+        records = parser.parse(data_splitter=SingleSplitSplitter())
+        return [{DataKeys.INPUT: record} for record in records[0]]
+
+    def predict_load_data(
+        self, paths: Union[str, List[str]], ann_file: Optional[str] = None, parser: Optional[Type["Parser"]] = None
+    ) -> List[Dict[str, Any]]:
+        if parser is not None:
+            return self.load_data(paths, ann_file, parser)
+        paths = list_valid_files(paths, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
+        return [{DataKeys.INPUT: path} for path in paths]
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        record = sample[DefaultDataKeys.INPUT].load()
+        record = sample[DataKeys.INPUT].load()
         return from_icevision_record(record)
 
     def predict_load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        if isinstance(sample[DefaultDataKeys.INPUT], BaseRecord):
-            # load the data via IceVision Base Record
+        if isinstance(sample[DataKeys.INPUT], BaseRecord):
             return self.load_sample(sample)
-        # load the data using numpy
-        filepath = sample[DefaultDataKeys.INPUT]
-        sample = super().load_sample(sample)
-        image = np.array(sample[DefaultDataKeys.INPUT])
+        filepath = sample[DataKeys.INPUT]
+        image = np.array(image_loader(filepath))
 
         record = BaseRecord([FilepathRecordComponent()])
         record.filepath = filepath
         record.set_img(image)
         record.add_component(ClassMapRecordComponent(task=tasks.detection))
         return from_icevision_record(record)
-
-
-class IceVisionParserDataSource(IceVisionPathsDataSource):
-    def __init__(self, parser: Optional[Type["Parser"]] = None):
-        super().__init__()
-        self.parser = parser
-
-    def load_data(self, data: Tuple[str, str], dataset: Optional[Any] = None) -> Sequence[Dict[str, Any]]:
-        if self.parser is not None:
-            if inspect.isclass(self.parser) and issubclass(self.parser, Parser):
-                root, ann_file = data
-                parser = self.parser(ann_file, root)
-            elif isinstance(self.parser, Callable):
-                parser = self.parser(data)
-            else:
-                raise ValueError("The parser must be a callable or an IceVision Parser type.")
-            dataset.num_classes = parser.class_map.num_classes
-            self.set_state(LabelsState([parser.class_map.get_by_id(i) for i in range(dataset.num_classes)]))
-            records = parser.parse(data_splitter=SingleSplitSplitter())
-            return [{DefaultDataKeys.INPUT: record} for record in records[0]]
-        raise ValueError("The parser argument must be provided.")
-
-    def predict_load_data(self, data: Any, dataset: Optional[Any] = None) -> Sequence[Dict[str, Any]]:
-        result = super().predict_load_data(data, dataset)
-        if len(result) == 0:
-            result = self.load_data(data, dataset)
-        return result

@@ -2,9 +2,9 @@ import numpy as np
 import pytest
 import torch
 
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE
-from flash.image.detection.serialization import FiftyOneDetectionLabels
+from flash.image.detection.output import FiftyOneDetectionLabels
 
 
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
@@ -24,7 +24,7 @@ class TestFiftyOneDetectionLabels:
         labels_serial = FiftyOneDetectionLabels(labels=labels)
 
         sample = {
-            DefaultDataKeys.PREDS: {
+            DataKeys.PREDS: {
                 "bboxes": [
                     {
                         "xmin": torch.tensor(20),
@@ -36,28 +36,28 @@ class TestFiftyOneDetectionLabels:
                 "labels": [torch.tensor(0)],
                 "scores": [torch.tensor(0.5)],
             },
-            DefaultDataKeys.METADATA: {
+            DataKeys.METADATA: {
                 "filepath": "something",
                 "size": (100, 100),
             },
         }
 
-        detections = serial.serialize(sample)
+        detections = serial.transform(sample)
         assert len(detections.detections) == 1
         np.testing.assert_array_almost_equal(detections.detections[0].bounding_box, [0.2, 0.3, 0.2, 0.2])
         assert detections.detections[0].confidence == 0.5
         assert detections.detections[0].label == "0"
 
-        detections = filepath_serial.serialize(sample)
+        detections = filepath_serial.transform(sample)
         assert len(detections["predictions"].detections) == 1
         np.testing.assert_array_almost_equal(detections["predictions"].detections[0].bounding_box, [0.2, 0.3, 0.2, 0.2])
         assert detections["predictions"].detections[0].confidence == 0.5
         assert detections["filepath"] == "something"
 
-        detections = threshold_serial.serialize(sample)
+        detections = threshold_serial.transform(sample)
         assert len(detections.detections) == 0
 
-        detections = labels_serial.serialize(sample)
+        detections = labels_serial.transform(sample)
         assert len(detections.detections) == 1
         np.testing.assert_array_almost_equal(detections.detections[0].bounding_box, [0.2, 0.3, 0.2, 0.2])
         assert detections.detections[0].confidence == 0.5

@@ -20,7 +20,7 @@ import torchmetrics
 
 from flash.core.adapter import Adapter
 from flash.core.data.batch import default_uncollate
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.data.states import CollateFn
 from flash.core.model import Task
 from flash.core.utilities.imports import _FORECASTING_AVAILABLE, _PANDAS_AVAILABLE
@@ -60,9 +60,9 @@ class PyTorchForecastingAdapter(Adapter):
 
     @staticmethod
     def _collate_fn(collate_fn, samples):
-        samples = [(sample[DefaultDataKeys.INPUT], sample[DefaultDataKeys.TARGET]) for sample in samples]
+        samples = [(sample[DataKeys.INPUT], sample[DataKeys.TARGET]) for sample in samples]
         batch = collate_fn(samples)
-        return {DefaultDataKeys.INPUT: batch[0], DefaultDataKeys.TARGET: batch[1]}
+        return {DataKeys.INPUT: batch[0], DataKeys.TARGET: batch[1]}
 
     @classmethod
     def from_task(
@@ -76,7 +76,7 @@ class PyTorchForecastingAdapter(Adapter):
     ) -> Adapter:
         parameters = copy(parameters)
         # Remove the single row of data from the parameters to reconstruct the `time_series_dataset`
-        data = parameters.pop("data_sample")
+        data = DataFrame.from_dict(parameters.pop("data_sample"))
         time_series_dataset = PatchTimeSeriesDataSet.from_parameters(parameters, data)
 
         backbone_kwargs["loss"] = loss_fn
@@ -95,11 +95,11 @@ class PyTorchForecastingAdapter(Adapter):
         return adapter
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
         return self.backbone.training_step(batch, batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
         return self.backbone.validation_step(batch, batch_idx)
 
     def test_step(self, batch: Any, batch_idx: int) -> None:
@@ -108,8 +108,8 @@ class PyTorchForecastingAdapter(Adapter):
         )
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        result = dict(self.backbone(batch[DefaultDataKeys.INPUT]))
-        result[DefaultDataKeys.INPUT] = default_uncollate(batch[DefaultDataKeys.INPUT])
+        result = dict(self.backbone(batch[DataKeys.INPUT]))
+        result[DataKeys.INPUT] = default_uncollate(batch[DataKeys.INPUT])
         return default_uncollate(result)
 
     def training_epoch_end(self, outputs) -> None:

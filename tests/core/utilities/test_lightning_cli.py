@@ -19,6 +19,7 @@ from pytorch_lightning import Callback, LightningDataModule, LightningModule, Tr
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.plugins.environments import SLURMEnvironment
 
+from flash.core.utilities.compatibility import accelerator_connector
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 from flash.core.utilities.lightning_cli import (
     instantiate_class,
@@ -83,21 +84,6 @@ def test_add_argparse_args_redefined(cli_args):
         ("--limit_train_batches=100", dict(limit_train_batches=100)),
         ("--limit_train_batches 0.8", dict(limit_train_batches=0.8)),
         ("--weights_summary=null", dict(weights_summary=None)),
-        (
-            "",
-            dict(
-                # These parameters are marked as Optional[...] in Trainer.__init__,
-                # with None as default. They should not be changed by the argparse
-                # interface.
-                min_steps=None,
-                max_steps=None,
-                log_gpu_memory=None,
-                distributed_backend=None,
-                weights_save_path=None,
-                resume_from_checkpoint=None,
-                profiler=None,
-            ),
-        ),
     ],
 )
 def test_parse_args_parsing(cli_args, expected):
@@ -283,7 +269,7 @@ def test_lightning_cli_args_cluster_environments(tmpdir):
     class TestModel(BoringModel):
         def on_fit_start(self):
             # Ensure SLURMEnvironment is set, instead of default LightningEnvironment
-            assert isinstance(self.trainer.accelerator_connector._cluster_environment, SLURMEnvironment)
+            assert isinstance(accelerator_connector(self.trainer)._cluster_environment, SLURMEnvironment)
             self.trainer.ran_asserts = True
 
     with mock.patch("sys.argv", ["any.py", f"--trainer.plugins={json.dumps(plugins)}"]):

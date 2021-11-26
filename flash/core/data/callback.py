@@ -81,7 +81,7 @@ class ControlFlow(FlashCallback):
 
 
 class BaseDataFetcher(FlashCallback):
-    """This class is used to profile :class:`~flash.core.data.process.Preprocess` hook outputs.
+    """This class is used to profile :class:`~flash.core.data.io.input_transform.InputTransform` hook outputs.
 
     By default, the callback won't profile the data being processed as it may lead to ``OOMError``.
 
@@ -89,14 +89,14 @@ class BaseDataFetcher(FlashCallback):
 
         from flash.core.data.callback import BaseDataFetcher
         from flash.core.data.data_module import DataModule
-        from flash.core.data.data_source import DataSource
-        from flash.core.data.process import Preprocess
+        from flash.core.data.io.input import Input
+        from flash.core.data.io.input_transform import InputTransform
 
-        class CustomPreprocess(Preprocess):
+        class CustomInputTransform(InputTransform):
 
             def __init__(**kwargs):
                 super().__init__(
-                    data_sources = {"inputs": DataSource()},
+                    inputs = {"inputs": Input()},
                     **kwargs,
                 )
 
@@ -107,7 +107,7 @@ class BaseDataFetcher(FlashCallback):
 
         class CustomDataModule(DataModule):
 
-            preprocess_cls = CustomPreprocess
+            input_transform_cls = CustomInputTransform
 
             @staticmethod
             def configure_data_fetcher():
@@ -121,7 +121,7 @@ class BaseDataFetcher(FlashCallback):
                 test_data: Any,
                 predict_data: Any,
             ) -> "CustomDataModule":
-                return cls.from_data_source(
+                return cls.from_input(
                     "inputs",
                     train_data=train_data,
                     val_data=val_data,
@@ -167,7 +167,7 @@ class BaseDataFetcher(FlashCallback):
 
     def __init__(self, enabled: bool = False):
         self.enabled = enabled
-        self._preprocess = None
+        self._input_transform = None
         self.reset()
 
     def _store(self, data: Any, fn_name: str, running_stage: RunningStage) -> None:
@@ -207,9 +207,9 @@ class BaseDataFetcher(FlashCallback):
         yield
         self.enabled = False
 
-    def attach_to_preprocess(self, preprocess: "flash.core.data.process.Preprocess") -> None:
-        preprocess.add_callbacks([self])
-        self._preprocess = preprocess
+    def attach_to_input_transform(self, input_transform: "flash.core.data.io.input_transform.InputTransform") -> None:
+        input_transform.add_callbacks([self])
+        self._input_transform = input_transform
 
     def reset(self):
         self.batches = {k: {} for k in _STAGES_PREFIX.values()}

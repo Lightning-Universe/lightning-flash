@@ -13,8 +13,9 @@
 # limitations under the License.
 from typing import Any, Dict, List, Optional
 
+from torchmetrics import BLEUScore
+
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
-from flash.text.seq2seq.core.metrics import BLEUScore
 from flash.text.seq2seq.core.model import Seq2SeqTask
 
 
@@ -80,13 +81,17 @@ class TranslationTask(Seq2SeqTask):
         return "translation"
 
     def compute_metrics(self, generated_tokens, batch, prefix):
-        tgt_lns = self.tokenize_labels(batch["labels"])
+        reference_corpus = self.tokenize_labels(batch["labels"])
         # wrap targets in list as score expects a list of potential references
-        tgt_lns = [[reference] for reference in tgt_lns]
-        result = self.bleu(self._postprocess.uncollate(generated_tokens), tgt_lns)
+        reference_corpus = [[reference] for reference in reference_corpus]
+
+        translate_corpus = self._output_transform.uncollate(generated_tokens)
+        translate_corpus = [line for line in translate_corpus]
+
+        result = self.bleu(reference_corpus, translate_corpus)
         self.log(f"{prefix}_bleu_score", result, on_step=False, on_epoch=True, prog_bar=True)
 
     @staticmethod
     def _ci_benchmark_fn(history: List[Dict[str, Any]]):
         """This function is used only for debugging usage with CI."""
-        assert history[-1]["val_bleu_score"] > 0.6
+        assert history[-1]["val_bleu_score"] > 0.6, history[-1]["val_bleu_score"]

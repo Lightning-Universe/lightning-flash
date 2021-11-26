@@ -21,19 +21,20 @@ import numpy as np
 import torch
 
 import flash
-from flash.core.data.data_source import (
-    DefaultDataKeys,
-    FiftyOneDataSource,
+from flash.core.data.io.input import (
+    DataKeys,
+    FiftyOneInput,
     has_file_allowed_extension,
-    NumpyDataSource,
-    PathsDataSource,
-    TensorDataSource,
+    NumpyInput,
+    PathsInput,
+    TensorInput,
 )
 from flash.core.data.process import Deserializer
+from flash.core.data.utils import image_default_loader
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, Image, requires
 
 if _TORCHVISION_AVAILABLE:
-    from torchvision.datasets.folder import default_loader, IMG_EXTENSIONS
+    from torchvision.datasets.folder import IMG_EXTENSIONS
     from torchvision.transforms.functional import to_pil_image
 else:
     IMG_EXTENSIONS = (".jpg", ".jpeg", ".png", ".ppm", ".bmp", ".pgm", ".tif", ".tiff", ".webp")
@@ -44,7 +45,7 @@ NP_EXTENSIONS = (".npy",)
 
 def image_loader(filepath: str):
     if has_file_allowed_extension(filepath, IMG_EXTENSIONS):
-        img = default_loader(filepath)
+        img = image_default_loader(filepath)
     elif has_file_allowed_extension(filepath, NP_EXTENSIONS):
         img = Image.fromarray(np.load(filepath).astype("uint8"), "RGB")
     else:
@@ -63,7 +64,7 @@ class ImageDeserializer(Deserializer):
         buffer = BytesIO(img)
         img = Image.open(buffer, mode="r")
         return {
-            DefaultDataKeys.INPUT: img,
+            DataKeys.INPUT: img,
         }
 
     @property
@@ -75,51 +76,51 @@ class ImageDeserializer(Deserializer):
 def _labels_to_indices(data):
     out = defaultdict(list)
     for idx, sample in enumerate(data):
-        label = sample[DefaultDataKeys.TARGET]
+        label = sample[DataKeys.TARGET]
         if torch.is_tensor(label):
             label = label.item()
         out[label].append(idx)
     return out
 
 
-class ImagePathsDataSource(PathsDataSource):
+class ImagePathsInput(PathsInput):
     def __init__(self):
         super().__init__(loader=image_loader, extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
 
     @requires("image")
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
         sample = super().load_sample(sample, dataset)
-        w, h = sample[DefaultDataKeys.INPUT].size  # WxH
-        sample[DefaultDataKeys.METADATA]["size"] = (h, w)
+        w, h = sample[DataKeys.INPUT].size  # WxH
+        sample[DataKeys.METADATA]["size"] = (h, w)
         return sample
 
 
-class ImageTensorDataSource(TensorDataSource):
+class ImageTensorInput(TensorInput):
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        img = to_pil_image(sample[DefaultDataKeys.INPUT])
-        sample[DefaultDataKeys.INPUT] = img
+        img = to_pil_image(sample[DataKeys.INPUT])
+        sample[DataKeys.INPUT] = img
         w, h = img.size  # WxH
-        sample[DefaultDataKeys.METADATA] = {"size": (h, w)}
+        sample[DataKeys.METADATA] = {"size": (h, w)}
         return sample
 
 
-class ImageNumpyDataSource(NumpyDataSource):
+class ImageNumpyInput(NumpyInput):
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        img = to_pil_image(torch.from_numpy(sample[DefaultDataKeys.INPUT]))
-        sample[DefaultDataKeys.INPUT] = img
+        img = to_pil_image(torch.from_numpy(sample[DataKeys.INPUT]))
+        sample[DataKeys.INPUT] = img
         w, h = img.size  # WxH
-        sample[DefaultDataKeys.METADATA] = {"size": (h, w)}
+        sample[DataKeys.METADATA] = {"size": (h, w)}
         return sample
 
 
-class ImageFiftyOneDataSource(FiftyOneDataSource):
+class ImageFiftyOneInput(FiftyOneInput):
     @staticmethod
     def load_sample(sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        img_path = sample[DefaultDataKeys.INPUT]
-        img = default_loader(img_path)
-        sample[DefaultDataKeys.INPUT] = img
+        img_path = sample[DataKeys.INPUT]
+        img = image_default_loader(img_path)
+        sample[DataKeys.INPUT] = img
         w, h = img.size  # WxH
-        sample[DefaultDataKeys.METADATA] = {
+        sample[DataKeys.METADATA] = {
             "filepath": img_path,
             "size": (h, w),
         }

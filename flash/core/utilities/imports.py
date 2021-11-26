@@ -66,6 +66,7 @@ def _compare_version(package: str, op, version) -> bool:
 
 
 _TORCH_AVAILABLE = _module_available("torch")
+_PL_AVAILABLE = _module_available("pytorch_lightning")
 _BOLTS_AVAILABLE = _module_available("pl_bolts") and _compare_version("torch", operator.lt, "1.9.0")
 _PANDAS_AVAILABLE = _module_available("pandas")
 _SKLEARN_AVAILABLE = _module_available("sklearn")
@@ -88,15 +89,16 @@ _UVICORN_AVAILABLE = _module_available("uvicorn")
 _PIL_AVAILABLE = _module_available("PIL")
 _OPEN3D_AVAILABLE = _module_available("open3d")
 _SEGMENTATION_MODELS_AVAILABLE = _module_available("segmentation_models_pytorch")
-_FASTFACE_AVAILABLE = _module_available("fastface")
+_FASTFACE_AVAILABLE = _module_available("fastface") and _compare_version("pytorch_lightning", operator.lt, "1.5.0")
 _LIBROSA_AVAILABLE = _module_available("librosa")
 _TORCH_SCATTER_AVAILABLE = _module_available("torch_scatter")
 _TORCH_SPARSE_AVAILABLE = _module_available("torch_sparse")
 _TORCH_GEOMETRIC_AVAILABLE = _module_available("torch_geometric")
+_NETWORKX_AVAILABLE = _module_available("networkx")
 _TORCHAUDIO_AVAILABLE = _module_available("torchaudio")
-_ROUGE_SCORE_AVAILABLE = _module_available("rouge_score")
 _SENTENCEPIECE_AVAILABLE = _module_available("sentencepiece")
 _DATASETS_AVAILABLE = _module_available("datasets")
+_TM_TEXT_AVAILABLE: bool = _module_available("torchmetrics.text")
 _ICEVISION_AVAILABLE = _module_available("icevision")
 _ICEDATA_AVAILABLE = _module_available("icedata")
 _LEARN2LEARN_AVAILABLE = _module_available("learn2learn") and _compare_version("learn2learn", operator.ge, "0.1.6")
@@ -118,13 +120,16 @@ else:
 if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
     _PL_GREATER_EQUAL_1_4_3 = _compare_version("pytorch_lightning", operator.ge, "1.4.3")
+    _PL_GREATER_EQUAL_1_5_0 = _compare_version("pytorch_lightning", operator.ge, "1.5.0")
+    _PANDAS_GREATER_EQUAL_1_3_0 = _compare_version("pandas", operator.ge, "1.3.0")
+    _ICEVISION_GREATER_EQUAL_0_11_0 = _compare_version("icevision", operator.ge, "0.11.0")
 
 _TEXT_AVAILABLE = all(
     [
         _TRANSFORMERS_AVAILABLE,
-        _ROUGE_SCORE_AVAILABLE,
         _SENTENCEPIECE_AVAILABLE,
         _DATASETS_AVAILABLE,
+        _TM_TEXT_AVAILABLE,
     ]
 )
 _TABULAR_AVAILABLE = _TABNET_AVAILABLE and _PANDAS_AVAILABLE and _FORECASTING_AVAILABLE
@@ -142,7 +147,9 @@ _IMAGE_AVAILABLE = all(
 _SERVE_AVAILABLE = _FASTAPI_AVAILABLE and _PYDANTIC_AVAILABLE and _CYTOOLZ_AVAILABLE and _UVICORN_AVAILABLE
 _POINTCLOUD_AVAILABLE = _OPEN3D_AVAILABLE and _TORCHVISION_AVAILABLE
 _AUDIO_AVAILABLE = all([_TORCHAUDIO_AVAILABLE, _LIBROSA_AVAILABLE, _TRANSFORMERS_AVAILABLE])
-_GRAPH_AVAILABLE = _TORCH_SCATTER_AVAILABLE and _TORCH_SPARSE_AVAILABLE and _TORCH_GEOMETRIC_AVAILABLE
+_GRAPH_AVAILABLE = (
+    _TORCH_SCATTER_AVAILABLE and _TORCH_SPARSE_AVAILABLE and _TORCH_GEOMETRIC_AVAILABLE and _NETWORKX_AVAILABLE
+)
 
 _EXTRAS_AVAILABLE = {
     "image": _IMAGE_AVAILABLE,

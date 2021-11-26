@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import torch
 
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _AUDIO_AVAILABLE
 
 if _AUDIO_AVAILABLE:
@@ -60,7 +60,7 @@ class DataCollatorCTCWithPadding:
     pad_to_multiple_of_labels: Optional[int] = None
 
     def __call__(self, samples: List[Dict[str, Any]], metadata: List[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
-        inputs = [sample[DefaultDataKeys.INPUT] for sample in samples]
+        inputs = [sample[DataKeys.INPUT] for sample in samples]
         sampling_rates = [sample["sampling_rate"] for sample in metadata]
 
         assert (
@@ -81,7 +81,7 @@ class DataCollatorCTCWithPadding:
             return_tensors="pt",
         )
 
-        labels = [sample.get(DefaultDataKeys.TARGET, None) for sample in samples]
+        labels = [sample.get(DataKeys.TARGET, None) for sample in samples]
         # check to ensure labels exist to collate
         if None not in labels:
             with self.processor.as_target_processor():

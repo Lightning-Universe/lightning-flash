@@ -20,8 +20,11 @@ from torch import Tensor
 
 import flash
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DataSource, DefaultDataSources
-from flash.core.data.process import Deserializer, Postprocess, Preprocess
+from flash.core.data.process import Deserializer
+from flash.core.data.data_module import DataModule
+from flash.core.data.io.input import Input, InputFormat
+from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 
@@ -47,7 +50,7 @@ class TextDeserializer(Deserializer):
         return "An example input"
 
 
-class Seq2SeqDataSource(DataSource):
+class Seq2SeqInput(Input):
     @requires("text")
     def __init__(
         self,
@@ -108,7 +111,7 @@ class Seq2SeqDataSource(DataSource):
         self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True, **self.backbone_kwargs)
 
 
-class Seq2SeqFileDataSource(Seq2SeqDataSource):
+class Seq2SeqFileInput(Seq2SeqInput):
     def __init__(
         self,
         filetype: str,
@@ -176,7 +179,7 @@ class Seq2SeqFileDataSource(Seq2SeqDataSource):
         self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True, **self.backbone_kwargs)
 
 
-class Seq2SeqCSVDataSource(Seq2SeqFileDataSource):
+class Seq2SeqCSVInput(Seq2SeqFileInput):
     def __init__(
         self,
         backbone: str,
@@ -204,7 +207,7 @@ class Seq2SeqCSVDataSource(Seq2SeqFileDataSource):
         self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True, **self.backbone_kwargs)
 
 
-class Seq2SeqJSONDataSource(Seq2SeqFileDataSource):
+class Seq2SeqJSONInput(Seq2SeqFileInput):
     def __init__(
         self,
         backbone: str,
@@ -232,7 +235,7 @@ class Seq2SeqJSONDataSource(Seq2SeqFileDataSource):
         self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True, **self.backbone_kwargs)
 
 
-class Seq2SeqSentencesDataSource(Seq2SeqDataSource):
+class Seq2SeqSentencesInput(Seq2SeqInput):
     def load_data(
         self,
         data: Union[str, List[str]],
@@ -256,14 +259,14 @@ class Seq2SeqSentencesDataSource(Seq2SeqDataSource):
 @dataclass(unsafe_hash=True, frozen=True)
 class Seq2SeqBackboneState(ProcessState):
     """The ``Seq2SeqBackboneState`` stores the backbone in use by the
-    :class:`~flash.text.seq2seq.core.data.Seq2SeqPreprocess`
+    :class:`~flash.text.seq2seq.core.data.Seq2SeqInputTransform`
     """
 
     backbone: str
     backbone_kwargs: Dict[str, Any] = field(default_factory=dict)
 
 
-class Seq2SeqPreprocess(Preprocess):
+class Seq2SeqInputTransform(InputTransform):
     @requires("text")
     def __init__(
         self,
@@ -287,22 +290,22 @@ class Seq2SeqPreprocess(Preprocess):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
-                DefaultDataSources.CSV: Seq2SeqCSVDataSource(
+            inputs={
+                InputFormat.CSV: Seq2SeqCSVInput(
                     self.backbone,
                     max_source_length=max_source_length,
                     max_target_length=max_target_length,
                     padding=padding,
                     **backbone_kwargs,
                 ),
-                DefaultDataSources.JSON: Seq2SeqJSONDataSource(
+                InputFormat.JSON: Seq2SeqJSONInput(
                     self.backbone,
                     max_source_length=max_source_length,
                     max_target_length=max_target_length,
                     padding=padding,
                     **backbone_kwargs,
                 ),
-                "sentences": Seq2SeqSentencesDataSource(
+                "sentences": Seq2SeqSentencesInput(
                     self.backbone,
                     max_source_length=max_source_length,
                     max_target_length=max_target_length,
@@ -310,7 +313,7 @@ class Seq2SeqPreprocess(Preprocess):
                     **backbone_kwargs,
                 ),
             },
-            default_data_source="sentences",
+            default_input="sentences",
             deserializer=TextDeserializer(backbone, max_source_length),
         )
 
@@ -334,7 +337,7 @@ class Seq2SeqPreprocess(Preprocess):
         return default_data_collator(samples)
 
 
-class Seq2SeqPostprocess(Postprocess):
+class Seq2SeqOutputTransform(OutputTransform):
     @requires("text")
     def __init__(self):
         super().__init__()
@@ -374,5 +377,5 @@ class Seq2SeqPostprocess(Postprocess):
 class Seq2SeqData(DataModule):
     """Data module for Seq2Seq tasks."""
 
-    preprocess_cls = Seq2SeqPreprocess
-    postprocess_cls = Seq2SeqPostprocess
+    input_transform_cls = Seq2SeqInputTransform
+    output_transform_cls = Seq2SeqOutputTransform

@@ -21,9 +21,8 @@ __all__ = ["tabular_classification"]
 
 
 def from_titanic(
-    batch_size: int = 4,
-    num_workers: int = 0,
-    **preprocess_kwargs,
+    val_split: float = 0.1,
+    **data_module_kwargs,
 ) -> TabularClassificationData:
     """Downloads and loads the Titanic data set."""
     download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "./data")
@@ -32,10 +31,8 @@ def from_titanic(
         "Fare",
         target_fields="Survived",
         train_file="data/titanic/titanic.csv",
-        val_split=0.1,
-        batch_size=batch_size,
-        num_workers=num_workers,
-        **preprocess_kwargs,
+        val_split=val_split,
+        **data_module_kwargs,
     )
 
 

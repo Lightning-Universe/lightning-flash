@@ -19,7 +19,7 @@ from torch.utils.data import DataLoader, Sampler
 import flash
 from flash.core.adapter import Adapter
 from flash.core.data.auto_dataset import BaseAutoDataset
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.integrations.icevision.transforms import from_icevision_predictions, to_icevision_record
 from flash.core.model import Task
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
@@ -46,13 +46,14 @@ class IceVisionAdapter(Adapter):
 
     required_extras: str = "image"
 
-    def __init__(self, model_type, model, icevision_adapter, backbone):
+    def __init__(self, model_type, model, icevision_adapter, backbone, predict_kwargs):
         super().__init__()
 
         self.model_type = model_type
         self.model = model
         self.icevision_adapter = icevision_adapter
         self.backbone = backbone
+        self.predict_kwargs = predict_kwargs
 
     @classmethod
     @catch_url_error
@@ -62,6 +63,7 @@ class IceVisionAdapter(Adapter):
         num_classes: int,
         backbone: str,
         head: str,
+        predict_kwargs: Dict,
         pretrained: bool = True,
         metrics: Optional["IceVisionMetric"] = None,
         image_size: Optional = None,
@@ -77,16 +79,16 @@ class IceVisionAdapter(Adapter):
             **kwargs,
         )
         icevision_adapter = icevision_adapter(model=model, metrics=metrics)
-        return cls(model_type, model, icevision_adapter, backbone)
+        return cls(model_type, model, icevision_adapter, backbone, predict_kwargs)
 
     @staticmethod
     def _collate_fn(collate_fn, samples, metadata: Optional[List[Dict[str, Any]]] = None):
         metadata = metadata or [None] * len(samples)
         return {
-            DefaultDataKeys.INPUT: collate_fn(
-                [to_icevision_record({**sample, DefaultDataKeys.METADATA: m}) for sample, m in zip(samples, metadata)]
+            DataKeys.INPUT: collate_fn(
+                [to_icevision_record({**sample, DataKeys.METADATA: m}) for sample, m in zip(samples, metadata)]
             ),
-            DefaultDataKeys.METADATA: metadata,
+            DataKeys.METADATA: metadata,
         }
 
     def process_train_dataset(
@@ -185,20 +187,22 @@ class IceVisionAdapter(Adapter):
         return data_loader
 
     def training_step(self, batch, batch_idx) -> Any:
-        return self.icevision_adapter.training_step(batch[DefaultDataKeys.INPUT], batch_idx)
+        return self.icevision_adapter.training_step(batch[DataKeys.INPUT], batch_idx)
 
     def validation_step(self, batch, batch_idx):
-        return self.icevision_adapter.validation_step(batch[DefaultDataKeys.INPUT], batch_idx)
+        return self.icevision_adapter.validation_step(batch[DataKeys.INPUT], batch_idx)
 
     def test_step(self, batch, batch_idx):
-        return self.icevision_adapter.validation_step(batch[DefaultDataKeys.INPUT], batch_idx)
+        return self.icevision_adapter.validation_step(batch[DataKeys.INPUT], batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch[DefaultDataKeys.PREDS] = self(batch[DefaultDataKeys.INPUT])
+        batch[DataKeys.PREDS] = self(batch[DataKeys.INPUT])
         return batch
 
     def forward(self, batch: Any) -> Any:
-        return from_icevision_predictions(self.model_type.predict_from_dl(self.model, [batch], show_pbar=False))
+        return from_icevision_predictions(
+            self.model_type.predict_from_dl(self.model, [batch], show_pbar=False, **self.predict_kwargs)
+        )
 
     def training_epoch_end(self, outputs) -> None:
         return self.icevision_adapter.training_epoch_end(outputs)

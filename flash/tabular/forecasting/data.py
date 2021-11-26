@@ -13,16 +13,19 @@
 # limitations under the License.
 from copy import copy
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Mapping, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from torch.utils.data.sampler import Sampler
 
-from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import DataSource, DefaultDataKeys, DefaultDataSources
-from flash.core.data.process import Deserializer, Preprocess
+from flash.core.data.io.input import DataKeys, InputFormat
+from flash.core.data.io.input_base import Input
+from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.process import Deserializer
 from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _FORECASTING_AVAILABLE, _PANDAS_AVAILABLE, requires
+from flash.core.utilities.stages import RunningStage
 
 if _PANDAS_AVAILABLE:
     from pandas.core.frame import DataFrame
@@ -38,41 +41,35 @@ class TimeSeriesDataSetParametersState(ProcessState):
     """A :class:`~flash.core.data.properties.ProcessState` containing ``labels``, a mapping from class index to
     label."""
 
-    time_series_dataset_parameters: Optional[Dict[str, Any]]
+    parameters: Optional[Dict[str, Any]]
 
 
-class TabularForecastingDataFrameDataSource(DataSource[DataFrame]):
+class TabularForecastingDataFrameInput(Input):
     @requires("tabular")
-    def __init__(
+    def load_data(
         self,
+        data: DataFrame,
         time_idx: Optional[str] = None,
         target: Optional[Union[str, List[str]]] = None,
         group_ids: Optional[List[str]] = None,
         parameters: Optional[Dict[str, Any]] = None,
-        **data_source_kwargs: Any,
+        **time_series_dataset_kwargs: Any,
     ):
-        super().__init__()
-        self.time_idx = time_idx
-        self.target = target
-        self.group_ids = group_ids
-        self.data_source_kwargs = data_source_kwargs
-
-        self.set_state(TimeSeriesDataSetParametersState(parameters))
-
-    def load_data(self, data: DataFrame, dataset: Optional[Any] = None):
         if self.training:
             time_series_dataset = TimeSeriesDataSet(
-                data, time_idx=self.time_idx, group_ids=self.group_ids, target=self.target, **self.data_source_kwargs
+                data, time_idx=time_idx, group_ids=group_ids, target=target, **time_series_dataset_kwargs
             )
             parameters = time_series_dataset.get_parameters()
 
             # Add some sample data so that we can recreate the `TimeSeriesDataSet` later on
-            parameters["data_sample"] = data.iloc[[0]]
+            parameters["data_sample"] = data.iloc[[0]].to_dict()
 
             self.set_state(TimeSeriesDataSetParametersState(parameters))
-            dataset.parameters = parameters
+            self.parameters = parameters
         else:
-            parameters = copy(self.get_state(TimeSeriesDataSetParametersState).time_series_dataset_parameters)
+            parameters_state = self.get_state(TimeSeriesDataSetParametersState)
+            parameters = parameters or (parameters_state.parameters if parameters_state is not None else None)
+            parameters = copy(parameters)
             if parameters is None:
                 raise MisconfigurationException(
                     "Loading data for evaluation or inference requires parameters from the train data. Either "
@@ -86,14 +83,13 @@ class TabularForecastingDataFrameDataSource(DataSource[DataFrame]):
                 predict=True,
                 stop_randomization=True,
             )
-        dataset.time_series_dataset = time_series_dataset
         return time_series_dataset
 
-    def load_sample(self, sample: Mapping[str, Any], dataset: Optional[Any] = None) -> Any:
-        return {DefaultDataKeys.INPUT: sample[0], DefaultDataKeys.TARGET: sample[1]}
+    def load_sample(self, sample: Tuple) -> Any:
+        return {DataKeys.INPUT: sample[0], DataKeys.TARGET: sample[1]}
 
 
-class TabularForecastingPreprocess(Preprocess):
+class TabularForecastingInputTransform(InputTransform):
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -101,33 +97,31 @@ class TabularForecastingPreprocess(Preprocess):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         deserializer: Optional[Deserializer] = None,
-        **data_source_kwargs: Any,
     ):
-        self.data_source_kwargs = data_source_kwargs
         super().__init__(
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
-                DefaultDataSources.DATAFRAME: TabularForecastingDataFrameDataSource(**data_source_kwargs),
+            inputs={
+                InputFormat.DATAFRAME: TabularForecastingDataFrameInput,
             },
             deserializer=deserializer,
-            default_data_source=DefaultDataSources.DATAFRAME,
+            default_input=InputFormat.DATAFRAME,
         )
 
     def get_state_dict(self, strict: bool = False) -> Dict[str, Any]:
-        return {**self.transforms, **self.data_source_kwargs}
+        return {**self.transforms}
 
     @classmethod
-    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = True) -> "Preprocess":
+    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = True) -> "InputTransform":
         return cls(**state_dict)
 
 
 class TabularForecastingData(DataModule):
     """Data module for the tabular forecasting task."""
 
-    preprocess_cls = TabularForecastingPreprocess
+    input_transform_cls = TabularForecastingInputTransform
 
     @property
     def parameters(self) -> Optional[Dict[str, Any]]:
@@ -150,13 +144,13 @@ class TabularForecastingData(DataModule):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        data_fetcher: Optional[BaseDataFetcher] = None,
-        preprocess: Optional[Preprocess] = None,
+        # TODO: Update these when DataModule is updated
         val_split: Optional[float] = None,
         batch_size: int = 4,
-        num_workers: Optional[int] = None,
-        **preprocess_kwargs: Any,
-    ):
+        num_workers: int = 0,
+        sampler: Optional[Type[Sampler]] = None,
+        **time_series_dataset_kwargs: Any,
+    ) -> "TabularForecastingData":
         """Creates a :class:`~flash.tabular.forecasting.data.TabularForecastingData` object from the given data
         frames.
 
@@ -166,69 +160,24 @@ class TabularForecastingData(DataModule):
             instead. These can be obtained from the
             :attr:`~flash.tabular.forecasting.data.TabularForecastingData.parameters` attribute of the
             :class:`~flash.tabular.forecasting.data.TabularForecastingData` object that contains your training data.
-
-        Args:
-            time_idx:
-            target: Column denoting the target or list of columns denoting the target.
-            group_ids: List of column names identifying a time series. This means that the group_ids identify a sample
-                together with the time_idx. If you have only one timeseries, set this to the name of column that is
-                constant.
-            parameters: Parameters to use for the timeseries if ``time_idx``, ``target``, and ``group_ids`` are not
-                provided (e.g. when loading data for inference or validation).
-            train_data_frame: The pandas ``DataFrame`` containing the training data.
-            val_data_frame: The pandas ``DataFrame`` containing the validation data.
-            test_data_frame: The pandas ``DataFrame`` containing the testing data.
-            predict_data_frame: The pandas ``DataFrame`` containing the data to use when predicting.
-            train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
-            val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
-            test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
-            predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
-            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`.
-            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
-                will be constructed and used.
-            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
-                if ``preprocess = None``.
-
-        Returns:
-            The constructed data module.
-
-        Examples::
-
-            data_module = TabularForecastingData.from_data_frame(
-                time_idx="time_idx",
-                target="value",
-                group_ids=["series"],
-                train_data_frame=train_data,
-            )
         """
-
-        return cls.from_data_source(
+        train_input = TabularForecastingDataFrameInput(
+            RunningStage.TRAINING,
+            train_data_frame,
             time_idx=time_idx,
-            target=target,
             group_ids=group_ids,
-            parameters=parameters,
-            data_source=DefaultDataSources.DATAFRAME,
-            train_data=train_data_frame,
-            val_data=val_data_frame,
-            test_data=test_data_frame,
-            predict_data=predict_data_frame,
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
-            data_fetcher=data_fetcher,
-            preprocess=preprocess,
+            target=target,
+            **time_series_dataset_kwargs,
+        )
+        parameters = train_input.parameters if train_input else parameters
+        return cls(
+            train_input,
+            TabularForecastingDataFrameInput(RunningStage.VALIDATING, val_data_frame, parameters=parameters),
+            TabularForecastingDataFrameInput(RunningStage.TESTING, test_data_frame, parameters=parameters),
+            TabularForecastingDataFrameInput(RunningStage.PREDICTING, predict_data_frame, parameters=parameters),
+            input_transform=cls.input_transform_cls(train_transform, val_transform, test_transform, predict_transform),
             val_split=val_split,
             batch_size=batch_size,
             num_workers=num_workers,
-            **preprocess_kwargs,
+            sampler=sampler,
         )

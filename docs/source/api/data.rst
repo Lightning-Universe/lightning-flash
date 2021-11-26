@@ -7,6 +7,16 @@ flash.core.data
     :local:
     :backlinks: top
 
+flash.core.data.io.output
+_________________________
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: classtemplate.rst
+
+    ~flash.core.data.io.output.Output
+
 flash.core.data.auto_dataset
 ____________________________
 
@@ -71,7 +81,7 @@ _____________________________
     ~flash.core.data.data_pipeline.DataPipeline
     ~flash.core.data.data_pipeline.DataPipelineState
 
-flash.core.data.data_source
+flash.core.data.io.input
 ___________________________
 
 .. autosummary::
@@ -79,26 +89,26 @@ ___________________________
     :nosignatures:
     :template: classtemplate.rst
 
-    ~flash.core.data.data_source.DatasetDataSource
-    ~flash.core.data.data_source.DataSource
-    ~flash.core.data.data_source.DefaultDataKeys
-    ~flash.core.data.data_source.DefaultDataSources
-    ~flash.core.data.data_source.FiftyOneDataSource
-    ~flash.core.data.data_source.ImageLabelsMap
-    ~flash.core.data.data_source.LabelsState
-    ~flash.core.data.data_source.MockDataset
-    ~flash.core.data.data_source.NumpyDataSource
-    ~flash.core.data.data_source.PathsDataSource
-    ~flash.core.data.data_source.SequenceDataSource
-    ~flash.core.data.data_source.TensorDataSource
+    ~flash.core.data.io.input.DatasetInput
+    ~flash.core.data.io.input.Input
+    ~flash.core.data.io.input.DataKeys
+    ~flash.core.data.io.input.InputFormat
+    ~flash.core.data.io.input.FiftyOneInput
+    ~flash.core.data.io.input.ImageLabelsMap
+    ~flash.core.data.io.input.LabelsState
+    ~flash.core.data.io.input.MockDataset
+    ~flash.core.data.io.input.NumpyInput
+    ~flash.core.data.io.input.PathsInput
+    ~flash.core.data.io.input.SequenceInput
+    ~flash.core.data.io.input.TensorInput
 
 .. autosummary::
     :toctree: generated/
     :nosignatures:
 
-    ~flash.core.data.data_source.has_file_allowed_extension
-    ~flash.core.data.data_source.has_len
-    ~flash.core.data.data_source.make_dataset
+    ~flash.core.data.io.input.has_file_allowed_extension
+    ~flash.core.data.io.input.has_len
+    ~flash.core.data.io.input.make_dataset
 
 flash.core.data.process
 _______________________
@@ -108,14 +118,12 @@ _______________________
     :nosignatures:
     :template: classtemplate.rst
 
-    ~flash.core.data.process.BasePreprocess
-    ~flash.core.data.process.DefaultPreprocess
+    ~flash.core.data.io.input_transform.BaseInputTransform
+    ~flash.core.data.io.input_transform.DefaultInputTransform
     ~flash.core.data.process.DeserializerMapping
     ~flash.core.data.process.Deserializer
-    ~flash.core.data.process.Postprocess
-    ~flash.core.data.process.Preprocess
-    ~flash.core.data.process.SerializerMapping
-    ~flash.core.data.process.Serializer
+    ~flash.core.data.io.output_transform.OutputTransform
+    ~flash.core.data.io.input_transform.InputTransform
 
 flash.core.data.properties
 __________________________

@@ -17,10 +17,10 @@ import torch
 from pytorch_lightning import Callback
 
 from flash.core.classification import ClassificationTask, Labels
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
-from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, SERIALIZER_TYPE
+from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 from flash.text.classification.backbones import TEXT_CLASSIFIER_BACKBONES
 from flash.text.ort_callback import ORTCallback
 
@@ -44,7 +44,7 @@ class TextClassifier(ClassificationTask):
             `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training, defaults to `1e-3`
         multi_label: Whether the targets are multi-label or not.
-        serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
+        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
         enable_ort: Enable Torch ONNX Runtime Optimization: https://onnxruntime.ai/docs/#onnx-runtime-for-training
     """
 
@@ -64,7 +64,7 @@ class TextClassifier(ClassificationTask):
         metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-2,
         multi_label: bool = False,
-        serializer: SERIALIZER_TYPE = None,
+        output: OUTPUT_TYPE = None,
         enable_ort: bool = False,
     ):
         self.save_hyperparameters()
@@ -78,7 +78,7 @@ class TextClassifier(ClassificationTask):
             metrics=metrics,
             learning_rate=learning_rate,
             multi_label=multi_label,
-            serializer=serializer or Labels(multi_label=multi_label),
+            output=output or Labels(multi_label=multi_label),
         )
         self.enable_ort = enable_ort
         self.model = self.backbones.get(backbone)(num_labels=num_classes)
@@ -122,20 +122,13 @@ class TextClassifier(ClassificationTask):
         getattr(self.model, transformer_type).embeddings.add_module(name, new_embedding_module)
 
     def forward(self, batch: Dict[str, torch.Tensor]):
-        return self.model(input_ids=batch.get("input_ids", None), attention_mask=batch.get("attention_mask", None))
-
-    def to_loss_format(self, x) -> torch.Tensor:
-        if isinstance(x, (SequenceClassifierOutput, Seq2SeqSequenceClassifierOutput)):
-            x = x.logits
-        return super().to_loss_format(x)
-
-    def to_metrics_format(self, x) -> torch.Tensor:
-        if isinstance(x, (SequenceClassifierOutput, Seq2SeqSequenceClassifierOutput)):
-            x = x.logits
-        return super().to_metrics_format(x)
+        result = self.model(input_ids=batch.get("input_ids", None), attention_mask=batch.get("attention_mask", None))
+        if isinstance(result, (SequenceClassifierOutput, Seq2SeqSequenceClassifierOutput)):
+            result = result.logits
+        return result
 
     def step(self, batch, batch_idx, metrics) -> dict:
-        target = batch.pop(DefaultDataKeys.TARGET)
+        target = batch.pop(DataKeys.TARGET)
         batch = (batch, target)
         return super().step(batch, batch_idx, metrics)
 

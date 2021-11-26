@@ -14,22 +14,22 @@
 import pytest
 
 from flash.core.data.transforms import merge_transforms
-from flash.core.utilities.imports import _TORCH_GEOMETRIC_AVAILABLE
-from flash.graph.classification.data import GraphClassificationData, GraphClassificationPreprocess
+from flash.core.utilities.imports import _GRAPH_AVAILABLE
+from flash.graph.classification.data import GraphClassificationData, GraphClassificationInputTransform
 from tests.helpers.utils import _GRAPH_TESTING
 
-if _TORCH_GEOMETRIC_AVAILABLE:
+if _GRAPH_AVAILABLE:
     from torch_geometric.datasets import TUDataset
     from torch_geometric.transforms import OneHotDegree
 
 
 @pytest.mark.skipif(not _GRAPH_TESTING, reason="graph libraries aren't installed.")
-class TestGraphClassificationPreprocess:
-    """Tests ``GraphClassificationPreprocess``."""
+class TestGraphClassificationInputTransform:
+    """Tests ``GraphClassificationInputTransform``."""
 
     def test_smoke(self):
         """A simple test that the class can be instantiated."""
-        prep = GraphClassificationPreprocess()
+        prep = GraphClassificationInputTransform()
         assert prep is not None
 
 
@@ -94,19 +94,19 @@ class TestGraphClassificationData:
             test_dataset=test_dataset,
             predict_dataset=predict_dataset,
             train_transform=merge_transforms(
-                GraphClassificationPreprocess.default_transforms(),
+                GraphClassificationInputTransform.default_transforms(),
                 {"pre_tensor_transform": OneHotDegree(tudataset.num_features - 1)},
             ),
             val_transform=merge_transforms(
-                GraphClassificationPreprocess.default_transforms(),
+                GraphClassificationInputTransform.default_transforms(),
                 {"pre_tensor_transform": OneHotDegree(tudataset.num_features - 1)},
             ),
             test_transform=merge_transforms(
-                GraphClassificationPreprocess.default_transforms(),
+                GraphClassificationInputTransform.default_transforms(),
                 {"pre_tensor_transform": OneHotDegree(tudataset.num_features - 1)},
             ),
             predict_transform=merge_transforms(
-                GraphClassificationPreprocess.default_transforms(),
+                GraphClassificationInputTransform.default_transforms(),
                 {"pre_tensor_transform": OneHotDegree(tudataset.num_features - 1)},
             ),
             batch_size=2,

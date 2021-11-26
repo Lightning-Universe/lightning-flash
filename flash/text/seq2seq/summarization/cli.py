@@ -23,7 +23,7 @@ def from_xsum(
     backbone: str = "sshleifer/distilbart-xsum-1-1",
     batch_size: int = 4,
     num_workers: int = 0,
-    **preprocess_kwargs,
+    **input_transform_kwargs,
 ) -> SummarizationData:
     """Downloads and loads the XSum data set."""
     download_data("https://pl-flash-data.s3.amazonaws.com/xsum.zip", "./data/")
@@ -35,7 +35,7 @@ def from_xsum(
         backbone=backbone,
         batch_size=batch_size,
         num_workers=num_workers,
-        **preprocess_kwargs,
+        **input_transform_kwargs,
     )
 
 
@@ -49,6 +49,7 @@ def summarization():
             "trainer.max_epochs": 3,
             "model.backbone": "sshleifer/distilbart-xsum-1-1",
         },
+        legacy=True,
     )
 
     cli.trainer.save_checkpoint("summarization_model_xsum.pt")

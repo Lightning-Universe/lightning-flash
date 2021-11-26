@@ -1,41 +1,46 @@
-from typing import Any, Callable, Dict, Optional, Type
+# Copyright The PyTorch Lightning team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+from typing import Any, Callable, Dict, Optional
 
-from torch.utils.data import Sampler
+from torch.utils.data import Dataset
 
-from flash.core.data.base_viz import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_source import BaseDataFormat, DataSource, DefaultDataKeys, DefaultDataSources
-from flash.core.data.process import Deserializer, Preprocess
-from flash.pointcloud.detection.open3d_ml.data_sources import (
+from flash.core.data.io.input import BaseDataFormat, DataKeys, InputFormat
+from flash.core.data.io.input_base import Input
+from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.process import Deserializer
+from flash.core.utilities.stages import RunningStage
+from flash.pointcloud.detection.open3d_ml.inputs import (
     PointCloudObjectDetectionDataFormat,
-    PointCloudObjectDetectorFoldersDataSource,
+    PointCloudObjectDetectorFoldersInput,
 )
 
 
-class PointCloudObjectDetectorDatasetDataSource(DataSource):
-    def __init__(self, **kwargs):
-        super().__init__()
+class PointCloudObjectDetectorDatasetInput(Input):
+    def load_data(self, dataset: Dataset) -> Any:
+        self.dataset = dataset
+        return range(len(self.dataset))
 
-    def load_data(
-        self,
-        data: Any,
-        dataset: Optional[Any] = None,
-    ) -> Any:
-
-        dataset.dataset = data
-
-        return range(len(data))
-
-    def load_sample(self, index: int, dataset: Optional[Any] = None) -> Any:
-        sample = dataset.dataset[index]
-
+    def load_sample(self, index: int) -> Any:
+        sample = self.dataset[index]
         return {
-            DefaultDataKeys.INPUT: sample["data"],
-            DefaultDataKeys.METADATA: sample["attr"],
+            DataKeys.INPUT: sample["data"],
+            DataKeys.METADATA: sample["attr"],
         }
 
 
-class PointCloudObjectDetectorPreprocess(Preprocess):
+class PointCloudObjectDetectorInputTransform(InputTransform):
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -43,7 +48,7 @@ class PointCloudObjectDetectorPreprocess(Preprocess):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         deserializer: Optional[Deserializer] = None,
-        **data_source_kwargs,
+        **_kwargs,
     ):
 
         super().__init__(
@@ -51,12 +56,12 @@ class PointCloudObjectDetectorPreprocess(Preprocess):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
-                DefaultDataSources.DATASETS: PointCloudObjectDetectorDatasetDataSource(**data_source_kwargs),
-                DefaultDataSources.FOLDERS: PointCloudObjectDetectorFoldersDataSource(**data_source_kwargs),
+            inputs={
+                InputFormat.DATASETS: PointCloudObjectDetectorDatasetInput,
+                InputFormat.FOLDERS: PointCloudObjectDetectorFoldersInput,
             },
             deserializer=deserializer,
-            default_data_source=DefaultDataSources.FOLDERS,
+            default_input=InputFormat.FOLDERS,
         )
 
     def get_state_dict(self):
@@ -72,7 +77,7 @@ class PointCloudObjectDetectorPreprocess(Preprocess):
 
 class PointCloudObjectDetectorData(DataModule):
 
-    preprocess_cls = PointCloudObjectDetectorPreprocess
+    input_transform_cls = PointCloudObjectDetectorInputTransform
 
     @classmethod
     def from_folders(
@@ -85,83 +90,55 @@ class PointCloudObjectDetectorData(DataModule):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        data_fetcher: Optional[BaseDataFetcher] = None,
-        preprocess: Optional[Preprocess] = None,
-        val_split: Optional[float] = None,
-        batch_size: int = 4,
-        num_workers: int = 0,
-        sampler: Optional[Type[Sampler]] = None,
         scans_folder_name: Optional[str] = "scans",
         labels_folder_name: Optional[str] = "labels",
         calibrations_folder_name: Optional[str] = "calibs",
         data_format: Optional[BaseDataFormat] = PointCloudObjectDetectionDataFormat.KITTI,
-        **preprocess_kwargs: Any,
-    ) -> "DataModule":
-        """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given folders using the
-        :class:`~flash.core.data.data_source.DataSource` of name
-        :attr:`~flash.core.data.data_source.DefaultDataSources.FOLDERS`
-        from the passed or constructed :class:`~flash.core.data.process.Preprocess`.
-
-        Args:
-            train_folder: The folder containing the train data.
-            val_folder: The folder containing the validation data.
-            test_folder: The folder containing the test data.
-            predict_folder: The folder containing the predict data.
-            train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
-            val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
-            test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
-            predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.process.Preprocess` hook names to callable transforms.
-            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`.
-            preprocess: The :class:`~flash.core.data.data.Preprocess` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.preprocess_cls``
-                will be constructed and used.
-            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            sampler: The ``sampler`` to use for the ``train_dataloader``.
-            preprocess_kwargs: Additional keyword arguments to use when constructing the preprocess. Will only be used
-                if ``preprocess = None``.
-            scans_folder_name: The name of the pointcloud scan folder
-            labels_folder_name: The name of the pointcloud scan labels folder
-            calibrations_folder_name: The name of the pointcloud scan calibration folder
-            data_format: Format in which the data are stored.
-
-        Returns:
-            The constructed data module.
-
-        Examples::
-
-            data_module = DataModule.from_folders(
-                train_folder="train_folder",
-                train_transform={
-                    "to_tensor_transform": torch.as_tensor,
-                },
-            )
-        """
-        return cls.from_data_source(
-            DefaultDataSources.FOLDERS,
-            train_folder,
-            val_folder,
-            test_folder,
-            predict_folder,
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
-            data_fetcher=data_fetcher,
-            preprocess=preprocess,
-            val_split=val_split,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            sampler=sampler,
+        **data_module_kwargs: Any,
+    ) -> "PointCloudObjectDetectorData":
+        dataset_kwargs = dict(
             scans_folder_name=scans_folder_name,
             labels_folder_name=labels_folder_name,
             calibrations_folder_name=calibrations_folder_name,
             data_format=data_format,
-            **preprocess_kwargs,
+        )
+        return cls(
+            PointCloudObjectDetectorFoldersInput(RunningStage.TRAINING, train_folder, **dataset_kwargs),
+            PointCloudObjectDetectorFoldersInput(RunningStage.VALIDATING, val_folder, **dataset_kwargs),
+            PointCloudObjectDetectorFoldersInput(RunningStage.TESTING, test_folder, **dataset_kwargs),
+            PointCloudObjectDetectorFoldersInput(RunningStage.PREDICTING, predict_folder, **dataset_kwargs),
+            input_transform=cls.input_transform_cls(
+                train_transform,
+                val_transform,
+                test_transform,
+                predict_transform,
+            ),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_datasets(
+        cls,
+        train_dataset: Optional[Dataset] = None,
+        val_dataset: Optional[Dataset] = None,
+        test_dataset: Optional[Dataset] = None,
+        predict_dataset: Optional[Dataset] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        **data_module_kwargs,
+    ) -> "PointCloudObjectDetectorData":
+        return cls(
+            PointCloudObjectDetectorDatasetInput(RunningStage.TRAINING, train_dataset),
+            PointCloudObjectDetectorDatasetInput(RunningStage.VALIDATING, val_dataset),
+            PointCloudObjectDetectorDatasetInput(RunningStage.TESTING, test_dataset),
+            PointCloudObjectDetectorDatasetInput(RunningStage.PREDICTING, predict_dataset),
+            input_transform=cls.input_transform_cls(
+                train_transform,
+                val_transform,
+                test_transform,
+                predict_transform,
+            ),
+            **data_module_kwargs,
         )

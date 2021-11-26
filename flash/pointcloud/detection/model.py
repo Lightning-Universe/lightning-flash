@@ -18,21 +18,20 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader, Sampler
 
-from flash.core.data.auto_dataset import BaseAutoDataset
-from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.process import Serializer
+from flash.core.data.io.input import DataKeys
+from flash.core.data.io.input_base import Input
+from flash.core.data.io.output import Output
 from flash.core.data.states import CollateFn
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.apply_func import get_callable_dict
-from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
-from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, SERIALIZER_TYPE
+from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 from flash.pointcloud.detection.backbones import POINTCLOUD_OBJECT_DETECTION_BACKBONES
 
 __FILE_EXAMPLE__ = "pointcloud_detection"
 
 
-class PointCloudObjectDetectorSerializer(Serializer):
+class PointCloudObjectDetectorOutput(Output):
     pass
 
 
@@ -41,7 +40,6 @@ class PointCloudObjectDetector(Task):
     pointcloud data.
 
     Args:
-        num_features: The number of features (elements) in the input data.
         num_classes: The number of classes (outputs) for this :class:`~flash.core.model.Task`.
         backbone: The backbone name (or a tuple of ``nn.Module``, output size) to use.
         backbone_kwargs: Any additional kwargs to pass to the backbone constructor.
@@ -52,8 +50,7 @@ class PointCloudObjectDetector(Task):
         metrics: Any metrics to use with this :class:`~flash.core.model.Task`. If ``None``, a default will be selected
             by the :class:`~flash.core.classification.ClassificationTask` depending on the ``multi_label`` argument.
         learning_rate: The learning rate for the optimizer.
-        multi_label: If ``True``, this will be treated as a multi-label classification problem.
-        serializer: The :class:`~flash.core.data.process.Serializer` to use for prediction outputs.
+        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
         lambda_loss_cls: The value to scale the loss classification.
         lambda_loss_bbox: The value to scale the bounding boxes loss.
         lambda_loss_dir: The value to scale the bounding boxes direction loss.
@@ -67,13 +64,12 @@ class PointCloudObjectDetector(Task):
         num_classes: int,
         backbone: Union[str, Tuple[nn.Module, int]] = "pointpillars_kitti",
         backbone_kwargs: Optional[Dict] = None,
-        head: Optional[nn.Module] = None,
         loss_fn: LOSS_FN_TYPE = None,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-2,
-        serializer: SERIALIZER_TYPE = PointCloudObjectDetectorSerializer(),
+        output: OUTPUT_TYPE = PointCloudObjectDetectorOutput(),
         lambda_loss_cls: float = 1.0,
         lambda_loss_bbox: float = 1.0,
         lambda_loss_dir: float = 1.0,
@@ -86,7 +82,7 @@ class PointCloudObjectDetector(Task):
             lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
-            serializer=serializer,
+            output=output,
         )
 
         self.save_hyperparameters()
@@ -135,9 +131,9 @@ class PointCloudObjectDetector(Task):
         results = self.model(batch)
         boxes = self.model.inference_end(results, batch)
         return {
-            DefaultDataKeys.INPUT: getattr(batch, "point", None),
-            DefaultDataKeys.PREDS: boxes,
-            DefaultDataKeys.METADATA: [a["name"] for a in batch.attr],
+            DataKeys.INPUT: getattr(batch, "point", None),
+            DataKeys.PREDS: boxes,
+            DataKeys.METADATA: [a["name"] for a in batch.attr],
         }
 
     def forward(self, x) -> torch.Tensor:
@@ -148,7 +144,7 @@ class PointCloudObjectDetector(Task):
 
     def _process_dataset(
         self,
-        dataset: BaseAutoDataset,
+        dataset: Input,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -158,11 +154,7 @@ class PointCloudObjectDetector(Task):
         sampler: Optional[Sampler] = None,
         **kwargs
     ) -> DataLoader:
-
-        if not _POINTCLOUD_AVAILABLE:
-            raise ModuleNotFoundError("Please, run `pip install flash[pointcloud]`.")
-
-        dataset.preprocess_fn = self.model.preprocess
+        dataset.input_transform_fn = self.model.preprocess
         dataset.transform_fn = self.model.transform
 
         return DataLoader(

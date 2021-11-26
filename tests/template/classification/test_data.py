@@ -14,22 +14,22 @@
 import numpy as np
 import pytest
 
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _SKLEARN_AVAILABLE
-from flash.template.classification.data import TemplateData, TemplatePreprocess
+from flash.template.classification.data import TemplateData, TemplateInputTransform
 
 if _SKLEARN_AVAILABLE:
     from sklearn import datasets
 
 
 @pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
-class TestTemplatePreprocess:
-    """Tests ``TemplatePreprocess``."""
+class TestTemplateInputTransform:
+    """Tests ``TemplateInputTransform``."""
 
     @staticmethod
     def test_smoke():
         """A simple test that the class can be instantiated."""
-        prep = TemplatePreprocess()
+        prep = TemplateInputTransform()
         assert prep is not None
 
 
@@ -69,19 +69,19 @@ class TestTemplateData:
 
         # check training data
         data = next(iter(dm.train_dataloader()))
-        rows, targets = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        rows, targets = data[DataKeys.INPUT], data[DataKeys.TARGET]
         assert rows.shape == (2, self.num_features)
         assert targets.shape == (2,)
 
         # check val data
         data = next(iter(dm.val_dataloader()))
-        rows, targets = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        rows, targets = data[DataKeys.INPUT], data[DataKeys.TARGET]
         assert rows.shape == (2, self.num_features)
         assert targets.shape == (2,)
 
         # check test data
         data = next(iter(dm.test_dataloader()))
-        rows, targets = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        rows, targets = data[DataKeys.INPUT], data[DataKeys.TARGET]
         assert rows.shape == (2, self.num_features)
         assert targets.shape == (2,)
 
@@ -105,18 +105,18 @@ class TestTemplateData:
 
         # check training data
         data = next(iter(dm.train_dataloader()))
-        rows, targets = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        rows, targets = data[DataKeys.INPUT], data[DataKeys.TARGET]
         assert rows.shape == (2, dm.num_features)
         assert targets.shape == (2,)
 
         # check val data
         data = next(iter(dm.val_dataloader()))
-        rows, targets = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        rows, targets = data[DataKeys.INPUT], data[DataKeys.TARGET]
         assert rows.shape == (2, dm.num_features)
         assert targets.shape == (2,)
 
         # check test data
         data = next(iter(dm.test_dataloader()))
-        rows, targets = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+        rows, targets = data[DataKeys.INPUT], data[DataKeys.TARGET]
         assert rows.shape == (2, dm.num_features)
         assert targets.shape == (2,)

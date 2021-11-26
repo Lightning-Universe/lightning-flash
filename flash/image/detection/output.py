@@ -15,8 +15,8 @@ from typing import Any, Dict, List, Optional, TYPE_CHECKING, Union
 
 from pytorch_lightning.utilities import rank_zero_warn
 
-from flash.core.data.data_source import DefaultDataKeys, LabelsState
-from flash.core.data.process import Serializer
+from flash.core.data.io.input import DataKeys, LabelsState
+from flash.core.data.io.output import Output
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 
 Detections = None
@@ -28,8 +28,8 @@ else:
     fo = None
 
 
-class FiftyOneDetectionLabels(Serializer):
-    """A :class:`.Serializer` which converts model outputs to FiftyOne detection format.
+class FiftyOneDetectionLabels(Output):
+    """A :class:`.Output` which converts model outputs to FiftyOne detection format.
 
     Args:
         labels: A list of labels, assumed to map the class index to the label for that class. If ``labels`` is not
@@ -55,9 +55,9 @@ class FiftyOneDetectionLabels(Serializer):
         if labels is not None:
             self.set_state(LabelsState(labels))
 
-    def serialize(self, sample: Dict[str, Any]) -> Union[Detections, Dict[str, Any]]:
-        if DefaultDataKeys.METADATA not in sample:
-            raise ValueError("sample requires DefaultDataKeys.METADATA to use a FiftyOneDetectionLabels serializer.")
+    def transform(self, sample: Dict[str, Any]) -> Union[Detections, Dict[str, Any]]:
+        if DataKeys.METADATA not in sample:
+            raise ValueError("sample requires DefaultDataKeys.METADATA to use a FiftyOneDetectionLabels output.")
 
         labels = None
         if self._labels is not None:
@@ -69,11 +69,11 @@ class FiftyOneDetectionLabels(Serializer):
             else:
                 rank_zero_warn("No LabelsState was found, int targets will be used as label strings", UserWarning)
 
-        height, width = sample[DefaultDataKeys.METADATA]["size"]
+        height, width = sample[DataKeys.METADATA]["size"]
 
         detections = []
 
-        preds = sample[DefaultDataKeys.PREDS]
+        preds = sample[DataKeys.PREDS]
 
         for bbox, label, score in zip(preds["bboxes"], preds["labels"], preds["scores"]):
             confidence = score.tolist()
@@ -104,6 +104,6 @@ class FiftyOneDetectionLabels(Serializer):
             )
         fo_predictions = fo.Detections(detections=detections)
         if self.return_filepath:
-            filepath = sample[DefaultDataKeys.METADATA]["filepath"]
+            filepath = sample[DataKeys.METADATA]["filepath"]
             return {"filepath": filepath, "predictions": fo_predictions}
         return fo_predictions

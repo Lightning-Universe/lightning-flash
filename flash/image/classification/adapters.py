@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import functools
 import inspect
 import os
 from collections import defaultdict
@@ -28,9 +29,10 @@ from torch.utils.data import DataLoader, IterableDataset, Sampler
 import flash
 from flash.core.adapter import Adapter, AdapterTask
 from flash.core.data.auto_dataset import BaseAutoDataset
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
+from flash.core.utilities.compatibility import accelerator_connector
 from flash.core.utilities.imports import _LEARN2LEARN_AVAILABLE
 from flash.core.utilities.providers import _LEARN2LEARN
 from flash.core.utilities.url_error import catch_url_error
@@ -51,27 +53,8 @@ else:
 class RemapLabels(Learn2LearnRemapLabels):
     def remap(self, data, mapping):
         # remap needs to be adapted to Flash API.
-        data[DefaultDataKeys.TARGET] = mapping(data[DefaultDataKeys.TARGET])
+        data[DataKeys.TARGET] = mapping(data[DataKeys.TARGET])
         return data
-
-
-class NoModule:
-
-    """This class is used to prevent nn.Module infinite recursion."""
-
-    def __init__(self, task):
-        self.task = task
-
-    def __getattr__(self, key):
-        if key != "task":
-            return getattr(self.task, key)
-        return self.task
-
-    def __setattr__(self, key: str, value: Any) -> None:
-        if key == "task":
-            object.__setattr__(self, key, value)
-            return
-        setattr(self.task, key, value)
 
 
 class Model(torch.nn.Module):
@@ -95,7 +78,6 @@ class Learn2LearnAdapter(Adapter):
 
     def __init__(
         self,
-        task: AdapterTask,
         backbone: torch.nn.Module,
         head: torch.nn.Module,
         algorithm_cls: Type[LightningModule],
@@ -141,7 +123,6 @@ class Learn2LearnAdapter(Adapter):
 
         super().__init__()
 
-        self._task = NoModule(task)
         self.backbone = backbone
         self.head = head
         self.algorithm_cls = algorithm_cls
@@ -183,8 +164,16 @@ class Learn2LearnAdapter(Adapter):
 
         self.model = self.algorithm_cls(**algorithm_kwargs)
 
+        # Patch log to avoid error with learn2learn and PL 1.5
+        self.model.log = functools.partial(self._patch_log, self.model.log)
+
         # this algorithm requires a special treatment
         self._algorithm_has_validated = self.algorithm_cls != l2l.algorithms.LightningPrototypicalNetworks
+
+    def _patch_log(self, log, *args, on_step: Optional[bool] = None, on_epoch: Optional[bool] = None, **kwargs):
+        if not on_step and not on_epoch:
+            on_epoch = True
+        return log(*args, on_step=on_step, on_epoch=on_epoch, **kwargs)
 
     def _default_transform(self, dataset, ways: int, shots: int, queries) -> List[Callable]:
         return [
@@ -198,7 +187,7 @@ class Learn2LearnAdapter(Adapter):
     def _labels_to_indices(data):
         out = defaultdict(list)
         for idx, sample in enumerate(data):
-            label = sample[DefaultDataKeys.TARGET]
+            label = sample[DataKeys.TARGET]
             if torch.is_tensor(label):
                 label = label.item()
             out[label].append(idx)
@@ -268,7 +257,7 @@ class Learn2LearnAdapter(Adapter):
             devices = 1
             if isinstance(trainer.training_type_plugin, DataParallelPlugin):
                 # when using DP, we need to sample n tasks, so it can splitted across multiple devices.
-                devices = trainer.accelerator_connector.devices
+                devices = accelerator_connector(trainer).devices
             dataset = TaskDataParallel(taskset, epoch_length=epoch_length, devices=devices, collate_fn=None)
             self.trainer.accumulated_grad_batches = self.meta_batch_size / devices
 
@@ -299,35 +288,37 @@ class Learn2LearnAdapter(Adapter):
                 "The `shots` should be provided training_strategy_kwargs={'shots'=...}. "
                 "This is equivalent to the number of sample per label to select within a task."
             )
-        return cls(task, backbone, head, algorithm, **kwargs)
+        adapter = cls(backbone, head, algorithm, **kwargs)
+        adapter.__dict__["_task"] = task
+        return adapter
 
     def training_step(self, batch, batch_idx) -> Any:
-        input = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        input = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
         return self.model.training_step(input, batch_idx)
 
     def validation_step(self, batch, batch_idx):
         # Should be True only for trainer.validate
         if self.trainer.state.fn == TrainerFn.VALIDATING:
             self._algorithm_has_validated = True
-        input = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        input = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
         return self.model.validation_step(input, batch_idx)
 
     def validation_epoch_end(self, outpus: Any):
         self.model.validation_epoch_end(outpus)
 
     def test_step(self, batch, batch_idx):
-        input = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
+        input = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
         return self.model.test_step(input, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        return self.model.predict_step(batch[DefaultDataKeys.INPUT], batch_idx, dataloader_idx=dataloader_idx)
+        return self.model.predict_step(batch[DataKeys.INPUT], batch_idx, dataloader_idx=dataloader_idx)
 
     def _sanetize_batch_size(self, batch_size: int) -> int:
         if batch_size != 1:
             warning_cache.warn(
                 "When using a meta-learning training_strategy, the batch_size should be set to 1. "
                 "HINT: You can modify the `meta_batch_size` to 100 for example by doing "
-                f"{type(self._task.task)}" + "(training_strategies_kwargs={'meta_batch_size': 100})"
+                f"{type(self._task)}" + "(training_strategies_kwargs={'meta_batch_size': 100})"
             )
         return 1
 
@@ -476,10 +467,9 @@ class DefaultAdapter(Adapter):
 
     required_extras: str = "image"
 
-    def __init__(self, task: AdapterTask, backbone: torch.nn.Module, head: torch.nn.Module):
+    def __init__(self, backbone: torch.nn.Module, head: torch.nn.Module):
         super().__init__()
 
-        self._task = NoModule(task)
         self.backbone = backbone
         self.head = head
 
@@ -493,23 +483,25 @@ class DefaultAdapter(Adapter):
         head: torch.nn.Module,
         **kwargs,
     ) -> Adapter:
-        return cls(task, backbone, head)
+        adapter = cls(backbone, head)
+        adapter.__dict__["_task"] = task
+        return adapter
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
-        return Task.training_step(self._task.task, batch, batch_idx)
+        batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
+        return Task.training_step(self._task, batch, batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
-        return Task.validation_step(self._task.task, batch, batch_idx)
+        batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
+        return Task.validation_step(self._task, batch, batch_idx)
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DefaultDataKeys.INPUT], batch[DefaultDataKeys.TARGET])
-        return Task.test_step(self._task.task, batch, batch_idx)
+        batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
+        return Task.test_step(self._task, batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch[DefaultDataKeys.PREDS] = Task.predict_step(
-            self._task.task, (batch[DefaultDataKeys.INPUT]), batch_idx, dataloader_idx=dataloader_idx
+        batch[DataKeys.PREDS] = Task.predict_step(
+            self._task, (batch[DataKeys.INPUT]), batch_idx, dataloader_idx=dataloader_idx
         )
         return batch
 

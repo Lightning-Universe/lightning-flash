@@ -27,12 +27,12 @@ _________________________
     :template: classtemplate.rst
 
     ~flash.core.classification.Classes
-    ~flash.core.classification.ClassificationSerializer
+    ~flash.core.classification.ClassificationOutput
     ~flash.core.classification.ClassificationTask
     ~flash.core.classification.FiftyOneLabels
     ~flash.core.classification.Labels
     ~flash.core.classification.Logits
-    ~flash.core.classification.PredsClassificationSerializer
+    ~flash.core.classification.PredsClassificationOutput
     ~flash.core.classification.Probabilities
 
 flash.core.finetuning
@@ -44,6 +44,8 @@ _____________________
     :template: classtemplate.rst
 
     ~flash.core.finetuning.FlashBaseFinetuning
+    ~flash.core.hooks.FineTuningHooks
+    ~flash.core.finetuning.Freeze
     ~flash.core.finetuning.FreezeUnfreeze
     ~flash.core.finetuning.NoFreeze
     ~flash.core.finetuning.UnfreezeMilestones

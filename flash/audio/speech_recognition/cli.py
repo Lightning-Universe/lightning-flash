@@ -23,7 +23,7 @@ def from_timit(
     val_split: float = 0.1,
     batch_size: int = 4,
     num_workers: int = 0,
-    **preprocess_kwargs,
+    **input_transform_kwargs,
 ) -> SpeechRecognitionData:
     """Downloads and loads the timit data set."""
     download_data("https://pl-flash-data.s3.amazonaws.com/timit_data.zip", "./data")
@@ -35,7 +35,7 @@ def from_timit(
         val_split=val_split,
         batch_size=batch_size,
         num_workers=num_workers,
-        **preprocess_kwargs,
+        **input_transform_kwargs,
     )
 
 

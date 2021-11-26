@@ -7,15 +7,15 @@
 
 This section details the available ways to load your own data into the {{ data_module }}.
 
-{% if 'folders' in data_sources %}
+{% if 'folders' in inputs %}
 {% call render_subsection('from_folders') %}
 
 {% block from_folders %}
 Construct the {{ data_module }} from folders.
 
-{% if data_sources['folders'].extensions is defined %}
-The supported file extensions are: {{ data_sources['folders'].extensions|join(', ') }}.
-{% set extension = data_sources['folders'].extensions[0] %}
+{% if inputs['folders'].extensions is defined %}
+The supported file extensions are: {{ inputs['folders'].extensions|join(', ') }}.
+{% set extension = inputs['folders'].extensions[0] %}
 {% else %}
 {% set extension = '' %}
 {% endif %}
@@ -54,15 +54,15 @@ Example::
 {% endblock %}
 {% endcall %}
 {% endif %}
-{% if 'files' in data_sources %}
+{% if 'files' in inputs %}
 {% call render_subsection('from_files') %}
 
 {% block from_files %}
 Construct the {{ data_module }} from lists of files and corresponding lists of targets.
 
-{% if data_sources['files'].extensions is defined %}
-The supported file extensions are: {{ data_sources['files'].extensions|join(', ') }}.
-{% set extension = data_sources['files'].extensions[0] %}
+{% if inputs['files'].extensions is defined %}
+The supported file extensions are: {{ inputs['files'].extensions|join(', ') }}.
+{% set extension = inputs['files'].extensions[0] %}
 {% else %}
 {% set extension = '' %}
 {% endif %}
@@ -80,7 +80,7 @@ Example::
 {% endblock %}
 {% endcall %}
 {% endif %}
-{% if 'datasets' in data_sources %}
+{% if 'datasets' in inputs %}
 {% call render_subsection('from_datasets') %}
 
 {% block from_datasets %}

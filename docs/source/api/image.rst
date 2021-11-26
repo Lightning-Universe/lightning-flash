@@ -19,7 +19,7 @@ ______________
 
     ~classification.model.ImageClassifier
     ~classification.data.ImageClassificationData
-    ~classification.data.ImageClassificationPreprocess
+    ~classification.data.ImageClassificationInputTransform
 
     classification.data.MatplotlibVisualization
 
@@ -43,9 +43,9 @@ ________________
     ~detection.data.ObjectDetectionData
 
     detection.data.FiftyOneParser
-    detection.data.ObjectDetectionFiftyOneDataSource
-    detection.data.ObjectDetectionPreprocess
-    detection.serialization.FiftyOneDetectionLabels
+    detection.data.ObjectDetectionFiftyOneInput
+    detection.output.FiftyOneDetectionLabels
+    detection.data.ObjectDetectionInputTransform
 
 Keypoint Detection
 __________________
@@ -58,7 +58,7 @@ __________________
     ~keypoint_detection.model.KeypointDetector
     ~keypoint_detection.data.KeypointDetectionData
 
-    keypoint_detection.data.KeypointDetectionPreprocess
+    keypoint_detection.data.KeypointDetectionInputTransform
 
 Instance Segmentation
 _____________________
@@ -71,7 +71,7 @@ _____________________
     ~instance_segmentation.model.InstanceSegmentation
     ~instance_segmentation.data.InstanceSegmentationData
 
-    instance_segmentation.data.InstanceSegmentationPreprocess
+    instance_segmentation.data.InstanceSegmentationInputTransform
 
 Embedding
 _________
@@ -93,17 +93,17 @@ ____________
 
     ~segmentation.model.SemanticSegmentation
     ~segmentation.data.SemanticSegmentationData
-    ~segmentation.data.SemanticSegmentationPreprocess
+    ~segmentation.data.SemanticSegmentationInputTransform
 
     segmentation.data.SegmentationMatplotlibVisualization
-    segmentation.data.SemanticSegmentationNumpyDataSource
-    segmentation.data.SemanticSegmentationTensorDataSource
-    segmentation.data.SemanticSegmentationPathsDataSource
-    segmentation.data.SemanticSegmentationFiftyOneDataSource
+    segmentation.data.SemanticSegmentationNumpyInput
+    segmentation.data.SemanticSegmentationTensorInput
+    segmentation.data.SemanticSegmentationPathsInput
+    segmentation.data.SemanticSegmentationFiftyOneInput
     segmentation.data.SemanticSegmentationDeserializer
-    segmentation.model.SemanticSegmentationPostprocess
-    segmentation.serialization.FiftyOneSegmentationLabels
-    segmentation.serialization.SegmentationLabels
+    segmentation.model.SemanticSegmentationOutputTransform
+    segmentation.output.FiftyOneSegmentationLabels
+    segmentation.output.SegmentationLabels
 
 .. autosummary::
     :toctree: generated/
@@ -123,7 +123,7 @@ ______________
 
     ~style_transfer.model.StyleTransfer
     ~style_transfer.data.StyleTransferData
-    ~style_transfer.data.StyleTransferPreprocess
+    ~style_transfer.data.StyleTransferInputTransform
 
 .. autosummary::
     :toctree: generated/
@@ -140,7 +140,7 @@ ________________
     :template: classtemplate.rst
 
     ~data.ImageDeserializer
-    ~data.ImageFiftyOneDataSource
-    ~data.ImageNumpyDataSource
-    ~data.ImagePathsDataSource
-    ~data.ImageTensorDataSource
+    ~data.ImageFiftyOneInput
+    ~data.ImageNumpyInput
+    ~data.ImagePathsInput
+    ~data.ImageTensorInput

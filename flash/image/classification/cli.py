@@ -22,7 +22,7 @@ __all__ = ["image_classification"]
 def from_hymenoptera(
     batch_size: int = 4,
     num_workers: int = 0,
-    **preprocess_kwargs,
+    **input_transform_kwargs,
 ) -> ImageClassificationData:
     """Downloads and loads the Hymenoptera (Ants, Bees) data set."""
     download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./data")
@@ -31,14 +31,14 @@ def from_hymenoptera(
         val_folder="data/hymenoptera_data/val/",
         batch_size=batch_size,
         num_workers=num_workers,
-        **preprocess_kwargs,
+        **input_transform_kwargs,
     )
 
 
 def from_movie_posters(
     batch_size: int = 4,
     num_workers: int = 0,
-    **preprocess_kwargs,
+    **input_transform_kwargs,
 ) -> ImageClassificationData:
     """Downloads and loads the movie posters genre classification data set."""
     download_data("https://pl-flash-data.s3.amazonaws.com/movie_posters.zip", "./data")
@@ -49,7 +49,7 @@ def from_movie_posters(
         val_file="data/movie_posters/val/metadata.csv",
         batch_size=batch_size,
         num_workers=num_workers,
-        **preprocess_kwargs,
+        **input_transform_kwargs,
     )
 
 
@@ -64,6 +64,7 @@ def image_classification():
             "trainer.max_epochs": 3,
         },
         datamodule_attributes={"num_classes", "multi_label"},
+        legacy=True,
     )
 
     cli.trainer.save_checkpoint("image_classification_model.pt")

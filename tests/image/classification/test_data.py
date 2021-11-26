@@ -20,7 +20,7 @@ import pytest
 import torch
 import torch.nn as nn
 
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.data.transforms import ApplyToKeys, merge_transforms
 from flash.core.utilities.imports import (
     _ALBUMENTATIONS_AVAILABLE,
@@ -80,8 +80,6 @@ def test_from_filepaths_smoke(tmpdir):
         num_workers=0,
     )
     assert img_data.train_dataloader() is not None
-    assert img_data.val_dataloader() is None
-    assert img_data.test_dataloader() is None
 
     data = next(iter(img_data.train_dataloader()))
     imgs, labels = data["input"], data["target"]
@@ -231,8 +229,8 @@ def test_from_filepaths_splits(tmpdir):
 
     _to_tensor = {
         "to_tensor_transform": nn.Sequential(
-            ApplyToKeys(DefaultDataKeys.INPUT, torchvision.transforms.ToTensor()),
-            ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor),
+            ApplyToKeys(DataKeys.INPUT, torchvision.transforms.ToTensor()),
+            ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
         ),
     }
 
@@ -274,9 +272,6 @@ def test_from_folders_only_train(tmpdir):
     imgs, labels = data["input"], data["target"]
     assert imgs.shape == (1, 3, 196, 196)
     assert labels.shape == (1,)
-
-    assert img_data.val_dataloader() is None
-    assert img_data.test_dataloader() is None
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
@@ -472,19 +467,19 @@ def test_from_datasets():
 
     # check training data
     data = next(iter(img_data.train_dataloader()))
-    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+    imgs, labels = data[DataKeys.INPUT], data[DataKeys.TARGET]
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2,)
 
     # check validation data
     data = next(iter(img_data.val_dataloader()))
-    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+    imgs, labels = data[DataKeys.INPUT], data[DataKeys.TARGET]
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2,)
 
     # check test data
     data = next(iter(img_data.test_dataloader()))
-    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+    imgs, labels = data[DataKeys.INPUT], data[DataKeys.TARGET]
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2,)
 
@@ -520,7 +515,7 @@ def test_from_csv_single_target(single_target_csv):
 
     # check training data
     data = next(iter(img_data.train_dataloader()))
-    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+    imgs, labels = data[DataKeys.INPUT], data[DataKeys.TARGET]
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2,)
 
@@ -548,7 +543,7 @@ def test_from_csv_multi_target(multi_target_csv):
 
     # check training data
     data = next(iter(img_data.train_dataloader()))
-    imgs, labels = data[DefaultDataKeys.INPUT], data[DefaultDataKeys.TARGET]
+    imgs, labels = data[DataKeys.INPUT], data[DataKeys.TARGET]
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2, 2)
 

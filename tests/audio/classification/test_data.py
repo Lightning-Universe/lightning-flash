@@ -20,7 +20,7 @@ import torch
 import torch.nn as nn
 
 from flash.audio import AudioClassificationData
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
 from tests.helpers.utils import _AUDIO_TESTING
@@ -58,8 +58,6 @@ def test_from_filepaths_smoke(tmpdir):
         num_workers=0,
     )
     assert spectrograms_data.train_dataloader() is not None
-    assert spectrograms_data.val_dataloader() is None
-    assert spectrograms_data.test_dataloader() is None
 
     data = next(iter(spectrograms_data.train_dataloader()))
     imgs, labels = data["input"], data["target"]
@@ -130,8 +128,6 @@ def test_from_filepaths_numpy(tmpdir):
         num_workers=0,
     )
     assert spectrograms_data.train_dataloader() is not None
-    assert spectrograms_data.val_dataloader() is None
-    assert spectrograms_data.test_dataloader() is None
 
     data = next(iter(spectrograms_data.train_dataloader()))
     imgs, labels = data["input"], data["target"]
@@ -279,8 +275,8 @@ def test_from_filepaths_splits(tmpdir):
 
     _to_tensor = {
         "to_tensor_transform": nn.Sequential(
-            ApplyToKeys(DefaultDataKeys.INPUT, torchvision.transforms.ToTensor()),
-            ApplyToKeys(DefaultDataKeys.TARGET, torch.as_tensor),
+            ApplyToKeys(DataKeys.INPUT, torchvision.transforms.ToTensor()),
+            ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
         ),
     }
 
@@ -322,9 +318,6 @@ def test_from_folders_only_train(tmpdir):
     imgs, labels = data["input"], data["target"]
     assert imgs.shape == (1, 3, 128, 128)
     assert labels.shape == (1,)
-
-    assert spectrograms_data.val_dataloader() is None
-    assert spectrograms_data.test_dataloader() is None
 
 
 @pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")

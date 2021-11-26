@@ -17,7 +17,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from flash.core.data.data_source import DefaultDataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import TextClassificationData
 from tests.helpers.utils import _TEXT_TESTING
@@ -129,15 +129,15 @@ def test_from_csv(tmpdir, pretrained):
     )
 
     batch = next(iter(dm.train_dataloader()))
-    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert batch[DataKeys.TARGET].item() in [0, 1]
     assert "input_ids" in batch
 
     batch = next(iter(dm.val_dataloader()))
-    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert batch[DataKeys.TARGET].item() in [0, 1]
     assert "input_ids" in batch
 
     batch = next(iter(dm.test_dataloader()))
-    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert batch[DataKeys.TARGET].item() in [0, 1]
     assert "input_ids" in batch
 
     batch = next(iter(dm.predict_dataloader()))
@@ -162,15 +162,15 @@ def test_from_csv_multilabel(tmpdir, pretrained):
     )
 
     batch = next(iter(dm.train_dataloader()))
-    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
     assert "input_ids" in batch
 
     batch = next(iter(dm.val_dataloader()))
-    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
     assert "input_ids" in batch
 
     batch = next(iter(dm.test_dataloader()))
-    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
     assert "input_ids" in batch
 
     batch = next(iter(dm.predict_dataloader()))
@@ -195,15 +195,15 @@ def test_from_json(tmpdir, pretrained):
     )
 
     batch = next(iter(dm.train_dataloader()))
-    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert batch[DataKeys.TARGET].item() in [0, 1]
     assert "input_ids" in batch
 
     batch = next(iter(dm.val_dataloader()))
-    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert batch[DataKeys.TARGET].item() in [0, 1]
     assert "input_ids" in batch
 
     batch = next(iter(dm.test_dataloader()))
-    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert batch[DataKeys.TARGET].item() in [0, 1]
     assert "input_ids" in batch
 
     batch = next(iter(dm.predict_dataloader()))
@@ -228,15 +228,15 @@ def test_from_json_multilabel(tmpdir, pretrained):
     )
 
     batch = next(iter(dm.train_dataloader()))
-    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
     assert "input_ids" in batch
 
     batch = next(iter(dm.val_dataloader()))
-    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
     assert "input_ids" in batch
 
     batch = next(iter(dm.test_dataloader()))
-    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
     assert "input_ids" in batch
 
     batch = next(iter(dm.predict_dataloader()))
@@ -262,15 +262,15 @@ def test_from_json_with_field(tmpdir, pretrained):
     )
 
     batch = next(iter(dm.train_dataloader()))
-    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert batch[DataKeys.TARGET].item() in [0, 1]
     assert "input_ids" in batch
 
     batch = next(iter(dm.val_dataloader()))
-    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert batch[DataKeys.TARGET].item() in [0, 1]
     assert "input_ids" in batch
 
     batch = next(iter(dm.test_dataloader()))
-    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert batch[DataKeys.TARGET].item() in [0, 1]
     assert "input_ids" in batch
 
     batch = next(iter(dm.predict_dataloader()))
@@ -296,15 +296,15 @@ def test_from_json_with_field_multilabel(tmpdir, pretrained):
     )
 
     batch = next(iter(dm.train_dataloader()))
-    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
     assert "input_ids" in batch
 
     batch = next(iter(dm.val_dataloader()))
-    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
     assert "input_ids" in batch
 
     batch = next(iter(dm.test_dataloader()))
-    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
     assert "input_ids" in batch
 
     batch = next(iter(dm.predict_dataloader()))
@@ -329,15 +329,15 @@ def test_from_parquet(tmpdir, pretrained):
     )
 
     batch = next(iter(dm.train_dataloader()))
-    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert batch[DataKeys.TARGET].item() in [0, 1]
     assert "input_ids" in batch
 
     batch = next(iter(dm.val_dataloader()))
-    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert batch[DataKeys.TARGET].item() in [0, 1]
     assert "input_ids" in batch
 
     batch = next(iter(dm.test_dataloader()))
-    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert batch[DataKeys.TARGET].item() in [0, 1]
     assert "input_ids" in batch
 
     batch = next(iter(dm.predict_dataloader()))
@@ -362,15 +362,15 @@ def test_from_parquet_multilabel(tmpdir, pretrained):
     )
 
     batch = next(iter(dm.train_dataloader()))
-    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
     assert "input_ids" in batch
 
     batch = next(iter(dm.val_dataloader()))
-    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
     assert "input_ids" in batch
 
     batch = next(iter(dm.test_dataloader()))
-    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
     assert "input_ids" in batch
 
     batch = next(iter(dm.predict_dataloader()))
@@ -394,15 +394,15 @@ def test_from_data_frame(pretrained):
     )
 
     batch = next(iter(dm.train_dataloader()))
-    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert batch[DataKeys.TARGET].item() in [0, 1]
     assert "input_ids" in batch
 
     batch = next(iter(dm.val_dataloader()))
-    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert batch[DataKeys.TARGET].item() in [0, 1]
     assert "input_ids" in batch
 
     batch = next(iter(dm.test_dataloader()))
-    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert batch[DataKeys.TARGET].item() in [0, 1]
     assert "input_ids" in batch
 
     batch = next(iter(dm.predict_dataloader()))
@@ -426,15 +426,15 @@ def test_from_data_frame_multilabel(pretrained):
     )
 
     batch = next(iter(dm.train_dataloader()))
-    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
     assert "input_ids" in batch
 
     batch = next(iter(dm.val_dataloader()))
-    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
     assert "input_ids" in batch
 
     batch = next(iter(dm.test_dataloader()))
-    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
     assert "input_ids" in batch
 
     batch = next(iter(dm.predict_dataloader()))
@@ -459,15 +459,15 @@ def test_from_hf_datasets(pretrained):
     )
 
     batch = next(iter(dm.train_dataloader()))
-    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert batch[DataKeys.TARGET].item() in [0, 1]
     assert "input_ids" in batch
 
     batch = next(iter(dm.val_dataloader()))
-    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert batch[DataKeys.TARGET].item() in [0, 1]
     assert "input_ids" in batch
 
     batch = next(iter(dm.test_dataloader()))
-    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert batch[DataKeys.TARGET].item() in [0, 1]
     assert "input_ids" in batch
 
     batch = next(iter(dm.predict_dataloader()))
@@ -492,15 +492,15 @@ def test_from_hf_datasets_multilabel(pretrained):
     )
 
     batch = next(iter(dm.train_dataloader()))
-    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
     assert "input_ids" in batch
 
     batch = next(iter(dm.val_dataloader()))
-    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
     assert "input_ids" in batch
 
     batch = next(iter(dm.test_dataloader()))
-    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
     assert "input_ids" in batch
 
     batch = next(iter(dm.predict_dataloader()))
@@ -525,15 +525,15 @@ def test_from_lists(pretrained):
     )
 
     batch = next(iter(dm.train_dataloader()))
-    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert batch[DataKeys.TARGET].item() in [0, 1]
     assert "input_ids" in batch
 
     batch = next(iter(dm.val_dataloader()))
-    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert batch[DataKeys.TARGET].item() in [0, 1]
     assert "input_ids" in batch
 
     batch = next(iter(dm.test_dataloader()))
-    assert batch[DefaultDataKeys.TARGET].item() in [0, 1]
+    assert batch[DataKeys.TARGET].item() in [0, 1]
     assert "input_ids" in batch
 
     batch = next(iter(dm.predict_dataloader()))
@@ -558,15 +558,15 @@ def test_from_lists_multilabel(pretrained):
     )
 
     batch = next(iter(dm.train_dataloader()))
-    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
     assert "input_ids" in batch
 
     batch = next(iter(dm.val_dataloader()))
-    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
     assert "input_ids" in batch
 
     batch = next(iter(dm.test_dataloader()))
-    assert all([label in [0, 1] for label in batch[DefaultDataKeys.TARGET][0]])
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
     assert "input_ids" in batch
 
     batch = next(iter(dm.predict_dataloader()))

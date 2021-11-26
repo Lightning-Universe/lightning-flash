@@ -209,7 +209,7 @@ model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer="Adam", lr
 model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer="Adam", lr_scheduler=functools.partial(CyclicLR, step_size_up=1500, mode='exp_range', gamma=0.5))
 
 # - Tuple[string, dict]: (The dict takes in the scheduler kwargs)
-model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer="Adam", lr_scheduler=("StepLR", {"step_size": 10]))
+model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer="Adam", lr_scheduler=("StepLR", {"step_size": 10}))
 ```
 
 You can also register you own custom scheduler recipes beforeahand and use them shown as above:
@@ -227,7 +227,7 @@ model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer="Adam", lr
 
 Flash includes some simple augmentations for each task by default, however, you will often want to override these and control your own augmentation recipe.
 To this end, Flash supports custom transformations backed by our powerful data pipeline.
-The transform requires to be passed as a dictionary of transforms where the keys are the [hook's name](https://lightning-flash.readthedocs.io/en/latest/api/generated/flash.core.data.process.Preprocess.html?highlight=Preprocess).
+The transform requires to be passed as a dictionary of transforms where the keys are the [hook's name](https://lightning-flash.readthedocs.io/en/latest/api/generated/flash.core.data.io.input_transform.InputTransform.html?highlight=InputTransform).
 This enable transforms to be applied per sample or per batch either on or off device.
 It is important to note that data are being processed as a dictionary for all tasks (typically containing `input`, `target`, and `metadata`),
 Therefore, you can use [`ApplyToKeys`](https://lightning-flash.readthedocs.io/en/latest/api/generated/flash.core.data.transforms.ApplyToKeys.html#flash.core.data.transforms.ApplyToKeys) utility to apply the transform to a specific key.
@@ -238,10 +238,8 @@ The example also uses our [`merge_transforms`](https://lightning-flash.readthedo
 
 ```py
 import torch
-from typing import Any
 import numpy as np
 import albumentations
-from torchvision import transforms as T
 from flash.core.data.transforms import ApplyToKeys, merge_transforms
 from flash.image import ImageClassificationData
 from flash.image.classification.transforms import default_transforms, AlbumentationsAdapter

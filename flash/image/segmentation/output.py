@@ -17,8 +17,8 @@ import numpy as np
 import torch
 
 import flash
-from flash.core.data.data_source import DefaultDataKeys, ImageLabelsMap
-from flash.core.data.process import Serializer
+from flash.core.data.io.input import DataKeys, ImageLabelsMap
+from flash.core.data.io.output import Output
 from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,
     _KORNIA_AVAILABLE,
@@ -46,9 +46,9 @@ else:
     K = None
 
 
-class SegmentationLabels(Serializer):
-    """A :class:`.Serializer` which converts the model outputs to the label of the argmax classification per pixel
-    in the image for semantic segmentation tasks.
+class SegmentationLabels(Output):
+    """A :class:`.Output` which converts the model outputs to the label of the argmax classification per pixel in
+    the image for semantic segmentation tasks.
 
     Args:
         labels_map: A dictionary that map the labels ids to pixel intensities.
@@ -90,8 +90,8 @@ class SegmentationLabels(Serializer):
         plt.imshow(labels_vis)
         plt.show()
 
-    def serialize(self, sample: Dict[str, torch.Tensor]) -> torch.Tensor:
-        preds = sample[DefaultDataKeys.PREDS]
+    def transform(self, sample: Dict[str, torch.Tensor]) -> torch.Tensor:
+        preds = sample[DataKeys.PREDS]
         assert len(preds.shape) == 3, preds.shape
         labels = torch.argmax(preds, dim=-3)  # HxW
 
@@ -101,7 +101,7 @@ class SegmentationLabels(Serializer):
 
 
 class FiftyOneSegmentationLabels(SegmentationLabels):
-    """A :class:`.Serializer` which converts the model outputs to FiftyOne segmentation format.
+    """A :class:`.Output` which converts the model outputs to FiftyOne segmentation format.
 
     Args:
         labels_map: A dictionary that map the labels ids to pixel intensities.
@@ -122,10 +122,10 @@ class FiftyOneSegmentationLabels(SegmentationLabels):
 
         self.return_filepath = return_filepath
 
-    def serialize(self, sample: Dict[str, torch.Tensor]) -> Union[Segmentation, Dict[str, Any]]:
-        labels = super().serialize(sample)
+    def transform(self, sample: Dict[str, torch.Tensor]) -> Union[Segmentation, Dict[str, Any]]:
+        labels = super().transform(sample)
         fo_predictions = fol.Segmentation(mask=np.array(labels))
         if self.return_filepath:
-            filepath = sample[DefaultDataKeys.METADATA]["filepath"]
+            filepath = sample[DataKeys.METADATA]["filepath"]
             return {"filepath": filepath, "predictions": fo_predictions}
         return fo_predictions

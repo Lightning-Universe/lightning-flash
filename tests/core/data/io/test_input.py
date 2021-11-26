@@ -11,14 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, List, Union
-
-from flash.core.data.data_source import DefaultDataKeys
-from flash.core.data.process import Serializer
+from flash.core.data.io.input import DataKeys, DatasetInput
 
 
-class Preds(Serializer):
-    """A :class:`~flash.core.data.process.Serializer` which returns the "preds" from the model outputs."""
+def test_dataset_input():
+    dataset_input = DatasetInput()
 
-    def serialize(self, sample: Any) -> Union[int, List[int]]:
-        return sample.get(DefaultDataKeys.PREDS, sample) if isinstance(sample, dict) else sample
+    input, target = "test", 3
+
+    assert dataset_input.load_sample((input, target)) == {DataKeys.INPUT: input, DataKeys.TARGET: target}
+    assert dataset_input.load_sample(input) == {DataKeys.INPUT: input}

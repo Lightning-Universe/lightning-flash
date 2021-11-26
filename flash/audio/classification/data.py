@@ -16,55 +16,53 @@ from typing import Any, Callable, Dict, Optional, Tuple
 import numpy as np
 
 from flash.audio.classification.transforms import default_transforms, train_default_transforms
-from flash.core.data.data_source import (
-    DefaultDataKeys,
-    DefaultDataSources,
+from flash.core.data.io.input import (
+    DataKeys,
     has_file_allowed_extension,
-    LoaderDataFrameDataSource,
-    NumpyDataSource,
-    PathsDataSource,
+    InputFormat,
+    LoaderDataFrameInput,
+    NumpyInput,
+    PathsInput,
 )
-from flash.core.data.process import Deserializer, Preprocess
-from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
+from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.process import Deserializer
+from flash.core.data.utils import image_default_loader
 from flash.image.classification.data import ImageClassificationData
 from flash.image.data import ImageDeserializer, IMG_EXTENSIONS, NP_EXTENSIONS
-
-if _TORCHVISION_AVAILABLE:
-    from torchvision.datasets.folder import default_loader
 
 
 def spectrogram_loader(filepath: str):
     if has_file_allowed_extension(filepath, IMG_EXTENSIONS):
-        img = default_loader(filepath)
+        img = image_default_loader(filepath)
         data = np.array(img)
     else:
         data = np.load(filepath)
     return data
 
 
-class AudioClassificationNumpyDataSource(NumpyDataSource):
+class AudioClassificationNumpyInput(NumpyInput):
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        sample[DefaultDataKeys.INPUT] = np.transpose(sample[DefaultDataKeys.INPUT], (1, 2, 0))
+        sample[DataKeys.INPUT] = np.transpose(sample[DataKeys.INPUT], (1, 2, 0))
         return sample
 
 
-class AudioClassificationTensorDataSource(AudioClassificationNumpyDataSource):
+class AudioClassificationTensorInput(AudioClassificationNumpyInput):
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        sample[DefaultDataKeys.INPUT] = sample[DefaultDataKeys.INPUT].numpy()
+        sample[DataKeys.INPUT] = sample[DataKeys.INPUT].numpy()
         return super().load_sample(sample, dataset=dataset)
 
 
-class AudioClassificationPathsDataSource(PathsDataSource):
+class AudioClassificationPathsInput(PathsInput):
     def __init__(self):
         super().__init__(loader=spectrogram_loader, extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
 
 
-class AudioClassificationDataFrameDataSource(LoaderDataFrameDataSource):
+class AudioClassificationDataFrameInput(LoaderDataFrameInput):
     def __init__(self):
         super().__init__(spectrogram_loader)
 
 
-class AudioClassificationPreprocess(Preprocess):
+class AudioClassificationInputTransform(InputTransform):
     def __init__(
         self,
         train_transform: Optional[Dict[str, Callable]] = None,
@@ -85,16 +83,16 @@ class AudioClassificationPreprocess(Preprocess):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_sources={
-                DefaultDataSources.FILES: AudioClassificationPathsDataSource(),
-                DefaultDataSources.FOLDERS: AudioClassificationPathsDataSource(),
-                "data_frame": AudioClassificationDataFrameDataSource(),
-                DefaultDataSources.CSV: AudioClassificationDataFrameDataSource(),
-                DefaultDataSources.NUMPY: AudioClassificationNumpyDataSource(),
-                DefaultDataSources.TENSORS: AudioClassificationTensorDataSource(),
+            inputs={
+                InputFormat.FILES: AudioClassificationPathsInput(),
+                InputFormat.FOLDERS: AudioClassificationPathsInput(),
+                "data_frame": AudioClassificationDataFrameInput(),
+                InputFormat.CSV: AudioClassificationDataFrameInput(),
+                InputFormat.NUMPY: AudioClassificationNumpyInput(),
+                InputFormat.TENSORS: AudioClassificationTensorInput(),
             },
             deserializer=deserializer or ImageDeserializer(),
-            default_data_source=DefaultDataSources.FILES,
+            default_input=InputFormat.FILES,
         )
 
     def get_state_dict(self) -> Dict[str, Any]:
@@ -119,4 +117,4 @@ class AudioClassificationPreprocess(Preprocess):
 class AudioClassificationData(ImageClassificationData):
     """Data module for audio classification."""
 
-    preprocess_cls = AudioClassificationPreprocess
+    input_transform_cls = AudioClassificationInputTransform

@@ -1,37 +1,22 @@
-# Python package
-# Create and test a Python package on multiple Python versions.
-# Add steps that analyze code, save the dist with the build record, publish to a PyPI-compatible index, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/python
-trigger: none
-
-pr: none
-
-schedules:
-- cron: "0 0 * * *"
-  displayName: Daily midnight testing
-  branches:
-    include:
-    - master
-
 jobs:
-  - job: pytest
+- ${{ each config in parameters.configs }}:
+  - job:
+    displayName: ${{config}}
     # how long to run the job before automatically cancelling
     timeoutInMinutes: 45
     # how much time to give 'run always even if cancelled tasks' before stopping them
     cancelTimeoutInMinutes: 2
 
-    pool: gridai-spot-pool
-
-    # ToDo: this need to have installed docker in the base image...
-    #container: "pytorchlightning/pytorch_lightning:base-cuda-py$[ variables['python.version'] ]-torch1.6"
+    pool: azure-gpus-spot
+    # this need to have installed docker in the base image...
     container:
-      image: "pytorchlightning/pytorch_lightning:base-cuda-py3.8-torch1.8"
-      #endpoint: azureContainerRegistryConnection
-      options: "--ipc=host --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all"
+      # base ML image: mcr.microsoft.com/azureml/openmpi3.1.2-cuda10.2-cudnn8-ubuntu18.04
+      image: "pytorchlightning/pytorch_lightning:base-cuda-py3.9-torch1.8"
+      # image: "pytorch/pytorch:1.8.1-cuda11.0-cudnn8-runtime"
+      options: "-it --rm --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all --shm-size=32g"
 
     workspace:
       clean: all
-
     steps:
 
     - bash: |
@@ -50,7 +35,7 @@ jobs:
 
     - bash: |
         # python -m pip install "pip==20.1"
-        pip install '.[all]'
+        pip install '.[${{config}}]'
         pip install '.[test]' --upgrade-strategy only-if-needed
         pip list
       displayName: 'Install dependencies'
@@ -58,10 +43,6 @@ jobs:
     - bash: |
         python -m coverage run --source flash -m pytest flash tests/examples/test_scripts.py -v --junitxml=$(Build.StagingDirectory)/test-results.xml --durations=30
       displayName: 'Testing'
-
-    - bash: |
-        bash tests/special_tests.sh
-      displayName: 'Testing: special'
 
     - bash: |
         python -m coverage report

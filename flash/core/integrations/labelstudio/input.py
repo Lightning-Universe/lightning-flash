@@ -7,19 +7,17 @@ import torch
 from pytorch_lightning.utilities.cloud_io import get_filesystem
 
 from flash.core.data.auto_dataset import AutoDataset, IterableAutoDataset
-from flash.core.data.data_source import DataSource, DefaultDataKeys, has_len
-from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.data.io.input import DataKeys, has_len, Input
+from flash.core.data.utils import image_default_loader
+from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE
 from flash.core.utilities.stages import RunningStage
-
-if _TORCHVISION_AVAILABLE:
-    from torchvision.datasets.folder import default_loader
 
 DATA_TYPE = TypeVar("DATA_TYPE")
 
 
-class LabelStudioDataSource(DataSource):
-    """The ``LabelStudioDatasource`` expects the input to
-    :meth:`~flash.core.data.data_source.DataSource.load_data` to be a json export from label studio."""
+class LabelStudioInput(Input):
+    """The ``LabelStudioInput`` expects the input to
+    :meth:`~flash.core.data.io.input.Input.load_data` to be a json export from label studio."""
 
     def __init__(self):
         super().__init__()
@@ -45,7 +43,7 @@ class LabelStudioDataSource(DataSource):
                 _raw_data = json.load(f)
             self.multi_label = data.get("multi_label", False)
             self.split = data.get("split")
-            results, test_results, classes, data_types, tag_types = LabelStudioDataSource._load_json_data(
+            results, test_results, classes, data_types, tag_types = LabelStudioInput._load_json_data(
                 _raw_data, data_folder=data_folder, multi_label=self.multi_label
             )
             self.classes = self.classes | classes
@@ -73,8 +71,8 @@ class LabelStudioDataSource(DataSource):
         # delete label from input data
         del sample["label"]
         result = {
-            DefaultDataKeys.INPUT: sample,
-            DefaultDataKeys.TARGET: label,
+            DataKeys.INPUT: sample,
+            DataKeys.TARGET: label,
         }
         return result
 
@@ -178,23 +176,23 @@ class LabelStudioDataSource(DataSource):
         return results, test_results, classes, data_types, tag_types
 
 
-class LabelStudioImageClassificationDataSource(LabelStudioDataSource):
-    """The ``LabelStudioImageDataSource`` expects the input to
-    :meth:`~flash.core.data.data_source.DataSource.load_data` to be a json export from label studio.
+class LabelStudioImageClassificationInput(LabelStudioInput):
+    """The ``LabelStudioImageInput`` expects the input to
+    :meth:`~flash.core.data.io.input.Input.load_data` to be a json export from label studio.
     Export data should point to image files"""
 
     def load_sample(self, sample: Mapping[str, Any] = None, dataset: Optional[Any] = None) -> Any:
         """Load 1 sample from dataset."""
         p = sample["file_upload"]
         # loading image
-        image = default_loader(p)
-        result = {DefaultDataKeys.INPUT: image, DefaultDataKeys.TARGET: self._get_labels_from_sample(sample["label"])}
+        image = image_default_loader(p)
+        result = {DataKeys.INPUT: image, DataKeys.TARGET: self._get_labels_from_sample(sample["label"])}
         return result
 
 
-class LabelStudioTextClassificationDataSource(LabelStudioDataSource):
-    """The ``LabelStudioTextDataSource`` expects the input to
-    :meth:`~flash.core.data.data_source.DataSource.load_data` to be a json export from label studio.
+class LabelStudioTextClassificationInput(LabelStudioInput):
+    """The ``LabelStudioTextInput`` expects the input to
+    :meth:`~flash.core.data.io.input.Input.load_data` to be a json export from label studio.
     Export data should point to text data
     """
 
@@ -216,9 +214,9 @@ class LabelStudioTextClassificationDataSource(LabelStudioDataSource):
         return result
 
 
-class LabelStudioVideoClassificationDataSource(LabelStudioDataSource):
-    """The ``LabelStudioVideoDataSource`` expects the input to
-    :meth:`~flash.core.data.data_source.DataSource.load_data` to be a json export from label studio.
+class LabelStudioVideoClassificationInput(LabelStudioInput):
+    """The ``LabelStudioVideoInput`` expects the input to
+    :meth:`~flash.core.data.io.input.Input.load_data` to be a json export from label studio.
     Export data should point to video files"""
 
     def __init__(self, video_sampler=None, clip_sampler=None, decode_audio=False, decoder: str = "pyav"):

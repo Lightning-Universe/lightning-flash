@@ -25,7 +25,7 @@ from flash.core.data.states import CollateFn
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _AUDIO_AVAILABLE
-from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE, SERIALIZER_TYPE
+from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 
 if _AUDIO_AVAILABLE:
     from transformers import Wav2Vec2Processor
@@ -41,7 +41,7 @@ class SpeechRecognition(Task):
         learning_rate: Learning rate to use for training, defaults to ``1e-5``.
         optimizer: Optimizer to use for training.
         lr_scheduler: The LR scheduler to use during training.
-        serializer: The :class:`~flash.core.data.process.Serializer` to use when serializing prediction outputs.
+        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
     """
 
     backbones: FlashRegistry = SPEECH_RECOGNITION_BACKBONES
@@ -54,7 +54,7 @@ class SpeechRecognition(Task):
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         learning_rate: float = 1e-5,
-        serializer: SERIALIZER_TYPE = None,
+        output: OUTPUT_TYPE = None,
     ):
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
         # disable HF thousand warnings
@@ -68,7 +68,7 @@ class SpeechRecognition(Task):
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
             learning_rate=learning_rate,
-            serializer=serializer,
+            output=output,
         )
 
         self.save_hyperparameters()

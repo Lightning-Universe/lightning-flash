@@ -19,23 +19,23 @@
 import collections
 import os
 import warnings
-from typing import Any, Callable, List, Mapping, Optional, Sequence, Union
+from typing import Any, Callable, Iterable, List, Mapping, Optional, Sequence, Union
 
 import numpy as np
 import torch
 from pytorch_lightning import Callback
 from pytorch_lightning.utilities import rank_zero_info
 from torch import Tensor
+from torch.nn import Module
 
-from flash.core.data.data_source import DefaultDataKeys
-from flash.core.finetuning import FlashBaseFinetuning
+from flash.core.data.io.input import DataKeys
 from flash.core.model import Task
 from flash.core.registry import ExternalRegistry, FlashRegistry
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.core.utilities.providers import _HUGGINGFACE
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.text.ort_callback import ORTCallback
-from flash.text.question_answering.finetuning import QuestionAnsweringFreezeEmbeddings
+from flash.text.question_answering.finetuning import _get_question_answering_bacbones_for_freezing
 from flash.text.seq2seq.core.metrics import RougeMetric
 
 if _TEXT_AVAILABLE:
@@ -125,7 +125,7 @@ class QuestionAnsweringTask(Task):
         self._initialize_model_specific_parameters()
 
         self.rouge = RougeMetric(
-            rouge_newline_sep=rouge_newline_sep,
+            newline_sep=rouge_newline_sep,
             use_stemmer=use_stemmer,
         )
 
@@ -242,14 +242,14 @@ class QuestionAnsweringTask(Task):
         return all_predictions
 
     def forward(self, batch: Any) -> Any:
-        metadata = batch.pop(DefaultDataKeys.METADATA)
+        metadata = batch.pop(DataKeys.METADATA)
         outputs = self.model(**batch)
         loss = outputs.loss
         start_logits = outputs.start_logits
         end_logits = outputs.end_logits
 
         generated_answers = self._generate_answers(start_logits, end_logits, metadata)
-        batch[DefaultDataKeys.METADATA] = metadata
+        batch[DataKeys.METADATA] = metadata
         return loss, generated_answers
 
     def training_step(self, batch: Any, batch_idx: int) -> Tensor:
@@ -260,7 +260,7 @@ class QuestionAnsweringTask(Task):
 
     def common_step(self, prefix: str, batch: Any) -> torch.Tensor:
         loss, generated_answers = self(batch)
-        result = self.compute_metrics(generated_answers, batch[DefaultDataKeys.METADATA])
+        result = self.compute_metrics(generated_answers, batch[DataKeys.METADATA])
         self.log(f"{prefix}_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log_dict(result, on_step=False, on_epoch=True, prog_bar=False)
 
@@ -296,8 +296,9 @@ class QuestionAnsweringTask(Task):
             rank_zero_info(f"Overriding model paramameters for {self.task} as defined within the model:\n {pars}")
             self.model.config.update(pars)
 
-    def configure_finetune_callback(self) -> List[FlashBaseFinetuning]:
-        return [QuestionAnsweringFreezeEmbeddings(self.model.config.model_type, train_bn=True)]
+    def modules_to_freeze(self) -> Union[Module, Iterable[Union[Module, Iterable]]]:
+        """Return the module attributes of the model to be frozen."""
+        return _get_question_answering_bacbones_for_freezing(self.model)
 
     def configure_callbacks(self) -> List[Callback]:
         callbacks = super().configure_callbacks() or []

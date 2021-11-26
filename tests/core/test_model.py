@@ -32,18 +32,17 @@ from torch.utils.data import DataLoader
 from torchmetrics import Accuracy
 
 import flash
+from flash.audio import SpeechRecognition
 from flash.core.adapter import Adapter
 from flash.core.classification import ClassificationTask
-from flash.core.data.process import DefaultPreprocess, Postprocess
-from flash.core.utilities.imports import _TABULAR_AVAILABLE, _TORCH_OPTIMIZER_AVAILABLE, _TRANSFORMERS_AVAILABLE, Image
-from flash.image import ImageClassificationData, ImageClassifier
-from tests.helpers.utils import _IMAGE_TESTING, _TABULAR_TESTING
-
-if _TABULAR_AVAILABLE:
-    from flash.tabular import TabularClassifier
-else:
-    TabularClassifier = None
-
+from flash.core.data.io.input_transform import DefaultInputTransform
+from flash.core.data.io.output_transform import OutputTransform
+from flash.core.utilities.imports import _TORCH_OPTIMIZER_AVAILABLE, _TRANSFORMERS_AVAILABLE, Image
+from flash.graph import GraphClassifier, GraphEmbedder
+from flash.image import ImageClassificationData, ImageClassifier, SemanticSegmentation
+from flash.tabular import TabularClassifier
+from flash.text import SummarizationTask, TextClassifier, TranslationTask
+from tests.helpers.utils import _AUDIO_TESTING, _GRAPH_TESTING, _IMAGE_TESTING, _TABULAR_TESTING, _TEXT_TESTING
 
 # ======== Mock functions ========
 
@@ -67,7 +66,7 @@ class PredictDummyDataset(DummyDataset):
         return torch.rand(1, 28, 28)
 
 
-class DummyPostprocess(Postprocess):
+class DummyOutputTransform(OutputTransform):
 
     pass
 
@@ -178,7 +177,7 @@ def test_nested_tasks(tmpdir, task):
 
 def test_classificationtask_task_predict():
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
-    task = ClassificationTask(model, preprocess=DefaultPreprocess())
+    task = ClassificationTask(model, input_transform=DefaultInputTransform())
     ds = DummyDataset()
     expected = list(range(10))
     # single item
@@ -225,10 +224,10 @@ def test_classification_task_trainer_predict(tmpdir):
 def test_task_datapipeline_save(tmpdir):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
     train_dl = torch.utils.data.DataLoader(DummyDataset())
-    task = ClassificationTask(model, loss_fn=F.nll_loss, postprocess=DummyPostprocess())
+    task = ClassificationTask(model, loss_fn=F.nll_loss, output_transform=DummyOutputTransform())
 
     # to check later
-    task.postprocess.test = True
+    task.output_transform.test = True
 
     # generate a checkpoint
     trainer = pl.Trainer(
@@ -245,27 +244,82 @@ def test_task_datapipeline_save(tmpdir):
 
     # load from file
     task = ClassificationTask.load_from_checkpoint(path, model=model)
-    assert task.postprocess.test
+    assert task.output_transform.test
 
 
 @pytest.mark.parametrize(
     ["cls", "filename"],
     [
-        # needs to be updated.
-        # pytest.param(
-        #    ImageClassifier,
-        #    "image_classification_model.pt",
-        #    marks=pytest.mark.skipif(
-        #        not _IMAGE_TESTING,
-        #        reason="image packages aren't installed",
-        #    ),
-        # ),
+        pytest.param(
+            ImageClassifier,
+            "0.6.0/image_classification_model.pt",
+            marks=pytest.mark.skipif(
+                not _IMAGE_TESTING,
+                reason="image packages aren't installed",
+            ),
+        ),
+        pytest.param(
+            SemanticSegmentation,
+            "0.6.0/semantic_segmentation_model.pt",
+            marks=pytest.mark.skipif(
+                not _IMAGE_TESTING,
+                reason="image packages aren't installed",
+            ),
+        ),
+        pytest.param(
+            SpeechRecognition,
+            "0.6.0/speech_recognition_model.pt",
+            marks=pytest.mark.skipif(
+                not _AUDIO_TESTING,
+                reason="audio packages aren't installed",
+            ),
+        ),
         pytest.param(
             TabularClassifier,
-            "tabular_classification_model.pt",
+            "0.6.0/tabular_classification_model.pt",
             marks=pytest.mark.skipif(
                 not _TABULAR_TESTING,
                 reason="tabular packages aren't installed",
+            ),
+        ),
+        pytest.param(
+            TextClassifier,
+            "0.6.0/text_classification_model.pt",
+            marks=pytest.mark.skipif(
+                not _TEXT_TESTING,
+                reason="text packages aren't installed",
+            ),
+        ),
+        pytest.param(
+            SummarizationTask,
+            "0.6.0/summarization_model_xsum.pt",
+            marks=pytest.mark.skipif(
+                not _TEXT_TESTING,
+                reason="text packages aren't installed",
+            ),
+        ),
+        pytest.param(
+            TranslationTask,
+            "0.6.0/translation_model_en_ro.pt",
+            marks=pytest.mark.skipif(
+                not _TEXT_TESTING,
+                reason="text packages aren't installed",
+            ),
+        ),
+        pytest.param(
+            GraphClassifier,
+            "0.6.0/graph_classification_model.pt",
+            marks=pytest.mark.skipif(
+                not _GRAPH_TESTING,
+                reason="graph packages aren't installed",
+            ),
+        ),
+        pytest.param(
+            GraphEmbedder,
+            "0.6.0/graph_classification_model.pt",
+            marks=pytest.mark.skipif(
+                not _GRAPH_TESTING,
+                reason="graph packages aren't installed",
             ),
         ),
     ],
