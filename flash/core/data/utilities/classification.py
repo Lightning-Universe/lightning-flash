@@ -37,33 +37,20 @@ class TargetMode(Enum):
     SINGLE_NUMERIC = auto()
     SINGLE_BINARY = auto()
 
-    def resolve(self, other: "TargetMode") -> "TargetMode":
-        """The purpose of the addition here is to reduce the ``TargetMode`` over multiple targets. If one target
-        mode is a comma delimited string and the other a single string then their sum will be comma delimited. If
-        one target is multi binary and the other is single binary, their sum will be multi binary. Otherwise, we
-        expect that both target modes are the same.
-
-        Raises:
-            ValueError: If the two  target modes could not be resolved to a single mode.
-        """
-        if self is other:
-            return self
-        elif self is TargetMode.MUTLI_COMMA_DELIMITED and other is TargetMode.SINGLE_TOKEN:
-            return TargetMode.MUTLI_COMMA_DELIMITED
-        elif self is TargetMode.SINGLE_TOKEN and other is TargetMode.MUTLI_COMMA_DELIMITED:
-            return TargetMode.MUTLI_COMMA_DELIMITED
-        elif self is TargetMode.MULTI_BINARY and other is TargetMode.SINGLE_BINARY:
-            return TargetMode.MULTI_BINARY
-        elif self is TargetMode.SINGLE_BINARY and other is TargetMode.MULTI_BINARY:
-            return TargetMode.MULTI_BINARY
-        raise ValueError(
-            "Found inconsistent target modes. All targets should be either: single values, lists of values, or "
-            "comma-delimited strings."
-        )
-
     @classmethod
     def from_target(cls, target: Any) -> "TargetMode":
         """Determine the ``TargetMode`` for a given target.
+
+        Multi-label targets can be:
+            * Comma delimited string - ``TargetMode.MUTLI_COMMA_DELIMITED`` (e.g. ["blue,green", "red"])
+            * List of strings - ``TargetMode.MULTI_TOKEN`` (e.g. [["blue", "green"], ["red"]])
+            * List of numbers - ``TargetMode.MULTI_NUMERIC`` (e.g. [[0, 1], [2]])
+            * Binary list - ``TargetMode.MULTI_BINARY`` (e.g. [[1, 1, 0], [0, 0, 1]])
+
+        Single-label targets can be:
+            * Single string - ``TargetMode.SINGLE_TOKEN`` (e.g. ["blue", "green", "red"])
+            * Single number - ``TargetMode.SINGLE_NUMERIC`` (e.g. [0, 1, 2])
+            * One-hot binary list - ``TargetMode.SINGLE_BINARY`` (e.g. [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
         Args:
             target: A target that is one of: a single target, a list of targets, a comma delimited string.
@@ -75,6 +62,8 @@ class TargetMode(Enum):
             else:
                 return TargetMode.SINGLE_TOKEN
         elif _is_list_like(target):
+            if len(target) == 1:
+                return TargetMode.from_target(target[0])
             if isinstance(target[0], str):
                 return TargetMode.MULTI_TOKEN
             elif all(t == 0 or t == 1 for t in target):
@@ -91,6 +80,7 @@ class TargetMode(Enum):
                 self is TargetMode.MUTLI_COMMA_DELIMITED,
                 self is TargetMode.MULTI_NUMERIC,
                 self is TargetMode.MULTI_TOKEN,
+                self is TargetMode.MULTI_BINARY,
             ]
         )
 
@@ -113,6 +103,35 @@ class TargetMode(Enum):
         )
 
 
+_MAPPING = {
+    TargetMode.MULTI_BINARY: [TargetMode.MULTI_NUMERIC],
+    TargetMode.SINGLE_BINARY: [TargetMode.MULTI_BINARY, TargetMode.MULTI_NUMERIC],
+    TargetMode.SINGLE_TOKEN: [TargetMode.MULTI_TOKEN, TargetMode.MUTLI_COMMA_DELIMITED],
+    TargetMode.SINGLE_NUMERIC: [TargetMode.MULTI_NUMERIC],
+}
+
+
+def _resolve_target_mode(a: TargetMode, b: TargetMode) -> TargetMode:
+    """The purpose of the addition here is to reduce the ``TargetMode`` over multiple targets. If one target mode
+    is a comma delimited string and the other a single string then their sum will be comma delimited. If one target
+    is multi binary and the other is single binary, their sum will be multi binary. Otherwise, we expect that both
+    target modes are the same.
+
+    Raises:
+        ValueError: If the two  target modes could not be resolved to a single mode.
+    """
+    if a is b:
+        return a
+    elif a in _MAPPING and b in _MAPPING[a]:
+        return b
+    elif b in _MAPPING and a in _MAPPING[b]:
+        return a
+    raise ValueError(
+        "Found inconsistent target modes. All targets should be either: single values, lists of values, or "
+        "comma-delimited strings."
+    )
+
+
 def get_target_mode(targets: List[Any]) -> TargetMode:
     """Aggregate the ``TargetMode`` for a list of targets.
 
@@ -122,7 +141,7 @@ def get_target_mode(targets: List[Any]) -> TargetMode:
     Returns:
         The total ``TargetMode`` of the list of targets.
     """
-    return reduce(TargetMode.resolve, [TargetMode.from_target(target) for target in targets])
+    return reduce(_resolve_target_mode, [TargetMode.from_target(target) for target in targets])
 
 
 class TargetFormatter:
@@ -133,12 +152,19 @@ class TargetFormatter:
         return target
 
 
+class SingleNumericTargetFormatter(TargetFormatter):
+    def format(self, target: Any) -> Any:
+        if _is_list_like(target):
+            return target[0]
+        return target
+
+
 class SingleLabelFormatter(TargetFormatter):
     def __init__(self, labels: List[Any]):
         self.label_to_idx = {label: idx for idx, label in enumerate(labels)}
 
     def format(self, target: Any) -> Any:
-        return self.label_to_idx[target]
+        return self.label_to_idx[target[0] if not isinstance(target, str) else target]
 
 
 class MultiLabelFormatter(SingleLabelFormatter):
@@ -182,8 +208,10 @@ class OneHotFormatter(TargetFormatter):
 def get_target_formatter(
     target_mode: TargetMode, labels: Optional[List[Any]], num_classes: Optional[int]
 ) -> TargetFormatter:
-    if target_mode is TargetMode.SINGLE_NUMERIC or target_mode is TargetMode.MULTI_BINARY:
+    if target_mode is TargetMode.MULTI_BINARY:
         return TargetFormatter()
+    elif target_mode is TargetMode.SINGLE_NUMERIC:
+        return SingleNumericTargetFormatter()
     elif target_mode is TargetMode.SINGLE_BINARY:
         return OneHotFormatter()
     elif target_mode is TargetMode.MULTI_NUMERIC:
@@ -226,6 +254,9 @@ def get_target_details(targets: List[Any], target_mode: TargetMode) -> Tuple[Opt
         else:
             values = targets
         num_classes = max(values)
+        if _is_list_like(num_classes):
+            num_classes = num_classes[0]
+        num_classes = num_classes + 1
         labels = None
     elif target_mode.is_binary:
         # Take a length
@@ -242,9 +273,9 @@ def get_target_details(targets: List[Any], target_mode: TargetMode) -> Tuple[Opt
             for target in targets:
                 tokens.extend(target)
         else:
-            tokens = targets
+            tokens = [target[0] if not isinstance(target, str) else target for target in targets]
 
-        labels = list(set(tokens))
+        labels = [token[0] if not isinstance(token, str) else token for token in set(tokens)]
         labels.sort()
         num_classes = len(labels)
     return labels, num_classes
