@@ -18,7 +18,7 @@ import flash
 from flash.core.utilities.stages import RunningStage
 
 
-@dataclass(unsafe_hash=True)
+@dataclass(unsafe_hash=True, frozen=True)
 class ProcessState:
     """Base class for all process states."""
 

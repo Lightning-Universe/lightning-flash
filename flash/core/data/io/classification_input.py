@@ -25,7 +25,7 @@ from flash.core.data.utilities.classification import (
 )
 
 
-@dataclass(unsafe_hash=True)
+@dataclass(unsafe_hash=True, frozen=True)
 class ClassificationState(ProcessState):
     """A :class:`~flash.core.data.properties.ProcessState` containing ``labels`` (a mapping from class index to
     label) and ``num_classes``."""
