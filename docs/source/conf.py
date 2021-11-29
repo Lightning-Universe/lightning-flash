@@ -119,7 +119,7 @@ extensions = [
     "sphinx.ext.imgmath",
     "recommonmark",
     # 'sphinx.ext.autosectionlabel',
-    # 'nbsphinx',  # it seems some sphinx issue
+    "nbsphinx",
     "sphinx_autodoc_typehints",
     "sphinx_copybutton",
     "sphinx_paramlinks",
