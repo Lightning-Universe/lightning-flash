@@ -73,6 +73,13 @@ cases = [
         ["blue", "green", "red"],
         3,
     ),
+    Case(
+        [f"class_{i}" for i in range(10000)],
+        list(range(10000)),
+        TargetMode.SINGLE_TOKEN,
+        [f"class_{i}" for i in range(10000)],
+        10000,
+    ),
 ]
 
 
@@ -91,7 +98,7 @@ def test_case(case):
 
 @pytest.mark.parametrize("case", cases)
 def test_speed(case):
-    targets = case.target * 100000  # 300000 targets
+    targets = case.target * int(1e6 / len(case.target))  # Approx. a million targets
 
     start = time.time()
     target_mode = get_target_mode(targets)
@@ -99,10 +106,10 @@ def test_speed(case):
     formatter = get_target_formatter(target_mode, labels, num_classes)
     end = time.time()
 
-    assert (end - start) / 300000 < 1e-5  # 0.01ms per target
+    assert (end - start) / len(targets) < 1e-5  # 0.01ms per target
 
     start = time.time()
     _ = [formatter(t) for t in targets]
     end = time.time()
 
-    assert (end - start) / 300000 < 1e-5  # 0.01ms per target
+    assert (end - start) / len(targets) < 1e-5  # 0.01ms per target

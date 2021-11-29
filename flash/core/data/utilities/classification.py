@@ -11,9 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import re
 from enum import auto, Enum
 from functools import reduce
-from typing import Any, List, Optional, Tuple
+from typing import Any, Iterable, List, Optional, Tuple, Union
 
 
 def _is_list_like(x: Any) -> bool:
@@ -23,6 +24,23 @@ def _is_list_like(x: Any) -> bool:
         return True
     except TypeError:
         return False
+
+
+def _convert(text: str) -> Union[int, str]:
+    return int(text) if text.isdigit() else text
+
+
+def _alphanumeric_key(key: str) -> List[Union[int, str]]:
+    return [_convert(c) for c in re.split("([0-9]+)", key)]
+
+
+def _sorted_nicely(iterable: Iterable[str]) -> Iterable[str]:
+    """Sort the given iterable in the way that humans expect.
+
+    Copied from:
+    https://blog.codinghorror.com/sorting-for-humans-natural-sort-order/
+    """
+    return sorted(iterable, key=_alphanumeric_key)
 
 
 class TargetMode(Enum):
@@ -273,7 +291,6 @@ def get_target_details(targets: List[Any], target_mode: TargetMode) -> Tuple[Opt
             tokens = targets
 
         tokens = [token.strip() for token in tokens]
-        labels = list(set(tokens))
-        labels.sort()
+        labels = list(_sorted_nicely(set(tokens)))
         num_classes = len(labels)
     return labels, num_classes
