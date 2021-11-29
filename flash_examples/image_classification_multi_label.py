@@ -40,7 +40,7 @@ datamodule = ImageClassificationData.from_csv(
 )
 
 # 2. Build the task
-model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes, multi_label=True)
+model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes, multi_label=datamodule.multi_label)
 
 # 3. Create the trainer and finetune the model
 trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count(), limit_train_batches=10)

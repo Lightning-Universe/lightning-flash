@@ -420,7 +420,7 @@ class DataModule(pl.LightningDataModule):
 
     @property
     def multi_label(self) -> Optional[bool]:
-        """Property that returns the number of labels of the datamodule if a multilabel task."""
+        """Property that returns ``True`` if this ``DataModule`` contains multi-label data."""
         multi_label_train = getattr(self.train_dataset, "multi_label", None)
         multi_label_val = getattr(self.val_dataset, "multi_label", None)
         multi_label_test = getattr(self.test_dataset, "multi_label", None)

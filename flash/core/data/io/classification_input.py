@@ -62,6 +62,7 @@ class ClassificationInput(Input):
             targets: The list of targets.
         """
         self.target_mode = get_target_mode(targets)
+        self.multi_label = self.target_mode.multi_label
         if self.training:
             self.labels, self.num_classes = get_target_details(targets, self.target_mode)
             self.set_state(ClassificationState(self.labels, self.num_classes))

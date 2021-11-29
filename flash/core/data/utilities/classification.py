@@ -44,7 +44,8 @@ def _alphanumeric_key(key: str) -> List[Union[int, str]]:
 
 
 def _sorted_nicely(iterable: Iterable[str]) -> Iterable[str]:
-    """Sort the given iterable in the way that humans expect.
+    """Sort the given iterable in the way that humans expect. For example, given ``{"class_1", "class_11",
+    "class_2"}`` this returns ``["class_1", "class_2", "class_11"]``.
 
     Copied from:
     https://blog.codinghorror.com/sorting-for-humans-natural-sort-order/
@@ -99,7 +100,7 @@ class TargetMode(Enum):
         return TargetMode.SINGLE_NUMERIC
 
     @property
-    def is_multi_label(self) -> bool:
+    def multi_label(self) -> bool:
         return any(
             [
                 self is TargetMode.MUTLI_COMMA_DELIMITED,
@@ -110,7 +111,7 @@ class TargetMode(Enum):
         )
 
     @property
-    def is_numeric(self) -> bool:
+    def numeric(self) -> bool:
         return any(
             [
                 self is TargetMode.MULTI_NUMERIC,
@@ -119,7 +120,7 @@ class TargetMode(Enum):
         )
 
     @property
-    def is_binary(self) -> bool:
+    def binary(self) -> bool:
         return any(
             [
                 self is TargetMode.MULTI_BINARY,
@@ -170,6 +171,9 @@ def get_target_mode(targets: List[Any]) -> TargetMode:
 
 
 class TargetFormatter:
+    """A ``TargetFormatter`` is used to convert targets of a given type to a standard format required by the
+    task."""
+
     def __call__(self, target: Any) -> Any:
         return self.format(target)
 
@@ -177,7 +181,7 @@ class TargetFormatter:
         return _as_list(target)
 
 
-class SingleLabelFormatter(TargetFormatter):
+class SingleLabelTargetFormatter(TargetFormatter):
     def __init__(self, labels: List[Any]):
         self.label_to_idx = {label: idx for idx, label in enumerate(labels)}
 
@@ -185,7 +189,7 @@ class SingleLabelFormatter(TargetFormatter):
         return self.label_to_idx[(target[0] if not isinstance(target, str) else target).strip()]
 
 
-class MultiLabelFormatter(SingleLabelFormatter):
+class MultiLabelTargetFormatter(SingleLabelTargetFormatter):
     def __init__(self, labels: List[Any]):
         super().__init__(labels)
 
@@ -199,12 +203,12 @@ class MultiLabelFormatter(SingleLabelFormatter):
         return result
 
 
-class CommaDelimitedFormatter(MultiLabelFormatter):
+class CommaDelimitedTargetFormatter(MultiLabelTargetFormatter):
     def format(self, target: Any) -> Any:
         return super().format(target.split(","))
 
 
-class MultiNumericFormatter(TargetFormatter):
+class MultiNumericTargetFormatter(TargetFormatter):
     def __init__(self, num_classes: int):
         self.num_classes = num_classes
 
@@ -215,7 +219,7 @@ class MultiNumericFormatter(TargetFormatter):
         return result
 
 
-class OneHotFormatter(TargetFormatter):
+class OneHotTargetFormatter(TargetFormatter):
     def format(self, target: Any) -> Any:
         for idx, t in enumerate(target):
             if t == 1:
@@ -226,42 +230,45 @@ class OneHotFormatter(TargetFormatter):
 def get_target_formatter(
     target_mode: TargetMode, labels: Optional[List[Any]], num_classes: Optional[int]
 ) -> TargetFormatter:
+    """Get the ``TargetFormatter`` object to use for the given ``TargetMode``, ``labels``, and ``num_classes``.
+
+    Args:
+        target_mode: The target mode to format.
+        labels: Labels used by the target (if available).
+        num_classes: The number of classes in the targets.
+
+    Returns:
+        The target formatter to use when formatting targets.
+    """
     if target_mode is TargetMode.SINGLE_NUMERIC or target_mode is TargetMode.MULTI_BINARY:
         return TargetFormatter()
     elif target_mode is TargetMode.SINGLE_BINARY:
-        return OneHotFormatter()
+        return OneHotTargetFormatter()
     elif target_mode is TargetMode.MULTI_NUMERIC:
-        return MultiNumericFormatter(num_classes)
+        return MultiNumericTargetFormatter(num_classes)
     elif target_mode is TargetMode.SINGLE_TOKEN:
-        return SingleLabelFormatter(labels)
+        return SingleLabelTargetFormatter(labels)
     elif target_mode is TargetMode.MUTLI_COMMA_DELIMITED:
-        return CommaDelimitedFormatter(labels)
-    return MultiLabelFormatter(labels)
+        return CommaDelimitedTargetFormatter(labels)
+    return MultiLabelTargetFormatter(labels)
 
 
-def get_target_details(targets: List[Any], target_mode: TargetMode) -> Tuple[Optional[List[Any]], Optional[int]]:
-    """Finds and sorts the unique labels in a list of single or multi label targets.
+def get_target_details(targets: List[Any], target_mode: TargetMode) -> Tuple[Optional[List[Any]], int]:
+    """Given a list of targets and their ``TargetMode``, this function determines the ``labels`` and
+    ``num_classes``. Targets can be:
+
+    * Token-based: ``labels`` is the unique tokens, ``num_classes`` is the number of unique tokens.
+    * Numeric: ``labels`` is ``None`` and ``num_classes`` is the maximum value plus one.
+    * Binary: ``labels`` is ``None`` and ``num_classes`` is the length of the binary target.
 
     Args:
         targets: A list of single or multi-label targets.
 
     Returns:
-        (labels, is_multilabel): Tuple containing the sorted list of unique targets / labels and a boolean indicating
-        whether or not the targets were multilabel.
+        (labels, num_classes): Tuple containing the inferred ``labels`` (or ``None`` if no labels could be inferred)
+        and ``num_classes``.
     """
-
-    # Multi-label targets can be:
-    # Comma delimited string (e.g. ["blue,green", "red"]) -> Count unique tokens
-    # List of strings (e.g. [["blue", "green"], ["red"]]) -> Count unique tokens
-    # List of numbers (e.g. [[0, 1], [2]]) -> Take a max
-    # Binary list (e.g. [[1, 1, 0], [0, 0, 1]]) -> Take the length
-
-    # Single-label targets can be:
-    # Single string (e.g. ["blue", "green", "red"]) -> Count unique tokens
-    # Single number (e.g. [0, 1, 2]) -> Take a max
-    # One-hot binary list (e.g. [[1, 0, 0], [0, 1, 0], [0, 0, 1]]) -> Take the length
-
-    if target_mode.is_numeric:
+    if target_mode.numeric:
         # Take a max over all values
         if target_mode is TargetMode.MULTI_NUMERIC:
             values = []
@@ -274,7 +281,7 @@ def get_target_details(targets: List[Any], target_mode: TargetMode) -> Tuple[Opt
             num_classes = num_classes[0]
         num_classes = num_classes + 1
         labels = None
-    elif target_mode.is_binary:
+    elif target_mode.binary:
         # Take a length
         # TODO: Add a check here and error if target lengths are not all equal
         num_classes = len(targets[0])
