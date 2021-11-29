@@ -14,7 +14,10 @@
 import re
 from enum import auto, Enum
 from functools import reduce
-from typing import Any, Iterable, List, Optional, Tuple, Union
+from typing import Any, cast, Iterable, List, Optional, Tuple, Union
+
+import numpy as np
+import torch
 
 
 def _is_list_like(x: Any) -> bool:
@@ -22,8 +25,14 @@ def _is_list_like(x: Any) -> bool:
         _ = x[0]
         _ = len(x)
         return True
-    except TypeError:
+    except (TypeError, IndexError):  # Single element tensors raise an `IndexError`
         return False
+
+
+def _as_list(x: Union[List, torch.Tensor, np.ndarray]) -> List:
+    if torch.is_tensor(x) or isinstance(x, np.ndarray):
+        return cast(List, x.tolist())
+    return x
 
 
 def _convert(text: str) -> Union[int, str]:
@@ -156,6 +165,7 @@ def get_target_mode(targets: List[Any]) -> TargetMode:
     Returns:
         The total ``TargetMode`` of the list of targets.
     """
+    targets = _as_list(targets)
     return reduce(_resolve_target_mode, [TargetMode.from_target(target) for target in targets])
 
 
@@ -164,14 +174,7 @@ class TargetFormatter:
         return self.format(target)
 
     def format(self, target: Any) -> Any:
-        return target
-
-
-class SingleNumericTargetFormatter(TargetFormatter):
-    def format(self, target: Any) -> Any:
-        if _is_list_like(target):
-            return target[0]
-        return target
+        return _as_list(target)
 
 
 class SingleLabelFormatter(TargetFormatter):
@@ -198,7 +201,7 @@ class MultiLabelFormatter(SingleLabelFormatter):
 
 class CommaDelimitedFormatter(MultiLabelFormatter):
     def format(self, target: Any) -> Any:
-        return super().format([t.strip() for t in target.split(",")])
+        return super().format(target.split(","))
 
 
 class MultiNumericFormatter(TargetFormatter):
@@ -223,10 +226,8 @@ class OneHotFormatter(TargetFormatter):
 def get_target_formatter(
     target_mode: TargetMode, labels: Optional[List[Any]], num_classes: Optional[int]
 ) -> TargetFormatter:
-    if target_mode is TargetMode.MULTI_BINARY:
+    if target_mode is TargetMode.SINGLE_NUMERIC or target_mode is TargetMode.MULTI_BINARY:
         return TargetFormatter()
-    elif target_mode is TargetMode.SINGLE_NUMERIC:
-        return SingleNumericTargetFormatter()
     elif target_mode is TargetMode.SINGLE_BINARY:
         return OneHotFormatter()
     elif target_mode is TargetMode.MULTI_NUMERIC:

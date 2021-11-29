@@ -14,7 +14,9 @@
 import time
 from collections import namedtuple
 
+import numpy as np
 import pytest
+import torch
 
 from flash.core.data.utilities.classification import (
     get_target_details,
@@ -80,6 +82,9 @@ cases = [
         [f"class_{i}" for i in range(10000)],
         10000,
     ),
+    # Array types
+    Case(torch.tensor([0, 1, 2]), [0, 1, 2], TargetMode.SINGLE_NUMERIC, None, 3),
+    Case(np.array([0, 1, 2]), [0, 1, 2], TargetMode.SINGLE_NUMERIC, None, 3),
 ]
 
 
@@ -98,7 +103,14 @@ def test_case(case):
 
 @pytest.mark.parametrize("case", cases)
 def test_speed(case):
-    targets = case.target * int(1e6 / len(case.target))  # Approx. a million targets
+    repeats = int(1e5 / len(case.target))  # Approx. a hundred thousand targets
+
+    if torch.is_tensor(case.target):
+        targets = case.target.repeat(repeats)
+    elif isinstance(case.target, np.ndarray):
+        targets = np.repeat(case.target, repeats)
+    else:
+        targets = case.target * repeats
 
     start = time.time()
     target_mode = get_target_mode(targets)
