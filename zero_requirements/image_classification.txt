@@ -1,0 +1,7 @@
+torchvision
+timm>=0.4.5
+lightning-bolts>=0.3.3
+Pillow>=7.2
+kornia>=0.5.1,<0.5.4
+pystiche==1.*
+segmentation-models-pytorch
