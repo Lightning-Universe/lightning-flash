@@ -13,3 +13,5 @@ sphinx-paramlinks>=0.5.1
 sphinx-togglebutton>=0.2
 sphinx-copybutton>=0.3
 jinja2
+
+-r ../_notebooks/.actions/requirements.txt
