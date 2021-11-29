@@ -12,12 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Collection, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import torch
-from torch.utils.data.sampler import Sampler
 
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
@@ -177,7 +176,7 @@ class ImageClassificationInputTransform(InputTransform):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        image_size: Tuple[int, int] = (128, 128),
+        image_size: Tuple[int, int] = (196, 196),
         deserializer: Optional[Deserializer] = None,
     ):
         self.image_size = image_size
@@ -221,6 +220,38 @@ class ImageClassificationData(DataModule):
     input_transform_cls = ImageClassificationInputTransform
 
     @classmethod
+    def from_files(
+        cls,
+        train_files: Optional[Sequence[str]] = None,
+        train_targets: Optional[Sequence[Any]] = None,
+        val_files: Optional[Sequence[str]] = None,
+        val_targets: Optional[Sequence[Any]] = None,
+        test_files: Optional[Sequence[str]] = None,
+        test_targets: Optional[Sequence[Any]] = None,
+        predict_files: Optional[Sequence[str]] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        image_size: Tuple[int, int] = (196, 196),
+        **data_module_kwargs: Any,
+    ) -> "DataModule":
+        return cls(
+            ImageClassificationFilesInput(RunningStage.TRAINING, train_files, train_targets),
+            ImageClassificationFilesInput(RunningStage.VALIDATING, val_files, val_targets),
+            ImageClassificationFilesInput(RunningStage.TESTING, test_files, test_targets),
+            ImageClassificationFilesInput(RunningStage.PREDICTING, predict_files),
+            input_transform=cls.input_transform_cls(
+                train_transform,
+                val_transform,
+                test_transform,
+                predict_transform,
+                image_size=image_size,
+            ),
+            **data_module_kwargs,
+        )
+
+    @classmethod
     def from_folders(
         cls,
         train_folder: Optional[str] = None,
@@ -231,7 +262,7 @@ class ImageClassificationData(DataModule):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        image_size: Tuple[int, int] = (128, 128),
+        image_size: Tuple[int, int] = (196, 196),
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
         return cls(
@@ -239,6 +270,70 @@ class ImageClassificationData(DataModule):
             ImageClassificationFolderInput(RunningStage.VALIDATING, val_folder),
             ImageClassificationFolderInput(RunningStage.TESTING, test_folder),
             ImageClassificationFolderInput(RunningStage.PREDICTING, predict_folder),
+            input_transform=cls.input_transform_cls(
+                train_transform,
+                val_transform,
+                test_transform,
+                predict_transform,
+                image_size=image_size,
+            ),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_numpy(
+        cls,
+        train_data: Optional[Collection[np.ndarray]] = None,
+        train_targets: Optional[Collection[Any]] = None,
+        val_data: Optional[Collection[np.ndarray]] = None,
+        val_targets: Optional[Sequence[Any]] = None,
+        test_data: Optional[Collection[np.ndarray]] = None,
+        test_targets: Optional[Sequence[Any]] = None,
+        predict_data: Optional[Collection[np.ndarray]] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        image_size: Tuple[int, int] = (196, 196),
+        **data_module_kwargs: Any,
+    ) -> "ImageClassificationData":
+        return cls(
+            ImageClassificationNumpyInput(RunningStage.TRAINING, train_data, train_targets),
+            ImageClassificationNumpyInput(RunningStage.VALIDATING, val_data, val_targets),
+            ImageClassificationNumpyInput(RunningStage.TESTING, test_data, test_targets),
+            ImageClassificationNumpyInput(RunningStage.PREDICTING, predict_data),
+            input_transform=cls.input_transform_cls(
+                train_transform,
+                val_transform,
+                test_transform,
+                predict_transform,
+                image_size=image_size,
+            ),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_tensors(
+        cls,
+        train_data: Optional[Collection[torch.Tensor]] = None,
+        train_targets: Optional[Collection[Any]] = None,
+        val_data: Optional[Collection[torch.Tensor]] = None,
+        val_targets: Optional[Sequence[Any]] = None,
+        test_data: Optional[Collection[torch.Tensor]] = None,
+        test_targets: Optional[Sequence[Any]] = None,
+        predict_data: Optional[Collection[torch.Tensor]] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        image_size: Tuple[int, int] = (196, 196),
+        **data_module_kwargs: Any,
+    ) -> "ImageClassificationData":
+        return cls(
+            ImageClassificationTensorInput(RunningStage.TRAINING, train_data, train_targets),
+            ImageClassificationTensorInput(RunningStage.VALIDATING, val_data, val_targets),
+            ImageClassificationTensorInput(RunningStage.TESTING, test_data, test_targets),
+            ImageClassificationTensorInput(RunningStage.PREDICTING, predict_data),
             input_transform=cls.input_transform_cls(
                 train_transform,
                 val_transform,
@@ -270,31 +365,34 @@ class ImageClassificationData(DataModule):
         val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        data_fetcher: Optional[BaseDataFetcher] = None,
-        input_transform: Optional[InputTransform] = None,
-        val_split: Optional[float] = None,
-        batch_size: int = 4,
-        num_workers: int = 0,
-        sampler: Optional[Type[Sampler]] = None,
-        **input_transform_kwargs: Any,
+        image_size: Tuple[int, int] = (196, 196),
+        **data_module_kwargs: Any,
     ) -> "DataModule":
-        return cls.from_input(
-            "data_frame",
-            (train_data_frame, input_field, target_fields, train_images_root, train_resolver),
-            (val_data_frame, input_field, target_fields, val_images_root, val_resolver),
-            (test_data_frame, input_field, target_fields, test_images_root, test_resolver),
-            (predict_data_frame, input_field, target_fields, predict_images_root, predict_resolver),
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
-            data_fetcher=data_fetcher,
-            input_transform=input_transform,
-            val_split=val_split,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            sampler=sampler,
-            **input_transform_kwargs,
+        return cls(
+            ImageClassificationDataFrameInput(
+                RunningStage.TRAINING, train_data_frame, input_field, target_fields, train_images_root, train_resolver
+            ),
+            ImageClassificationCSVInput(
+                RunningStage.VALIDATING, val_data_frame, input_field, target_fields, val_images_root, val_resolver
+            ),
+            ImageClassificationCSVInput(
+                RunningStage.TESTING, test_data_frame, input_field, target_fields, test_images_root, test_resolver
+            ),
+            ImageClassificationCSVInput(
+                RunningStage.PREDICTING,
+                predict_data_frame,
+                input_field,
+                root=predict_images_root,
+                resolver=predict_resolver,
+            ),
+            input_transform=cls.input_transform_cls(
+                train_transform,
+                val_transform,
+                test_transform,
+                predict_transform,
+                image_size=image_size,
+            ),
+            **data_module_kwargs,
         )
 
     @classmethod
@@ -318,7 +416,7 @@ class ImageClassificationData(DataModule):
         val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        image_size: Tuple[int, int] = (128, 128),
+        image_size: Tuple[int, int] = (196, 196),
         **data_module_kwargs: Any,
     ) -> "DataModule":
         return cls(
@@ -357,7 +455,7 @@ class ImageClassificationData(DataModule):
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
         label_field: str = "ground_truth",
-        image_size: Tuple[int, int] = (128, 128),
+        image_size: Tuple[int, int] = (196, 196),
         **data_module_kwargs,
     ) -> "ImageClassificationData":
         return cls(
