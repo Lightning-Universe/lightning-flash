@@ -11,6 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import time
+from collections import namedtuple
+
 import pytest
 
 from flash.core.data.utilities.classification import (
@@ -20,55 +23,86 @@ from flash.core.data.utilities.classification import (
     TargetMode,
 )
 
+Case = namedtuple("Case", ["target", "formatted_target", "target_mode", "labels", "num_classes"])
 
-@pytest.mark.parametrize(
-    "targets, expected_mode",
-    [
-        # Test single
-        ([0, 1, 2], TargetMode.SINGLE_NUMERIC),
-        ([[1, 0, 0], [0, 1, 0], [0, 0, 1]], TargetMode.SINGLE_BINARY),
-        (["red", "green", "blue"], TargetMode.SINGLE_TOKEN),
-        # Test multi
-        ([[0, 1], [1, 2], [2, 0]], TargetMode.MULTI_NUMERIC),
-        ([[1, 1, 0], [0, 1, 1], [1, 0, 1]], TargetMode.MULTI_BINARY),
-        ([["red", "green"], ["green", "blue"], ["blue", "red"]], TargetMode.MULTI_TOKEN),
-        (["red,green", "green,blue", "blue,red"], TargetMode.MUTLI_COMMA_DELIMITED),
-        # Test ambiguous targets
-        ([[0], [1], [2]], TargetMode.SINGLE_NUMERIC),
-        ([[0], [1, 2], [2, 0]], TargetMode.MULTI_NUMERIC),
-        ([[1, 0, 0], [0, 1, 1], [1, 0, 1]], TargetMode.MULTI_BINARY),
-        ([["red"], ["green", "blue"], ["blue", "red"]], TargetMode.MULTI_TOKEN),
-        (["red", "green,blue", "blue,red"], TargetMode.MUTLI_COMMA_DELIMITED),
-        ([["red"], ["green"], ["blue"]], TargetMode.SINGLE_TOKEN),
-    ],
-)
-def test_get_target_mode(targets, expected_mode):
-    assert get_target_mode(targets) is expected_mode
+cases = [
+    # Single
+    Case([0, 1, 2], [0, 1, 2], TargetMode.SINGLE_NUMERIC, None, 3),
+    Case([[1, 0, 0], [0, 1, 0], [0, 0, 1]], [0, 1, 2], TargetMode.SINGLE_BINARY, None, 3),
+    Case(["blue", "green", "red"], [0, 1, 2], TargetMode.SINGLE_TOKEN, ["blue", "green", "red"], 3),
+    # Multi
+    Case([[0, 1], [1, 2], [2, 0]], [[1, 1, 0], [0, 1, 1], [1, 0, 1]], TargetMode.MULTI_NUMERIC, None, 3),
+    Case([[1, 1, 0], [0, 1, 1], [1, 0, 1]], [[1, 1, 0], [0, 1, 1], [1, 0, 1]], TargetMode.MULTI_BINARY, None, 3),
+    Case(
+        [["blue", "green"], ["green", "red"], ["red", "blue"]],
+        [[1, 1, 0], [0, 1, 1], [1, 0, 1]],
+        TargetMode.MULTI_TOKEN,
+        ["blue", "green", "red"],
+        3,
+    ),
+    Case(
+        ["blue,green", "green,red", "red,blue"],
+        [[1, 1, 0], [0, 1, 1], [1, 0, 1]],
+        TargetMode.MUTLI_COMMA_DELIMITED,
+        ["blue", "green", "red"],
+        3,
+    ),
+    # Ambiguous
+    Case([[0], [1, 2], [2, 0]], [[1, 0, 0], [0, 1, 1], [1, 0, 1]], TargetMode.MULTI_NUMERIC, None, 3),
+    Case([[1, 0, 0], [0, 1, 1], [1, 0, 1]], [[1, 0, 0], [0, 1, 1], [1, 0, 1]], TargetMode.MULTI_BINARY, None, 3),
+    Case(
+        [["blue"], ["green", "red"], ["red", "blue"]],
+        [[1, 0, 0], [0, 1, 1], [1, 0, 1]],
+        TargetMode.MULTI_TOKEN,
+        ["blue", "green", "red"],
+        3,
+    ),
+    Case(
+        ["blue", "green,red", "red,blue"],
+        [[1, 0, 0], [0, 1, 1], [1, 0, 1]],
+        TargetMode.MUTLI_COMMA_DELIMITED,
+        ["blue", "green", "red"],
+        3,
+    ),
+    # Special cases
+    Case(["blue ", " green", "red"], [0, 1, 2], TargetMode.SINGLE_TOKEN, ["blue", "green", "red"], 3),
+    Case(
+        ["blue", "green, red", "red, blue"],
+        [[1, 0, 0], [0, 1, 1], [1, 0, 1]],
+        TargetMode.MUTLI_COMMA_DELIMITED,
+        ["blue", "green", "red"],
+        3,
+    ),
+]
 
 
-@pytest.mark.parametrize(
-    "targets, formatted_targets",
-    [
-        # Test single
-        ([0, 1, 2], [0, 1, 2]),
-        ([[1, 0, 0], [0, 1, 0], [0, 0, 1]], [0, 1, 2]),
-        (["red", "green", "blue"], [2, 1, 0]),
-        # Test multi
-        ([[0, 1], [1, 2], [2, 0]], [[1, 1, 0], [0, 1, 1], [1, 0, 1]]),
-        ([[1, 1, 0], [0, 1, 1], [1, 0, 1]], [[1, 1, 0], [0, 1, 1], [1, 0, 1]]),
-        ([["red", "green"], ["green", "blue"], ["blue", "red"]], [[0, 1, 1], [1, 1, 0], [1, 0, 1]]),
-        (["red,green", "green,blue", "blue,red"], [[0, 1, 1], [1, 1, 0], [1, 0, 1]]),
-        # Test ambiguous targets
-        ([[0], [1], [2]], [0, 1, 2]),
-        ([[0], [1, 2], [2, 0]], [[1, 0, 0], [0, 1, 1], [1, 0, 1]]),
-        ([[1, 0, 0], [0, 1, 1], [1, 0, 1]], [[1, 0, 0], [0, 1, 1], [1, 0, 1]]),
-        ([["red"], ["green", "blue"], ["blue", "red"]], [[0, 0, 1], [1, 1, 0], [1, 0, 1]]),
-        (["red", "green,blue", "blue,red"], [[0, 0, 1], [1, 1, 0], [1, 0, 1]]),
-        ([["red"], ["green"], ["blue"]], [2, 1, 0]),
-    ],
-)
-def test_target_format(targets, formatted_targets):
+@pytest.mark.parametrize("case", cases)
+def test_case(case):
+    target_mode = get_target_mode(case.target)
+    assert target_mode is case.target_mode
+
+    labels, num_classes = get_target_details(case.target, target_mode)
+    assert labels == case.labels
+    assert num_classes == case.num_classes
+
+    formatter = get_target_formatter(target_mode, labels, num_classes)
+    assert [formatter(t) for t in case.target] == case.formatted_target
+
+
+@pytest.mark.parametrize("case", cases)
+def test_speed(case):
+    targets = case.target * 100000  # 300000 targets
+
+    start = time.time()
     target_mode = get_target_mode(targets)
     labels, num_classes = get_target_details(targets, target_mode)
     formatter = get_target_formatter(target_mode, labels, num_classes)
-    assert [formatter(target) for target in targets] == formatted_targets
+    end = time.time()
+
+    assert (end - start) / 300000 < 1e-5  # 0.01ms per target
+
+    start = time.time()
+    _ = [formatter(t) for t in targets]
+    end = time.time()
+
+    assert (end - start) / 300000 < 1e-5  # 0.01ms per target

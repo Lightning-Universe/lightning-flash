@@ -62,8 +62,6 @@ class TargetMode(Enum):
             else:
                 return TargetMode.SINGLE_TOKEN
         elif _is_list_like(target):
-            if len(target) == 1:
-                return TargetMode.from_target(target[0])
             if isinstance(target[0], str):
                 return TargetMode.MULTI_TOKEN
             elif all(t == 0 or t == 1 for t in target):
@@ -103,11 +101,10 @@ class TargetMode(Enum):
         )
 
 
-_MAPPING = {
+_RESOLUTION_MAPPING = {
     TargetMode.MULTI_BINARY: [TargetMode.MULTI_NUMERIC],
     TargetMode.SINGLE_BINARY: [TargetMode.MULTI_BINARY, TargetMode.MULTI_NUMERIC],
-    TargetMode.SINGLE_TOKEN: [TargetMode.MULTI_TOKEN, TargetMode.MUTLI_COMMA_DELIMITED],
-    TargetMode.SINGLE_NUMERIC: [TargetMode.MULTI_NUMERIC],
+    TargetMode.SINGLE_TOKEN: [TargetMode.MUTLI_COMMA_DELIMITED],
 }
 
 
@@ -122,9 +119,9 @@ def _resolve_target_mode(a: TargetMode, b: TargetMode) -> TargetMode:
     """
     if a is b:
         return a
-    elif a in _MAPPING and b in _MAPPING[a]:
+    elif a in _RESOLUTION_MAPPING and b in _RESOLUTION_MAPPING[a]:
         return b
-    elif b in _MAPPING and a in _MAPPING[b]:
+    elif b in _RESOLUTION_MAPPING and a in _RESOLUTION_MAPPING[b]:
         return a
     raise ValueError(
         "Found inconsistent target modes. All targets should be either: single values, lists of values, or "
@@ -164,7 +161,7 @@ class SingleLabelFormatter(TargetFormatter):
         self.label_to_idx = {label: idx for idx, label in enumerate(labels)}
 
     def format(self, target: Any) -> Any:
-        return self.label_to_idx[target[0] if not isinstance(target, str) else target]
+        return self.label_to_idx[(target[0] if not isinstance(target, str) else target).strip()]
 
 
 class MultiLabelFormatter(SingleLabelFormatter):
@@ -183,7 +180,7 @@ class MultiLabelFormatter(SingleLabelFormatter):
 
 class CommaDelimitedFormatter(MultiLabelFormatter):
     def format(self, target: Any) -> Any:
-        return super().format(target.split(","))
+        return super().format([t.strip() for t in target.split(",")])
 
 
 class MultiNumericFormatter(TargetFormatter):
@@ -273,9 +270,10 @@ def get_target_details(targets: List[Any], target_mode: TargetMode) -> Tuple[Opt
             for target in targets:
                 tokens.extend(target)
         else:
-            tokens = [target[0] if not isinstance(target, str) else target for target in targets]
+            tokens = targets
 
-        labels = [token[0] if not isinstance(token, str) else token for token in set(tokens)]
+        tokens = [token.strip() for token in tokens]
+        labels = list(set(tokens))
         labels.sort()
         num_classes = len(labels)
     return labels, num_classes
