@@ -235,7 +235,7 @@ class ImageClassificationData(DataModule):
         predict_transform: Optional[Dict[str, Callable]] = None,
         image_size: Tuple[int, int] = (196, 196),
         **data_module_kwargs: Any,
-    ) -> "DataModule":
+    ) -> "ImageClassificationData":
         return cls(
             ImageClassificationFilesInput(RunningStage.TRAINING, train_files, train_targets),
             ImageClassificationFilesInput(RunningStage.VALIDATING, val_files, val_targets),
