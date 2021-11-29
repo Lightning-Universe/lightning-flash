@@ -64,7 +64,6 @@ def image_classification():
             "trainer.max_epochs": 3,
         },
         datamodule_attributes={"num_classes", "multi_label"},
-        legacy=True,
     )
 
     cli.trainer.save_checkpoint("image_classification_model.pt")
