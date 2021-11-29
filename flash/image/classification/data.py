@@ -145,7 +145,7 @@ class ImageClassificationDataFrameInput(ImageClassificationFilesInput):
         result = super().load_data(files, targets)
 
         # If we had binary multi-class targets then we also know the labels (column names)
-        if self.target_mode is TargetMode.MULTI_BINARY and isinstance(target_keys, List):
+        if self.training and self.target_mode is TargetMode.MULTI_BINARY and isinstance(target_keys, List):
             classification_state = self.get_state(ClassificationState)
             self.set_state(ClassificationState(target_keys, classification_state.num_classes))
 
