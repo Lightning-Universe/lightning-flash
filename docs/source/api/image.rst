@@ -18,6 +18,7 @@ ______________
     :template: classtemplate.rst
 
     ~classification.model.ImageClassifier
+    ~classification.data.ImageClassificationFiftyOneInput
     ~classification.data.ImageClassificationData
     ~classification.data.ImageClassificationInputTransform
 
@@ -140,7 +141,5 @@ ________________
     :template: classtemplate.rst
 
     ~data.ImageDeserializer
-    ~data.ImageClassificationFiftyOneInput
     ~data.ImageNumpyInput
-    ~data.ImagePathsInput
     ~data.ImageTensorInput
