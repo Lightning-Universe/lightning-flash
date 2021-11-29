@@ -72,7 +72,7 @@ def make_dataset(
     is_valid_file = cast(Callable[[str], bool], is_valid_file)
     subdirs = list_subdirs(directory)
     if len(subdirs) > 0:
-        for target_class in list_subdirs(directory):
+        for target_class in subdirs:
             target_dir = os.path.join(directory, target_class)
             if not os.path.isdir(target_dir):
                 continue
