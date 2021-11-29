@@ -63,7 +63,7 @@ author = "PyTorch Lightning"
 
 # -- Project documents -------------------------------------------------------
 if _SHOULD_COPY_NOTEBOOKS:
-    HelperCLI.copy_notebooks(os.path.join(_PATH_RAW_NB, "flash_tutorials"), _PATH_HERE, "notebooks")
+    HelperCLI.copy_notebooks(_PATH_RAW_NB, _PATH_HERE, "notebooks", patterns=["flash_tutorials"])
 
 
 def _transform_changelog(path_in: str, path_out: str) -> None:
