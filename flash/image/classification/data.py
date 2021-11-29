@@ -27,7 +27,7 @@ from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.process import Deserializer
 from flash.core.data.utilities.classification import TargetMode
 from flash.core.data.utilities.data_frame import read_csv, resolve_files, resolve_targets
-from flash.core.data.utilities.paths import filter_valid_files, list_valid_files, make_dataset, PATH_TYPE
+from flash.core.data.utilities.paths import filter_valid_files, make_dataset, PATH_TYPE
 from flash.core.data.utilities.samples import to_samples
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
 from flash.core.integrations.labelstudio.input import LabelStudioImageClassificationInput
@@ -74,9 +74,6 @@ class ImageClassificationFolderInput(ImageClassificationFilesInput):
     def load_data(self, folder: PATH_TYPE) -> List[Dict[str, Any]]:
         files, targets = make_dataset(folder, extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
         return super().load_data(files, targets)
-
-    def predict_load_data(self, folder: PATH_TYPE) -> List[Dict[str, Any]]:
-        return super().load_data(list_valid_files(folder, IMG_EXTENSIONS + NP_EXTENSIONS))
 
 
 class ImageClassificationFiftyOneInput(ImageClassificationFilesInput):
