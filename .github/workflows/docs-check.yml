@@ -30,6 +30,8 @@ jobs:
 
     - name: Install dependencies
       run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake pandoc
         python --version
         pip --version
         pip install . --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
@@ -77,6 +79,8 @@ jobs:
 
       - name: Install dependencies
         run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake pandoc
           pip install '.[all]' --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
           pip install '.[test]' --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
           pip install --requirement requirements/docs.txt
