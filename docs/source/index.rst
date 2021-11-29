@@ -23,6 +23,14 @@ Lightning Flash
 
 .. toctree::
    :maxdepth: 1
+   :name: Tutorials
+   :caption: Tutorials
+   :glob:
+
+   notebooks/flash_tutorials/*
+
+.. toctree::
+   :maxdepth: 1
    :caption: Guides
 
    general/training
