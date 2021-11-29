@@ -365,7 +365,7 @@ class ImageClassificationData(DataModule):
         predict_transform: Optional[Dict[str, Callable]] = None,
         image_size: Tuple[int, int] = (196, 196),
         **data_module_kwargs: Any,
-    ) -> "DataModule":
+    ) -> "ImageClassificationData":
         return cls(
             ImageClassificationDataFrameInput(
                 RunningStage.TRAINING, train_data_frame, input_field, target_fields, train_images_root, train_resolver
@@ -416,7 +416,7 @@ class ImageClassificationData(DataModule):
         predict_transform: Optional[Dict[str, Callable]] = None,
         image_size: Tuple[int, int] = (196, 196),
         **data_module_kwargs: Any,
-    ) -> "DataModule":
+    ) -> "ImageClassificationData":
         return cls(
             ImageClassificationCSVInput(
                 RunningStage.TRAINING, train_file, input_field, target_fields, train_images_root, train_resolver
