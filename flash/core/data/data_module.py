@@ -149,6 +149,10 @@ class DataModule(pl.LightningDataModule):
 
         self.set_running_stages()
 
+        # Share state between input objects (this will be available in ``load_sample`` but not in ``load_data``)
+        data_pipeline = self.data_pipeline
+        data_pipeline.initialize()
+
     @property
     def train_dataset(self) -> Optional[Dataset]:
         """This property returns the train dataset."""

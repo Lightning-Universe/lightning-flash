@@ -68,8 +68,8 @@ def default_resolver(root: Optional[PATH_TYPE], file_id: Any) -> PATH_TYPE:
     if os.path.isfile(file):
         return file
     raise ValueError(
-        "File ID did not resolve to an existing file. For use cases which involve first converting the ID to a file you"
-        "should pass a custom resolver when loading the data."
+        f"File ID `{file_id}` did not resolve to an existing file. For use cases which involve first converting the ID "
+        f"to a file you should pass a custom resolver when loading the data."
     )
 
 

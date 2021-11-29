@@ -262,12 +262,14 @@ def get_target_details(targets: List[Any], target_mode: TargetMode) -> Tuple[Opt
     * Binary: ``labels`` is ``None`` and ``num_classes`` is the length of the binary target.
 
     Args:
-        targets: A list of single or multi-label targets.
+        targets: A list of targets.
+        target_mode: The ``TargetMode`` of the targets from ``get_target_mode``.
 
     Returns:
         (labels, num_classes): Tuple containing the inferred ``labels`` (or ``None`` if no labels could be inferred)
         and ``num_classes``.
     """
+    targets = _as_list(targets)
     if target_mode.numeric:
         # Take a max over all values
         if target_mode is TargetMode.MULTI_NUMERIC:
