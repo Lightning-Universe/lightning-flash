@@ -40,7 +40,7 @@ def make_dataset(
     directory: PATH_TYPE,
     extensions: Optional[Tuple[str, ...]] = None,
     is_valid_file: Optional[Callable[[str], bool]] = None,
-) -> Tuple[List[str], List[str]]:
+) -> Tuple[List[PATH_TYPE], Optional[List[PATH_TYPE]]]:
     """Generates a list of samples of a form (path_to_sample, class).
 
     Args:
@@ -70,17 +70,20 @@ def make_dataset(
             return has_file_allowed_extension(x, cast(Tuple[str, ...], extensions))
 
     is_valid_file = cast(Callable[[str], bool], is_valid_file)
-    for target_class in list_subdirs(directory):
-        target_dir = os.path.join(directory, target_class)
-        if not os.path.isdir(target_dir):
-            continue
-        for root, _, fnames in sorted(os.walk(target_dir, followlinks=True)):
-            for fname in sorted(fnames):
-                path = os.path.join(root, fname)
-                if is_valid_file(path):
-                    files.append(path)
-                    targets.append(target_class)
-    return files, targets
+    subdirs = list_subdirs(directory)
+    if len(subdirs) > 0:
+        for target_class in list_subdirs(directory):
+            target_dir = os.path.join(directory, target_class)
+            if not os.path.isdir(target_dir):
+                continue
+            for root, _, fnames in sorted(os.walk(target_dir, followlinks=True)):
+                for fname in sorted(fnames):
+                    path = os.path.join(root, fname)
+                    if is_valid_file(path):
+                        files.append(path)
+                        targets.append(target_class)
+        return files, targets
+    return list_valid_files(directory), None
 
 
 def isdir(path: Any) -> bool:

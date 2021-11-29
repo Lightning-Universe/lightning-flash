@@ -58,11 +58,9 @@ class ImageClassificationFilesInput(ClassificationInput, ImageFilesInput):
         targets: Optional[List[Any]] = None,
     ) -> List[Dict[str, Any]]:
         if targets is None:
-            files = filter_valid_files(files, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
-        else:
-            files, targets = filter_valid_files(files, targets, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
-            self.load_target_metadata(targets)
-
+            return super().load_data(files)
+        files, targets = filter_valid_files(files, targets, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
+        self.load_target_metadata(targets)
         return to_samples(files, targets)
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:

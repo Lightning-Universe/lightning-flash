@@ -14,7 +14,7 @@
 import base64
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Dict, TYPE_CHECKING
+from typing import Any, Dict, List, TYPE_CHECKING
 
 import numpy as np
 import torch
@@ -23,7 +23,8 @@ import flash
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_base import Input
 from flash.core.data.process import Deserializer
-from flash.core.data.utilities.paths import has_file_allowed_extension
+from flash.core.data.utilities.paths import filter_valid_files, has_file_allowed_extension, PATH_TYPE
+from flash.core.data.utilities.samples import to_samples
 from flash.core.data.utils import image_default_loader
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _TORCHVISION_AVAILABLE, Image, lazy_import, requires
 
@@ -85,6 +86,10 @@ class ImageInput(Input):
 
 
 class ImageFilesInput(ImageInput):
+    def load_data(self, files: List[PATH_TYPE]) -> List[Dict[str, Any]]:
+        files = filter_valid_files(files, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
+        return to_samples(files)
+
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         filepath = sample[DataKeys.INPUT]
         sample[DataKeys.INPUT] = image_loader(filepath)
