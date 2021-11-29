@@ -27,6 +27,10 @@ jobs:
       - image: readthedocs/build:latest
     steps:
       - checkout
+      - run:
+          command: |
+            git submodule update --init --recursive
+          name: Init git submodule
       - *make_docs
       - store_artifacts:
           # allows us to preview the generated html pages
