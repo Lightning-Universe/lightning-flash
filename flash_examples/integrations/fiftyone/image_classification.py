@@ -16,7 +16,7 @@ from itertools import chain
 import torch
 
 import flash
-from flash.core.classification import FiftyOneLabelsOutput, Labels
+from flash.core.classification import FiftyOneLabelsOutput, LabelsOutput
 from flash.core.data.utils import download_data
 from flash.core.integrations.fiftyone import visualize
 from flash.image import ImageClassificationData, ImageClassifier
@@ -36,7 +36,7 @@ datamodule = ImageClassificationData.from_folders(
 model = ImageClassifier(
     backbone="resnet18",
     num_classes=datamodule.num_classes,
-    output=Labels(),
+    output=LabelsOutput(),
 )
 trainer = flash.Trainer(
     max_epochs=1,
