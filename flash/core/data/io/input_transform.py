@@ -547,13 +547,13 @@ class _InputTransformProcessor(torch.nn.Module):
         return samples, metadata if any(m is not None for m in metadata) else None
 
     def forward(self, samples: Sequence[Any]) -> Any:
-        # we create a new dict to prevent from potential memory leaks
-        # assuming that the dictionary samples are stored in between and
-        # potentially modified before the transforms are applied.
         if not self.on_device:
             for sample in samples:
                 self.callback.on_load_sample(sample, self.stage)
 
+        # we create a new dict to prevent from potential memory leaks
+        # assuming that the dictionary samples are stored in between and
+        # potentially modified before the transforms are applied.
         if isinstance(samples, dict):
             samples = dict(samples.items())
 
