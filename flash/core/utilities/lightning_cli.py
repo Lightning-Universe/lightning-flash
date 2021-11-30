@@ -7,6 +7,7 @@ else:
     import inspect
     import os
     import sys
+    from operator import ge
     from types import MethodType, ModuleType
     from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Type, Union
     from unittest import mock
@@ -15,13 +16,16 @@ else:
     import torch
     import yaml
     from pytorch_lightning import Callback, LightningDataModule, LightningModule, seed_everything, Trainer
-    from pytorch_lightning.utilities import _JSONARGPARSE_AVAILABLE, rank_zero_warn, warnings
     from pytorch_lightning.utilities.cloud_io import get_filesystem
     from pytorch_lightning.utilities.exceptions import MisconfigurationException
+    from pytorch_lightning.utilities.imports import rank_zero_warn, warnings
     from pytorch_lightning.utilities.model_helpers import is_overridden
     from pytorch_lightning.utilities.types import LRSchedulerType, LRSchedulerTypeTuple
     from torch.optim import Optimizer
 
+    from flash.core.utilities.imports import _compare_version, _module_available
+
+    _JSONARGPARSE_AVAILABLE = _module_available("jsonargparse") and _compare_version("jsonargparse", ge, "4.0.0")
     if _JSONARGPARSE_AVAILABLE:
         from jsonargparse import ActionConfigFile, ArgumentParser, class_from_function, Namespace, set_config_read_mode
         from jsonargparse.optionals import import_docstring_parse
