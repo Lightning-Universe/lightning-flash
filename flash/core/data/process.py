@@ -13,14 +13,31 @@
 # limitations under the License.
 import functools
 from abc import abstractmethod
-from typing import Any, Mapping
+from typing import Any, List, Mapping
 from warnings import warn
 
 from deprecate import deprecated
 
 import flash
+from flash.core.data.io.input import Input
 from flash.core.data.io.output import Output
 from flash.core.data.properties import Properties
+
+
+class ServeInput(Input):
+    def load_data(self, data: Any) -> List[Any]:
+        return [data]
+
+    def deserialize(self, sample: Any) -> Any:  # TODO: Output must be a tensor???
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def example_input(self) -> str:
+        raise NotImplementedError
+
+    def __call__(self, sample: Any) -> Any:
+        return self.deserialize(sample)
 
 
 class Deserializer(Properties):
