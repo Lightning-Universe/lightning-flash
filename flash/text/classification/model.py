@@ -13,10 +13,10 @@
 # limitations under the License.
 import inspect
 from typing import Any, Dict, List, Optional
-from pytorch_lightning.utilities import rank_zero_info
 
 import torch
 from pytorch_lightning import Callback
+from pytorch_lightning.utilities import rank_zero_info
 
 from flash.core.classification import ClassificationTask, Labels
 from flash.core.data.io.input import DataKeys
@@ -129,12 +129,11 @@ class TextClassifier(ClassificationTask):
 
 
 def replace_embeddings(module, vocab_size, original_vocab_size):
-    """
-    Recursively overwrites torch.nn.Embedding and torch.nn.EmbeddingBag layers in module
-    by only changing the `num_embeddings` attribute and keeping everything else equal.
+    """Recursively overwrites torch.nn.Embedding and torch.nn.EmbeddingBag layers in module by only changing the
+    `num_embeddings` attribute and keeping everything else equal.
 
-    It reinitializes the embedding modules using the Pytorch default initialization since
-    it cannot be known what initialization was used for each backbone automatically.
+    It reinitializes the embedding modules using the Pytorch default initialization since it cannot be known what
+    initialization was used for each backbone automatically.
     """
 
     # get object class input signature to reinitialize the object with only the vocab_size changed
