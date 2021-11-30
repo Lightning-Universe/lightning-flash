@@ -541,7 +541,7 @@ class TextClassificationData(DataModule):
                 "target",
                 train_file="train_data.parquet",
                 train_transform={
-                    "to_tensor_transform": torch.as_tensor,
+                    "per_sample_transform": torch.as_tensor,
                 },
             )
         """

@@ -21,17 +21,8 @@ class FlashCallback(Callback):
         trainer = Trainer(callbacks=[MyCustomCallback()])
     """
 
-    def on_load_sample(self, sample: Any, running_stage: RunningStage) -> None:
-        """Called once a sample has been loaded using ``load_sample``."""
-
-    def on_pre_tensor_transform(self, sample: Any, running_stage: RunningStage) -> None:
-        """Called once ``pre_tensor_transform`` has been applied to a sample."""
-
-    def on_to_tensor_transform(self, sample: Any, running_stage: RunningStage) -> None:
-        """Called once ``to_tensor_transform`` has been applied to a sample."""
-
-    def on_post_tensor_transform(self, sample: Tensor, running_stage: RunningStage) -> None:
-        """Called once ``post_tensor_transform`` has been applied to a sample."""
+    def on_per_sample_transform(self, sample: Tensor, running_stage: RunningStage) -> None:
+        """Called once ``per_sample_transform`` has been applied to a sample."""
 
     def on_per_batch_transform(self, batch: Any, running_stage: RunningStage) -> None:
         """Called once ``per_batch_transform`` has been applied to a batch."""
@@ -58,14 +49,8 @@ class ControlFlow(FlashCallback):
     def on_load_sample(self, sample: Any, running_stage: RunningStage) -> None:
         self.run_for_all_callbacks(sample, running_stage, method_name="on_load_sample")
 
-    def on_pre_tensor_transform(self, sample: Any, running_stage: RunningStage) -> None:
-        self.run_for_all_callbacks(sample, running_stage, method_name="on_pre_tensor_transform")
-
-    def on_to_tensor_transform(self, sample: Any, running_stage: RunningStage) -> None:
-        self.run_for_all_callbacks(sample, running_stage, method_name="on_to_tensor_transform")
-
-    def on_post_tensor_transform(self, sample: Tensor, running_stage: RunningStage) -> None:
-        self.run_for_all_callbacks(sample, running_stage, method_name="on_post_tensor_transform")
+    def on_per_sample_transform(self, sample: Any, running_stage: RunningStage) -> None:
+        self.run_for_all_callbacks(sample, running_stage, method_name="on_per_sample_transform")
 
     def on_per_batch_transform(self, batch: Any, running_stage: RunningStage) -> None:
         self.run_for_all_callbacks(batch, running_stage, method_name="on_per_batch_transform")
@@ -147,9 +132,7 @@ class BaseDataFetcher(FlashCallback):
             'test': {},
             'val': {
                 'load_sample': [0, 1, 2, 3, 4],
-                'pre_tensor_transform': [0, 1, 2, 3, 4],
-                'to_tensor_transform': [0, 1, 2, 3, 4],
-                'post_tensor_transform': [0, 1, 2, 3, 4],
+                'per_sample_transform': [0, 1, 2, 3, 4],
                 'collate': [tensor([0, 1, 2, 3, 4])],
                 'per_batch_transform': [tensor([0, 1, 2, 3, 4])]},
             'predict': {}
@@ -179,14 +162,8 @@ class BaseDataFetcher(FlashCallback):
     def on_load_sample(self, sample: Any, running_stage: RunningStage) -> None:
         self._store(sample, "load_sample", running_stage)
 
-    def on_pre_tensor_transform(self, sample: Any, running_stage: RunningStage) -> None:
-        self._store(sample, "pre_tensor_transform", running_stage)
-
-    def on_to_tensor_transform(self, sample: Any, running_stage: RunningStage) -> None:
-        self._store(sample, "to_tensor_transform", running_stage)
-
-    def on_post_tensor_transform(self, sample: Tensor, running_stage: RunningStage) -> None:
-        self._store(sample, "post_tensor_transform", running_stage)
+    def on_per_sample_transform(self, sample: Any, running_stage: RunningStage) -> None:
+        self._store(sample, "per_sample_transform", running_stage)
 
     def on_per_batch_transform(self, batch: Any, running_stage: RunningStage) -> None:
         self._store(batch, "per_batch_transform", running_stage)

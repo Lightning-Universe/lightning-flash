@@ -17,7 +17,6 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torch import Tensor
 from torch.utils.data._utils.collate import default_collate
 
 from flash.core.data.callback import ControlFlow, FlashCallback
@@ -28,14 +27,11 @@ from flash.core.data.states import (
     CollateFn,
     PerBatchTransform,
     PerBatchTransformOnDevice,
+    PerSampleTransform,
     PerSampleTransformOnDevice,
-    PostTensorTransform,
-    PreTensorTransform,
-    ToTensorTransform,
 )
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import (
-    _contains_any_tensor,
     _INPUT_TRANSFORM_FUNCS,
     _STAGES_PREFIX,
     convert_to_modules,
@@ -64,30 +60,12 @@ class InputTransform(BaseInputTransform, Properties):
 
     The :class:`~flash.core.data.io.input_transform.InputTransform` supports the following hooks:
 
-        - ``pre_tensor_transform``: Performs transforms on a single data sample.
+        - ``per_sample_transform``: Performs transforms on a single data sample.
             Example::
 
                 * Input: Receive a PIL Image and its label.
 
-                * Action: Rotate the PIL Image.
-
-                * Output: Return the rotated PIL image and its label.
-
-        - ``to_tensor_transform``: Converts a single data sample to a tensor / data structure containing tensors.
-            Example::
-
-                * Input: Receive the rotated PIL Image and its label.
-
-                * Action: Convert the rotated PIL Image to a tensor.
-
-                * Output: Return the tensored image and its label.
-
-        - ``post_tensor_transform``: Performs transform on a single tensor sample.
-            Example::
-
-                * Input: Receive the tensored image and its label.
-
-                * Action: Flip the tensored image randomly.
+                * Action: Rotate the PIL Image and Convert the rotated PIL Image to a tensor.
 
                 * Output: Return the tensored image and its label.
 
@@ -140,30 +118,25 @@ class InputTransform(BaseInputTransform, Properties):
 
             def default_transforms() -> Mapping[str, Callable]:
                 return {
-                    "to_tensor_transform": transforms.ToTensor(),
+                    "per_sample_transform": transforms.ToTensor(),
                     "collate": torch.utils.data._utils.collate.default_collate,
                 }
 
             def train_default_transforms() -> Mapping[str, Callable]:
                 return {
-                    "pre_tensor_transform": transforms.RandomHorizontalFlip(),
-                    "to_tensor_transform": transforms.ToTensor(),
+                    "per_sample_transform": T.Compose([transforms.RandomHorizontalFlip(), transforms.ToTensor()]),
                     "collate": torch.utils.data._utils.collate.default_collate,
                 }
 
     When overriding hooks for particular stages, you can prefix with ``train``, ``val``, ``test`` or ``predict``. For
-    example, you can achieve the same as the above example by implementing ``train_pre_tensor_transform`` and
-    ``train_to_tensor_transform``.
+    example, you can achieve the same as the above example by implementing ``train_per_sample_transform``.
 
     Example::
 
         class CustomInputTransform(InputTransform):
 
-            def train_pre_tensor_transform(self, sample: PIL.Image) -> PIL.Image:
+            def train_per_sample_transform(self, sample: PIL.Image) -> PIL.Image:
                 return transforms.RandomHorizontalFlip()(sample)
-
-            def to_tensor_transform(self, sample: PIL.Image) -> torch.Tensor:
-                return transforms.ToTensor()(sample)
 
             def collate(self, samples: List[torch.Tensor]) -> torch.Tensor:
                 return torch.utils.data._utils.collate.default_collate(samples)
@@ -175,7 +148,7 @@ class InputTransform(BaseInputTransform, Properties):
 
         class CustomInputTransform(InputTransform):
 
-            def pre_tensor_transform(self, sample: PIL.Image) -> PIL.Image:
+            def per_sample_transform(self, sample: PIL.Image) -> PIL.Image:
 
                 if self.training:
                     # logic for training
@@ -268,9 +241,9 @@ class InputTransform(BaseInputTransform, Properties):
             return transform
 
         if isinstance(transform, list):
-            transform = {"pre_tensor_transform": ApplyToKeys(DataKeys.INPUT, torch.nn.Sequential(*transform))}
+            transform = {"per_sample_transform": ApplyToKeys(DataKeys.INPUT, torch.nn.Sequential(*transform))}
         elif callable(transform):
-            transform = {"pre_tensor_transform": ApplyToKeys(DataKeys.INPUT, transform)}
+            transform = {"per_sample_transform": ApplyToKeys(DataKeys.INPUT, transform)}
 
         if not isinstance(transform, Dict):
             raise MisconfigurationException(
@@ -407,17 +380,9 @@ class InputTransform(BaseInputTransform, Properties):
             else:
                 return self._apply_batch_transform(batch)
 
-    def pre_tensor_transform(self, sample: Any) -> Any:
+    def per_sample_transform(self, sample: Any) -> Any:
         """Transforms to apply on a single object."""
-        return self._apply_process_state_transform(PreTensorTransform, sample=sample)
-
-    def to_tensor_transform(self, sample: Any) -> Tensor:
-        """Transforms to convert single object to a tensor."""
-        return self._apply_process_state_transform(ToTensorTransform, sample=sample)
-
-    def post_tensor_transform(self, sample: Tensor) -> Tensor:
-        """Transforms to apply on a tensor."""
-        return self._apply_process_state_transform(PostTensorTransform, sample=sample)
+        return self._apply_process_state_transform(PerSampleTransform, sample=sample)
 
     def per_batch_transform(self, batch: Any) -> Any:
         """Transforms to apply to a whole batch (if possible use this for efficiency).
@@ -534,102 +499,25 @@ class DefaultInputTransform(InputTransform):
         return cls(**state_dict)
 
 
-class _InputTransformSequential(torch.nn.Module):
-    """This class is used to chain 3 functions together for the _InputTransformProcessor ``per_sample_transform``
-    function.
-
-    1. ``pre_tensor_transform``
-    2. ``to_tensor_transform``
-    3. ``post_tensor_transform``
-    """
-
-    def __init__(
-        self,
-        input_transform: InputTransform,
-        pre_tensor_transform: Optional[Callable],
-        to_tensor_transform: Optional[Callable],
-        post_tensor_transform: Callable,
-        stage: RunningStage,
-        assert_contains_tensor: bool = False,
-    ):
-        super().__init__()
-        self.input_transform = input_transform
-        self.callback = ControlFlow(self.input_transform.callbacks)
-        self.pre_tensor_transform = convert_to_modules(pre_tensor_transform)
-        self.to_tensor_transform = convert_to_modules(to_tensor_transform)
-        self.post_tensor_transform = convert_to_modules(post_tensor_transform)
-        self.stage = stage
-        self.assert_contains_tensor = assert_contains_tensor
-
-        self._current_stage_context = CurrentRunningStageContext(stage, input_transform, reset=False)
-        self._pre_tensor_transform_context = CurrentFuncContext("pre_tensor_transform", input_transform)
-        self._to_tensor_transform_context = CurrentFuncContext("to_tensor_transform", input_transform)
-        self._post_tensor_transform_context = CurrentFuncContext("post_tensor_transform", input_transform)
-
-    def forward(self, sample: Any) -> Any:
-        self.callback.on_load_sample(sample, self.stage)
-
-        with self._current_stage_context:
-            if self.pre_tensor_transform is not None:
-                with self._pre_tensor_transform_context:
-                    sample = self.pre_tensor_transform(sample)
-                    self.callback.on_pre_tensor_transform(sample, self.stage)
-
-            if self.to_tensor_transform is not None:
-                with self._to_tensor_transform_context:
-                    sample = self.to_tensor_transform(sample)
-                    self.callback.on_to_tensor_transform(sample, self.stage)
-
-                if self.assert_contains_tensor:
-                    if not _contains_any_tensor(sample):
-                        raise MisconfigurationException(
-                            "When ``to_tensor_transform`` is overriden, "
-                            "``DataPipeline`` expects the outputs to be ``tensors``"
-                        )
-
-            with self._post_tensor_transform_context:
-                sample = self.post_tensor_transform(sample)
-                self.callback.on_post_tensor_transform(sample, self.stage)
-
-            return sample
-
-    def __str__(self) -> str:
-        return (
-            f"{self.__class__.__name__}:\n"
-            f"\t(pre_tensor_transform): {str(self.pre_tensor_transform)}\n"
-            f"\t(to_tensor_transform): {str(self.to_tensor_transform)}\n"
-            f"\t(post_tensor_transform): {str(self.post_tensor_transform)}\n"
-            f"\t(assert_contains_tensor): {str(self.assert_contains_tensor)}\n"
-            f"\t(stage): {str(self.stage)}"
-        )
-
-
 class _InputTransformProcessor(torch.nn.Module):
     """
-    This class is used to encapsultate the following functions of a InputTransformInputTransform Object:
+    This class is used to encapsulate the following functions of a InputTransformInputTransform Object:
     Inside a worker:
         per_sample_transform: Function to transform an individual sample
-            Inside a worker, it is actually make of 3 functions:
-                * pre_tensor_transform
-                * to_tensor_transform
-                * post_tensor_transform
         collate: Function to merge sample into a batch
         per_batch_transform: Function to transform an individual batch
-            * per_batch_transform
 
     Inside main process:
-        per_sample_transform: Function to transform an individual sample
-            * per_sample_transform_on_device
+        per_sample_transform_on_device: Function to transform an individual sample
         collate: Function to merge sample into a batch
-        per_batch_transform: Function to transform an individual batch
-            * per_batch_transform_on_device
+        per_batch_transform_on_device: Function to transform an individual batch
     """
 
     def __init__(
         self,
         input_transform: InputTransform,
         collate_fn: Callable,
-        per_sample_transform: Union[Callable, _InputTransformSequential],
+        per_sample_transform: Callable,
         per_batch_transform: Callable,
         stage: RunningStage,
         apply_per_sample_transform: bool = True,

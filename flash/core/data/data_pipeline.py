@@ -27,12 +27,7 @@ from flash.core.data.auto_dataset import IterableAutoDataset
 from flash.core.data.batch import _DeserializeProcessor
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_base import InputBase
-from flash.core.data.io.input_transform import (
-    _InputTransformProcessor,
-    _InputTransformSequential,
-    DefaultInputTransform,
-    InputTransform,
-)
+from flash.core.data.io.input_transform import _InputTransformProcessor, DefaultInputTransform, InputTransform
 from flash.core.data.io.output import _OutputProcessor, Output
 from flash.core.data.io.output_transform import _OutputTransformProcessor, OutputTransform
 from flash.core.data.process import Deserializer
@@ -270,27 +265,15 @@ class DataPipeline:
             else worker_collate_fn
         )
 
-        assert_contains_tensor = self._is_overriden_recursive(
-            "to_tensor_transform", input_transform, InputTransform, prefix=_STAGES_PREFIX[stage]
-        )
-
         deserialize_processor = _DeserializeProcessor(
             self._deserializer,
             input_transform,
-            getattr(input_transform, func_names["pre_tensor_transform"]),
-            getattr(input_transform, func_names["to_tensor_transform"]),
+            getattr(input_transform, func_names["per_sample_transform"]),
         )
         worker_input_transform_processor = _InputTransformProcessor(
             input_transform,
             worker_collate_fn,
-            _InputTransformSequential(
-                input_transform,
-                None if is_serving else getattr(input_transform, func_names["pre_tensor_transform"]),
-                None if is_serving else getattr(input_transform, func_names["to_tensor_transform"]),
-                getattr(input_transform, func_names["post_tensor_transform"]),
-                stage,
-                assert_contains_tensor=assert_contains_tensor,
-            ),
+            getattr(input_transform, func_names["per_sample_transform"]),
             getattr(input_transform, func_names["per_batch_transform"]),
             stage,
         )

@@ -248,9 +248,7 @@ def test_from_filepaths_visualise_multilabel(tmpdir):
 
     # call show functions
     dm.show_train_batch()
-    dm.show_train_batch("pre_tensor_transform")
-    dm.show_train_batch("to_tensor_transform")
-    dm.show_train_batch(["pre_tensor_transform", "post_tensor_transform"])
+    dm.show_train_batch("per_sample_transform")
     dm.show_val_batch("per_batch_transform")
 
 
@@ -274,7 +272,7 @@ def test_from_filepaths_splits(tmpdir):
     assert len(train_filepaths) == len(train_labels)
 
     _to_tensor = {
-        "to_tensor_transform": nn.Sequential(
+        "per_sample_transform": nn.Sequential(
             ApplyToKeys(DataKeys.INPUT, torchvision.transforms.ToTensor()),
             ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
         ),

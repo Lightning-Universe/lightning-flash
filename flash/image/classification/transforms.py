@@ -49,33 +49,34 @@ def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
     collate the batch, and apply normalization."""
     if _KORNIA_AVAILABLE and os.getenv("FLASH_TESTING", "0") != "1":
         #  Better approach as all transforms are applied on tensor directly
-        return {
-            "to_tensor_transform": nn.Sequential(
-                ApplyToKeys(DataKeys.INPUT, torchvision.transforms.ToTensor()),
+        per_sample_transform = T.Compose(
+            [
+                ApplyToKeys(
+                    DataKeys.INPUT,
+                    T.Compose([torchvision.transforms.ToTensor(), K.geometry.Resize(image_size)]),
+                ),
                 ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
-            ),
-            "post_tensor_transform": ApplyToKeys(
-                DataKeys.INPUT,
-                K.geometry.Resize(image_size),
-            ),
-            "collate": kornia_collate,
-            "per_batch_transform_on_device": ApplyToKeys(
-                DataKeys.INPUT,
-                K.augmentation.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
-            ),
-        }
-    return {
-        "pre_tensor_transform": ApplyToKeys(DataKeys.INPUT, T.Resize(image_size)),
-        "to_tensor_transform": nn.Sequential(
-            ApplyToKeys(DataKeys.INPUT, torchvision.transforms.ToTensor()),
-            ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
-        ),
-        "post_tensor_transform": ApplyToKeys(
+            ]
+        )
+        per_batch_transform_on_device = ApplyToKeys(
             DataKeys.INPUT,
-            T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+            K.augmentation.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
+        )
+        return dict(
+            per_sample_transform=per_sample_transform,
+            collate=kornia_collate,
+            per_batch_transform_on_device=per_batch_transform_on_device,
+        )
+    return dict(
+        per_sample_transform=nn.Sequential(
+            ApplyToKeys(
+                DataKeys.INPUT,
+                nn.Sequential(T.Resize(image_size), T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])),
+                ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
+            )
         ),
-        "collate": kornia_collate,
-    }
+        collate=kornia_collate,
+    )
 
 
 def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:

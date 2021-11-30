@@ -91,17 +91,14 @@ class StyleTransferInputTransform(InputTransform):
     def default_transforms(self) -> Optional[Dict[str, Callable]]:
         if self.training:
             return dict(
-                to_tensor_transform=T.ToTensor(),
+                per_sample_transform=T.ToTensor(),
                 per_sample_transform_on_device=nn.Sequential(
                     T.Resize(self.image_size),
                     T.CenterCrop(self.image_size),
                 ),
             )
         if self.predicting:
-            return dict(
-                pre_tensor_transform=T.Resize(self.image_size),
-                to_tensor_transform=T.ToTensor(),
-            )
+            return dict(per_sample_transform=nn.Sequential(T.Resize(self.image_size), T.ToTensor()))
         # Style transfer doesn't support a validation or test phase, so we return nothing here
         return None
 

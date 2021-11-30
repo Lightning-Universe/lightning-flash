@@ -777,7 +777,7 @@ class QuestionAnsweringData(DataModule):
             data_module = QuestionAnsweringData.from_json(
                 train_file="train_data.json",
                 train_transform={
-                    "to_tensor_transform": torch.as_tensor,
+                    "per_sample_transform": torch.as_tensor,
                 },
                 backbone="distilbert-base-uncased",
                 max_source_length=384,
@@ -880,7 +880,7 @@ class QuestionAnsweringData(DataModule):
                 "target",
                 train_file="train_data.csv",
                 train_transform={
-                    "to_tensor_transform": torch.as_tensor,
+                    "per_sample_transform": torch.as_tensor,
                 },
                 backbone="distilbert-base-uncased",
                 max_source_length=384,
