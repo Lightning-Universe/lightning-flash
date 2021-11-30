@@ -118,8 +118,8 @@ _MOCK_TRANSFORM = Mock()
     [
         (
             {"per_sample_transform": _MOCK_TRANSFORM},
-            {"per_sample_transform": _MOCK_TRANSFORM},
-            {"per_sample_transform": _MOCK_TRANSFORM, "per_sample_transform": _MOCK_TRANSFORM},
+            {"per_batch_transform": _MOCK_TRANSFORM},
+            {"per_sample_transform": _MOCK_TRANSFORM, "per_batch_transform": _MOCK_TRANSFORM},
         ),
         (
             {"per_sample_transform": _MOCK_TRANSFORM},
