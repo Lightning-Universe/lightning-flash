@@ -13,7 +13,7 @@
 # limitations under the License.
 import importlib
 from argparse import REMAINDER
-from unittest import mock
+from unittest.mock import patch
 
 import jsonargparse
 
@@ -64,7 +64,7 @@ def main() -> None:
     task_args = args[args.subcommand].pop("task_args")
     selected_cli_module = importlib.import_module(selected)
     cli_fn = getattr(selected_cli_module, "cli")  # assumes the function is called just `cli`
-    with mock.patch("sys.argv", ["flash.py"] + task_args):
+    with patch("sys.argv", ["flash.py"] + task_args):
         cli_kwargs = args[args.subcommand]
         cli_fn(**cli_kwargs)
 
