@@ -13,6 +13,7 @@
 # limitations under the License.
 import inspect
 from typing import Any, Dict, List, Optional
+from pytorch_lightning.utilities import rank_zero_info
 
 import torch
 from pytorch_lightning import Callback
@@ -86,12 +87,12 @@ class TextClassifier(ClassificationTask):
 
         if self.pretrained:
             self.vocab_size = self.model.config.vocab_size
-            print("`pretrained=True`, ignoring `vocab_size` argument.")
+            rank_zero_info("`pretrained=True`, ignoring `vocab_size` argument.")
 
         else:
             self.vocab_size = vocab_size if vocab_size else self.model.config.vocab_size
             replace_embeddings(self.model, self.vocab_size, self.model.config.vocab_size)
-            print(f"Re-initialized word embeddings layer with `vocab_size={self.vocab_size}`")
+            rank_zero_info(f"Re-initialized word embeddings layer with `vocab_size={self.vocab_size}`")
 
         self.save_hyperparameters()
 
