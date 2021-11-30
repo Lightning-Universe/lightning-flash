@@ -16,15 +16,15 @@ import torch
 
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE
-from flash.image.segmentation.output import FiftyOneSegmentationLabels, SegmentationLabels
+from flash.image.segmentation.output import FiftyOneSegmentationLabelsOutput, SegmentationLabelsOutput
 from tests.helpers.utils import _IMAGE_TESTING
 
 
-class TestSemanticSegmentationLabels:
+class TestSemanticSegmentationLabelsOutput:
     @pytest.mark.skipif(not _IMAGE_TESTING, "image libraries aren't installed.")
     @staticmethod
     def test_smoke():
-        serial = SegmentationLabels()
+        serial = SegmentationLabelsOutput()
         assert serial is not None
         assert serial.labels_map is None
         assert serial.visualize is False
@@ -32,7 +32,7 @@ class TestSemanticSegmentationLabels:
     @pytest.mark.skipif(not _IMAGE_TESTING, "image libraries aren't installed.")
     @staticmethod
     def test_exception():
-        serial = SegmentationLabels()
+        serial = SegmentationLabelsOutput()
 
         with pytest.raises(Exception):
             sample = torch.zeros(1, 5, 2, 3)
@@ -45,7 +45,7 @@ class TestSemanticSegmentationLabels:
     @pytest.mark.skipif(not _IMAGE_TESTING, "image libraries aren't installed.")
     @staticmethod
     def test_serialize():
-        serial = SegmentationLabels()
+        serial = SegmentationLabelsOutput()
 
         sample = torch.zeros(5, 2, 3)
         sample[1, 1, 2] = 1  # add peak in class 2
@@ -59,8 +59,8 @@ class TestSemanticSegmentationLabels:
     @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
     @staticmethod
     def test_serialize_fiftyone():
-        serial = FiftyOneSegmentationLabels()
-        filepath_serial = FiftyOneSegmentationLabels(return_filepath=True)
+        serial = FiftyOneSegmentationLabelsOutput()
+        filepath_serial = FiftyOneSegmentationLabelsOutput(return_filepath=True)
 
         preds = torch.zeros(5, 2, 3)
         preds[1, 1, 2] = 1  # add peak in class 2

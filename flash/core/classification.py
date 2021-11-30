@@ -16,7 +16,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, TYPE_
 import torch
 import torch.nn.functional as F
 import torchmetrics
-from pytorch_lightning.utilities import rank_zero_warn
+from pytorch_lightning.utilities import rank_zero_deprecation, rank_zero_warn
 
 from flash.core.adapter import AdapterTask
 from flash.core.data.io.classification_input import ClassificationState
@@ -79,7 +79,7 @@ class ClassificationTask(Task, ClassificationMixin):
             *args,
             loss_fn=loss_fn,
             metrics=metrics,
-            output=output or Classes(multi_label=multi_label),
+            output=output or ClassesOutput(multi_label=multi_label),
             **kwargs,
         )
 
@@ -102,7 +102,7 @@ class ClassificationAdapterTask(AdapterTask, ClassificationMixin):
             *args,
             loss_fn=loss_fn,
             metrics=metrics,
-            output=output or Classes(multi_label=multi_label),
+            output=output or ClassesOutput(multi_label=multi_label),
             **kwargs,
         )
 
@@ -137,14 +137,14 @@ class PredsClassificationOutput(ClassificationOutput):
         return sample
 
 
-class Logits(PredsClassificationOutput):
+class LogitsOutput(PredsClassificationOutput):
     """A :class:`.Output` which simply converts the model outputs (assumed to be logits) to a list."""
 
     def transform(self, sample: Any) -> Any:
         return super().transform(sample).tolist()
 
 
-class Probabilities(PredsClassificationOutput):
+class ProbabilitiesOutput(PredsClassificationOutput):
     """A :class:`.Output` which applies a softmax to the model outputs (assumed to be logits) and converts to a
     list."""
 
@@ -155,7 +155,7 @@ class Probabilities(PredsClassificationOutput):
         return torch.softmax(sample, -1).tolist()
 
 
-class Classes(PredsClassificationOutput):
+class ClassesOutput(PredsClassificationOutput):
     """A :class:`.Output` which applies an argmax to the model outputs (either logits or probabilities) and
     converts to a list.
 
@@ -181,7 +181,7 @@ class Classes(PredsClassificationOutput):
         return torch.argmax(sample, -1).tolist()
 
 
-class Labels(Classes):
+class LabelsOutput(ClassesOutput):
     """A :class:`.Output` which converts the model outputs (either logits or probabilities) to the label of the
     argmax classification.
 
@@ -219,7 +219,7 @@ class Labels(Classes):
         return classes
 
 
-class FiftyOneLabels(ClassificationOutput):
+class FiftyOneLabelsOutput(ClassificationOutput):
     """A :class:`.Output` which converts the model outputs to FiftyOne classification format.
 
     Args:
@@ -339,3 +339,20 @@ class FiftyOneLabels(ClassificationOutput):
             filepath = sample[DataKeys.METADATA]["filepath"]
             return {"filepath": filepath, "predictions": fo_predictions}
         return fo_predictions
+
+
+class Labels(LabelsOutput):
+    def __init__(self, labels: Optional[List[str]] = None, multi_label: bool = False, threshold: float = 0.5):
+        rank_zero_deprecation(
+            "`Labels` was deprecated in v0.6.0 and will be removed in v0.7.0." "Please use `LabelsOutput` instead."
+        )
+        super().__init__(labels=labels, multi_label=multi_label, threshold=threshold)
+
+
+class Probabilities(ProbabilitiesOutput):
+    def __init__(self, multi_label: bool = False):
+        rank_zero_deprecation(
+            "`Probabilities` was deprecated in v0.6.0 and will be removed in v0.7.0."
+            "Please use `ProbabilitiesOutput` instead."
+        )
+        super().__init__(multi_label=multi_label)

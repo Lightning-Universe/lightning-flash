@@ -14,7 +14,7 @@
 import torch
 
 import flash
-from flash.core.classification import Probabilities
+from flash.core.classification import ProbabilitiesOutput
 from flash.core.data.utils import download_data
 from flash.image import ImageClassificationData, ImageClassifier
 from flash.image.classification.integrations.baal import ActiveLearningDataModule, ActiveLearningLoop
@@ -34,7 +34,9 @@ head = torch.nn.Sequential(
     torch.nn.Dropout(p=0.1),
     torch.nn.Linear(512, datamodule.num_classes),
 )
-model = ImageClassifier(backbone="resnet18", head=head, num_classes=datamodule.num_classes, output=Probabilities())
+model = ImageClassifier(
+    backbone="resnet18", head=head, num_classes=datamodule.num_classes, output=ProbabilitiesOutput()
+)
 
 
 # 3.1 Create the trainer

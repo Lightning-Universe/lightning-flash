@@ -4,24 +4,24 @@ import torch
 
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE
-from flash.image.detection.output import FiftyOneDetectionLabels
+from flash.image.detection.output import FiftyOneDetectionLabelsOutput
 
 
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
-class TestFiftyOneDetectionLabels:
+class TestFiftyOneDetectionLabelsOutput:
     @staticmethod
     def test_smoke():
-        serial = FiftyOneDetectionLabels()
+        serial = FiftyOneDetectionLabelsOutput()
         assert serial is not None
 
     @staticmethod
     def test_serialize_fiftyone():
         labels = ["class_1", "class_2", "class_3"]
-        serial = FiftyOneDetectionLabels()
-        filepath_serial = FiftyOneDetectionLabels(return_filepath=True)
-        threshold_serial = FiftyOneDetectionLabels(threshold=0.9)
-        labels_serial = FiftyOneDetectionLabels(labels=labels)
+        serial = FiftyOneDetectionLabelsOutput()
+        filepath_serial = FiftyOneDetectionLabelsOutput(return_filepath=True)
+        threshold_serial = FiftyOneDetectionLabelsOutput(threshold=0.9)
+        labels_serial = FiftyOneDetectionLabelsOutput(labels=labels)
 
         sample = {
             DataKeys.PREDS: {
