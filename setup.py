@@ -71,7 +71,7 @@ extras_req.update(
 )
 # some extra combinations
 extras_req["vision"] = _expand_reqs(extras_req, ["image", "video"])
-extras_req["all"] = _expand_reqs(extras_req, ["vision", "tabular", "text", "audio", "graph"])
+extras_req["all"] = _expand_reqs(extras_req, ["vision", "tabular", "text", "audio"])
 extras_req["dev"] = _expand_reqs(extras_req, ["all", "test", "docs"])
 # filter the uniques
 extras_req = {n: list(set(req)) for n, req in extras_req.items()}
