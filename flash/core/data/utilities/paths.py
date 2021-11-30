@@ -130,7 +130,9 @@ def list_valid_files(
 
 
 def filter_valid_files(
-    files: List[PATH_TYPE], *additional_lists: List[Any], valid_extensions: Optional[Tuple[str, ...]] = None
+    files: Union[PATH_TYPE, List[PATH_TYPE]],
+    *additional_lists: List[Any],
+    valid_extensions: Optional[Tuple[str, ...]] = None
 ) -> Union[List[Any], Tuple[List[Any], ...]]:
     """Filter the given list of files and any additional lists to include only the entries that contain a file with
     a valid extension.
@@ -143,6 +145,9 @@ def filter_valid_files(
     Returns:
         The filtered lists.
     """
+    if not isinstance(files, List):
+        files = [files]
+
     if valid_extensions is None:
         return (files,) + additional_lists
     filtered = list(
