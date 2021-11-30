@@ -267,7 +267,7 @@ class Input(Generic[DATA_TYPE], Properties, Module):
 
         Returns:
             The loaded sample as a mapping with string keys (e.g. "input", "target") that can be processed by the
-            :meth:`~flash.core.data.io.input_transform.InputTransform.pre_tensor_transform`.
+            :meth:`~flash.core.data.io.input_transform.InputTransform.per_sample_transform`.
 
         Example::
 

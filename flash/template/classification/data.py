@@ -254,8 +254,5 @@ class TemplateVisualization(BaseVisualization):
     def show_load_sample(self, samples: List[Any], running_stage: RunningStage):
         print(samples)
 
-    def show_pre_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
-        print(samples)
-
     def show_per_sample_transform(self, samples: List[Any], running_stage: RunningStage):
         print(samples)
