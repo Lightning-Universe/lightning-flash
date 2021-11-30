@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-import warnings
 from functools import partial
 from typing import Any, Callable, List, Optional, Union
 
 import pandas as pd
+from pytorch_lightning.utilities import rank_zero_warn
 
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.utilities.imports import _PANDAS_GREATER_EQUAL_1_3_0
@@ -34,7 +34,7 @@ def read_csv(file: PATH_TYPE) -> pd.DataFrame:
     try:
         return pd.read_csv(file, encoding="utf-8")
     except UnicodeDecodeError:
-        warnings.warn("A UnicodeDecodeError was raised when reading the CSV. This error will be ignored.")
+        rank_zero_warn("A UnicodeDecodeError was raised when reading the CSV. This error will be ignored.")
         if _PANDAS_GREATER_EQUAL_1_3_0:
             return pd.read_csv(file, encoding="utf-8", encoding_errors="ignore")
         else:
