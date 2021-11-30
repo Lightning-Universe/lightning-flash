@@ -16,6 +16,7 @@ import glob
 import os
 from functools import partial
 from importlib.util import module_from_spec, spec_from_file_location
+from itertools import chain
 
 from setuptools import find_packages, setup
 
@@ -45,6 +46,10 @@ long_description = setup_tools._load_readme_description(
 )
 
 
+def _expand_reqs(extras: dict, keys: list) -> list:
+    return list(chain(*[extras[ex] for ex in keys]))
+
+
 base_req = setup_tools._load_requirements(path_dir=_PATH_ROOT, file_name="requirements.txt")
 # find all extra requirements
 _load_req = partial(setup_tools._load_requirements, path_dir=_PATH_REQUIRE)
@@ -65,9 +70,9 @@ extras_req.update(
     }
 )
 # some extra combinations
-extras_req["vision"] = extras_req["image"] + extras_req["video"]
-extras_req["all"] = extras_req["vision"] + extras_req["tabular"] + extras_req["text"]
-extras_req["dev"] = extras_req["all"] + extras_req["test"] + extras_req["docs"]
+extras_req["vision"] = _expand_reqs(extras_req, ["image", "video"])
+extras_req["all"] = _expand_reqs(extras_req, ["vision", "tabular", "text", "audio"])
+extras_req["dev"] = _expand_reqs(extras_req, ["all", "test", "docs"])
 # filter the uniques
 extras_req = {n: list(set(req)) for n, req in extras_req.items()}
 
