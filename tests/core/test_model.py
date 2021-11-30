@@ -206,7 +206,11 @@ def test_classification_task_predict_folder_path(tmpdir):
     datamodule = ImageClassificationData.from_folders(predict_folder=train_dir)
 
     task = ImageClassifier(num_classes=10)
-    predictions = task.predict(str(train_dir), data_pipeline=datamodule.data_pipeline)
+    predictions = task.predict(
+        str(train_dir),
+        input="folders",
+        data_pipeline=datamodule.data_pipeline,
+    )
     assert len(predictions) == 2
 
 

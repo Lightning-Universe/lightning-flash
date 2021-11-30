@@ -20,7 +20,8 @@ from torch import nn
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import DataKeys, InputFormat, LabelsState, NumpyInput
+from flash.core.data.io.classification_input import ClassificationState
+from flash.core.data.io.input import DataKeys, InputFormat, NumpyInput
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _SKLEARN_AVAILABLE
@@ -67,7 +68,7 @@ class TemplateSKLearnInput(TemplateNumpyInput):
             A sequence of samples / sample metadata.
         """
         dataset.num_classes = len(data.target_names)
-        self.set_state(LabelsState(data.target_names))
+        self.set_state(ClassificationState(data.target_names))
         return super().load_data((data.data, data.target), dataset=dataset)
 
     def predict_load_data(self, data: Bunch) -> Sequence[Mapping[str, Any]]:

@@ -16,10 +16,11 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, TYPE_
 import torch
 import torch.nn.functional as F
 import torchmetrics
-from pytorch_lightning.utilities import rank_zero_warn
+from pytorch_lightning.utilities import rank_zero_deprecation, rank_zero_warn
 
 from flash.core.adapter import AdapterTask
-from flash.core.data.io.input import DataKeys, LabelsState
+from flash.core.data.io.classification_input import ClassificationState
+from flash.core.data.io.input import DataKeys
 from flash.core.data.io.output import Output
 from flash.core.model import Task
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
@@ -78,7 +79,7 @@ class ClassificationTask(Task, ClassificationMixin):
             *args,
             loss_fn=loss_fn,
             metrics=metrics,
-            output=output or Classes(multi_label=multi_label),
+            output=output or ClassesOutput(multi_label=multi_label),
             **kwargs,
         )
 
@@ -101,7 +102,7 @@ class ClassificationAdapterTask(AdapterTask, ClassificationMixin):
             *args,
             loss_fn=loss_fn,
             metrics=metrics,
-            output=output or Classes(multi_label=multi_label),
+            output=output or ClassesOutput(multi_label=multi_label),
             **kwargs,
         )
 
@@ -136,14 +137,14 @@ class PredsClassificationOutput(ClassificationOutput):
         return sample
 
 
-class Logits(PredsClassificationOutput):
+class LogitsOutput(PredsClassificationOutput):
     """A :class:`.Output` which simply converts the model outputs (assumed to be logits) to a list."""
 
     def transform(self, sample: Any) -> Any:
         return super().transform(sample).tolist()
 
 
-class Probabilities(PredsClassificationOutput):
+class ProbabilitiesOutput(PredsClassificationOutput):
     """A :class:`.Output` which applies a softmax to the model outputs (assumed to be logits) and converts to a
     list."""
 
@@ -154,7 +155,7 @@ class Probabilities(PredsClassificationOutput):
         return torch.softmax(sample, -1).tolist()
 
 
-class Classes(PredsClassificationOutput):
+class ClassesOutput(PredsClassificationOutput):
     """A :class:`.Output` which applies an argmax to the model outputs (either logits or probabilities) and
     converts to a list.
 
@@ -180,13 +181,13 @@ class Classes(PredsClassificationOutput):
         return torch.argmax(sample, -1).tolist()
 
 
-class Labels(Classes):
+class LabelsOutput(ClassesOutput):
     """A :class:`.Output` which converts the model outputs (either logits or probabilities) to the label of the
     argmax classification.
 
     Args:
         labels: A list of labels, assumed to map the class index to the label for that class. If ``labels`` is not
-            provided, will attempt to get them from the :class:`.LabelsState`.
+            provided, will attempt to get them from the :class:`.ClassificationState`.
         multi_label: If true, treats outputs as multi label logits.
         threshold: The threshold to use for multi_label classification.
     """
@@ -196,7 +197,7 @@ class Labels(Classes):
         self._labels = labels
 
         if labels is not None:
-            self.set_state(LabelsState(labels))
+            self.set_state(ClassificationState(labels))
 
     def transform(self, sample: Any) -> Union[int, List[int], str, List[str]]:
         labels = None
@@ -204,7 +205,7 @@ class Labels(Classes):
         if self._labels is not None:
             labels = self._labels
         else:
-            state = self.get_state(LabelsState)
+            state = self.get_state(ClassificationState)
             if state is not None:
                 labels = state.labels
 
@@ -214,16 +215,16 @@ class Labels(Classes):
             if self.multi_label:
                 return [labels[cls] for cls in classes]
             return labels[classes]
-        rank_zero_warn("No LabelsState was found, this output will act as a Classes output.", UserWarning)
+        rank_zero_warn("No ClassificationState was found, this output will act as a Classes output.", UserWarning)
         return classes
 
 
-class FiftyOneLabels(ClassificationOutput):
+class FiftyOneLabelsOutput(ClassificationOutput):
     """A :class:`.Output` which converts the model outputs to FiftyOne classification format.
 
     Args:
         labels: A list of labels, assumed to map the class index to the label for that class. If ``labels`` is not
-            provided, will attempt to get them from the :class:`.LabelsState`.
+            provided, will attempt to get them from the :class:`.ClassificationState`.
         multi_label: If true, treats outputs as multi label logits.
         threshold: A threshold to use to filter candidate labels. In the single label case, predictions below this
             threshold will be replaced with None
@@ -252,7 +253,7 @@ class FiftyOneLabels(ClassificationOutput):
         self.return_filepath = return_filepath
 
         if labels is not None:
-            self.set_state(LabelsState(labels))
+            self.set_state(ClassificationState(labels))
 
     def transform(
         self,
@@ -266,7 +267,7 @@ class FiftyOneLabels(ClassificationOutput):
         if self._labels is not None:
             labels = self._labels
         else:
-            state = self.get_state(LabelsState)
+            state = self.get_state(ClassificationState)
             if state is not None:
                 labels = state.labels
 
@@ -309,7 +310,7 @@ class FiftyOneLabels(ClassificationOutput):
                         logits=logits,
                     )
         else:
-            rank_zero_warn("No LabelsState was found, int targets will be used as label strings", UserWarning)
+            rank_zero_warn("No ClassificationState was found, int targets will be used as label strings", UserWarning)
 
             if self.multi_label:
                 classifications = []
@@ -338,3 +339,20 @@ class FiftyOneLabels(ClassificationOutput):
             filepath = sample[DataKeys.METADATA]["filepath"]
             return {"filepath": filepath, "predictions": fo_predictions}
         return fo_predictions
+
+
+class Labels(LabelsOutput):
+    def __init__(self, labels: Optional[List[str]] = None, multi_label: bool = False, threshold: float = 0.5):
+        rank_zero_deprecation(
+            "`Labels` was deprecated in v0.6.0 and will be removed in v0.7.0." "Please use `LabelsOutput` instead."
+        )
+        super().__init__(labels=labels, multi_label=multi_label, threshold=threshold)
+
+
+class Probabilities(ProbabilitiesOutput):
+    def __init__(self, multi_label: bool = False):
+        rank_zero_deprecation(
+            "`Probabilities` was deprecated in v0.6.0 and will be removed in v0.7.0."
+            "Please use `ProbabilitiesOutput` instead."
+        )
+        super().__init__(multi_label=multi_label)

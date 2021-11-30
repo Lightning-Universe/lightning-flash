@@ -16,6 +16,8 @@ from typing import Any, Callable, Dict, Optional, Tuple
 import numpy as np
 
 from flash.audio.classification.transforms import default_transforms, train_default_transforms
+from flash.core.data.callback import BaseDataFetcher
+from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import (
     DataKeys,
     has_file_allowed_extension,
@@ -27,7 +29,7 @@ from flash.core.data.io.input import (
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.process import Deserializer
 from flash.core.data.utils import image_default_loader
-from flash.image.classification.data import ImageClassificationData
+from flash.image.classification.data import MatplotlibVisualization
 from flash.image.data import ImageDeserializer, IMG_EXTENSIONS, NP_EXTENSIONS
 
 
@@ -114,7 +116,15 @@ class AudioClassificationInputTransform(InputTransform):
         return train_default_transforms(self.spectrogram_size, self.time_mask_param, self.freq_mask_param)
 
 
-class AudioClassificationData(ImageClassificationData):
+class AudioClassificationData(DataModule):
     """Data module for audio classification."""
 
     input_transform_cls = AudioClassificationInputTransform
+
+    def set_block_viz_window(self, value: bool) -> None:
+        """Setter method to switch on/off matplotlib to pop up windows."""
+        self.data_fetcher.block_viz_window = value
+
+    @staticmethod
+    def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
+        return MatplotlibVisualization(*args, **kwargs)

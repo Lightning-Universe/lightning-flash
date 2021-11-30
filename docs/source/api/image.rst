@@ -18,6 +18,7 @@ ______________
     :template: classtemplate.rst
 
     ~classification.model.ImageClassifier
+    ~classification.data.ImageClassificationFiftyOneInput
     ~classification.data.ImageClassificationData
     ~classification.data.ImageClassificationInputTransform
 
@@ -44,7 +45,7 @@ ________________
 
     detection.data.FiftyOneParser
     detection.data.ObjectDetectionFiftyOneInput
-    detection.output.FiftyOneDetectionLabels
+    detection.output.FiftyOneDetectionLabelsOutput
     detection.data.ObjectDetectionInputTransform
 
 Keypoint Detection
@@ -102,8 +103,8 @@ ____________
     segmentation.data.SemanticSegmentationFiftyOneInput
     segmentation.data.SemanticSegmentationDeserializer
     segmentation.model.SemanticSegmentationOutputTransform
-    segmentation.output.FiftyOneSegmentationLabels
-    segmentation.output.SegmentationLabels
+    segmentation.output.FiftyOneSegmentationLabelsOutput
+    segmentation.output.SegmentationLabelsOutput
 
 .. autosummary::
     :toctree: generated/
@@ -140,7 +141,5 @@ ________________
     :template: classtemplate.rst
 
     ~data.ImageDeserializer
-    ~data.ImageFiftyOneInput
     ~data.ImageNumpyInput
-    ~data.ImagePathsInput
     ~data.ImageTensorInput
