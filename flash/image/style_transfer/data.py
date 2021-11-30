@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import functools
-import pathlib
-from typing import Any, Callable, Dict, Optional, Sequence, Union
+from typing import Any, Callable, Collection, Dict, Optional, Sequence, Union
 
+import numpy as np
+import torch
 from torch import nn
 
 from flash.core.data.data_module import DataModule
@@ -22,9 +23,9 @@ from flash.core.data.io.input import DataKeys, InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
-from flash.image.classification import ImageClassificationData
-from flash.image.data import ImageNumpyInput, ImagePathsInput, ImageTensorInput
-from flash.image.style_transfer.utils import raise_not_supported
+from flash.core.utilities.stages import RunningStage
+from flash.image.classification.data import ImageClassificationFilesInput, ImageClassificationFolderInput
+from flash.image.data import ImageFilesInput, ImageNumpyInput, ImageTensorInput
 
 if _TORCHVISION_AVAILABLE:
     from torchvision import transforms as T
@@ -55,11 +56,6 @@ class StyleTransferInputTransform(InputTransform):
         predict_transform: Optional[Dict[str, Callable]] = None,
         image_size: int = 256,
     ):
-        if val_transform:
-            raise_not_supported("validation")
-        if test_transform:
-            raise_not_supported("test")
-
         if isinstance(image_size, int):
             image_size = (image_size, image_size)
 
@@ -71,11 +67,10 @@ class StyleTransferInputTransform(InputTransform):
             test_transform=test_transform,
             predict_transform=predict_transform,
             inputs={
-                InputFormat.FILES: ImagePathsInput(),
-                InputFormat.FOLDERS: ImagePathsInput(),
-                InputFormat.NUMPY: ImageNumpyInput(),
-                InputFormat.TENSORS: ImageTensorInput(),
-                InputFormat.TENSORS: ImageTensorInput(),
+                InputFormat.FILES: ImageFilesInput,
+                InputFormat.FOLDERS: ImageClassificationFolderInput,
+                InputFormat.NUMPY: ImageNumpyInput,
+                InputFormat.TENSORS: ImageTensorInput,
             },
             default_input=InputFormat.FILES,
         )
@@ -106,35 +101,89 @@ class StyleTransferInputTransform(InputTransform):
         return None
 
 
-class StyleTransferData(ImageClassificationData):
+class StyleTransferData(DataModule):
     input_transform_cls = StyleTransferInputTransform
+
+    @classmethod
+    def from_files(
+        cls,
+        train_files: Optional[Sequence[str]] = None,
+        predict_files: Optional[Sequence[str]] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        image_size: int = 256,
+        **data_module_kwargs: Any,
+    ) -> "StyleTransferData":
+        return cls(
+            ImageFilesInput(RunningStage.TRAINING, train_files),
+            predict_dataset=ImageClassificationFilesInput(RunningStage.PREDICTING, predict_files),
+            input_transform=cls.input_transform_cls(
+                train_transform,
+                predict_transform=predict_transform,
+                image_size=image_size,
+            ),
+            **data_module_kwargs,
+        )
 
     @classmethod
     def from_folders(
         cls,
-        train_folder: Optional[Union[str, pathlib.Path]] = None,
-        predict_folder: Optional[Union[str, pathlib.Path]] = None,
-        train_transform: Optional[Union[str, Dict]] = None,
-        predict_transform: Optional[Union[str, Dict]] = None,
-        input_transform: Optional[InputTransform] = None,
-        **kwargs: Any,
-    ) -> "DataModule":
-
-        if any(param in kwargs and kwargs[param] is not None for param in ("val_folder", "val_transform")):
-            raise_not_supported("validation")
-
-        if any(param in kwargs and kwargs[param] is not None for param in ("test_folder", "test_transform")):
-            raise_not_supported("test")
-
-        input_transform = input_transform or cls.input_transform_cls(
-            train_transform=train_transform,
-            predict_transform=predict_transform,
+        train_folder: Optional[str] = None,
+        predict_folder: Optional[str] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        image_size: int = 256,
+        **data_module_kwargs: Any,
+    ) -> "StyleTransferData":
+        return cls(
+            ImageClassificationFolderInput(RunningStage.TRAINING, train_folder),
+            predict_dataset=ImageClassificationFolderInput(RunningStage.PREDICTING, predict_folder),
+            input_transform=cls.input_transform_cls(
+                train_transform,
+                predict_transform=predict_transform,
+                image_size=image_size,
+            ),
+            **data_module_kwargs,
         )
 
-        return cls.from_input(
-            InputFormat.FOLDERS,
-            train_data=train_folder,
-            predict_data=predict_folder,
-            input_transform=input_transform,
-            **kwargs,
+    @classmethod
+    def from_numpy(
+        cls,
+        train_data: Optional[Collection[np.ndarray]] = None,
+        predict_data: Optional[Collection[np.ndarray]] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        image_size: int = 256,
+        **data_module_kwargs: Any,
+    ) -> "StyleTransferData":
+        return cls(
+            ImageNumpyInput(RunningStage.TRAINING, train_data),
+            predict_dataset=ImageNumpyInput(RunningStage.PREDICTING, predict_data),
+            input_transform=cls.input_transform_cls(
+                train_transform,
+                predict_transform=predict_transform,
+                image_size=image_size,
+            ),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_tensors(
+        cls,
+        train_data: Optional[Collection[torch.Tensor]] = None,
+        predict_data: Optional[Collection[torch.Tensor]] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        image_size: int = 256,
+        **data_module_kwargs: Any,
+    ) -> "StyleTransferData":
+        return cls(
+            ImageTensorInput(RunningStage.TRAINING, train_data),
+            predict_dataset=ImageTensorInput(RunningStage.PREDICTING, predict_data),
+            input_transform=cls.input_transform_cls(
+                train_transform,
+                predict_transform=predict_transform,
+                image_size=image_size,
+            ),
+            **data_module_kwargs,
         )

@@ -92,7 +92,7 @@ class ActiveLearningDataModule(LightningDataModule):
         if not self.labelled.num_classes:
             raise MisconfigurationException("The labelled dataset should be labelled")
 
-        if self.labelled and (self.labelled._val_ds is not None or self.labelled._predict_ds is not None):
+        if self.labelled and (self.labelled._val_ds or self.labelled._predict_ds):
             raise MisconfigurationException("The labelled `datamodule` should have only train data.")
 
         self._dataset = ActiveLearningDataset(
@@ -116,7 +116,7 @@ class ActiveLearningDataModule(LightningDataModule):
 
     @property
     def has_test(self) -> bool:
-        return self.labelled._test_ds is not None
+        return bool(self.labelled._test_ds)
 
     @property
     def has_labelled_data(self) -> bool:

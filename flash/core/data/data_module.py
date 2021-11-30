@@ -149,6 +149,10 @@ class DataModule(pl.LightningDataModule):
 
         self.set_running_stages()
 
+        # Share state between input objects (this will be available in ``load_sample`` but not in ``load_data``)
+        data_pipeline = self.data_pipeline
+        data_pipeline.initialize()
+
     @property
     def train_dataset(self) -> Optional[Dataset]:
         """This property returns the train dataset."""
@@ -420,7 +424,7 @@ class DataModule(pl.LightningDataModule):
 
     @property
     def multi_label(self) -> Optional[bool]:
-        """Property that returns the number of labels of the datamodule if a multilabel task."""
+        """Property that returns ``True`` if this ``DataModule`` contains multi-label data."""
         multi_label_train = getattr(self.train_dataset, "multi_label", None)
         multi_label_val = getattr(self.val_dataset, "multi_label", None)
         multi_label_test = getattr(self.test_dataset, "multi_label", None)
