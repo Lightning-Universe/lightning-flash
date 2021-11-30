@@ -84,8 +84,8 @@ def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]
     if _KORNIA_AVAILABLE and os.getenv("FLASH_TESTING", "0") != "1":
         #  Better approach as all transforms are applied on tensor directly
         transforms = {
-            "post_tensor_transform": ApplyToKeys(DataKeys.INPUT, K.augmentation.RandomHorizontalFlip()),
+            "per_sample_transform": ApplyToKeys(DataKeys.INPUT, K.augmentation.RandomHorizontalFlip()),
         }
     else:
-        transforms = {"pre_tensor_transform": ApplyToKeys(DataKeys.INPUT, T.RandomHorizontalFlip())}
+        transforms = {"per_sample_transform": ApplyToKeys(DataKeys.INPUT, T.RandomHorizontalFlip())}
     return merge_transforms(default_transforms(image_size), transforms)

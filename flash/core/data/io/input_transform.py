@@ -550,6 +550,10 @@ class _InputTransformProcessor(torch.nn.Module):
         # we create a new dict to prevent from potential memory leaks
         # assuming that the dictionary samples are stored in between and
         # potentially modified before the transforms are applied.
+        if not self.on_device:
+            for sample in samples:
+                self.callback.on_load_sample(sample, self.stage)
+
         if isinstance(samples, dict):
             samples = dict(samples.items())
 
@@ -566,6 +570,8 @@ class _InputTransformProcessor(torch.nn.Module):
                         sample = self.per_sample_transform(sample)
                         if self.on_device:
                             self.callback.on_per_sample_transform_on_device(sample, self.stage)
+                        else:
+                            self.callback.on_per_sample_transform(sample, self.stage)
                         _samples.append(sample)
 
                 samples = type(_samples)(_samples)

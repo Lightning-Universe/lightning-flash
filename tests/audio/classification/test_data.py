@@ -213,8 +213,8 @@ def test_from_filepaths_visualise(tmpdir):
 
     # call show functions
     # dm.show_train_batch()
-    dm.show_train_batch("pre_tensor_transform")
-    dm.show_train_batch(["pre_tensor_transform", "post_tensor_transform"])
+    dm.show_train_batch("per_sample_transform")
+    dm.show_train_batch(["per_sample_transform", "per_batch_transform"])
 
 
 @pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")

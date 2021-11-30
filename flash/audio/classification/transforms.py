@@ -53,5 +53,5 @@ def train_default_transforms(
         augs.append(ApplyToKeys(DataKeys.INPUT, TAudio.FrequencyMasking(freq_mask_param=freq_mask_param)))
 
     if len(augs) > 0:
-        return merge_transforms(default_transforms(spectrogram_size), {"post_tensor_transform": nn.Sequential(*augs)})
+        return merge_transforms(default_transforms(spectrogram_size), {"per_sample_transform": nn.Sequential(*augs)})
     return default_transforms(spectrogram_size)
