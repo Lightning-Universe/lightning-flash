@@ -18,7 +18,7 @@ from typing import Any, Dict, List
 import torch
 from pytorch_lightning import Callback
 
-from flash.core.classification import ClassificationTask, Labels
+from flash.core.classification import ClassificationTask, LabelsOutput
 from flash.core.data.io.input import DataKeys
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
@@ -84,7 +84,7 @@ class TextClassifier(ClassificationTask):
             metrics=metrics,
             learning_rate=learning_rate,
             multi_label=multi_label,
-            output=output or Labels(multi_label=multi_label),
+            output=output or LabelsOutput(multi_label=multi_label),
         )
         self.enable_ort = enable_ort
         self.model = self.backbones.get(backbone)(num_labels=num_classes)

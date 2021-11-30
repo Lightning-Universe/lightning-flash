@@ -46,7 +46,7 @@ else:
     K = None
 
 
-class SegmentationLabels(Output):
+class SegmentationLabelsOutput(Output):
     """A :class:`.Output` which converts the model outputs to the label of the argmax classification per pixel in
     the image for semantic segmentation tasks.
 
@@ -100,7 +100,7 @@ class SegmentationLabels(Output):
         return labels.tolist()
 
 
-class FiftyOneSegmentationLabels(SegmentationLabels):
+class FiftyOneSegmentationLabelsOutput(SegmentationLabelsOutput):
     """A :class:`.Output` which converts the model outputs to FiftyOne segmentation format.
 
     Args:

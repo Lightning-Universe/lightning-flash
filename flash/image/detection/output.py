@@ -29,7 +29,7 @@ else:
     fo = None
 
 
-class FiftyOneDetectionLabels(Output):
+class FiftyOneDetectionLabelsOutput(Output):
     """A :class:`.Output` which converts model outputs to FiftyOne detection format.
 
     Args:
@@ -58,7 +58,7 @@ class FiftyOneDetectionLabels(Output):
 
     def transform(self, sample: Dict[str, Any]) -> Union[Detections, Dict[str, Any]]:
         if DataKeys.METADATA not in sample:
-            raise ValueError("sample requires DefaultDataKeys.METADATA to use a FiftyOneDetectionLabels output.")
+            raise ValueError("sample requires DefaultDataKeys.METADATA to use a FiftyOneDetectionLabelsOutput output.")
 
         labels = None
         if self._labels is not None:

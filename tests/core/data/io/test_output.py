@@ -17,7 +17,7 @@ from unittest.mock import Mock
 import torch
 from torch.utils.data import DataLoader
 
-from flash.core.classification import Labels
+from flash.core.classification import LabelsOutput
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
 from flash.core.data.io.classification_input import ClassificationState
 from flash.core.data.io.input_transform import DefaultInputTransform
@@ -44,7 +44,7 @@ def test_saving_with_output(tmpdir):
         def __init__(self):
             super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
 
-    output = Labels(["a", "b"])
+    output = LabelsOutput(["a", "b"])
     model = CustomModel()
     trainer = Trainer(fast_dev_run=True)
     data_pipeline = DataPipeline(input_transform=DefaultInputTransform(), output=output)

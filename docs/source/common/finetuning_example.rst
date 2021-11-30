@@ -15,7 +15,7 @@ Here's an example of finetuning.
     from pytorch_lightning import seed_everything
 
     import flash
-    from flash.core.classification import Labels
+    from flash.core.classification import LabelsOutput
     from flash.core.data.utils import download_data
     from flash.image import ImageClassificationData, ImageClassifier
 
@@ -56,7 +56,7 @@ Once you've finetuned, use the model to predict:
 .. testcode:: finetune
 
     # Output predictions as labels, automatically inferred from the training data in part 2.
-    model.output = Labels()
+    model.output = LabelsOutput()
 
     predictions = model.predict(
         [
