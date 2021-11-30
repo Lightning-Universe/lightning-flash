@@ -18,15 +18,15 @@ from typing import Any, Callable, Dict, List, Optional, Union
 import numpy as np
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
-from flash.core.classification import LabelsState
 from flash.core.data.data_module import DataModule
+from flash.core.data.io.classification_input import ClassificationState
 from flash.core.data.io.input import DataKeys, InputFormat
 from flash.core.data.io.input_base import Input
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.process import Deserializer
 from flash.core.data.properties import ProcessState
-from flash.core.data.utilities.paths import read_csv
+from flash.core.data.utilities.data_frame import read_csv
 from flash.core.utilities.imports import _PANDAS_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 from flash.tabular.classification.utils import (
@@ -115,7 +115,7 @@ class TabularDataFrameInput(Input):
             parameters = self.compute_parameters(df, target_field, numerical_fields, categorical_fields, is_regression)
 
             self.set_state(TabularParametersState(parameters))
-            self.set_state(LabelsState(parameters["classes"]))
+            self.set_state(ClassificationState(parameters["classes"]))
         else:
             parameters_state = self.get_state(TabularParametersState)
             parameters = parameters or (parameters_state.parameters if parameters_state is not None else None)
