@@ -46,7 +46,7 @@ from flash.core.utilities.imports import (
 )
 from flash.core.utilities.stages import RunningStage
 from flash.image.data import ImageDeserializer, IMG_EXTENSIONS
-from flash.image.segmentation.output import SegmentationLabels
+from flash.image.segmentation.output import SegmentationLabelsOutput
 from flash.image.segmentation.transforms import default_transforms, predict_default_transforms, train_default_transforms
 
 SampleCollection = None
@@ -244,7 +244,7 @@ class SemanticSegmentationInputTransform(InputTransform):
         self.image_size = image_size
         self.num_classes = num_classes
         if num_classes:
-            labels_map = labels_map or SegmentationLabels.create_random_labels_map(num_classes)
+            labels_map = labels_map or SegmentationLabelsOutput.create_random_labels_map(num_classes)
 
         super().__init__(
             train_transform=train_transform,
@@ -329,9 +329,9 @@ class SemanticSegmentationData(DataModule):
 
         num_classes = input_transform_kwargs["num_classes"]
 
-        labels_map = getattr(input_transform_kwargs, "labels_map", None) or SegmentationLabels.create_random_labels_map(
-            num_classes
-        )
+        labels_map = getattr(
+            input_transform_kwargs, "labels_map", None
+        ) or SegmentationLabelsOutput.create_random_labels_map(num_classes)
 
         data_fetcher = data_fetcher or cls.configure_data_fetcher(labels_map)
 
@@ -494,7 +494,7 @@ class SegmentationMatplotlibVisualization(BaseVisualization):
                 raise TypeError(f"Unknown data type. Got: {type(data)}.")
             # convert images and labels to numpy and stack horizontally
             image_vis: np.ndarray = self._to_numpy(image.byte())
-            label_tmp: torch.Tensor = SegmentationLabels.labels_to_image(label.squeeze().byte(), self.labels_map)
+            label_tmp: torch.Tensor = SegmentationLabelsOutput.labels_to_image(label.squeeze().byte(), self.labels_map)
             label_vis: np.ndarray = self._to_numpy(label_tmp)
             img_vis = np.hstack((image_vis, label_vis))
             # send to visualiser

@@ -17,7 +17,7 @@ from flash.core.data.io.input import DataKeys
 from flash.core.data.io.output import Output
 
 
-class Preds(Output):
+class PredsOutput(Output):
     """A :class:`~flash.core.data.io.output.Output` which returns the "preds" from the model outputs."""
 
     def transform(self, sample: Any) -> Union[int, List[int]]:

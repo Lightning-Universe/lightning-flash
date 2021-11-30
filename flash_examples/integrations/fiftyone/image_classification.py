@@ -16,7 +16,7 @@ from itertools import chain
 import torch
 
 import flash
-from flash.core.classification import FiftyOneLabels, Labels
+from flash.core.classification import FiftyOneLabelsOutput, LabelsOutput
 from flash.core.data.utils import download_data
 from flash.core.integrations.fiftyone import visualize
 from flash.image import ImageClassificationData, ImageClassifier
@@ -36,7 +36,7 @@ datamodule = ImageClassificationData.from_folders(
 model = ImageClassifier(
     backbone="resnet18",
     num_classes=datamodule.num_classes,
-    output=Labels(),
+    output=LabelsOutput(),
 )
 trainer = flash.Trainer(
     max_epochs=1,
@@ -55,7 +55,7 @@ trainer.save_checkpoint("image_classification_model.pt")
 model = ImageClassifier.load_from_checkpoint(
     "https://flash-weights.s3.amazonaws.com/0.6.0/image_classification_model.pt"
 )
-model.output = FiftyOneLabels(return_filepath=True)  # output FiftyOne format
+model.output = FiftyOneLabelsOutput(return_filepath=True)  # output FiftyOne format
 predictions = trainer.predict(model, datamodule=datamodule)
 predictions = list(chain.from_iterable(predictions))  # flatten batches
 
