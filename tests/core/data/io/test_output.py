@@ -19,7 +19,7 @@ from torch.utils.data import DataLoader
 
 from flash.core.classification import Labels
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
-from flash.core.data.io.input import LabelsState
+from flash.core.data.io.classification_input import ClassificationState
 from flash.core.data.io.input_transform import DefaultInputTransform
 from flash.core.data.io.output import Output
 from flash.core.model import Task
@@ -56,4 +56,4 @@ def test_saving_with_output(tmpdir):
     trainer.save_checkpoint(checkpoint_file)
     model = CustomModel.load_from_checkpoint(checkpoint_file)
     assert isinstance(model._data_pipeline_state, DataPipelineState)
-    assert model._data_pipeline_state._state[LabelsState] == LabelsState(["a", "b"])
+    assert model._data_pipeline_state._state[ClassificationState] == ClassificationState(["a", "b"])

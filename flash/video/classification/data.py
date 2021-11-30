@@ -20,7 +20,8 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Sampler
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import DataKeys, InputFormat, LabelsState
+from flash.core.data.io.classification_input import ClassificationState
+from flash.core.data.io.input import DataKeys, InputFormat
 from flash.core.data.io.input_base import Input, IterableInput
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.utilities.paths import list_valid_files
@@ -75,7 +76,7 @@ class VideoClassificationInput(IterableInput):
     def load_data(self, dataset: "LabeledVideoDataset") -> "LabeledVideoDataset":
         if self.training:
             label_to_class_mapping = {p[1]: p[0].split("/")[-2] for p in dataset._labeled_videos._paths_and_labels}
-            self.set_state(LabelsState(label_to_class_mapping))
+            self.set_state(ClassificationState(label_to_class_mapping))
             self.num_classes = len(np.unique([s[1]["label"] for s in dataset._labeled_videos]))
         return dataset
 
@@ -203,7 +204,7 @@ class VideoClassificationFilesInput(VideoClassificationInput):
             decoder=decoder,
         )
         if self.training:
-            self.set_state(LabelsState(self.id_to_label))
+            self.set_state(ClassificationState(self.id_to_label))
             self.num_classes = len(self.labels_set)
         return dataset
 

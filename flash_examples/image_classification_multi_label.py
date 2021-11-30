@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
+
 import torch
 
 import flash
@@ -22,16 +24,23 @@ from flash.image import ImageClassificationData, ImageClassifier
 # More info here: https://www.cs.ccu.edu.tw/~wtchu/projects/MoviePoster/
 download_data("https://pl-flash-data.s3.amazonaws.com/movie_posters.zip")
 
+
+def resolver(root, file_id):
+    return os.path.join(root, f"{file_id}.jpg")
+
+
 datamodule = ImageClassificationData.from_csv(
     "Id",
     ["Action", "Romance", "Crime", "Thriller", "Adventure"],
     train_file="data/movie_posters/train/metadata.csv",
+    train_resolver=resolver,
     val_file="data/movie_posters/val/metadata.csv",
+    val_resolver=resolver,
     image_size=(128, 128),
 )
 
 # 2. Build the task
-model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes, multi_label=True)
+model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes, multi_label=datamodule.multi_label)
 
 # 3. Create the trainer and finetune the model
 trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
