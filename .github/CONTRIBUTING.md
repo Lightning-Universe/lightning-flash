@@ -6,28 +6,28 @@ Welcome to the PyTorch Lightning community! We're building the most advanced res
 
 We encourage all sorts of contributions you're interested in adding! When coding for Flash, please follow these principles.
 
-#### Simple Internal Code
+### Simple Internal Code
 
 It's useful for users to look at the code and understand very quickly what's happening.
 Many users won't be engineers. Thus we need to value clear, simple code over condensed ninja moves.
 While that's super cool, this isn't the project for that :)
 
-#### Force User Decisions To Best Practices
+### Force User Decisions To Best Practices
 
 There are 1,000 ways to do something. However, eventually one popular solution becomes standard practice, and everyone follows.
 We try to find the best way to solve a particular problem, and then force our users to use it for readability and simplicity.
 
 When something becomes a best practice, we add it to the framework. This is usually something like bits of code in utils or in the model file that everyone keeps adding over and over again across projects. When this happens, bring that code inside the trainer and add a flag for it.
 
-#### Backward-compatible API
+### Backward-compatible API
 
 We all hate updating our deep learning packages because we don't want to refactor a bunch of stuff. In Flash, we make sure every change we make which could break an API is backward compatible with good deprecation warnings.
 
-#### Gain User Trust
+### Gain User Trust
 
 As a researcher, you can't have any part of your code going wrong. So, make thorough tests to ensure that every implementation of a new trick or subtle change is correct.
 
-#### Interoperability
+### Interoperability
 
 PyTorch Lightning Flash is highly interoperable with PyTorch Lightning and PyTorch.
 
@@ -111,7 +111,7 @@ All added or edited code shall be the own original work of the particular contri
 If you use some third-party implementation, all such blocks/functions/modules shall be properly referred and if possible also agreed by code's author. For example - `This code is inspired from http://...`.
 In case you adding new dependencies, make sure that they are compatible with the actual PyTorch Lightning license (ie. dependencies should be _at least_ as permissive as the PyTorch Lightning license).
 
-#### How to rebase my PR?
+### How to rebase my PR?
 
 We recommend creating a PR in a separate branch other than `master`, especially if you plan to submit several changes and do not want to wait until the first one is resolved (we can work on them in parallel).
 
