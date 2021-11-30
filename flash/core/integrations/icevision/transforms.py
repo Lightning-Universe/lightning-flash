@@ -192,6 +192,7 @@ def from_icevision_detection(record: "BaseRecord"):
 
 
 def from_icevision_record(record: "BaseRecord"):
+    
     sample = {
         DataKeys.METADATA: {
             "size": (record.height, record.width),
@@ -239,9 +240,12 @@ class IceVisionTransformAdapter(nn.Module):
         self.transform = A.Adapter(transform)
 
     def forward(self, x):
+        
         record = to_icevision_record(x)
         record = self.transform(record)
-        return from_icevision_record(record)
+        record = from_icevision_record(record)
+        record[DataKeys.METADATA]['original_size'] = x.shape
+        return record
 
 
 @requires(["image", "icevision"])

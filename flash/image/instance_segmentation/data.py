@@ -13,22 +13,130 @@
 # limitations under the License.
 from functools import partial
 from typing import Any, Callable, Dict, Optional, Tuple, Type, Union
-
+from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import DataKeys, InputFormat
+from flash.core.data.io.input import DataKeys, InputFormat, NumpyInput
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.integrations.icevision.data import IceVisionInput
 from flash.core.integrations.icevision.transforms import default_transforms
+from flash.image.data import ImageDeserializer, IMG_EXTENSIONS
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
+from flash.core.utilities.imports import _KORNIA_AVAILABLE
 from flash.core.utilities.stages import RunningStage
+from flash.core.data.io.input import (
+    InputFormat,
+    NumpyInput,
+    PathsInput,
+    TensorInput,
+)
+from flash.core.data.utils import image_default_loader
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, TYPE_CHECKING, Union
 
+import torch
 if _ICEVISION_AVAILABLE:
     from icevision.parsers import COCOMaskParser, Parser, VOCMaskParser
+    import torchvision.transforms.functional as FT
+    from torchvision.datasets.folder import has_file_allowed_extension
+
 else:
     COCOMaskParser = object
     VOCMaskParser = object
     Parser = object
+if _KORNIA_AVAILABLE:
+    import kornia as K
+
+class InstanceSegmentationNumpyInput(NumpyInput):
+    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
+        breakpoint()
+        img = torch.from_numpy(sample[DataKeys.INPUT]).float()
+        sample[DataKeys.INPUT] = img
+        sample[DataKeys.METADATA] = {"size": img.shape}
+        return sample
+
+
+class InstanceSegmentationPathsInput(PathsInput):
+    def __init__(self):
+        breakpoint()
+        super().__init__(IMG_EXTENSIONS)
+
+
+    def load_data(
+        self, data: Union[Tuple[str, str], Tuple[List[str], List[str]]], dataset: BaseAutoDataset
+    ) -> Sequence[Mapping[str, Any]]:
+        input_data, target_data = data
+
+        if self.isdir(input_data) and self.isdir(target_data):
+            input_files = os.listdir(input_data)
+            target_files = os.listdir(target_data)
+
+            all_files = set(input_files).intersection(set(target_files))
+
+            if len(all_files) != len(input_files) or len(all_files) != len(target_files):
+                rank_zero_warn(
+                    f"Found inconsistent files in input_dir: {input_data} and target_dir: {target_data}. Some files"
+                    " have been dropped.",
+                    UserWarning,
+                )
+
+            input_data = [os.path.join(input_data, file) for file in all_files]
+            target_data = [os.path.join(target_data, file) for file in all_files]
+
+        if not isinstance(input_data, list) and not isinstance(target_data, list):
+            input_data = [input_data]
+            target_data = [target_data]
+
+        if len(input_data) != len(target_data):
+            raise MisconfigurationException(
+                f"The number of input files ({len(input_data)}) and number of target files ({len(target_data)}) must be"
+                " the same.",
+            )
+
+        data = filter(
+            lambda sample: (
+                has_file_allowed_extension(sample[0], self.extensions)
+                and has_file_allowed_extension(sample[1], self.extensions)
+            ),
+            zip(input_data, target_data),
+        )
+
+        data = [{DataKeys.INPUT: input, DataKeys.TARGET: target} for input, target in data]
+
+        return data
+
+    def predict_load_data(self, data: Union[str, List[str]]):
+        return super().predict_load_data(data)
+
+    def load_sample(self, sample: Mapping[str, Any]) -> Mapping[str, Union[torch.Tensor, torch.Size]]:
+        # unpack data paths
+        img_path = sample[DataKeys.INPUT]
+        img_labels_path = sample[DataKeys.TARGET]
+
+        # load images directly to torch tensors
+        img: torch.Tensor = FT.to_tensor(image_default_loader(img_path))  # CxHxW
+        img_labels: torch.Tensor = torchvision.io.read_image(img_labels_path)  # CxHxW
+        img_labels = img_labels[0]  # HxW
+
+        sample[DataKeys.INPUT] = img.float()
+        sample[DataKeys.TARGET] = img_labels.float()
+        sample[DataKeys.METADATA] = {
+            "filepath": img_path,
+            "size": img.shape,
+        }
+        return sample
+
+    @staticmethod
+    def predict_load_sample(sample: Mapping[str, Any]) -> Mapping[str, Any]:
+        
+        img_path = sample[DataKeys.INPUT]
+        img = FT.to_tensor(image_default_loader(img_path)).float()
+        breakpoint()
+        sample[DataKeys.INPUT] = img
+        sample[DataKeys.METADATA] = {
+            "filepath": img_path,
+            "size": img.shape,
+        }
+        return sample
 
 
 class InstanceSegmentationInputTransform(InputTransform):
@@ -51,7 +159,8 @@ class InstanceSegmentationInputTransform(InputTransform):
             inputs={
                 "coco": partial(IceVisionInput, parser=COCOMaskParser),
                 "voc": partial(IceVisionInput, parser=VOCMaskParser),
-                InputFormat.FILES: IceVisionInput,
+                InputFormat.NUMPY: InstanceSegmentationNumpyInput(),
+                InputFormat.FILES:  IceVisionInput,
                 InputFormat.FOLDERS: partial(IceVisionInput, parser=parser),
             },
             default_input=InputFormat.FILES,
@@ -73,16 +182,25 @@ class InstanceSegmentationInputTransform(InputTransform):
         return default_transforms(self.image_size)
 
 
+    
 class InstanceSegmentationOutputTransform(OutputTransform):
-    @staticmethod
-    def uncollate(batch: Any) -> Any:
-        return batch[DataKeys.PREDS]
+    # @staticmethod
+    # def uncollate(batch: Any) -> Any:
+    #     breakpoint()
+    #     return batch[DataKeys.PREDS]
+    def per_sample_transform(self, sample: Any) -> Any:
+        # TODO GET HERE WITH image SIZE 
+        breakpoint()
+        resize = K.geometry.Resize(sample[DataKeys.METADATA]["original_size"][-2:], interpolation="bilinear")
+        sample[DataKeys.PREDS]['mask_array'] = (resize(torch.tensor(sample[DataKeys.PREDS]['mask_array'], dtype=torch.float)) > 0).to(torch.uint8)
+        #sample[DataKeys.INPUT] = resize(sample[DataKeys.INPUT])
+        return super().per_sample_transform(sample)
 
 
 class InstanceSegmentationData(DataModule):
 
     input_transform_cls = InstanceSegmentationInputTransform
-    output_transform_cls = InstanceSegmentationOutputTransform
+    
 
     @classmethod
     def from_folders(
@@ -114,6 +232,7 @@ class InstanceSegmentationData(DataModule):
                 predict_transform,
                 image_size=image_size,
             ),
+            
             **data_module_kwargs,
         )
 

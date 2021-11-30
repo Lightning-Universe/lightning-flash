@@ -25,7 +25,7 @@ from flash.image.instance_segmentation.data import (
     InstanceSegmentationInputTransform,
     InstanceSegmentationOutputTransform,
 )
-
+from flash.core.utilities.imports import _KORNIA_AVAILABLE
 
 class InstanceSegmentation(AdapterTask):
     """The ``InstanceSegmentation`` is a :class:`~flash.Task` for detecting objects in images. For more details, see
@@ -44,8 +44,10 @@ class InstanceSegmentation(AdapterTask):
         **kwargs: additional kwargs used for initializing the task
     """
 
+    output_transform_cls = InstanceSegmentationOutputTransform
+    
     heads: FlashRegistry = INSTANCE_SEGMENTATION_HEADS
-
+    
     required_extras: List[str] = ["image", "icevision"]
 
     def __init__(
@@ -81,6 +83,7 @@ class InstanceSegmentation(AdapterTask):
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
             output=output or PredsOutput(),
+            output_transform=self.output_transform_cls()
         )
 
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]) -> None:
