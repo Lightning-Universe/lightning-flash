@@ -28,11 +28,11 @@ Specifically, it should include any formatting and transforms that should always
 If you want to support different use cases that require different prediction formats, you should add some :class:`~flash.core.data.io.output.Output` implementations in an ``output.py`` file.
 
 Some good examples are in `flash/core/classification.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash/core/classification.py>`_.
-Here's the :class:`~flash.core.classification.Classes` :class:`~flash.core.data.io.output.Output`:
+Here's the :class:`~flash.core.classification.ClassesOutput` :class:`~flash.core.data.io.output.Output`:
 
 .. literalinclude:: ../../../flash/core/classification.py
     :language: python
-    :pyobject: Classes
+    :pyobject: ClassesOutput
 
 Alternatively, here's the :class:`~flash.core.classification.LogitsOutput` :class:`~flash.core.data.io.output.Output`:
 

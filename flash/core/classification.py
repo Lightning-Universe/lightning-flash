@@ -342,17 +342,17 @@ class FiftyOneLabelsOutput(ClassificationOutput):
 
 
 class Labels(LabelsOutput):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, labels: Optional[List[str]] = None, multi_label: bool = False, threshold: float = 0.5):
         rank_zero_deprecation(
             "`Labels` was deprecated in v0.6.0 and will be removed in v0.7.0." "Please use `LabelsOutput` instead."
         )
-        super().__init__(*args, **kwargs)
+        super().__init__(labels=labels, multi_label=multi_label, threshold=threshold)
 
 
 class Probabilities(ProbabilitiesOutput):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, multi_label: bool = False):
         rank_zero_deprecation(
             "`Probabilities` was deprecated in v0.6.0 and will be removed in v0.7.0."
             "Please use `ProbabilitiesOutput` instead."
         )
-        super().__init__(*args, **kwargs)
+        super().__init__(multi_label=multi_label)
