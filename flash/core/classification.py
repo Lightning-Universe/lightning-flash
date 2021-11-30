@@ -19,7 +19,8 @@ import torchmetrics
 from pytorch_lightning.utilities import rank_zero_deprecation, rank_zero_warn
 
 from flash.core.adapter import AdapterTask
-from flash.core.data.io.input import DataKeys, LabelsState
+from flash.core.data.io.classification_input import ClassificationState
+from flash.core.data.io.input import DataKeys
 from flash.core.data.io.output import Output
 from flash.core.model import Task
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
@@ -186,7 +187,7 @@ class LabelsOutput(ClassesOutput):
 
     Args:
         labels: A list of labels, assumed to map the class index to the label for that class. If ``labels`` is not
-            provided, will attempt to get them from the :class:`.LabelsState`.
+            provided, will attempt to get them from the :class:`.ClassificationState`.
         multi_label: If true, treats outputs as multi label logits.
         threshold: The threshold to use for multi_label classification.
     """
@@ -196,7 +197,7 @@ class LabelsOutput(ClassesOutput):
         self._labels = labels
 
         if labels is not None:
-            self.set_state(LabelsState(labels))
+            self.set_state(ClassificationState(labels))
 
     def transform(self, sample: Any) -> Union[int, List[int], str, List[str]]:
         labels = None
@@ -204,7 +205,7 @@ class LabelsOutput(ClassesOutput):
         if self._labels is not None:
             labels = self._labels
         else:
-            state = self.get_state(LabelsState)
+            state = self.get_state(ClassificationState)
             if state is not None:
                 labels = state.labels
 
@@ -214,7 +215,7 @@ class LabelsOutput(ClassesOutput):
             if self.multi_label:
                 return [labels[cls] for cls in classes]
             return labels[classes]
-        rank_zero_warn("No LabelsState was found, this output will act as a Classes output.", UserWarning)
+        rank_zero_warn("No ClassificationState was found, this output will act as a Classes output.", UserWarning)
         return classes
 
 
@@ -223,7 +224,7 @@ class FiftyOneLabelsOutput(ClassificationOutput):
 
     Args:
         labels: A list of labels, assumed to map the class index to the label for that class. If ``labels`` is not
-            provided, will attempt to get them from the :class:`.LabelsState`.
+            provided, will attempt to get them from the :class:`.ClassificationState`.
         multi_label: If true, treats outputs as multi label logits.
         threshold: A threshold to use to filter candidate labels. In the single label case, predictions below this
             threshold will be replaced with None
@@ -252,7 +253,7 @@ class FiftyOneLabelsOutput(ClassificationOutput):
         self.return_filepath = return_filepath
 
         if labels is not None:
-            self.set_state(LabelsState(labels))
+            self.set_state(ClassificationState(labels))
 
     def transform(
         self,
@@ -266,7 +267,7 @@ class FiftyOneLabelsOutput(ClassificationOutput):
         if self._labels is not None:
             labels = self._labels
         else:
-            state = self.get_state(LabelsState)
+            state = self.get_state(ClassificationState)
             if state is not None:
                 labels = state.labels
 
@@ -309,7 +310,7 @@ class FiftyOneLabelsOutput(ClassificationOutput):
                         logits=logits,
                     )
         else:
-            rank_zero_warn("No LabelsState was found, int targets will be used as label strings", UserWarning)
+            rank_zero_warn("No ClassificationState was found, int targets will be used as label strings", UserWarning)
 
             if self.multi_label:
                 classifications = []
