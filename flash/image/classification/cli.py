@@ -11,12 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 from flash.core.data.utils import download_data
 from flash.core.utilities.flash_cli import FlashCLI
 from flash.image import ImageClassificationData, ImageClassifier
-
-__all__ = ["image_classification"]
 
 
 def from_hymenoptera(
@@ -53,22 +50,27 @@ def from_movie_posters(
     )
 
 
-def image_classification():
-    """Classify images."""
-    cli = FlashCLI(
-        ImageClassifier,
-        ImageClassificationData,
-        default_datamodule_builder=from_hymenoptera,
-        additional_datamodule_builders=[from_movie_posters],
-        default_arguments={
-            "trainer.max_epochs": 3,
-        },
-        datamodule_attributes={"num_classes", "multi_label"},
-        legacy=True,
-    )
+def cli(demo: bool = False) -> None:
+    """Classify images.
 
-    cli.trainer.save_checkpoint("image_classification_model.pt")
+    Args:
+        demo: Whether to use the demo CLI.
+    """
+    if not demo:
+        cli = FlashCLI(
+            ImageClassifier,
+            ImageClassificationData,
+            default_datamodule_builder=from_hymenoptera,
+            additional_datamodule_builders=[from_movie_posters],
+            default_arguments={"trainer.max_epochs": 3},
+            datamodule_attributes={"num_classes", "multi_label"},
+            legacy=True,
+        )
+        cli.trainer.save_checkpoint("image_classification_model.pt")
+    else:
+        # FIXME
+        pass
 
 
 if __name__ == "__main__":
-    image_classification()
+    cli()

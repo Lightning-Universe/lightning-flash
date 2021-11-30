@@ -5,5 +5,4 @@ torchmetrics>=0.5.0,!=0.5.1
 pytorch-lightning>=1.4.0
 pyDeprecate
 pandas>=1.1.0
-jsonargparse[signatures]>=3.17.0
-click>=7.1.2
+jsonargparse[signatures]>=4.0.4

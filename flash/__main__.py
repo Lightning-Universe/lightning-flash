@@ -11,63 +11,63 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import functools
 import importlib
-from unittest.mock import patch
+from argparse import REMAINDER
+from unittest import mock
 
-import click
+import jsonargparse
 
-
-@click.group(no_args_is_help=True)
-def main():
-    """The Lightning-Flash zero-code command line utility."""
+from flash.core.utilities.lightning_cli import _get_short_description
 
 
-def register_command(command):
-    @main.command(
-        command.__name__,
-        context_settings=dict(
-            help_option_names=[],
-            ignore_unknown_options=True,
-        ),
-    )
-    @click.argument("cli_args", nargs=-1, type=click.UNPROCESSED)
-    @functools.wraps(command)
-    def wrapper(cli_args):
-        with patch("sys.argv", [command.__name__] + list(cli_args)):
-            command()
+def main() -> None:
+    parser = jsonargparse.ArgumentParser(description="The Lightning Flash zero-code command line utility.")
 
+    # list of supported CLI tasks, the format is `[subcommand]: class_path`
+    tasks = {
+        "image_classification": "flash.image.classification.cli",
+        # FIXME: add support for all tasks
+        # "flash.audio.classification",
+        # "flash.audio.speech_recognition",
+        # "flash.graph.classification",
+        # "flash.image.detection",
+        # "flash.image.instance_segmentation",
+        # "flash.image.keypoint_detection",
+        # "flash.image.segmentation",
+        # "flash.image.style_transfer",
+        # "flash.pointcloud.detection",
+        # "flash.pointcloud.segmentation",
+        # "flash.tabular.classification",
+        # "flash.tabular.forecasting",
+        # "flash.text.classification",
+        # "flash.text.question_answering",
+        # "flash.text.seq2seq.summarization",
+        # "flash.text.seq2seq.translation",
+        # "flash.video.classification",
+    }
 
-tasks = [
-    "flash.audio.classification",
-    "flash.audio.speech_recognition",
-    "flash.graph.classification",
-    "flash.image.classification",
-    "flash.image.detection",
-    "flash.image.instance_segmentation",
-    "flash.image.keypoint_detection",
-    "flash.image.segmentation",
-    "flash.image.style_transfer",
-    "flash.pointcloud.detection",
-    "flash.pointcloud.segmentation",
-    "flash.tabular.classification",
-    "flash.tabular.forecasting",
-    "flash.text.classification",
-    "flash.text.question_answering",
-    "flash.text.seq2seq.summarization",
-    "flash.text.seq2seq.translation",
-    "flash.video.classification",
-]
+    # add the subcommands for each task, with their respective arguments
+    parser_subcommands = parser.add_subcommands()
+    for name, class_path in tasks.items():
+        task_cli_module = importlib.import_module(class_path)
+        cli_fn = getattr(task_cli_module, "cli")  # assumes the function is called just `cli`
+        description = _get_short_description(cli_fn)
+        subcommand_parser = jsonargparse.ArgumentParser()
+        subcommand_parser.add_function_arguments(cli_fn)
+        subcommand_parser.add_argument("task_args", nargs=REMAINDER)
+        parser_subcommands.add_subcommand(name, subcommand_parser, help=description)
 
-for task in tasks:
-    try:
-        task = importlib.import_module(f"{task}.cli")
+    args = parser.parse_args()
 
-        for command in task.__all__:
-            command = task.__dict__[command]
-            register_command(command)
-    except ImportError:
-        pass
+    # wrap and call the function
+    selected = tasks[args.subcommand]
+    task_args = args[args.subcommand].pop("task_args")
+    selected_cli_module = importlib.import_module(selected)
+    cli_fn = getattr(selected_cli_module, "cli")  # assumes the function is called just `cli`
+    with mock.patch("sys.argv", ["flash.py"] + task_args):
+        cli_kwargs = args[args.subcommand]
+        cli_fn(**cli_kwargs)
+
 
 if __name__ == "__main__":
     main()
