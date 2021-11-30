@@ -66,6 +66,7 @@ def _compare_version(package: str, op, version) -> bool:
 
 
 _TORCH_AVAILABLE = _module_available("torch")
+_PL_AVAILABLE = _module_available("pytorch_lightning")
 _BOLTS_AVAILABLE = _module_available("pl_bolts") and _compare_version("torch", operator.lt, "1.9.0")
 _PANDAS_AVAILABLE = _module_available("pandas")
 _SKLEARN_AVAILABLE = _module_available("sklearn")
@@ -121,6 +122,7 @@ if Version:
     _PL_GREATER_EQUAL_1_4_3 = _compare_version("pytorch_lightning", operator.ge, "1.4.3")
     _PL_GREATER_EQUAL_1_5_0 = _compare_version("pytorch_lightning", operator.ge, "1.5.0")
     _PANDAS_GREATER_EQUAL_1_3_0 = _compare_version("pandas", operator.ge, "1.3.0")
+    _ICEVISION_GREATER_EQUAL_0_11_0 = _compare_version("icevision", operator.ge, "0.11.0")
 
 _TEXT_AVAILABLE = all(
     [

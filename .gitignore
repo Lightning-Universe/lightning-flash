@@ -169,3 +169,8 @@ urban8k_images/
 __MACOSX
 *-v2.0.json
 cifar-10*
+mini-imagenet*
+
+docs/source/_static/images/course_UvA-DL
+docs/source/_static/images/lightning_examples
+docs/source/notebooks

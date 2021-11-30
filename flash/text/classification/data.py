@@ -23,7 +23,8 @@ import flash
 from flash.core.data.auto_dataset import AutoDataset
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import DataKeys, Input, InputFormat, LabelsState
+from flash.core.data.io.classification_input import ClassificationState
+from flash.core.data.io.input import DataKeys, Input, InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.process import Deserializer
@@ -115,15 +116,15 @@ class TextInput(Input):
                 dataset.multi_label = True
                 hf_dataset = hf_dataset.map(partial(self._multilabel_target, target))  # NOTE: renames target column
                 dataset.num_classes = len(target)
-                self.set_state(LabelsState(target))
+                self.set_state(ClassificationState(target))
             else:
                 dataset.multi_label = False
                 if self.training:
                     labels = list(sorted(list(set(hf_dataset[target]))))
                     dataset.num_classes = len(labels)
-                    self.set_state(LabelsState(labels))
+                    self.set_state(ClassificationState(labels))
 
-                labels = self.get_state(LabelsState)
+                labels = self.get_state(ClassificationState)
 
                 # convert labels to ids (note: the target column get overwritten)
                 if labels is not None:
@@ -224,15 +225,15 @@ class TextListInput(TextInput):
                 # multi-target_list
                 dataset.multi_label = True
                 dataset.num_classes = len(target_list[0])
-                self.set_state(LabelsState(target_list))
+                self.set_state(ClassificationState(target_list))
             else:
                 dataset.multi_label = False
                 if self.training:
                     labels = list(sorted(list(set(hf_dataset[DataKeys.TARGET]))))
                     dataset.num_classes = len(labels)
-                    self.set_state(LabelsState(labels))
+                    self.set_state(ClassificationState(labels))
 
-                labels = self.get_state(LabelsState)
+                labels = self.get_state(ClassificationState)
 
                 # convert labels to ids
                 if labels is not None:
@@ -259,7 +260,7 @@ class TextClassificationInputTransform(InputTransform):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        backbone: str = "prajjwal1/bert-tiny",
+        backbone: str = "prajjwal1/bert-medium",
         max_length: int = 128,
     ):
         self.backbone = backbone

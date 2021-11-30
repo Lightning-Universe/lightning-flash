@@ -26,7 +26,7 @@ from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.utilities.model_helpers import is_overridden
 
 import flash
-from flash import DataModule
+from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import InputFormat
 from flash.core.utilities.lightning_cli import (
     class_from_function,
@@ -74,6 +74,14 @@ def drop_kwargs(func):
     wrapper.__signature__ = sig
 
     return wrapper
+
+
+def get_kwarg_name(func) -> Optional[str]:
+    sig = signature(func)
+    var_kwargs = [p for p in sig.parameters.values() if p.kind == p.VAR_KEYWORD]
+    if len(var_kwargs) == 1:
+        return var_kwargs[0].name
+    return None
 
 
 def make_args_optional(cls, args: Set[str]):
@@ -211,22 +219,33 @@ class FlashCLI(LightningCLI):
 
     def add_subcommand_from_function(self, subcommands, function, function_name=None):
         subcommand = ArgumentParser()
-        datamodule_function = class_from_function(drop_kwargs(function), return_type=self.local_datamodule_class)
-        subcommand.add_class_arguments(datamodule_function, fail_untyped=False)
         if self.legacy:
+            datamodule_function = class_from_function(drop_kwargs(function), return_type=self.local_datamodule_class)
+            subcommand.add_class_arguments(datamodule_function, fail_untyped=False)
             input_transform_function = class_from_function(drop_kwargs(self.local_datamodule_class.input_transform_cls))
             subcommand.add_class_arguments(
                 input_transform_function,
                 fail_untyped=False,
                 skip=get_overlapping_args(datamodule_function, input_transform_function),
             )
-        else:
-            base_datamodule_function = class_from_function(drop_kwargs(self.local_datamodule_class))
+        elif get_kwarg_name(function) == "data_module_kwargs":
+            datamodule_function = class_from_function(function, return_type=self.local_datamodule_class)
             subcommand.add_class_arguments(
-                base_datamodule_function,
+                datamodule_function,
                 fail_untyped=False,
-                skip=get_overlapping_args(datamodule_function, base_datamodule_function),
+                skip={
+                    "self",
+                    "train_dataset",
+                    "val_dataset",
+                    "test_dataset",
+                    "predict_dataset",
+                    "input",
+                    "input_transform",
+                },
             )
+        else:
+            datamodule_function = class_from_function(drop_kwargs(function), return_type=self.local_datamodule_class)
+            subcommand.add_class_arguments(datamodule_function, fail_untyped=False)
         subcommand_name = function_name or function.__name__
         subcommands.add_subcommand(subcommand_name, subcommand)
         self._subcommand_builders[subcommand_name] = function

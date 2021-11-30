@@ -33,7 +33,7 @@ model = TranslationTask(backbone="Helsinki-NLP/opus-mt-en-ro")
 
 # 3. Create the trainer and finetune the model
 trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
-trainer.finetune(model, datamodule=datamodule)
+trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Translate something!
 predictions = model.predict(

@@ -1,0 +1,16 @@
+trigger:
+  branches:
+    include: ["master"]
+pr:
+  branches:
+    include: ["master"]
+  autoCancel: true
+  drafts: true
+
+jobs:
+- template: testing-template.yml
+  parameters:
+    configs:
+    - "image"
+    - "text"
+    - "tabular"
