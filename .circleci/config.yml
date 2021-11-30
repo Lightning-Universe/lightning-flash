@@ -14,7 +14,7 @@ references:
         pyenv global 3.7.3
         python --version
         pip install . --progress-bar off
-        pip install --requirement ./requirements/docs.txt --progress-bar off
+        pip install --requirement requirements/docs.txt --progress-bar off
         pip list
         cd docs
         make clean
@@ -27,6 +27,10 @@ jobs:
       - image: readthedocs/build:latest
     steps:
       - checkout
+      - run:
+          command: |
+            git submodule update --init --recursive
+          name: Init git submodule
       - *make_docs
       - store_artifacts:
           # allows us to preview the generated html pages

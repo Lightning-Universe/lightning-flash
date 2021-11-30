@@ -12,6 +12,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@master
+      with:
+        submodules: true
     - uses: actions/setup-python@v2
       with:
         python-version: 3.7
@@ -28,10 +30,12 @@ jobs:
 
     - name: Install dependencies
       run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake pandoc
         python --version
         pip --version
         pip install . --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
-        pip install --requirement ./requirements/docs.txt
+        pip install --requirement requirements/docs.txt
         # install Texlive, see https://linuxconfig.org/how-to-install-latex-on-ubuntu-20-04-focal-fossa-linux
         sudo apt-get update && sudo apt-get install -y texlive-latex-extra dvipng texlive-pictures
         pip list
@@ -57,6 +61,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@master
+        with:
+          submodules: true
       - uses: actions/setup-python@v2
         with:
           python-version: 3.7
@@ -73,9 +79,11 @@ jobs:
 
       - name: Install dependencies
         run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake pandoc
           pip install '.[all]' --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
           pip install '.[test]' --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
-          pip install --requirement ./requirements/docs.txt
+          pip install --requirement requirements/docs.txt
           python --version
           pip --version
           pip list
