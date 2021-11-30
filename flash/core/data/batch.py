@@ -46,7 +46,7 @@ class _DeserializeProcessor(torch.nn.Module):
 
     def forward(self, sample: str):
 
-        sample = self.deserializer(sample)
+        sample = self.deserializer.deserialize(sample)
 
         with self._current_stage_context:
             with self._pre_tensor_transform_context:

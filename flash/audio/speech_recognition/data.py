@@ -43,12 +43,12 @@ else:
 
 
 class SpeechRecognitionDeserializer(Deserializer):
+    @requires("audio")
     def __init__(self, sampling_rate: int = 16000):
         super().__init__()
-
         self.sampling_rate = sampling_rate
 
-    def deserialize(self, sample: Any) -> Dict:
+    def serve_load_sample(self, sample: Any) -> Dict:
         encoded_with_padding = (sample + "===").encode("ascii")
         audio = base64.b64decode(encoded_with_padding)
         buffer = io.BytesIO(audio)

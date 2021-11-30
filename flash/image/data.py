@@ -58,7 +58,7 @@ def image_loader(filepath: str):
 
 class ImageDeserializer(Deserializer):
     @requires("image")
-    def deserialize(self, data: str) -> Dict:
+    def serve_load_sample(self, data: str) -> Dict:
         encoded_with_padding = (data + "===").encode("ascii")
         img = base64.b64decode(encoded_with_padding)
         buffer = BytesIO(img)

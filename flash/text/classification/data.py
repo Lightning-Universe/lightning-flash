@@ -44,7 +44,7 @@ class TextDeserializer(Deserializer):
         self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=use_fast, **kwargs)
         self.max_length = max_length
 
-    def deserialize(self, text: str) -> Tensor:
+    def serve_load_sample(self, text: str) -> Tensor:
         return self.tokenizer(text, max_length=self.max_length, truncation=True, padding="max_length")
 
     @property

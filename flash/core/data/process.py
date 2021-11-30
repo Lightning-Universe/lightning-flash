@@ -21,38 +21,32 @@ from deprecate import deprecated
 import flash
 from flash.core.data.io.input import Input
 from flash.core.data.io.output import Output
-from flash.core.data.properties import Properties
 
 
 class ServeInput(Input):
-    def load_data(self, data: Any) -> List[Any]:
-        return [data]
+    def serve_load_data(self, data: Any) -> List[Any]:
+        raise NotImplementedError
 
-    def deserialize(self, sample: Any) -> Any:  # TODO: Output must be a tensor???
+    def serve_load_sample(self, sample: Any) -> List[Any]:
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def example_input(self) -> str:
+    def serve_example_input(self) -> str:
         raise NotImplementedError
 
-    def __call__(self, sample: Any) -> Any:
-        return self.deserialize(sample)
 
-
-class Deserializer(Properties):
+class Deserializer(ServeInput):
     """Deserializer."""
 
     def deserialize(self, sample: Any) -> Any:  # TODO: Output must be a tensor???
-        raise NotImplementedError
+        sample = self.serve_load_data(sample)
+        return self.serve_load_sample(sample)
 
     @property
     @abstractmethod
     def example_input(self) -> str:
         raise NotImplementedError
-
-    def __call__(self, sample: Any) -> Any:
-        return self.deserialize(sample)
 
 
 class DeserializerMapping(Deserializer):
