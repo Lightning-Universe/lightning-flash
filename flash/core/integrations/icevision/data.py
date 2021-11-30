@@ -16,7 +16,8 @@ from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 import numpy as np
 
-from flash.core.data.io.input import DataKeys, LabelsState
+from flash.core.data.io.classification_input import ClassificationState
+from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_base import Input
 from flash.core.data.utilities.paths import list_valid_files
 from flash.core.integrations.icevision.transforms import from_icevision_record
@@ -44,7 +45,7 @@ class IceVisionInput(Input):
         else:
             raise ValueError("The parser must be a callable or an IceVision Parser type.")
         self.num_classes = parser.class_map.num_classes
-        self.set_state(LabelsState([parser.class_map.get_by_id(i) for i in range(self.num_classes)]))
+        self.set_state(ClassificationState([parser.class_map.get_by_id(i) for i in range(self.num_classes)]))
         records = parser.parse(data_splitter=SingleSplitSplitter())
         return [{DataKeys.INPUT: record} for record in records[0]]
 
