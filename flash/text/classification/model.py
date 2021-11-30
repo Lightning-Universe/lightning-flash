@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import inspect
 from typing import Any, Dict, List, Optional
 
 import torch
@@ -67,7 +68,6 @@ class TextClassifier(ClassificationTask):
         output: OUTPUT_TYPE = None,
         enable_ort: bool = False,
     ):
-        self.save_hyperparameters()
 
         super().__init__(
             num_classes=num_classes,
@@ -85,41 +85,19 @@ class TextClassifier(ClassificationTask):
         self.pretrained = pretrained
 
         if self.pretrained:
-            if vocab_size:
-                print("`pretrained=True`, ignoring `vocab_size` argument.")
             self.vocab_size = self.model.config.vocab_size
+            print("`pretrained=True`, ignoring `vocab_size` argument.")
 
         else:
-            if vocab_size:
-                self.vocab_size = vocab_size
-                print(f"Re-initialize word embeddings layer with `vocab_size={self.vocab_size}`")
-            else:
-                self.vocab_size = self.model.config.vocab_size
-                print(f"Re-initialize word embeddings layer with the original `vocab_size={self.vocab_size}`")
-            self._init_embeddings()
+            self.vocab_size = vocab_size if vocab_size else self.model.config.vocab_size
+            replace_embeddings(self.model, self.vocab_size, self.model.config.vocab_size)
+            print(f"Re-initialized word embeddings layer with `vocab_size={self.vocab_size}`")
 
         self.save_hyperparameters()
 
     @property
     def backbone(self):
         return self.model.base_model
-
-    def _init_embeddings(self):
-        num_embeddings = self.model.config.vocab_size
-        initializer_range = self.model.config.initializer_range
-
-        for name, module in self.model.named_modules():
-            # find the word embedding layer
-            if isinstance(module, torch.nn.Embedding) and module.num_embeddings == num_embeddings:
-                embedding_module_name = name
-                embedding_dim = module.embedding_dim
-                padding_idx = module.padding_idx
-                break
-        transformer_type, _, name = embedding_module_name.split(".")
-        new_embedding_module = torch.nn.Embedding(self.vocab_size, embedding_dim, padding_idx)
-        new_embedding_module.weight.data.normal_(mean=0.0, std=initializer_range)
-
-        getattr(self.model, transformer_type).embeddings.add_module(name, new_embedding_module)
 
     def forward(self, batch: Dict[str, torch.Tensor]):
         result = self.model(input_ids=batch.get("input_ids", None), attention_mask=batch.get("attention_mask", None))
@@ -147,3 +125,41 @@ class TextClassifier(ClassificationTask):
         if self.enable_ort:
             callbacks.append(ORTCallback())
         return callbacks
+
+
+def replace_embeddings(module, vocab_size, original_vocab_size):
+    """
+    Recursively overwrites torch.nn.Embedding and torch.nn.EmbeddingBag layers in module
+    by only changing the `num_embeddings` attribute and keeping everything else equal.
+
+    It reinitializes the embedding modules using the Pytorch default initialization since
+    it cannot be known what initialization was used for each backbone automatically.
+    """
+
+    # get object class input signature to reinitialize the object with only the vocab_size changed
+    def get_inputs(target_cls):
+        return {
+            attr: attr_value
+            for attr, attr_value in [
+                (attr, getattr(target_attr, attr, None)) for attr in inspect.signature(target_cls).parameters.keys()
+            ]
+            if attr
+        }
+
+    # go through all attributes of module nn.module (e.g. network or layer) and put batch norms if present
+    for attr_str in dir(module):
+        target_attr = getattr(module, attr_str)
+
+        for target_cls in [torch.nn.Embedding, torch.nn.EmbeddingBag]:
+
+            # search module based on class and original vocab_size
+            if type(target_attr) == target_cls and target_attr.weight.shape[0] == original_vocab_size:
+                other_inputs = get_inputs(target_cls)
+                other_inputs.pop("num_embeddings")
+                new_bn = target_cls(num_embeddings=vocab_size, **other_inputs)
+
+                setattr(module, attr_str, new_bn)
+
+    # iterate through immediate child modules. Note, the recursion is done by our code no need to use named_modules()
+    for _, immediate_child_module in module.named_children():
+        replace_embeddings(immediate_child_module, vocab_size, original_vocab_size)
