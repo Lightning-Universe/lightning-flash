@@ -44,7 +44,7 @@ ________________
 
     detection.data.FiftyOneParser
     detection.data.ObjectDetectionFiftyOneInput
-    detection.output.FiftyOneDetectionLabels
+    detection.output.FiftyOneDetectionLabelsOutput
     detection.data.ObjectDetectionInputTransform
 
 Keypoint Detection
@@ -102,8 +102,8 @@ ____________
     segmentation.data.SemanticSegmentationFiftyOneInput
     segmentation.data.SemanticSegmentationDeserializer
     segmentation.model.SemanticSegmentationOutputTransform
-    segmentation.output.FiftyOneSegmentationLabels
-    segmentation.output.SegmentationLabels
+    segmentation.output.FiftyOneSegmentationLabelsOutput
+    segmentation.output.SegmentationLabelsOutput
 
 .. autosummary::
     :toctree: generated/

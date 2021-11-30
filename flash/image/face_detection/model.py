@@ -35,7 +35,7 @@ if _FASTFACE_AVAILABLE:
     import fastface as ff
 
 
-class DetectionLabels(Output):
+class DetectionLabelsOutput(Output):
     """A :class:`.Output` which extracts predictions from sample dict."""
 
     def transform(self, sample: Any) -> Dict[str, Any]:
@@ -89,7 +89,7 @@ class FaceDetector(Task):
             learning_rate=learning_rate,
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
-            output=output or DetectionLabels(),
+            output=output or DetectionLabelsOutput(),
             input_transform=input_transform or FaceDetectionInputTransform(),
         )
 
