@@ -14,6 +14,7 @@
 import functools
 import os
 import sys
+from copy import copy, deepcopy
 from typing import Any, cast, Dict, Iterable, MutableMapping, Optional, Sequence, Tuple, Union
 
 from torch.utils.data import Dataset
@@ -147,7 +148,7 @@ class InputBase(Properties, metaclass=_InputMeta):
                 InputBase,
             ),
         )
-        return load_sample(sample)
+        return load_sample(copy(sample))
 
     @staticmethod
     def load_data(*args: Any, **kwargs: Any) -> Union[Sequence, Iterable]:
@@ -189,6 +190,24 @@ class InputBase(Properties, metaclass=_InputMeta):
         """
         newstate["data"] = None
         self.__dict__.update(newstate)
+
+    def __copy__(self):
+        """The default copy implementation seems to use ``__getstate__`` and ``__setstate__`` so we override it
+        here with a custom implementation to ensure that it includes the data list."""
+        cls = self.__class__
+        result = cls.__new__(cls)
+        result.__dict__.update(self.__dict__)
+        return result
+
+    def __deepcopy__(self, memo):
+        """The default deepcopy implementation seems to use ``__getstate__`` and ``__setstate__`` so we override it
+        here with a custom implementation to ensure that it includes the data list."""
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, deepcopy(v, memo))
+        return result
 
     def __bool__(self):
         """If ``self.data`` is ``None`` then the ``InputBase`` is considered falsey.

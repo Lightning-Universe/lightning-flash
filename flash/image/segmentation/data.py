@@ -21,7 +21,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 import flash
 from flash.core.data.auto_dataset import BaseAutoDataset
-from flash.core.data.base_viz import BaseVisualization  # for viz
+from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import (
