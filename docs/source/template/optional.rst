@@ -34,11 +34,11 @@ Here's the :class:`~flash.core.classification.Classes` :class:`~flash.core.data.
     :language: python
     :pyobject: Classes
 
-Alternatively, here's the :class:`~flash.core.classification.Logits` :class:`~flash.core.data.io.output.Output`:
+Alternatively, here's the :class:`~flash.core.classification.LogitsOutput` :class:`~flash.core.data.io.output.Output`:
 
 .. literalinclude:: ../../../flash/core/classification.py
     :language: python
-    :pyobject: Logits
+    :pyobject: LogitsOutput
 
 Take a look at :ref:`predictions` to learn more.
 

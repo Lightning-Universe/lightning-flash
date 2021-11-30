@@ -78,7 +78,7 @@ class ClassificationTask(Task, ClassificationMixin):
             *args,
             loss_fn=loss_fn,
             metrics=metrics,
-            output=output or Classes(multi_label=multi_label),
+            output=output or ClassesOutput(multi_label=multi_label),
             **kwargs,
         )
 
@@ -101,7 +101,7 @@ class ClassificationAdapterTask(AdapterTask, ClassificationMixin):
             *args,
             loss_fn=loss_fn,
             metrics=metrics,
-            output=output or Classes(multi_label=multi_label),
+            output=output or ClassesOutput(multi_label=multi_label),
             **kwargs,
         )
 
@@ -136,14 +136,14 @@ class PredsClassificationOutput(ClassificationOutput):
         return sample
 
 
-class Logits(PredsClassificationOutput):
+class LogitsOutput(PredsClassificationOutput):
     """A :class:`.Output` which simply converts the model outputs (assumed to be logits) to a list."""
 
     def transform(self, sample: Any) -> Any:
         return super().transform(sample).tolist()
 
 
-class Probabilities(PredsClassificationOutput):
+class ProbabilitiesOutput(PredsClassificationOutput):
     """A :class:`.Output` which applies a softmax to the model outputs (assumed to be logits) and converts to a
     list."""
 
@@ -154,7 +154,7 @@ class Probabilities(PredsClassificationOutput):
         return torch.softmax(sample, -1).tolist()
 
 
-class Classes(PredsClassificationOutput):
+class ClassesOutput(PredsClassificationOutput):
     """A :class:`.Output` which applies an argmax to the model outputs (either logits or probabilities) and
     converts to a list.
 
@@ -180,7 +180,7 @@ class Classes(PredsClassificationOutput):
         return torch.argmax(sample, -1).tolist()
 
 
-class Labels(Classes):
+class LabelsOutput(ClassesOutput):
     """A :class:`.Output` which converts the model outputs (either logits or probabilities) to the label of the
     argmax classification.
 
@@ -218,7 +218,7 @@ class Labels(Classes):
         return classes
 
 
-class FiftyOneLabels(ClassificationOutput):
+class FiftyOneLabelsOutput(ClassificationOutput):
     """A :class:`.Output` which converts the model outputs to FiftyOne classification format.
 
     Args:

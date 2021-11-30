@@ -46,7 +46,7 @@ You can visualize predictions for classification, object detection, and
 semantic segmentation tasks. Doing so is as easy as updating your model to use
 one of the following outputs:
 
-* :class:`FiftyOneLabels(return_filepath=True)<flash.core.classification.FiftyOneLabels>`
+* :class:`FiftyOneLabelsOutput(return_filepath=True)<flash.core.classification.FiftyOneLabelsOutput>`
 * :class:`FiftyOneSegmentationLabelsOutput(return_filepath=True)<flash.image.segmentation.output.FiftyOneSegmentationLabelsOutput>`
 * :class:`FiftyOneDetectionLabelsOutput(return_filepath=True)<flash.image.detection.output.FiftyOneDetectionLabelsOutput>`
 
