@@ -84,7 +84,18 @@ class AudioClassificationFolderInput(AudioClassificationFilesInput):
         return super().load_data(files, targets)
 
 
-class AudioClassificationTensorInput(AudioClassificationInput):
+class AudioClassificationNumpyInput(AudioClassificationInput):
+    def load_data(self, array: Any, targets: Optional[List[Any]] = None) -> List[Dict[str, Any]]:
+        if targets is not None:
+            self.load_target_metadata(targets)
+        return to_samples(array, targets)
+
+    def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+        sample[DataKeys.INPUT] = np.transpose(sample[DataKeys.INPUT], (1, 2, 0))
+        return sample
+
+
+class AudioClassificationTensorInput(AudioClassificationNumpyInput):
     def load_data(self, tensor: Any, targets: Optional[List[Any]] = None) -> List[Dict[str, Any]]:
         if targets is not None:
             self.load_target_metadata(targets)
@@ -93,13 +104,6 @@ class AudioClassificationTensorInput(AudioClassificationInput):
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         sample[DataKeys.INPUT] = sample[DataKeys.INPUT].numpy()
         return sample
-
-
-class AudioClassificationNumpyInput(AudioClassificationInput):
-    def load_data(self, array: Any, targets: Optional[List[Any]] = None) -> List[Dict[str, Any]]:
-        if targets is not None:
-            self.load_target_metadata(targets)
-        return to_samples(array, targets)
 
 
 class AudioClassificationDataFrameInput(AudioClassificationFilesInput):
