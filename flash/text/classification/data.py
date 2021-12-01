@@ -28,8 +28,9 @@ from flash.core.data.io.input import DataKeys, Input, InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.process import Deserializer
-from flash.core.integrations.labelstudio.input import LabelStudioTextClassificationInput
+from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioTextClassificationInput
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
+from flash.core.utilities.stages import RunningStage
 
 if _TEXT_AVAILABLE:
     from datasets import Dataset, load_dataset
@@ -636,4 +637,105 @@ class TextClassificationData(DataModule):
             num_workers=num_workers,
             sampler=sampler,
             **input_transform_kwargs,
+        )
+
+    @classmethod
+    def from_labelstudio(
+        cls,
+        export_json: str = None,
+        train_export_json: str = None,
+        val_export_json: str = None,
+        test_export_json: str = None,
+        predict_export_json: str = None,
+        data_folder: str = None,
+        train_data_folder: str = None,
+        val_data_folder: str = None,
+        test_data_folder: str = None,
+        predict_data_folder: str = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        val_split: Optional[float] = None,
+        multi_label: Optional[bool] = False,
+        **data_module_kwargs: Any,
+    ) -> "TextClassificationData":
+        """Creates a :class:`~flash.core.data.data_module.DataModule` object
+        from the given export file and data directory using the
+        :class:`~flash.core.data.io.input.Input` of name
+        :attr:`~flash.core.data.io.input.InputFormat.FOLDERS`
+        from the passed or constructed :class:`~flash.core.data.io.input_transform.InputTransform`.
+
+        Args:
+            export_json: path to label studio export file
+            train_export_json: path to label studio export file for train set,
+            overrides export_json if specified
+            val_export_json: path to label studio export file for validation
+            test_export_json: path to label studio export file for test
+            predict_export_json: path to label studio export file for predict
+            data_folder: path to label studio data folder
+            train_data_folder: path to label studio data folder for train data set,
+            overrides data_folder if specified
+            val_data_folder: path to label studio data folder for validation data
+            test_data_folder: path to label studio data folder for test data
+            predict_data_folder: path to label studio data folder for predict data
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`.
+            input_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
+                will be constructed and used.
+            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            data_module_kwargs: Additional keyword arguments to use when constructing the input_transform.
+                Will only be used if ``input_transform = None``.
+
+        Returns:
+            The constructed data module.
+
+        Examples::
+
+            data_module = DataModule.from_labelstudio(
+                export_json='project.json',
+                data_folder='label-studio/media/upload',
+                val_split=0.8,
+            )
+        """
+
+        train_data, val_data, test_data, predict_data = _parse_labelstudio_arguments(
+            export_json=export_json,
+            train_export_json=train_export_json,
+            val_export_json=val_export_json,
+            test_export_json=test_export_json,
+            predict_export_json=predict_export_json,
+            data_folder=data_folder,
+            train_data_folder=train_data_folder,
+            val_data_folder=val_data_folder,
+            test_data_folder=test_data_folder,
+            predict_data_folder=predict_data_folder,
+            val_split=val_split,
+            multi_label=multi_label,
+        )
+
+        return cls(
+            LabelStudioTextClassificationInput(RunningStage.TRAINING, train_data),
+            LabelStudioTextClassificationInput(RunningStage.VALIDATING, val_data),
+            LabelStudioTextClassificationInput(RunningStage.TESTING, test_data),
+            LabelStudioTextClassificationInput(RunningStage.PREDICTING, predict_data),
+            input_transform=cls.input_transform_cls(
+                train_transform,
+                val_transform,
+                test_transform,
+                predict_transform,
+                **data_module_kwargs,
+            ),
+            **data_module_kwargs,
         )
