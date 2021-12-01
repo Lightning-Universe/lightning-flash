@@ -571,7 +571,7 @@ class DataModule(pl.LightningDataModule):
                 InputFormat.FOLDERS,
                 train_data="train_folder",
                 train_transform={
-                    "to_tensor_transform": torch.as_tensor,
+                    "per_sample_transform": torch.as_tensor,
                 },
             )
         """
@@ -819,7 +819,7 @@ class DataModule(pl.LightningDataModule):
                 train_files=torch.rand(3, 128),
                 train_targets=[1, 0, 1],
                 train_transform={
-                    "to_tensor_transform": torch.as_tensor,
+                    "per_sample_transform": torch.as_tensor,
                 },
             )
         """
@@ -906,7 +906,7 @@ class DataModule(pl.LightningDataModule):
                 train_files=np.random.rand(3, 128),
                 train_targets=[1, 0, 1],
                 train_transform={
-                    "to_tensor_transform": torch.as_tensor,
+                    "per_sample_transform": torch.as_tensor,
                 },
             )
         """
@@ -994,7 +994,7 @@ class DataModule(pl.LightningDataModule):
                 "target",
                 train_file="train_data.json",
                 train_transform={
-                    "to_tensor_transform": torch.as_tensor,
+                    "per_sample_transform": torch.as_tensor,
                 },
             )
 
@@ -1015,7 +1015,7 @@ class DataModule(pl.LightningDataModule):
                 "target",
                 train_file="train_data.json",
                 train_transform={
-                    "to_tensor_transform": torch.as_tensor,
+                    "per_sample_transform": torch.as_tensor,
                 },
                 feild="data"
             )
@@ -1102,7 +1102,7 @@ class DataModule(pl.LightningDataModule):
                 "target",
                 train_file="train_data.csv",
                 train_transform={
-                    "to_tensor_transform": torch.as_tensor,
+                    "per_sample_transform": torch.as_tensor,
                 },
             )
         """
@@ -1182,7 +1182,7 @@ class DataModule(pl.LightningDataModule):
             data_module = DataModule.from_datasets(
                 train_dataset=train_dataset,
                 train_transform={
-                    "to_tensor_transform": torch.as_tensor,
+                    "per_sample_transform": torch.as_tensor,
                 },
             )
         """
@@ -1266,7 +1266,7 @@ class DataModule(pl.LightningDataModule):
             data_module = DataModule.from_fiftyone(
                 train_data = train_dataset,
                 train_transform={
-                    "to_tensor_transform": torch.as_tensor,
+                    "per_sample_transform": torch.as_tensor,
                 },
             )
         """

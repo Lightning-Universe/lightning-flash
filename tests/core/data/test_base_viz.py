@@ -39,25 +39,13 @@ def _rand_image():
 class CustomBaseVisualization(BaseVisualization):
     def __init__(self):
         super().__init__()
-
-        self.show_load_sample_called = False
-        self.show_pre_tensor_transform_called = False
-        self.show_to_tensor_transform_called = False
-        self.show_post_tensor_transform_called = False
-        self.show_collate_called = False
-        self.per_batch_transform_called = False
+        self.check_reset()
 
     def show_load_sample(self, samples: List[Any], running_stage: RunningStage):
         self.show_load_sample_called = True
 
-    def show_pre_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
-        self.show_pre_tensor_transform_called = True
-
-    def show_to_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
-        self.show_to_tensor_transform_called = True
-
-    def show_post_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
-        self.show_post_tensor_transform_called = True
+    def show_per_sample_transform(self, samples: List[Any], running_stage: RunningStage):
+        self.show_per_sample_transform_called = True
 
     def show_collate(self, batch: Sequence, running_stage: RunningStage) -> None:
         self.show_collate_called = True
@@ -67,9 +55,7 @@ class CustomBaseVisualization(BaseVisualization):
 
     def check_reset(self):
         self.show_load_sample_called = False
-        self.show_pre_tensor_transform_called = False
-        self.show_to_tensor_transform_called = False
-        self.show_post_tensor_transform_called = False
+        self.show_per_sample_transform_called = False
         self.show_collate_called = False
         self.per_batch_transform_called = False
 
@@ -112,6 +98,7 @@ class TestBaseViz:
             for _ in range(num_tests):
                 for fcn_name in _CALLBACK_FUNCS:
                     dm.data_fetcher.reset()
+                    assert dm.data_fetcher.batches == {"predict": {}, "test": {}, "train": {}, "val": {}}
                     fcn = getattr(dm, f"show_{stage}_batch")
                     fcn(fcn_name, reset=False)
 
@@ -131,12 +118,12 @@ class TestBaseViz:
                 res = _get_result("load_sample")
                 assert isinstance(res[0][DataKeys.TARGET], int)
 
-            res = _get_result("to_tensor_transform")
+            res = _get_result("per_sample_transform")
             assert len(res) == B
             assert isinstance(_extract_data(res), torch.Tensor)
 
             if not is_predict:
-                res = _get_result("to_tensor_transform")
+                res = _get_result("per_sample_transform")
                 assert isinstance(res[0][DataKeys.TARGET], torch.Tensor)
 
             res = _get_result("collate")
@@ -154,19 +141,17 @@ class TestBaseViz:
                 assert res[0][DataKeys.TARGET].shape == (B,)
 
             assert dm.data_fetcher.show_load_sample_called
-            assert dm.data_fetcher.show_pre_tensor_transform_called
-            assert dm.data_fetcher.show_to_tensor_transform_called
-            assert dm.data_fetcher.show_post_tensor_transform_called
+            assert dm.data_fetcher.show_per_sample_transform_called
             assert dm.data_fetcher.show_collate_called
             assert dm.data_fetcher.per_batch_transform_called
-            dm.data_fetcher.check_reset()
+            dm.data_fetcher.reset()
 
     @pytest.mark.parametrize(
         "func_names, valid",
         [
             (["load_sample"], True),
             (["not_a_hook"], False),
-            (["load_sample", "pre_tensor_transform"], True),
+            (["load_sample", "per_sample_transform"], True),
             (["load_sample", "not_a_hook"], True),
         ],
     )

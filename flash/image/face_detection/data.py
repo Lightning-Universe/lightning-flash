@@ -108,7 +108,7 @@ class FaceDetectionInputTransform(InputTransform):
 
     def default_transforms(self) -> Dict[str, Callable]:
         return {
-            "to_tensor_transform": nn.Sequential(
+            "per_sample_transform": nn.Sequential(
                 ApplyToKeys(DataKeys.INPUT, torchvision.transforms.ToTensor()),
                 ApplyToKeys(
                     DataKeys.TARGET,
