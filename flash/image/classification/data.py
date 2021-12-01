@@ -21,6 +21,7 @@ import torch
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
+from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.classification_input import ClassificationInput, ClassificationState
 from flash.core.data.io.input import DataKeys, InputFormat
 from flash.core.data.io.input_transform import InputTransform
@@ -30,7 +31,7 @@ from flash.core.data.utilities.data_frame import read_csv, resolve_files, resolv
 from flash.core.data.utilities.paths import filter_valid_files, make_dataset, PATH_TYPE
 from flash.core.data.utilities.samples import to_samples
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
-from flash.core.integrations.labelstudio.input import LabelStudioImageClassificationInput
+from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioImageClassificationInput
 from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, Image, requires
 from flash.core.utilities.stages import RunningStage
 from flash.image.classification.transforms import default_transforms, train_default_transforms
@@ -189,7 +190,7 @@ class ImageClassificationInputTransform(InputTransform):
                 InputFormat.TENSORS: ImageClassificationTensorInput,
                 InputFormat.DATAFRAME: ImageClassificationDataFrameInput,
                 InputFormat.CSV: ImageClassificationCSVInput,
-                InputFormat.LABELSTUDIO: LabelStudioImageClassificationInput(),
+                InputFormat.LABELSTUDIO: LabelStudioImageClassificationInput,
             },
             deserializer=deserializer or ImageDeserializer(),
             default_input=InputFormat.FILES,
@@ -458,6 +459,109 @@ class ImageClassificationData(DataModule):
             ImageClassificationFiftyOneInput(RunningStage.VALIDATING, val_dataset, label_field),
             ImageClassificationFiftyOneInput(RunningStage.TESTING, test_dataset, label_field),
             ImageClassificationFiftyOneInput(RunningStage.PREDICTING, predict_dataset, label_field),
+            input_transform=cls.input_transform_cls(
+                train_transform,
+                val_transform,
+                test_transform,
+                predict_transform,
+                image_size=image_size,
+            ),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_labelstudio(
+        cls,
+        export_json: str = None,
+        train_export_json: str = None,
+        val_export_json: str = None,
+        test_export_json: str = None,
+        predict_export_json: str = None,
+        data_folder: str = None,
+        train_data_folder: str = None,
+        val_data_folder: str = None,
+        test_data_folder: str = None,
+        predict_data_folder: str = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        val_split: Optional[float] = None,
+        multi_label: Optional[bool] = False,
+        image_size: Tuple[int, int] = (196, 196),
+        **data_module_kwargs: Any,
+    ) -> "ImageClassificationData":
+        """Creates a :class:`~flash.core.data.data_module.DataModule` object
+        from the given export file and data directory using the
+        :class:`~flash.core.data.io.input.Input` of name
+        :attr:`~flash.core.data.io.input.InputFormat.FOLDERS`
+        from the passed or constructed :class:`~flash.core.data.io.input_transform.InputTransform`.
+
+        Args:
+            export_json: path to label studio export file
+            train_export_json: path to label studio export file for train set,
+            overrides export_json if specified
+            val_export_json: path to label studio export file for validation
+            test_export_json: path to label studio export file for test
+            predict_export_json: path to label studio export file for predict
+            data_folder: path to label studio data folder
+            train_data_folder: path to label studio data folder for train data set,
+            overrides data_folder if specified
+            val_data_folder: path to label studio data folder for validation data
+            test_data_folder: path to label studio data folder for test data
+            predict_data_folder: path to label studio data folder for predict data
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`.
+            input_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
+                will be constructed and used.
+            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            multi_label: Whether the labels are multi encoded
+            image_size: Size of the image.
+            data_module_kwargs: Additional keyword arguments to use when constructing the datamodule.
+
+        Returns:
+            The constructed data module.
+
+        Examples::
+
+            data_module = DataModule.from_labelstudio(
+                export_json='project.json',
+                data_folder='label-studio/media/upload',
+                val_split=0.8,
+            )
+        """
+
+        train_data, val_data, test_data, predict_data = _parse_labelstudio_arguments(
+            export_json=export_json,
+            train_export_json=train_export_json,
+            val_export_json=val_export_json,
+            test_export_json=test_export_json,
+            predict_export_json=predict_export_json,
+            data_folder=data_folder,
+            train_data_folder=train_data_folder,
+            val_data_folder=val_data_folder,
+            test_data_folder=test_data_folder,
+            predict_data_folder=predict_data_folder,
+            val_split=val_split,
+            multi_label=multi_label,
+        )
+
+        dataset_kwargs = dict(data_pipeline_state=DataPipelineState())
+
+        return cls(
+            LabelStudioImageClassificationInput(RunningStage.TRAINING, train_data, **dataset_kwargs),
+            LabelStudioImageClassificationInput(RunningStage.VALIDATING, val_data, **dataset_kwargs),
+            LabelStudioImageClassificationInput(RunningStage.TESTING, test_data, **dataset_kwargs),
+            LabelStudioImageClassificationInput(RunningStage.PREDICTING, predict_data, **dataset_kwargs),
             input_transform=cls.input_transform_cls(
                 train_transform,
                 val_transform,
