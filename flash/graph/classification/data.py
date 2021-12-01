@@ -53,7 +53,7 @@ class GraphClassificationInputTransform(InputTransform):
 
     @staticmethod
     def default_transforms() -> Optional[Dict[str, Callable]]:
-        return {"pre_tensor_transform": NormalizeFeatures(), "collate": Batch.from_data_list}
+        return {"per_sample_transform": NormalizeFeatures(), "collate": Batch.from_data_list}
 
 
 class GraphClassificationData(DataModule):

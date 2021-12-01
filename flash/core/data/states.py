@@ -5,19 +5,7 @@ from flash.core.data.properties import ProcessState
 
 
 @dataclass(unsafe_hash=True, frozen=True)
-class PreTensorTransform(ProcessState):
-
-    transform: Optional[Callable] = None
-
-
-@dataclass(unsafe_hash=True, frozen=True)
-class ToTensorTransform(ProcessState):
-
-    transform: Optional[Callable] = None
-
-
-@dataclass(unsafe_hash=True, frozen=True)
-class PostTensorTransform(ProcessState):
+class PerSampleTransform(ProcessState):
 
     transform: Optional[Callable] = None
 

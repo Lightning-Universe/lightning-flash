@@ -637,16 +637,8 @@ class MatplotlibVisualization(BaseVisualization):
         win_title: str = f"{running_stage} - show_load_sample"
         self._show_images_and_labels(samples, len(samples), win_title)
 
-    def show_pre_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
-        win_title: str = f"{running_stage} - show_pre_tensor_transform"
-        self._show_images_and_labels(samples, len(samples), win_title)
-
-    def show_to_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
-        win_title: str = f"{running_stage} - show_to_tensor_transform"
-        self._show_images_and_labels(samples, len(samples), win_title)
-
-    def show_post_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
-        win_title: str = f"{running_stage} - show_post_tensor_transform"
+    def show_per_sample_transform(self, samples: List[Any], running_stage: RunningStage):
+        win_title: str = f"{running_stage} - show_per_sample_transform"
         self._show_images_and_labels(samples, len(samples), win_title)
 
     def show_per_batch_transform(self, batch: List[Any], running_stage):

@@ -37,13 +37,13 @@ def ssl_datamodule(
         total_num_crops, num_crops, size_crops, crop_scales
     )
 
-    to_tensor_transform = ApplyToKeys(
+    per_sample_transform = ApplyToKeys(
         DataKeys.INPUT,
         multi_crop_transform,
     )
     input_transform = DefaultInputTransform(
         train_transform={
-            "to_tensor_transform": to_tensor_transform,
+            "per_sample_transform": per_sample_transform,
             "collate": collate_fn,
         }
     )
