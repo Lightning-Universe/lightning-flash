@@ -71,8 +71,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - (Removed InputTransform `pre_tensor_transform`, `to_tensor_transform`, `post_tensor_transform` hooks in favour of `per_sample_transform` ([#1010](https://github.com/PyTorchLightning/lightning-flash/pull/1010))
 
 
-### Breaking Changes
-
 ## [0.5.2] - 2021-11-05
 
 ### Added
