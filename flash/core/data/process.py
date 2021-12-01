@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import functools
-from abc import abstractmethod
 from typing import Any, List, Mapping
 from warnings import warn
 
@@ -34,7 +33,6 @@ class Deserializer(ServeInput):
     def deserialize(self, sample: Any) -> Any:
         return self.serve_load_sample(sample)
 
-    @abstractmethod
     def example_input(self) -> str:
         raise NotImplementedError
 
