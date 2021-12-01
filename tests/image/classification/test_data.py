@@ -498,8 +498,8 @@ def single_target_csv(image_tmpdir):
         fieldnames = ["image", "target"]
         writer = csv.DictWriter(csvfile, fieldnames)
         writer.writeheader()
-        writer.writerow({"image": "image_1", "target": "Ants"})
-        writer.writerow({"image": "image_2", "target": "Bees"})
+        writer.writerow({"image": "image_1.png", "target": "Ants"})
+        writer.writerow({"image": "image_2.png", "target": "Bees"})
     return str(image_tmpdir / "metadata.csv")
 
 
@@ -526,8 +526,8 @@ def multi_target_csv(image_tmpdir):
         fieldnames = ["image", "target_1", "target_2"]
         writer = csv.DictWriter(csvfile, fieldnames)
         writer.writeheader()
-        writer.writerow({"image": "image_1", "target_1": 1, "target_2": 0})
-        writer.writerow({"image": "image_2", "target_1": 1, "target_2": 1})
+        writer.writerow({"image": "image_1.png", "target_1": 1, "target_2": 0})
+        writer.writerow({"image": "image_2.png", "target_1": 1, "target_2": 1})
     return str(image_tmpdir / "metadata.csv")
 
 
@@ -560,7 +560,7 @@ def bad_csv_no_image(image_tmpdir):
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_from_bad_csv_no_image(bad_csv_no_image):
-    with pytest.raises(ValueError, match="Found no matches"):
+    with pytest.raises(ValueError, match="File ID `image_3` did not resolve to an existing file."):
         img_data = ImageClassificationData.from_csv(
             "image",
             ["target"],

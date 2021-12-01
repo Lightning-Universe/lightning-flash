@@ -11,30 +11,38 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, Union
+import os
+from typing import Any, Callable, Collection, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import torch
-from torch.utils.data.sampler import Sampler
 
-from flash.core.data.base_viz import BaseVisualization  # for viz
+from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import DataKeys, InputFormat, LoaderDataFrameInput
+from flash.core.data.io.classification_input import ClassificationInput, ClassificationState
+from flash.core.data.io.input import DataKeys, InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.process import Deserializer
+from flash.core.data.utilities.classification import TargetMode
+from flash.core.data.utilities.data_frame import read_csv, resolve_files, resolve_targets
+from flash.core.data.utilities.paths import filter_valid_files, make_dataset, PATH_TYPE
+from flash.core.data.utilities.samples import to_samples
+from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
 from flash.core.integrations.labelstudio.input import LabelStudioImageClassificationInput
 from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, Image, requires
 from flash.core.utilities.stages import RunningStage
 from flash.image.classification.transforms import default_transforms, train_default_transforms
 from flash.image.data import (
-    image_loader,
+    fol,
     ImageDeserializer,
-    ImageFiftyOneInput,
+    ImageFilesInput,
     ImageNumpyInput,
-    ImagePathsInput,
     ImageTensorInput,
+    IMG_EXTENSIONS,
+    NP_EXTENSIONS,
+    SampleCollection,
 )
 
 if _MATPLOTLIB_AVAILABLE:
@@ -43,30 +51,119 @@ else:
     plt = None
 
 
-class ImageClassificationDataFrameInput(LoaderDataFrameInput):
-    def __init__(self):
-        super().__init__(image_loader)
+class ImageClassificationFilesInput(ClassificationInput, ImageFilesInput):
+    def load_data(
+        self,
+        files: List[PATH_TYPE],
+        targets: Optional[List[Any]] = None,
+    ) -> List[Dict[str, Any]]:
+        if targets is None:
+            return super().load_data(files)
+        files, targets = filter_valid_files(files, targets, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
+        self.load_target_metadata(targets)
+        return to_samples(files, targets)
 
-    @requires("image")
-    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        sample = super().load_sample(sample, dataset)
-        w, h = sample[DataKeys.INPUT].size  # WxH
-        sample[DataKeys.METADATA]["size"] = (h, w)
+    def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+        sample = super().load_sample(sample)
+        if DataKeys.TARGET in sample:
+            sample[DataKeys.TARGET] = self.format_target(sample[DataKeys.TARGET])
         return sample
 
 
-class ImageClassificationInputTransform(InputTransform):
-    """Preprocssing of data of image classification.
+class ImageClassificationFolderInput(ImageClassificationFilesInput):
+    def load_data(self, folder: PATH_TYPE) -> List[Dict[str, Any]]:
+        files, targets = make_dataset(folder, extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
+        return super().load_data(files, targets)
 
-    Args::
-        train_transfor:m
-        val_transform:
-        test_transform:
-        predict_transform:
-        image_size: tuple with the (heigh, width) of the images
-        deserializer:
-        input_kwargs: Additional kwargs for the data source initializer
-    """
+
+class ImageClassificationFiftyOneInput(ImageClassificationFilesInput):
+    @requires("fiftyone")
+    def load_data(self, sample_collection: SampleCollection, label_field: str = "ground_truth") -> List[Dict[str, Any]]:
+        label_utilities = FiftyOneLabelUtilities(label_field, fol.Label)
+        label_utilities.validate(sample_collection)
+
+        label_path = sample_collection._get_label_field_path(label_field, "label")[1]
+
+        filepaths = sample_collection.values("filepath")
+        targets = sample_collection.values(label_path)
+
+        return super().load_data(filepaths, targets)
+
+    @staticmethod
+    @requires("fiftyone")
+    def predict_load_data(data: SampleCollection) -> List[Dict[str, Any]]:
+        return super().load_data(data.values("filepath"))
+
+
+class ImageClassificationTensorInput(ClassificationInput, ImageTensorInput):
+    def load_data(self, tensor: Any, targets: Optional[List[Any]] = None) -> List[Dict[str, Any]]:
+        if targets is not None:
+            self.load_target_metadata(targets)
+
+        return to_samples(tensor, targets)
+
+    def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+        sample = super().load_sample(sample)
+        if DataKeys.TARGET in sample:
+            sample[DataKeys.TARGET] = self.format_target(sample[DataKeys.TARGET])
+        return sample
+
+
+class ImageClassificationNumpyInput(ClassificationInput, ImageNumpyInput):
+    def load_data(self, array: Any, targets: Optional[List[Any]] = None) -> List[Dict[str, Any]]:
+        if targets is not None:
+            self.load_target_metadata(targets)
+
+        return to_samples(array, targets)
+
+    def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+        sample = super().load_sample(sample)
+        if DataKeys.TARGET in sample:
+            sample[DataKeys.TARGET] = self.format_target(sample[DataKeys.TARGET])
+        return sample
+
+
+class ImageClassificationDataFrameInput(ImageClassificationFilesInput):
+    def load_data(
+        self,
+        data_frame: pd.DataFrame,
+        input_key: str,
+        target_keys: Optional[Union[str, List[str]]] = None,
+        root: Optional[PATH_TYPE] = None,
+        resolver: Optional[Callable[[Optional[PATH_TYPE], Any], PATH_TYPE]] = None,
+    ) -> List[Dict[str, Any]]:
+        files = resolve_files(data_frame, input_key, root, resolver)
+        if target_keys is not None:
+            targets = resolve_targets(data_frame, target_keys)
+        else:
+            targets = None
+        result = super().load_data(files, targets)
+
+        # If we had binary multi-class targets then we also know the labels (column names)
+        if self.training and self.target_mode is TargetMode.MULTI_BINARY and isinstance(target_keys, List):
+            classification_state = self.get_state(ClassificationState)
+            self.set_state(ClassificationState(target_keys, classification_state.num_classes))
+
+        return result
+
+
+class ImageClassificationCSVInput(ImageClassificationDataFrameInput):
+    def load_data(
+        self,
+        csv_file: PATH_TYPE,
+        input_key: str,
+        target_keys: Optional[Union[str, List[str]]] = None,
+        root: Optional[PATH_TYPE] = None,
+        resolver: Optional[Callable[[Optional[PATH_TYPE], Any], PATH_TYPE]] = None,
+    ) -> List[Dict[str, Any]]:
+        data_frame = read_csv(csv_file)
+        if root is None:
+            root = os.path.dirname(csv_file)
+        return super().load_data(data_frame, input_key, target_keys, root, resolver)
+
+
+class ImageClassificationInputTransform(InputTransform):
+    """Preprocssing of data of image classification."""
 
     def __init__(
         self,
@@ -76,7 +173,6 @@ class ImageClassificationInputTransform(InputTransform):
         predict_transform: Optional[Dict[str, Callable]] = None,
         image_size: Tuple[int, int] = (196, 196),
         deserializer: Optional[Deserializer] = None,
-        **input_kwargs: Any,
     ):
         self.image_size = image_size
 
@@ -86,13 +182,13 @@ class ImageClassificationInputTransform(InputTransform):
             test_transform=test_transform,
             predict_transform=predict_transform,
             inputs={
-                InputFormat.FIFTYONE: ImageFiftyOneInput(**input_kwargs),
-                InputFormat.FILES: ImagePathsInput(),
-                InputFormat.FOLDERS: ImagePathsInput(),
-                InputFormat.NUMPY: ImageNumpyInput(),
-                InputFormat.TENSORS: ImageTensorInput(),
-                "data_frame": ImageClassificationDataFrameInput(),
-                InputFormat.CSV: ImageClassificationDataFrameInput(),
+                InputFormat.FIFTYONE: ImageClassificationFiftyOneInput,
+                InputFormat.FILES: ImageClassificationFilesInput,
+                InputFormat.FOLDERS: ImageClassificationFolderInput,
+                InputFormat.NUMPY: ImageClassificationNumpyInput,
+                InputFormat.TENSORS: ImageClassificationTensorInput,
+                InputFormat.DATAFRAME: ImageClassificationDataFrameInput,
+                InputFormat.CSV: ImageClassificationCSVInput,
                 InputFormat.LABELSTUDIO: LabelStudioImageClassificationInput(),
             },
             deserializer=deserializer or ImageDeserializer(),
@@ -119,6 +215,131 @@ class ImageClassificationData(DataModule):
     input_transform_cls = ImageClassificationInputTransform
 
     @classmethod
+    def from_files(
+        cls,
+        train_files: Optional[Sequence[str]] = None,
+        train_targets: Optional[Sequence[Any]] = None,
+        val_files: Optional[Sequence[str]] = None,
+        val_targets: Optional[Sequence[Any]] = None,
+        test_files: Optional[Sequence[str]] = None,
+        test_targets: Optional[Sequence[Any]] = None,
+        predict_files: Optional[Sequence[str]] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        image_size: Tuple[int, int] = (196, 196),
+        **data_module_kwargs: Any,
+    ) -> "ImageClassificationData":
+        return cls(
+            ImageClassificationFilesInput(RunningStage.TRAINING, train_files, train_targets),
+            ImageClassificationFilesInput(RunningStage.VALIDATING, val_files, val_targets),
+            ImageClassificationFilesInput(RunningStage.TESTING, test_files, test_targets),
+            ImageClassificationFilesInput(RunningStage.PREDICTING, predict_files),
+            input_transform=cls.input_transform_cls(
+                train_transform,
+                val_transform,
+                test_transform,
+                predict_transform,
+                image_size=image_size,
+            ),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_folders(
+        cls,
+        train_folder: Optional[str] = None,
+        val_folder: Optional[str] = None,
+        test_folder: Optional[str] = None,
+        predict_folder: Optional[str] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        image_size: Tuple[int, int] = (196, 196),
+        **data_module_kwargs: Any,
+    ) -> "ImageClassificationData":
+        return cls(
+            ImageClassificationFolderInput(RunningStage.TRAINING, train_folder),
+            ImageClassificationFolderInput(RunningStage.VALIDATING, val_folder),
+            ImageClassificationFolderInput(RunningStage.TESTING, test_folder),
+            ImageClassificationFolderInput(RunningStage.PREDICTING, predict_folder),
+            input_transform=cls.input_transform_cls(
+                train_transform,
+                val_transform,
+                test_transform,
+                predict_transform,
+                image_size=image_size,
+            ),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_numpy(
+        cls,
+        train_data: Optional[Collection[np.ndarray]] = None,
+        train_targets: Optional[Collection[Any]] = None,
+        val_data: Optional[Collection[np.ndarray]] = None,
+        val_targets: Optional[Sequence[Any]] = None,
+        test_data: Optional[Collection[np.ndarray]] = None,
+        test_targets: Optional[Sequence[Any]] = None,
+        predict_data: Optional[Collection[np.ndarray]] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        image_size: Tuple[int, int] = (196, 196),
+        **data_module_kwargs: Any,
+    ) -> "ImageClassificationData":
+        return cls(
+            ImageClassificationNumpyInput(RunningStage.TRAINING, train_data, train_targets),
+            ImageClassificationNumpyInput(RunningStage.VALIDATING, val_data, val_targets),
+            ImageClassificationNumpyInput(RunningStage.TESTING, test_data, test_targets),
+            ImageClassificationNumpyInput(RunningStage.PREDICTING, predict_data),
+            input_transform=cls.input_transform_cls(
+                train_transform,
+                val_transform,
+                test_transform,
+                predict_transform,
+                image_size=image_size,
+            ),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_tensors(
+        cls,
+        train_data: Optional[Collection[torch.Tensor]] = None,
+        train_targets: Optional[Collection[Any]] = None,
+        val_data: Optional[Collection[torch.Tensor]] = None,
+        val_targets: Optional[Sequence[Any]] = None,
+        test_data: Optional[Collection[torch.Tensor]] = None,
+        test_targets: Optional[Sequence[Any]] = None,
+        predict_data: Optional[Collection[torch.Tensor]] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        image_size: Tuple[int, int] = (196, 196),
+        **data_module_kwargs: Any,
+    ) -> "ImageClassificationData":
+        return cls(
+            ImageClassificationTensorInput(RunningStage.TRAINING, train_data, train_targets),
+            ImageClassificationTensorInput(RunningStage.VALIDATING, val_data, val_targets),
+            ImageClassificationTensorInput(RunningStage.TESTING, test_data, test_targets),
+            ImageClassificationTensorInput(RunningStage.PREDICTING, predict_data),
+            input_transform=cls.input_transform_cls(
+                train_transform,
+                val_transform,
+                test_transform,
+                predict_transform,
+                image_size=image_size,
+            ),
+            **data_module_kwargs,
+        )
+
+    @classmethod
     def from_data_frame(
         cls,
         input_field: str,
@@ -139,179 +360,112 @@ class ImageClassificationData(DataModule):
         val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        data_fetcher: Optional[BaseDataFetcher] = None,
-        input_transform: Optional[InputTransform] = None,
-        val_split: Optional[float] = None,
-        batch_size: int = 4,
-        num_workers: int = 0,
-        sampler: Optional[Type[Sampler]] = None,
-        **input_transform_kwargs: Any,
-    ) -> "DataModule":
-        """Creates a :class:`~flash.image.classification.data.ImageClassificationData` object from the given pandas
-        ``DataFrame`` objects.
-
-        Args:
-            input_field: The field (column) in the pandas ``DataFrame`` to use for the input.
-            target_fields: The field or fields (columns) in the pandas ``DataFrame`` to use for the target.
-            train_data_frame: The pandas ``DataFrame`` containing the training data.
-            train_images_root: The directory containing the train images. If ``None``, values in the ``input_field``
-                will be assumed to be the full file paths.
-            train_resolver: The function to use to resolve filenames given the ``train_images_root`` and IDs from the
-                ``input_field`` column.
-            val_data_frame: The pandas ``DataFrame`` containing the validation data.
-            val_images_root: The directory containing the validation images. If ``None``, the directory containing the
-                ``val_file`` will be used.
-            val_resolver: The function to use to resolve filenames given the ``val_images_root`` and IDs from the
-                ``input_field`` column.
-            test_data_frame: The pandas ``DataFrame`` containing the testing data.
-            test_images_root: The directory containing the test images. If ``None``, the directory containing the
-                ``test_file`` will be used.
-            test_resolver: The function to use to resolve filenames given the ``test_images_root`` and IDs from the
-                ``input_field`` column.
-            predict_data_frame: The pandas ``DataFrame`` containing the data to use when predicting.
-            predict_images_root: The directory containing the predict images. If ``None``, the directory containing the
-                ``predict_file`` will be used.
-            predict_resolver: The function to use to resolve filenames given the ``predict_images_root`` and IDs from
-                the ``input_field`` column.
-            train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`.
-            input_transform: The :class:`~flash.core.data.data.InputTransform` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
-                will be constructed and used.
-            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            sampler: The ``sampler`` to use for the ``train_dataloader``.
-            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
-                Will only be used if ``input_transform = None``.
-
-        Returns:
-            The constructed data module.
-        """
-        return cls.from_input(
-            "data_frame",
-            (train_data_frame, input_field, target_fields, train_images_root, train_resolver),
-            (val_data_frame, input_field, target_fields, val_images_root, val_resolver),
-            (test_data_frame, input_field, target_fields, test_images_root, test_resolver),
-            (predict_data_frame, input_field, target_fields, predict_images_root, predict_resolver),
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
-            data_fetcher=data_fetcher,
-            input_transform=input_transform,
-            val_split=val_split,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            sampler=sampler,
-            **input_transform_kwargs,
+        image_size: Tuple[int, int] = (196, 196),
+        **data_module_kwargs: Any,
+    ) -> "ImageClassificationData":
+        return cls(
+            ImageClassificationDataFrameInput(
+                RunningStage.TRAINING, train_data_frame, input_field, target_fields, train_images_root, train_resolver
+            ),
+            ImageClassificationCSVInput(
+                RunningStage.VALIDATING, val_data_frame, input_field, target_fields, val_images_root, val_resolver
+            ),
+            ImageClassificationCSVInput(
+                RunningStage.TESTING, test_data_frame, input_field, target_fields, test_images_root, test_resolver
+            ),
+            ImageClassificationCSVInput(
+                RunningStage.PREDICTING,
+                predict_data_frame,
+                input_field,
+                root=predict_images_root,
+                resolver=predict_resolver,
+            ),
+            input_transform=cls.input_transform_cls(
+                train_transform,
+                val_transform,
+                test_transform,
+                predict_transform,
+                image_size=image_size,
+            ),
+            **data_module_kwargs,
         )
 
     @classmethod
     def from_csv(
         cls,
         input_field: str,
-        target_fields: Optional[Union[str, Sequence[str]]] = None,
-        train_file: Optional[str] = None,
-        train_images_root: Optional[str] = None,
-        train_resolver: Optional[Callable[[str, str], str]] = None,
-        val_file: Optional[str] = None,
-        val_images_root: Optional[str] = None,
-        val_resolver: Optional[Callable[[str, str], str]] = None,
+        target_fields: Optional[Union[str, List[str]]] = None,
+        train_file: Optional[PATH_TYPE] = None,
+        train_images_root: Optional[PATH_TYPE] = None,
+        train_resolver: Optional[Callable[[PATH_TYPE, Any], PATH_TYPE]] = None,
+        val_file: Optional[PATH_TYPE] = None,
+        val_images_root: Optional[PATH_TYPE] = None,
+        val_resolver: Optional[Callable[[PATH_TYPE, Any], PATH_TYPE]] = None,
         test_file: Optional[str] = None,
         test_images_root: Optional[str] = None,
-        test_resolver: Optional[Callable[[str, str], str]] = None,
+        test_resolver: Optional[Callable[[PATH_TYPE, Any], PATH_TYPE]] = None,
         predict_file: Optional[str] = None,
         predict_images_root: Optional[str] = None,
-        predict_resolver: Optional[Callable[[str, str], str]] = None,
+        predict_resolver: Optional[Callable[[PATH_TYPE, Any], PATH_TYPE]] = None,
         train_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        data_fetcher: Optional[BaseDataFetcher] = None,
-        input_transform: Optional[InputTransform] = None,
-        val_split: Optional[float] = None,
-        batch_size: int = 4,
-        num_workers: int = 0,
-        sampler: Optional[Type[Sampler]] = None,
-        **input_transform_kwargs: Any,
-    ) -> "DataModule":
-        """Creates a :class:`~flash.image.classification.data.ImageClassificationData` object from the given CSV
-        files using the :class:`~flash.core.data.io.input.Input` of name
-        :attr:`~flash.core.data.io.input.InputFormat.CSV` from the passed or constructed
-        :class:`~flash.core.data.io.input_transform.InputTransform`.
+        image_size: Tuple[int, int] = (196, 196),
+        **data_module_kwargs: Any,
+    ) -> "ImageClassificationData":
+        return cls(
+            ImageClassificationCSVInput(
+                RunningStage.TRAINING, train_file, input_field, target_fields, train_images_root, train_resolver
+            ),
+            ImageClassificationCSVInput(
+                RunningStage.VALIDATING, val_file, input_field, target_fields, val_images_root, val_resolver
+            ),
+            ImageClassificationCSVInput(
+                RunningStage.TESTING, test_file, input_field, target_fields, test_images_root, test_resolver
+            ),
+            ImageClassificationCSVInput(
+                RunningStage.PREDICTING, predict_file, input_field, root=predict_images_root, resolver=predict_resolver
+            ),
+            input_transform=cls.input_transform_cls(
+                train_transform,
+                val_transform,
+                test_transform,
+                predict_transform,
+                image_size=image_size,
+            ),
+            **data_module_kwargs,
+        )
 
-        Args:
-            input_field: The field (column) in the CSV file to use for the input.
-            target_fields: The field or fields (columns) in the CSV file to use for the target.
-            train_file: The CSV file containing the training data.
-            train_images_root: The directory containing the train images. If ``None``, the directory containing the
-                ``train_file`` will be used.
-            train_resolver: The function to use to resolve filenames given the ``train_images_root`` and IDs from the
-                ``input_field`` column.
-            val_file: The CSV file containing the validation data.
-            val_images_root: The directory containing the validation images. If ``None``, the directory containing the
-                ``val_file`` will be used.
-            val_resolver: The function to use to resolve filenames given the ``val_images_root`` and IDs from the
-                ``input_field`` column.
-            test_file: The CSV file containing the testing data.
-            test_images_root: The directory containing the test images. If ``None``, the directory containing the
-                ``test_file`` will be used.
-            test_resolver: The function to use to resolve filenames given the ``test_images_root`` and IDs from the
-                ``input_field`` column.
-            predict_file: The CSV file containing the data to use when predicting.
-            predict_images_root: The directory containing the predict images. If ``None``, the directory containing the
-                ``predict_file`` will be used.
-            predict_resolver: The function to use to resolve filenames given the ``predict_images_root`` and IDs from
-                the ``input_field`` column.
-            train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`.
-            input_transform: The :class:`~flash.core.data.data.InputTransform` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
-                will be constructed and used.
-            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            sampler: The ``sampler`` to use for the ``train_dataloader``.
-            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
-                Will only be used if ``input_transform = None``.
-
-        Returns:
-            The constructed data module.
-        """
-        return cls.from_input(
-            InputFormat.CSV,
-            (train_file, input_field, target_fields, train_images_root, train_resolver),
-            (val_file, input_field, target_fields, val_images_root, val_resolver),
-            (test_file, input_field, target_fields, test_images_root, test_resolver),
-            (predict_file, input_field, target_fields, predict_images_root, predict_resolver),
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
-            data_fetcher=data_fetcher,
-            input_transform=input_transform,
-            val_split=val_split,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            sampler=sampler,
-            **input_transform_kwargs,
+    @classmethod
+    @requires("fiftyone")
+    def from_fiftyone(
+        cls,
+        train_dataset: Optional[SampleCollection] = None,
+        val_dataset: Optional[SampleCollection] = None,
+        test_dataset: Optional[SampleCollection] = None,
+        predict_dataset: Optional[SampleCollection] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        label_field: str = "ground_truth",
+        image_size: Tuple[int, int] = (196, 196),
+        **data_module_kwargs,
+    ) -> "ImageClassificationData":
+        return cls(
+            ImageClassificationFiftyOneInput(RunningStage.TRAINING, train_dataset, label_field),
+            ImageClassificationFiftyOneInput(RunningStage.VALIDATING, val_dataset, label_field),
+            ImageClassificationFiftyOneInput(RunningStage.TESTING, test_dataset, label_field),
+            ImageClassificationFiftyOneInput(RunningStage.PREDICTING, predict_dataset, label_field),
+            input_transform=cls.input_transform_cls(
+                train_transform,
+                val_transform,
+                test_transform,
+                predict_transform,
+                image_size=image_size,
+            ),
+            **data_module_kwargs,
         )
 
     def set_block_viz_window(self, value: bool) -> None:

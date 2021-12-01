@@ -34,7 +34,7 @@ from flash.core.utilities.types import (
 )
 from flash.image.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 from flash.image.segmentation.heads import SEMANTIC_SEGMENTATION_HEADS
-from flash.image.segmentation.output import SegmentationLabels
+from flash.image.segmentation.output import SegmentationLabelsOutput
 
 if _KORNIA_AVAILABLE:
     import kornia as K
@@ -114,7 +114,7 @@ class SemanticSegmentation(ClassificationTask):
             lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
-            output=output or SegmentationLabels(),
+            output=output or SegmentationLabelsOutput(),
             output_transform=output_transform or self.output_transform_cls(),
         )
 

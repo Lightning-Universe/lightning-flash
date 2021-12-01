@@ -11,20 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence
 
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset
 
-from flash.core.data.io.input import DataKeys, DatasetInput, InputFormat
+from flash.core.data.data_module import DataModule
+from flash.core.data.io.input import DataKeys, InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.transforms import ApplyToKeys
-from flash.core.data.utils import image_default_loader
 from flash.core.utilities.imports import _FASTFACE_AVAILABLE, _TORCHVISION_AVAILABLE
-from flash.image.data import ImagePathsInput
-from flash.image.detection import ObjectDetectionData
+from flash.core.utilities.stages import RunningStage
+from flash.image.classification.data import ImageClassificationFilesInput, ImageClassificationFolderInput
+from flash.image.data import ImageInput
 
 if _TORCHVISION_AVAILABLE:
     import torchvision
@@ -61,39 +62,18 @@ def fastface_collate_fn(samples: Sequence[Dict[str, Any]]) -> Dict[str, Sequence
     return samples
 
 
-class FastFaceInput(DatasetInput):
+class FastFaceInput(ImageInput):
     """Logic for loading from FDDBDataset."""
 
-    def load_data(self, data: Dataset, dataset: Any = None) -> Dataset:
-        new_data = []
-        for img_file_path, targets in zip(data.ids, data.targets):
-            new_data.append(
-                super().load_sample(
-                    (
-                        img_file_path,
-                        dict(
-                            boxes=targets["target_boxes"],
-                            # label `1` indicates positive sample
-                            labels=[1 for _ in range(targets["target_boxes"].shape[0])],
-                        ),
-                    )
-                )
-            )
-
-        return new_data
-
-    def load_sample(self, sample: Any, dataset: Optional[Any] = None) -> Mapping[str, Any]:
-        filepath = sample[DataKeys.INPUT]
-        img = image_default_loader(filepath)
-        sample[DataKeys.INPUT] = img
-
-        w, h = img.size  # WxH
-        sample[DataKeys.METADATA] = {
-            "filepath": filepath,
-            "size": (h, w),
-        }
-
-        return sample
+    def load_data(self, dataset: Dataset) -> List[Dict[str, Any]]:
+        return [
+            {
+                DataKeys.INPUT: filepath,
+                "boxes": targets["target_boxes"],
+                "labels": [1] * targets["target_boxes"].shape[0],
+            }
+            for filepath, targets in zip(dataset.ids, dataset.targets)
+        ]
 
 
 class FaceDetectionInputTransform(InputTransform):
@@ -105,19 +85,16 @@ class FaceDetectionInputTransform(InputTransform):
         val_transform: Optional[Dict[str, Callable]] = None,
         test_transform: Optional[Dict[str, Callable]] = None,
         predict_transform: Optional[Dict[str, Callable]] = None,
-        image_size: Tuple[int, int] = (128, 128),
     ):
-        self.image_size = image_size
-
         super().__init__(
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
             inputs={
-                InputFormat.FILES: ImagePathsInput(),
-                InputFormat.FOLDERS: ImagePathsInput(),
-                InputFormat.DATASETS: FastFaceInput(),
+                InputFormat.FILES: ImageClassificationFilesInput,
+                InputFormat.FOLDERS: ImageClassificationFolderInput,
+                InputFormat.DATASETS: FastFaceInput,
             },
             default_input=InputFormat.FILES,
         )
@@ -166,6 +143,34 @@ class FaceDetectionOutputTransform(OutputTransform):
         return batch
 
 
-class FaceDetectionData(ObjectDetectionData):
+class FaceDetectionData(DataModule):
     input_transform_cls = FaceDetectionInputTransform
     output_transform_cls = FaceDetectionOutputTransform
+
+    @classmethod
+    def from_datasets(
+        cls,
+        train_dataset: Optional[Dataset] = None,
+        val_dataset: Optional[Dataset] = None,
+        test_dataset: Optional[Dataset] = None,
+        predict_dataset: Optional[Dataset] = None,
+        train_transform: Optional[Dict[str, Callable]] = None,
+        val_transform: Optional[Dict[str, Callable]] = None,
+        test_transform: Optional[Dict[str, Callable]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        **data_module_kwargs,
+    ) -> "FaceDetectionData":
+        return cls(
+            FastFaceInput(RunningStage.TRAINING, train_dataset),
+            FastFaceInput(RunningStage.VALIDATING, val_dataset),
+            FastFaceInput(RunningStage.TESTING, test_dataset),
+            FastFaceInput(RunningStage.PREDICTING, predict_dataset),
+            input_transform=cls.input_transform_cls(
+                train_transform,
+                val_transform,
+                test_transform,
+                predict_transform,
+            ),
+            output_transform=cls.output_transform_cls(),
+            **data_module_kwargs,
+        )

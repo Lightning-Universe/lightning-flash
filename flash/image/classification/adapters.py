@@ -30,6 +30,7 @@ import flash
 from flash.core.adapter import Adapter, AdapterTask
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.io.input import DataKeys
+from flash.core.data.io.input_base import InputBase
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.compatibility import accelerator_connector
@@ -204,7 +205,7 @@ class Learn2LearnAdapter(Adapter):
         num_task: int,
         epoch_length: int,
     ):
-        if isinstance(dataset, BaseAutoDataset):
+        if isinstance(dataset, (InputBase, BaseAutoDataset)):
 
             metadata = getattr(dataset, "data", None)
             if metadata is None or (metadata is not None and not isinstance(dataset.data, list)):

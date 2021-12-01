@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 
-from flash.core.classification import ClassificationAdapterTask, Labels
+from flash.core.classification import ClassificationAdapterTask, LabelsOutput
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 from flash.image.classification.adapters import TRAINING_STRATEGIES
@@ -136,7 +136,7 @@ class ImageClassifier(ClassificationAdapterTask):
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
             multi_label=multi_label,
-            output=output or Labels(multi_label=multi_label),
+            output=output or LabelsOutput(multi_label=multi_label),
         )
 
     @classmethod

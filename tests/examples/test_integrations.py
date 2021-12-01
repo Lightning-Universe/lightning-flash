@@ -42,9 +42,12 @@ root = Path(__file__).parent.parent.parent
         pytest.param(
             "learn2learn",
             "image_classification_imagenette_mini.py",
-            marks=pytest.mark.skipif(
-                not (_IMAGE_AVAILABLE and _LEARN2LEARN_AVAILABLE), reason="learn2learn isn't installed"
-            ),
+            marks=[
+                pytest.mark.skip("MiniImagenet broken: https://github.com/learnables/learn2learn/issues/291"),
+                pytest.mark.skipif(
+                    not (_IMAGE_AVAILABLE and _LEARN2LEARN_AVAILABLE), reason="learn2learn isn't installed"
+                ),
+            ],
         ),
     ],
 )
