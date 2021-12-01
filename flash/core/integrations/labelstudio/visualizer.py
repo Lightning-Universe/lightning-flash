@@ -5,26 +5,31 @@ import string
 from pytorch_lightning.utilities.cloud_io import get_filesystem
 
 from flash.core.data.data_module import DataModule
+from flash.core.data.data_pipeline import DataPipelineState
+from flash.core.integrations.labelstudio.input import LabelStudioState
 
 
 class App:
     """App for visualizing predictions in Label Studio results format."""
 
     def __init__(self, datamodule: DataModule):
-        self.datamodule = datamodule
+        ds = datamodule.inputs
+        data_pipeline_state: DataPipelineState = (
+            ds[0]._data_pipeline_state if isinstance(ds, list) else ds._data_pipeline_state
+        )
+        self.state: LabelStudioState = data_pipeline_state.get_state(LabelStudioState)
 
     def show_predictions(self, predictions):
         """Converts predictions to Label Studio results."""
         results = []
         for pred in predictions:
-            results.append(self.construct_result(pred))
+            results.append(self._construct_result(pred))
         return results
 
     def show_tasks(self, predictions, export_json=None):
         """Converts predictions to tasks format."""
         results = self.show_predictions(predictions)
-        ds = self.datamodule.inputs
-        data_type = list(ds.data_types)[0]
+        data_type = list(self.state.data_types)[0]
         meta = {"ids": [], "data": [], "meta": [], "max_predictions_id": 0, "project": None}
         if export_json:
             fs = get_filesystem(export_json)
@@ -67,18 +72,17 @@ class App:
                 final_results.append(task)
             return final_results
 
-    def construct_result(self, pred):
+    def _construct_result(self, pred):
         """Construction Label Studio result from data source and prediction values."""
-        ds = self.datamodule.inputs
         # get label
         if isinstance(pred, list):
-            label = [list(ds.classes)[p] for p in pred]
+            label = [list(self.state.classes)[p] for p in pred]
         else:
-            label = list(ds.classes)[pred]
+            label = list(self.state.classes)[pred]
         # get data type, if len(data_types) > 1 take first data type
-        data_type = list(ds.data_types)[0]
+        data_type = list(self.state.data_types)[0]
         # get tag type, if len(tag_types) > 1 take first tag
-        tag_type = list(ds.tag_types)[0]
+        tag_type = list(self.state.tag_types)[0]
         js = {
             "result": [
                 {
