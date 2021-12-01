@@ -78,7 +78,7 @@ class ImageDeserializer(Deserializer):
 class ImageInput(Input):
     @requires("image")
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        w, h = sample[DataKeys.INPUT].size  # WxH
+        w, h = sample[DataKeys.INPUT].size  # W x H
         if DataKeys.METADATA not in sample:
             sample[DataKeys.METADATA] = {}
         sample[DataKeys.METADATA]["size"] = (h, w)
@@ -99,6 +99,9 @@ class ImageFilesInput(ImageInput):
 
 
 class ImageTensorInput(ImageInput):
+    def load_data(self, tensor: Any) -> List[Dict[str, Any]]:
+        return to_samples(tensor)
+
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         img = to_pil_image(sample[DataKeys.INPUT])
         sample[DataKeys.INPUT] = img
@@ -106,6 +109,9 @@ class ImageTensorInput(ImageInput):
 
 
 class ImageNumpyInput(ImageInput):
+    def load_data(self, array: Any) -> List[Dict[str, Any]]:
+        return to_samples(array)
+
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         img = to_pil_image(torch.from_numpy(sample[DataKeys.INPUT]))
         sample[DataKeys.INPUT] = img
