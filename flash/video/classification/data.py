@@ -534,10 +534,15 @@ class VideoClassificationData(DataModule):
                 :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
                 will be constructed and used.
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            data_module_kwargs: Additional keyword arguments to use when constructing the input_transform.
-                Will only be used if ``input_transform = None``.
+            multi_label: Whether the label are multi encoded.
+            clip_sampler: Defines how clips should be sampled from each video.
+            clip_duration: Defines how long the sampled clips should be for each video.
+            clip_sampler_kwargs: Additional keyword arguments to use when constructing the clip sampler.
+            video_sampler: Sampler for the internal video container. This defines the order videos are decoded and,
+                    if necessary, the distributed split.
+            decode_audio: If True, also decode audio from video.
+            decoder: Defines what type of decoder used to decode a video.
+            data_module_kwargs: Additional keyword arguments to use when constructing the datamodule.
 
         Returns:
             The constructed data module.

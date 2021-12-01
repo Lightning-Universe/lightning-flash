@@ -693,10 +693,8 @@ class TextClassificationData(DataModule):
                 :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
                 will be constructed and used.
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            data_module_kwargs: Additional keyword arguments to use when constructing the input_transform.
-                Will only be used if ``input_transform = None``.
+            multi_label: Whether the labels are multi encoded
+            data_module_kwargs: Additional keyword arguments to use when constructing the datamodule.
 
         Returns:
             The constructed data module.

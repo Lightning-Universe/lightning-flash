@@ -216,9 +216,6 @@ class InputBase(Properties, metaclass=_InputMeta):
         """
         return self.data is not None
 
-    # def __getattr__(self, name: str) -> Any:
-    #    return object.__getattribute__(self, name)
-
 
 class Input(InputBase, Dataset):
     def __getitem__(self, index: int) -> Any:
