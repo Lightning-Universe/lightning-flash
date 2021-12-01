@@ -313,21 +313,21 @@ class VideoClassificationInputTransform(InputTransform):
 
     def default_transforms(self) -> Dict[str, Callable]:
         if self.training:
-            post_tensor_transform = [
+            per_sample_transform = [
                 RandomCrop(244, pad_if_needed=True),
                 RandomHorizontalFlip(p=0.5),
             ]
         else:
-            post_tensor_transform = [
+            per_sample_transform = [
                 CenterCrop(244),
             ]
 
         return {
-            "post_tensor_transform": Compose(
+            "per_sample_transform": Compose(
                 [
                     ApplyTransformToKey(
                         key="video",
-                        transform=Compose([UniformTemporalSubsample(8)] + post_tensor_transform),
+                        transform=Compose([UniformTemporalSubsample(8)] + per_sample_transform),
                     ),
                 ]
             ),

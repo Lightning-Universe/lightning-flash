@@ -22,7 +22,6 @@ from flash.core.data.transforms import ApplyToKeys, merge_transforms
 from flash.core.utilities.imports import _TORCHAUDIO_AVAILABLE, _TORCHVISION_AVAILABLE
 
 if _TORCHVISION_AVAILABLE:
-    import torchvision
     from torchvision import transforms as T
 
 if _TORCHAUDIO_AVAILABLE:
@@ -33,11 +32,10 @@ def default_transforms(spectrogram_size: Tuple[int, int]) -> Dict[str, Callable]
     """The default transforms for audio classification for spectrograms: resize the spectrogram, convert the
     spectrogram and target to a tensor, and collate the batch."""
     return {
-        "to_tensor_transform": nn.Sequential(
-            ApplyToKeys(DataKeys.INPUT, torchvision.transforms.ToTensor()),
+        "per_sample_transform": nn.Sequential(
+            ApplyToKeys(DataKeys.INPUT, T.Compose([T.ToTensor(), T.Resize(spectrogram_size)])),
             ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
         ),
-        "post_tensor_transform": ApplyToKeys(DataKeys.INPUT, T.Resize(spectrogram_size)),
         "collate": default_collate,
     }
 
@@ -55,5 +53,5 @@ def train_default_transforms(
         augs.append(ApplyToKeys(DataKeys.INPUT, TAudio.FrequencyMasking(freq_mask_param=freq_mask_param)))
 
     if len(augs) > 0:
-        return merge_transforms(default_transforms(spectrogram_size), {"post_tensor_transform": nn.Sequential(*augs)})
+        return merge_transforms(default_transforms(spectrogram_size), {"per_sample_transform": nn.Sequential(*augs)})
     return default_transforms(spectrogram_size)

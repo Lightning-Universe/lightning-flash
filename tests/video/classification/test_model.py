@@ -153,7 +153,7 @@ def test_video_classifier_finetune_from_folders(tmpdir):
         assert len(VideoClassifier.available_backbones()) > 5
 
         train_transform = {
-            "post_tensor_transform": Compose(
+            "per_sample_transform": Compose(
                 [
                     ApplyTransformToKey(
                         key="video",
@@ -239,7 +239,7 @@ def test_video_classifier_finetune_from_files(tmpdir):
         assert len(VideoClassifier.available_backbones()) > 5
 
         train_transform = {
-            "post_tensor_transform": Compose(
+            "per_sample_transform": Compose(
                 [
                     ApplyTransformToKey(
                         key="video",
@@ -316,7 +316,7 @@ def test_video_classifier_finetune_fiftyone(tmpdir):
         assert len(VideoClassifier.available_backbones()) > 5
 
         train_transform = {
-            "post_tensor_transform": Compose(
+            "per_sample_transform": Compose(
                 [
                     ApplyTransformToKey(
                         key="video",

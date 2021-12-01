@@ -35,25 +35,27 @@ train_dataset = l2l.vision.datasets.MiniImagenet(root="data", mode="train", down
 val_dataset = l2l.vision.datasets.MiniImagenet(root="data", mode="validation", download=True)
 
 train_transform = {
-    "to_tensor_transform": nn.Sequential(
-        ApplyToKeys(DataKeys.INPUT, torchvision.transforms.ToTensor()),
+    "per_sample_transform": nn.Sequential(
+        ApplyToKeys(
+            DataKeys.INPUT,
+            nn.Sequential(
+                torchvision.transforms.ToTensor(),
+                Kg.Resize((196, 196)),
+                # SPATIAL
+                Ka.RandomHorizontalFlip(p=0.25),
+                Ka.RandomRotation(degrees=90.0, p=0.25),
+                Ka.RandomAffine(degrees=1 * 5.0, shear=1 / 5, translate=1 / 20, p=0.25),
+                Ka.RandomPerspective(distortion_scale=1 / 25, p=0.25),
+                # PIXEL-LEVEL
+                Ka.ColorJitter(brightness=1 / 30, p=0.25),  # brightness
+                Ka.ColorJitter(saturation=1 / 30, p=0.25),  # saturation
+                Ka.ColorJitter(contrast=1 / 30, p=0.25),  # contrast
+                Ka.ColorJitter(hue=1 / 30, p=0.25),  # hue
+                Ka.RandomMotionBlur(kernel_size=2 * (4 // 3) + 1, angle=1, direction=1.0, p=0.25),
+                Ka.RandomErasing(scale=(1 / 100, 1 / 50), ratio=(1 / 20, 1), p=0.25),
+            ),
+        ),
         ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
-    ),
-    "post_tensor_transform": ApplyToKeys(
-        DataKeys.INPUT,
-        Kg.Resize((196, 196)),
-        # SPATIAL
-        Ka.RandomHorizontalFlip(p=0.25),
-        Ka.RandomRotation(degrees=90.0, p=0.25),
-        Ka.RandomAffine(degrees=1 * 5.0, shear=1 / 5, translate=1 / 20, p=0.25),
-        Ka.RandomPerspective(distortion_scale=1 / 25, p=0.25),
-        # PIXEL-LEVEL
-        Ka.ColorJitter(brightness=1 / 30, p=0.25),  # brightness
-        Ka.ColorJitter(saturation=1 / 30, p=0.25),  # saturation
-        Ka.ColorJitter(contrast=1 / 30, p=0.25),  # contrast
-        Ka.ColorJitter(hue=1 / 30, p=0.25),  # hue
-        Ka.RandomMotionBlur(kernel_size=2 * (4 // 3) + 1, angle=1, direction=1.0, p=0.25),
-        Ka.RandomErasing(scale=(1 / 100, 1 / 50), ratio=(1 / 20, 1), p=0.25),
     ),
     "collate": kornia_collate,
     "per_batch_transform_on_device": ApplyToKeys(

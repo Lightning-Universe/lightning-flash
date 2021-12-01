@@ -95,19 +95,19 @@ class TestGraphClassificationData:
             predict_dataset=predict_dataset,
             train_transform=merge_transforms(
                 GraphClassificationInputTransform.default_transforms(),
-                {"pre_tensor_transform": OneHotDegree(tudataset.num_features - 1)},
+                {"per_sample_transform": OneHotDegree(tudataset.num_features - 1)},
             ),
             val_transform=merge_transforms(
                 GraphClassificationInputTransform.default_transforms(),
-                {"pre_tensor_transform": OneHotDegree(tudataset.num_features - 1)},
+                {"per_sample_transform": OneHotDegree(tudataset.num_features - 1)},
             ),
             test_transform=merge_transforms(
                 GraphClassificationInputTransform.default_transforms(),
-                {"pre_tensor_transform": OneHotDegree(tudataset.num_features - 1)},
+                {"per_sample_transform": OneHotDegree(tudataset.num_features - 1)},
             ),
             predict_transform=merge_transforms(
                 GraphClassificationInputTransform.default_transforms(),
-                {"pre_tensor_transform": OneHotDegree(tudataset.num_features - 1)},
+                {"per_sample_transform": OneHotDegree(tudataset.num_features - 1)},
             ),
             batch_size=2,
         )
