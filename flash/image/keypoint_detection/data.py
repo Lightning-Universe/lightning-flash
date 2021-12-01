@@ -94,18 +94,13 @@ class KeypointDetectionData(DataModule):
         **data_module_kwargs,
     ) -> "KeypointDetectionData":
 
-        train_data = (train_folder, train_ann_file)
-        val_data = (val_folder, val_ann_file)
-        test_data = (test_folder, test_ann_file)
-        predict_data = predict_folder
-
         dataset_kwargs = dict(parser=parser, data_pipeline_state=DataPipelineState())
 
         return cls(
-            IceVisionInput(RunningStage.TRAINING, *train_data, **dataset_kwargs),
-            IceVisionInput(RunningStage.VALIDATING, *val_data, **dataset_kwargs),
-            IceVisionInput(RunningStage.TESTING, *test_data, test_ann_file, **dataset_kwargs),
-            IceVisionInput(RunningStage.PREDICTING, *predict_data, **dataset_kwargs),
+            IceVisionInput(RunningStage.TRAINING, train_folder, train_ann_file, **dataset_kwargs),
+            IceVisionInput(RunningStage.VALIDATING, val_folder, val_ann_file, **dataset_kwargs),
+            IceVisionInput(RunningStage.TESTING, test_folder, test_ann_file, **dataset_kwargs),
+            IceVisionInput(RunningStage.PREDICTING, predict_folder, **dataset_kwargs),
             input_transform=cls.input_transform_cls(
                 train_transform,
                 val_transform,

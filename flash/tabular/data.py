@@ -358,7 +358,7 @@ class TabularData(DataModule):
         **data_module_kwargs: Any,
     ) -> "TabularData":
 
-        data_pipeline_state = (DataPipelineState(),)
+        data_pipeline_state = DataPipelineState()
 
         train_input = TabularCSVInput(
             RunningStage.TRAINING,
