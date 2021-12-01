@@ -89,7 +89,6 @@ Flash automatically applies some default image transformations and augmentations
 The base :class:`~flash.core.data.io.input_transform.InputTransform` defines 7 hooks for different stages in the data loading pipeline.
 To apply image augmentations you can directly import the ``default_transforms`` from ``flash.image.classification.transforms`` and then merge your custom image transformations with them using the :func:`~flash.core.data.transforms.merge_transforms` helper function.
 Here's an example where we load the default transforms and merge with custom `torchvision` transformations.
-We use the `post_tensor_transform` hook to apply the transformations after the image has been converted to a `torch.Tensor`.
 
 
 .. testsetup:: transformations
@@ -108,12 +107,12 @@ We use the `post_tensor_transform` hook to apply the transformations after the i
     from flash.image import ImageClassificationData, ImageClassifier
     from flash.image.classification.transforms import default_transforms
 
-    post_tensor_transform = ApplyToKeys(
+    per_sample_transform = ApplyToKeys(
         DataKeys.INPUT,
         T.Compose([T.RandomHorizontalFlip(), T.ColorJitter(), T.RandomAutocontrast(), T.RandomPerspective()]),
     )
 
-    new_transforms = merge_transforms(default_transforms((64, 64)), {"post_tensor_transform": post_tensor_transform})
+    new_transforms = merge_transforms(default_transforms((64, 64)), {"per_sample_transform": per_sample_transform})
 
     datamodule = ImageClassificationData.from_folders(
         train_folder="data/hymenoptera_data/train/", val_folder="data/hymenoptera_data/val/", train_transform=new_transforms

@@ -35,7 +35,7 @@ Here's an example:
     from flash.image import ObjectDetectionData
 
     train_transform = {
-        "pre_tensor_transform": IceVisionTransformAdapter([A.HorizontalFlip(), A.Normalize()]),
+        "per_sample_transform": IceVisionTransformAdapter([A.HorizontalFlip(), A.Normalize()]),
     }
 
     datamodule = ObjectDetectionData.from_coco(
