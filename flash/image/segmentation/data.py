@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, TYPE_CHECKING, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, TYPE_CHECKING, Union
 
 import numpy as np
 import torch
@@ -20,22 +20,17 @@ from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 import flash
-from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import (
-    DataKeys,
-    FiftyOneInput,
-    ImageLabelsMap,
-    InputFormat,
-    NumpyInput,
-    PathsInput,
-    TensorInput,
-)
+from flash.core.data.io.input import DataKeys, ImageLabelsMap, InputFormat
+from flash.core.data.io.input_base import Input
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.process import Deserializer
+from flash.core.data.utilities.paths import filter_valid_files, PATH_TYPE
+from flash.core.data.utilities.samples import to_samples
 from flash.core.data.utils import image_default_loader
+from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
 from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,
     _MATPLOTLIB_AVAILABLE,
@@ -65,153 +60,92 @@ else:
 if _TORCHVISION_AVAILABLE:
     import torchvision
     import torchvision.transforms.functional as FT
-    from torchvision.datasets.folder import has_file_allowed_extension
 
 
-class SemanticSegmentationNumpyInput(NumpyInput):
-    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        img = torch.from_numpy(sample[DataKeys.INPUT]).float()
-        sample[DataKeys.INPUT] = img
-        sample[DataKeys.METADATA] = {"size": img.shape}
+class SemanticSegmentationInput(Input):
+    def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+        sample[DataKeys.INPUT] = sample[DataKeys.INPUT].float()
+        if DataKeys.TARGET in sample:
+            sample[DataKeys.TARGET] = sample[DataKeys.TARGET].long()
+        sample[DataKeys.METADATA] = {"size": sample[DataKeys.INPUT].shape[-2:]}
         return sample
 
 
-class SemanticSegmentationTensorInput(TensorInput):
-    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        img = sample[DataKeys.INPUT].float()
-        sample[DataKeys.INPUT] = img
-        sample[DataKeys.METADATA] = {"size": img.shape}
-        return sample
+class SemanticSegmentationTensorInput(Input):
+    def load_data(self, tensor: Any, masks: Any = None) -> List[Dict[str, Any]]:
+        return to_samples(tensor, masks)
 
 
-class SemanticSegmentationPathsInput(PathsInput):
-    def __init__(self):
-        super().__init__(IMG_EXTENSIONS)
+class SemanticSegmentationNumpyInput(Input):
+    def load_data(self, array: Any, masks: Any = None) -> List[Dict[str, Any]]:
+        return to_samples(array, masks)
 
+    def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+        sample[DataKeys.INPUT] = torch.from_numpy(sample[DataKeys.INPUT])
+        if DataKeys.TARGET in sample:
+            sample[DataKeys.TARGET] = torch.from_numpy(sample[DataKeys.TARGET])
+        return super().load_sample(sample)
+
+
+class SemanticSegmentationFilesInput(SemanticSegmentationInput):
     def load_data(
-        self, data: Union[Tuple[str, str], Tuple[List[str], List[str]]], dataset: BaseAutoDataset
-    ) -> Sequence[Mapping[str, Any]]:
-        input_data, target_data = data
+        self, files: Union[PATH_TYPE, List[PATH_TYPE]], mask_files: Optional[Union[PATH_TYPE, List[PATH_TYPE]]] = None
+    ) -> List[Dict[str, Any]]:
+        if mask_files is None:
+            files = filter_valid_files(files, valid_extensions=IMG_EXTENSIONS)
+        else:
+            files, masks = filter_valid_files(files, mask_files, valid_extensions=IMG_EXTENSIONS)
+        return to_samples(files, mask_files)
 
-        if self.isdir(input_data) and self.isdir(target_data):
-            input_files = os.listdir(input_data)
-            target_files = os.listdir(target_data)
+    def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+        filepath = sample[DataKeys.INPUT]
+        sample[DataKeys.INPUT] = FT.to_tensor(image_default_loader(filepath))
+        if DataKeys.TARGET in sample:
+            sample[DataKeys.TARGET] = torchvision.io.read_image(sample[DataKeys.TARGET])[0]
+        sample = super().load_sample(sample)
+        sample[DataKeys.METADATA]["filepath"] = filepath
+        return sample
 
-            all_files = set(input_files).intersection(set(target_files))
 
-            if len(all_files) != len(input_files) or len(all_files) != len(target_files):
+class SemanticSegmentationFolderInput(SemanticSegmentationFilesInput):
+    def load_data(self, folder: PATH_TYPE, mask_folder: Optional[PATH_TYPE] = None) -> List[Dict[str, Any]]:
+        files = os.listdir(folder)
+        if mask_folder is not None:
+            mask_files = os.listdir(mask_folder)
+
+            all_files = set(files).intersection(set(mask_files))
+            if len(all_files) != len(files) or len(all_files) != len(mask_files):
                 rank_zero_warn(
-                    f"Found inconsistent files in input_dir: {input_data} and target_dir: {target_data}. Some files"
+                    f"Found inconsistent files in input folder: {folder} and mask folder: {mask_folder}. Some files"
                     " have been dropped.",
                     UserWarning,
                 )
 
-            input_data = [os.path.join(input_data, file) for file in all_files]
-            target_data = [os.path.join(target_data, file) for file in all_files]
-
-        if not isinstance(input_data, list) and not isinstance(target_data, list):
-            input_data = [input_data]
-            target_data = [target_data]
-
-        if len(input_data) != len(target_data):
-            raise MisconfigurationException(
-                f"The number of input files ({len(input_data)}) and number of target files ({len(target_data)}) must be"
-                " the same.",
-            )
-
-        data = filter(
-            lambda sample: (
-                has_file_allowed_extension(sample[0], self.extensions)
-                and has_file_allowed_extension(sample[1], self.extensions)
-            ),
-            zip(input_data, target_data),
-        )
-
-        data = [{DataKeys.INPUT: input, DataKeys.TARGET: target} for input, target in data]
-
-        return data
-
-    def predict_load_data(self, data: Union[str, List[str]]):
-        return super().predict_load_data(data)
-
-    def load_sample(self, sample: Mapping[str, Any]) -> Mapping[str, Union[torch.Tensor, torch.Size]]:
-        # unpack data paths
-        img_path = sample[DataKeys.INPUT]
-        img_labels_path = sample[DataKeys.TARGET]
-
-        # load images directly to torch tensors
-        img: torch.Tensor = FT.to_tensor(image_default_loader(img_path))  # CxHxW
-        img_labels: torch.Tensor = torchvision.io.read_image(img_labels_path)  # CxHxW
-        img_labels = img_labels[0]  # HxW
-
-        sample[DataKeys.INPUT] = img.float()
-        sample[DataKeys.TARGET] = img_labels.float()
-        sample[DataKeys.METADATA] = {
-            "filepath": img_path,
-            "size": img.shape,
-        }
-        return sample
-
-    @staticmethod
-    def predict_load_sample(sample: Mapping[str, Any]) -> Mapping[str, Any]:
-        img_path = sample[DataKeys.INPUT]
-        img = FT.to_tensor(image_default_loader(img_path)).float()
-
-        sample[DataKeys.INPUT] = img
-        sample[DataKeys.METADATA] = {
-            "filepath": img_path,
-            "size": img.shape,
-        }
-        return sample
+            files = [os.path.join(folder, file) for file in all_files]
+            mask_files = [os.path.join(mask_folder, file) for file in all_files]
+            return super().load_data(files, mask_files)
+        return super().load_data(files)
 
 
-class SemanticSegmentationFiftyOneInput(FiftyOneInput):
-    def __init__(self, label_field: str = "ground_truth"):
-        super().__init__(label_field=label_field)
-        self._fo_dataset_name = None
+class SemanticSegmentationFiftyOneInput(SemanticSegmentationFilesInput):
+    def load_data(self, sample_collection: SampleCollection, label_field: str = "ground_truth") -> List[Dict[str, Any]]:
+        label_utilities = FiftyOneLabelUtilities(label_field, fo.Segmentation)
+        label_utilities.validate(sample_collection)
+        self._fo_dataset_name = sample_collection.name
+        return to_samples(sample_collection.values("filepath"))
 
-    @property
-    def label_cls(self):
-        return fo.Segmentation
-
-    def load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
-        self._validate(data)
-
-        self._fo_dataset_name = data.name
-        return [{DataKeys.INPUT: f} for f in data.values("filepath")]
-
-    def load_sample(self, sample: Mapping[str, str]) -> Mapping[str, Union[torch.Tensor, torch.Size]]:
-        _fo_dataset = fo.load_dataset(self._fo_dataset_name)
-
-        img_path = sample[DataKeys.INPUT]
-        fo_sample = _fo_dataset[img_path]
-
-        img: torch.Tensor = FT.to_tensor(image_default_loader(img_path))  # CxHxW
-        img_labels: torch.Tensor = torch.from_numpy(fo_sample[self.label_field].mask)  # HxW
-
-        sample[DataKeys.INPUT] = img.float()
-        sample[DataKeys.TARGET] = img_labels.float()
-        sample[DataKeys.METADATA] = {
-            "filepath": img_path,
-            "size": img.shape,
-        }
-        return sample
-
-    @staticmethod
-    def predict_load_sample(sample: Mapping[str, Any]) -> Mapping[str, Any]:
-        img_path = sample[DataKeys.INPUT]
-        img = FT.to_tensor(image_default_loader(img_path)).float()
-
-        sample[DataKeys.INPUT] = img
-        sample[DataKeys.METADATA] = {
-            "filepath": img_path,
-            "size": img.shape,
-        }
+    def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+        filepath = sample[DataKeys.INPUT]
+        sample = super().load_sample(sample)
+        if not self.predicting:
+            fo_dataset = fo.load_dataset(self._fo_dataset_name)
+            fo_sample = fo_dataset[filepath]
+            sample[DataKeys.TARGET] = torch.from_numpy(fo_sample[self.label_field].mask).long()  # H x W
         return sample
 
 
 class SemanticSegmentationDeserializer(ImageDeserializer):
-    def deserialize(self, data: str) -> torch.Tensor:
+    def deserialize(self, data: str) -> Dict[str, Any]:
         result = super().deserialize(data)
         result[DataKeys.INPUT] = FT.to_tensor(result[DataKeys.INPUT])
         result[DataKeys.METADATA] = {"size": result[DataKeys.INPUT].shape}
@@ -229,7 +163,6 @@ class SemanticSegmentationInputTransform(InputTransform):
         deserializer: Optional["Deserializer"] = None,
         num_classes: int = None,
         labels_map: Dict[int, Tuple[int, int, int]] = None,
-        **input_kwargs: Any,
     ) -> None:
         """InputTransform pipeline for semantic segmentation tasks.
 
@@ -239,7 +172,6 @@ class SemanticSegmentationInputTransform(InputTransform):
             test_transform: Dictionary with the set of transforms to apply during testing.
             predict_transform: Dictionary with the set of transforms to apply during prediction.
             image_size: A tuple with the expected output image size.
-            **input_kwargs: Additional arguments passed on to the data source constructors.
         """
         self.image_size = image_size
         self.num_classes = num_classes
@@ -252,11 +184,11 @@ class SemanticSegmentationInputTransform(InputTransform):
             test_transform=test_transform,
             predict_transform=predict_transform,
             inputs={
-                InputFormat.FIFTYONE: SemanticSegmentationFiftyOneInput(**input_kwargs),
-                InputFormat.FILES: SemanticSegmentationPathsInput(),
-                InputFormat.FOLDERS: SemanticSegmentationPathsInput(),
-                InputFormat.TENSORS: SemanticSegmentationTensorInput(),
-                InputFormat.NUMPY: SemanticSegmentationNumpyInput(),
+                InputFormat.FIFTYONE: SemanticSegmentationFiftyOneInput,
+                InputFormat.FILES: SemanticSegmentationFilesInput,
+                InputFormat.FOLDERS: SemanticSegmentationFolderInput,
+                InputFormat.TENSORS: SemanticSegmentationTensorInput,
+                InputFormat.NUMPY: SemanticSegmentationNumpyInput,
             },
             deserializer=deserializer or SemanticSegmentationDeserializer(),
             default_input=InputFormat.FILES,

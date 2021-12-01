@@ -78,7 +78,7 @@ class ImageDeserializer(Deserializer):
 class ImageInput(Input):
     @requires("image")
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        w, h = sample[DataKeys.INPUT].size  # WxH
+        w, h = sample[DataKeys.INPUT].size  # W x H
         if DataKeys.METADATA not in sample:
             sample[DataKeys.METADATA] = {}
         sample[DataKeys.METADATA]["size"] = (h, w)
