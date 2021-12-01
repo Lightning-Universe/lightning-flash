@@ -380,42 +380,16 @@ class AudioClassificationData(DataModule):
     ) -> "AudioClassificationData":
         dataset_kwargs = dict(data_pipeline_state=DataPipelineState())
 
+        train_data = (train_data_frame, input_field, target_fields, train_images_root, train_resolver)
+        val_data = (val_data_frame, input_field, target_fields, val_images_root, val_resolver)
+        test_data = (test_data_frame, input_field, target_fields, test_images_root, test_resolver)
+        predict_data = (predict_data_frame, input_field, None, predict_images_root, predict_resolver)
+
         return cls(
-            AudioClassificationDataFrameInput(
-                RunningStage.TRAINING,
-                train_data_frame,
-                input_field,
-                target_fields,
-                train_images_root,
-                train_resolver,
-                **dataset_kwargs,
-            ),
-            AudioClassificationDataFrameInput(
-                RunningStage.VALIDATING,
-                val_data_frame,
-                input_field,
-                target_fields,
-                val_images_root,
-                val_resolver,
-                **dataset_kwargs,
-            ),
-            AudioClassificationDataFrameInput(
-                RunningStage.TESTING,
-                test_data_frame,
-                input_field,
-                target_fields,
-                test_images_root,
-                test_resolver,
-                **dataset_kwargs,
-            ),
-            AudioClassificationDataFrameInput(
-                RunningStage.PREDICTING,
-                predict_data_frame,
-                input_field,
-                root=predict_images_root,
-                resolver=predict_resolver,
-                **dataset_kwargs,
-            ),
+            AudioClassificationDataFrameInput(RunningStage.TRAINING, *train_data, **dataset_kwargs),
+            AudioClassificationDataFrameInput(RunningStage.VALIDATING, *val_data, **dataset_kwargs),
+            AudioClassificationDataFrameInput(RunningStage.TESTING, *test_data, **dataset_kwargs),
+            AudioClassificationDataFrameInput(RunningStage.PREDICTING, *predict_data, **dataset_kwargs),
             input_transform=cls.input_transform_cls(
                 train_transform,
                 val_transform,
@@ -456,42 +430,16 @@ class AudioClassificationData(DataModule):
     ) -> "AudioClassificationData":
         dataset_kwargs = dict(data_pipeline_state=DataPipelineState())
 
+        train_data = (train_file, input_field, target_fields, train_images_root, train_resolver)
+        val_data = (val_file, input_field, target_fields, val_images_root, val_resolver)
+        test_data = (test_file, input_field, target_fields, test_images_root, test_resolver)
+        predict_data = (predict_file, input_field, None, predict_images_root, predict_resolver)
+
         return cls(
-            AudioClassificationCSVInput(
-                RunningStage.TRAINING,
-                train_file,
-                input_field,
-                target_fields,
-                train_images_root,
-                train_resolver,
-                **dataset_kwargs,
-            ),
-            AudioClassificationCSVInput(
-                RunningStage.VALIDATING,
-                val_file,
-                input_field,
-                target_fields,
-                val_images_root,
-                val_resolver,
-                **dataset_kwargs,
-            ),
-            AudioClassificationCSVInput(
-                RunningStage.TESTING,
-                test_file,
-                input_field,
-                target_fields,
-                test_images_root,
-                test_resolver,
-                **dataset_kwargs,
-            ),
-            AudioClassificationCSVInput(
-                RunningStage.PREDICTING,
-                predict_file,
-                input_field,
-                root=predict_images_root,
-                resolver=predict_resolver,
-                **dataset_kwargs,
-            ),
+            AudioClassificationCSVInput(RunningStage.TRAINING, *train_data, **dataset_kwargs),
+            AudioClassificationCSVInput(RunningStage.VALIDATING, *val_data, **dataset_kwargs),
+            AudioClassificationCSVInput(RunningStage.TESTING, *test_data, **dataset_kwargs),
+            AudioClassificationCSVInput(RunningStage.PREDICTING, *predict_data, **dataset_kwargs),
             input_transform=cls.input_transform_cls(
                 train_transform,
                 val_transform,
