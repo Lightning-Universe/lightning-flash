@@ -264,11 +264,7 @@ def test_datamodule_labelstudio_text():
     backbone = "prajjwal1/bert-medium"
     datamodule = TextClassificationData.from_labelstudio(
         train_export_json="data/project.json",
-        val_export_json="data/project.json",
-        test_export_json="data/project.json",
-        predict_export_json="data/project.json",
         data_folder="data/upload/",
-        val_split=0,
         backbone=backbone,
     )
     assert datamodule

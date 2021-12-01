@@ -23,6 +23,7 @@ import flash
 from flash.core.data.auto_dataset import AutoDataset
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
+from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.classification_input import ClassificationState
 from flash.core.data.io.input import DataKeys, Input, InputFormat
 from flash.core.data.io.input_transform import InputTransform
@@ -279,9 +280,6 @@ class TextClassificationInputTransform(InputTransform):
                 InputFormat.HUGGINGFACE_DATASET: TextHuggingFaceDatasetInput(self.backbone, max_length=max_length),
                 InputFormat.DATAFRAME: TextDataFrameInput(self.backbone, max_length=max_length),
                 InputFormat.LISTS: TextListInput(self.backbone, max_length=max_length),
-                InputFormat.LABELSTUDIO: LabelStudioTextClassificationInput(
-                    backbone=self.backbone, max_length=max_length
-                ),
             },
             default_input=InputFormat.LISTS,
             deserializer=TextDeserializer(backbone, max_length),
@@ -642,6 +640,8 @@ class TextClassificationData(DataModule):
     @classmethod
     def from_labelstudio(
         cls,
+        backbone: str,
+        max_length: int = 128,
         export_json: str = None,
         train_export_json: str = None,
         val_export_json: str = None,
@@ -725,16 +725,20 @@ class TextClassificationData(DataModule):
             multi_label=multi_label,
         )
 
+        dataset_kwargs = dict(backbone=backbone, data_pipeline_state=DataPipelineState(), max_length=max_length)
+
         return cls(
-            LabelStudioTextClassificationInput(RunningStage.TRAINING, train_data),
-            LabelStudioTextClassificationInput(RunningStage.VALIDATING, val_data),
-            LabelStudioTextClassificationInput(RunningStage.TESTING, test_data),
-            LabelStudioTextClassificationInput(RunningStage.PREDICTING, predict_data),
+            LabelStudioTextClassificationInput(RunningStage.TRAINING, train_data, **dataset_kwargs),
+            LabelStudioTextClassificationInput(RunningStage.VALIDATING, val_data, **dataset_kwargs),
+            LabelStudioTextClassificationInput(RunningStage.TESTING, test_data, **dataset_kwargs),
+            LabelStudioTextClassificationInput(RunningStage.PREDICTING, predict_data, **dataset_kwargs),
             input_transform=cls.input_transform_cls(
                 train_transform,
                 val_transform,
                 test_transform,
                 predict_transform,
+                backbone=backbone,
+                max_length=max_length,
                 **data_module_kwargs,
             ),
             **data_module_kwargs,

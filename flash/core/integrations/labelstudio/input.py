@@ -428,6 +428,8 @@ def _parse_labelstudio_arguments(
 
     train_data = train_data if train_data else data
 
+    # TODO: Extract test from data if present.
+
     if val_split and val_data is None:
         train_data, val_data = LabelStudioInput._split_train_val_data(train_data, val_split)
 
