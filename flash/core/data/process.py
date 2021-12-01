@@ -24,26 +24,16 @@ from flash.core.data.io.output import Output
 
 
 class ServeInput(Input):
-    def serve_load_data(self, data: Any) -> List[Any]:
-        raise NotImplementedError
-
     def serve_load_sample(self, sample: Any) -> List[Any]:
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def serve_example_input(self) -> str:
         raise NotImplementedError
 
 
 class Deserializer(ServeInput):
     """Deserializer."""
 
-    def deserialize(self, sample: Any) -> Any:  # TODO: Output must be a tensor???
-        sample = self.serve_load_data(sample)
+    def deserialize(self, sample: Any) -> Any:
         return self.serve_load_sample(sample)
 
-    @property
     @abstractmethod
     def example_input(self) -> str:
         raise NotImplementedError
