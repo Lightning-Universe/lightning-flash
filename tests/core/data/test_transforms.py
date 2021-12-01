@@ -117,37 +117,37 @@ _MOCK_TRANSFORM = Mock()
     "base_transforms, additional_transforms, expected_result",
     [
         (
-            {"to_tensor_transform": _MOCK_TRANSFORM},
-            {"post_tensor_transform": _MOCK_TRANSFORM},
-            {"to_tensor_transform": _MOCK_TRANSFORM, "post_tensor_transform": _MOCK_TRANSFORM},
+            {"per_sample_transform": _MOCK_TRANSFORM},
+            {"per_batch_transform": _MOCK_TRANSFORM},
+            {"per_sample_transform": _MOCK_TRANSFORM, "per_batch_transform": _MOCK_TRANSFORM},
         ),
         (
-            {"to_tensor_transform": _MOCK_TRANSFORM},
-            {"to_tensor_transform": _MOCK_TRANSFORM},
+            {"per_sample_transform": _MOCK_TRANSFORM},
+            {"per_sample_transform": _MOCK_TRANSFORM},
             {
-                "to_tensor_transform": nn.Sequential(
+                "per_sample_transform": nn.Sequential(
                     convert_to_modules(_MOCK_TRANSFORM), convert_to_modules(_MOCK_TRANSFORM)
                 )
             },
         ),
         (
-            {"to_tensor_transform": _MOCK_TRANSFORM},
-            {"to_tensor_transform": _MOCK_TRANSFORM, "post_tensor_transform": _MOCK_TRANSFORM},
+            {"per_sample_transform": _MOCK_TRANSFORM},
+            {"per_sample_transform": _MOCK_TRANSFORM, "per_batch_transform": _MOCK_TRANSFORM},
             {
-                "to_tensor_transform": nn.Sequential(
+                "per_sample_transform": nn.Sequential(
                     convert_to_modules(_MOCK_TRANSFORM), convert_to_modules(_MOCK_TRANSFORM)
                 ),
-                "post_tensor_transform": _MOCK_TRANSFORM,
+                "per_batch_transform": _MOCK_TRANSFORM,
             },
         ),
         (
-            {"to_tensor_transform": _MOCK_TRANSFORM, "post_tensor_transform": _MOCK_TRANSFORM},
-            {"to_tensor_transform": _MOCK_TRANSFORM},
+            {"per_sample_transform": _MOCK_TRANSFORM, "per_batch_transform": _MOCK_TRANSFORM},
+            {"per_sample_transform": _MOCK_TRANSFORM},
             {
-                "to_tensor_transform": nn.Sequential(
+                "per_sample_transform": nn.Sequential(
                     convert_to_modules(_MOCK_TRANSFORM), convert_to_modules(_MOCK_TRANSFORM)
                 ),
-                "post_tensor_transform": _MOCK_TRANSFORM,
+                "per_batch_transform": _MOCK_TRANSFORM,
             },
         ),
     ],

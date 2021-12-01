@@ -93,7 +93,7 @@ For object-detection tasks, you can leverage the transformations from `Albumenta
     from flash.image import ObjectDetectionData
 
     train_transform = {
-        "pre_tensor_transform": transforms.IceVisionTransformAdapter(
+        "per_sample_transform": transforms.IceVisionTransformAdapter(
             [*A.resize_and_pad(128), A.Normalize(), A.Flip(0.4), alb.RandomBrightnessContrast()]
         )
     }

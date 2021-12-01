@@ -134,13 +134,13 @@ class TemplateInputTransform(InputTransform):
         return torch.from_numpy(input).float()
 
     def default_transforms(self) -> Optional[Dict[str, Callable]]:
-        """Configures the default ``to_tensor_transform``.
+        """Configures the default ``per_sample_transform``.
 
         Returns:
             Our dictionary of transforms.
         """
         return {
-            "to_tensor_transform": nn.Sequential(
+            "per_sample_transform": nn.Sequential(
                 ApplyToKeys(DataKeys.INPUT, self.input_to_tensor),
                 ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
             ),
@@ -255,14 +255,5 @@ class TemplateVisualization(BaseVisualization):
     def show_load_sample(self, samples: List[Any], running_stage: RunningStage):
         print(samples)
 
-    def show_pre_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
+    def show_per_sample_transform(self, samples: List[Any], running_stage: RunningStage):
         print(samples)
-
-    def show_to_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
-        print(samples)
-
-    def show_post_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
-        print(samples)
-
-    def show_per_batch_transform(self, batch: List[Any], running_stage):
-        print(batch)

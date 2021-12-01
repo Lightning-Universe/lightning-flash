@@ -248,7 +248,7 @@ class IceVisionTransformAdapter(nn.Module):
 def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
     """The default transforms from IceVision."""
     return {
-        "pre_tensor_transform": IceVisionTransformAdapter([*A.resize_and_pad(image_size), A.Normalize()]),
+        "per_sample_transform": IceVisionTransformAdapter([*A.resize_and_pad(image_size), A.Normalize()]),
     }
 
 
@@ -256,5 +256,5 @@ def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
 def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
     """The default augmentations from IceVision."""
     return {
-        "pre_tensor_transform": IceVisionTransformAdapter([*A.aug_tfms(size=image_size), A.Normalize()]),
+        "per_sample_transform": IceVisionTransformAdapter([*A.aug_tfms(size=image_size), A.Normalize()]),
     }
