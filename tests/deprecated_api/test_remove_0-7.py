@@ -11,11 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from flash.image import SemanticSegmentation
-from flash.image.segmentation.output import SegmentationLabelsOutput
+import pytest
 
-model = SemanticSegmentation.load_from_checkpoint(
-    "https://flash-weights.s3.amazonaws.com/0.6.0/semantic_segmentation_model.pt"
-)
-model.output = SegmentationLabelsOutput(visualize=False)
-model.serve()
+from flash.core.classification import Labels, Probabilities
+
+
+def test_v0_7_deprecated_labels(tmpdir):
+    with pytest.deprecated_call(match="`Labels` was deprecated in v0.6.0 and will be removed in v0.7.0."):
+        Labels()
+
+
+def test_v0_7_deprecated_probabilities(tmpdir):
+    with pytest.deprecated_call(match="`Probabilities` was deprecated in v0.6.0 and will be removed in v0.7.0."):
+        Probabilities()
