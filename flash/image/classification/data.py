@@ -232,11 +232,14 @@ class ImageClassificationData(DataModule):
         image_size: Tuple[int, int] = (196, 196),
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
+
+        dataset_kwargs = dict(data_pipeline_state=DataPipelineState())
+
         return cls(
-            ImageClassificationFilesInput(RunningStage.TRAINING, train_files, train_targets),
-            ImageClassificationFilesInput(RunningStage.VALIDATING, val_files, val_targets),
-            ImageClassificationFilesInput(RunningStage.TESTING, test_files, test_targets),
-            ImageClassificationFilesInput(RunningStage.PREDICTING, predict_files),
+            ImageClassificationFilesInput(RunningStage.TRAINING, train_files, train_targets, **dataset_kwargs),
+            ImageClassificationFilesInput(RunningStage.VALIDATING, val_files, val_targets, **dataset_kwargs),
+            ImageClassificationFilesInput(RunningStage.TESTING, test_files, test_targets, **dataset_kwargs),
+            ImageClassificationFilesInput(RunningStage.PREDICTING, predict_files, **dataset_kwargs),
             input_transform=cls.input_transform_cls(
                 train_transform,
                 val_transform,
@@ -261,11 +264,14 @@ class ImageClassificationData(DataModule):
         image_size: Tuple[int, int] = (196, 196),
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
+
+        dataset_kwargs = dict(data_pipeline_state=DataPipelineState())
+
         return cls(
-            ImageClassificationFolderInput(RunningStage.TRAINING, train_folder),
-            ImageClassificationFolderInput(RunningStage.VALIDATING, val_folder),
-            ImageClassificationFolderInput(RunningStage.TESTING, test_folder),
-            ImageClassificationFolderInput(RunningStage.PREDICTING, predict_folder),
+            ImageClassificationFolderInput(RunningStage.TRAINING, train_folder, **dataset_kwargs),
+            ImageClassificationFolderInput(RunningStage.VALIDATING, val_folder, **dataset_kwargs),
+            ImageClassificationFolderInput(RunningStage.TESTING, test_folder, **dataset_kwargs),
+            ImageClassificationFolderInput(RunningStage.PREDICTING, predict_folder, **dataset_kwargs),
             input_transform=cls.input_transform_cls(
                 train_transform,
                 val_transform,
@@ -293,11 +299,14 @@ class ImageClassificationData(DataModule):
         image_size: Tuple[int, int] = (196, 196),
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
+
+        dataset_kwargs = dict(data_pipeline_state=DataPipelineState())
+
         return cls(
-            ImageClassificationNumpyInput(RunningStage.TRAINING, train_data, train_targets),
-            ImageClassificationNumpyInput(RunningStage.VALIDATING, val_data, val_targets),
-            ImageClassificationNumpyInput(RunningStage.TESTING, test_data, test_targets),
-            ImageClassificationNumpyInput(RunningStage.PREDICTING, predict_data),
+            ImageClassificationNumpyInput(RunningStage.TRAINING, train_data, train_targets, **dataset_kwargs),
+            ImageClassificationNumpyInput(RunningStage.VALIDATING, val_data, val_targets, **dataset_kwargs),
+            ImageClassificationNumpyInput(RunningStage.TESTING, test_data, test_targets, **dataset_kwargs),
+            ImageClassificationNumpyInput(RunningStage.PREDICTING, predict_data, **dataset_kwargs),
             input_transform=cls.input_transform_cls(
                 train_transform,
                 val_transform,
@@ -325,11 +334,14 @@ class ImageClassificationData(DataModule):
         image_size: Tuple[int, int] = (196, 196),
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
+
+        dataset_kwargs = dict(data_pipeline_state=DataPipelineState())
+
         return cls(
-            ImageClassificationTensorInput(RunningStage.TRAINING, train_data, train_targets),
-            ImageClassificationTensorInput(RunningStage.VALIDATING, val_data, val_targets),
-            ImageClassificationTensorInput(RunningStage.TESTING, test_data, test_targets),
-            ImageClassificationTensorInput(RunningStage.PREDICTING, predict_data),
+            ImageClassificationTensorInput(RunningStage.TRAINING, train_data, train_targets, **dataset_kwargs),
+            ImageClassificationTensorInput(RunningStage.VALIDATING, val_data, val_targets, **dataset_kwargs),
+            ImageClassificationTensorInput(RunningStage.TESTING, test_data, test_targets, **dataset_kwargs),
+            ImageClassificationTensorInput(RunningStage.PREDICTING, predict_data, **dataset_kwargs),
             input_transform=cls.input_transform_cls(
                 train_transform,
                 val_transform,
@@ -364,23 +376,19 @@ class ImageClassificationData(DataModule):
         image_size: Tuple[int, int] = (196, 196),
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
+
+        dataset_kwargs = dict(data_pipeline_state=DataPipelineState())
+
+        train_data = (train_data_frame, input_field, target_fields, train_images_root, train_resolver)
+        val_data = (val_data_frame, input_field, target_fields, val_images_root, val_resolver)
+        test_data = (test_data_frame, input_field, target_fields, test_images_root, test_resolver)
+        predict_data = (predict_data_frame, input_field, predict_images_root, predict_resolver)
+
         return cls(
-            ImageClassificationDataFrameInput(
-                RunningStage.TRAINING, train_data_frame, input_field, target_fields, train_images_root, train_resolver
-            ),
-            ImageClassificationCSVInput(
-                RunningStage.VALIDATING, val_data_frame, input_field, target_fields, val_images_root, val_resolver
-            ),
-            ImageClassificationCSVInput(
-                RunningStage.TESTING, test_data_frame, input_field, target_fields, test_images_root, test_resolver
-            ),
-            ImageClassificationCSVInput(
-                RunningStage.PREDICTING,
-                predict_data_frame,
-                input_field,
-                root=predict_images_root,
-                resolver=predict_resolver,
-            ),
+            ImageClassificationCSVInput(RunningStage.TRAINING, *train_data, **dataset_kwargs),
+            ImageClassificationCSVInput(RunningStage.VALIDATING, *val_data, **dataset_kwargs),
+            ImageClassificationCSVInput(RunningStage.TESTING, *test_data, **dataset_kwargs),
+            ImageClassificationCSVInput(RunningStage.PREDICTING, *predict_data, **dataset_kwargs),
             input_transform=cls.input_transform_cls(
                 train_transform,
                 val_transform,
@@ -415,19 +423,19 @@ class ImageClassificationData(DataModule):
         image_size: Tuple[int, int] = (196, 196),
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
+
+        dataset_kwargs = dict(data_pipeline_state=DataPipelineState())
+
+        train_data = (train_file, input_field, target_fields, train_images_root, train_resolver)
+        val_data = (val_file, input_field, target_fields, val_images_root, val_resolver)
+        test_data = (test_file, input_field, target_fields, test_images_root, test_resolver)
+        predict_data = (predict_file, input_field, predict_images_root, predict_resolver)
+
         return cls(
-            ImageClassificationCSVInput(
-                RunningStage.TRAINING, train_file, input_field, target_fields, train_images_root, train_resolver
-            ),
-            ImageClassificationCSVInput(
-                RunningStage.VALIDATING, val_file, input_field, target_fields, val_images_root, val_resolver
-            ),
-            ImageClassificationCSVInput(
-                RunningStage.TESTING, test_file, input_field, target_fields, test_images_root, test_resolver
-            ),
-            ImageClassificationCSVInput(
-                RunningStage.PREDICTING, predict_file, input_field, root=predict_images_root, resolver=predict_resolver
-            ),
+            ImageClassificationCSVInput(RunningStage.TRAINING, *train_data, **dataset_kwargs),
+            ImageClassificationCSVInput(RunningStage.VALIDATING, *val_data, **dataset_kwargs),
+            ImageClassificationCSVInput(RunningStage.TESTING, *test_data, **dataset_kwargs),
+            ImageClassificationCSVInput(RunningStage.PREDICTING, *predict_data, **dataset_kwargs),
             input_transform=cls.input_transform_cls(
                 train_transform,
                 val_transform,
@@ -454,11 +462,14 @@ class ImageClassificationData(DataModule):
         image_size: Tuple[int, int] = (196, 196),
         **data_module_kwargs,
     ) -> "ImageClassificationData":
+
+        dataset_kwargs = dict(data_pipeline_state=DataPipelineState())
+
         return cls(
-            ImageClassificationFiftyOneInput(RunningStage.TRAINING, train_dataset, label_field),
-            ImageClassificationFiftyOneInput(RunningStage.VALIDATING, val_dataset, label_field),
-            ImageClassificationFiftyOneInput(RunningStage.TESTING, test_dataset, label_field),
-            ImageClassificationFiftyOneInput(RunningStage.PREDICTING, predict_dataset, label_field),
+            ImageClassificationFiftyOneInput(RunningStage.TRAINING, train_dataset, label_field, **dataset_kwargs),
+            ImageClassificationFiftyOneInput(RunningStage.VALIDATING, val_dataset, label_field, **dataset_kwargs),
+            ImageClassificationFiftyOneInput(RunningStage.TESTING, test_dataset, label_field, **dataset_kwargs),
+            ImageClassificationFiftyOneInput(RunningStage.PREDICTING, predict_dataset, label_field, **dataset_kwargs),
             input_transform=cls.input_transform_cls(
                 train_transform,
                 val_transform,

@@ -16,6 +16,7 @@ from typing import Any, Callable, Dict, Optional
 from torch.utils.data import Dataset
 
 from flash.core.data.data_module import DataModule
+from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
@@ -74,11 +75,14 @@ class GraphClassificationData(DataModule):
         predict_transform: Optional[Dict[str, Callable]] = None,
         **data_module_kwargs,
     ) -> "GraphClassificationData":
+
+        dataset_kwargs = dict(data_pipeline_state=DataPipelineState())
+
         return cls(
-            GraphDatasetInput(RunningStage.TRAINING, train_dataset),
-            GraphDatasetInput(RunningStage.VALIDATING, val_dataset),
-            GraphDatasetInput(RunningStage.TESTING, test_dataset),
-            GraphDatasetInput(RunningStage.PREDICTING, predict_dataset),
+            GraphDatasetInput(RunningStage.TRAINING, train_dataset, **dataset_kwargs),
+            GraphDatasetInput(RunningStage.VALIDATING, val_dataset, **dataset_kwargs),
+            GraphDatasetInput(RunningStage.TESTING, test_dataset, **dataset_kwargs),
+            GraphDatasetInput(RunningStage.PREDICTING, predict_dataset, **dataset_kwargs),
             input_transform=cls.input_transform_cls(
                 train_transform,
                 val_transform,
@@ -94,3 +98,11 @@ class GraphClassificationData(DataModule):
         n_cls_val = getattr(self.val_dataset, "num_features", None)
         n_cls_test = getattr(self.test_dataset, "num_features", None)
         return n_cls_train or n_cls_val or n_cls_test
+
+    from_folders = None
+    from_files = None
+    from_tensors = None
+    from_numpy = None
+    from_json = None
+    from_csv = None
+    from_fiftyone = None

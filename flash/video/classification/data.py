@@ -374,6 +374,7 @@ class VideoClassificationData(DataModule):
             video_sampler=video_sampler,
             decode_audio=decode_audio,
             decoder=decoder,
+            data_pipeline_state=DataPipelineState(),
         )
         return cls(
             VideoClassificationFilesInput(RunningStage.TRAINING, train_files, train_targets, **dataset_kwargs),
@@ -415,6 +416,7 @@ class VideoClassificationData(DataModule):
             video_sampler=video_sampler,
             decode_audio=decode_audio,
             decoder=decoder,
+            data_pipeline_state=DataPipelineState(),
         )
         return cls(
             VideoClassificationFoldersInput(RunningStage.TRAINING, train_folder, **dataset_kwargs),
@@ -459,6 +461,7 @@ class VideoClassificationData(DataModule):
             decode_audio=decode_audio,
             decoder=decoder,
             label_field=label_field,
+            data_pipeline_state=DataPipelineState(),
         )
         return cls(
             VideoClassificationFiftyOneInput(RunningStage.TRAINING, train_dataset, **dataset_kwargs),

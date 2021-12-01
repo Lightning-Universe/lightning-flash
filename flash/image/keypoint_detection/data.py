@@ -15,6 +15,7 @@ from functools import partial
 from typing import Any, Callable, Dict, Optional, Tuple, Type, Union
 
 from flash.core.data.data_module import DataModule
+from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.integrations.icevision.data import IceVisionInput
@@ -75,7 +76,7 @@ class KeypointDetectionData(DataModule):
     input_transform_cls = KeypointDetectionInputTransform
 
     @classmethod
-    def from_folders(
+    def from_icedata(
         cls,
         train_folder: Optional[str] = None,
         train_ann_file: Optional[str] = None,
@@ -92,11 +93,19 @@ class KeypointDetectionData(DataModule):
         parser: Optional[Union[Callable, Type[Parser]]] = None,
         **data_module_kwargs,
     ) -> "KeypointDetectionData":
+
+        train_data = (train_folder, train_ann_file)
+        val_data = (val_folder, val_ann_file)
+        test_data = (test_folder, test_ann_file)
+        predict_data = predict_folder
+
+        dataset_kwargs = dict(parser=parser, data_pipeline_state=DataPipelineState())
+
         return cls(
-            IceVisionInput(RunningStage.TRAINING, train_folder, train_ann_file, parser=parser),
-            IceVisionInput(RunningStage.VALIDATING, val_folder, val_ann_file, parser=parser),
-            IceVisionInput(RunningStage.TESTING, test_folder, test_ann_file, parser=parser),
-            IceVisionInput(RunningStage.PREDICTING, predict_folder, parser=parser),
+            IceVisionInput(RunningStage.TRAINING, *train_data, **dataset_kwargs),
+            IceVisionInput(RunningStage.VALIDATING, *val_data, **dataset_kwargs),
+            IceVisionInput(RunningStage.TESTING, *test_data, test_ann_file, **dataset_kwargs),
+            IceVisionInput(RunningStage.PREDICTING, *predict_data, **dataset_kwargs),
             input_transform=cls.input_transform_cls(
                 train_transform,
                 val_transform,
@@ -145,7 +154,7 @@ class KeypointDetectionData(DataModule):
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             image_size: The size to resize images (and rescale their keypoints) to.
         """
-        return cls.from_folders(
+        return cls.from_icedata(
             train_folder=train_folder,
             train_ann_file=train_ann_file,
             val_folder=val_folder,

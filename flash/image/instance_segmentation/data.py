@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import partial
-from typing import Any, Callable, Dict, Optional, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import DataKeys, InputFormat
@@ -51,10 +51,11 @@ class InstanceSegmentationInputTransform(InputTransform):
             inputs={
                 "coco": partial(IceVisionInput, parser=COCOMaskParser),
                 "voc": partial(IceVisionInput, parser=VOCMaskParser),
+                "icedata": partial(IceVisionInput, parser=Parser),
                 InputFormat.FILES: IceVisionInput,
                 InputFormat.FOLDERS: partial(IceVisionInput, parser=parser),
             },
-            default_input=InputFormat.FILES,
+            default_input="icedata",
         )
 
         self._default_collate = self._identity
@@ -85,7 +86,7 @@ class InstanceSegmentationData(DataModule):
     output_transform_cls = InstanceSegmentationOutputTransform
 
     @classmethod
-    def from_folders(
+    def from_icedata(
         cls,
         train_folder: Optional[str] = None,
         train_ann_file: Optional[str] = None,
@@ -155,7 +156,7 @@ class InstanceSegmentationData(DataModule):
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             image_size: The size to resize images (and their masks) to.
         """
-        return cls.from_folders(
+        return cls.from_icedata(
             train_folder=train_folder,
             train_ann_file=train_ann_file,
             val_folder=val_folder,
@@ -210,7 +211,7 @@ class InstanceSegmentationData(DataModule):
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             image_size: The size to resize images (and their masks) to.
         """
-        return cls.from_folders(
+        return cls.from_icedata(
             train_folder=train_folder,
             train_ann_file=train_ann_file,
             val_folder=val_folder,
@@ -226,3 +227,80 @@ class InstanceSegmentationData(DataModule):
             parser=VOCMaskParser,
             **data_module_kwargs,
         )
+
+    @classmethod
+    def from_folders(
+        cls,
+        predict_folder: Optional[str] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        image_size: Tuple[int, int] = (128, 128),
+        **data_module_kwargs: Any,
+    ) -> "DataModule":
+        """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given folders using the
+        :class:`~flash.core.data.io.input.Input` of name
+        :attr:`~flash.core.data.io.input.InputFormat.FOLDERS`
+        from the passed or constructed :class:`~flash.core.data.io.input_transform.InputTransform`.
+
+        Args:
+            predict_folder: The folder containing the predict data.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+            data_module_kwargs: The keywords arguments for creating the datamodule.
+
+        Returns:
+            The constructed data module.
+        """
+        return cls(
+            None,
+            None,
+            None,
+            IceVisionInput(RunningStage.PREDICTING, predict_folder),
+            input_transform=cls.input_transform_cls(
+                None,
+                None,
+                None,
+                predict_transform,
+                image_size=image_size,
+            ),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_files(
+        cls,
+        predict_files: Optional[List[str]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        image_size: Tuple[int, int] = (128, 128),
+        **data_module_kwargs: Any,
+    ) -> "DataModule":
+        """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given folders using the
+        :class:`~flash.core.data.io.input.Input` of name
+        :attr:`~flash.core.data.io.input.InputFormat.FOLDERS`
+        from the passed or constructed :class:`~flash.core.data.io.input_transform.InputTransform`.
+
+        Args:
+            predict_files: The list of files containing the predict data.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+            data_module_kwargs: The keywords arguments for creating the datamodule.
+
+        Returns:
+            The constructed data module.
+        """
+        return cls(
+            None,
+            None,
+            None,
+            IceVisionInput(RunningStage.PREDICTING, predict_files),
+            input_transform=cls.input_transform_cls(
+                None,
+                None,
+                None,
+                predict_transform,
+                image_size=image_size,
+            ),
+            **data_module_kwargs,
+        )
+
+    from_tensor = None
+    from_json = None
+    from_csv = None
+    from_datasets = None
