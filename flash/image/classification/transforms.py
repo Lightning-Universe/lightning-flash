@@ -15,7 +15,6 @@ import os
 from typing import Callable, Dict, Tuple
 
 import torch
-from torch import nn
 
 from flash.core.data.io.input import DataKeys
 from flash.core.data.transforms import ApplyToKeys, kornia_collate, merge_transforms
@@ -25,7 +24,6 @@ if _KORNIA_AVAILABLE:
     import kornia as K
 
 if _TORCHVISION_AVAILABLE:
-    import torchvision
     from torchvision import transforms as T
 
 if _ALBUMENTATIONS_AVAILABLE:
@@ -53,7 +51,7 @@ def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
             [
                 ApplyToKeys(
                     DataKeys.INPUT,
-                    T.Compose([torchvision.transforms.ToTensor(), K.geometry.Resize(image_size)]),
+                    T.Compose([T.ToTensor(), K.geometry.Resize(image_size)]),
                 ),
                 ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
             ]
@@ -68,12 +66,16 @@ def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
             per_batch_transform_on_device=per_batch_transform_on_device,
         )
     return dict(
-        per_sample_transform=nn.Sequential(
-            ApplyToKeys(
-                DataKeys.INPUT,
-                nn.Sequential(T.Resize(image_size), T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])),
+        per_sample_transform=T.Compose(
+            [
+                ApplyToKeys(
+                    DataKeys.INPUT,
+                    T.Compose(
+                        [T.ToTensor(), T.Resize(image_size), T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]
+                    ),
+                ),
                 ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
-            )
+            ]
         ),
         collate=kornia_collate,
     )

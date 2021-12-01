@@ -265,15 +265,17 @@ class DataPipeline:
             else worker_collate_fn
         )
 
+        per_sample_transform = getattr(input_transform, func_names["per_sample_transform"])
+
         deserialize_processor = _DeserializeProcessor(
             self._deserializer,
             input_transform,
-            getattr(input_transform, func_names["per_sample_transform"]),
+            per_sample_transform,
         )
         worker_input_transform_processor = _InputTransformProcessor(
             input_transform,
             worker_collate_fn,
-            getattr(input_transform, func_names["per_sample_transform"]),
+            self._identity if is_serving else per_sample_transform,
             getattr(input_transform, func_names["per_batch_transform"]),
             stage,
         )
