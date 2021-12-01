@@ -93,7 +93,7 @@ class StyleTransferInputTransform(InputTransform):
                 ),
             )
         if self.predicting:
-            return dict(per_sample_transform=nn.Sequential(T.Resize(self.image_size), T.ToTensor()))
+            return dict(per_sample_transform=T.Compose([T.Resize(self.image_size), T.ToTensor()]))
         # Style transfer doesn't support a validation or test phase, so we return nothing here
         return None
 
