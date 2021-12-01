@@ -19,13 +19,14 @@ from flash.core.adapter import AdapterTask
 from flash.core.data.data_pipeline import DataPipeline
 from flash.core.data.output import PredsOutput
 from flash.core.registry import FlashRegistry
+from flash.core.utilities.imports import _KORNIA_AVAILABLE
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 from flash.image.instance_segmentation.backbones import INSTANCE_SEGMENTATION_HEADS
 from flash.image.instance_segmentation.data import (
     InstanceSegmentationInputTransform,
     InstanceSegmentationOutputTransform,
 )
-from flash.core.utilities.imports import _KORNIA_AVAILABLE
+
 
 class InstanceSegmentation(AdapterTask):
     """The ``InstanceSegmentation`` is a :class:`~flash.Task` for detecting objects in images. For more details, see
@@ -45,9 +46,9 @@ class InstanceSegmentation(AdapterTask):
     """
 
     output_transform_cls = InstanceSegmentationOutputTransform
-    
+
     heads: FlashRegistry = INSTANCE_SEGMENTATION_HEADS
-    
+
     required_extras: List[str] = ["image", "icevision"]
 
     def __init__(
@@ -83,12 +84,11 @@ class InstanceSegmentation(AdapterTask):
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
             output=output or PredsOutput(),
-            output_transform=self.output_transform_cls()
+            output_transform=self.output_transform_cls(),
         )
 
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]) -> None:
         """This function is used only for debugging usage with CI."""
-        
 
     def on_load_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         super().on_load_checkpoint(checkpoint)

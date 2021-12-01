@@ -12,31 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import partial
-from typing import Any, Callable, Dict, Optional, Tuple, Type, Union
-from flash.core.data.auto_dataset import BaseAutoDataset
-from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import DataKeys, InputFormat, NumpyInput
-from flash.core.data.io.input_transform import InputTransform
-from flash.core.data.io.output_transform import OutputTransform
-from flash.core.integrations.icevision.data import IceVisionInput
-from flash.core.integrations.icevision.transforms import default_transforms
-from flash.image.data import ImageDeserializer, IMG_EXTENSIONS
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE
-from flash.core.utilities.imports import _KORNIA_AVAILABLE
-from flash.core.utilities.stages import RunningStage
-from flash.core.data.io.input import (
-    InputFormat,
-    NumpyInput,
-    PathsInput,
-    TensorInput,
-)
-from flash.core.data.utils import image_default_loader
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, TYPE_CHECKING, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, TYPE_CHECKING, Union
 
 import torch
+
+from flash.core.data.auto_dataset import BaseAutoDataset
+from flash.core.data.data_module import DataModule
+from flash.core.data.io.input import DataKeys, InputFormat, NumpyInput, PathsInput, TensorInput
+from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.io.output_transform import OutputTransform
+from flash.core.data.utils import image_default_loader
+from flash.core.integrations.icevision.data import IceVisionInput
+from flash.core.integrations.icevision.transforms import default_transforms
+from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _KORNIA_AVAILABLE
+from flash.core.utilities.stages import RunningStage
+from flash.image.data import ImageDeserializer, IMG_EXTENSIONS
+
 if _ICEVISION_AVAILABLE:
-    from icevision.parsers import COCOMaskParser, Parser, VOCMaskParser
     import torchvision.transforms.functional as FT
+    from icevision.parsers import COCOMaskParser, Parser, VOCMaskParser
     from torchvision.datasets.folder import has_file_allowed_extension
 
 else:
@@ -45,6 +39,7 @@ else:
     Parser = object
 if _KORNIA_AVAILABLE:
     import kornia as K
+
 
 class InstanceSegmentationNumpyInput(NumpyInput):
     def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
@@ -59,7 +54,6 @@ class InstanceSegmentationPathsInput(PathsInput):
     def __init__(self):
         breakpoint()
         super().__init__(IMG_EXTENSIONS)
-
 
     def load_data(
         self, data: Union[Tuple[str, str], Tuple[List[str], List[str]]], dataset: BaseAutoDataset
@@ -127,7 +121,7 @@ class InstanceSegmentationPathsInput(PathsInput):
 
     @staticmethod
     def predict_load_sample(sample: Mapping[str, Any]) -> Mapping[str, Any]:
-        
+
         img_path = sample[DataKeys.INPUT]
         img = FT.to_tensor(image_default_loader(img_path)).float()
         breakpoint()
@@ -160,7 +154,7 @@ class InstanceSegmentationInputTransform(InputTransform):
                 "coco": partial(IceVisionInput, parser=COCOMaskParser),
                 "voc": partial(IceVisionInput, parser=VOCMaskParser),
                 InputFormat.NUMPY: InstanceSegmentationNumpyInput(),
-                InputFormat.FILES:  IceVisionInput,
+                InputFormat.FILES: IceVisionInput,
                 InputFormat.FOLDERS: partial(IceVisionInput, parser=parser),
             },
             default_input=InputFormat.FILES,
@@ -182,25 +176,25 @@ class InstanceSegmentationInputTransform(InputTransform):
         return default_transforms(self.image_size)
 
 
-    
 class InstanceSegmentationOutputTransform(OutputTransform):
     # @staticmethod
     # def uncollate(batch: Any) -> Any:
     #     breakpoint()
     #     return batch[DataKeys.PREDS]
     def per_sample_transform(self, sample: Any) -> Any:
-        # TODO GET HERE WITH image SIZE 
+        # TODO GET HERE WITH image SIZE
         breakpoint()
         resize = K.geometry.Resize(sample[DataKeys.METADATA]["original_size"][-2:], interpolation="bilinear")
-        sample[DataKeys.PREDS]['mask_array'] = (resize(torch.tensor(sample[DataKeys.PREDS]['mask_array'], dtype=torch.float)) > 0).to(torch.uint8)
-        #sample[DataKeys.INPUT] = resize(sample[DataKeys.INPUT])
+        sample[DataKeys.PREDS]["mask_array"] = (
+            resize(torch.tensor(sample[DataKeys.PREDS]["mask_array"], dtype=torch.float)) > 0
+        ).to(torch.uint8)
+        # sample[DataKeys.INPUT] = resize(sample[DataKeys.INPUT])
         return super().per_sample_transform(sample)
 
 
 class InstanceSegmentationData(DataModule):
 
     input_transform_cls = InstanceSegmentationInputTransform
-    
 
     @classmethod
     def from_folders(
@@ -232,7 +226,6 @@ class InstanceSegmentationData(DataModule):
                 predict_transform,
                 image_size=image_size,
             ),
-            
             **data_module_kwargs,
         )
 
