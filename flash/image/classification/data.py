@@ -99,7 +99,6 @@ class ImageClassificationTensorInput(ClassificationInput, ImageTensorInput):
     def load_data(self, tensor: Any, targets: Optional[List[Any]] = None) -> List[Dict[str, Any]]:
         if targets is not None:
             self.load_target_metadata(targets)
-
         return to_samples(tensor, targets)
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
@@ -113,7 +112,6 @@ class ImageClassificationNumpyInput(ClassificationInput, ImageNumpyInput):
     def load_data(self, array: Any, targets: Optional[List[Any]] = None) -> List[Dict[str, Any]]:
         if targets is not None:
             self.load_target_metadata(targets)
-
         return to_samples(array, targets)
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
