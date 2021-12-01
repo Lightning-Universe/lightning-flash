@@ -103,7 +103,7 @@ class AudioClassificationTensorInput(AudioClassificationNumpyInput):
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         sample[DataKeys.INPUT] = sample[DataKeys.INPUT].numpy()
-        return sample
+        return super().load_sample(sample)
 
 
 class AudioClassificationDataFrameInput(AudioClassificationFilesInput):
