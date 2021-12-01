@@ -40,13 +40,7 @@ class LabelStudioState(ProcessState):
 def _get_labels_from_sample(labels, classes):
     """Translate string labels to int."""
     sorted_labels = sorted(list(classes))
-    if isinstance(labels, list):
-        label = []
-        for item in labels:
-            label.append(sorted_labels.index(item))
-    else:
-        label = sorted_labels.index(labels)
-    return label
+    return [sorted_labels.index(item) for item in labels] if isinstance(labels, list) else sorted_labels.index(labels)
 
 
 def _load_json_data(data, data_folder, multi_label=False):
