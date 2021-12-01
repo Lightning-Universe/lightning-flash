@@ -88,7 +88,7 @@ class InstanceSegmentation(AdapterTask):
 
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]) -> None:
         """This function is used only for debugging usage with CI."""
-        # todo
+        
 
     def on_load_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         super().on_load_checkpoint(checkpoint)

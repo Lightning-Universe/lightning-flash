@@ -244,7 +244,7 @@ class IceVisionTransformAdapter(nn.Module):
         record = to_icevision_record(x)
         record = self.transform(record)
         record = from_icevision_record(record)
-        record[DataKeys.METADATA]['original_size'] = x.shape
+        record[DataKeys.METADATA]['original_size'] = x[DataKeys.INPUT].shape[:-1]
         return record
 
 
