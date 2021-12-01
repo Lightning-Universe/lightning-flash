@@ -379,7 +379,7 @@ class TestSemanticSegmentationData:
         assert dm.data_fetcher.block_viz_window is False
 
         dm.show_train_batch("load_sample")
-        dm.show_train_batch("to_tensor_transform")
+        dm.show_train_batch("per_sample_transform")
 
         # check training data
         data = next(iter(dm.train_dataloader()))

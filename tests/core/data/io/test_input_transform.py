@@ -20,11 +20,7 @@ from torch.utils.data._utils.collate import default_collate
 
 from flash import DataModule
 from flash.core.data.io.input import InputFormat
-from flash.core.data.io.input_transform import (
-    _InputTransformProcessor,
-    _InputTransformSequential,
-    DefaultInputTransform,
-)
+from flash.core.data.io.input_transform import _InputTransformProcessor, DefaultInputTransform
 from flash.core.utilities.stages import RunningStage
 
 
@@ -56,25 +52,6 @@ def test_input_transform_processor_str():
         "\t(per_batch_transform): FuncModule(softmax)\n"
         "\t(apply_per_sample_transform): False\n"
         "\t(on_device): True\n"
-        "\t(stage): RunningStage.TRAINING"
-    )
-
-
-def test_sequential_str():
-    sequential = _InputTransformSequential(
-        Mock(name="input_transform"),
-        torch.softmax,
-        torch.as_tensor,
-        torch.relu,
-        RunningStage.TRAINING,
-        True,
-    )
-    assert str(sequential) == (
-        "_InputTransformSequential:\n"
-        "\t(pre_tensor_transform): FuncModule(softmax)\n"
-        "\t(to_tensor_transform): FuncModule(as_tensor)\n"
-        "\t(post_tensor_transform): FuncModule(relu)\n"
-        "\t(assert_contains_tensor): True\n"
         "\t(stage): RunningStage.TRAINING"
     )
 

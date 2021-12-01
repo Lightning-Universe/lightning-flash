@@ -37,7 +37,7 @@ def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
     """The default transforms for semantic segmentation: resize the image and mask, collate the batch, and apply
     normalization."""
     return {
-        "post_tensor_transform": nn.Sequential(
+        "per_sample_transform": nn.Sequential(
             ApplyToKeys(
                 [DataKeys.INPUT, DataKeys.TARGET],
                 KorniaParallelTransforms(K.geometry.Resize(image_size, interpolation="nearest")),
@@ -53,7 +53,7 @@ def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]
     return merge_transforms(
         default_transforms(image_size),
         {
-            "post_tensor_transform": nn.Sequential(
+            "per_sample_transform": nn.Sequential(
                 ApplyToKeys(
                     [DataKeys.INPUT, DataKeys.TARGET],
                     KorniaParallelTransforms(K.augmentation.RandomHorizontalFlip(p=0.5)),
@@ -66,7 +66,7 @@ def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]
 def predict_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
     """During predict, we apply the default transforms only on DataKeys.INPUT."""
     return {
-        "post_tensor_transform": nn.Sequential(
+        "per_sample_transform": nn.Sequential(
             ApplyToKeys(
                 DataKeys.INPUT,
                 K.geometry.Resize(image_size, interpolation="nearest"),

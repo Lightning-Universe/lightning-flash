@@ -15,12 +15,11 @@
 import os.path
 import tarfile
 import zipfile
-from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Set, Type
+from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Set
 
 import requests
 import torch
 from pytorch_lightning.utilities.apply_func import apply_to_collection
-from torch import Tensor
 from tqdm.auto import tqdm as tq
 
 from flash.core.utilities.imports import _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
@@ -48,9 +47,7 @@ _INPUT_FUNCS: Set[str] = {
 }
 
 _INPUT_TRANSFORM_FUNCS: Set[str] = {
-    "pre_tensor_transform",
-    "to_tensor_transform",
-    "post_tensor_transform",
+    "per_sample_transform",
     "per_batch_transform",
     "per_sample_transform_on_device",
     "per_batch_transform_on_device",
@@ -174,19 +171,6 @@ def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:
         extract_tarfile(local_filename, path, "r:gz")
     elif local_filename.endswith(".tar.bz2") or local_filename.endswith(".tbz"):
         extract_tarfile(local_filename, path, "r:bz2")
-
-
-def _contains_any_tensor(value: Any, dtype: Type = Tensor) -> bool:
-    # TODO: we should refactor FlashDatasetFolder to better integrate
-    # with DataPipeline. That way, we wouldn't need this check.
-    # This is because we are running transforms in both places.
-    if isinstance(value, dtype):
-        return True
-    if isinstance(value, (list, tuple)):
-        return any(_contains_any_tensor(v, dtype=dtype) for v in value)
-    if isinstance(value, dict):
-        return any(_contains_any_tensor(v, dtype=dtype) for v in value.values())
-    return False
 
 
 class FuncModule(torch.nn.Module):
