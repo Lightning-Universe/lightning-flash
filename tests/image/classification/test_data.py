@@ -286,7 +286,7 @@ def test_from_folders_train_val(tmpdir):
     _rand_image().save(train_dir / "b" / "1.png")
     _rand_image().save(train_dir / "b" / "2.png")
     img_data = ImageClassificationData.from_folders(
-        train_dir,
+        train_folder=train_dir,
         val_folder=train_dir,
         test_folder=train_dir,
         batch_size=2,
