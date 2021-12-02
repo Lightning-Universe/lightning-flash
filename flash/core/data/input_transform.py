@@ -13,7 +13,7 @@
 # limitations under the License.
 import inspect
 from functools import partial, wraps
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -102,7 +102,7 @@ class InputTransform(Properties):
 
         self._transform_kwargs = transform_kwargs
 
-        transform = transform or self._resolve_transforms(running_stage)
+        transform = self._parse_user_transform(transform) or self._resolve_transforms(running_stage)
         self.transform = self._check_transforms(transform, running_stage)
         self.callbacks = []
 
@@ -177,76 +177,18 @@ class InputTransform(Properties):
         """
         return self.current_transform(batch)
 
-    @classmethod
-    def from_transform(
-        cls,
-        transform: INPUT_TRANSFORM_TYPE,
-        running_stage: RunningStage,
-        input_transforms_registry: Optional[FlashRegistry] = None,
-    ) -> Optional["InputTransform"]:
-
-        if isinstance(transform, InputTransform):
-            transform.running_stage = running_stage
-            return transform
+    def _parse_user_transform(self, transform: Union[Callable, List, Dict[str, Callable]]):
 
         if isinstance(transform, Callable):
-            return cls(running_stage, {InputTransformPlacement.PER_SAMPLE_TRANSFORM: transform})
+            return {InputTransformPlacement.PER_SAMPLE_TRANSFORM: transform}
 
-        if isinstance(transform, tuple) or isinstance(transform, (LightningEnum, str)):
-            enum, transform_kwargs = cls._sanitize_registry_transform(transform, input_transforms_registry)
-            transform_cls = input_transforms_registry.get(enum)
-            return transform_cls(running_stage, transform=None, **transform_kwargs)
+        if isinstance(transform, (Mapping, List)):
+            return transform
 
         if not transform:
             return None
 
         raise MisconfigurationException(f"The format for the transform isn't correct. Found {transform}")
-
-    @classmethod
-    def from_train_transform(
-        cls,
-        transform: INPUT_TRANSFORM_TYPE,
-        input_transforms_registry: Optional[FlashRegistry] = None,
-    ) -> Optional["InputTransform"]:
-        return cls.from_transform(
-            transform=transform,
-            running_stage=RunningStage.TRAINING,
-            input_transforms_registry=input_transforms_registry,
-        )
-
-    @classmethod
-    def from_val_transform(
-        cls,
-        transform: INPUT_TRANSFORM_TYPE,
-        input_transforms_registry: Optional[FlashRegistry] = None,
-    ) -> Optional["InputTransform"]:
-        return cls.from_transform(
-            transform=transform,
-            running_stage=RunningStage.VALIDATING,
-            input_transforms_registry=input_transforms_registry,
-        )
-
-    @classmethod
-    def from_test_transform(
-        cls,
-        transform: INPUT_TRANSFORM_TYPE,
-        input_transforms_registry: Optional[FlashRegistry] = None,
-    ) -> Optional["InputTransform"]:
-        return cls.from_transform(
-            transform=transform, running_stage=RunningStage.TESTING, input_transforms_registry=input_transforms_registry
-        )
-
-    @classmethod
-    def from_predict_transform(
-        cls,
-        transform: INPUT_TRANSFORM_TYPE,
-        input_transforms_registry: Optional[FlashRegistry] = None,
-    ) -> Optional["InputTransform"]:
-        return cls.from_transform(
-            transform=transform,
-            running_stage=RunningStage.PREDICTING,
-            input_transforms_registry=input_transforms_registry,
-        )
 
     def _resolve_transforms(self, running_stage: RunningStage) -> Optional[Dict[str, Callable]]:
         from flash.core.data.data_pipeline import DataPipeline

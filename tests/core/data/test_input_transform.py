@@ -35,16 +35,16 @@ def test_input_transform():
     def fn(x):
         return x + 1
 
-    transform = InputTransform.from_train_transform(transform=fn)
+    transform = InputTransform(RunningStage.TRAINING, transform=fn)
     assert transform.transform == {InputTransformPlacement.PER_SAMPLE_TRANSFORM: fn}
 
-    transform = InputTransform.from_val_transform(transform=fn)
+    transform = InputTransform(RunningStage.VALIDATING, transform=fn)
     assert transform.transform == {InputTransformPlacement.PER_SAMPLE_TRANSFORM: fn}
 
-    transform = InputTransform.from_test_transform(transform=fn)
+    transform = InputTransform(RunningStage.TESTING, transform=fn)
     assert transform.transform == {InputTransformPlacement.PER_SAMPLE_TRANSFORM: fn}
 
-    transform = InputTransform.from_predict_transform(transform=fn)
+    transform = InputTransform(RunningStage.PREDICTING, transform=fn)
     assert transform.transform == {InputTransformPlacement.PER_SAMPLE_TRANSFORM: fn}
 
     class MyInputTransform(InputTransform):
@@ -104,17 +104,25 @@ def test_input_transform():
     input_transforms_registry = FlashRegistry("transforms")
     input_transforms_registry(fn=MyInputTransform, name="something")
 
-    transform = InputTransform.from_transform(
-        running_stage=RunningStage.TRAINING, transform="something", input_transforms_registry=input_transforms_registry
-    )
+    with pytest.raises(MisconfigurationException, match="The format for the transform isn't correct"):
+        transform = InputTransform(
+            running_stage=RunningStage.TRAINING,
+            transform="something",
+            input_transforms_registry=input_transforms_registry,
+        )
 
-    transform = transform.from_transform(
-        running_stage=RunningStage.TRAINING, transform=transform, input_transforms_registry=input_transforms_registry
-    )
+    with pytest.raises(MisconfigurationException, match="The format for the transform isn't correct"):
+        transform = InputTransform(
+            running_stage=RunningStage.TRAINING,
+            transform=transform,
+            input_transforms_registry=input_transforms_registry,
+        )
+
+        transform = InputTransform(running_stage=RunningStage.TRAINING)
 
     assert isinstance(transform, MyInputTransform)
     assert transform.transform == {
-        InputTransformPlacement.PER_SAMPLE_TRANSFORM: transform.fn,
+        InputTransformPlacement.PER_SAMPLE_TRANSFORM: fn,
         InputTransformPlacement.COLLATE: default_collate,
     }
 
@@ -141,7 +149,7 @@ def test_input_transform():
         transform = MyInputTransform(running_stage=RunningStage.TESTING)
 
     with pytest.raises(MisconfigurationException, match="The format for the transform isn't correct"):
-        InputTransform.from_transform(1, running_stage=RunningStage.TRAINING)
+        InputTransform(RunningStage.TRAINING, 1)
 
     class MyInputTransform(InputTransform):
         def configure_collate(self, *args, **kwargs) -> Callable:
@@ -161,9 +169,7 @@ def test_input_transform():
             x = f(x)
         return x
 
-    transform = InputTransform.from_transform(
-        transform=partial(compose, funcs=[fn, fn]), running_stage=RunningStage.TRAINING
-    )
+    transform = InputTransform(transform=partial(compose, funcs=[fn, fn]), running_stage=RunningStage.TRAINING)
     assert transform[InputTransformPlacement.PER_SAMPLE_TRANSFORM](1) == 3
 
 
@@ -179,26 +185,5 @@ def test_transform_with_registry():
     registry = FlashRegistry("transforms")
     registry(name="custom", fn=MyInputTransform)
 
-    transform = InputTransform.from_train_transform(transform="custom", input_transforms_registry=registry)
-    assert isinstance(transform, MyInputTransform)
-    assert transform.name == "lightning"
-
-    transform = InputTransform.from_train_transform(
-        transform=("custom", {"name": "flash"}), input_transforms_registry=registry
-    )
-    assert isinstance(transform, MyInputTransform)
-    assert transform.name == "flash"
-
-    transform = InputTransform.from_train_transform(transform=None, input_transforms_registry=registry)
-    assert transform is None
-
-    transform = InputTransform.from_train_transform(transform=None, input_transforms_registry=registry)
-    assert transform is None
-
-    with pytest.raises(
-        MisconfigurationException, match="The transform should be provided as a tuple with the following types"
-    ):
-        transform = InputTransform.from_train_transform(transform=("custom", None), input_transforms_registry=registry)
-
-    with pytest.raises(MisconfigurationException, match="The format for the transform isn't correct"):
-        transform = InputTransform.from_train_transform(transform=1, input_transforms_registry=registry)
+    transform = InputTransform(RunningStage.TRAINING, transform=None)
+    assert transform.transform
