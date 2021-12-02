@@ -248,7 +248,7 @@ class ServeInput(Input):
     def serve_load_sample(self, sample: Any) -> List[Any]:
         raise NotImplementedError
 
-    def deserialize(self, sample: Any) -> Any:
+    def __call__(self, sample: Any) -> Any:
         return self._call_load_sample(sample)
 
     def example_input(self) -> str:
