@@ -42,6 +42,7 @@ class _DeserializeProcessor(torch.nn.Module):
         self._per_sample_transform_context = CurrentFuncContext("per_sample_transform", input_transform)
 
     def forward(self, sample: str):
+
         sample = self.deserializer(sample)
 
         with self._current_stage_context:

@@ -811,7 +811,13 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         if deserializer is None or type(deserializer) is Deserializer:
             deserializer = getattr(input_transform, "deserializer", deserializer)
 
-        data_pipeline = DataPipeline(input, input_transform, output_transform, deserializer, output)
+        data_pipeline = DataPipeline(
+            input=input,
+            input_transform=input_transform,
+            output_transform=output_transform,
+            deserializer=deserializer,
+            output=output,
+        )
         self._data_pipeline_state = self._data_pipeline_state or DataPipelineState()
         self.attach_data_pipeline_state(self._data_pipeline_state)
         self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)
