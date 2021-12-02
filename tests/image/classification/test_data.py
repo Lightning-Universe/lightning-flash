@@ -296,7 +296,6 @@ def test_from_folders_train_val(tmpdir):
     imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2,)
-    assert list(labels.numpy()) == [0, 0]
 
     data = next(iter(img_data.val_dataloader()))
     imgs, labels = data["input"], data["target"]
