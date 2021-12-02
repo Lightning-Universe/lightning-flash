@@ -253,3 +253,6 @@ class ServeInput(Input):
 
     def example_input(self) -> str:
         raise NotImplementedError
+
+    def __bool__(self):
+        return True
