@@ -14,6 +14,8 @@
 import os
 from typing import Any, Callable, cast, List, Optional, Tuple, TypeVar, Union
 
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
+
 PATH_TYPE = Union[str, bytes, os.PathLike]
 
 T = TypeVar("T")
@@ -132,7 +134,7 @@ def list_valid_files(
 def filter_valid_files(
     files: Union[PATH_TYPE, List[PATH_TYPE]],
     *additional_lists: List[Any],
-    valid_extensions: Optional[Tuple[str, ...]] = None
+    valid_extensions: Optional[Tuple[str, ...]] = None,
 ) -> Union[List[Any], Tuple[List[Any], ...]]:
     """Filter the given list of files and any additional lists to include only the entries that contain a file with
     a valid extension.
@@ -147,6 +149,13 @@ def filter_valid_files(
     """
     if not isinstance(files, List):
         files = [files]
+
+    additional_lists = tuple([a] if not isinstance(a, List) else a for a in additional_lists)
+
+    if not all(len(a) == len(files) for a in additional_lists):
+        raise MisconfigurationException(
+            f"The number of files ({len(files)}) and the number of items in any additional lists must be the same."
+        )
 
     if valid_extensions is None:
         return (files,) + additional_lists

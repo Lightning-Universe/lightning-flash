@@ -106,7 +106,7 @@ def test_unfreeze():
 def test_predict_tensor():
     img = torch.rand(1, 3, 64, 64)
     model = SemanticSegmentation(2, backbone="mobilenetv3_large_100")
-    data_pipe = DataPipeline(input_transform=SemanticSegmentationInputTransform(num_classes=1))
+    data_pipe = DataPipeline(input_transform=SemanticSegmentationInputTransform())
     out = model.predict(img, input="tensors", data_pipeline=data_pipe)
     assert isinstance(out[0], list)
     assert len(out[0]) == 64
@@ -117,7 +117,7 @@ def test_predict_tensor():
 def test_predict_numpy():
     img = np.ones((1, 3, 64, 64))
     model = SemanticSegmentation(2, backbone="mobilenetv3_large_100")
-    data_pipe = DataPipeline(input_transform=SemanticSegmentationInputTransform(num_classes=1))
+    data_pipe = DataPipeline(input_transform=SemanticSegmentationInputTransform())
     out = model.predict(img, input="numpy", data_pipeline=data_pipe)
     assert isinstance(out[0], list)
     assert len(out[0]) == 64

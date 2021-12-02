@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import random
 from typing import Any, Dict, Optional, Tuple, TYPE_CHECKING, Union
 
 import numpy as np
@@ -78,7 +79,7 @@ class SegmentationLabelsOutput(Output):
     def create_random_labels_map(num_classes: int) -> Dict[int, Tuple[int, int, int]]:
         labels_map: Dict[int, Tuple[int, int, int]] = {}
         for i in range(num_classes):
-            labels_map[i] = torch.randint(0, 255, (3,))
+            labels_map[i] = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
         return labels_map
 
     @requires("matplotlib")
