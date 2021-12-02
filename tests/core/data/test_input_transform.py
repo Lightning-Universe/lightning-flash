@@ -131,10 +131,8 @@ def test_input_transform():
     assert transform._collate_in_worker_from_transform
 
     class MyInputTransform(InputTransform):
-        def configure_transforms(self) -> Optional[Dict[str, Callable]]:
-            return {
-                InputTransformPlacement.PER_SAMPLE_TRANSFORM_ON_DEVICE: fn,
-            }
+        def configure_per_sample_transform_on_device(self) -> Callable:
+            return fn
 
         def configure_per_batch_transform(self):
             return fn
@@ -146,12 +144,14 @@ def test_input_transform():
         InputTransform.from_transform(1, running_stage=RunningStage.TRAINING)
 
     class MyInputTransform(InputTransform):
-        def configure_transforms(self) -> Optional[Dict[str, Callable]]:
-            return {
-                InputTransformPlacement.COLLATE: fn,
-                InputTransformPlacement.PER_SAMPLE_TRANSFORM_ON_DEVICE: fn,
-                InputTransformPlacement.PER_BATCH_TRANSFORM_ON_DEVICE: fn,
-            }
+        def configure_collate(self, *args, **kwargs) -> Callable:
+            return fn
+
+        def configure_per_sample_transform_on_device(self, *args, **kwargs) -> Callable:
+            return fn
+
+        def configure_per_batch_transform_on_device(self, *args, **kwargs) -> Callable:
+            return fn
 
     transform = MyInputTransform(running_stage=RunningStage.TESTING)
     assert not transform._collate_in_worker_from_transform
@@ -172,11 +172,9 @@ def test_transform_with_registry():
         pass
 
     class MyInputTransform(InputTransform):
-        def configure_transforms(self, name: str = "lightning") -> Optional[Dict[str, Callable]]:
+        def configure_per_sample_transform(self, name: str = "lightning") -> Optional[Dict[str, Callable]]:
             self.name = name
-            return {
-                InputTransformPlacement.PER_SAMPLE_TRANSFORM_ON_DEVICE: fn,
-            }
+            return fn
 
     registry = FlashRegistry("transforms")
     registry(name="custom", fn=MyInputTransform)

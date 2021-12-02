@@ -54,12 +54,6 @@ def transform_context(func: Callable, current_fn: str) -> Callable:
 
 
 class InputTransform(Properties):
-    def configure_transforms(self, *args, **kwargs) -> Dict[InputTransformPlacement, Callable]:
-        """The default transforms to use.
-
-        Will be overridden by transforms passed to the ``__init__``.
-        """
-
     def configure_per_sample_transform(self, *args, **kwargs) -> Callable:
         """The default transforms to use.
 
@@ -257,16 +251,7 @@ class InputTransform(Properties):
     def _resolve_transforms(self, running_stage: RunningStage) -> Optional[Dict[str, Callable]]:
         from flash.core.data.data_pipeline import DataPipeline
 
-        resolved_function = getattr(
-            self,
-            DataPipeline._resolve_function_hierarchy("configure_transforms", self, running_stage, InputTransform),
-        )
-        params = inspect.signature(resolved_function).parameters
-        transforms_out: Optional[Dict[str, Callable]] = resolved_function(
-            **{k: v for k, v in self._transform_kwargs.items() if k in params}
-        )
-
-        transforms_out = transforms_out or {}
+        transforms_out = {}
         for placement in InputTransformPlacement:
             transform_name = f"configure_{placement.value}"
             resolved_function = getattr(
