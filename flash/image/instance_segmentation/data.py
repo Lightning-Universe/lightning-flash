@@ -236,10 +236,9 @@ class InstanceSegmentationData(DataModule):
         image_size: Tuple[int, int] = (128, 128),
         **data_module_kwargs: Any,
     ) -> "DataModule":
-        """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given folders using the
-        :class:`~flash.core.data.io.input.Input` of name
-        :attr:`~flash.core.data.io.input.InputFormat.FOLDERS`
-        from the passed or constructed :class:`~flash.core.data.io.input_transform.InputTransform`.
+        """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given folders.
+
+        This is supported only for the predicting stage.
 
         Args:
             predict_folder: The folder containing the predict data.
@@ -250,15 +249,9 @@ class InstanceSegmentationData(DataModule):
             The constructed data module.
         """
         return cls(
-            None,
-            None,
-            None,
-            IceVisionInput(RunningStage.PREDICTING, predict_folder),
+            predict_dataset=IceVisionInput(RunningStage.PREDICTING, predict_folder),
             input_transform=cls.input_transform_cls(
-                None,
-                None,
-                None,
-                predict_transform,
+                predict_transform=predict_transform,
                 image_size=image_size,
             ),
             **data_module_kwargs,
@@ -272,10 +265,9 @@ class InstanceSegmentationData(DataModule):
         image_size: Tuple[int, int] = (128, 128),
         **data_module_kwargs: Any,
     ) -> "DataModule":
-        """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given folders using the
-        :class:`~flash.core.data.io.input.Input` of name
-        :attr:`~flash.core.data.io.input.InputFormat.FOLDERS`
-        from the passed or constructed :class:`~flash.core.data.io.input_transform.InputTransform`.
+        """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given a list of files.
+
+        This is supported only for the predicting stage.
 
         Args:
             predict_files: The list of files containing the predict data.
@@ -286,15 +278,9 @@ class InstanceSegmentationData(DataModule):
             The constructed data module.
         """
         return cls(
-            None,
-            None,
-            None,
-            IceVisionInput(RunningStage.PREDICTING, predict_files),
+            predict_dataset=IceVisionInput(RunningStage.PREDICTING, predict_files),
             input_transform=cls.input_transform_cls(
-                None,
-                None,
-                None,
-                predict_transform,
+                predict_transform=predict_transform,
                 image_size=image_size,
             ),
             **data_module_kwargs,

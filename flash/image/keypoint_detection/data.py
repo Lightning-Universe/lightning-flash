@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import partial
-from typing import Any, Callable, Dict, Optional, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
@@ -165,3 +165,66 @@ class KeypointDetectionData(DataModule):
             parser=COCOKeyPointsParser,
             **data_module_kwargs,
         )
+
+    @classmethod
+    def from_folders(
+        cls,
+        predict_folder: Optional[str] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        image_size: Tuple[int, int] = (128, 128),
+        **data_module_kwargs: Any,
+    ) -> "DataModule":
+        """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given folders.
+
+        This is supported only for the predicting stage.
+
+        Args:
+            predict_folder: The folder containing the predict data.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+            data_module_kwargs: The keywords arguments for creating the datamodule.
+
+        Returns:
+            The constructed data module.
+        """
+        return cls(
+            predict_dataset=IceVisionInput(RunningStage.PREDICTING, predict_folder),
+            input_transform=cls.input_transform_cls(
+                predict_transform=predict_transform,
+                image_size=image_size,
+            ),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_files(
+        cls,
+        predict_files: Optional[List[str]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        image_size: Tuple[int, int] = (128, 128),
+        **data_module_kwargs: Any,
+    ) -> "DataModule":
+        """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given a list of files.
+
+        This is supported only for the predicting stage.
+
+        Args:
+            predict_files: The list of files containing the predict data.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+            data_module_kwargs: The keywords arguments for creating the datamodule.
+
+        Returns:
+            The constructed data module.
+        """
+        return cls(
+            predict_dataset=IceVisionInput(RunningStage.PREDICTING, predict_files),
+            input_transform=cls.input_transform_cls(
+                predict_transform=predict_transform,
+                image_size=image_size,
+            ),
+            **data_module_kwargs,
+        )
+
+    from_tensor = None
+    from_json = None
+    from_csv = None
+    from_datasets = None
