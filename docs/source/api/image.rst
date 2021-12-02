@@ -97,9 +97,11 @@ ____________
     ~segmentation.data.SemanticSegmentationInputTransform
 
     segmentation.data.SegmentationMatplotlibVisualization
+    segmentation.data.SemanticSegmentationInput
+    segmentation.data.SemanticSegmentationFilesInput
+    segmentation.data.SemanticSegmentationFolderInput
     segmentation.data.SemanticSegmentationNumpyInput
     segmentation.data.SemanticSegmentationTensorInput
-    segmentation.data.SemanticSegmentationPathsInput
     segmentation.data.SemanticSegmentationFiftyOneInput
     segmentation.data.SemanticSegmentationDeserializer
     segmentation.model.SemanticSegmentationOutputTransform

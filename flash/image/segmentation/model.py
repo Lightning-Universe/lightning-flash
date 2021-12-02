@@ -42,7 +42,7 @@ if _KORNIA_AVAILABLE:
 
 class SemanticSegmentationOutputTransform(OutputTransform):
     def per_sample_transform(self, sample: Any) -> Any:
-        resize = K.geometry.Resize(sample[DataKeys.METADATA]["size"][-2:], interpolation="bilinear")
+        resize = K.geometry.Resize(sample[DataKeys.METADATA]["size"], interpolation="bilinear")
         sample[DataKeys.PREDS] = resize(sample[DataKeys.PREDS])
         sample[DataKeys.INPUT] = resize(sample[DataKeys.INPUT])
         return super().per_sample_transform(sample)

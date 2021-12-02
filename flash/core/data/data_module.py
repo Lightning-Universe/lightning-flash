@@ -110,6 +110,14 @@ class DataModule(pl.LightningDataModule):
         if flash._IS_TESTING and torch.cuda.is_available():
             batch_size = 16
 
+        self._train_ds = train_dataset
+        self._val_ds = val_dataset
+        self._test_ds = test_dataset
+        self._predict_ds = predict_dataset
+
+        if self._train_ds and (val_split is not None and not self._val_ds):
+            self._train_ds, self._val_ds = self._split_train_val(self._train_ds, val_split)
+
         self._input: Input = input
         self._input_tranform: Optional[InputTransform] = input_transform
         self._output_transform: Optional[OutputTransform] = output_transform
@@ -118,14 +126,6 @@ class DataModule(pl.LightningDataModule):
 
         # TODO: InputTransform can change
         self.data_fetcher.attach_to_input_transform(self.input_transform)
-
-        self._train_ds = train_dataset
-        self._val_ds = val_dataset
-        self._test_ds = test_dataset
-        self._predict_ds = predict_dataset
-
-        if self._train_ds and (val_split is not None and not self._val_ds):
-            self._train_ds, self._val_ds = self._split_train_val(self._train_ds, val_split)
 
         if self._train_ds:
             self.train_dataloader = self._train_dataloader
