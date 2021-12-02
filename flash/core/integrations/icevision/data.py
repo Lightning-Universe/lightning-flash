@@ -52,7 +52,7 @@ class IceVisionInput(Input):
     def predict_load_data(
         self, paths: Union[str, List[str]], ann_file: Optional[str] = None, parser: Optional[Type["Parser"]] = None
     ) -> List[Dict[str, Any]]:
-        if parser is not None:
+        if parser is not None and parser != Parser:
             return self.load_data(paths, ann_file, parser)
         paths = list_valid_files(paths, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
         return [{DataKeys.INPUT: path} for path in paths]
