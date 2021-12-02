@@ -44,8 +44,8 @@ else:
 
 class SpeechRecognitionDeserializer(Deserializer):
     @requires("audio")
-    def __init__(self, sampling_rate: int = 16000):
-        super().__init__()
+    def __init__(self, sampling_rate: int = 16000, **kwargs):
+        super().__init__(**kwargs)
         self.sampling_rate = sampling_rate
 
     def serve_load_sample(self, sample: Any) -> Dict:
