@@ -16,6 +16,8 @@ from typing import Any, Callable, cast, List, Optional, Tuple, TypeVar, Union
 
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
+from flash.core.data.utilities.sort import sorted_alphanumeric
+
 PATH_TYPE = Union[str, bytes, os.PathLike]
 
 T = TypeVar("T")
@@ -105,7 +107,7 @@ def list_subdirs(dir: PATH_TYPE) -> List[str]:
     Returns:
         The list of subdirectories.
     """
-    return [d.name for d in os.scandir(str(dir)) if d.is_dir()]
+    return list(sorted_alphanumeric(d.name for d in os.scandir(str(dir)) if d.is_dir()))
 
 
 def list_valid_files(

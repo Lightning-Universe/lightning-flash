@@ -19,7 +19,6 @@ import numpy as np
 import pytest
 import torch
 import torch.nn as nn
-from pytorch_lightning import seed_everything
 
 from flash.core.data.io.input import DataKeys
 from flash.core.data.transforms import ApplyToKeys, merge_transforms
@@ -275,8 +274,6 @@ def test_from_folders_only_train(tmpdir):
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_from_folders_train_val(tmpdir):
-    seed_everything(42)
-
     train_dir = Path(tmpdir / "train")
     train_dir.mkdir()
 
@@ -299,7 +296,6 @@ def test_from_folders_train_val(tmpdir):
     imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2,)
-    assert list(labels.numpy()) == [0, 1]
 
     data = next(iter(img_data.val_dataloader()))
     imgs, labels = data["input"], data["target"]
