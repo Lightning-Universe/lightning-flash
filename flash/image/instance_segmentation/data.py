@@ -53,7 +53,7 @@ class InstanceSegmentationInputTransform(InputTransform):
                 "voc": partial(IceVisionInput, parser=VOCMaskParser),
                 "icedata": partial(IceVisionInput, parser=Parser),
                 InputFormat.FILES: IceVisionInput,
-                InputFormat.FOLDERS: partial(IceVisionInput, parser=parser),
+                InputFormat.FOLDERS: IceVisionInput,
             },
             default_input="icedata",
         )
