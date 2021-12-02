@@ -16,6 +16,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Added support for comma delimited multi-label targets to the `ImageClassifier` ([#997](https://github.com/PyTorchLightning/lightning-flash/pull/997))
 
+- Added `datapipeline_state` on dataset creation within the `from_*` methods from the `DataModule` ([#1018](https://github.com/PyTorchLightning/lightning-flash/pull/1018))
+
 ### Changed
 
 - Changed `DataSource` to `Input` ([#929](https://github.com/PyTorchLightning/lightning-flash/pull/929))
@@ -33,6 +35,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Changed the `SpeechRecognition` task to use `AutoModelForCTC` rather than just `Wav2Vec2ForCTC` ([#874](https://github.com/PyTorchLightning/lightning-flash/pull/874))
 
 - Added `Output` suffix to `Preds`, `FiftyOneDetectionLabels`, `SegmentationLabels`, `FiftyOneDetectionLabels`, `DetectionLabels`, `Classes`, `FiftyOneLabels`, `Labels`, `Logits`, `Probabilities` ([#1011](https://github.com/PyTorchLightning/lightning-flash/pull/1011))
+
+
+- Changed `from_files` and `from_folders` from `ObjectDetectionData`, `InstanceSegmentationData`, `KeypointDetectionData` to support only the `predicting` stage ([#1018](https://github.com/PyTorchLightning/lightning-flash/pull/1018))
 
 ### Deprecated
 
