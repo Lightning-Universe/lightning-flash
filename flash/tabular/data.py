@@ -19,6 +19,7 @@ import numpy as np
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.data_module import DataModule
+from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.classification_input import ClassificationState
 from flash.core.data.io.input import DataKeys, InputFormat
 from flash.core.data.io.input_base import Input
@@ -186,7 +187,7 @@ class TabularDeserializer(Deserializer):
             )
         return parameters_state.parameters
 
-    def deserialize(self, data: str) -> Any:
+    def serve_load_sample(self, data: str) -> Any:
         parameters = self.parameters
 
         df = read_csv(StringIO(data))
@@ -313,6 +314,9 @@ class TabularData(DataModule):
         predict_transform: Optional[Dict[str, Callable]] = None,
         **data_module_kwargs: Any,
     ) -> "TabularData":
+
+        data_pipeline_state = DataPipelineState()
+
         train_input = TabularDataFrameInput(
             RunningStage.TRAINING,
             train_data_frame,
@@ -320,13 +324,18 @@ class TabularData(DataModule):
             numerical_fields=numerical_fields,
             target_field=target_fields,
             is_regression=cls.is_regression,
+            data_pipeline_state=data_pipeline_state,
         )
-        parameters = train_input.parameters if train_input else parameters
+
+        dataset_kwargs = dict(
+            data_pipeline_state=data_pipeline_state, parameters=train_input.parameters if train_input else parameters
+        )
+
         return cls(
             train_input,
-            TabularDataFrameInput(RunningStage.VALIDATING, val_data_frame, parameters=parameters),
-            TabularDataFrameInput(RunningStage.TESTING, test_data_frame, parameters=parameters),
-            TabularDataFrameInput(RunningStage.PREDICTING, predict_data_frame, parameters=parameters),
+            TabularDataFrameInput(RunningStage.VALIDATING, val_data_frame, **dataset_kwargs),
+            TabularDataFrameInput(RunningStage.TESTING, test_data_frame, **dataset_kwargs),
+            TabularDataFrameInput(RunningStage.PREDICTING, predict_data_frame, **dataset_kwargs),
             input_transform=cls.input_transform_cls(train_transform, val_transform, test_transform, predict_transform),
             **data_module_kwargs,
         )
@@ -348,6 +357,9 @@ class TabularData(DataModule):
         predict_transform: Optional[Dict[str, Callable]] = None,
         **data_module_kwargs: Any,
     ) -> "TabularData":
+
+        data_pipeline_state = DataPipelineState()
+
         train_input = TabularCSVInput(
             RunningStage.TRAINING,
             train_file,
@@ -355,13 +367,18 @@ class TabularData(DataModule):
             numerical_fields=numerical_fields,
             target_field=target_fields,
             is_regression=cls.is_regression,
+            data_pipeline_state=data_pipeline_state,
         )
-        parameters = train_input.parameters if train_input else parameters
+
+        dataset_kwargs = dict(
+            data_pipeline_state=data_pipeline_state, parameters=train_input.parameters if train_input else parameters
+        )
+
         return cls(
             train_input,
-            TabularCSVInput(RunningStage.VALIDATING, val_file, parameters=parameters),
-            TabularCSVInput(RunningStage.TESTING, test_file, parameters=parameters),
-            TabularCSVInput(RunningStage.PREDICTING, predict_file, parameters=parameters),
+            TabularCSVInput(RunningStage.VALIDATING, val_file, **dataset_kwargs),
+            TabularCSVInput(RunningStage.TESTING, test_file, **dataset_kwargs),
+            TabularCSVInput(RunningStage.PREDICTING, predict_file, **dataset_kwargs),
             input_transform=cls.input_transform_cls(train_transform, val_transform, test_transform, predict_transform),
             **data_module_kwargs,
         )

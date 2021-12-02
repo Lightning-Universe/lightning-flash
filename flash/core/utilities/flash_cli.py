@@ -207,7 +207,8 @@ class FlashCLI(LightningCLI):
                 )
                 or (not hasattr(DataModule, function) and not self.legacy)
             ):
-                self.add_subcommand_from_function(subcommands, getattr(self.local_datamodule_class, function))
+                if getattr(self.local_datamodule_class, function) is not None:
+                    self.add_subcommand_from_function(subcommands, getattr(self.local_datamodule_class, function))
 
         for datamodule_builder in self.additional_datamodule_builders:
             self.add_subcommand_from_function(subcommands, datamodule_builder)

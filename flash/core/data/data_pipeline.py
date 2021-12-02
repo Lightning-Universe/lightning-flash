@@ -197,6 +197,8 @@ class DataPipeline:
             prefixes += ["test"]
         elif stage == RunningStage.PREDICTING:
             prefixes += ["predict"]
+        elif stage == RunningStage.SERVING:
+            prefixes += ["serve"]
 
         prefixes += [None]
 

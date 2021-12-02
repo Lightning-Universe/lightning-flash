@@ -18,6 +18,7 @@ import numpy as np
 import pytest
 import torch
 import torch.nn as nn
+from pytorch_lightning import seed_everything
 
 from flash.audio import AudioClassificationData
 from flash.core.data.io.input import DataKeys
@@ -320,6 +321,7 @@ def test_from_folders_only_train(tmpdir):
 
 @pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 def test_from_folders_train_val(tmpdir):
+    seed_everything(42)
 
     train_dir = Path(tmpdir / "train")
     train_dir.mkdir()
@@ -343,6 +345,7 @@ def test_from_folders_train_val(tmpdir):
     imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 128, 128)
     assert labels.shape == (2,)
+    assert list(labels.numpy()) == [0, 1]
 
     data = next(iter(spectrograms_data.val_dataloader()))
     imgs, labels = data["input"], data["target"]
