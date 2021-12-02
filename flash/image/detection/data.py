@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import partial
-from typing import Any, Callable, Dict, Hashable, Optional, Sequence, Tuple, Type, TYPE_CHECKING, Union
+from typing import Any, Callable, Dict, Hashable, List, Optional, Sequence, Tuple, Type, TYPE_CHECKING, Union
 
 from flash.core.data.data_module import DataModule
+from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import DataKeys, InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
@@ -151,11 +152,12 @@ class ObjectDetectionInputTransform(InputTransform):
                 "coco": partial(IceVisionInput, parser=COCOBBoxParser),
                 "via": partial(IceVisionInput, parser=VIABBoxParser),
                 "voc": partial(IceVisionInput, parser=VOCBBoxParser),
+                "icedata": partial(IceVisionInput, parser=parser),
                 InputFormat.FILES: IceVisionInput,
                 InputFormat.FOLDERS: partial(IceVisionInput, parser=parser),
                 InputFormat.FIFTYONE: ObjectDetectionFiftyOneInput,
             },
-            default_input=InputFormat.FILES,
+            default_input="icedata",
         )
 
         self._default_collate = self._identity
@@ -179,7 +181,7 @@ class ObjectDetectionData(DataModule):
     input_transform_cls = ObjectDetectionInputTransform
 
     @classmethod
-    def from_folders(
+    def from_icedata(
         cls,
         train_folder: Optional[str] = None,
         train_ann_file: Optional[str] = None,
@@ -196,11 +198,14 @@ class ObjectDetectionData(DataModule):
         parser: Optional[Union[Callable, Type[Parser]]] = None,
         **data_module_kwargs,
     ) -> "ObjectDetectionData":
+
+        dataset_kwargs = dict(parser=parser, data_pipeline_state=DataPipelineState())
+
         return cls(
-            IceVisionInput(RunningStage.TRAINING, train_folder, train_ann_file, parser=parser),
-            IceVisionInput(RunningStage.VALIDATING, val_folder, val_ann_file, parser=parser),
-            IceVisionInput(RunningStage.TESTING, test_folder, test_ann_file, parser=parser),
-            IceVisionInput(RunningStage.PREDICTING, predict_folder, parser=parser),
+            IceVisionInput(RunningStage.TRAINING, train_folder, train_ann_file, **dataset_kwargs),
+            IceVisionInput(RunningStage.VALIDATING, val_folder, val_ann_file, **dataset_kwargs),
+            IceVisionInput(RunningStage.TESTING, test_folder, test_ann_file, **dataset_kwargs),
+            IceVisionInput(RunningStage.PREDICTING, predict_folder, **dataset_kwargs),
             input_transform=cls.input_transform_cls(
                 train_transform,
                 val_transform,
@@ -249,7 +254,7 @@ class ObjectDetectionData(DataModule):
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             image_size: The size to resize images (and their bounding boxes) to.
         """
-        return cls.from_folders(
+        return cls.from_icedata(
             train_folder=train_folder,
             train_ann_file=train_ann_file,
             val_folder=val_folder,
@@ -304,7 +309,7 @@ class ObjectDetectionData(DataModule):
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             image_size: The size to resize images (and their bounding boxes) to.
         """
-        return cls.from_folders(
+        return cls.from_icedata(
             train_folder=train_folder,
             train_ann_file=train_ann_file,
             val_folder=val_folder,
@@ -359,7 +364,7 @@ class ObjectDetectionData(DataModule):
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             image_size: The size to resize images (and their bounding boxes) to.
         """
-        return cls.from_folders(
+        return cls.from_icedata(
             train_folder=train_folder,
             train_ann_file=train_ann_file,
             val_folder=val_folder,
@@ -407,3 +412,65 @@ class ObjectDetectionData(DataModule):
             ),
             **data_module_kwargs,
         )
+
+    @classmethod
+    def from_folders(
+        cls,
+        predict_folder: Optional[str] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        image_size: Tuple[int, int] = (128, 128),
+        **data_module_kwargs: Any,
+    ) -> "DataModule":
+        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders
+        This is currently support only for the predicting stage.
+
+        Args:
+            predict_folder: The folder containing the predict data.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+            data_module_kwargs: The keywords arguments for creating the datamodule.
+
+        Returns:
+            The constructed data module.
+        """
+        return cls(
+            predict_dataset=IceVisionInput(RunningStage.PREDICTING, predict_folder),
+            input_transform=cls.input_transform_cls(
+                predict_transform=predict_transform,
+                image_size=image_size,
+            ),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_files(
+        cls,
+        predict_files: Optional[List[str]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        image_size: Tuple[int, int] = (128, 128),
+        **data_module_kwargs: Any,
+    ) -> "DataModule":
+        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data files.
+
+        This is currently support only for the predicting stage.
+
+        Args:
+            predict_files: The list of files containing the predict data.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+            data_module_kwargs: The keywords arguments for creating the datamodule.
+
+        Returns:
+            The constructed data module.
+        """
+        return cls(
+            predict_dataset=IceVisionInput(RunningStage.PREDICTING, predict_files),
+            input_transform=cls.input_transform_cls(
+                predict_transform=predict_transform,
+                image_size=image_size,
+            ),
+            **data_module_kwargs,
+        )
+
+    from_tensor = None
+    from_json = None
+    from_csv = None
+    from_datasets = None

@@ -191,8 +191,8 @@ class SemanticSegmentationFiftyOneInput(SemanticSegmentationFilesInput):
 
 
 class SemanticSegmentationDeserializer(ImageDeserializer):
-    def deserialize(self, data: str) -> Dict[str, Any]:
-        result = super().deserialize(data)
+    def serve_load_sample(self, data: str) -> Dict[str, Any]:
+        result = super().serve_load_sample(data)
         result[DataKeys.INPUT] = FT.to_tensor(result[DataKeys.INPUT])
         result[DataKeys.METADATA] = {"size": result[DataKeys.INPUT].shape[-2:]}
         return result

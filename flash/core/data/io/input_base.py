@@ -15,8 +15,9 @@ import functools
 import os
 import sys
 from copy import copy, deepcopy
-from typing import Any, cast, Dict, Iterable, MutableMapping, Optional, Sequence, Tuple, Union
+from typing import Any, cast, Dict, Iterable, List, MutableMapping, Optional, Sequence, Tuple, Union
 
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Dataset
 
 import flash
@@ -232,3 +233,26 @@ class IterableInput(InputBase, IterableDataset, metaclass=_IterableInputMeta):
 
     def __next__(self) -> Any:
         return self._call_load_sample(next(self.data_iter))
+
+
+class ServeInput(Input):
+    def __init__(
+        self,
+        data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None,
+    ) -> None:
+        if hasattr(self, "serve_load_data"):
+            raise MisconfigurationException("`serve_load_data` shouldn't be implemented.")
+
+        super().__init__(RunningStage.SERVING, data_pipeline_state=data_pipeline_state)
+
+    def serve_load_sample(self, sample: Any) -> List[Any]:
+        raise NotImplementedError
+
+    def __call__(self, sample: Any) -> Any:
+        return self._call_load_sample(sample)
+
+    def example_input(self) -> str:
+        raise NotImplementedError
+
+    def __bool__(self):
+        return True

@@ -19,6 +19,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data.sampler import Sampler
 
 from flash.core.data.data_module import DataModule
+from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import DataKeys, InputFormat
 from flash.core.data.io.input_base import Input
 from flash.core.data.io.input_transform import InputTransform
@@ -161,6 +162,9 @@ class TabularForecastingData(DataModule):
             :attr:`~flash.tabular.forecasting.data.TabularForecastingData.parameters` attribute of the
             :class:`~flash.tabular.forecasting.data.TabularForecastingData` object that contains your training data.
         """
+
+        data_pipeline_state = DataPipelineState()
+
         train_input = TabularForecastingDataFrameInput(
             RunningStage.TRAINING,
             train_data_frame,
@@ -168,13 +172,17 @@ class TabularForecastingData(DataModule):
             group_ids=group_ids,
             target=target,
             **time_series_dataset_kwargs,
+            data_pipeline_state=data_pipeline_state,
         )
-        parameters = train_input.parameters if train_input else parameters
+
+        dataset_kwargs = dict(
+            data_pipeline_state=data_pipeline_state, parameters=train_input.parameters if train_input else parameters
+        )
         return cls(
             train_input,
-            TabularForecastingDataFrameInput(RunningStage.VALIDATING, val_data_frame, parameters=parameters),
-            TabularForecastingDataFrameInput(RunningStage.TESTING, test_data_frame, parameters=parameters),
-            TabularForecastingDataFrameInput(RunningStage.PREDICTING, predict_data_frame, parameters=parameters),
+            TabularForecastingDataFrameInput(RunningStage.VALIDATING, val_data_frame, **dataset_kwargs),
+            TabularForecastingDataFrameInput(RunningStage.TESTING, test_data_frame, **dataset_kwargs),
+            TabularForecastingDataFrameInput(RunningStage.PREDICTING, predict_data_frame, **dataset_kwargs),
             input_transform=cls.input_transform_cls(train_transform, val_transform, test_transform, predict_transform),
             val_split=val_split,
             batch_size=batch_size,
