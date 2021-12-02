@@ -235,7 +235,7 @@ class IterableInput(InputBase, IterableDataset, metaclass=_IterableInputMeta):
         return self._call_load_sample(next(self.data_iter))
 
 
-class DeserializerInput(Input):
+class ServeInput(Input):
     def __init__(
         self,
         data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None,

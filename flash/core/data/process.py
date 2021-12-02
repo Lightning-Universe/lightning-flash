@@ -18,7 +18,7 @@ from warnings import warn
 from deprecate import deprecated
 
 import flash
-from flash.core.data.io.input_base import DeserializerInput as Deserializer
+from flash.core.data.io.input_base import ServeInput as Deserializer
 from flash.core.data.io.output import Output
 
 

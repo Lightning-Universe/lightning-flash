@@ -14,7 +14,7 @@
 import pytest
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
-from flash.core.data.io.input_base import DeserializerInput, Input, IterableInput
+from flash.core.data.io.input_base import Input, IterableInput, ServeInput
 from flash.core.utilities.stages import RunningStage
 
 
@@ -60,12 +60,12 @@ def test_iterable_input_validation():
 
 def test_serve_input():
 
-    server_input = DeserializerInput()
+    server_input = ServeInput()
     assert server_input.serving
     with pytest.raises(NotImplementedError):
         server_input._call_load_sample("")
 
-    class CustomDeserializerInput(DeserializerInput):
+    class CustomServeInput(ServeInput):
         def serve_load_data(self, data):
             raise NotImplementedError
 
@@ -73,11 +73,11 @@ def test_serve_input():
             return data + 1
 
     with pytest.raises(MisconfigurationException, match="serve_load_data"):
-        serve_input = CustomDeserializerInput()
+        serve_input = CustomServeInput()
 
-    class CustomDeserializerInput2(DeserializerInput):
+    class CustomServeInput2(ServeInput):
         def serve_load_sample(self, data):
             return data + 1
 
-    serve_input = CustomDeserializerInput2()
+    serve_input = CustomServeInput2()
     assert serve_input._call_load_sample(1) == 2

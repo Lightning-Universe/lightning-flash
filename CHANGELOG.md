@@ -32,7 +32,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Changed the `SpeechRecognition` task to use `AutoModelForCTC` rather than just `Wav2Vec2ForCTC` ([#874](https://github.com/PyTorchLightning/lightning-flash/pull/874))
 
-- Changed the `Deserializer` subclass `DeserializerInput` ([#1013](https://github.com/PyTorchLightning/lightning-flash/pull/1013))
+- Changed the `Deserializer` subclass `ServeInput` ([#1013](https://github.com/PyTorchLightning/lightning-flash/pull/1013))
 
 - Added `Output` suffix to `Preds`, `FiftyOneDetectionLabels`, `SegmentationLabels`, `FiftyOneDetectionLabels`, `DetectionLabels`, `Classes`, `FiftyOneLabels`, `Labels`, `Logits`, `Probabilities` ([#1011](https://github.com/PyTorchLightning/lightning-flash/pull/1011))
 
