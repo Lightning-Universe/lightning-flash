@@ -65,8 +65,14 @@ _________________________________
 .. autosummary::
     :toctree: generated/
     :nosignatures:
+    :template: classtemplate.rst
 
     ~flash.core.integrations.icevision.transforms.IceVisionTransformAdapter
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
     ~flash.core.integrations.icevision.transforms.default_transforms
     ~flash.core.integrations.icevision.transforms.train_default_transforms
 
