@@ -212,7 +212,7 @@ class SemanticSegmentationFiftyOneInput(FiftyOneInput):
 
 class SemanticSegmentationDeserializer(ImageDeserializer):
     def serve_load_sample(self, data: str) -> torch.Tensor:
-        result = super().deserialize(data)
+        result = super().serve_load_sample(data)
         result[DataKeys.INPUT] = FT.to_tensor(result[DataKeys.INPUT])
         result[DataKeys.METADATA] = {"size": result[DataKeys.INPUT].shape}
         return result

@@ -186,7 +186,7 @@ class TabularDeserializer(Deserializer):
             )
         return parameters_state.parameters
 
-    def serve_load_data(self, data: str) -> Any:
+    def serve_load_sample(self, data: str) -> Any:
         parameters = self.parameters
 
         df = read_csv(StringIO(data))

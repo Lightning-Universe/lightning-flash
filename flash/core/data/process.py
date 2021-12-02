@@ -12,29 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import functools
-from typing import Any, List, Mapping
+from typing import Any, Mapping
 from warnings import warn
 
 from deprecate import deprecated
 
 import flash
-from flash.core.data.io.input import Input
+from flash.core.data.io.input_base import DeserializerInput as Deserializer
 from flash.core.data.io.output import Output
-
-
-class ServeInput(Input):
-    def serve_load_sample(self, sample: Any) -> List[Any]:
-        raise NotImplementedError
-
-
-class Deserializer(ServeInput):
-    """Deserializer."""
-
-    def deserialize(self, sample: Any) -> Any:
-        return self.serve_load_sample(sample)
-
-    def example_input(self) -> str:
-        raise NotImplementedError
 
 
 class DeserializerMapping(Deserializer):
