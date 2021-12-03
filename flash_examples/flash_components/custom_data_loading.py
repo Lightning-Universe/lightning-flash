@@ -105,6 +105,8 @@ class BaseImageInputTransform(InputTransform):
     image_size: Tuple[int, int] = (224, 224)
 
     def input_per_sample_transform(self) -> Any:
+        # this will be used to transform only the input value associated with
+        # the `input` key within each sample.
         return T.Compose([T.Resize(self.image_size), T.ToTensor()])
 
 
@@ -115,6 +117,8 @@ class ImageRandomRotationInputTransform(BaseImageInputTransform):
     image_size: Tuple[int, int] = (224, 224)
 
     def input_per_sample_transform(self) -> Any:
+        # this will be used to transform only the input value associated with
+        # the `input` key within each sample.
         transforms = [T.Resize(self.image_size), T.ToTensor()]
         if self.training:
             transforms += [T.RandomRotation(self.rotation)]
