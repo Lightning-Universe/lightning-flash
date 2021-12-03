@@ -383,10 +383,10 @@ class ImageClassificationData(DataModule):
         predict_data = (predict_data_frame, input_field, predict_images_root, predict_resolver)
 
         return cls(
-            ImageClassificationCSVInput(RunningStage.TRAINING, *train_data, **dataset_kwargs),
-            ImageClassificationCSVInput(RunningStage.VALIDATING, *val_data, **dataset_kwargs),
-            ImageClassificationCSVInput(RunningStage.TESTING, *test_data, **dataset_kwargs),
-            ImageClassificationCSVInput(RunningStage.PREDICTING, *predict_data, **dataset_kwargs),
+            ImageClassificationDataFrameInput(RunningStage.TRAINING, *train_data, **dataset_kwargs),
+            ImageClassificationDataFrameInput(RunningStage.VALIDATING, *val_data, **dataset_kwargs),
+            ImageClassificationDataFrameInput(RunningStage.TESTING, *test_data, **dataset_kwargs),
+            ImageClassificationDataFrameInput(RunningStage.PREDICTING, *predict_data, **dataset_kwargs),
             input_transform=cls.input_transform_cls(
                 train_transform,
                 val_transform,

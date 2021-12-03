@@ -27,14 +27,13 @@ datamodule = TextClassificationData.from_csv(
     ["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"],
     train_file="data/jigsaw_toxic_comments/train.csv",
     val_split=0.1,
-    backbone="unitary/toxic-bert",
 )
 
 # 2. Build the task
 model = TextClassifier(
     backbone="unitary/toxic-bert",
     num_classes=datamodule.num_classes,
-    multi_label=True,
+    multi_label=datamodule.multi_label,
 )
 
 # 3. Create the trainer and finetune the model

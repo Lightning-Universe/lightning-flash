@@ -21,10 +21,11 @@ from torch import Tensor
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
-from flash.core.data.io.classification_input import ClassificationInput
+from flash.core.data.io.classification_input import ClassificationInput, ClassificationState
 from flash.core.data.io.input import DataKeys, InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.process import Deserializer
+from flash.core.data.utilities.classification import TargetMode
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioTextClassificationInput
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
@@ -81,11 +82,17 @@ class TextClassificationInput(ClassificationInput):
             targets = hf_dataset.to_dict()[DataKeys.TARGET]
             self.load_target_metadata(targets)
 
+            # If we had binary multi-class targets then we also know the labels (column names)
+            if self.target_mode is TargetMode.MULTI_BINARY and isinstance(target_keys, List):
+                classification_state = self.get_state(ClassificationState)
+                self.set_state(ClassificationState(target_keys, classification_state.num_classes))
+
         # remove extra columns
         extra_columns = set(hf_dataset.column_names) - {input_key, DataKeys.TARGET}
         hf_dataset = hf_dataset.remove_columns(extra_columns)
 
-        hf_dataset = hf_dataset.rename_column(input_key, DataKeys.INPUT)
+        if input_key != DataKeys.INPUT:
+            hf_dataset = hf_dataset.rename_column(input_key, DataKeys.INPUT)
 
         return hf_dataset
 
