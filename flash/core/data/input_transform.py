@@ -854,7 +854,7 @@ class InputTransform(Properties):
                 if resolve_name_overridden and resolved_apply_to_key_name_overridden:
                     # if both are specialized or both aren't specialized, raise a exception
                     # It means there is priority to specialize hooks name.
-                    if ~(is_specialized_name ^ is_specialized_apply_to_key_name):
+                    if not (is_specialized_name ^ is_specialized_apply_to_key_name):
                         raise MisconfigurationException(
                             f"Only one of {resolved_name} or {resolved_apply_to_key_name} can be overridden."
                         )
