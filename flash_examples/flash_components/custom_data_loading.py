@@ -271,21 +271,17 @@ class ImageClassificationDataModule(DataModule):
         **data_module_kwargs: Any,
     ) -> "ImageClassificationDataModule":
 
-        dataset_kwargs = dict(data_pipeline_state=DataPipelineState())
+        kwargs = dict(data_pipeline_state=DataPipelineState())
 
         return cls(
-            MultipleFoldersImageInput(
-                RunningStage.TRAINING, train_folders, transform=train_transform, **dataset_kwargs
-            ),
-            MultipleFoldersImageInput(RunningStage.VALIDATING, val_folders, transform=val_transform, **dataset_kwargs),
-            MultipleFoldersImageInput(
-                RunningStage.VALIDATING, test_folders, transform=test_transform, **dataset_kwargs
-            ),
+            MultipleFoldersImageInput(RunningStage.TRAINING, train_folders, transform=train_transform, **kwargs),
+            MultipleFoldersImageInput(RunningStage.VALIDATING, val_folders, transform=val_transform, **kwargs),
+            MultipleFoldersImageInput(RunningStage.VALIDATING, test_folders, transform=test_transform, **kwargs),
             MultipleFoldersImageInput(
                 RunningStage.PREDICTING,
                 predict_folder,
                 transform=predict_transform,
-                **dataset_kwargs,
+                **kwargs,
             ),
             **data_module_kwargs,
         )
