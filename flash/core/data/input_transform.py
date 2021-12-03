@@ -145,8 +145,8 @@ class InputTransform(Properties):
                 is_specialized_apply_to_key_name = resolved_apply_to_key_name.startswith(stage)
 
                 # check if they are overridden by the user
-                resolve_name_overridden = DataPipeline._is_overriden(resolved_name, self, InputTransform)
-                resolved_apply_to_key_name_overridden = DataPipeline._is_overriden(
+                resolve_name_overridden = DataPipeline._is_overridden(resolved_name, self, InputTransform)
+                resolved_apply_to_key_name_overridden = DataPipeline._is_overridden(
                     resolved_apply_to_key_name, self, InputTransform
                 )
 
@@ -257,16 +257,16 @@ class InputTransform(Properties):
 
         prefix: str = _STAGES_PREFIX[self.running_stage]
 
-        per_batch_transform_overriden: bool = DataPipeline._is_overriden_recursive(
+        per_batch_transform_overridden: bool = DataPipeline._is_overridden_recursive(
             "per_batch_transform", self, InputTransform, prefix=prefix
         )
 
-        per_sample_transform_on_device_overriden: bool = DataPipeline._is_overriden_recursive(
+        per_sample_transform_on_device_overridden: bool = DataPipeline._is_overridden_recursive(
             "per_sample_transform_on_device", self, InputTransform, prefix=prefix
         )
 
-        is_per_overriden = per_batch_transform_overriden and per_sample_transform_on_device_overriden
-        if self._collate_in_worker_from_transform is None and is_per_overriden:
+        is_per_overridden = per_batch_transform_overridden and per_sample_transform_on_device_overridden
+        if self._collate_in_worker_from_transform is None and is_per_overridden:
             raise MisconfigurationException(
                 f"{self.__class__.__name__}: `per_batch_transform` and `per_sample_transform_on_device` "
                 f"are mutually exclusive for stage {self.running_stage}"
@@ -278,7 +278,7 @@ class InputTransform(Properties):
             )
         else:
             worker_collate_fn, device_collate_fn = self._make_collates(
-                per_sample_transform_on_device_overriden, self._collate
+                per_sample_transform_on_device_overridden, self._collate
             )
 
         worker_collate_fn = (
