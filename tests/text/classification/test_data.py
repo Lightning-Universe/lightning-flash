@@ -20,22 +20,14 @@ import pytest
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import TextClassificationData
-from flash.text.classification.data import (
-    TextCSVInput,
-    TextDataFrameInput,
-    TextHuggingFaceDatasetInput,
-    TextInput,
-    TextJSONInput,
-    TextListInput,
-    TextParquetInput,
-)
+from flash.text.classification.model import TextClassificationBackboneState
 from tests.helpers.utils import _TEXT_TESTING
 
 if _TEXT_AVAILABLE:
     from datasets import Dataset
-    from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 
 TEST_BACKBONE = "prajjwal1/bert-tiny"  # super small model for testing
+TEST_BACKBONE_STATE = TextClassificationBackboneState(TEST_BACKBONE)
 
 TEST_CSV_DATA = """sentence,label
 this is a sentence one,0
@@ -126,13 +118,14 @@ def test_from_csv(tmpdir):
     dm = TextClassificationData.from_csv(
         "sentence",
         "label",
-        backbone=TEST_BACKBONE,
         train_file=csv_path,
         val_file=csv_path,
         test_file=csv_path,
         predict_file=csv_path,
         batch_size=1,
     )
+
+    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
 
     batch = next(iter(dm.train_dataloader()))
     assert batch[DataKeys.TARGET].item() in [0, 1]
@@ -157,13 +150,14 @@ def test_from_csv_multilabel(tmpdir):
     dm = TextClassificationData.from_csv(
         "sentence",
         ["lab1", "lab2"],
-        backbone=TEST_BACKBONE,
         train_file=csv_path,
         val_file=csv_path,
         test_file=csv_path,
         predict_file=csv_path,
         batch_size=1,
     )
+
+    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
 
     batch = next(iter(dm.train_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
@@ -188,13 +182,14 @@ def test_from_json(tmpdir):
     dm = TextClassificationData.from_json(
         "sentence",
         "lab",
-        backbone=TEST_BACKBONE,
         train_file=json_path,
         val_file=json_path,
         test_file=json_path,
         predict_file=json_path,
         batch_size=1,
     )
+
+    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
 
     batch = next(iter(dm.train_dataloader()))
     assert batch[DataKeys.TARGET].item() in [0, 1]
@@ -219,13 +214,14 @@ def test_from_json_multilabel(tmpdir):
     dm = TextClassificationData.from_json(
         "sentence",
         ["lab1", "lab2"],
-        backbone=TEST_BACKBONE,
         train_file=json_path,
         val_file=json_path,
         test_file=json_path,
         predict_file=json_path,
         batch_size=1,
     )
+
+    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
 
     batch = next(iter(dm.train_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
@@ -250,7 +246,6 @@ def test_from_json_with_field(tmpdir):
     dm = TextClassificationData.from_json(
         "sentence",
         "lab",
-        backbone=TEST_BACKBONE,
         train_file=json_path,
         val_file=json_path,
         test_file=json_path,
@@ -258,6 +253,8 @@ def test_from_json_with_field(tmpdir):
         batch_size=1,
         field="data",
     )
+
+    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
 
     batch = next(iter(dm.train_dataloader()))
     assert batch[DataKeys.TARGET].item() in [0, 1]
@@ -282,7 +279,6 @@ def test_from_json_with_field_multilabel(tmpdir):
     dm = TextClassificationData.from_json(
         "sentence",
         ["lab1", "lab2"],
-        backbone=TEST_BACKBONE,
         train_file=json_path,
         val_file=json_path,
         test_file=json_path,
@@ -290,6 +286,8 @@ def test_from_json_with_field_multilabel(tmpdir):
         batch_size=1,
         field="data",
     )
+
+    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
 
     batch = next(iter(dm.train_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
@@ -314,13 +312,14 @@ def test_from_parquet(tmpdir):
     dm = TextClassificationData.from_parquet(
         "sentence",
         "lab1",
-        backbone=TEST_BACKBONE,
         train_file=parquet_path,
         val_file=parquet_path,
         test_file=parquet_path,
         predict_file=parquet_path,
         batch_size=1,
     )
+
+    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
 
     batch = next(iter(dm.train_dataloader()))
     assert batch[DataKeys.TARGET].item() in [0, 1]
@@ -345,13 +344,14 @@ def test_from_parquet_multilabel(tmpdir):
     dm = TextClassificationData.from_parquet(
         "sentence",
         ["lab1", "lab2"],
-        backbone=TEST_BACKBONE,
         train_file=parquet_path,
         val_file=parquet_path,
         test_file=parquet_path,
         predict_file=parquet_path,
         batch_size=1,
     )
+
+    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
 
     batch = next(iter(dm.train_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
@@ -375,13 +375,14 @@ def test_from_data_frame():
     dm = TextClassificationData.from_data_frame(
         "sentence",
         "lab1",
-        backbone=TEST_BACKBONE,
         train_data_frame=TEST_DATA_FRAME_DATA,
         val_data_frame=TEST_DATA_FRAME_DATA,
         test_data_frame=TEST_DATA_FRAME_DATA,
         predict_data_frame=TEST_DATA_FRAME_DATA,
         batch_size=1,
     )
+
+    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
 
     batch = next(iter(dm.train_dataloader()))
     assert batch[DataKeys.TARGET].item() in [0, 1]
@@ -405,13 +406,14 @@ def test_from_data_frame_multilabel():
     dm = TextClassificationData.from_data_frame(
         "sentence",
         ["lab1", "lab2"],
-        backbone=TEST_BACKBONE,
         train_data_frame=TEST_DATA_FRAME_DATA,
         val_data_frame=TEST_DATA_FRAME_DATA,
         test_data_frame=TEST_DATA_FRAME_DATA,
         predict_data_frame=TEST_DATA_FRAME_DATA,
         batch_size=1,
     )
+
+    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
 
     batch = next(iter(dm.train_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
@@ -436,13 +438,14 @@ def test_from_hf_datasets():
     dm = TextClassificationData.from_hf_datasets(
         "sentence",
         "lab1",
-        backbone=TEST_BACKBONE,
         train_hf_dataset=TEST_HF_DATASET_DATA,
         val_hf_dataset=TEST_HF_DATASET_DATA,
         test_hf_dataset=TEST_HF_DATASET_DATA,
         predict_hf_dataset=TEST_HF_DATASET_DATA,
         batch_size=1,
     )
+
+    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
 
     batch = next(iter(dm.train_dataloader()))
     assert batch[DataKeys.TARGET].item() in [0, 1]
@@ -467,13 +470,14 @@ def test_from_hf_datasets_multilabel():
     dm = TextClassificationData.from_hf_datasets(
         "sentence",
         ["lab1", "lab2"],
-        backbone=TEST_BACKBONE,
         train_hf_dataset=TEST_HF_DATASET_DATA,
         val_hf_dataset=TEST_HF_DATASET_DATA,
         test_hf_dataset=TEST_HF_DATASET_DATA,
         predict_hf_dataset=TEST_HF_DATASET_DATA,
         batch_size=1,
     )
+
+    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
 
     batch = next(iter(dm.train_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
@@ -495,7 +499,6 @@ def test_from_hf_datasets_multilabel():
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_lists():
     dm = TextClassificationData.from_lists(
-        backbone=TEST_BACKBONE,
         train_data=TEST_LIST_DATA,
         train_targets=TEST_LIST_TARGETS,
         val_data=TEST_LIST_DATA,
@@ -505,6 +508,8 @@ def test_from_lists():
         predict_data=TEST_LIST_DATA,
         batch_size=1,
     )
+
+    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
 
     batch = next(iter(dm.train_dataloader()))
     assert batch[DataKeys.TARGET].item() in [0, 1]
@@ -526,7 +531,6 @@ def test_from_lists():
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_lists_multilabel():
     dm = TextClassificationData.from_lists(
-        backbone=TEST_BACKBONE,
         train_data=TEST_LIST_DATA,
         train_targets=TEST_LIST_TARGETS_MULTILABEL,
         val_data=TEST_LIST_DATA,
@@ -536,6 +540,8 @@ def test_from_lists_multilabel():
         predict_data=TEST_LIST_DATA,
         batch_size=1,
     )
+
+    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
 
     batch = next(iter(dm.train_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
@@ -556,33 +562,4 @@ def test_from_lists_multilabel():
 @pytest.mark.skipif(_TEXT_AVAILABLE, reason="text libraries are installed.")
 def test_text_module_not_found_error():
     with pytest.raises(ModuleNotFoundError, match="[text]"):
-        TextClassificationData.from_json("sentence", "lab", backbone=TEST_BACKBONE, train_file="", batch_size=1)
-
-
-@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-@pytest.mark.parametrize(
-    "cls, kwargs",
-    [
-        (TextInput, {}),
-        (TextCSVInput, {}),
-        (TextJSONInput, {}),
-        (TextDataFrameInput, {}),
-        (TextParquetInput, {}),
-        (TextHuggingFaceDatasetInput, {}),
-        (TextListInput, {}),
-    ],
-)
-def test_tokenizer_state(cls, kwargs):
-    """Tests that the tokenizer is not in __getstate__"""
-    instance = cls(backbone=TEST_BACKBONE, **kwargs)
-    state = instance.__getstate__()
-    tokenizers = []
-    for name, attribute in instance.__dict__.items():
-        if isinstance(attribute, PreTrainedTokenizerBase):
-            assert name not in state
-            setattr(instance, name, None)
-            tokenizers.append(name)
-    instance.__setstate__(state)
-    for name in tokenizers:
-        assert getattr(instance, name, None) is not None
+        TextClassificationData.from_json("sentence", "lab", train_file="", batch_size=1)

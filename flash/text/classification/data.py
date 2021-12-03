@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import partial
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Union
 
 import pandas as pd
 import torch
@@ -46,7 +46,7 @@ class TextDeserializer(Deserializer):
         self.max_length = max_length
 
     def serve_load_sample(self, text: str) -> Tensor:
-        return self.self.get_state(TextClassificationBackboneState).tokenizer(
+        return self.get_state(TextClassificationBackboneState).tokenizer(
             text, max_length=self.max_length, truncation=True, padding="max_length"
         )
 
@@ -112,8 +112,8 @@ class TextClassificationCSVInput(TextClassificationInput):
         target_keys: Optional[Union[str, List[str]]] = None,
         max_length: int = 128,
     ) -> Dataset:
-        dataset = load_dataset("csv", data_files=str(csv_file))
-        return super().load_data(dataset, input_key, target_keys, max_length)
+        dataset_dict = load_dataset("csv", data_files={"data": str(csv_file)})
+        return super().load_data(dataset_dict["data"], input_key, target_keys, max_length)
 
 
 class TextClassificationJSONInput(TextClassificationInput):
@@ -125,8 +125,8 @@ class TextClassificationJSONInput(TextClassificationInput):
         target_keys: Optional[Union[str, List[str]]] = None,
         max_length: int = 128,
     ) -> Dataset:
-        dataset = load_dataset("json", data_files=str(json_file), field=field)
-        return super().load_data(dataset, input_key, target_keys, max_length)
+        dataset_dict = load_dataset("json", data_files={"data": str(json_file)}, field=field)
+        return super().load_data(dataset_dict["data"], input_key, target_keys, max_length)
 
 
 class TextClassificationDataFrameInput(TextClassificationInput):
@@ -422,10 +422,10 @@ class TextClassificationData(DataModule):
         cls,
         input_field: str,
         target_fields: Optional[Union[str, Sequence[str]]] = None,
-        train_hf_dataset: Optional[Sequence[Mapping[str, Any]]] = None,
-        val_hf_dataset: Optional[Sequence[Mapping[str, Any]]] = None,
-        test_hf_dataset: Optional[Sequence[Mapping[str, Any]]] = None,
-        predict_hf_dataset: Optional[Sequence[Mapping[str, Any]]] = None,
+        train_hf_dataset: Optional[Dataset] = None,
+        val_hf_dataset: Optional[Dataset] = None,
+        test_hf_dataset: Optional[Dataset] = None,
+        predict_hf_dataset: Optional[Dataset] = None,
         train_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
         test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
