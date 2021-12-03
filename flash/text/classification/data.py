@@ -105,6 +105,7 @@ class TextClassificationInput(ClassificationInput):
 
 
 class TextClassificationCSVInput(TextClassificationInput):
+    @requires("text")
     def load_data(
         self,
         csv_file: PATH_TYPE,
@@ -117,6 +118,7 @@ class TextClassificationCSVInput(TextClassificationInput):
 
 
 class TextClassificationJSONInput(TextClassificationInput):
+    @requires("text")
     def load_data(
         self,
         json_file: PATH_TYPE,
@@ -130,6 +132,7 @@ class TextClassificationJSONInput(TextClassificationInput):
 
 
 class TextClassificationDataFrameInput(TextClassificationInput):
+    @requires("text")
     def load_data(
         self,
         data_frame: pd.DataFrame,
@@ -141,6 +144,7 @@ class TextClassificationDataFrameInput(TextClassificationInput):
 
 
 class TextClassificationParquetInput(TextClassificationInput):
+    @requires("text")
     def load_data(
         self,
         parquet_file: PATH_TYPE,
@@ -152,6 +156,7 @@ class TextClassificationParquetInput(TextClassificationInput):
 
 
 class TextClassificationListInput(TextClassificationInput):
+    @requires("text")
     def load_data(
         self,
         inputs: List[str],
