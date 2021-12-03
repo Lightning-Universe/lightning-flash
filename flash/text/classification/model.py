@@ -14,6 +14,7 @@
 import os
 import warnings
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Any, Dict, List
 
 import torch
@@ -29,6 +30,7 @@ from flash.text.classification.backbones import TEXT_CLASSIFIER_BACKBONES
 from flash.text.ort_callback import ORTCallback
 
 if _TRANSFORMERS_AVAILABLE:
+    from transformers import AutoTokenizer
     from transformers.modeling_outputs import Seq2SeqSequenceClassifierOutput, SequenceClassifierOutput
 
 
@@ -37,6 +39,11 @@ class TextClassificationBackboneState(ProcessState):
     """The ``TextClassificationBackboneState`` records the ``backbone`` in use by the ``TextClassifier``."""
 
     backbone: str
+
+    @property
+    @lru_cache(maxsize=None)
+    def tokenizer(self):
+        return AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
 class TextClassifier(ClassificationTask):

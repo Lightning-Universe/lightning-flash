@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from functools import lru_cache, partial
+from functools import partial
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union
 
 import pandas as pd
@@ -34,7 +34,7 @@ from flash.text.classification.model import TextClassificationBackboneState
 
 if _TEXT_AVAILABLE:
     from datasets import Dataset, load_dataset
-    from transformers import AutoTokenizer, default_data_collator
+    from transformers import default_data_collator
 else:
     Dataset = object
 
@@ -45,14 +45,10 @@ class TextDeserializer(Deserializer):
         super().__init__()
         self.max_length = max_length
 
-    @property
-    @lru_cache(maxsize=None)
-    def tokenizer(self):
-        backbone_state = self.get_state(TextClassificationBackboneState)
-        return AutoTokenizer.from_pretrained(backbone_state.backbone, use_fast=True)
-
     def serve_load_sample(self, text: str) -> Tensor:
-        return self.tokenizer(text, max_length=self.max_length, truncation=True, padding="max_length")
+        return self.self.get_state(TextClassificationBackboneState).tokenizer(
+            text, max_length=self.max_length, truncation=True, padding="max_length"
+        )
 
     @property
     def example_input(self) -> str:
@@ -98,14 +94,8 @@ class TextClassificationInput(ClassificationInput):
 
         return hf_dataset
 
-    @property
-    @lru_cache(maxsize=None)
-    def tokenizer(self):
-        backbone_state = self.get_state(TextClassificationBackboneState)
-        return AutoTokenizer.from_pretrained(backbone_state.backbone, use_fast=True)
-
     def load_sample(self, sample: Dict[str, Any]) -> Any:
-        tokenized_sample = self.tokenizer(
+        tokenized_sample = self.get_state(TextClassificationBackboneState).tokenizer(
             sample[DataKeys.INPUT], max_length=self.max_length, truncation=True, padding="max_length"
         )
         tokenized_sample = tokenized_sample.data
@@ -122,8 +112,8 @@ class TextClassificationCSVInput(TextClassificationInput):
         target_keys: Optional[Union[str, List[str]]] = None,
         max_length: int = 128,
     ) -> Dataset:
-        dataset_dict = load_dataset("csv", data_files={"train": str(csv_file)})
-        return super().load_data(dataset_dict["train"], input_key, target_keys, max_length)
+        dataset = load_dataset("csv", data_files=str(csv_file))
+        return super().load_data(dataset, input_key, target_keys, max_length)
 
 
 class TextClassificationJSONInput(TextClassificationInput):
@@ -135,8 +125,8 @@ class TextClassificationJSONInput(TextClassificationInput):
         target_keys: Optional[Union[str, List[str]]] = None,
         max_length: int = 128,
     ) -> Dataset:
-        dataset_dict = load_dataset("json", data_files={"train": str(json_file)}, field=field)
-        return super().load_data(dataset_dict["train"], input_key, target_keys, max_length)
+        dataset = load_dataset("json", data_files=str(json_file), field=field)
+        return super().load_data(dataset, input_key, target_keys, max_length)
 
 
 class TextClassificationDataFrameInput(TextClassificationInput):

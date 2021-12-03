@@ -2,7 +2,6 @@ import json
 import os
 from copy import deepcopy
 from dataclasses import dataclass
-from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Set, Type
 
@@ -17,15 +16,12 @@ from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_base import Input, IterableInput
 from flash.core.data.properties import ProcessState, Properties
 from flash.core.data.utils import image_default_loader
-from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE, _TEXT_AVAILABLE
+from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 from flash.text.classification.model import TextClassificationBackboneState
 
 if _PYTORCHVIDEO_AVAILABLE:
     from pytorchvideo.data.clip_sampling import make_clip_sampler
-
-if _TEXT_AVAILABLE:
-    from transformers import AutoTokenizer
 
 
 @dataclass(unsafe_hash=True, frozen=True)
@@ -283,12 +279,6 @@ class LabelStudioTextClassificationInput(LabelStudioInput):
         self.max_length = max_length
         super().__init__(*args, **kwargs)
 
-    @property
-    @lru_cache(maxsize=None)
-    def tokenizer(self):
-        backbone_state = self.get_state(TextClassificationBackboneState)
-        return AutoTokenizer.from_pretrained(backbone_state.backbone, use_fast=True)
-
     def load_sample(self, sample: Mapping[str, Any] = None) -> Any:
         """Load 1 sample from dataset."""
         if not self.state:
@@ -299,7 +289,9 @@ class LabelStudioTextClassificationInput(LabelStudioInput):
         data = ""
         for key in sample.get("data"):
             data += sample.get("data").get(key)
-        tokenized_data = self.tokenizer(data, max_length=self.max_length, truncation=True, padding="max_length")
+        tokenized_data = self.get_state(TextClassificationBackboneState).tokenizer(
+            data, max_length=self.max_length, truncation=True, padding="max_length"
+        )
         for key in tokenized_data:
             tokenized_data[key] = torch.tensor(tokenized_data[key])
         tokenized_data["labels"] = _get_labels_from_sample(sample["label"], self.state.classes)
