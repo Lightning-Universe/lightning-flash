@@ -96,7 +96,7 @@ def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]
 
 
 @dataclass
-class NewImageClassificationInputTransform(InputTransform):
+class ImageClassificationInputTransform(InputTransform):
 
     image_size: Tuple[int, int] = (224, 224)
 

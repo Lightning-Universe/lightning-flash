@@ -18,10 +18,12 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 
 from flash.core.classification import ClassificationAdapterTask, LabelsOutput
+from flash.core.data.io.input import InputFormat
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 from flash.image.classification.adapters import TRAINING_STRATEGIES
 from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES
+from flash.image.classification.input import INPUTS
 
 
 class ImageClassifier(ClassificationAdapterTask):
@@ -69,6 +71,9 @@ class ImageClassifier(ClassificationAdapterTask):
     backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES
     training_strategies: FlashRegistry = TRAINING_STRATEGIES
     required_extras: str = "image"
+
+    inputs = INPUTS
+    default_input = InputFormat.FILES
 
     def __init__(
         self,
