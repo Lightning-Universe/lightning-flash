@@ -123,3 +123,28 @@ def test_input_transform():
     transform = LambdaInputTransform(RunningStage.TRAINING, fn)
     assert list(transform._transform.keys()) == ["per_sample_transform", "collate"]
     assert transform._transform["per_sample_transform"] == fn
+
+    class MyTransform(InputTransform):
+        def __init__(self, value: int, running_stage: RunningStage):
+            super().__init__(running_stage)
+            self.value = value
+
+        def input_per_batch_transform(self) -> Callable:
+            if self.value > 0:
+                return self.input_per_batch_transform
+            return super().input_per_batch_transform
+
+    with pytest.raises(AttributeError, match="__init__"):
+        MyTransform(1, running_stage=RunningStage.TRAINING)
+
+    class MyTransform(InputTransform):
+        def __init__(self, value: int, running_stage: RunningStage):
+            self.value = value
+            super().__init__(running_stage)
+
+        def input_per_batch_transform(self) -> Callable:
+            if self.value > 0:
+                return self.input_per_batch_transform
+            return super().input_per_batch_transform
+
+    MyTransform(1, running_stage=RunningStage.TRAINING)

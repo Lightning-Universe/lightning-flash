@@ -145,7 +145,10 @@ class InputTransform(Properties):
                 else:
                     method_name = resolved_key_name if resolved_key_name_overridden else resolved_name
 
-                fn = getattr(self, method_name)()
+                try:
+                    fn = getattr(self, method_name)()
+                except AttributeError as e:
+                    raise AttributeError(str(e) + ". Hint: Call super().__init__(...) after setting all attributes.")
 
                 if not callable(fn):
                     raise MisconfigurationException(f"The hook {method_name} should return a function.")
