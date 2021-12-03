@@ -18,7 +18,6 @@ from flash.core.data.properties import ProcessState, Properties
 from flash.core.data.utils import image_default_loader
 from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE
 from flash.core.utilities.stages import RunningStage
-from flash.text.classification.model import TextClassificationBackboneState
 
 if _PYTORCHVIDEO_AVAILABLE:
     from pytorchvideo.data.clip_sampling import make_clip_sampler
@@ -289,7 +288,7 @@ class LabelStudioTextClassificationInput(LabelStudioInput):
         data = ""
         for key in sample.get("data"):
             data += sample.get("data").get(key)
-        tokenized_data = self.get_state(TextClassificationBackboneState).tokenizer(
+        tokenized_data = self.get_state(flash.text.classification.model.TextClassificationBackboneState).tokenizer(
             data, max_length=self.max_length, truncation=True, padding="max_length"
         )
         for key in tokenized_data:
