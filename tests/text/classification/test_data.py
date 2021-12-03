@@ -38,7 +38,7 @@ this is a sentence three,0
 TEST_CSV_DATA_MULTILABEL = """sentence,lab1,lab2
 this is a sentence one,0,1
 this is a sentence two,1,0
-this is a sentence three,0,1
+this is a sentence three,1,1
 """
 
 TEST_JSON_DATA = """
@@ -50,7 +50,7 @@ TEST_JSON_DATA = """
 TEST_JSON_DATA_MULTILABEL = """
 {"sentence": "this is a sentence one","lab1":0, "lab2": 1}
 {"sentence": "this is a sentence two","lab1":1, "lab2": 0}
-{"sentence": "this is a sentence three","lab1":0, "lab2": 1}
+{"sentence": "this is a sentence three","lab1":1, "lab2": 1}
 """
 
 TEST_JSON_DATA_FIELD = """{"data": [
@@ -62,20 +62,27 @@ TEST_JSON_DATA_FIELD = """{"data": [
 TEST_JSON_DATA_FIELD_MULTILABEL = """{"data": [
 {"sentence": "this is a sentence one","lab1":0, "lab2": 1},
 {"sentence": "this is a sentence two","lab1":1, "lab2": 0},
-{"sentence": "this is a sentence three","lab1":0, "lab2": 1}]}
+{"sentence": "this is a sentence three","lab1":1, "lab2": 1}]}
 """
 
 TEST_DATA_FRAME_DATA = pd.DataFrame(
     {
         "sentence": ["this is a sentence one", "this is a sentence two", "this is a sentence three"],
         "lab1": [0, 1, 0],
+    },
+)
+
+TEST_DATA_FRAME_DATA_MULTILABEL = pd.DataFrame(
+    {
+        "sentence": ["this is a sentence one", "this is a sentence two", "this is a sentence three"],
+        "lab1": [0, 1, 1],
         "lab2": [1, 0, 1],
     },
 )
 
 TEST_LIST_DATA = ["this is a sentence one", "this is a sentence two", "this is a sentence three"]
 TEST_LIST_TARGETS = [0, 1, 0]
-TEST_LIST_TARGETS_MULTILABEL = [[0, 1], [1, 0], [0, 1]]
+TEST_LIST_TARGETS_MULTILABEL = [[0, 1], [1, 0], [1, 1]]
 
 
 def csv_data(tmpdir, multilabel: bool):
@@ -105,9 +112,12 @@ def json_data_with_field(tmpdir, multilabel: bool):
     return path
 
 
-def parquet_data(tmpdir):
+def parquet_data(tmpdir, multilabel: bool):
     path = Path(tmpdir) / "data.parquet"
-    TEST_DATA_FRAME_DATA.to_parquet(path)
+    if multilabel:
+        TEST_DATA_FRAME_DATA_MULTILABEL.to_parquet(path)
+    else:
+        TEST_DATA_FRAME_DATA.to_parquet(path)
     return path
 
 
@@ -158,6 +168,8 @@ def test_from_csv_multilabel(tmpdir):
     )
 
     dm.train_dataset.set_state(TEST_BACKBONE_STATE)
+
+    assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
@@ -222,6 +234,8 @@ def test_from_json_multilabel(tmpdir):
     )
 
     dm.train_dataset.set_state(TEST_BACKBONE_STATE)
+
+    assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
@@ -289,6 +303,8 @@ def test_from_json_with_field_multilabel(tmpdir):
 
     dm.train_dataset.set_state(TEST_BACKBONE_STATE)
 
+    assert dm.multi_label
+
     batch = next(iter(dm.train_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
     assert "input_ids" in batch
@@ -308,7 +324,7 @@ def test_from_json_with_field_multilabel(tmpdir):
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_parquet(tmpdir):
-    parquet_path = parquet_data(tmpdir)
+    parquet_path = parquet_data(tmpdir, False)
     dm = TextClassificationData.from_parquet(
         "sentence",
         "lab1",
@@ -340,7 +356,7 @@ def test_from_parquet(tmpdir):
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_parquet_multilabel(tmpdir):
-    parquet_path = parquet_data(tmpdir)
+    parquet_path = parquet_data(tmpdir, True)
     dm = TextClassificationData.from_parquet(
         "sentence",
         ["lab1", "lab2"],
@@ -352,6 +368,8 @@ def test_from_parquet_multilabel(tmpdir):
     )
 
     dm.train_dataset.set_state(TEST_BACKBONE_STATE)
+
+    assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
@@ -406,14 +424,16 @@ def test_from_data_frame_multilabel():
     dm = TextClassificationData.from_data_frame(
         "sentence",
         ["lab1", "lab2"],
-        train_data_frame=TEST_DATA_FRAME_DATA,
-        val_data_frame=TEST_DATA_FRAME_DATA,
-        test_data_frame=TEST_DATA_FRAME_DATA,
-        predict_data_frame=TEST_DATA_FRAME_DATA,
+        train_data_frame=TEST_DATA_FRAME_DATA_MULTILABEL,
+        val_data_frame=TEST_DATA_FRAME_DATA_MULTILABEL,
+        test_data_frame=TEST_DATA_FRAME_DATA_MULTILABEL,
+        predict_data_frame=TEST_DATA_FRAME_DATA_MULTILABEL,
         batch_size=1,
     )
 
     dm.train_dataset.set_state(TEST_BACKBONE_STATE)
+
+    assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
@@ -466,18 +486,20 @@ def test_from_hf_datasets():
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_hf_datasets_multilabel():
-    TEST_HF_DATASET_DATA = Dataset.from_pandas(TEST_DATA_FRAME_DATA)
+    TEST_HF_DATASET_DATA_MULTILABEL = Dataset.from_pandas(TEST_DATA_FRAME_DATA_MULTILABEL)
     dm = TextClassificationData.from_hf_datasets(
         "sentence",
         ["lab1", "lab2"],
-        train_hf_dataset=TEST_HF_DATASET_DATA,
-        val_hf_dataset=TEST_HF_DATASET_DATA,
-        test_hf_dataset=TEST_HF_DATASET_DATA,
-        predict_hf_dataset=TEST_HF_DATASET_DATA,
+        train_hf_dataset=TEST_HF_DATASET_DATA_MULTILABEL,
+        val_hf_dataset=TEST_HF_DATASET_DATA_MULTILABEL,
+        test_hf_dataset=TEST_HF_DATASET_DATA_MULTILABEL,
+        predict_hf_dataset=TEST_HF_DATASET_DATA_MULTILABEL,
         batch_size=1,
     )
 
     dm.train_dataset.set_state(TEST_BACKBONE_STATE)
+
+    assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
@@ -542,6 +564,8 @@ def test_from_lists_multilabel():
     )
 
     dm.train_dataset.set_state(TEST_BACKBONE_STATE)
+
+    assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
