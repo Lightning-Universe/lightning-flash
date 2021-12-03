@@ -20,16 +20,14 @@ ______________
     ~classification.model.TextClassifier
     ~classification.data.TextClassificationData
 
-    classification.data.TextClassificationOutputTransform
     classification.data.TextClassificationInputTransform
     classification.data.TextDeserializer
-    classification.data.TextInput
-    classification.data.TextCSVInput
-    classification.data.TextJSONInput
-    classification.data.TextDataFrameInput
-    classification.data.TextParquetInput
-    classification.data.TextHuggingFaceDatasetInput
-    classification.data.TextListInput
+    classification.data.TextClassificationInput
+    classification.data.TextClassificationCSVInput
+    classification.data.TextClassificationJSONInput
+    classification.data.TextClassificationDataFrameInput
+    classification.data.TextClassificationParquetInput
+    classification.data.TextClassificationListInput
 
 Question Answering
 __________________
