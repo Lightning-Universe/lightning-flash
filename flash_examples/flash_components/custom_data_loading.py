@@ -102,7 +102,6 @@ predict_dataset = MultipleFoldersImageInput(RunningStage.PREDICTING, PREDICT_FOL
 @dataclass
 class BaseImageInputTransform(InputTransform):
 
-    running_stage: RunningStage
     image_size: Tuple[int, int] = (224, 224)
 
     def input_per_sample_transform(self) -> Any:
@@ -112,7 +111,6 @@ class BaseImageInputTransform(InputTransform):
 @dataclass
 class ImageRandomRotationInputTransform(BaseImageInputTransform):
 
-    running_stage: RunningStage
     rotation: float = 0
     image_size: Tuple[int, int] = (224, 224)
 
@@ -273,23 +271,21 @@ class ImageClassificationDataModule(DataModule):
         **data_module_kwargs: Any,
     ) -> "ImageClassificationDataModule":
 
-        data_pipeline_state = DataPipelineState()
+        dataset_kwargs = dict(data_pipeline_state=DataPipelineState())
 
         return cls(
             MultipleFoldersImageInput(
-                RunningStage.TRAINING, train_folders, transform=train_transform, data_pipeline_state=data_pipeline_state
+                RunningStage.TRAINING, train_folders, transform=train_transform, **dataset_kwargs
             ),
+            MultipleFoldersImageInput(RunningStage.VALIDATING, val_folders, transform=val_transform, **dataset_kwargs),
             MultipleFoldersImageInput(
-                RunningStage.VALIDATING, val_folders, transform=val_transform, data_pipeline_state=data_pipeline_state
-            ),
-            MultipleFoldersImageInput(
-                RunningStage.VALIDATING, test_folders, transform=test_transform, data_pipeline_state=data_pipeline_state
+                RunningStage.VALIDATING, test_folders, transform=test_transform, **dataset_kwargs
             ),
             MultipleFoldersImageInput(
                 RunningStage.PREDICTING,
                 predict_folder,
                 transform=predict_transform,
-                data_pipeline_state=data_pipeline_state,
+                **dataset_kwargs,
             ),
             **data_module_kwargs,
         )

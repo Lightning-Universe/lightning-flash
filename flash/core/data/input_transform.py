@@ -115,6 +115,707 @@ class InputTransform(Properties):
             "transform": self._transform,
         }
 
+    @property
+    def dataloader_collate_fn(self):
+        """Generate the function to be injected within the DataLoader as the collate_fn."""
+        return self._create_collate_input_transform_processors()[0]
+
+    @property
+    def on_after_batch_transfer_fn(self):
+        """Generate the function to be injected after the on_after_batch_transfer from the LightningModule."""
+        return self._create_collate_input_transform_processors()[1]
+
+    ########################
+    # PER SAMPLE TRANSFORM #
+    ########################
+
+    def per_sample_transform(self) -> Callable:
+        """Defines the transform to be applied on a single sample on cpu for all stages stage.
+
+        The input data of the transform would have the following form:
+
+        {
+            DataKeys.INPUT: ...,
+            DataKeys.TARGET: ...,
+            DataKeys.METADATA: ...,
+        }
+
+        You would need to use :class:`flash.core.data.transforms.ApplyToKeys` as follows:
+
+        Example:
+
+            from flash.core.data.transforms import ApplyToKeys
+
+            class MyInputTransform(InputTransform):
+
+                def per_sample_transform(self) -> Callable:
+
+                    return ApplyToKeys("input", my_func)
+        """
+        return self._identity
+
+    def input_per_sample_transform(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "input" key of each sample on
+        device for all stages stage."""
+        return self._identity
+
+    def target_per_sample_transform(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "target" key of each sample on
+        device for all stages stage."""
+        return self._identity
+
+    def train_per_sample_transform(self) -> Callable:
+        """Defines the transform to be applied on a single sample on cpu for the training stage.
+
+        The input data of the transform would have the following form:
+        {
+            DataKeys.INPUT: ...,
+            DataKeys.TARGET: ...,
+            DataKeys.METADATA: ...,
+        }
+        """
+        return self._identity
+
+    def train_input_per_sample_transform(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "input" key of each single sample
+        on cpu for the training stage."""
+        return self._identity
+
+    def train_target_per_sample_transform(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "target" key of each single sample
+        on cpu for the training stage."""
+        return self._identity
+
+    def val_per_sample_transform(self) -> Callable:
+        """Defines the transform to be applied on a single sample on cpu for the validating stage.
+
+        The input data of the transform would have the following form:
+        {
+            DataKeys.INPUT: ...,
+            DataKeys.TARGET: ...,
+            DataKeys.METADATA: ...,
+        }
+
+        You would need to use :class:`flash.core.data.transforms.ApplyToKeys` as follows:
+
+        Example:
+
+            from flash.core.data.transforms import ApplyToKeys
+
+            class MyInputTransform(InputTransform):
+
+                def per_sample_transform(self) -> Callable:
+
+                    return ApplyToKeys("input", my_func)
+        """
+        return self._identity
+
+    def val_input_per_sample_transform(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "input" key of each single sample
+        on cpu for the validating stage."""
+        return self._identity
+
+    def val_target_per_sample_transform(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "target" key of each single sample
+        on cpu for the validating stage."""
+        return self._identity
+
+    def test_per_sample_transform(self) -> Callable:
+        """Defines the transform to be applied on a single sample on cpu for the testing stage.
+
+        The input data of the transform would have the following form:
+        {
+            DataKeys.INPUT: ...,
+            DataKeys.TARGET: ...,
+            DataKeys.METADATA: ...,
+        }
+        """
+        return self._identity
+
+    def test_input_per_sample_transform(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "input" key of each single sample
+        on cpu for the testing stage."""
+        return self._identity
+
+    def test_target_per_sample_transform(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "target" key of each single sample
+        on cpu for the testing stage."""
+        return self._identity
+
+    def predict_per_sample_transform(self) -> Callable:
+        """Defines the transform to be applied on a single sample on cpu for the predicting stage.
+
+        The input data of the transform would have the following form:
+        {
+            DataKeys.INPUT: ...,
+            DataKeys.TARGET: ...,
+            DataKeys.METADATA: ...,
+        }
+
+        You would need to use :class:`flash.core.data.transforms.ApplyToKeys` as follows:
+
+        Example:
+
+            from flash.core.data.transforms import ApplyToKeys
+
+            class MyInputTransform(InputTransform):
+
+                def per_sample_transform(self) -> Callable:
+
+                    return ApplyToKeys("input", my_func)
+        """
+        return self._identity
+
+    def predict_input_per_sample_transform(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "input" key of each single sample
+        on cpu for the predicting stage."""
+        return self._identity
+
+    def predict_target_per_sample_transform(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "target" key of each single sample
+        on cpu for the predicting stage."""
+        return self._identity
+
+    ##################################
+    # PER SAMPLE TRANSFORM ON DEVICE #
+    ##################################
+
+    def per_sample_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on a single sample on device for all stages stage.
+
+        The input data of the transform would have the following form:
+
+        {
+            DataKeys.INPUT: ...,
+            DataKeys.TARGET: ...,
+            DataKeys.METADATA: ...,
+        }
+
+        You would need to use :class:`flash.core.data.transforms.ApplyToKeys` as follows:
+
+        Example:
+
+            from flash.core.data.transforms import ApplyToKeys
+
+            class MyInputTransform(InputTransform):
+
+                def per_sample_transform_on_device(self) -> Callable:
+
+                    return ApplyToKeys("input", my_func)
+        """
+        return self._identity
+
+    def input_per_sample_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "input" key of each sample on
+        device for all stages stage."""
+        return self._identity
+
+    def target_per_sample_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "target" key of each sample on
+        device for all stages stage."""
+        return self._identity
+
+    def train_per_sample_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on a single sample on device for the training stage.
+
+        The input data of the transform would have the following form:
+        {
+            DataKeys.INPUT: ...,
+            DataKeys.TARGET: ...,
+            DataKeys.METADATA: ...,
+        }
+        """
+        return self._identity
+
+    def train_input_per_sample_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "input" key of each single sample
+        on device for the training stage."""
+        return self._identity
+
+    def train_target_per_sample_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "target" key of each single sample
+        on device for the training stage."""
+        return self._identity
+
+    def val_per_sample_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on a single sample on device for the validating stage.
+
+        The input data of the transform would have the following form:
+        {
+            DataKeys.INPUT: ...,
+            DataKeys.TARGET: ...,
+            DataKeys.METADATA: ...,
+        }
+
+        You would need to use :class:`flash.core.data.transforms.ApplyToKeys` as follows:
+
+        Example:
+
+            from flash.core.data.transforms import ApplyToKeys
+
+            class MyInputTransform(InputTransform):
+
+                def per_sample_transform_on_device(self) -> Callable:
+
+                    return ApplyToKeys("input", my_func)
+        """
+        return self._identity
+
+    def val_input_per_sample_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "input" key of each single sample
+        on device for the validating stage."""
+        return self._identity
+
+    def val_target_per_sample_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "target" key of each single sample
+        on device for the validating stage."""
+        return self._identity
+
+    def test_per_sample_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on a single sample on device for the testing stage.
+
+        The input data of the transform would have the following form:
+        {
+            DataKeys.INPUT: ...,
+            DataKeys.TARGET: ...,
+            DataKeys.METADATA: ...,
+        }
+        """
+        return self._identity
+
+    def test_input_per_sample_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "input" key of each single sample
+        on device for the testing stage."""
+        return self._identity
+
+    def test_target_per_sample_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "target" key of each single sample
+        on device for the testing stage."""
+        return self._identity
+
+    def predict_per_sample_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on a single sample on device for the predicting stage.
+
+        The input data of the transform would have the following form:
+        {
+            DataKeys.INPUT: ...,
+            DataKeys.TARGET: ...,
+            DataKeys.METADATA: ...,
+        }
+
+        You would need to use :class:`flash.core.data.transforms.ApplyToKeys` as follows:
+
+        Example:
+
+            from flash.core.data.transforms import ApplyToKeys
+
+            class MyInputTransform(InputTransform):
+
+                def per_sample_transform_on_device(self) -> Callable:
+
+                    return ApplyToKeys("input", my_func)
+        """
+        return self._identity
+
+    def predict_input_per_sample_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "input" key of each single sample
+        on device for the predicting stage."""
+        return self._identity
+
+    def predict_target_per_sample_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "target" key of each single sample
+        on device for the predicting stage."""
+        return self._identity
+
+    #######################
+    # PER BATCH TRANSFORM #
+    #######################
+
+    def per_batch_transform(self) -> Callable:
+        """Defines the transform to be applied on a batch of data on cpu for all stages stage.
+
+        The input data of the transform would have the following form:
+        {
+            DataKeys.INPUT: ...,
+            DataKeys.TARGET: ...,
+            DataKeys.METADATA: ...,
+        }
+
+        You would need to use :class:`flash.core.data.transforms.ApplyToKeys` as follows:
+
+        Example:
+
+            from flash.core.data.transforms import ApplyToKeys
+
+            class MyInputTransform(InputTransform):
+
+                def per_batch_transform(self) -> Callable:
+
+                    return ApplyToKeys("input", my_func)
+        """
+        return self._identity
+
+    def input_per_batch_transform(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "input" key of batch on cpu for all
+        stages stage."""
+        return self._identity
+
+    def target_per_batch_transform(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "target" key of batch on cpu for
+        all stages stage."""
+        return self._identity
+
+    def train_per_batch_transform(self) -> Callable:
+        """Defines the transform to be applied on a batch of data on cpu for the training stage.
+
+        The input data of the transform would have the following form:
+        {
+            DataKeys.INPUT: ...,
+            DataKeys.TARGET: ...,
+            DataKeys.METADATA: ...,
+        }
+        """
+        return self._identity
+
+    def train_input_per_batch_transform(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "input" key of each single sample
+        on cpu for the training stage."""
+        return self._identity
+
+    def train_target_per_batch_transform(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "target" key of each single sample
+        on cpu for the training stage."""
+        return self._identity
+
+    def val_per_batch_transform(self) -> Callable:
+        """Defines the transform to be applied on a batch of data on cpu for the validating stage.
+
+        The input data of the transform would have the following form:
+        {
+            DataKeys.INPUT: ...,
+            DataKeys.TARGET: ...,
+            DataKeys.METADATA: ...,
+        }
+
+        You would need to use :class:`flash.core.data.transforms.ApplyToKeys` as follows:
+
+        Example:
+
+            from flash.core.data.transforms import ApplyToKeys
+
+            class MyInputTransform(InputTransform):
+
+                def per_batch_transform(self) -> Callable:
+
+                    return ApplyToKeys("input", my_func)
+        """
+        return self._identity
+
+    def val_input_per_batch_transform(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "input" key of each single sample
+        on cpu for the validating stage."""
+        return self._identity
+
+    def val_target_per_batch_transform(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "target" key of each single sample
+        on cpu for the validating stage."""
+        return self._identity
+
+    def test_per_batch_transform(self) -> Callable:
+        """Defines the transform to be applied on a batch of data on cpu for the testing stage.
+
+        The input data of the transform would have the following form:
+        {
+            DataKeys.INPUT: ...,
+            DataKeys.TARGET: ...,
+            DataKeys.METADATA: ...,
+        }
+        """
+        return self._identity
+
+    def test_input_per_batch_transform(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "input" key of each single sample
+        on cpu for the testing stage."""
+        return self._identity
+
+    def test_target_per_batch_transform(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "target" key of each single sample
+        on cpu for the testing stage."""
+        return self._identity
+
+    def predict_per_batch_transform(self) -> Callable:
+        """Defines the transform to be applied on a batch of data on cpu for the predicting stage.
+
+        The input data of the transform would have the following form:
+        {
+            DataKeys.INPUT: ...,
+            DataKeys.TARGET: ...,
+            DataKeys.METADATA: ...,
+        }
+
+        You would need to use :class:`flash.core.data.transforms.ApplyToKeys` as follows:
+
+        Example:
+
+            from flash.core.data.transforms import ApplyToKeys
+
+            class MyInputTransform(InputTransform):
+
+                def per_batch_transform(self) -> Callable:
+
+                    return ApplyToKeys("input", my_func)
+        """
+        return self._identity
+
+    def predict_input_per_batch_transform(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "input" key of each single sample
+        on cpu for the predicting stage."""
+        return self._identity
+
+    def predict_target_per_batch_transform(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "target" key of each single sample
+        on cpu for the predicting stage."""
+        return self._identity
+
+    #################################
+    # PER BATCH TRANSFORM ON DEVICE #
+    #################################
+
+    def per_batch_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on a batch of data on device for all stages stage.
+
+        The input data of the transform would have the following form:
+        {
+            DataKeys.INPUT: ...,
+            DataKeys.TARGET: ...,
+            DataKeys.METADATA: ...,
+        }
+
+        You would need to use :class:`flash.core.data.transforms.ApplyToKeys` as follows:
+
+        Example:
+
+            from flash.core.data.transforms import ApplyToKeys
+
+            class MyInputTransform(InputTransform):
+
+                def per_batch_transform_on_device(self) -> Callable:
+
+                    return ApplyToKeys("input", my_func)
+        """
+        return self._identity
+
+    def input_per_batch_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "input" key of batch on device for
+        all stages stage."""
+        return self._identity
+
+    def target_per_batch_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "target" key of batch on device for
+        all stages stage."""
+        return self._identity
+
+    def train_per_batch_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on a batch of data on device for the training stage.
+
+        The input data of the transform would have the following form:
+        {
+            DataKeys.INPUT: ...,
+            DataKeys.TARGET: ...,
+            DataKeys.METADATA: ...,
+        }
+        """
+        return self._identity
+
+    def train_input_per_batch_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "input" key of each single sample
+        on device for the training stage."""
+        return self._identity
+
+    def train_target_per_batch_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "target" key of each single sample
+        on device for the training stage."""
+        return self._identity
+
+    def val_per_batch_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on a batch of data on device for the validating stage.
+
+        The input data of the transform would have the following form:
+        {
+            DataKeys.INPUT: ...,
+            DataKeys.TARGET: ...,
+            DataKeys.METADATA: ...,
+        }
+
+        You would need to use :class:`flash.core.data.transforms.ApplyToKeys` as follows:
+
+        Example:
+
+            from flash.core.data.transforms import ApplyToKeys
+
+            class MyInputTransform(InputTransform):
+
+                def per_batch_transform_on_device(self) -> Callable:
+
+                    return ApplyToKeys("input", my_func)
+        """
+        return self._identity
+
+    def val_input_per_batch_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "input" key of each single sample
+        on device for the validating stage."""
+        return self._identity
+
+    def val_target_per_batch_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "target" key of each single sample
+        on device for the validating stage."""
+        return self._identity
+
+    def test_per_batch_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on a batch of data on device for the testing stage.
+
+        The input data of the transform would have the following form:
+        {
+            DataKeys.INPUT: ...,
+            DataKeys.TARGET: ...,
+            DataKeys.METADATA: ...,
+        }
+        """
+        return self._identity
+
+    def test_input_per_batch_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "input" key of each single sample
+        on device for the testing stage."""
+        return self._identity
+
+    def test_target_per_batch_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "target" key of each single sample
+        on device for the testing stage."""
+        return self._identity
+
+    def predict_per_batch_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on a batch of data on device for the predicting stage.
+
+        The input data of the transform would have the following form:
+        {
+            DataKeys.INPUT: ...,
+            DataKeys.TARGET: ...,
+            DataKeys.METADATA: ...,
+        }
+
+        You would need to use :class:`flash.core.data.transforms.ApplyToKeys` as follows:
+
+        Example:
+
+            from flash.core.data.transforms import ApplyToKeys
+
+            class MyInputTransform(InputTransform):
+
+                def per_batch_transform_on_device(self) -> Callable:
+
+                    return ApplyToKeys("input", my_func)
+        """
+        return self._identity
+
+    def predict_input_per_batch_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "input" key of each single sample
+        on device for the predicting stage."""
+        return self._identity
+
+    def predict_target_per_batch_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "target" key of each single sample
+        on device for the predicting stage."""
+        return self._identity
+
+    ###########
+    # COLLATE #
+    ###########
+
+    def train_collate(self) -> Callable:
+        """Defines the transform to be applied on a list of training sample to create a training batch."""
+        return default_collate
+
+    def val_collate(self) -> Callable:
+        """Defines the transform to be applied on a list of validating sample to create a validating batch."""
+        return default_collate
+
+    def test_collate(self) -> Callable:
+        """Defines the transform to be applied on a list of testing sample to create a testing batch."""
+        return default_collate
+
+    def predict_collate(self) -> Callable:
+        """Defines the transform to be applied on a list of predicting sample to create a predicting batch."""
+        return default_collate
+
+    def collate(self) -> Callable:
+        """Defines the transform to be applied on a list of sample to create a batch for all stages."""
+        return default_collate
+
+    ########################################
+    # HOOKS CALLED INTERNALLY WITHIN FLASH #
+    ########################################
+
+    @partial(transform_context, current_fn="per_sample_transform")
+    def _per_sample_transform(self, sample: Any) -> Any:
+        if isinstance(sample, list):
+            return [self.current_transform(s) for s in sample]
+        return self.current_transform(sample)
+
+    @partial(transform_context, current_fn="per_batch_transform")
+    def _per_batch_transform(self, batch: Any) -> Any:
+        """Transforms to apply to a whole batch (if possible use this for efficiency).
+
+        .. note::     This option is mutually exclusive with :meth:`per_sample_transform_on_device`,     since if both
+        are specified, uncollation has to be applied.
+        """
+        return self.current_transform(batch)
+
+    @partial(transform_context, current_fn="collate")
+    def _collate(self, samples: Sequence, metadata=None) -> Any:
+        """Transform to convert a sequence of samples to a collated batch."""
+        current_transform = self.current_transform
+        if current_transform is self._identity:
+            current_transform = default_collate
+
+        # the model can provide a custom ``collate_fn``.
+        collate_fn = self.get_state(CollateFn)
+        if collate_fn is not None:
+            collate_fn = collate_fn.collate_fn
+        else:
+            collate_fn = current_transform
+            # return collate_fn.collate_fn(samples)
+
+        parameters = inspect.signature(collate_fn).parameters
+        if len(parameters) > 1 and DataKeys.METADATA in parameters:
+            return collate_fn(samples, metadata)
+        return collate_fn(samples)
+
+    @partial(transform_context, current_fn="per_sample_transform_on_device")
+    def _per_sample_transform_on_device(self, sample: Any) -> Any:
+        """Transforms to apply to the data before the collation (per-sample basis).
+
+        .. note::     This option is mutually exclusive with :meth:`per_batch_transform`,     since if both are
+        specified, uncollation has to be applied. .. note::     This function won't be called within the dataloader
+        workers, since to make that happen     each of the workers would have to create it's own CUDA-context which
+        would pollute GPU memory (if on GPU).
+        """
+        if isinstance(sample, list):
+            return [self.current_transform(s) for s in sample]
+        return self.current_transform(sample)
+
+    @partial(transform_context, current_fn="per_batch_transform_on_device")
+    def _per_batch_transform_on_device(self, batch: Any) -> Any:
+        """Transforms to apply to a whole batch (if possible use this for efficiency).
+
+        .. note::     This function won't be called within the dataloader workers, since to make that happen     each of
+        the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
+        """
+        return self.current_transform(batch)
+
+    #############
+    # UTILITIES #
+    #############
+
     def _resolve_transforms(self, running_stage: RunningStage) -> Optional[Dict[str, Callable]]:
         from flash.core.data.data_pipeline import DataPipeline
 
@@ -153,9 +854,7 @@ class InputTransform(Properties):
                 if resolve_name_overridden and resolved_apply_to_key_name_overridden:
                     # if both are specialized or both aren't specialized, raise a exception
                     # It means there is priority to specialize hooks name.
-                    if (is_specialized_name and is_specialized_apply_to_key_name) or (
-                        not is_specialized_name and not is_specialized_apply_to_key_name
-                    ):
+                    if ~(is_specialized_name ^ is_specialized_apply_to_key_name):
                         raise MisconfigurationException(
                             f"Only one of {resolved_name} or {resolved_apply_to_key_name} can be overridden."
                         )
@@ -174,7 +873,7 @@ class InputTransform(Properties):
                     raise MisconfigurationException(f"The hook {method_name} should return a function.")
 
                 # if the default hook is used, it should return identity, skip it.
-                if fn == self._identity:
+                if fn is self._identity:
                     continue
 
                 # wrap apply to key hook into `ApplyToKeys` with the associated key.
@@ -242,16 +941,6 @@ class InputTransform(Properties):
             return self._identity, collate
         return collate, self._identity
 
-    @property
-    def dataloader_collate_fn(self):
-        """Generate the function to be injected within the DataLoader as the collate_fn."""
-        return self._create_collate_input_transform_processors()[0]
-
-    @property
-    def on_after_batch_transfer_fn(self):
-        """Generate the function to be injected after the on_after_batch_transfer from the LightningModule."""
-        return self._create_collate_input_transform_processors()[1]
-
     def _create_collate_input_transform_processors(self) -> Tuple[Any]:
         from flash.core.data.data_pipeline import DataPipeline
 
@@ -304,691 +993,6 @@ class InputTransform(Properties):
             on_device=True,
         )
         return worker_input_transform_processor, device_input_transform_processor
-
-    ########################################
-    # HOOKS CALLED INTERNALLY WITHIN FLASH #
-    ########################################
-
-    @partial(transform_context, current_fn="per_sample_transform")
-    def _per_sample_transform(self, sample: Any) -> Any:
-        if isinstance(sample, list):
-            return [self.current_transform(s) for s in sample]
-        return self.current_transform(sample)
-
-    @partial(transform_context, current_fn="per_batch_transform")
-    def _per_batch_transform(self, batch: Any) -> Any:
-        """Transforms to apply to a whole batch (if possible use this for efficiency).
-
-        .. note::     This option is mutually exclusive with :meth:`per_sample_transform_on_device`,     since if both
-        are specified, uncollation has to be applied.
-        """
-        return self.current_transform(batch)
-
-    @partial(transform_context, current_fn="collate")
-    def _collate(self, samples: Sequence, metadata=None) -> Any:
-        """Transform to convert a sequence of samples to a collated batch."""
-        current_transform = self.current_transform
-        if current_transform is self._identity:
-            current_transform = default_collate
-
-        # the model can provide a custom ``collate_fn``.
-        collate_fn = self.get_state(CollateFn)
-        if collate_fn is not None:
-            collate_fn = collate_fn.collate_fn
-        else:
-            collate_fn = current_transform
-            # return collate_fn.collate_fn(samples)
-
-        parameters = inspect.signature(collate_fn).parameters
-        if len(parameters) > 1 and DataKeys.METADATA in parameters:
-            return collate_fn(samples, metadata)
-        return collate_fn(samples)
-
-    @partial(transform_context, current_fn="per_sample_transform_on_device")
-    def _per_sample_transform_on_device(self, sample: Any) -> Any:
-        """Transforms to apply to the data before the collation (per-sample basis).
-
-        .. note::     This option is mutually exclusive with :meth:`per_batch_transform`,     since if both are
-        specified, uncollation has to be applied. .. note::     This function won't be called within the dataloader
-        workers, since to make that happen     each of the workers would have to create it's own CUDA-context which
-        would pollute GPU memory (if on GPU).
-        """
-        if isinstance(sample, list):
-            return [self.current_transform(s) for s in sample]
-        return self.current_transform(sample)
-
-    @partial(transform_context, current_fn="per_batch_transform_on_device")
-    def _per_batch_transform_on_device(self, batch: Any) -> Any:
-        """Transforms to apply to a whole batch (if possible use this for efficiency).
-
-        .. note::     This function won't be called within the dataloader workers, since to make that happen     each of
-        the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
-        """
-        return self.current_transform(batch)
-
-    ########################
-    # PER SAMPLE TRANSFORM #
-    ########################
-
-    def per_sample_transform(self) -> Callable:
-        """Defines the transform to be applied on a single sample on cpu for all stages stage.
-
-        The input data of the transform would have the following form:
-        {
-            "input": ...,
-            "target": ...,
-            "metadata": ...,
-        }
-
-        You would need to use :class:`flash.core.data.transforms.ApplyToKeys` as follows:
-
-        Example:
-
-            from flash.core.data.transforms import ApplyToKeys
-
-            class MyInputTransform(InputTransform):
-
-                def per_sample_transform(self) -> Callable:
-
-                    return ApplyToKeys("input", my_func)
-        """
-        return self._identity
-
-    def input_per_sample_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each sample on cpu
-        for all stages stage."""
-        return self._identity
-
-    def target_per_sample_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each sample on cpu
-        for all stages stage."""
-        return self._identity
-
-    def train_per_sample_transform(self) -> Callable:
-        """Defines the transform to be applied on a single sample on cpu for the training stage.
-
-        The input data of the transform would have the following form:
-        {
-            "input": ...,
-            "target": ...,
-            "metadata": ...,
-        }
-        """
-        return self._identity
-
-    def train_input_per_sample_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on cpu for the training stage."""
-        return self._identity
-
-    def train_target_per_sample_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on cpu for the training stage."""
-        return self._identity
-
-    def val_per_sample_transform(self) -> Callable:
-        """Defines the transform to be applied on a single sample on cpu for the validating stage.
-
-        The input data of the transform would have the following form:
-        {
-            "input": ...,
-            "target": ...,
-            "metadata": ...,
-        }
-
-        You would need to use :class:`flash.core.data.transforms.ApplyToKeys` as follows:
-
-        Example:
-
-            from flash.core.data.transforms import ApplyToKeys
-
-            class MyInputTransform(InputTransform):
-
-                def per_sample_transform(self) -> Callable:
-
-                    return ApplyToKeys("input", my_func)
-        """
-        return self._identity
-
-    def val_input_per_sample_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on cpu for the validating stage."""
-        return self._identity
-
-    def val_target_per_sample_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on cpu for the validating stage."""
-        return self._identity
-
-    def test_per_sample_transform(self) -> Callable:
-        """Defines the transform to be applied on a single sample on cpu for the testing stage.
-
-        The input data of the transform would have the following form:
-        {
-            "input": ...,
-            "target": ...,
-            "metadata": ...,
-        }
-        """
-        return self._identity
-
-    def test_input_per_sample_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on cpu for the testing stage."""
-        return self._identity
-
-    def test_target_per_sample_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on cpu for the testing stage."""
-        return self._identity
-
-    def predict_per_sample_transform(self) -> Callable:
-        """Defines the transform to be applied on a single sample on cpu for the predicting stage.
-
-        The input data of the transform would have the following form:
-        {
-            "input": ...,
-            "target": ...,
-            "metadata": ...,
-        }
-
-        You would need to use :class:`flash.core.data.transforms.ApplyToKeys` as follows:
-
-        Example:
-
-            from flash.core.data.transforms import ApplyToKeys
-
-            class MyInputTransform(InputTransform):
-
-                def per_sample_transform(self) -> Callable:
-
-                    return ApplyToKeys("input", my_func)
-        """
-        return self._identity
-
-    def predict_input_per_sample_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on cpu for the predicting stage."""
-        return self._identity
-
-    def predict_target_per_sample_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on cpu for the predicting stage."""
-        return self._identity
-
-    ##################################
-    # PER SAMPLE TRANSFORM ON DEVICE #
-    ##################################
-
-    def per_sample_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on a single sample on device for all stages stage.
-
-        The input data of the transform would have the following form:
-        {
-            "input": ...,
-            "target": ...,
-            "metadata": ...,
-        }
-
-        You would need to use :class:`flash.core.data.transforms.ApplyToKeys` as follows:
-
-        Example:
-
-            from flash.core.data.transforms import ApplyToKeys
-
-            class MyInputTransform(InputTransform):
-
-                def per_sample_transform_on_device(self) -> Callable:
-
-                    return ApplyToKeys("input", my_func)
-        """
-        return self._identity
-
-    def input_per_sample_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each sample on
-        device for all stages stage."""
-        return self._identity
-
-    def target_per_sample_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each sample on
-        device for all stages stage."""
-        return self._identity
-
-    def train_per_sample_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on a single sample on device for the training stage.
-
-        The input data of the transform would have the following form:
-        {
-            "input": ...,
-            "target": ...,
-            "metadata": ...,
-        }
-        """
-        return self._identity
-
-    def train_input_per_sample_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on device for the training stage."""
-        return self._identity
-
-    def train_target_per_sample_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on device for the training stage."""
-        return self._identity
-
-    def val_per_sample_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on a single sample on device for the validating stage.
-
-        The input data of the transform would have the following form:
-        {
-            "input": ...,
-            "target": ...,
-            "metadata": ...,
-        }
-
-        You would need to use :class:`flash.core.data.transforms.ApplyToKeys` as follows:
-
-        Example:
-
-            from flash.core.data.transforms import ApplyToKeys
-
-            class MyInputTransform(InputTransform):
-
-                def per_sample_transform_on_device(self) -> Callable:
-
-                    return ApplyToKeys("input", my_func)
-        """
-        return self._identity
-
-    def val_input_per_sample_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on device for the validating stage."""
-        return self._identity
-
-    def val_target_per_sample_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on device for the validating stage."""
-        return self._identity
-
-    def test_per_sample_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on a single sample on device for the testing stage.
-
-        The input data of the transform would have the following form:
-        {
-            "input": ...,
-            "target": ...,
-            "metadata": ...,
-        }
-        """
-        return self._identity
-
-    def test_input_per_sample_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on device for the testing stage."""
-        return self._identity
-
-    def test_target_per_sample_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on device for the testing stage."""
-        return self._identity
-
-    def predict_per_sample_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on a single sample on device for the predicting stage.
-
-        The input data of the transform would have the following form:
-        {
-            "input": ...,
-            "target": ...,
-            "metadata": ...,
-        }
-
-        You would need to use :class:`flash.core.data.transforms.ApplyToKeys` as follows:
-
-        Example:
-
-            from flash.core.data.transforms import ApplyToKeys
-
-            class MyInputTransform(InputTransform):
-
-                def per_sample_transform_on_device(self) -> Callable:
-
-                    return ApplyToKeys("input", my_func)
-        """
-        return self._identity
-
-    def predict_input_per_sample_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on device for the predicting stage."""
-        return self._identity
-
-    def predict_target_per_sample_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on device for the predicting stage."""
-        return self._identity
-
-    #######################
-    # PER BATCH TRANSFORM #
-    #######################
-
-    def per_batch_transform(self) -> Callable:
-        """Defines the transform to be applied on a batch of data on cpu for all stages stage.
-
-        The input data of the transform would have the following form:
-        {
-            "input": ...,
-            "target": ...,
-            "metadata": ...,
-        }
-
-        You would need to use :class:`flash.core.data.transforms.ApplyToKeys` as follows:
-
-        Example:
-
-            from flash.core.data.transforms import ApplyToKeys
-
-            class MyInputTransform(InputTransform):
-
-                def per_batch_transform(self) -> Callable:
-
-                    return ApplyToKeys("input", my_func)
-        """
-        return self._identity
-
-    def input_per_batch_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of batch on cpu for all
-        stages stage."""
-        return self._identity
-
-    def target_per_batch_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of batch on cpu for
-        all stages stage."""
-        return self._identity
-
-    def train_per_batch_transform(self) -> Callable:
-        """Defines the transform to be applied on a batch of data on cpu for the training stage.
-
-        The input data of the transform would have the following form:
-        {
-            "input": ...,
-            "target": ...,
-            "metadata": ...,
-        }
-        """
-        return self._identity
-
-    def train_input_per_batch_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on cpu for the training stage."""
-        return self._identity
-
-    def train_target_per_batch_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on cpu for the training stage."""
-        return self._identity
-
-    def val_per_batch_transform(self) -> Callable:
-        """Defines the transform to be applied on a batch of data on cpu for the validating stage.
-
-        The input data of the transform would have the following form:
-        {
-            "input": ...,
-            "target": ...,
-            "metadata": ...,
-        }
-
-        You would need to use :class:`flash.core.data.transforms.ApplyToKeys` as follows:
-
-        Example:
-
-            from flash.core.data.transforms import ApplyToKeys
-
-            class MyInputTransform(InputTransform):
-
-                def per_batch_transform(self) -> Callable:
-
-                    return ApplyToKeys("input", my_func)
-        """
-        return self._identity
-
-    def val_input_per_batch_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on cpu for the validating stage."""
-        return self._identity
-
-    def val_target_per_batch_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on cpu for the validating stage."""
-        return self._identity
-
-    def test_per_batch_transform(self) -> Callable:
-        """Defines the transform to be applied on a batch of data on cpu for the testing stage.
-
-        The input data of the transform would have the following form:
-        {
-            "input": ...,
-            "target": ...,
-            "metadata": ...,
-        }
-        """
-        return self._identity
-
-    def test_input_per_batch_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on cpu for the testing stage."""
-        return self._identity
-
-    def test_target_per_batch_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on cpu for the testing stage."""
-        return self._identity
-
-    def predict_per_batch_transform(self) -> Callable:
-        """Defines the transform to be applied on a batch of data on cpu for the predicting stage.
-
-        The input data of the transform would have the following form:
-        {
-            "input": ...,
-            "target": ...,
-            "metadata": ...,
-        }
-
-        You would need to use :class:`flash.core.data.transforms.ApplyToKeys` as follows:
-
-        Example:
-
-            from flash.core.data.transforms import ApplyToKeys
-
-            class MyInputTransform(InputTransform):
-
-                def per_batch_transform(self) -> Callable:
-
-                    return ApplyToKeys("input", my_func)
-        """
-        return self._identity
-
-    def predict_input_per_batch_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on cpu for the predicting stage."""
-        return self._identity
-
-    def predict_target_per_batch_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on cpu for the predicting stage."""
-        return self._identity
-
-    #################################
-    # PER BATCH TRANSFORM ON DEVICE #
-    #################################
-
-    def per_batch_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on a batch of data on device for all stages stage.
-
-        The input data of the transform would have the following form:
-        {
-            "input": ...,
-            "target": ...,
-            "metadata": ...,
-        }
-
-        You would need to use :class:`flash.core.data.transforms.ApplyToKeys` as follows:
-
-        Example:
-
-            from flash.core.data.transforms import ApplyToKeys
-
-            class MyInputTransform(InputTransform):
-
-                def per_batch_transform_on_device(self) -> Callable:
-
-                    return ApplyToKeys("input", my_func)
-        """
-        return self._identity
-
-    def input_per_batch_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of batch on device for
-        all stages stage."""
-        return self._identity
-
-    def target_per_batch_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of batch on device for
-        all stages stage."""
-        return self._identity
-
-    def train_per_batch_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on a batch of data on device for the training stage.
-
-        The input data of the transform would have the following form:
-        {
-            "input": ...,
-            "target": ...,
-            "metadata": ...,
-        }
-        """
-        return self._identity
-
-    def train_input_per_batch_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on device for the training stage."""
-        return self._identity
-
-    def train_target_per_batch_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on device for the training stage."""
-        return self._identity
-
-    def val_per_batch_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on a batch of data on device for the validating stage.
-
-        The input data of the transform would have the following form:
-        {
-            "input": ...,
-            "target": ...,
-            "metadata": ...,
-        }
-
-        You would need to use :class:`flash.core.data.transforms.ApplyToKeys` as follows:
-
-        Example:
-
-            from flash.core.data.transforms import ApplyToKeys
-
-            class MyInputTransform(InputTransform):
-
-                def per_batch_transform_on_device(self) -> Callable:
-
-                    return ApplyToKeys("input", my_func)
-        """
-        return self._identity
-
-    def val_input_per_batch_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on device for the validating stage."""
-        return self._identity
-
-    def val_target_per_batch_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on device for the validating stage."""
-        return self._identity
-
-    def test_per_batch_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on a batch of data on device for the testing stage.
-
-        The input data of the transform would have the following form:
-        {
-            "input": ...,
-            "target": ...,
-            "metadata": ...,
-        }
-        """
-        return self._identity
-
-    def test_input_per_batch_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on device for the testing stage."""
-        return self._identity
-
-    def test_target_per_batch_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on device for the testing stage."""
-        return self._identity
-
-    def predict_per_batch_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on a batch of data on device for the predicting stage.
-
-        The input data of the transform would have the following form:
-        {
-            "input": ...,
-            "target": ...,
-            "metadata": ...,
-        }
-
-        You would need to use :class:`flash.core.data.transforms.ApplyToKeys` as follows:
-
-        Example:
-
-            from flash.core.data.transforms import ApplyToKeys
-
-            class MyInputTransform(InputTransform):
-
-                def per_batch_transform_on_device(self) -> Callable:
-
-                    return ApplyToKeys("input", my_func)
-        """
-        return self._identity
-
-    def predict_input_per_batch_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on device for the predicting stage."""
-        return self._identity
-
-    def predict_target_per_batch_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on device for the predicting stage."""
-        return self._identity
-
-    ###########
-    # COLLATE #
-    ###########
-
-    def train_collate(self) -> Callable:
-        """Defines the transform to be applied on a list of training sample to create a training batch."""
-        return default_collate
-
-    def val_collate(self) -> Callable:
-        """Defines the transform to be applied on a list of validating sample to create a validating batch."""
-        return default_collate
-
-    def test_collate(self) -> Callable:
-        """Defines the transform to be applied on a list of testing sample to create a testing batch."""
-        return default_collate
-
-    def predict_collate(self) -> Callable:
-        """Defines the transform to be applied on a list of predicting sample to create a predicting batch."""
-        return default_collate
-
-    def collate(self) -> Callable:
-        """Defines the transform to be applied on a list of sample to create a batch for all stages."""
-        return default_collate
 
 
 @dataclass
