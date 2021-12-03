@@ -187,11 +187,7 @@ class DataPipeline:
 
     @classmethod
     def _resolve_function_hierarchy(
-        cls,
-        function_name,
-        process_obj,
-        stage: RunningStage,
-        object_type: Optional[Type] = None,
+        cls, function_name, process_obj, stage: RunningStage, object_type: Optional[Type] = None
     ) -> str:
         if object_type is None:
             object_type = InputTransform
