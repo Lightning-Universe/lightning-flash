@@ -19,7 +19,7 @@ from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Dataset, IterableDataset
 
-from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
+from flash.core.data.input_transform import create_transform, INPUT_TRANSFORM_TYPE, InputTransform
 from flash.core.data.properties import Properties
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.stages import RunningStage
@@ -53,7 +53,7 @@ class BaseDataset(Properties):
         super().__init__()
         self.running_stage = running_stage
         if transform:
-            self.transform = InputTransform.from_transform(
+            self.transform = create_transform(
                 transform, running_stage=running_stage, input_transforms_registry=self.input_transforms_registry
             )
 

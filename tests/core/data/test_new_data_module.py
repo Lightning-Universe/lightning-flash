@@ -15,7 +15,6 @@ from typing import Callable
 
 import torch
 from pytorch_lightning import seed_everything
-from torch.utils.data.dataloader import default_collate
 
 from flash import Task, Trainer
 from flash.core.data.datasets import FlashDataset
@@ -43,10 +42,7 @@ def test_data_module():
         pass
 
     class TestTransform(InputTransform):
-        def configure_collate(self, *args, **kwargs) -> Callable:
-            return default_collate
-
-        def configure_per_batch_transform_on_device(self) -> Callable:
+        def per_batch_transform_on_device(self) -> Callable:
             if self.training:
                 return train_fn
             elif self.validating:

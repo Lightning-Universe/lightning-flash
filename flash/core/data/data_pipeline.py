@@ -25,6 +25,7 @@ from torch.utils.data import DataLoader, IterableDataset
 import flash
 from flash.core.data.auto_dataset import IterableAutoDataset
 from flash.core.data.batch import _DeserializeProcessor
+from flash.core.data.input_transform import InputTransform as NewInputTransform
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_base import InputBase
 from flash.core.data.io.input_transform import _InputTransformProcessor, DefaultInputTransform, InputTransform
@@ -124,16 +125,24 @@ class DataPipeline:
         return self._deserializer.example_input
 
     @staticmethod
-    def _is_overriden(method_name: str, process_obj, super_obj: Any, prefix: Optional[str] = None) -> bool:
+    def _is_overriden(
+        method_name: str, process_obj, super_obj: Any, prefix: Optional[str] = None, use_current_name: bool = False
+    ) -> bool:
         """Cropped Version of https://github.com/PyTorchLightning/pytorch-
         lightning/blob/master/pytorch_lightning/utilities/model_helpers.py."""
+
+        if super_obj == NewInputTransform:
+            use_current_name = True
 
         current_method_name = method_name if prefix is None else f"{prefix}_{method_name}"
 
         if not hasattr(process_obj, current_method_name):
             return False
 
-        return getattr(process_obj, current_method_name).__code__ != getattr(super_obj, method_name).__code__
+        return (
+            getattr(process_obj, current_method_name).__code__
+            != getattr(super_obj, current_method_name if use_current_name else method_name).__code__
+        )
 
     @classmethod
     def _is_overriden_recursive(
@@ -182,7 +191,12 @@ class DataPipeline:
 
     @classmethod
     def _resolve_function_hierarchy(
-        cls, function_name, process_obj, stage: RunningStage, object_type: Optional[Type] = None
+        cls,
+        function_name,
+        process_obj,
+        stage: RunningStage,
+        object_type: Optional[Type] = None,
+        use_current_name: bool = False,
     ) -> str:
         if object_type is None:
             object_type = InputTransform
@@ -203,7 +217,9 @@ class DataPipeline:
         prefixes += [None]
 
         for prefix in prefixes:
-            if cls._is_overriden(function_name, process_obj, object_type, prefix=prefix):
+            if cls._is_overriden(
+                function_name, process_obj, object_type, prefix=prefix, use_current_name=use_current_name
+            ):
                 return function_name if prefix is None else f"{prefix}_{function_name}"
 
         return function_name
