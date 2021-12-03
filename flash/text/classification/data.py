@@ -35,6 +35,8 @@ from flash.text.classification.model import TextClassificationBackboneState
 if _TEXT_AVAILABLE:
     from datasets import Dataset, load_dataset
     from transformers import AutoTokenizer, default_data_collator
+else:
+    Dataset = object
 
 
 class TextDeserializer(Deserializer):
