@@ -511,7 +511,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         if (inspect.isclass(input) and issubclass(input, NewInputBase)) or (
             isinstance(input, functools.partial) and issubclass(input.func, NewInputBase)
         ):
-            dataset = input(running_stage, x, data_pipeline_state=self._data_pipeline_state)
+            dataset = type(data_pipeline.input)(running_stage, x, data_pipeline_state=self._data_pipeline_state)
         else:
             dataset = input.generate_dataset(x, running_stage)
         # </hack>
@@ -810,7 +810,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
                 input = input_transform.input_of_name(input)
 
         if not input:
-            breakpoint()
+            input = self.inputs[self.default_input](RunningStage.PREDICTING)
 
         if deserializer is None or type(deserializer) is Deserializer:
             deserializer = getattr(input_transform, "deserializer", deserializer)

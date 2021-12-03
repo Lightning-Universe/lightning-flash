@@ -20,7 +20,7 @@ import torch
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_pipeline import DataPipelineState
-from flash.core.data.io.input import DataKeys
+from flash.core.data.io.input import DataKeys, InputFormat
 from flash.core.data.io.input_base import Input
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.new_data_module import DataModule
@@ -33,9 +33,9 @@ from flash.image.classification.input import (
     ImageClassificationCSVInput,
     ImageClassificationFiftyOneInput,
     ImageClassificationFilesInput,
-    ImageClassificationFolderInput,
     ImageClassificationNumpyInput,
     ImageClassificationTensorInput,
+    INPUTS,
     LabelStudioImageClassificationInput,
 )
 from flash.image.classification.transforms import ImageClassificationInputTransform
@@ -99,7 +99,7 @@ class ImageClassificationData(DataModule):
         val_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
         test_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
         predict_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        input_cls: Input = ImageClassificationFolderInput,
+        input_cls: Input = INPUTS[InputFormat.FOLDERS],
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
