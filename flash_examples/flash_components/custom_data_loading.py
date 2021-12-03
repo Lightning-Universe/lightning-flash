@@ -286,7 +286,7 @@ class ImageClassificationDataModule(DataModule):
         )
 
 
-ImageClassificationDataModule.register_flash_dataset("multiple_folders", MultipleFoldersImageInput)
+ImageClassificationDataModule.register_input("multiple_folders", MultipleFoldersImageInput)
 
 
 # Create the datamodule with your new constructor. This is purely equivalent to the previous datamdoule creation.

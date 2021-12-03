@@ -14,7 +14,7 @@
 import inspect
 from dataclasses import dataclass
 from functools import partial, wraps
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Type, Union
 
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -31,7 +31,13 @@ from flash.core.registry import FlashRegistry
 from flash.core.utilities.stages import RunningStage
 
 INPUT_TRANSFORM_TYPE = Optional[
-    Union["InputTransform", Callable, Tuple[Union[LightningEnum, str], Dict[str, Any]], Union[LightningEnum, str]]
+    Union[
+        "InputTransform",
+        Type["InputTransform"],
+        Callable,
+        Tuple[Union[LightningEnum, str], Dict[str, Any]],
+        Union[LightningEnum, str],
+    ]
 ]
 
 
@@ -1031,15 +1037,25 @@ def create_transform(
     running_stage: RunningStage,
     data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None,
     input_transforms_registry: Optional[FlashRegistry] = None,
+    transform_kwargs: Optional[Dict] = None,
 ) -> Optional["InputTransform"]:
+
+    if not transform_kwargs:
+        transform_kwargs = {}
 
     if isinstance(transform, InputTransform):
         transform._data_pipeline_state = data_pipeline_state
         return transform
 
+    if inspect.isclass(transform) and issubclass(transform, InputTransform):
+        return transform(running_stage=running_stage, data_pipeline_state=data_pipeline_state, **transform_kwargs)
+
     if isinstance(transform, Callable):
         return LambdaInputTransform(
-            running_stage=running_stage, transform=transform, data_pipeline_state=data_pipeline_state
+            running_stage=running_stage,
+            transform=transform,
+            data_pipeline_state=data_pipeline_state,
+            **transform_kwargs,
         )
 
     if isinstance(transform, tuple) or isinstance(transform, (LightningEnum, str)):

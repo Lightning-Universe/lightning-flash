@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+from dataclasses import dataclass
 from typing import Callable, Dict, Tuple
 
 import torch
 
+from flash.core.data.input_transform import InputTransform
 from flash.core.data.io.input import DataKeys
 from flash.core.data.transforms import ApplyToKeys, kornia_collate, merge_transforms
 from flash.core.utilities.imports import _ALBUMENTATIONS_AVAILABLE, _KORNIA_AVAILABLE, _TORCHVISION_AVAILABLE, requires
@@ -91,3 +93,27 @@ def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]
     else:
         transforms = {"per_sample_transform": ApplyToKeys(DataKeys.INPUT, T.RandomHorizontalFlip())}
     return merge_transforms(default_transforms(image_size), transforms)
+
+
+@dataclass
+class NewImageClassificationInputTransform(InputTransform):
+
+    image_size: Tuple[int, int] = (224, 224)
+
+    def input_per_sample_transform(self):
+        return T.Compose(
+            [T.ToTensor(), T.Resize(self.image_size), T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]
+        )
+
+    def train_input_per_sample_transform(self):
+        return T.Compose(
+            [
+                T.ToTensor(),
+                T.Resize(self.image_size),
+                T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+                T.RandomHorizontalFlip(),
+            ]
+        )
+
+    def target_per_sample_transform(self) -> Callable:
+        return torch.as_tensor

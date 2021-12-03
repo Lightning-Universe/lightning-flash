@@ -20,11 +20,12 @@ import torch
 
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
-from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.classification_input import ClassificationInput, ClassificationState
 from flash.core.data.io.input import DataKeys, InputFormat
+from flash.core.data.io.input_base import Input
 from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.new_data_module import DataModule
 from flash.core.data.process import Deserializer
 from flash.core.data.utilities.classification import TargetMode
 from flash.core.data.utilities.data_frame import read_csv, resolve_files, resolve_targets
@@ -32,9 +33,14 @@ from flash.core.data.utilities.paths import filter_valid_files, make_dataset, PA
 from flash.core.data.utilities.samples import to_samples
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
 from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioImageClassificationInput
+from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, Image, requires
 from flash.core.utilities.stages import RunningStage
-from flash.image.classification.transforms import default_transforms, train_default_transforms
+from flash.image.classification.transforms import (
+    default_transforms,
+    NewImageClassificationInputTransform,
+    train_default_transforms,
+)
 from flash.image.data import (
     fol,
     ImageDeserializer,
@@ -53,11 +59,7 @@ else:
 
 
 class ImageClassificationFilesInput(ClassificationInput, ImageFilesInput):
-    def load_data(
-        self,
-        files: List[PATH_TYPE],
-        targets: Optional[List[Any]] = None,
-    ) -> List[Dict[str, Any]]:
+    def load_data(self, files: List[PATH_TYPE], targets: Optional[List[Any]] = None) -> List[Dict[str, Any]]:
         if targets is None:
             return super().load_data(files)
         files, targets = filter_valid_files(files, targets, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
@@ -211,7 +213,7 @@ class ImageClassificationInputTransform(InputTransform):
 class ImageClassificationData(DataModule):
     """Data module for image classification tasks."""
 
-    input_transform_cls = ImageClassificationInputTransform
+    input_transforms_registry = FlashRegistry("input_transforms")
 
     @classmethod
     def from_files(
@@ -234,16 +236,17 @@ class ImageClassificationData(DataModule):
         dataset_kwargs = dict(data_pipeline_state=DataPipelineState())
 
         return cls(
-            ImageClassificationFilesInput(RunningStage.TRAINING, train_files, train_targets, **dataset_kwargs),
-            ImageClassificationFilesInput(RunningStage.VALIDATING, val_files, val_targets, **dataset_kwargs),
-            ImageClassificationFilesInput(RunningStage.TESTING, test_files, test_targets, **dataset_kwargs),
-            ImageClassificationFilesInput(RunningStage.PREDICTING, predict_files, **dataset_kwargs),
-            input_transform=cls.input_transform_cls(
-                train_transform,
-                val_transform,
-                test_transform,
-                predict_transform,
-                image_size=image_size,
+            ImageClassificationFilesInput(
+                RunningStage.TRAINING, train_files, train_targets, transform=train_transform, **dataset_kwargs
+            ),
+            ImageClassificationFilesInput(
+                RunningStage.VALIDATING, val_files, val_targets, transform=val_transform, **dataset_kwargs
+            ),
+            ImageClassificationFilesInput(
+                RunningStage.TESTING, test_files, test_targets, transform=test_transform, **dataset_kwargs
+            ),
+            ImageClassificationFilesInput(
+                RunningStage.PREDICTING, predict_files, transform=predict_transform, **dataset_kwargs
             ),
             **data_module_kwargs,
         )
@@ -255,28 +258,22 @@ class ImageClassificationData(DataModule):
         val_folder: Optional[str] = None,
         test_folder: Optional[str] = None,
         predict_folder: Optional[str] = None,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-        image_size: Tuple[int, int] = (196, 196),
+        train_transform: Union[Callable, InputTransform] = NewImageClassificationInputTransform,
+        val_transform: Union[Callable, InputTransform] = NewImageClassificationInputTransform,
+        test_transform: Union[Callable, InputTransform] = NewImageClassificationInputTransform,
+        predict_transform: Union[Callable, InputTransform] = NewImageClassificationInputTransform,
+        input_cls: Input = ImageClassificationFolderInput,
+        transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
 
-        dataset_kwargs = dict(data_pipeline_state=DataPipelineState())
+        ds_kw = dict(data_pipeline_state=DataPipelineState(), transform_kwargs=transform_kwargs)
 
         return cls(
-            ImageClassificationFolderInput(RunningStage.TRAINING, train_folder, **dataset_kwargs),
-            ImageClassificationFolderInput(RunningStage.VALIDATING, val_folder, **dataset_kwargs),
-            ImageClassificationFolderInput(RunningStage.TESTING, test_folder, **dataset_kwargs),
-            ImageClassificationFolderInput(RunningStage.PREDICTING, predict_folder, **dataset_kwargs),
-            input_transform=cls.input_transform_cls(
-                train_transform,
-                val_transform,
-                test_transform,
-                predict_transform,
-                image_size=image_size,
-            ),
+            input_cls(RunningStage.TRAINING, train_folder, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_folder, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, test_folder, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_folder, transform=predict_transform, **ds_kw),
             **data_module_kwargs,
         )
 
@@ -306,11 +303,7 @@ class ImageClassificationData(DataModule):
             ImageClassificationNumpyInput(RunningStage.TESTING, test_data, test_targets, **dataset_kwargs),
             ImageClassificationNumpyInput(RunningStage.PREDICTING, predict_data, **dataset_kwargs),
             input_transform=cls.input_transform_cls(
-                train_transform,
-                val_transform,
-                test_transform,
-                predict_transform,
-                image_size=image_size,
+                train_transform, val_transform, test_transform, predict_transform, image_size=image_size
             ),
             **data_module_kwargs,
         )
@@ -341,11 +334,7 @@ class ImageClassificationData(DataModule):
             ImageClassificationTensorInput(RunningStage.TESTING, test_data, test_targets, **dataset_kwargs),
             ImageClassificationTensorInput(RunningStage.PREDICTING, predict_data, **dataset_kwargs),
             input_transform=cls.input_transform_cls(
-                train_transform,
-                val_transform,
-                test_transform,
-                predict_transform,
-                image_size=image_size,
+                train_transform, val_transform, test_transform, predict_transform, image_size=image_size
             ),
             **data_module_kwargs,
         )
@@ -388,11 +377,7 @@ class ImageClassificationData(DataModule):
             ImageClassificationCSVInput(RunningStage.TESTING, *test_data, **dataset_kwargs),
             ImageClassificationCSVInput(RunningStage.PREDICTING, *predict_data, **dataset_kwargs),
             input_transform=cls.input_transform_cls(
-                train_transform,
-                val_transform,
-                test_transform,
-                predict_transform,
-                image_size=image_size,
+                train_transform, val_transform, test_transform, predict_transform, image_size=image_size
             ),
             **data_module_kwargs,
         )
@@ -435,11 +420,7 @@ class ImageClassificationData(DataModule):
             ImageClassificationCSVInput(RunningStage.TESTING, *test_data, **dataset_kwargs),
             ImageClassificationCSVInput(RunningStage.PREDICTING, *predict_data, **dataset_kwargs),
             input_transform=cls.input_transform_cls(
-                train_transform,
-                val_transform,
-                test_transform,
-                predict_transform,
-                image_size=image_size,
+                train_transform, val_transform, test_transform, predict_transform, image_size=image_size
             ),
             **data_module_kwargs,
         )
@@ -469,11 +450,7 @@ class ImageClassificationData(DataModule):
             ImageClassificationFiftyOneInput(RunningStage.TESTING, test_dataset, label_field, **dataset_kwargs),
             ImageClassificationFiftyOneInput(RunningStage.PREDICTING, predict_dataset, label_field, **dataset_kwargs),
             input_transform=cls.input_transform_cls(
-                train_transform,
-                val_transform,
-                test_transform,
-                predict_transform,
-                image_size=image_size,
+                train_transform, val_transform, test_transform, predict_transform, image_size=image_size
             ),
             **data_module_kwargs,
         )
@@ -572,11 +549,7 @@ class ImageClassificationData(DataModule):
             LabelStudioImageClassificationInput(RunningStage.TESTING, test_data, **dataset_kwargs),
             LabelStudioImageClassificationInput(RunningStage.PREDICTING, predict_data, **dataset_kwargs),
             input_transform=cls.input_transform_cls(
-                train_transform,
-                val_transform,
-                test_transform,
-                predict_transform,
-                image_size=image_size,
+                train_transform, val_transform, test_transform, predict_transform, image_size=image_size
             ),
             **data_module_kwargs,
         )

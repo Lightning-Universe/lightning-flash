@@ -23,6 +23,7 @@ download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./
 datamodule = ImageClassificationData.from_folders(
     train_folder="data/hymenoptera_data/train/",
     val_folder="data/hymenoptera_data/val/",
+    batch_size=1,
 )
 
 # 2. Build the task

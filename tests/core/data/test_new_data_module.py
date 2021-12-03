@@ -128,6 +128,6 @@ def test_data_module():
     class CustomDataModule(DataModule):
         pass
 
-    CustomDataModule.register_flash_dataset("custom", TestDataset)
+    CustomDataModule.register_input("custom", TestDataset)
     train_dataset, *_ = DataModule.create_inputs("custom", range(10))
     assert train_dataset[0] == 0

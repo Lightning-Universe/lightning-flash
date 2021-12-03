@@ -45,6 +45,7 @@ from flash.core.data.io.input_base import InputBase as NewInputBase
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import OutputTransform
+from flash.core.data.new_data_module import DataModule as NewDataModule
 from flash.core.data.process import Deserializer, DeserializerMapping
 from flash.core.data.properties import ProcessState
 from flash.core.finetuning import _DEFAULTS_FINETUNE_STRATEGIES, _FINETUNING_STRATEGIES_REGISTRY
@@ -808,6 +809,9 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             else:
                 input = input_transform.input_of_name(input)
 
+        if not input:
+            breakpoint()
+
         if deserializer is None or type(deserializer) is Deserializer:
             deserializer = getattr(input_transform, "deserializer", deserializer)
 
@@ -841,6 +845,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
     @torch.jit.unused
     @data_pipeline.setter
     def data_pipeline(self, data_pipeline: Optional[DataPipeline]) -> None:
+        breakpoint()
         self._deserializer, self._input_transform, self._output_transform, self.output = Task._resolve(
             self._deserializer,
             self._input_transform,
@@ -867,35 +872,48 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         return getattr(self.data_pipeline, "_output_transform", None)
 
     def on_train_dataloader(self) -> None:
+        # TODO: Remove this logic when moving to the new DataModule
+        if isinstance(self.trainer.datamodule, NewDataModule):
+            return
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self, RunningStage.TRAINING)
             self.data_pipeline._attach_to_model(self, RunningStage.TRAINING)
         super().on_train_dataloader()
 
     def on_val_dataloader(self) -> None:
+        if isinstance(self.trainer.datamodule, NewDataModule):
+            return
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self, RunningStage.VALIDATING)
             self.data_pipeline._attach_to_model(self, RunningStage.VALIDATING)
         super().on_val_dataloader()
 
     def on_test_dataloader(self, *_) -> None:
+        if isinstance(self.trainer.datamodule, NewDataModule):
+            return
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self, RunningStage.TESTING)
             self.data_pipeline._attach_to_model(self, RunningStage.TESTING)
         super().on_test_dataloader()
 
     def on_predict_dataloader(self) -> None:
+        if isinstance(self.trainer.datamodule, NewDataModule):
+            return
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self, RunningStage.PREDICTING)
             self.data_pipeline._attach_to_model(self, RunningStage.PREDICTING)
         super().on_predict_dataloader()
 
     def on_predict_end(self) -> None:
+        if isinstance(self.trainer.datamodule, NewDataModule):
+            return
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self)
         super().on_predict_end()
 
     def on_fit_end(self) -> None:
+        if isinstance(self.trainer.datamodule, NewDataModule):
+            return
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self)
         super().on_fit_end()

@@ -68,7 +68,6 @@ class ImageClassifier(ClassificationAdapterTask):
 
     backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES
     training_strategies: FlashRegistry = TRAINING_STRATEGIES
-
     required_extras: str = "image"
 
     def __init__(

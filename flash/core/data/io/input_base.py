@@ -126,12 +126,15 @@ class InputBase(Properties, metaclass=_InputMeta):
         running_stage: RunningStage,
         *args: Any,
         transform: "flash.InputTransform" = None,
+        transform_kwargs: Optional[Dict] = None,
         data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None,
         **kwargs: Any,
     ) -> None:
         from flash.core.data.input_transform import create_transform
 
-        self.transform = create_transform(transform, running_stage, data_pipeline_state, self.input_transforms_registry)
+        self.transform = create_transform(
+            transform, running_stage, data_pipeline_state, self.input_transforms_registry, transform_kwargs
+        )
         super().__init__(running_stage=running_stage, data_pipeline_state=data_pipeline_state)
 
         self.data = None
