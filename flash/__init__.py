@@ -29,6 +29,7 @@ if _TORCH_AVAILABLE:
     from flash.core.data.process import Serializer
     from flash.core.model import Task
     from flash.core.trainer import Trainer
+    from flash.core.utilities.stages import RunningStage
 
     _PACKAGE_ROOT = os.path.dirname(__file__)
     ASSETS_ROOT = os.path.join(_PACKAGE_ROOT, "assets")
@@ -50,6 +51,7 @@ if _TORCH_AVAILABLE:
         "InputTransform",
         "Output",
         "OutputTransform",
+        "RunningStage",
         "Serializer",
         "Task",
         "Trainer",

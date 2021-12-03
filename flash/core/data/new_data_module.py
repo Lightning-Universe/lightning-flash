@@ -26,8 +26,8 @@ import flash
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.datasets import BaseDataset
 from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
+from flash.core.data.io.input_base import Input
 from flash.core.data.io.input_transform import DefaultInputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.registry import FlashRegistry
@@ -36,7 +36,7 @@ from flash.core.utilities.stages import RunningStage
 
 class DataModule(DataModule):
     """A basic DataModule class for all Flash tasks. This class includes references to a
-    :class:`~flash.core.data.datasets.BaseDataset` and a :class:`~flash.core.data.callback.BaseDataFetcher`.
+    :class:`~flash.core.data.datasets.Input` and a :class:`~flash.core.data.callback.BaseDataFetcher`.
 
     Args:
         train_dataset: Dataset for training. Defaults to None.
@@ -62,10 +62,10 @@ class DataModule(DataModule):
 
     def __init__(
         self,
-        train_dataset: Optional[BaseDataset] = None,
-        val_dataset: Optional[BaseDataset] = None,
-        test_dataset: Optional[BaseDataset] = None,
-        predict_dataset: Optional[BaseDataset] = None,
+        train_dataset: Optional[Input] = None,
+        val_dataset: Optional[Input] = None,
+        test_dataset: Optional[Input] = None,
+        predict_dataset: Optional[Input] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
         val_split: Optional[float] = None,
         batch_size: Optional[int] = None,
@@ -125,7 +125,7 @@ class DataModule(DataModule):
         LightningDataModule.__init__(self)
 
     def _train_dataloader(self) -> DataLoader:
-        train_ds: BaseDataset = self._train_ds
+        train_ds: Input = self._train_ds
         collate_fn = train_ds.dataloader_collate_fn
         shuffle: bool = False
         if isinstance(train_ds, IterableDataset):
@@ -165,7 +165,7 @@ class DataModule(DataModule):
         )
 
     def _val_dataloader(self) -> DataLoader:
-        val_ds: BaseDataset = self._val_ds
+        val_ds: Input = self._val_ds
         collate_fn = val_ds.dataloader_collate_fn
 
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
@@ -188,7 +188,7 @@ class DataModule(DataModule):
         )
 
     def _test_dataloader(self) -> DataLoader:
-        test_ds: BaseDataset = self._test_ds
+        test_ds: Input = self._test_ds
         collate_fn = test_ds.dataloader_collate_fn
 
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
@@ -211,7 +211,7 @@ class DataModule(DataModule):
         )
 
     def _predict_dataloader(self) -> DataLoader:
-        predict_ds: BaseDataset = self._predict_ds
+        predict_ds: Input = self._predict_ds
         collate_fn = predict_ds.dataloader_collate_fn
 
         if isinstance(predict_ds, IterableDataset):
@@ -267,9 +267,9 @@ class DataModule(DataModule):
         test_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
         predict_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
         **flash_dataset_kwargs,
-    ) -> Tuple[Optional[BaseDataset]]:
+    ) -> Tuple[Optional[Input]]:
         cls._verify_flash_dataset_enum(enum)
-        flash_dataset_cls: BaseDataset = cls.flash_datasets_registry.get(enum)
+        flash_dataset_cls: Input = cls.flash_datasets_registry.get(enum)
         return (
             cls._create_flash_dataset(
                 flash_dataset_cls,
@@ -308,7 +308,7 @@ class DataModule(DataModule):
         running_stage: RunningStage,
         transform: Optional[InputTransform],
         **kwargs,
-    ) -> Optional[BaseDataset]:
+    ) -> Optional[Input]:
         if load_data_args[0] is not None:
             return flash_dataset_cls.from_data(
                 *load_data_args, running_stage=running_stage, transform=transform, **kwargs
@@ -332,7 +332,7 @@ class DataModule(DataModule):
             )
 
     @classmethod
-    def register_flash_dataset(cls, enum: Union[str, LightningEnum], flash_dataset_cls: Type[BaseDataset]) -> None:
+    def register_flash_dataset(cls, enum: Union[str, LightningEnum], flash_dataset_cls: Type[Input]) -> None:
         if cls.flash_datasets_registry is None:
             raise MisconfigurationException("The class attribute `flash_datasets_registry` should be set. ")
         cls.flash_datasets_registry(fn=flash_dataset_cls, name=enum)

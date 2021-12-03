@@ -15,13 +15,16 @@ import functools
 import os
 import sys
 from copy import copy, deepcopy
-from typing import Any, cast, Dict, Iterable, List, MutableMapping, Optional, Sequence, Tuple, Union
+from functools import partial
+from typing import Any, Callable, cast, Dict, Iterable, List, MutableMapping, Optional, Sequence, Tuple, Type, Union
 
+from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Dataset
 
 import flash
 from flash.core.data.properties import Properties
+from flash.core.registry import FlashRegistry
 from flash.core.utilities.stages import RunningStage
 
 if sys.version_info < (3, 7):
@@ -116,13 +119,19 @@ class InputBase(Properties, metaclass=_InputMeta):
         **kwargs: Any additional keyword arguments to pass to the ``load_data`` hook.
     """
 
+    input_transforms_registry = FlashRegistry("input_transforms")
+
     def __init__(
         self,
         running_stage: RunningStage,
         *args: Any,
+        transform: "flash.InputTransform" = None,
         data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None,
         **kwargs: Any,
     ) -> None:
+        from flash.core.data.input_transform import create_transform
+
+        self.transform = create_transform(transform, running_stage, data_pipeline_state, self.input_transforms_registry)
         super().__init__(running_stage=running_stage, data_pipeline_state=data_pipeline_state)
 
         self.data = None
@@ -216,6 +225,28 @@ class InputBase(Properties, metaclass=_InputMeta):
         This allows for quickly checking whether or not the ``InputBase`` is populated with data.
         """
         return self.data is not None
+
+    @classmethod
+    def register_input_transform(
+        cls, enum: Union[LightningEnum, str], fn: Union[Type["flash.InputTransform"], partial]
+    ) -> None:
+        if cls.input_transforms_registry is None:
+            raise MisconfigurationException(
+                "The class attribute `input_transforms_registry` should be set as a class attribute. "
+            )
+        cls.input_transforms_registry(fn=fn, name=enum)
+
+    @property
+    def dataloader_collate_fn(self) -> Optional[Callable]:
+        if self.transform:
+            self.transform.running_stage = self.running_stage
+            return self.transform.dataloader_collate_fn
+
+    @property
+    def on_after_batch_transfer_fn(self) -> Optional[Callable]:
+        if self.transform:
+            self.transform.running_stage = self.running_stage
+            return self.transform.on_after_batch_transfer_fn
 
 
 class Input(InputBase, Dataset):

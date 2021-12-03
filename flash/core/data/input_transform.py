@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import inspect
+from dataclasses import dataclass
 from functools import partial, wraps
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
 
@@ -19,6 +20,7 @@ from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data._utils.collate import default_collate
 
+import flash
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import _InputTransformProcessor
 from flash.core.data.properties import Properties
@@ -84,16 +86,20 @@ class Compose:
         return format_string
 
 
+@dataclass
 class InputTransform(Properties):
-    def __init__(self, running_stage: RunningStage):
-        super().__init__()
-        # used to keep track of provided transforms
-        self._running_stage = running_stage
-        self._collate_in_worker_from_transform: Optional[bool] = None
 
+    running_stage: RunningStage
+    data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None
+
+    def __post_init__(self):
+        # used to keep track of provided transforms
+        self._collate_in_worker_from_transform: Optional[bool] = None
         self._transform = None
-        self._transform = self._check_transforms(self._resolve_transforms(running_stage), running_stage)
+        self._transform = self._check_transforms(self._resolve_transforms(self.running_stage), self.running_stage)
         self.callbacks = []
+        # Hack
+        Properties.__init__(self, data_pipeline_state=self.data_pipeline_state)
 
     @property
     def current_transform(self) -> Callable:
@@ -985,10 +991,11 @@ class InputTransform(Properties):
         return default_collate
 
 
+@dataclass
 class LambdaInputTransform(InputTransform):
-    def __init__(self, running_stage: RunningStage, transform: Callable):
-        self.transform = transform
-        super().__init__(running_stage)
+
+    transform: Callable = InputTransform._identity
+    data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None
 
     def per_sample_transform(self) -> Callable:
         return self.transform
@@ -1018,19 +1025,23 @@ def _sanitize_registry_transform(
 def create_transform(
     transform: INPUT_TRANSFORM_TYPE,
     running_stage: RunningStage,
+    data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None,
     input_transforms_registry: Optional[FlashRegistry] = None,
 ) -> Optional["InputTransform"]:
 
     if isinstance(transform, InputTransform):
+        transform._data_pipeline_state = data_pipeline_state
         return transform
 
     if isinstance(transform, Callable):
-        return LambdaInputTransform(running_stage, transform)
+        return LambdaInputTransform(
+            running_stage=running_stage, transform=transform, data_pipeline_state=data_pipeline_state
+        )
 
     if isinstance(transform, tuple) or isinstance(transform, (LightningEnum, str)):
         enum, transform_kwargs = _sanitize_registry_transform(transform, input_transforms_registry)
         transform_cls = input_transforms_registry.get(enum)
-        return transform_cls(running_stage, transform=None, **transform_kwargs)
+        return transform_cls(running_stage, data_pipeline_state=data_pipeline_state, **transform_kwargs)
 
     if not transform:
         return None
