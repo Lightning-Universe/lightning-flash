@@ -125,23 +125,19 @@ class DataPipeline:
         return self._deserializer.example_input
 
     @staticmethod
-    def _is_overriden(
-        method_name: str, process_obj, super_obj: Any, prefix: Optional[str] = None, use_current_name: bool = False
-    ) -> bool:
+    def _is_overriden(method_name: str, process_obj, super_obj: Any, prefix: Optional[str] = None) -> bool:
         """Cropped Version of https://github.com/PyTorchLightning/pytorch-
         lightning/blob/master/pytorch_lightning/utilities/model_helpers.py."""
-
-        if super_obj == NewInputTransform:
-            use_current_name = True
 
         current_method_name = method_name if prefix is None else f"{prefix}_{method_name}"
 
         if not hasattr(process_obj, current_method_name):
             return False
 
+        # TODO: With the new API, all hooks are implemented to improve discoverability.
         return (
             getattr(process_obj, current_method_name).__code__
-            != getattr(super_obj, current_method_name if use_current_name else method_name).__code__
+            != getattr(super_obj, current_method_name if super_obj == NewInputTransform else method_name).__code__
         )
 
     @classmethod
@@ -196,7 +192,6 @@ class DataPipeline:
         process_obj,
         stage: RunningStage,
         object_type: Optional[Type] = None,
-        use_current_name: bool = False,
     ) -> str:
         if object_type is None:
             object_type = InputTransform
@@ -217,9 +212,7 @@ class DataPipeline:
         prefixes += [None]
 
         for prefix in prefixes:
-            if cls._is_overriden(
-                function_name, process_obj, object_type, prefix=prefix, use_current_name=use_current_name
-            ):
+            if cls._is_overriden(function_name, process_obj, object_type, prefix=prefix):
                 return function_name if prefix is None else f"{prefix}_{function_name}"
 
         return function_name

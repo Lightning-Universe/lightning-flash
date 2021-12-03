@@ -122,20 +122,16 @@ class InputTransform(Properties):
             for key in ApplyToKeyPrefix:
 
                 resolved_name = DataPipeline._resolve_function_hierarchy(
-                    transform_name, self, running_stage, InputTransform, use_current_name=True
+                    transform_name, self, running_stage, InputTransform
                 )
                 is_specialized_name = resolved_name.startswith(stage)
                 resolved_key_name = DataPipeline._resolve_function_hierarchy(
-                    f"{key}_{transform_name}", self, running_stage, InputTransform, use_current_name=True
+                    f"{key}_{transform_name}", self, running_stage, InputTransform
                 )
                 is_specialized_key_name = resolved_key_name.startswith(stage)
 
-                resolve_name_overridden = DataPipeline._is_overriden(
-                    resolved_name, self, InputTransform, use_current_name=True
-                )
-                resolved_key_name_overridden = DataPipeline._is_overriden(
-                    resolved_key_name, self, InputTransform, use_current_name=True
-                )
+                resolve_name_overridden = DataPipeline._is_overriden(resolved_name, self, InputTransform)
+                resolved_key_name_overridden = DataPipeline._is_overriden(resolved_key_name, self, InputTransform)
 
                 if resolve_name_overridden and resolved_key_name_overridden:
                     if (is_specialized_name and is_specialized_key_name) or (
