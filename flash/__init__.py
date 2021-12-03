@@ -21,7 +21,6 @@ if _TORCH_AVAILABLE:
 
     from flash.core.data.callback import FlashCallback
     from flash.core.data.data_module import DataModule
-    from flash.core.data.datasets import FlashDataset, FlashIterableDataset
     from flash.core.data.io.input import DataKeys, Input
     from flash.core.data.io.input_transform import InputTransform
     from flash.core.data.io.output import Output
@@ -45,8 +44,6 @@ if _TORCH_AVAILABLE:
         "DataKeys",
         "DataModule",
         "FlashCallback",
-        "FlashDataset",
-        "FlashIterableDataset",
         "Input",
         "InputTransform",
         "Output",

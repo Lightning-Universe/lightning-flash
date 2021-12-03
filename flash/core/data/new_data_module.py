@@ -255,7 +255,7 @@ class DataModule(DataModule):
         return batch
 
     @classmethod
-    def create_flash_datasets(
+    def create_inputs(
         cls,
         enum: Union[LightningEnum, str],
         train_data: Optional[Any] = None,
@@ -266,56 +266,54 @@ class DataModule(DataModule):
         val_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
         test_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
         predict_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
-        **flash_dataset_kwargs,
+        **input_kwarg,
     ) -> Tuple[Optional[Input]]:
-        cls._verify_flash_dataset_enum(enum)
-        flash_dataset_cls: Input = cls.flash_datasets_registry.get(enum)
+        cls._verify_input_enum(enum)
+        input_cls: Input = cls.flash_datasets_registry.get(enum)
         return (
-            cls._create_flash_dataset(
-                flash_dataset_cls,
+            cls._create_input(
+                input_cls,
                 train_data,
                 running_stage=RunningStage.TRAINING,
                 transform=train_transform,
-                **flash_dataset_kwargs,
+                **input_kwarg,
             ),
-            cls._create_flash_dataset(
-                flash_dataset_cls,
+            cls._create_input(
+                input_cls,
                 val_data,
                 running_stage=RunningStage.VALIDATING,
                 transform=val_transform,
-                **flash_dataset_kwargs,
+                **input_kwarg,
             ),
-            cls._create_flash_dataset(
-                flash_dataset_cls,
+            cls._create_input(
+                input_cls,
                 test_data,
                 running_stage=RunningStage.TESTING,
                 transform=test_transform,
-                **flash_dataset_kwargs,
+                **input_kwarg,
             ),
-            cls._create_flash_dataset(
-                flash_dataset_cls,
+            cls._create_input(
+                input_cls,
                 predict_data,
                 running_stage=RunningStage.PREDICTING,
                 transform=predict_transform,
-                **flash_dataset_kwargs,
+                **input_kwarg,
             ),
         )
 
     @staticmethod
-    def _create_flash_dataset(
-        flash_dataset_cls,
+    def _create_input(
+        input_cls,
         *load_data_args,
         running_stage: RunningStage,
         transform: Optional[InputTransform],
         **kwargs,
     ) -> Optional[Input]:
         if load_data_args[0] is not None:
-            return flash_dataset_cls.from_data(
-                *load_data_args, running_stage=running_stage, transform=transform, **kwargs
-            )
+            return input_cls(running_stage, *load_data_args, transform=transform, **kwargs)
 
     @classmethod
-    def _verify_flash_dataset_enum(cls, enum: LightningEnum) -> None:
+    def _verify_input_enum(cls, enum: LightningEnum) -> None:
         if not cls.flash_datasets_registry or not isinstance(cls.flash_datasets_registry, FlashRegistry):
             raise MisconfigurationException(
                 "The ``AutoContainer`` should have ``flash_datasets_registry`` (FlashRegistry) populated "
@@ -332,7 +330,7 @@ class DataModule(DataModule):
             )
 
     @classmethod
-    def register_flash_dataset(cls, enum: Union[str, LightningEnum], flash_dataset_cls: Type[Input]) -> None:
+    def register_flash_dataset(cls, enum: Union[str, LightningEnum], input_cls: Type[Input]) -> None:
         if cls.flash_datasets_registry is None:
             raise MisconfigurationException("The class attribute `flash_datasets_registry` should be set. ")
-        cls.flash_datasets_registry(fn=flash_dataset_cls, name=enum)
+        cls.flash_datasets_registry(fn=input_cls, name=enum)

@@ -99,7 +99,7 @@ class InputTransform(Properties):
         self._transform = self._check_transforms(self._resolve_transforms(self.running_stage), self.running_stage)
         self.callbacks = []
         # Hack
-        Properties.__init__(self, data_pipeline_state=self.data_pipeline_state)
+        Properties.__init__(self, data_pipeline_state=self.data_pipeline_state, running_stage=self.running_stage)
 
     @property
     def current_transform(self) -> Callable:

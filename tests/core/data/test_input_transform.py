@@ -120,7 +120,7 @@ def test_input_transform():
     assert transform._transform["per_batch_transform"] == transform.train_per_batch_transform
     assert transform._transform["collate"] == transform.collate
 
-    transform = LambdaInputTransform(RunningStage.TRAINING, fn)
+    transform = LambdaInputTransform(RunningStage.TRAINING, transform=fn)
     assert list(transform._transform.keys()) == ["per_sample_transform", "collate"]
     assert transform._transform["per_sample_transform"] == fn
 
