@@ -126,7 +126,7 @@ def test_data_pipeline_init_and_assignement(use_input_transform, use_output_tran
         assert model._output_transform is None or isinstance(model._output_transform, OutputTransform)
 
 
-def test_data_pipeline_is_overriden_and_resolve_function_hierarchy(tmpdir):
+def test_data_pipeline_is_overridden_and_resolve_function_hierarchy(tmpdir):
     class CustomInputTransform(DefaultInputTransform):
         def val_per_sample_transform(self, *_, **__):
             pass
@@ -776,7 +776,7 @@ def test_datapipeline_transformations_overridden_by_task():
     trainer.fit(model, datamodule=datamodule)
 
 
-def test_is_overriden_recursive(tmpdir):
+def test_is_overridden_recursive(tmpdir):
     class TestInputTransform(DefaultInputTransform):
         def collate(self, *_):
             pass
@@ -785,14 +785,14 @@ def test_is_overriden_recursive(tmpdir):
             pass
 
     input_transform = TestInputTransform()
-    assert DataPipeline._is_overriden_recursive("collate", input_transform, InputTransform, prefix="val")
-    assert DataPipeline._is_overriden_recursive("collate", input_transform, InputTransform, prefix="train")
-    assert not DataPipeline._is_overriden_recursive(
+    assert DataPipeline._is_overridden_recursive("collate", input_transform, InputTransform, prefix="val")
+    assert DataPipeline._is_overridden_recursive("collate", input_transform, InputTransform, prefix="train")
+    assert not DataPipeline._is_overridden_recursive(
         "per_batch_transform_on_device", input_transform, InputTransform, prefix="train"
     )
-    assert not DataPipeline._is_overriden_recursive("per_batch_transform_on_device", input_transform, InputTransform)
+    assert not DataPipeline._is_overridden_recursive("per_batch_transform_on_device", input_transform, InputTransform)
     with pytest.raises(MisconfigurationException, match="This function doesn't belong to the parent class"):
-        assert not DataPipeline._is_overriden_recursive("chocolate", input_transform, InputTransform)
+        assert not DataPipeline._is_overridden_recursive("chocolate", input_transform, InputTransform)
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")

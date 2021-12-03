@@ -25,6 +25,7 @@ from torch.utils.data import DataLoader, IterableDataset
 import flash
 from flash.core.data.auto_dataset import IterableAutoDataset
 from flash.core.data.batch import _DeserializeProcessor
+from flash.core.data.input_transform import InputTransform as NewInputTransform
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_base import InputBase
 from flash.core.data.io.input_transform import _InputTransformProcessor, DefaultInputTransform, InputTransform
@@ -124,7 +125,7 @@ class DataPipeline:
         return self._deserializer.example_input
 
     @staticmethod
-    def _is_overriden(method_name: str, process_obj, super_obj: Any, prefix: Optional[str] = None) -> bool:
+    def _is_overridden(method_name: str, process_obj, super_obj: Any, prefix: Optional[str] = None) -> bool:
         """Cropped Version of https://github.com/PyTorchLightning/pytorch-
         lightning/blob/master/pytorch_lightning/utilities/model_helpers.py."""
 
@@ -133,10 +134,14 @@ class DataPipeline:
         if not hasattr(process_obj, current_method_name):
             return False
 
-        return getattr(process_obj, current_method_name).__code__ != getattr(super_obj, method_name).__code__
+        # TODO: With the new API, all hooks are implemented to improve discoverability.
+        return (
+            getattr(process_obj, current_method_name).__code__
+            != getattr(super_obj, current_method_name if super_obj == NewInputTransform else method_name).__code__
+        )
 
     @classmethod
-    def _is_overriden_recursive(
+    def _is_overridden_recursive(
         cls, method_name: str, process_obj, super_obj: Any, prefix: Optional[str] = None
     ) -> bool:
         """Cropped Version of https://github.com/PyTorchLightning/pytorch-
@@ -148,14 +153,14 @@ class DataPipeline:
         current_method_name = method_name if prefix is None else f"{prefix}_{method_name}"
 
         if not hasattr(process_obj, current_method_name):
-            return DataPipeline._is_overriden_recursive(method_name, process_obj, super_obj)
+            return DataPipeline._is_overridden_recursive(method_name, process_obj, super_obj)
 
         current_code = inspect.unwrap(getattr(process_obj, current_method_name)).__code__
         has_different_code = current_code != getattr(super_obj, method_name).__code__
 
         if not prefix:
             return has_different_code
-        return has_different_code or cls._is_overriden_recursive(method_name, process_obj, super_obj)
+        return has_different_code or cls._is_overridden_recursive(method_name, process_obj, super_obj)
 
     @staticmethod
     def _identity(samples: Sequence[Any]) -> Sequence[Any]:
@@ -203,7 +208,7 @@ class DataPipeline:
         prefixes += [None]
 
         for prefix in prefixes:
-            if cls._is_overriden(function_name, process_obj, object_type, prefix=prefix):
+            if cls._is_overridden(function_name, process_obj, object_type, prefix=prefix):
                 return function_name if prefix is None else f"{prefix}_{function_name}"
 
         return function_name
@@ -235,11 +240,11 @@ class DataPipeline:
 
         collate_fn: Callable = getattr(input_transform, func_names["collate"])
 
-        per_batch_transform_overriden: bool = self._is_overriden_recursive(
+        per_batch_transform_overridden: bool = self._is_overridden_recursive(
             "per_batch_transform", input_transform, InputTransform, prefix=prefix
         )
 
-        per_sample_transform_on_device_overriden: bool = self._is_overriden_recursive(
+        per_sample_transform_on_device_overridden: bool = self._is_overridden_recursive(
             "per_sample_transform_on_device", input_transform, InputTransform, prefix=prefix
         )
 
@@ -247,8 +252,8 @@ class DataPipeline:
             input_transform, f"_{prefix}_collate_in_worker_from_transform", None
         )
 
-        is_per_overriden = per_batch_transform_overriden and per_sample_transform_on_device_overriden
-        if collate_in_worker_from_transform is None and is_per_overriden:
+        is_per_overridden = per_batch_transform_overridden and per_sample_transform_on_device_overridden
+        if collate_in_worker_from_transform is None and is_per_overridden:
             raise MisconfigurationException(
                 f"{self.__class__.__name__}: `per_batch_transform` and `per_sample_transform_on_device` "
                 f"are mutually exclusive for stage {stage}"
@@ -258,7 +263,7 @@ class DataPipeline:
             worker_collate_fn, device_collate_fn = self._make_collates(not collate_in_worker_from_transform, collate_fn)
         else:
             worker_collate_fn, device_collate_fn = self._make_collates(
-                per_sample_transform_on_device_overriden, collate_fn
+                per_sample_transform_on_device_overridden, collate_fn
             )
 
         worker_collate_fn = (

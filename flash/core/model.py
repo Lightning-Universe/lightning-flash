@@ -1053,7 +1053,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
                     f" the second index containing the required keyword arguments to initialize the LR Scheduler and"
                     f" the third index containing a Lightning scheduler configuration dictionary of the format"
                     f" {_get_default_scheduler_config()}. NOTE: Do not set the `scheduler` key in the"
-                    f" lr_scheduler_config, it will overriden with an instance of the provided scheduler key."
+                    f" lr_scheduler_config, it will overridden with an instance of the provided scheduler key."
                 )
 
             if not isinstance(self.lr_scheduler[0], (str, Callable)):
