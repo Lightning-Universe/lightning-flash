@@ -114,37 +114,51 @@ class InputTransform(Properties):
 
         transforms_out = {}
         stage = _STAGES_PREFIX[running_stage.value]
+
+        # iterate over all transforms hook name
         for transform_name in InputTransformPlacement:
 
             transforms = []
             transform_name = transform_name.value
 
+            # iterate over all prefixes
             for key in ApplyToKeyPrefix:
 
+                # get the resolved hook name based on the current stage
                 resolved_name = DataPipeline._resolve_function_hierarchy(
                     transform_name, self, running_stage, InputTransform
                 )
+                # check if the hook name is specialized
                 is_specialized_name = resolved_name.startswith(stage)
-                resolved_key_name = DataPipeline._resolve_function_hierarchy(
+
+                # get the resolved hook name for apply to key on the current stage
+                resolved_apply_to_key_name = DataPipeline._resolve_function_hierarchy(
                     f"{key}_{transform_name}", self, running_stage, InputTransform
                 )
-                is_specialized_key_name = resolved_key_name.startswith(stage)
+                # check if resolved hook name for apply to key is specialized
+                is_specialized_apply_to_key_name = resolved_apply_to_key_name.startswith(stage)
 
+                # check if they are overridden by the user
                 resolve_name_overridden = DataPipeline._is_overriden(resolved_name, self, InputTransform)
-                resolved_key_name_overridden = DataPipeline._is_overriden(resolved_key_name, self, InputTransform)
+                resolved_apply_to_key_name_overridden = DataPipeline._is_overriden(
+                    resolved_apply_to_key_name, self, InputTransform
+                )
 
-                if resolve_name_overridden and resolved_key_name_overridden:
-                    if (is_specialized_name and is_specialized_key_name) or (
-                        not is_specialized_name and not is_specialized_key_name
+                if resolve_name_overridden and resolved_apply_to_key_name_overridden:
+                    # if both are specialized or both aren't specialized, raise a exception
+                    # It means there is priority to specialize hooks name.
+                    if (is_specialized_name and is_specialized_apply_to_key_name) or (
+                        not is_specialized_name and not is_specialized_apply_to_key_name
                     ):
                         raise MisconfigurationException(
-                            f"Only one of {resolved_name} or {resolved_key_name} can be overridden."
+                            f"Only one of {resolved_name} or {resolved_apply_to_key_name} can be overridden."
                         )
 
-                    method_name = resolved_name if is_specialized_name else resolved_key_name
+                    method_name = resolved_name if is_specialized_name else resolved_apply_to_key_name
                 else:
-                    method_name = resolved_key_name if resolved_key_name_overridden else resolved_name
+                    method_name = resolved_apply_to_key_name if resolved_apply_to_key_name_overridden else resolved_name
 
+                # get associated transform
                 try:
                     fn = getattr(self, method_name)()
                 except AttributeError as e:
@@ -153,15 +167,18 @@ class InputTransform(Properties):
                 if not callable(fn):
                     raise MisconfigurationException(f"The hook {method_name} should return a function.")
 
+                # if the default hook is used, it should return identity, skip it.
                 if fn == self._identity:
                     continue
 
-                if method_name == resolved_key_name:
+                # wrap apply to key hook into `ApplyToKeys` with the associated key.
+                if method_name == resolved_apply_to_key_name:
                     fn = ApplyToKeys(key.value, fn)
 
                 if fn not in transforms:
                     transforms.append(fn)
 
+            # store the transforms.
             if transforms:
                 transforms_out[transform_name] = Compose(transforms) if len(transforms) > 1 else transforms[0]
 
