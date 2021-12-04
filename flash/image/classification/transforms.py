@@ -98,7 +98,7 @@ def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]
 @dataclass
 class ImageClassificationInputTransform(InputTransform):
 
-    image_size: Tuple[int, int] = (224, 224)
+    image_size: Tuple[int, int] = (196, 196)
 
     def input_per_sample_transform(self):
         return T.Compose(

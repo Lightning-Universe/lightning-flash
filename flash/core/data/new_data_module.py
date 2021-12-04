@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Optional, Tuple, Type, Union
+from typing import Any, Callable, Dict, Mapping, Optional, Tuple, Type, Union
 
 import pytorch_lightning as pl
 import torch
@@ -19,19 +19,36 @@ from pytorch_lightning import LightningDataModule
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader
-from torch.utils.data.dataset import IterableDataset
+from torch.utils.data.dataset import Dataset, IterableDataset
 from torch.utils.data.sampler import Sampler
 
 import flash
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
+from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
+from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_base import Input
 from flash.core.data.io.input_transform import DefaultInputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.stages import RunningStage
+
+
+class DatasetInput(Input):
+    """The ``DatasetInput`` implements default behaviours for data sources which expect the input to
+    :meth:`~flash.core.data.io.input.Input.load_data` to be a :class:`torch.utils.data.dataset.Dataset`
+
+    Args:
+        labels: Optionally pass the labels as a mapping from class index to label string. These will then be set as the
+            :class:`~flash.core.data.io.input.ClassificationState`.
+    """
+
+    def load_sample(self, sample: Any, dataset: Optional[Any] = None) -> Mapping[str, Any]:
+        if isinstance(sample, tuple) and len(sample) == 2:
+            return {DataKeys.INPUT: sample[0], DataKeys.TARGET: sample[1]}
+        return {DataKeys.INPUT: sample}
 
 
 class DataModule(DataModule):
@@ -59,6 +76,7 @@ class DataModule(DataModule):
     input_transform_cls = DefaultInputTransform
     output_transform_cls = OutputTransform
     inputs_registry = FlashRegistry("datasets")
+    input_transforms_registry: Optional[FlashRegistry] = None
 
     def __init__(
         self,
@@ -127,6 +145,7 @@ class DataModule(DataModule):
 
     def _train_dataloader(self) -> DataLoader:
         train_ds: Input = self._train_ds
+        self._register_callbacks(train_ds)
         collate_fn = train_ds.dataloader_collate_fn
         shuffle: bool = False
         if isinstance(train_ds, IterableDataset):
@@ -167,6 +186,7 @@ class DataModule(DataModule):
 
     def _val_dataloader(self) -> DataLoader:
         val_ds: Input = self._val_ds
+        self._register_callbacks(val_ds)
         collate_fn = val_ds.dataloader_collate_fn
 
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
@@ -190,6 +210,7 @@ class DataModule(DataModule):
 
     def _test_dataloader(self) -> DataLoader:
         test_ds: Input = self._test_ds
+        self._register_callbacks(test_ds)
         collate_fn = test_ds.dataloader_collate_fn
 
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
@@ -213,6 +234,7 @@ class DataModule(DataModule):
 
     def _predict_dataloader(self) -> DataLoader:
         predict_ds: Input = self._predict_ds
+        self._register_callbacks(predict_ds)
         collate_fn = predict_ds.dataloader_collate_fn
 
         if isinstance(predict_ds, IterableDataset):
@@ -254,6 +276,11 @@ class DataModule(DataModule):
             batch = transform(batch)
 
         return batch
+
+    def _register_callbacks(self, ds: Input) -> None:
+        # TODO: This is a hack and the DataModule should create executors.
+        if ds.transform is not None and self._data_fetcher not in ds.transform.callbacks:
+            ds.transform.callbacks.append(self._data_fetcher)
 
     @classmethod
     def create_inputs(
@@ -333,3 +360,74 @@ class DataModule(DataModule):
         if cls.inputs_registry is None:
             raise MisconfigurationException("The class attribute `inputs_registry` should be set. ")
         cls.inputs_registry(fn=input_cls, name=enum)
+
+    @classmethod
+    def from_datasets(
+        cls,
+        train_dataset: Optional[Dataset] = None,
+        val_dataset: Optional[Dataset] = None,
+        test_dataset: Optional[Dataset] = None,
+        predict_dataset: Optional[Dataset] = None,
+        train_transform: Optional[Union[Callable, InputTransform]] = None,
+        val_transform: Optional[Union[Callable, InputTransform]] = None,
+        test_transform: Optional[Union[Callable, InputTransform]] = None,
+        predict_transform: Optional[Union[Callable, InputTransform]] = None,
+        input_cls: Type[Input] = DatasetInput,
+        transform_kwargs: Optional[Dict] = None,
+        **data_module_kwargs: Any,
+    ) -> "DataModule":
+        """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given datasets using the
+        :class:`~flash.core.data.io.input.Input`
+        of name :attr:`~flash.core.data.io.input.InputFormat.DATASETS`
+        from the passed or constructed :class:`~flash.core.data.io.input_transform.InputTransform`.
+
+        Args:
+            train_dataset: Dataset used during training.
+            val_dataset: Dataset used during validating.
+            test_dataset: Dataset used during testing.
+            predict_dataset: Dataset used during predicting.
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`.
+            input_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` to pass to the
+                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
+                will be constructed and used.
+            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
+            sampler: The ``sampler`` to use for the ``train_dataloader``.
+            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
+                Will only be used if ``input_transform = None``.
+
+        Returns:
+            The constructed data module.
+
+        Examples::
+
+            data_module = DataModule.from_datasets(
+                train_dataset=train_dataset,
+                train_transform={
+                    "per_sample_transform": torch.as_tensor,
+                },
+            )
+        """
+        ds_kw = dict(
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
+        )
+
+        return cls(
+            input_cls(RunningStage.TRAINING, train_dataset, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_dataset, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, test_dataset, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_dataset, transform=predict_transform, **ds_kw),
+            **data_module_kwargs,
+        )
