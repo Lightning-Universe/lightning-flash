@@ -24,7 +24,7 @@ from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _FASTFACE_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.core.utilities.stages import RunningStage
-from flash.image.classification.data import ImageClassificationFilesInput, ImageClassificationFolderInput
+from flash.image.classification.input import ImageClassificationFilesInput, ImageClassificationFolderInput
 from flash.image.data import ImageInput
 
 if _TORCHVISION_AVAILABLE:

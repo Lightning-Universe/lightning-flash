@@ -23,7 +23,8 @@ from flash.core.registry import FlashRegistry
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 from flash.image.classification.adapters import TRAINING_STRATEGIES
 from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES
-from flash.image.classification.input import INPUTS
+from flash.image.classification.input import IMAGE_CLASSICATION_INPUTS
+from flash.image.classification.transforms import ImageClassificationInputTransform
 
 
 class ImageClassifier(ClassificationAdapterTask):
@@ -72,8 +73,9 @@ class ImageClassifier(ClassificationAdapterTask):
     training_strategies: FlashRegistry = TRAINING_STRATEGIES
     required_extras: str = "image"
 
-    inputs = INPUTS
+    inputs = IMAGE_CLASSICATION_INPUTS
     default_input = InputFormat.FILES
+    default_input_transform = ImageClassificationInputTransform
 
     def __init__(
         self,

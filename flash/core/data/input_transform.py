@@ -92,6 +92,10 @@ class Compose:
         return format_string
 
 
+class InputTransformState(dict):
+    pass
+
+
 @dataclass
 class InputTransform(Properties):
 
@@ -99,6 +103,9 @@ class InputTransform(Properties):
     data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None
 
     def __post_init__(self):
+        transform_kwargs = {
+            k: v for k, v in self.__dict__.items() if k not in ("_running_stage", "data_pipeline_state")
+        }
         # used to keep track of provided transforms
         self._collate_in_worker_from_transform: Optional[bool] = None
         self._transform = None
@@ -106,6 +113,7 @@ class InputTransform(Properties):
         self.callbacks = []
         # Hack
         Properties.__init__(self, data_pipeline_state=self.data_pipeline_state, running_stage=self.running_stage)
+        self.set_state(InputTransformState(**transform_kwargs))
 
     @property
     def current_transform(self) -> Callable:

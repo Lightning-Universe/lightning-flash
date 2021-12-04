@@ -141,7 +141,7 @@ class ImageClassificationCSVInput(ImageClassificationDataFrameInput):
         return super().load_data(data_frame, input_key, target_keys, root, resolver)
 
 
-INPUTS = {
+IMAGE_CLASSICATION_INPUTS = {
     InputFormat.FIFTYONE: ImageClassificationFiftyOneInput,
     InputFormat.FILES: ImageClassificationFilesInput,
     InputFormat.FOLDERS: ImageClassificationFolderInput,

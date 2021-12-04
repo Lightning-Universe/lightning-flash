@@ -24,6 +24,7 @@ datamodule = ImageClassificationData.from_folders(
     train_folder="data/hymenoptera_data/train/",
     val_folder="data/hymenoptera_data/val/",
     batch_size=1,
+    transform_kwargs={"image_size": (196, 196)},
 )
 
 # 2. Build the task
