@@ -1,14 +1,24 @@
 from flash.core.registry import ExternalRegistry, FlashRegistry
 from flash.core.utilities.imports import _TEXT_AVAILABLE
-from flash.core.utilities.providers import _SENTENCE_TRANSFORMERS
+from flash.core.utilities.providers import _HUGGINGFACE
 
 SENTENCE_TRANSFORMERS_BACKBONE = FlashRegistry("backbones")
 
 if _TEXT_AVAILABLE:
-    from sentence_transformers import SentenceTransformer
+    from transformers import AutoModel, AutoTokenizer, AutoConfig
 
-    SENTENCE_TRANSFORMERS_BACKBONE += ExternalRegistry(
-        SentenceTransformer,
+    AUTOMODEL_BACKBONE = ExternalRegistry(
+        AutoModel.from_pretrained,
         "backbones",
-        _SENTENCE_TRANSFORMERS,
+        _HUGGINGFACE,
     )
+    AUTOTOKENIZER_BACKBONE= ExternalRegistry(
+        AutoTokenizer.from_pretrained,
+        "backbones",
+        _HUGGINGFACE,
+    )
+    AUTOCONFIG_BACKBONE=ExternalRegistry(
+                AutoConfig.from_pretrained,
+                "backbones",
+                _HUGGINGFACE,
+            )
