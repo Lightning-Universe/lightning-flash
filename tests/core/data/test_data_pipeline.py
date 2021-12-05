@@ -33,7 +33,7 @@ from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import _OutputTransformProcessor, OutputTransform
 from flash.core.data.process import Deserializer
 from flash.core.data.properties import ProcessState
-from flash.core.data.states import PerBatchTransformOnDevice, ToTensorTransform
+from flash.core.data.states import PerBatchTransformOnDevice, PerSampleTransform
 from flash.core.model import Task
 from flash.core.utilities.imports import _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.core.utilities.stages import RunningStage
@@ -126,15 +126,9 @@ def test_data_pipeline_init_and_assignement(use_input_transform, use_output_tran
         assert model._output_transform is None or isinstance(model._output_transform, OutputTransform)
 
 
-def test_data_pipeline_is_overriden_and_resolve_function_hierarchy(tmpdir):
+def test_data_pipeline_is_overridden_and_resolve_function_hierarchy(tmpdir):
     class CustomInputTransform(DefaultInputTransform):
-        def val_pre_tensor_transform(self, *_, **__):
-            pass
-
-        def predict_to_tensor_transform(self, *_, **__):
-            pass
-
-        def train_post_tensor_transform(self, *_, **__):
+        def val_per_sample_transform(self, *_, **__):
             pass
 
         def test_collate(self, *_, **__):
@@ -177,23 +171,11 @@ def test_data_pipeline_is_overriden_and_resolve_function_hierarchy(tmpdir):
         for k in data_pipeline.INPUT_TRANSFORM_FUNCS
     }
 
-    # pre_tensor_transform
-    assert train_func_names["pre_tensor_transform"] == "pre_tensor_transform"
-    assert val_func_names["pre_tensor_transform"] == "val_pre_tensor_transform"
-    assert test_func_names["pre_tensor_transform"] == "pre_tensor_transform"
-    assert predict_func_names["pre_tensor_transform"] == "pre_tensor_transform"
-
-    # to_tensor_transform
-    assert train_func_names["to_tensor_transform"] == "to_tensor_transform"
-    assert val_func_names["to_tensor_transform"] == "to_tensor_transform"
-    assert test_func_names["to_tensor_transform"] == "to_tensor_transform"
-    assert predict_func_names["to_tensor_transform"] == "predict_to_tensor_transform"
-
-    # post_tensor_transform
-    assert train_func_names["post_tensor_transform"] == "train_post_tensor_transform"
-    assert val_func_names["post_tensor_transform"] == "post_tensor_transform"
-    assert test_func_names["post_tensor_transform"] == "post_tensor_transform"
-    assert predict_func_names["post_tensor_transform"] == "post_tensor_transform"
+    # per_sample_transform
+    assert train_func_names["per_sample_transform"] == "per_sample_transform"
+    assert val_func_names["per_sample_transform"] == "val_per_sample_transform"
+    assert test_func_names["per_sample_transform"] == "per_sample_transform"
+    assert predict_func_names["per_sample_transform"] == "per_sample_transform"
 
     # collate
     assert train_func_names["collate"] == "collate"
@@ -218,31 +200,19 @@ def test_data_pipeline_is_overriden_and_resolve_function_hierarchy(tmpdir):
     test_worker_input_transform_processor = data_pipeline.worker_input_transform_processor(RunningStage.TESTING)
     predict_worker_input_transform_processor = data_pipeline.worker_input_transform_processor(RunningStage.PREDICTING)
 
-    _seq = train_worker_input_transform_processor.per_sample_transform
-    assert _seq.pre_tensor_transform.func == input_transform.pre_tensor_transform
-    assert _seq.to_tensor_transform.func == input_transform.to_tensor_transform
-    assert _seq.post_tensor_transform.func == input_transform.train_post_tensor_transform
+    assert train_worker_input_transform_processor.per_sample_transform.func == input_transform.per_sample_transform
     assert train_worker_input_transform_processor.collate_fn.func == input_transform.collate
     assert train_worker_input_transform_processor.per_batch_transform.func == input_transform.per_batch_transform
 
-    _seq = val_worker_input_transform_processor.per_sample_transform
-    assert _seq.pre_tensor_transform.func == input_transform.val_pre_tensor_transform
-    assert _seq.to_tensor_transform.func == input_transform.to_tensor_transform
-    assert _seq.post_tensor_transform.func == input_transform.post_tensor_transform
+    assert val_worker_input_transform_processor.per_sample_transform.func == input_transform.val_per_sample_transform
     assert val_worker_input_transform_processor.collate_fn.func == DataPipeline._identity
     assert val_worker_input_transform_processor.per_batch_transform.func == input_transform.per_batch_transform
 
-    _seq = test_worker_input_transform_processor.per_sample_transform
-    assert _seq.pre_tensor_transform.func == input_transform.pre_tensor_transform
-    assert _seq.to_tensor_transform.func == input_transform.to_tensor_transform
-    assert _seq.post_tensor_transform.func == input_transform.post_tensor_transform
+    assert test_worker_input_transform_processor.per_sample_transform.func == input_transform.per_sample_transform
     assert test_worker_input_transform_processor.collate_fn.func == input_transform.test_collate
     assert test_worker_input_transform_processor.per_batch_transform.func == input_transform.per_batch_transform
 
-    _seq = predict_worker_input_transform_processor.per_sample_transform
-    assert _seq.pre_tensor_transform.func == input_transform.pre_tensor_transform
-    assert _seq.to_tensor_transform.func == input_transform.predict_to_tensor_transform
-    assert _seq.post_tensor_transform.func == input_transform.post_tensor_transform
+    assert predict_worker_input_transform_processor.per_sample_transform.func == input_transform.per_sample_transform
     assert predict_worker_input_transform_processor.collate_fn.func == input_transform.collate
     assert predict_worker_input_transform_processor.per_batch_transform.func == input_transform.per_batch_transform
 
@@ -395,11 +365,7 @@ def test_attaching_datapipeline_to_model(tmpdir):
 
         @staticmethod
         def _compare_pre_processor(p1, p2):
-            p1_seq = p1.per_sample_transform
-            p2_seq = p2.per_sample_transform
-            assert p1_seq.pre_tensor_transform.func == p2_seq.pre_tensor_transform.func
-            assert p1_seq.to_tensor_transform.func == p2_seq.to_tensor_transform.func
-            assert p1_seq.post_tensor_transform.func == p2_seq.post_tensor_transform.func
+            assert p1.per_sample_transform.func == p2.per_sample_transform.func
             assert p1.collate_fn.func == p2.collate_fn.func
             assert p1.per_batch_transform.func == p2.per_batch_transform.func
 
@@ -595,19 +561,18 @@ class TestInputTransformations(DefaultInputTransform):
     def __init__(self):
         super().__init__(inputs={"default": TestInputTransformationsInput()})
 
-        self.train_pre_tensor_transform_called = False
+        self.train_per_sample_transform_called = False
         self.train_collate_called = False
         self.train_per_batch_transform_on_device_called = False
-        self.val_to_tensor_transform_called = False
+        self.val_per_sample_transform_called = False
         self.val_collate_called = False
         self.val_per_batch_transform_on_device_called = False
-        self.test_to_tensor_transform_called = False
-        self.test_post_tensor_transform_called = False
+        self.test_per_sample_transform_called = False
 
-    def train_pre_tensor_transform(self, sample: Any) -> Any:
+    def train_per_sample_transform(self, sample: Any) -> Any:
         assert self.training
-        assert self.current_fn == "pre_tensor_transform"
-        self.train_pre_tensor_transform_called = True
+        assert self.current_fn == "per_sample_transform"
+        self.train_per_sample_transform_called = True
         return sample + (5,)
 
     def train_collate(self, samples) -> Tensor:
@@ -622,10 +587,10 @@ class TestInputTransformations(DefaultInputTransform):
         self.train_per_batch_transform_on_device_called = True
         assert torch.equal(batch, tensor([[0, 1, 2, 3, 5], [0, 1, 2, 3, 5]]))
 
-    def val_to_tensor_transform(self, sample: Any) -> Tensor:
+    def val_per_sample_transform(self, sample: Any) -> Tensor:
         assert self.validating
-        assert self.current_fn == "to_tensor_transform"
-        self.val_to_tensor_transform_called = True
+        assert self.current_fn == "per_sample_transform"
+        self.val_per_sample_transform_called = True
         return sample
 
     def val_collate(self, samples) -> Dict[str, Tensor]:
@@ -646,22 +611,16 @@ class TestInputTransformations(DefaultInputTransform):
         assert torch.equal(batch["b"], tensor([1, 2]))
         return [False]
 
-    def test_to_tensor_transform(self, sample: Any) -> Tensor:
+    def test_per_sample_transform(self, sample: Any) -> Tensor:
         assert self.testing
-        assert self.current_fn == "to_tensor_transform"
-        self.test_to_tensor_transform_called = True
-        return sample
-
-    def test_post_tensor_transform(self, sample: Tensor) -> Tensor:
-        assert self.testing
-        assert self.current_fn == "post_tensor_transform"
-        self.test_post_tensor_transform_called = True
+        assert self.current_fn == "per_sample_transform"
+        self.test_per_sample_transform_called = True
         return sample
 
 
 class TestInputTransformations2(TestInputTransformations):
-    def val_to_tensor_transform(self, sample: Any) -> Tensor:
-        self.val_to_tensor_transform_called = True
+    def val_per_sample_transform(self, sample: Any) -> Tensor:
+        self.val_per_sample_transform_called = True
         return {"a": tensor(sample["a"]), "b": tensor(sample["b"])}
 
 
@@ -701,8 +660,7 @@ def test_datapipeline_transformations(tmpdir):
 
     assert datamodule.val_dataloader().dataset[0] == {"a": 0, "b": 1}
     assert datamodule.val_dataloader().dataset[1] == {"a": 1, "b": 2}
-    with pytest.raises(MisconfigurationException, match="When ``to_tensor_transform``"):
-        batch = next(iter(datamodule.val_dataloader()))
+    batch = next(iter(datamodule.val_dataloader()))
 
     datamodule = DataModule.from_input(
         "default", 1, 1, 1, 1, batch_size=2, num_workers=0, input_transform=TestInputTransformations2()
@@ -727,17 +685,16 @@ def test_datapipeline_transformations(tmpdir):
     input_transform = model._input_transform
     input = input_transform.input_of_name("default")
     assert input.train_load_data_called
-    assert input_transform.train_pre_tensor_transform_called
+    assert input_transform.train_per_sample_transform_called
     assert input_transform.train_collate_called
     assert input_transform.train_per_batch_transform_on_device_called
     assert input.val_load_data_called
     assert input.val_load_sample_called
-    assert input_transform.val_to_tensor_transform_called
+    assert input_transform.train_per_sample_transform_called
     assert input_transform.val_collate_called
     assert input_transform.val_per_batch_transform_on_device_called
     assert input.test_load_data_called
-    assert input_transform.test_to_tensor_transform_called
-    assert input_transform.test_post_tensor_transform_called
+    assert input_transform.test_per_sample_transform_called
     assert input.predict_load_data_called
 
 
@@ -771,7 +728,7 @@ def test_datapipeline_transformations_overridden_by_task():
 
         def default_transforms(self):
             return {
-                "to_tensor_transform": T.Compose([T.ToTensor()]),
+                "per_sample_transform": T.Compose([T.ToTensor()]),
                 "per_batch_transform_on_device": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             }
 
@@ -781,7 +738,7 @@ def test_datapipeline_transformations_overridden_by_task():
             super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
 
             # override default transform to resize images
-            self.set_state(ToTensorTransform(T.Compose([T.ToTensor(), T.Resize(128)])))
+            self.set_state(PerSampleTransform(T.Compose([T.ToTensor(), T.Resize(128)])))
 
             # remove normalization, => image still in [0, 1] range
             self.set_state(PerBatchTransformOnDevice(None))
@@ -819,7 +776,7 @@ def test_datapipeline_transformations_overridden_by_task():
     trainer.fit(model, datamodule=datamodule)
 
 
-def test_is_overriden_recursive(tmpdir):
+def test_is_overridden_recursive(tmpdir):
     class TestInputTransform(DefaultInputTransform):
         def collate(self, *_):
             pass
@@ -828,14 +785,14 @@ def test_is_overriden_recursive(tmpdir):
             pass
 
     input_transform = TestInputTransform()
-    assert DataPipeline._is_overriden_recursive("collate", input_transform, InputTransform, prefix="val")
-    assert DataPipeline._is_overriden_recursive("collate", input_transform, InputTransform, prefix="train")
-    assert not DataPipeline._is_overriden_recursive(
+    assert DataPipeline._is_overridden_recursive("collate", input_transform, InputTransform, prefix="val")
+    assert DataPipeline._is_overridden_recursive("collate", input_transform, InputTransform, prefix="train")
+    assert not DataPipeline._is_overridden_recursive(
         "per_batch_transform_on_device", input_transform, InputTransform, prefix="train"
     )
-    assert not DataPipeline._is_overriden_recursive("per_batch_transform_on_device", input_transform, InputTransform)
+    assert not DataPipeline._is_overridden_recursive("per_batch_transform_on_device", input_transform, InputTransform)
     with pytest.raises(MisconfigurationException, match="This function doesn't belong to the parent class"):
-        assert not DataPipeline._is_overriden_recursive("chocolate", input_transform, InputTransform)
+        assert not DataPipeline._is_overridden_recursive("chocolate", input_transform, InputTransform)
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
@@ -858,7 +815,7 @@ def test_dummy_example(tmpdir):
             val_transform=None,
             test_transform=None,
             predict_transform=None,
-            to_tensor_transform=None,
+            per_sample_transform=None,
             train_per_sample_transform_on_device=None,
         ):
             super().__init__(
@@ -868,10 +825,10 @@ def test_dummy_example(tmpdir):
                 predict_transform=predict_transform,
                 inputs={"default": ImageInput()},
             )
-            self._to_tensor = to_tensor_transform
+            self._to_tensor = per_sample_transform
             self._train_per_sample_transform_on_device = train_per_sample_transform_on_device
 
-        def to_tensor_transform(self, pil_image: Image.Image) -> Tensor:
+        def per_sample_transform(self, pil_image: Image.Image) -> Tensor:
             # convert pil image into a tensor
             return self._to_tensor(pil_image)
 
@@ -903,7 +860,7 @@ def test_dummy_example(tmpdir):
         "test_folder",
         None,
         batch_size=2,
-        to_tensor_transform=T.ToTensor(),
+        per_sample_transform=T.ToTensor(),
         train_per_sample_transform_on_device=T.RandomHorizontalFlip(),
     )
 
@@ -934,7 +891,7 @@ def test_input_transform_transforms(tmpdir):
     with pytest.raises(MisconfigurationException, match="train_transform contains {'choco'}. Only"):
         DefaultInputTransform(train_transform={"choco": None})
 
-    input_transform = DefaultInputTransform(train_transform={"to_tensor_transform": torch.nn.Linear(1, 1)})
+    input_transform = DefaultInputTransform(train_transform={"per_sample_transform": torch.nn.Linear(1, 1)})
     # keep is None
     assert input_transform._train_collate_in_worker_from_transform is True
     assert input_transform._val_collate_in_worker_from_transform is None
@@ -1037,7 +994,7 @@ def local_fn(x):
 
 def test_save_hyperparemeters(tmpdir):
 
-    kwargs = {"train_transform": {"pre_tensor_transform": local_fn}}
+    kwargs = {"train_transform": {"per_sample_transform": local_fn}}
     input_transform = CustomInputTransformHyperparameters("token", **kwargs)
     state_dict = input_transform.state_dict()
     torch.save(state_dict, os.path.join(tmpdir, "state_dict.pt"))

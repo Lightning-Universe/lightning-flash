@@ -507,7 +507,9 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         # <hack> Temporary fix to support new `Input` object
         input = data_pipeline._input_transform_pipeline.input_of_name(input or "default")
 
-        if inspect.isclass(input) and issubclass(input, NewInputBase):
+        if (inspect.isclass(input) and issubclass(input, NewInputBase)) or (
+            isinstance(input, functools.partial) and issubclass(input.func, NewInputBase)
+        ):
             dataset = input(running_stage, x, data_pipeline_state=self._data_pipeline_state)
         else:
             dataset = input.generate_dataset(x, running_stage)
@@ -809,7 +811,13 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         if deserializer is None or type(deserializer) is Deserializer:
             deserializer = getattr(input_transform, "deserializer", deserializer)
 
-        data_pipeline = DataPipeline(input, input_transform, output_transform, deserializer, output)
+        data_pipeline = DataPipeline(
+            input=input,
+            input_transform=input_transform,
+            output_transform=output_transform,
+            deserializer=deserializer,
+            output=output,
+        )
         self._data_pipeline_state = self._data_pipeline_state or DataPipelineState()
         self.attach_data_pipeline_state(self._data_pipeline_state)
         self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)
@@ -1045,7 +1053,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
                     f" the second index containing the required keyword arguments to initialize the LR Scheduler and"
                     f" the third index containing a Lightning scheduler configuration dictionary of the format"
                     f" {_get_default_scheduler_config()}. NOTE: Do not set the `scheduler` key in the"
-                    f" lr_scheduler_config, it will overriden with an instance of the provided scheduler key."
+                    f" lr_scheduler_config, it will overridden with an instance of the provided scheduler key."
                 )
 
             if not isinstance(self.lr_scheduler[0], (str, Callable)):

@@ -64,7 +64,7 @@ reference below).
 
 .. code-block:: python
 
-    from flash.core.classification import Probabilities
+    from flash.core.classification import ProbabilitiesOutput
     from flash.core.data.utils import download_data
     from flash.image import ImageClassifier
 
@@ -78,7 +78,7 @@ reference below).
     )
 
     # 3. Attach the Output
-    model.output = Probabilities()
+    model.output = ProbabilitiesOutput()
 
     # 4. Predict whether the image contains an ant or a bee
     predictions = model.predict("data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg")

@@ -12,26 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import base64
-from collections import defaultdict
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, TYPE_CHECKING
 
 import numpy as np
 import torch
 
 import flash
-from flash.core.data.io.input import (
-    DataKeys,
-    FiftyOneInput,
-    has_file_allowed_extension,
-    NumpyInput,
-    PathsInput,
-    TensorInput,
-)
+from flash.core.data.io.input import DataKeys
+from flash.core.data.io.input_base import Input
 from flash.core.data.process import Deserializer
+from flash.core.data.utilities.paths import filter_valid_files, has_file_allowed_extension, PATH_TYPE
+from flash.core.data.utilities.samples import to_samples
 from flash.core.data.utils import image_default_loader
-from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, Image, requires
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _TORCHVISION_AVAILABLE, Image, lazy_import, requires
 
 if _TORCHVISION_AVAILABLE:
     from torchvision.datasets.folder import IMG_EXTENSIONS
@@ -39,6 +34,13 @@ if _TORCHVISION_AVAILABLE:
 else:
     IMG_EXTENSIONS = (".jpg", ".jpeg", ".png", ".ppm", ".bmp", ".pgm", ".tif", ".tiff", ".webp")
 
+SampleCollection = None
+if _FIFTYONE_AVAILABLE:
+    fol = lazy_import("fiftyone.core.labels")
+    if TYPE_CHECKING:
+        pass
+else:
+    fol = None
 
 NP_EXTENSIONS = (".npy",)
 
@@ -58,7 +60,7 @@ def image_loader(filepath: str):
 
 class ImageDeserializer(Deserializer):
     @requires("image")
-    def deserialize(self, data: str) -> Dict:
+    def serve_load_sample(self, data: str) -> Dict:
         encoded_with_padding = (data + "===").encode("ascii")
         img = base64.b64decode(encoded_with_padding)
         buffer = BytesIO(img)
@@ -73,55 +75,44 @@ class ImageDeserializer(Deserializer):
             return base64.b64encode(f.read()).decode("UTF-8")
 
 
-def _labels_to_indices(data):
-    out = defaultdict(list)
-    for idx, sample in enumerate(data):
-        label = sample[DataKeys.TARGET]
-        if torch.is_tensor(label):
-            label = label.item()
-        out[label].append(idx)
-    return out
-
-
-class ImagePathsInput(PathsInput):
-    def __init__(self):
-        super().__init__(loader=image_loader, extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
-
+class ImageInput(Input):
     @requires("image")
-    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        sample = super().load_sample(sample, dataset)
-        w, h = sample[DataKeys.INPUT].size  # WxH
+    def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+        w, h = sample[DataKeys.INPUT].size  # W x H
+        if DataKeys.METADATA not in sample:
+            sample[DataKeys.METADATA] = {}
         sample[DataKeys.METADATA]["size"] = (h, w)
         return sample
 
 
-class ImageTensorInput(TensorInput):
-    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
+class ImageFilesInput(ImageInput):
+    def load_data(self, files: List[PATH_TYPE]) -> List[Dict[str, Any]]:
+        files = filter_valid_files(files, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
+        return to_samples(files)
+
+    def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+        filepath = sample[DataKeys.INPUT]
+        sample[DataKeys.INPUT] = image_loader(filepath)
+        sample = super().load_sample(sample)
+        sample[DataKeys.METADATA]["filepath"] = filepath
+        return sample
+
+
+class ImageTensorInput(ImageInput):
+    def load_data(self, tensor: Any) -> List[Dict[str, Any]]:
+        return to_samples(tensor)
+
+    def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         img = to_pil_image(sample[DataKeys.INPUT])
         sample[DataKeys.INPUT] = img
-        w, h = img.size  # WxH
-        sample[DataKeys.METADATA] = {"size": (h, w)}
-        return sample
+        return super().load_sample(sample)
 
 
-class ImageNumpyInput(NumpyInput):
-    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
+class ImageNumpyInput(ImageInput):
+    def load_data(self, array: Any) -> List[Dict[str, Any]]:
+        return to_samples(array)
+
+    def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         img = to_pil_image(torch.from_numpy(sample[DataKeys.INPUT]))
         sample[DataKeys.INPUT] = img
-        w, h = img.size  # WxH
-        sample[DataKeys.METADATA] = {"size": (h, w)}
-        return sample
-
-
-class ImageFiftyOneInput(FiftyOneInput):
-    @staticmethod
-    def load_sample(sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        img_path = sample[DataKeys.INPUT]
-        img = image_default_loader(img_path)
-        sample[DataKeys.INPUT] = img
-        w, h = img.size  # WxH
-        sample[DataKeys.METADATA] = {
-            "filepath": img_path,
-            "size": (h, w),
-        }
-        return sample
+        return super().load_sample(sample)

@@ -20,7 +20,8 @@ from torch import nn
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import DataKeys, InputFormat, LabelsState, NumpyInput
+from flash.core.data.io.classification_input import ClassificationState
+from flash.core.data.io.input import DataKeys, InputFormat, NumpyInput
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _SKLEARN_AVAILABLE
@@ -67,7 +68,7 @@ class TemplateSKLearnInput(TemplateNumpyInput):
             A sequence of samples / sample metadata.
         """
         dataset.num_classes = len(data.target_names)
-        self.set_state(LabelsState(data.target_names))
+        self.set_state(ClassificationState(data.target_names))
         return super().load_data((data.data, data.target), dataset=dataset)
 
     def predict_load_data(self, data: Bunch) -> Sequence[Mapping[str, Any]]:
@@ -133,13 +134,13 @@ class TemplateInputTransform(InputTransform):
         return torch.from_numpy(input).float()
 
     def default_transforms(self) -> Optional[Dict[str, Callable]]:
-        """Configures the default ``to_tensor_transform``.
+        """Configures the default ``per_sample_transform``.
 
         Returns:
             Our dictionary of transforms.
         """
         return {
-            "to_tensor_transform": nn.Sequential(
+            "per_sample_transform": nn.Sequential(
                 ApplyToKeys(DataKeys.INPUT, self.input_to_tensor),
                 ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
             ),
@@ -254,14 +255,5 @@ class TemplateVisualization(BaseVisualization):
     def show_load_sample(self, samples: List[Any], running_stage: RunningStage):
         print(samples)
 
-    def show_pre_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
+    def show_per_sample_transform(self, samples: List[Any], running_stage: RunningStage):
         print(samples)
-
-    def show_to_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
-        print(samples)
-
-    def show_post_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
-        print(samples)
-
-    def show_per_batch_transform(self, batch: List[Any], running_stage):
-        print(batch)

@@ -31,7 +31,7 @@ Here are common terms you need to be familiar with:
      - The :class:`~flash.core.data.io.input.Input` provides :meth:`~flash.core.data.io.input.Input.load_data` and :meth:`~flash.core.data.io.input.Input.load_sample` hooks for creating data sets from metadata (such as folder names).
    * - :class:`~flash.core.data.io.input_transform.InputTransform`
      - The :class:`~flash.core.data.io.input_transform.InputTransform` provides a simple hook-based API to encapsulate your pre-processing logic.
-        These hooks (such as :meth:`~flash.core.data.io.input_transform.InputTransform.pre_tensor_transform`) enable transformations to be applied to your data at every point along the pipeline (including on the device).
+        These hooks (such as :meth:`~flash.core.data.io.input_transform.InputTransform.per_sample_transform`) enable transformations to be applied to your data at every point along the pipeline (including on the device).
         The :class:`~flash.core.data.data_pipeline.DataPipeline` contains a system to call the right hooks when needed.
         The :class:`~flash.core.data.io.input_transform.InputTransform` hooks can be either overridden directly or provided as a dictionary of transforms (mapping hook name to callable transform).
    * - :class:`~flash.core.data.io.output_transform.OutputTransform`
@@ -112,7 +112,7 @@ Here's an example:
     from flash.core.data.transforms import ApplyToKeys
     from flash.image import ImageClassificationData, ImageClassifier
 
-    transform = {"to_tensor_transform": ApplyToKeys("input", my_to_tensor_transform)}
+    transform = {"per_sample_transform": ApplyToKeys("input", my_per_sample_transform)}
 
     datamodule = ImageClassificationData.from_folders(
         train_folder="data/hymenoptera_data/train/",
@@ -132,8 +132,8 @@ Alternatively, the user may directly override the hooks for their needs like thi
 
 
     class CustomImageClassificationInputTransform(ImageClassificationInputTransform):
-        def to_tensor_transform(sample: Dict[str, Any]) -> Dict[str, Any]:
-            sample["input"] = my_to_tensor_transform(sample["input"])
+        def per_sample_transform(sample: Dict[str, Any]) -> Dict[str, Any]:
+            sample["input"] = my_per_sample_transform(sample["input"])
             return sample
 
 
@@ -267,7 +267,7 @@ Next, implement your custom ``ImageClassificationInputTransform`` with some defa
             return cls(**state_dict)
 
         def default_transforms(self) -> Dict[str, Callable]:
-            return {"to_tensor_transform": ApplyToKeys(DataKeys.INPUT, T.to_tensor)}
+            return {"per_sample_transform": ApplyToKeys(DataKeys.INPUT, T.to_tensor)}
 
 4. The DataModule
 _________________
@@ -325,9 +325,7 @@ ______________
 
 .. note::
 
-    The :meth:`~flash.core.data.io.input_transform.InputTransform.pre_tensor_transform`,
-    :meth:`~flash.core.data.io.input_transform.InputTransform.to_tensor_transform`,
-    :meth:`~flash.core.data.io.input_transform.InputTransform.post_tensor_transform`,
+    The :meth:`~flash.core.data.io.input_transform.InputTransform.per_sample_transform`,
     :meth:`~flash.core.data.io.input_transform.InputTransform.collate`,
     :meth:`~flash.core.data.io.input_transform.InputTransform.per_batch_transform` are injected as the
     :paramref:`torch.utils.data.DataLoader.collate_fn` function of the DataLoader.
@@ -342,9 +340,7 @@ Example::
 
         # This will be wrapped into a :class:`~flash.core.data.io.input_transform._InputTransformSequential`
         for sample in samples:
-            sample = pre_tensor_transform(sample)
-            sample = to_tensor_transform(sample)
-            sample = post_tensor_transform(sample)
+            sample = per_sample_transform(sample)
 
         samples = type(samples)(samples)
 

@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-import warnings
-from typing import Any, Callable, cast, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, cast, List, Optional, Tuple, TypeVar, Union
 
-import pandas as pd
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
-from flash.core.utilities.imports import _PANDAS_GREATER_EQUAL_1_3_0
+from flash.core.data.utilities.sort import sorted_alphanumeric
 
 PATH_TYPE = Union[str, bytes, os.PathLike]
+
+T = TypeVar("T")
 
 
 # adapted from torchvision:
@@ -37,19 +38,17 @@ def has_file_allowed_extension(filename: PATH_TYPE, extensions: Tuple[str, ...])
     return str(filename).lower().endswith(extensions)
 
 
-# Copied from torchvision:
+# Adapted from torchvision:
 # https://github.com/pytorch/vision/blob/master/torchvision/datasets/folder.py#L48
 def make_dataset(
     directory: PATH_TYPE,
-    class_to_idx: Dict[str, int],
     extensions: Optional[Tuple[str, ...]] = None,
     is_valid_file: Optional[Callable[[str], bool]] = None,
-) -> List[Tuple[str, int]]:
+) -> Tuple[List[PATH_TYPE], Optional[List[PATH_TYPE]]]:
     """Generates a list of samples of a form (path_to_sample, class).
 
     Args:
         directory (str): root dataset directory
-        class_to_idx (Dict[str, int]): dictionary mapping class name to class index
         extensions (optional): A list of allowed extensions.
             Either extensions or is_valid_file should be passed. Defaults to None.
         is_valid_file (optional): A function that takes path of a file
@@ -61,9 +60,9 @@ def make_dataset(
         ValueError: In case ``extensions`` and ``is_valid_file`` are None or both are not None.
 
     Returns:
-        List[Tuple[str, int]]: samples of a form (path_to_sample, class)
+        (files, targets) Tuple containing the list of files and corresponding list of targets.
     """
-    instances = []
+    files, targets = [], []
     directory = os.path.expanduser(str(directory))
     both_none = extensions is None and is_valid_file is None
     both_something = extensions is not None and is_valid_file is not None
@@ -75,18 +74,20 @@ def make_dataset(
             return has_file_allowed_extension(x, cast(Tuple[str, ...], extensions))
 
     is_valid_file = cast(Callable[[str], bool], is_valid_file)
-    for target_class in sorted(class_to_idx.keys()):
-        class_index = class_to_idx[target_class]
-        target_dir = os.path.join(directory, target_class)
-        if not os.path.isdir(target_dir):
-            continue
-        for root, _, fnames in sorted(os.walk(target_dir, followlinks=True)):
-            for fname in sorted(fnames):
-                path = os.path.join(root, fname)
-                if is_valid_file(path):
-                    item = path, class_index
-                    instances.append(item)
-    return instances
+    subdirs = list_subdirs(directory)
+    if len(subdirs) > 0:
+        for target_class in subdirs:
+            target_dir = os.path.join(directory, target_class)
+            if not os.path.isdir(target_dir):
+                continue
+            for root, _, fnames in sorted(os.walk(target_dir, followlinks=True)):
+                for fname in sorted(fnames):
+                    path = os.path.join(root, fname)
+                    if is_valid_file(path):
+                        files.append(path)
+                        targets.append(target_class)
+        return files, targets
+    return list_valid_files(directory), None
 
 
 def isdir(path: Any) -> bool:
@@ -97,19 +98,16 @@ def isdir(path: Any) -> bool:
         return False
 
 
-def find_classes(dir: PATH_TYPE) -> Tuple[List[str], Dict[str, int]]:
-    """Finds the class folders in a dataset. Ensures that no class is a subdirectory of another.
+def list_subdirs(dir: PATH_TYPE) -> List[str]:
+    """List the subdirectories of a given directory.
 
     Args:
-        dir: Root directory path.
+        dir: The directory to scan.
 
     Returns:
-        (classes, class_to_idx) where classes are relative to (dir), and class_to_idx is a dictionary.
+        The list of subdirectories.
     """
-    classes = [d.name for d in os.scandir(str(dir)) if d.is_dir()]
-    classes.sort()
-    class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}
-    return classes, class_to_idx
+    return list(sorted_alphanumeric(d.name for d in os.scandir(str(dir)) if d.is_dir()))
 
 
 def list_valid_files(
@@ -132,28 +130,40 @@ def list_valid_files(
 
     if valid_extensions is None:
         return paths
-    return list(
-        filter(
-            lambda file: has_file_allowed_extension(file, valid_extensions),
-            paths,
-        )
-    )
+    return [path for path in paths if has_file_allowed_extension(path, valid_extensions)]
 
 
-def read_csv(file: PATH_TYPE) -> pd.DataFrame:
-    """A wrapper for ``pd.read_csv`` which tries to handle errors gracefully.
+def filter_valid_files(
+    files: Union[PATH_TYPE, List[PATH_TYPE]],
+    *additional_lists: List[Any],
+    valid_extensions: Optional[Tuple[str, ...]] = None,
+) -> Union[List[Any], Tuple[List[Any], ...]]:
+    """Filter the given list of files and any additional lists to include only the entries that contain a file with
+    a valid extension.
 
     Args:
-        file: The CSV file to read.
+        files: The list of files to filter by.
+        additional_lists: Any additional lists to be filtered together with files.
+        valid_extensions: The tuple of valid file extensions.
 
     Returns:
-        A ``DataFrame`` containing the contents of the file.
+        The filtered lists.
     """
-    try:
-        return pd.read_csv(file, encoding="utf-8")
-    except UnicodeDecodeError:
-        warnings.warn("A UnicodeDecodeError was raised when reading the CSV. This error will be ignored.")
-        if _PANDAS_GREATER_EQUAL_1_3_0:
-            return pd.read_csv(file, encoding="utf-8", encoding_errors="ignore")
-        else:
-            return pd.read_csv(file, encoding=None, engine="python")
+    if not isinstance(files, List):
+        files = [files]
+
+    additional_lists = tuple([a] if not isinstance(a, List) else a for a in additional_lists)
+
+    if not all(len(a) == len(files) for a in additional_lists):
+        raise MisconfigurationException(
+            f"The number of files ({len(files)}) and the number of items in any additional lists must be the same."
+        )
+
+    if valid_extensions is None:
+        return (files,) + additional_lists
+    filtered = list(
+        filter(lambda sample: has_file_allowed_extension(sample[0], valid_extensions), zip(files, *additional_lists))
+    )
+    if len(additional_lists) > 0:
+        return tuple(zip(*filtered))
+    return [f[0] for f in filtered]

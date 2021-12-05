@@ -17,7 +17,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.utils import _CALLBACK_FUNCS
-from flash.core.utilities.apply_func import _is_overriden
+from flash.core.utilities.apply_func import _is_overridden
 from flash.core.utilities.stages import RunningStage
 
 
@@ -37,13 +37,7 @@ class BaseVisualization(BaseDataFetcher):
             def show_load_sample(self, samples: List[Any], running_stage):
                 # plot samples
 
-            def show_pre_tensor_transform(self, samples: List[Any], running_stage):
-                # plot samples
-
-            def show_to_tensor_transform(self, samples: List[Any], running_stage):
-                # plot samples
-
-            def show_post_tensor_transform(self, samples: List[Any], running_stage):
+            def show_per_sample_transform(self, samples: List[Any], running_stage):
                 # plot samples
 
             def show_collate(self, batch: List[Any], running_stage):
@@ -93,9 +87,7 @@ class BaseVisualization(BaseDataFetcher):
                 # out
                 {
                     'load_sample': [...],
-                    'pre_tensor_transform': [...],
-                    'to_tensor_transform': [...],
-                    'post_tensor_transform': [...],
+                    'per_sample_transform': [...],
                     'collate': [...],
                     'per_batch_transform': [...],
                 }
@@ -119,20 +111,14 @@ class BaseVisualization(BaseDataFetcher):
 
         for func_name in func_names_set:
             hook_name = f"show_{func_name}"
-            if _is_overriden(hook_name, self, BaseVisualization):
+            if _is_overridden(hook_name, self, BaseVisualization):
                 getattr(self, hook_name)(batch[func_name], running_stage)
 
     def show_load_sample(self, samples: List[Any], running_stage: RunningStage):
         """Override to visualize  ``load_sample`` output data."""
 
-    def show_pre_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
-        """Override to visualize  ``pre_tensor_transform`` output data."""
-
-    def show_to_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
-        """Override to visualize  ``to_tensor_transform`` output data."""
-
-    def show_post_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
-        """Override to visualize  ``post_tensor_transform`` output data."""
+    def show_per_sample_transform(self, samples: List[Any], running_stage: RunningStage):
+        """Override to visualize ``per_sample_transform`` output data."""
 
     def show_collate(self, batch: List[Any], running_stage: RunningStage) -> None:
         """Override to visualize  ``collate`` output data."""

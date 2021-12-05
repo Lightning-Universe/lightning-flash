@@ -14,12 +14,17 @@
 import functools
 import os
 import sys
-from typing import Any, cast, Dict, Iterable, MutableMapping, Optional, Sequence, Tuple, Union
+from copy import copy, deepcopy
+from functools import partial
+from typing import Any, Callable, cast, Dict, Iterable, List, MutableMapping, Optional, Sequence, Tuple, Type, Union
 
+from pytorch_lightning.utilities.enums import LightningEnum
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Dataset
 
 import flash
 from flash.core.data.properties import Properties
+from flash.core.registry import FlashRegistry
 from flash.core.utilities.stages import RunningStage
 
 if sys.version_info < (3, 7):
@@ -114,13 +119,19 @@ class InputBase(Properties, metaclass=_InputMeta):
         **kwargs: Any additional keyword arguments to pass to the ``load_data`` hook.
     """
 
+    input_transforms_registry = FlashRegistry("input_transforms")
+
     def __init__(
         self,
         running_stage: RunningStage,
         *args: Any,
+        transform: "flash.InputTransform" = None,
         data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None,
         **kwargs: Any,
     ) -> None:
+        from flash.core.data.input_transform import create_transform
+
+        self.transform = create_transform(transform, running_stage, data_pipeline_state, self.input_transforms_registry)
         super().__init__(running_stage=running_stage, data_pipeline_state=data_pipeline_state)
 
         self.data = None
@@ -147,7 +158,7 @@ class InputBase(Properties, metaclass=_InputMeta):
                 InputBase,
             ),
         )
-        return load_sample(sample)
+        return load_sample(copy(sample))
 
     @staticmethod
     def load_data(*args: Any, **kwargs: Any) -> Union[Sequence, Iterable]:
@@ -190,12 +201,52 @@ class InputBase(Properties, metaclass=_InputMeta):
         newstate["data"] = None
         self.__dict__.update(newstate)
 
+    def __copy__(self):
+        """The default copy implementation seems to use ``__getstate__`` and ``__setstate__`` so we override it
+        here with a custom implementation to ensure that it includes the data list."""
+        cls = self.__class__
+        result = cls.__new__(cls)
+        result.__dict__.update(self.__dict__)
+        return result
+
+    def __deepcopy__(self, memo):
+        """The default deepcopy implementation seems to use ``__getstate__`` and ``__setstate__`` so we override it
+        here with a custom implementation to ensure that it includes the data list."""
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, deepcopy(v, memo))
+        return result
+
     def __bool__(self):
         """If ``self.data`` is ``None`` then the ``InputBase`` is considered falsey.
 
         This allows for quickly checking whether or not the ``InputBase`` is populated with data.
         """
         return self.data is not None
+
+    @classmethod
+    def register_input_transform(
+        cls, enum: Union[LightningEnum, str], fn: Union[Type["flash.InputTransform"], partial]
+    ) -> None:
+        if cls.input_transforms_registry is None:
+            raise MisconfigurationException(
+                "The class attribute `input_transforms_registry` should be set as a class attribute. "
+            )
+        cls.input_transforms_registry(fn=fn, name=enum)
+
+    @property
+    def dataloader_collate_fn(self) -> Optional[Callable]:
+        if self.transform:
+            self.transform.running_stage = self.running_stage
+            return self.transform.dataloader_collate_fn
+
+    @property
+    def on_after_batch_transfer_fn(self) -> Optional[Callable]:
+        if self.transform:
+            self.transform.running_stage = self.running_stage
+            return self.transform.on_after_batch_transfer_fn
 
 
 class Input(InputBase, Dataset):
@@ -213,3 +264,26 @@ class IterableInput(InputBase, IterableDataset, metaclass=_IterableInputMeta):
 
     def __next__(self) -> Any:
         return self._call_load_sample(next(self.data_iter))
+
+
+class ServeInput(Input):
+    def __init__(
+        self,
+        data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None,
+    ) -> None:
+        if hasattr(self, "serve_load_data"):
+            raise MisconfigurationException("`serve_load_data` shouldn't be implemented.")
+
+        super().__init__(RunningStage.SERVING, data_pipeline_state=data_pipeline_state)
+
+    def serve_load_sample(self, sample: Any) -> List[Any]:
+        raise NotImplementedError
+
+    def __call__(self, sample: Any) -> Any:
+        return self._call_load_sample(sample)
+
+    def example_input(self) -> str:
+        raise NotImplementedError
+
+    def __bool__(self):
+        return True
