@@ -52,7 +52,7 @@ def test_instance_segmentation_inference(tmpdir):
     icevision.utils.data_dir.data_dir.mkdir(exist_ok=True, parents=True)
     data_dir = icedata.pets.load_data()
 
-    datamodule = InstanceSegmentationData.from_folders(
+    datamodule = InstanceSegmentationData.from_icedata(
         train_folder=data_dir,
         val_split=0.1,
         parser=partial(icedata.pets.parser, mask=True),

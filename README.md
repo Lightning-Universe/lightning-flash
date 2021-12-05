@@ -257,7 +257,7 @@ def mixup(batch, alpha=1.0):
 
 train_transform = {
     # applied only on images as ApplyToKeys is used with `input`
-    "post_tensor_transform": ApplyToKeys(
+    "per_sample_transform": ApplyToKeys(
         "input", AlbumentationsAdapter(albumentations.HorizontalFlip(p=0.5))),
 
     # applied to the entire dictionary as `ApplyToKeys` isn't used.

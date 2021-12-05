@@ -30,32 +30,25 @@ class _DeserializeProcessor(torch.nn.Module):
         self,
         deserializer: "Deserializer",
         input_transform: "InputTransform",
-        pre_tensor_transform: Callable,
-        to_tensor_transform: Callable,
+        per_sample_transform: Callable,
     ):
         super().__init__()
         self.input_transform = input_transform
         self.callback = ControlFlow(self.input_transform.callbacks)
         self.deserializer = convert_to_modules(deserializer)
-        self.pre_tensor_transform = convert_to_modules(pre_tensor_transform)
-        self.to_tensor_transform = convert_to_modules(to_tensor_transform)
+        self.per_sample_transform = convert_to_modules(per_sample_transform)
 
         self._current_stage_context = CurrentRunningStageContext(RunningStage.PREDICTING, input_transform, reset=False)
-        self._pre_tensor_transform_context = CurrentFuncContext("pre_tensor_transform", input_transform)
-        self._to_tensor_transform_context = CurrentFuncContext("to_tensor_transform", input_transform)
+        self._per_sample_transform_context = CurrentFuncContext("per_sample_transform", input_transform)
 
     def forward(self, sample: str):
 
         sample = self.deserializer(sample)
 
         with self._current_stage_context:
-            with self._pre_tensor_transform_context:
-                sample = self.pre_tensor_transform(sample)
-                self.callback.on_pre_tensor_transform(sample, RunningStage.PREDICTING)
-
-            with self._to_tensor_transform_context:
-                sample = self.to_tensor_transform(sample)
-                self.callback.on_to_tensor_transform(sample, RunningStage.PREDICTING)
+            with self._per_sample_transform_context:
+                sample = self.per_sample_transform(sample)
+                self.callback.on_per_sample_transform(sample, RunningStage.PREDICTING)
 
         return sample
 

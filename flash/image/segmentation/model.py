@@ -34,7 +34,7 @@ from flash.core.utilities.types import (
 )
 from flash.image.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 from flash.image.segmentation.heads import SEMANTIC_SEGMENTATION_HEADS
-from flash.image.segmentation.output import SegmentationLabels
+from flash.image.segmentation.output import SegmentationLabelsOutput
 
 if _KORNIA_AVAILABLE:
     import kornia as K
@@ -42,7 +42,7 @@ if _KORNIA_AVAILABLE:
 
 class SemanticSegmentationOutputTransform(OutputTransform):
     def per_sample_transform(self, sample: Any) -> Any:
-        resize = K.geometry.Resize(sample[DataKeys.METADATA]["size"][-2:], interpolation="bilinear")
+        resize = K.geometry.Resize(sample[DataKeys.METADATA]["size"], interpolation="bilinear")
         sample[DataKeys.PREDS] = resize(sample[DataKeys.PREDS])
         sample[DataKeys.INPUT] = resize(sample[DataKeys.INPUT])
         return super().per_sample_transform(sample)
@@ -114,7 +114,7 @@ class SemanticSegmentation(ClassificationTask):
             lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
-            output=output or SegmentationLabels(),
+            output=output or SegmentationLabelsOutput(),
             output_transform=output_transform or self.output_transform_cls(),
         )
 

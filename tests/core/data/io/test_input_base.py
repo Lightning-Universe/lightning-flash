@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pytest
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
-from flash.core.data.io.input_base import Input, IterableInput
+from flash.core.data.io.input_base import Input, IterableInput, ServeInput
 from flash.core.utilities.stages import RunningStage
 
 
@@ -55,3 +56,28 @@ def test_iterable_input_validation():
             self.data = iter([1, 2, 3])
 
     ValidIterableInput(RunningStage.TRAINING)
+
+
+def test_serve_input():
+
+    server_input = ServeInput()
+    assert server_input.serving
+    with pytest.raises(NotImplementedError):
+        server_input._call_load_sample("")
+
+    class CustomServeInput(ServeInput):
+        def serve_load_data(self, data):
+            raise NotImplementedError
+
+        def serve_load_sample(self, data):
+            return data + 1
+
+    with pytest.raises(MisconfigurationException, match="serve_load_data"):
+        serve_input = CustomServeInput()
+
+    class CustomServeInput2(ServeInput):
+        def serve_load_sample(self, data):
+            return data + 1
+
+    serve_input = CustomServeInput2()
+    assert serve_input._call_load_sample(1) == 2

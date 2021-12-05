@@ -14,14 +14,24 @@ import glob
 import os
 import shutil
 import sys
+import warnings
 from importlib.util import module_from_spec, spec_from_file_location
 
 import pt_lightning_sphinx_theme
 
 _PATH_HERE = os.path.abspath(os.path.dirname(__file__))
 _PATH_ROOT = os.path.join(_PATH_HERE, "..", "..")
+_PATH_RAW_NB = os.path.join(_PATH_ROOT, "_notebooks")
 sys.path.insert(0, os.path.abspath(_PATH_ROOT))
-sys.path.insert(0, os.path.abspath(os.path.join(_PATH_HERE, "..", "extensions")))
+sys.path.append(os.path.join(_PATH_RAW_NB, ".actions"))
+
+_SHOULD_COPY_NOTEBOOKS = True
+
+try:
+    from helpers import HelperCLI
+except Exception:
+    _SHOULD_COPY_NOTEBOOKS = False
+    warnings.warn("To build the code, please run: `git submodule update --init --recursive`", stacklevel=2)
 
 
 def _load_py_module(fname, pkg="flash"):
@@ -51,6 +61,8 @@ copyright = "2020-2021, PyTorch Lightning"
 author = "PyTorch Lightning"
 
 # -- Project documents -------------------------------------------------------
+if _SHOULD_COPY_NOTEBOOKS:
+    HelperCLI.copy_notebooks(_PATH_RAW_NB, _PATH_HERE, "notebooks", patterns=["flash_tutorials"])
 
 
 def _transform_changelog(path_in: str, path_out: str) -> None:
@@ -99,20 +111,17 @@ extensions = [
     "sphinx.ext.doctest",
     "sphinx.ext.intersphinx",
     "sphinx.ext.todo",
-    # 'sphinx.ext.coverage',
     "sphinx.ext.viewcode",
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
     "sphinx.ext.imgmath",
-    "recommonmark",
-    # 'sphinx.ext.autosectionlabel',
-    # 'nbsphinx',  # it seems some sphinx issue
+    "myst_parser",
+    "nbsphinx",
     "sphinx_autodoc_typehints",
     "sphinx_copybutton",
     "sphinx_paramlinks",
     "sphinx_togglebutton",
     "pt_lightning_sphinx_theme.extensions.lightning_tutorials",
-    "autodatasources",
 ]
 
 # autodoc: Default to members and undoc-members
@@ -124,15 +133,30 @@ autodoc_inherit_docstrings = False
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
+# https://berkeley-stat159-f17.github.io/stat159-f17/lectures/14-sphinx..html#conf.py-(cont.)
+# https://stackoverflow.com/questions/38526888/embed-ipython-notebook-in-sphinx-document
+# I execute the notebooks manually in advance. If notebooks test the code,
+# they should be run at build time.
+nbsphinx_execute = "never"
+nbsphinx_allow_errors = True
+nbsphinx_requirejs_path = ""
+
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["generated/PULL_REQUEST_TEMPLATE.md"]
 
+# myst-parser, forcing to parse all html pages with mathjax
+# https://github.com/executablebooks/MyST-Parser/issues/394
+myst_update_mathjax = False
+
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
-source_suffix = [".rst", ".md"]
+source_parsers = {".rst": "restructuredtext", ".txt": "markdown", ".md": "markdown", ".ipynb": "nbsphinx"}
+
+# The master toctree document.
+master_doc = "index"
 
 needs_sphinx = "4.0"
 

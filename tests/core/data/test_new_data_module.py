@@ -11,15 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from dataclasses import dataclass
 from typing import Callable
 
 import torch
 from pytorch_lightning import seed_everything
-from torch.utils.data.dataloader import default_collate
 
 from flash import Task, Trainer
-from flash.core.data.datasets import FlashDataset
 from flash.core.data.input_transform import InputTransform
+from flash.core.data.io.input_base import Input
 from flash.core.data.new_data_module import DataModule
 from flash.core.utilities.stages import RunningStage
 
@@ -39,14 +39,12 @@ def test_data_module():
     def predict_fn(data):
         return data + 1000
 
-    class TestDataset(FlashDataset):
+    class TestDataset(Input):
         pass
 
+    @dataclass
     class TestTransform(InputTransform):
-        def configure_collate(self, *args, **kwargs) -> Callable:
-            return default_collate
-
-        def configure_per_batch_transform_on_device(self) -> Callable:
+        def per_batch_transform_on_device(self) -> Callable:
             if self.training:
                 return train_fn
             elif self.validating:
@@ -56,24 +54,24 @@ def test_data_module():
             elif self.predicting:
                 return predict_fn
 
-    transform = TestTransform(running_stage=RunningStage.TRAINING)
-    assert transform.running_stage == RunningStage.TRAINING
-    train_dataset = TestDataset.from_train_data(range(10), transform=transform)
+    transform = TestTransform(RunningStage.TRAINING)
+    assert transform._running_stage == RunningStage.TRAINING
+    train_dataset = TestDataset(RunningStage.TRAINING, range(10), transform=transform)
     assert train_dataset.running_stage == RunningStage.TRAINING
 
-    transform = TestTransform(running_stage=RunningStage.VALIDATING)
-    assert transform.running_stage == RunningStage.VALIDATING
-    val_dataset = TestDataset.from_val_data(range(10), transform=transform)
+    transform = TestTransform(RunningStage.VALIDATING)
+    assert transform._running_stage == RunningStage.VALIDATING
+    val_dataset = TestDataset(RunningStage.VALIDATING, range(10), transform=transform)
     assert val_dataset.running_stage == RunningStage.VALIDATING
 
-    transform = TestTransform(running_stage=RunningStage.TESTING)
-    assert transform.running_stage == RunningStage.TESTING
-    test_dataset = TestDataset.from_test_data(range(10), transform=transform)
+    transform = TestTransform(RunningStage.TESTING)
+    assert transform._running_stage == RunningStage.TESTING
+    test_dataset = TestDataset(RunningStage.TESTING, range(10), transform=transform)
     assert test_dataset.running_stage == RunningStage.TESTING
 
-    transform = TestTransform(running_stage=RunningStage.PREDICTING)
-    assert transform.running_stage == RunningStage.PREDICTING
-    predict_dataset = TestDataset.from_predict_data(range(10), transform=transform)
+    transform = TestTransform(RunningStage.PREDICTING)
+    assert transform._running_stage == RunningStage.PREDICTING
+    predict_dataset = TestDataset(RunningStage.PREDICTING, range(10), transform=transform)
     assert predict_dataset.running_stage == RunningStage.PREDICTING
 
     dm = DataModule(
@@ -131,5 +129,5 @@ def test_data_module():
         pass
 
     CustomDataModule.register_flash_dataset("custom", TestDataset)
-    train_dataset, *_ = DataModule.create_flash_datasets("custom", range(10))
+    train_dataset, *_ = DataModule.create_inputs("custom", range(10))
     assert train_dataset[0] == 0

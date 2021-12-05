@@ -18,6 +18,7 @@ import numpy as np
 import pytest
 import torch
 import torch.nn as nn
+from pytorch_lightning import seed_everything
 
 from flash.audio import AudioClassificationData
 from flash.core.data.io.input import DataKeys
@@ -213,8 +214,8 @@ def test_from_filepaths_visualise(tmpdir):
 
     # call show functions
     # dm.show_train_batch()
-    dm.show_train_batch("pre_tensor_transform")
-    dm.show_train_batch(["pre_tensor_transform", "post_tensor_transform"])
+    dm.show_train_batch("per_sample_transform")
+    dm.show_train_batch(["per_sample_transform", "per_batch_transform"])
 
 
 @pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
@@ -248,9 +249,7 @@ def test_from_filepaths_visualise_multilabel(tmpdir):
 
     # call show functions
     dm.show_train_batch()
-    dm.show_train_batch("pre_tensor_transform")
-    dm.show_train_batch("to_tensor_transform")
-    dm.show_train_batch(["pre_tensor_transform", "post_tensor_transform"])
+    dm.show_train_batch("per_sample_transform")
     dm.show_val_batch("per_batch_transform")
 
 
@@ -274,7 +273,7 @@ def test_from_filepaths_splits(tmpdir):
     assert len(train_filepaths) == len(train_labels)
 
     _to_tensor = {
-        "to_tensor_transform": nn.Sequential(
+        "per_sample_transform": nn.Sequential(
             ApplyToKeys(DataKeys.INPUT, torchvision.transforms.ToTensor()),
             ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
         ),
@@ -322,6 +321,7 @@ def test_from_folders_only_train(tmpdir):
 
 @pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 def test_from_folders_train_val(tmpdir):
+    seed_everything(42)
 
     train_dir = Path(tmpdir / "train")
     train_dir.mkdir()
@@ -345,6 +345,7 @@ def test_from_folders_train_val(tmpdir):
     imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 128, 128)
     assert labels.shape == (2,)
+    assert list(labels.numpy()) == [0, 1]
 
     data = next(iter(spectrograms_data.val_dataloader()))
     imgs, labels = data["input"], data["target"]

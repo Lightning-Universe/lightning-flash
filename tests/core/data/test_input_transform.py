@@ -11,196 +11,140 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from functools import partial
-from typing import Callable, Dict, Optional
+from typing import Callable
 
 import pytest
-import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data.dataloader import default_collate
 
-from flash.core.data.input_transform import InputTransform, InputTransformPlacement
-from flash.core.registry import FlashRegistry
+from flash.core.data.input_transform import Compose, InputTransform, LambdaInputTransform
+from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.stages import RunningStage
 
 
 def test_input_transform():
-
-    transform = InputTransform(running_stage=RunningStage.TRAINING)
-
-    assert "InputTransform(running_stage=train, transform={<InputTransformPlacement.COLLATE: 'collate'>" in str(
-        transform
-    )
-
     def fn(x):
         return x + 1
 
-    transform = InputTransform.from_train_transform(transform=fn)
-    assert transform.transform == {InputTransformPlacement.PER_SAMPLE_TRANSFORM: fn}
+    class MyTransform(InputTransform):
+        def per_batch_transform(self) -> Callable:
+            return super().per_batch_transform()
 
-    transform = InputTransform.from_val_transform(transform=fn)
-    assert transform.transform == {InputTransformPlacement.PER_SAMPLE_TRANSFORM: fn}
-
-    transform = InputTransform.from_test_transform(transform=fn)
-    assert transform.transform == {InputTransformPlacement.PER_SAMPLE_TRANSFORM: fn}
-
-    transform = InputTransform.from_predict_transform(transform=fn)
-    assert transform.transform == {InputTransformPlacement.PER_SAMPLE_TRANSFORM: fn}
-
-    class MyInputTransform(InputTransform):
-        def configure_transforms(self) -> Optional[Dict[str, Callable]]:
-            return None
-
-    transform = MyInputTransform(running_stage=RunningStage.TRAINING)
-    assert not transform._current_fn
-    assert "InputTransform(running_stage=train, transform={<InputTransformPlacement.COLLATE: 'collate'>" in str(
-        transform
-    )
-
-    class MyInputTransform(InputTransform):
-        def fn(self, x):
-            return x + 1
-
-        def configure_per_sample_transform(self) -> Optional[Dict[str, Callable]]:
-            return self.fn if self.training else fn
-
-    transform = MyInputTransform(running_stage=RunningStage.TRAINING)
-    assert transform.transform == {
-        InputTransformPlacement.PER_SAMPLE_TRANSFORM: transform.fn,
-        InputTransformPlacement.COLLATE: default_collate,
-    }
-
-    transform._current_fn = "per_sample_transform"
-    assert transform.current_transform == transform.fn
-    assert transform.per_sample_transform(1) == 2
-    assert transform.per_sample_transform([1, 2]) == [2, 3]
-
-    transform._current_fn = "per_sample_transform_on_device"
-    assert transform.current_transform == transform._identity
-    assert transform.per_sample_transform_on_device(1) == 1
-    assert transform.per_sample_transform_on_device([1, 2]) == [1, 2]
-
-    transform._current_fn = "collate"
-    assert transform.current_transform == default_collate
-    assert torch.equal(transform.collate([0, 1]), torch.tensor([0, 1]))
-
-    transform._current_fn = "per_batch_transform"
-    assert transform.current_transform == transform._identity
-    assert transform.per_batch_transform(2) == 2
-
-    transform = MyInputTransform(running_stage=RunningStage.TESTING)
-    assert transform.transform == {
-        InputTransformPlacement.PER_SAMPLE_TRANSFORM: fn,
-        InputTransformPlacement.COLLATE: default_collate,
-    }
-
-    assert transform.transforms == {
-        "transform": {
-            InputTransformPlacement.PER_SAMPLE_TRANSFORM: fn,
-            InputTransformPlacement.COLLATE: default_collate,
-        }
-    }
-
-    input_transforms_registry = FlashRegistry("transforms")
-    input_transforms_registry(fn=MyInputTransform, name="something")
-
-    transform = InputTransform.from_transform(
-        running_stage=RunningStage.TRAINING, transform="something", input_transforms_registry=input_transforms_registry
-    )
-
-    transform = transform.from_transform(
-        running_stage=RunningStage.TRAINING, transform=transform, input_transforms_registry=input_transforms_registry
-    )
-
-    assert isinstance(transform, MyInputTransform)
-    assert transform.transform == {
-        InputTransformPlacement.PER_SAMPLE_TRANSFORM: transform.fn,
-        InputTransformPlacement.COLLATE: default_collate,
-    }
-
-    collate_fn = transform.dataloader_collate_fn
-    assert collate_fn.collate_fn.func == transform.collate
-    assert collate_fn.per_sample_transform.func == transform.per_sample_transform
-    assert collate_fn.per_batch_transform.func == transform.per_batch_transform
-
-    on_after_batch_transfer_fn = transform.on_after_batch_transfer_fn
-    assert on_after_batch_transfer_fn.collate_fn.func == transform._identity
-    assert on_after_batch_transfer_fn.per_sample_transform.func == transform.per_sample_transform_on_device
-    assert on_after_batch_transfer_fn.per_batch_transform.func == transform.per_batch_transform_on_device
-
-    assert transform._collate_in_worker_from_transform
-
-    class MyInputTransform(InputTransform):
-        def configure_transforms(self) -> Optional[Dict[str, Callable]]:
-            return {
-                InputTransformPlacement.PER_SAMPLE_TRANSFORM_ON_DEVICE: fn,
-            }
-
-        def configure_per_batch_transform(self):
+        def input_per_batch_transform(self) -> Callable:
             return fn
 
-    with pytest.raises(MisconfigurationException, match="`per_batch_transform` and `per_sample_transform_on_device`"):
-        transform = MyInputTransform(running_stage=RunningStage.TESTING)
+    with pytest.raises(
+        MisconfigurationException,
+        match="Only one of per_batch_transform or input_per_batch_transform can be overridden",
+    ):
+        MyTransform(running_stage=RunningStage.TRAINING)
 
-    with pytest.raises(MisconfigurationException, match="The format for the transform isn't correct"):
-        InputTransform.from_transform(1, running_stage=RunningStage.TRAINING)
+    class MyTransform(InputTransform):
+        def input_per_batch_transform(self) -> Callable:
+            return None
 
-    class MyInputTransform(InputTransform):
-        def configure_transforms(self) -> Optional[Dict[str, Callable]]:
-            return {
-                InputTransformPlacement.COLLATE: fn,
-                InputTransformPlacement.PER_SAMPLE_TRANSFORM_ON_DEVICE: fn,
-                InputTransformPlacement.PER_BATCH_TRANSFORM_ON_DEVICE: fn,
-            }
+    with pytest.raises(MisconfigurationException, match="The hook input_per_batch_transform should return a function."):
+        MyTransform(running_stage=RunningStage.TRAINING)
 
-    transform = MyInputTransform(running_stage=RunningStage.TESTING)
-    assert not transform._collate_in_worker_from_transform
+    class MyTransform(InputTransform):
+        def target_per_batch_transform(self) -> Callable:
+            return super().target_per_batch_transform()
 
-    def compose(x, funcs):
-        for f in funcs:
-            x = f(x)
-        return x
+        def input_per_batch_transform(self) -> Callable:
+            return fn
 
-    transform = InputTransform.from_transform(
-        transform=partial(compose, funcs=[fn, fn]), running_stage=RunningStage.TRAINING
-    )
-    assert transform[InputTransformPlacement.PER_SAMPLE_TRANSFORM](1) == 3
+    transform = MyTransform(running_stage=RunningStage.TRAINING)
+    assert list(transform._transform.keys()) == ["per_batch_transform", "collate"]
+    assert isinstance(transform._transform["per_batch_transform"], ApplyToKeys)
+    assert transform._transform["per_batch_transform"].keys == ["input"]
+    assert transform._transform["collate"] == default_collate
 
+    class MyTransform(InputTransform):
+        def train_per_batch_transform(self) -> Callable:
+            return self.train_per_batch_transform
 
-def test_transform_with_registry():
-    def fn():
-        pass
+        def target_per_batch_transform(self) -> Callable:
+            return self.target_per_batch_transform
 
-    class MyInputTransform(InputTransform):
-        def configure_transforms(self, name: str = "lightning") -> Optional[Dict[str, Callable]]:
-            self.name = name
-            return {
-                InputTransformPlacement.PER_SAMPLE_TRANSFORM_ON_DEVICE: fn,
-            }
+        def input_per_batch_transform(self) -> Callable:
+            return self.input_per_batch_transform
 
-    registry = FlashRegistry("transforms")
-    registry(name="custom", fn=MyInputTransform)
+    transform = MyTransform(running_stage=RunningStage.TRAINING)
+    assert list(transform._transform.keys()) == ["per_batch_transform", "collate"]
+    assert transform._transform["per_batch_transform"] == transform.train_per_batch_transform
 
-    transform = InputTransform.from_train_transform(transform="custom", input_transforms_registry=registry)
-    assert isinstance(transform, MyInputTransform)
-    assert transform.name == "lightning"
+    transform = MyTransform(running_stage=RunningStage.VALIDATING)
+    assert isinstance(transform._transform["per_batch_transform"], Compose)
+    assert len(transform._transform["per_batch_transform"].transforms) == 2
 
-    transform = InputTransform.from_train_transform(
-        transform=("custom", {"name": "flash"}), input_transforms_registry=registry
-    )
-    assert isinstance(transform, MyInputTransform)
-    assert transform.name == "flash"
+    class MyTransform(InputTransform):
+        def train_per_batch_transform(self) -> Callable:
+            return self.train_per_batch_transform
 
-    transform = InputTransform.from_train_transform(transform=None, input_transforms_registry=registry)
-    assert transform is None
+        def train_target_per_batch_transform(self) -> Callable:
+            return super().target_per_batch_transform()
 
-    transform = InputTransform.from_train_transform(transform=None, input_transforms_registry=registry)
-    assert transform is None
+        def input_per_batch_transform(self) -> Callable:
+            return fn
 
     with pytest.raises(
-        MisconfigurationException, match="The transform should be provided as a tuple with the following types"
+        MisconfigurationException,
+        match="Only one of train_per_batch_transform or train_target_per_batch_transform can be overridden.",
     ):
-        transform = InputTransform.from_train_transform(transform=("custom", None), input_transforms_registry=registry)
+        MyTransform(running_stage=RunningStage.TRAINING)
 
-    with pytest.raises(MisconfigurationException, match="The format for the transform isn't correct"):
-        transform = InputTransform.from_train_transform(transform=1, input_transforms_registry=registry)
+    class MyTransform(InputTransform):
+        def per_batch_transform(self) -> Callable:
+            return self.train_per_batch_transform
+
+        def train_target_per_batch_transform(self) -> Callable:
+            return self.train_target_per_batch_transform
+
+        def train_input_per_batch_transform(self) -> Callable:
+            return fn
+
+        def train_collate(self) -> Callable:
+            return self.train_collate
+
+        def collate(self) -> Callable:
+            return self.collate
+
+    transform = MyTransform(running_stage=RunningStage.TRAINING)
+    assert list(transform._transform.keys()) == ["per_batch_transform", "collate"]
+    assert isinstance(transform._transform["per_batch_transform"], Compose)
+    assert len(transform._transform["per_batch_transform"].transforms) == 2
+    assert transform._transform["collate"] == transform.train_collate
+
+    transform = MyTransform(running_stage=RunningStage.VALIDATING)
+    assert list(transform._transform.keys()) == ["per_batch_transform", "collate"]
+    assert transform._transform["per_batch_transform"] == transform.train_per_batch_transform
+    assert transform._transform["collate"] == transform.collate
+
+    transform = LambdaInputTransform(RunningStage.TRAINING, transform=fn)
+    assert list(transform._transform.keys()) == ["per_sample_transform", "collate"]
+    assert transform._transform["per_sample_transform"] == fn
+
+    class MyTransform(InputTransform):
+        def __init__(self, value: int, running_stage: RunningStage):
+            super().__init__(running_stage)
+            self.value = value
+
+        def input_per_batch_transform(self) -> Callable:
+            if self.value > 0:
+                return self.input_per_batch_transform
+            return super().input_per_batch_transform
+
+    with pytest.raises(AttributeError, match="__init__"):
+        MyTransform(1, running_stage=RunningStage.TRAINING)
+
+    class MyTransform(InputTransform):
+        def __init__(self, value: int, running_stage: RunningStage):
+            self.value = value
+            super().__init__(running_stage)
+
+        def input_per_batch_transform(self) -> Callable:
+            if self.value > 0:
+                return self.input_per_batch_transform
+            return super().input_per_batch_transform
+
+    MyTransform(1, running_stage=RunningStage.TRAINING)

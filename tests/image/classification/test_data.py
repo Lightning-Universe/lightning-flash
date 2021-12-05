@@ -167,8 +167,8 @@ def test_from_filepaths_visualise(tmpdir):
 
     # call show functions
     # dm.show_train_batch()
-    dm.show_train_batch("pre_tensor_transform")
-    dm.show_train_batch(["pre_tensor_transform", "post_tensor_transform"])
+    dm.show_train_batch("per_sample_transform")
+    dm.show_train_batch(["per_sample_transform", "per_batch_transform"])
 
 
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
@@ -202,9 +202,7 @@ def test_from_filepaths_visualise_multilabel(tmpdir):
 
     # call show functions
     dm.show_train_batch()
-    dm.show_train_batch("pre_tensor_transform")
-    dm.show_train_batch("to_tensor_transform")
-    dm.show_train_batch(["pre_tensor_transform", "post_tensor_transform"])
+    dm.show_train_batch("per_sample_transform")
     dm.show_val_batch("per_batch_transform")
 
 
@@ -228,7 +226,7 @@ def test_from_filepaths_splits(tmpdir):
     assert len(train_filepaths) == len(train_labels)
 
     _to_tensor = {
-        "to_tensor_transform": nn.Sequential(
+        "per_sample_transform": nn.Sequential(
             ApplyToKeys(DataKeys.INPUT, torchvision.transforms.ToTensor()),
             ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
         ),
@@ -276,7 +274,6 @@ def test_from_folders_only_train(tmpdir):
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_from_folders_train_val(tmpdir):
-
     train_dir = Path(tmpdir / "train")
     train_dir.mkdir()
 
@@ -288,7 +285,7 @@ def test_from_folders_train_val(tmpdir):
     _rand_image().save(train_dir / "b" / "1.png")
     _rand_image().save(train_dir / "b" / "2.png")
     img_data = ImageClassificationData.from_folders(
-        train_dir,
+        train_folder=train_dir,
         val_folder=train_dir,
         test_folder=train_dir,
         batch_size=2,
@@ -498,8 +495,8 @@ def single_target_csv(image_tmpdir):
         fieldnames = ["image", "target"]
         writer = csv.DictWriter(csvfile, fieldnames)
         writer.writeheader()
-        writer.writerow({"image": "image_1", "target": "Ants"})
-        writer.writerow({"image": "image_2", "target": "Bees"})
+        writer.writerow({"image": "image_1.png", "target": "Ants"})
+        writer.writerow({"image": "image_2.png", "target": "Bees"})
     return str(image_tmpdir / "metadata.csv")
 
 
@@ -526,8 +523,8 @@ def multi_target_csv(image_tmpdir):
         fieldnames = ["image", "target_1", "target_2"]
         writer = csv.DictWriter(csvfile, fieldnames)
         writer.writeheader()
-        writer.writerow({"image": "image_1", "target_1": 1, "target_2": 0})
-        writer.writerow({"image": "image_2", "target_1": 1, "target_2": 1})
+        writer.writerow({"image": "image_1.png", "target_1": 1, "target_2": 0})
+        writer.writerow({"image": "image_2.png", "target_1": 1, "target_2": 1})
     return str(image_tmpdir / "metadata.csv")
 
 
@@ -560,7 +557,7 @@ def bad_csv_no_image(image_tmpdir):
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_from_bad_csv_no_image(bad_csv_no_image):
-    with pytest.raises(ValueError, match="Found no matches"):
+    with pytest.raises(ValueError, match="File ID `image_3` did not resolve to an existing file."):
         img_data = ImageClassificationData.from_csv(
             "image",
             ["target"],
@@ -589,7 +586,7 @@ def test_albumentations_mixup(single_target_csv):
 
     train_transform = {
         # applied only on images as ApplyToKeys is used with `input`
-        "post_tensor_transform": ApplyToKeys("input", AlbumentationsAdapter(albumentations.HorizontalFlip(p=0.5))),
+        "per_sample_transform": ApplyToKeys("input", AlbumentationsAdapter(albumentations.HorizontalFlip(p=0.5))),
         "per_batch_transform": mixup,
     }
     # merge the default transform for this task with new one.

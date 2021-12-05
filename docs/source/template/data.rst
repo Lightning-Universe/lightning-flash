@@ -52,7 +52,7 @@ We override our ``TemplateNumpyInput`` so that we can call ``super`` with the da
 We perform two additional steps here to improve the user experience:
 
 1. We set the ``num_classes`` attribute on the ``dataset``. If ``num_classes`` is set, it is automatically made available as a property of the :class:`~flash.core.data.data_module.DataModule`.
-2. We create and set a :class:`~flash.core.data.io.input.LabelsState`. The labels provided here will be shared with the :class:`~flash.core.classification.Labels` output, so the user doesn't need to provide them.
+2. We create and set a :class:`~flash.core.data.io.input.ClassificationState`. The labels provided here will be shared with the :class:`~flash.core.classification.Labels` output, so the user doesn't need to provide them.
 
 Here's the code for the ``TemplateSKLearnInput.load_data`` method:
 
@@ -93,7 +93,7 @@ InputTransform
 The :class:`~flash.core.data.io.input_transform.InputTransform` object contains all the data transforms.
 Internally we inject the :class:`~flash.core.data.io.input_transform.InputTransform` transforms at several points along the pipeline.
 
-Defining the standard transforms (typically at least a ``to_tensor_transform`` should be defined) for your :class:`~flash.core.data.io.input_transform.InputTransform` is as simple as implementing the ``default_transforms`` method.
+Defining the standard transforms (typically at least a ``per_sample_transform`` should be defined) for your :class:`~flash.core.data.io.input_transform.InputTransform` is as simple as implementing the ``default_transforms`` method.
 The :class:`~flash.core.data.io.input_transform.InputTransform` must take ``train_transform``, ``val_transform``, ``test_transform``, and ``predict_transform`` arguments in the ``__init__``.
 These arguments can be provided by the user (when creating the :class:`~flash.core.data.data_module.DataModule`) to override the default transforms.
 Any additional arguments are up to you.
@@ -115,7 +115,7 @@ Here's our ``TemplateInputTransform.__init__``:
     :dedent: 4
     :pyobject: TemplateInputTransform.__init__
 
-For our ``TemplateInputTransform``, we'll just configure a default ``to_tensor_transform``.
+For our ``TemplateInputTransform``, we'll just configure a default ``per_sample_transform``.
 Let's first define the transform as a ``staticmethod``:
 
 .. literalinclude:: ../../../flash/template/classification/data.py

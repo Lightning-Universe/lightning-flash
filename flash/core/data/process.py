@@ -12,30 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import functools
-from abc import abstractmethod
 from typing import Any, Mapping
 from warnings import warn
 
 from deprecate import deprecated
 
 import flash
+from flash.core.data.io.input_base import ServeInput as Deserializer
 from flash.core.data.io.output import Output
-from flash.core.data.properties import Properties
-
-
-class Deserializer(Properties):
-    """Deserializer."""
-
-    def deserialize(self, sample: Any) -> Any:  # TODO: Output must be a tensor???
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def example_input(self) -> str:
-        raise NotImplementedError
-
-    def __call__(self, sample: Any) -> Any:
-        return self.deserialize(sample)
 
 
 class DeserializerMapping(Deserializer):

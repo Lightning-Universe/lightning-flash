@@ -251,7 +251,7 @@ class TestSemanticSegmentationData:
 
         # instantiate the data module
 
-        with pytest.raises(MisconfigurationException, match="The number of input files"):
+        with pytest.raises(MisconfigurationException, match="The number of files"):
             SemanticSegmentationData.from_files(
                 train_files=images,
                 train_targets=targets + [str(tmp_dir / "labels_img4.png")],
@@ -379,7 +379,7 @@ class TestSemanticSegmentationData:
         assert dm.data_fetcher.block_viz_window is False
 
         dm.show_train_batch("load_sample")
-        dm.show_train_batch("to_tensor_transform")
+        dm.show_train_batch("per_sample_transform")
 
         # check training data
         data = next(iter(dm.train_dataloader()))

@@ -15,7 +15,7 @@ Here's an example:
     from pytorch_lightning import seed_everything
 
     import flash
-    from flash.core.classification import Labels
+    from flash.core.classification import LabelsOutput
     from flash.core.data.utils import download_data
     from flash.image import ImageClassificationData, ImageClassifier
 

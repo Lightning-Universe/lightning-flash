@@ -17,7 +17,7 @@ import flash
 from flash.core.integrations.fiftyone import visualize
 from flash.core.utilities.imports import example_requires
 from flash.image import ObjectDetectionData, ObjectDetector
-from flash.image.detection.output import FiftyOneDetectionLabels
+from flash.image.detection.output import FiftyOneDetectionLabelsOutput
 
 example_requires("image")
 
@@ -42,7 +42,7 @@ trainer = flash.Trainer(max_epochs=1)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Set the output and get some predictions
-model.output = FiftyOneDetectionLabels(return_filepath=True)  # output FiftyOne format
+model.output = FiftyOneDetectionLabelsOutput(return_filepath=True)  # output FiftyOne format
 predictions = trainer.predict(model, datamodule=datamodule)
 predictions = list(chain.from_iterable(predictions))  # flatten batches
 
