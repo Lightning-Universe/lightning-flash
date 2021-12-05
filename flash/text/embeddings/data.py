@@ -25,7 +25,6 @@ from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 if _TEXT_AVAILABLE:
     from datasets import Dataset, load_dataset
     from transformers import AutoTokenizer
-    
 
 
 class TextInput(Input):
@@ -216,5 +215,3 @@ class TextListInput(TextInput):
         hf_dataset.set_format("torch")
 
         return hf_dataset
-
-
