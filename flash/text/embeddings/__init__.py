@@ -1,1 +1,2 @@
 from flash.text.embeddings.model import SentenceEmbedder
+from flash.text.embeddings.data import TextInput,TextCSVInput,TextJSONInput,TextDataFrameInput,TextParquetInput,TextHuggingFaceDatasetInput,TextListInput
