@@ -201,11 +201,11 @@ OutputTransform
 
 :class:`~flash.core.data.io.output_transform.OutputTransform` contains any transforms that need to be applied *after* the model.
 You may want to use it for: converting tokens back into text, applying an inverse normalization to an output image, resizing a generated image back to the size of the input, etc.
-As an example, here's the :class:`~text.classification.data.TextClassificationOutputTransform` which gets the logits from a ``SequenceClassifierOutput``:
+As an example, here's the :class:`~text.seq2seq.core.data.Seq2SeqOutputTransform` which decodes tokenized model outputs:
 
-.. literalinclude:: ../../../flash/text/classification/data.py
+.. literalinclude:: ../../../flash/text/seq2seq/core/data.py
     :language: python
-    :pyobject: TextClassificationOutputTransform
+    :pyobject: Seq2SeqOutputTransform
 
 In your :class:`~flash.core.data.io.input.Input` or :class:`~flash.core.data.io.input_transform.InputTransform`, you can add metadata to the batch using the :attr:`~flash.core.data.io.input.DataKeys.METADATA` key.
 Your :class:`~flash.core.data.io.output_transform.OutputTransform` can then use this metadata in its transforms.

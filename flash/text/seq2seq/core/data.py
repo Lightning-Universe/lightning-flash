@@ -25,14 +25,39 @@ from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input, InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
+from flash.core.data.process import Deserializer
 from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
-from flash.text.classification.data import TextDeserializer
 
 if _TEXT_AVAILABLE:
     import datasets
     from datasets import DatasetDict, load_dataset
     from transformers import AutoTokenizer, default_data_collator
+
+
+class Seq2SeqDeserializer(Deserializer):
+    @requires("text")
+    def __init__(self, backbone: str, max_length: int, use_fast: bool = True, **kwargs):
+        super().__init__()
+        self.backbone = backbone
+        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=use_fast, **kwargs)
+        self.max_length = max_length
+
+    def serve_load_sample(self, text: str) -> Tensor:
+        return self.tokenizer(text, max_length=self.max_length, truncation=True, padding="max_length")
+
+    @property
+    def example_input(self) -> str:
+        return "An example input"
+
+    def __getstate__(self):  # TODO: Find out why this is being pickled
+        state = self.__dict__.copy()
+        state.pop("tokenizer")
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
 class Seq2SeqInput(Input):
@@ -299,7 +324,7 @@ class Seq2SeqInputTransform(InputTransform):
                 ),
             },
             default_input=InputFormat.LISTS,
-            deserializer=TextDeserializer(backbone, max_source_length),
+            deserializer=Seq2SeqDeserializer(backbone, max_source_length),
         )
 
         self.set_state(Seq2SeqBackboneState(self.backbone, backbone_kwargs))

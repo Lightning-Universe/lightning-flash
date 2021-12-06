@@ -154,7 +154,7 @@ class InputFormat(LightningEnum):
     JSON = "json"
     PARQUET = "parquet"
     DATASETS = "datasets"
-    HUGGINGFACE_DATASET = "hf_dataset"
+    HUGGINGFACE_DATASET = "hf_datasets"
     FIFTYONE = "fiftyone"
     DATAFRAME = "data_frame"
     LISTS = "lists"

@@ -13,6 +13,8 @@
 # limitations under the License.
 import os
 import warnings
+from dataclasses import dataclass
+from functools import lru_cache
 from typing import Any, Dict, List
 
 import torch
@@ -20,6 +22,7 @@ from pytorch_lightning import Callback
 
 from flash.core.classification import ClassificationTask, LabelsOutput
 from flash.core.data.io.input import DataKeys
+from flash.core.data.properties import ProcessState
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
@@ -27,7 +30,20 @@ from flash.text.classification.backbones import TEXT_CLASSIFIER_BACKBONES
 from flash.text.ort_callback import ORTCallback
 
 if _TRANSFORMERS_AVAILABLE:
+    from transformers import AutoTokenizer
     from transformers.modeling_outputs import Seq2SeqSequenceClassifierOutput, SequenceClassifierOutput
+
+
+@dataclass(unsafe_hash=True, frozen=True)
+class TextClassificationBackboneState(ProcessState):
+    """The ``TextClassificationBackboneState`` records the ``backbone`` in use by the ``TextClassifier``."""
+
+    backbone: str
+
+    @property
+    @lru_cache(maxsize=None)
+    def tokenizer(self):
+        return AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
 
 
 class TextClassifier(ClassificationTask):
@@ -87,6 +103,7 @@ class TextClassifier(ClassificationTask):
             output=output or LabelsOutput(multi_label=multi_label),
         )
         self.enable_ort = enable_ort
+        self.set_state(TextClassificationBackboneState(backbone))
         self.model = self.backbones.get(backbone)(num_labels=num_classes)
         self.save_hyperparameters()
 
