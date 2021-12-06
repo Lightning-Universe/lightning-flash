@@ -34,7 +34,6 @@ from flash.text.classification.model import TextClassificationBackboneState
 
 if _TEXT_AVAILABLE:
     from datasets import Dataset, load_dataset
-    from transformers import default_data_collator
 else:
     Dataset = object
 
@@ -213,19 +212,6 @@ class TextClassificationInputTransform(InputTransform):
         for key in sample:
             sample[key] = torch.as_tensor(sample[key])
         return sample
-
-    def per_batch_transform(self, batch: Any) -> Any:
-        if "labels" not in batch:
-            # todo: understand why an extra dimension has been added.
-            if batch["input_ids"].dim() == 3:
-                batch["input_ids"] = batch["input_ids"].squeeze(0)
-        return batch
-
-    def collate(self, samples: Any) -> Tensor:
-        """Override to convert a set of samples to a batch."""
-        if isinstance(samples, dict):
-            samples = [samples]
-        return default_data_collator(samples)
 
 
 class TextClassificationData(DataModule):
