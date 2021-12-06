@@ -260,27 +260,6 @@ class BenchmarkConvergenceCI(Callback):
                     print("Benchmark Successful!")
 
 
-def predict_context(func: Callable) -> Callable:
-    """This decorator is used as context manager to put model in eval mode before running predict and reset to
-    train after."""
-
-    @functools.wraps(func)
-    def wrapper(self, *args, **kwargs) -> Any:
-        grad_enabled = torch.is_grad_enabled()
-        is_training = self.training
-        self.eval()
-        torch.set_grad_enabled(False)
-
-        result = func(self, *args, **kwargs)
-
-        if is_training:
-            self.train()
-        torch.set_grad_enabled(grad_enabled)
-        return result
-
-    return wrapper
-
-
 class CheckDependenciesMeta(ABCMeta):
     def __new__(mcs, *args, **kwargs):
         result = ABCMeta.__new__(mcs, *args, **kwargs)
