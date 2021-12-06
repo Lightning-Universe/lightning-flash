@@ -36,7 +36,10 @@ trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
 trainer.fit(model, datamodule=datamodule)
 
 # 4. Generate predictions from a CSV
-datamodule = TabularClassificationData.from_csv(predict_file="data/titanic/titanic.csv")
+datamodule = TabularClassificationData.from_csv(
+    predict_file="data/titanic/titanic.csv",
+    parameters=datamodule.parameters,
+)
 predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
 

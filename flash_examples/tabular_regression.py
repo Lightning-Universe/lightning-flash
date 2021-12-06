@@ -46,7 +46,10 @@ trainer = flash.Trainer(max_epochs=1, gpus=torch.cuda.device_count())
 trainer.fit(model, datamodule=datamodule)
 
 # 4. Generate predictions from a CSV
-datamodule = TabularRegressionData.from_csv(predict_file="data/SeoulBikeData.csv")
+datamodule = TabularRegressionData.from_csv(
+    predict_file="data/SeoulBikeData.csv",
+    parameters=datamodule.parameters,
+)
 predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
 
