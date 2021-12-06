@@ -285,6 +285,7 @@ class DataPipeline:
             self._identity if is_serving else per_sample_transform,
             getattr(input_transform, func_names["per_batch_transform"]),
             stage,
+            callbacks=input_transform.callbacks,
         )
         worker_input_transform_processor._original_collate_fn = original_collate_fn
         device_input_transform_processor = _InputTransformProcessor(
@@ -295,6 +296,7 @@ class DataPipeline:
             stage,
             apply_per_sample_transform=device_collate_fn != self._identity,
             on_device=True,
+            callbacks=input_transform.callbacks,
         )
         return deserialize_processor, worker_input_transform_processor, device_input_transform_processor
 

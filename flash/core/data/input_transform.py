@@ -14,13 +14,14 @@
 import inspect
 from dataclasses import dataclass
 from functools import partial, wraps
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, Union
 
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data._utils.collate import default_collate
 
 import flash
+from flash.core.data.callback import FlashCallback
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import _InputTransformProcessor
 from flash.core.data.properties import Properties
@@ -31,7 +32,7 @@ from flash.core.registry import FlashRegistry
 from flash.core.utilities.stages import RunningStage
 
 INPUT_TRANSFORM_TYPE = Optional[
-    Union["InputTransform", Callable, Tuple[Union[LightningEnum, str], Dict[str, Any]], Union[LightningEnum, str]]
+    Union[Type["InputTransform"], Callable, Tuple[Union[LightningEnum, str], Dict[str, Any]], Union[LightningEnum, str]]
 ]
 
 
@@ -86,6 +87,10 @@ class Compose:
         return format_string
 
 
+class InputTransformState(dict):
+    pass
+
+
 @dataclass
 class InputTransform(Properties):
 
@@ -93,6 +98,9 @@ class InputTransform(Properties):
     data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None
 
     def __post_init__(self):
+        transform_kwargs = {
+            k: v for k, v in self.__dict__.items() if k not in ("_running_stage", "data_pipeline_state")
+        }
         # used to keep track of provided transforms
         self._collate_in_worker_from_transform: Optional[bool] = None
         self._transform = None
@@ -100,6 +108,7 @@ class InputTransform(Properties):
         self.callbacks = []
         # Hack
         Properties.__init__(self, data_pipeline_state=self.data_pipeline_state, running_stage=self.running_stage)
+        self.set_state(InputTransformState(**transform_kwargs))
 
     @property
     def current_transform(self) -> Callable:
@@ -114,16 +123,6 @@ class InputTransform(Properties):
         return {
             "transform": self._transform,
         }
-
-    @property
-    def dataloader_collate_fn(self):
-        """Generate the function to be injected within the DataLoader as the collate_fn."""
-        return self._create_collate_input_transform_processors()[0]
-
-    @property
-    def on_after_batch_transfer_fn(self):
-        """Generate the function to be injected after the on_after_batch_transfer from the LightningModule."""
-        return self._create_collate_input_transform_processors()[1]
 
     ########################
     # PER SAMPLE TRANSFORM #
@@ -930,69 +929,15 @@ class InputTransform(Properties):
             return transform[self.current_fn]
         return self._identity
 
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(running_stage={self.running_stage}, transform={self._transform})"
+    def __str__(self) -> str:
+        state = self.get_state(InputTransformState)
+        return (
+            f"{self.__class__.__name__}("
+            + f"running_stage={self.running_stage}, state: {state}, transform={self._transform})"
+        )
 
     def __getitem__(self, placement: InputTransformPlacement) -> Callable:
         return self._transform[placement]
-
-    def _make_collates(self, on_device: bool, collate: Callable) -> Tuple[Callable, Callable]:
-        if on_device:
-            return self._identity, collate
-        return collate, self._identity
-
-    def _create_collate_input_transform_processors(self) -> Tuple[Any]:
-        from flash.core.data.data_pipeline import DataPipeline
-
-        prefix: str = _STAGES_PREFIX[self.running_stage]
-
-        per_batch_transform_overridden: bool = DataPipeline._is_overridden_recursive(
-            "per_batch_transform", self, InputTransform, prefix=prefix
-        )
-
-        per_sample_transform_on_device_overridden: bool = DataPipeline._is_overridden_recursive(
-            "per_sample_transform_on_device", self, InputTransform, prefix=prefix
-        )
-
-        is_per_overridden = per_batch_transform_overridden and per_sample_transform_on_device_overridden
-        if self._collate_in_worker_from_transform is None and is_per_overridden:
-            raise MisconfigurationException(
-                f"{self.__class__.__name__}: `per_batch_transform` and `per_sample_transform_on_device` "
-                f"are mutually exclusive for stage {self.running_stage}"
-            )
-
-        if isinstance(self._collate_in_worker_from_transform, bool):
-            worker_collate_fn, device_collate_fn = self._make_collates(
-                not self._collate_in_worker_from_transform, self._collate
-            )
-        else:
-            worker_collate_fn, device_collate_fn = self._make_collates(
-                per_sample_transform_on_device_overridden, self._collate
-            )
-
-        worker_collate_fn = (
-            worker_collate_fn.collate_fn
-            if isinstance(worker_collate_fn, _InputTransformProcessor)
-            else worker_collate_fn
-        )
-
-        worker_input_transform_processor = _InputTransformProcessor(
-            self,
-            worker_collate_fn,
-            self._per_sample_transform,
-            self._per_batch_transform,
-            self.running_stage,
-        )
-        device_input_transform_processor = _InputTransformProcessor(
-            self,
-            device_collate_fn,
-            self._per_sample_transform_on_device,
-            self._per_batch_transform_on_device,
-            self.running_stage,
-            apply_per_sample_transform=device_collate_fn != self._identity,
-            on_device=True,
-        )
-        return worker_input_transform_processor, device_input_transform_processor
 
 
 @dataclass
@@ -1037,6 +982,9 @@ def create_transform(
         transform._data_pipeline_state = data_pipeline_state
         return transform
 
+    if inspect.isclass(transform) and issubclass(transform, InputTransform):
+        return transform(running_stage=running_stage, data_pipeline_state=data_pipeline_state)
+
     if isinstance(transform, Callable):
         return LambdaInputTransform(
             running_stage=running_stage, transform=transform, data_pipeline_state=data_pipeline_state
@@ -1051,3 +999,68 @@ def create_transform(
         return None
 
     raise MisconfigurationException(f"The format for the transform isn't correct. Found {transform}")
+
+
+def _make_collates(input_transform: "InputTransform", on_device: bool, collate: Callable) -> Tuple[Callable, Callable]:
+    if on_device:
+        return input_transform._identity, collate
+    return collate, input_transform._identity
+
+
+def _create_collate_input_transform_processors(
+    input_transform: "InputTransform", callbacks: List[FlashCallback]
+) -> Tuple[_InputTransformProcessor, _InputTransformProcessor]:
+    """This utility is used to create the 2 `_InputTransformProcessor` objects which contain the transforms used as
+    the DataLoader `collate_fn` and the DataModule `on_after_batch_transfer` hook."""
+
+    from flash.core.data.data_pipeline import DataPipeline
+
+    prefix: str = _STAGES_PREFIX[input_transform.running_stage]
+
+    per_batch_transform_overridden: bool = DataPipeline._is_overridden_recursive(
+        "per_batch_transform", input_transform, InputTransform, prefix=prefix
+    )
+
+    per_sample_transform_on_device_overridden: bool = DataPipeline._is_overridden_recursive(
+        "per_sample_transform_on_device", input_transform, InputTransform, prefix=prefix
+    )
+
+    is_per_overridden = per_batch_transform_overridden and per_sample_transform_on_device_overridden
+    if input_transform._collate_in_worker_from_transform is None and is_per_overridden:
+        raise MisconfigurationException(
+            f"{input_transform.__class__.__name__}: `per_batch_transform` and `per_sample_transform_on_device` "
+            f"are mutually exclusive for stage {input_transform.running_stage}"
+        )
+
+    if isinstance(input_transform._collate_in_worker_from_transform, bool):
+        worker_collate_fn, device_collate_fn = _make_collates(
+            input_transform, not input_transform._collate_in_worker_from_transform, input_transform._collate
+        )
+    else:
+        worker_collate_fn, device_collate_fn = _make_collates(
+            input_transform, per_sample_transform_on_device_overridden, input_transform._collate
+        )
+
+    worker_collate_fn = (
+        worker_collate_fn.collate_fn if isinstance(worker_collate_fn, _InputTransformProcessor) else worker_collate_fn
+    )
+
+    worker_input_transform_processor = _InputTransformProcessor(
+        input_transform,
+        worker_collate_fn,
+        input_transform._per_sample_transform,
+        input_transform._per_batch_transform,
+        input_transform.running_stage,
+        callbacks=callbacks,
+    )
+    device_input_transform_processor = _InputTransformProcessor(
+        input_transform,
+        device_collate_fn,
+        input_transform._per_sample_transform_on_device,
+        input_transform._per_batch_transform_on_device,
+        input_transform.running_stage,
+        apply_per_sample_transform=device_collate_fn != input_transform._identity,
+        on_device=True,
+        callbacks=callbacks,
+    )
+    return worker_input_transform_processor, device_input_transform_processor

@@ -15,8 +15,9 @@ import os
 from contextlib import suppress
 from dataclasses import dataclass
 from functools import partial
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
+import torch
 import torchvision.transforms as T
 from PIL import Image
 from pytorch_lightning import seed_everything
@@ -109,12 +110,14 @@ class BaseImageInputTransform(InputTransform):
         # the `input` key within each sample.
         return T.Compose([T.Resize(self.image_size), T.ToTensor()])
 
+    def target_per_sample_transform(self) -> Callable:
+        return torch.as_tensor
+
 
 @dataclass
 class ImageRandomRotationInputTransform(BaseImageInputTransform):
 
     rotation: float = 0
-    image_size: Tuple[int, int] = (224, 224)
 
     def input_per_sample_transform(self) -> Any:
         # this will be used to transform only the input value associated with
@@ -139,18 +142,20 @@ train_dataset = MultipleFoldersImageInput(
     transform=("random_rotation", {"rotation": 45}),
 )
 
-print(train_dataset.transform)
 # Out:
-# ImageClassificationRandomRotationTransform(
-#    running_stage=train,
-#    transform={
-#        InputTransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(
-#           keys="input",
-#           transform=Compose(
+# ImageRandomRotationInputTransform(
+#   running_stage=train,
+#   state: {'image_size': (224, 224), 'rotation': 45}
+#   transform={
+#      'per_sample_transform': Compose(
+#           ApplyToKeys(keys='input', transform=Compose(
+#                Resize(size=(224, 224), interpolation=bilinear, max_size=None, antialias=None)
 #                ToTensor()
-#                RandomRotation(degrees=[-45.0, 45.0], interpolation=nearest, expand=False, fill=0)),
-#        InputTransformPlacement.COLLATE: default_collate,
-#    },
+#                RandomRotation(degrees=[-45.0, 45.0], interpolation=nearest, expand=False, fill=0))),
+#            ApplyToKeys(keys='target', transform=<built-in method as_tensor ...>)
+#      ),
+#      'collate': <function default_collate at 0x12be64670>
+#  }
 # )
 
 train_dataset = MultipleFoldersImageInput(
@@ -161,27 +166,37 @@ train_dataset = MultipleFoldersImageInput(
 
 print(train_dataset.transform)
 # Out:
-# ImageClassificationRandomRotationTransform(
-#    running_stage=train,
-#    transform={
-#        InputTransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(
-#           keys="input",
-#           transform=Compose(
+# ImageRandomRotationInputTransform(
+#   running_stage=train,
+#   state: {'image_size': (224, 224), 'rotation': 90}
+#   transform={
+#      'per_sample_transform': Compose(
+#           ApplyToKeys(keys='input', transform=Compose(
+#                Resize(size=(224, 224), interpolation=bilinear, max_size=None, antialias=None)
 #                ToTensor()
-#                RandomRotation(degrees=[-90.0, 90.0], interpolation=nearest, expand=False, fill=0)),
-#        InputTransformPlacement.COLLATE: default_collate,
-#    },
+#                RandomRotation(degrees=[-90.0, 90.0], interpolation=nearest, expand=False, fill=0))),
+#            ApplyToKeys(keys='target', transform=<built-in method as_tensor ...>)
+#      ),
+#      'collate': <function default_collate at 0x12be64670>
+#  }
 # )
 
 val_dataset = MultipleFoldersImageInput(RunningStage.VALIDATING, VAL_FOLDERS, transform="base")
 print(val_dataset.transform)
 # Out:
-# ImageClassificationRandomRotationTransform(
-#    running_stage=validate,
-#    transform={
-#        InputTransformPlacement.PER_SAMPLE_TRANSFORM: ApplyToKeys(keys="input", transform=ToTensor()),
-#        InputTransformPlacement.COLLATE: default_collate,
-#    },
+# ImageRandomRotationInputTransform(
+#   running_stage=train,
+#   state: {'image_size': (224, 224), 'rotation': 90}
+#   transform={
+#      'per_sample_transform': Compose(
+#           ApplyToKeys(keys='input', transform=Compose(
+#                Resize(size=(224, 224), interpolation=bilinear, max_size=None, antialias=None)
+#                ToTensor()
+#            ),
+#            ApplyToKeys(keys='target', transform=<built-in method as_tensor ...>)
+#      ),
+#      'collate': <function default_collate at 0x12be64670>
+#  }
 # )
 
 print(train_dataset[0])
@@ -202,9 +217,9 @@ print(train_dataset[0])
 
 
 datamodule = DataModule(
-    train_dataset=MultipleFoldersImageInput(RunningStage.TRAINING, TRAIN_FOLDERS, transform="random_rotation"),
-    val_dataset=MultipleFoldersImageInput(RunningStage.VALIDATING, VAL_FOLDERS, transform="base"),
-    predict_dataset=MultipleFoldersImageInput(RunningStage.PREDICTING, PREDICT_FOLDER, transform="base"),
+    train_input=MultipleFoldersImageInput(RunningStage.TRAINING, TRAIN_FOLDERS, transform="random_rotation"),
+    val_input=MultipleFoldersImageInput(RunningStage.VALIDATING, VAL_FOLDERS, transform="base"),
+    predict_input=MultipleFoldersImageInput(RunningStage.PREDICTING, PREDICT_FOLDER, transform="base"),
     batch_size=2,
 )
 
@@ -284,9 +299,6 @@ class ImageClassificationDataModule(DataModule):
             MultipleFoldersImageInput(RunningStage.PREDICTING, predict_folder, transform=predict_transform, **kw),
             **data_module_kwargs,
         )
-
-
-ImageClassificationDataModule.register_flash_dataset("multiple_folders", MultipleFoldersImageInput)
 
 
 # Create the datamodule with your new constructor. This is purely equivalent to the previous datamdoule creation.
