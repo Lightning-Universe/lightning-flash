@@ -79,7 +79,7 @@ Inference
 Inference is the process of generating predictions from trained models. To use a task for inference:
 
 1. Init your task with pretrained weights using a checkpoint (a checkpoint is simply a file that capture the exact value of all parameters used by a model). Local file or URL works.
-2. Pass in the data to :func:`flash.core.model.Task.predict`.
+2. Load your data into a :class:`~flash.core.data.data_module.DataModule` and pass it to :func:`Trainer.predict <flash.core.trainer.Trainer.predict>`.
 
 |
 
