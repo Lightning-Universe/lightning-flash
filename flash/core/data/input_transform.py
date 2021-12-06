@@ -998,6 +998,9 @@ def _make_collates(input_transform: "InputTransform", on_device: bool, collate: 
 def _create_collate_input_transform_processors(
     input_transform: "InputTransform", callbacks: List[FlashCallback]
 ) -> Tuple[_InputTransformProcessor, _InputTransformProcessor]:
+    """This utility is used to create the 2 `_InputTransformProcessor` objects contain the transforms used as the
+    DataLoader `collate_fn` and the `on_after_batch_transfer` hook."""
+
     from flash.core.data.data_pipeline import DataPipeline
 
     prefix: str = _STAGES_PREFIX[input_transform.running_stage]
