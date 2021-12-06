@@ -23,7 +23,7 @@ from torch.utils.data._utils.collate import default_collate
 import flash
 from flash.core.data.callback import FlashCallback
 from flash.core.data.io.input import DataKeys
-from flash.core.data.io.input_transform import _InputTransformProcessor
+from flash.core.data.io.input_transform import _InputTransformProcessorV2
 from flash.core.data.properties import Properties
 from flash.core.data.states import CollateFn
 from flash.core.data.transforms import ApplyToKeys
@@ -1013,9 +1013,9 @@ def _make_collates(input_transform: "InputTransform", on_device: bool, collate: 
 
 def _create_collate_input_transform_processors(
     input_transform: "InputTransform", callbacks: List[FlashCallback]
-) -> Tuple[_InputTransformProcessor, _InputTransformProcessor]:
-    """This utility is used to create the 2 `_InputTransformProcessor` objects which contain the transforms used as
-    the DataLoader `collate_fn` and the DataModule `on_after_batch_transfer` hook."""
+) -> Tuple[_InputTransformProcessorV2, _InputTransformProcessorV2]:
+    """This utility is used to create the 2 `_InputTransformProcessorV2` objects which contain the transforms used
+    as the DataLoader `collate_fn` and the DataModule `on_after_batch_transfer` hook."""
 
     from flash.core.data.data_pipeline import DataPipeline
 
@@ -1046,18 +1046,18 @@ def _create_collate_input_transform_processors(
         )
 
     worker_collate_fn = (
-        worker_collate_fn.collate_fn if isinstance(worker_collate_fn, _InputTransformProcessor) else worker_collate_fn
+        worker_collate_fn.collate_fn if isinstance(worker_collate_fn, _InputTransformProcessorV2) else worker_collate_fn
     )
 
-    worker_input_transform_processor = _InputTransformProcessor(
+    worker_input_transform_processor = _InputTransformProcessorV2(
         input_transform,
         worker_collate_fn,
-        input_transform._per_sample_transform,
+        input_transform._identity if input_transform.serving else input_transform._per_sample_transform,
         input_transform._per_batch_transform,
         input_transform.running_stage,
         callbacks=callbacks,
     )
-    device_input_transform_processor = _InputTransformProcessor(
+    device_input_transform_processor = _InputTransformProcessorV2(
         input_transform,
         device_collate_fn,
         input_transform._per_sample_transform_on_device,

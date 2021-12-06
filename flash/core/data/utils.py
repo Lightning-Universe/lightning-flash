@@ -38,8 +38,9 @@ _STAGES_PREFIX = {
     RunningStage.TESTING: "test",
     RunningStage.VALIDATING: "val",
     RunningStage.PREDICTING: "predict",
+    RunningStage.SERVING: "serve",
 }
-_STAGES_PREFIX_VALUES = {"train", "test", "val", "predict"}
+_STAGES_PREFIX_VALUES = {"train", "test", "val", "predict", "serve"}
 
 _INPUT_FUNCS: Set[str] = {
     "load_data",
