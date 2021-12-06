@@ -103,6 +103,7 @@ Here's an example of inference:
             "This guy has done a great job with this movie!",
         ]
     )
+    predictions = trainer.predict(model, datamodule=datamodule)
     print(predictions)
 
 We get the following output:
