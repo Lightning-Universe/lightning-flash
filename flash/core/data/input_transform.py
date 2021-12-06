@@ -116,16 +116,6 @@ class InputTransform(Properties):
             "transform": self._transform,
         }
 
-    @property
-    def dataloader_collate_fn(self):
-        """Generate the function to be injected within the DataLoader as the collate_fn."""
-        return self._create_collate_input_transform_processors()[0]
-
-    @property
-    def on_after_batch_transfer_fn(self):
-        """Generate the function to be injected after the on_after_batch_transfer from the LightningModule."""
-        return self._create_collate_input_transform_processors()[1]
-
     ########################
     # PER SAMPLE TRANSFORM #
     ########################
@@ -936,64 +926,6 @@ class InputTransform(Properties):
 
     def __getitem__(self, placement: InputTransformPlacement) -> Callable:
         return self._transform[placement]
-
-    def _make_collates(self, on_device: bool, collate: Callable) -> Tuple[Callable, Callable]:
-        if on_device:
-            return self._identity, collate
-        return collate, self._identity
-
-    def _create_collate_input_transform_processors(self) -> Tuple[Any]:
-        from flash.core.data.data_pipeline import DataPipeline
-
-        prefix: str = _STAGES_PREFIX[self.running_stage]
-
-        per_batch_transform_overridden: bool = DataPipeline._is_overridden_recursive(
-            "per_batch_transform", self, InputTransform, prefix=prefix
-        )
-
-        per_sample_transform_on_device_overridden: bool = DataPipeline._is_overridden_recursive(
-            "per_sample_transform_on_device", self, InputTransform, prefix=prefix
-        )
-
-        is_per_overridden = per_batch_transform_overridden and per_sample_transform_on_device_overridden
-        if self._collate_in_worker_from_transform is None and is_per_overridden:
-            raise MisconfigurationException(
-                f"{self.__class__.__name__}: `per_batch_transform` and `per_sample_transform_on_device` "
-                f"are mutually exclusive for stage {self.running_stage}"
-            )
-
-        if isinstance(self._collate_in_worker_from_transform, bool):
-            worker_collate_fn, device_collate_fn = self._make_collates(
-                not self._collate_in_worker_from_transform, self._collate
-            )
-        else:
-            worker_collate_fn, device_collate_fn = self._make_collates(
-                per_sample_transform_on_device_overridden, self._collate
-            )
-
-        worker_collate_fn = (
-            worker_collate_fn.collate_fn
-            if isinstance(worker_collate_fn, _InputTransformProcessor)
-            else worker_collate_fn
-        )
-
-        worker_input_transform_processor = _InputTransformProcessor(
-            self,
-            worker_collate_fn,
-            self._per_sample_transform,
-            self._per_batch_transform,
-            self.running_stage,
-        )
-        device_input_transform_processor = _InputTransformProcessor(
-            self,
-            device_collate_fn,
-            self._per_sample_transform_on_device,
-            self._per_batch_transform_on_device,
-            self.running_stage,
-            apply_per_sample_transform=device_collate_fn != self._identity,
-            on_device=True,
-        )
-        return worker_input_transform_processor, device_input_transform_processor
 
 
 @dataclass

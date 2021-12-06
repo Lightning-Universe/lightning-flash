@@ -16,7 +16,7 @@ import os
 import sys
 from copy import copy, deepcopy
 from functools import partial
-from typing import Any, Callable, cast, Dict, Iterable, List, MutableMapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, cast, Dict, Iterable, List, MutableMapping, Optional, Sequence, Tuple, Type, Union
 
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -235,18 +235,6 @@ class InputBase(Properties, metaclass=_InputMeta):
                 "The class attribute `input_transforms_registry` should be set as a class attribute. "
             )
         cls.input_transforms_registry(fn=fn, name=enum)
-
-    @property
-    def dataloader_collate_fn(self) -> Optional[Callable]:
-        if self.transform:
-            self.transform.running_stage = self.running_stage
-            return self.transform.dataloader_collate_fn
-
-    @property
-    def on_after_batch_transfer_fn(self) -> Optional[Callable]:
-        if self.transform:
-            self.transform.running_stage = self.running_stage
-            return self.transform.on_after_batch_transfer_fn
 
 
 class Input(InputBase, Dataset):
