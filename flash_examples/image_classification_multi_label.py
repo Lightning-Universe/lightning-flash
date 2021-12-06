@@ -47,13 +47,14 @@ trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Predict the genre of a few movies!
-predictions = model.predict(
-    [
+predict_datamodule = ImageClassificationData.from_files(
+    predict_files=[
         "data/movie_posters/predict/tt0085318.jpg",
         "data/movie_posters/predict/tt0089461.jpg",
         "data/movie_posters/predict/tt0097179.jpg",
     ]
 )
+predictions = trainer.predict(model, datamodule=predict_datamodule)
 print(predictions)
 
 # 5. Save the model!

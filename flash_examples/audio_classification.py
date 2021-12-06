@@ -35,13 +35,14 @@ trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
 trainer.finetune(model, datamodule=datamodule, strategy=("freeze_unfreeze", 1))
 
 # 4. Predict what's on few images! air_conditioner, children_playing, siren e.t.c
-predictions = model.predict(
-    [
+predict_datamodule = AudioClassificationData.from_files(
+    predict_files=[
         "data/urban8k_images/test/air_conditioner/13230-0-0-5.wav.jpg",
         "data/urban8k_images/test/children_playing/9223-2-0-15.wav.jpg",
         "data/urban8k_images/test/jackhammer/22883-7-10-0.wav.jpg",
     ]
 )
+predictions = trainer.predict(model, datamodule=predict_datamodule)
 print(predictions)
 
 # 5. Save the model!

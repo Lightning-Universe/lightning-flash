@@ -58,7 +58,8 @@ trainer = flash.Trainer(max_epochs=1, gpus=torch.cuda.device_count(), gradient_c
 trainer.fit(model, datamodule=datamodule)
 
 # 4. Generate predictions
-predictions = model.predict(data)
+predict_datamodule = TabularForecastingData.from_data_frame(predict_data_frame=data, parameters=datamodule.parameters)
+predictions = trainer.predict(model, datamodule=predict_datamodule)
 print(predictions)
 
 # 5. Save the model!

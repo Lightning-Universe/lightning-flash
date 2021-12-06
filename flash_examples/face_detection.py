@@ -30,17 +30,18 @@ datamodule = FaceDetectionData.from_datasets(train_dataset=train_dataset, val_da
 model = FaceDetector(model="lffd_slim")
 
 # # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
+trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count(), fast_dev_run=True)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Detect faces in a few images!
-predictions = model.predict(
-    [
+predict_datamodule = FaceDetectionData.from_files(
+    predict_files=[
         "data/2002/07/19/big/img_18.jpg",
         "data/2002/07/19/big/img_65.jpg",
         "data/2002/07/19/big/img_255.jpg",
     ]
 )
+predictions = trainer.predict(model, datamodule=predict_datamodule)
 print(predictions)
 
 # # 5. Save the model!

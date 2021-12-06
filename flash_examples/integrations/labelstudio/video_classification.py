@@ -29,8 +29,8 @@ trainer = flash.Trainer(max_epochs=3)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 5. Make a prediction
-predictions = model.predict(os.path.join(os.getcwd(), "data/test"))
-print(predictions)
+predict_datamodule = VideoClassificationData.from_folders(predict_folder=os.path.join(os.getcwd(), "data/test"))
+predictions = trainer.predict(model, datamodule=predict_datamodule)
 
 # 6. Save the model!
 trainer.save_checkpoint("video_classification.pt")

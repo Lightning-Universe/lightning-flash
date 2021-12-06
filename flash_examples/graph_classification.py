@@ -39,7 +39,8 @@ trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
 trainer.fit(model, datamodule=datamodule)
 
 # 4. Classify some graphs!
-predictions = model.predict(dataset[:3])
+predict_datamodule = GraphClassificationData.from_datasets(predict_dataset=dataset[:3])
+predictions = trainer.predict(model, datamodule=predict_datamodule)
 print(predictions)
 
 # 5. Save the model!

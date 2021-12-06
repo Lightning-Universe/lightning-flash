@@ -14,7 +14,6 @@
 import functools
 import inspect
 import pickle
-import warnings
 from abc import ABCMeta
 from copy import deepcopy
 from importlib import import_module
@@ -41,7 +40,6 @@ import flash
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
 from flash.core.data.io.input import Input
-from flash.core.data.io.input_base import InputBase as NewInputBase
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import OutputTransform
@@ -471,63 +469,6 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             on_epoch=True,
             prog_bar=True,
         )
-
-    @predict_context
-    def predict(
-        self,
-        x: Any,
-        data_source: Optional[str] = None,
-        input: Optional[str] = None,
-        deserializer: Optional[Deserializer] = None,
-        data_pipeline: Optional[DataPipeline] = None,
-    ) -> Any:
-        """Predict function for raw data or processed data.
-
-        Args:
-            x: Input to predict. Can be raw data or processed data. If str, assumed to be a folder of data.
-            input: A string that indicates the format of the data source to use which will override
-                the current data source format used
-            deserializer: A single :class:`~flash.core.data.process.Deserializer` to deserialize the input
-            data_pipeline: Use this to override the current data pipeline
-
-        Returns:
-            The post-processed model predictions
-        """
-        if data_source is not None:
-            warnings.warn(
-                "The `data_source` argument has been deprecated since 0.6.0 and will be removed in 0.7.0. Use `input` "
-                "instead.",
-                FutureWarning,
-            )
-            input = data_source
-        running_stage = RunningStage.PREDICTING
-
-        data_pipeline = self.build_data_pipeline(None, deserializer, data_pipeline)
-
-        # <hack> Temporary fix to support new `Input` object
-        input = data_pipeline._input_transform_pipeline.input_of_name(input or "default")
-
-        if (inspect.isclass(input) and issubclass(input, NewInputBase)) or (
-            isinstance(input, functools.partial) and issubclass(input.func, NewInputBase)
-        ):
-            dataset = input(running_stage, x, data_pipeline_state=self._data_pipeline_state)
-        else:
-            dataset = input.generate_dataset(x, running_stage)
-        # </hack>
-
-        dataloader = self.process_predict_dataset(dataset)
-        x = list(dataloader.dataset)
-        x = data_pipeline.worker_input_transform_processor(running_stage, collate_fn=dataloader.collate_fn)(x)
-        # todo (tchaton): Remove this when sync with Lightning master.
-        if len(inspect.signature(self.transfer_batch_to_device).parameters) == 3:
-            x = self.transfer_batch_to_device(x, self.device, 0)
-        else:
-            x = self.transfer_batch_to_device(x, self.device)
-        x = data_pipeline.device_input_transform_processor(running_stage)(x)
-        x = x[0] if isinstance(x, list) else x
-        predictions = self.predict_step(x, 0)  # batch_idx is always 0 when running with `model.predict`
-        predictions = data_pipeline.output_transform_processor(running_stage)(predictions)
-        return predictions
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         if isinstance(batch, tuple):

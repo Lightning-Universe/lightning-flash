@@ -35,7 +35,8 @@ trainer = flash.Trainer(max_epochs=1, gpus=torch.cuda.device_count())
 trainer.finetune(model, datamodule=datamodule, strategy="no_freeze")
 
 # 4. Predict on audio files!
-predictions = model.predict(["data/timit/example.wav"])
+predict_datamodule = SpeechRecognitionData.from_files(predict_files=["data/timit/example.wav"])
+predictions = trainer.predict(model, datamodule=predict_datamodule)
 print(predictions)
 
 # 5. Save the model!
