@@ -374,8 +374,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         # Explicitly set the output to call the setter
         self.deserializer = deserializer
         self.output = output
-
-        self.predict_step = self._wrap_predict_step(self.predict_step)
+        self._wrapped_predict_step = False
 
     def _wrap_predict_step(task, predict_step: Callable) -> Callable:
 
@@ -385,6 +384,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         def wrapper(self, *args, **kwargs):
             predictions = predict_step(self, *args, **kwargs)
             return process_fn(predictions)
+
+        task._wrapped_predict_step = True
 
         return wrapper
 
@@ -917,6 +918,10 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
     @property
     def output_transform(self) -> OutputTransform:
         return getattr(self.data_pipeline, "_output_transform", None)
+
+    def on_predict_start(self) -> None:
+        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule) and not self._wrapped_predict_step:
+            self.predict_step = self._wrap_predict_step(self.predict_step)
 
     def on_train_dataloader(self) -> None:
         # TODO: Remove this logic when moving to the new DataModule

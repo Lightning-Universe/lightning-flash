@@ -37,7 +37,8 @@ trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Make a prediction
-predictions = model.predict("data/kinetics/predict")
+datamodule = VideoClassificationData.from_folders(predict_folder="data/kinetics/predict")
+predictions = trainer.predict(model, datamodule)
 print(predictions)
 
 # 5. Save the model!
