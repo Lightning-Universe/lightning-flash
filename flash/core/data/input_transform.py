@@ -1036,6 +1036,7 @@ def _create_collate_input_transform_processors(
         input_transform._per_sample_transform,
         input_transform._per_batch_transform,
         input_transform.running_stage,
+        callbacks=callbacks,
     )
     device_input_transform_processor = _InputTransformProcessor(
         input_transform,
@@ -1045,5 +1046,6 @@ def _create_collate_input_transform_processors(
         input_transform.running_stage,
         apply_per_sample_transform=device_collate_fn != input_transform._identity,
         on_device=True,
+        callbacks=callbacks,
     )
     return worker_input_transform_processor, device_input_transform_processor
