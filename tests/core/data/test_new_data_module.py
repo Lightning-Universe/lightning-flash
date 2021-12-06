@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, Dict
 
+import pytest
 import torch
 from pytorch_lightning import seed_everything
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from torch.utils.data import Dataset
 
 from flash import Task, Trainer
 from flash.core.data.input_transform import InputTransform
@@ -128,6 +131,73 @@ def test_data_module():
     class CustomDataModule(DataModule):
         pass
 
-    CustomDataModule.register_flash_dataset("custom", TestDataset)
+    CustomDataModule.register_input("custom", TestDataset)
     train_dataset, *_ = DataModule.create_inputs("custom", range(10))
     assert train_dataset[0] == 0
+
+    input = Input(RunningStage.TRAINING, transform=TestTransform)
+
+    with pytest.raises(MisconfigurationException, match="A single transform should be provided."):
+        DataModule(train_dataset=input, train_transform=TestTransform, batch_size=1)
+
+    dm = DataModule(train_dataset=input, batch_size=1)
+    assert isinstance(dm._train_transform, TestTransform)
+
+    class RandomDataset(Dataset):
+        def __init__(self, size: int, length: int):
+            self.len = length
+            self.data = torch.ones(length, size)
+
+        def __getitem__(self, index):
+            return self.data[index]
+
+        def __len__(self):
+            return self.len
+
+    class TrainInputTransform(InputTransform):
+        def _add_one(self, x):
+            if isinstance(x, Dict):
+                x["input"] += 1
+            else:
+                x += 1
+            return x
+
+        def per_sample_transform(self) -> Callable:
+            return self._add_one
+
+    dm = DataModule(
+        train_dataset=RandomDataset(64, 32),
+        val_dataset=RandomDataset(64, 32),
+        test_dataset=RandomDataset(64, 32),
+        train_transform=TrainInputTransform,
+        val_transform=lambda x: x + 100,
+        batch_size=3,
+    )
+    batch = next(iter(dm.train_dataloader()))
+    assert batch[0][0] == 2
+    batch = next(iter(dm.val_dataloader()))
+    assert batch[0][0] == 101
+    batch = next(iter(dm.test_dataloader()))
+    assert batch[0][0] == 1
+
+    def _add_hundred(x):
+        if isinstance(x, Dict):
+            x["input"] += 100
+        else:
+            x += 100
+        return x
+
+    dm = DataModule.from_datasets(
+        train_dataset=RandomDataset(64, 32),
+        val_dataset=RandomDataset(64, 32),
+        test_dataset=RandomDataset(64, 32),
+        train_transform=TrainInputTransform,
+        val_transform=_add_hundred,
+        batch_size=3,
+    )
+    batch = next(iter(dm.train_dataloader()))
+    assert batch["input"][0][0] == 2
+    batch = next(iter(dm.val_dataloader()))
+    assert batch["input"][0][0] == 101
+    batch = next(iter(dm.test_dataloader()))
+    assert batch["input"][0][0] == 1

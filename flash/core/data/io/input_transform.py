@@ -522,10 +522,11 @@ class _InputTransformProcessor(torch.nn.Module):
         stage: RunningStage,
         apply_per_sample_transform: bool = True,
         on_device: bool = False,
+        callbacks: List[FlashCallback] = None,
     ):
         super().__init__()
         self.input_transform = input_transform
-        self.callback = ControlFlow(self.input_transform.callbacks)
+        self.callback = ControlFlow(callbacks or [])
         self.collate_fn = convert_to_modules(collate_fn)
         self.per_sample_transform = convert_to_modules(per_sample_transform)
         self.per_batch_transform = convert_to_modules(per_batch_transform)
