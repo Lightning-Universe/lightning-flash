@@ -57,10 +57,10 @@ class DataModule(DataModule):
     :class:`~flash.core.data.datasets.Input` and a :class:`~flash.core.data.callback.BaseDataFetcher`.
 
     Args:
-        train_dataset: Dataset for training. Defaults to None.
-        val_dataset: Dataset for validating model performance during training. Defaults to None.
-        test_dataset: Dataset to test model performance. Defaults to None.
-        predict_dataset: Dataset for predicting. Defaults to None.
+        train_input: Input dataset for training. Defaults to None.
+        val_input: Input dataset for validating model performance during training. Defaults to None.
+        test_input: Input dataset to test model performance. Defaults to None.
+        predict_input: Input dataset for predicting. Defaults to None.
         data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to attach to the
             :class:`~flash.core.data.io.input_transform.InputTransform`. If ``None``, the output from
             :meth:`~flash.core.data.data_module.DataModule.configure_data_fetcher` will be used.
@@ -81,10 +81,10 @@ class DataModule(DataModule):
 
     def __init__(
         self,
-        train_dataset: Optional[Input] = None,
-        val_dataset: Optional[Input] = None,
-        test_dataset: Optional[Input] = None,
-        predict_dataset: Optional[Input] = None,
+        train_input: Optional[Input] = None,
+        val_input: Optional[Input] = None,
+        test_input: Optional[Input] = None,
+        predict_input: Optional[Input] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
         val_split: Optional[float] = None,
         batch_size: Optional[int] = None,
@@ -105,39 +105,40 @@ class DataModule(DataModule):
         self._viz: Optional[BaseVisualization] = None
         self._data_fetcher: Optional[BaseDataFetcher] = data_fetcher or self.configure_data_fetcher()
 
-        self._train_ds = train_dataset
-        self._val_ds = val_dataset
-        self._test_ds = test_dataset
-        self._predict_ds = predict_dataset
+        # TODO: Remove _X_ds reference when previous DataModule is removed.
+        self._train_input = self._train_ds = train_input
+        self._val_input = self._val_ds = val_input
+        self._test_input = self._test_ds = test_input
+        self._predict_input = self._predict_ds = predict_input
 
-        self._train_dataloader_collate_fn = self._resolve_dataloader_collate_fn(self._train_ds)
-        self._val_dataloader_collate_fn = self._resolve_dataloader_collate_fn(self._val_ds)
-        self._test_dataloader_collate_fn = self._resolve_dataloader_collate_fn(self._test_ds)
-        self._predict_dataloader_collate_fn = self._resolve_dataloader_collate_fn(self._predict_ds)
+        self._train_dataloader_collate_fn = self._resolve_dataloader_collate_fn(self._train_input)
+        self._val_dataloader_collate_fn = self._resolve_dataloader_collate_fn(self._val_input)
+        self._test_dataloader_collate_fn = self._resolve_dataloader_collate_fn(self._test_input)
+        self._predict_dataloader_collate_fn = self._resolve_dataloader_collate_fn(self._predict_input)
 
-        self._train_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._train_ds)
-        self._val_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._val_ds)
-        self._test_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._test_ds)
-        self._predict_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._predict_ds)
+        self._train_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._train_input)
+        self._val_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._val_input)
+        self._test_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._test_input)
+        self._predict_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._predict_input)
 
-        if self._train_ds and self._val_ds and isinstance(val_split, float) and val_split > 0:
+        if self._train_input and self._val_input and isinstance(val_split, float) and val_split > 0:
             raise MisconfigurationException(
                 "A `val_dataset` was provided with `val_split`. Please, choose one or the other."
             )
 
-        if self._train_ds is not None and (val_split is not None and self._val_ds is None):
-            self._train_ds, self._val_ds = self._split_train_val(self._train_ds, val_split)
+        if self._train_input is not None and (val_split is not None and self._val_input is None):
+            self._train_input, self._val_input = self._split_train_val(self._train_input, val_split)
 
-        if self._train_ds:
+        if self._train_input:
             self.train_dataloader = self._train_dataloader
 
-        if self._val_ds:
+        if self._val_input:
             self.val_dataloader = self._val_dataloader
 
-        if self._test_ds:
+        if self._test_input:
             self.test_dataloader = self._test_dataloader
 
-        if self._predict_ds:
+        if self._predict_input:
             self.predict_dataloader = self._predict_dataloader
 
         self.batch_size = batch_size
@@ -171,7 +172,7 @@ class DataModule(DataModule):
             return ds._create_on_after_batch_transfer_fn([self.data_fetcher])
 
     def _train_dataloader(self) -> DataLoader:
-        train_ds: Dataset = self._train_ds
+        train_ds: Input = self._train_input
         collate_fn = self._train_dataloader_collate_fn
         shuffle: bool = False
         if isinstance(train_ds, IterableDataset):
@@ -211,7 +212,7 @@ class DataModule(DataModule):
         )
 
     def _val_dataloader(self) -> DataLoader:
-        val_ds: Dataset = self._val_ds
+        val_ds: Input = self._val_input
         collate_fn = self._val_dataloader_collate_fn
 
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
@@ -234,7 +235,7 @@ class DataModule(DataModule):
         )
 
     def _test_dataloader(self) -> DataLoader:
-        test_ds: Dataset = self._test_ds
+        test_ds: Input = self._test_input
         collate_fn = self._test_dataloader_collate_fn
 
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
@@ -257,7 +258,7 @@ class DataModule(DataModule):
         )
 
     def _predict_dataloader(self) -> DataLoader:
-        predict_ds: Dataset = self._predict_ds
+        predict_ds: Input = self._predict_input
         collate_fn = self._predict_dataloader_collate_fn
 
         if isinstance(predict_ds, IterableDataset):
@@ -287,14 +288,14 @@ class DataModule(DataModule):
     def data_pipeline_state(self) -> DataPipelineState:
         """Collect the states from the input datasets and their transforms."""
         data_pipeline_state = DataPipelineState()
-        if self._train_ds:
-            self._add_to_data_pipeline_state(self._train_ds, data_pipeline_state)
-        if self._val_ds:
-            self._add_to_data_pipeline_state(self._val_ds, data_pipeline_state)
-        if self._test_ds:
-            self._add_to_data_pipeline_state(self._test_ds, data_pipeline_state)
-        if self._predict_ds:
-            self._add_to_data_pipeline_state(self._predict_ds, data_pipeline_state)
+        if self._train_input:
+            self._add_to_data_pipeline_state(self._train_input, data_pipeline_state)
+        if self._val_input:
+            self._add_to_data_pipeline_state(self._val_input, data_pipeline_state)
+        if self._test_input:
+            self._add_to_data_pipeline_state(self._test_input, data_pipeline_state)
+        if self._predict_input:
+            self._add_to_data_pipeline_state(self._predict_input, data_pipeline_state)
         return data_pipeline_state
 
     def _add_to_data_pipeline_state(self, input: Input, data_pipeline_state: DataPipelineState) -> None:

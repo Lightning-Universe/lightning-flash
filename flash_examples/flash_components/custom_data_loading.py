@@ -217,9 +217,9 @@ print(train_dataset[0])
 
 
 datamodule = DataModule(
-    train_dataset=MultipleFoldersImageInput(RunningStage.TRAINING, TRAIN_FOLDERS, transform="random_rotation"),
-    val_dataset=MultipleFoldersImageInput(RunningStage.VALIDATING, VAL_FOLDERS, transform="base"),
-    predict_dataset=MultipleFoldersImageInput(RunningStage.PREDICTING, PREDICT_FOLDER, transform="base"),
+    train_input=MultipleFoldersImageInput(RunningStage.TRAINING, TRAIN_FOLDERS, transform="random_rotation"),
+    val_input=MultipleFoldersImageInput(RunningStage.VALIDATING, VAL_FOLDERS, transform="base"),
+    predict_input=MultipleFoldersImageInput(RunningStage.PREDICTING, PREDICT_FOLDER, transform="base"),
     batch_size=2,
 )
 

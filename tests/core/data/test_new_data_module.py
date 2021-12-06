@@ -76,10 +76,10 @@ def test_data_module():
     assert predict_dataset.running_stage == RunningStage.PREDICTING
 
     dm = DataModule(
-        train_dataset=train_dataset,
-        val_dataset=val_dataset,
-        test_dataset=test_dataset,
-        predict_dataset=predict_dataset,
+        train_input=train_dataset,
+        val_input=val_dataset,
+        test_input=test_dataset,
+        predict_input=predict_dataset,
         batch_size=2,
     )
 
@@ -134,7 +134,7 @@ def test_data_module():
     assert train_dataset[0] == 0
 
     input = Input(RunningStage.TRAINING, transform=TestTransform)
-    dm = DataModule(train_dataset=input, batch_size=1)
+    dm = DataModule(train_input=input, batch_size=1)
     assert isinstance(dm._train_ds.transform, TestTransform)
 
     class RandomDataset(Dataset):
