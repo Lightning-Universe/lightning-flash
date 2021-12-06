@@ -375,6 +375,19 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         self.deserializer = deserializer
         self.output = output
 
+        self.predict_step = self._wrap_predict_step(self.predict_step)
+
+    def _wrap_predict_step(task, predict_step: Callable) -> Callable:
+
+        process_fn = task.build_data_pipeline().output_transform_processor(RunningStage.PREDICTING)
+
+        @functools.wraps(predict_step)
+        def wrapper(self, *args, **kwargs):
+            predictions = predict_step(self, *args, **kwargs)
+            return process_fn(predictions)
+
+        return wrapper
+
     def step(self, batch: Any, batch_idx: int, metrics: nn.ModuleDict) -> Any:
         """Implement the core logic for the training/validation/test step. By default this includes:
 
@@ -568,7 +581,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         elif isinstance(batch, list):
             # Todo: Understand why stack is needed
             batch = torch.stack(batch)
-        return self.build_data_pipeline().output_transform_processor(RunningStage.PREDICTING)(self(batch))
+        return self(batch)
 
     def modules_to_freeze(self) -> Optional[Union[nn.Module]]:
         """By default, we try to get the ``backbone`` attribute from the task and return it or ``None`` if not
