@@ -18,7 +18,6 @@ from itertools import chain
 from numbers import Number
 from pathlib import Path
 from typing import Any, Tuple
-from unittest import mock
 
 import numpy as np
 import pytest
@@ -191,7 +190,6 @@ def test_classificationtask_task_predict():
     assert pred0[0] == pred1[0]
 
 
-@mock.patch("flash._IS_TESTING", True)
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_classification_task_predict_folder_path(tmpdir):
     predict_dir = Path(tmpdir / "predict")
@@ -206,9 +204,9 @@ def test_classification_task_predict_folder_path(tmpdir):
     task = ImageClassifier(num_classes=10, output=None)
     datamodule = ImageClassificationData.from_folders(predict_folder=predict_dir, batch_size=1)
     assert len(datamodule.predict_dataloader()) == 2
-    predictions = flash.Trainer().predict(task, datamodule)
-    breakpoint()
-    assert len(predictions[0]) == 2
+    trainer = flash.Trainer()
+    predictions = trainer.predict(task, datamodule)
+    assert len(predictions) == 2
 
 
 def test_classification_task_trainer_predict(tmpdir):

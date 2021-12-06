@@ -197,6 +197,7 @@ def test_datamodule_labelstudio_image():
         test_export_json="data/project.json",
         test_data_folder="data/upload/",
         val_split=0.5,
+        batch_size=1,
     )
     assert datamodule
 
@@ -212,6 +213,7 @@ def test_label_studio_predictions_visualization():
         test_export_json="data/project.json",
         test_data_folder="data/upload/",
         val_split=0.5,
+        batch_size=1,
     )
     assert datamodule
     app = launch_app(datamodule)

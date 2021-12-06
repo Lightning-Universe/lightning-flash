@@ -16,6 +16,7 @@ from typing import Any, Callable, Collection, Dict, List, Optional, Sequence, Ty
 import numpy as np
 import pandas as pd
 import torch
+from torch.utils.data import Dataset
 
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
@@ -23,7 +24,7 @@ from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_base import Input
-from flash.core.data.new_data_module import DataModule
+from flash.core.data.new_data_module import DataModule, DatasetInput
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioImageClassificationInput
 from flash.core.registry import FlashRegistry
@@ -219,10 +220,10 @@ class ImageClassificationData(DataModule):
         predict_data = (predict_data_frame, input_field, predict_images_root, predict_resolver)
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_data, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_data, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_data, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, *train_data, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, *val_data, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, *test_data, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, *predict_data, transform=predict_transform, **ds_kw),
             **data_module_kwargs,
         )
 
@@ -264,10 +265,10 @@ class ImageClassificationData(DataModule):
         predict_data = (predict_file, input_field, predict_images_root, predict_resolver)
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_data, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_data, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_data, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, *train_data, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, *val_data, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, *test_data, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, *predict_data, transform=predict_transform, **ds_kw),
             **data_module_kwargs,
         )
 
@@ -402,6 +403,66 @@ class ImageClassificationData(DataModule):
             input_cls(RunningStage.VALIDATING, val_data, transform=val_transform, **ds_kw),
             input_cls(RunningStage.TESTING, val_data, transform=test_transform, **ds_kw),
             input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_datasets(
+        cls,
+        train_dataset: Optional[Dataset] = None,
+        val_dataset: Optional[Dataset] = None,
+        test_dataset: Optional[Dataset] = None,
+        predict_dataset: Optional[Dataset] = None,
+        train_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        input_cls: Type[Input] = DatasetInput,
+        transform_kwargs: Optional[Dict] = None,
+        **data_module_kwargs: Any,
+    ) -> "DataModule":
+        """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given datasets using the
+        :class:`~flash.core.data.io.input.Input`
+        of name :attr:`~flash.core.data.io.input.InputFormat.DATASETS`
+        from the passed or constructed :class:`~flash.core.data.io.input_transform.InputTransform`.
+
+        Args:
+            train_dataset: Dataset used during training.
+            val_dataset: Dataset used during validating.
+            test_dataset: Dataset used during testing.
+            predict_dataset: Dataset used during predicting.
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            input_cls: Input class used to create the datasets.
+            transform_kwargs: Additional keyword arguments to be used when constructing the transform.
+            data_module_kwargs: Additional keyword arguments to use when constructing the DataModule.
+
+        Returns:
+            The constructed data module.
+
+        Examples::
+
+            data_module = DataModule.from_datasets(
+                train_dataset=train_dataset,
+            )
+        """
+        ds_kw = dict(
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
+        )
+
+        return cls(
+            input_cls(RunningStage.TRAINING, train_dataset, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_dataset, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, test_dataset, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_dataset, transform=predict_transform, **ds_kw),
             **data_module_kwargs,
         )
 
