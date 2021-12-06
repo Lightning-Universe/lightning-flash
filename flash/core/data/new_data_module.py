@@ -61,10 +61,6 @@ class DataModule(DataModule):
         val_dataset: Dataset for validating model performance during training. Defaults to None.
         test_dataset: Dataset to test model performance. Defaults to None.
         predict_dataset: Dataset for predicting. Defaults to None.
-        train_transform: Either a callable or a :class:`~flash.core.data.input_transform.InputTransform` transform.
-        val_transform: Either a callable or a :class:`~flash.core.data.input_transform.InputTransform` transform.
-        test_transform: Either a callable or a :class:`~flash.core.data.input_transform.InputTransform` transform.
-        predict_transform: Either a callable or a :class:`~flash.core.data.input_transform.InputTransform` transform.
         data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to attach to the
             :class:`~flash.core.data.io.input_transform.InputTransform`. If ``None``, the output from
             :meth:`~flash.core.data.data_module.DataModule.configure_data_fetcher` will be used.

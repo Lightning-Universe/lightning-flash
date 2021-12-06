@@ -522,7 +522,7 @@ class _InputTransformProcessor(torch.nn.Module):
         stage: RunningStage,
         apply_per_sample_transform: bool = True,
         on_device: bool = False,
-        callbacks: List[FlashCallback] = None,
+        callbacks: Optional[List[FlashCallback]] = None,
     ):
         super().__init__()
         self.input_transform = input_transform
