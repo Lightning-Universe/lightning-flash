@@ -35,13 +35,14 @@ trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Classify a few sentences! How was the movie?
-predictions = model.predict(
-    [
+datamodule = TextClassificationData.from_lists(
+    predict_data=[
         "Turgid dialogue, feeble characterization - Harvey Keitel a judge?.",
         "The worst movie in the history of cinema.",
         "I come from Bulgaria where it 's almost impossible to have a tornado.",
     ]
 )
+predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
 
 # 5. Save the model!

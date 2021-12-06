@@ -58,12 +58,13 @@ Once you've finetuned, use the model to predict:
     # Output predictions as labels, automatically inferred from the training data in part 2.
     model.output = LabelsOutput()
 
-    predictions = model.predict(
-        [
+    predict_datamodule = ImageClassificationData.from_files(
+        predict_files=[
             "data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg",
             "data/hymenoptera_data/val/ants/2255445811_dabcdf7258.jpg",
         ]
     )
+    predictions = trainer.predict(model, datamodule=predict_datamodule)
     print(predictions)
 
 We get the following output:
@@ -76,19 +77,24 @@ We get the following output:
 .. testcode:: finetune
     :hide:
 
-    assert all([prediction in ["ants", "bees"] for prediction in predictions])
+    assert all(
+        [all([prediction in ["ants", "bees"] for prediction in prediction_batch]) for prediction_batch in predictions]
+    )
 
 .. code-block::
 
-    ['bees', 'ants']
+    [['bees', 'ants']]
 
 Or you can use the saved model for prediction anywhere you want!
 
 .. code-block:: python
 
-    from flash.image import ImageClassifier
+    from flash import Trainer
+    from flash.image import ImageClassifier, ImageClassificationData
 
     # load finetuned checkpoint
     model = ImageClassifier.load_from_checkpoint("image_classification_model.pt")
 
-    predictions = model.predict("path/to/your/own/image.png")
+    trainer = Trainer()
+    datamodule = ImageClassificationData.from_files(predict_files=["path/to/your/own/image.png"])
+    predictions = trainer.predict(model, datamodule=datamodule)

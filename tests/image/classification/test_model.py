@@ -108,12 +108,10 @@ def test_multilabel(tmpdir):
     train_dl = torch.utils.data.DataLoader(ds, batch_size=2)
     trainer = Trainer(default_root_dir=tmpdir, max_epochs=2, limit_train_batches=5)
     trainer.finetune(model, train_dl, strategy=("freeze_unfreeze", 1))
-    image, label = ds[0][DataKeys.INPUT], ds[0][DataKeys.TARGET]
-    predictions = model.predict([{DataKeys.INPUT: image}])
+    predictions = trainer.predict(model, train_dl)[0]
     assert (torch.tensor(predictions) > 1).sum() == 0
     assert (torch.tensor(predictions) < 0).sum() == 0
-    assert len(predictions[0]) == num_classes == len(label)
-    assert len(torch.unique(label)) <= 2
+    assert len(predictions[0]) == num_classes
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")

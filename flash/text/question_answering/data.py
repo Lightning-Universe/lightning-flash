@@ -20,7 +20,7 @@ import collections
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 import torch
 from torch import Tensor
@@ -542,7 +542,7 @@ class QuestionAnsweringInputTransform(InputTransform):
                     answer_column_name=answer_column_name,
                     doc_stride=doc_stride,
                 ),
-                "dict": QuestionAnsweringDictionaryInput(
+                "dicts": QuestionAnsweringDictionaryInput(
                     self.backbone,
                     max_source_length=max_source_length,
                     max_target_length=max_target_length,
@@ -560,7 +560,7 @@ class QuestionAnsweringInputTransform(InputTransform):
                     doc_stride=doc_stride,
                 ),
             },
-            default_input="dict",
+            default_input="dicts",
         )
 
         self.set_state(QuestionAnsweringBackboneState(self.backbone))
@@ -901,6 +901,32 @@ class QuestionAnsweringData(DataModule):
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,
+            predict_transform=predict_transform,
+            data_fetcher=data_fetcher,
+            input_transform=input_transform,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            sampler=sampler,
+            **input_transform_kwargs,
+        )
+
+    @classmethod
+    def from_dicts(
+        cls,
+        predict_data: Optional[Dict[str, Any]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_fetcher: Optional[BaseDataFetcher] = None,
+        input_transform: Optional[InputTransform] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: int = 0,
+        sampler: Optional[Type[Sampler]] = None,
+        **input_transform_kwargs: Any,
+    ) -> "DataModule":
+        return cls.from_input(
+            "dicts",
+            predict_data=predict_data,
             predict_transform=predict_transform,
             data_fetcher=data_fetcher,
             input_transform=input_transform,

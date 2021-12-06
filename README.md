@@ -129,12 +129,6 @@ model.serve()
 or make predictions from raw data directly.
 
 ```py
-predictions = model.predict(["data/CameraRGB/F61-1.png", "data/CameraRGB/F62-1.png"])
-```
-
-or make predictions with 2 GPUs.
-
-```py
 trainer = Trainer(accelerator='ddp', gpus=2)
 dm = SemanticSegmentationData.from_folders(predict_folder="data/CameraRGB")
 predictions = trainer.predict(model, dm)

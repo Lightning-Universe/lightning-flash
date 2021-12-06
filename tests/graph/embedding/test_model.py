@@ -58,6 +58,8 @@ def test_predict_dataset(tmpdir):
     model = GraphEmbedder(
         GraphClassifier(num_features=tudataset.num_features, num_classes=tudataset.num_classes).backbone
     )
-    data_pipe = DataPipeline(input_transform=GraphClassificationInputTransform())
-    out = model.predict(tudataset, input="datasets", data_pipeline=data_pipe)
-    assert isinstance(out[0], torch.Tensor)
+    model.data_pipeline = DataPipeline(input_transform=GraphClassificationInputTransform())
+    predict_dl = torch.utils.data.DataLoader(tudataset, batch_size=4)
+    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
+    out = trainer.predict(model, predict_dl)
+    assert isinstance(out[0][0], torch.Tensor)

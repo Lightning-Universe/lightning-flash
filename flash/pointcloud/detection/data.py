@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from torch.utils.data import Dataset
 
@@ -113,6 +113,29 @@ class PointCloudObjectDetectorData(DataModule):
                 test_transform,
                 predict_transform,
             ),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_files(
+        cls,
+        predict_files: Optional[List[str]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        scans_folder_name: Optional[str] = "scans",
+        labels_folder_name: Optional[str] = "labels",
+        calibrations_folder_name: Optional[str] = "calibs",
+        data_format: Optional[BaseDataFormat] = PointCloudObjectDetectionDataFormat.KITTI,
+        **data_module_kwargs: Any,
+    ) -> "PointCloudObjectDetectorData":
+        ds_kw = dict(
+            scans_folder_name=scans_folder_name,
+            labels_folder_name=labels_folder_name,
+            calibrations_folder_name=calibrations_folder_name,
+            data_format=data_format,
+        )
+        return cls(
+            predict_dataset=PointCloudObjectDetectorFoldersInput(RunningStage.PREDICTING, predict_files, **ds_kw),
+            input_transform=cls.input_transform_cls(predict_transform),
             **data_module_kwargs,
         )
 

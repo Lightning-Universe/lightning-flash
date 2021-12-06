@@ -68,24 +68,26 @@ def test_instance_segmentation_inference(tmpdir):
     trainer = flash.Trainer(max_epochs=1, fast_dev_run=True)
     trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
-    predictions = model.predict(
-        [
+    datamodule = InstanceSegmentationData.from_files(
+        predict_files=[
             str(data_dir / "images/yorkshire_terrier_9.jpg"),
             str(data_dir / "images/yorkshire_terrier_12.jpg"),
             str(data_dir / "images/yorkshire_terrier_13.jpg"),
         ]
     )
-    assert len(predictions) == 3
+    predictions = trainer.predict(model, datamodule=datamodule)
+    assert len(predictions[0]) == 3
 
     model_path = os.path.join(tmpdir, "model.pt")
     trainer.save_checkpoint(model_path)
     InstanceSegmentation.load_from_checkpoint(model_path)
 
-    predictions = model.predict(
-        [
+    datamodule = InstanceSegmentationData.from_files(
+        predict_files=[
             str(data_dir / "images/yorkshire_terrier_9.jpg"),
             str(data_dir / "images/yorkshire_terrier_12.jpg"),
-            str(data_dir / "images/yorkshire_terrier_15.jpg"),
+            str(data_dir / "images/yorkshire_terrier_13.jpg"),
         ]
     )
-    assert len(predictions) == 3
+    predictions = trainer.predict(model, datamodule=datamodule)
+    assert len(predictions[0]) == 3

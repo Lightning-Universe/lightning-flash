@@ -73,9 +73,11 @@ def test_predict_dataset(tmpdir):
     """Tests that we can generate predictions from a pytorch geometric dataset."""
     tudataset = datasets.TUDataset(root=tmpdir, name="KKI")
     model = GraphClassifier(num_features=tudataset.num_features, num_classes=tudataset.num_classes)
-    data_pipe = DataPipeline(input_transform=GraphClassificationInputTransform())
-    out = model.predict(tudataset, input="datasets", data_pipeline=data_pipe)
-    assert isinstance(out[0], int)
+    model.data_pipeline = DataPipeline(input_transform=GraphClassificationInputTransform())
+    predict_dl = torch.utils.data.DataLoader(tudataset, batch_size=4)
+    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
+    out = trainer.predict(model, predict_dl)
+    assert isinstance(out[0][0], int)
 
 
 @pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")
