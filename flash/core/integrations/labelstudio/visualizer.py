@@ -22,8 +22,9 @@ class App:
     def show_predictions(self, predictions):
         """Converts predictions to Label Studio results."""
         results = []
-        for pred in predictions:
-            results.append(self._construct_result(pred))
+        for prediction_batch in predictions:
+            for pred in prediction_batch:
+                results.append(self._construct_result(pred))
         return results
 
     def show_tasks(self, predictions, export_json=None):

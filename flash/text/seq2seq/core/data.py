@@ -13,12 +13,14 @@
 # limitations under the License.
 from dataclasses import dataclass, field
 from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 import torch
 from torch import Tensor
+from torch.utils.data import Sampler
 
 import flash
+from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input, InputFormat
 from flash.core.data.io.input_transform import InputTransform
@@ -288,7 +290,7 @@ class Seq2SeqInputTransform(InputTransform):
                     padding=padding,
                     **backbone_kwargs,
                 ),
-                "sentences": Seq2SeqSentencesInput(
+                InputFormat.LISTS: Seq2SeqSentencesInput(
                     self.backbone,
                     max_source_length=max_source_length,
                     max_target_length=max_target_length,
@@ -296,7 +298,7 @@ class Seq2SeqInputTransform(InputTransform):
                     **backbone_kwargs,
                 ),
             },
-            default_input="sentences",
+            default_input=InputFormat.LISTS,
             deserializer=TextDeserializer(backbone, max_source_length),
         )
 
@@ -362,3 +364,29 @@ class Seq2SeqData(DataModule):
 
     input_transform_cls = Seq2SeqInputTransform
     output_transform_cls = Seq2SeqOutputTransform
+
+    @classmethod
+    def from_lists(
+        cls,
+        predict_data: Optional[List[str]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        data_fetcher: Optional[BaseDataFetcher] = None,
+        input_transform: Optional[InputTransform] = None,
+        val_split: Optional[float] = None,
+        batch_size: int = 4,
+        num_workers: int = 0,
+        sampler: Optional[Type[Sampler]] = None,
+        **input_transform_kwargs: Any,
+    ) -> "DataModule":
+        return cls.from_input(
+            InputFormat.LISTS,
+            predict_data=predict_data,
+            predict_transform=predict_transform,
+            data_fetcher=data_fetcher,
+            input_transform=input_transform,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            sampler=sampler,
+            **input_transform_kwargs,
+        )

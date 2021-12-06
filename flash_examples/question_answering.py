@@ -31,8 +31,8 @@ trainer = Trainer(max_epochs=3, limit_train_batches=1, limit_val_batches=1)
 trainer.finetune(model, datamodule=datamodule)
 
 # 4. Answer some Questions!
-predictions = model.predict(
-    {
+datamodule = QuestionAnsweringData.from_dicts(
+    predict_data={
         "id": ["56ddde6b9a695914005b9629", "56ddde6b9a695914005b9628"],
         "context": [
             """
@@ -59,6 +59,7 @@ predictions = model.predict(
         "question": ["When were the Normans in Normandy?", "In what country is Normandy located?"],
     }
 )
+predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
 
 # 5. Save the model!

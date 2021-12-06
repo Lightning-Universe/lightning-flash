@@ -38,7 +38,6 @@ model = ImageClassifier(
     backbone="resnet18", head=head, num_classes=datamodule.num_classes, output=ProbabilitiesOutput()
 )
 
-
 # 3.1 Create the trainer
 trainer = flash.Trainer(max_epochs=3)
 
@@ -51,7 +50,10 @@ trainer.fit_loop = active_learning_loop
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Predict what's on a few images! ants or bees?
-predictions = model.predict("data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg")
+datamodule = ImageClassificationData.from_files(
+    predict_files=["data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg"]
+)
+predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
 
 # 5. Save the model!
