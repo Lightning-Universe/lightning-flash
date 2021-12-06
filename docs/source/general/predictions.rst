@@ -7,7 +7,7 @@ Predictions (inference)
 
 You can use Flash to get predictions on pretrained or finetuned models.
 
-First create a :class:`~flash.core.data.data_module.DataModule` with some predict data, then pass it to the :method:`Trainer.predict <flash.core.trainer.Trainer.predict>` method.
+First create a :class:`~flash.core.data.data_module.DataModule` with some predict data, then pass it to the :meth:`Trainer.predict <flash.core.trainer.Trainer.predict>` method.
 
 .. code-block:: python
 
