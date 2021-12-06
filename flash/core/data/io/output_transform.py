@@ -85,7 +85,7 @@ class _OutputTransformProcessor(torch.nn.Module):
         return batch, metadata
 
     def forward(self, batch: Sequence[Any]):
-        if not batch:
+        if batch is None:
             return batch
 
         batch, metadata = self._extract_metadata(batch)
