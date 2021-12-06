@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from torch.utils.data import Dataset
 
@@ -111,6 +111,19 @@ class PointCloudSegmentationData(DataModule):
                 test_transform,
                 predict_transform,
             ),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_files(
+        cls,
+        predict_files: Optional[List[str]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        **data_module_kwargs: Any,
+    ) -> "PointCloudSegmentationData":
+        return cls(
+            predict_dataset=PointCloudSegmentationFoldersInput(RunningStage.PREDICTING, predict_files),
+            input_transform=cls.input_transform_cls(predict_transform),
             **data_module_kwargs,
         )
 

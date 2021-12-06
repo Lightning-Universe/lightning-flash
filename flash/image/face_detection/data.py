@@ -24,8 +24,8 @@ from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _FASTFACE_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.core.utilities.stages import RunningStage
-from flash.image.classification.input import ImageClassificationFilesInput, ImageClassificationFolderInput
-from flash.image.data import ImageInput
+from flash.image.classification.data import ImageClassificationFilesInput, ImageClassificationFolderInput
+from flash.image.data import ImageFilesInput
 
 if _TORCHVISION_AVAILABLE:
     import torchvision
@@ -48,7 +48,6 @@ def fastface_collate_fn(samples: Sequence[Dict[str, Any]]) -> Dict[str, Sequence
 
     if DataKeys.TARGET in samples.keys():
         targets = samples[DataKeys.TARGET]
-        targets = [{"target_boxes": target["boxes"]} for target in targets]
 
         for i, (target, scale, padding) in enumerate(zip(targets, scales, paddings)):
             target["target_boxes"] *= scale
@@ -62,15 +61,14 @@ def fastface_collate_fn(samples: Sequence[Dict[str, Any]]) -> Dict[str, Sequence
     return samples
 
 
-class FastFaceInput(ImageInput):
+class FastFaceInput(ImageFilesInput):
     """Logic for loading from FDDBDataset."""
 
     def load_data(self, dataset: Dataset) -> List[Dict[str, Any]]:
         return [
             {
                 DataKeys.INPUT: filepath,
-                "boxes": targets["target_boxes"],
-                "labels": [1] * targets["target_boxes"].shape[0],
+                DataKeys.TARGET: targets,
             }
             for filepath, targets in zip(dataset.ids, dataset.targets)
         ]
@@ -112,10 +110,7 @@ class FaceDetectionInputTransform(InputTransform):
                 ApplyToKeys(DataKeys.INPUT, torchvision.transforms.ToTensor()),
                 ApplyToKeys(
                     DataKeys.TARGET,
-                    nn.Sequential(
-                        ApplyToKeys("boxes", torch.as_tensor),
-                        ApplyToKeys("labels", torch.as_tensor),
-                    ),
+                    ApplyToKeys("target_boxes", torch.as_tensor),
                 ),
             ),
             "collate": fastface_collate_fn,
@@ -172,5 +167,31 @@ class FaceDetectionData(DataModule):
                 predict_transform,
             ),
             output_transform=cls.output_transform_cls(),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_files(
+        cls,
+        predict_files: Optional[Sequence[str]] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        **data_module_kwargs: Any,
+    ) -> "FaceDetectionData":
+        return cls(
+            predict_dataset=ImageClassificationFilesInput(RunningStage.PREDICTING, predict_files),
+            input_transform=cls.input_transform_cls(predict_transform=predict_transform),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_folders(
+        cls,
+        predict_folder: Optional[str] = None,
+        predict_transform: Optional[Dict[str, Callable]] = None,
+        **data_module_kwargs: Any,
+    ) -> "FaceDetectionData":
+        return cls(
+            predict_dataset=ImageClassificationFolderInput(RunningStage.PREDICTING, predict_folder),
+            input_transform=cls.input_transform_cls(predict_transform=predict_transform),
             **data_module_kwargs,
         )

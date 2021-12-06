@@ -44,7 +44,7 @@ datamodule = ImageClassificationData.from_files(
     ],
     batch_size=3,
 )
-predictions = flash.Trainer().predict(model, datamodule)
+predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
 
 # 5. Save the model!

@@ -152,14 +152,15 @@ if _POINTCLOUD_AVAILABLE:
                     lut.add_label(id, id, color=color)
                 viz.set_lut("label", lut)
 
-                for pred in predictions:
-                    data = {
-                        "points": pred[DataKeys.INPUT][:, :3],
-                        "name": pred[DataKeys.METADATA],
-                    }
-                    bounding_box = pred[DataKeys.PREDS]
+                for prediction_batch in predictions:
+                    for pred in prediction_batch:
+                        data = {
+                            "points": pred[DataKeys.INPUT][:, :3],
+                            "name": pred[DataKeys.METADATA],
+                        }
+                        bounding_box = pred[DataKeys.PREDS]
 
-                    viz.visualize([data], bounding_boxes=bounding_box)
+                        viz.visualize([data], bounding_boxes=bounding_box)
 
 
 def launch_app(datamodule: DataModule) -> "App":

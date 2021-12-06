@@ -38,7 +38,7 @@ trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Make a prediction
 datamodule = VideoClassificationData.from_folders(predict_folder="data/kinetics/predict")
-predictions = trainer.predict(model, datamodule)
+predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
 
 # 5. Save the model!

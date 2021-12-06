@@ -83,15 +83,16 @@ class App:
             color_map = dataset.color_map
 
             predictions_visualizations = []
-            for pred in predictions:
-                predictions_visualizations.append(
-                    {
-                        "points": pred[DataKeys.INPUT],
-                        "labels": pred[DataKeys.TARGET],
-                        "predictions": torch.argmax(pred[DataKeys.PREDS], axis=-1) + 1,
-                        "name": pred[DataKeys.METADATA]["name"],
-                    }
-                )
+            for prediction_batch in predictions:
+                for pred in prediction_batch:
+                    predictions_visualizations.append(
+                        {
+                            "points": pred[DataKeys.INPUT],
+                            "labels": pred[DataKeys.TARGET],
+                            "predictions": torch.argmax(pred[DataKeys.PREDS], axis=-1) + 1,
+                            "name": pred[DataKeys.METADATA]["name"],
+                        }
+                    )
 
             viz = Visualizer()
             lut = LabelLUT()

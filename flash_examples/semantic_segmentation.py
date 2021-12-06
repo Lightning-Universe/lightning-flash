@@ -45,13 +45,14 @@ trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count(), fast_dev_r
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Segment a few images!
-predictions = model.predict(
-    [
+datamodule = SemanticSegmentationData.from_files(
+    predict_files=[
         "data/CameraRGB/F61-1.png",
         "data/CameraRGB/F62-1.png",
         "data/CameraRGB/F63-1.png",
     ]
 )
+predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
 
 # 5. Save the model!

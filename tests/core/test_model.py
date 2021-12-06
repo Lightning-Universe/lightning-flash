@@ -16,10 +16,8 @@ import math
 from copy import deepcopy
 from itertools import chain
 from numbers import Number
-from pathlib import Path
 from typing import Any, Tuple
 
-import numpy as np
 import pytest
 import pytorch_lightning as pl
 import torch
@@ -34,11 +32,10 @@ import flash
 from flash.audio import SpeechRecognition
 from flash.core.adapter import Adapter
 from flash.core.classification import ClassificationTask
-from flash.core.data.io.input_transform import DefaultInputTransform
 from flash.core.data.io.output_transform import OutputTransform
-from flash.core.utilities.imports import _TORCH_OPTIMIZER_AVAILABLE, _TRANSFORMERS_AVAILABLE, Image
+from flash.core.utilities.imports import _TORCH_OPTIMIZER_AVAILABLE, _TRANSFORMERS_AVAILABLE
 from flash.graph import GraphClassifier, GraphEmbedder
-from flash.image import ImageClassificationData, ImageClassifier, SemanticSegmentation
+from flash.image import ImageClassifier, SemanticSegmentation
 from flash.tabular import TabularClassifier
 from flash.text import SummarizationTask, TextClassifier, TranslationTask
 from tests.helpers.utils import _AUDIO_TESTING, _GRAPH_TESTING, _IMAGE_TESTING, _TABULAR_TESTING, _TEXT_TESTING
@@ -159,6 +156,13 @@ def test_classificationtask_train(tmpdir: str, metrics: Any):
     assert "test_nll_loss" in result[0]
 
 
+def test_task_predict_raises():
+    with pytest.raises(AttributeError, match="`flash.Task.predict` has been removed."):
+        model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
+        task = ClassificationTask(model, loss_fn=F.nll_loss)
+        task.predict("args", kwarg="test")
+
+
 @pytest.mark.parametrize("task", [Parent, GrandParent, AdapterParent])
 def test_nested_tasks(tmpdir, task):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
@@ -172,41 +176,6 @@ def test_nested_tasks(tmpdir, task):
     trainer.fit(parent_task, train_dl, val_dl)
     result = trainer.test(parent_task, val_dl)
     assert "test_nll_loss" in result[0]
-
-
-def test_classificationtask_task_predict():
-    model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
-    task = ClassificationTask(model, input_transform=DefaultInputTransform())
-    ds = DummyDataset()
-    expected = list(range(10))
-    # single item
-    x0, _ = ds[0]
-    pred0 = task.predict(x0)
-    assert pred0[0] in expected
-    # list
-    x1, _ = ds[1]
-    pred1 = task.predict([x0, x1])
-    assert all(c in expected for c in pred1)
-    assert pred0[0] == pred1[0]
-
-
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
-def test_classification_task_predict_folder_path(tmpdir):
-    predict_dir = Path(tmpdir / "predict")
-    predict_dir.mkdir()
-
-    def _rand_image():
-        return Image.fromarray(np.random.randint(0, 255, (256, 256, 3), dtype="uint8"))
-
-    _rand_image().save(predict_dir / "1.png")
-    _rand_image().save(predict_dir / "2.png")
-
-    task = ImageClassifier(num_classes=10, output=None)
-    datamodule = ImageClassificationData.from_folders(predict_folder=predict_dir, batch_size=1)
-    assert len(datamodule.predict_dataloader()) == 2
-    trainer = flash.Trainer()
-    predictions = trainer.predict(task, datamodule)
-    assert len(predictions) == 2
 
 
 def test_classification_task_trainer_predict(tmpdir):

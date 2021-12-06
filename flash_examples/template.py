@@ -39,7 +39,7 @@ datamodule = TemplateData.from_numpy(
         np.array([7.2, 3.0, 5.8, 1.6]),
     ],
 )
-predictions = trainer.predict(model, datamodule)
+predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
 
 # 5. Save the model!

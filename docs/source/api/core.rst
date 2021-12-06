@@ -133,4 +133,3 @@ _________
     ~flash.core.trainer.from_argparse_args
     ~flash.core.utilities.apply_func.get_callable_name
     ~flash.core.utilities.apply_func.get_callable_dict
-    ~flash.core.model.predict_context

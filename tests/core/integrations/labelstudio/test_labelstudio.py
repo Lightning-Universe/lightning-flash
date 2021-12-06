@@ -217,7 +217,7 @@ def test_label_studio_predictions_visualization():
     )
     assert datamodule
     app = launch_app(datamodule)
-    predictions = [0, 1, 1, 0]
+    predictions = [[0, 1], [1, 0]]
     vis_predictions = app.show_predictions(predictions)
     assert len(vis_predictions) == 4
     assert vis_predictions[0]["result"][0]["id"] != vis_predictions[3]["result"][0]["id"]
