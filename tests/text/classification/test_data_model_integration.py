@@ -44,7 +44,6 @@ def test_classification(tmpdir):
     data = TextClassificationData.from_csv(
         "sentence",
         "label",
-        backbone=TEST_BACKBONE,
         train_file=csv_path,
         num_workers=0,
         batch_size=2,
