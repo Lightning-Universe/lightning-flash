@@ -194,24 +194,21 @@ def test_classificationtask_task_predict():
 @mock.patch("flash._IS_TESTING", True)
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_classification_task_predict_folder_path(tmpdir):
-    train_dir = Path(tmpdir / "train")
-    train_dir.mkdir()
+    predict_dir = Path(tmpdir / "predict")
+    predict_dir.mkdir()
 
     def _rand_image():
         return Image.fromarray(np.random.randint(0, 255, (256, 256, 3), dtype="uint8"))
 
-    _rand_image().save(train_dir / "1.png")
-    _rand_image().save(train_dir / "2.png")
+    _rand_image().save(predict_dir / "1.png")
+    _rand_image().save(predict_dir / "2.png")
 
-    datamodule = ImageClassificationData.from_folders(predict_folder=train_dir, batch_size=1)
-
-    task = ImageClassifier(num_classes=10)
-    predictions = task.predict(
-        str(train_dir),
-        input="folders",
-        data_pipeline=datamodule.data_pipeline,
-    )
-    assert len(predictions) == 2
+    task = ImageClassifier(num_classes=10, output=None)
+    datamodule = ImageClassificationData.from_folders(predict_folder=predict_dir, batch_size=1)
+    assert len(datamodule.predict_dataloader()) == 2
+    predictions = flash.Trainer().predict(task, datamodule)
+    breakpoint()
+    assert len(predictions[0]) == 2
 
 
 def test_classification_task_trainer_predict(tmpdir):
