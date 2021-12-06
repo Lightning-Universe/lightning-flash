@@ -25,7 +25,7 @@ from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_base import Input
 from flash.core.data.new_data_module import DataModule
 from flash.core.data.utilities.paths import PATH_TYPE
-from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments
+from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioImageClassificationInput
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, Image, requires
 from flash.core.utilities.stages import RunningStage
@@ -37,7 +37,6 @@ from flash.image.classification.input import (
     ImageClassificationFolderInput,
     ImageClassificationNumpyInput,
     ImageClassificationTensorInput,
-    LabelStudioImageClassificationInput,
 )
 from flash.image.classification.transforms import ImageClassificationInputTransform
 from flash.image.data import SampleCollection
