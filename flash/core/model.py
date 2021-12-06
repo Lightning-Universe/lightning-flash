@@ -514,6 +514,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             input = data_pipeline._input_transform_pipeline.input_of_name(input or "default")
         elif isinstance(data_pipeline.input, list):
             input = type(data_pipeline.input[0])
+        else:
+            input = data_pipeline.input
 
         dataloader_collate_fn = None
         on_after_batch_transfer_fn = None
@@ -566,7 +568,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         elif isinstance(batch, list):
             # Todo: Understand why stack is needed
             batch = torch.stack(batch)
-        return self(batch)
+        return self.build_data_pipeline().output_transform_processor(RunningStage.PREDICTING)(self(batch))
 
     def modules_to_freeze(self) -> Optional[Union[nn.Module]]:
         """By default, we try to get the ``backbone`` attribute from the task and return it or ``None`` if not
@@ -799,12 +801,15 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         elif getattr(self, "datamodule", None) is not None:
             datamodule = self.datamodule
 
+        data_pipeline_state = None
+
         if getattr(datamodule, "data_pipeline", None) is not None:
             old_input = getattr(datamodule.data_pipeline, "input", None)
             input_transform = getattr(datamodule.data_pipeline, "_input_transform_pipeline", None)
             output_transform = getattr(datamodule.data_pipeline, "_output_transform", None)
             output = getattr(datamodule.data_pipeline, "_output", None)
             deserializer = getattr(datamodule.data_pipeline, "_deserializer", None)
+            data_pipeline_state = datamodule.data_pipeline_state if isinstance(datamodule, NewDataModule) else None
 
         # Defaults / task attributes
         deserializer, input_transform, output_transform, output = Task._resolve(
@@ -849,7 +854,10 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             deserializer=deserializer,
             output=output,
         )
-        self._data_pipeline_state = self._data_pipeline_state or DataPipelineState()
+        # HACK: Should we get rid of the DataPipeline entirely ?
+        if data_pipeline_state:
+            for state in data_pipeline_state._state.values():
+                self._data_pipeline_state.set_state(state)
         self.attach_data_pipeline_state(self._data_pipeline_state)
         self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)
         return data_pipeline
@@ -899,7 +907,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
     def on_train_dataloader(self) -> None:
         # TODO: Remove this logic when moving to the new DataModule
-        if isinstance(self.trainer.datamodule, NewDataModule):
+        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
+            self.data_pipeline
             return
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self, RunningStage.TRAINING)
@@ -907,7 +916,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         super().on_train_dataloader()
 
     def on_val_dataloader(self) -> None:
-        if isinstance(self.trainer.datamodule, NewDataModule):
+        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
             return
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self, RunningStage.VALIDATING)
@@ -915,7 +924,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         super().on_val_dataloader()
 
     def on_test_dataloader(self, *_) -> None:
-        if isinstance(self.trainer.datamodule, NewDataModule):
+        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
             return
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self, RunningStage.TESTING)
@@ -923,7 +932,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         super().on_test_dataloader()
 
     def on_predict_dataloader(self) -> None:
-        if isinstance(self.trainer.datamodule, NewDataModule):
+        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
             return
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self, RunningStage.PREDICTING)
@@ -931,14 +940,14 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         super().on_predict_dataloader()
 
     def on_predict_end(self) -> None:
-        if isinstance(self.trainer.datamodule, NewDataModule):
+        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
             return
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self)
         super().on_predict_end()
 
     def on_fit_end(self) -> None:
-        if isinstance(self.trainer.datamodule, NewDataModule):
+        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
             return
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self)

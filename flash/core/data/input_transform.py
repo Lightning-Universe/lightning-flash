@@ -14,7 +14,7 @@
 import inspect
 from dataclasses import dataclass
 from functools import partial, wraps
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
 
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -26,19 +26,10 @@ from flash.core.data.io.input_transform import _InputTransformProcessor
 from flash.core.data.properties import Properties
 from flash.core.data.states import CollateFn
 from flash.core.data.transforms import ApplyToKeys
+from flash.core.data.types import INPUT_TRANSFORM_TYPE
 from flash.core.data.utils import _INPUT_TRANSFORM_FUNCS, _STAGES_PREFIX
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.stages import RunningStage
-
-INPUT_TRANSFORM_TYPE = Optional[
-    Union[
-        "InputTransform",
-        Type["InputTransform"],
-        Callable,
-        Tuple[Union[LightningEnum, str], Dict[str, Any]],
-        Union[LightningEnum, str],
-    ]
-]
 
 
 class InputTransformPlacement(LightningEnum):

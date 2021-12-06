@@ -37,7 +37,8 @@ predictions = model.predict(
         np.array([4.9, 3.0, 1.4, 0.2]),
         np.array([6.9, 3.2, 5.7, 2.3]),
         np.array([7.2, 3.0, 5.8, 1.6]),
-    ]
+    ],
+    input="numpy",
 )
 print(predictions)
 

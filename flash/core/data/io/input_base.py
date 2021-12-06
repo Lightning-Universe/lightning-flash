@@ -24,6 +24,7 @@ from torch.utils.data import Dataset
 
 import flash
 from flash.core.data.properties import Properties
+from flash.core.data.types import INPUT_TRANSFORM_TYPE
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.stages import RunningStage
 
@@ -125,7 +126,7 @@ class InputBase(Properties, metaclass=_InputMeta):
         self,
         running_stage: RunningStage,
         *args: Any,
-        transform: "flash.InputTransform" = None,
+        transform: INPUT_TRANSFORM_TYPE = None,
         transform_kwargs: Optional[Dict] = None,
         input_transforms_registry: Optional[FlashRegistry] = None,
         data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None,

@@ -14,7 +14,7 @@
 import functools
 import inspect
 import weakref
-from functools import partial
+from functools import lru_cache, partial
 from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Tuple, Type, TYPE_CHECKING, Union
 
 import torch
@@ -166,9 +166,11 @@ class DataPipeline:
     def _identity(samples: Sequence[Any]) -> Sequence[Any]:
         return samples
 
+    @lru_cache(maxsize=None)
     def deserialize_processor(self) -> _DeserializeProcessor:
         return self._create_collate_input_transform_processors(RunningStage.PREDICTING)[0]
 
+    @lru_cache(maxsize=None)
     def worker_input_transform_processor(
         self, running_stage: RunningStage, collate_fn: Optional[Callable] = None, is_serving: bool = False
     ) -> _InputTransformProcessor:
@@ -176,9 +178,11 @@ class DataPipeline:
             running_stage, collate_fn=collate_fn, is_serving=is_serving
         )[1]
 
+    @lru_cache(maxsize=None)
     def device_input_transform_processor(self, running_stage: RunningStage) -> _InputTransformProcessor:
         return self._create_collate_input_transform_processors(running_stage)[2]
 
+    @lru_cache(maxsize=None)
     def output_transform_processor(self, running_stage: RunningStage, is_serving=False) -> _OutputTransformProcessor:
         return self._create_output_transform_processor(running_stage, is_serving=is_serving)
 

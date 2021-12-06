@@ -143,6 +143,8 @@ class DataModule(DataModule):
 
         LightningDataModule.__init__(self)
 
+        self._data_pipeline_state = self.data_pipeline_state
+
     def _train_dataloader(self) -> DataLoader:
         train_ds: Input = self._train_ds
         self._register_callbacks(train_ds)
@@ -259,6 +261,26 @@ class DataModule(DataModule):
             collate_fn=collate_fn,
             persistent_workers=self.persistent_workers,
         )
+
+    @property
+    def data_pipeline_state(self) -> DataPipelineState:
+        data_pipeline_state = DataPipelineState()
+        if self._train_ds:
+            self._add_to_data_pipeline_state(self._train_ds, data_pipeline_state)
+        if self._val_ds:
+            self._add_to_data_pipeline_state(self._val_ds, data_pipeline_state)
+        if self._test_ds:
+            self._add_to_data_pipeline_state(self._test_ds, data_pipeline_state)
+        if self._predict_ds:
+            self._add_to_data_pipeline_state(self._predict_ds, data_pipeline_state)
+        return data_pipeline_state
+
+    def _add_to_data_pipeline_state(self, input: Input, data_pipeline_state: DataPipelineState) -> None:
+        for state in input._state.values():
+            data_pipeline_state.set_state(state)
+        if isinstance(input.transform, InputTransform):
+            for state in input.transform._state.values():
+                data_pipeline_state.set_state(state)
 
     def on_after_batch_transfer(self, batch: Any, dataloader_idx: int) -> Any:
         ds = None

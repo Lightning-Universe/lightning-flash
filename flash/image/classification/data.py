@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Collection, Dict, List, Optional, Sequence, Union
+from typing import Any, Callable, Collection, Dict, List, Optional, Sequence, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -20,16 +20,25 @@ import torch
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_pipeline import DataPipelineState
-from flash.core.data.io.input import DataKeys, InputFormat
+from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE
+from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_base import Input
-from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.new_data_module import DataModule
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, Image, requires
 from flash.core.utilities.stages import RunningStage
-from flash.image.classification.input import IMAGE_CLASSICATION_INPUTS
+from flash.image.classification.input import (
+    ImageClassificationCSVInput,
+    ImageClassificationDataFrameInput,
+    ImageClassificationFiftyOneInput,
+    ImageClassificationFilesInput,
+    ImageClassificationFolderInput,
+    ImageClassificationNumpyInput,
+    ImageClassificationTensorInput,
+    LabelStudioImageClassificationInput,
+)
 from flash.image.classification.transforms import ImageClassificationInputTransform
 from flash.image.data import SampleCollection
 
@@ -54,11 +63,11 @@ class ImageClassificationData(DataModule):
         test_files: Optional[Sequence[str]] = None,
         test_targets: Optional[Sequence[Any]] = None,
         predict_files: Optional[Sequence[str]] = None,
-        train_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        val_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        test_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        predict_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        input_cls: Input = IMAGE_CLASSICATION_INPUTS[InputFormat.FILES],
+        train_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        input_cls: Type[Input] = ImageClassificationFilesInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
@@ -84,11 +93,11 @@ class ImageClassificationData(DataModule):
         val_folder: Optional[str] = None,
         test_folder: Optional[str] = None,
         predict_folder: Optional[str] = None,
-        train_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        val_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        test_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        predict_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        input_cls: Input = IMAGE_CLASSICATION_INPUTS[InputFormat.FOLDERS],
+        train_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        input_cls: Type[Input] = ImageClassificationFolderInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
@@ -117,11 +126,11 @@ class ImageClassificationData(DataModule):
         test_data: Optional[Collection[np.ndarray]] = None,
         test_targets: Optional[Sequence[Any]] = None,
         predict_data: Optional[Collection[np.ndarray]] = None,
-        train_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        val_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        test_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        predict_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        input_cls: Input = IMAGE_CLASSICATION_INPUTS[InputFormat.NUMPY],
+        train_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        input_cls: Type[Input] = ImageClassificationNumpyInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
@@ -150,11 +159,11 @@ class ImageClassificationData(DataModule):
         test_data: Optional[Collection[torch.Tensor]] = None,
         test_targets: Optional[Sequence[Any]] = None,
         predict_data: Optional[Collection[torch.Tensor]] = None,
-        train_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        val_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        test_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        predict_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        input_cls: Input = IMAGE_CLASSICATION_INPUTS[InputFormat.TENSORS],
+        train_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        input_cls: Type[Input] = ImageClassificationTensorInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
@@ -190,11 +199,11 @@ class ImageClassificationData(DataModule):
         predict_data_frame: Optional[pd.DataFrame] = None,
         predict_images_root: Optional[str] = None,
         predict_resolver: Optional[Callable[[str, str], str]] = None,
-        train_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        val_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        test_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        predict_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        input_cls: Input = IMAGE_CLASSICATION_INPUTS[InputFormat.DATAFRAME],
+        train_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        input_cls: Type[Input] = ImageClassificationDataFrameInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
@@ -235,11 +244,11 @@ class ImageClassificationData(DataModule):
         predict_file: Optional[str] = None,
         predict_images_root: Optional[str] = None,
         predict_resolver: Optional[Callable[[PATH_TYPE, Any], PATH_TYPE]] = None,
-        train_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        val_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        test_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        predict_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        input_cls: Input = IMAGE_CLASSICATION_INPUTS[InputFormat.CSV],
+        train_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        input_cls: Type[Input] = ImageClassificationCSVInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
@@ -272,11 +281,11 @@ class ImageClassificationData(DataModule):
         test_dataset: Optional[SampleCollection] = None,
         predict_dataset: Optional[SampleCollection] = None,
         label_field: str = "ground_truth",
-        train_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        val_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        test_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        predict_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        input_cls: Input = IMAGE_CLASSICATION_INPUTS[InputFormat.FIFTYONE],
+        train_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        input_cls: Type[Input] = ImageClassificationFiftyOneInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
     ) -> "ImageClassificationData":
@@ -309,11 +318,11 @@ class ImageClassificationData(DataModule):
         val_data_folder: str = None,
         test_data_folder: str = None,
         predict_data_folder: str = None,
-        train_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        val_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        test_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        predict_transform: Union[Callable, InputTransform] = ImageClassificationInputTransform,
-        input_cls: Input = IMAGE_CLASSICATION_INPUTS[InputFormat.LABELSTUDIO],
+        train_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        input_cls: Type[Input] = LabelStudioImageClassificationInput,
         transform_kwargs: Optional[Dict] = None,
         val_split: Optional[float] = None,
         multi_label: Optional[bool] = False,
