@@ -32,14 +32,14 @@ trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
 trainer.fit(model, datamodule=datamodule)
 
 # 4. Apply style transfer to a few images!
-predict_datamodule = StyleTransferData.from_files(
+datamodule = StyleTransferData.from_files(
     predict_files=[
         "data/coco128/images/train2017/000000000625.jpg",
         "data/coco128/images/train2017/000000000626.jpg",
         "data/coco128/images/train2017/000000000629.jpg",
     ]
 )
-predictions = trainer.predict(model, datamodule=predict_datamodule)
+predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
 
 # 5. Save the model!

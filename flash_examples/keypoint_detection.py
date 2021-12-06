@@ -41,14 +41,14 @@ trainer = flash.Trainer(max_epochs=1)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Detect objects in a few images!
-predict_datamodule = KeypointDetectionData.from_files(
+datamodule = KeypointDetectionData.from_files(
     predict_files=[
         str(data_dir / "biwi_sample/images/0.jpg"),
         str(data_dir / "biwi_sample/images/1.jpg"),
         str(data_dir / "biwi_sample/images/10.jpg"),
     ]
 )
-predictions = trainer.predict(model, datamodule=predict_datamodule)
+predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
 
 # 5. Save the model!

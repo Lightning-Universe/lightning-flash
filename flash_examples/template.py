@@ -32,13 +32,14 @@ trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
 trainer.fit(model, datamodule=datamodule)
 
 # 4. Classify a few examples
-predictions = model.predict(
-    [
+datamodule = TemplateData.from_numpy(
+    predict_data=[
         np.array([4.9, 3.0, 1.4, 0.2]),
         np.array([6.9, 3.2, 5.7, 2.3]),
         np.array([7.2, 3.0, 5.8, 1.6]),
     ]
 )
+predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
 
 # 5. Save the model!

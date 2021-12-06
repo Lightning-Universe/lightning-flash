@@ -50,10 +50,10 @@ trainer.fit_loop = active_learning_loop
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Predict what's on a few images! ants or bees?
-predict_datamodule = ImageClassificationData.from_files(
+datamodule = ImageClassificationData.from_files(
     predict_files=["data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg"]
 )
-predictions = trainer.predict(model, datamodule=predict_datamodule)
+predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
 
 # 5. Save the model!

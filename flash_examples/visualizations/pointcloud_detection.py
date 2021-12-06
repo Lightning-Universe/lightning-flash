@@ -36,10 +36,8 @@ trainer = flash.Trainer(
 trainer.fit(model, datamodule)
 
 # 4. Predict what's within a few PointClouds?
-predict_datamodule = PointCloudObjectDetectorData.from_files(
-    predict_files=["data/KITTI_Tiny/Kitti/predict/scans/000000.bin"]
-)
-predictions = trainer.predict(model, datamodule=predict_datamodule)
+datamodule = PointCloudObjectDetectorData.from_files(predict_files=["data/KITTI_Tiny/Kitti/predict/scans/000000.bin"])
+predictions = trainer.predict(model, datamodule=datamodule)
 
 # 5. Save the model!
 trainer.save_checkpoint("pointcloud_segmentation_model.pt")

@@ -34,14 +34,14 @@ trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count(), fast_dev_r
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Detect faces in a few images!
-predict_datamodule = FaceDetectionData.from_files(
+datamodule = FaceDetectionData.from_files(
     predict_files=[
         "data/2002/07/19/big/img_18.jpg",
         "data/2002/07/19/big/img_65.jpg",
         "data/2002/07/19/big/img_255.jpg",
     ]
 )
-predictions = trainer.predict(model, datamodule=predict_datamodule)
+predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
 
 # # 5. Save the model!
