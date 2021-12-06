@@ -30,7 +30,6 @@ from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.input_transform import (
     _create_collate_input_transform_processors,
-    create_transform,
     INPUT_TRANSFORM_TYPE,
     InputTransform,
 )
@@ -51,7 +50,7 @@ class DatasetInput(Input):
             :class:`~flash.core.data.io.input.ClassificationState`.
     """
 
-    def load_sample(self, sample: Any, dataset: Optional[Any] = None) -> Mapping[str, Any]:
+    def load_sample(self, sample: Any) -> Mapping[str, Any]:
         if isinstance(sample, tuple) and len(sample) == 2:
             return {DataKeys.INPUT: sample[0], DataKeys.TARGET: sample[1]}
         return {DataKeys.INPUT: sample}
@@ -90,14 +89,10 @@ class DataModule(DataModule):
 
     def __init__(
         self,
-        train_dataset: Optional[Dataset] = None,
-        val_dataset: Optional[Dataset] = None,
-        test_dataset: Optional[Dataset] = None,
-        predict_dataset: Optional[Dataset] = None,
-        train_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
-        val_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
-        test_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
-        predict_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
+        train_dataset: Optional[Input] = None,
+        val_dataset: Optional[Input] = None,
+        test_dataset: Optional[Input] = None,
+        predict_dataset: Optional[Input] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
         val_split: Optional[float] = None,
         batch_size: Optional[int] = None,
@@ -123,20 +118,15 @@ class DataModule(DataModule):
         self._test_ds = test_dataset
         self._predict_ds = predict_dataset
 
-        self._train_transform = self._resolve_transform(self._train_ds, train_transform, RunningStage.TRAINING)
-        self._val_transform = self._resolve_transform(self._val_ds, val_transform, RunningStage.VALIDATING)
-        self._test_transform = self._resolve_transform(self._test_ds, test_transform, RunningStage.TESTING)
-        self._predict_transform = self._resolve_transform(self._predict_ds, predict_transform, RunningStage.PREDICTING)
+        self._train_dataloader_collate_fn = self._resolve_dataloader_collate_fn(self._train_ds)
+        self._val_dataloader_collate_fn = self._resolve_dataloader_collate_fn(self._val_ds)
+        self._test_dataloader_collate_fn = self._resolve_dataloader_collate_fn(self._test_ds)
+        self._predict_dataloader_collate_fn = self._resolve_dataloader_collate_fn(self._predict_ds)
 
-        self._train_dataloader_collate_fn = self._resolve_dataloader_collate_fn(self._train_transform)
-        self._val_dataloader_collate_fn = self._resolve_dataloader_collate_fn(self._val_transform)
-        self._test_dataloader_collate_fn = self._resolve_dataloader_collate_fn(self._test_transform)
-        self._predict_dataloader_collate_fn = self._resolve_dataloader_collate_fn(self._predict_transform)
-
-        self._train_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._train_transform)
-        self._val_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._val_transform)
-        self._test_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._test_transform)
-        self._predict_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._predict_transform)
+        self._train_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._train_ds)
+        self._val_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._val_ds)
+        self._test_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._test_ds)
+        self._predict_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._predict_ds)
 
         if self._train_ds and self._val_ds and isinstance(val_split, float) and val_split > 0:
             raise MisconfigurationException(
@@ -170,30 +160,23 @@ class DataModule(DataModule):
 
         LightningDataModule.__init__(self)
 
-    def _resolve_transform(
-        self, ds: Optional[Dataset], transform: Optional[INPUT_TRANSFORM_TYPE], running_stage: RunningStage
-    ) -> InputTransform:
-        if isinstance(ds, Input):
-            if ds.transform and transform:
-                raise MisconfigurationException(
-                    f"A single transform should be provided. Found {ds.transform} and {transform}"
-                )
-            if ds.transform is None:
-                return create_transform(
-                    transform, running_stage, ds._data_pipeline_state, self.input_transforms_registry
-                )
-            return ds.transform
-        return create_transform(transform, running_stage, None, self.input_transforms_registry)
+    def _resolve_transform(self, ds: Optional[Input]) -> Optional[InputTransform]:
+        if not isinstance(ds, Input):
+            return None
+        return ds.transform
 
-    def _resolve_dataloader_collate_fn(self, transform: Optional[InputTransform]) -> Callable:
-        if isinstance(transform, InputTransform):
-            return _create_collate_input_transform_processors(transform, [self.data_fetcher])[0]
+    def _resolve_dataloader_collate_fn(self, ds: Optional[Input]) -> Optional[Callable]:
+        if not ds:
+            return None
+        if isinstance(ds.transform, InputTransform):
+            return _create_collate_input_transform_processors(ds.transform, [self.data_fetcher])[0]
         return default_collate
 
-    def _resolve_on_after_batch_transfer_fn(self, transform: Optional[InputTransform]) -> Callable:
-        if isinstance(transform, InputTransform):
-            return _create_collate_input_transform_processors(transform, [self.data_fetcher])[1]
-        return InputTransform._identity
+    def _resolve_on_after_batch_transfer_fn(self, ds: Optional[Input]) -> Optional[Callable]:
+        if not ds:
+            return None
+        if isinstance(ds.transform, InputTransform):
+            return _create_collate_input_transform_processors(ds.transform, [self.data_fetcher])[1]
 
     def _train_dataloader(self) -> DataLoader:
         train_ds: Dataset = self._train_ds
@@ -457,17 +440,9 @@ class DataModule(DataModule):
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`.
-            input_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
-                will be constructed and used.
-            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            sampler: The ``sampler`` to use for the ``train_dataloader``.
-            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
-                Will only be used if ``input_transform = None``.
+            input_cls: Input class used to create the datasets.
+            transform_kwargs: Additional keyword arguments to be used when constructing the transform.
+            data_module_kwargs: Additional keyword arguments to use when constructing the DataModule.
 
         Returns:
             The constructed data module.
