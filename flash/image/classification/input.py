@@ -17,13 +17,12 @@ from typing import Any, Callable, Dict, List, Optional, Union
 import pandas as pd
 
 from flash.core.data.io.classification_input import ClassificationInput, ClassificationState
-from flash.core.data.io.input import DataKeys, InputFormat
+from flash.core.data.io.input import DataKeys
 from flash.core.data.utilities.classification import TargetMode
 from flash.core.data.utilities.data_frame import read_csv, resolve_files, resolve_targets
 from flash.core.data.utilities.paths import filter_valid_files, make_dataset, PATH_TYPE
 from flash.core.data.utilities.samples import to_samples
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
-from flash.core.integrations.labelstudio.input import LabelStudioImageClassificationInput
 from flash.core.utilities.imports import requires
 from flash.image.data import (
     fol,
@@ -139,15 +138,3 @@ class ImageClassificationCSVInput(ImageClassificationDataFrameInput):
         if root is None:
             root = os.path.dirname(csv_file)
         return super().load_data(data_frame, input_key, target_keys, root, resolver)
-
-
-IMAGE_CLASSICATION_INPUTS = {
-    InputFormat.FIFTYONE: ImageClassificationFiftyOneInput,
-    InputFormat.FILES: ImageClassificationFilesInput,
-    InputFormat.FOLDERS: ImageClassificationFolderInput,
-    InputFormat.NUMPY: ImageClassificationNumpyInput,
-    InputFormat.TENSORS: ImageClassificationTensorInput,
-    InputFormat.DATAFRAME: ImageClassificationDataFrameInput,
-    InputFormat.CSV: ImageClassificationCSVInput,
-    InputFormat.LABELSTUDIO: LabelStudioImageClassificationInput,
-}
