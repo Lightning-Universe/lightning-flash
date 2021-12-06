@@ -143,8 +143,6 @@ class DataModule(DataModule):
 
         LightningDataModule.__init__(self)
 
-        self._data_pipeline_state = self.data_pipeline_state
-
     def _train_dataloader(self) -> DataLoader:
         train_ds: Input = self._train_ds
         self._register_callbacks(train_ds)
