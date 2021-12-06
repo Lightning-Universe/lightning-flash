@@ -19,6 +19,7 @@ from pytorch_lightning import LightningDataModule
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader
+from torch.utils.data._utils.collate import default_collate
 from torch.utils.data.dataset import Dataset, IterableDataset
 from torch.utils.data.sampler import Sampler
 
@@ -45,7 +46,7 @@ class DatasetInput(Input):
             :class:`~flash.core.data.io.input.ClassificationState`.
     """
 
-    def load_sample(self, sample: Any, dataset: Optional[Any] = None) -> Mapping[str, Any]:
+    def load_sample(self, sample: Any) -> Mapping[str, Any]:
         if isinstance(sample, tuple) and len(sample) == 2:
             return {DataKeys.INPUT: sample[0], DataKeys.TARGET: sample[1]}
         return {DataKeys.INPUT: sample}
@@ -56,10 +57,10 @@ class DataModule(DataModule):
     :class:`~flash.core.data.datasets.Input` and a :class:`~flash.core.data.callback.BaseDataFetcher`.
 
     Args:
-        train_dataset: Dataset for training. Defaults to None.
-        val_dataset: Dataset for validating model performance during training. Defaults to None.
-        test_dataset: Dataset to test model performance. Defaults to None.
-        predict_dataset: Dataset for predicting. Defaults to None.
+        train_input: Input dataset for training. Defaults to None.
+        val_input: Input dataset for validating model performance during training. Defaults to None.
+        test_input: Input dataset to test model performance. Defaults to None.
+        predict_input: Input dataset for predicting. Defaults to None.
         data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to attach to the
             :class:`~flash.core.data.io.input_transform.InputTransform`. If ``None``, the output from
             :meth:`~flash.core.data.data_module.DataModule.configure_data_fetcher` will be used.
@@ -80,10 +81,10 @@ class DataModule(DataModule):
 
     def __init__(
         self,
-        train_dataset: Optional[Input] = None,
-        val_dataset: Optional[Input] = None,
-        test_dataset: Optional[Input] = None,
-        predict_dataset: Optional[Input] = None,
+        train_input: Optional[Input] = None,
+        val_input: Optional[Input] = None,
+        test_input: Optional[Input] = None,
+        predict_input: Optional[Input] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
         val_split: Optional[float] = None,
         batch_size: Optional[int] = None,
@@ -104,29 +105,40 @@ class DataModule(DataModule):
         self._viz: Optional[BaseVisualization] = None
         self._data_fetcher: Optional[BaseDataFetcher] = data_fetcher or self.configure_data_fetcher()
 
-        self._train_ds = train_dataset
-        self._val_ds = val_dataset
-        self._test_ds = test_dataset
-        self._predict_ds = predict_dataset
+        # TODO: Remove _X_ds reference when previous DataModule is removed.
+        self._train_input = self._train_ds = train_input
+        self._val_input = self._val_ds = val_input
+        self._test_input = self._test_ds = test_input
+        self._predict_input = self._predict_ds = predict_input
 
-        if self._train_ds and self._val_ds and isinstance(val_split, float) and val_split > 0:
+        self._train_dataloader_collate_fn = self._resolve_dataloader_collate_fn(self._train_input)
+        self._val_dataloader_collate_fn = self._resolve_dataloader_collate_fn(self._val_input)
+        self._test_dataloader_collate_fn = self._resolve_dataloader_collate_fn(self._test_input)
+        self._predict_dataloader_collate_fn = self._resolve_dataloader_collate_fn(self._predict_input)
+
+        self._train_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._train_input)
+        self._val_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._val_input)
+        self._test_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._test_input)
+        self._predict_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._predict_input)
+
+        if self._train_input and self._val_input and isinstance(val_split, float) and val_split > 0:
             raise MisconfigurationException(
                 "A `val_dataset` was provided with `val_split`. Please, choose one or the other."
             )
 
-        if self._train_ds is not None and (val_split is not None and self._val_ds is None):
-            self._train_ds, self._val_ds = self._split_train_val(self._train_ds, val_split)
+        if self._train_input is not None and (val_split is not None and self._val_input is None):
+            self._train_input, self._val_input = self._split_train_val(self._train_input, val_split)
 
-        if self._train_ds:
+        if self._train_input:
             self.train_dataloader = self._train_dataloader
 
-        if self._val_ds:
+        if self._val_input:
             self.val_dataloader = self._val_dataloader
 
-        if self._test_ds:
+        if self._test_input:
             self.test_dataloader = self._test_dataloader
 
-        if self._predict_ds:
+        if self._predict_input:
             self.predict_dataloader = self._predict_dataloader
 
         self.batch_size = batch_size
@@ -141,10 +153,27 @@ class DataModule(DataModule):
 
         LightningDataModule.__init__(self)
 
+    def _resolve_transform(self, ds: Optional[Input]) -> Optional[InputTransform]:
+        if not isinstance(ds, Input):
+            return None
+        return ds.transform
+
+    def _resolve_dataloader_collate_fn(self, ds: Optional[Input]) -> Optional[Callable]:
+        if not ds:
+            return None
+        if isinstance(ds.transform, InputTransform):
+            return ds._create_dataloader_collate_fn([self.data_fetcher])
+        return default_collate
+
+    def _resolve_on_after_batch_transfer_fn(self, ds: Optional[Input]) -> Optional[Callable]:
+        if not ds:
+            return None
+        if isinstance(ds.transform, InputTransform):
+            return ds._create_on_after_batch_transfer_fn([self.data_fetcher])
+
     def _train_dataloader(self) -> DataLoader:
-        train_ds: Input = self._train_ds
-        self._register_callbacks(train_ds)
-        collate_fn = train_ds.dataloader_collate_fn
+        train_ds: Input = self._train_input
+        collate_fn = self._train_dataloader_collate_fn
         shuffle: bool = False
         if isinstance(train_ds, IterableDataset):
             drop_last = False
@@ -183,9 +212,8 @@ class DataModule(DataModule):
         )
 
     def _val_dataloader(self) -> DataLoader:
-        val_ds: Input = self._val_ds
-        self._register_callbacks(val_ds)
-        collate_fn = val_ds.dataloader_collate_fn
+        val_ds: Input = self._val_input
+        collate_fn = self._val_dataloader_collate_fn
 
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
             return self.trainer.lightning_module.process_val_dataset(
@@ -207,9 +235,8 @@ class DataModule(DataModule):
         )
 
     def _test_dataloader(self) -> DataLoader:
-        test_ds: Input = self._test_ds
-        self._register_callbacks(test_ds)
-        collate_fn = test_ds.dataloader_collate_fn
+        test_ds: Input = self._test_input
+        collate_fn = self._test_dataloader_collate_fn
 
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
             return self.trainer.lightning_module.process_test_dataset(
@@ -231,9 +258,8 @@ class DataModule(DataModule):
         )
 
     def _predict_dataloader(self) -> DataLoader:
-        predict_ds: Input = self._predict_ds
-        self._register_callbacks(predict_ds)
-        collate_fn = predict_ds.dataloader_collate_fn
+        predict_ds: Input = self._predict_input
+        collate_fn = self._predict_dataloader_collate_fn
 
         if isinstance(predict_ds, IterableDataset):
             batch_size = self.batch_size
@@ -262,14 +288,14 @@ class DataModule(DataModule):
     def data_pipeline_state(self) -> DataPipelineState:
         """Collect the states from the input datasets and their transforms."""
         data_pipeline_state = DataPipelineState()
-        if self._train_ds:
-            self._add_to_data_pipeline_state(self._train_ds, data_pipeline_state)
-        if self._val_ds:
-            self._add_to_data_pipeline_state(self._val_ds, data_pipeline_state)
-        if self._test_ds:
-            self._add_to_data_pipeline_state(self._test_ds, data_pipeline_state)
-        if self._predict_ds:
-            self._add_to_data_pipeline_state(self._predict_ds, data_pipeline_state)
+        if self._train_input:
+            self._add_to_data_pipeline_state(self._train_input, data_pipeline_state)
+        if self._val_input:
+            self._add_to_data_pipeline_state(self._val_input, data_pipeline_state)
+        if self._test_input:
+            self._add_to_data_pipeline_state(self._test_input, data_pipeline_state)
+        if self._predict_input:
+            self._add_to_data_pipeline_state(self._predict_input, data_pipeline_state)
         return data_pipeline_state
 
     def _add_to_data_pipeline_state(self, input: Input, data_pipeline_state: DataPipelineState) -> None:
@@ -281,18 +307,16 @@ class DataModule(DataModule):
                 data_pipeline_state.set_state(state)
 
     def on_after_batch_transfer(self, batch: Any, dataloader_idx: int) -> Any:
-        ds = None
         if self.trainer.training:
-            ds = self._train_ds
+            transform = self._train_on_after_batch_transfer_fn
         elif self.trainer.validating:
-            ds = self._val_ds
+            transform = self._val_on_after_batch_transfer_fn
         elif self.trainer.testing:
-            ds = self._test_ds
+            transform = self._test_on_after_batch_transfer_fn
         elif self.trainer.predicting:
-            ds = self._predict_ds
+            transform = self._predict_on_after_batch_transfer_fn
 
-        if ds:
-            transform = ds.on_after_batch_transfer_fn
+        if transform:
             batch = transform(batch)
 
         return batch
@@ -414,17 +438,9 @@ class DataModule(DataModule):
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`.
-            input_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
-                will be constructed and used.
-            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            sampler: The ``sampler`` to use for the ``train_dataloader``.
-            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
-                Will only be used if ``input_transform = None``.
+            input_cls: Input class used to create the datasets.
+            transform_kwargs: Additional keyword arguments to be used when constructing the transform.
+            data_module_kwargs: Additional keyword arguments to use when constructing the DataModule.
 
         Returns:
             The constructed data module.

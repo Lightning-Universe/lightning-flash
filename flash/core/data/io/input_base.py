@@ -23,6 +23,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Dataset
 
 import flash
+from flash.core.data.callback import FlashCallback
 from flash.core.data.properties import Properties
 from flash.core.data.types import INPUT_TRANSFORM_TYPE
 from flash.core.registry import FlashRegistry
@@ -147,6 +148,20 @@ class InputBase(Properties, metaclass=_InputMeta):
         if len(args) >= 1 and args[0] is not None:
             self.data = self._call_load_data(*args, **kwargs)
 
+    def _create_dataloader_collate_fn(self, callbacks: List[FlashCallback]) -> Optional[Callable]:
+        from flash.core.data.input_transform import _create_collate_input_transform_processors
+
+        if not self.transform:
+            return
+        return _create_collate_input_transform_processors(self.transform, callbacks)[0]
+
+    def _create_on_after_batch_transfer_fn(self, callbacks: List[FlashCallback]) -> Optional[Callable]:
+        from flash.core.data.input_transform import _create_collate_input_transform_processors
+
+        if not self.transform:
+            return
+        return _create_collate_input_transform_processors(self.transform, callbacks)[1]
+
     def _call_load_data(self, *args: Any, **kwargs: Any) -> Union[Sequence, Iterable]:
         from flash.core.data.data_pipeline import DataPipeline
 
@@ -244,18 +259,6 @@ class InputBase(Properties, metaclass=_InputMeta):
                 "The class attribute `input_transforms_registry` should be set as a class attribute. "
             )
         cls.input_transforms_registry(fn=fn, name=enum)
-
-    @property
-    def dataloader_collate_fn(self) -> Optional[Callable]:
-        if self.transform:
-            self.transform.running_stage = self.running_stage
-            return self.transform.dataloader_collate_fn
-
-    @property
-    def on_after_batch_transfer_fn(self) -> Optional[Callable]:
-        if self.transform:
-            self.transform.running_stage = self.running_stage
-            return self.transform.on_after_batch_transfer_fn
 
 
 class Input(InputBase, Dataset):
