@@ -1021,12 +1021,12 @@ def _create_collate_input_transform_processors(
         )
 
     if isinstance(input_transform._collate_in_worker_from_transform, bool):
-        worker_collate_fn, device_collate_fn = input_transform._make_collates(
-            not input_transform._collate_in_worker_from_transform, input_transform._collate
+        worker_collate_fn, device_collate_fn = _make_collates(
+            input_transform, not input_transform._collate_in_worker_from_transform, input_transform._collate
         )
     else:
-        worker_collate_fn, device_collate_fn = input_transform._make_collates(
-            per_sample_transform_on_device_overridden, input_transform._collate
+        worker_collate_fn, device_collate_fn = _make_collates(
+            input_transform, per_sample_transform_on_device_overridden, input_transform._collate
         )
 
     worker_collate_fn = (
