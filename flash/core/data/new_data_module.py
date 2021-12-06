@@ -28,11 +28,7 @@ from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
-from flash.core.data.input_transform import (
-    _create_collate_input_transform_processors,
-    INPUT_TRANSFORM_TYPE,
-    InputTransform,
-)
+from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_base import Input
 from flash.core.data.io.input_transform import DefaultInputTransform
@@ -169,14 +165,14 @@ class DataModule(DataModule):
         if not ds:
             return None
         if isinstance(ds.transform, InputTransform):
-            return _create_collate_input_transform_processors(ds.transform, [self.data_fetcher])[0]
+            return ds._create_dataloader_collate_fn([self.data_fetcher])
         return default_collate
 
     def _resolve_on_after_batch_transfer_fn(self, ds: Optional[Input]) -> Optional[Callable]:
         if not ds:
             return None
         if isinstance(ds.transform, InputTransform):
-            return _create_collate_input_transform_processors(ds.transform, [self.data_fetcher])[1]
+            return ds._create_on_after_batch_transfer_fn([self.data_fetcher])
 
     def _train_dataloader(self) -> DataLoader:
         train_ds: Dataset = self._train_ds
