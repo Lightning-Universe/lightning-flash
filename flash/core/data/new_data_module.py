@@ -139,8 +139,6 @@ class DataModule(DataModule):
 
         self.sampler = sampler
 
-        self.set_running_stages()
-
         LightningDataModule.__init__(self)
 
     def _train_dataloader(self) -> DataLoader:
@@ -262,6 +260,7 @@ class DataModule(DataModule):
 
     @property
     def data_pipeline_state(self) -> DataPipelineState:
+        """Collect the states from the input datasets and their transforms."""
         data_pipeline_state = DataPipelineState()
         if self._train_ds:
             self._add_to_data_pipeline_state(self._train_ds, data_pipeline_state)
@@ -274,6 +273,7 @@ class DataModule(DataModule):
         return data_pipeline_state
 
     def _add_to_data_pipeline_state(self, input: Input, data_pipeline_state: DataPipelineState) -> None:
+        """Collect the states contained within the input datasets and their transforms."""
         for state in input._state.values():
             data_pipeline_state.set_state(state)
         if isinstance(input.transform, InputTransform):
