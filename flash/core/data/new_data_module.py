@@ -321,11 +321,6 @@ class DataModule(DataModule):
 
         return batch
 
-    def _register_callbacks(self, ds: Input) -> None:
-        # TODO: This is a hack and the DataModule should create executors.
-        if ds.transform is not None and self._data_fetcher not in ds.transform.callbacks:
-            ds.transform.callbacks.append(self._data_fetcher)
-
     @classmethod
     def create_inputs(
         cls,
