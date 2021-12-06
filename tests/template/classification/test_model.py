@@ -18,11 +18,10 @@ import pytest
 import torch
 
 from flash import Trainer
-from flash.core.data.data_pipeline import DataPipeline
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _SKLEARN_AVAILABLE
 from flash.template import TemplateSKLearnClassifier
-from flash.template.classification.data import TemplateInputTransform
+from flash.template.classification.data import TemplateData
 
 if _SKLEARN_AVAILABLE:
     from sklearn import datasets
@@ -105,9 +104,10 @@ def test_predict_numpy():
     """Tests that we can generate predictions from a numpy array."""
     row = np.random.rand(1, DummyDataset.num_features)
     model = TemplateSKLearnClassifier(num_features=DummyDataset.num_features, num_classes=DummyDataset.num_classes)
-    data_pipe = DataPipeline(input_transform=TemplateInputTransform())
-    out = model.predict(row, data_pipeline=data_pipe)
-    assert isinstance(out[0], int)
+    datamodule = TemplateData.from_numpy(predict_data=row)
+    trainer = Trainer()
+    out = trainer.predict(model, datamodule=datamodule)
+    assert isinstance(out[0][0], int)
 
 
 @pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
@@ -115,9 +115,10 @@ def test_predict_sklearn():
     """Tests that we can generate predictions from a scikit-learn ``Bunch``."""
     bunch = datasets.load_iris()
     model = TemplateSKLearnClassifier(num_features=DummyDataset.num_features, num_classes=DummyDataset.num_classes)
-    data_pipe = DataPipeline(input_transform=TemplateInputTransform())
-    out = model.predict(bunch, input="sklearn", data_pipeline=data_pipe)
-    assert isinstance(out[0], int)
+    datamodule = TemplateData.from_sklearn(predict_bunch=bunch)
+    trainer = Trainer()
+    out = trainer.predict(model, datamodule=datamodule)
+    assert isinstance(out[0][0], int)
 
 
 @pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
