@@ -160,6 +160,13 @@ def test_classificationtask_train(tmpdir: str, metrics: Any):
     assert "test_nll_loss" in result[0]
 
 
+def test_task_predict_raises():
+    with pytest.raises(AttributeError, match="`flash.Task.predict` has been removed."):
+        model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
+        task = ClassificationTask(model, loss_fn=F.nll_loss)
+        task.predict("args", kwarg="test")
+
+
 @pytest.mark.parametrize("task", [Parent, GrandParent, AdapterParent])
 def test_nested_tasks(tmpdir, task):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())

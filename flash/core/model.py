@@ -449,6 +449,9 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             prog_bar=True,
         )
 
+    def predict(self, *args, **kwargs):
+        raise AttributeError("`flash.Task.predict` has been removed. Use `flash.Trainer.predict` instead.")
+
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         if isinstance(batch, tuple):
             batch = batch[0]
