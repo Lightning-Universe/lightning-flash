@@ -80,7 +80,6 @@ class TemplateSKLearnInput(TemplateNumpyInput):
         Returns:
             A sequence of samples / sample metadata.
         """
-        breakpoint()
         return super().predict_load_data(data.data)
 
 
