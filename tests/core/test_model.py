@@ -203,7 +203,7 @@ def test_classification_task_predict_folder_path(tmpdir):
     _rand_image().save(train_dir / "1.png")
     _rand_image().save(train_dir / "2.png")
 
-    datamodule = ImageClassificationData.from_folders(predict_folder=train_dir)
+    datamodule = ImageClassificationData.from_folders(predict_folder=train_dir, batch_size=1)
 
     task = ImageClassifier(num_classes=10)
     predictions = task.predict(
