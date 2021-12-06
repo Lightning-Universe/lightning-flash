@@ -15,8 +15,8 @@ import os
 from pathlib import Path
 
 import pytest
-from pytorch_lightning import Trainer
 
+from flash.core.trainer import Trainer
 from flash.text import TextClassificationData, TextClassifier
 from tests.helpers.utils import _TEXT_TESTING
 
