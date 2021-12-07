@@ -30,6 +30,7 @@ datamodule = ImageClassificationData.from_folders(
     val_folder="data/hymenoptera_data/val/",
     test_folder="data/hymenoptera_data/test/",
     predict_folder="data/hymenoptera_data/predict/",
+    batch_size=1,
 )
 
 # 3 Fine tune a model

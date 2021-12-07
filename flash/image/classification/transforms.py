@@ -117,3 +117,6 @@ class ImageClassificationInputTransform(InputTransform):
 
     def target_per_sample_transform(self) -> Callable:
         return torch.as_tensor
+
+    def collate(self) -> Callable:
+        return kornia_collate
