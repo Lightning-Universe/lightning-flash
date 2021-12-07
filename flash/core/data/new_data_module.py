@@ -153,6 +153,12 @@ class DataModule(DataModule):
 
         LightningDataModule.__init__(self)
 
+    @property
+    def input_transform(self) -> InputTransform:
+        """Property that returns the input transform class used on input data."""
+        # Find a better way to resolve this.
+        return self._train_ds.transform or self.input_transform_cls()
+
     def _resolve_transform(self, ds: Optional[Input]) -> Optional[InputTransform]:
         if not isinstance(ds, Input):
             return None

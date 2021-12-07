@@ -53,9 +53,12 @@ class Properties:
             self._data_pipeline_state.set_state(state)
 
     def attach_data_pipeline_state(self, data_pipeline_state: "flash.core.data.data_pipeline.DataPipelineState"):
-        self._data_pipeline_state = data_pipeline_state
         for state in self._state.values():
             self._data_pipeline_state.set_state(state)
+        if self._data_pipeline_state:
+            for state in self._data_pipeline_state._state.values():
+                data_pipeline_state.set_state(state)
+        self._data_pipeline_state = data_pipeline_state
 
     @property
     def current_fn(self) -> Optional[str]:

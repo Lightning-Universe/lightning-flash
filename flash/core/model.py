@@ -800,6 +800,9 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         if getattr(self._input_transform, "_ddp_params_and_buffers_to_ignore", None):
             self._ddp_params_and_buffers_to_ignore = self._input_transform._ddp_params_and_buffers_to_ignore
 
+        # used to re-create the state and consolidate the data pipeline.
+        self.build_data_pipeline()
+
     @torch.jit.unused
     @property
     def input_transform(self) -> InputTransform:
@@ -817,7 +820,6 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
     def on_train_dataloader(self) -> None:
         # TODO: Remove this logic when moving to the new DataModule
         if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
-            self.data_pipeline
             return
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self, RunningStage.TRAINING)
