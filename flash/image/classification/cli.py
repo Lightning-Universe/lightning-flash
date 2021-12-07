@@ -19,14 +19,9 @@ from flash.image import ImageClassificationData, ImageClassifier
 __all__ = ["image_classification"]
 
 
-# TODO: Find a better way to prevent double injection of input.
 def from_hymenoptera(
     batch_size: int = 4,
     num_workers: int = 0,
-    train_input=None,  # Hack
-    val_input=None,
-    test_input=None,
-    predict_input=None,
     **data_module_kwargs,
 ) -> ImageClassificationData:
     """Downloads and loads the Hymenoptera (Ants, Bees) data set."""
