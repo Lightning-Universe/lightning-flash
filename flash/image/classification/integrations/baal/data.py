@@ -21,8 +21,8 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader, Dataset, random_split
 
 from flash.core.data.auto_dataset import BaseAutoDataset
-from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipeline
+from flash.core.data.new_data_module import DataModule
 from flash.core.utilities.imports import _BAAL_AVAILABLE, requires
 
 if _BAAL_AVAILABLE:
@@ -77,6 +77,7 @@ class ActiveLearningDataModule(LightningDataModule):
             val_split: Float to split train dataset into train and validation set.
         """
         super().__init__()
+        self.__dict__.update(labelled.__dict__)
         self.labelled = labelled
         self.heuristic = heuristic
         self.map_dataset_to_labelled = map_dataset_to_labelled
@@ -98,6 +99,8 @@ class ActiveLearningDataModule(LightningDataModule):
         self._dataset = ActiveLearningDataset(
             self.labelled._train_ds, labelled=self.map_dataset_to_labelled(self.labelled._train_ds)
         )
+
+        self._input_transform = self.labelled._train_ds.transform
 
         if not self.val_split or not self.has_labelled_data:
             self.val_dataloader = None

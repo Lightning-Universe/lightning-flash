@@ -101,6 +101,7 @@ Here's an example where we load the default transforms and merge with custom `to
 
     from torchvision import transforms as T
 
+    from typing import Tuple
     import flash
     from flash.core.data.io.input import DataKeys
     from flash.core.data.transforms import ApplyToKeys, merge_transforms
