@@ -29,6 +29,7 @@ Here's an example of finetuning.
         train_folder="data/hymenoptera_data/train/",
         val_folder="data/hymenoptera_data/val/",
         test_folder="data/hymenoptera_data/test/",
+        batch_size=1,
     )
 
     # 2. Build the model using desired Task

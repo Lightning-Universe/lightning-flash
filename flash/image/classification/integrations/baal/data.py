@@ -107,6 +107,9 @@ class ActiveLearningDataModule(LightningDataModule):
         if self.labelled._test_ds:
             self.test_dataloader = self._test_dataloader
 
+        if hasattr(self.labelled, "on_after_batch_transfer"):
+            self.on_after_batch_transfer = self.labelled.on_after_batch_transfer
+
         if not self.initial_num_labels:
             warnings.warn(
                 "No labels provided for the initial step," "the estimated uncertainties are unreliable!", UserWarning

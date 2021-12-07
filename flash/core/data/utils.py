@@ -185,7 +185,7 @@ class FuncModule(torch.nn.Module):
         return self.func(*args, **kwargs)
 
     def __str__(self) -> str:
-        return f"{self.__class__.__name__}({self.func.__name__})"
+        return str(self.func)
 
     def __repr__(self):
         return str(self.func)

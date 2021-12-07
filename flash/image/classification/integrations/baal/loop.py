@@ -20,6 +20,7 @@ from pytorch_lightning.loops import Loop
 from pytorch_lightning.loops.fit_loop import FitLoop
 from pytorch_lightning.trainer.progress import Progress
 from pytorch_lightning.trainer.states import TrainerFn, TrainerStatus
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from pytorch_lightning.utilities.model_helpers import is_overridden
 
 import flash
@@ -186,4 +187,8 @@ class ActiveLearningLoop(Loop):
                     _PatchDataLoader(dataloader(), running_state),
                 )
             setattr(self.trainer, dataloader_name, None)
-            getattr(self.trainer, f"reset_{dataloader_name}")(self.trainer.lightning_module)
+            # TODO: Resolve this within PyTorch Lightning.
+            try:
+                getattr(self.trainer, f"reset_{dataloader_name}")(self.trainer.lightning_module)
+            except MisconfigurationException:
+                pass
