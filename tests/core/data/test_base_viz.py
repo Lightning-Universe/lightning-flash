@@ -98,7 +98,7 @@ class TestBaseViz:
             for _ in range(num_tests):
                 for fcn_name in _CALLBACK_FUNCS:
                     dm.data_fetcher.reset()
-                    assert dm.data_fetcher.batches == {"predict": {}, "test": {}, "train": {}, "val": {}, "serve": {}}
+                    assert dm.data_fetcher.batches == {"predict": {}, "test": {}, "train": {}, "val": {}}
                     fcn = getattr(dm, f"show_{stage}_batch")
                     fcn(fcn_name, reset=False)
 
