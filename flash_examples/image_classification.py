@@ -14,7 +14,6 @@
 import torch
 
 import flash
-from flash.core.classification import LabelsOutput
 from flash.core.data.utils import download_data
 from flash.image import ImageClassificationData, ImageClassifier
 
@@ -29,7 +28,7 @@ datamodule = ImageClassificationData.from_folders(
 )
 
 # 2. Build the task
-model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes, output=LabelsOutput())
+model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
 
 # 3. Create the trainer and finetune the model
 trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
