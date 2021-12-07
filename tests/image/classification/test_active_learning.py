@@ -101,9 +101,9 @@ def test_active_learning_training(simple_datamodule, initial_num_labels, query_s
 
     trainer.finetune(model, datamodule=active_learning_dm, strategy="no_freeze")
     # Check that all metrics are logged
-    # assert all(
-    #    any(m in log_met for log_met in active_learning_loop.trainer.logged_metrics) for m in ("train", "val", "test")
-    #    )
+    assert all(
+        any(m in log_met for log_met in active_learning_loop.trainer.logged_metrics) for m in ("train", "val", "test")
+    )
 
     # Check that the weights has changed for both module.
     classifier = active_learning_loop._lightning_module.adapter.parameters()

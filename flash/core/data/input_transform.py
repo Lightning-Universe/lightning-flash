@@ -27,10 +27,10 @@ from flash.core.data.io.input_transform import _InputTransformProcessorV2
 from flash.core.data.properties import Properties
 from flash.core.data.states import CollateFn
 from flash.core.data.transforms import ApplyToKeys
-from flash.core.data.types import INPUT_TRANSFORM_TYPE
 from flash.core.data.utils import _INPUT_TRANSFORM_FUNCS, _STAGES_PREFIX
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.stages import RunningStage
+from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 
 
 class InputTransformPlacement(LightningEnum):

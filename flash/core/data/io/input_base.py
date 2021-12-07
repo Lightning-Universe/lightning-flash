@@ -25,9 +25,9 @@ from torch.utils.data import Dataset
 import flash
 from flash.core.data.callback import FlashCallback
 from flash.core.data.properties import Properties
-from flash.core.data.types import INPUT_TRANSFORM_TYPE
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.stages import RunningStage
+from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 
 if sys.version_info < (3, 7):
     from typing import GenericMeta
