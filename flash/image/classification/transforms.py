@@ -119,4 +119,5 @@ class ImageClassificationInputTransform(InputTransform):
         return torch.as_tensor
 
     def collate(self) -> Callable:
+        # TODO: Remove kornia collate for default_collate
         return kornia_collate
