@@ -53,7 +53,7 @@ datamodule = ImageClassificationData.from_files(
     predict_files=["data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg"],
     batch_size=1,
 )
-predictions = flash.Trainer().predict(model, datamodule=datamodule)
+predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
 
 # 5. Save the model!
