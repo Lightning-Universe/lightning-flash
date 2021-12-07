@@ -43,6 +43,7 @@ from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import OutputTransform
+from flash.core.data.new_data_module import DataModule as NewDataModule
 from flash.core.data.process import Deserializer, DeserializerMapping
 from flash.core.data.properties import ProcessState
 from flash.core.finetuning import _DEFAULTS_FINETUNE_STRATEGIES, _FINETUNING_STRATEGIES_REGISTRY
@@ -349,6 +350,20 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         # Explicitly set the output to call the setter
         self.deserializer = deserializer
         self.output = output
+        self._wrapped_predict_step = False
+
+    def _wrap_predict_step(task, predict_step: Callable) -> Callable:
+
+        process_fn = task.build_data_pipeline().output_transform_processor(RunningStage.PREDICTING)
+
+        @functools.wraps(predict_step)
+        def wrapper(self, *args, **kwargs):
+            predictions = predict_step(self, *args, **kwargs)
+            return process_fn(predictions)
+
+        task._wrapped_predict_step = True
+
+        return wrapper
 
     def step(self, batch: Any, batch_idx: int, metrics: nn.ModuleDict) -> Any:
         """Implement the core logic for the training/validation/test step. By default this includes:
@@ -741,7 +756,15 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             deserializer=deserializer,
             output=output,
         )
+
         self._data_pipeline_state = self._data_pipeline_state or DataPipelineState()
+
+        # HACK: Should we get rid of the DataPipeline entirely?
+        data_pipeline_state = datamodule.data_pipeline_state if isinstance(datamodule, NewDataModule) else None
+        if data_pipeline_state:
+            for state in data_pipeline_state._state.values():
+                self._data_pipeline_state.set_state(state)
+
         self.attach_data_pipeline_state(self._data_pipeline_state)
         self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)
         return data_pipeline
@@ -779,6 +802,9 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         if getattr(self._input_transform, "_ddp_params_and_buffers_to_ignore", None):
             self._ddp_params_and_buffers_to_ignore = self._input_transform._ddp_params_and_buffers_to_ignore
 
+        # used to re-create the state and consolidate the data pipeline.
+        self.build_data_pipeline()
+
     @torch.jit.unused
     @property
     def input_transform(self) -> InputTransform:
@@ -789,36 +815,53 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
     def output_transform(self) -> OutputTransform:
         return getattr(self.data_pipeline, "_output_transform", None)
 
+    def on_predict_start(self) -> None:
+        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule) and not self._wrapped_predict_step:
+            self.predict_step = self._wrap_predict_step(self.predict_step)
+
     def on_train_dataloader(self) -> None:
+        # TODO: Remove this logic when moving to the new DataModule
+        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
+            return
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self, RunningStage.TRAINING)
             self.data_pipeline._attach_to_model(self, RunningStage.TRAINING)
         super().on_train_dataloader()
 
     def on_val_dataloader(self) -> None:
+        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
+            return
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self, RunningStage.VALIDATING)
             self.data_pipeline._attach_to_model(self, RunningStage.VALIDATING)
         super().on_val_dataloader()
 
     def on_test_dataloader(self, *_) -> None:
+        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
+            return
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self, RunningStage.TESTING)
             self.data_pipeline._attach_to_model(self, RunningStage.TESTING)
         super().on_test_dataloader()
 
     def on_predict_dataloader(self) -> None:
+        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
+            return
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self, RunningStage.PREDICTING)
             self.data_pipeline._attach_to_model(self, RunningStage.PREDICTING)
         super().on_predict_dataloader()
 
     def on_predict_end(self) -> None:
+        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
+            return
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self)
         super().on_predict_end()
 
     def on_fit_end(self) -> None:
+        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
+            return
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self)
         super().on_fit_end()

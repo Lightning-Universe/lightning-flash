@@ -101,21 +101,49 @@ Here's an example where we load the default transforms and merge with custom `to
 
     from torchvision import transforms as T
 
+    from typing import Tuple, Callable
     import flash
     from flash.core.data.io.input import DataKeys
     from flash.core.data.transforms import ApplyToKeys, merge_transforms
     from flash.image import ImageClassificationData, ImageClassifier
+    from flash.core.data.input_transform import InputTransform
     from flash.image.classification.transforms import default_transforms
+    from dataclasses import dataclass
 
-    per_sample_transform = ApplyToKeys(
-        DataKeys.INPUT,
-        T.Compose([T.RandomHorizontalFlip(), T.ColorJitter(), T.RandomAutocontrast(), T.RandomPerspective()]),
-    )
 
-    new_transforms = merge_transforms(default_transforms((64, 64)), {"per_sample_transform": per_sample_transform})
+    @dataclass
+    class ImageClassificationInputTransform(InputTransform):
+
+        image_size: Tuple[int, int] = (196, 196)
+
+        def input_per_sample_transform(self):
+            return T.Compose(
+                [T.ToTensor(), T.Resize(self.image_size), T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]
+            )
+
+        def train_input_per_sample_transform(self):
+            return T.Compose(
+                [
+                    T.ToTensor(),
+                    T.Resize(self.image_size),
+                    T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+                    T.RandomHorizontalFlip(),
+                    T.ColorJitter(),
+                    T.RandomAutocontrast(),
+                    T.RandomPerspective(),
+                ]
+            )
+
+        def target_per_sample_transform(self) -> Callable:
+            return torch.as_tensor
+
 
     datamodule = ImageClassificationData.from_folders(
-        train_folder="data/hymenoptera_data/train/", val_folder="data/hymenoptera_data/val/", train_transform=new_transforms
+        train_folder="data/hymenoptera_data/train/",
+        val_folder="data/hymenoptera_data/val/",
+        train_transform=ImageClassificationInputTransform,
+        transform_kwargs=dict(image_size=(128, 128)),
+        batch_size=1,
     )
 
     model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)

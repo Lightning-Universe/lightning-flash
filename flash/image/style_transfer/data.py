@@ -24,7 +24,7 @@ from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 from flash.core.utilities.stages import RunningStage
-from flash.image.classification.data import ImageClassificationFilesInput, ImageClassificationFolderInput
+from flash.image.classification.input import ImageClassificationFilesInput, ImageClassificationFolderInput
 from flash.image.data import ImageFilesInput, ImageNumpyInput, ImageTensorInput
 
 if _TORCHVISION_AVAILABLE:

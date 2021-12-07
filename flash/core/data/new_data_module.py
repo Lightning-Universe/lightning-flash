@@ -153,6 +153,12 @@ class DataModule(DataModule):
 
         LightningDataModule.__init__(self)
 
+    @property
+    def input_transform(self) -> InputTransform:
+        """Property that returns the input transform class used on input data."""
+        # Find a better way to resolve this.
+        return self._train_ds.transform or self.input_transform_cls()
+
     def _resolve_transform(self, ds: Optional[Input]) -> Optional[InputTransform]:
         if not isinstance(ds, Input):
             return None
@@ -307,9 +313,12 @@ class DataModule(DataModule):
                 data_pipeline_state.set_state(state)
 
     def on_after_batch_transfer(self, batch: Any, dataloader_idx: int) -> Any:
+        if getattr(self, "trainer", None) is None:
+            return batch
+        transform = None
         if self.trainer.training:
             transform = self._train_on_after_batch_transfer_fn
-        elif self.trainer.validating:
+        elif self.trainer.validating or self.trainer.sanity_checking:
             transform = self._val_on_after_batch_transfer_fn
         elif self.trainer.testing:
             transform = self._test_on_after_batch_transfer_fn

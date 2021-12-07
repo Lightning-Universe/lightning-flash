@@ -36,7 +36,8 @@ datamodule = ImageClassificationData.from_csv(
     train_resolver=resolver,
     val_file="data/movie_posters/val/metadata.csv",
     val_resolver=resolver,
-    image_size=(128, 128),
+    transform_kwargs={"image_size": (128, 128)},
+    batch_size=1,
 )
 
 # 2. Build the task
@@ -52,7 +53,8 @@ datamodule = ImageClassificationData.from_files(
         "data/movie_posters/predict/tt0085318.jpg",
         "data/movie_posters/predict/tt0089461.jpg",
         "data/movie_posters/predict/tt0097179.jpg",
-    ]
+    ],
+    batch_size=3,
 )
 predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)

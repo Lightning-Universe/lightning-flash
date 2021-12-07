@@ -27,7 +27,6 @@ from pytorch_lightning.utilities.model_helpers import is_overridden
 
 import flash
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import InputFormat
 from flash.core.utilities.lightning_cli import (
     class_from_function,
     LightningArgumentParser,
@@ -192,12 +191,9 @@ class FlashCLI(LightningCLI):
     def add_arguments_to_parser(self, parser) -> None:
         subcommands = parser.add_subcommands()
 
-        inputs = self.local_datamodule_class.input_transform_cls().available_inputs()
-
-        for input in inputs:
-            if isinstance(input, InputFormat):
-                input = input.value
-            function = f"from_{input}"
+        for function in vars(self.local_datamodule_class).keys():
+            if not function.startswith("from"):
+                continue
             if (
                 (hasattr(self.local_datamodule_class, function) and self.legacy)
                 or (
@@ -207,7 +203,7 @@ class FlashCLI(LightningCLI):
                 )
                 or (not hasattr(DataModule, function) and not self.legacy)
             ):
-                if getattr(self.local_datamodule_class, function) is not None:
+                if getattr(self.local_datamodule_class, function, None) is not None:
                     self.add_subcommand_from_function(subcommands, getattr(self.local_datamodule_class, function))
 
         for datamodule_builder in self.additional_datamodule_builders:
@@ -240,6 +236,10 @@ class FlashCLI(LightningCLI):
                     "val_dataset",
                     "test_dataset",
                     "predict_dataset",
+                    "train_input",
+                    "val_input",
+                    "test_input",
+                    "predict_input",
                     "input",
                     "input_transform",
                 },

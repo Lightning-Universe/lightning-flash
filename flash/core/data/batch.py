@@ -53,6 +53,26 @@ class _DeserializeProcessor(torch.nn.Module):
         return sample
 
 
+class _DeserializeProcessorV2(torch.nn.Module):
+    def __init__(
+        self,
+        deserializer: "Deserializer",
+        input_transform: "InputTransform",
+        per_sample_transform: Callable,
+    ):
+        super().__init__()
+        self.input_transform = input_transform
+        self.callback = ControlFlow(self.input_transform.callbacks)
+        self.deserializer = convert_to_modules(deserializer)
+        self.per_sample_transform = convert_to_modules(per_sample_transform)
+
+    def forward(self, sample: str):
+        sample = self.deserializer(sample)
+        sample = self.per_sample_transform(sample)
+        self.callback.on_per_sample_transform(sample, RunningStage.SERVING)
+        return sample
+
+
 def default_uncollate(batch: Any):
     """
     This function is used to uncollate a batch into samples.

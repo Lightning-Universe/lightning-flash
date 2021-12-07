@@ -40,11 +40,14 @@ def test_data_module():
     def predict_fn(data):
         return data + 1000
 
-    class TestDataset(Input):
-        pass
-
     @dataclass
     class TestTransform(InputTransform):
+        def per_sample_transform(self):
+            def fn(x):
+                return x
+
+            return fn
+
         def per_batch_transform_on_device(self) -> Callable:
             if self.training:
                 return train_fn
@@ -55,24 +58,23 @@ def test_data_module():
             elif self.predicting:
                 return predict_fn
 
-    transform = TestTransform(RunningStage.TRAINING)
-    assert transform._running_stage == RunningStage.TRAINING
-    train_dataset = TestDataset(RunningStage.TRAINING, range(10), transform=transform)
+    train_dataset = Input(RunningStage.TRAINING, range(10), transform=TestTransform)
+    assert train_dataset.transform._running_stage == RunningStage.TRAINING
     assert train_dataset.running_stage == RunningStage.TRAINING
 
     transform = TestTransform(RunningStage.VALIDATING)
     assert transform._running_stage == RunningStage.VALIDATING
-    val_dataset = TestDataset(RunningStage.VALIDATING, range(10), transform=transform)
+    val_dataset = Input(RunningStage.VALIDATING, range(10), transform=transform)
     assert val_dataset.running_stage == RunningStage.VALIDATING
 
     transform = TestTransform(RunningStage.TESTING)
     assert transform._running_stage == RunningStage.TESTING
-    test_dataset = TestDataset(RunningStage.TESTING, range(10), transform=transform)
+    test_dataset = Input(RunningStage.TESTING, range(10), transform=transform)
     assert test_dataset.running_stage == RunningStage.TESTING
 
     transform = TestTransform(RunningStage.PREDICTING)
     assert transform._running_stage == RunningStage.PREDICTING
-    predict_dataset = TestDataset(RunningStage.PREDICTING, range(10), transform=transform)
+    predict_dataset = Input(RunningStage.PREDICTING, range(10), transform=transform)
     assert predict_dataset.running_stage == RunningStage.PREDICTING
 
     dm = DataModule(
@@ -82,8 +84,13 @@ def test_data_module():
         predict_input=predict_dataset,
         batch_size=2,
     )
-
+    assert len(dm.train_dataloader()) == 5
     batch = next(iter(dm.train_dataloader()))
+    assert batch.shape == torch.Size([2])
+    assert batch.min() >= 0 and batch.max() < 10
+
+    assert len(dm.val_dataloader()) == 5
+    batch = next(iter(dm.val_dataloader()))
     assert batch.shape == torch.Size([2])
     assert batch.min() >= 0 and batch.max() < 10
 
@@ -129,7 +136,7 @@ def test_data_module():
     class CustomDataModule(DataModule):
         pass
 
-    CustomDataModule.register_input("custom", TestDataset)
+    CustomDataModule.register_input("custom", Input)
     train_dataset, *_ = DataModule.create_inputs("custom", range(10))
     assert train_dataset[0] == 0
 

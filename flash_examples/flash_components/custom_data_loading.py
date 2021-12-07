@@ -45,18 +45,18 @@ download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", f"{
 
 
 #############################################################################################
-#                         Step 1 / 2: Implement a Input                              #
+#                         Step 1 / 2: Implement a Input                                     #
 #                                                                                           #
-# An `Input` is a state-aware (c.f training, validating, testing and predicting)      #
+# An `Input` is a state-aware (c.f training, validating, testing and predicting)            #
 # dataset.                                                                                  #
 # and with specialized hooks (c.f load_data, load_sample) for each of those stages.         #
 # The hook resolution for the function is done in the following way.                        #
 # If {state}_load_data is implemented then it would be used exclusively for that stage.     #
 # Otherwise, it would use the load_data function.                                           #
-# If you use Input outside of Flash, the only requirements are to return a Sequence  #
-# from load_data with Input or an Iterable with FlashIterableDataset.                #
-# When using Input with Flash Tasks, the model expects the `load_sample` to return a #
-#  dictionary with `DataKeys` as its keys (c.f `input`, `target`, metadata)          #
+# If you use Input outside of Flash, the only requirements are to return a Sequence         #
+# from load_data with Input or an Iterable with FlashIterableDataset.                       #
+# When using Input with Flash Tasks, the model expects the `load_sample` to return a        #
+#  dictionary with `DataKeys` as its keys (c.f `input`, `target`, metadata)                 #
 #                                                                                           #
 #############################################################################################
 
@@ -210,7 +210,7 @@ print(train_dataset[0])
 #############################################################################################
 #                           Step 4 / 5: Create a DataModule                                 #
 #                                                                                           #
-# The `DataModule` class is a collection of Input and you can pass them directly to  #
+# The `DataModule` class is a collection of Input and you can pass them directly to         #
 # its init function.                                                                        #
 #                                                                                           #
 #############################################################################################
@@ -269,7 +269,7 @@ print(batch)
 #############################################################################################
 #                Step 5 / 5: Provide your new utility with your DataModule                  #
 #                                                                                           #
-# The `DataModule` class is a collection of Input and you can pass them directly to  #
+# The `DataModule` class is a collection of Input and you can pass them directly to         #
 # its init function.                                                                        #
 #                                                                                           #
 #############################################################################################

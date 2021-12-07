@@ -27,6 +27,7 @@ from flash.core.data.callback import FlashCallback
 from flash.core.data.properties import Properties
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.stages import RunningStage
+from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 
 if sys.version_info < (3, 7):
     from typing import GenericMeta
@@ -126,13 +127,21 @@ class InputBase(Properties, metaclass=_InputMeta):
         self,
         running_stage: RunningStage,
         *args: Any,
-        transform: "flash.InputTransform" = None,
+        transform: INPUT_TRANSFORM_TYPE = None,
+        transform_kwargs: Optional[Dict] = None,
+        input_transforms_registry: Optional[FlashRegistry] = None,
         data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None,
         **kwargs: Any,
     ) -> None:
         from flash.core.data.input_transform import create_transform
 
-        self.transform = create_transform(transform, running_stage, data_pipeline_state, self.input_transforms_registry)
+        self.transform = create_transform(
+            transform,
+            running_stage,
+            data_pipeline_state,
+            input_transforms_registry or self.input_transforms_registry,
+            transform_kwargs,
+        )
         super().__init__(running_stage=running_stage, data_pipeline_state=data_pipeline_state)
 
         self.data = None

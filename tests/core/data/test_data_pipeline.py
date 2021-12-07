@@ -360,7 +360,6 @@ def test_attaching_datapipeline_to_model(tmpdir):
         on_predict_start_called = False
 
         def on_fit_start(self):
-            assert self.predict_step.__self__ == self
             self._saved_predict_step = self.predict_step
 
         @staticmethod

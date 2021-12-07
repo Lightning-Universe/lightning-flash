@@ -29,6 +29,7 @@ Here's an example of finetuning.
         train_folder="data/hymenoptera_data/train/",
         val_folder="data/hymenoptera_data/val/",
         test_folder="data/hymenoptera_data/test/",
+        batch_size=1,
     )
 
     # 2. Build the model using desired Task
@@ -62,7 +63,8 @@ Once you've finetuned, use the model to predict:
         predict_files=[
             "data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg",
             "data/hymenoptera_data/val/ants/2255445811_dabcdf7258.jpg",
-        ]
+        ],
+        batch_size=1,
     )
     predictions = trainer.predict(model, datamodule=predict_datamodule)
     print(predictions)

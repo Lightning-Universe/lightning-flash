@@ -26,14 +26,14 @@ def test_multicrop_input_transform():
     size_crops = [160, 96]
     crop_scales = [[0.4, 1], [0.05, 0.4]]
 
-    train_dataloader = ssl_datamodule(
+    datamodule = ssl_datamodule(
         batch_size=batch_size,
         total_num_crops=total_num_crops,
         num_crops=num_crops,
         size_crops=size_crops,
         crop_scales=crop_scales,
-    )._train_dataloader()
-    batch = next(iter(train_dataloader))
+    )
+    batch = next(iter(datamodule.train_dataloader()))
 
     assert len(batch[DataKeys.INPUT]) == total_num_crops
     assert batch[DataKeys.INPUT][0].shape == (batch_size, 3, size_crops[0], size_crops[0])
