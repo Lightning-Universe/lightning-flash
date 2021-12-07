@@ -757,6 +757,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             output=output,
         )
 
+        self._data_pipeline_state = self._data_pipeline_state or DataPipelineState()
+
         # HACK: Should we get rid of the DataPipeline entirely?
         data_pipeline_state = datamodule.data_pipeline_state if isinstance(datamodule, NewDataModule) else None
         if data_pipeline_state:
