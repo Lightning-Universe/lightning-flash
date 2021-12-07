@@ -19,7 +19,7 @@ import torch
 
 from flash.core.data.input_transform import InputTransform
 from flash.core.data.io.input import DataKeys
-from flash.core.data.transforms import ApplyToKeys, default_collate, kornia_collate, merge_transforms
+from flash.core.data.transforms import ApplyToKeys, kornia_collate, merge_transforms
 from flash.core.utilities.imports import _ALBUMENTATIONS_AVAILABLE, _KORNIA_AVAILABLE, _TORCHVISION_AVAILABLE, requires
 
 if _KORNIA_AVAILABLE:
@@ -120,9 +120,4 @@ class ImageClassificationInputTransform(InputTransform):
 
     def collate(self) -> Callable:
         # TODO: Remove kornia collate for default_collate
-
-        def fn(x):
-            breakpoint()
-            return default_collate(x)
-
-        return fn
+        return kornia_collate
