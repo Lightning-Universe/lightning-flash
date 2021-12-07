@@ -661,37 +661,37 @@ class _InputTransformProcessorV2(torch.nn.Module):
         if isinstance(samples, dict):
             samples = dict(samples.items())
 
-            if self.apply_per_sample_transform:
-                _samples = []
+        if self.apply_per_sample_transform:
+            _samples = []
 
-                if isinstance(samples, Mapping):
-                    samples = [samples]
+            if isinstance(samples, Mapping):
+                samples = [samples]
 
-                for sample in samples:
-                    sample = self.per_sample_transform(sample)
-                    if self.on_device:
-                        self.callback.on_per_sample_transform_on_device(sample, self.stage)
-                    else:
-                        self.callback.on_per_sample_transform(sample, self.stage)
-                    _samples.append(sample)
+            for sample in samples:
+                sample = self.per_sample_transform(sample)
+                if self.on_device:
+                    self.callback.on_per_sample_transform_on_device(sample, self.stage)
+                else:
+                    self.callback.on_per_sample_transform(sample, self.stage)
+                _samples.append(sample)
 
-                samples = type(_samples)(_samples)
+            samples = type(_samples)(_samples)
 
-                samples, metadata = self._extract_metadata(samples)
-                try:
-                    samples = self.collate_fn(samples, metadata)
-                except TypeError:
-                    samples = self.collate_fn(samples)
-                if metadata and isinstance(samples, dict):
-                    samples[DataKeys.METADATA] = metadata
-                self.callback.on_collate(samples, self.stage)
+            samples, metadata = self._extract_metadata(samples)
+            try:
+                samples = self.collate_fn(samples, metadata)
+            except TypeError:
+                samples = self.collate_fn(samples)
+            if metadata and isinstance(samples, dict):
+                samples[DataKeys.METADATA] = metadata
+            self.callback.on_collate(samples, self.stage)
 
-            samples = self.per_batch_transform(samples)
-            if self.on_device:
-                self.callback.on_per_batch_transform_on_device(samples, self.stage)
-            else:
-                self.callback.on_per_batch_transform(samples, self.stage)
-            return samples
+        samples = self.per_batch_transform(samples)
+        if self.on_device:
+            self.callback.on_per_batch_transform_on_device(samples, self.stage)
+        else:
+            self.callback.on_per_batch_transform(samples, self.stage)
+        return samples
 
     def __str__(self) -> str:
         # todo: define repr function which would take object and string attributes to be shown
