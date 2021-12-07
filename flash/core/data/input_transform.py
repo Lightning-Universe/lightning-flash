@@ -24,8 +24,14 @@ import flash
 from flash.core.data.callback import FlashCallback
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import _InputTransformProcessorV2
-from flash.core.data.properties import Properties
-from flash.core.data.states import CollateFn
+from flash.core.data.properties import ProcessState, Properties
+from flash.core.data.states import (
+    CollateFn,
+    PerBatchTransform,
+    PerBatchTransformOnDevice,
+    PerSampleTransform,
+    PerSampleTransformOnDevice,
+)
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import _INPUT_TRANSFORM_FUNCS, _STAGES_PREFIX
 from flash.core.registry import FlashRegistry
@@ -753,9 +759,10 @@ class InputTransform(Properties):
 
     @partial(transform_context, current_fn="per_sample_transform")
     def _per_sample_transform(self, sample: Any) -> Any:
+        fn = self._get_current_transform(PerSampleTransform)
         if isinstance(sample, list):
-            return [self.current_transform(s) for s in sample]
-        return self.current_transform(sample)
+            return [fn(s) for s in sample]
+        return fn(sample)
 
     @partial(transform_context, current_fn="per_batch_transform")
     def _per_batch_transform(self, batch: Any) -> Any:
@@ -764,7 +771,7 @@ class InputTransform(Properties):
         .. note::     This option is mutually exclusive with :meth:`per_sample_transform_on_device`,     since if both
         are specified, uncollation has to be applied.
         """
-        return self.current_transform(batch)
+        return self._get_current_transform(PerBatchTransform)(batch)
 
     @partial(transform_context, current_fn="collate")
     def _collate(self, samples: Sequence, metadata=None) -> Any:
@@ -786,6 +793,12 @@ class InputTransform(Properties):
             return collate_fn(samples, metadata)
         return collate_fn(samples)
 
+    def _get_current_transform(self, process_state: ProcessState):
+        fn = self.get_state(process_state)
+        if fn is not None and fn.transform is not None:
+            return fn.transform
+        return self.current_transform
+
     @partial(transform_context, current_fn="per_sample_transform_on_device")
     def _per_sample_transform_on_device(self, sample: Any) -> Any:
         """Transforms to apply to the data before the collation (per-sample basis).
@@ -795,9 +808,10 @@ class InputTransform(Properties):
         workers, since to make that happen     each of the workers would have to create it's own CUDA-context which
         would pollute GPU memory (if on GPU).
         """
+        fn = self._get_current_transform(PerSampleTransformOnDevice)
         if isinstance(sample, list):
-            return [self.current_transform(s) for s in sample]
-        return self.current_transform(sample)
+            return [fn(s) for s in sample]
+        return fn(sample)
 
     @partial(transform_context, current_fn="per_batch_transform_on_device")
     def _per_batch_transform_on_device(self, batch: Any) -> Any:
@@ -806,7 +820,7 @@ class InputTransform(Properties):
         .. note::     This function won't be called within the dataloader workers, since to make that happen     each of
         the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
         """
-        return self.current_transform(batch)
+        return self._get_current_transform(PerBatchTransformOnDevice)(batch)
 
     #############
     # UTILITIES #
