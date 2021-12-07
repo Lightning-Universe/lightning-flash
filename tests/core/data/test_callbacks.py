@@ -65,7 +65,7 @@ def test_base_data_fetcher(tmpdir):
 
     data_fetcher.check()
     data_fetcher.reset()
-    assert data_fetcher.batches == {"train": {}, "test": {}, "val": {}, "predict": {}, "serve": {}}
+    assert data_fetcher.batches == {"train": {}, "test": {}, "val": {}, "predict": {}}
 
 
 def test_data_loaders_num_workers_to_0(tmpdir):
