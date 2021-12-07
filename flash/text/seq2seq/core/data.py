@@ -11,28 +11,28 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from dataclasses import dataclass, field
-from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from typing import Any, Dict, List, Optional, Type, Union
 
-import torch
 from torch import Tensor
-from torch.utils.data import Sampler
 
-import flash
-from flash.core.data.callback import BaseDataFetcher
-from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import Input, InputFormat
-from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.data_pipeline import DataPipelineState
+from flash.core.data.io.input import DataKeys
+from flash.core.data.io.input_base import Input
 from flash.core.data.io.output_transform import OutputTransform
+from flash.core.data.new_data_module import DataModule
 from flash.core.data.process import Deserializer
-from flash.core.data.properties import ProcessState
+from flash.core.data.utilities.paths import PATH_TYPE
+from flash.core.integrations.transformers.states import TransformersBackboneState
+from flash.core.integrations.transformers.transforms import TransformersInputTransform
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
+from flash.core.utilities.stages import RunningStage
+from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 
 if _TEXT_AVAILABLE:
-    import datasets
-    from datasets import DatasetDict, load_dataset
-    from transformers import AutoTokenizer, default_data_collator
+    from datasets import Dataset, load_dataset
+    from transformers import AutoTokenizer
+else:
+    Dataset = object
 
 
 class Seq2SeqDeserializer(Deserializer):
@@ -62,289 +62,120 @@ class Seq2SeqDeserializer(Deserializer):
 
 class Seq2SeqInput(Input):
     @requires("text")
-    def __init__(
+    def load_data(
         self,
-        backbone: str,
+        hf_dataset: Dataset,
+        input_key: str,
+        target_key: Optional[str] = None,
         max_source_length: int = 128,
         max_target_length: int = 128,
         padding: Union[str, bool] = "max_length",
-        **backbone_kwargs,
-    ):
-        super().__init__()
-
-        self.backbone = backbone
-        self.backbone_kwargs = backbone_kwargs
-        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True, **backbone_kwargs)
+    ) -> Dataset:
         self.max_source_length = max_source_length
         self.max_target_length = max_target_length
         self.padding = padding
 
-    def _tokenize_fn(
-        self,
-        ex: Union[Dict[str, str], str],
-        input: Optional[str] = None,
-        target: Optional[str] = None,
-    ) -> Callable:
-        if isinstance(ex, dict):
-            ex_input = ex[input]
-            ex_target = ex[target] if target else None
-        else:
-            ex_input = ex
-            ex_target = None
+        # remove extra columns
+        extra_columns = set(hf_dataset.column_names) - {input_key, target_key}
+        hf_dataset = hf_dataset.remove_columns(extra_columns)
 
-        model_inputs = self.tokenizer(
-            ex_input,
+        if input_key != DataKeys.INPUT:
+            hf_dataset = hf_dataset.rename_column(input_key, DataKeys.INPUT)
+
+        if target_key != DataKeys.TARGET:
+            hf_dataset = hf_dataset.rename_column(target_key, DataKeys.TARGET)
+
+        return hf_dataset
+
+    def load_sample(self, sample: Dict[str, Any]) -> Any:
+        tokenizer = self.get_state(TransformersBackboneState).tokenizer
+        tokenized_sample = tokenizer(
+            sample[DataKeys.INPUT],
             max_length=self.max_source_length,
             padding=self.padding,
             add_special_tokens=True,
             truncation=True,
         )
-        if ex_target is not None:
-            with self.tokenizer.as_target_tokenizer():
-                labels = self.tokenizer(
-                    ex_target,
+        tokenized_sample = tokenized_sample.data
+        if DataKeys.TARGET in sample:
+            with tokenizer.as_target_tokenizer():
+                tokenized_sample[DataKeys.TARGET] = tokenizer(
+                    sample[DataKeys.TARGET],
                     max_length=self.max_target_length,
                     padding=self.padding,
                     add_special_tokens=True,
                     truncation=True,
-                )
-            model_inputs["labels"] = labels["input_ids"]
-        return model_inputs
-
-    def __getstate__(self):  # TODO: Find out why this is being pickled
-        state = self.__dict__.copy()
-        state.pop("tokenizer")
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True, **self.backbone_kwargs)
+                )["input_ids"]
+        return tokenized_sample
 
 
-class Seq2SeqFileInput(Seq2SeqInput):
-    def __init__(
-        self,
-        filetype: str,
-        backbone: str,
-        max_source_length: int = 128,
-        max_target_length: int = 128,
-        padding: Union[str, bool] = "max_length",
-        **backbone_kwargs,
-    ):
-        super().__init__(backbone, max_source_length, max_target_length, padding, **backbone_kwargs)
-
-        self.filetype = filetype
-
-    def load_data(self, data: Any, columns: List[str] = None) -> "datasets.Dataset":
-        if columns is None:
-            columns = ["input_ids", "attention_mask", "labels"]
-        if self.filetype == "json":
-            file, input, target, field = data
-        else:
-            file, input, target = data
-        data_files = {}
-        stage = self._running_stage.value
-        data_files[stage] = str(file)
-
-        # FLASH_TESTING is set in the CI to run faster.
-        if flash._IS_TESTING:
-            try:
-                if self.filetype == "json" and field is not None:
-                    dataset_dict = DatasetDict(
-                        {
-                            stage: load_dataset(
-                                self.filetype, data_files=data_files, split=[f"{stage}[:20]"], field=field
-                            )[0]
-                        }
-                    )
-                else:
-                    dataset_dict = DatasetDict(
-                        {stage: load_dataset(self.filetype, data_files=data_files, split=[f"{stage}[:20]"])[0]}
-                    )
-            except Exception:
-                if self.filetype == "json" and field is not None:
-                    dataset_dict = load_dataset(self.filetype, data_files=data_files, field=field)
-                else:
-                    dataset_dict = load_dataset(self.filetype, data_files=data_files)
-        else:
-            if self.filetype == "json" and field is not None:
-                dataset_dict = load_dataset(self.filetype, data_files=data_files, field=field)
-            else:
-                dataset_dict = load_dataset(self.filetype, data_files=data_files)
-
-        dataset_dict = dataset_dict.map(partial(self._tokenize_fn, input=input, target=target), batched=True)
-        dataset_dict.set_format(columns=columns)
-        return dataset_dict[stage]
-
-    def predict_load_data(self, data: Any) -> Union["datasets.Dataset", List[Dict[str, torch.Tensor]]]:
-        return self.load_data(data, columns=["input_ids", "attention_mask"])
-
-    def __getstate__(self):  # TODO: Find out why this is being pickled
-        state = self.__dict__.copy()
-        state.pop("tokenizer")
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True, **self.backbone_kwargs)
-
-
-class Seq2SeqCSVInput(Seq2SeqFileInput):
-    def __init__(
-        self,
-        backbone: str,
-        max_source_length: int = 128,
-        max_target_length: int = 128,
-        padding: Union[str, bool] = "max_length",
-        **backbone_kwargs,
-    ):
-        super().__init__(
-            "csv",
-            backbone,
-            max_source_length=max_source_length,
-            max_target_length=max_target_length,
-            padding=padding,
-            **backbone_kwargs,
-        )
-
-    def __getstate__(self):  # TODO: Find out why this is being pickled
-        state = self.__dict__.copy()
-        state.pop("tokenizer")
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True, **self.backbone_kwargs)
-
-
-class Seq2SeqJSONInput(Seq2SeqFileInput):
-    def __init__(
-        self,
-        backbone: str,
-        max_source_length: int = 128,
-        max_target_length: int = 128,
-        padding: Union[str, bool] = "max_length",
-        **backbone_kwargs,
-    ):
-        super().__init__(
-            "json",
-            backbone,
-            max_source_length=max_source_length,
-            max_target_length=max_target_length,
-            padding=padding,
-            **backbone_kwargs,
-        )
-
-    def __getstate__(self):  # TODO: Find out why this is being pickled
-        state = self.__dict__.copy()
-        state.pop("tokenizer")
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True, **self.backbone_kwargs)
-
-
-class Seq2SeqSentencesInput(Seq2SeqInput):
+class Seq2SeqCSVInput(Seq2SeqInput):
+    @requires("text")
     def load_data(
         self,
-        data: Union[str, List[str]],
-        dataset: Optional[Any] = None,
-    ) -> List[Any]:
-
-        if isinstance(data, str):
-            data = [data]
-        return [self._tokenize_fn(s) for s in data]
-
-    def __getstate__(self):  # TODO: Find out why this is being pickled
-        state = self.__dict__.copy()
-        state.pop("tokenizer")
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True, **self.backbone_kwargs)
-
-
-@dataclass(unsafe_hash=True, frozen=True)
-class Seq2SeqBackboneState(ProcessState):
-    """The ``Seq2SeqBackboneState`` stores the backbone in use by the
-    :class:`~flash.text.seq2seq.core.data.Seq2SeqInputTransform`
-    """
-
-    backbone: str
-    backbone_kwargs: Dict[str, Any] = field(default_factory=dict)
-
-
-class Seq2SeqInputTransform(InputTransform):
-    @requires("text")
-    def __init__(
-        self,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-        backbone: str = "sshleifer/tiny-mbart",
+        csv_file: PATH_TYPE,
+        input_key: str,
+        target_key: Optional[str] = None,
         max_source_length: int = 128,
         max_target_length: int = 128,
         padding: Union[str, bool] = "max_length",
-        **backbone_kwargs,
-    ):
-        self.backbone = backbone
-        self.max_target_length = max_target_length
-        self.max_source_length = max_source_length
-        self.padding = padding
-
-        super().__init__(
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
-            inputs={
-                InputFormat.CSV: Seq2SeqCSVInput(
-                    self.backbone,
-                    max_source_length=max_source_length,
-                    max_target_length=max_target_length,
-                    padding=padding,
-                    **backbone_kwargs,
-                ),
-                InputFormat.JSON: Seq2SeqJSONInput(
-                    self.backbone,
-                    max_source_length=max_source_length,
-                    max_target_length=max_target_length,
-                    padding=padding,
-                    **backbone_kwargs,
-                ),
-                InputFormat.LISTS: Seq2SeqSentencesInput(
-                    self.backbone,
-                    max_source_length=max_source_length,
-                    max_target_length=max_target_length,
-                    padding=padding,
-                    **backbone_kwargs,
-                ),
-            },
-            default_input=InputFormat.LISTS,
-            deserializer=Seq2SeqDeserializer(backbone, max_source_length),
+    ) -> Dataset:
+        dataset_dict = load_dataset("csv", data_files={"data": str(csv_file)})
+        return super().load_data(
+            dataset_dict["data"],
+            input_key,
+            target_key,
+            max_source_length,
+            max_target_length,
+            padding,
         )
 
-        self.set_state(Seq2SeqBackboneState(self.backbone, backbone_kwargs))
 
-    def get_state_dict(self) -> Dict[str, Any]:
-        return {
-            **self.transforms,
-            "backbone": self.backbone,
-            "max_source_length": self.max_source_length,
-            "max_target_length": self.max_target_length,
-            "padding": self.padding,
-        }
+class Seq2SeqJSONInput(Seq2SeqInput):
+    @requires("text")
+    def load_data(
+        self,
+        json_file: PATH_TYPE,
+        field: str,
+        input_key: str,
+        target_key: Optional[str] = None,
+        max_source_length: int = 128,
+        max_target_length: int = 128,
+        padding: Union[str, bool] = "max_length",
+    ) -> Dataset:
+        dataset_dict = load_dataset("json", data_files={"data": str(json_file)}, field=field)
+        return super().load_data(
+            dataset_dict["data"],
+            input_key,
+            target_key,
+            max_source_length,
+            max_target_length,
+            padding,
+        )
 
-    @classmethod
-    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
-        return cls(**state_dict)
 
-    def collate(self, samples: Any) -> Tensor:
-        """Override to convert a set of samples to a batch."""
-        return default_data_collator(samples)
+class Seq2SeqListInput(Seq2SeqInput):
+    @requires("text")
+    def load_data(
+        self,
+        inputs: List[str],
+        targets: Optional[List[str]] = None,
+        max_source_length: int = 128,
+        max_target_length: int = 128,
+        padding: Union[str, bool] = "max_length",
+    ) -> Dataset:
+        if targets is not None:
+            hf_dataset = Dataset.from_dict({DataKeys.INPUT: inputs, DataKeys.TARGET: targets})
+        else:
+            hf_dataset = Dataset.from_dict({DataKeys.INPUT: inputs})
+        return super().load_data(
+            hf_dataset,
+            DataKeys.INPUT,
+            DataKeys.TARGET,
+            max_source_length,
+            max_target_length,
+            padding,
+        )
 
 
 class Seq2SeqOutputTransform(OutputTransform):
@@ -355,63 +186,278 @@ class Seq2SeqOutputTransform(OutputTransform):
         self._backbone = None
         self._tokenizer = None
 
-    @property
-    def backbone_state(self):
-        return self.get_state(Seq2SeqBackboneState)
-
-    @property
-    def tokenizer(self):
-        if self.backbone_state is not None and self.backbone_state.backbone != self._backbone:
-            self._tokenizer = AutoTokenizer.from_pretrained(
-                self.backbone_state.backbone, use_fast=True, **self.backbone_state.backbone_kwargs
-            )
-            self._backbone = self.backbone_state.backbone
-        return self._tokenizer
-
     def uncollate(self, generated_tokens: Any) -> Any:
-        pred_str = self.tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
+        tokenizer = self.get_state(TransformersBackboneState).tokenizer
+        pred_str = tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
         pred_str = [str.strip(s) for s in pred_str]
         return pred_str
-
-    def __getstate__(self):  # TODO: Find out why this is being pickled
-        state = self.__dict__.copy()
-        state.pop("_tokenizer")
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self._backbone = None
-        _ = self.tokenizer
 
 
 class Seq2SeqData(DataModule):
     """Data module for Seq2Seq tasks."""
 
-    input_transform_cls = Seq2SeqInputTransform
+    input_transform_cls = TransformersInputTransform
     output_transform_cls = Seq2SeqOutputTransform
+
+    @classmethod
+    def from_csv(
+        cls,
+        input_field: str,
+        target_field: Optional[str] = None,
+        train_file: Optional[PATH_TYPE] = None,
+        val_file: Optional[PATH_TYPE] = None,
+        test_file: Optional[PATH_TYPE] = None,
+        predict_file: Optional[PATH_TYPE] = None,
+        train_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
+        input_cls: Type[Input] = Seq2SeqCSVInput,
+        transform_kwargs: Optional[Dict] = None,
+        max_source_length: int = 128,
+        max_target_length: int = 128,
+        padding: Union[str, bool] = "max_length",
+        **data_module_kwargs: Any,
+    ) -> "Seq2SeqData":
+        """Creates a :class:`~flash.text.seq2seq.core.data.Seq2SeqData` object from the given CSV files.
+
+        Args:
+            input_field: The field (column) in the CSV file to use for the input.
+            target_field: The field (column) in the CSV file to use for the target.
+            train_file: The CSV file containing the training data.
+            val_file: The CSV file containing the validation data.
+            test_file: The CSV file containing the testing data.
+            predict_file: The CSV file containing the data to use when predicting.
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            max_source_length: The maximum source sequence length.
+            max_target_length: The maximum target sequence length.
+            padding: The padding mode to use.
+
+        Returns:
+            The constructed data module.
+        """
+
+        ds_kw = dict(
+            input_key=input_field,
+            target_key=target_field,
+            max_source_length=max_source_length,
+            max_target_length=max_target_length,
+            padding=padding,
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
+        )
+
+        return cls(
+            input_cls(RunningStage.TRAINING, train_file, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_file, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, test_file, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_file, transform=predict_transform, **ds_kw),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_json(
+        cls,
+        input_field: str,
+        target_field: Optional[str] = None,
+        train_file: Optional[PATH_TYPE] = None,
+        val_file: Optional[PATH_TYPE] = None,
+        test_file: Optional[PATH_TYPE] = None,
+        predict_file: Optional[PATH_TYPE] = None,
+        train_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
+        input_cls: Type[Input] = Seq2SeqJSONInput,
+        transform_kwargs: Optional[Dict] = None,
+        field: Optional[str] = None,
+        max_source_length: int = 128,
+        max_target_length: int = 128,
+        padding: Union[str, bool] = "max_length",
+        **data_module_kwargs: Any,
+    ) -> "Seq2SeqData":
+        """Creates a :class:`~flash.text.seq2seq.core.data.Seq2SeqData` object from the given JSON files.
+
+        Args:
+            input_field: The field (column) in the JSON file to use for the input.
+            target_field: The field (column) in the JSON file to use for the target.
+            train_file: The JSON file containing the training data.
+            val_file: The JSON file containing the validation data.
+            test_file: The JSON file containing the testing data.
+            predict_file: The JSON file containing the data to use when predicting.
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            field: To specify the field that holds the data in the JSON file.
+            max_source_length: The maximum source sequence length.
+            max_target_length: The maximum target sequence length.
+            padding: The padding mode to use.
+
+        Returns:
+            The constructed data module.
+        """
+
+        ds_kw = dict(
+            input_key=input_field,
+            target_key=target_field,
+            field=field,
+            max_source_length=max_source_length,
+            max_target_length=max_target_length,
+            padding=padding,
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
+        )
+
+        return cls(
+            input_cls(RunningStage.TRAINING, train_file, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_file, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, test_file, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_file, transform=predict_transform, **ds_kw),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_hf_datasets(
+        cls,
+        input_field: str,
+        target_field: Optional[str] = None,
+        train_hf_dataset: Optional[Dataset] = None,
+        val_hf_dataset: Optional[Dataset] = None,
+        test_hf_dataset: Optional[Dataset] = None,
+        predict_hf_dataset: Optional[Dataset] = None,
+        train_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
+        input_cls: Type[Input] = Seq2SeqInput,
+        transform_kwargs: Optional[Dict] = None,
+        max_source_length: int = 128,
+        max_target_length: int = 128,
+        padding: Union[str, bool] = "max_length",
+        **data_module_kwargs: Any,
+    ) -> "Seq2SeqData":
+        """Creates a :class:`~flash.text.seq2seq.core.data.Seq2SeqData` object from the given Hugging Face datasets
+        ``Dataset`` objects.
+
+        Args:
+            input_field: The field (column) in the ``Dataset`` to use for the input.
+            target_field: The field (column) in the ``Dataset`` to use for the target.
+            train_hf_dataset: The pandas ``Dataset`` containing the training data.
+            val_hf_dataset: The pandas ``Dataset`` containing the validation data.
+            test_hf_dataset: The pandas ``Dataset`` containing the testing data.
+            predict_hf_dataset: The pandas ``Dataset`` containing the data to use when predicting.
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            max_source_length: The maximum source sequence length.
+            max_target_length: The maximum target sequence length.
+            padding: The padding mode to use.
+
+        Returns:
+            The constructed data module.
+        """
+
+        ds_kw = dict(
+            input_key=input_field,
+            target_key=target_field,
+            max_source_length=max_source_length,
+            max_target_length=max_target_length,
+            padding=padding,
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
+        )
+
+        return cls(
+            input_cls(RunningStage.TRAINING, train_hf_dataset, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_hf_dataset, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, test_hf_dataset, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_hf_dataset, transform=predict_transform, **ds_kw),
+            **data_module_kwargs,
+        )
 
     @classmethod
     def from_lists(
         cls,
+        train_data: Optional[List[str]] = None,
+        train_targets: Optional[Union[List[Any], List[List[Any]]]] = None,
+        val_data: Optional[List[str]] = None,
+        val_targets: Optional[Union[List[Any], List[List[Any]]]] = None,
+        test_data: Optional[List[str]] = None,
+        test_targets: Optional[Union[List[Any], List[List[Any]]]] = None,
         predict_data: Optional[List[str]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-        data_fetcher: Optional[BaseDataFetcher] = None,
-        input_transform: Optional[InputTransform] = None,
-        val_split: Optional[float] = None,
-        batch_size: int = 4,
-        num_workers: int = 0,
-        sampler: Optional[Type[Sampler]] = None,
-        **input_transform_kwargs: Any,
-    ) -> "DataModule":
-        return cls.from_input(
-            InputFormat.LISTS,
-            predict_data=predict_data,
-            predict_transform=predict_transform,
-            data_fetcher=data_fetcher,
-            input_transform=input_transform,
-            val_split=val_split,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            sampler=sampler,
-            **input_transform_kwargs,
+        train_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
+        input_cls: Type[Input] = Seq2SeqListInput,
+        transform_kwargs: Optional[Dict] = None,
+        max_source_length: int = 128,
+        max_target_length: int = 128,
+        padding: Union[str, bool] = "max_length",
+        **data_module_kwargs: Any,
+    ) -> "Seq2SeqData":
+        """Creates a :class:`~flash.text.seq2seq.core.data.Seq2SeqData` object from the given Python lists.
+
+        Args:
+            train_data: A list of sentences to use as the train inputs.
+            train_targets: A list of targets to use as the train targets. For multi-label classification, the targets
+                should be provided as a list of lists, where each inner list contains the targets for a sample.
+            val_data: A list of sentences to use as the validation inputs.
+            val_targets: A list of targets to use as the validation targets. For multi-label classification, the targets
+                should be provided as a list of lists, where each inner list contains the targets for a sample.
+            test_data: A list of sentences to use as the test inputs.
+            test_targets: A list of targets to use as the test targets. For multi-label classification, the targets
+                should be provided as a list of lists, where each inner list contains the targets for a sample.
+            predict_data: A list of sentences to use when predicting.
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            max_source_length: The maximum source sequence length.
+            max_target_length: The maximum target sequence length.
+            padding: The padding mode to use.
+
+        Returns:
+            The constructed data module.
+        """
+
+        ds_kw = dict(
+            max_source_length=max_source_length,
+            max_target_length=max_target_length,
+            padding=padding,
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
+        )
+
+        return cls(
+            input_cls(RunningStage.TRAINING, train_data, train_targets, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_data, val_targets, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, test_data, test_targets, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
+            **data_module_kwargs,
         )
