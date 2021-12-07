@@ -38,9 +38,8 @@ _STAGES_PREFIX = {
     RunningStage.TESTING: "test",
     RunningStage.VALIDATING: "val",
     RunningStage.PREDICTING: "predict",
-    RunningStage.SERVING: "serve",
 }
-_STAGES_PREFIX_VALUES = {"train", "test", "val", "predict", "serve"}
+_STAGES_PREFIX_VALUES = {"train", "test", "val", "predict"}
 
 _INPUT_FUNCS: Set[str] = {
     "load_data",
@@ -185,7 +184,7 @@ class FuncModule(torch.nn.Module):
         return self.func(*args, **kwargs)
 
     def __str__(self) -> str:
-        return str(self.func)
+        return f"{self.__class__.__name__}({self.func.__name__})"
 
     def __repr__(self):
         return str(self.func)
