@@ -706,15 +706,12 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         elif getattr(self, "datamodule", None) is not None:
             datamodule = self.datamodule
 
-        data_pipeline_state = None
-
         if getattr(datamodule, "data_pipeline", None) is not None:
             old_input = getattr(datamodule.data_pipeline, "input", None)
             input_transform = getattr(datamodule.data_pipeline, "_input_transform_pipeline", None)
             output_transform = getattr(datamodule.data_pipeline, "_output_transform", None)
             output = getattr(datamodule.data_pipeline, "_output", None)
             deserializer = getattr(datamodule.data_pipeline, "_deserializer", None)
-            data_pipeline_state = datamodule.data_pipeline_state if isinstance(datamodule, NewDataModule) else None
 
         # Defaults / task attributes
         deserializer, input_transform, output_transform, output = Task._resolve(
@@ -759,10 +756,13 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             deserializer=deserializer,
             output=output,
         )
-        # HACK: Should we get rid of the DataPipeline entirely ?
+
+        # HACK: Should we get rid of the DataPipeline entirely?
+        data_pipeline_state = datamodule.data_pipeline_state if isinstance(datamodule, NewDataModule) else None
         if data_pipeline_state:
             for state in data_pipeline_state._state.values():
                 self._data_pipeline_state.set_state(state)
+
         self.attach_data_pipeline_state(self._data_pipeline_state)
         self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)
         return data_pipeline
