@@ -24,7 +24,6 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from pytorch_lightning.utilities.model_helpers import is_overridden
 
 import flash
-from flash.core.data.data_pipeline import DataLoaderGetter
 from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_5_0, requires
 from flash.core.utilities.stages import RunningStage
@@ -33,6 +32,8 @@ from flash.image.classification.integrations.baal.dropout import InferenceMCDrop
 
 if not _PL_GREATER_EQUAL_1_5_0:
     from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
+else:
+    from pytorch_lightning.trainer.connectors.data_connector import _DataLoaderSource
 
 
 class ActiveLearningLoop(Loop):
@@ -96,6 +97,7 @@ class ActiveLearningLoop(Loop):
         self.progress.increment_ready()
 
     def advance(self, *args: Any, **kwargs: Any) -> None:
+
         self.progress.increment_started()
 
         if self.trainer.datamodule.has_labelled_data:
@@ -126,6 +128,7 @@ class ActiveLearningLoop(Loop):
 
     def on_run_end(self):
         self._reset_fitting()
+        self._teardown()
         return super().on_run_end()
 
     def on_save_checkpoint(self) -> Dict:
@@ -176,9 +179,9 @@ class ActiveLearningLoop(Loop):
         if dataloader:
             if _PL_GREATER_EQUAL_1_5_0:
                 setattr(
-                    self.trainer.lightning_module,
-                    dataloader_name,
-                    DataLoaderGetter(dataloader()),
+                    self.trainer._data_connector,
+                    f"_{dataloader_name}_source",
+                    _DataLoaderSource(self.trainer.datamodule, dataloader_name),
                 )
             else:
                 setattr(
@@ -192,3 +195,14 @@ class ActiveLearningLoop(Loop):
                 getattr(self.trainer, f"reset_{dataloader_name}")(self.trainer.lightning_module)
             except MisconfigurationException:
                 pass
+
+    def _teardown(self) -> None:
+        self.trainer.train_dataloader = None
+        self.trainer.val_dataloaders = None
+        self.trainer.test_dataloaders = None
+        self.trainer.predict_dataloaders = None
+        # Hack
+        self.trainer.lightning_module.train_dataloader = None
+        self.trainer.lightning_module.val_dataloader = None
+        self.trainer.lightning_module.test_dataloader = None
+        self.trainer.lightning_module.predict_dataloader = None

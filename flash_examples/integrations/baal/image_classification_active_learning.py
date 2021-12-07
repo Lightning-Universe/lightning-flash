@@ -50,9 +50,10 @@ trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Predict what's on a few images! ants or bees?
 datamodule = ImageClassificationData.from_files(
-    predict_files=["data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg"]
+    predict_files=["data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg"],
+    batch_size=1,
 )
-predictions = trainer.predict(model, datamodule=datamodule)
+predictions = flash.Trainer().predict(model, datamodule=datamodule)
 print(predictions)
 
 # 5. Save the model!

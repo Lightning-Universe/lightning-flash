@@ -16,7 +16,6 @@ from typing import Callable, Dict, List, Optional
 
 import numpy as np
 import torch
-from pytorch_lightning import LightningDataModule
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader, Dataset, random_split
 
@@ -52,7 +51,7 @@ def train_val_split(dataset: Dataset, val_size: float = 0.1):
     return random_split(dataset, [train_size, val_size], generator=torch.Generator().manual_seed(42))
 
 
-class ActiveLearningDataModule(LightningDataModule):
+class ActiveLearningDataModule(DataModule):
     @requires("baal")
     def __init__(
         self,
@@ -76,8 +75,7 @@ class ActiveLearningDataModule(LightningDataModule):
             query_size: Number of samples to be labelled at each Active Learning loop based on the fed heuristic.
             val_split: Float to split train dataset into train and validation set.
         """
-        super().__init__()
-        self.__dict__.update(labelled.__dict__)
+        super().__init__(batch_size=1)
         self.labelled = labelled
         self.heuristic = heuristic
         self.map_dataset_to_labelled = map_dataset_to_labelled
@@ -99,8 +97,6 @@ class ActiveLearningDataModule(LightningDataModule):
         self._dataset = ActiveLearningDataset(
             self.labelled._train_ds, labelled=self.map_dataset_to_labelled(self.labelled._train_ds)
         )
-
-        self._input_transform = self.labelled._train_ds.transform
 
         if not self.val_split or not self.has_labelled_data:
             self.val_dataloader = None
@@ -142,9 +138,9 @@ class ActiveLearningDataModule(LightningDataModule):
 
     def train_dataloader(self) -> "DataLoader":
         if self.val_split:
-            self.labelled._train_ds = train_val_split(self._dataset, self.val_split)[0]
+            self.labelled._train_input = train_val_split(self._dataset, self.val_split)[0]
         else:
-            self.labelled._train_ds = self._dataset
+            self.labelled._train_input = self._dataset
 
         if self.has_labelled_data and self.val_split:
             self.val_dataloader = self._val_dataloader
@@ -152,14 +148,18 @@ class ActiveLearningDataModule(LightningDataModule):
         return self.labelled.train_dataloader()
 
     def _val_dataloader(self) -> "DataLoader":
-        self.labelled._val_ds = train_val_split(self._dataset, self.val_split)[1]
+        self.labelled._val_input = train_val_split(self._dataset, self.val_split)[1]
+        self.labelled._val_dataloader_collate_fn = self.labelled._train_dataloader_collate_fn
+        self.labelled._val_on_after_batch_transfer_fn = self.labelled._train_on_after_batch_transfer_fn
         return self.labelled._val_dataloader()
 
     def _test_dataloader(self) -> "DataLoader":
         return self.labelled.test_dataloader()
 
     def predict_dataloader(self) -> "DataLoader":
-        self.labelled._predict_ds = self.filter_unlabelled_data(self._dataset.pool)
+        self.labelled._predict_input = self.filter_unlabelled_data(self._dataset.pool)
+        self.labelled._predict_dataloader_collate_fn = self.labelled._train_dataloader_collate_fn
+        self.labelled._predict_on_after_batch_transfer_fn = self.labelled._train_on_after_batch_transfer_fn
         return self.labelled._predict_dataloader()
 
     def label(self, probabilities: List[torch.Tensor] = None, indices=None):
@@ -168,7 +168,8 @@ class ActiveLearningDataModule(LightningDataModule):
                 "The `probabilities` and `indices` are mutually exclusive, pass only of one them."
             )
         if probabilities is not None:
-            uncertainties = self.heuristic.get_uncertainties(torch.cat(probabilities, dim=0))
+            probabilities = torch.cat([p[0].unsqueeze(0) for p in probabilities], dim=0)
+            uncertainties = self.heuristic.get_uncertainties(probabilities)
             indices = np.argsort(uncertainties)
             if self._dataset is not None:
                 self._dataset.label(indices[-self.query_size :])

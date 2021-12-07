@@ -52,6 +52,7 @@ class ImageClassificationData(DataModule):
     """Data module for image classification tasks."""
 
     input_transforms_registry = FlashRegistry("input_transforms")
+    input_transform_cls = ImageClassificationInputTransform
 
     @classmethod
     def from_files(

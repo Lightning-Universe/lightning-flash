@@ -307,6 +307,8 @@ class DataModule(DataModule):
                 data_pipeline_state.set_state(state)
 
     def on_after_batch_transfer(self, batch: Any, dataloader_idx: int) -> Any:
+        if getattr(self, "trainer", None) is None:
+            return batch
         transform = None
         if self.trainer.training:
             transform = self._train_on_after_batch_transfer_fn
