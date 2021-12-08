@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Tuple
 
 from torch import nn
 
@@ -244,6 +244,22 @@ class IceVisionTransformAdapter(nn.Module):
         record = to_icevision_record(x)
         record = self.transform(record)
         return from_icevision_record(record)
+
+
+@requires(["image", "icevision"])
+def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
+    """The default transforms from IceVision."""
+    return {
+        "per_sample_transform": IceVisionTransformAdapter([*A.resize_and_pad(image_size), A.Normalize()]),
+    }
+
+
+@requires(["image", "icevision"])
+def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
+    """The default augmentations from IceVision."""
+    return {
+        "per_sample_transform": IceVisionTransformAdapter([*A.aug_tfms(size=image_size), A.Normalize()]),
+    }
 
 
 @dataclass
