@@ -94,18 +94,18 @@ ____________
     ~segmentation.model.SemanticSegmentation
     ~segmentation.data.SemanticSegmentationData
 
-    ~segmentation.data.SegmentationMatplotlibVisualization
-    ~segmentation.input.SemanticSegmentationInput
-    ~segmentation.input.SemanticSegmentationFilesInput
-    ~segmentation.input.SemanticSegmentationFolderInput
-    ~segmentation.input.SemanticSegmentationNumpyInput
-    ~segmentation.input.SemanticSegmentationTensorInput
-    ~segmentation.input.SemanticSegmentationFiftyOneInput
-    ~segmentation.input.SemanticSegmentationDeserializer
-    ~segmentation.transforms.SemanticSegmentationInputTransform
-    ~segmentation.model.SemanticSegmentationOutputTransform
-    ~segmentation.output.FiftyOneSegmentationLabelsOutput
-    ~segmentation.output.SegmentationLabelsOutput
+    segmentation.data.SegmentationMatplotlibVisualization
+    segmentation.input.SemanticSegmentationInput
+    segmentation.input.SemanticSegmentationFilesInput
+    segmentation.input.SemanticSegmentationFolderInput
+    segmentation.input.SemanticSegmentationNumpyInput
+    segmentation.input.SemanticSegmentationTensorInput
+    segmentation.input.SemanticSegmentationFiftyOneInput
+    segmentation.input.SemanticSegmentationDeserializer
+    segmentation.transforms.SemanticSegmentationInputTransform
+    segmentation.model.SemanticSegmentationOutputTransform
+    segmentation.output.FiftyOneSegmentationLabelsOutput
+    segmentation.output.SegmentationLabelsOutput
 
 .. autosummary::
     :toctree: generated/
