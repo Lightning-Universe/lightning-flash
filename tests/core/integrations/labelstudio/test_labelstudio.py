@@ -9,10 +9,10 @@ from flash.core.integrations.labelstudio.input import (
     LabelStudioTextClassificationInput,
 )
 from flash.core.integrations.labelstudio.visualizer import launch_app
+from flash.core.integrations.transformers.states import TransformersBackboneState
 from flash.core.utilities.stages import RunningStage
 from flash.image.classification.data import ImageClassificationData
 from flash.text.classification.data import TextClassificationData
-from flash.text.classification.model import TextClassificationBackboneState
 from flash.video.classification.data import LabelStudioVideoClassificationInput, VideoClassificationData
 from tests.helpers.utils import _IMAGE_TESTING, _TEXT_TESTING, _VIDEO_TESTING
 
@@ -249,7 +249,7 @@ def test_input_labelstudio_text():
     test = LabelStudioTextClassificationInput(RunningStage.TESTING, test_data, data_pipeline_state=data_pipeline_state)
 
     backbone = "prajjwal1/bert-tiny"
-    train.set_state(TextClassificationBackboneState(backbone))
+    train.set_state(TransformersBackboneState(backbone))
 
     assert train._data_pipeline_state == val._data_pipeline_state
     assert train._data_pipeline_state == test._data_pipeline_state

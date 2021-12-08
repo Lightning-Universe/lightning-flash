@@ -23,6 +23,7 @@ datamodule = SummarizationData.from_csv(
     "target",
     train_file="data/xsum/train.csv",
     val_file="data/xsum/valid.csv",
+    batch_size=4,
 )
 
 # 2. Build the task
@@ -55,7 +56,8 @@ datamodule = SummarizationData.from_lists(
         The trust hopes to restore and refurbish the building,
         where once Jimi Hendrix and The Clash played, as a new community and business centre."
         """
-    ]
+    ],
+    batch_size=4,
 )
 predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
