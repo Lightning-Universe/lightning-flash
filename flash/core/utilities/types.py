@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Dict, Mapping, Optional, Sequence, Tuple, Type, TypeVar, Union
 
 from pytorch_lightning.utilities.enums import LightningEnum
 from torch import nn
@@ -29,17 +29,14 @@ LR_SCHEDULER_TYPE = Optional[
 METRICS_TYPE = Union[Metric, Mapping, Sequence, None]
 
 # Data Pipeline
-DESERIALIZER_TYPE = Optional[
-    Union["flash.core.data.process.Deserializer", Mapping[str, "flash.core.data.process.Deserializer"]]
-]
-INPUT_TRANSFORM_TYPE = Optional[
-    Union[
-        Type["flash.core.data.input_transform.InputTransform"],
-        Callable,
-        Tuple[Union[LightningEnum, str], Dict[str, Any]],
-        Union[LightningEnum, str],
-    ]
-]
-
-OUTPUT_TRANSFORM_TYPE = Optional["flash.core.data.io.output_transform.OutputTransform"]
-OUTPUT_TYPE = Optional["flash.core.data.io.output.Output"]
+DESERIALIZER_TYPE = TypeVar("DESERIALIZER_TYPE", "flash.core.data.process.Deserializer", None)
+INPUT_TRANSFORM_TYPE = TypeVar(
+    "INPUT_TRANSFORM_TYPE",
+    Type["flash.core.data.input_transform.InputTransform"],
+    Callable,
+    Tuple[Union[LightningEnum, str], Dict[str, Any]],
+    Union[LightningEnum, str],
+    None,
+)
+OUTPUT_TRANSFORM_TYPE = TypeVar("OUTPUT_TRANSFORM_TYPE", "flash.core.data.io.output_transform.OutputTransform", None)
+OUTPUT_TYPE = TypeVar("OUTPUT_TYPE", "flash.core.data.io.output.Output", None)
