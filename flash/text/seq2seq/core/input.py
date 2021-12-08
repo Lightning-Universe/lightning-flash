@@ -14,7 +14,7 @@
 from typing import Any, Dict, List, Optional, Union
 
 import flash
-from flash import DataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_base import Input
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.integrations.transformers.states import TransformersBackboneState

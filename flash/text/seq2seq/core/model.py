@@ -21,7 +21,7 @@ from pytorch_lightning.utilities import rank_zero_info
 from torch import Tensor
 from torch.nn import Module
 
-from flash import DataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.integrations.transformers.states import TransformersBackboneState
 from flash.core.model import Task
 from flash.core.registry import ExternalRegistry, FlashRegistry
@@ -31,7 +31,7 @@ from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_
 from flash.text.ort_callback import ORTCallback
 
 if _TEXT_AVAILABLE:
-    from transformers import AutoModelForSeq2SeqLM, PreTrainedTokenizerBase
+    from transformers import AutoModelForSeq2SeqLM
 
     HUGGINGFACE_BACKBONES = ExternalRegistry(
         AutoModelForSeq2SeqLM.from_pretrained,
