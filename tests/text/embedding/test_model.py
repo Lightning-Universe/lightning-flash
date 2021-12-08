@@ -1,4 +1,3 @@
-
 # Copyright The PyTorch Lightning team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,31 +16,29 @@ import os
 import pytest
 import torch
 
-
 import flash
 from flash.text import SentenceEmbedder, TextClassificationData
-from tests.helpers.utils import  _TEXT_TESTING
+from tests.helpers.utils import _TEXT_TESTING
 
 # ======== Mock functions ========
 
 datamodule = TextClassificationData.from_lists(
-      predict_data=[
-          "Turgid dialogue, feeble characterization - Harvey Keitel a judge?.",
-          "The worst movie in the history of cinema.",
-          "I come from Bulgaria where it 's almost impossible to have a tornado.",
-      ]
-  )
+    predict_data=[
+        "Turgid dialogue, feeble characterization - Harvey Keitel a judge?.",
+        "The worst movie in the history of cinema.",
+        "I come from Bulgaria where it 's almost impossible to have a tornado.",
+    ]
+)
 
 # ==============================
 
 TEST_BACKBONE = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"  # super small model for testing
 model = SentenceEmbedder(backbone=TEST_BACKBONE)
 
+
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_predict(tmpdir):
     trainer = flash.Trainer(gpus=torch.cuda.device_count())
     predictions = trainer.predict(model, datamodule=datamodule)
-    assert[t.size() for t in predictions[0]]==[torch.Size([384]), torch.Size([384]), torch.Size([384])]
-
-
+    assert [t.size() for t in predictions[0]] == [torch.Size([384]), torch.Size([384]), torch.Size([384])]
