@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, Dict, Tuple
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, Tuple
 
 import torch
 import torch.nn as nn
@@ -77,6 +78,13 @@ def predict_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callabl
     }
 
 
+def remove_extra_dimensions(batch: Dict[str, Any]):
+    if isinstance(batch[DataKeys.INPUT], list):
+        batch[DataKeys.INPUT] = batch[DataKeys.INPUT][0]
+    return batch
+
+
+@dataclass
 class SemanticSegmentationInputTransform(InputTransform):
 
     image_size: Tuple[int, int] = (128, 128)
@@ -99,4 +107,10 @@ class SemanticSegmentationInputTransform(InputTransform):
         return K.geometry.Resize(self.image_size, interpolation="nearest")
 
     def collate(self) -> Callable:
-        return Compose([kornia_collate, ApplyToKeys(DataKeys.TARGET, prepare_target)])
+        return kornia_collate
+
+    def target_per_batch_transform(self) -> Callable:
+        return prepare_target
+
+    def predict_per_batch_transform(self) -> Callable:
+        return remove_extra_dimensions

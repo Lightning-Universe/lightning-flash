@@ -114,7 +114,6 @@ def kornia_collate(samples: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
     if len(samples) == 1 and isinstance(samples[0], list):
         samples = samples[0]
     for sample in samples:
-        breakpoint()
         for key in sample.keys():
             if torch.is_tensor(sample[key]) and sample[key].ndim == 4:
                 sample[key] = sample[key].squeeze(0)

@@ -59,7 +59,7 @@ class TestSemanticSegmentationData:
     @staticmethod
     @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
     def test_smoke():
-        dm = SemanticSegmentationData()
+        dm = SemanticSegmentationData(batch_size=1)
         assert dm is not None
 
     @staticmethod
@@ -327,6 +327,7 @@ class TestSemanticSegmentationData:
 
         # check predict data
         data = next(iter(dm.predict_dataloader()))
+        breakpoint()
         imgs = data[DataKeys.INPUT]
         assert imgs.shape == (2, 3, 128, 128)
 

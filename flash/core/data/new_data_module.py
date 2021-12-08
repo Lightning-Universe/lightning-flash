@@ -101,11 +101,10 @@ class DataModule(DataModule):
         self._output_transform: Optional[OutputTransform] = None
         self._viz: Optional[BaseVisualization] = None
 
-        # TODO: Remove _X_ds reference when previous DataModule is removed.
-        self._train_input = self._train_ds = train_input
-        self._val_input = self._val_ds = val_input
-        self._test_input = self._test_ds = test_input
-        self._predict_input = self._predict_ds = predict_input
+        self._train_input = train_input
+        self._val_input = val_input
+        self._test_input = test_input
+        self._predict_input = predict_input
 
         self._data_fetcher: Optional[BaseDataFetcher] = data_fetcher or self.configure_data_fetcher()
 
