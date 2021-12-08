@@ -36,6 +36,7 @@ def from_pets(
     val_split: float = 0.1,
     image_size: Tuple[int, int] = (128, 128),
     parser: Optional[Callable] = None,
+    batch_size: int = 1,
     **data_module_kwargs,
 ) -> InstanceSegmentationData:
     """Downloads and loads the pets data set from icedata."""
@@ -55,6 +56,7 @@ def from_pets(
         transform_kwargs=dict(image_size=image_size),
         parser=parser,
         val_split=val_split,
+        batch_size=batch_size,
         **data_module_kwargs,
     )
 
