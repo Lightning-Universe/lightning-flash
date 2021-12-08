@@ -18,7 +18,7 @@ from unittest import mock
 import pytest
 import torch
 
-from flash import RunningStage, Trainer
+from flash import DataKeys, RunningStage, Trainer
 from flash.core.integrations.transformers.transforms import TransformersInputTransform
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import SummarizationTask
@@ -32,7 +32,7 @@ class DummyDataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
         return {
             "input_ids": torch.randint(1000, size=(128,)),
-            "labels": torch.randint(1000, size=(128,)),
+            DataKeys.TARGET: torch.randint(1000, size=(128,)),
         }
 
     def __len__(self) -> int:
