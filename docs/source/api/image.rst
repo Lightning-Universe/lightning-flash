@@ -46,7 +46,6 @@ ________________
     detection.input.FiftyOneParser
     detection.input.ObjectDetectionFiftyOneInput
     detection.output.FiftyOneDetectionLabelsOutput
-    detection.data.ObjectDetectionInputTransform
 
 Keypoint Detection
 __________________
