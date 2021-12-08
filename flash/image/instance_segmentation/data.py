@@ -19,7 +19,7 @@ from flash.core.data.io.input_base import Input
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.new_data_module import DataModule
 from flash.core.integrations.icevision.data import IceVisionInput
-from flash.core.integrations.icevision.transforms import IceVisionInputTransform
+from flash.core.integrations.icevision.transforms import IceVisionInputTransform as InstanceSegmentationInputTransform
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
@@ -40,7 +40,7 @@ class InstanceSegmentationOutputTransform(OutputTransform):
 
 class InstanceSegmentationData(DataModule):
 
-    input_transform_cls = IceVisionInputTransform
+    input_transform_cls = InstanceSegmentationInputTransform
     output_transform_cls = InstanceSegmentationOutputTransform
 
     @classmethod
@@ -53,10 +53,10 @@ class InstanceSegmentationData(DataModule):
         test_folder: Optional[str] = None,
         test_ann_file: Optional[str] = None,
         predict_folder: Optional[str] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        train_transform: INPUT_TRANSFORM_TYPE = InstanceSegmentationInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = InstanceSegmentationInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = InstanceSegmentationInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = InstanceSegmentationInputTransform,
         parser: Optional[Type[Parser]] = Parser,
         input_cls: Type[Input] = IceVisionInput,
         transform_kwargs: Optional[Dict] = None,
@@ -83,10 +83,10 @@ class InstanceSegmentationData(DataModule):
         test_folder: Optional[str] = None,
         test_ann_file: Optional[str] = None,
         predict_folder: Optional[str] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        train_transform: INPUT_TRANSFORM_TYPE = InstanceSegmentationInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = InstanceSegmentationInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = InstanceSegmentationInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = InstanceSegmentationInputTransform,
         input_cls: Type[Input] = IceVisionInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -142,10 +142,10 @@ class InstanceSegmentationData(DataModule):
         test_folder: Optional[str] = None,
         test_ann_file: Optional[str] = None,
         predict_folder: Optional[str] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        train_transform: INPUT_TRANSFORM_TYPE = InstanceSegmentationInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = InstanceSegmentationInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = InstanceSegmentationInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = InstanceSegmentationInputTransform,
         input_cls: Type[Input] = IceVisionInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -195,7 +195,7 @@ class InstanceSegmentationData(DataModule):
     def from_folders(
         cls,
         predict_folder: Optional[str] = None,
-        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = InstanceSegmentationInputTransform,
         input_cls: Type[Input] = IceVisionInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -225,7 +225,7 @@ class InstanceSegmentationData(DataModule):
     def from_files(
         cls,
         predict_files: Optional[List[str]] = None,
-        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = InstanceSegmentationInputTransform,
         input_cls: Type[Input] = IceVisionInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
