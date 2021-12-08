@@ -82,11 +82,10 @@ _______________
     ~seq2seq.core.model.Seq2SeqTask
     ~seq2seq.core.data.Seq2SeqData
 
-    seq2seq.core.data.Seq2SeqBackboneState
-    seq2seq.core.data.Seq2SeqInputBase
-    seq2seq.core.data.Seq2SeqCSVInput
-    seq2seq.core.data.Seq2SeqJSONInput
-    seq2seq.core.data.Seq2SeqListInput
+    seq2seq.core.input.Seq2SeqInputBase
+    seq2seq.core.input.Seq2SeqCSVInput
+    seq2seq.core.input.Seq2SeqJSONInput
+    seq2seq.core.input.Seq2SeqListInput
     seq2seq.core.data.Seq2SeqOutputTransform
 
 flash.text.input
@@ -97,4 +96,4 @@ ________________
     :nosignatures:
     :template: classtemplate.rst
 
-    data.TextDeserializer
+    input.TextDeserializer
