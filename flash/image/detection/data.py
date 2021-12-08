@@ -17,7 +17,7 @@ from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input_base import Input
 from flash.core.data.new_data_module import DataModule
 from flash.core.integrations.icevision.data import IceVisionInput
-from flash.core.integrations.icevision.transforms import IceVisionTransform
+from flash.core.integrations.icevision.transforms import IceVisionInputTransform
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _ICEVISION_AVAILABLE, lazy_import, requires
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
@@ -42,7 +42,7 @@ else:
 
 class ObjectDetectionData(DataModule):
 
-    input_transform_cls = IceVisionTransform
+    input_transform_cls = IceVisionInputTransform
 
     @classmethod
     def from_icedata(
@@ -54,10 +54,10 @@ class ObjectDetectionData(DataModule):
         test_folder: Optional[str] = None,
         test_ann_file: Optional[str] = None,
         predict_folder: Optional[str] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = IceVisionTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = IceVisionTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = IceVisionTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionTransform,
+        train_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         parser: Type[Parser] = Parser,
         input_cls: Type[Input] = IceVisionInput,
         transform_kwargs: Optional[Dict] = None,
@@ -84,10 +84,10 @@ class ObjectDetectionData(DataModule):
         test_folder: Optional[str] = None,
         test_ann_file: Optional[str] = None,
         predict_folder: Optional[str] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = IceVisionTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = IceVisionTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = IceVisionTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionTransform,
+        train_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         input_cls: Type[Input] = IceVisionInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -143,10 +143,10 @@ class ObjectDetectionData(DataModule):
         test_folder: Optional[str] = None,
         test_ann_file: Optional[str] = None,
         predict_folder: Optional[str] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = IceVisionTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = IceVisionTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = IceVisionTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionTransform,
+        train_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         input_cls: Type[Input] = IceVisionInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -202,10 +202,10 @@ class ObjectDetectionData(DataModule):
         test_folder: Optional[str] = None,
         test_ann_file: Optional[str] = None,
         predict_folder: Optional[str] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = IceVisionTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = IceVisionTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = IceVisionTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionTransform,
+        train_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         input_cls: Type[Input] = IceVisionInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -259,10 +259,10 @@ class ObjectDetectionData(DataModule):
         val_dataset: Optional[SampleCollection] = None,
         test_dataset: Optional[SampleCollection] = None,
         predict_dataset: Optional[SampleCollection] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = IceVisionTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = IceVisionTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = IceVisionTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionTransform,
+        train_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         label_field: str = "ground_truth",
         iscrowd: str = "iscrowd",
         input_cls: Type[Input] = ObjectDetectionFiftyOneInput,
@@ -286,7 +286,7 @@ class ObjectDetectionData(DataModule):
     def from_folders(
         cls,
         predict_folder: Optional[str] = None,
-        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         input_cls: Type[Input] = IceVisionInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -313,7 +313,7 @@ class ObjectDetectionData(DataModule):
     def from_files(
         cls,
         predict_files: Optional[List[str]] = None,
-        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         input_cls: Type[Input] = IceVisionInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,

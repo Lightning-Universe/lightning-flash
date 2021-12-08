@@ -263,7 +263,7 @@ def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]
 
 
 @dataclass
-class IceVisionTransform(InputTransform):
+class IceVisionInputTransform(InputTransform):
 
     image_size: int = 128
 
