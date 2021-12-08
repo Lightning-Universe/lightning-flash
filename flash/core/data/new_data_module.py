@@ -100,13 +100,14 @@ class DataModule(DataModule):
         self._input_transform: Optional[OutputTransform] = None
         self._output_transform: Optional[OutputTransform] = None
         self._viz: Optional[BaseVisualization] = None
-        self._data_fetcher: Optional[BaseDataFetcher] = data_fetcher or self.configure_data_fetcher()
 
         # TODO: Remove _X_ds reference when previous DataModule is removed.
         self._train_input = self._train_ds = train_input
         self._val_input = self._val_ds = val_input
         self._test_input = self._test_ds = test_input
         self._predict_input = self._predict_ds = predict_input
+
+        self._data_fetcher: Optional[BaseDataFetcher] = data_fetcher or self.configure_data_fetcher()
 
         self._train_dataloader_collate_fn = self._resolve_dataloader_collate_fn(self._train_input)
         self._val_dataloader_collate_fn = self._resolve_dataloader_collate_fn(self._val_input)
@@ -155,6 +156,26 @@ class DataModule(DataModule):
         """Property that returns the input transform class used on input data."""
         # Find a better way to resolve this.
         return self._train_ds.transform or self.input_transform_cls()
+
+    @property
+    def train_dataset(self) -> Optional[Input]:
+        """This property returns the train dataset."""
+        return self._train_input
+
+    @property
+    def val_dataset(self) -> Optional[Input]:
+        """This property returns the validation dataset."""
+        return self._val_input
+
+    @property
+    def test_dataset(self) -> Optional[Input]:
+        """This property returns the test dataset."""
+        return self._test_input
+
+    @property
+    def predict_dataset(self) -> Optional[Input]:
+        """This property returns the predict dataset."""
+        return self._predict_input
 
     def _resolve_transform(self, ds: Optional[Input]) -> Optional[InputTransform]:
         if not isinstance(ds, Input):
