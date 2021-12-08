@@ -59,7 +59,7 @@ def test_detection(tmpdir, head, backbone):
     Image.new("RGB", (512, 512)).save(test_image_one)
     Image.new("RGB", (512, 512)).save(test_image_two)
 
-    datamodule = ObjectDetectionData.from_files(predict_files=[str(test_image_one), str(test_image_two)])
+    datamodule = ObjectDetectionData.from_files(predict_files=[str(test_image_one), str(test_image_two)], batch_size=1)
     trainer.predict(model, datamodule=datamodule)
 
 
@@ -83,5 +83,5 @@ def test_detection_fiftyone(tmpdir, head, backbone):
     Image.new("RGB", (512, 512)).save(test_image_one)
     Image.new("RGB", (512, 512)).save(test_image_two)
 
-    datamodule = ObjectDetectionData.from_files(predict_files=[str(test_image_one), str(test_image_two)])
+    datamodule = ObjectDetectionData.from_files(predict_files=[str(test_image_one), str(test_image_two)], batch_size=1)
     trainer.predict(model, datamodule=datamodule)

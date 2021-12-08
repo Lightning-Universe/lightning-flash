@@ -23,6 +23,7 @@ __all__ = ["object_detection"]
 def from_coco_128(
     val_split: float = 0.1,
     image_size: Tuple[int, int] = (128, 128),
+    batch_size: int = 1,
     **data_module_kwargs,
 ) -> ObjectDetectionData:
     """Downloads and loads the COCO 128 data set."""
@@ -31,7 +32,8 @@ def from_coco_128(
         train_folder="data/coco128/images/train2017/",
         train_ann_file="data/coco128/annotations/instances_train2017.json",
         val_split=val_split,
-        image_size=image_size,
+        transform_kwargs=dict(image_size=image_size),
+        batch_size=batch_size,
         **data_module_kwargs,
     )
 

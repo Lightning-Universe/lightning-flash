@@ -91,11 +91,11 @@ class ActiveLearningDataModule(DataModule):
         if not self.labelled.num_classes:
             raise MisconfigurationException("The labelled dataset should be labelled")
 
-        if self.labelled and (self.labelled._val_ds or self.labelled._predict_ds):
+        if self.labelled and (self.labelled._val_input or self.labelled._predict_input):
             raise MisconfigurationException("The labelled `datamodule` should have only train data.")
 
         self._dataset = ActiveLearningDataset(
-            self.labelled._train_ds, labelled=self.map_dataset_to_labelled(self.labelled._train_ds)
+            self.labelled._train_input, labelled=self.map_dataset_to_labelled(self.labelled._train_input)
         )
 
         if not self.val_split or not self.has_labelled_data:
@@ -103,7 +103,7 @@ class ActiveLearningDataModule(DataModule):
         elif self.val_split < 0 or self.val_split > 1:
             raise MisconfigurationException("The `val_split` should a float between 0 and 1.")
 
-        if self.labelled._test_ds:
+        if self.labelled._test_input:
             self.test_dataloader = self._test_dataloader
 
         if hasattr(self.labelled, "on_after_batch_transfer"):
@@ -118,7 +118,7 @@ class ActiveLearningDataModule(DataModule):
 
     @property
     def has_test(self) -> bool:
-        return bool(self.labelled._test_ds)
+        return bool(self.labelled._test_input)
 
     @property
     def has_labelled_data(self) -> bool:

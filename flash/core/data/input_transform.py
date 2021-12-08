@@ -278,6 +278,40 @@ class InputTransform(Properties):
         on cpu for the predicting stage."""
         return self._identity
 
+    def serve_per_sample_transform(self) -> Callable:
+        """Defines the transform to be applied on a single sample on cpu for the serving stage.
+
+        The input data of the transform would have the following form:
+        {
+            DataKeys.INPUT: ...,
+            DataKeys.TARGET: ...,
+            DataKeys.METADATA: ...,
+        }
+
+        You would need to use :class:`flash.core.data.transforms.ApplyToKeys` as follows:
+
+        Example:
+
+            from flash.core.data.transforms import ApplyToKeys
+
+            class MyInputTransform(InputTransform):
+
+                def per_sample_transform(self) -> Callable:
+
+                    return ApplyToKeys("input", my_func)
+        """
+        return self._identity
+
+    def serve_input_per_sample_transform(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "input" key of each single sample
+        on cpu for the serving stage."""
+        return self._identity
+
+    def serve_target_per_sample_transform(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "target" key of each single sample
+        on cpu for the serving stage."""
+        return self._identity
+
     ##################################
     # PER SAMPLE TRANSFORM ON DEVICE #
     ##################################
@@ -579,6 +613,40 @@ class InputTransform(Properties):
         on cpu for the predicting stage."""
         return self._identity
 
+    def serve_per_batch_transform(self) -> Callable:
+        """Defines the transform to be applied on a batch of data on cpu for the serving stage.
+
+        The input data of the transform would have the following form:
+        {
+            DataKeys.INPUT: ...,
+            DataKeys.TARGET: ...,
+            DataKeys.METADATA: ...,
+        }
+
+        You would need to use :class:`flash.core.data.transforms.ApplyToKeys` as follows:
+
+        Example:
+
+            from flash.core.data.transforms import ApplyToKeys
+
+            class MyInputTransform(InputTransform):
+
+                def per_batch_transform(self) -> Callable:
+
+                    return ApplyToKeys("input", my_func)
+        """
+        return self._identity
+
+    def serve_input_per_batch_transform(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "input" key of each single sample
+        on cpu for the serving stage."""
+        return self._identity
+
+    def serve_target_per_batch_transform(self) -> Callable:
+        """Defines the transform to be applied on the value associated with the "target" key of each single sample
+        on cpu for the serving stage."""
+        return self._identity
+
     #################################
     # PER BATCH TRANSFORM ON DEVICE #
     #################################
@@ -749,6 +817,10 @@ class InputTransform(Properties):
         """Defines the transform to be applied on a list of predicting sample to create a predicting batch."""
         return default_collate
 
+    def serve_collate(self) -> Callable:
+        """Defines the transform to be applied on a list of serving sample to create a serving batch."""
+        return default_collate
+
     def collate(self) -> Callable:
         """Defines the transform to be applied on a list of sample to create a batch for all stages."""
         return default_collate
@@ -777,8 +849,6 @@ class InputTransform(Properties):
     def _collate(self, samples: Sequence, metadata=None) -> Any:
         """Transform to convert a sequence of samples to a collated batch."""
         current_transform = self.current_transform
-        if current_transform is self._identity:
-            current_transform = default_collate
 
         # the model can provide a custom ``collate_fn``.
         collate_fn = self.get_state(CollateFn)
