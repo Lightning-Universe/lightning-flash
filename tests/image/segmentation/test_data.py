@@ -59,7 +59,7 @@ class TestSemanticSegmentationData:
     @staticmethod
     @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
     def test_smoke():
-        dm = SemanticSegmentationData()
+        dm = SemanticSegmentationData(batch_size=1)
         assert dm is not None
 
     @staticmethod

@@ -135,7 +135,7 @@ def test_data_module():
 
     input = Input(RunningStage.TRAINING, transform=TestTransform)
     dm = DataModule(train_input=input, batch_size=1)
-    assert isinstance(dm._train_ds.transform, TestTransform)
+    assert isinstance(dm._train_input.transform, TestTransform)
 
     class RandomDataset(Dataset):
         def __init__(self, size: int, length: int):
