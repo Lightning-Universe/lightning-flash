@@ -18,8 +18,6 @@ from flash.core.data.utils import download_data
 from flash.text import SentenceEmbedder, TextClassificationData
 
 # 1. Create the DataModule
-download_data("https://pl-flash-data.s3.amazonaws.com/xsum.zip", "./data/")
-
 datamodule = TextClassificationData.from_lists(
     predict_data=[
         "Turgid dialogue, feeble characterization - Harvey Keitel a judge?.",
