@@ -20,7 +20,7 @@ import flash
 from flash.text import SentenceEmbedder, TextClassificationData
 from tests.helpers.utils import _TEXT_TESTING
 
-# ======== Mock functions ========
+# ======== Mock data ========
 
 datamodule = TextClassificationData.from_lists(
     predict_data=[
