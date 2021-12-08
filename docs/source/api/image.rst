@@ -71,8 +71,6 @@ _____________________
     ~instance_segmentation.model.InstanceSegmentation
     ~instance_segmentation.data.InstanceSegmentationData
 
-    instance_segmentation.data.InstanceSegmentationInputTransform
-
 Embedding
 _________
 
