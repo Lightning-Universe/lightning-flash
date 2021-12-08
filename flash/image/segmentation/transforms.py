@@ -114,3 +114,6 @@ class SemanticSegmentationInputTransform(InputTransform):
 
     def predict_per_batch_transform(self) -> Callable:
         return remove_extra_dimensions
+
+    def serve_per_batch_transform(self) -> Callable:
+        return remove_extra_dimensions
