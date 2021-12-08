@@ -296,8 +296,11 @@ For example, to train an image classifier for 10 epochs with a `resnet50` backbo
 
 ## Kaggle Notebook Examples
 
-- [Titanic crash with Lightning⚡Flash](https://www.kaggle.com/jirkaborovec/titanic-crash-with-lightning-flash)
-- [Covid detection with Lightning⚡️Flash](https://www.kaggle.com/jirkaborovec/covid-detection-with-lightning-flash)
+- [🚢Titanic crash with Lightning⚡Flash](https://www.kaggle.com/jirkaborovec/titanic-crash-with-lightning-flash)
+- [🏠House 💵prices predictions with Lightning⚡Flash](https://www.kaggle.com/jirkaborovec/house-prices-predictions-with-lightning-flash)
+- [Playing 📋tabular with Lightning⚡Flash](https://www.kaggle.com/jirkaborovec/playing-tabular-with-lightning-flash)
+- [🙊Toxic comments with Lightning⚡Flash](https://www.kaggle.com/jirkaborovec/toxic-comments-with-lightning-flash)
+- [🫁COVID detection with Lightning⚡️Flash](https://www.kaggle.com/jirkaborovec/covid-detection-with-lightning-flash)
 
 
 ## Contribute!
