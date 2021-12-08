@@ -170,7 +170,7 @@ def test_image_detector_data_from_coco(tmpdir):
     train_folder, coco_ann_path = _create_synth_coco_dataset(tmpdir)
 
     datamodule = ObjectDetectionData.from_coco(
-        train_folder=train_folder, train_ann_file=coco_ann_path, batch_size=1, image_size=128
+        train_folder=train_folder, train_ann_file=coco_ann_path, batch_size=1, transform_kwargs=dict(image_size=128)
     )
 
     data = next(iter(datamodule.train_dataloader()))
@@ -186,11 +186,10 @@ def test_image_detector_data_from_coco(tmpdir):
         test_ann_file=coco_ann_path,
         batch_size=1,
         num_workers=0,
-        image_size=128,
+        transform_kwargs=dict(image_size=128),
     )
 
     data = next(iter(datamodule.val_dataloader()))
-
     sample = data[0]
     assert sample[DataKeys.INPUT].shape == (128, 128, 3)
 
@@ -205,7 +204,9 @@ def test_image_detector_data_from_fiftyone(tmpdir):
 
     train_dataset = _create_synth_fiftyone_dataset(tmpdir)
 
-    datamodule = ObjectDetectionData.from_fiftyone(train_dataset=train_dataset, batch_size=1, image_size=128)
+    datamodule = ObjectDetectionData.from_fiftyone(
+        train_dataset=train_dataset, batch_size=1, transform_kwargs=dict(image_size=128)
+    )
 
     data = next(iter(datamodule.train_dataloader()))
     sample = data[0]
@@ -217,7 +218,7 @@ def test_image_detector_data_from_fiftyone(tmpdir):
         test_dataset=train_dataset,
         batch_size=1,
         num_workers=0,
-        image_size=128,
+        transform_kwargs=dict(image_size=128),
     )
 
     data = next(iter(datamodule.val_dataloader()))
@@ -234,7 +235,9 @@ def test_image_detector_data_from_fiftyone(tmpdir):
 def test_image_detector_data_from_files(tmpdir):
 
     predict_files = _create_synth_files_dataset(tmpdir)
-    datamodule = ObjectDetectionData.from_files(predict_files=predict_files, batch_size=1, image_size=(128, 128))
+    datamodule = ObjectDetectionData.from_files(
+        predict_files=predict_files, batch_size=1, transform_kwargs=dict(image_size=128)
+    )
     data = next(iter(datamodule.predict_dataloader()))
     sample = data[0]
     assert sample[DataKeys.INPUT].shape == (128, 128, 3)
@@ -245,7 +248,9 @@ def test_image_detector_data_from_files(tmpdir):
 def test_image_detector_data_from_folders(tmpdir):
 
     predict_folder = _create_synth_folders_dataset(tmpdir)
-    datamodule = ObjectDetectionData.from_folders(predict_folder=predict_folder, batch_size=1, image_size=(128, 128))
+    datamodule = ObjectDetectionData.from_folders(
+        predict_folder=predict_folder, batch_size=1, transform_kwargs=dict(image_size=128)
+    )
     data = next(iter(datamodule.predict_dataloader()))
     sample = data[0]
     assert sample[DataKeys.INPUT].shape == (128, 128, 3)
