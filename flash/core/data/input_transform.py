@@ -777,8 +777,6 @@ class InputTransform(Properties):
     def _collate(self, samples: Sequence, metadata=None) -> Any:
         """Transform to convert a sequence of samples to a collated batch."""
         current_transform = self.current_transform
-        if current_transform is self._identity:
-            current_transform = default_collate
 
         # the model can provide a custom ``collate_fn``.
         collate_fn = self.get_state(CollateFn)
