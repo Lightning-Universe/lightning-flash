@@ -327,7 +327,6 @@ class TestSemanticSegmentationData:
 
         # check predict data
         data = next(iter(dm.predict_dataloader()))
-        breakpoint()
         imgs = data[DataKeys.INPUT]
         assert imgs.shape == (2, 3, 128, 128)
 
