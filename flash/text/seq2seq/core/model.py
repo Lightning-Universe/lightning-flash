@@ -22,6 +22,7 @@ from torch import Tensor
 from torch.nn import Module
 
 from flash.core.data.io.input import DataKeys
+from flash.core.data.io.output_transform import OutputTransform
 from flash.core.integrations.transformers.states import TransformersBackboneState
 from flash.core.model import Task
 from flash.core.registry import ExternalRegistry, FlashRegistry
@@ -29,6 +30,7 @@ from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.core.utilities.providers import _HUGGINGFACE
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.text.ort_callback import ORTCallback
+from flash.text.seq2seq.core.data import Seq2SeqOutputTransform
 
 if _TEXT_AVAILABLE:
     from transformers import AutoModelForSeq2SeqLM
@@ -87,6 +89,7 @@ class Seq2SeqTask(Task):
         val_target_max_length: Optional[int] = None,
         num_beams: Optional[int] = None,
         enable_ort: bool = False,
+        output_transform: Optional[OutputTransform] = Seq2SeqOutputTransform(),
     ):
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
         # disable HF thousand warnings
@@ -99,6 +102,7 @@ class Seq2SeqTask(Task):
             lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
+            output_transform=output_transform,
         )
         self.set_state(TransformersBackboneState(backbone, tokenizer_kwargs=tokenizer_kwargs))
         self.model = self.backbones.get(backbone)()
