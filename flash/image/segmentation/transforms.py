@@ -80,6 +80,7 @@ def predict_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callabl
 
 def remove_extra_dimensions(batch: Dict[str, Any]):
     if isinstance(batch[DataKeys.INPUT], list):
+        assert len(batch[DataKeys.INPUT]) == 1
         batch[DataKeys.INPUT] = batch[DataKeys.INPUT][0]
     return batch
 
