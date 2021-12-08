@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 import warnings
-from typing import Any, Iterable, List, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, Union
 
 import torch
 from pytorch_lightning import Callback
@@ -78,6 +78,7 @@ class Seq2SeqTask(Task):
     def __init__(
         self,
         backbone: str = "t5-small",
+        tokenizer_kwargs: Optional[Dict[str, Any]] = None,
         loss_fn: LOSS_FN_TYPE = None,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
@@ -99,7 +100,7 @@ class Seq2SeqTask(Task):
             metrics=metrics,
             learning_rate=learning_rate,
         )
-        self.set_state(TransformersBackboneState(backbone))
+        self.set_state(TransformersBackboneState(backbone, tokenizer_kwargs=tokenizer_kwargs))
         self.model = self.backbones.get(backbone)()
         self.enable_ort = enable_ort
         self.val_target_max_length = val_target_max_length

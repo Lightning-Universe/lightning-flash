@@ -48,6 +48,7 @@ class TranslationTask(Seq2SeqTask):
     def __init__(
         self,
         backbone: str = "t5-small",
+        tokenizer_kwargs: Optional[Dict[str, Any]] = None,
         loss_fn: LOSS_FN_TYPE = None,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
@@ -62,6 +63,7 @@ class TranslationTask(Seq2SeqTask):
         self.save_hyperparameters()
         super().__init__(
             backbone=backbone,
+            tokenizer_kwargs=tokenizer_kwargs,
             loss_fn=loss_fn,
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,

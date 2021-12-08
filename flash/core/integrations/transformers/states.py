@@ -11,8 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import lru_cache
+from typing import Any, Dict, Optional
 
 from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
@@ -27,8 +28,12 @@ class TransformersBackboneState(ProcessState):
     transformers."""
 
     backbone: str
+    tokenizer_kwargs: Optional[Dict[str, Any]] = field(default_factory=dict, hash=False)
 
     @property
     @lru_cache(maxsize=None)
     def tokenizer(self):
-        return AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
+        tokenizer_kwargs = {}
+        if self.tokenizer_kwargs is not None:
+            tokenizer_kwargs = self.tokenizer_kwargs
+        return AutoTokenizer.from_pretrained(self.backbone, use_fast=True, **tokenizer_kwargs)
