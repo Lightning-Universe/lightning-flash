@@ -55,7 +55,7 @@ def test_classification(tmpdir):
         train_targets=[0, 1],
         num_workers=0,
         batch_size=2,
-        image_size=(64, 64),
+        transform_kwargs={"image_size": (64, 64)},
     )
     model = ImageClassifier(num_classes=2, backbone="resnet18")
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
@@ -90,7 +90,7 @@ def test_classification_fiftyone(tmpdir):
         label_field="test",
         batch_size=2,
         num_workers=0,
-        image_size=(64, 64),
+        transform_kwargs={"image_size": (64, 64)},
     )
 
     model = ImageClassifier(num_classes=2, backbone="resnet18")

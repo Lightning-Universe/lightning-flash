@@ -121,6 +121,7 @@ Here's an example:
         train_transform=transform,
         val_transform=transform,
         test_transform=transform,
+        batch_size=1,
     )
 
 Alternatively, the user may directly override the hooks for their needs like this:
@@ -142,6 +143,7 @@ Alternatively, the user may directly override the hooks for their needs like thi
         val_folder="data/hymenoptera_data/val/",
         test_folder="data/hymenoptera_data/test/",
         input_transform=CustomImageClassificationInputTransform(),
+        batch_size=1,
     )
 
 

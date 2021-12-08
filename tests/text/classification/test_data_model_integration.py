@@ -15,8 +15,8 @@ import os
 from pathlib import Path
 
 import pytest
-from pytorch_lightning import Trainer
 
+from flash.core.trainer import Trainer
 from flash.text import TextClassificationData, TextClassifier
 from tests.helpers.utils import _TEXT_TESTING
 
@@ -44,7 +44,6 @@ def test_classification(tmpdir):
     data = TextClassificationData.from_csv(
         "sentence",
         "label",
-        backbone=TEST_BACKBONE,
         train_file=csv_path,
         num_workers=0,
         batch_size=2,

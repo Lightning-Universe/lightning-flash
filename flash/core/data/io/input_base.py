@@ -23,9 +23,11 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Dataset
 
 import flash
+from flash.core.data.callback import FlashCallback
 from flash.core.data.properties import Properties
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.stages import RunningStage
+from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 
 if sys.version_info < (3, 7):
     from typing import GenericMeta
@@ -125,18 +127,40 @@ class InputBase(Properties, metaclass=_InputMeta):
         self,
         running_stage: RunningStage,
         *args: Any,
-        transform: "flash.InputTransform" = None,
+        transform: INPUT_TRANSFORM_TYPE = None,
+        transform_kwargs: Optional[Dict] = None,
+        input_transforms_registry: Optional[FlashRegistry] = None,
         data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None,
         **kwargs: Any,
     ) -> None:
         from flash.core.data.input_transform import create_transform
 
-        self.transform = create_transform(transform, running_stage, data_pipeline_state, self.input_transforms_registry)
+        self.transform = create_transform(
+            transform,
+            running_stage,
+            data_pipeline_state,
+            input_transforms_registry or self.input_transforms_registry,
+            transform_kwargs,
+        )
         super().__init__(running_stage=running_stage, data_pipeline_state=data_pipeline_state)
 
         self.data = None
         if len(args) >= 1 and args[0] is not None:
             self.data = self._call_load_data(*args, **kwargs)
+
+    def _create_dataloader_collate_fn(self, callbacks: List[FlashCallback]) -> Optional[Callable]:
+        from flash.core.data.input_transform import _create_collate_input_transform_processors
+
+        if not self.transform:
+            return
+        return _create_collate_input_transform_processors(self.transform, callbacks)[0]
+
+    def _create_on_after_batch_transfer_fn(self, callbacks: List[FlashCallback]) -> Optional[Callable]:
+        from flash.core.data.input_transform import _create_collate_input_transform_processors
+
+        if not self.transform:
+            return
+        return _create_collate_input_transform_processors(self.transform, callbacks)[1]
 
     def _call_load_data(self, *args: Any, **kwargs: Any) -> Union[Sequence, Iterable]:
         from flash.core.data.data_pipeline import DataPipeline
@@ -235,18 +259,6 @@ class InputBase(Properties, metaclass=_InputMeta):
                 "The class attribute `input_transforms_registry` should be set as a class attribute. "
             )
         cls.input_transforms_registry(fn=fn, name=enum)
-
-    @property
-    def dataloader_collate_fn(self) -> Optional[Callable]:
-        if self.transform:
-            self.transform.running_stage = self.running_stage
-            return self.transform.dataloader_collate_fn
-
-    @property
-    def on_after_batch_transfer_fn(self) -> Optional[Callable]:
-        if self.transform:
-            self.transform.running_stage = self.running_stage
-            return self.transform.on_after_batch_transfer_fn
 
 
 class Input(InputBase, Dataset):

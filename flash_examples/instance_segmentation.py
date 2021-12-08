@@ -42,13 +42,14 @@ trainer = flash.Trainer(max_epochs=1)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Detect objects in a few images!
-predictions = model.predict(
-    [
+datamodule = InstanceSegmentationData.from_files(
+    predict_files=[
         str(data_dir / "images/yorkshire_terrier_9.jpg"),
         str(data_dir / "images/yorkshire_terrier_12.jpg"),
         str(data_dir / "images/yorkshire_terrier_13.jpg"),
     ]
 )
+predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
 
 # 5. Save the model!

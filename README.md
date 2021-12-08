@@ -129,12 +129,6 @@ model.serve()
 or make predictions from raw data directly.
 
 ```py
-predictions = model.predict(["data/CameraRGB/F61-1.png", "data/CameraRGB/F62-1.png"])
-```
-
-or make predictions with 2 GPUs.
-
-```py
 trainer = Trainer(accelerator='ddp', gpus=2)
 dm = SemanticSegmentationData.from_folders(predict_folder="data/CameraRGB")
 predictions = trainer.predict(model, dm)
@@ -273,6 +267,7 @@ train_transform = merge_transforms(default_transforms((256, 256)), train_transfo
 datamodule = ImageClassificationData.from_folders(
     train_folder = "data/train",
     train_transform=train_transform,
+    batch_size=2,
 )
 
 ```
@@ -301,8 +296,11 @@ For example, to train an image classifier for 10 epochs with a `resnet50` backbo
 
 ## Kaggle Notebook Examples
 
-- [Titanic crash with Lightning⚡Flash](https://www.kaggle.com/jirkaborovec/titanic-crash-with-lightning-flash)
-- [Covid detection with Lightning⚡️Flash](https://www.kaggle.com/jirkaborovec/covid-detection-with-lightning-flash)
+- [🚢Titanic crash with Lightning⚡Flash](https://www.kaggle.com/jirkaborovec/titanic-crash-with-lightning-flash)
+- [🏠House 💵prices predictions with Lightning⚡Flash](https://www.kaggle.com/jirkaborovec/house-prices-predictions-with-lightning-flash)
+- [Playing 📋tabular with Lightning⚡Flash](https://www.kaggle.com/jirkaborovec/playing-tabular-with-lightning-flash)
+- [🙊Toxic comments with Lightning⚡Flash](https://www.kaggle.com/jirkaborovec/toxic-comments-with-lightning-flash)
+- [🫁COVID detection with Lightning⚡️Flash](https://www.kaggle.com/jirkaborovec/covid-detection-with-lightning-flash)
 
 
 ## Contribute!

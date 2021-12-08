@@ -11,14 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Optional, Tuple, Type, Union
+from typing import Any, Callable, Mapping, Optional, Type
 
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning import LightningDataModule
-from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader
+from torch.utils.data._utils.collate import default_collate
 from torch.utils.data.dataset import IterableDataset
 from torch.utils.data.sampler import Sampler
 
@@ -26,12 +26,28 @@ import flash
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
+from flash.core.data.data_pipeline import DataPipelineState
+from flash.core.data.input_transform import InputTransform
+from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_base import Input
 from flash.core.data.io.input_transform import DefaultInputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.stages import RunningStage
+
+
+class DatasetInput(Input):
+    """The ``DatasetInput`` implements default behaviours for data sources which expect the input to
+    :meth:`~flash.core.data.io.input.Input.load_data` to be a :class:`torch.utils.data.dataset.Dataset`
+
+    Args:
+        labels: Optionally pass the labels as a mapping from class index to label string. These will then be set as the
+            :class:`~flash.core.data.io.input.ClassificationState`.
+    """
+
+    def load_sample(self, sample: Any) -> Mapping[str, Any]:
+        if isinstance(sample, tuple) and len(sample) == 2:
+            return {DataKeys.INPUT: sample[0], DataKeys.TARGET: sample[1]}
+        return {DataKeys.INPUT: sample}
 
 
 class DataModule(DataModule):
@@ -39,10 +55,10 @@ class DataModule(DataModule):
     :class:`~flash.core.data.datasets.Input` and a :class:`~flash.core.data.callback.BaseDataFetcher`.
 
     Args:
-        train_dataset: Dataset for training. Defaults to None.
-        val_dataset: Dataset for validating model performance during training. Defaults to None.
-        test_dataset: Dataset to test model performance. Defaults to None.
-        predict_dataset: Dataset for predicting. Defaults to None.
+        train_input: Input dataset for training. Defaults to None.
+        val_input: Input dataset for validating model performance during training. Defaults to None.
+        test_input: Input dataset to test model performance. Defaults to None.
+        predict_input: Input dataset for predicting. Defaults to None.
         data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to attach to the
             :class:`~flash.core.data.io.input_transform.InputTransform`. If ``None``, the output from
             :meth:`~flash.core.data.data_module.DataModule.configure_data_fetcher` will be used.
@@ -58,14 +74,14 @@ class DataModule(DataModule):
 
     input_transform_cls = DefaultInputTransform
     output_transform_cls = OutputTransform
-    flash_datasets_registry = FlashRegistry("datasets")
+    input_transforms_registry: Optional[FlashRegistry] = None
 
     def __init__(
         self,
-        train_dataset: Optional[Input] = None,
-        val_dataset: Optional[Input] = None,
-        test_dataset: Optional[Input] = None,
-        predict_dataset: Optional[Input] = None,
+        train_input: Optional[Input] = None,
+        val_input: Optional[Input] = None,
+        test_input: Optional[Input] = None,
+        predict_input: Optional[Input] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
         val_split: Optional[float] = None,
         batch_size: Optional[int] = None,
@@ -81,33 +97,45 @@ class DataModule(DataModule):
         if flash._IS_TESTING and torch.cuda.is_available():
             batch_size = 16
 
+        self._input_transform: Optional[OutputTransform] = None
         self._output_transform: Optional[OutputTransform] = None
         self._viz: Optional[BaseVisualization] = None
         self._data_fetcher: Optional[BaseDataFetcher] = data_fetcher or self.configure_data_fetcher()
 
-        self._train_ds = train_dataset
-        self._val_ds = val_dataset
-        self._test_ds = test_dataset
-        self._predict_ds = predict_dataset
+        # TODO: Remove _X_ds reference when previous DataModule is removed.
+        self._train_input = self._train_ds = train_input
+        self._val_input = self._val_ds = val_input
+        self._test_input = self._test_ds = test_input
+        self._predict_input = self._predict_ds = predict_input
 
-        if self._train_ds and self._val_ds and isinstance(val_split, float) and val_split > 0:
+        self._train_dataloader_collate_fn = self._resolve_dataloader_collate_fn(self._train_input)
+        self._val_dataloader_collate_fn = self._resolve_dataloader_collate_fn(self._val_input)
+        self._test_dataloader_collate_fn = self._resolve_dataloader_collate_fn(self._test_input)
+        self._predict_dataloader_collate_fn = self._resolve_dataloader_collate_fn(self._predict_input)
+
+        self._train_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._train_input)
+        self._val_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._val_input)
+        self._test_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._test_input)
+        self._predict_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._predict_input)
+
+        if self._train_input and self._val_input and isinstance(val_split, float) and val_split > 0:
             raise MisconfigurationException(
                 "A `val_dataset` was provided with `val_split`. Please, choose one or the other."
             )
 
-        if self._train_ds is not None and (val_split is not None and self._val_ds is None):
-            self._train_ds, self._val_ds = self._split_train_val(self._train_ds, val_split)
+        if self._train_input is not None and (val_split is not None and self._val_input is None):
+            self._train_input, self._val_input = self._split_train_val(self._train_input, val_split)
 
-        if self._train_ds:
+        if self._train_input:
             self.train_dataloader = self._train_dataloader
 
-        if self._val_ds:
+        if self._val_input:
             self.val_dataloader = self._val_dataloader
 
-        if self._test_ds:
+        if self._test_input:
             self.test_dataloader = self._test_dataloader
 
-        if self._predict_ds:
+        if self._predict_input:
             self.predict_dataloader = self._predict_dataloader
 
         self.batch_size = batch_size
@@ -120,13 +148,35 @@ class DataModule(DataModule):
 
         self.sampler = sampler
 
-        self.set_running_stages()
-
         LightningDataModule.__init__(self)
 
+    @property
+    def input_transform(self) -> InputTransform:
+        """Property that returns the input transform class used on input data."""
+        # Find a better way to resolve this.
+        return self._train_ds.transform or self.input_transform_cls()
+
+    def _resolve_transform(self, ds: Optional[Input]) -> Optional[InputTransform]:
+        if not isinstance(ds, Input):
+            return None
+        return ds.transform
+
+    def _resolve_dataloader_collate_fn(self, ds: Optional[Input]) -> Optional[Callable]:
+        if not ds:
+            return None
+        if isinstance(ds.transform, InputTransform):
+            return ds._create_dataloader_collate_fn([self.data_fetcher])
+        return default_collate
+
+    def _resolve_on_after_batch_transfer_fn(self, ds: Optional[Input]) -> Optional[Callable]:
+        if not ds:
+            return None
+        if isinstance(ds.transform, InputTransform):
+            return ds._create_on_after_batch_transfer_fn([self.data_fetcher])
+
     def _train_dataloader(self) -> DataLoader:
-        train_ds: Input = self._train_ds
-        collate_fn = train_ds.dataloader_collate_fn
+        train_ds: Input = self._train_input
+        collate_fn = self._train_dataloader_collate_fn
         shuffle: bool = False
         if isinstance(train_ds, IterableDataset):
             drop_last = False
@@ -140,6 +190,8 @@ class DataModule(DataModule):
             sampler = self.sampler(train_ds)
 
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
+            if isinstance(self.trainer.lightning_module, flash.Task):
+                self.connect(self.trainer.lightning_module)
             return self.trainer.lightning_module.process_train_dataset(
                 train_ds,
                 trainer=self.trainer,
@@ -165,10 +217,12 @@ class DataModule(DataModule):
         )
 
     def _val_dataloader(self) -> DataLoader:
-        val_ds: Input = self._val_ds
-        collate_fn = val_ds.dataloader_collate_fn
+        val_ds: Input = self._val_input
+        collate_fn = self._val_dataloader_collate_fn
 
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
+            if isinstance(self.trainer.lightning_module, flash.Task):
+                self.connect(self.trainer.lightning_module)
             return self.trainer.lightning_module.process_val_dataset(
                 val_ds,
                 trainer=self.trainer,
@@ -188,10 +242,12 @@ class DataModule(DataModule):
         )
 
     def _test_dataloader(self) -> DataLoader:
-        test_ds: Input = self._test_ds
-        collate_fn = test_ds.dataloader_collate_fn
+        test_ds: Input = self._test_input
+        collate_fn = self._test_dataloader_collate_fn
 
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
+            if isinstance(self.trainer.lightning_module, flash.Task):
+                self.connect(self.trainer.lightning_module)
             return self.trainer.lightning_module.process_test_dataset(
                 test_ds,
                 trainer=self.trainer,
@@ -211,8 +267,8 @@ class DataModule(DataModule):
         )
 
     def _predict_dataloader(self) -> DataLoader:
-        predict_ds: Input = self._predict_ds
-        collate_fn = predict_ds.dataloader_collate_fn
+        predict_ds: Input = self._predict_input
+        collate_fn = self._predict_dataloader_collate_fn
 
         if isinstance(predict_ds, IterableDataset):
             batch_size = self.batch_size
@@ -220,6 +276,8 @@ class DataModule(DataModule):
             batch_size = min(self.batch_size, len(predict_ds) if len(predict_ds) > 0 else 1)
 
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
+            if isinstance(self.trainer.lightning_module, flash.Task):
+                self.connect(self.trainer.lightning_module)
             return self.trainer.lightning_module.process_predict_dataset(
                 predict_ds,
                 batch_size=batch_size,
@@ -237,100 +295,39 @@ class DataModule(DataModule):
             persistent_workers=self.persistent_workers,
         )
 
-    def on_after_batch_transfer(self, batch: Any, dataloader_idx: int) -> Any:
-        ds = None
-        if self.trainer.training:
-            ds = self._train_ds
-        elif self.trainer.validating:
-            ds = self._val_ds
-        elif self.trainer.testing:
-            ds = self._test_ds
-        elif self.trainer.predicting:
-            ds = self._predict_ds
+    def connect(self, task: "flash.Task"):
+        data_pipeline_state = DataPipelineState()
+        for properties in [
+            self._train_input,
+            self._val_input,
+            self._test_input,
+            self._predict_input,
+            self._train_input.transform,
+            self._val_input.transform,
+            self._test_input.transform,
+            self._predict_input.transform,
+            task._deserializer,
+            task._output_transform,
+            task._output,
+            task,
+        ]:
+            if properties is not None:
+                properties.attach_data_pipeline_state(data_pipeline_state)
 
-        if ds:
-            transform = ds.on_after_batch_transfer_fn
+    def on_after_batch_transfer(self, batch: Any, dataloader_idx: int) -> Any:
+        if getattr(self, "trainer", None) is None:
+            return batch
+        transform = None
+        if self.trainer.training:
+            transform = self._train_on_after_batch_transfer_fn
+        elif self.trainer.validating or self.trainer.sanity_checking:
+            transform = self._val_on_after_batch_transfer_fn
+        elif self.trainer.testing:
+            transform = self._test_on_after_batch_transfer_fn
+        elif self.trainer.predicting:
+            transform = self._predict_on_after_batch_transfer_fn
+
+        if transform:
             batch = transform(batch)
 
         return batch
-
-    @classmethod
-    def create_inputs(
-        cls,
-        enum: Union[LightningEnum, str],
-        train_data: Optional[Any] = None,
-        val_data: Optional[Any] = None,
-        test_data: Optional[Any] = None,
-        predict_data: Optional[Any] = None,
-        train_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
-        val_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
-        test_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
-        predict_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
-        **input_kwarg,
-    ) -> Tuple[Optional[Input]]:
-        cls._verify_input_enum(enum)
-        input_cls: Input = cls.flash_datasets_registry.get(enum)
-        return (
-            cls._create_input(
-                input_cls,
-                train_data,
-                running_stage=RunningStage.TRAINING,
-                transform=train_transform,
-                **input_kwarg,
-            ),
-            cls._create_input(
-                input_cls,
-                val_data,
-                running_stage=RunningStage.VALIDATING,
-                transform=val_transform,
-                **input_kwarg,
-            ),
-            cls._create_input(
-                input_cls,
-                test_data,
-                running_stage=RunningStage.TESTING,
-                transform=test_transform,
-                **input_kwarg,
-            ),
-            cls._create_input(
-                input_cls,
-                predict_data,
-                running_stage=RunningStage.PREDICTING,
-                transform=predict_transform,
-                **input_kwarg,
-            ),
-        )
-
-    @staticmethod
-    def _create_input(
-        input_cls,
-        *load_data_args,
-        running_stage: RunningStage,
-        transform: Optional[InputTransform],
-        **kwargs,
-    ) -> Optional[Input]:
-        if load_data_args[0] is not None:
-            return input_cls(running_stage, *load_data_args, transform=transform, **kwargs)
-
-    @classmethod
-    def _verify_input_enum(cls, enum: LightningEnum) -> None:
-        if not cls.flash_datasets_registry or not isinstance(cls.flash_datasets_registry, FlashRegistry):
-            raise MisconfigurationException(
-                "The ``AutoContainer`` should have ``flash_datasets_registry`` (FlashRegistry) populated "
-                "with Input class and ``default_flash_dataset_enum`` (LightningEnum) class attributes. "
-            )
-
-        if enum not in cls.flash_datasets_registry.available_keys():
-            available_constructors = [
-                f"from_{key.name.lower()}" for key in cls.flash_datasets_registry.available_keys()
-            ]
-            raise MisconfigurationException(
-                f"The ``AutoContainer`` ``flash_datasets_registry`` doesn't contain the associated {enum} "
-                f"HINT: Here are the available constructors {available_constructors}"
-            )
-
-    @classmethod
-    def register_flash_dataset(cls, enum: Union[str, LightningEnum], input_cls: Type[Input]) -> None:
-        if cls.flash_datasets_registry is None:
-            raise MisconfigurationException("The class attribute `flash_datasets_registry` should be set. ")
-        cls.flash_datasets_registry(fn=input_cls, name=enum)

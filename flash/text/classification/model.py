@@ -20,6 +20,7 @@ from pytorch_lightning import Callback
 
 from flash.core.classification import ClassificationTask, LabelsOutput
 from flash.core.data.io.input import DataKeys
+from flash.core.integrations.transformers.states import TransformersBackboneState
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
@@ -87,6 +88,7 @@ class TextClassifier(ClassificationTask):
             output=output or LabelsOutput(multi_label=multi_label),
         )
         self.enable_ort = enable_ort
+        self.set_state(TransformersBackboneState(backbone))
         self.model = self.backbones.get(backbone)(num_labels=num_classes)
         self.save_hyperparameters()
 

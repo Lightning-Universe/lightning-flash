@@ -11,38 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, Dict, Optional, Union
-
-from flash.text.seq2seq.core.data import Seq2SeqData, Seq2SeqInputTransform, Seq2SeqOutputTransform
-
-
-class SummarizationInputTransform(Seq2SeqInputTransform):
-    def __init__(
-        self,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-        backbone: str = "sshleifer/distilbart-xsum-1-1",
-        max_source_length: int = 128,
-        max_target_length: int = 128,
-        padding: Union[str, bool] = "max_length",
-        **kwargs,
-    ):
-        super().__init__(
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
-            backbone=backbone,
-            max_source_length=max_source_length,
-            max_target_length=max_target_length,
-            padding=padding,
-            **kwargs,
-        )
+from flash.text.seq2seq.core.data import Seq2SeqData
 
 
 class SummarizationData(Seq2SeqData):
-
-    input_transform_cls = SummarizationInputTransform
-    output_transform_cls = Seq2SeqOutputTransform
+    """DataModule for Summarization tasks."""

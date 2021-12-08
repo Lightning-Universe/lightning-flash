@@ -14,7 +14,6 @@
 import functools
 import inspect
 import pickle
-import warnings
 from abc import ABCMeta
 from copy import deepcopy
 from importlib import import_module
@@ -41,10 +40,10 @@ import flash
 from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
 from flash.core.data.io.input import Input
-from flash.core.data.io.input_base import InputBase as NewInputBase
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import OutputTransform
+from flash.core.data.new_data_module import DataModule as NewDataModule
 from flash.core.data.process import Deserializer, DeserializerMapping
 from flash.core.data.properties import ProcessState
 from flash.core.finetuning import _DEFAULTS_FINETUNE_STRATEGIES, _FINETUNING_STRATEGIES_REGISTRY
@@ -262,27 +261,6 @@ class BenchmarkConvergenceCI(Callback):
                     print("Benchmark Successful!")
 
 
-def predict_context(func: Callable) -> Callable:
-    """This decorator is used as context manager to put model in eval mode before running predict and reset to
-    train after."""
-
-    @functools.wraps(func)
-    def wrapper(self, *args, **kwargs) -> Any:
-        grad_enabled = torch.is_grad_enabled()
-        is_training = self.training
-        self.eval()
-        torch.set_grad_enabled(False)
-
-        result = func(self, *args, **kwargs)
-
-        if is_training:
-            self.train()
-        torch.set_grad_enabled(grad_enabled)
-        return result
-
-    return wrapper
-
-
 class CheckDependenciesMeta(ABCMeta):
     def __new__(mcs, *args, **kwargs):
         result = ABCMeta.__new__(mcs, *args, **kwargs)
@@ -372,6 +350,20 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         # Explicitly set the output to call the setter
         self.deserializer = deserializer
         self.output = output
+        self._wrapped_predict_step = False
+
+    def _wrap_predict_step(task, predict_step: Callable) -> Callable:
+
+        process_fn = task.build_data_pipeline().output_transform_processor(RunningStage.PREDICTING)
+
+        @functools.wraps(predict_step)
+        def wrapper(self, *args, **kwargs):
+            predictions = predict_step(self, *args, **kwargs)
+            return process_fn(predictions)
+
+        task._wrapped_predict_step = True
+
+        return wrapper
 
     def step(self, batch: Any, batch_idx: int, metrics: nn.ModuleDict) -> Any:
         """Implement the core logic for the training/validation/test step. By default this includes:
@@ -472,62 +464,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             prog_bar=True,
         )
 
-    @predict_context
-    def predict(
-        self,
-        x: Any,
-        data_source: Optional[str] = None,
-        input: Optional[str] = None,
-        deserializer: Optional[Deserializer] = None,
-        data_pipeline: Optional[DataPipeline] = None,
-    ) -> Any:
-        """Predict function for raw data or processed data.
-
-        Args:
-            x: Input to predict. Can be raw data or processed data. If str, assumed to be a folder of data.
-            input: A string that indicates the format of the data source to use which will override
-                the current data source format used
-            deserializer: A single :class:`~flash.core.data.process.Deserializer` to deserialize the input
-            data_pipeline: Use this to override the current data pipeline
-
-        Returns:
-            The post-processed model predictions
-        """
-        if data_source is not None:
-            warnings.warn(
-                "The `data_source` argument has been deprecated since 0.6.0 and will be removed in 0.7.0. Use `input` "
-                "instead.",
-                FutureWarning,
-            )
-            input = data_source
-        running_stage = RunningStage.PREDICTING
-
-        data_pipeline = self.build_data_pipeline(None, deserializer, data_pipeline)
-
-        # <hack> Temporary fix to support new `Input` object
-        input = data_pipeline._input_transform_pipeline.input_of_name(input or "default")
-
-        if (inspect.isclass(input) and issubclass(input, NewInputBase)) or (
-            isinstance(input, functools.partial) and issubclass(input.func, NewInputBase)
-        ):
-            dataset = input(running_stage, x, data_pipeline_state=self._data_pipeline_state)
-        else:
-            dataset = input.generate_dataset(x, running_stage)
-        # </hack>
-
-        dataloader = self.process_predict_dataset(dataset)
-        x = list(dataloader.dataset)
-        x = data_pipeline.worker_input_transform_processor(running_stage, collate_fn=dataloader.collate_fn)(x)
-        # todo (tchaton): Remove this when sync with Lightning master.
-        if len(inspect.signature(self.transfer_batch_to_device).parameters) == 3:
-            x = self.transfer_batch_to_device(x, self.device, 0)
-        else:
-            x = self.transfer_batch_to_device(x, self.device)
-        x = data_pipeline.device_input_transform_processor(running_stage)(x)
-        x = x[0] if isinstance(x, list) else x
-        predictions = self.predict_step(x, 0)  # batch_idx is always 0 when running with `model.predict`
-        predictions = data_pipeline.output_transform_processor(running_stage)(predictions)
-        return predictions
+    def predict(self, *args, **kwargs):
+        raise AttributeError("`flash.Task.predict` has been removed. Use `flash.Trainer.predict` instead.")
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         if isinstance(batch, tuple):
@@ -818,7 +756,9 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             deserializer=deserializer,
             output=output,
         )
+
         self._data_pipeline_state = self._data_pipeline_state or DataPipelineState()
+
         self.attach_data_pipeline_state(self._data_pipeline_state)
         self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)
         return data_pipeline
@@ -866,36 +806,53 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
     def output_transform(self) -> OutputTransform:
         return getattr(self.data_pipeline, "_output_transform", None)
 
+    def on_predict_start(self) -> None:
+        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule) and not self._wrapped_predict_step:
+            self.predict_step = self._wrap_predict_step(self.predict_step)
+
     def on_train_dataloader(self) -> None:
+        # TODO: Remove this logic when moving to the new DataModule
+        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
+            return
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self, RunningStage.TRAINING)
             self.data_pipeline._attach_to_model(self, RunningStage.TRAINING)
         super().on_train_dataloader()
 
     def on_val_dataloader(self) -> None:
+        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
+            return
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self, RunningStage.VALIDATING)
             self.data_pipeline._attach_to_model(self, RunningStage.VALIDATING)
         super().on_val_dataloader()
 
     def on_test_dataloader(self, *_) -> None:
+        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
+            return
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self, RunningStage.TESTING)
             self.data_pipeline._attach_to_model(self, RunningStage.TESTING)
         super().on_test_dataloader()
 
     def on_predict_dataloader(self) -> None:
+        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
+            return
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self, RunningStage.PREDICTING)
             self.data_pipeline._attach_to_model(self, RunningStage.PREDICTING)
         super().on_predict_dataloader()
 
     def on_predict_end(self) -> None:
+        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
+            return
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self)
         super().on_predict_end()
 
     def on_fit_end(self) -> None:
+        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
+            return
         if self.data_pipeline is not None:
             self.data_pipeline._detach_from_model(self)
         super().on_fit_end()

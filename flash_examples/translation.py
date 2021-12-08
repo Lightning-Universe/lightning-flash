@@ -25,7 +25,7 @@ datamodule = TranslationData.from_csv(
     "target",
     train_file="data/wmt_en_ro/train.csv",
     val_file="data/wmt_en_ro/valid.csv",
-    backbone="Helsinki-NLP/opus-mt-en-ro",
+    batch_size=4,
 )
 
 # 2. Build the task
@@ -36,13 +36,15 @@ trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Translate something!
-predictions = model.predict(
-    [
+datamodule = TranslationData.from_lists(
+    predict_data=[
         "BBC News went to meet one of the project's first graduates.",
         "A recession has come as quickly as 11 months after the first rate hike and as long as 86 months.",
         "Of course, it's still early in the election cycle.",
-    ]
+    ],
+    batch_size=4,
 )
+predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
 
 # 5. Save the model!

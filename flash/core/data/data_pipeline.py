@@ -24,7 +24,8 @@ from torch.utils.data import DataLoader, IterableDataset
 
 import flash
 from flash.core.data.auto_dataset import IterableAutoDataset
-from flash.core.data.batch import _DeserializeProcessor
+from flash.core.data.batch import _DeserializeProcessor, _DeserializeProcessorV2
+from flash.core.data.input_transform import _create_collate_input_transform_processors
 from flash.core.data.input_transform import InputTransform as NewInputTransform
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_base import InputBase
@@ -146,7 +147,7 @@ class DataPipeline:
     ) -> bool:
         """Cropped Version of https://github.com/PyTorchLightning/pytorch-
         lightning/blob/master/pytorch_lightning/utilities/model_helpers.py."""
-        assert isinstance(process_obj, super_obj)
+        assert isinstance(process_obj, super_obj), (process_obj, super_obj)
         if prefix is None and not hasattr(super_obj, method_name):
             raise MisconfigurationException(f"This function doesn't belong to the parent class {super_obj}")
 
@@ -167,16 +168,26 @@ class DataPipeline:
         return samples
 
     def deserialize_processor(self) -> _DeserializeProcessor:
+        if isinstance(self._input_transform_pipeline, NewInputTransform):
+            return _DeserializeProcessorV2(
+                self._deserializer,
+                self._input_transform_pipeline,
+                self._input_transform_pipeline._per_sample_transform,
+            )
         return self._create_collate_input_transform_processors(RunningStage.PREDICTING)[0]
 
     def worker_input_transform_processor(
         self, running_stage: RunningStage, collate_fn: Optional[Callable] = None, is_serving: bool = False
     ) -> _InputTransformProcessor:
+        if isinstance(self._input_transform_pipeline, NewInputTransform):
+            return _create_collate_input_transform_processors(self._input_transform_pipeline, [])[0]
         return self._create_collate_input_transform_processors(
             running_stage, collate_fn=collate_fn, is_serving=is_serving
         )[1]
 
     def device_input_transform_processor(self, running_stage: RunningStage) -> _InputTransformProcessor:
+        if isinstance(self._input_transform_pipeline, NewInputTransform):
+            return _create_collate_input_transform_processors(self._input_transform_pipeline, [])[1]
         return self._create_collate_input_transform_processors(running_stage)[2]
 
     def output_transform_processor(self, running_stage: RunningStage, is_serving=False) -> _OutputTransformProcessor:
@@ -285,6 +296,7 @@ class DataPipeline:
             self._identity if is_serving else per_sample_transform,
             getattr(input_transform, func_names["per_batch_transform"]),
             stage,
+            callbacks=input_transform.callbacks,
         )
         worker_input_transform_processor._original_collate_fn = original_collate_fn
         device_input_transform_processor = _InputTransformProcessor(
@@ -295,6 +307,7 @@ class DataPipeline:
             stage,
             apply_per_sample_transform=device_collate_fn != self._identity,
             on_device=True,
+            callbacks=input_transform.callbacks,
         )
         return deserialize_processor, worker_input_transform_processor, device_input_transform_processor
 

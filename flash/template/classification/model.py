@@ -57,7 +57,7 @@ class TemplateSKLearnClassifier(ClassificationTask):
         metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-2,
         multi_label: bool = False,
-        output: OUTPUT_TYPE = None,
+        output: OUTPUT_TYPE = LabelsOutput(),
     ):
         super().__init__(
             model=None,
@@ -67,7 +67,7 @@ class TemplateSKLearnClassifier(ClassificationTask):
             metrics=metrics,
             learning_rate=learning_rate,
             multi_label=multi_label,
-            output=output or LabelsOutput(),
+            output=output,
         )
 
         self.save_hyperparameters()

@@ -9,6 +9,7 @@ from flash.core.integrations.labelstudio.input import (
     LabelStudioTextClassificationInput,
 )
 from flash.core.integrations.labelstudio.visualizer import launch_app
+from flash.core.integrations.transformers.states import TransformersBackboneState
 from flash.core.utilities.stages import RunningStage
 from flash.image.classification.data import ImageClassificationData
 from flash.text.classification.data import TextClassificationData
@@ -197,6 +198,7 @@ def test_datamodule_labelstudio_image():
         test_export_json="data/project.json",
         test_data_folder="data/upload/",
         val_split=0.5,
+        batch_size=1,
     )
     assert datamodule
 
@@ -212,10 +214,11 @@ def test_label_studio_predictions_visualization():
         test_export_json="data/project.json",
         test_data_folder="data/upload/",
         val_split=0.5,
+        batch_size=1,
     )
     assert datamodule
     app = launch_app(datamodule)
-    predictions = [0, 1, 1, 0]
+    predictions = [[0, 1], [1, 0]]
     vis_predictions = app.show_predictions(predictions)
     assert len(vis_predictions) == 4
     assert vis_predictions[0]["result"][0]["id"] != vis_predictions[3]["result"][0]["id"]
@@ -230,24 +233,24 @@ def test_label_studio_predictions_visualization():
 def test_input_labelstudio_text():
     """Test creation of LabelStudioTextClassificationInput and Datamodule from text."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/text_data.zip", "./data/")
-    backbone = "prajjwal1/bert-medium"
     data = {
         "data_folder": "data/upload/",
         "export_json": "data/project.json",
         "multi_label": False,
     }
+
     data_pipeline_state = DataPipelineState()
     train_data, test_data = LabelStudioInput._split_train_test_data(data)
     train_data, val_data = LabelStudioInput._split_train_val_data(train_data, split=0.2)
     train = LabelStudioTextClassificationInput(
-        RunningStage.TRAINING, train_data, backbone=backbone, data_pipeline_state=data_pipeline_state
+        RunningStage.TRAINING, train_data, data_pipeline_state=data_pipeline_state
     )
-    val = LabelStudioTextClassificationInput(
-        RunningStage.VALIDATING, val_data, backbone=backbone, data_pipeline_state=data_pipeline_state
-    )
-    test = LabelStudioTextClassificationInput(
-        RunningStage.TESTING, test_data, backbone=backbone, data_pipeline_state=data_pipeline_state
-    )
+    val = LabelStudioTextClassificationInput(RunningStage.VALIDATING, val_data, data_pipeline_state=data_pipeline_state)
+    test = LabelStudioTextClassificationInput(RunningStage.TESTING, test_data, data_pipeline_state=data_pipeline_state)
+
+    backbone = "prajjwal1/bert-tiny"
+    train.set_state(TransformersBackboneState(backbone))
+
     assert train._data_pipeline_state == val._data_pipeline_state
     assert train._data_pipeline_state == test._data_pipeline_state
     train_sample = train[0]
@@ -261,11 +264,9 @@ def test_input_labelstudio_text():
 def test_datamodule_labelstudio_text():
     """Test creation of LabelStudioTextClassificationInput and Datamodule from text."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/text_data.zip", "./data/")
-    backbone = "prajjwal1/bert-medium"
     datamodule = TextClassificationData.from_labelstudio(
         train_export_json="data/project.json",
         data_folder="data/upload/",
-        backbone=backbone,
     )
     assert datamodule
 

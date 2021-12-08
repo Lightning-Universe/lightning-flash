@@ -22,7 +22,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.io.input import DataKeys
-from flash.core.data.utils import _CALLBACK_FUNCS, _STAGES_PREFIX
+from flash.core.data.utils import _CALLBACK_FUNCS
 from flash.core.utilities.imports import _PIL_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 from flash.image import ImageClassificationData
@@ -93,12 +93,12 @@ class TestBaseViz:
 
         num_tests = 10
 
-        for stage in _STAGES_PREFIX.values():
+        for stage in ("train", "val", "test", "predict"):
 
             for _ in range(num_tests):
                 for fcn_name in _CALLBACK_FUNCS:
                     dm.data_fetcher.reset()
-                    assert dm.data_fetcher.batches == {"predict": {}, "test": {}, "train": {}, "val": {}}
+                    assert dm.data_fetcher.batches == {"predict": {}, "test": {}, "train": {}, "val": {}, "serve": {}}
                     fcn = getattr(dm, f"show_{stage}_batch")
                     fcn(fcn_name, reset=False)
 

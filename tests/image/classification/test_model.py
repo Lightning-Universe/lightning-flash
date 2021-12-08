@@ -23,8 +23,10 @@ from flash.__main__ import main
 from flash.core.classification import ProbabilitiesOutput
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.core.utilities.stages import RunningStage
 from flash.image import ImageClassifier
 from flash.image.classification.data import ImageClassificationInputTransform
+from flash.image.data import ImageDeserializer
 from tests.helpers.utils import _IMAGE_TESTING, _SERVE_TESTING
 
 # ======== Mock functions ========
@@ -108,12 +110,10 @@ def test_multilabel(tmpdir):
     train_dl = torch.utils.data.DataLoader(ds, batch_size=2)
     trainer = Trainer(default_root_dir=tmpdir, max_epochs=2, limit_train_batches=5)
     trainer.finetune(model, train_dl, strategy=("freeze_unfreeze", 1))
-    image, label = ds[0][DataKeys.INPUT], ds[0][DataKeys.TARGET]
-    predictions = model.predict([{DataKeys.INPUT: image}])
+    predictions = trainer.predict(model, train_dl)[0]
     assert (torch.tensor(predictions) > 1).sum() == 0
     assert (torch.tensor(predictions) < 0).sum() == 0
-    assert len(predictions[0]) == num_classes == len(label)
-    assert len(torch.unique(label)) <= 2
+    assert len(predictions[0]) == num_classes
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
@@ -139,7 +139,8 @@ def test_jit(tmpdir, jitter, args):
 def test_serve():
     model = ImageClassifier(2)
     # TODO: Currently only servable once a input_transform has been attached
-    model._input_transform = ImageClassificationInputTransform()
+    model._input_transform = ImageClassificationInputTransform(RunningStage.SERVING)
+    model._deserializer = ImageDeserializer()
     model.eval()
     model.serve()
 

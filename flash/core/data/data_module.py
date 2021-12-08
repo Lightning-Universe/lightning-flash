@@ -119,7 +119,7 @@ class DataModule(pl.LightningDataModule):
             self._train_ds, self._val_ds = self._split_train_val(self._train_ds, val_split)
 
         self._input: Input = input
-        self._input_tranform: Optional[InputTransform] = input_transform
+        self._input_transform: Optional[InputTransform] = input_transform
         self._output_transform: Optional[OutputTransform] = output_transform
         self._viz: Optional[BaseVisualization] = None
         self._data_fetcher: Optional[BaseDataFetcher] = data_fetcher or self.configure_data_fetcher()
@@ -447,7 +447,7 @@ class DataModule(pl.LightningDataModule):
     @property
     def input_transform(self) -> InputTransform:
         """Property that returns the input transform class used on input data."""
-        return self._input_tranform or self.input_transform_cls()
+        return self._input_transform or self.input_transform_cls()
 
     @property
     def output_transform(self) -> OutputTransform:

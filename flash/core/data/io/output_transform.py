@@ -85,6 +85,9 @@ class _OutputTransformProcessor(torch.nn.Module):
         return batch, metadata
 
     def forward(self, batch: Sequence[Any]):
+        if batch is None:
+            return batch
+
         batch, metadata = self._extract_metadata(batch)
         uncollated = self.uncollate_fn(self.per_batch_transform(batch))
         if metadata:

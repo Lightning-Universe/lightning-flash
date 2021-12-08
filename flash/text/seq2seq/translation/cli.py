@@ -20,7 +20,6 @@ __all__ = ["translation"]
 
 
 def from_wmt_en_ro(
-    backbone: str = "Helsinki-NLP/opus-mt-en-ro",
     batch_size: int = 4,
     num_workers: int = 0,
     **input_transform_kwargs,
@@ -32,7 +31,6 @@ def from_wmt_en_ro(
         "target",
         train_file="data/wmt_en_ro/train.csv",
         val_file="data/wmt_en_ro/valid.csv",
-        backbone=backbone,
         batch_size=batch_size,
         num_workers=num_workers,
         **input_transform_kwargs,
@@ -49,7 +47,6 @@ def translation():
             "trainer.max_epochs": 3,
             "model.backbone": "Helsinki-NLP/opus-mt-en-ro",
         },
-        legacy=True,
     )
 
     cli.trainer.save_checkpoint("translation_model_en_ro.pt")

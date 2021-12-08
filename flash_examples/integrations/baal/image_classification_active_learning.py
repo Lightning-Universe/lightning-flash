@@ -25,8 +25,7 @@ download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./
 # Implement the research use-case where we mask labels from labelled dataset.
 datamodule = ActiveLearningDataModule(
     ImageClassificationData.from_folders(train_folder="data/hymenoptera_data/train/", batch_size=2),
-    initial_num_labels=5,
-    val_split=0.1,
+    initial_num_labels=10,
 )
 
 # 2. Build the task
@@ -37,7 +36,6 @@ head = torch.nn.Sequential(
 model = ImageClassifier(
     backbone="resnet18", head=head, num_classes=datamodule.num_classes, output=ProbabilitiesOutput()
 )
-
 
 # 3.1 Create the trainer
 trainer = flash.Trainer(max_epochs=3)
@@ -51,7 +49,11 @@ trainer.fit_loop = active_learning_loop
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Predict what's on a few images! ants or bees?
-predictions = model.predict("data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg")
+datamodule = ImageClassificationData.from_files(
+    predict_files=["data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg"],
+    batch_size=1,
+)
+predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
 
 # 5. Save the model!
