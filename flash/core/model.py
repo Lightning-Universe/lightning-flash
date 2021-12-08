@@ -759,12 +759,6 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
         self._data_pipeline_state = self._data_pipeline_state or DataPipelineState()
 
-        # HACK: Should we get rid of the DataPipeline entirely?
-        data_pipeline_state = datamodule.data_pipeline_state if isinstance(datamodule, NewDataModule) else None
-        if data_pipeline_state:
-            for state in data_pipeline_state._state.values():
-                self._data_pipeline_state.set_state(state)
-
         self.attach_data_pipeline_state(self._data_pipeline_state)
         self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)
         return data_pipeline
@@ -801,9 +795,6 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         # self._input_transform.state_dict()
         if getattr(self._input_transform, "_ddp_params_and_buffers_to_ignore", None):
             self._ddp_params_and_buffers_to_ignore = self._input_transform._ddp_params_and_buffers_to_ignore
-
-        # used to re-create the state and consolidate the data pipeline.
-        self.build_data_pipeline()
 
     @torch.jit.unused
     @property
