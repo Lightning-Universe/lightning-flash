@@ -11,10 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Tuple
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, List
 
 from torch import nn
 
+from flash.core.data.input_transform import InputTransform
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _ICEVISION_GREATER_EQUAL_0_11_0, requires
 
@@ -244,17 +246,18 @@ class IceVisionTransformAdapter(nn.Module):
         return from_icevision_record(record)
 
 
-@requires(["image", "icevision"])
-def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
-    """The default transforms from IceVision."""
-    return {
-        "per_sample_transform": IceVisionTransformAdapter([*A.resize_and_pad(image_size), A.Normalize()]),
-    }
+@dataclass
+class IceVisionTransform(InputTransform):
 
+    image_size: int = 128
 
-@requires(["image", "icevision"])
-def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
-    """The default augmentations from IceVision."""
-    return {
-        "per_sample_transform": IceVisionTransformAdapter([*A.aug_tfms(size=image_size), A.Normalize()]),
-    }
+    @requires(["image", "icevision"])
+    def per_sample_transform(self):
+        return IceVisionTransformAdapter([*A.resize_and_pad(self.image_size), A.Normalize()])
+
+    @requires(["image", "icevision"])
+    def train_per_sample_transform(self):
+        return IceVisionTransformAdapter([*A.aug_tfms(size=self.image_size), A.Normalize()])
+
+    def collate(self) -> Callable:
+        return self._identity
