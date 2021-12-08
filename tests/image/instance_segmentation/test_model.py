@@ -56,6 +56,7 @@ def test_instance_segmentation_inference(tmpdir):
         train_folder=data_dir,
         val_split=0.1,
         parser=partial(icedata.pets.parser, mask=True),
+        batch_size=1,
     )
 
     model = InstanceSegmentation(
@@ -73,7 +74,8 @@ def test_instance_segmentation_inference(tmpdir):
             str(data_dir / "images/yorkshire_terrier_9.jpg"),
             str(data_dir / "images/yorkshire_terrier_12.jpg"),
             str(data_dir / "images/yorkshire_terrier_13.jpg"),
-        ]
+        ],
+        batch_size=1,
     )
     predictions = trainer.predict(model, datamodule=datamodule)
     assert len(predictions[0]) == 3

@@ -52,7 +52,7 @@ def from_pets(
         test_folder=test_folder,
         test_ann_file=test_ann_file,
         predict_folder=predict_folder,
-        image_size=image_size,
+        transform_kwargs=dict(image_size=image_size),
         parser=parser,
         val_split=val_split,
         **data_module_kwargs,

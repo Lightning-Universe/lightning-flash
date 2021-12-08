@@ -21,10 +21,7 @@ from flash.core.data.output import PredsOutput
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 from flash.image.instance_segmentation.backbones import INSTANCE_SEGMENTATION_HEADS
-from flash.image.instance_segmentation.data import (
-    InstanceSegmentationInputTransform,
-    InstanceSegmentationOutputTransform,
-)
+from flash.image.instance_segmentation.data import InstanceSegmentationOutputTransform
 
 
 class InstanceSegmentation(AdapterTask):
@@ -97,7 +94,7 @@ class InstanceSegmentation(AdapterTask):
                 "If you'd like to change this, extend the InstanceSegmentation Task and override `on_load_checkpoint`."
             )
             self.data_pipeline = DataPipeline(
-                input_transform=InstanceSegmentationInputTransform(),
+                input_transform=None,
                 output_transform=InstanceSegmentationOutputTransform(),
             )
 
