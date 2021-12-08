@@ -13,169 +13,22 @@
 # limitations under the License.
 from typing import Any, Dict, List, Optional, Type, Union
 
-from torch import Tensor
-
 from flash.core.data.data_pipeline import DataPipelineState
-from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_base import Input
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.new_data_module import DataModule
-from flash.core.data.process import Deserializer
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.integrations.transformers.states import TransformersBackboneState
 from flash.core.integrations.transformers.transforms import TransformersInputTransform
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
+from flash.text.seq2seq.core.input import Seq2SeqCSVInput, Seq2SeqInputBase, Seq2SeqJSONInput, Seq2SeqListInput
 
 if _TEXT_AVAILABLE:
-    from datasets import Dataset, load_dataset
-    from transformers import AutoTokenizer
+    from datasets import Dataset
 else:
     Dataset = object
-
-
-class Seq2SeqDeserializer(Deserializer):
-    @requires("text")
-    def __init__(self, backbone: str, max_length: int, use_fast: bool = True, **kwargs):
-        super().__init__()
-        self.backbone = backbone
-        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=use_fast, **kwargs)
-        self.max_length = max_length
-
-    def serve_load_sample(self, text: str) -> Tensor:
-        return self.tokenizer(text, max_length=self.max_length, truncation=True, padding="max_length")
-
-    @property
-    def example_input(self) -> str:
-        return "An example input"
-
-    def __getstate__(self):  # TODO: Find out why this is being pickled
-        state = self.__dict__.copy()
-        state.pop("tokenizer")
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
-
-
-class Seq2SeqInput(Input):
-    @requires("text")
-    def load_data(
-        self,
-        hf_dataset: Dataset,
-        input_key: str,
-        target_key: Optional[str] = None,
-        max_source_length: int = 128,
-        max_target_length: int = 128,
-        padding: Union[str, bool] = "max_length",
-    ) -> Dataset:
-        self.max_source_length = max_source_length
-        self.max_target_length = max_target_length
-        self.padding = padding
-
-        # remove extra columns
-        extra_columns = set(hf_dataset.column_names) - {input_key, target_key}
-        hf_dataset = hf_dataset.remove_columns(extra_columns)
-
-        if input_key != DataKeys.INPUT:
-            hf_dataset = hf_dataset.rename_column(input_key, DataKeys.INPUT)
-
-        if target_key != DataKeys.TARGET:
-            hf_dataset = hf_dataset.rename_column(target_key, DataKeys.TARGET)
-
-        return hf_dataset
-
-    def load_sample(self, sample: Dict[str, Any]) -> Any:
-        tokenizer = self.get_state(TransformersBackboneState).tokenizer
-        tokenized_sample = tokenizer(
-            sample[DataKeys.INPUT],
-            max_length=self.max_source_length,
-            padding=self.padding,
-            add_special_tokens=True,
-            truncation=True,
-        )
-        tokenized_sample = tokenized_sample.data
-        if DataKeys.TARGET in sample:
-            with tokenizer.as_target_tokenizer():
-                tokenized_sample[DataKeys.TARGET] = tokenizer(
-                    sample[DataKeys.TARGET],
-                    max_length=self.max_target_length,
-                    padding=self.padding,
-                    add_special_tokens=True,
-                    truncation=True,
-                )["input_ids"]
-        return tokenized_sample
-
-
-class Seq2SeqCSVInput(Seq2SeqInput):
-    @requires("text")
-    def load_data(
-        self,
-        csv_file: PATH_TYPE,
-        input_key: str,
-        target_key: Optional[str] = None,
-        max_source_length: int = 128,
-        max_target_length: int = 128,
-        padding: Union[str, bool] = "max_length",
-    ) -> Dataset:
-        dataset_dict = load_dataset("csv", data_files={"data": str(csv_file)})
-        return super().load_data(
-            dataset_dict["data"],
-            input_key,
-            target_key,
-            max_source_length,
-            max_target_length,
-            padding,
-        )
-
-
-class Seq2SeqJSONInput(Seq2SeqInput):
-    @requires("text")
-    def load_data(
-        self,
-        json_file: PATH_TYPE,
-        field: str,
-        input_key: str,
-        target_key: Optional[str] = None,
-        max_source_length: int = 128,
-        max_target_length: int = 128,
-        padding: Union[str, bool] = "max_length",
-    ) -> Dataset:
-        dataset_dict = load_dataset("json", data_files={"data": str(json_file)}, field=field)
-        return super().load_data(
-            dataset_dict["data"],
-            input_key,
-            target_key,
-            max_source_length,
-            max_target_length,
-            padding,
-        )
-
-
-class Seq2SeqListInput(Seq2SeqInput):
-    @requires("text")
-    def load_data(
-        self,
-        inputs: List[str],
-        targets: Optional[List[str]] = None,
-        max_source_length: int = 128,
-        max_target_length: int = 128,
-        padding: Union[str, bool] = "max_length",
-    ) -> Dataset:
-        if targets is not None:
-            hf_dataset = Dataset.from_dict({DataKeys.INPUT: inputs, DataKeys.TARGET: targets})
-        else:
-            hf_dataset = Dataset.from_dict({DataKeys.INPUT: inputs})
-        return super().load_data(
-            hf_dataset,
-            DataKeys.INPUT,
-            DataKeys.TARGET,
-            max_source_length,
-            max_target_length,
-            padding,
-        )
 
 
 class Seq2SeqOutputTransform(OutputTransform):
@@ -343,7 +196,7 @@ class Seq2SeqData(DataModule):
         val_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
-        input_cls: Type[Input] = Seq2SeqInput,
+        input_cls: Type[Input] = Seq2SeqInputBase,
         transform_kwargs: Optional[Dict] = None,
         max_source_length: int = 128,
         max_target_length: int = 128,

@@ -21,7 +21,6 @@ ______________
     ~classification.data.TextClassificationData
 
     classification.data.TextClassificationInputTransform
-    classification.data.TextDeserializer
     classification.data.TextClassificationInput
     classification.data.TextClassificationCSVInput
     classification.data.TextClassificationJSONInput
@@ -61,8 +60,6 @@ _____________
     ~seq2seq.summarization.model.SummarizationTask
     ~seq2seq.summarization.data.SummarizationData
 
-    seq2seq.summarization.data.SummarizationInputTransform
-
 Translation
 ___________
 
@@ -73,8 +70,6 @@ ___________
 
     ~seq2seq.translation.model.TranslationTask
     ~seq2seq.translation.data.TranslationData
-
-    seq2seq.translation.data.TranslationInputTransform
 
 General Seq2Seq
 _______________
@@ -88,10 +83,18 @@ _______________
     ~seq2seq.core.data.Seq2SeqData
 
     seq2seq.core.data.Seq2SeqBackboneState
+    seq2seq.core.data.Seq2SeqInputBase
     seq2seq.core.data.Seq2SeqCSVInput
-    seq2seq.core.data.Seq2SeqInput
-    seq2seq.core.data.Seq2SeqFileInput
     seq2seq.core.data.Seq2SeqJSONInput
+    seq2seq.core.data.Seq2SeqListInput
     seq2seq.core.data.Seq2SeqOutputTransform
-    seq2seq.core.data.Seq2SeqInputTransform
-    seq2seq.core.data.Seq2SeqSentencesInput
+
+flash.text.input
+________________
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: classtemplate.rst
+
+    data.TextDeserializer
