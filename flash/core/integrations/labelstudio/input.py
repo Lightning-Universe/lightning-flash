@@ -16,6 +16,7 @@ from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_base import Input, IterableInput
 from flash.core.data.properties import ProcessState, Properties
 from flash.core.data.utils import image_default_loader
+from flash.core.integrations.transformers.states import TransformersBackboneState
 from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 
@@ -288,7 +289,7 @@ class LabelStudioTextClassificationInput(LabelStudioInput):
         data = ""
         for key in sample.get("data"):
             data += sample.get("data").get(key)
-        tokenized_data = self.get_state(flash.text.classification.model.TextClassificationBackboneState).tokenizer(
+        tokenized_data = self.get_state(TransformersBackboneState).tokenizer(
             data, max_length=self.max_length, truncation=True, padding="max_length"
         )
         for key in tokenized_data:

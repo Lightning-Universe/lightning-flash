@@ -18,11 +18,12 @@ from unittest import mock
 import pytest
 import torch
 
-from flash import Trainer
+from flash import DataKeys, RunningStage, Trainer
+from flash.core.integrations.transformers.transforms import TransformersInputTransform
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import TranslationTask
+from flash.text.input import TextDeserializer
 from flash.text.seq2seq.core.data import Seq2SeqOutputTransform
-from flash.text.seq2seq.translation.data import TranslationInputTransform
 from tests.helpers.utils import _SERVE_TESTING, _TEXT_TESTING
 
 # ======== Mock functions ========
@@ -32,7 +33,7 @@ class DummyDataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
         return {
             "input_ids": torch.randint(1000, size=(128,)),
-            "labels": torch.randint(1000, size=(128,)),
+            DataKeys.TARGET: torch.randint(1000, size=(128,)),
         }
 
     def __len__(self) -> int:
@@ -79,7 +80,8 @@ def test_jit(tmpdir):
 def test_serve():
     model = TranslationTask(TEST_BACKBONE)
     # TODO: Currently only servable once a input_transform and output_transform have been attached
-    model._input_transform = TranslationInputTransform(backbone=TEST_BACKBONE)
+    model._input_transform = TransformersInputTransform(RunningStage.SERVING)
+    model._deserializer = TextDeserializer()
     model._output_transform = Seq2SeqOutputTransform()
 
     model.eval()

@@ -17,41 +17,24 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Union
 import pandas as pd
 import torch
 from pandas.core.frame import DataFrame
-from torch import Tensor
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.classification_input import ClassificationInput, ClassificationState
 from flash.core.data.io.input import DataKeys, InputFormat
 from flash.core.data.io.input_transform import InputTransform
-from flash.core.data.process import Deserializer
 from flash.core.data.utilities.classification import TargetMode
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioTextClassificationInput
+from flash.core.integrations.transformers.states import TransformersBackboneState
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 from flash.core.utilities.stages import RunningStage
-from flash.text.classification.model import TextClassificationBackboneState
+from flash.text.input import TextDeserializer
 
 if _TEXT_AVAILABLE:
     from datasets import Dataset, load_dataset
 else:
     Dataset = object
-
-
-class TextDeserializer(Deserializer):
-    @requires("text")
-    def __init__(self, max_length: int):
-        super().__init__()
-        self.max_length = max_length
-
-    def serve_load_sample(self, text: str) -> Tensor:
-        return self.get_state(TextClassificationBackboneState).tokenizer(
-            text, max_length=self.max_length, truncation=True, padding="max_length"
-        )
-
-    @property
-    def example_input(self) -> str:
-        return "An example input"
 
 
 class TextClassificationInput(ClassificationInput):
@@ -94,7 +77,7 @@ class TextClassificationInput(ClassificationInput):
         return hf_dataset
 
     def load_sample(self, sample: Dict[str, Any]) -> Any:
-        tokenized_sample = self.get_state(TextClassificationBackboneState).tokenizer(
+        tokenized_sample = self.get_state(TransformersBackboneState).tokenizer(
             sample[DataKeys.INPUT], max_length=self.max_length, truncation=True, padding="max_length"
         )
         tokenized_sample = tokenized_sample.data

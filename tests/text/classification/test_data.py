@@ -18,16 +18,16 @@ import pandas as pd
 import pytest
 
 from flash.core.data.io.input import DataKeys
+from flash.core.integrations.transformers.states import TransformersBackboneState
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import TextClassificationData
-from flash.text.classification.model import TextClassificationBackboneState
 from tests.helpers.utils import _TEXT_TESTING
 
 if _TEXT_AVAILABLE:
     from datasets import Dataset
 
 TEST_BACKBONE = "prajjwal1/bert-tiny"  # super small model for testing
-TEST_BACKBONE_STATE = TextClassificationBackboneState(TEST_BACKBONE)
+TEST_BACKBONE_STATE = TransformersBackboneState(TEST_BACKBONE)
 
 TEST_CSV_DATA = """sentence,label
 this is a sentence one,0

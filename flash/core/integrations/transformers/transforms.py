@@ -11,8 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from flash.text.seq2seq.core.data import Seq2SeqData
+from dataclasses import dataclass
+from typing import Any, Callable, Dict
+
+import torch
+
+from flash.core.data.input_transform import InputTransform
 
 
-class TranslationData(Seq2SeqData):
-    """DataModule for Translation tasks."""
+def to_tensor(sample: Dict[str, Any]) -> Dict[str, Any]:
+    for key in sample:
+        sample[key] = torch.as_tensor(sample[key])
+    return sample
+
+
+@dataclass
+class TransformersInputTransform(InputTransform):
+    def per_sample_transform(self) -> Callable:
+        return to_tensor
