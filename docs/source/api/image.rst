@@ -43,10 +43,9 @@ ________________
     ~detection.model.ObjectDetector
     ~detection.data.ObjectDetectionData
 
-    detection.data.FiftyOneParser
-    detection.data.ObjectDetectionFiftyOneInput
+    detection.input.FiftyOneParser
+    detection.input.ObjectDetectionFiftyOneInput
     detection.output.FiftyOneDetectionLabelsOutput
-    detection.data.ObjectDetectionInputTransform
 
 Keypoint Detection
 __________________
