@@ -17,8 +17,10 @@ from pytorch_lightning.utilities.enums import LightningEnum
 from torch import nn
 from torchmetrics import Metric
 
-import flash
+from flash.core.data.input_transform import InputTransform
 from flash.core.data.io.output import Output
+from flash.core.data.io.output_transform import OutputTransform
+from flash.core.data.process import Deserializer
 
 # Task Arguments
 MODEL_TYPE = Optional[nn.Module]
@@ -30,17 +32,15 @@ LR_SCHEDULER_TYPE = Optional[
 METRICS_TYPE = Union[Metric, Mapping, Sequence, None]
 
 # Data Pipeline
-DESERIALIZER_TYPE = Optional[
-    Union["flash.core.data.process.Deserializer", Mapping[str, "flash.core.data.process.Deserializer"]]
-]
+DESERIALIZER_TYPE = Optional[Union[Deserializer, Mapping[str, Deserializer]]]
 INPUT_TRANSFORM_TYPE = Optional[
     Union[
-        Type["flash.InputTransform"],
+        Type[InputTransform],
         Callable,
         Tuple[Union[LightningEnum, str], Dict[str, Any]],
         Union[LightningEnum, str],
     ]
 ]
 
-OUTPUT_TRANSFORM_TYPE = Optional["flash.OutputTransform"]
+OUTPUT_TRANSFORM_TYPE = Optional[OutputTransform]
 OUTPUT_TYPE = Optional[Output]
