@@ -21,7 +21,7 @@ from torch.utils.data import Dataset
 from flash import Task, Trainer
 from flash.core.data.input_transform import InputTransform
 from flash.core.data.io.input_base import Input
-from flash.core.data.new_data_module import DataModule
+from flash.core.data.new_data_module import DataModule, DatasetInput
 from flash.core.utilities.stages import RunningStage
 
 
@@ -133,13 +133,6 @@ def test_data_module():
     trainer.test(model, dm)
     trainer.predict(model, dm)
 
-    class CustomDataModule(DataModule):
-        pass
-
-    CustomDataModule.register_input("custom", Input)
-    train_dataset, *_ = DataModule.create_inputs("custom", range(10))
-    assert train_dataset[0] == 0
-
     input = Input(RunningStage.TRAINING, transform=TestTransform)
     dm = DataModule(train_input=input, batch_size=1)
     assert isinstance(dm._train_ds.transform, TestTransform)
@@ -173,28 +166,10 @@ def test_data_module():
             x += 100
         return x
 
-    dm = DataModule.from_datasets(
-        train_dataset=RandomDataset(64, 32),
-        val_dataset=RandomDataset(64, 32),
-        test_dataset=RandomDataset(64, 32),
-        train_transform=TrainInputTransform,
-        val_transform=_add_hundred,
-        input_cls=Input,
-        batch_size=3,
-    )
-    batch = next(iter(dm.train_dataloader()))
-    assert batch[0][0] == 2
-    batch = next(iter(dm.val_dataloader()))
-    assert batch[0][0] == 101
-    batch = next(iter(dm.test_dataloader()))
-    assert batch[0][0] == 1
-
-    dm = DataModule.from_datasets(
-        train_dataset=RandomDataset(64, 32),
-        val_dataset=RandomDataset(64, 32),
-        test_dataset=RandomDataset(64, 32),
-        train_transform=TrainInputTransform,
-        val_transform=_add_hundred,
+    dm = DataModule(
+        train_input=DatasetInput(RunningStage.TRAINING, RandomDataset(64, 32), transform=TrainInputTransform),
+        val_input=DatasetInput(RunningStage.TRAINING, RandomDataset(64, 32), transform=_add_hundred),
+        test_input=DatasetInput(RunningStage.TRAINING, RandomDataset(64, 32)),
         batch_size=3,
     )
     batch = next(iter(dm.train_dataloader()))
