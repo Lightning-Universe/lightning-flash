@@ -93,6 +93,7 @@ ____________
 
     ~segmentation.model.SemanticSegmentation
     ~segmentation.data.SemanticSegmentationData
+
     ~segmentation.data.SegmentationMatplotlibVisualization
     ~segmentation.input.SemanticSegmentationInput
     ~segmentation.input.SemanticSegmentationFilesInput
