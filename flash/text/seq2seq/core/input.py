@@ -13,6 +13,7 @@
 # limitations under the License.
 from typing import Any, Dict, List, Optional, Union
 
+import flash
 from flash import DataKeys
 from flash.core.data.io.input_base import Input
 from flash.core.data.utilities.paths import PATH_TYPE
@@ -49,6 +50,10 @@ class Seq2SeqInputBase(Input):
 
         if target_key != DataKeys.TARGET:
             hf_dataset = hf_dataset.rename_column(target_key, DataKeys.TARGET)
+
+        if flash._IS_TESTING:
+            # NOTE: must subset in this way to return a Dataset
+            hf_dataset = hf_dataset.select(range(20))
 
         return hf_dataset
 
