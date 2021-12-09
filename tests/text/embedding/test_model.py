@@ -17,7 +17,7 @@ import pytest
 import torch
 
 import flash
-from flash.text import SentenceEmbedder, TextClassificationData
+from flash.text import TextEmbedder, TextClassificationData
 from tests.helpers.utils import _TEXT_TESTING
 
 # ======== Mock data ========
@@ -33,7 +33,7 @@ datamodule = TextClassificationData.from_lists(
 # ==============================
 
 TEST_BACKBONE = "sentence-transformers/all-MiniLM-L6-v2"  # super small model for testing
-model = SentenceEmbedder(backbone=TEST_BACKBONE)
+model = TextEmbedder(backbone=TEST_BACKBONE)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")

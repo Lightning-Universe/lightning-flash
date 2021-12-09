@@ -1,1 +1,1 @@
-from flash.text.embedding.model import SentenceEmbedder  # noqa: F401
+from flash.text.embedding.model import TextEmbedder  # noqa: F401

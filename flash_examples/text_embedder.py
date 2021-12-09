@@ -15,7 +15,7 @@ import torch
 
 import flash
 from flash.core.data.utils import download_data
-from flash.text import SentenceEmbedder, TextClassificationData
+from flash.text import TextEmbedder, TextClassificationData
 
 # 1. Create the DataModule
 datamodule = TextClassificationData.from_lists(
@@ -26,8 +26,8 @@ datamodule = TextClassificationData.from_lists(
     ]
 )
 
-# 2. Load a previously trained SentenceEmbedder
-model = SentenceEmbedder(backbone="sentence-transformers/all-MiniLM-L6-v2")
+# 2. Load a previously trained TextEmbedder
+model = TextEmbedder(backbone="sentence-transformers/all-MiniLM-L6-v2")
 
 # 3. Generate embeddings for the first 3 graphs
 trainer = flash.Trainer(gpus=torch.cuda.device_count())
