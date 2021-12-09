@@ -31,7 +31,6 @@ __________________
     ~speech_recognition.data.SpeechRecognitionData
     ~speech_recognition.model.SpeechRecognition
 
-    speech_recognition.input.SpeechRecognitionInputTransform
     speech_recognition.input.SpeechRecognitionCSVInput
     speech_recognition.input.SpeechRecognitionJSONInput
     speech_recognition.input.BaseSpeechRecognition
