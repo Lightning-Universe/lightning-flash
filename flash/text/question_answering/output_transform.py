@@ -14,7 +14,7 @@
 import collections
 from typing import Any
 
-from flash import OutputTransform
+from flash.core.data.io.output_transform import OutputTransform
 from flash.core.utilities.imports import requires
 
 
