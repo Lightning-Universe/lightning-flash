@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Any, Callable, cast, Dict, List, Optional, Tuple
+from typing import Any, cast, Dict, Optional, Tuple
 from unittest.mock import patch
 
 import numpy as np
@@ -487,142 +487,6 @@ def test_stage_orchestrator_state_attach_detach(tmpdir):
     assert model.predict_step == _original_predict_step
 
 
-class LamdaDummyDataset(torch.utils.data.Dataset):
-    def __init__(self, fx: Callable):
-        self.fx = fx
-
-    def __getitem__(self, index: int) -> Any:
-        return self.fx()
-
-    def __len__(self) -> int:
-        return 5
-
-
-class TestInputTransformationsInput(Input):
-    def __init__(self):
-        super().__init__()
-
-        self.train_load_data_called = False
-        self.val_load_data_called = False
-        self.val_load_sample_called = False
-        self.test_load_data_called = False
-        self.predict_load_data_called = False
-
-    @staticmethod
-    def fn_train_load_data() -> Tuple:
-        return (
-            0,
-            1,
-            2,
-            3,
-        )
-
-    def train_load_data(self, sample) -> LamdaDummyDataset:
-        assert self.training
-        assert self.current_fn == "load_data"
-        self.train_load_data_called = True
-        return LamdaDummyDataset(self.fn_train_load_data)
-
-    def val_load_data(self, sample, dataset) -> List[int]:
-        assert self.validating
-        assert self.current_fn == "load_data"
-        self.val_load_data_called = True
-        return list(range(5))
-
-    def val_load_sample(self, sample) -> Dict[str, Tensor]:
-        assert self.validating
-        assert self.current_fn == "load_sample"
-        self.val_load_sample_called = True
-        return {"a": sample, "b": sample + 1}
-
-    @staticmethod
-    def fn_test_load_data() -> List[torch.Tensor]:
-        return [torch.rand(1), torch.rand(1)]
-
-    def test_load_data(self, sample) -> LamdaDummyDataset:
-        assert self.testing
-        assert self.current_fn == "load_data"
-        self.test_load_data_called = True
-        return LamdaDummyDataset(self.fn_test_load_data)
-
-    @staticmethod
-    def fn_predict_load_data() -> List[str]:
-        return ["a", "b"]
-
-    def predict_load_data(self, sample) -> LamdaDummyDataset:
-        assert self.predicting
-        assert self.current_fn == "load_data"
-        self.predict_load_data_called = True
-        return LamdaDummyDataset(self.fn_predict_load_data)
-
-
-class TestInputTransformations(DefaultInputTransform):
-    def __init__(self):
-        super().__init__(inputs={"default": TestInputTransformationsInput()})
-
-        self.train_per_sample_transform_called = False
-        self.train_collate_called = False
-        self.train_per_batch_transform_on_device_called = False
-        self.val_per_sample_transform_called = False
-        self.val_collate_called = False
-        self.val_per_batch_transform_on_device_called = False
-        self.test_per_sample_transform_called = False
-
-    def train_per_sample_transform(self, sample: Any) -> Any:
-        assert self.training
-        assert self.current_fn == "per_sample_transform"
-        self.train_per_sample_transform_called = True
-        return sample + (5,)
-
-    def train_collate(self, samples) -> Tensor:
-        assert self.training
-        assert self.current_fn == "collate"
-        self.train_collate_called = True
-        return tensor([list(s) for s in samples])
-
-    def train_per_batch_transform_on_device(self, batch: Any) -> Any:
-        assert self.training
-        assert self.current_fn == "per_batch_transform_on_device"
-        self.train_per_batch_transform_on_device_called = True
-        assert torch.equal(batch, tensor([[0, 1, 2, 3, 5], [0, 1, 2, 3, 5]]))
-
-    def val_per_sample_transform(self, sample: Any) -> Tensor:
-        assert self.validating
-        assert self.current_fn == "per_sample_transform"
-        self.val_per_sample_transform_called = True
-        return sample
-
-    def val_collate(self, samples) -> Dict[str, Tensor]:
-        assert self.validating
-        assert self.current_fn == "collate"
-        self.val_collate_called = True
-        _count = samples[0]["a"]
-        assert samples == [{"a": _count, "b": _count + 1}, {"a": _count + 1, "b": _count + 2}]
-        return {"a": tensor([0, 1]), "b": tensor([1, 2])}
-
-    def val_per_batch_transform_on_device(self, batch: Any) -> Any:
-        assert self.validating
-        assert self.current_fn == "per_batch_transform_on_device"
-        self.val_per_batch_transform_on_device_called = True
-        if isinstance(batch, list):
-            batch = batch[0]
-        assert torch.equal(batch["a"], tensor([0, 1]))
-        assert torch.equal(batch["b"], tensor([1, 2]))
-        return [False]
-
-    def test_per_sample_transform(self, sample: Any) -> Tensor:
-        assert self.testing
-        assert self.current_fn == "per_sample_transform"
-        self.test_per_sample_transform_called = True
-        return sample
-
-
-class TestInputTransformations2(TestInputTransformations):
-    def val_per_sample_transform(self, sample: Any) -> Tensor:
-        self.val_per_sample_transform_called = True
-        return {"a": tensor(sample["a"]), "b": tensor(sample["b"])}
-
-
 class CustomModel(Task):
     def __init__(self):
         super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
@@ -645,56 +509,6 @@ class CustomModel(Task):
         assert batch[1][0] == "b"
         assert batch[1][1] == "b"
         return tensor([0, 0, 0])
-
-
-def test_datapipeline_transformations(tmpdir):
-
-    datamodule = DataModule.from_input(
-        "default", 1, 1, 1, 1, batch_size=2, num_workers=0, input_transform=TestInputTransformations()
-    )
-
-    assert datamodule.train_dataloader().dataset[0] == (0, 1, 2, 3)
-    batch = next(iter(datamodule.train_dataloader()))
-    assert torch.equal(batch, tensor([[0, 1, 2, 3, 5], [0, 1, 2, 3, 5]]))
-
-    assert datamodule.val_dataloader().dataset[0] == {"a": 0, "b": 1}
-    assert datamodule.val_dataloader().dataset[1] == {"a": 1, "b": 2}
-    batch = next(iter(datamodule.val_dataloader()))
-
-    datamodule = DataModule.from_input(
-        "default", 1, 1, 1, 1, batch_size=2, num_workers=0, input_transform=TestInputTransformations2()
-    )
-    batch = next(iter(datamodule.val_dataloader()))
-    assert torch.equal(batch["a"], tensor([0, 1]))
-    assert torch.equal(batch["b"], tensor([1, 2]))
-
-    model = CustomModel()
-    trainer = Trainer(
-        max_epochs=1,
-        limit_train_batches=2,
-        limit_val_batches=1,
-        limit_test_batches=2,
-        limit_predict_batches=2,
-        num_sanity_val_steps=1,
-    )
-    trainer.fit(model, datamodule=datamodule)
-    trainer.test(model)
-    trainer.predict(model)
-
-    input_transform = model._input_transform
-    input = input_transform.input_of_name("default")
-    assert input.train_load_data_called
-    assert input_transform.train_per_sample_transform_called
-    assert input_transform.train_collate_called
-    assert input_transform.train_per_batch_transform_on_device_called
-    assert input.val_load_data_called
-    assert input.val_load_sample_called
-    assert input_transform.train_per_sample_transform_called
-    assert input_transform.val_collate_called
-    assert input_transform.val_per_batch_transform_on_device_called
-    assert input.test_load_data_called
-    assert input_transform.test_per_sample_transform_called
-    assert input.predict_load_data_called
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
