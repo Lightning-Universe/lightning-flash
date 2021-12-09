@@ -58,7 +58,6 @@ __________________
     ~keypoint_detection.model.KeypointDetector
     ~keypoint_detection.data.KeypointDetectionData
 
-    keypoint_detection.data.IceVisionInputTransform
 
 Instance Segmentation
 _____________________
