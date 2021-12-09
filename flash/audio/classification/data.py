@@ -11,191 +11,29 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
-from typing import Any, Callable, Collection, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Collection, Dict, List, Optional, Sequence, Type, Union
 
 import numpy as np
 import pandas as pd
 import torch
 
-from flash.audio.classification.transforms import default_transforms, train_default_transforms
+from flash.audio.classification.input import (
+    AudioClassificationCSVInput,
+    AudioClassificationDataFrameInput,
+    AudioClassificationFilesInput,
+    AudioClassificationFolderInput,
+    AudioClassificationNumpyInput,
+    AudioClassificationTensorInput,
+)
+from flash.audio.classification.input_transform import AudioClassificationInputTransform
 from flash.core.data.callback import BaseDataFetcher
-from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
-from flash.core.data.io.classification_input import ClassificationInput, ClassificationState
-from flash.core.data.io.input import DataKeys, has_file_allowed_extension, InputFormat
-from flash.core.data.io.input_transform import InputTransform
-from flash.core.data.process import Deserializer
-from flash.core.data.utilities.classification import TargetMode
-from flash.core.data.utilities.data_frame import read_csv, resolve_files, resolve_targets
-from flash.core.data.utilities.paths import filter_valid_files, make_dataset, PATH_TYPE
-from flash.core.data.utilities.samples import to_samples
-from flash.core.data.utils import image_default_loader
-from flash.core.utilities.imports import requires
+from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE
+from flash.core.data.io.input_base import Input
+from flash.core.data.new_data_module import DataModule
+from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.utilities.stages import RunningStage
 from flash.image.classification.data import MatplotlibVisualization
-from flash.image.data import ImageDeserializer, IMG_EXTENSIONS, NP_EXTENSIONS
-
-
-def spectrogram_loader(filepath: str):
-    if has_file_allowed_extension(filepath, IMG_EXTENSIONS):
-        img = image_default_loader(filepath)
-        data = np.array(img)
-    else:
-        data = np.load(filepath)
-    return data
-
-
-class AudioClassificationInput(ClassificationInput):
-    @requires("audio")
-    def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        h, w = sample[DataKeys.INPUT].shape[-2:]  # H x W
-        if DataKeys.METADATA not in sample:
-            sample[DataKeys.METADATA] = {}
-        sample[DataKeys.METADATA]["size"] = (h, w)
-        if DataKeys.TARGET in sample:
-            sample[DataKeys.TARGET] = self.format_target(sample[DataKeys.TARGET])
-        return sample
-
-
-class AudioClassificationFilesInput(AudioClassificationInput):
-    def load_data(
-        self,
-        files: List[PATH_TYPE],
-        targets: Optional[List[Any]] = None,
-    ) -> List[Dict[str, Any]]:
-        if targets is None:
-            files = filter_valid_files(files, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
-            return to_samples(files)
-        files, targets = filter_valid_files(files, targets, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
-        self.load_target_metadata(targets)
-        return to_samples(files, targets)
-
-    def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        filepath = sample[DataKeys.INPUT]
-        sample[DataKeys.INPUT] = spectrogram_loader(filepath)
-        sample = super().load_sample(sample)
-        sample[DataKeys.METADATA]["filepath"] = filepath
-        return sample
-
-
-class AudioClassificationFolderInput(AudioClassificationFilesInput):
-    def load_data(self, folder: PATH_TYPE) -> List[Dict[str, Any]]:
-        files, targets = make_dataset(folder, extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
-        return super().load_data(files, targets)
-
-
-class AudioClassificationNumpyInput(AudioClassificationInput):
-    def load_data(self, array: Any, targets: Optional[List[Any]] = None) -> List[Dict[str, Any]]:
-        if targets is not None:
-            self.load_target_metadata(targets)
-        return to_samples(array, targets)
-
-    def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        sample[DataKeys.INPUT] = np.transpose(sample[DataKeys.INPUT], (1, 2, 0))
-        return sample
-
-
-class AudioClassificationTensorInput(AudioClassificationNumpyInput):
-    def load_data(self, tensor: Any, targets: Optional[List[Any]] = None) -> List[Dict[str, Any]]:
-        if targets is not None:
-            self.load_target_metadata(targets)
-        return to_samples(tensor, targets)
-
-    def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        sample[DataKeys.INPUT] = sample[DataKeys.INPUT].numpy()
-        return super().load_sample(sample)
-
-
-class AudioClassificationDataFrameInput(AudioClassificationFilesInput):
-    def load_data(
-        self,
-        data_frame: pd.DataFrame,
-        input_key: str,
-        target_keys: Optional[Union[str, List[str]]] = None,
-        root: Optional[PATH_TYPE] = None,
-        resolver: Optional[Callable[[Optional[PATH_TYPE], Any], PATH_TYPE]] = None,
-    ) -> List[Dict[str, Any]]:
-        files = resolve_files(data_frame, input_key, root, resolver)
-        if target_keys is not None:
-            targets = resolve_targets(data_frame, target_keys)
-        else:
-            targets = None
-        result = super().load_data(files, targets)
-
-        # If we had binary multi-class targets then we also know the labels (column names)
-        if self.training and self.target_mode is TargetMode.MULTI_BINARY and isinstance(target_keys, List):
-            classification_state = self.get_state(ClassificationState)
-            self.set_state(ClassificationState(target_keys, classification_state.num_classes))
-
-        return result
-
-
-class AudioClassificationCSVInput(AudioClassificationDataFrameInput):
-    def load_data(
-        self,
-        csv_file: PATH_TYPE,
-        input_key: str,
-        target_keys: Optional[Union[str, List[str]]] = None,
-        root: Optional[PATH_TYPE] = None,
-        resolver: Optional[Callable[[Optional[PATH_TYPE], Any], PATH_TYPE]] = None,
-    ) -> List[Dict[str, Any]]:
-        data_frame = read_csv(csv_file)
-        if root is None:
-            root = os.path.dirname(csv_file)
-        return super().load_data(data_frame, input_key, target_keys, root, resolver)
-
-
-class AudioClassificationInputTransform(InputTransform):
-    def __init__(
-        self,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-        spectrogram_size: Tuple[int, int] = (128, 128),
-        time_mask_param: Optional[int] = None,
-        freq_mask_param: Optional[int] = None,
-        deserializer: Optional["Deserializer"] = None,
-    ):
-        self.spectrogram_size = spectrogram_size
-        self.time_mask_param = time_mask_param
-        self.freq_mask_param = freq_mask_param
-
-        super().__init__(
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
-            inputs={
-                InputFormat.FILES: AudioClassificationFilesInput,
-                InputFormat.FOLDERS: AudioClassificationFolderInput,
-                InputFormat.DATAFRAME: AudioClassificationDataFrameInput,
-                InputFormat.CSV: AudioClassificationDataFrameInput,
-                InputFormat.NUMPY: AudioClassificationNumpyInput,
-                InputFormat.TENSORS: AudioClassificationTensorInput,
-            },
-            deserializer=deserializer or ImageDeserializer(),
-            default_input=InputFormat.FILES,
-        )
-
-    def get_state_dict(self) -> Dict[str, Any]:
-        return {
-            **self.transforms,
-            "spectrogram_size": self.spectrogram_size,
-            "time_mask_param": self.time_mask_param,
-            "freq_mask_param": self.freq_mask_param,
-        }
-
-    @classmethod
-    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
-        return cls(**state_dict)
-
-    def default_transforms(self) -> Optional[Dict[str, Callable]]:
-        return default_transforms(self.spectrogram_size)
-
-    def train_default_transforms(self) -> Optional[Dict[str, Callable]]:
-        return train_default_transforms(self.spectrogram_size, self.time_mask_param, self.freq_mask_param)
 
 
 class AudioClassificationData(DataModule):
@@ -213,31 +51,26 @@ class AudioClassificationData(DataModule):
         test_files: Optional[Sequence[str]] = None,
         test_targets: Optional[Sequence[Any]] = None,
         predict_files: Optional[Sequence[str]] = None,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-        spectrogram_size: Tuple[int, int] = (128, 128),
-        time_mask_param: Optional[int] = None,
-        freq_mask_param: Optional[int] = None,
+        train_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        input_cls: Type[Input] = AudioClassificationFilesInput,
+        transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "AudioClassificationData":
-        dataset_kwargs = dict(data_pipeline_state=DataPipelineState())
+
+        ds_kw = dict(
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
+        )
 
         return cls(
-            AudioClassificationFilesInput(RunningStage.TRAINING, train_files, train_targets, **dataset_kwargs),
-            AudioClassificationFilesInput(RunningStage.VALIDATING, val_files, val_targets, **dataset_kwargs),
-            AudioClassificationFilesInput(RunningStage.TESTING, test_files, test_targets, **dataset_kwargs),
-            AudioClassificationFilesInput(RunningStage.PREDICTING, predict_files, **dataset_kwargs),
-            input_transform=cls.input_transform_cls(
-                train_transform,
-                val_transform,
-                test_transform,
-                predict_transform,
-                spectrogram_size=spectrogram_size,
-                time_mask_param=time_mask_param,
-                freq_mask_param=freq_mask_param,
-            ),
+            input_cls(RunningStage.TRAINING, train_files, train_targets, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_files, val_targets, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, test_files, test_targets, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_files, transform=predict_transform, **ds_kw),
             **data_module_kwargs,
         )
 
@@ -248,31 +81,26 @@ class AudioClassificationData(DataModule):
         val_folder: Optional[str] = None,
         test_folder: Optional[str] = None,
         predict_folder: Optional[str] = None,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-        spectrogram_size: Tuple[int, int] = (128, 128),
-        time_mask_param: Optional[int] = None,
-        freq_mask_param: Optional[int] = None,
+        train_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        input_cls: Type[Input] = AudioClassificationFolderInput,
+        transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "AudioClassificationData":
-        dataset_kwargs = dict(data_pipeline_state=DataPipelineState())
+
+        ds_kw = dict(
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
+        )
 
         return cls(
-            AudioClassificationFolderInput(RunningStage.TRAINING, train_folder, **dataset_kwargs),
-            AudioClassificationFolderInput(RunningStage.VALIDATING, val_folder, **dataset_kwargs),
-            AudioClassificationFolderInput(RunningStage.TESTING, test_folder, **dataset_kwargs),
-            AudioClassificationFolderInput(RunningStage.PREDICTING, predict_folder, **dataset_kwargs),
-            input_transform=cls.input_transform_cls(
-                train_transform,
-                val_transform,
-                test_transform,
-                predict_transform,
-                spectrogram_size=spectrogram_size,
-                time_mask_param=time_mask_param,
-                freq_mask_param=freq_mask_param,
-            ),
+            input_cls(RunningStage.TRAINING, train_folder, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_folder, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, test_folder, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_folder, transform=predict_transform, **ds_kw),
             **data_module_kwargs,
         )
 
@@ -286,31 +114,26 @@ class AudioClassificationData(DataModule):
         test_data: Optional[Collection[np.ndarray]] = None,
         test_targets: Optional[Sequence[Any]] = None,
         predict_data: Optional[Collection[np.ndarray]] = None,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-        spectrogram_size: Tuple[int, int] = (128, 128),
-        time_mask_param: Optional[int] = None,
-        freq_mask_param: Optional[int] = None,
+        train_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        input_cls: Type[Input] = AudioClassificationNumpyInput,
+        transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "AudioClassificationData":
-        dataset_kwargs = dict(data_pipeline_state=DataPipelineState())
+
+        ds_kw = dict(
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
+        )
 
         return cls(
-            AudioClassificationNumpyInput(RunningStage.TRAINING, train_data, train_targets, **dataset_kwargs),
-            AudioClassificationNumpyInput(RunningStage.VALIDATING, val_data, val_targets, **dataset_kwargs),
-            AudioClassificationNumpyInput(RunningStage.TESTING, test_data, test_targets, **dataset_kwargs),
-            AudioClassificationNumpyInput(RunningStage.PREDICTING, predict_data, **dataset_kwargs),
-            input_transform=cls.input_transform_cls(
-                train_transform,
-                val_transform,
-                test_transform,
-                predict_transform,
-                spectrogram_size=spectrogram_size,
-                time_mask_param=time_mask_param,
-                freq_mask_param=freq_mask_param,
-            ),
+            input_cls(RunningStage.TRAINING, train_data, train_targets, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_data, val_targets, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, test_data, test_targets, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
             **data_module_kwargs,
         )
 
@@ -324,31 +147,26 @@ class AudioClassificationData(DataModule):
         test_data: Optional[Collection[torch.Tensor]] = None,
         test_targets: Optional[Sequence[Any]] = None,
         predict_data: Optional[Collection[torch.Tensor]] = None,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-        spectrogram_size: Tuple[int, int] = (128, 128),
-        time_mask_param: Optional[int] = None,
-        freq_mask_param: Optional[int] = None,
+        train_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        input_cls: Type[Input] = AudioClassificationTensorInput,
+        transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "AudioClassificationData":
-        dataset_kwargs = dict(data_pipeline_state=DataPipelineState())
+
+        ds_kw = dict(
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
+        )
 
         return cls(
-            AudioClassificationTensorInput(RunningStage.TRAINING, train_data, train_targets, **dataset_kwargs),
-            AudioClassificationTensorInput(RunningStage.VALIDATING, val_data, val_targets, **dataset_kwargs),
-            AudioClassificationTensorInput(RunningStage.TESTING, test_data, test_targets, **dataset_kwargs),
-            AudioClassificationTensorInput(RunningStage.PREDICTING, predict_data, **dataset_kwargs),
-            input_transform=cls.input_transform_cls(
-                train_transform,
-                val_transform,
-                test_transform,
-                predict_transform,
-                spectrogram_size=spectrogram_size,
-                time_mask_param=time_mask_param,
-                freq_mask_param=freq_mask_param,
-            ),
+            input_cls(RunningStage.TRAINING, train_data, train_targets, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_data, val_targets, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, test_data, test_targets, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
             **data_module_kwargs,
         )
 
@@ -369,16 +187,20 @@ class AudioClassificationData(DataModule):
         predict_data_frame: Optional[pd.DataFrame] = None,
         predict_images_root: Optional[str] = None,
         predict_resolver: Optional[Callable[[str, str], str]] = None,
-        train_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
-        val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
-        test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-        spectrogram_size: Tuple[int, int] = (128, 128),
-        time_mask_param: Optional[int] = None,
-        freq_mask_param: Optional[int] = None,
+        train_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        input_cls: Type[Input] = AudioClassificationDataFrameInput,
+        transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "AudioClassificationData":
-        dataset_kwargs = dict(data_pipeline_state=DataPipelineState())
+
+        ds_kw = dict(
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
+        )
 
         train_data = (train_data_frame, input_field, target_fields, train_images_root, train_resolver)
         val_data = (val_data_frame, input_field, target_fields, val_images_root, val_resolver)
@@ -386,19 +208,10 @@ class AudioClassificationData(DataModule):
         predict_data = (predict_data_frame, input_field, None, predict_images_root, predict_resolver)
 
         return cls(
-            AudioClassificationDataFrameInput(RunningStage.TRAINING, *train_data, **dataset_kwargs),
-            AudioClassificationDataFrameInput(RunningStage.VALIDATING, *val_data, **dataset_kwargs),
-            AudioClassificationDataFrameInput(RunningStage.TESTING, *test_data, **dataset_kwargs),
-            AudioClassificationDataFrameInput(RunningStage.PREDICTING, *predict_data, **dataset_kwargs),
-            input_transform=cls.input_transform_cls(
-                train_transform,
-                val_transform,
-                test_transform,
-                predict_transform,
-                spectrogram_size=spectrogram_size,
-                time_mask_param=time_mask_param,
-                freq_mask_param=freq_mask_param,
-            ),
+            input_cls(RunningStage.TRAINING, *train_data, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, *val_data, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, *test_data, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, *predict_data, transform=predict_transform, **ds_kw),
             **data_module_kwargs,
         )
 
@@ -419,16 +232,20 @@ class AudioClassificationData(DataModule):
         predict_file: Optional[str] = None,
         predict_images_root: Optional[str] = None,
         predict_resolver: Optional[Callable[[PATH_TYPE, Any], PATH_TYPE]] = None,
-        train_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
-        val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
-        test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-        spectrogram_size: Tuple[int, int] = (128, 128),
-        time_mask_param: Optional[int] = None,
-        freq_mask_param: Optional[int] = None,
+        train_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        input_cls: Type[Input] = AudioClassificationCSVInput,
+        transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "AudioClassificationData":
-        dataset_kwargs = dict(data_pipeline_state=DataPipelineState())
+
+        ds_kw = dict(
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
+        )
 
         train_data = (train_file, input_field, target_fields, train_images_root, train_resolver)
         val_data = (val_file, input_field, target_fields, val_images_root, val_resolver)
@@ -436,19 +253,10 @@ class AudioClassificationData(DataModule):
         predict_data = (predict_file, input_field, None, predict_images_root, predict_resolver)
 
         return cls(
-            AudioClassificationCSVInput(RunningStage.TRAINING, *train_data, **dataset_kwargs),
-            AudioClassificationCSVInput(RunningStage.VALIDATING, *val_data, **dataset_kwargs),
-            AudioClassificationCSVInput(RunningStage.TESTING, *test_data, **dataset_kwargs),
-            AudioClassificationCSVInput(RunningStage.PREDICTING, *predict_data, **dataset_kwargs),
-            input_transform=cls.input_transform_cls(
-                train_transform,
-                val_transform,
-                test_transform,
-                predict_transform,
-                spectrogram_size=spectrogram_size,
-                time_mask_param=time_mask_param,
-                freq_mask_param=freq_mask_param,
-            ),
+            input_cls(RunningStage.TRAINING, *train_data, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, *val_data, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, *test_data, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, *predict_data, transform=predict_transform, **ds_kw),
             **data_module_kwargs,
         )
 
