@@ -21,13 +21,14 @@ download_data("https://pl-flash-data.s3.amazonaws.com/squad_tiny.zip", "./data/"
 datamodule = QuestionAnsweringData.from_squad_v2(
     train_file="./data/squad_tiny/train.json",
     val_file="./data/squad_tiny/val.json",
+    batch_size=4,
 )
 
 # 2. Build the task
 model = QuestionAnsweringTask()
 
 # 3. Create the trainer and finetune the model
-trainer = Trainer(max_epochs=3, limit_train_batches=1, limit_val_batches=1)
+trainer = Trainer(max_epochs=3, fast_dev_run=True)
 trainer.finetune(model, datamodule=datamodule)
 
 # 4. Answer some Questions!
@@ -57,7 +58,8 @@ datamodule = QuestionAnsweringData.from_dicts(
         """,
         ],
         "question": ["When were the Normans in Normandy?", "In what country is Normandy located?"],
-    }
+    },
+    batch_size=4,
 )
 predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)

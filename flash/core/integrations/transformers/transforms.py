@@ -17,15 +17,18 @@ from typing import Any, Callable, Dict
 import torch
 
 from flash.core.data.input_transform import InputTransform
-
-
-def to_tensor(sample: Dict[str, Any]) -> Dict[str, Any]:
-    for key in sample:
-        sample[key] = torch.as_tensor(sample[key])
-    return sample
+from flash.core.data.io.input import DataKeys
 
 
 @dataclass
 class TransformersInputTransform(InputTransform):
+    @staticmethod
+    def to_tensor(sample: Dict[str, Any]) -> Dict[str, Any]:
+        for key in sample:
+            if key is DataKeys.METADATA:
+                continue
+            sample[key] = torch.as_tensor(sample[key])
+        return sample
+
     def per_sample_transform(self) -> Callable:
-        return to_tensor
+        return self.to_tensor

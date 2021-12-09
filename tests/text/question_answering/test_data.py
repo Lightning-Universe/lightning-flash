@@ -19,10 +19,12 @@ import pandas as pd
 import pytest
 
 from flash.core.data.io.input import DataKeys
+from flash.core.integrations.transformers.states import TransformersBackboneState
 from flash.text import QuestionAnsweringData
 from tests.helpers.utils import _TEXT_TESTING
 
 TEST_BACKBONE = "distilbert-base-uncased"
+TEST_BACKBONE_STATE = TransformersBackboneState(TEST_BACKBONE)
 
 TEST_CSV_DATA = {
     "id": ["12345", "12346", "12347", "12348"],
@@ -110,9 +112,10 @@ def test_from_csv(tmpdir):
         question_column_name="question",
         context_column_name="context",
         answer_column_name="answer",
-        backbone=TEST_BACKBONE,
         train_file=csv_path,
+        batch_size=2,
     )
+    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
     batch = next(iter(dm.train_dataloader()))
     assert "input_ids" in batch
     assert "attention_mask" in batch
@@ -128,11 +131,12 @@ def test_from_files(tmpdir):
         question_column_name="question",
         context_column_name="context",
         answer_column_name="answer",
-        backbone=TEST_BACKBONE,
         train_file=csv_path,
         val_file=csv_path,
         test_file=csv_path,
+        batch_size=2,
     )
+    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
     batch = next(iter(dm.val_dataloader()))
     assert "input_ids" in batch
     assert "attention_mask" in batch
@@ -156,26 +160,6 @@ def test_from_files(tmpdir):
     assert "offset_mapping" in batch[DataKeys.METADATA][0]
 
 
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_output_transform_tokenizer(tmpdir):
-    """Tests that the tokenizer property in ``QuestionAnsweringOutputTransform`` resolves correctly when a
-    different backbone is used."""
-    backbone = "allenai/longformer-base-4096"
-    json_path = json_data(tmpdir, TEST_JSON_DATA)
-    dm = QuestionAnsweringData.from_json(
-        question_column_name="question",
-        context_column_name="context",
-        answer_column_name="answer",
-        backbone=backbone,
-        train_file=json_path,
-        batch_size=2,
-    )
-    pipeline = dm.data_pipeline
-    pipeline.initialize()
-    assert pipeline._output_transform.backbone == backbone
-    assert pipeline._output_transform.tokenizer is not None
-
-
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_json(tmpdir):
@@ -184,10 +168,10 @@ def test_from_json(tmpdir):
         question_column_name="question",
         context_column_name="context",
         answer_column_name="answer",
-        backbone=TEST_BACKBONE,
         train_file=json_path,
         batch_size=2,
     )
+    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
     batch = next(iter(dm.train_dataloader()))
     assert "input_ids" in batch
     assert "attention_mask" in batch
@@ -203,10 +187,11 @@ def test_from_json_with_field(tmpdir):
         question_column_name="question",
         context_column_name="context",
         answer_column_name="answer",
-        backbone=TEST_BACKBONE,
         train_file=json_path,
         field="data",
+        batch_size=2,
     )
+    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
     batch = next(iter(dm.train_dataloader()))
     assert "input_ids" in batch
     assert "attention_mask" in batch
@@ -224,8 +209,8 @@ def test_wrong_keys_and_types(tmpdir):
             question_column_name="question",
             context_column_name="context",
             answer_column_name="answer",
-            backbone=TEST_BACKBONE,
             train_file=csv_path,
+            batch_size=2,
         )
 
     TEST_CSV_DATA.pop("answer_start")
@@ -235,8 +220,8 @@ def test_wrong_keys_and_types(tmpdir):
             question_column_name="question",
             context_column_name="context",
             answer_column_name="answer",
-            backbone=TEST_BACKBONE,
             train_file=csv_path,
+            batch_size=2,
         )
 
     TEST_JSON_DATA = [
@@ -258,7 +243,6 @@ def test_wrong_keys_and_types(tmpdir):
             question_column_name="question",
             context_column_name="context",
             answer_column_name="answer",
-            backbone=TEST_BACKBONE,
             train_file=json_path,
             batch_size=2,
         )
@@ -271,7 +255,6 @@ def test_wrong_keys_and_types(tmpdir):
             question_column_name="question",
             context_column_name="context",
             answer_column_name="answer",
-            backbone=TEST_BACKBONE,
             train_file=json_path,
             batch_size=2,
         )
