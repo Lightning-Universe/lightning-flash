@@ -19,15 +19,16 @@ import json
 from pathlib import Path
 from typing import Any, Callable, Dict, Union
 
-from datasets import Dataset, load_dataset
-
 import flash
-from flash import DataKeys
 from flash.core.data.batch import default_uncollate
+from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_base import Input
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.integrations.transformers.states import TransformersBackboneState
-from flash.core.utilities.imports import requires
+from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
+
+if _TEXT_AVAILABLE:
+    from datasets import Dataset, load_dataset
 
 
 class QuestionAnsweringInputBase(Input):
