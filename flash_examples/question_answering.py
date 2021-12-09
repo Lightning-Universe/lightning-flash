@@ -28,7 +28,7 @@ datamodule = QuestionAnsweringData.from_squad_v2(
 model = QuestionAnsweringTask()
 
 # 3. Create the trainer and finetune the model
-trainer = Trainer(max_epochs=3, fast_dev_run=True)
+trainer = Trainer(max_epochs=3)
 trainer.finetune(model, datamodule=datamodule)
 
 # 4. Answer some Questions!
