@@ -17,7 +17,7 @@ from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input_base import Input
 from flash.core.data.new_data_module import DataModule
 from flash.core.integrations.icevision.data import IceVisionInput
-from flash.core.integrations.icevision.transforms import IceVisionInputTransform as KeypointDetectionInputTransform
+from flash.core.integrations.icevision.transforms import IceVisionInputTransform
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
