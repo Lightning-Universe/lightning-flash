@@ -14,7 +14,6 @@
 import torch
 
 import flash
-from flash.core.data.utils import download_data
 from flash.text import TextEmbedder, TextClassificationData
 
 # 1. Create the DataModule
