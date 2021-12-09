@@ -29,6 +29,8 @@ from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 
 if _TEXT_AVAILABLE:
     from datasets import Dataset, load_dataset
+else:
+    Dataset = object
 
 
 class QuestionAnsweringInputBase(Input):
