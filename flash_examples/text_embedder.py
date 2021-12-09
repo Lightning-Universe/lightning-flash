@@ -33,4 +33,3 @@ model = SentenceEmbedder(backbone="sentence-transformers/all-MiniLM-L6-v2")
 trainer = flash.Trainer(gpus=torch.cuda.device_count())
 predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
-
