@@ -22,7 +22,7 @@ import torch
 from flash import Trainer
 from flash.__main__ import main
 from flash.audio import SpeechRecognition
-from flash.audio.speech_recognition.data import SpeechRecognitionInputTransform, SpeechRecognitionOutputTransform
+from flash.audio.speech_recognition.data import InputTransform, SpeechRecognitionOutputTransform
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _AUDIO_AVAILABLE
 from tests.helpers.utils import _AUDIO_TESTING, _SERVE_TESTING
@@ -81,7 +81,7 @@ def test_serve():
     model = SpeechRecognition(backbone=TEST_BACKBONE)
 
     # TODO: Currently only servable once a input_transform and postprocess have been attached
-    model._input_transform = SpeechRecognitionInputTransform()
+    model._input_transform = InputTransform()
     model._output_transform = SpeechRecognitionOutputTransform()
     model.eval()
     model.serve()

@@ -31,13 +31,13 @@ __________________
     ~speech_recognition.data.SpeechRecognitionData
     ~speech_recognition.model.SpeechRecognition
 
-    speech_recognition.data.SpeechRecognitionInputTransform
-    speech_recognition.data.SpeechRecognitionBackboneState
-    speech_recognition.data.SpeechRecognitionOutputTransform
-    speech_recognition.data.SpeechRecognitionCSVInput
-    speech_recognition.data.SpeechRecognitionJSONInput
-    speech_recognition.data.BaseSpeechRecognition
-    speech_recognition.data.SpeechRecognitionFileInput
-    speech_recognition.data.SpeechRecognitionPathsInput
-    speech_recognition.data.SpeechRecognitionDatasetInput
-    speech_recognition.data.SpeechRecognitionDeserializer
+    speech_recognition.input.SpeechRecognitionInputTransform
+    speech_recognition.input.SpeechRecognitionCSVInput
+    speech_recognition.input.SpeechRecognitionJSONInput
+    speech_recognition.input.BaseSpeechRecognition
+    speech_recognition.input.SpeechRecognitionFileInput
+    speech_recognition.input.SpeechRecognitionPathsInput
+    speech_recognition.input.SpeechRecognitionDatasetInput
+    speech_recognition.input.SpeechRecognitionDeserializer
+    speech_recognition.output_transform.SpeechRecognitionOutputTransform
+    speech_recognition.output_transform.SpeechRecognitionBackboneState

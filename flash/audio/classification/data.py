@@ -32,6 +32,7 @@ from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE
 from flash.core.data.io.input_base import Input
 from flash.core.data.new_data_module import DataModule
 from flash.core.data.utilities.paths import PATH_TYPE
+from flash.core.registry import FlashRegistry
 from flash.core.utilities.stages import RunningStage
 from flash.image.classification.data import MatplotlibVisualization
 
@@ -40,6 +41,7 @@ class AudioClassificationData(DataModule):
     """Data module for audio classification."""
 
     input_transform_cls = AudioClassificationInputTransform
+    input_transforms_registry = FlashRegistry("input_transforms")
 
     @classmethod
     def from_files(
