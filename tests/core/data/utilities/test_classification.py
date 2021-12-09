@@ -24,6 +24,7 @@ from flash.core.data.utilities.classification import (
     get_target_mode,
     TargetMode,
 )
+from tests.helpers.retry import retry
 
 Case = namedtuple("Case", ["target", "formatted_target", "target_mode", "labels", "num_classes"])
 
@@ -102,6 +103,7 @@ def test_case(case):
 
 
 @pytest.mark.parametrize("case", cases)
+@retry(3)
 def test_speed(case):
     repeats = int(1e5 / len(case.target))  # Approx. a hundred thousand targets
 
