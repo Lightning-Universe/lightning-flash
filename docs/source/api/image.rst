@@ -58,7 +58,6 @@ __________________
     ~keypoint_detection.model.KeypointDetector
     ~keypoint_detection.data.KeypointDetectionData
 
-    keypoint_detection.data.KeypointDetectionInputTransform
 
 Instance Segmentation
 _____________________
@@ -93,16 +92,16 @@ ____________
 
     ~segmentation.model.SemanticSegmentation
     ~segmentation.data.SemanticSegmentationData
-    ~segmentation.data.SemanticSegmentationInputTransform
 
     segmentation.data.SegmentationMatplotlibVisualization
-    segmentation.data.SemanticSegmentationInput
-    segmentation.data.SemanticSegmentationFilesInput
-    segmentation.data.SemanticSegmentationFolderInput
-    segmentation.data.SemanticSegmentationNumpyInput
-    segmentation.data.SemanticSegmentationTensorInput
-    segmentation.data.SemanticSegmentationFiftyOneInput
-    segmentation.data.SemanticSegmentationDeserializer
+    segmentation.input.SemanticSegmentationInput
+    segmentation.input.SemanticSegmentationFilesInput
+    segmentation.input.SemanticSegmentationFolderInput
+    segmentation.input.SemanticSegmentationNumpyInput
+    segmentation.input.SemanticSegmentationTensorInput
+    segmentation.input.SemanticSegmentationFiftyOneInput
+    segmentation.input.SemanticSegmentationDeserializer
+    segmentation.transforms.SemanticSegmentationInputTransform
     segmentation.model.SemanticSegmentationOutputTransform
     segmentation.output.FiftyOneSegmentationLabelsOutput
     segmentation.output.SegmentationLabelsOutput

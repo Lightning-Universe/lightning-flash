@@ -20,7 +20,7 @@ import torch.nn as nn
 
 from flash.audio.speech_recognition.backbone import SPEECH_RECOGNITION_BACKBONES
 from flash.audio.speech_recognition.collate import DataCollatorCTCWithPadding
-from flash.audio.speech_recognition.data import SpeechRecognitionBackboneState
+from flash.audio.speech_recognition.output_transform import SpeechRecognitionBackboneState
 from flash.core.data.states import CollateFn
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry

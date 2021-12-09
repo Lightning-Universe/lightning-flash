@@ -213,7 +213,7 @@ You should use this approach if your postprocessing depends on the state of the 
 For example, if you want to resize the predictions to the original size of the inputs you should add the original image size in the :attr:`~flash.core.data.io.input.DataKeys.METADATA`.
 Here's an example from the :class:`~flash.image.segmentation.SemanticSegmentationNumpyInput`:
 
-.. literalinclude:: ../../../flash/image/segmentation/data.py
+.. literalinclude:: ../../../flash/image/segmentation/input.py
     :language: python
     :dedent: 4
     :pyobject: SemanticSegmentationNumpyInput.load_sample

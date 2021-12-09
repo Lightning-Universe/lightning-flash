@@ -19,12 +19,9 @@ from flash.core.adapter import AdapterTask
 from flash.core.data.data_pipeline import DataPipeline
 from flash.core.data.output import PredsOutput
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
+from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE, OUTPUT_TRANSFORM_TYPE, OUTPUT_TYPE
 from flash.image.instance_segmentation.backbones import INSTANCE_SEGMENTATION_HEADS
-from flash.image.instance_segmentation.data import (
-    InstanceSegmentationInputTransform,
-    InstanceSegmentationOutputTransform,
-)
+from flash.image.instance_segmentation.data import InstanceSegmentationOutputTransform
 
 
 class InstanceSegmentation(AdapterTask):
@@ -57,7 +54,8 @@ class InstanceSegmentation(AdapterTask):
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         learning_rate: float = 5e-4,
-        output: OUTPUT_TYPE = None,
+        output_transform: OUTPUT_TRANSFORM_TYPE = InstanceSegmentationOutputTransform(),
+        output: OUTPUT_TYPE = PredsOutput(),
         predict_kwargs: Dict = None,
         **kwargs: Any,
     ):
@@ -80,7 +78,8 @@ class InstanceSegmentation(AdapterTask):
             learning_rate=learning_rate,
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
-            output=output or PredsOutput(),
+            output_transform=output_transform,
+            output=output,
         )
 
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]) -> None:
@@ -97,7 +96,7 @@ class InstanceSegmentation(AdapterTask):
                 "If you'd like to change this, extend the InstanceSegmentation Task and override `on_load_checkpoint`."
             )
             self.data_pipeline = DataPipeline(
-                input_transform=InstanceSegmentationInputTransform(),
+                input_transform=None,
                 output_transform=InstanceSegmentationOutputTransform(),
             )
 

@@ -25,6 +25,7 @@ datamodule = SpeechRecognitionData.from_json(
     target_fields="text",
     train_file="data/timit/train.json",
     test_file="data/timit/test.json",
+    batch_size=4,
 )
 
 # 2. Build the task
@@ -35,7 +36,7 @@ trainer = flash.Trainer(max_epochs=1, gpus=torch.cuda.device_count())
 trainer.finetune(model, datamodule=datamodule, strategy="no_freeze")
 
 # 4. Predict on audio files!
-datamodule = SpeechRecognitionData.from_files(predict_files=["data/timit/example.wav"])
+datamodule = SpeechRecognitionData.from_files(predict_files=["data/timit/example.wav"], batch_size=4)
 predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
 
