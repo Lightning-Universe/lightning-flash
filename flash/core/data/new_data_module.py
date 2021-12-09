@@ -89,6 +89,7 @@ class DataModule(DataModule):
         sampler: Optional[Type[Sampler]] = None,
         pin_memory: bool = True,
         persistent_workers: bool = True,
+        output_transform: Optional[OutputTransform] = None,
     ) -> None:
 
         if not batch_size:
@@ -98,7 +99,7 @@ class DataModule(DataModule):
             batch_size = 16
 
         self._input_transform: Optional[OutputTransform] = None
-        self._output_transform: Optional[OutputTransform] = None
+        self._output_transform: Optional[OutputTransform] = output_transform
         self._viz: Optional[BaseVisualization] = None
 
         self._train_input = train_input
