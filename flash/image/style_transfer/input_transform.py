@@ -14,8 +14,6 @@
 from dataclasses import dataclass
 from typing import Callable
 
-from torch import nn
-
 from flash.core.data.input_transform import InputTransform
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 
@@ -28,11 +26,8 @@ class StyleTransferInputTransform(InputTransform):
 
     image_size: int = 256
 
-    def per_sample_transform(self) -> Callable:
-        return T.ToTensor()
+    def input_per_sample_transform(self) -> Callable:
+        return T.Compose([T.ToTensor(), T.Resize(self.image_size), T.CenterCrop(self.image_size)])
 
-    def train_per_sample_transform_on_device(self) -> Callable:
-        return nn.Sequential(T.Resize(self.image_size), T.CenterCrop(self.image_size))
-
-    def per_sample_transform_on_device(self) -> Callable:
-        return T.Resize(self.image_size)
+    def predict_per_sample_transform_on_device(self) -> Callable:
+        return T.Resize((self.image_size, self.image_size))
