@@ -29,6 +29,7 @@ from torch import Tensor
 from torch.nn import Module
 
 from flash.core.data.io.input import DataKeys
+from flash.core.integrations.transformers.states import TransformersBackboneState
 from flash.core.model import Task
 from flash.core.registry import ExternalRegistry, FlashRegistry
 from flash.core.utilities.imports import _TEXT_AVAILABLE
@@ -116,6 +117,7 @@ class QuestionAnsweringTask(Task):
             metrics=metrics,
             learning_rate=learning_rate,
         )
+        self.set_state(TransformersBackboneState(backbone))
         self.model = self.backbones.get(backbone)()
         self.enable_ort = enable_ort
         self.n_best_size = n_best_size

@@ -11,24 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from dataclasses import dataclass
-from typing import Any, Callable, Dict
+import collections
+from typing import Any
 
-import torch
-
-from flash.core.data.input_transform import InputTransform
-from flash.core.data.io.input import DataKeys
+from flash.core.data.io.output_transform import OutputTransform
+from flash.core.utilities.imports import requires
 
 
-@dataclass
-class TransformersInputTransform(InputTransform):
-    @staticmethod
-    def to_tensor(sample: Dict[str, Any]) -> Dict[str, Any]:
-        for key in sample:
-            if key is DataKeys.METADATA:
-                continue
-            sample[key] = torch.as_tensor(sample[key])
-        return sample
-
-    def per_sample_transform(self) -> Callable:
-        return self.to_tensor
+class QuestionAnsweringOutputTransform(OutputTransform):
+    @requires("text")
+    def uncollate(self, predicted_sentences: collections.OrderedDict) -> Any:
+        uncollated_predicted_sentences = []
+        for key in predicted_sentences:
+            uncollated_predicted_sentences.append({key: predicted_sentences[key]})
+        return uncollated_predicted_sentences
