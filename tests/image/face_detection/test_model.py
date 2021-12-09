@@ -32,13 +32,14 @@ else:
 @pytest.mark.skipif(not _FASTFACE_AVAILABLE, reason="fastface not installed.")
 def test_fastface_training():
     dataset = ff.dataset.FDDBDataset(source_dir="data/", phase="val")
-    datamodule = FaceDetectionData.from_datasets(train_dataset=dataset, batch_size=2)
+    datamodule = FaceDetectionData.from_datasets(train_dataset=dataset, predict_dataset=dataset, batch_size=2)
 
     model = FaceDetector(model="lffd_slim")
 
     # test fit
-    trainer = flash.Trainer(max_steps=2, num_sanity_val_steps=0)
+    trainer = flash.Trainer(fast_dev_run=True)
     trainer.finetune(model, datamodule=datamodule, strategy="freeze")
+    trainer.predict(model, datamodule=datamodule)
 
 
 @pytest.mark.skipif(not _FASTFACE_AVAILABLE, reason="fastface not installed.")
