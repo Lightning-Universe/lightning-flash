@@ -27,7 +27,7 @@ if _AUDIO_AVAILABLE:
 @dataclass(unsafe_hash=True, frozen=True)
 class SpeechRecognitionBackboneState(ProcessState):
     """The ``SpeechRecognitionBackboneState`` stores the backbone in use by the
-    :class:`~flash.audio.speech_recognition.data.SpeechRecognitionOutputTransform`
+    :class:`~flash.audio.speech_recognition.data.SpeechRecognitionOutputTransform`.
     """
 
     backbone: str
