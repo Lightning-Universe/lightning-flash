@@ -18,7 +18,6 @@ import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data._utils.collate import default_collate
 
-from flash import DataModule
 from flash.core.data.io.input import InputFormat
 from flash.core.data.io.input_transform import _InputTransformProcessor, DefaultInputTransform
 from flash.core.utilities.stages import RunningStage
@@ -74,12 +73,6 @@ def test_available_inputs():
     assert InputFormat.TENSORS in input_transform.available_inputs()
     assert "test" in input_transform.available_inputs()
     assert len(input_transform.available_inputs()) == 3
-
-    data_module = DataModule(input_transform=input_transform)
-
-    assert InputFormat.TENSORS in data_module.available_inputs()
-    assert "test" in data_module.available_inputs()
-    assert len(data_module.available_inputs()) == 3
 
 
 def test_check_transforms():
