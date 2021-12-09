@@ -24,8 +24,10 @@ from flash import Trainer
 from flash.__main__ import main
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.core.utilities.stages import RunningStage
 from flash.image import SemanticSegmentation
 from flash.image.segmentation.data import SemanticSegmentationData, SemanticSegmentationInputTransform
+from flash.image.segmentation.input import SemanticSegmentationDeserializer
 from tests.helpers.utils import _IMAGE_TESTING, _SERVE_TESTING
 
 # ======== Mock functions ========
@@ -105,7 +107,7 @@ def test_unfreeze():
 def test_predict_tensor():
     img = torch.rand(1, 3, 64, 64)
     model = SemanticSegmentation(2, backbone="mobilenetv3_large_100")
-    datamodule = SemanticSegmentationData.from_tensors(predict_data=img)
+    datamodule = SemanticSegmentationData.from_tensors(predict_data=img, batch_size=1)
     trainer = Trainer()
     out = trainer.predict(model, datamodule=datamodule)
     assert isinstance(out[0][0], list)
@@ -117,7 +119,7 @@ def test_predict_tensor():
 def test_predict_numpy():
     img = np.ones((1, 3, 64, 64))
     model = SemanticSegmentation(2, backbone="mobilenetv3_large_100")
-    datamodule = SemanticSegmentationData.from_numpy(predict_data=img)
+    datamodule = SemanticSegmentationData.from_numpy(predict_data=img, batch_size=1)
     trainer = Trainer()
     out = trainer.predict(model, datamodule=datamodule)
     assert isinstance(out[0][0], list)
@@ -148,7 +150,8 @@ def test_jit(tmpdir, jitter, args):
 def test_serve():
     model = SemanticSegmentation(2)
     # TODO: Currently only servable once a input_transform has been attached
-    model._input_transform = SemanticSegmentationInputTransform()
+    model._input_transform = SemanticSegmentationInputTransform(RunningStage.SERVING)
+    model._deserializer = SemanticSegmentationDeserializer()
     model.eval()
     model.serve()
 

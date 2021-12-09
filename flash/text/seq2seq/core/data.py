@@ -32,13 +32,13 @@ else:
 
 
 class Seq2SeqOutputTransform(OutputTransform):
-    @requires("text")
     def __init__(self):
         super().__init__()
 
         self._backbone = None
         self._tokenizer = None
 
+    @requires("text")
     def uncollate(self, generated_tokens: Any) -> Any:
         tokenizer = self.get_state(TransformersBackboneState).tokenizer
         pred_str = tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)

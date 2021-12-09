@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased] - YYYY-DD-MM
 
 ### Added
+- Added `TextEmbedder` task ([#996](https://github.com/PyTorchLightning/lightning-flash/pull/996))
 
 - Added predict_kwargs in `ObjectDetector`, `InstanceSegmentation`, `KeypointDetector` ([#990](https://github.com/PyTorchLightning/lightning-flash/pull/990))
 

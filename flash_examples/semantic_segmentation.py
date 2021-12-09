@@ -29,8 +29,9 @@ datamodule = SemanticSegmentationData.from_folders(
     train_folder="data/CameraRGB",
     train_target_folder="data/CameraSeg",
     val_split=0.1,
-    image_size=(256, 256),
+    transform_kwargs=dict(image_size=(256, 256)),
     num_classes=21,
+    batch_size=4,
 )
 
 # 2. Build the task
@@ -50,7 +51,8 @@ datamodule = SemanticSegmentationData.from_files(
         "data/CameraRGB/F61-1.png",
         "data/CameraRGB/F62-1.png",
         "data/CameraRGB/F63-1.png",
-    ]
+    ],
+    batch_size=3,
 )
 predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)

@@ -27,7 +27,7 @@ from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE, 
 from tests.helpers.utils import _AUDIO_TESTING
 
 if _TORCHVISION_AVAILABLE:
-    import torchvision
+    import torchvision.transforms as T
 
 if _PIL_AVAILABLE:
     from PIL import Image
@@ -42,6 +42,7 @@ def _rand_image(size: Tuple[int, int] = None):
 
 @pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 def test_from_filepaths_smoke(tmpdir):
+
     tmpdir = Path(tmpdir)
 
     _rand_image().save(tmpdir / "a_1.png")
@@ -240,7 +241,7 @@ def test_from_filepaths_visualise_multilabel(tmpdir):
         test_files=[image_b, image_b],
         test_targets=[[0, 0, 1], [1, 1, 0]],
         batch_size=2,
-        spectrogram_size=(64, 64),
+        transform_kwargs=dict(spectrogram_size=(64, 64)),
     )
     # disable visualisation for testing
     assert dm.data_fetcher.block_viz_window is True
@@ -272,12 +273,10 @@ def test_from_filepaths_splits(tmpdir):
 
     assert len(train_filepaths) == len(train_labels)
 
-    _to_tensor = {
-        "per_sample_transform": nn.Sequential(
-            ApplyToKeys(DataKeys.INPUT, torchvision.transforms.ToTensor()),
-            ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
-        ),
-    }
+    _to_tensor = nn.Sequential(
+        ApplyToKeys(DataKeys.INPUT, T.Compose([T.ToTensor(), T.Resize(img_size)])),
+        ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
+    )
 
     def run(transform: Any = None):
         dm = AudioClassificationData.from_files(
@@ -288,7 +287,6 @@ def test_from_filepaths_splits(tmpdir):
             batch_size=B,
             num_workers=0,
             val_split=val_split,
-            spectrogram_size=img_size,
         )
         data = next(iter(dm.train_dataloader()))
         imgs, labels = data["input"], data["target"]
@@ -300,6 +298,9 @@ def test_from_filepaths_splits(tmpdir):
 
 @pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 def test_from_folders_only_train(tmpdir):
+
+    seed_everything(42)
+
     train_dir = Path(tmpdir / "train")
     train_dir.mkdir()
 
@@ -315,7 +316,7 @@ def test_from_folders_only_train(tmpdir):
 
     data = next(iter(spectrograms_data.train_dataloader()))
     imgs, labels = data["input"], data["target"]
-    assert imgs.shape == (1, 3, 128, 128)
+    assert imgs.shape == (1, 196, 196, 3)
     assert labels.shape == (1,)
 
 

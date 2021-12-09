@@ -29,7 +29,6 @@ from flash.core.utilities.types import (
     OUTPUT_TYPE,
 )
 from flash.image.face_detection.backbones import FACE_DETECTION_BACKBONES
-from flash.image.face_detection.data import FaceDetectionInputTransform
 
 if _FASTFACE_AVAILABLE:
     import fastface as ff
@@ -71,7 +70,7 @@ class FaceDetector(Task):
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         learning_rate: float = 1e-4,
-        output: OUTPUT_TYPE = None,
+        output: OUTPUT_TYPE = DetectionLabelsOutput(),
         input_transform: INPUT_TRANSFORM_TYPE = None,
         **kwargs: Any,
     ):
@@ -89,8 +88,8 @@ class FaceDetector(Task):
             learning_rate=learning_rate,
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
-            output=output or DetectionLabelsOutput(),
-            input_transform=input_transform or FaceDetectionInputTransform(),
+            output=output,
+            input_transform=input_transform,
         )
 
     @staticmethod
