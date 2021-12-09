@@ -30,7 +30,6 @@ predict_data=[
 # ==============================
 
 TEST_BACKBONE = "sentence-transformers/all-MiniLM-L6-v2"  # super small model for testing
-model = TextEmbedder(backbone=TEST_BACKBONE)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -39,6 +38,8 @@ def test_predict(tmpdir):
     datamodule = TextClassificationData.from_lists(
         predict_data=predict_data
     )
+    model = TextEmbedder(backbone=TEST_BACKBONE)
+
     trainer = flash.Trainer(gpus=torch.cuda.device_count())
     predictions = trainer.predict(model, datamodule=datamodule)
     assert [t.size() for t in predictions[0]] == [torch.Size([384]), torch.Size([384]), torch.Size([384])]
