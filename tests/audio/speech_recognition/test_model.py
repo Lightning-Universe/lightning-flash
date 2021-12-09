@@ -23,8 +23,10 @@ from flash import Trainer
 from flash.__main__ import main
 from flash.audio import SpeechRecognition
 from flash.audio.speech_recognition.data import InputTransform, SpeechRecognitionOutputTransform
+from flash.audio.speech_recognition.input import SpeechRecognitionDeserializer
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _AUDIO_AVAILABLE
+from flash.core.utilities.stages import RunningStage
 from tests.helpers.utils import _AUDIO_TESTING, _SERVE_TESTING
 
 # ======== Mock functions ========
@@ -81,8 +83,9 @@ def test_serve():
     model = SpeechRecognition(backbone=TEST_BACKBONE)
 
     # TODO: Currently only servable once a input_transform and postprocess have been attached
-    model._input_transform = InputTransform()
+    model._input_transform = InputTransform(RunningStage.SERVING)
     model._output_transform = SpeechRecognitionOutputTransform()
+    model._deserializer = SpeechRecognitionDeserializer()
     model.eval()
     model.serve()
 
