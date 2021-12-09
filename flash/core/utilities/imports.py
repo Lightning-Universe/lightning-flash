@@ -107,6 +107,7 @@ _VISSL_AVAILABLE = _module_available("vissl") and _module_available("classy_visi
 _ALBUMENTATIONS_AVAILABLE = _module_available("albumentations")
 _BAAL_AVAILABLE = _module_available("baal")
 _TORCH_OPTIMIZER_AVAILABLE = _module_available("torch_optimizer")
+_SENTENCE_TRANSFORMERS_AVAILABLE = _module_available("sentence_transformers")
 
 
 if _PIL_AVAILABLE:
@@ -130,6 +131,7 @@ _TEXT_AVAILABLE = all(
         _SENTENCEPIECE_AVAILABLE,
         _DATASETS_AVAILABLE,
         _TM_TEXT_AVAILABLE,
+        _SENTENCE_TRANSFORMERS_AVAILABLE,
     ]
 )
 _TABULAR_AVAILABLE = _TABNET_AVAILABLE and _PANDAS_AVAILABLE and _FORECASTING_AVAILABLE

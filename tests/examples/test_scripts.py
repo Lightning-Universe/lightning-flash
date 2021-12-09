@@ -80,6 +80,10 @@ root = Path(__file__).parent.parent.parent
             "text_classification.py",
             marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed"),
         ),
+        pytest.param(
+            "text_embedder.py",
+            marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed"),
+        ),
         # pytest.param(
         #     "text_classification_multi_label.py",
         #     marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed")
