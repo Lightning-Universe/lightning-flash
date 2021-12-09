@@ -17,7 +17,7 @@ import pytest
 import torch
 
 import flash
-from flash.text import TextEmbedder, TextClassificationData
+from flash.text import TextClassificationData, TextEmbedder
 from tests.helpers.utils import _TEXT_TESTING
 
 # ======== Mock data ========
