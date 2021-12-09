@@ -27,9 +27,10 @@ datamodule = TextClassificationData.from_lists(
 )
 
 # 2. Load a previously trained SentenceEmbedder
-model = SentenceEmbedder(backbone="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+model = SentenceEmbedder(backbone="sentence-transformers/all-MiniLM-L6-v2")
 
 # 3. Generate embeddings for the first 3 graphs
 trainer = flash.Trainer(gpus=torch.cuda.device_count())
 predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
+

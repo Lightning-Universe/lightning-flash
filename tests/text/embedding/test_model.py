@@ -32,7 +32,7 @@ datamodule = TextClassificationData.from_lists(
 
 # ==============================
 
-TEST_BACKBONE = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"  # super small model for testing
+TEST_BACKBONE = "sentence-transformers/all-MiniLM-L6-v2"  # super small model for testing
 model = SentenceEmbedder(backbone=TEST_BACKBONE)
 
 
