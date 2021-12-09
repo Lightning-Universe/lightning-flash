@@ -22,11 +22,11 @@ from tests.helpers.utils import _TEXT_TESTING
 
 # ======== Mock data ========
 
-predict_data=[
-     "Turgid dialogue, feeble characterization - Harvey Keitel a judge?.",
-     "The worst movie in the history of cinema.",
-     "I come from Bulgaria where it 's almost impossible to have a tornado.",
- ]
+predict_data = [
+    "Turgid dialogue, feeble characterization - Harvey Keitel a judge?.",
+    "The worst movie in the history of cinema.",
+    "I come from Bulgaria where it 's almost impossible to have a tornado.",
+]
 # ==============================
 
 TEST_BACKBONE = "sentence-transformers/all-MiniLM-L6-v2"  # super small model for testing
@@ -36,9 +36,7 @@ model = TextEmbedder(backbone=TEST_BACKBONE)
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_predict(tmpdir):
-    datamodule = TextClassificationData.from_lists(
-        predict_data=predict_data
-    )
+    datamodule = TextClassificationData.from_lists(predict_data=predict_data)
     trainer = flash.Trainer(gpus=torch.cuda.device_count())
     predictions = trainer.predict(model, datamodule=datamodule)
     assert [t.size() for t in predictions[0]] == [torch.Size([384]), torch.Size([384]), torch.Size([384])]
