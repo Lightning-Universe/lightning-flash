@@ -50,7 +50,8 @@ class TemplateNumpyClassificationInput(ClassificationInput):
         Returns:
             A sequence of samples / sample metadata.
         """
-        self.num_features = examples.shape[1]
+        if not self.predicting and isinstance(examples, np.ndarray):
+            self.num_features = examples.shape[1]
         if targets is not None:
             self.load_target_metadata(targets)
         return to_samples(examples, targets)
