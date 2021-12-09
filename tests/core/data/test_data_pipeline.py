@@ -13,9 +13,7 @@
 # limitations under the License.
 import os
 from typing import Any, cast, Dict, Optional, Tuple
-from unittest.mock import patch
 
-import numpy as np
 import pytest
 import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -25,7 +23,6 @@ from torch.utils.data._utils.collate import default_collate
 
 from flash import Trainer
 from flash.core.data.auto_dataset import IterableAutoDataset
-from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import _StageOrchestrator, DataPipeline, DataPipelineState
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import _InputTransformProcessor, DefaultInputTransform, InputTransform
@@ -34,15 +31,7 @@ from flash.core.data.io.output_transform import _OutputTransformProcessor, Outpu
 from flash.core.data.process import Deserializer
 from flash.core.data.properties import ProcessState
 from flash.core.model import Task
-from flash.core.utilities.imports import _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.core.utilities.stages import RunningStage
-from tests.helpers.utils import _IMAGE_TESTING
-
-if _TORCHVISION_AVAILABLE:
-    import torchvision.transforms as T
-
-if _PIL_AVAILABLE:
-    from PIL import Image
 
 
 class DummyDataset(torch.utils.data.Dataset):
@@ -527,92 +516,6 @@ def test_is_overridden_recursive(tmpdir):
     assert not DataPipeline._is_overridden_recursive("per_batch_transform_on_device", input_transform, InputTransform)
     with pytest.raises(MisconfigurationException, match="This function doesn't belong to the parent class"):
         assert not DataPipeline._is_overridden_recursive("chocolate", input_transform, InputTransform)
-
-
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
-@patch("torch.save")  # need to mock torch.save or we get pickle error
-def test_dummy_example(tmpdir):
-    class ImageInput(Input):
-        def load_data(self, folder: str):
-            # from folder -> return files paths
-            return ["a.jpg", "b.jpg"]
-
-        def load_sample(self, path: str) -> Image.Image:
-            # from a file path, load the associated image
-            img8Bit = np.uint8(np.random.uniform(0, 1, (64, 64, 3)) * 255.0)
-            return Image.fromarray(img8Bit)
-
-    class ImageClassificationInputTransform(DefaultInputTransform):
-        def __init__(
-            self,
-            train_transform=None,
-            val_transform=None,
-            test_transform=None,
-            predict_transform=None,
-            per_sample_transform=None,
-            train_per_sample_transform_on_device=None,
-        ):
-            super().__init__(
-                train_transform=train_transform,
-                val_transform=val_transform,
-                test_transform=test_transform,
-                predict_transform=predict_transform,
-                inputs={"default": ImageInput()},
-            )
-            self._to_tensor = per_sample_transform
-            self._train_per_sample_transform_on_device = train_per_sample_transform_on_device
-
-        def per_sample_transform(self, pil_image: Image.Image) -> Tensor:
-            # convert pil image into a tensor
-            return self._to_tensor(pil_image)
-
-        def train_per_sample_transform_on_device(self, sample: Any) -> Any:
-            # apply an augmentation per sample on gpu for train only
-            return self._train_per_sample_transform_on_device(sample)
-
-    class CustomModel(Task):
-        def __init__(self):
-            super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
-
-        def training_step(self, batch, batch_idx):
-            assert batch.shape == torch.Size([2, 3, 64, 64])
-
-        def validation_step(self, batch, batch_idx):
-            assert batch.shape == torch.Size([2, 3, 64, 64])
-
-        def test_step(self, batch, batch_idx):
-            assert batch.shape == torch.Size([2, 3, 64, 64])
-
-    class CustomDataModule(DataModule):
-
-        input_transform_cls = ImageClassificationInputTransform
-
-    datamodule = CustomDataModule.from_input(
-        "default",
-        "train_folder",
-        "val_folder",
-        "test_folder",
-        None,
-        batch_size=2,
-        per_sample_transform=T.ToTensor(),
-        train_per_sample_transform_on_device=T.RandomHorizontalFlip(),
-    )
-
-    assert isinstance(datamodule.train_dataloader().dataset[0], Image.Image)
-    batch = next(iter(datamodule.train_dataloader()))
-    assert batch[0].shape == torch.Size([3, 64, 64])
-
-    model = CustomModel()
-    trainer = Trainer(
-        max_epochs=1,
-        limit_train_batches=2,
-        limit_val_batches=1,
-        limit_test_batches=2,
-        limit_predict_batches=2,
-        num_sanity_val_steps=1,
-    )
-    trainer.fit(model, datamodule=datamodule)
-    trainer.test(model)
 
 
 def test_input_transform_transforms(tmpdir):
