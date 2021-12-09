@@ -155,7 +155,7 @@ class DataModule(DataModule):
     def input_transform(self) -> InputTransform:
         """Property that returns the input transform class used on input data."""
         # Find a better way to resolve this.
-        return self._train_ds.transform or self.input_transform_cls()
+        return self._train_input.transform or self.input_transform_cls()
 
     @property
     def train_dataset(self) -> Optional[Input]:
