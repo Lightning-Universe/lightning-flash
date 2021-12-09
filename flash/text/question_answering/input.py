@@ -343,17 +343,22 @@ class QuestionAnsweringSQuADInput(QuestionAnsweringDictionaryInput):
                     question = qa["question"]
                     id = qa["id"]
 
-                    _answer_starts = [answer["answer_start"] for answer in qa["answers"]]
-                    _answers = [answer["text"] for answer in qa["answers"]]
-
                     ids.append(id)
                     titles.append(title)
                     contexts.append(context)
                     questions.append(question)
-                    answers.append(dict(text=_answers, answer_start=_answer_starts))
+
+                    if not self.predicting:
+                        _answer_starts = [answer["answer_start"] for answer in qa["answers"]]
+                        _answers = [answer["text"] for answer in qa["answers"]]
+                        answers.append(dict(text=_answers, answer_start=_answer_starts))
+
+        data = {"id": ids, "title": titles, "context": contexts, "question": questions}
+        if not self.predicting:
+            data["answer"] = answers
 
         return super().load_data(
-            {"id": ids, "title": titles, "context": contexts, "question": questions, "answer": answers},
+            data,
             max_source_length=max_source_length,
             max_target_length=max_target_length,
             padding=padding,

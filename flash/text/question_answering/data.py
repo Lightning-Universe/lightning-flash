@@ -186,9 +186,11 @@ class QuestionAnsweringData(DataModule):
         train_file: Optional[str] = None,
         val_file: Optional[str] = None,
         test_file: Optional[str] = None,
+        predict_file: Optional[str] = None,
         train_transform: INPUT_TRANSFORM_TYPE = QuestionAnsweringInputTransform,
         val_transform: INPUT_TRANSFORM_TYPE = QuestionAnsweringInputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = QuestionAnsweringInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = QuestionAnsweringInputTransform,
         input_cls: Type[Input] = QuestionAnsweringSQuADInput,
         transform_kwargs: Optional[Dict] = None,
         max_source_length: int = 384,
@@ -207,11 +209,14 @@ class QuestionAnsweringData(DataModule):
             train_file: The JSON file containing the training data.
             val_file: The JSON file containing the validation data.
             test_file: The JSON file containing the testing data.
+            predict_file: The JSON file containing the predict data.
             train_transform: The dictionary of transforms to use during training which maps
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             max_source_length: Max length of the sequence to be considered during tokenization.
             max_target_length: Max length of each answer to be produced.
@@ -242,6 +247,7 @@ class QuestionAnsweringData(DataModule):
             input_cls(RunningStage.TRAINING, train_file, transform=train_transform, **ds_kw),
             input_cls(RunningStage.VALIDATING, val_file, transform=val_transform, **ds_kw),
             input_cls(RunningStage.TESTING, test_file, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_file, transform=predict_transform, **ds_kw),
             **data_module_kwargs,
         )
 
