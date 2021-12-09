@@ -35,9 +35,7 @@ TEST_BACKBONE = "sentence-transformers/all-MiniLM-L6-v2"  # super small model fo
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_predict(tmpdir):
-    datamodule = TextClassificationData.from_lists(
-        predict_data=predict_data
-    )
+    datamodule = TextClassificationData.from_lists(predict_data=predict_data)
     model = TextEmbedder(backbone=TEST_BACKBONE)
 
     trainer = flash.Trainer(gpus=torch.cuda.device_count())
