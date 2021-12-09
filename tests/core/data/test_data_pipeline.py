@@ -33,7 +33,6 @@ from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import _OutputTransformProcessor, OutputTransform
 from flash.core.data.process import Deserializer
 from flash.core.data.properties import ProcessState
-from flash.core.data.states import PerBatchTransformOnDevice, PerSampleTransform
 from flash.core.model import Task
 from flash.core.utilities.imports import _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.core.utilities.stages import RunningStage
@@ -509,84 +508,6 @@ class CustomModel(Task):
         assert batch[1][0] == "b"
         assert batch[1][1] == "b"
         return tensor([0, 0, 0])
-
-
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
-def test_datapipeline_transformations_overridden_by_task():
-    # define input transforms
-    class ImageInput(Input):
-        def load_data(self, folder: str):
-            # from folder -> return files paths
-            return ["a.jpg", "b.jpg"]
-
-        def load_sample(self, path: str) -> Image.Image:
-            # from a file path, load the associated image
-            return np.random.uniform(0, 1, (64, 64, 3))
-
-    class ImageClassificationInputTransform(DefaultInputTransform):
-        def __init__(
-            self,
-            train_transform=None,
-            val_transform=None,
-            test_transform=None,
-            predict_transform=None,
-        ):
-            super().__init__(
-                train_transform=train_transform,
-                val_transform=val_transform,
-                test_transform=test_transform,
-                predict_transform=predict_transform,
-                inputs={"default": ImageInput()},
-            )
-
-        def default_transforms(self):
-            return {
-                "per_sample_transform": T.Compose([T.ToTensor()]),
-                "per_batch_transform_on_device": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-            }
-
-    # define task which overrides transforms using set_state
-    class CustomModel(Task):
-        def __init__(self):
-            super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
-
-            # override default transform to resize images
-            self.set_state(PerSampleTransform(T.Compose([T.ToTensor(), T.Resize(128)])))
-
-            # remove normalization, => image still in [0, 1] range
-            self.set_state(PerBatchTransformOnDevice(None))
-
-        def training_step(self, batch, batch_idx):
-            assert batch.shape == torch.Size([2, 3, 128, 128])
-            assert torch.max(batch) <= 1.0
-            assert torch.min(batch) >= 0.0
-
-        def validation_step(self, batch, batch_idx):
-            assert batch.shape == torch.Size([2, 3, 128, 128])
-            assert torch.max(batch) <= 1.0
-            assert torch.min(batch) >= 0.0
-
-    class CustomDataModule(DataModule):
-
-        input_transform_cls = ImageClassificationInputTransform
-
-    datamodule = CustomDataModule.from_input(
-        "default",
-        "train_folder",
-        "val_folder",
-        None,
-        batch_size=2,
-    )
-
-    # call trainer
-    model = CustomModel()
-    trainer = Trainer(
-        max_epochs=1,
-        limit_train_batches=2,
-        limit_val_batches=1,
-        num_sanity_val_steps=1,
-    )
-    trainer.fit(model, datamodule=datamodule)
 
 
 def test_is_overridden_recursive(tmpdir):

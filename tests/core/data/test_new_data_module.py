@@ -14,6 +14,8 @@
 from dataclasses import dataclass
 from typing import Callable, Dict
 
+import numpy as np
+import pytest
 import torch
 from pytorch_lightning import seed_everything
 from torch.utils.data import Dataset
@@ -22,7 +24,13 @@ from flash import Task, Trainer
 from flash.core.data.input_transform import InputTransform
 from flash.core.data.io.input_base import Input
 from flash.core.data.new_data_module import DataModule, DatasetInput
+from flash.core.data.states import PerBatchTransformOnDevice, PerSampleTransform
+from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 from flash.core.utilities.stages import RunningStage
+from tests.helpers.utils import _IMAGE_TESTING
+
+if _TORCHVISION_AVAILABLE:
+    import torchvision.transforms as T
 
 
 def test_data_module():
@@ -351,3 +359,61 @@ def test_transformations(tmpdir):
     assert datamodule.val_dataset.transform.val_collate_called
     assert datamodule.val_dataset.transform.val_per_batch_transform_on_device_called
     assert datamodule.test_dataset.transform.test_per_sample_transform_called
+
+
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+def test_datapipeline_transformations_overridden_by_task():
+    # define input transforms
+    class ImageInput(Input):
+        def load_data(self, folder):
+            # from folder -> return files paths
+            return ["a.jpg", "b.jpg"]
+
+        def load_sample(self, path):
+            # from a file path, load the associated image
+            return np.random.uniform(0, 1, (64, 64, 3))
+
+    class ImageClassificationInputTransform(InputTransform):
+        def per_sample_transform(self) -> Callable:
+            return T.Compose([T.ToTensor()])
+
+        def per_batch_transform_on_device(self) -> Callable:
+            return T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+
+    # define task which overrides transforms using set_state
+    class CustomModel(Task):
+        def __init__(self):
+            super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
+
+            # override default transform to resize images
+            self.set_state(PerSampleTransform(T.Compose([T.ToTensor(), T.Resize(128)])))
+
+            # remove normalization, => image still in [0, 1] range
+            self.set_state(PerBatchTransformOnDevice(None))
+
+        def training_step(self, batch, batch_idx):
+            assert batch.shape == torch.Size([2, 3, 128, 128])
+            assert torch.max(batch) <= 1.0
+            assert torch.min(batch) >= 0.0
+
+        def validation_step(self, batch, batch_idx):
+            assert batch.shape == torch.Size([2, 3, 128, 128])
+            assert torch.max(batch) <= 1.0
+            assert torch.min(batch) >= 0.0
+
+    datamodule = DataModule(
+        ImageInput(RunningStage.TRAINING, [1], transform=ImageClassificationInputTransform),
+        ImageInput(RunningStage.VALIDATING, [1], transform=ImageClassificationInputTransform),
+        batch_size=2,
+        num_workers=0,
+    )
+
+    # call trainer
+    model = CustomModel()
+    trainer = Trainer(
+        max_epochs=1,
+        limit_train_batches=2,
+        limit_val_batches=1,
+        num_sanity_val_steps=1,
+    )
+    trainer.fit(model, datamodule=datamodule)
