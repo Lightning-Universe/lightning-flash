@@ -31,7 +31,7 @@ else:
 
 class KeypointDetectionData(DataModule):
 
-    input_transform_cls = KeypointDetectionInputTransform
+    input_transform_cls = IceVisionInputTransform
 
     @classmethod
     def from_icedata(
@@ -43,10 +43,10 @@ class KeypointDetectionData(DataModule):
         test_folder: Optional[str] = None,
         test_ann_file: Optional[str] = None,
         predict_folder: Optional[str] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = KeypointDetectionInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = KeypointDetectionInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = KeypointDetectionInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = KeypointDetectionInputTransform,
+        train_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         parser: Optional[Type[Parser]] = Parser,
         input_cls: Type[Input] = IceVisionInput,
         transform_kwargs: Optional[Dict] = None,
@@ -73,10 +73,10 @@ class KeypointDetectionData(DataModule):
         test_folder: Optional[str] = None,
         test_ann_file: Optional[str] = None,
         predict_folder: Optional[str] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = KeypointDetectionInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = KeypointDetectionInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = KeypointDetectionInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = KeypointDetectionInputTransform,
+        train_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         parser: Optional[Type[Parser]] = COCOKeyPointsParser,
         input_cls: Type[Input] = IceVisionInput,
         transform_kwargs: Optional[Dict] = None,
@@ -119,7 +119,7 @@ class KeypointDetectionData(DataModule):
     def from_folders(
         cls,
         predict_folder: Optional[str] = None,
-        predict_transform: INPUT_TRANSFORM_TYPE = KeypointDetectionInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         input_cls: Type[Input] = IceVisionInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -149,7 +149,7 @@ class KeypointDetectionData(DataModule):
     def from_files(
         cls,
         predict_files: Optional[List[str]] = None,
-        predict_transform: INPUT_TRANSFORM_TYPE = KeypointDetectionInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         input_cls: Type[Input] = IceVisionInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
