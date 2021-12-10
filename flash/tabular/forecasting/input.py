@@ -17,8 +17,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
-from flash.core.data.io.input import DataKeys
-from flash.core.data.io.input_base import Input
+from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _FORECASTING_AVAILABLE, _PANDAS_AVAILABLE, requires
 
