@@ -484,7 +484,7 @@ class DefaultInputTransform(InputTransform):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            inputs=inputs or {"default": Input()},
+            inputs=inputs or {"default": Input},
             default_input=default_input or "default",
         )
 
