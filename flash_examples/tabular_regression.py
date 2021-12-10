@@ -36,7 +36,7 @@ datamodule = TabularRegressionData.from_csv(
     target_fields="Rented Bike Count",
     train_file="data/SeoulBikeData.csv",
     val_split=0.1,
-    batch_size=4,
+    batch_size=8,
 )
 
 # 2. Build the task
@@ -50,7 +50,7 @@ trainer.fit(model, datamodule=datamodule)
 datamodule = TabularRegressionData.from_csv(
     predict_file="data/SeoulBikeData.csv",
     parameters=datamodule.parameters,
-    batch_size=4,
+    batch_size=8,
 )
 predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
