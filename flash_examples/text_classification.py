@@ -25,6 +25,7 @@ datamodule = TextClassificationData.from_csv(
     "sentiment",
     train_file="data/imdb/train.csv",
     val_file="data/imdb/valid.csv",
+    batch_size=4,
 )
 
 # 2. Build the task
@@ -40,7 +41,8 @@ datamodule = TextClassificationData.from_lists(
         "Turgid dialogue, feeble characterization - Harvey Keitel a judge?.",
         "The worst movie in the history of cinema.",
         "I come from Bulgaria where it 's almost impossible to have a tornado.",
-    ]
+    ],
+    batch_size=4,
 )
 predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)

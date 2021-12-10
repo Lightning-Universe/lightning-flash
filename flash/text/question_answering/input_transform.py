@@ -17,7 +17,7 @@ from typing import Any, Callable, Dict, List
 from torch.utils.data.dataloader import default_collate
 
 from flash.core.data.io.input import DataKeys
-from flash.core.integrations.transformers.transforms import TransformersInputTransform
+from flash.core.integrations.transformers.input_transform import TransformersInputTransform
 
 
 @dataclass

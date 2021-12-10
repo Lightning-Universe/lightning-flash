@@ -18,12 +18,13 @@ from unittest import mock
 import pytest
 import torch
 
-from flash import Trainer
+from flash import RunningStage, Trainer
 from flash.__main__ import main
 from flash.core.data.io.input import DataKeys
+from flash.core.integrations.transformers.input_transform import TransformersInputTransform
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import TextClassifier
-from flash.text.classification.data import TextClassificationInputTransform
+from flash.text.input import TextDeserializer
 from tests.helpers.utils import _SERVE_TESTING, _TEXT_TESTING
 
 # ======== Mock functions ========
@@ -79,7 +80,8 @@ def test_serve():
     model = TextClassifier(2, TEST_BACKBONE)
 
     # TODO: Currently only servable once an input_transform has been attached
-    model._input_transform = TextClassificationInputTransform()
+    model._input_transform = TransformersInputTransform(RunningStage.SERVING)
+    model._deserializer = TextDeserializer()
     model.eval()
     model.serve()
 

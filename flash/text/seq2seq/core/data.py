@@ -18,8 +18,8 @@ from flash.core.data.io.input import Input
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.new_data_module import DataModule
 from flash.core.data.utilities.paths import PATH_TYPE
+from flash.core.integrations.transformers.input_transform import TransformersInputTransform
 from flash.core.integrations.transformers.states import TransformersBackboneState
-from flash.core.integrations.transformers.transforms import TransformersInputTransform
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
