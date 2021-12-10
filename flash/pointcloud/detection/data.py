@@ -95,7 +95,7 @@ class PointCloudObjectDetectorData(DataModule):
         )
 
         return cls(
-            predict_dataset=input_cls(RunningStage.PREDICTING, predict_files, transform=predict_transform, **ds_kw),
+            predict_input=input_cls(RunningStage.PREDICTING, predict_files, transform=predict_transform, **ds_kw),
             **data_module_kwargs,
         )
 

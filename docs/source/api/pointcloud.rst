@@ -20,9 +20,8 @@ ____________
     ~segmentation.model.PointCloudSegmentation
     ~segmentation.data.PointCloudSegmentationData
 
-    segmentation.data.PointCloudSegmentationInputTransform
-    segmentation.data.PointCloudSegmentationFoldersInput
-    segmentation.data.PointCloudSegmentationDatasetInput
+    segmentation.input.PointCloudSegmentationFoldersInput
+    segmentation.input.PointCloudSegmentationDatasetInput
 
 Object Detection
 ________________
