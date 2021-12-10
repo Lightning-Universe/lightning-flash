@@ -12,10 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Any, Callable, cast, Dict, List, Optional, Tuple
-from unittest.mock import patch
+from typing import Any, cast, Dict, Optional, Tuple
 
-import numpy as np
 import pytest
 import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -25,7 +23,6 @@ from torch.utils.data._utils.collate import default_collate
 
 from flash import Trainer
 from flash.core.data.auto_dataset import IterableAutoDataset
-from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import _StageOrchestrator, DataPipeline, DataPipelineState
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import _InputTransformProcessor, DefaultInputTransform, InputTransform
@@ -33,17 +30,8 @@ from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import _OutputTransformProcessor, OutputTransform
 from flash.core.data.process import Deserializer
 from flash.core.data.properties import ProcessState
-from flash.core.data.states import PerBatchTransformOnDevice, PerSampleTransform
 from flash.core.model import Task
-from flash.core.utilities.imports import _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.core.utilities.stages import RunningStage
-from tests.helpers.utils import _IMAGE_TESTING
-
-if _TORCHVISION_AVAILABLE:
-    import torchvision.transforms as T
-
-if _PIL_AVAILABLE:
-    from PIL import Image
 
 
 class DummyDataset(torch.utils.data.Dataset):
@@ -487,142 +475,6 @@ def test_stage_orchestrator_state_attach_detach(tmpdir):
     assert model.predict_step == _original_predict_step
 
 
-class LamdaDummyDataset(torch.utils.data.Dataset):
-    def __init__(self, fx: Callable):
-        self.fx = fx
-
-    def __getitem__(self, index: int) -> Any:
-        return self.fx()
-
-    def __len__(self) -> int:
-        return 5
-
-
-class TestInputTransformationsInput(Input):
-    def __init__(self):
-        super().__init__()
-
-        self.train_load_data_called = False
-        self.val_load_data_called = False
-        self.val_load_sample_called = False
-        self.test_load_data_called = False
-        self.predict_load_data_called = False
-
-    @staticmethod
-    def fn_train_load_data() -> Tuple:
-        return (
-            0,
-            1,
-            2,
-            3,
-        )
-
-    def train_load_data(self, sample) -> LamdaDummyDataset:
-        assert self.training
-        assert self.current_fn == "load_data"
-        self.train_load_data_called = True
-        return LamdaDummyDataset(self.fn_train_load_data)
-
-    def val_load_data(self, sample, dataset) -> List[int]:
-        assert self.validating
-        assert self.current_fn == "load_data"
-        self.val_load_data_called = True
-        return list(range(5))
-
-    def val_load_sample(self, sample) -> Dict[str, Tensor]:
-        assert self.validating
-        assert self.current_fn == "load_sample"
-        self.val_load_sample_called = True
-        return {"a": sample, "b": sample + 1}
-
-    @staticmethod
-    def fn_test_load_data() -> List[torch.Tensor]:
-        return [torch.rand(1), torch.rand(1)]
-
-    def test_load_data(self, sample) -> LamdaDummyDataset:
-        assert self.testing
-        assert self.current_fn == "load_data"
-        self.test_load_data_called = True
-        return LamdaDummyDataset(self.fn_test_load_data)
-
-    @staticmethod
-    def fn_predict_load_data() -> List[str]:
-        return ["a", "b"]
-
-    def predict_load_data(self, sample) -> LamdaDummyDataset:
-        assert self.predicting
-        assert self.current_fn == "load_data"
-        self.predict_load_data_called = True
-        return LamdaDummyDataset(self.fn_predict_load_data)
-
-
-class TestInputTransformations(DefaultInputTransform):
-    def __init__(self):
-        super().__init__(inputs={"default": TestInputTransformationsInput()})
-
-        self.train_per_sample_transform_called = False
-        self.train_collate_called = False
-        self.train_per_batch_transform_on_device_called = False
-        self.val_per_sample_transform_called = False
-        self.val_collate_called = False
-        self.val_per_batch_transform_on_device_called = False
-        self.test_per_sample_transform_called = False
-
-    def train_per_sample_transform(self, sample: Any) -> Any:
-        assert self.training
-        assert self.current_fn == "per_sample_transform"
-        self.train_per_sample_transform_called = True
-        return sample + (5,)
-
-    def train_collate(self, samples) -> Tensor:
-        assert self.training
-        assert self.current_fn == "collate"
-        self.train_collate_called = True
-        return tensor([list(s) for s in samples])
-
-    def train_per_batch_transform_on_device(self, batch: Any) -> Any:
-        assert self.training
-        assert self.current_fn == "per_batch_transform_on_device"
-        self.train_per_batch_transform_on_device_called = True
-        assert torch.equal(batch, tensor([[0, 1, 2, 3, 5], [0, 1, 2, 3, 5]]))
-
-    def val_per_sample_transform(self, sample: Any) -> Tensor:
-        assert self.validating
-        assert self.current_fn == "per_sample_transform"
-        self.val_per_sample_transform_called = True
-        return sample
-
-    def val_collate(self, samples) -> Dict[str, Tensor]:
-        assert self.validating
-        assert self.current_fn == "collate"
-        self.val_collate_called = True
-        _count = samples[0]["a"]
-        assert samples == [{"a": _count, "b": _count + 1}, {"a": _count + 1, "b": _count + 2}]
-        return {"a": tensor([0, 1]), "b": tensor([1, 2])}
-
-    def val_per_batch_transform_on_device(self, batch: Any) -> Any:
-        assert self.validating
-        assert self.current_fn == "per_batch_transform_on_device"
-        self.val_per_batch_transform_on_device_called = True
-        if isinstance(batch, list):
-            batch = batch[0]
-        assert torch.equal(batch["a"], tensor([0, 1]))
-        assert torch.equal(batch["b"], tensor([1, 2]))
-        return [False]
-
-    def test_per_sample_transform(self, sample: Any) -> Tensor:
-        assert self.testing
-        assert self.current_fn == "per_sample_transform"
-        self.test_per_sample_transform_called = True
-        return sample
-
-
-class TestInputTransformations2(TestInputTransformations):
-    def val_per_sample_transform(self, sample: Any) -> Tensor:
-        self.val_per_sample_transform_called = True
-        return {"a": tensor(sample["a"]), "b": tensor(sample["b"])}
-
-
 class CustomModel(Task):
     def __init__(self):
         super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
@@ -647,134 +499,6 @@ class CustomModel(Task):
         return tensor([0, 0, 0])
 
 
-def test_datapipeline_transformations(tmpdir):
-
-    datamodule = DataModule.from_input(
-        "default", 1, 1, 1, 1, batch_size=2, num_workers=0, input_transform=TestInputTransformations()
-    )
-
-    assert datamodule.train_dataloader().dataset[0] == (0, 1, 2, 3)
-    batch = next(iter(datamodule.train_dataloader()))
-    assert torch.equal(batch, tensor([[0, 1, 2, 3, 5], [0, 1, 2, 3, 5]]))
-
-    assert datamodule.val_dataloader().dataset[0] == {"a": 0, "b": 1}
-    assert datamodule.val_dataloader().dataset[1] == {"a": 1, "b": 2}
-    batch = next(iter(datamodule.val_dataloader()))
-
-    datamodule = DataModule.from_input(
-        "default", 1, 1, 1, 1, batch_size=2, num_workers=0, input_transform=TestInputTransformations2()
-    )
-    batch = next(iter(datamodule.val_dataloader()))
-    assert torch.equal(batch["a"], tensor([0, 1]))
-    assert torch.equal(batch["b"], tensor([1, 2]))
-
-    model = CustomModel()
-    trainer = Trainer(
-        max_epochs=1,
-        limit_train_batches=2,
-        limit_val_batches=1,
-        limit_test_batches=2,
-        limit_predict_batches=2,
-        num_sanity_val_steps=1,
-    )
-    trainer.fit(model, datamodule=datamodule)
-    trainer.test(model)
-    trainer.predict(model)
-
-    input_transform = model._input_transform
-    input = input_transform.input_of_name("default")
-    assert input.train_load_data_called
-    assert input_transform.train_per_sample_transform_called
-    assert input_transform.train_collate_called
-    assert input_transform.train_per_batch_transform_on_device_called
-    assert input.val_load_data_called
-    assert input.val_load_sample_called
-    assert input_transform.train_per_sample_transform_called
-    assert input_transform.val_collate_called
-    assert input_transform.val_per_batch_transform_on_device_called
-    assert input.test_load_data_called
-    assert input_transform.test_per_sample_transform_called
-    assert input.predict_load_data_called
-
-
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
-def test_datapipeline_transformations_overridden_by_task():
-    # define input transforms
-    class ImageInput(Input):
-        def load_data(self, folder: str):
-            # from folder -> return files paths
-            return ["a.jpg", "b.jpg"]
-
-        def load_sample(self, path: str) -> Image.Image:
-            # from a file path, load the associated image
-            return np.random.uniform(0, 1, (64, 64, 3))
-
-    class ImageClassificationInputTransform(DefaultInputTransform):
-        def __init__(
-            self,
-            train_transform=None,
-            val_transform=None,
-            test_transform=None,
-            predict_transform=None,
-        ):
-            super().__init__(
-                train_transform=train_transform,
-                val_transform=val_transform,
-                test_transform=test_transform,
-                predict_transform=predict_transform,
-                inputs={"default": ImageInput()},
-            )
-
-        def default_transforms(self):
-            return {
-                "per_sample_transform": T.Compose([T.ToTensor()]),
-                "per_batch_transform_on_device": T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-            }
-
-    # define task which overrides transforms using set_state
-    class CustomModel(Task):
-        def __init__(self):
-            super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
-
-            # override default transform to resize images
-            self.set_state(PerSampleTransform(T.Compose([T.ToTensor(), T.Resize(128)])))
-
-            # remove normalization, => image still in [0, 1] range
-            self.set_state(PerBatchTransformOnDevice(None))
-
-        def training_step(self, batch, batch_idx):
-            assert batch.shape == torch.Size([2, 3, 128, 128])
-            assert torch.max(batch) <= 1.0
-            assert torch.min(batch) >= 0.0
-
-        def validation_step(self, batch, batch_idx):
-            assert batch.shape == torch.Size([2, 3, 128, 128])
-            assert torch.max(batch) <= 1.0
-            assert torch.min(batch) >= 0.0
-
-    class CustomDataModule(DataModule):
-
-        input_transform_cls = ImageClassificationInputTransform
-
-    datamodule = CustomDataModule.from_input(
-        "default",
-        "train_folder",
-        "val_folder",
-        None,
-        batch_size=2,
-    )
-
-    # call trainer
-    model = CustomModel()
-    trainer = Trainer(
-        max_epochs=1,
-        limit_train_batches=2,
-        limit_val_batches=1,
-        num_sanity_val_steps=1,
-    )
-    trainer.fit(model, datamodule=datamodule)
-
-
 def test_is_overridden_recursive(tmpdir):
     class TestInputTransform(DefaultInputTransform):
         def collate(self, *_):
@@ -792,92 +516,6 @@ def test_is_overridden_recursive(tmpdir):
     assert not DataPipeline._is_overridden_recursive("per_batch_transform_on_device", input_transform, InputTransform)
     with pytest.raises(MisconfigurationException, match="This function doesn't belong to the parent class"):
         assert not DataPipeline._is_overridden_recursive("chocolate", input_transform, InputTransform)
-
-
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
-@patch("torch.save")  # need to mock torch.save or we get pickle error
-def test_dummy_example(tmpdir):
-    class ImageInput(Input):
-        def load_data(self, folder: str):
-            # from folder -> return files paths
-            return ["a.jpg", "b.jpg"]
-
-        def load_sample(self, path: str) -> Image.Image:
-            # from a file path, load the associated image
-            img8Bit = np.uint8(np.random.uniform(0, 1, (64, 64, 3)) * 255.0)
-            return Image.fromarray(img8Bit)
-
-    class ImageClassificationInputTransform(DefaultInputTransform):
-        def __init__(
-            self,
-            train_transform=None,
-            val_transform=None,
-            test_transform=None,
-            predict_transform=None,
-            per_sample_transform=None,
-            train_per_sample_transform_on_device=None,
-        ):
-            super().__init__(
-                train_transform=train_transform,
-                val_transform=val_transform,
-                test_transform=test_transform,
-                predict_transform=predict_transform,
-                inputs={"default": ImageInput()},
-            )
-            self._to_tensor = per_sample_transform
-            self._train_per_sample_transform_on_device = train_per_sample_transform_on_device
-
-        def per_sample_transform(self, pil_image: Image.Image) -> Tensor:
-            # convert pil image into a tensor
-            return self._to_tensor(pil_image)
-
-        def train_per_sample_transform_on_device(self, sample: Any) -> Any:
-            # apply an augmentation per sample on gpu for train only
-            return self._train_per_sample_transform_on_device(sample)
-
-    class CustomModel(Task):
-        def __init__(self):
-            super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
-
-        def training_step(self, batch, batch_idx):
-            assert batch.shape == torch.Size([2, 3, 64, 64])
-
-        def validation_step(self, batch, batch_idx):
-            assert batch.shape == torch.Size([2, 3, 64, 64])
-
-        def test_step(self, batch, batch_idx):
-            assert batch.shape == torch.Size([2, 3, 64, 64])
-
-    class CustomDataModule(DataModule):
-
-        input_transform_cls = ImageClassificationInputTransform
-
-    datamodule = CustomDataModule.from_input(
-        "default",
-        "train_folder",
-        "val_folder",
-        "test_folder",
-        None,
-        batch_size=2,
-        per_sample_transform=T.ToTensor(),
-        train_per_sample_transform_on_device=T.RandomHorizontalFlip(),
-    )
-
-    assert isinstance(datamodule.train_dataloader().dataset[0], Image.Image)
-    batch = next(iter(datamodule.train_dataloader()))
-    assert batch[0].shape == torch.Size([3, 64, 64])
-
-    model = CustomModel()
-    trainer = Trainer(
-        max_epochs=1,
-        limit_train_batches=2,
-        limit_val_batches=1,
-        limit_test_batches=2,
-        limit_predict_batches=2,
-        num_sanity_val_steps=1,
-    )
-    trainer.fit(model, datamodule=datamodule)
-    trainer.test(model)
 
 
 def test_input_transform_transforms(tmpdir):

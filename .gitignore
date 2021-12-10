@@ -170,6 +170,7 @@ __MACOSX
 *-v2.0.json
 cifar-10*
 mini-imagenet*
+squad_tiny*
 
 docs/source/_static/images/course_UvA-DL
 docs/source/_static/images/lightning_examples

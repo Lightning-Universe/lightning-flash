@@ -22,6 +22,7 @@ from flash.template import TemplateData, TemplateSKLearnClassifier
 datamodule = TemplateData.from_sklearn(
     train_bunch=datasets.load_iris(),
     val_split=0.1,
+    batch_size=4,
 )
 
 # 2. Build the task
@@ -38,6 +39,7 @@ datamodule = TemplateData.from_numpy(
         np.array([6.9, 3.2, 5.7, 2.3]),
         np.array([7.2, 3.0, 5.8, 1.6]),
     ],
+    batch_size=4,
 )
 predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)

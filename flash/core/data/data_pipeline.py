@@ -173,6 +173,7 @@ class DataPipeline:
                 self._deserializer,
                 self._input_transform_pipeline,
                 self._input_transform_pipeline._per_sample_transform,
+                [],
             )
         return self._create_collate_input_transform_processors(RunningStage.PREDICTING)[0]
 
@@ -289,6 +290,7 @@ class DataPipeline:
             self._deserializer,
             input_transform,
             per_sample_transform,
+            callbacks=input_transform.callbacks,
         )
         worker_input_transform_processor = _InputTransformProcessor(
             input_transform,

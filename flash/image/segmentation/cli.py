@@ -23,8 +23,7 @@ def from_carla(
     num_classes: int = 21,
     val_split: float = 0.1,
     batch_size: int = 4,
-    num_workers: int = 0,
-    **input_transform_kwargs,
+    **data_module_kwargs,
 ) -> SemanticSegmentationData:
     """Downloads and loads the CARLA capture data set."""
     download_data(
@@ -36,9 +35,8 @@ def from_carla(
         train_target_folder="data/CameraSeg",
         val_split=val_split,
         batch_size=batch_size,
-        num_workers=num_workers,
         num_classes=num_classes,
-        **input_transform_kwargs,
+        **data_module_kwargs,
     )
 
 
@@ -51,7 +49,6 @@ def semantic_segmentation():
         default_arguments={
             "trainer.max_epochs": 3,
         },
-        legacy=True,
     )
 
     cli.trainer.save_checkpoint("semantic_segmentation_model.pt")
