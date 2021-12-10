@@ -17,8 +17,7 @@ from typing import Any, Callable, Dict, List, Optional, Type, Union
 import numpy as np
 
 from flash.core.data.io.classification_input import ClassificationState
-from flash.core.data.io.input import DataKeys
-from flash.core.data.io.input_base import Input
+from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.utilities.paths import list_valid_files
 from flash.core.integrations.icevision.transforms import from_icevision_record
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE

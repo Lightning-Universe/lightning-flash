@@ -19,8 +19,7 @@ import numpy as np
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.io.classification_input import ClassificationState
-from flash.core.data.io.input import DataKeys
-from flash.core.data.io.input_base import Input
+from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.process import Deserializer
 from flash.core.data.properties import ProcessState
 from flash.core.data.utilities.data_frame import read_csv

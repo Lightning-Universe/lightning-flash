@@ -15,7 +15,7 @@ from typing import Any, Mapping
 
 from torch.utils.data import Dataset
 
-from flash.core.data.io.input_base import Input
+from flash.core.data.io.input import Input
 from flash.core.utilities.imports import _GRAPH_AVAILABLE, requires
 
 if _GRAPH_AVAILABLE:

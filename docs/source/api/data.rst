@@ -17,18 +17,6 @@ _________________________
 
     ~flash.core.data.io.output.Output
 
-flash.core.data.auto_dataset
-____________________________
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-    :template: classtemplate.rst
-
-    ~flash.core.data.auto_dataset.AutoDataset
-    ~flash.core.data.auto_dataset.BaseAutoDataset
-    ~flash.core.data.auto_dataset.IterableAutoDataset
-
 flash.core.data.base_viz
 ________________________
 
@@ -89,25 +77,10 @@ ___________________________
     :nosignatures:
     :template: classtemplate.rst
 
-    ~flash.core.data.io.input.DatasetInput
     ~flash.core.data.io.input.Input
     ~flash.core.data.io.input.DataKeys
     ~flash.core.data.io.input.InputFormat
-    ~flash.core.data.io.input.FiftyOneInput
     ~flash.core.data.io.input.ImageLabelsMap
-    ~flash.core.data.io.input.MockDataset
-    ~flash.core.data.io.input.NumpyInput
-    ~flash.core.data.io.input.PathsInput
-    ~flash.core.data.io.input.SequenceInput
-    ~flash.core.data.io.input.TensorInput
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-
-    ~flash.core.data.io.input.has_file_allowed_extension
-    ~flash.core.data.io.input.has_len
-    ~flash.core.data.io.input.make_dataset
 
 flash.core.data.process
 _______________________

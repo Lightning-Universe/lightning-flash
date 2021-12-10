@@ -18,7 +18,7 @@ from torch.utils.data import Sampler
 
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE
-from flash.core.data.io.input_base import Input
+from flash.core.data.io.input import Input
 from flash.core.data.new_data_module import DataModule
 from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, lazy_import, requires

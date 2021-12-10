@@ -20,8 +20,7 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Union
 from torch.utils.data import Dataset
 
 import flash
-from flash.core.data.io.input import DataKeys
-from flash.core.data.io.input_base import Input
+from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.process import Deserializer
 from flash.core.data.utilities.paths import list_valid_files
 from flash.core.utilities.imports import _AUDIO_AVAILABLE, requires

@@ -67,14 +67,6 @@ def test_input_of_name():
         input_transform.input_of_name("not available")
 
 
-def test_available_inputs():
-    input_transform = CustomInputTransform()
-
-    assert InputFormat.TENSORS in input_transform.available_inputs()
-    assert "test" in input_transform.available_inputs()
-    assert len(input_transform.available_inputs()) == 3
-
-
 def test_check_transforms():
     transform = torch.nn.Identity()
     DefaultInputTransform(train_transform=transform)

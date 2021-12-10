@@ -20,7 +20,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data._utils.collate import default_collate
 
 from flash.core.data.callback import ControlFlow, FlashCallback
-from flash.core.data.io.input import DataKeys, DatasetInput, Input, InputFormat
+from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.process import Deserializer
 from flash.core.data.properties import ProcessState, Properties
 from flash.core.data.states import (
@@ -197,9 +197,6 @@ class InputTransform(BaseInputTransform, Properties):
         self._val_transform = convert_to_modules(self.val_transform)
         self._test_transform = convert_to_modules(self.test_transform)
         self._predict_transform = convert_to_modules(self.predict_transform)
-
-        if InputFormat.DATASETS not in inputs:
-            inputs[InputFormat.DATASETS] = DatasetInput()
 
         self._inputs = inputs
         self._deserializer = deserializer
@@ -487,7 +484,7 @@ class DefaultInputTransform(InputTransform):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            inputs=inputs or {"default": Input()},
+            inputs=inputs or {"default": Input},
             default_input=default_input or "default",
         )
 

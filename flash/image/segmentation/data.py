@@ -18,7 +18,7 @@ import torch
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_pipeline import DataPipelineState
-from flash.core.data.io.input_base import Input
+from flash.core.data.io.input import Input
 from flash.core.data.new_data_module import DataModule
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import
