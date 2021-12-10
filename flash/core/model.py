@@ -118,6 +118,7 @@ class ModuleWrapperBase:
             child = getattr(self, child)
             if hasattr(child, "attach_data_pipeline_state"):
                 child.attach_data_pipeline_state(data_pipeline_state)
+        self._data_pipeline_state = data_pipeline_state
 
 
 class DatasetProcessor:

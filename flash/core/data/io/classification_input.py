@@ -63,7 +63,7 @@ class ClassificationInput(Input):
         """
         self.target_mode = get_target_mode(targets)
         self.multi_label = self.target_mode.multi_label
-        if self.training:
+        if self.get_state(ClassificationState) is None:
             self.labels, self.num_classes = get_target_details(targets, self.target_mode)
             self.set_state(ClassificationState(self.labels, self.num_classes))
 
