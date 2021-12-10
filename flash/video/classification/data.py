@@ -30,6 +30,12 @@ from flash.core.utilities.imports import (
     requires,
 )
 from flash.core.utilities.stages import RunningStage
+from flash.video.classification.input import (
+    VideoClassificationFiftyOneInput,
+    VideoClassificationFilesInput,
+    VideoClassificationFoldersInput,
+    VideoClassificationPathsPredictInput,
+)
 
 SampleCollection = None
 if _FIFTYONE_AVAILABLE:

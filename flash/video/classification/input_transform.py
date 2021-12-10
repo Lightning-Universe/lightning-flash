@@ -11,48 +11,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import pathlib
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Type, TYPE_CHECKING, Union
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, List, Optional, Type, Union
 
-import numpy as np
 import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Sampler
 
-from flash.core.data.data_module import DataModule
-from flash.core.data.data_pipeline import DataPipelineState
-from flash.core.data.io.classification_input import ClassificationState
-from flash.core.data.io.input import DataKeys, InputFormat
-from flash.core.data.io.input_base import Input, IterableInput
+from flash.core.data.io.input import InputFormat
 from flash.core.data.io.input_transform import InputTransform
-from flash.core.data.utilities.paths import list_valid_files
-from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
-from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioVideoClassificationInput
-from flash.core.utilities.imports import (
-    _FIFTYONE_AVAILABLE,
-    _KORNIA_AVAILABLE,
-    _PYTORCHVIDEO_AVAILABLE,
-    lazy_import,
-    requires,
-)
-from flash.core.utilities.stages import RunningStage
-
-SampleCollection = None
-if _FIFTYONE_AVAILABLE:
-    fol = lazy_import("fiftyone.core.labels")
-    if TYPE_CHECKING:
-        from fiftyone.core.collections import SampleCollection
-else:
-    fol = None
+from flash.core.utilities.imports import _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE
 
 if _KORNIA_AVAILABLE:
     import kornia.augmentation as K
 
 if _PYTORCHVIDEO_AVAILABLE:
     from pytorchvideo.data.clip_sampling import ClipSampler, make_clip_sampler
-    from pytorchvideo.data.encoded_video import EncodedVideo
-    from pytorchvideo.data.labeled_video_dataset import labeled_video_dataset, LabeledVideoDataset
-    from pytorchvideo.data.labeled_video_paths import LabeledVideoPaths
     from pytorchvideo.transforms import ApplyTransformToKey, UniformTemporalSubsample
     from torchvision.transforms import CenterCrop, Compose, RandomCrop, RandomHorizontalFlip
 else:
@@ -159,3 +133,32 @@ class VideoClassificationInputTransform(InputTransform):
                 ]
             ),
         }
+
+
+@dataclass
+class VideoClassificationInputTransform(InputTransform):
+
+    image_size: int = 244
+    clip_sampler: Union[str, "ClipSampler"] = "random"
+    clip_duration: float = 2
+    clip_sampler_kwargs: Dict[str, Any] = None
+    video_sampler: Type[Sampler] = torch.utils.data.RandomSampler
+    decode_audio: bool = False
+    decoder: str = "pyav"
+    temporal_sub_sample: int = 8
+
+    def input_per_sample_transform(self):
+        if self.training:
+            per_sample_transform = [
+                RandomCrop(self.image_size, pad_if_needed=True),
+                RandomHorizontalFlip(p=0.5),
+            ]
+        else:
+            per_sample_transform = [
+                CenterCrop(self.image_size),
+            ]
+
+        return ApplyTransformToKey(
+            key="video",
+            transform=Compose([UniformTemporalSubsample(8)] + per_sample_transform),
+        )
