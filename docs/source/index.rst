@@ -80,6 +80,7 @@ Lightning Flash
    reference/question_answering
    reference/summarization
    reference/translation
+   reference/text_embedder
 
 .. toctree::
    :maxdepth: 1
