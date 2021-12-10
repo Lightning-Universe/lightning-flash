@@ -11,18 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from typing import Any, Dict, List, Optional, Type, Union
 
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
-from flash.core.data.io.input import InputFormat
 from flash.core.data.io.input_base import Input
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.new_data_module import DataModule
-from flash.core.data.process import Deserializer
 from flash.core.utilities.imports import _PANDAS_AVAILABLE
 from flash.core.utilities.stages import RunningStage
-from flash.tabular.input import TabularCSVInput, TabularDataFrameInput, TabularDeserializer
+from flash.tabular.input import TabularCSVInput, TabularDataFrameInput
 
 if _PANDAS_AVAILABLE:
     from pandas.core.frame import DataFrame
@@ -30,40 +28,10 @@ else:
     DataFrame = object
 
 
-class TabularInputTransform(InputTransform):
-    def __init__(
-        self,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-        deserializer: Optional[Deserializer] = None,
-    ):
-        super().__init__(
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
-            inputs={
-                InputFormat.CSV: TabularCSVInput,
-                InputFormat.DATAFRAME: TabularDataFrameInput,
-            },
-            default_input=InputFormat.CSV,
-            deserializer=deserializer or TabularDeserializer(),
-        )
-
-    def get_state_dict(self, strict: bool = False) -> Dict[str, Any]:
-        return self.transforms
-
-    @classmethod
-    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = True) -> "InputTransform":
-        return cls(**state_dict)
-
-
 class TabularData(DataModule):
     """Data module for tabular tasks."""
 
-    input_transform_cls = TabularInputTransform
+    input_transform_cls = InputTransform
     output_transform_cls = OutputTransform
 
     is_regression: bool = False
@@ -128,6 +96,7 @@ class TabularData(DataModule):
             numerical_fields=numerical_fields,
             target_field=target_fields,
             is_regression=cls.is_regression,
+            parameters=parameters,
         )
 
         train_input = input_cls(RunningStage.TRAINING, train_data_frame, transform=train_transform, **ds_kw)
@@ -170,6 +139,7 @@ class TabularData(DataModule):
             numerical_fields=numerical_fields,
             target_field=target_fields,
             is_regression=cls.is_regression,
+            parameters=parameters,
         )
 
         train_input = input_cls(RunningStage.TRAINING, train_file, transform=train_transform, **ds_kw)

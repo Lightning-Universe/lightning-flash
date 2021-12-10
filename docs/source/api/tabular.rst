@@ -55,8 +55,7 @@ __________________
     :template: classtemplate.rst
 
     ~data.TabularData
-    ~data.TabularDataFrameInput
-    ~data.TabularCSVInput
-    ~data.TabularDeserializer
-    ~data.TabularOutputTransform
-    ~data.TabularInputTransform
+
+    input.TabularDataFrameInput
+    input.TabularCSVInput
+    input.TabularDeserializer
