@@ -33,11 +33,8 @@ if _FIFTYONE_AVAILABLE:
     import fiftyone as fo
 
 if _VIDEO_AVAILABLE:
-    import kornia.augmentation as K
     import torchvision.io as io
     from pytorchvideo.data.utils import thwc_to_cthw
-    from pytorchvideo.transforms import ApplyTransformToKey, RandomShortSideScale, UniformTemporalSubsample
-    from torchvision.transforms import Compose, RandomCrop, RandomHorizontalFlip
 
 
 def create_dummy_video_frames(num_frames: int, height: int, width: int):
@@ -115,26 +112,15 @@ def mock_encoded_video_dataset_folder(tmpdir):
     os.makedirs(str(tmp_dir / "c1"))
     os.makedirs(str(tmp_dir / "c2"))
 
-    with temp_encoded_video(num_frames=num_frames, fps=fps, directory=str(tmp_dir / "c1")) as (
-        video_file_name_1,
-        data_1,
-    ):
-        with temp_encoded_video(num_frames=num_frames, fps=fps, directory=str(tmp_dir / "c2")) as (
-            video_file_name_2,
-            data_2,
-        ):
+    with temp_encoded_video(num_frames=num_frames, fps=fps, directory=str(tmp_dir / "c1")):
+        with temp_encoded_video(num_frames=num_frames, fps=fps, directory=str(tmp_dir / "c2")):
             video_duration = num_frames / fps
             yield str(tmp_dir), video_duration
 
 
 @pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
 def test_video_classifier_finetune_from_folders(tmpdir):
-
-    with mock_encoded_video_dataset_file() as (
-        mock_csv,
-        _,
-        total_duration,
-    ):
+    with mock_encoded_video_dataset_file() as (mock_csv, _, total_duration):
 
         half_duration = total_duration / 2 - 1e-9
 
@@ -159,25 +145,18 @@ def test_video_classifier_finetune_from_folders(tmpdir):
             clip_duration=half_duration,
             video_sampler=SequentialSampler,
             decode_audio=False,
+            batch_size=1,
         )
 
         model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50")
-
-        trainer = flash.Trainer(fast_dev_run=True, gpus=torch.cuda.device_count())
-
+        trainer = flash.Trainer(default_root_dir=tmpdir, fast_dev_run=True, gpus=torch.cuda.device_count())
         trainer.finetune(model, datamodule=datamodule)
 
 
 @pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
 def test_video_classifier_finetune_from_files(tmpdir):
-
-    with mock_encoded_video_dataset_file() as (
-        mock_csv,
-        _,
-        total_duration,
-    ):
+    with mock_encoded_video_dataset_file() as (mock_csv, _, total_duration):
         label_names = ["label_1", "label_2", "label_3", "label_4"]
-
         half_duration = total_duration / 2 - 1e-9
 
         files = []
@@ -219,9 +198,7 @@ def test_video_classifier_finetune_from_files(tmpdir):
         )
 
         model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50")
-
-        trainer = flash.Trainer(fast_dev_run=True, gpus=torch.cuda.device_count())
-
+        trainer = flash.Trainer(default_root_dir=tmpdir, fast_dev_run=True, gpus=torch.cuda.device_count())
         trainer.finetune(model, datamodule=datamodule)
 
 
@@ -246,6 +223,7 @@ def test_video_classifier_finetune_fiftyone(tmpdir):
             clip_duration=half_duration,
             video_sampler=SequentialSampler,
             decode_audio=False,
+            batch_size=1,
         )
 
         for sample in datamodule.train_dataset.data:
@@ -254,50 +232,17 @@ def test_video_classifier_finetune_fiftyone(tmpdir):
 
         assert len(VideoClassifier.available_backbones()) > 5
 
-        train_transform = {
-            "per_sample_transform": Compose(
-                [
-                    ApplyTransformToKey(
-                        key="video",
-                        transform=Compose(
-                            [
-                                UniformTemporalSubsample(8),
-                                RandomShortSideScale(min_size=256, max_size=320),
-                                RandomCrop(244),
-                                RandomHorizontalFlip(p=0.5),
-                            ]
-                        ),
-                    ),
-                ]
-            ),
-            "per_batch_transform_on_device": Compose(
-                [
-                    ApplyTransformToKey(
-                        key="video",
-                        transform=K.VideoSequential(
-                            K.Normalize(torch.tensor([0.45, 0.45, 0.45]), torch.tensor([0.225, 0.225, 0.225])),
-                            K.augmentation.ColorJitter(0.1, 0.1, 0.1, 0.1, p=1.0),
-                            data_format="BCTHW",
-                            same_on_frame=False,
-                        ),
-                    ),
-                ]
-            ),
-        }
-
         datamodule = VideoClassificationData.from_fiftyone(
             train_dataset=train_dataset,
             clip_sampler="uniform",
             clip_duration=half_duration,
             video_sampler=SequentialSampler,
             decode_audio=False,
-            train_transform=train_transform,
+            batch_size=1,
         )
 
         model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50")
-
         trainer = flash.Trainer(fast_dev_run=True, gpus=torch.cuda.device_count())
-
         trainer.finetune(model, datamodule=datamodule)
 
 
