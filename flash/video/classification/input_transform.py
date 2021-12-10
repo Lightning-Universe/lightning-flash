@@ -30,8 +30,8 @@ else:
     ClipSampler, LabeledVideoDataset, EncodedVideo, ApplyTransformToKey = None, None, None, None
 
 
-@dataclass
 @requires("video")
+@dataclass
 class VideoClassificationInputTransform(InputTransform):
 
     image_size: int = 244
