@@ -29,7 +29,6 @@ from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.input_transform import InputTransform
 from flash.core.data.io.input import DataKeys, Input
-from flash.core.data.io.input_transform import DefaultInputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.registry import FlashRegistry
 
@@ -71,7 +70,7 @@ class DataModule(DataModule):
             Will be passed to the DataLoader for the training dataset. Defaults to None.
     """
 
-    input_transform_cls = DefaultInputTransform
+    input_transform_cls = InputTransform
     output_transform_cls = OutputTransform
     input_transforms_registry: Optional[FlashRegistry] = None
 

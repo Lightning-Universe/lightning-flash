@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Any, Callable, Iterable, List, Optional, Tuple, Type, TYPE_CHECKING, Union
+from typing import Any, Iterable, List, Optional, Tuple, Type, TYPE_CHECKING, Union
 
 import numpy as np
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import Dataset
 from torch.utils.data.dataset import IterableDataset, Subset
 from torch.utils.data.sampler import Sampler
 
@@ -26,8 +26,8 @@ import flash
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_pipeline import DataPipeline
+from flash.core.data.input_transform import InputTransform
 from flash.core.data.io.input import Input, InputBase, IterableInput
-from flash.core.data.io.input_transform import DefaultInputTransform, InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX
@@ -71,7 +71,6 @@ class DataModule(pl.LightningDataModule):
             Will be passed to the DataLoader for the training dataset. Defaults to None.
     """
 
-    input_transform_cls = DefaultInputTransform
     output_transform_cls = OutputTransform
 
     def __init__(
@@ -111,18 +110,6 @@ class DataModule(pl.LightningDataModule):
 
         # TODO: InputTransform can change
         self.data_fetcher.attach_to_input_transform(self.input_transform)
-
-        if self._train_ds:
-            self.train_dataloader = self._train_dataloader
-
-        if self._val_ds:
-            self.val_dataloader = self._val_dataloader
-
-        if self._test_ds:
-            self.test_dataloader = self._test_dataloader
-
-        if self._predict_ds:
-            self.predict_dataloader = self._predict_dataloader
 
         self.batch_size = batch_size
 
@@ -268,136 +255,6 @@ class DataModule(pl.LightningDataModule):
 
         if self._predict_ds:
             self.set_dataset_attribute(self._predict_ds, "running_stage", RunningStage.PREDICTING)
-
-    def _resolve_collate_fn(self, dataset: Dataset, running_stage: RunningStage) -> Optional[Callable]:
-        if isinstance(dataset, (SplitDataset, InputBase)):
-            return self.data_pipeline.worker_input_transform_processor(running_stage)
-
-    def _train_dataloader(self) -> DataLoader:
-        """Configure the train dataloader of the datamodule."""
-        train_ds: Dataset = self._train_ds() if isinstance(self._train_ds, Callable) else self._train_ds
-        shuffle: bool = False
-        collate_fn = self._resolve_collate_fn(train_ds, RunningStage.TRAINING)
-        if isinstance(train_ds, IterableInput):
-            drop_last = False
-        else:
-            drop_last = len(train_ds) > self.batch_size
-        pin_memory = True
-        persistent_workers = self.num_workers > 0
-
-        if self.sampler is None:
-            sampler = None
-            shuffle = not isinstance(train_ds, (IterableDataset, IterableInput))
-        else:
-            sampler = self.sampler(train_ds)
-
-        if isinstance(getattr(self, "trainer", None), pl.Trainer):
-            return self.trainer.lightning_module.process_train_dataset(
-                train_ds,
-                trainer=self.trainer,
-                batch_size=self.batch_size,
-                num_workers=self.num_workers,
-                pin_memory=pin_memory,
-                shuffle=shuffle,
-                drop_last=drop_last,
-                collate_fn=collate_fn,
-                sampler=sampler,
-            )
-
-        return DataLoader(
-            train_ds,
-            batch_size=self.batch_size,
-            shuffle=shuffle,
-            sampler=sampler,
-            num_workers=self.num_workers,
-            pin_memory=pin_memory,
-            drop_last=drop_last,
-            collate_fn=collate_fn,
-            persistent_workers=persistent_workers,
-        )
-
-    def _val_dataloader(self) -> DataLoader:
-        """Configure the validation dataloader of the datamodule."""
-        val_ds: Dataset = self._val_ds() if isinstance(self._val_ds, Callable) else self._val_ds
-        collate_fn = self._resolve_collate_fn(val_ds, RunningStage.VALIDATING)
-        pin_memory = True
-        persistent_workers = self.num_workers > 0
-
-        if isinstance(getattr(self, "trainer", None), pl.Trainer):
-            return self.trainer.lightning_module.process_val_dataset(
-                val_ds,
-                trainer=self.trainer,
-                batch_size=self.batch_size,
-                num_workers=self.num_workers,
-                pin_memory=pin_memory,
-                collate_fn=collate_fn,
-            )
-
-        return DataLoader(
-            val_ds,
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-            pin_memory=pin_memory,
-            collate_fn=collate_fn,
-            persistent_workers=persistent_workers,
-        )
-
-    def _test_dataloader(self) -> DataLoader:
-        """Configure the test dataloader of the datamodule."""
-        test_ds: Dataset = self._test_ds() if isinstance(self._test_ds, Callable) else self._test_ds
-        collate_fn = self._resolve_collate_fn(test_ds, RunningStage.TESTING)
-        pin_memory = True
-        persistent_workers = False
-
-        if isinstance(getattr(self, "trainer", None), pl.Trainer):
-            return self.trainer.lightning_module.process_test_dataset(
-                test_ds,
-                trainer=self.trainer,
-                batch_size=self.batch_size,
-                num_workers=self.num_workers,
-                pin_memory=pin_memory,
-                collate_fn=collate_fn,
-            )
-
-        return DataLoader(
-            test_ds,
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-            pin_memory=pin_memory,
-            collate_fn=collate_fn,
-            persistent_workers=persistent_workers,
-        )
-
-    def _predict_dataloader(self) -> DataLoader:
-        """Configure the prediction dataloader of the datamodule."""
-        predict_ds: Dataset = self._predict_ds() if isinstance(self._predict_ds, Callable) else self._predict_ds
-
-        if isinstance(predict_ds, IterableInput):
-            batch_size = self.batch_size
-        else:
-            batch_size = min(self.batch_size, len(predict_ds) if len(predict_ds) > 0 else 1)
-
-        collate_fn = self._resolve_collate_fn(predict_ds, RunningStage.PREDICTING)
-        pin_memory = True
-        persistent_workers = False
-
-        if isinstance(getattr(self, "trainer", None), pl.Trainer):
-            return self.trainer.lightning_module.process_predict_dataset(
-                predict_ds,
-                batch_size=batch_size,
-                num_workers=self.num_workers,
-                pin_memory=pin_memory,
-                collate_fn=collate_fn,
-            )
-
-        return DataLoader(
-            predict_ds,
-            batch_size=batch_size,
-            num_workers=self.num_workers,
-            pin_memory=True,
-            collate_fn=collate_fn,
-            persistent_workers=persistent_workers,
-        )
 
     @property
     def num_classes(self) -> Optional[int]:

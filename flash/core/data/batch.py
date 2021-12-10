@@ -17,41 +17,12 @@ import torch
 from torch import Tensor
 
 from flash.core.data.callback import ControlFlow, FlashCallback
-from flash.core.data.utils import convert_to_modules, CurrentFuncContext, CurrentRunningStageContext
+from flash.core.data.utils import convert_to_modules
 from flash.core.utilities.stages import RunningStage
 
 if TYPE_CHECKING:
-    from flash.core.data.io.input_transform import InputTransform
+    from flash.core.data.input_transform import InputTransform
     from flash.core.data.process import Deserializer
-
-
-class _DeserializeProcessor(torch.nn.Module):
-    def __init__(
-        self,
-        deserializer: "Deserializer",
-        input_transform: "InputTransform",
-        per_sample_transform: Callable,
-        callbacks: Optional[List[FlashCallback]] = None,
-    ):
-        super().__init__()
-        self.input_transform = input_transform
-        self.callback = ControlFlow(callbacks or [])
-        self.deserializer = convert_to_modules(deserializer)
-        self.per_sample_transform = convert_to_modules(per_sample_transform)
-
-        self._current_stage_context = CurrentRunningStageContext(RunningStage.PREDICTING, input_transform, reset=False)
-        self._per_sample_transform_context = CurrentFuncContext("per_sample_transform", input_transform)
-
-    def forward(self, sample: str):
-
-        sample = self.deserializer(sample)
-
-        with self._current_stage_context:
-            with self._per_sample_transform_context:
-                sample = self.per_sample_transform(sample)
-                self.callback.on_per_sample_transform(sample, RunningStage.PREDICTING)
-
-        return sample
 
 
 class _DeserializeProcessorV2(torch.nn.Module):

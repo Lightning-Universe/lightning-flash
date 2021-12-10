@@ -21,8 +21,8 @@ if _TORCH_AVAILABLE:
 
     from flash.core.data.callback import FlashCallback
     from flash.core.data.data_module import DataModule
+    from flash.core.data.input_transform import InputTransform
     from flash.core.data.io.input import DataKeys, Input
-    from flash.core.data.io.input_transform import InputTransform
     from flash.core.data.io.output import Output
     from flash.core.data.io.output_transform import OutputTransform
     from flash.core.data.process import Serializer
