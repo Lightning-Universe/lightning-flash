@@ -114,11 +114,14 @@ class ModuleWrapperBase:
     def attach_data_pipeline_state(self, data_pipeline_state: "DataPipelineState"):
         for state in self._state.values():
             data_pipeline_state.set_state(state)
+        if self._data_pipeline_state:
+            for state in self._data_pipeline_state._state.values():
+                data_pipeline_state.set_state(state)
+        self._data_pipeline_state = data_pipeline_state
         for child in self._children:
             child = getattr(self, child)
             if hasattr(child, "attach_data_pipeline_state"):
                 child.attach_data_pipeline_state(data_pipeline_state)
-        self._data_pipeline_state = data_pipeline_state
 
 
 class DatasetProcessor:
