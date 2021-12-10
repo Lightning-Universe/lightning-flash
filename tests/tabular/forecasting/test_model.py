@@ -52,6 +52,7 @@ def test_fast_dev_run_smoke(sample_data):
         max_prediction_length=max_prediction_length,
         train_data_frame=data[lambda x: x.time_idx <= training_cutoff],
         val_data_frame=data,
+        batch_size=4,
     )
 
     model = TabularForecaster(
@@ -78,6 +79,7 @@ def test_testing_raises(sample_data):
         max_prediction_length=max_prediction_length,
         train_data_frame=data[lambda x: x.time_idx <= training_cutoff],
         test_data_frame=data,
+        batch_size=4,
     )
 
     model = TabularForecaster(

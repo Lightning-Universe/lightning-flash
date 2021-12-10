@@ -42,9 +42,8 @@ ___________
     ~forecasting.model.TabularForecaster
     ~forecasting.data.TabularForecastingData
 
-    forecasting.data.TabularForecastingInputTransform
-    forecasting.data.TabularForecastingDataFrameInput
-    forecasting.data.TimeSeriesDataSetParametersState
+    forecasting.input.TabularForecastingDataFrameInput
+    forecasting.input.TimeSeriesDataSetParametersState
 
 flash.tabular.data
 __________________
