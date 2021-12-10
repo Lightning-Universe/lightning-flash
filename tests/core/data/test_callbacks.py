@@ -17,8 +17,9 @@ import torch
 from torch import tensor
 
 from flash.core.data.callback import BaseDataFetcher
-from flash.core.data.data_module import DataModule
-from flash.core.data.io.input_transform import DefaultInputTransform
+from flash.core.data.input_transform import InputTransform
+from flash.core.data.io.input_base import Input
+from flash.core.data.new_data_module import DataModule
 from flash.core.utilities.stages import RunningStage
 
 
@@ -40,16 +41,11 @@ def test_base_data_fetcher(tmpdir):
 
         @classmethod
         def from_inputs(cls, train_data: Any, val_data: Any, test_data: Any, predict_data: Any) -> "CustomDataModule":
-
-            input_transform = DefaultInputTransform()
-
-            return cls.from_input(
-                "default",
-                train_data=train_data,
-                val_data=val_data,
-                test_data=test_data,
-                predict_data=predict_data,
-                input_transform=input_transform,
+            return cls(
+                Input(RunningStage.TRAINING, train_data, transform=InputTransform),
+                Input(RunningStage.VALIDATING, val_data, transform=InputTransform),
+                Input(RunningStage.TESTING, test_data, transform=InputTransform),
+                Input(RunningStage.PREDICTING, predict_data, transform=InputTransform),
                 batch_size=5,
             )
 
@@ -66,14 +62,3 @@ def test_base_data_fetcher(tmpdir):
     data_fetcher.check()
     data_fetcher.reset()
     assert data_fetcher.batches == {"train": {}, "test": {}, "val": {}, "predict": {}, "serve": {}}
-
-
-def test_data_loaders_num_workers_to_0(tmpdir):
-    """num_workers should be set to `0` internally for visualization and not for training."""
-
-    datamodule = DataModule(train_dataset=range(10), num_workers=3)
-    iterator = datamodule._reset_iterator(RunningStage.TRAINING)
-    assert isinstance(iterator, torch.utils.data.dataloader._SingleProcessDataLoaderIter)
-    iterator = iter(datamodule.train_dataloader())
-    assert isinstance(iterator, torch.utils.data.dataloader._MultiProcessingDataLoaderIter)
-    assert datamodule.num_workers == 3

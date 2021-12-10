@@ -39,15 +39,13 @@ __________________
     ~question_answering.model.QuestionAnsweringTask
     ~question_answering.data.QuestionAnsweringData
 
-    question_answering.data.QuestionAnsweringBackboneState
-    question_answering.data.QuestionAnsweringCSVInput
-    question_answering.data.QuestionAnsweringInput
-    question_answering.data.QuestionAnsweringDictionaryInput
-    question_answering.data.QuestionAnsweringFileInput
-    question_answering.data.QuestionAnsweringJSONInput
-    question_answering.data.QuestionAnsweringOutputTransform
-    question_answering.data.QuestionAnsweringInputTransform
-    question_answering.data.SQuADInput
+    question_answering.input.QuestionAnsweringInputBase
+    question_answering.input.QuestionAnsweringCSVInput
+    question_answering.input.QuestionAnsweringJSONInput
+    question_answering.input.QuestionAnsweringSQuADInput
+    question_answering.input.QuestionAnsweringDictionaryInput
+    question_answering.input_transform.QuestionAnsweringInputTransform
+    question_answering.output_transform.QuestionAnsweringOutputTransform
 
 Summarization
 _____________

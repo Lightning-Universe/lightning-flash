@@ -108,7 +108,7 @@ class InputTransform(Properties):
         self._collate_in_worker_from_transform: Optional[bool] = None
         self._transform = None
         self._transform = self._check_transforms(self._resolve_transforms(self.running_stage), self.running_stage)
-        self.callbacks = []
+
         # Hack
         Properties.__init__(self, data_pipeline_state=self.data_pipeline_state, running_stage=self.running_stage)
         self.set_state(InputTransformState(**transform_kwargs))
@@ -865,8 +865,10 @@ class InputTransform(Properties):
 
     def _get_current_transform(self, process_state: ProcessState):
         fn = self.get_state(process_state)
-        if fn is not None and fn.transform is not None:
-            return fn.transform
+        if fn is not None:
+            if fn.transform is not None:
+                return fn.transform
+            return self._identity
         return self.current_transform
 
     @partial(transform_context, current_fn="per_sample_transform_on_device")

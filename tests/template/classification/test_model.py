@@ -104,7 +104,7 @@ def test_predict_numpy():
     """Tests that we can generate predictions from a numpy array."""
     row = np.random.rand(1, DummyDataset.num_features)
     model = TemplateSKLearnClassifier(num_features=DummyDataset.num_features, num_classes=DummyDataset.num_classes)
-    datamodule = TemplateData.from_numpy(predict_data=row)
+    datamodule = TemplateData.from_numpy(predict_data=row, batch_size=1)
     trainer = Trainer()
     out = trainer.predict(model, datamodule=datamodule)
     assert isinstance(out[0][0], int)
@@ -115,7 +115,7 @@ def test_predict_sklearn():
     """Tests that we can generate predictions from a scikit-learn ``Bunch``."""
     bunch = datasets.load_iris()
     model = TemplateSKLearnClassifier(num_features=DummyDataset.num_features, num_classes=DummyDataset.num_classes)
-    datamodule = TemplateData.from_sklearn(predict_bunch=bunch)
+    datamodule = TemplateData.from_sklearn(predict_bunch=bunch, batch_size=1)
     trainer = Trainer()
     out = trainer.predict(model, datamodule=datamodule)
     assert isinstance(out[0][0], int)
