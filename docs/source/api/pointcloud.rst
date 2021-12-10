@@ -35,6 +35,5 @@ ________________
     ~detection.model.PointCloudObjectDetector
     ~detection.data.PointCloudObjectDetectorData
 
-    detection.data.PointCloudObjectDetectorInputTransform
-    detection.data.PointCloudObjectDetectorFoldersInput
-    detection.data.PointCloudObjectDetectorDatasetInput
+    detection.input.PointCloudObjectDetectorDatasetInput
+    detection.open3d_ml.input.PointCloudObjectDetectorFoldersInput

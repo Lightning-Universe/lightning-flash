@@ -24,6 +24,7 @@ download_data("https://pl-flash-data.s3.amazonaws.com/KITTI_tiny.zip", "data/")
 datamodule = PointCloudObjectDetectorData.from_folders(
     train_folder="data/KITTI_Tiny/Kitti/train",
     val_folder="data/KITTI_Tiny/Kitti/val",
+    batch_size=4,
 )
 
 # 2. Build the task
@@ -40,7 +41,8 @@ datamodule = PointCloudObjectDetectorData.from_files(
     predict_files=[
         "data/KITTI_Tiny/Kitti/predict/scans/000000.bin",
         "data/KITTI_Tiny/Kitti/predict/scans/000001.bin",
-    ]
+    ],
+    batch_size=4,
 )
 predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
