@@ -20,17 +20,10 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Sampler
 
 from flash.core.data.io.classification_input import ClassificationState
-from flash.core.data.io.input import DataKeys
-from flash.core.data.io.input_base import Input, IterableInput
+from flash.core.data.io.input import DataKeys, Input, IterableInput
 from flash.core.data.utilities.paths import list_valid_files
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
-from flash.core.utilities.imports import (
-    _FIFTYONE_AVAILABLE,
-    _KORNIA_AVAILABLE,
-    _PYTORCHVIDEO_AVAILABLE,
-    lazy_import,
-    requires,
-)
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, lazy_import
 
 SampleCollection = None
 if _FIFTYONE_AVAILABLE:
@@ -39,9 +32,6 @@ if _FIFTYONE_AVAILABLE:
         from fiftyone.core.collections import SampleCollection
 else:
     fol = None
-
-if _KORNIA_AVAILABLE:
-    import kornia.augmentation as K
 
 if _PYTORCHVIDEO_AVAILABLE:
     from pytorchvideo.data.clip_sampling import ClipSampler, make_clip_sampler
