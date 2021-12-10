@@ -14,10 +14,11 @@
 import pytest
 import torch
 
-from flash import Trainer
-from flash.core.data.data_pipeline import DataPipeline
+from flash import RunningStage, Trainer
+from flash.core.data.new_data_module import DataModule
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
-from flash.graph.classification.data import GraphClassificationInputTransform
+from flash.graph.classification.input import GraphClassificationDatasetInput
+from flash.graph.classification.input_transform import GraphClassificationInputTransform
 from flash.graph.classification.model import GraphClassifier
 from flash.graph.embedding.model import GraphEmbedder
 from tests.helpers.utils import _GRAPH_TESTING
@@ -38,17 +39,23 @@ def test_not_trainable(tmpdir):
     """Tests that the model gives an error when training, validating, or testing."""
     tudataset = datasets.TUDataset(root=tmpdir, name="KKI")
     model = GraphEmbedder(GraphClassifier(num_features=1, num_classes=1).backbone)
-    model.data_pipeline = DataPipeline(input_transform=GraphClassificationInputTransform())
-    dl = torch.utils.data.DataLoader(tudataset, batch_size=4)
+    datamodule = DataModule(
+        GraphClassificationDatasetInput(RunningStage.TRAINING, tudataset, transform=GraphClassificationInputTransform),
+        GraphClassificationDatasetInput(
+            RunningStage.VALIDATING, tudataset, transform=GraphClassificationInputTransform
+        ),
+        GraphClassificationDatasetInput(RunningStage.TESTING, tudataset, transform=GraphClassificationInputTransform),
+        batch_size=4,
+    )
     trainer = Trainer(default_root_dir=tmpdir, num_sanity_val_steps=0)
     with pytest.raises(NotImplementedError, match="Training a `GraphEmbedder` is not supported."):
-        trainer.fit(model, dl)
+        trainer.fit(model, datamodule=datamodule)
 
     with pytest.raises(NotImplementedError, match="Validating a `GraphEmbedder` is not supported."):
-        trainer.validate(model, dl)
+        trainer.validate(model, datamodule=datamodule)
 
     with pytest.raises(NotImplementedError, match="Testing a `GraphEmbedder` is not supported."):
-        trainer.test(model, dl)
+        trainer.test(model, datamodule=datamodule)
 
 
 @pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")
@@ -58,8 +65,12 @@ def test_predict_dataset(tmpdir):
     model = GraphEmbedder(
         GraphClassifier(num_features=tudataset.num_features, num_classes=tudataset.num_classes).backbone
     )
-    model.data_pipeline = DataPipeline(input_transform=GraphClassificationInputTransform())
-    predict_dl = torch.utils.data.DataLoader(tudataset, batch_size=4)
+    datamodule = DataModule(
+        predict_input=GraphClassificationDatasetInput(
+            RunningStage.PREDICTING, tudataset, transform=GraphClassificationInputTransform
+        ),
+        batch_size=4,
+    )
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    out = trainer.predict(model, predict_dl)
+    out = trainer.predict(model, datamodule=datamodule)
     assert isinstance(out[0][0], torch.Tensor)

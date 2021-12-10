@@ -16,8 +16,8 @@ from typing import Any, Callable, Dict, IO, Optional, Union
 import torch
 from torch import nn
 
+from flash.core.data.io.input import DataKeys
 from flash.core.model import Task
-from flash.graph.classification.data import GraphClassificationInputTransform
 from flash.graph.classification.model import GraphClassifier, POOLING_FUNCTIONS
 
 
@@ -33,7 +33,7 @@ class GraphEmbedder(Task):
     required_extras: str = "graph"
 
     def __init__(self, backbone: nn.Module, pooling_fn: Optional[Union[str, Callable]] = "mean"):
-        super().__init__(model=None, input_transform=GraphClassificationInputTransform())
+        super().__init__(model=None)
 
         # Don't save backbone or pooling_fn if it is not a string
         self.save_hyperparameters(ignore=["backbone"] if isinstance(pooling_fn, str) else ["backbone", "pooling_fn"])
@@ -57,7 +57,7 @@ class GraphEmbedder(Task):
         raise NotImplementedError("Testing a `GraphEmbedder` is not supported. Use a `GraphClassifier` instead.")
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
+        return super().predict_step(batch[DataKeys.INPUT], batch_idx, dataloader_idx=dataloader_idx)
 
     @classmethod
     def load_from_checkpoint(

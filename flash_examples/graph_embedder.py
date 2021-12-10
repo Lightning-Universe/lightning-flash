@@ -23,12 +23,15 @@ from torch_geometric.datasets import TUDataset  # noqa: E402
 
 # 1. Create the DataModule
 dataset = TUDataset(root="data", name="KKI")
+datamodule = GraphClassificationData.from_datasets(
+    predict_dataset=dataset[:3],
+    batch_size=4,
+)
 
 # 2. Load a previously trained GraphClassifier
 model = GraphEmbedder.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/0.6.0/graph_classification_model.pt")
 
 # 3. Generate embeddings for the first 3 graphs
 trainer = flash.Trainer(gpus=torch.cuda.device_count())
-datamodule = GraphClassificationData.from_datasets(predict_dataset=dataset[:3])
 predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)

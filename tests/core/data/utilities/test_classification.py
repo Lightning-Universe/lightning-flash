@@ -84,6 +84,7 @@ cases = [
         10000,
     ),
     # Array types
+    Case(torch.tensor([[0], [1]]), [0, 1], TargetMode.SINGLE_NUMERIC, None, 2),
     Case(torch.tensor([0, 1, 2]), [0, 1, 2], TargetMode.SINGLE_NUMERIC, None, 3),
     Case(np.array([0, 1, 2]), [0, 1, 2], TargetMode.SINGLE_NUMERIC, None, 3),
 ]
@@ -108,7 +109,7 @@ def test_speed(case):
     repeats = int(1e5 / len(case.target))  # Approx. a hundred thousand targets
 
     if torch.is_tensor(case.target):
-        targets = case.target.repeat(repeats)
+        targets = case.target.repeat(repeats, *(1 for _ in range(case.target.ndim - 1)))
     elif isinstance(case.target, np.ndarray):
         targets = np.repeat(case.target, repeats)
     else:

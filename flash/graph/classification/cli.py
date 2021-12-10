@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 from flash.core.utilities.flash_cli import FlashCLI
 from flash.graph import GraphClassificationData, GraphClassifier
 
@@ -21,6 +20,7 @@ __all__ = ["graph_classification"]
 def from_tu_dataset(
     name: str = "KKI",
     val_split: float = 0.1,
+    batch_size: int = 4,
     **data_module_kwargs,
 ) -> GraphClassificationData:
     """Downloads and loads the TU Dataset."""
@@ -36,6 +36,7 @@ def from_tu_dataset(
     return GraphClassificationData.from_datasets(
         train_dataset=dataset,
         val_split=val_split,
+        batch_size=batch_size,
         **data_module_kwargs,
     )
 

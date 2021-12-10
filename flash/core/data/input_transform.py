@@ -907,7 +907,7 @@ class InputTransform(Properties):
         # iterate over all transforms hook name
         for transform_name in InputTransformPlacement:
 
-            transforms = []
+            transforms = {}
             transform_name = transform_name.value
 
             # iterate over all prefixes
@@ -962,11 +962,12 @@ class InputTransform(Properties):
                 if method_name == resolved_apply_to_key_name:
                     fn = ApplyToKeys(key.value, fn)
 
-                if fn not in transforms:
-                    transforms.append(fn)
+                if method_name not in transforms:
+                    transforms[method_name] = fn
 
             # store the transforms.
             if transforms:
+                transforms = list(transforms.values())
                 transforms_out[transform_name] = Compose(transforms) if len(transforms) > 1 else transforms[0]
 
         return transforms_out
