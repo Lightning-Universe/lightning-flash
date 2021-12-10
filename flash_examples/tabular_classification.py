@@ -26,6 +26,7 @@ datamodule = TabularClassificationData.from_csv(
     target_fields="Survived",
     train_file="data/titanic/titanic.csv",
     val_split=0.1,
+    batch_size=8,
 )
 
 # 2. Build the task
@@ -39,6 +40,7 @@ trainer.fit(model, datamodule=datamodule)
 datamodule = TabularClassificationData.from_csv(
     predict_file="data/titanic/titanic.csv",
     parameters=datamodule.parameters,
+    batch_size=8,
 )
 predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
