@@ -36,7 +36,8 @@ def test_from_data_frame_time_series_data_set_single_call(patch_time_series_data
         ["series"],
         train_data_frame=train_data,
         val_data_frame=val_data,
-        additional_kwarg="test",
+        input_kwargs=dict(additional_kwarg="test"),
+        batch_size=4,
     )
 
     patch_time_series_data_set.assert_called_once_with(
@@ -64,11 +65,13 @@ def test_from_data_frame_time_series_data_set_multi_call(patch_time_series_data_
         ["series"],
         train_data_frame=train_data,
         additional_kwarg="test",
+        batch_size=4,
     )
 
     TabularForecastingData.from_data_frame(
         val_data_frame=val_data,
         parameters=train_datamodule.parameters,
+        batch_size=4,
     )
 
     patch_time_series_data_set.assert_called_once_with(
@@ -91,4 +94,5 @@ def test_from_data_frame_misconfiguration():
             ["series"],
             val_data_frame=MagicMock(),
             additional_kwarg="test",
+            batch_size=4,
         )
