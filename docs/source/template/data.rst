@@ -172,9 +172,9 @@ OutputTransform
 
 :class:`~flash.core.data.io.output_transform.OutputTransform` contains any transforms that need to be applied *after* the model.
 You may want to use it for: converting tokens back into text, applying an inverse normalization to an output image, resizing a generated image back to the size of the input, etc.
-As an example, here's the :class:`~text.seq2seq.core.data.Seq2SeqOutputTransform` which decodes tokenized model outputs:
+As an example, here's the :class:`~text.seq2seq.core.output_transform.Seq2SeqOutputTransform` which decodes tokenized model outputs:
 
-.. literalinclude:: ../../../flash/text/seq2seq/core/data.py
+.. literalinclude:: ../../../flash/text/seq2seq/core/output_transform.py
     :language: python
     :pyobject: Seq2SeqOutputTransform
 

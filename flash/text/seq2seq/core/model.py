@@ -30,7 +30,7 @@ from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.core.utilities.providers import _HUGGINGFACE
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.text.ort_callback import ORTCallback
-from flash.text.seq2seq.core.data import Seq2SeqOutputTransform
+from flash.text.seq2seq.core.output_transform import Seq2SeqOutputTransform
 
 if _TEXT_AVAILABLE:
     from transformers import AutoModelForSeq2SeqLM

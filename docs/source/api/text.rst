@@ -83,7 +83,7 @@ _______________
     seq2seq.core.input.Seq2SeqCSVInput
     seq2seq.core.input.Seq2SeqJSONInput
     seq2seq.core.input.Seq2SeqListInput
-    seq2seq.core.data.Seq2SeqOutputTransform
+    seq2seq.core.output_transform.Seq2SeqOutputTransform
 
 flash.text.input
 ________________
