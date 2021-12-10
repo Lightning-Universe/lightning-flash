@@ -22,7 +22,7 @@ __all__ = ["tabular_classification"]
 
 def from_titanic(
     val_split: float = 0.1,
-    batch_size: int = 1,
+    batch_size: int = 4,
     **data_module_kwargs,
 ) -> TabularClassificationData:
     """Downloads and loads the Titanic data set."""
