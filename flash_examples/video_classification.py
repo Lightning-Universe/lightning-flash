@@ -27,6 +27,7 @@ datamodule = VideoClassificationData.from_folders(
     clip_sampler="uniform",
     clip_duration=1,
     decode_audio=False,
+    batch_size=1,
 )
 
 # 2. Build the task
@@ -37,7 +38,7 @@ trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Make a prediction
-datamodule = VideoClassificationData.from_folders(predict_folder="data/kinetics/predict")
+datamodule = VideoClassificationData.from_folders(predict_folder="data/kinetics/predict", batch_size=1)
 predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
 
