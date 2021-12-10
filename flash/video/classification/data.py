@@ -20,7 +20,7 @@ from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE
 from flash.core.data.io.input import Input
 from flash.core.data.new_data_module import DataModule
-from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments
+from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioVideoClassificationInput
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, lazy_import, requires
 from flash.core.utilities.stages import RunningStage
 from flash.video.classification.input import (
@@ -209,7 +209,7 @@ class VideoClassificationData(DataModule):
         video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
         decode_audio: bool = False,
         decoder: str = "pyav",
-        input_cls: Type[Input] = VideoClassificationFiftyOneInput,
+        input_cls: Type[Input] = LabelStudioVideoClassificationInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
     ) -> "VideoClassificationData":
