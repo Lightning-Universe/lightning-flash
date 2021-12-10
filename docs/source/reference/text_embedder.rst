@@ -15,7 +15,7 @@ The  :class:`~flash.text.TextEmbedder` implementation is adopted from `https://g
 Example
 *******
 
-Let's look at an example of generating sentence embeddings. 
+Let's look at an example of generating sentence embeddings.
 
 We start by using few custom sentences as input.
 Next, we load a trained model from :class:`~flash.text.TextEmbedder`.
