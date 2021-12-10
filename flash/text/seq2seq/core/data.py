@@ -15,35 +15,19 @@ from typing import Any, Dict, List, Optional, Type, Union
 
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
-from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.new_data_module import DataModule
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.integrations.transformers.input_transform import TransformersInputTransform
-from flash.core.integrations.transformers.states import TransformersBackboneState
-from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
+from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 from flash.text.seq2seq.core.input import Seq2SeqCSVInput, Seq2SeqInputBase, Seq2SeqJSONInput, Seq2SeqListInput
+from flash.text.seq2seq.core.output_transform import Seq2SeqOutputTransform
 
 if _TEXT_AVAILABLE:
     from datasets import Dataset
 else:
     Dataset = object
-
-
-class Seq2SeqOutputTransform(OutputTransform):
-    def __init__(self):
-        super().__init__()
-
-        self._backbone = None
-        self._tokenizer = None
-
-    @requires("text")
-    def uncollate(self, generated_tokens: Any) -> Any:
-        tokenizer = self.get_state(TransformersBackboneState).tokenizer
-        pred_str = tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
-        pred_str = [str.strip(s) for s in pred_str]
-        return pred_str
 
 
 class Seq2SeqData(DataModule):
