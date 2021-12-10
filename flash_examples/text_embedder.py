@@ -22,7 +22,8 @@ datamodule = TextClassificationData.from_lists(
         "Turgid dialogue, feeble characterization - Harvey Keitel a judge?.",
         "The worst movie in the history of cinema.",
         "I come from Bulgaria where it 's almost impossible to have a tornado.",
-    ]
+    ],
+    batch_size=4,
 )
 
 # 2. Load a previously trained TextEmbedder
