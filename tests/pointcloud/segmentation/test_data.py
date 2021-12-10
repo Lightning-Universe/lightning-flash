@@ -34,6 +34,7 @@ def test_pointcloud_segmentation_data(tmpdir):
     datamodule = PointCloudSegmentationData.from_folders(
         train_folder=join(tmpdir, "SemanticKittiMicro", "train"),
         predict_folder=join(tmpdir, "SemanticKittiMicro", "predict"),
+        batch_size=4,
     )
 
     class MockModel(PointCloudSegmentation):

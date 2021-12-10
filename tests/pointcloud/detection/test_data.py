@@ -36,6 +36,7 @@ def test_pointcloud_object_detection_data(tmpdir):
 
     datamodule = PointCloudObjectDetectorData.from_folders(
         train_folder=join(tmpdir, "KITTI_Micro", "Kitti", "train"),
+        batch_size=4,
     )
 
     class MockModel(PointCloudObjectDetector):
@@ -53,7 +54,8 @@ def test_pointcloud_object_detection_data(tmpdir):
     trainer.fit(model, datamodule=datamodule)
 
     datamodule = PointCloudObjectDetectorData.from_files(
-        predict_files=[join(tmpdir, "KITTI_Micro", "Kitti", "predict", "scans", "000000.bin")]
+        predict_files=[join(tmpdir, "KITTI_Micro", "Kitti", "predict", "scans", "000000.bin")],
+        batch_size=4,
     )
 
     predictions = trainer.predict(model, datamodule=datamodule)[0]

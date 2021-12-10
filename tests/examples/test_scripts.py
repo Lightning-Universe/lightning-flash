@@ -115,17 +115,3 @@ root = Path(__file__).parent.parent.parent
 )
 def test_example(tmpdir, file):
     run_test(str(root / "flash_examples" / file))
-
-
-@mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
-@pytest.mark.parametrize(
-    "file",
-    [
-        pytest.param(
-            "pointcloud_detection.py",
-            marks=pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed"),
-        ),
-    ],
-)
-def test_example_2(tmpdir, file):
-    run_test(str(root / "flash_examples" / file))

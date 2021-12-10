@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 from flash.core.data.utils import download_data
 from flash.core.utilities.flash_cli import FlashCLI
 from flash.pointcloud import PointCloudObjectDetector, PointCloudObjectDetectorData
@@ -20,6 +19,7 @@ __all__ = ["pointcloud_detection"]
 
 
 def from_kitti(
+    batch_size: int = 4,
     **data_module_kwargs,
 ) -> PointCloudObjectDetectorData:
     """Downloads and loads the KITTI data set."""
@@ -27,6 +27,7 @@ def from_kitti(
     return PointCloudObjectDetectorData.from_folders(
         train_folder="data/KITTI_Tiny/Kitti/train",
         val_folder="data/KITTI_Tiny/Kitti/val",
+        batch_size=batch_size,
         **data_module_kwargs,
     )
 
