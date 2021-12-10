@@ -35,6 +35,7 @@ def from_biwi(
     val_split: float = 0.1,
     image_size: Tuple[int, int] = (128, 128),
     parser: Optional[Callable] = None,
+    batch_size: int = 1,
     **data_module_kwargs,
 ) -> KeypointDetectionData:
     """Downloads and loads the BIWI data set from icedata."""
@@ -52,7 +53,8 @@ def from_biwi(
         test_ann_file=test_ann_file,
         predict_folder=predict_folder,
         val_split=val_split,
-        image_size=image_size,
+        transform_kwargs=dict(image_size=image_size),
+        batch_size=batch_size,
         parser=parser,
         **data_module_kwargs,
     )
@@ -68,7 +70,6 @@ def keypoint_detection():
             "model.num_keypoints": 1,
             "trainer.max_epochs": 3,
         },
-        legacy=True,
     )
 
     cli.trainer.save_checkpoint("keypoint_detection_model.pt")

@@ -126,7 +126,6 @@ class FlashCLI(LightningCLI):
         default_arguments=None,
         finetune=True,
         datamodule_attributes=None,
-        legacy: bool = False,
         **kwargs: Any,
     ) -> None:
         """Flash's extension of the :class:`pytorch_lightning.utilities.cli.LightningCLI`
@@ -151,7 +150,6 @@ class FlashCLI(LightningCLI):
         self.additional_datamodule_builders = additional_datamodule_builders or []
         self.default_arguments = default_arguments or {}
         self.finetune = finetune
-        self.legacy = legacy
 
         model_class = make_args_optional(model_class, self.datamodule_attributes)
         self.local_datamodule_class = datamodule_class
@@ -195,14 +193,8 @@ class FlashCLI(LightningCLI):
             if not function.startswith("from"):
                 continue
             if (
-                (hasattr(self.local_datamodule_class, function) and self.legacy)
-                or (
-                    hasattr(DataModule, function)
-                    and is_overridden(function, self.local_datamodule_class, DataModule)
-                    and not self.legacy
-                )
-                or (not hasattr(DataModule, function) and not self.legacy)
-            ):
+                hasattr(DataModule, function) and is_overridden(function, self.local_datamodule_class, DataModule)
+            ) or not hasattr(DataModule, function):
                 if getattr(self.local_datamodule_class, function, None) is not None:
                     self.add_subcommand_from_function(subcommands, getattr(self.local_datamodule_class, function))
 
@@ -216,16 +208,7 @@ class FlashCLI(LightningCLI):
 
     def add_subcommand_from_function(self, subcommands, function, function_name=None):
         subcommand = ArgumentParser()
-        if self.legacy:
-            datamodule_function = class_from_function(drop_kwargs(function), return_type=self.local_datamodule_class)
-            subcommand.add_class_arguments(datamodule_function, fail_untyped=False)
-            input_transform_function = class_from_function(drop_kwargs(self.local_datamodule_class.input_transform_cls))
-            subcommand.add_class_arguments(
-                input_transform_function,
-                fail_untyped=False,
-                skip=get_overlapping_args(datamodule_function, input_transform_function),
-            )
-        elif get_kwarg_name(function) == "data_module_kwargs":
+        if get_kwarg_name(function) == "data_module_kwargs":
             datamodule_function = class_from_function(function, return_type=self.local_datamodule_class)
             subcommand.add_class_arguments(
                 datamodule_function,
