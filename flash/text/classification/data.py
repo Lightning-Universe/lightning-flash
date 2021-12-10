@@ -20,7 +20,7 @@ from flash.core.data.io.input_base import Input
 from flash.core.data.new_data_module import DataModule
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioTextClassificationInput
-from flash.core.integrations.transformers.transforms import TransformersInputTransform
+from flash.core.integrations.transformers.input_transform import TransformersInputTransform
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 from flash.text.classification.input import (

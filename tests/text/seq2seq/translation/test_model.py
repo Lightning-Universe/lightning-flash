@@ -19,7 +19,7 @@ import pytest
 import torch
 
 from flash import DataKeys, RunningStage, Trainer
-from flash.core.integrations.transformers.transforms import TransformersInputTransform
+from flash.core.integrations.transformers.input_transform import TransformersInputTransform
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import TranslationTask
 from flash.text.input import TextDeserializer
