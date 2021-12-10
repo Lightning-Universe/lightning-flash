@@ -8,7 +8,7 @@ Text Embedder
 The Task
 ********
 This task consists of creating a Sentence Embedding. That is, a vector of sentence representations which can be used for a downstream task.
-The  :class:`~flash.text.TextEmbedder` implementation is adopted from `https://github.com/UKPLab/sentence-transformers/blob/master/sentence_transformers/models/Transformer.py`
+The  :class:`~flash.text.TextEmbedder` implementation is adapted from `https://github.com/UKPLab/sentence-transformers/blob/master/sentence_transformers/models/Transformer.py`
 ------
 
 *******
