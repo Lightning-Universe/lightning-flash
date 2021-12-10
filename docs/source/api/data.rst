@@ -17,18 +17,6 @@ _________________________
 
     ~flash.core.data.io.output.Output
 
-flash.core.data.auto_dataset
-____________________________
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-    :template: classtemplate.rst
-
-    ~flash.core.data.auto_dataset.AutoDataset
-    ~flash.core.data.auto_dataset.BaseAutoDataset
-    ~flash.core.data.auto_dataset.IterableAutoDataset
-
 flash.core.data.base_viz
 ________________________
 

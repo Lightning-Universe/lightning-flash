@@ -18,8 +18,7 @@ from torch.utils.data import DataLoader, Sampler
 
 import flash
 from flash.core.adapter import Adapter
-from flash.core.data.auto_dataset import BaseAutoDataset
-from flash.core.data.io.input import DataKeys
+from flash.core.data.io.input import DataKeys, InputBase
 from flash.core.integrations.icevision.transforms import from_icevision_predictions, to_icevision_record
 from flash.core.model import Task
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
@@ -93,7 +92,7 @@ class IceVisionAdapter(Adapter):
 
     def process_train_dataset(
         self,
-        dataset: BaseAutoDataset,
+        dataset: InputBase,
         trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
@@ -117,7 +116,7 @@ class IceVisionAdapter(Adapter):
 
     def process_val_dataset(
         self,
-        dataset: BaseAutoDataset,
+        dataset: InputBase,
         trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
@@ -141,7 +140,7 @@ class IceVisionAdapter(Adapter):
 
     def process_test_dataset(
         self,
-        dataset: BaseAutoDataset,
+        dataset: InputBase,
         trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
@@ -165,7 +164,7 @@ class IceVisionAdapter(Adapter):
 
     def process_predict_dataset(
         self,
-        dataset: BaseAutoDataset,
+        dataset: InputBase,
         batch_size: int = 1,
         num_workers: int = 0,
         pin_memory: bool = False,

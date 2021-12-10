@@ -23,12 +23,10 @@ from pytorch_lightning.utilities.model_helpers import is_overridden
 from torch.utils.data import DataLoader, IterableDataset
 
 import flash
-from flash.core.data.auto_dataset import IterableAutoDataset
 from flash.core.data.batch import _DeserializeProcessor, _DeserializeProcessorV2
 from flash.core.data.input_transform import _create_collate_input_transform_processors
 from flash.core.data.input_transform import InputTransform as NewInputTransform
-from flash.core.data.io.input import Input
-from flash.core.data.io.input_base import InputBase
+from flash.core.data.io.input import Input, InputBase, IterableInput
 from flash.core.data.io.input_transform import _InputTransformProcessor, DefaultInputTransform, InputTransform
 from flash.core.data.io.output import _OutputProcessor, Output
 from flash.core.data.io.output_transform import _OutputTransformProcessor, OutputTransform
@@ -557,7 +555,7 @@ class DataPipeline:
                     if isinstance(dl_args["collate_fn"], _InputTransformProcessor):
                         dl_args["collate_fn"] = dl_args["collate_fn"]._original_collate_fn
 
-                        if isinstance(dl_args["dataset"], (IterableAutoDataset, IterableDataset)):
+                        if isinstance(dl_args["dataset"], (IterableInput, IterableDataset)):
                             del dl_args["sampler"]
 
                         del dl_args["batch_sampler"]
