@@ -21,7 +21,7 @@ from tests.helpers.utils import _TABULAR_TESTING
 
 
 @pytest.mark.skipif(not _TABULAR_TESTING, reason="Tabular libraries aren't installed.")
-@patch("flash.tabular.forecasting.data.TimeSeriesDataSet")
+@patch("flash.tabular.forecasting.input.TimeSeriesDataSet")
 def test_from_data_frame_time_series_data_set_single_call(patch_time_series_data_set):
     """Tests that ``TabularForecastingData.from_data_frame`` calls ``TimeSeriesDataSet`` with the expected
     parameters when called once with data for all stages."""
@@ -36,7 +36,7 @@ def test_from_data_frame_time_series_data_set_single_call(patch_time_series_data
         ["series"],
         train_data_frame=train_data,
         val_data_frame=val_data,
-        input_kwargs=dict(additional_kwarg="test"),
+        additional_kwarg="test",
         batch_size=4,
     )
 
@@ -50,7 +50,7 @@ def test_from_data_frame_time_series_data_set_single_call(patch_time_series_data
 
 
 @pytest.mark.skipif(not _TABULAR_TESTING, reason="Tabular libraries aren't installed.")
-@patch("flash.tabular.forecasting.data.TimeSeriesDataSet")
+@patch("flash.tabular.forecasting.input.TimeSeriesDataSet")
 def test_from_data_frame_time_series_data_set_multi_call(patch_time_series_data_set):
     """Tests that ``TabularForecastingData.from_data_frame`` calls ``TimeSeriesDataSet`` with the expected
     parameters when called separately for each stage."""

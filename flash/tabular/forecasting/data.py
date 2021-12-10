@@ -13,9 +13,13 @@
 # limitations under the License.
 from typing import Any, Dict, List, Optional, Type, Union
 
+from torch.utils.data.sampler import Sampler
+
+from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
 from flash.core.data.io.input_base import Input
+from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.new_data_module import DataModule
 from flash.core.utilities.imports import _PANDAS_AVAILABLE
 from flash.core.utilities.stages import RunningStage
@@ -54,9 +58,16 @@ class TabularForecastingData(DataModule):
         test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         input_cls: Type[Input] = TabularForecastingDataFrameInput,
-        input_kwargs: Optional[Dict] = None,
         transform_kwargs: Optional[Dict] = None,
-        **data_module_kwargs: Any,
+        data_fetcher: Optional[BaseDataFetcher] = None,
+        val_split: Optional[float] = None,
+        batch_size: Optional[int] = None,
+        num_workers: int = 0,
+        sampler: Optional[Type[Sampler]] = None,
+        pin_memory: bool = True,
+        persistent_workers: bool = True,
+        output_transform: Optional[OutputTransform] = None,
+        **input_kwargs: Any,
     ) -> "TabularForecastingData":
         """Creates a :class:`~flash.tabular.forecasting.data.TabularForecastingData` object from the given data
         frames.
@@ -77,7 +88,7 @@ class TabularForecastingData(DataModule):
             group_ids=group_ids,
             target=target,
             parameters=parameters,
-            **(input_kwargs or {}),
+            **input_kwargs,
         )
 
         train_input = input_cls(RunningStage.TRAINING, train_data_frame, transform=train_transform, **ds_kw)
@@ -89,5 +100,12 @@ class TabularForecastingData(DataModule):
             input_cls(RunningStage.VALIDATING, val_data_frame, transform=val_transform, **ds_kw),
             input_cls(RunningStage.TESTING, test_data_frame, transform=test_transform, **ds_kw),
             input_cls(RunningStage.PREDICTING, predict_data_frame, transform=predict_transform, **ds_kw),
-            **data_module_kwargs,
+            data_fetcher=data_fetcher,
+            val_split=val_split,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            sampler=sampler,
+            pin_memory=pin_memory,
+            persistent_workers=persistent_workers,
+            output_transform=output_transform,
         )
