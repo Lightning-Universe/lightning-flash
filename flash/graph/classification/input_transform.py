@@ -14,8 +14,6 @@
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List
 
-from torch import nn
-
 from flash.core.data.input_transform import InputTransform
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
@@ -28,7 +26,7 @@ else:
 
 
 @dataclass
-class PyGTransformAdapter(nn.Module):
+class PyGTransformAdapter:
     """Adapter to enable using ``PyG`` transforms within flash.
 
     Args:
@@ -37,7 +35,7 @@ class PyGTransformAdapter(nn.Module):
 
     transform: Callable[[Data], Data]
 
-    def forward(self, x):
+    def __call__(self, x):
         data = x[DataKeys.INPUT]
         data.y = x[DataKeys.TARGET]
         data = self.transform(data)
