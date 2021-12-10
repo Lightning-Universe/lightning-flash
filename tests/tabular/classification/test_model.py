@@ -24,6 +24,7 @@ from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _TABULAR_AVAILABLE
 from flash.tabular.classification.data import TabularClassificationData
 from flash.tabular.classification.model import TabularClassifier
+from flash.tabular.input import TabularDeserializer
 from tests.helpers.utils import _SERVE_TESTING, _TABULAR_TESTING
 
 # ======== Mock functions ========
@@ -105,11 +106,13 @@ def test_serve():
         "num_col",
         "target",
         train_data_frame=pd.DataFrame.from_dict(train_data),
+        batch_size=1,
     )
     model = TabularClassifier.from_data(datamodule)
     # TODO: Currently only servable once a input_transform has been attached
     model._input_transform = datamodule.input_transform
     model._input_transform._state = datamodule.train_dataset._state
+    model._deserializer = TabularDeserializer()
     model.eval()
     model.serve()
 
