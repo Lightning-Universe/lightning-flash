@@ -21,8 +21,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.classification_input import ClassificationState
-from flash.core.data.io.input import DataKeys, InputFormat
-from flash.core.data.io.input_base import Input
+from flash.core.data.io.input import DataKeys, Input, InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.process import Deserializer

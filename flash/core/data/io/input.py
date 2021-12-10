@@ -161,8 +161,8 @@ class _IterableInputMeta(_InputMeta, type(IterableDataset)):
 
 
 class InputBase(Properties, metaclass=_InputMeta):
-    """``InputBase`` is the base class for the :class:`~flash.core.data.io.input_base.Input` and
-    :class:`~flash.core.data.io.input_base.IterableInput` dataset implementations in Flash. These datasets are
+    """``InputBase`` is the base class for the :class:`~flash.core.data.io.input.Input` and
+    :class:`~flash.core.data.io.input.IterableInput` dataset implementations in Flash. These datasets are
     constructed via the ``load_data`` and ``load_sample`` hooks, which allow a single dataset object to include custom
     loading logic according to the running stage (e.g. train, validate, test, predict).
 

@@ -17,8 +17,7 @@ from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING, Union
 import torch
 from pytorch_lightning.utilities import rank_zero_warn
 
-from flash.core.data.io.input import DataKeys, ImageLabelsMap
-from flash.core.data.io.input_base import Input
+from flash.core.data.io.input import DataKeys, ImageLabelsMap, Input
 from flash.core.data.utilities.paths import filter_valid_files, PATH_TYPE
 from flash.core.data.utilities.samples import to_samples
 from flash.core.data.utils import image_default_loader

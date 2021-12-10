@@ -22,8 +22,7 @@ from torch.utils.data import Sampler
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.classification_input import ClassificationState
-from flash.core.data.io.input import DataKeys, InputFormat, IterableInput
-from flash.core.data.io.input_base import Input
+from flash.core.data.io.input import DataKeys, Input, InputFormat, IterableInput
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.utilities.paths import list_valid_files
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities

@@ -28,8 +28,7 @@ from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.input_transform import InputTransform
-from flash.core.data.io.input import DataKeys
-from flash.core.data.io.input_base import Input
+from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.io.input_transform import DefaultInputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.registry import FlashRegistry

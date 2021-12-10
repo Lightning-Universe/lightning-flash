@@ -18,7 +18,7 @@ from torch import tensor
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.input_transform import InputTransform
-from flash.core.data.io.input_base import Input
+from flash.core.data.io.input import Input
 from flash.core.data.new_data_module import DataModule
 from flash.core.utilities.stages import RunningStage
 
