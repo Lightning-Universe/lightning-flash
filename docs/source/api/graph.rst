@@ -21,7 +21,7 @@ ______________
     ~classification.data.GraphClassificationData
 
     classification.input.GraphClassificationDatasetInput
-    classification.data.GraphClassificationInputTransform
+    classification.input_transform.GraphClassificationInputTransform
 
 Embedding
 _________
