@@ -15,7 +15,6 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, List
 
 from torch import nn
-from torch_geometric.transforms import NormalizeFeatures
 
 from flash.core.data.input_transform import InputTransform
 from flash.core.data.io.input import DataKeys
@@ -23,6 +22,7 @@ from flash.core.utilities.imports import _GRAPH_AVAILABLE
 
 if _GRAPH_AVAILABLE:
     from torch_geometric.data import Batch, Data
+    from torch_geometric.transforms import NormalizeFeatures
 else:
     Data = object
 
