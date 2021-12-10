@@ -12,8 +12,7 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Sampler
 
 import flash
-from flash.core.data.io.input import DataKeys
-from flash.core.data.io.input_base import Input, IterableInput
+from flash.core.data.io.input import DataKeys, Input, IterableInput
 from flash.core.data.properties import ProcessState, Properties
 from flash.core.data.utils import image_default_loader
 from flash.core.integrations.transformers.states import TransformersBackboneState

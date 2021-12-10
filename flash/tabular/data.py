@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Optional, Type, Union
 
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
-from flash.core.data.io.input_base import Input
+from flash.core.data.io.input import Input
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.new_data_module import DataModule
 from flash.core.utilities.imports import _PANDAS_AVAILABLE

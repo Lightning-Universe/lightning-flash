@@ -14,8 +14,7 @@
 from typing import Any, Dict, List, Optional, Type
 
 from flash.core.data.data_pipeline import DataPipelineState
-from flash.core.data.io.input import DataKeys
-from flash.core.data.io.input_base import Input
+from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.new_data_module import DataModule
 from flash.core.integrations.icevision.data import IceVisionInput
@@ -110,7 +109,7 @@ class InstanceSegmentationData(DataModule):
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            input_cls: The :class:`~flash.core.data.io.input_base.Input` used to create the dataset.
+            input_cls: The :class:`~flash.core.data.io.input.Input` used to create the dataset.
             transform_kwargs: Keyword arguments provided to the transform on instantiation.
             data_module_kwargs: Keyword arguments provided to the DataModule on instantiation.
         """
@@ -169,7 +168,7 @@ class InstanceSegmentationData(DataModule):
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            input_cls: The :class:`~flash.core.data.io.input_base.Input` used to create the dataset.
+            input_cls: The :class:`~flash.core.data.io.input.Input` used to create the dataset.
             transform_kwargs: Keyword arguments provided to the transform on instantiation.
             data_module_kwargs: Keyword arguments provided to the DataModule on instantiation.
         """
@@ -207,7 +206,7 @@ class InstanceSegmentationData(DataModule):
         Args:
             predict_folder: The folder containing the predict data.
             predict_transform: The dictionary of transforms to use during predicting which maps.
-            input_cls: The :class:`~flash.core.data.io.input_base.Input` used to create the dataset.
+            input_cls: The :class:`~flash.core.data.io.input.Input` used to create the dataset.
             transform_kwargs: Keyword arguments provided to the transform on instantiation.
             data_module_kwargs: The keywords arguments for creating the datamodule.
 
@@ -237,7 +236,7 @@ class InstanceSegmentationData(DataModule):
         Args:
             predict_files: The list of files containing the predict data.
             predict_transform: The dictionary of transforms to use during predicting which maps.
-            input_cls: The :class:`~flash.core.data.io.input_base.Input` used to create the dataset.
+            input_cls: The :class:`~flash.core.data.io.input.Input` used to create the dataset.
             transform_kwargs: Keyword arguments provided to the transform on instantiation.
             data_module_kwargs: The keywords arguments for creating the datamodule.
 

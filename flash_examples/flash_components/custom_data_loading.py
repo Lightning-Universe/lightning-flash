@@ -25,8 +25,7 @@ from pytorch_lightning import seed_everything
 from flash import _PACKAGE_ROOT, RunningStage
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
-from flash.core.data.io.input import DataKeys
-from flash.core.data.io.input_base import Input
+from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.new_data_module import DataModule
 from flash.core.data.utils import download_data
 

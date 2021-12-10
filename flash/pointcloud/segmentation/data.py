@@ -16,8 +16,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 from torch.utils.data import Dataset
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import DataKeys, InputFormat
-from flash.core.data.io.input_base import Input
+from flash.core.data.io.input import DataKeys, Input, InputFormat
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.process import Deserializer
 from flash.core.utilities.imports import requires
