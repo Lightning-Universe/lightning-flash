@@ -295,5 +295,6 @@ def test_datamodule_labelstudio_video():
         clip_sampler="uniform",
         clip_duration=1,
         decode_audio=False,
+        batch_size=1,
     )
     assert datamodule
