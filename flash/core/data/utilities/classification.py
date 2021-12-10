@@ -75,11 +75,12 @@ class TargetMode(Enum):
         elif _is_list_like(target):
             if isinstance(target[0], str):
                 return TargetMode.MULTI_TOKEN
-            elif all(t == 0 or t == 1 for t in target):
-                if sum(target) == 1:
-                    return TargetMode.SINGLE_BINARY
-                return TargetMode.MULTI_BINARY
-            return TargetMode.MULTI_NUMERIC
+            elif len(target) > 1:
+                if all(t == 0 or t == 1 for t in target):
+                    if sum(target) == 1:
+                        return TargetMode.SINGLE_BINARY
+                    return TargetMode.MULTI_BINARY
+                return TargetMode.MULTI_NUMERIC
         return TargetMode.SINGLE_NUMERIC
 
     @property
@@ -116,6 +117,7 @@ _RESOLUTION_MAPPING = {
     TargetMode.MULTI_BINARY: [TargetMode.MULTI_NUMERIC],
     TargetMode.SINGLE_BINARY: [TargetMode.MULTI_BINARY, TargetMode.MULTI_NUMERIC],
     TargetMode.SINGLE_TOKEN: [TargetMode.MUTLI_COMMA_DELIMITED],
+    TargetMode.SINGLE_NUMERIC: [TargetMode.MULTI_NUMERIC],
 }
 
 
@@ -162,6 +164,14 @@ class TargetFormatter:
 
     def format(self, target: Any) -> Any:
         return _as_list(target)
+
+
+class SingleNumericTargetFormatter(TargetFormatter):
+    def format(self, target: Any) -> Any:
+        result = super().format(target)
+        if _is_list_like(result):
+            result = result[0]
+        return result
 
 
 class SingleLabelTargetFormatter(TargetFormatter):
@@ -223,8 +233,10 @@ def get_target_formatter(
     Returns:
         The target formatter to use when formatting targets.
     """
-    if target_mode is TargetMode.SINGLE_NUMERIC or target_mode is TargetMode.MULTI_BINARY:
+    if target_mode is TargetMode.MULTI_BINARY:
         return TargetFormatter()
+    elif target_mode is TargetMode.SINGLE_NUMERIC:
+        return SingleNumericTargetFormatter()
     elif target_mode is TargetMode.SINGLE_BINARY:
         return OneHotTargetFormatter()
     elif target_mode is TargetMode.MULTI_NUMERIC:
@@ -261,7 +273,7 @@ def get_target_details(targets: List[Any], target_mode: TargetMode) -> Tuple[Opt
                 values.extend(target)
         else:
             values = targets
-        num_classes = max(values)
+        num_classes = _as_list(max(values))
         if _is_list_like(num_classes):
             num_classes = num_classes[0]
         num_classes = num_classes + 1

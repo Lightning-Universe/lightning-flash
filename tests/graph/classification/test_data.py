@@ -11,11 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import functools
-
 import pytest
 
 from flash import DataKeys
+from flash.core.data.input_transform import Compose
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
 from flash.graph.classification.data import GraphClassificationData
 from flash.graph.classification.input_transform import GraphClassificationInputTransform, PyGTransformAdapter
@@ -47,10 +46,6 @@ class TestGraphClassificationData:
             val_dataset=val_dataset,
             test_dataset=test_dataset,
             predict_dataset=predict_dataset,
-            train_transform=None,
-            val_transform=None,
-            test_transform=None,
-            predict_transform=None,
             batch_size=2,
         )
         assert dm is not None
@@ -81,13 +76,9 @@ class TestGraphClassificationData:
         predict_dataset = tudataset
 
         class TestInputTransform(GraphClassificationInputTransform):
-            @staticmethod
-            def _compose(*functions):
-                return functools.reduce(lambda f, g: lambda x: f(g(x)), functions, lambda x: x)
-
             def per_sample_transform(self):
-                return self._compose(
-                    super().per_sample_transform(), PyGTransformAdapter(OneHotDegree(tudataset.num_features - 1))
+                return Compose(
+                    [super().per_sample_transform(), PyGTransformAdapter(OneHotDegree(tudataset.num_features - 1))]
                 )
 
         # instantiate the data module
