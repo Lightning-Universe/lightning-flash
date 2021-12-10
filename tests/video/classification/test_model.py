@@ -132,7 +132,7 @@ def test_video_classifier_finetune_from_folders(tmpdir):
 
     with mock_encoded_video_dataset_file() as (
         mock_csv,
-        label_videos,
+        _,
         total_duration,
     ):
 
@@ -144,6 +144,7 @@ def test_video_classifier_finetune_from_folders(tmpdir):
             clip_duration=half_duration,
             video_sampler=SequentialSampler,
             decode_audio=False,
+            batch_size=1,
         )
 
         for sample in datamodule.train_dataset.data:
@@ -152,44 +153,12 @@ def test_video_classifier_finetune_from_folders(tmpdir):
 
         assert len(VideoClassifier.available_backbones()) > 5
 
-        train_transform = {
-            "per_sample_transform": Compose(
-                [
-                    ApplyTransformToKey(
-                        key="video",
-                        transform=Compose(
-                            [
-                                UniformTemporalSubsample(8),
-                                RandomShortSideScale(min_size=256, max_size=320),
-                                RandomCrop(244),
-                                RandomHorizontalFlip(p=0.5),
-                            ]
-                        ),
-                    ),
-                ]
-            ),
-            "per_batch_transform_on_device": Compose(
-                [
-                    ApplyTransformToKey(
-                        key="video",
-                        transform=K.VideoSequential(
-                            K.Normalize(torch.tensor([0.45, 0.45, 0.45]), torch.tensor([0.225, 0.225, 0.225])),
-                            K.augmentation.ColorJitter(0.1, 0.1, 0.1, 0.1, p=1.0),
-                            data_format="BCTHW",
-                            same_on_frame=False,
-                        ),
-                    ),
-                ]
-            ),
-        }
-
         datamodule = VideoClassificationData.from_folders(
             train_folder=mock_csv,
             clip_sampler="uniform",
             clip_duration=half_duration,
             video_sampler=SequentialSampler,
             decode_audio=False,
-            train_transform=train_transform,
         )
 
         model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50")
@@ -204,7 +173,7 @@ def test_video_classifier_finetune_from_files(tmpdir):
 
     with mock_encoded_video_dataset_file() as (
         mock_csv,
-        label_videos,
+        _,
         total_duration,
     ):
         label_names = ["label_1", "label_2", "label_3", "label_4"]
@@ -230,6 +199,7 @@ def test_video_classifier_finetune_from_files(tmpdir):
             clip_duration=half_duration,
             video_sampler=SequentialSampler,
             decode_audio=False,
+            batch_size=1,
         )
 
         for sample in datamodule.train_dataset.data:
@@ -238,37 +208,6 @@ def test_video_classifier_finetune_from_files(tmpdir):
 
         assert len(VideoClassifier.available_backbones()) > 5
 
-        train_transform = {
-            "per_sample_transform": Compose(
-                [
-                    ApplyTransformToKey(
-                        key="video",
-                        transform=Compose(
-                            [
-                                UniformTemporalSubsample(8),
-                                RandomShortSideScale(min_size=256, max_size=320),
-                                RandomCrop(244),
-                                RandomHorizontalFlip(p=0.5),
-                            ]
-                        ),
-                    ),
-                ]
-            ),
-            "per_batch_transform_on_device": Compose(
-                [
-                    ApplyTransformToKey(
-                        key="video",
-                        transform=K.VideoSequential(
-                            K.Normalize(torch.tensor([0.45, 0.45, 0.45]), torch.tensor([0.225, 0.225, 0.225])),
-                            K.augmentation.ColorJitter(0.1, 0.1, 0.1, 0.1, p=1.0),
-                            data_format="BCTHW",
-                            same_on_frame=False,
-                        ),
-                    ),
-                ]
-            ),
-        }
-
         datamodule = VideoClassificationData.from_files(
             train_files=files,
             train_targets=labels,
@@ -276,7 +215,7 @@ def test_video_classifier_finetune_from_files(tmpdir):
             clip_duration=half_duration,
             video_sampler=SequentialSampler,
             decode_audio=False,
-            train_transform=train_transform,
+            batch_size=1,
         )
 
         model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50")

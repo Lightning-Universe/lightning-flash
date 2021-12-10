@@ -11,24 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Optional, Sequence, Type, TYPE_CHECKING, Union
+from typing import Any, Dict, Optional, Sequence, Type, TYPE_CHECKING, Union
 
 import torch
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Sampler
 
-from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
-from flash.core.data.io.input import InputFormat
-from flash.core.data.io.input_transform import InputTransform
-from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioVideoClassificationInput
-from flash.core.utilities.imports import (
-    _FIFTYONE_AVAILABLE,
-    _KORNIA_AVAILABLE,
-    _PYTORCHVIDEO_AVAILABLE,
-    lazy_import,
-    requires,
-)
+from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE
+from flash.core.data.io.input_base import Input
+from flash.core.data.new_data_module import DataModule
+from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, lazy_import, requires
 from flash.core.utilities.stages import RunningStage
 from flash.video.classification.input import (
     VideoClassificationFiftyOneInput,
@@ -36,6 +29,7 @@ from flash.video.classification.input import (
     VideoClassificationFoldersInput,
     VideoClassificationPathsPredictInput,
 )
+from flash.video.classification.input_transform import VideoClassificationInputTransform
 
 SampleCollection = None
 if _FIFTYONE_AVAILABLE:
@@ -45,117 +39,10 @@ if _FIFTYONE_AVAILABLE:
 else:
     fol = None
 
-if _KORNIA_AVAILABLE:
-    import kornia.augmentation as K
-
 if _PYTORCHVIDEO_AVAILABLE:
-    from pytorchvideo.data.clip_sampling import ClipSampler, make_clip_sampler
-    from pytorchvideo.transforms import ApplyTransformToKey, UniformTemporalSubsample
-    from torchvision.transforms import CenterCrop, Compose, RandomCrop, RandomHorizontalFlip
+    from pytorchvideo.data.clip_sampling import ClipSampler
 else:
-    ClipSampler, LabeledVideoDataset, EncodedVideo, ApplyTransformToKey = None, None, None, None
-
-_PYTORCHVIDEO_DATA = Dict[str, Union[str, torch.Tensor, int, float, List]]
-
-Label = Union[int, List[int]]
-
-
-class VideoClassificationInputTransform(InputTransform):
-    def __init__(
-        self,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-        clip_sampler: Union[str, "ClipSampler"] = "random",
-        clip_duration: float = 2,
-        clip_sampler_kwargs: Dict[str, Any] = None,
-        video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
-        decode_audio: bool = False,
-        decoder: str = "pyav",
-        **_kwargs: Any,
-    ):
-        self.clip_sampler = clip_sampler
-        self.clip_duration = clip_duration
-        self.clip_sampler_kwargs = clip_sampler_kwargs
-        self.video_sampler = video_sampler
-        self.decode_audio = decode_audio
-        self.decoder = decoder
-
-        if not _PYTORCHVIDEO_AVAILABLE:
-            raise ModuleNotFoundError("Please, run `pip install pytorchvideo`.")
-
-        if not clip_sampler_kwargs:
-            clip_sampler_kwargs = {}
-
-        if not clip_sampler:
-            raise MisconfigurationException(
-                "clip_sampler should be provided as a string or ``pytorchvideo.data.clip_sampling.ClipSampler``"
-            )
-
-        clip_sampler = make_clip_sampler(clip_sampler, clip_duration, **clip_sampler_kwargs)
-
-        super().__init__(
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
-            inputs={
-                InputFormat.FILES: VideoClassificationPathsPredictInput,
-                InputFormat.FOLDERS: VideoClassificationPathsPredictInput,
-                InputFormat.FIFTYONE: VideoClassificationFiftyOneInput,
-            },
-            default_input=InputFormat.FILES,
-        )
-
-    def get_state_dict(self) -> Dict[str, Any]:
-        return {
-            **self.transforms,
-            "clip_sampler": self.clip_sampler,
-            "clip_duration": self.clip_duration,
-            "clip_sampler_kwargs": self.clip_sampler_kwargs,
-            "video_sampler": self.video_sampler,
-            "decode_audio": self.decode_audio,
-            "decoder": self.decoder,
-        }
-
-    @classmethod
-    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool) -> "VideoClassificationInputTransform":
-        return cls(**state_dict)
-
-    def default_transforms(self) -> Dict[str, Callable]:
-        if self.training:
-            per_sample_transform = [
-                RandomCrop(244, pad_if_needed=True),
-                RandomHorizontalFlip(p=0.5),
-            ]
-        else:
-            per_sample_transform = [
-                CenterCrop(244),
-            ]
-
-        return {
-            "per_sample_transform": Compose(
-                [
-                    ApplyTransformToKey(
-                        key="video",
-                        transform=Compose([UniformTemporalSubsample(8)] + per_sample_transform),
-                    ),
-                ]
-            ),
-            "per_batch_transform_on_device": Compose(
-                [
-                    ApplyTransformToKey(
-                        key="video",
-                        transform=K.VideoSequential(
-                            K.Normalize(torch.tensor([0.45, 0.45, 0.45]), torch.tensor([0.225, 0.225, 0.225])),
-                            data_format="BCTHW",
-                            same_on_frame=False,
-                        ),
-                    ),
-                ]
-            ),
-        }
+    ClipSampler = None
 
 
 class VideoClassificationData(DataModule):
@@ -173,38 +60,39 @@ class VideoClassificationData(DataModule):
         test_files: Optional[Sequence[str]] = None,
         test_targets: Optional[Sequence[Any]] = None,
         predict_files: Optional[Sequence[str]] = None,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
+        train_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
         clip_sampler: Union[str, "ClipSampler"] = "random",
         clip_duration: float = 2,
         clip_sampler_kwargs: Dict[str, Any] = None,
         video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
         decode_audio: bool = False,
         decoder: str = "pyav",
+        input_cls: Type[Input] = VideoClassificationFilesInput,
+        predict_input_cls: Type[Input] = VideoClassificationFilesInput,
+        transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
     ) -> "VideoClassificationData":
-        dataset_kwargs = dict(
+
+        ds_kw = dict(
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
             clip_sampler=clip_sampler,
             clip_duration=clip_duration,
             clip_sampler_kwargs=clip_sampler_kwargs,
             video_sampler=video_sampler,
             decode_audio=decode_audio,
             decoder=decoder,
-            data_pipeline_state=DataPipelineState(),
         )
+
         return cls(
-            VideoClassificationFilesInput(RunningStage.TRAINING, train_files, train_targets, **dataset_kwargs),
-            VideoClassificationFilesInput(RunningStage.VALIDATING, val_files, val_targets, **dataset_kwargs),
-            VideoClassificationFilesInput(RunningStage.TESTING, test_files, test_targets, **dataset_kwargs),
-            VideoClassificationPathsPredictInput(RunningStage.PREDICTING, predict_files, **dataset_kwargs),
-            input_transform=cls.input_transform_cls(
-                train_transform,
-                val_transform,
-                test_transform,
-                predict_transform,
-            ),
+            input_cls(RunningStage.TRAINING, train_files, train_targets, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_files, val_targets, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, test_files, test_targets, transform=test_transform, **ds_kw),
+            predict_input_cls(RunningStage.PREDICTING, predict_files, transform=predict_transform, **ds_kw),
             **data_module_kwargs,
         )
 
@@ -215,38 +103,39 @@ class VideoClassificationData(DataModule):
         val_folder: Optional[str] = None,
         test_folder: Optional[str] = None,
         predict_folder: Optional[str] = None,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
+        train_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
         clip_sampler: Union[str, "ClipSampler"] = "random",
         clip_duration: float = 2,
         clip_sampler_kwargs: Dict[str, Any] = None,
         video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
         decode_audio: bool = False,
         decoder: str = "pyav",
+        input_cls: Type[Input] = VideoClassificationFoldersInput,
+        predict_input_cls: Type[Input] = VideoClassificationPathsPredictInput,
+        transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
     ) -> "VideoClassificationData":
-        dataset_kwargs = dict(
+
+        ds_kw = dict(
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
             clip_sampler=clip_sampler,
             clip_duration=clip_duration,
             clip_sampler_kwargs=clip_sampler_kwargs,
             video_sampler=video_sampler,
             decode_audio=decode_audio,
             decoder=decoder,
-            data_pipeline_state=DataPipelineState(),
         )
+
         return cls(
-            VideoClassificationFoldersInput(RunningStage.TRAINING, train_folder, **dataset_kwargs),
-            VideoClassificationFoldersInput(RunningStage.VALIDATING, val_folder, **dataset_kwargs),
-            VideoClassificationFoldersInput(RunningStage.TESTING, test_folder, **dataset_kwargs),
-            VideoClassificationPathsPredictInput(RunningStage.PREDICTING, predict_folder, **dataset_kwargs),
-            input_transform=cls.input_transform_cls(
-                train_transform,
-                val_transform,
-                test_transform,
-                predict_transform,
-            ),
+            input_cls(RunningStage.TRAINING, train_folder, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_folder, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, test_folder, transform=test_transform, **ds_kw),
+            predict_input_cls(RunningStage.PREDICTING, predict_folder, transform=predict_transform, **ds_kw),
             **data_module_kwargs,
         )
 
@@ -258,10 +147,10 @@ class VideoClassificationData(DataModule):
         val_dataset: Optional[SampleCollection] = None,
         test_dataset: Optional[SampleCollection] = None,
         predict_dataset: Optional[SampleCollection] = None,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
+        train_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
         clip_sampler: Union[str, "ClipSampler"] = "random",
         clip_duration: float = 2,
         clip_sampler_kwargs: Dict[str, Any] = None,
@@ -269,9 +158,15 @@ class VideoClassificationData(DataModule):
         decode_audio: bool = False,
         decoder: str = "pyav",
         label_field: str = "ground_truth",
+        input_cls: Type[Input] = VideoClassificationFiftyOneInput,
+        transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
     ) -> "VideoClassificationData":
-        dataset_kwargs = dict(
+
+        ds_kw = dict(
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
             clip_sampler=clip_sampler,
             clip_duration=clip_duration,
             clip_sampler_kwargs=clip_sampler_kwargs,
@@ -279,19 +174,13 @@ class VideoClassificationData(DataModule):
             decode_audio=decode_audio,
             decoder=decoder,
             label_field=label_field,
-            data_pipeline_state=DataPipelineState(),
         )
+
         return cls(
-            VideoClassificationFiftyOneInput(RunningStage.TRAINING, train_dataset, **dataset_kwargs),
-            VideoClassificationFiftyOneInput(RunningStage.VALIDATING, val_dataset, **dataset_kwargs),
-            VideoClassificationFiftyOneInput(RunningStage.TESTING, test_dataset, **dataset_kwargs),
-            VideoClassificationFiftyOneInput(RunningStage.PREDICTING, predict_dataset, **dataset_kwargs),
-            input_transform=cls.input_transform_cls(
-                train_transform,
-                val_transform,
-                test_transform,
-                predict_transform,
-            ),
+            input_cls(RunningStage.TRAINING, train_dataset, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_dataset, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, test_dataset, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_dataset, transform=predict_transform, **ds_kw),
             **data_module_kwargs,
         )
 
@@ -308,10 +197,10 @@ class VideoClassificationData(DataModule):
         val_data_folder: str = None,
         test_data_folder: str = None,
         predict_data_folder: str = None,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
+        train_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
         val_split: Optional[float] = None,
         multi_label: Optional[bool] = False,
         clip_sampler: Union[str, "ClipSampler"] = "random",
@@ -320,7 +209,9 @@ class VideoClassificationData(DataModule):
         video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
         decode_audio: bool = False,
         decoder: str = "pyav",
-        **data_module_kwargs: Any,
+        input_cls: Type[Input] = VideoClassificationFiftyOneInput,
+        transform_kwargs: Optional[Dict] = None,
+        **data_module_kwargs,
     ) -> "VideoClassificationData":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object
         from the given export file and data directory using the
@@ -392,8 +283,10 @@ class VideoClassificationData(DataModule):
             multi_label=multi_label,
         )
 
-        dataset_kwargs = dict(
+        ds_kw = dict(
             data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
             clip_sampler=clip_sampler,
             clip_duration=clip_duration,
             clip_sampler_kwargs=clip_sampler_kwargs,
@@ -403,16 +296,9 @@ class VideoClassificationData(DataModule):
         )
 
         return cls(
-            LabelStudioVideoClassificationInput(RunningStage.TRAINING, train_data, **dataset_kwargs),
-            LabelStudioVideoClassificationInput(RunningStage.VALIDATING, val_data, **dataset_kwargs),
-            LabelStudioVideoClassificationInput(RunningStage.TESTING, test_data, **dataset_kwargs),
-            LabelStudioVideoClassificationInput(RunningStage.PREDICTING, predict_data, **dataset_kwargs),
-            input_transform=cls.input_transform_cls(
-                train_transform,
-                val_transform,
-                test_transform,
-                predict_transform,
-                **data_module_kwargs,
-            ),
+            input_cls(RunningStage.TRAINING, train_data, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_data, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, test_data, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
             **data_module_kwargs,
         )
