@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any, List, Optional, Sequence
 
-from flash.core.data.io.input_base import Input
+from flash.core.data.io.input import Input
 from flash.core.data.properties import ProcessState
 from flash.core.data.utilities.classification import (
     get_target_details,
@@ -36,7 +36,7 @@ class ClassificationState(ProcessState):
 
 class ClassificationInput(Input):
     """The ``ClassificationInput`` class provides utility methods for handling classification targets.
-    :class:`~flash.core.data.io.input_base.Input` objects that extend ``ClassificationInput`` should do the following:
+    :class:`~flash.core.data.io.input.Input` objects that extend ``ClassificationInput`` should do the following:
 
     * In the ``load_data`` method, include a call to ``load_target_metadata``. This will determine the format of the
       targets and store metadata like ``labels`` and ``num_classes``.

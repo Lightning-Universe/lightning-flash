@@ -22,7 +22,6 @@ from torch.utils.data import DataLoader
 from torch.utils.data._utils.collate import default_collate
 
 from flash import Trainer
-from flash.core.data.auto_dataset import IterableAutoDataset
 from flash.core.data.data_pipeline import _StageOrchestrator, DataPipeline, DataPipelineState
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import _InputTransformProcessor, DefaultInputTransform, InputTransform
@@ -599,17 +598,6 @@ def test_input_transform_transforms(tmpdir):
 
     assert train_input_transform_processor.collate_fn.func == input_transform.collate
     assert predict_input_transform_processor.collate_fn.func == DataPipeline._identity
-
-
-def test_iterable_auto_dataset(tmpdir):
-    class CustomInput(Input):
-        def load_sample(self, index: int) -> Dict[str, int]:
-            return {"index": index}
-
-    ds = IterableAutoDataset(range(10), input=CustomInput(), running_stage=RunningStage.TRAINING)
-
-    for index, v in enumerate(ds):
-        assert v == {"index": index}
 
 
 class CustomInputTransformHyperparameters(DefaultInputTransform):

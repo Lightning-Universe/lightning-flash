@@ -18,8 +18,7 @@ from typing import Any, Dict, List, Optional, Type, Union
 import yaml
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
-from flash.core.data.io.input import BaseDataFormat
-from flash.core.data.io.input_base import Input
+from flash.core.data.io.input import BaseDataFormat, Input
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
 
 if _POINTCLOUD_AVAILABLE:

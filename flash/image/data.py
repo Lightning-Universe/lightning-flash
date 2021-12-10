@@ -20,8 +20,7 @@ import numpy as np
 import torch
 
 import flash
-from flash.core.data.io.input import DataKeys
-from flash.core.data.io.input_base import Input
+from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.process import Deserializer
 from flash.core.data.utilities.paths import filter_valid_files, has_file_allowed_extension, PATH_TYPE
 from flash.core.data.utilities.samples import to_samples

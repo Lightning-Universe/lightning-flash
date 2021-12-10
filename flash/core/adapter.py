@@ -19,7 +19,7 @@ from torch import nn
 from torch.utils.data import DataLoader, Sampler
 
 import flash
-from flash.core.data.auto_dataset import BaseAutoDataset
+from flash.core.data.io.input import InputBase
 from flash.core.model import DatasetProcessor, ModuleWrapperBase, Task
 
 
@@ -109,7 +109,7 @@ class AdapterTask(Task):
 
     def process_train_dataset(
         self,
-        dataset: BaseAutoDataset,
+        dataset: InputBase,
         trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
@@ -133,7 +133,7 @@ class AdapterTask(Task):
 
     def process_val_dataset(
         self,
-        dataset: BaseAutoDataset,
+        dataset: InputBase,
         trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
@@ -157,7 +157,7 @@ class AdapterTask(Task):
 
     def process_test_dataset(
         self,
-        dataset: BaseAutoDataset,
+        dataset: InputBase,
         trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
@@ -181,7 +181,7 @@ class AdapterTask(Task):
 
     def process_predict_dataset(
         self,
-        dataset: BaseAutoDataset,
+        dataset: InputBase,
         batch_size: int = 1,
         num_workers: int = 0,
         pin_memory: bool = False,

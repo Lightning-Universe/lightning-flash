@@ -21,8 +21,7 @@ from typing import Any, Callable, Dict, Union
 
 import flash
 from flash.core.data.batch import default_uncollate
-from flash.core.data.io.input import DataKeys
-from flash.core.data.io.input_base import Input
+from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.integrations.transformers.states import TransformersBackboneState
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
