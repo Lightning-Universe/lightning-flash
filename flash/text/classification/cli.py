@@ -20,6 +20,7 @@ __all__ = ["text_classification"]
 
 
 def from_imdb(
+    batch_size: int = 4,
     **data_module_kwargs,
 ) -> TextClassificationData:
     """Downloads and loads the IMDB sentiment classification data set."""
@@ -29,12 +30,14 @@ def from_imdb(
         "sentiment",
         train_file="data/imdb/train.csv",
         val_file="data/imdb/valid.csv",
+        batch_size=batch_size,
         **data_module_kwargs,
     )
 
 
 def from_toxic(
     val_split: float = 0.1,
+    batch_size: int = 4,
     **data_module_kwargs,
 ) -> TextClassificationData:
     """Downloads and loads the Jigsaw toxic comments data set."""
@@ -44,6 +47,7 @@ def from_toxic(
         ["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"],
         train_file="data/jigsaw_toxic_comments/train.csv",
         val_split=val_split,
+        batch_size=batch_size,
         **data_module_kwargs,
     )
 

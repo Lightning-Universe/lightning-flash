@@ -267,6 +267,7 @@ def test_datamodule_labelstudio_text():
     datamodule = TextClassificationData.from_labelstudio(
         train_export_json="data/project.json",
         data_folder="data/upload/",
+        batch_size=4,
     )
     assert datamodule
 

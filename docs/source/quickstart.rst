@@ -101,7 +101,8 @@ Here's an example of inference:
             "Turgid dialogue, feeble characterization - Harvey Keitel a judge?.",
             "The worst movie in the history of cinema.",
             "This guy has done a great job with this movie!",
-        ]
+        ],
+        batch_size=4,
     )
     predictions = trainer.predict(model, datamodule=datamodule)
     print(predictions)

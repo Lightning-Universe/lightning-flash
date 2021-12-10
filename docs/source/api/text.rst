@@ -20,13 +20,12 @@ ______________
     ~classification.model.TextClassifier
     ~classification.data.TextClassificationData
 
-    classification.data.TextClassificationInputTransform
-    classification.data.TextClassificationInput
-    classification.data.TextClassificationCSVInput
-    classification.data.TextClassificationJSONInput
-    classification.data.TextClassificationDataFrameInput
-    classification.data.TextClassificationParquetInput
-    classification.data.TextClassificationListInput
+    classification.input.TextClassificationInput
+    classification.input.TextClassificationCSVInput
+    classification.input.TextClassificationJSONInput
+    classification.input.TextClassificationDataFrameInput
+    classification.input.TextClassificationParquetInput
+    classification.input.TextClassificationListInput
 
 Question Answering
 __________________
