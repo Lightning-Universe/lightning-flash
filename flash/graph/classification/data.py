@@ -11,50 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Optional
+from typing import Dict, Optional, Type
 
 from torch.utils.data import Dataset
 
-from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
-from flash.core.data.io.input import InputFormat
-from flash.core.data.io.input_transform import InputTransform
-from flash.core.utilities.imports import _GRAPH_AVAILABLE
+from flash.core.data.io.input import Input
+from flash.core.data.new_data_module import DataModule
 from flash.core.utilities.stages import RunningStage
-from flash.graph.data import GraphDatasetInput
-
-if _GRAPH_AVAILABLE:
-    from torch_geometric.data.batch import Batch
-    from torch_geometric.transforms import NormalizeFeatures
-
-
-class GraphClassificationInputTransform(InputTransform):
-    def __init__(
-        self,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-    ):
-        super().__init__(
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
-            inputs={InputFormat.DATASETS: GraphDatasetInput},
-            default_input=InputFormat.DATASETS,
-        )
-
-    def get_state_dict(self) -> Dict[str, Any]:
-        return self.transforms
-
-    @classmethod
-    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
-        return cls(**state_dict)
-
-    @staticmethod
-    def default_transforms() -> Optional[Dict[str, Callable]]:
-        return {"per_sample_transform": NormalizeFeatures(), "collate": Batch.from_data_list}
+from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
+from flash.graph.classification.input import GraphClassificationDatasetInput
+from flash.graph.classification.input_transform import GraphClassificationInputTransform
 
 
 class GraphClassificationData(DataModule):
@@ -69,26 +36,26 @@ class GraphClassificationData(DataModule):
         val_dataset: Optional[Dataset] = None,
         test_dataset: Optional[Dataset] = None,
         predict_dataset: Optional[Dataset] = None,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
+        train_transform: INPUT_TRANSFORM_TYPE = GraphClassificationInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = GraphClassificationInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = GraphClassificationInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = GraphClassificationInputTransform,
+        input_cls: Type[Input] = GraphClassificationDatasetInput,
+        transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
     ) -> "GraphClassificationData":
 
-        dataset_kwargs = dict(data_pipeline_state=DataPipelineState())
+        ds_kw = dict(
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
+        )
 
         return cls(
-            GraphDatasetInput(RunningStage.TRAINING, train_dataset, **dataset_kwargs),
-            GraphDatasetInput(RunningStage.VALIDATING, val_dataset, **dataset_kwargs),
-            GraphDatasetInput(RunningStage.TESTING, test_dataset, **dataset_kwargs),
-            GraphDatasetInput(RunningStage.PREDICTING, predict_dataset, **dataset_kwargs),
-            input_transform=cls.input_transform_cls(
-                train_transform,
-                val_transform,
-                test_transform,
-                predict_transform,
-            ),
+            input_cls(RunningStage.TRAINING, train_dataset, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_dataset, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, test_dataset, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_dataset, transform=predict_transform, **ds_kw),
             **data_module_kwargs,
         )
 
@@ -98,11 +65,3 @@ class GraphClassificationData(DataModule):
         n_cls_val = getattr(self.val_dataset, "num_features", None)
         n_cls_test = getattr(self.test_dataset, "num_features", None)
         return n_cls_train or n_cls_val or n_cls_test
-
-    from_folders = None
-    from_files = None
-    from_tensors = None
-    from_numpy = None
-    from_json = None
-    from_csv = None
-    from_fiftyone = None

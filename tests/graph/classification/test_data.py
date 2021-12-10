@@ -11,11 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import functools
+
 import pytest
 
-from flash.core.data.transforms import merge_transforms
+from flash import DataKeys
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
-from flash.graph.classification.data import GraphClassificationData, GraphClassificationInputTransform
+from flash.graph.classification.data import GraphClassificationData
+from flash.graph.classification.input_transform import GraphClassificationInputTransform, PyGTransformAdapter
 from tests.helpers.utils import _GRAPH_TESTING
 
 if _GRAPH_AVAILABLE:
@@ -24,21 +27,11 @@ if _GRAPH_AVAILABLE:
 
 
 @pytest.mark.skipif(not _GRAPH_TESTING, reason="graph libraries aren't installed.")
-class TestGraphClassificationInputTransform:
-    """Tests ``GraphClassificationInputTransform``."""
-
-    def test_smoke(self):
-        """A simple test that the class can be instantiated."""
-        prep = GraphClassificationInputTransform()
-        assert prep is not None
-
-
-@pytest.mark.skipif(not _GRAPH_TESTING, reason="graph libraries aren't installed.")
 class TestGraphClassificationData:
     """Tests ``GraphClassificationData``."""
 
     def test_smoke(self):
-        dm = GraphClassificationData()
+        dm = GraphClassificationData(batch_size=2)
         assert dm is not None
 
     def test_from_datasets(self, tmpdir):
@@ -66,17 +59,17 @@ class TestGraphClassificationData:
         assert dm.test_dataloader() is not None
 
         # check training data
-        data = next(iter(dm.train_dataloader()))
+        data = next(iter(dm.train_dataloader()))[DataKeys.INPUT]
         assert list(data.x.size())[1] == tudataset.num_features
         assert list(data.y.size()) == [2]
 
         # check val data
-        data = next(iter(dm.val_dataloader()))
+        data = next(iter(dm.val_dataloader()))[DataKeys.INPUT]
         assert list(data.x.size())[1] == tudataset.num_features
         assert list(data.y.size()) == [2]
 
         # check test data
-        data = next(iter(dm.test_dataloader()))
+        data = next(iter(dm.test_dataloader()))[DataKeys.INPUT]
         assert list(data.x.size())[1] == tudataset.num_features
         assert list(data.y.size()) == [2]
 
@@ -87,28 +80,26 @@ class TestGraphClassificationData:
         test_dataset = tudataset
         predict_dataset = tudataset
 
+        class TestInputTransform(GraphClassificationInputTransform):
+            @staticmethod
+            def _compose(*functions):
+                return functools.reduce(lambda f, g: lambda x: f(g(x)), functions, lambda x: x)
+
+            def per_sample_transform(self):
+                return self._compose(
+                    super().per_sample_transform(), PyGTransformAdapter(OneHotDegree(tudataset.num_features - 1))
+                )
+
         # instantiate the data module
         dm = GraphClassificationData.from_datasets(
             train_dataset=train_dataset,
             val_dataset=val_dataset,
             test_dataset=test_dataset,
             predict_dataset=predict_dataset,
-            train_transform=merge_transforms(
-                GraphClassificationInputTransform.default_transforms(),
-                {"per_sample_transform": OneHotDegree(tudataset.num_features - 1)},
-            ),
-            val_transform=merge_transforms(
-                GraphClassificationInputTransform.default_transforms(),
-                {"per_sample_transform": OneHotDegree(tudataset.num_features - 1)},
-            ),
-            test_transform=merge_transforms(
-                GraphClassificationInputTransform.default_transforms(),
-                {"per_sample_transform": OneHotDegree(tudataset.num_features - 1)},
-            ),
-            predict_transform=merge_transforms(
-                GraphClassificationInputTransform.default_transforms(),
-                {"per_sample_transform": OneHotDegree(tudataset.num_features - 1)},
-            ),
+            train_transform=TestInputTransform,
+            val_transform=TestInputTransform,
+            test_transform=TestInputTransform,
+            predict_transform=TestInputTransform,
             batch_size=2,
         )
         assert dm is not None
@@ -117,16 +108,16 @@ class TestGraphClassificationData:
         assert dm.test_dataloader() is not None
 
         # check training data
-        data = next(iter(dm.train_dataloader()))
+        data = next(iter(dm.train_dataloader()))[DataKeys.INPUT]
         assert list(data.x.size())[1] == tudataset.num_features * 2
         assert list(data.y.size()) == [2]
 
         # check val data
-        data = next(iter(dm.val_dataloader()))
+        data = next(iter(dm.val_dataloader()))[DataKeys.INPUT]
         assert list(data.x.size())[1] == tudataset.num_features * 2
         assert list(data.y.size()) == [2]
 
         # check test data
-        data = next(iter(dm.test_dataloader()))
+        data = next(iter(dm.test_dataloader()))[DataKeys.INPUT]
         assert list(data.x.size())[1] == tudataset.num_features * 2
         assert list(data.y.size()) == [2]

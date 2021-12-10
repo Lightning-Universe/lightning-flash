@@ -20,6 +20,7 @@ ______________
     ~classification.model.GraphClassifier
     ~classification.data.GraphClassificationData
 
+    classification.input.GraphClassificationDatasetInput
     classification.data.GraphClassificationInputTransform
 
 Embedding
@@ -31,13 +32,3 @@ _________
     :template: classtemplate.rst
 
     ~embedding.model.GraphEmbedder
-
-flash.graph.data
-________________
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-    :template: classtemplate.rst
-
-    ~data.GraphDatasetInput
