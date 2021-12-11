@@ -479,7 +479,7 @@ class InputTransform(Properties):
 
         You would need to use :class:`flash.core.data.transforms.ApplyToKeys` as follows:
 
-        Example:
+        Example::
 
             from flash.core.data.transforms import ApplyToKeys
 
