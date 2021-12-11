@@ -90,12 +90,10 @@ _______________________
     :nosignatures:
     :template: classtemplate.rst
 
-    ~flash.core.data.io.input_transform.BaseInputTransform
-    ~flash.core.data.io.input_transform.DefaultInputTransform
     ~flash.core.data.process.DeserializerMapping
     ~flash.core.data.process.Deserializer
     ~flash.core.data.io.output_transform.OutputTransform
-    ~flash.core.data.io.input_transform.InputTransform
+    ~flash.core.data.input_transform.InputTransform
 
 flash.core.data.properties
 __________________________
@@ -144,9 +142,6 @@ _____________________
     :nosignatures:
     :template: classtemplate.rst
 
-    ~flash.core.data.utils.CurrentFuncContext
-    ~flash.core.data.utils.CurrentRunningStageContext
-    ~flash.core.data.utils.CurrentRunningStageFuncContext
     ~flash.core.data.utils.FuncModule
 
 .. autosummary::
