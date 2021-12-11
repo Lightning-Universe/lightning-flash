@@ -1139,7 +1139,7 @@ def _create_collate_input_transform_processors(
     worker_input_transform_processor = _InputTransformProcessorV2(
         input_transform,
         worker_collate_fn,
-        input_transform._identity if input_transform.serving else input_transform._per_sample_transform,
+        input_transform._per_sample_transform,
         input_transform._per_batch_transform,
         input_transform.running_stage,
         callbacks=callbacks,

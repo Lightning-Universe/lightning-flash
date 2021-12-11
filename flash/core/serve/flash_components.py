@@ -55,12 +55,9 @@ def build_flash_serve_model_component(model):
             self.model = model
             self.model.eval()
             self.data_pipeline = model.build_data_pipeline()
-            self.worker_input_transform_processor = self.data_pipeline.worker_input_transform_processor(
-                RunningStage.PREDICTING, is_serving=True
-            )
-            self.device_input_transform_processor = self.data_pipeline.device_input_transform_processor(
-                RunningStage.PREDICTING
-            )
+            self.deserializer = self.data_pipeline._deserializer
+            self.dataloader_collate_fn = self.data_pipeline._deserializer._create_dataloader_collate_fn([])
+            self.on_after_batch_transfer_fn = self.data_pipeline._deserializer._create_on_after_batch_transfer_fn([])
             self.output_transform_processor = self.data_pipeline.output_transform_processor(
                 RunningStage.PREDICTING, is_serving=True
             )
@@ -69,17 +66,17 @@ def build_flash_serve_model_component(model):
             self.device = self.model.device
 
         @expose(
-            inputs={"inputs": FlashInputs(data_pipeline.deserialize_processor())},
+            inputs={"inputs": FlashInputs(data_pipeline._deserializer._call_load_sample)},
             outputs={"outputs": FlashOutputs(data_pipeline.output_processor())},
         )
         def predict(self, inputs):
             with torch.no_grad():
-                inputs = self.worker_input_transform_processor(inputs)
+                inputs = self.dataloader_collate_fn(inputs)
                 if self.extra_arguments:
                     inputs = self.model.transfer_batch_to_device(inputs, self.device, 0)
                 else:
                     inputs = self.model.transfer_batch_to_device(inputs, self.device)
-                inputs = self.device_input_transform_processor(inputs)
+                inputs = self.on_after_batch_transfer_fn(inputs)
                 preds = self.model.predict_step(inputs, 0)
                 preds = self.output_transform_processor(preds)
                 return preds

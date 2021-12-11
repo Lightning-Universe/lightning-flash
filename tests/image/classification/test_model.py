@@ -138,9 +138,7 @@ def test_jit(tmpdir, jitter, args):
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = ImageClassifier(2)
-    # TODO: Currently only servable once a input_transform has been attached
-    model._input_transform = ImageClassificationInputTransform(RunningStage.SERVING)
-    model._deserializer = ImageDeserializer()
+    model._deserializer = ImageDeserializer(transform=ImageClassificationInputTransform(RunningStage.SERVING))
     model.eval()
     model.serve()
 

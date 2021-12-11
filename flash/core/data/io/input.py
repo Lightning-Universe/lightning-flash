@@ -332,12 +332,19 @@ class IterableInput(InputBase, IterableDataset, metaclass=_IterableInputMeta):
 class ServeInput(Input):
     def __init__(
         self,
+        transform: INPUT_TRANSFORM_TYPE = None,
+        transform_kwargs: Optional[Dict] = None,
         data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None,
     ) -> None:
         if hasattr(self, "serve_load_data"):
             raise MisconfigurationException("`serve_load_data` shouldn't be implemented.")
 
-        super().__init__(RunningStage.SERVING, data_pipeline_state=data_pipeline_state)
+        super().__init__(
+            RunningStage.SERVING,
+            transform=transform,
+            transform_kwargs=transform_kwargs,
+            data_pipeline_state=data_pipeline_state,
+        )
 
     def serve_load_sample(self, sample: Any) -> List[Any]:
         raise NotImplementedError
