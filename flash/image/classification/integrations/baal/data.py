@@ -19,9 +19,9 @@ import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader, Dataset, random_split
 
+from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipeline
 from flash.core.data.io.input import InputBase
-from flash.core.data.new_data_module import DataModule
 from flash.core.utilities.imports import _BAAL_AVAILABLE, requires
 
 if _BAAL_AVAILABLE:

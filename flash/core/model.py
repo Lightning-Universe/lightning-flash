@@ -42,7 +42,6 @@ from flash.core.data.input_transform import InputTransform
 from flash.core.data.io.input import InputBase
 from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import OutputTransform
-from flash.core.data.new_data_module import DataModule as NewDataModule
 from flash.core.data.process import Deserializer, DeserializerMapping
 from flash.core.data.properties import ProcessState
 from flash.core.finetuning import _DEFAULTS_FINETUNE_STRATEGIES, _FINETUNING_STRATEGIES_REGISTRY
@@ -804,7 +803,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         return getattr(self.data_pipeline, "_output_transform", None)
 
     def on_predict_start(self) -> None:
-        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule) and not self._wrapped_predict_step:
+        if self.trainer and not self._wrapped_predict_step:
             self.predict_step = self._wrap_predict_step(self.predict_step)
 
     def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:

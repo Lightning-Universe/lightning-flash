@@ -13,9 +13,9 @@
 # limitations under the License.
 from typing import Any, Dict, List, Optional, Type
 
+from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
-from flash.core.data.new_data_module import DataModule
 from flash.core.integrations.icevision.data import IceVisionInput
 from flash.core.integrations.icevision.transforms import IceVisionInputTransform
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
