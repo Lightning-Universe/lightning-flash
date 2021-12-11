@@ -71,7 +71,7 @@ class DataPipeline:
     ) -> None:
         self.input = input
 
-        self._input_transform_pipeline = input_transform
+        self._input_transform_pipeline = input_transform or InputTransform(RunningStage.TRAINING)
         self._output_transform = output_transform or OutputTransform()
         self._output = output or Output()
         self._deserializer = deserializer or Deserializer()
