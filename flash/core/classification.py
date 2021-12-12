@@ -45,6 +45,7 @@ class ClassificationMixin:
         num_classes: Optional[int] = None,
         loss_fn: Optional[Callable] = None,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
+        local_files_only: bool = False,
         multi_label: bool = False,
     ):
         if metrics is None:
@@ -69,6 +70,7 @@ class ClassificationTask(Task, ClassificationMixin):
         loss_fn: Optional[Callable] = None,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         multi_label: bool = False,
+        local_files_only: bool = False,
         output: Optional[Union[Output, Mapping[str, Output]]] = None,
         **kwargs,
     ) -> None:
