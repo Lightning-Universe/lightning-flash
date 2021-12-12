@@ -67,7 +67,7 @@ class TextClassifier(ClassificationTask):
         multi_label: bool = False,
         output: OUTPUT_TYPE = None,
         enable_ort: bool = False,
-        local_files_only=False
+        local_files_only=False,
     ):
         self.save_hyperparameters()
 
@@ -87,11 +87,11 @@ class TextClassifier(ClassificationTask):
             learning_rate=learning_rate,
             multi_label=multi_label,
             output=output or LabelsOutput(multi_label=multi_label),
-            local_files_only=local_files_only
+            local_files_only=local_files_only,
         )
         self.enable_ort = enable_ort
         self.set_state(TransformersBackboneState(backbone))
-        self.model = self.backbones.get(backbone)(num_labels=num_classes,local_files_only=local_files_only)
+        self.model = self.backbones.get(backbone)(num_labels=num_classes, local_files_only=local_files_only)
         self.save_hyperparameters()
 
     @property
