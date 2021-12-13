@@ -14,7 +14,7 @@
 import pytest
 
 from flash import DataKeys
-from flash.core.data.input_transform import Compose
+from flash.core.data.io.input_transform import Compose
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
 from flash.graph.classification.data import GraphClassificationData
 from flash.graph.classification.input_transform import GraphClassificationInputTransform, PyGTransformAdapter

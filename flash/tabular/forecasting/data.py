@@ -18,8 +18,8 @@ from torch.utils.data.sampler import Sampler
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
-from flash.core.data.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
 from flash.core.data.io.input import Input
+from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.utilities.imports import _PANDAS_AVAILABLE
 from flash.core.utilities.stages import RunningStage

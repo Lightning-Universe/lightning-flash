@@ -15,7 +15,7 @@
 from dataclasses import dataclass
 from typing import Callable, List, Optional
 
-from flash.core.data.input_transform import InputTransform
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, _VISSL_AVAILABLE
 from flash.image import ImageClassificationData
 from flash.image.embedding.vissl.transforms import multicrop_collate_fn

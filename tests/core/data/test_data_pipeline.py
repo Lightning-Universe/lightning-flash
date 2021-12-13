@@ -19,8 +19,8 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
-from flash.core.data.input_transform import InputTransform
 from flash.core.data.io.input import Input
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.process import Deserializer
