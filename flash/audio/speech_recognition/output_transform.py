@@ -34,7 +34,6 @@ class SpeechRecognitionBackboneState(ProcessState):
 
 
 class SpeechRecognitionOutputTransform(OutputTransform):
-    @requires("audio")
     def __init__(self):
         super().__init__()
 
@@ -54,6 +53,7 @@ class SpeechRecognitionOutputTransform(OutputTransform):
             self._backbone = self.backbone
         return self._tokenizer
 
+    @requires("audio")
     def per_batch_transform(self, batch: Any) -> Any:
         # converts logits into greedy transcription
         pred_ids = torch.argmax(batch.logits, dim=-1)
