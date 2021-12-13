@@ -34,11 +34,11 @@ from flash.core.utilities.types import (
     OUTPUT_TRANSFORM_TYPE,
     OUTPUT_TYPE,
 )
-from flash.image import SemanticSegmentationInputTransform
 from flash.image.data import ImageDeserializer
 from flash.image.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 from flash.image.segmentation.heads import SEMANTIC_SEGMENTATION_HEADS
 from flash.image.segmentation.output import SegmentationLabelsOutput
+from flash.image.segmentation.transforms import SemanticSegmentationInputTransform
 
 if _KORNIA_AVAILABLE:
     import kornia as K
