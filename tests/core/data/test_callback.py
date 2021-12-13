@@ -17,8 +17,8 @@ from unittest.mock import ANY, call, MagicMock
 import torch
 
 from flash import DataKeys
+from flash.core.data.data_module import DataModule, DatasetInput
 from flash.core.data.input_transform import InputTransform
-from flash.core.data.new_data_module import DataModule, DatasetInput
 from flash.core.model import Task
 from flash.core.trainer import Trainer
 from flash.core.utilities.stages import RunningStage

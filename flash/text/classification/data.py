@@ -15,9 +15,9 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Type, Union
 
 from pandas.core.frame import DataFrame
 
+from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
-from flash.core.data.new_data_module import DataModule
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioTextClassificationInput
 from flash.core.integrations.transformers.input_transform import TransformersInputTransform

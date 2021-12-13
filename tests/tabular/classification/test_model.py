@@ -19,6 +19,7 @@ import pytest
 import torch
 from pytorch_lightning import Trainer
 
+from flash import InputTransform, RunningStage
 from flash.__main__ import main
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _TABULAR_AVAILABLE
@@ -109,10 +110,9 @@ def test_serve():
         batch_size=1,
     )
     model = TabularClassifier.from_data(datamodule)
-    # TODO: Currently only servable once a input_transform has been attached
-    model._input_transform = datamodule.input_transform
-    model._input_transform._state = datamodule.train_dataset._state
-    model._deserializer = TabularDeserializer()
+
+    model._deserializer = TabularDeserializer(transform=InputTransform(RunningStage.SERVING))
+    model._deserializer._state = datamodule.train_dataset._state
     model.eval()
     model.serve()
 

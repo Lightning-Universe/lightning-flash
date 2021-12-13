@@ -149,9 +149,10 @@ def test_jit(tmpdir, jitter, args):
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = SemanticSegmentation(2)
-    # TODO: Currently only servable once a input_transform has been attached
-    model._input_transform = SemanticSegmentationInputTransform(RunningStage.SERVING)
-    model._deserializer = SemanticSegmentationDeserializer()
+
+    model._deserializer = SemanticSegmentationDeserializer(
+        transform=SemanticSegmentationInputTransform(RunningStage.SERVING)
+    )
     model.eval()
     model.serve()
 

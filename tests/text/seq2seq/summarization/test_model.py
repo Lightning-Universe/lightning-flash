@@ -79,9 +79,7 @@ def test_jit(tmpdir):
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = SummarizationTask(TEST_BACKBONE)
-    # TODO: Currently only servable once a input_transform has been attached
-    model._input_transform = TransformersInputTransform(RunningStage.SERVING)
-    model._deserializer = TextDeserializer()
+    model._deserializer = TextDeserializer(transform=TransformersInputTransform(RunningStage.SERVING))
     model._output_transform = Seq2SeqOutputTransform()
     model.eval()
     model.serve()

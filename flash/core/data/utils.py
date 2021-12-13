@@ -42,11 +42,6 @@ _STAGES_PREFIX = {
 }
 _STAGES_PREFIX_VALUES = {"train", "test", "val", "predict", "serve"}
 
-_INPUT_FUNCS: Set[str] = {
-    "load_data",
-    "load_sample",
-}
-
 _INPUT_TRANSFORM_FUNCS: Set[str] = {
     "per_sample_transform",
     "per_batch_transform",
@@ -65,59 +60,6 @@ _OUTPUT_TRANSFORM_FUNCS: Set[str] = {
     "uncollate",
     "per_sample_transform",
 }
-
-
-class CurrentRunningStageContext:
-    def __init__(self, running_stage: RunningStage, obj: Any, reset: bool = True):
-        self._running_stage = running_stage
-        self._obj = obj
-        self._reset = reset
-
-    def __enter__(self):
-        if self._obj is not None:
-            if getattr(self._obj, "running_stage", None) != self._running_stage:
-                self._obj.running_stage = self._running_stage
-        return self
-
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        if self._obj is not None and self._reset:
-            self._obj.running_stage = None
-
-
-class CurrentFuncContext:
-    def __init__(self, current_fn: str, obj: Any):
-        self._current_fn = current_fn
-        self._obj = obj
-
-    def __enter__(self):
-        if self._obj is not None:
-            if getattr(self._obj, "current_fn", None) != self._current_fn:
-                self._obj.current_fn = self._current_fn
-        return self
-
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        if self._obj is not None:
-            self._obj.current_fn = None
-
-
-class CurrentRunningStageFuncContext:
-    def __init__(self, running_stage: RunningStage, current_fn: str, obj: Any):
-        self._running_stage = running_stage
-        self._current_fn = current_fn
-        self._obj = obj
-
-    def __enter__(self):
-        if self._obj is not None:
-            if getattr(self._obj, "running_stage", None) != self._running_stage:
-                self._obj.running_stage = self._running_stage
-            if getattr(self._obj, "current_fn", None) != self._current_fn:
-                self._obj.current_fn = self._current_fn
-        return self
-
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        if self._obj is not None:
-            self._obj.running_stage = None
-            self._obj.current_fn = None
 
 
 def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:

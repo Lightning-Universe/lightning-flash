@@ -17,7 +17,7 @@ import pytest
 
 from flash import RunningStage, Trainer
 from flash.__main__ import main
-from flash.core.data.new_data_module import DataModule
+from flash.core.data.data_module import DataModule
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
 from flash.graph.classification import GraphClassifier
 from flash.graph.classification.input import GraphClassificationDatasetInput

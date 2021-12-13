@@ -38,11 +38,10 @@ from torch.utils.data import DataLoader, Sampler
 
 import flash
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
-from flash.core.data.io.input import Input, InputBase
-from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.input_transform import InputTransform
+from flash.core.data.io.input import InputBase
 from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import OutputTransform
-from flash.core.data.new_data_module import DataModule as NewDataModule
 from flash.core.data.process import Deserializer, DeserializerMapping
 from flash.core.data.properties import ProcessState
 from flash.core.finetuning import _DEFAULTS_FINETUNE_STRATEGIES, _FINETUNING_STRATEGIES_REGISTRY
@@ -743,12 +742,6 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
         input = input or old_input
 
-        if isinstance(input, str):
-            if input_transform is None:
-                input = Input()  # TODO: warn the user that we are not using the specified data source
-            else:
-                input = input_transform.input_of_name(input)
-
         if deserializer is None or type(deserializer) is Deserializer:
             deserializer = getattr(input_transform, "deserializer", deserializer)
 
@@ -810,55 +803,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         return getattr(self.data_pipeline, "_output_transform", None)
 
     def on_predict_start(self) -> None:
-        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule) and not self._wrapped_predict_step:
+        if self.trainer and not self._wrapped_predict_step:
             self.predict_step = self._wrap_predict_step(self.predict_step)
-
-    def on_train_dataloader(self) -> None:
-        # TODO: Remove this logic when moving to the new DataModule
-        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
-            return
-        if self.data_pipeline is not None:
-            self.data_pipeline._detach_from_model(self, RunningStage.TRAINING)
-            self.data_pipeline._attach_to_model(self, RunningStage.TRAINING)
-        super().on_train_dataloader()
-
-    def on_val_dataloader(self) -> None:
-        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
-            return
-        if self.data_pipeline is not None:
-            self.data_pipeline._detach_from_model(self, RunningStage.VALIDATING)
-            self.data_pipeline._attach_to_model(self, RunningStage.VALIDATING)
-        super().on_val_dataloader()
-
-    def on_test_dataloader(self, *_) -> None:
-        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
-            return
-        if self.data_pipeline is not None:
-            self.data_pipeline._detach_from_model(self, RunningStage.TESTING)
-            self.data_pipeline._attach_to_model(self, RunningStage.TESTING)
-        super().on_test_dataloader()
-
-    def on_predict_dataloader(self) -> None:
-        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
-            return
-        if self.data_pipeline is not None:
-            self.data_pipeline._detach_from_model(self, RunningStage.PREDICTING)
-            self.data_pipeline._attach_to_model(self, RunningStage.PREDICTING)
-        super().on_predict_dataloader()
-
-    def on_predict_end(self) -> None:
-        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
-            return
-        if self.data_pipeline is not None:
-            self.data_pipeline._detach_from_model(self)
-        super().on_predict_end()
-
-    def on_fit_end(self) -> None:
-        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
-            return
-        if self.data_pipeline is not None:
-            self.data_pipeline._detach_from_model(self)
-        super().on_fit_end()
 
     def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         # This may be an issue since here we create the same problems with pickle as in

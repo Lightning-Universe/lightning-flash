@@ -13,7 +13,8 @@
 # limitations under the License.
 import torch
 
-from flash import DataModule
+from flash import DataKeys, DataModule, RunningStage
+from flash.core.data.data_module import DatasetInput
 
 # ======== Mock functions ========
 
@@ -30,26 +31,30 @@ class DummyDataset(torch.utils.data.Dataset):
 
 
 def test_init():
-    train_ds, val_ds, test_ds = DummyDataset(), DummyDataset(), DummyDataset()
-    DataModule(train_ds)
-    DataModule(train_ds, val_ds)
-    DataModule(train_ds, val_ds, test_ds)
-    assert DataModule().data_pipeline
+    train_input = DatasetInput(RunningStage.TRAINING, DummyDataset())
+    val_input = DatasetInput(RunningStage.VALIDATING, DummyDataset())
+    test_input = DatasetInput(RunningStage.TESTING, DummyDataset())
+    DataModule(train_input, batch_size=1)
+    DataModule(train_input, val_input, batch_size=1)
+    DataModule(train_input, val_input, test_input, batch_size=1)
+    assert DataModule(batch_size=1).data_pipeline
 
 
 def test_dataloaders():
-    train_ds, val_ds, test_ds = DummyDataset(), DummyDataset(), DummyDataset()
-    dm = DataModule(train_ds, val_ds, test_ds, num_workers=0)
+    train_input = DatasetInput(RunningStage.TRAINING, DummyDataset())
+    val_input = DatasetInput(RunningStage.VALIDATING, DummyDataset())
+    test_input = DatasetInput(RunningStage.TESTING, DummyDataset())
+    dm = DataModule(train_input, val_input, test_input, num_workers=0, batch_size=1)
     for dl in [
         dm.train_dataloader(),
         dm.val_dataloader(),
         dm.test_dataloader(),
     ]:
-        x, y = next(iter(dl))
-        assert x.shape == (4, 1, 28, 28)
+        x = next(iter(dl))[DataKeys.INPUT]
+        assert x.shape == (1, 1, 28, 28)
 
 
 def test_cpu_count_none():
-    train_ds = DummyDataset()
-    dm = DataModule(train_ds, num_workers=None)
+    train_input = DatasetInput(RunningStage.TRAINING, DummyDataset())
+    dm = DataModule(train_input, num_workers=None, batch_size=1)
     assert dm.num_workers == 0
