@@ -92,7 +92,7 @@ Here's an example of inference:
     from flash.text import TextClassifier, TextClassificationData
 
     # 1. Init the finetuned task from URL
-    model = TextClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/0.6.1/text_classification_model.pt")
+    model = TextClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/0.7.0/text_classification_model.pt")
 
     # 2. Perform inference from list of sequences
     trainer = Trainer()

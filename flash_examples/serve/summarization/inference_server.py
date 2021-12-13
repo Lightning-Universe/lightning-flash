@@ -14,6 +14,6 @@
 from flash.text import SummarizationTask
 
 model = SummarizationTask.load_from_checkpoint(
-    "https://flash-weights.s3.amazonaws.com/0.6.1/summarization_model_xsum.pt"
+    "https://flash-weights.s3.amazonaws.com/0.7.0/summarization_model_xsum.pt"
 )
 model.serve()
