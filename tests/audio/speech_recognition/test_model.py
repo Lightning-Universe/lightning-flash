@@ -83,6 +83,8 @@ def test_serve():
     model = SpeechRecognition(backbone=TEST_BACKBONE)
 
     model._deserializer = SpeechRecognitionDeserializer(transform=InputTransform(RunningStage.SERVING))
+    # TODO: Serve should share the state
+    model._deserializer.transform._state = model._state
     model._output_transform = SpeechRecognitionOutputTransform()
     model.eval()
     model.serve()
