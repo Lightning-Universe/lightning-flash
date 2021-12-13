@@ -22,7 +22,7 @@ from torch.utils.data import DistributedSampler
 from torchmetrics import Accuracy
 
 import flash
-from flash.core.classification import ClassificationTask, Labels
+from flash.core.classification import ClassificationTask, LabelsOutput
 from flash.core.data.io.input import DataKeys
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.compatibility import accelerator_connector
@@ -91,7 +91,7 @@ class VideoClassifier(ClassificationTask):
             lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
-            output=output or Labels(),
+            output=output or LabelsOutput(),
         )
 
         self.save_hyperparameters()

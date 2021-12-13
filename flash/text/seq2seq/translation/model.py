@@ -48,6 +48,7 @@ class TranslationTask(Seq2SeqTask):
     def __init__(
         self,
         backbone: str = "t5-small",
+        tokenizer_kwargs: Optional[Dict[str, Any]] = None,
         loss_fn: LOSS_FN_TYPE = None,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
@@ -62,6 +63,7 @@ class TranslationTask(Seq2SeqTask):
         self.save_hyperparameters()
         super().__init__(
             backbone=backbone,
+            tokenizer_kwargs=tokenizer_kwargs,
             loss_fn=loss_fn,
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
@@ -81,13 +83,17 @@ class TranslationTask(Seq2SeqTask):
         return "translation"
 
     def compute_metrics(self, generated_tokens, batch, prefix):
-        tgt_lns = self.tokenize_labels(batch["labels"])
+        reference_corpus = self.tokenize_labels(batch["labels"])
         # wrap targets in list as score expects a list of potential references
-        tgt_lns = [[reference] for reference in tgt_lns]
-        result = self.bleu(self._output_transform.uncollate(generated_tokens), tgt_lns)
+        reference_corpus = [[reference] for reference in reference_corpus]
+
+        translate_corpus = self._output_transform.uncollate(generated_tokens)
+        translate_corpus = [line for line in translate_corpus]
+
+        result = self.bleu(reference_corpus, translate_corpus)
         self.log(f"{prefix}_bleu_score", result, on_step=False, on_epoch=True, prog_bar=True)
 
     @staticmethod
     def _ci_benchmark_fn(history: List[Dict[str, Any]]):
         """This function is used only for debugging usage with CI."""
-        assert history[-1]["val_bleu_score"] > 0.6
+        assert history[-1]["val_bleu_score"] > 0.6, history[-1]["val_bleu_score"]

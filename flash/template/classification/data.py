@@ -11,20 +11,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Callable, Collection, Dict, List, Optional, Sequence, Type
 
 import numpy as np
 import torch
-from torch import nn
 
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import DataKeys, InputFormat, LabelsState, NumpyInput
+from flash.core.data.data_pipeline import DataPipelineState
+from flash.core.data.io.classification_input import ClassificationInput
+from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.io.input_transform import InputTransform
-from flash.core.data.transforms import ApplyToKeys
+from flash.core.data.utilities.samples import to_samples
 from flash.core.utilities.imports import _SKLEARN_AVAILABLE
 from flash.core.utilities.stages import RunningStage
+from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 
 if _SKLEARN_AVAILABLE:
     from sklearn.utils import Bunch
@@ -32,45 +34,48 @@ else:
     Bunch = object
 
 
-class TemplateNumpyInput(NumpyInput):
-    """An example data source that records ``num_features`` on the dataset.
+class TemplateNumpyClassificationInput(ClassificationInput):
+    """An example data source that records ``num_features`` on the dataset."""
 
-    We extend
-    :class:`~flash.core.data.io.input.NumpyInput` so that we can use ``super().load_data``.
-    """
-
-    def load_data(self, data: Tuple[np.ndarray, Sequence[Any]], dataset: Any) -> Sequence[Mapping[str, Any]]:
+    def load_data(
+        self, examples: Collection[np.ndarray], targets: Optional[Sequence[Any]] = None
+    ) -> Sequence[Dict[str, Any]]:
         """Sets the ``num_features`` attribute and calls ``super().load_data``.
 
         Args:
-            data: The tuple of ``np.ndarray`` (num_examples x num_features) and associated targets.
-            dataset: The object that we can set attributes (such as ``num_features``) on.
+            examples: The ``np.ndarray`` (num_examples x num_features).
+            targets: Associated targets.
 
         Returns:
             A sequence of samples / sample metadata.
         """
-        dataset.num_features = data[0].shape[1]
-        return super().load_data(data, dataset)
+        if not self.predicting and isinstance(examples, np.ndarray):
+            self.num_features = examples.shape[1]
+        if targets is not None:
+            self.load_target_metadata(targets)
+        return to_samples(examples, targets)
+
+    def load_sample(self, sample: Dict[str, Any]) -> Any:
+        if DataKeys.TARGET in sample:
+            sample[DataKeys.TARGET] = self.format_target(sample[DataKeys.TARGET])
+        return sample
 
 
-class TemplateSKLearnInput(TemplateNumpyInput):
+class TemplateSKLearnClassificationInput(TemplateNumpyClassificationInput):
     """An example data source that loads data from an sklearn data ``Bunch``."""
 
-    def load_data(self, data: Bunch, dataset: Any) -> Sequence[Mapping[str, Any]]:
+    def load_data(self, data: Bunch) -> Sequence[Dict[str, Any]]:
         """Gets the ``data`` and ``target`` attributes from the ``Bunch`` and passes them to ``super().load_data``.
 
         Args:
             data: The scikit-learn data ``Bunch``.
-            dataset: The object that we can set attributes (such as ``num_classes``) on.
 
         Returns:
             A sequence of samples / sample metadata.
         """
-        dataset.num_classes = len(data.target_names)
-        self.set_state(LabelsState(data.target_names))
-        return super().load_data((data.data, data.target), dataset=dataset)
+        return super().load_data(data.data, data.target)
 
-    def predict_load_data(self, data: Bunch) -> Sequence[Mapping[str, Any]]:
+    def predict_load_data(self, data: Bunch) -> Sequence[Dict[str, Any]]:
         """Avoid including targets when predicting.
 
         Args:
@@ -79,87 +84,89 @@ class TemplateSKLearnInput(TemplateNumpyInput):
         Returns:
             A sequence of samples / sample metadata.
         """
-        return super().predict_load_data(data.data)
+        return super().load_data(data.data)
 
 
 class TemplateInputTransform(InputTransform):
-    """An example :class:`~flash.core.data.io.input_transform.InputTransform`.
-
-    Args:
-        train_transform: The user-specified transforms to apply during training.
-        val_transform: The user-specified transforms to apply during validation.
-        test_transform: The user-specified transforms to apply during testing.
-        predict_transform: The user-specified transforms to apply during prediction.
-    """
-
-    def __init__(
-        self,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-    ):
-        super().__init__(
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
-            inputs={
-                InputFormat.NUMPY: TemplateNumpyInput(),
-                "sklearn": TemplateSKLearnInput(),
-            },
-            default_input=InputFormat.NUMPY,
-        )
-
-    def get_state_dict(self) -> Dict[str, Any]:
-        """For serialization, you have control over what to save with the ``get_state_dict`` method.
-
-        It's usually a good idea to save the transforms. So we just return them here. If you had any other attributes
-        you wanted to save, this is where you would return them.
-        """
-        return self.transforms
-
-    @classmethod
-    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
-        """This methods gets whatever we returned from ``get_state_dict`` as an input.
-
-        Now we re-create the class with the transforms we saved.
-        """
-        return cls(**state_dict)
+    """An example :class:`~flash.core.data.io.input_transform.InputTransform`."""
 
     @staticmethod
     def input_to_tensor(input: np.ndarray):
         """Transform which creates a tensor from the given numpy ``ndarray`` and converts it to ``float``"""
         return torch.from_numpy(input).float()
 
-    def default_transforms(self) -> Optional[Dict[str, Callable]]:
-        """Configures the default ``to_tensor_transform``.
+    def input_per_sample_transform(self) -> Callable:
+        return self.input_to_tensor
 
-        Returns:
-            Our dictionary of transforms.
-        """
-        return {
-            "to_tensor_transform": nn.Sequential(
-                ApplyToKeys(DataKeys.INPUT, self.input_to_tensor),
-                ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
-            ),
-        }
-
-    # If we wanted to apply different transforms at a particular stage (e.g. during training), we can prepend: `train`,
-    # `val`, `test`, or `predict`, and provide some different defaults linke this:
-    # def train_default_transforms(self) -> Optional[Dict[str, Callable]]:
+    def target_per_sample_transform(self) -> Callable:
+        return torch.as_tensor
 
 
 class TemplateData(DataModule):
-    """Creating our :class:`~flash.core.data.data_module.DataModule` is as easy as setting the
-    ``input_transform_cls`` attribute.
+    """To create our :class:`~flash.core.data.data_module.DataModule` we first set the ``input_transform_cls``
+    attribute.
 
-    We get the ``from_numpy`` method for free as we've configured a ``InputFormat.NUMPY`` data source. We'll also add a
-    ``from_sklearn`` method so that we can use our ``TemplateSKLearnInput. Finally, we define the ``num_features``
-    property for convenience.
+    Next, we add a ``from_numpy`` method and a ``from_sklearn`` method. Finally, we define the ``num_features`` property
+    for convenience.
     """
 
     input_transform_cls = TemplateInputTransform
+
+    @classmethod
+    def from_numpy(
+        cls,
+        train_data: Optional[Collection[np.ndarray]] = None,
+        train_targets: Optional[Collection[Any]] = None,
+        val_data: Optional[Collection[np.ndarray]] = None,
+        val_targets: Optional[Sequence[Any]] = None,
+        test_data: Optional[Collection[np.ndarray]] = None,
+        test_targets: Optional[Sequence[Any]] = None,
+        predict_data: Optional[Collection[np.ndarray]] = None,
+        train_transform: INPUT_TRANSFORM_TYPE = TemplateInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = TemplateInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = TemplateInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = TemplateInputTransform,
+        input_cls: Type[Input] = TemplateNumpyClassificationInput,
+        transform_kwargs: Optional[Dict] = None,
+        **data_module_kwargs: Any,
+    ) -> "TemplateData":
+        """This is our custom ``from_*`` method. It expects numpy ``Array`` objects and targets as input and
+        creates the ``TemplateData`` with them.
+
+        Args:
+            train_data: The numpy ``Array`` containing the train data.
+            train_targets: The sequence of train targets.
+            val_data: The numpy ``Array`` containing the validation data.
+            val_targets: The sequence of validation targets.
+            test_data: The numpy ``Array`` containing the test data.
+            test_targets: The sequence of test targets.
+            predict_data: The numpy ``Array`` containing the predict data.
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+
+        Returns:
+            The constructed data module.
+        """
+
+        ds_kw = dict(
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
+        )
+
+        return cls(
+            input_cls(RunningStage.TRAINING, train_data, train_targets, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_data, val_targets, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, test_data, test_targets, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
+            **data_module_kwargs,
+        )
 
     @classmethod
     def from_sklearn(
@@ -168,19 +175,16 @@ class TemplateData(DataModule):
         val_bunch: Optional[Bunch] = None,
         test_bunch: Optional[Bunch] = None,
         predict_bunch: Optional[Bunch] = None,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-        data_fetcher: Optional[BaseDataFetcher] = None,
-        input_transform: Optional[InputTransform] = None,
-        val_split: Optional[float] = None,
-        batch_size: int = 4,
-        num_workers: int = 0,
-        **input_transform_kwargs: Any,
-    ):
-        """This is our custom ``from_*`` method. It expects scikit-learn ``Bunch`` objects as input and passes them
-        through to the :meth:`~flash.core.data.data_module.DataModule.from_` method underneath.
+        train_transform: INPUT_TRANSFORM_TYPE = TemplateInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = TemplateInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = TemplateInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = TemplateInputTransform,
+        input_cls: Type[Input] = TemplateSKLearnClassificationInput,
+        transform_kwargs: Optional[Dict] = None,
+        **data_module_kwargs: Any,
+    ) -> "TemplateData":
+        """This is our custom ``from_*`` method. It expects scikit-learn ``Bunch`` objects as input and creates the
+        ``TemplateData`` with them.
 
         Args:
             train_bunch: The scikit-learn ``Bunch`` containing the train data.
@@ -195,36 +199,23 @@ class TemplateData(DataModule):
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`.
-            input_transform: The :class:`~flash.core.data.data.InputTransform` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls`` will be
-                constructed and used.
-            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
-                Will only be used if ``input_transform = None``.
 
         Returns:
             The constructed data module.
         """
-        return super().from_input(
-            "sklearn",
-            train_bunch,
-            val_bunch,
-            test_bunch,
-            predict_bunch,
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
-            data_fetcher=data_fetcher,
-            input_transform=input_transform,
-            val_split=val_split,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            **input_transform_kwargs,
+
+        ds_kw = dict(
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
+        )
+
+        return cls(
+            input_cls(RunningStage.TRAINING, train_bunch, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_bunch, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, test_bunch, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_bunch, transform=predict_transform, **ds_kw),
+            **data_module_kwargs,
         )
 
     @property
@@ -254,14 +245,5 @@ class TemplateVisualization(BaseVisualization):
     def show_load_sample(self, samples: List[Any], running_stage: RunningStage):
         print(samples)
 
-    def show_pre_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
+    def show_per_sample_transform(self, samples: List[Any], running_stage: RunningStage):
         print(samples)
-
-    def show_to_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
-        print(samples)
-
-    def show_post_tensor_transform(self, samples: List[Any], running_stage: RunningStage):
-        print(samples)
-
-    def show_per_batch_transform(self, batch: List[Any], running_stage):
-        print(batch)

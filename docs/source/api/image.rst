@@ -18,6 +18,7 @@ ______________
     :template: classtemplate.rst
 
     ~classification.model.ImageClassifier
+    ~classification.data.ImageClassificationFiftyOneInput
     ~classification.data.ImageClassificationData
     ~classification.data.ImageClassificationInputTransform
 
@@ -42,10 +43,9 @@ ________________
     ~detection.model.ObjectDetector
     ~detection.data.ObjectDetectionData
 
-    detection.data.FiftyOneParser
-    detection.data.ObjectDetectionFiftyOneInput
-    detection.output.FiftyOneDetectionLabels
-    detection.data.ObjectDetectionInputTransform
+    detection.input.FiftyOneParser
+    detection.input.ObjectDetectionFiftyOneInput
+    detection.output.FiftyOneDetectionLabelsOutput
 
 Keypoint Detection
 __________________
@@ -58,7 +58,6 @@ __________________
     ~keypoint_detection.model.KeypointDetector
     ~keypoint_detection.data.KeypointDetectionData
 
-    keypoint_detection.data.KeypointDetectionInputTransform
 
 Instance Segmentation
 _____________________
@@ -93,17 +92,19 @@ ____________
 
     ~segmentation.model.SemanticSegmentation
     ~segmentation.data.SemanticSegmentationData
-    ~segmentation.data.SemanticSegmentationInputTransform
 
     segmentation.data.SegmentationMatplotlibVisualization
-    segmentation.data.SemanticSegmentationNumpyInput
-    segmentation.data.SemanticSegmentationTensorInput
-    segmentation.data.SemanticSegmentationPathsInput
-    segmentation.data.SemanticSegmentationFiftyOneInput
-    segmentation.data.SemanticSegmentationDeserializer
+    segmentation.input.SemanticSegmentationInput
+    segmentation.input.SemanticSegmentationFilesInput
+    segmentation.input.SemanticSegmentationFolderInput
+    segmentation.input.SemanticSegmentationNumpyInput
+    segmentation.input.SemanticSegmentationTensorInput
+    segmentation.input.SemanticSegmentationFiftyOneInput
+    segmentation.input.SemanticSegmentationDeserializer
+    segmentation.transforms.SemanticSegmentationInputTransform
     segmentation.model.SemanticSegmentationOutputTransform
-    segmentation.output.FiftyOneSegmentationLabels
-    segmentation.output.SegmentationLabels
+    segmentation.output.FiftyOneSegmentationLabelsOutput
+    segmentation.output.SegmentationLabelsOutput
 
 .. autosummary::
     :toctree: generated/
@@ -140,7 +141,5 @@ ________________
     :template: classtemplate.rst
 
     ~data.ImageDeserializer
-    ~data.ImageFiftyOneInput
     ~data.ImageNumpyInput
-    ~data.ImagePathsInput
     ~data.ImageTensorInput

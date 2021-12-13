@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+from dataclasses import dataclass
 from typing import Callable, Dict, Tuple
 
 import torch
-from torch import nn
 
 from flash.core.data.io.input import DataKeys
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.transforms import ApplyToKeys, kornia_collate, merge_transforms
 from flash.core.utilities.imports import _ALBUMENTATIONS_AVAILABLE, _KORNIA_AVAILABLE, _TORCHVISION_AVAILABLE, requires
 
@@ -25,7 +26,6 @@ if _KORNIA_AVAILABLE:
     import kornia as K
 
 if _TORCHVISION_AVAILABLE:
-    import torchvision
     from torchvision import transforms as T
 
 if _ALBUMENTATIONS_AVAILABLE:
@@ -49,33 +49,38 @@ def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
     collate the batch, and apply normalization."""
     if _KORNIA_AVAILABLE and os.getenv("FLASH_TESTING", "0") != "1":
         #  Better approach as all transforms are applied on tensor directly
-        return {
-            "to_tensor_transform": nn.Sequential(
-                ApplyToKeys(DataKeys.INPUT, torchvision.transforms.ToTensor()),
+        per_sample_transform = T.Compose(
+            [
+                ApplyToKeys(
+                    DataKeys.INPUT,
+                    T.Compose([T.ToTensor(), K.geometry.Resize(image_size)]),
+                ),
                 ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
-            ),
-            "post_tensor_transform": ApplyToKeys(
-                DataKeys.INPUT,
-                K.geometry.Resize(image_size),
-            ),
-            "collate": kornia_collate,
-            "per_batch_transform_on_device": ApplyToKeys(
-                DataKeys.INPUT,
-                K.augmentation.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
-            ),
-        }
-    return {
-        "pre_tensor_transform": ApplyToKeys(DataKeys.INPUT, T.Resize(image_size)),
-        "to_tensor_transform": nn.Sequential(
-            ApplyToKeys(DataKeys.INPUT, torchvision.transforms.ToTensor()),
-            ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
-        ),
-        "post_tensor_transform": ApplyToKeys(
+            ]
+        )
+        per_batch_transform_on_device = ApplyToKeys(
             DataKeys.INPUT,
-            T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+            K.augmentation.Normalize(torch.tensor([0.485, 0.456, 0.406]), torch.tensor([0.229, 0.224, 0.225])),
+        )
+        return dict(
+            per_sample_transform=per_sample_transform,
+            collate=kornia_collate,
+            per_batch_transform_on_device=per_batch_transform_on_device,
+        )
+    return dict(
+        per_sample_transform=T.Compose(
+            [
+                ApplyToKeys(
+                    DataKeys.INPUT,
+                    T.Compose(
+                        [T.ToTensor(), T.Resize(image_size), T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]
+                    ),
+                ),
+                ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
+            ]
         ),
-        "collate": kornia_collate,
-    }
+        collate=kornia_collate,
+    )
 
 
 def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
@@ -83,8 +88,36 @@ def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]
     if _KORNIA_AVAILABLE and os.getenv("FLASH_TESTING", "0") != "1":
         #  Better approach as all transforms are applied on tensor directly
         transforms = {
-            "post_tensor_transform": ApplyToKeys(DataKeys.INPUT, K.augmentation.RandomHorizontalFlip()),
+            "per_sample_transform": ApplyToKeys(DataKeys.INPUT, K.augmentation.RandomHorizontalFlip()),
         }
     else:
-        transforms = {"pre_tensor_transform": ApplyToKeys(DataKeys.INPUT, T.RandomHorizontalFlip())}
+        transforms = {"per_sample_transform": ApplyToKeys(DataKeys.INPUT, T.RandomHorizontalFlip())}
     return merge_transforms(default_transforms(image_size), transforms)
+
+
+@dataclass
+class ImageClassificationInputTransform(InputTransform):
+
+    image_size: Tuple[int, int] = (196, 196)
+
+    def input_per_sample_transform(self):
+        return T.Compose(
+            [T.ToTensor(), T.Resize(self.image_size), T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]
+        )
+
+    def train_input_per_sample_transform(self):
+        return T.Compose(
+            [
+                T.ToTensor(),
+                T.Resize(self.image_size),
+                T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+                T.RandomHorizontalFlip(),
+            ]
+        )
+
+    def target_per_sample_transform(self) -> Callable:
+        return torch.as_tensor
+
+    def collate(self) -> Callable:
+        # TODO: Remove kornia collate for default_collate
+        return kornia_collate

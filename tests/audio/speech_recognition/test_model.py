@@ -22,9 +22,10 @@ import torch
 from flash import Trainer
 from flash.__main__ import main
 from flash.audio import SpeechRecognition
-from flash.audio.speech_recognition.data import SpeechRecognitionInputTransform, SpeechRecognitionOutputTransform
-from flash.core.data.io.input import DataKeys
+from flash.audio.speech_recognition.data import InputTransform, SpeechRecognitionData
+from flash.core.data.io.input import DataKeys, Input
 from flash.core.utilities.imports import _AUDIO_AVAILABLE
+from flash.core.utilities.stages import RunningStage
 from tests.helpers.utils import _AUDIO_TESTING, _SERVE_TESTING
 
 # ======== Mock functions ========
@@ -51,9 +52,11 @@ TEST_BACKBONE = "patrickvonplaten/wav2vec2_tiny_random_robust"  # super small mo
 @pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 def test_init_train(tmpdir):
     model = SpeechRecognition(backbone=TEST_BACKBONE)
-    train_dl = torch.utils.data.DataLoader(DummyDataset())
+    datamodule = SpeechRecognitionData(
+        Input(RunningStage.TRAINING, DummyDataset(), transform=InputTransform), batch_size=2
+    )
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    trainer.fit(model, train_dl)
+    trainer.fit(model, datamodule=datamodule)
 
 
 @pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
@@ -79,10 +82,6 @@ def test_jit(tmpdir):
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = SpeechRecognition(backbone=TEST_BACKBONE)
-
-    # TODO: Currently only servable once a input_transform and postprocess have been attached
-    model._input_transform = SpeechRecognitionInputTransform()
-    model._output_transform = SpeechRecognitionOutputTransform()
     model.eval()
     model.serve()
 

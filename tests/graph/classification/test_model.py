@@ -14,14 +14,14 @@
 from unittest import mock
 
 import pytest
-import torch
 
-from flash import Trainer
+from flash import RunningStage, Trainer
 from flash.__main__ import main
-from flash.core.data.data_pipeline import DataPipeline
+from flash.core.data.data_module import DataModule
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
 from flash.graph.classification import GraphClassifier
-from flash.graph.classification.data import GraphClassificationInputTransform
+from flash.graph.classification.input import GraphClassificationDatasetInput
+from flash.graph.classification.input_transform import GraphClassificationInputTransform
 from tests.helpers.utils import _GRAPH_TESTING
 
 if _GRAPH_AVAILABLE:
@@ -40,10 +40,12 @@ def test_train(tmpdir):
     """Tests that the model can be trained on a pytorch geometric dataset."""
     tudataset = datasets.TUDataset(root=tmpdir, name="KKI")
     model = GraphClassifier(num_features=tudataset.num_features, num_classes=tudataset.num_classes)
-    model.data_pipeline = DataPipeline(input_transform=GraphClassificationInputTransform())
-    train_dl = torch.utils.data.DataLoader(tudataset, batch_size=4)
+    datamodule = DataModule(
+        GraphClassificationDatasetInput(RunningStage.TRAINING, tudataset, transform=GraphClassificationInputTransform),
+        batch_size=4,
+    )
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    trainer.fit(model, train_dl)
+    trainer.fit(model, datamodule=datamodule)
 
 
 @pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")
@@ -51,10 +53,14 @@ def test_val(tmpdir):
     """Tests that the model can be validated on a pytorch geometric dataset."""
     tudataset = datasets.TUDataset(root=tmpdir, name="KKI")
     model = GraphClassifier(num_features=tudataset.num_features, num_classes=tudataset.num_classes)
-    model.data_pipeline = DataPipeline(input_transform=GraphClassificationInputTransform())
-    val_dl = torch.utils.data.DataLoader(tudataset, batch_size=4)
+    datamodule = DataModule(
+        val_input=GraphClassificationDatasetInput(
+            RunningStage.VALIDATING, tudataset, transform=GraphClassificationInputTransform
+        ),
+        batch_size=4,
+    )
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    trainer.validate(model, val_dl)
+    trainer.validate(model, datamodule=datamodule)
 
 
 @pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")
@@ -62,10 +68,14 @@ def test_test(tmpdir):
     """Tests that the model can be tested on a pytorch geometric dataset."""
     tudataset = datasets.TUDataset(root=tmpdir, name="KKI")
     model = GraphClassifier(num_features=tudataset.num_features, num_classes=tudataset.num_classes)
-    model.data_pipeline = DataPipeline(input_transform=GraphClassificationInputTransform())
-    test_dl = torch.utils.data.DataLoader(tudataset, batch_size=4)
+    datamodule = DataModule(
+        test_input=GraphClassificationDatasetInput(
+            RunningStage.TESTING, tudataset, transform=GraphClassificationInputTransform
+        ),
+        batch_size=4,
+    )
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    trainer.test(model, test_dl)
+    trainer.test(model, datamodule=datamodule)
 
 
 @pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")
@@ -73,9 +83,15 @@ def test_predict_dataset(tmpdir):
     """Tests that we can generate predictions from a pytorch geometric dataset."""
     tudataset = datasets.TUDataset(root=tmpdir, name="KKI")
     model = GraphClassifier(num_features=tudataset.num_features, num_classes=tudataset.num_classes)
-    data_pipe = DataPipeline(input_transform=GraphClassificationInputTransform())
-    out = model.predict(tudataset, input="datasets", data_pipeline=data_pipe)
-    assert isinstance(out[0], int)
+    datamodule = DataModule(
+        predict_input=GraphClassificationDatasetInput(
+            RunningStage.TESTING, tudataset, transform=GraphClassificationInputTransform
+        ),
+        batch_size=4,
+    )
+    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
+    out = trainer.predict(model, datamodule=datamodule)
+    assert isinstance(out[0][0], int)
 
 
 @pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")

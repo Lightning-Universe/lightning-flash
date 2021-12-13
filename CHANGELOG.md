@@ -4,51 +4,57 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased] - YYYY-DD-MM
+## [0.6.0] - 2021-13-12
 
 ### Added
 
+- Added `TextEmbedder` task ([#996](https://github.com/PyTorchLightning/lightning-flash/pull/996))
+- Added predict_kwargs in `ObjectDetector`, `InstanceSegmentation`, `KeypointDetector` ([#990](https://github.com/PyTorchLightning/lightning-flash/pull/990))
 - Added backbones for `GraphClassifier` ([#592](https://github.com/PyTorchLightning/lightning-flash/pull/592))
-
 - Added `GraphEmbedder` task ([#592](https://github.com/PyTorchLightning/lightning-flash/pull/592))
+- Added support for comma delimited multi-label targets to the `ImageClassifier` ([#997](https://github.com/PyTorchLightning/lightning-flash/pull/997))
+- Added `datapipeline_state` on dataset creation within the `from_*` methods from the `DataModule` ([#1018](https://github.com/PyTorchLightning/lightning-flash/pull/1018))
 
 ### Changed
 
 - Changed `DataSource` to `Input` ([#929](https://github.com/PyTorchLightning/lightning-flash/pull/929))
-
 - Changed `Preprocess` to `InputTransform` ([#951](https://github.com/PyTorchLightning/lightning-flash/pull/951))
-
 - Changed classes named `*Serializer` and properties / variables named `serializer` to be `*Output` and `output` respectively ([#927](https://github.com/PyTorchLightning/lightning-flash/pull/927))
-
 - Changed `Postprocess` to `OutputTransform` ([#942](https://github.com/PyTorchLightning/lightning-flash/pull/942))
-
 - Changed loading of RGBA images to drop alpha channel by default ([#946](https://github.com/PyTorchLightning/lightning-flash/pull/946))
-
 - Updated `FlashFinetuning` callback to use separate hooks that lets users use the freezing logic provided out-of-the-box from flash, route FlashFinetuning through a registry. ([#830](https://github.com/PyTorchLightning/lightning-flash/pull/830))
+- Changed the `SpeechRecognition` task to use `AutoModelForCTC` rather than just `Wav2Vec2ForCTC` ([#874](https://github.com/PyTorchLightning/lightning-flash/pull/874))
+- Changed the `Deserializer` to subclass `ServeInput` ([#1013](https://github.com/PyTorchLightning/lightning-flash/pull/1013))
+- Added `Output` suffix to `Preds`, `FiftyOneDetectionLabels`, `SegmentationLabels`, `FiftyOneDetectionLabels`, `DetectionLabels`, `Classes`, `FiftyOneLabels`, `Labels`, `Logits`, `Probabilities` ([#1011](https://github.com/PyTorchLightning/lightning-flash/pull/1011))
+- Changed `from_files` and `from_folders` from `ObjectDetectionData`, `InstanceSegmentationData`, `KeypointDetectionData` to support only the `predicting` stage ([#1018](https://github.com/PyTorchLightning/lightning-flash/pull/1018))
+- Changed `Image Classification Task` to use the new DataModule API ([#1025](https://github.com/PyTorchLightning/pytorch-lightning/pull/1025))
 
 ### Deprecated
 
 - Deprecated `flash.core.data.process.Serializer` in favour of `flash.core.data.io.output.Output` ([#927](https://github.com/PyTorchLightning/lightning-flash/pull/927))
-
 - Deprecated `Task.serializer` in favour of `Task.output` ([#927](https://github.com/PyTorchLightning/lightning-flash/pull/927))
-
 - Deprecated `flash.text.seq2seq.core.metrics` in favour of `torchmetrics[text]` ([#648](https://github.com/PyTorchLightning/lightning-flash/pull/648))
-
 - Deprecated `flash.core.data.data_source.DefaultDataKeys` in favour of `flash.DataKeys` ([#929](https://github.com/PyTorchLightning/lightning-flash/pull/929))
-
 - Deprecated `data_source` argument to `flash.Task.predict` in favour of `input` ([#929](https://github.com/PyTorchLightning/lightning-flash/pull/929))
 
 ### Fixed
 
 - Fixed a bug where using image classification with DDP spawn would trigger an infinite recursion ([#969](https://github.com/PyTorchLightning/lightning-flash/pull/969))
+- Fixed a bug where Flash could not be used with IceVision 0.11.0 ([#989](https://github.com/PyTorchLightning/lightning-flash/pull/989))
+- Fixed a bug where backbone weights were sometimes not frozen correctly ([#992](https://github.com/PyTorchLightning/lightning-flash/pull/992))
+- Fixed a bug where translation metrics were not computed correctly ([#992](https://github.com/PyTorchLightning/lightning-flash/pull/992))
+- Fixed a bug where additional `DataModule` keyword arguments could not be configured with Flash Zero for some tasks ([#994](https://github.com/PyTorchLightning/lightning-flash/pull/994))
+- Fixed a bug where the TabularForecaster would not work with some versions of pandas ([#995](https://github.com/PyTorchLightning/lightning-flash/pull/995))
 
 ### Removed
 
 - Removed `OutputMapping` ([#939](https://github.com/PyTorchLightning/lightning-flash/pull/939))
-
 - Removed `Output.enable` and `Output.disable` ([#939](https://github.com/PyTorchLightning/lightning-flash/pull/939))
-
 - Removed `OutputTransform.save_sample` and `save_data` hooks ([#948](https://github.com/PyTorchLightning/lightning-flash/pull/948))
+- Removed InputTransform `pre_tensor_transform`, `to_tensor_transform`, `post_tensor_transform` hooks in favour of `per_sample_transform` ([#1010](https://github.com/PyTorchLightning/lightning-flash/pull/1010))
+- Removed `Task.predict`, use `Trainer.predict` instead ([#1030](https://github.com/PyTorchLightning/lightning-flash/pull/1030))
+- Removed the `backbone` argument from `TextClassificationData`, it is now sufficient to only provide a `backbone` argument to the `TextClassifier` ([#1022](https://github.com/PyTorchLightning/lightning-flash/pull/1022))
+- Removed support for the `serve_sanity_check` argument in `flash.Trainer` ([#1062](https://github.com/PyTorchLightning/lightning-flash/pull/1062))
 
 ## [0.5.2] - 2021-11-05
 

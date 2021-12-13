@@ -27,14 +27,13 @@ datamodule = TextClassificationData.from_csv(
     ["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"],
     train_file="data/jigsaw_toxic_comments/train.csv",
     val_split=0.1,
-    backbone="unitary/toxic-bert",
 )
 
 # 2. Build the task
 model = TextClassifier(
     backbone="unitary/toxic-bert",
     num_classes=datamodule.num_classes,
-    multi_label=True,
+    multi_label=datamodule.multi_label,
 )
 
 # 3. Create the trainer and finetune the model
@@ -42,13 +41,14 @@ trainer = flash.Trainer(max_epochs=1, gpus=torch.cuda.device_count())
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Generate predictions for a few comments!
-predictions = model.predict(
-    [
+datamodule = TextClassificationData.from_lists(
+    predict_data=[
         "No, he is an arrogant, self serving, immature idiot. Get it right.",
         "U SUCK HANNAH MONTANA",
         "Would you care to vote? Thx.",
     ]
 )
+predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
 
 # 5. Save the model!

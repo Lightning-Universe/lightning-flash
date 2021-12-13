@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 import warnings
-from typing import Any, Iterable, List, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, Type, Union
 
 import torch
 from pytorch_lightning import Callback
@@ -21,15 +21,28 @@ from pytorch_lightning.utilities import rank_zero_info
 from torch import Tensor
 from torch.nn import Module
 
+from flash.core.data.io.input import DataKeys, ServeInput
+from flash.core.data.io.output_transform import OutputTransform
+from flash.core.integrations.transformers.input_transform import TransformersInputTransform
+from flash.core.integrations.transformers.states import TransformersBackboneState
 from flash.core.model import Task
 from flash.core.registry import ExternalRegistry, FlashRegistry
-from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.core.serve import Composition
+from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 from flash.core.utilities.providers import _HUGGINGFACE
-from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
+from flash.core.utilities.types import (
+    INPUT_TRANSFORM_TYPE,
+    LOSS_FN_TYPE,
+    LR_SCHEDULER_TYPE,
+    METRICS_TYPE,
+    OPTIMIZER_TYPE,
+)
+from flash.text.input import TextDeserializer
 from flash.text.ort_callback import ORTCallback
+from flash.text.seq2seq.core.output_transform import Seq2SeqOutputTransform
 
 if _TEXT_AVAILABLE:
-    from transformers import AutoModelForSeq2SeqLM, PreTrainedTokenizerBase
+    from transformers import AutoModelForSeq2SeqLM
 
     HUGGINGFACE_BACKBONES = ExternalRegistry(
         AutoModelForSeq2SeqLM.from_pretrained,
@@ -76,6 +89,7 @@ class Seq2SeqTask(Task):
     def __init__(
         self,
         backbone: str = "t5-small",
+        tokenizer_kwargs: Optional[Dict[str, Any]] = None,
         loss_fn: LOSS_FN_TYPE = None,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
@@ -84,6 +98,7 @@ class Seq2SeqTask(Task):
         val_target_max_length: Optional[int] = None,
         num_beams: Optional[int] = None,
         enable_ort: bool = False,
+        output_transform: Optional[OutputTransform] = Seq2SeqOutputTransform(),
     ):
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
         # disable HF thousand warnings
@@ -96,7 +111,9 @@ class Seq2SeqTask(Task):
             lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
+            output_transform=output_transform,
         )
+        self.set_state(TransformersBackboneState(backbone, tokenizer_kwargs=tokenizer_kwargs))
         self.model = self.backbones.get(backbone)()
         self.enable_ort = enable_ort
         self.val_target_max_length = val_target_max_length
@@ -117,12 +134,14 @@ class Seq2SeqTask(Task):
         return generated_tokens
 
     def training_step(self, batch: Any, batch_idx: int) -> Tensor:
+        batch["labels"] = batch.pop(DataKeys.TARGET)
         outputs = self.model(**batch)
         loss = outputs[0]
         self.log("train_loss", loss)
         return loss
 
     def common_step(self, prefix: str, batch: Any) -> torch.Tensor:
+        batch["labels"] = batch.pop(DataKeys.TARGET)
         generated_tokens = self(batch)
         self.compute_metrics(generated_tokens, batch, prefix)
 
@@ -148,12 +167,8 @@ class Seq2SeqTask(Task):
             rank_zero_info(f"Overriding model paramameters for {self.task} as defined within the model:\n {pars}")
             self.model.config.update(pars)
 
-    @property
-    def tokenizer(self) -> "PreTrainedTokenizerBase":
-        return self.data_pipeline.input.tokenizer
-
     def tokenize_labels(self, labels: Tensor) -> List[str]:
-        label_str = self.tokenizer.batch_decode(labels, skip_special_tokens=True)
+        label_str = self.get_state(TransformersBackboneState).tokenizer.batch_decode(labels, skip_special_tokens=True)
         return [str.strip(s) for s in label_str]
 
     def modules_to_freeze(self) -> Union[Module, Iterable[Union[Module, Iterable]]]:
@@ -176,3 +191,15 @@ class Seq2SeqTask(Task):
         if self.enable_ort:
             callbacks.append(ORTCallback())
         return callbacks
+
+    @requires("serve")
+    def serve(
+        self,
+        host: str = "127.0.0.1",
+        port: int = 8000,
+        sanity_check: bool = True,
+        input_cls: Optional[Type[ServeInput]] = TextDeserializer,
+        transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
+        transform_kwargs: Optional[Dict] = None,
+    ) -> Composition:
+        return super().serve(host, port, sanity_check, input_cls, transform, transform_kwargs)

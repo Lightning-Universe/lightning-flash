@@ -11,9 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from flash.core.data.io.input import DataKeys
-from flash.core.data.io.input_transform import DefaultInputTransform
-from flash.core.data.transforms import ApplyToKeys
+
+from dataclasses import dataclass
+from typing import Callable, List, Optional
+
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, _VISSL_AVAILABLE
 from flash.image import ImageClassificationData
 from flash.image.embedding.vissl.transforms import multicrop_collate_fn
@@ -33,24 +35,33 @@ def ssl_datamodule(
     crop_scales=[[0.4, 1], [0.05, 0.4]],
     collate_fn=multicrop_collate_fn,
 ):
-    multi_crop_transform = TRANSFORM_REGISTRY["multicrop_ssl_transform"](
-        total_num_crops, num_crops, size_crops, crop_scales
-    )
+    @dataclass
+    class SSLInputTransform(InputTransform):
 
-    to_tensor_transform = ApplyToKeys(
-        DataKeys.INPUT,
-        multi_crop_transform,
-    )
-    input_transform = DefaultInputTransform(
-        train_transform={
-            "to_tensor_transform": to_tensor_transform,
-            "collate": collate_fn,
-        }
+        total_num_crops: int = 4
+        num_crops: Optional[List[int]] = None
+        size_crops: Optional[List[int]] = None
+        crop_scales: Optional[List[List[float]]] = None
+
+        def input_per_sample_transform(self) -> Callable:
+            return TRANSFORM_REGISTRY["multicrop_ssl_transform"](
+                self.total_num_crops, self.num_crops, self.size_crops, self.crop_scales
+            )
+
+        def collate(self) -> Callable:
+            return collate_fn
+
+    transform_kwargs = dict(
+        total_num_crops=total_num_crops, num_crops=num_crops, size_crops=size_crops, crop_scales=crop_scales
     )
 
     datamodule = ImageClassificationData.from_datasets(
         train_dataset=FakeData(),
-        input_transform=input_transform,
+        train_transform=SSLInputTransform,
+        val_transform=SSLInputTransform,
+        test_transform=SSLInputTransform,
+        predict_transform=SSLInputTransform,
+        transform_kwargs=transform_kwargs,
         batch_size=batch_size,
     )
 

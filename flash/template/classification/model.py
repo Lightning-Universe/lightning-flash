@@ -16,7 +16,7 @@ from typing import Any, Dict, Optional, Tuple, Union
 import torch
 from torch import nn
 
-from flash.core.classification import ClassificationTask, Labels
+from flash.core.classification import ClassificationTask, LabelsOutput
 from flash.core.data.io.input import DataKeys
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
@@ -57,7 +57,7 @@ class TemplateSKLearnClassifier(ClassificationTask):
         metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-2,
         multi_label: bool = False,
-        output: OUTPUT_TYPE = None,
+        output: OUTPUT_TYPE = LabelsOutput(),
     ):
         super().__init__(
             model=None,
@@ -67,7 +67,7 @@ class TemplateSKLearnClassifier(ClassificationTask):
             metrics=metrics,
             learning_rate=learning_rate,
             multi_label=multi_label,
-            output=output or Labels(),
+            output=output,
         )
 
         self.save_hyperparameters()

@@ -1,5 +1,5 @@
 import flash
-from flash.core.classification import Labels
+from flash.core.classification import LabelsOutput
 from flash.core.data.utils import download_data
 from flash.core.integrations.labelstudio.visualizer import launch_app
 from flash.image import ImageClassificationData, ImageClassifier
@@ -30,14 +30,15 @@ trainer.save_checkpoint("image_classification_model.pt")
 
 # 4. Predict from checkpoint
 model = ImageClassifier.load_from_checkpoint("image_classification_model.pt")
-model.output = Labels()
+model.output = LabelsOutput()
 
-predictions = model.predict(
-    [
+datamodule = ImageClassificationData.from_files(
+    predict_files=[
         "data/test/1.jpg",
         "data/test/2.jpg",
     ]
 )
+predictions = trainer.predict(model, datamodule=datamodule)
 
 # 5. Visualize predictions
 app = launch_app(datamodule)

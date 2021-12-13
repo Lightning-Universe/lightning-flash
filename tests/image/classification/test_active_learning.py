@@ -22,7 +22,7 @@ from torch import nn
 from torch.utils.data import SequentialSampler
 
 import flash
-from flash.core.classification import Probabilities
+from flash.core.classification import ProbabilitiesOutput
 from flash.core.utilities.imports import _BAAL_AVAILABLE
 from flash.image import ImageClassificationData, ImageClassifier
 from flash.image.classification.integrations.baal import ActiveLearningDataModule, ActiveLearningLoop
@@ -50,7 +50,7 @@ def simple_datamodule(tmpdir):
     _rand_image(image_size).save(pb_1)
     _rand_image(image_size).save(pb_2)
 
-    n = 5
+    n = 10
     dm = ImageClassificationData.from_files(
         train_files=[str(pa_1)] * n + [str(pa_2)] * n + [str(pb_1)] * n + [str(pb_2)] * n,
         train_targets=[0] * n + [1] * n + [2] * n + [3] * n,
@@ -58,7 +58,7 @@ def simple_datamodule(tmpdir):
         test_targets=[0] * n,
         batch_size=2,
         num_workers=0,
-        image_size=image_size,
+        transform_kwargs=dict(image_size=image_size),
     )
     return dm
 
@@ -92,9 +92,9 @@ def test_active_learning_training(simple_datamodule, initial_num_labels, query_s
     )
 
     model = ImageClassifier(
-        backbone="resnet18", head=head, num_classes=active_learning_dm.num_classes, output=Probabilities()
+        backbone="resnet18", head=head, num_classes=active_learning_dm.num_classes, output=ProbabilitiesOutput()
     )
-    trainer = flash.Trainer(max_epochs=3)
+    trainer = flash.Trainer(max_epochs=3, num_sanity_val_steps=0)
     active_learning_loop = ActiveLearningLoop(label_epoch_frequency=1, inference_iteration=3)
     active_learning_loop.connect(trainer.fit_loop)
     trainer.fit_loop = active_learning_loop
@@ -144,7 +144,7 @@ def test_no_validation_loop(simple_datamodule):
     )
 
     model = ImageClassifier(
-        backbone="resnet18", head=head, num_classes=active_learning_dm.num_classes, output=Probabilities()
+        backbone="resnet18", head=head, num_classes=active_learning_dm.num_classes, output=ProbabilitiesOutput()
     )
     trainer = flash.Trainer(max_epochs=3)
     active_learning_loop = ActiveLearningLoop(label_epoch_frequency=1, inference_iteration=3)

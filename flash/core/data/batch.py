@@ -11,52 +11,27 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Sequence, TYPE_CHECKING
+from typing import Any, Sequence, TYPE_CHECKING
 
 import torch
 from torch import Tensor
 
-from flash.core.data.callback import ControlFlow
-from flash.core.data.utils import convert_to_modules, CurrentFuncContext, CurrentRunningStageContext
-from flash.core.utilities.stages import RunningStage
-
 if TYPE_CHECKING:
-    from flash.core.data.io.input_transform import InputTransform
-    from flash.core.data.process import Deserializer
+    from flash.core.data.io.input import ServeInput
 
 
-class _DeserializeProcessor(torch.nn.Module):
+class _ServeInputProcessor(torch.nn.Module):
     def __init__(
         self,
-        deserializer: "Deserializer",
-        input_transform: "InputTransform",
-        pre_tensor_transform: Callable,
-        to_tensor_transform: Callable,
+        serve_input: "ServeInput",
     ):
         super().__init__()
-        self.input_transform = input_transform
-        self.callback = ControlFlow(self.input_transform.callbacks)
-        self.deserializer = convert_to_modules(deserializer)
-        self.pre_tensor_transform = convert_to_modules(pre_tensor_transform)
-        self.to_tensor_transform = convert_to_modules(to_tensor_transform)
-
-        self._current_stage_context = CurrentRunningStageContext(RunningStage.PREDICTING, input_transform, reset=False)
-        self._pre_tensor_transform_context = CurrentFuncContext("pre_tensor_transform", input_transform)
-        self._to_tensor_transform_context = CurrentFuncContext("to_tensor_transform", input_transform)
+        self.serve_input = serve_input
+        self.dataloader_collate_fn = self.serve_input._create_dataloader_collate_fn([])
 
     def forward(self, sample: str):
-
-        sample = self.deserializer(sample)
-
-        with self._current_stage_context:
-            with self._pre_tensor_transform_context:
-                sample = self.pre_tensor_transform(sample)
-                self.callback.on_pre_tensor_transform(sample, RunningStage.PREDICTING)
-
-            with self._to_tensor_transform_context:
-                sample = self.to_tensor_transform(sample)
-                self.callback.on_to_tensor_transform(sample, RunningStage.PREDICTING)
-
+        sample = self.serve_input._call_load_sample(sample)
+        sample = self.dataloader_collate_fn(sample)
         return sample
 
 

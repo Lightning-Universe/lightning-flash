@@ -18,11 +18,9 @@ from unittest import mock
 import pytest
 import torch
 
-from flash import Trainer
+from flash import DataKeys, Trainer
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import SummarizationTask
-from flash.text.seq2seq.core.data import Seq2SeqOutputTransform
-from flash.text.seq2seq.summarization.data import SummarizationInputTransform
 from tests.helpers.utils import _SERVE_TESTING, _TEXT_TESTING
 
 # ======== Mock functions ========
@@ -32,7 +30,7 @@ class DummyDataset(torch.utils.data.Dataset):
     def __getitem__(self, index):
         return {
             "input_ids": torch.randint(1000, size=(128,)),
-            "labels": torch.randint(1000, size=(128,)),
+            DataKeys.TARGET: torch.randint(1000, size=(128,)),
         }
 
     def __len__(self) -> int:
@@ -78,10 +76,6 @@ def test_jit(tmpdir):
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = SummarizationTask(TEST_BACKBONE)
-
-    # TODO: Currently only servable once a input_transform and postprocess have been attached
-    model._input_transform = SummarizationInputTransform(backbone=TEST_BACKBONE)
-    model._output_transform = Seq2SeqOutputTransform()
     model.eval()
     model.serve()
 

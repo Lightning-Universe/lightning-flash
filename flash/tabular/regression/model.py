@@ -11,15 +11,25 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, List, Tuple
+from functools import partial
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
 import torch
 from torch.nn import functional as F
 
-from flash.core.data.io.input import DataKeys
+from flash.core.data.io.input import DataKeys, ServeInput
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.regression import RegressionTask
-from flash.core.utilities.imports import _TABULAR_AVAILABLE
-from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
+from flash.core.serve import Composition
+from flash.core.utilities.imports import _TABULAR_AVAILABLE, requires
+from flash.core.utilities.types import (
+    INPUT_TRANSFORM_TYPE,
+    LR_SCHEDULER_TYPE,
+    METRICS_TYPE,
+    OPTIMIZER_TYPE,
+    OUTPUT_TYPE,
+)
+from flash.tabular.input import TabularDeserializer
 
 if _TABULAR_AVAILABLE:
     from pytorch_tabnet.tab_network import TabNet
@@ -109,3 +119,18 @@ class TabularRegressor(RegressionTask):
     def from_data(cls, datamodule, **kwargs) -> "TabularRegressor":
         model = cls(datamodule.num_features, datamodule.embedding_sizes, **kwargs)
         return model
+
+    @requires("serve")
+    def serve(
+        self,
+        host: str = "127.0.0.1",
+        port: int = 8000,
+        sanity_check: bool = True,
+        input_cls: Optional[Type[ServeInput]] = TabularDeserializer,
+        transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        transform_kwargs: Optional[Dict] = None,
+        parameters: Optional[Dict[str, Any]] = None,
+    ) -> Composition:
+        return super().serve(
+            host, port, sanity_check, partial(input_cls, parameters=parameters), transform, transform_kwargs
+        )

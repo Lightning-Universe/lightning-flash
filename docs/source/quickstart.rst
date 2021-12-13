@@ -79,7 +79,7 @@ Inference
 Inference is the process of generating predictions from trained models. To use a task for inference:
 
 1. Init your task with pretrained weights using a checkpoint (a checkpoint is simply a file that capture the exact value of all parameters used by a model). Local file or URL works.
-2. Pass in the data to :func:`flash.core.model.Task.predict`.
+2. Load your data into a :class:`~flash.core.data.data_module.DataModule` and pass it to :func:`Trainer.predict <flash.core.trainer.Trainer.predict>`.
 
 |
 
@@ -88,19 +88,23 @@ Here's an example of inference:
 .. testcode::
 
     # import our libraries
-    from flash.text import TextClassifier
+    from flash import Trainer
+    from flash.text import TextClassifier, TextClassificationData
 
     # 1. Init the finetuned task from URL
     model = TextClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/0.6.0/text_classification_model.pt")
 
     # 2. Perform inference from list of sequences
-    predictions = model.predict(
-        [
+    trainer = Trainer()
+    datamodule = TextClassificationData.from_lists(
+        predict_data=[
             "Turgid dialogue, feeble characterization - Harvey Keitel a judge?.",
             "The worst movie in the history of cinema.",
             "This guy has done a great job with this movie!",
-        ]
+        ],
+        batch_size=4,
     )
+    predictions = trainer.predict(model, datamodule=datamodule)
     print(predictions)
 
 We get the following output:
@@ -113,11 +117,16 @@ We get the following output:
 .. testcode::
     :hide:
 
-    assert all([prediction in ["positive", "negative"] for prediction in predictions])
+    assert all(
+        [
+            all([prediction in ["positive", "negative"] for prediction in prediction_batch])
+            for prediction_batch in predictions
+        ]
+    )
 
 .. code-block::
 
-    ["negative", "negative", "positive"]
+    [["negative", "negative", "positive"]]
 
 -------
 

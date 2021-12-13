@@ -14,7 +14,6 @@
 import functools
 import inspect
 import pickle
-import warnings
 from abc import ABCMeta
 from copy import deepcopy
 from importlib import import_module
@@ -38,10 +37,8 @@ from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader, Sampler
 
 import flash
-from flash.core.data.auto_dataset import BaseAutoDataset
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
-from flash.core.data.io.input import Input
-from flash.core.data.io.input_base import InputBase as NewInputBase
+from flash.core.data.io.input import InputBase, ServeInput
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import OutputTransform
@@ -116,6 +113,10 @@ class ModuleWrapperBase:
     def attach_data_pipeline_state(self, data_pipeline_state: "DataPipelineState"):
         for state in self._state.values():
             data_pipeline_state.set_state(state)
+        if self._data_pipeline_state:
+            for state in self._data_pipeline_state._state.values():
+                data_pipeline_state.set_state(state)
+        self._data_pipeline_state = data_pipeline_state
         for child in self._children:
             child = getattr(self, child)
             if hasattr(child, "attach_data_pipeline_state"):
@@ -128,7 +129,7 @@ class DatasetProcessor:
 
     def _process_dataset(
         self,
-        dataset: BaseAutoDataset,
+        dataset: InputBase,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -152,7 +153,7 @@ class DatasetProcessor:
 
     def process_train_dataset(
         self,
-        dataset: BaseAutoDataset,
+        dataset: InputBase,
         trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
@@ -176,7 +177,7 @@ class DatasetProcessor:
 
     def process_val_dataset(
         self,
-        dataset: BaseAutoDataset,
+        dataset: InputBase,
         trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
@@ -200,7 +201,7 @@ class DatasetProcessor:
 
     def process_test_dataset(
         self,
-        dataset: BaseAutoDataset,
+        dataset: InputBase,
         trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
@@ -224,7 +225,7 @@ class DatasetProcessor:
 
     def process_predict_dataset(
         self,
-        dataset: BaseAutoDataset,
+        dataset: InputBase,
         batch_size: int = 1,
         num_workers: int = 0,
         pin_memory: bool = False,
@@ -260,27 +261,6 @@ class BenchmarkConvergenceCI(Callback):
                 fn(self.history)
                 if trainer.is_global_zero:
                     print("Benchmark Successful!")
-
-
-def predict_context(func: Callable) -> Callable:
-    """This decorator is used as context manager to put model in eval mode before running predict and reset to
-    train after."""
-
-    @functools.wraps(func)
-    def wrapper(self, *args, **kwargs) -> Any:
-        grad_enabled = torch.is_grad_enabled()
-        is_training = self.training
-        self.eval()
-        torch.set_grad_enabled(False)
-
-        result = func(self, *args, **kwargs)
-
-        if is_training:
-            self.train()
-        torch.set_grad_enabled(grad_enabled)
-        return result
-
-    return wrapper
 
 
 class CheckDependenciesMeta(ABCMeta):
@@ -372,6 +352,29 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         # Explicitly set the output to call the setter
         self.deserializer = deserializer
         self.output = output
+        self._wrapped_predict_step = False
+
+    def _wrap_predict_step(self) -> None:
+        if not self._wrapped_predict_step:
+            process_fn = self.build_data_pipeline().output_transform_processor(RunningStage.PREDICTING)
+
+            predict_step = self.predict_step
+
+            @functools.wraps(predict_step)
+            def wrapper(*args, **kwargs):
+                predictions = predict_step(*args, **kwargs)
+                return process_fn(predictions)
+
+            self._original_predict_step = self.predict_step
+            self.predict_step = wrapper
+
+            self._wrapped_predict_step = True
+
+    def _unwrap_predict_step(self) -> None:
+        if self._wrapped_predict_step:
+            self.predict_step = self._original_predict_step
+            del self._original_predict_step
+            self._wrapped_predict_step = False
 
     def step(self, batch: Any, batch_idx: int, metrics: nn.ModuleDict) -> Any:
         """Implement the core logic for the training/validation/test step. By default this includes:
@@ -472,60 +475,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             prog_bar=True,
         )
 
-    @predict_context
-    def predict(
-        self,
-        x: Any,
-        data_source: Optional[str] = None,
-        input: Optional[str] = None,
-        deserializer: Optional[Deserializer] = None,
-        data_pipeline: Optional[DataPipeline] = None,
-    ) -> Any:
-        """Predict function for raw data or processed data.
-
-        Args:
-            x: Input to predict. Can be raw data or processed data. If str, assumed to be a folder of data.
-            input: A string that indicates the format of the data source to use which will override
-                the current data source format used
-            deserializer: A single :class:`~flash.core.data.process.Deserializer` to deserialize the input
-            data_pipeline: Use this to override the current data pipeline
-
-        Returns:
-            The post-processed model predictions
-        """
-        if data_source is not None:
-            warnings.warn(
-                "The `data_source` argument has been deprecated since 0.6.0 and will be removed in 0.7.0. Use `input` "
-                "instead.",
-                FutureWarning,
-            )
-            input = data_source
-        running_stage = RunningStage.PREDICTING
-
-        data_pipeline = self.build_data_pipeline(None, deserializer, data_pipeline)
-
-        # <hack> Temporary fix to support new `Input` object
-        input = data_pipeline._input_transform_pipeline.input_of_name(input or "default")
-
-        if inspect.isclass(input) and issubclass(input, NewInputBase):
-            dataset = input(running_stage, x, data_pipeline_state=self._data_pipeline_state)
-        else:
-            dataset = input.generate_dataset(x, running_stage)
-        # </hack>
-
-        dataloader = self.process_predict_dataset(dataset)
-        x = list(dataloader.dataset)
-        x = data_pipeline.worker_input_transform_processor(running_stage, collate_fn=dataloader.collate_fn)(x)
-        # todo (tchaton): Remove this when sync with Lightning master.
-        if len(inspect.signature(self.transfer_batch_to_device).parameters) == 3:
-            x = self.transfer_batch_to_device(x, self.device, 0)
-        else:
-            x = self.transfer_batch_to_device(x, self.device)
-        x = data_pipeline.device_input_transform_processor(running_stage)(x)
-        x = x[0] if isinstance(x, list) else x
-        predictions = self.predict_step(x, 0)  # batch_idx is always 0 when running with `model.predict`
-        predictions = data_pipeline.output_transform_processor(running_stage)(predictions)
-        return predictions
+    def predict(self, *args, **kwargs):
+        raise AttributeError("`flash.Task.predict` has been removed. Use `flash.Trainer.predict` instead.")
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         if isinstance(batch, tuple):
@@ -534,6 +485,15 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             # Todo: Understand why stack is needed
             batch = torch.stack(batch)
         return self(batch)
+
+    def modules_to_freeze(self) -> Optional[Union[nn.Module]]:
+        """By default, we try to get the ``backbone`` attribute from the task and return it or ``None`` if not
+        present.
+
+        Returns:
+            The backbone ``Module`` to freeze or ``None`` if this task does not have a ``backbone`` attribute.
+        """
+        return getattr(self, "backbone", None)
 
     def _get_optimizer_class_from_registry(self, optimizer_key: str) -> Optimizer:
         if optimizer_key.lower() not in self.available_optimizers():
@@ -791,25 +751,22 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
         input = input or old_input
 
-        if isinstance(input, str):
-            if input_transform is None:
-                input = Input()  # TODO: warn the user that we are not using the specified data source
-            else:
-                input = input_transform.input_of_name(input)
-
         if deserializer is None or type(deserializer) is Deserializer:
             deserializer = getattr(input_transform, "deserializer", deserializer)
 
-        data_pipeline = DataPipeline(input, input_transform, output_transform, deserializer, output)
+        data_pipeline = DataPipeline(
+            input=input,
+            input_transform=input_transform,
+            output_transform=output_transform,
+            deserializer=deserializer,
+            output=output,
+        )
+
         self._data_pipeline_state = self._data_pipeline_state or DataPipelineState()
+
         self.attach_data_pipeline_state(self._data_pipeline_state)
         self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)
         return data_pipeline
-
-    @torch.jit.unused
-    @property
-    def is_servable(self) -> bool:
-        return type(self.build_data_pipeline()._deserializer) != Deserializer
 
     @torch.jit.unused
     @property
@@ -849,39 +806,11 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
     def output_transform(self) -> OutputTransform:
         return getattr(self.data_pipeline, "_output_transform", None)
 
-    def on_train_dataloader(self) -> None:
-        if self.data_pipeline is not None:
-            self.data_pipeline._detach_from_model(self, RunningStage.TRAINING)
-            self.data_pipeline._attach_to_model(self, RunningStage.TRAINING)
-        super().on_train_dataloader()
-
-    def on_val_dataloader(self) -> None:
-        if self.data_pipeline is not None:
-            self.data_pipeline._detach_from_model(self, RunningStage.VALIDATING)
-            self.data_pipeline._attach_to_model(self, RunningStage.VALIDATING)
-        super().on_val_dataloader()
-
-    def on_test_dataloader(self, *_) -> None:
-        if self.data_pipeline is not None:
-            self.data_pipeline._detach_from_model(self, RunningStage.TESTING)
-            self.data_pipeline._attach_to_model(self, RunningStage.TESTING)
-        super().on_test_dataloader()
-
-    def on_predict_dataloader(self) -> None:
-        if self.data_pipeline is not None:
-            self.data_pipeline._detach_from_model(self, RunningStage.PREDICTING)
-            self.data_pipeline._attach_to_model(self, RunningStage.PREDICTING)
-        super().on_predict_dataloader()
+    def on_predict_start(self) -> None:
+        self._wrap_predict_step()
 
     def on_predict_end(self) -> None:
-        if self.data_pipeline is not None:
-            self.data_pipeline._detach_from_model(self)
-        super().on_predict_end()
-
-    def on_fit_end(self) -> None:
-        if self.data_pipeline is not None:
-            self.data_pipeline._detach_from_model(self)
-        super().on_fit_end()
+        self._unwrap_predict_step()
 
     def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         # This may be an issue since here we create the same problems with pickle as in
@@ -1036,7 +965,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
                     f" the second index containing the required keyword arguments to initialize the LR Scheduler and"
                     f" the third index containing a Lightning scheduler configuration dictionary of the format"
                     f" {_get_default_scheduler_config()}. NOTE: Do not set the `scheduler` key in the"
-                    f" lr_scheduler_config, it will overriden with an instance of the provided scheduler key."
+                    f" lr_scheduler_config, it will overridden with an instance of the provided scheduler key."
                 )
 
             if not isinstance(self.lr_scheduler[0], (str, Callable)):
@@ -1143,36 +1072,54 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             return [BenchmarkConvergenceCI()]
 
     @requires("serve")
-    def run_serve_sanity_check(self):
-        if not self.is_servable:
-            raise NotImplementedError("This Task is not servable. Attach a Deserializer to enable serving.")
-
+    def run_serve_sanity_check(self, serve_input: ServeInput):
         from fastapi.testclient import TestClient
 
         from flash.core.serve.flash_components import build_flash_serve_model_component
 
         print("Running serve sanity check")
-        comp = build_flash_serve_model_component(self)
+        comp = build_flash_serve_model_component(self, serve_input)
         composition = Composition(predict=comp, TESTING=True, DEBUG=True)
         app = composition.serve(host="0.0.0.0", port=8000)
 
         with TestClient(app) as tc:
-            input_str = self.data_pipeline._deserializer.example_input
+            input_str = serve_input.example_input
             body = {"session": "UUID", "payload": {"inputs": {"data": input_str}}}
             resp = tc.post("http://0.0.0.0:8000/predict", json=body)
             print(f"Sanity check response: {resp.json()}")
 
     @requires("serve")
-    def serve(self, host: str = "127.0.0.1", port: int = 8000, sanity_check: bool = True) -> "Composition":
-        if not self.is_servable:
-            raise NotImplementedError("This Task is not servable. Attach a Deserializer to enable serving.")
+    def serve(
+        self,
+        host: str = "127.0.0.1",
+        port: int = 8000,
+        sanity_check: bool = True,
+        input_cls: Optional[Type[ServeInput]] = None,
+        transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        transform_kwargs: Optional[Dict] = None,
+    ) -> "Composition":
+        """Serve the ``Task``. Override this method to provide a default ``input_cls``, ``transform``, and
+        ``transform_kwargs``.
 
+        Args:
+            host: The IP address to host the ``Task`` on.
+            port: The port to host on.
+            sanity_check: If ``True``, runs a sanity check before serving.
+            input_cls: The ``ServeInput`` type to use.
+            transform: The transform to use when serving.
+            transform_kwargs: Keyword arguments used to instantiate the transform.
+        """
         from flash.core.serve.flash_components import build_flash_serve_model_component
 
-        if sanity_check:
-            self.run_serve_sanity_check()
+        if input_cls is None:
+            raise NotImplementedError("The `input_cls` must be provided to enable serving.")
 
-        comp = build_flash_serve_model_component(self)
+        serve_input = input_cls(transform=transform, transform_kwargs=transform_kwargs)
+
+        if sanity_check:
+            self.run_serve_sanity_check(serve_input)
+
+        comp = build_flash_serve_model_component(self, serve_input)
         composition = Composition(predict=comp, TESTING=flash._IS_TESTING)
         composition.serve(host=host, port=port)
         return composition

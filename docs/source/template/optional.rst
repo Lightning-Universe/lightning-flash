@@ -7,18 +7,12 @@ Optional Extras
 Organize your transforms in transforms.py
 =========================================
 
-If you have a lot of default transforms, it can be useful to put them all in a ``transforms.py`` file, to be referenced in your :class:`~flash.core.data.io.input_transform.InputTransform`.
-Here's an example from `image/classification/transforms.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash/image/classification/transforms.py>`_ which creates some default transforms given the desired image size:
+It can be useful to define your :class:`~flash.core.data.io.input_transform.InputTransform` in a ``transforms.py`` file.
+Here's an example from `image/classification/transforms.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash/image/classification/transforms.py>`_:
 
 .. literalinclude:: ../../../flash/image/classification/transforms.py
     :language: python
-    :pyobject: default_transforms
-
-Here's how we create our transforms in the :class:`~flash.image.classification.data.ImageClassificationInputTransform`:
-
-.. literalinclude:: ../../../flash/image/classification/data.py
-    :language: python
-    :pyobject: ImageClassificationInputTransform.default_transforms
+    :pyobject: ImageClassificationInputTransform
 
 Add outputs to your Task
 ========================
@@ -28,17 +22,17 @@ Specifically, it should include any formatting and transforms that should always
 If you want to support different use cases that require different prediction formats, you should add some :class:`~flash.core.data.io.output.Output` implementations in an ``output.py`` file.
 
 Some good examples are in `flash/core/classification.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash/core/classification.py>`_.
-Here's the :class:`~flash.core.classification.Classes` :class:`~flash.core.data.io.output.Output`:
+Here's the :class:`~flash.core.classification.ClassesOutput` :class:`~flash.core.data.io.output.Output`:
 
 .. literalinclude:: ../../../flash/core/classification.py
     :language: python
-    :pyobject: Classes
+    :pyobject: ClassesOutput
 
-Alternatively, here's the :class:`~flash.core.classification.Logits` :class:`~flash.core.data.io.output.Output`:
+Alternatively, here's the :class:`~flash.core.classification.LogitsOutput` :class:`~flash.core.data.io.output.Output`:
 
 .. literalinclude:: ../../../flash/core/classification.py
     :language: python
-    :pyobject: Logits
+    :pyobject: LogitsOutput
 
 Take a look at :ref:`predictions` to learn more.
 

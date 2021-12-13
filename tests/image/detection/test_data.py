@@ -102,6 +102,27 @@ def _create_synth_coco_dataset(tmpdir):
     return train_folder, coco_ann_path
 
 
+def _create_synth_folders_dataset(tmpdir):
+
+    predict = Path(tmpdir / "predict")
+    predict.mkdir()
+
+    (predict / "images").mkdir()
+    Image.new("RGB", (224, 224)).save(predict / "images" / "sample_one.png")
+    Image.new("RGB", (224, 224)).save(predict / "images" / "sample_two.png")
+
+    predict_folder = os.fspath(Path(predict / "images"))
+
+    return predict_folder
+
+
+def _create_synth_files_dataset(tmpdir):
+
+    predict_folder = _create_synth_folders_dataset(tmpdir)
+
+    return [os.path.join(predict_folder, f) for f in os.listdir(predict_folder)]
+
+
 def _create_synth_fiftyone_dataset(tmpdir):
     img_dir = Path(tmpdir / "fo_imgs")
     img_dir.mkdir()
@@ -149,7 +170,7 @@ def test_image_detector_data_from_coco(tmpdir):
     train_folder, coco_ann_path = _create_synth_coco_dataset(tmpdir)
 
     datamodule = ObjectDetectionData.from_coco(
-        train_folder=train_folder, train_ann_file=coco_ann_path, batch_size=1, image_size=128
+        train_folder=train_folder, train_ann_file=coco_ann_path, batch_size=1, transform_kwargs=dict(image_size=128)
     )
 
     data = next(iter(datamodule.train_dataloader()))
@@ -165,11 +186,10 @@ def test_image_detector_data_from_coco(tmpdir):
         test_ann_file=coco_ann_path,
         batch_size=1,
         num_workers=0,
-        image_size=128,
+        transform_kwargs=dict(image_size=128),
     )
 
     data = next(iter(datamodule.val_dataloader()))
-
     sample = data[0]
     assert sample[DataKeys.INPUT].shape == (128, 128, 3)
 
@@ -184,7 +204,9 @@ def test_image_detector_data_from_fiftyone(tmpdir):
 
     train_dataset = _create_synth_fiftyone_dataset(tmpdir)
 
-    datamodule = ObjectDetectionData.from_fiftyone(train_dataset=train_dataset, batch_size=1, image_size=128)
+    datamodule = ObjectDetectionData.from_fiftyone(
+        train_dataset=train_dataset, batch_size=1, transform_kwargs=dict(image_size=128)
+    )
 
     data = next(iter(datamodule.train_dataloader()))
     sample = data[0]
@@ -196,7 +218,7 @@ def test_image_detector_data_from_fiftyone(tmpdir):
         test_dataset=train_dataset,
         batch_size=1,
         num_workers=0,
-        image_size=128,
+        transform_kwargs=dict(image_size=128),
     )
 
     data = next(iter(datamodule.val_dataloader()))
@@ -206,3 +228,37 @@ def test_image_detector_data_from_fiftyone(tmpdir):
     data = next(iter(datamodule.test_dataloader()))
     sample = data[0]
     assert sample[DataKeys.INPUT].shape == (128, 128, 3)
+
+
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _COCO_AVAILABLE, reason="pycocotools is not installed for testing")
+def test_image_detector_data_from_files(tmpdir):
+
+    predict_files = _create_synth_files_dataset(tmpdir)
+    datamodule = ObjectDetectionData.from_files(
+        predict_files=predict_files, batch_size=1, transform_kwargs=dict(image_size=128)
+    )
+    data = next(iter(datamodule.predict_dataloader()))
+    sample = data[0]
+    assert sample[DataKeys.INPUT].shape == (128, 128, 3)
+
+
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _COCO_AVAILABLE, reason="pycocotools is not installed for testing")
+def test_image_detector_data_from_folders(tmpdir):
+
+    predict_folder = _create_synth_folders_dataset(tmpdir)
+    datamodule = ObjectDetectionData.from_folders(
+        predict_folder=predict_folder, batch_size=1, transform_kwargs=dict(image_size=128)
+    )
+    data = next(iter(datamodule.predict_dataloader()))
+    sample = data[0]
+    assert sample[DataKeys.INPUT].shape == (128, 128, 3)
+
+
+def test_data_non_supported():
+
+    assert not ObjectDetectionData.from_tensor
+    assert not ObjectDetectionData.from_json
+    assert not ObjectDetectionData.from_csv
+    assert not ObjectDetectionData.from_datasets

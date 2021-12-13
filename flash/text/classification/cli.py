@@ -20,10 +20,8 @@ __all__ = ["text_classification"]
 
 
 def from_imdb(
-    backbone: str = "prajjwal1/bert-medium",
     batch_size: int = 4,
-    num_workers: int = 0,
-    **input_transform_kwargs,
+    **data_module_kwargs,
 ) -> TextClassificationData:
     """Downloads and loads the IMDB sentiment classification data set."""
     download_data("https://pl-flash-data.s3.amazonaws.com/imdb.zip", "./data/")
@@ -32,19 +30,15 @@ def from_imdb(
         "sentiment",
         train_file="data/imdb/train.csv",
         val_file="data/imdb/valid.csv",
-        backbone=backbone,
         batch_size=batch_size,
-        num_workers=num_workers,
-        **input_transform_kwargs,
+        **data_module_kwargs,
     )
 
 
 def from_toxic(
-    backbone: str = "unitary/toxic-bert",
     val_split: float = 0.1,
     batch_size: int = 4,
-    num_workers: int = 0,
-    **input_transform_kwargs,
+    **data_module_kwargs,
 ) -> TextClassificationData:
     """Downloads and loads the Jigsaw toxic comments data set."""
     download_data("https://pl-flash-data.s3.amazonaws.com/jigsaw_toxic_comments.zip", "./data")
@@ -52,11 +46,9 @@ def from_toxic(
         "comment_text",
         ["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"],
         train_file="data/jigsaw_toxic_comments/train.csv",
-        backbone=backbone,
         val_split=val_split,
         batch_size=batch_size,
-        num_workers=num_workers,
-        **input_transform_kwargs,
+        **data_module_kwargs,
     )
 
 
@@ -70,8 +62,7 @@ def text_classification():
         default_arguments={
             "trainer.max_epochs": 3,
         },
-        datamodule_attributes={"num_classes", "multi_label", "backbone"},
-        legacy=True,
+        datamodule_attributes={"num_classes", "multi_label"},
     )
 
     cli.trainer.save_checkpoint("text_classification_model.pt")

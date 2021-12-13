@@ -32,9 +32,10 @@ class InferenceMCDropoutTask(flash.Task):
         self.inference_iteration = inference_iteration
 
     def predict_step(self, batch, batch_idx, dataloader_idx: int = 0):
-        out = []
-        for _ in range(self.inference_iteration):
-            out.append(self.parent_module.predict_step(batch, batch_idx, dataloader_idx=dataloader_idx))
+        with torch.no_grad():
+            out = []
+            for _ in range(self.inference_iteration):
+                out.append(self.parent_module.predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)["preds"])
 
         # BaaL expects a shape [num_samples, num_classes, num_iterations]
-        return torch.tensor(out).permute((1, 2, 0))
+        return torch.stack(out).permute((1, 2, 0))

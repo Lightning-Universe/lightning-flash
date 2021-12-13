@@ -24,6 +24,7 @@ def from_kinetics(
     clip_sampler: str = "uniform",
     clip_duration: int = 1,
     decode_audio: bool = False,
+    batch_size=1,
     **data_module_kwargs,
 ) -> VideoClassificationData:
     """Downloads and loads the Kinetics data set."""
@@ -34,6 +35,7 @@ def from_kinetics(
         clip_sampler=clip_sampler,
         clip_duration=clip_duration,
         decode_audio=decode_audio,
+        batch_size=batch_size,
         **data_module_kwargs,
     )
 
@@ -45,7 +47,7 @@ def video_classification():
         VideoClassificationData,
         default_datamodule_builder=from_kinetics,
         default_arguments={
-            "trainer.max_epochs": 3,
+            "trainer.max_epochs": 1,
         },
     )
 

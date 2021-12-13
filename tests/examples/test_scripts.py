@@ -17,7 +17,7 @@ from unittest import mock
 
 import pytest
 
-from flash.core.utilities.imports import _LEARN2LEARN_AVAILABLE, _SKLEARN_AVAILABLE
+from flash.core.utilities.imports import _SKLEARN_AVAILABLE
 from tests.examples.utils import run_test
 from tests.helpers.utils import (
     _AUDIO_TESTING,
@@ -52,12 +52,6 @@ root = Path(__file__).parent.parent.parent
             "image_classification_multi_label.py",
             marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed"),
         ),
-        pytest.param(
-            "image_classification_meta_learning.py.py",
-            marks=pytest.mark.skipif(
-                not (_IMAGE_TESTING and _LEARN2LEARN_AVAILABLE), reason="image/learn2learn libraries aren't installed"
-            ),
-        ),
         # pytest.param("finetuning", "object_detection.py"),  # TODO: takes too long.
         pytest.param(
             "question_answering.py",
@@ -84,6 +78,10 @@ root = Path(__file__).parent.parent.parent
         pytest.param("template.py", marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")),
         pytest.param(
             "text_classification.py",
+            marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed"),
+        ),
+        pytest.param(
+            "text_embedder.py",
             marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed"),
         ),
         # pytest.param(
@@ -116,18 +114,4 @@ root = Path(__file__).parent.parent.parent
     ],
 )
 def test_example(tmpdir, file):
-    run_test(str(root / "flash_examples" / file))
-
-
-@mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
-@pytest.mark.parametrize(
-    "file",
-    [
-        pytest.param(
-            "pointcloud_detection.py",
-            marks=pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed"),
-        ),
-    ],
-)
-def test_example_2(tmpdir, file):
     run_test(str(root / "flash_examples" / file))

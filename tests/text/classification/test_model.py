@@ -23,7 +23,6 @@ from flash.__main__ import main
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import TextClassifier
-from flash.text.classification.data import TextClassificationInputTransform, TextClassificationOutputTransform
 from tests.helpers.utils import _SERVE_TESTING, _TEXT_TESTING
 
 # ======== Mock functions ========
@@ -77,10 +76,6 @@ def test_jit(tmpdir):
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = TextClassifier(2, TEST_BACKBONE)
-
-    # TODO: Currently only servable once a input_transform and postprocess have been attached
-    model._input_transform = TextClassificationInputTransform(backbone=TEST_BACKBONE)
-    model._output_transform = TextClassificationOutputTransform()
     model.eval()
     model.serve()
 

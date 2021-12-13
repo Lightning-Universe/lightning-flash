@@ -22,7 +22,7 @@ from flash.image.style_transfer import StyleTransfer, StyleTransferData
 # 1. Create the DataModule
 download_data("https://github.com/zhiqwang/yolov5-rt-stack/releases/download/v0.3.0/coco128.zip", "./data")
 
-datamodule = StyleTransferData.from_folders(train_folder="data/coco128/images/train2017")
+datamodule = StyleTransferData.from_folders(train_folder="data/coco128/images/train2017", batch_size=1)
 
 # 2. Build the task
 model = StyleTransfer(os.path.join(flash.ASSETS_ROOT, "starry_night.jpg"))
@@ -32,13 +32,15 @@ trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
 trainer.fit(model, datamodule=datamodule)
 
 # 4. Apply style transfer to a few images!
-predictions = model.predict(
-    [
+datamodule = StyleTransferData.from_files(
+    predict_files=[
         "data/coco128/images/train2017/000000000625.jpg",
         "data/coco128/images/train2017/000000000626.jpg",
         "data/coco128/images/train2017/000000000629.jpg",
-    ]
+    ],
+    batch_size=3,
 )
+predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
 
 # 5. Save the model!

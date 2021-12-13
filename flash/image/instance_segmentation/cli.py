@@ -26,9 +26,17 @@ __all__ = ["instance_segmentation"]
 
 @requires(["image", "icedata"])
 def from_pets(
+    train_folder: Optional[str] = None,
+    train_ann_file: Optional[str] = None,
+    val_folder: Optional[str] = None,
+    val_ann_file: Optional[str] = None,
+    test_folder: Optional[str] = None,
+    test_ann_file: Optional[str] = None,
+    predict_folder: Optional[str] = None,
     val_split: float = 0.1,
     image_size: Tuple[int, int] = (128, 128),
     parser: Optional[Callable] = None,
+    batch_size: int = 1,
     **data_module_kwargs,
 ) -> InstanceSegmentationData:
     """Downloads and loads the pets data set from icedata."""
@@ -37,11 +45,18 @@ def from_pets(
     if parser is None:
         parser = partial(icedata.pets.parser, mask=True)
 
-    return InstanceSegmentationData.from_folders(
-        train_folder=data_dir,
-        val_split=val_split,
-        image_size=image_size,
+    return InstanceSegmentationData.from_icedata(
+        train_folder=train_folder or data_dir,
+        train_ann_file=train_ann_file,
+        val_folder=val_folder,
+        val_ann_file=val_ann_file,
+        test_folder=test_folder,
+        test_ann_file=test_ann_file,
+        predict_folder=predict_folder,
+        transform_kwargs=dict(image_size=image_size),
         parser=parser,
+        val_split=val_split,
+        batch_size=batch_size,
         **data_module_kwargs,
     )
 

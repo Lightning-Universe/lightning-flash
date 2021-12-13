@@ -105,13 +105,11 @@ def test_serve():
         "num_col",
         "target",
         train_data_frame=pd.DataFrame.from_dict(train_data),
+        batch_size=1,
     )
     model = TabularClassifier.from_data(datamodule)
-    # TODO: Currently only servable once a input_transform has been attached
-    model._input_transform = datamodule.input_transform
-    model._input_transform._state = datamodule.train_dataset._state
     model.eval()
-    model.serve()
+    model.serve(parameters=datamodule.parameters)
 
 
 @pytest.mark.skipif(_TABULAR_AVAILABLE, reason="tabular libraries are installed.")

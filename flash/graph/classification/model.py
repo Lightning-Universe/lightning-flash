@@ -19,6 +19,7 @@ from torch.nn import functional as F
 from torch.nn import Linear
 
 from flash.core.classification import ClassificationTask
+from flash.core.data.io.input import DataKeys
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
@@ -97,19 +98,19 @@ class GraphClassifier(ClassificationTask):
             self.head = DefaultGraphHead(num_out_features, num_classes)
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch, batch.y)
+        batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
         return super().training_step(batch, batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch, batch.y)
+        batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
         return super().validation_step(batch, batch_idx)
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch, batch.y)
+        batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
+        return super().predict_step(batch[DataKeys.INPUT], batch_idx, dataloader_idx=dataloader_idx)
 
     def forward(self, data) -> torch.Tensor:
         x = self.backbone(data.x, data.edge_index)

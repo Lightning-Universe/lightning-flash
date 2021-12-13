@@ -11,343 +11,295 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from functools import partial
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Type, Union
 
-import torch
 from pandas.core.frame import DataFrame
-from torch import Tensor
-from torch.utils.data.sampler import Sampler
 
-import flash
-from flash.core.data.auto_dataset import AutoDataset
-from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import DataKeys, Input, InputFormat, LabelsState
-from flash.core.data.io.input_transform import InputTransform
-from flash.core.data.io.output_transform import OutputTransform
-from flash.core.data.process import Deserializer
-from flash.core.integrations.labelstudio.input import LabelStudioTextClassificationInput
-from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
+from flash.core.data.data_pipeline import DataPipelineState
+from flash.core.data.io.input import Input
+from flash.core.data.utilities.paths import PATH_TYPE
+from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioTextClassificationInput
+from flash.core.integrations.transformers.input_transform import TransformersInputTransform
+from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.core.utilities.stages import RunningStage
+from flash.text.classification.input import (
+    TextClassificationCSVInput,
+    TextClassificationDataFrameInput,
+    TextClassificationInput,
+    TextClassificationJSONInput,
+    TextClassificationListInput,
+    TextClassificationParquetInput,
+)
 
 if _TEXT_AVAILABLE:
-    from datasets import Dataset, load_dataset
-    from transformers import AutoTokenizer, default_data_collator
-    from transformers.modeling_outputs import SequenceClassifierOutput
-
-
-class TextDeserializer(Deserializer):
-    @requires("text")
-    def __init__(self, backbone: str, max_length: int, use_fast: bool = True, **kwargs):
-        super().__init__()
-        self.backbone = backbone
-        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=use_fast, **kwargs)
-        self.max_length = max_length
-
-    def deserialize(self, text: str) -> Tensor:
-        return self.tokenizer(text, max_length=self.max_length, truncation=True, padding="max_length")
-
-    @property
-    def example_input(self) -> str:
-        return "An example input"
-
-    def __getstate__(self):  # TODO: Find out why this is being pickled
-        state = self.__dict__.copy()
-        state.pop("tokenizer")
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
-
-
-class TextInput(Input):
-    @requires("text")
-    def __init__(self, backbone: str, max_length: int = 128):
-        super().__init__()
-
-        self.backbone = backbone
-        self.tokenizer = AutoTokenizer.from_pretrained(backbone, use_fast=True)
-        self.max_length = max_length
-
-    def _tokenize_fn(
-        self,
-        ex: Union[Dict[str, str], str],
-        input: Optional[str] = None,
-    ) -> Callable:
-        """This function is used to tokenize sentences using the provided tokenizer."""
-        return self.tokenizer(ex[input], max_length=self.max_length, truncation=True, padding="max_length")
-
-    @staticmethod
-    def _transform_label(label_to_class_mapping: Dict[str, int], target: str, ex: Dict[str, Union[int, str]]):
-        ex[target] = label_to_class_mapping[ex[target]]
-        return ex
-
-    @staticmethod
-    def _multilabel_target(targets: List[str], element: Dict[str, Any]) -> Dict[str, Any]:
-        targets = [element.pop(target) for target in targets]
-        element[DataKeys.TARGET] = targets
-        return element
-
-    def _to_hf_dataset(self, data) -> Sequence[Mapping[str, Any]]:
-        """account for flash CI testing context."""
-        hf_dataset, *other = self.to_hf_dataset(data)
-
-        if flash._IS_TESTING and not torch.cuda.is_available():
-            # NOTE: must subset in this way to return a Dataset
-            hf_dataset = hf_dataset.select(range(20))
-
-        return (hf_dataset, *other)
-
-    def load_data(
-        self,
-        data: Tuple[str, Union[str, List[str]], Union[str, List[str]]],
-        dataset: Optional[Any] = None,
-    ) -> Sequence[Mapping[str, Any]]:
-        """Loads data into HuggingFace datasets.Dataset."""
-
-        hf_dataset, input, *other = self._to_hf_dataset(data)
-
-        if not self.predicting:
-            target: Union[str, List[str]] = other.pop()
-            if isinstance(target, List):
-                # multi-target
-                dataset.multi_label = True
-                hf_dataset = hf_dataset.map(partial(self._multilabel_target, target))  # NOTE: renames target column
-                dataset.num_classes = len(target)
-                self.set_state(LabelsState(target))
-            else:
-                dataset.multi_label = False
-                if self.training:
-                    labels = list(sorted(list(set(hf_dataset[target]))))
-                    dataset.num_classes = len(labels)
-                    self.set_state(LabelsState(labels))
-
-                labels = self.get_state(LabelsState)
-
-                # convert labels to ids (note: the target column get overwritten)
-                if labels is not None:
-                    labels = labels.labels
-                    label_to_class_mapping = {v: k for k, v in enumerate(labels)}
-                    hf_dataset = hf_dataset.map(partial(self._transform_label, label_to_class_mapping, target))
-
-                # rename label column
-                hf_dataset = hf_dataset.rename_column(target, DataKeys.TARGET)
-
-        # remove extra columns
-        extra_columns = set(hf_dataset.column_names) - {input, DataKeys.TARGET}
-        hf_dataset = hf_dataset.remove_columns(extra_columns)
-
-        # tokenize
-        hf_dataset = hf_dataset.map(partial(self._tokenize_fn, input=input), batched=True, remove_columns=[input])
-
-        # set format
-        hf_dataset.set_format("torch")
-
-        return hf_dataset
-
-    def predict_load_data(self, data: Any, dataset: AutoDataset):
-        return self.load_data(data, dataset)
-
-    def __getstate__(self):  # TODO: Find out why this is being pickled
-        state = self.__dict__.copy()
-        state.pop("tokenizer")
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True)
-
-
-class TextCSVInput(TextInput):
-    def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, str]:
-        file, *other = data
-        dataset_dict = load_dataset("csv", data_files={"train": str(file)})
-        return (dataset_dict["train"], *other)
-
-
-class TextJSONInput(TextInput):
-    def to_hf_dataset(self, data: Tuple[str, str, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, str]:
-        file, *other, field = data
-        dataset_dict = load_dataset("json", data_files={"train": str(file)}, field=field)
-        return (dataset_dict["train"], *other)
-
-
-class TextDataFrameInput(TextInput):
-    def to_hf_dataset(self, data: Tuple[DataFrame, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, str]:
-        df, *other = data
-        hf_dataset = Dataset.from_pandas(df)
-        return (hf_dataset, *other)
-
-
-class TextParquetInput(TextInput):
-    def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, str]:
-        file, *other = data
-        hf_dataset = Dataset.from_parquet(str(file))
-        return (hf_dataset, *other)
-
-
-class TextHuggingFaceDatasetInput(TextInput):
-    def to_hf_dataset(self, data: Tuple[str, str, str]) -> Tuple[Sequence[Mapping[str, Any]], str, str]:
-        hf_dataset, *other = data
-        return (hf_dataset, *other)
-
-
-class TextListInput(TextInput):
-    def to_hf_dataset(
-        self, data: Union[Tuple[List[str], List[str]], List[str]]
-    ) -> Tuple[Sequence[Mapping[str, Any]], Optional[List[str]]]:
-
-        if isinstance(data, tuple):
-            input_list, target_list = data
-            # NOTE: here we already deal with multilabels
-            # NOTE: here we already rename to correct column names
-            hf_dataset = Dataset.from_dict({DataKeys.INPUT: input_list, DataKeys.TARGET: target_list})
-            return hf_dataset, target_list
-
-        # predicting
-        hf_dataset = Dataset.from_dict({DataKeys.INPUT: data})
-
-        return (hf_dataset,)
-
-    def load_data(
-        self,
-        data: Tuple[List[str], Union[List[Any], List[List[Any]]]],
-        dataset: Optional[Any] = None,
-    ) -> Sequence[Mapping[str, Any]]:
-
-        hf_dataset, *other = self._to_hf_dataset(data)
-
-        if not self.predicting:
-            target_list = other.pop()
-            if isinstance(target_list[0], List):
-                # multi-target_list
-                dataset.multi_label = True
-                dataset.num_classes = len(target_list[0])
-                self.set_state(LabelsState(target_list))
-            else:
-                dataset.multi_label = False
-                if self.training:
-                    labels = list(sorted(list(set(hf_dataset[DataKeys.TARGET]))))
-                    dataset.num_classes = len(labels)
-                    self.set_state(LabelsState(labels))
-
-                labels = self.get_state(LabelsState)
-
-                # convert labels to ids
-                if labels is not None:
-                    labels = labels.labels
-                    label_to_class_mapping = {v: k for k, v in enumerate(labels)}
-                    # happens in-place and keeps the target column name
-                    hf_dataset = hf_dataset.map(partial(self._transform_label, label_to_class_mapping, DataKeys.TARGET))
-
-        # tokenize
-        hf_dataset = hf_dataset.map(partial(self._tokenize_fn, input=DataKeys.INPUT), batched=True)
-
-        # set format
-        hf_dataset = hf_dataset.remove_columns([DataKeys.INPUT])  # just leave the numerical columns
-        hf_dataset.set_format("torch")
-
-        return hf_dataset
-
-
-class TextClassificationInputTransform(InputTransform):
-    @requires("text")
-    def __init__(
-        self,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-        backbone: str = "prajjwal1/bert-tiny",
-        max_length: int = 128,
-    ):
-        self.backbone = backbone
-        self.max_length = max_length
-
-        super().__init__(
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
-            inputs={
-                InputFormat.CSV: TextCSVInput(self.backbone, max_length=max_length),
-                InputFormat.JSON: TextJSONInput(self.backbone, max_length=max_length),
-                InputFormat.PARQUET: TextParquetInput(self.backbone, max_length=max_length),
-                InputFormat.HUGGINGFACE_DATASET: TextHuggingFaceDatasetInput(self.backbone, max_length=max_length),
-                InputFormat.DATAFRAME: TextDataFrameInput(self.backbone, max_length=max_length),
-                InputFormat.LISTS: TextListInput(self.backbone, max_length=max_length),
-                InputFormat.LABELSTUDIO: LabelStudioTextClassificationInput(
-                    backbone=self.backbone, max_length=max_length
-                ),
-            },
-            default_input=InputFormat.LISTS,
-            deserializer=TextDeserializer(backbone, max_length),
-        )
-
-    def get_state_dict(self) -> Dict[str, Any]:
-        return {
-            **self.transforms,
-            "backbone": self.backbone,
-            "max_length": self.max_length,
-        }
-
-    @classmethod
-    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool):
-        return cls(**state_dict)
-
-    def per_batch_transform(self, batch: Any) -> Any:
-        if "labels" not in batch:
-            # todo: understand why an extra dimension has been added.
-            if batch["input_ids"].dim() == 3:
-                batch["input_ids"] = batch["input_ids"].squeeze(0)
-        return batch
-
-    def collate(self, samples: Any) -> Tensor:
-        """Override to convert a set of samples to a batch."""
-        if isinstance(samples, dict):
-            samples = [samples]
-        return default_data_collator(samples)
-
-
-class TextClassificationOutputTransform(OutputTransform):
-    def per_batch_transform(self, batch: Any) -> Any:
-        if isinstance(batch, SequenceClassifierOutput):
-            batch = batch.logits
-        return super().per_batch_transform(batch)
+    from datasets import Dataset
+else:
+    Dataset = object
 
 
 class TextClassificationData(DataModule):
     """Data Module for text classification tasks."""
 
-    input_transform_cls = TextClassificationInputTransform
-    output_transform_cls = TextClassificationOutputTransform
+    input_transform_cls = TransformersInputTransform
 
-    @property
-    def backbone(self) -> Optional[str]:
-        return getattr(self.input_transform, "backbone", None)
+    @classmethod
+    def from_csv(
+        cls,
+        input_field: str,
+        target_fields: Optional[Union[str, Sequence[str]]] = None,
+        train_file: Optional[PATH_TYPE] = None,
+        val_file: Optional[PATH_TYPE] = None,
+        test_file: Optional[PATH_TYPE] = None,
+        predict_file: Optional[PATH_TYPE] = None,
+        train_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        val_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        test_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        predict_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        input_cls: Type[Input] = TextClassificationCSVInput,
+        transform_kwargs: Optional[Dict] = None,
+        max_length: int = 128,
+        **data_module_kwargs: Any,
+    ) -> "TextClassificationData":
+        """Creates a :class:`~flash.text.classification.data.TextClassificationData` object from the given CSV
+        files.
+
+        Args:
+            input_field: The field (column) in the pandas ``Dataset`` to use for the input.
+            target_fields: The field or fields (columns) in the pandas ``Dataset`` to use for the target.
+            train_file: The CSV file containing the training data.
+            val_file: The CSV file containing the validation data.
+            test_file: The CSV file containing the testing data.
+            predict_file: The CSV file containing the data to use when predicting.
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            max_length: The maximum sequence length.
+
+        Returns:
+            The constructed data module.
+        """
+
+        ds_kw = dict(
+            input_key=input_field,
+            target_keys=target_fields,
+            max_length=max_length,
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
+        )
+
+        return cls(
+            input_cls(RunningStage.TRAINING, train_file, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_file, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, test_file, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_file, transform=predict_transform, **ds_kw),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_json(
+        cls,
+        input_field: str,
+        target_fields: Optional[Union[str, Sequence[str]]] = None,
+        train_file: Optional[PATH_TYPE] = None,
+        val_file: Optional[PATH_TYPE] = None,
+        test_file: Optional[PATH_TYPE] = None,
+        predict_file: Optional[PATH_TYPE] = None,
+        train_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        val_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        test_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        predict_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        input_cls: Type[Input] = TextClassificationJSONInput,
+        transform_kwargs: Optional[Dict] = None,
+        field: Optional[str] = None,
+        max_length: int = 128,
+        **data_module_kwargs: Any,
+    ) -> "TextClassificationData":
+        """Creates a :class:`~flash.text.classification.data.TextClassificationData` object from the given JSON
+        files.
+
+        Args:
+            input_field: The field (column) in the pandas ``Dataset`` to use for the input.
+            target_fields: The field or fields (columns) in the pandas ``Dataset`` to use for the target.
+            train_file: The JSON file containing the training data.
+            val_file: The JSON file containing the validation data.
+            test_file: The JSON file containing the testing data.
+            predict_file: The JSON file containing the data to use when predicting.
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            field: To specify the field that holds the data in the JSON file.
+            max_length: The maximum sequence length.
+
+        Returns:
+            The constructed data module.
+        """
+
+        ds_kw = dict(
+            input_key=input_field,
+            target_keys=target_fields,
+            field=field,
+            max_length=max_length,
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
+        )
+
+        return cls(
+            input_cls(RunningStage.TRAINING, train_file, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_file, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, test_file, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_file, transform=predict_transform, **ds_kw),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_parquet(
+        cls,
+        input_field: str,
+        target_fields: Optional[Union[str, Sequence[str]]] = None,
+        train_file: Optional[PATH_TYPE] = None,
+        val_file: Optional[PATH_TYPE] = None,
+        test_file: Optional[PATH_TYPE] = None,
+        predict_file: Optional[PATH_TYPE] = None,
+        train_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        val_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        test_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        predict_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        input_cls: Type[Input] = TextClassificationParquetInput,
+        transform_kwargs: Optional[Dict] = None,
+        max_length: int = 128,
+        **data_module_kwargs: Any,
+    ) -> "TextClassificationData":
+        """Creates a :class:`~flash.text.classification.data.TextClassificationData` object from the given PARQUET
+        files.
+
+        Args:
+            input_field: The field (column) in the pandas ``Dataset`` to use for the input.
+            target_fields: The field or fields (columns) in the pandas ``Dataset`` to use for the target.
+            train_file: The PARQUET file containing the training data.
+            val_file: The PARQUET file containing the validation data.
+            test_file: The PARQUET file containing the testing data.
+            predict_file: The PARQUET file containing the data to use when predicting.
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            max_length: The maximum sequence length.
+
+        Returns:
+            The constructed data module.
+        """
+
+        ds_kw = dict(
+            input_key=input_field,
+            target_keys=target_fields,
+            max_length=max_length,
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
+        )
+
+        return cls(
+            input_cls(RunningStage.TRAINING, train_file, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_file, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, test_file, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_file, transform=predict_transform, **ds_kw),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_hf_datasets(
+        cls,
+        input_field: str,
+        target_fields: Optional[Union[str, Sequence[str]]] = None,
+        train_hf_dataset: Optional[Dataset] = None,
+        val_hf_dataset: Optional[Dataset] = None,
+        test_hf_dataset: Optional[Dataset] = None,
+        predict_hf_dataset: Optional[Dataset] = None,
+        train_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        val_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        test_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        predict_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        input_cls: Type[Input] = TextClassificationInput,
+        transform_kwargs: Optional[Dict] = None,
+        max_length: int = 128,
+        **data_module_kwargs: Any,
+    ) -> "TextClassificationData":
+        """Creates a :class:`~flash.text.classification.data.TextClassificationData` object from the given Hugging
+        Face datasets ``Dataset`` objects.
+
+        Args:
+            input_field: The field (column) in the pandas ``Dataset`` to use for the input.
+            target_fields: The field or fields (columns) in the pandas ``Dataset`` to use for the target.
+            train_hf_dataset: The pandas ``Dataset`` containing the training data.
+            val_hf_dataset: The pandas ``Dataset`` containing the validation data.
+            test_hf_dataset: The pandas ``Dataset`` containing the testing data.
+            predict_hf_dataset: The pandas ``Dataset`` containing the data to use when predicting.
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            max_length: The maximum sequence length.
+
+        Returns:
+            The constructed data module.
+        """
+
+        ds_kw = dict(
+            input_key=input_field,
+            target_keys=target_fields,
+            max_length=max_length,
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
+        )
+
+        return cls(
+            input_cls(RunningStage.TRAINING, train_hf_dataset, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_hf_dataset, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, test_hf_dataset, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_hf_dataset, transform=predict_transform, **ds_kw),
+            **data_module_kwargs,
+        )
 
     @classmethod
     def from_data_frame(
         cls,
         input_field: str,
-        target_fields: Union[str, Sequence[str]],
+        target_fields: Optional[Union[str, Sequence[str]]] = None,
         train_data_frame: Optional[DataFrame] = None,
         val_data_frame: Optional[DataFrame] = None,
         test_data_frame: Optional[DataFrame] = None,
         predict_data_frame: Optional[DataFrame] = None,
-        train_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
-        val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
-        test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-        data_fetcher: Optional[BaseDataFetcher] = None,
-        input_transform: Optional[InputTransform] = None,
-        val_split: Optional[float] = None,
-        batch_size: int = 4,
-        num_workers: int = 0,
-        sampler: Optional[Type[Sampler]] = None,
-        **input_transform_kwargs: Any,
-    ) -> "DataModule":
+        train_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        val_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        test_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        predict_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        input_cls: Type[Input] = TextClassificationDataFrameInput,
+        transform_kwargs: Optional[Dict] = None,
+        max_length: int = 128,
+        **data_module_kwargs: Any,
+    ) -> "TextClassificationData":
         """Creates a :class:`~flash.text.classification.data.TextClassificationData` object from the given pandas
         ``DataFrame`` objects.
 
@@ -366,38 +318,27 @@ class TextClassificationData(DataModule):
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`.
-            input_transform: The :class:`~flash.core.data.data.InputTransform` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
-                will be constructed and used.
-            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            sampler: The ``sampler`` to use for the ``train_dataloader``.
-            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
-                Will only be used if ``input_transform = None``.
+            max_length: The maximum sequence length.
 
         Returns:
             The constructed data module.
         """
-        return cls.from_input(
-            InputFormat.DATAFRAME,
-            (train_data_frame, input_field, target_fields),
-            (val_data_frame, input_field, target_fields),
-            (test_data_frame, input_field, target_fields),
-            (predict_data_frame, input_field, target_fields),
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
-            data_fetcher=data_fetcher,
-            input_transform=input_transform,
-            val_split=val_split,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            sampler=sampler,
-            **input_transform_kwargs,
+
+        ds_kw = dict(
+            input_key=input_field,
+            target_keys=target_fields,
+            max_length=max_length,
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
+        )
+
+        return cls(
+            input_cls(RunningStage.TRAINING, train_data_frame, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_data_frame, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, test_data_frame, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_data_frame, transform=predict_transform, **ds_kw),
+            **data_module_kwargs,
         )
 
     @classmethod
@@ -410,18 +351,15 @@ class TextClassificationData(DataModule):
         test_data: Optional[List[str]] = None,
         test_targets: Optional[Union[List[Any], List[List[Any]]]] = None,
         predict_data: Optional[List[str]] = None,
-        train_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
-        val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
-        test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-        data_fetcher: Optional[BaseDataFetcher] = None,
-        input_transform: Optional[InputTransform] = None,
-        val_split: Optional[float] = None,
-        batch_size: int = 4,
-        num_workers: int = 0,
-        sampler: Optional[Type[Sampler]] = None,
-        **input_transform_kwargs: Any,
-    ) -> "DataModule":
+        train_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        val_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        test_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        predict_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        input_cls: Type[Input] = TextClassificationListInput,
+        transform_kwargs: Optional[Dict] = None,
+        max_length: int = 128,
+        **data_module_kwargs: Any,
+    ) -> "TextClassificationData":
         """Creates a :class:`~flash.text.classification.data.TextClassificationData` object from the given Python
         lists.
 
@@ -444,73 +382,70 @@ class TextClassificationData(DataModule):
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`.
-            input_transform: The :class:`~flash.core.data.data.InputTransform` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
-                will be constructed and used.
-            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            sampler: The ``sampler`` to use for the ``train_dataloader``.
-            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
-                Will only be used if ``input_transform = None``.
+            max_length: The maximum sequence length.
 
         Returns:
             The constructed data module.
         """
-        return cls.from_input(
-            InputFormat.LISTS,
-            (train_data, train_targets),
-            (val_data, val_targets),
-            (test_data, test_targets),
-            predict_data,
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
-            data_fetcher=data_fetcher,
-            input_transform=input_transform,
-            val_split=val_split,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            sampler=sampler,
-            **input_transform_kwargs,
+
+        ds_kw = dict(
+            max_length=max_length,
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
+        )
+
+        return cls(
+            input_cls(RunningStage.TRAINING, train_data, train_targets, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_data, val_targets, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, test_data, test_targets, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
+            **data_module_kwargs,
         )
 
     @classmethod
-    def from_parquet(
+    def from_labelstudio(
         cls,
-        input_field: str,
-        target_fields: Optional[Union[str, Sequence[str]]] = None,
-        train_file: Optional[str] = None,
-        val_file: Optional[str] = None,
-        test_file: Optional[str] = None,
-        predict_file: Optional[str] = None,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-        data_fetcher: Optional[BaseDataFetcher] = None,
-        input_transform: Optional[InputTransform] = None,
+        export_json: str = None,
+        train_export_json: str = None,
+        val_export_json: str = None,
+        test_export_json: str = None,
+        predict_export_json: str = None,
+        data_folder: str = None,
+        train_data_folder: str = None,
+        val_data_folder: str = None,
+        test_data_folder: str = None,
+        predict_data_folder: str = None,
+        train_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        val_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        test_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        predict_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        input_cls: Type[Input] = LabelStudioTextClassificationInput,
+        transform_kwargs: Optional[Dict] = None,
         val_split: Optional[float] = None,
-        batch_size: int = 4,
-        num_workers: int = 0,
-        sampler: Optional[Type[Sampler]] = None,
-        **input_transform_kwargs: Any,
-    ) -> "DataModule":
-        """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given PARQUET files using the
-        :class:`~flash.core.data.io.input.Input`
-        of name :attr:`~flash.core.data.io.input.InputFormat.PARQUET`
+        multi_label: Optional[bool] = False,
+        max_length: int = 128,
+        **data_module_kwargs: Any,
+    ) -> "TextClassificationData":
+        """Creates a :class:`~flash.core.data.data_module.DataModule` object
+        from the given export file and data directory using the
+        :class:`~flash.core.data.io.input.Input` of name
+        :attr:`~flash.core.data.io.input.InputFormat.FOLDERS`
         from the passed or constructed :class:`~flash.core.data.io.input_transform.InputTransform`.
 
         Args:
-            input_fields: The field or fields (columns) in the PARQUET file to use for the input.
-            target_fields: The field or fields (columns) in the PARQUET file to use for the target.
-            train_file: The PARQUET file containing the training data.
-            val_file: The PARQUET file containing the validation data.
-            test_file: The PARQUET file containing the testing data.
-            predict_file: The PARQUET file containing the data to use when predicting.
+            export_json: path to label studio export file
+            train_export_json: path to label studio export file for train set,
+            overrides export_json if specified
+            val_export_json: path to label studio export file for validation
+            test_export_json: path to label studio export file for test
+            predict_export_json: path to label studio export file for predict
+            data_folder: path to label studio data folder
+            train_data_folder: path to label studio data folder for train data set,
+            overrides data_folder if specified
+            val_data_folder: path to label studio data folder for validation data
+            test_data_folder: path to label studio data folder for test data
+            predict_data_folder: path to label studio data folder for predict data
             train_transform: The dictionary of transforms to use during training which maps
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             val_transform: The dictionary of transforms to use during validation which maps
@@ -519,120 +454,41 @@ class TextClassificationData(DataModule):
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`.
-            input_transform: The :class:`~flash.core.data.data.InputTransform` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
-                will be constructed and used.
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            sampler: The ``sampler`` to use for the ``train_dataloader``.
-            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
-                Will only be used if ``input_transform = None``.
+            multi_label: Whether the labels are multi encoded.
+            max_length: The maximum sequence length.
+            data_module_kwargs: Additional keyword arguments to use when constructing the datamodule.
 
         Returns:
             The constructed data module.
-
-        Examples::
-
-            data_module = DataModule.from_parquet(
-                "input",
-                "target",
-                train_file="train_data.parquet",
-                train_transform={
-                    "to_tensor_transform": torch.as_tensor,
-                },
-            )
         """
-        return cls.from_input(
-            InputFormat.PARQUET,
-            (train_file, input_field, target_fields),
-            (val_file, input_field, target_fields),
-            (test_file, input_field, target_fields),
-            (predict_file, input_field, target_fields),
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
-            data_fetcher=data_fetcher,
-            input_transform=input_transform,
+
+        train_data, val_data, test_data, predict_data = _parse_labelstudio_arguments(
+            export_json=export_json,
+            train_export_json=train_export_json,
+            val_export_json=val_export_json,
+            test_export_json=test_export_json,
+            predict_export_json=predict_export_json,
+            data_folder=data_folder,
+            train_data_folder=train_data_folder,
+            val_data_folder=val_data_folder,
+            test_data_folder=test_data_folder,
+            predict_data_folder=predict_data_folder,
             val_split=val_split,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            sampler=sampler,
-            **input_transform_kwargs,
+            multi_label=multi_label,
         )
 
-    @classmethod
-    def from_hf_datasets(
-        cls,
-        input_field: str,
-        target_fields: Union[str, Sequence[str]],
-        train_hf_dataset: Optional[Sequence[Mapping[str, Any]]] = None,
-        val_hf_dataset: Optional[Sequence[Mapping[str, Any]]] = None,
-        test_hf_dataset: Optional[Sequence[Mapping[str, Any]]] = None,
-        predict_hf_dataset: Optional[Sequence[Mapping[str, Any]]] = None,
-        train_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
-        val_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
-        test_transform: Optional[Union[Callable, List, Dict[str, Callable]]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-        data_fetcher: Optional[BaseDataFetcher] = None,
-        input_transform: Optional[InputTransform] = None,
-        val_split: Optional[float] = None,
-        batch_size: int = 4,
-        num_workers: int = 0,
-        sampler: Optional[Type[Sampler]] = None,
-        **input_transform_kwargs: Any,
-    ) -> "DataModule":
-        """Creates a :class:`~flash.text.classification.data.TextClassificationData` object from the given Hugging
-        Face datasets ``Dataset`` objects.
+        ds_kw = dict(
+            max_length=max_length,
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
+        )
 
-        Args:
-            input_field: The field (column) in the pandas ``Dataset`` to use for the input.
-            target_fields: The field or fields (columns) in the pandas ``Dataset`` to use for the target.
-            train_hf_dataset: The pandas ``Dataset`` containing the training data.
-            val_hf_dataset: The pandas ``Dataset`` containing the validation data.
-            test_hf_dataset: The pandas ``Dataset`` containing the testing data.
-            predict_hf_dataset: The pandas ``Dataset`` containing the data to use when predicting.
-            train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`.
-            input_transform: The :class:`~flash.core.data.data.InputTransform` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
-                will be constructed and used.
-            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            sampler: The ``sampler`` to use for the ``train_dataloader``.
-            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
-                Will only be used if ``input_transform = None``.
-
-        Returns:
-            The constructed data module.
-        """
-        return cls.from_input(
-            InputFormat.HUGGINGFACE_DATASET,
-            (train_hf_dataset, input_field, target_fields),
-            (val_hf_dataset, input_field, target_fields),
-            (test_hf_dataset, input_field, target_fields),
-            (predict_hf_dataset, input_field, target_fields),
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
-            data_fetcher=data_fetcher,
-            input_transform=input_transform,
-            val_split=val_split,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            sampler=sampler,
-            **input_transform_kwargs,
+        return cls(
+            input_cls(RunningStage.TRAINING, train_data, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_data, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, test_data, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
+            **data_module_kwargs,
         )

@@ -20,10 +20,8 @@ from flash.core.data.states import (
     CollateFn,
     PerBatchTransform,
     PerBatchTransformOnDevice,
+    PerSampleTransform,
     PerSampleTransformOnDevice,
-    PostTensorTransform,
-    PreTensorTransform,
-    ToTensorTransform,
 )
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.registry import FlashRegistry
@@ -120,15 +118,16 @@ class ImageEmbedder(AdapterTask):
         )
 
         transform, collate_fn = self.transforms.get(pretraining_transform)(**pretraining_transform_kwargs)
-        to_tensor_transform = ApplyToKeys(
-            DataKeys.INPUT,
-            transform,
-        )
 
         self.adapter.set_state(CollateFn(collate_fn))
-        self.adapter.set_state(ToTensorTransform(to_tensor_transform))
-        self.adapter.set_state(PostTensorTransform(None))
-        self.adapter.set_state(PreTensorTransform(None))
+        self.adapter.set_state(
+            PerSampleTransform(
+                ApplyToKeys(
+                    DataKeys.INPUT,
+                    transform,
+                )
+            )
+        )
         self.adapter.set_state(PerSampleTransformOnDevice(None))
         self.adapter.set_state(PerBatchTransform(None))
         self.adapter.set_state(PerBatchTransformOnDevice(None))

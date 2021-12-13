@@ -52,40 +52,46 @@ def test_instance_segmentation_inference(tmpdir):
     icevision.utils.data_dir.data_dir.mkdir(exist_ok=True, parents=True)
     data_dir = icedata.pets.load_data()
 
-    datamodule = InstanceSegmentationData.from_folders(
+    datamodule = InstanceSegmentationData.from_icedata(
         train_folder=data_dir,
         val_split=0.1,
         parser=partial(icedata.pets.parser, mask=True),
+        batch_size=1,
     )
 
     model = InstanceSegmentation(
         head="mask_rcnn",
         backbone="resnet18_fpn",
         num_classes=datamodule.num_classes,
+        output=None,
     )
 
     # 3. Create the trainer and finetune the model
     trainer = flash.Trainer(max_epochs=1, fast_dev_run=True)
     trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
-    predictions = model.predict(
-        [
+    datamodule = InstanceSegmentationData.from_files(
+        predict_files=[
             str(data_dir / "images/yorkshire_terrier_9.jpg"),
             str(data_dir / "images/yorkshire_terrier_12.jpg"),
             str(data_dir / "images/yorkshire_terrier_13.jpg"),
-        ]
+        ],
+        batch_size=2,
     )
-    assert len(predictions) == 3
+    predictions = trainer.predict(model, datamodule=datamodule)
+    assert len(predictions[0][0]) == 6
 
     model_path = os.path.join(tmpdir, "model.pt")
     trainer.save_checkpoint(model_path)
     InstanceSegmentation.load_from_checkpoint(model_path)
 
-    predictions = model.predict(
-        [
+    datamodule = InstanceSegmentationData.from_files(
+        predict_files=[
             str(data_dir / "images/yorkshire_terrier_9.jpg"),
             str(data_dir / "images/yorkshire_terrier_12.jpg"),
-            str(data_dir / "images/yorkshire_terrier_15.jpg"),
-        ]
+            str(data_dir / "images/yorkshire_terrier_13.jpg"),
+        ],
+        batch_size=2,
     )
-    assert len(predictions) == 3
+    predictions = trainer.predict(model, datamodule=datamodule)
+    assert len(predictions[0][0]) == 6

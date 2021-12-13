@@ -7,17 +7,13 @@ Predictions (inference)
 
 You can use Flash to get predictions on pretrained or finetuned models.
 
-Predict on a single sample of data
-==================================
-
-You can pass in a sample of data (image file path, a string of text, etc) to the :func:`~flash.core.model.Task.predict` method.
-
+First create a :class:`~flash.core.data.data_module.DataModule` with some predict data, then pass it to the :meth:`Trainer.predict <flash.core.trainer.Trainer.predict>` method.
 
 .. code-block:: python
 
+    from flash import Trainer
     from flash.core.data.utils import download_data
-    from flash.image import ImageClassifier
-
+    from flash.image import ImageClassifier, ImageClassificationData
 
     # 1. Download the data set
     download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "data/")
@@ -28,30 +24,13 @@ You can pass in a sample of data (image file path, a string of text, etc) to the
     )
 
     # 3. Predict whether the image contains an ant or a bee
-    predictions = model.predict("data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg")
-    print(predictions)
-
-
-
-Predict on a csv file
-=====================
-
-.. code-block:: python
-
-    from flash.core.data.utils import download_data
-    from flash.tabular import TabularClassifier
-
-    # 1. Download the data
-    download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "data/")
-
-    # 2. Load the model from a checkpoint
-    model = TabularClassifier.load_from_checkpoint(
-        "https://flash-weights.s3.amazonaws.com/0.6.0/tabular_classification_model.pt"
+    trainer = Trainer()
+    datamodule = ImageClassificationData.from_files(
+        predict_files=["data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg"]
     )
-
-    # 3. Generate predictions from a csv file! Who would survive?
-    predictions = model.predict("data/titanic/titanic.csv")
+    predictions = trainer.predict(model, datamodule=datamodule)
     print(predictions)
+    # out: [["bees"]]
 
 
 Serializing predictions
@@ -61,10 +40,9 @@ To change the output format of predictions you can attach an :class:`~flash.core
 :class:`~flash.core.model.Task`. For example, you can choose to output probabilities (for more options see the API
 reference below).
 
-
 .. code-block:: python
 
-    from flash.core.classification import Probabilities
+    from flash.core.classification import ProbabilitiesOutput
     from flash.core.data.utils import download_data
     from flash.image import ImageClassifier
 
@@ -78,9 +56,13 @@ reference below).
     )
 
     # 3. Attach the Output
-    model.output = Probabilities()
+    model.output = ProbabilitiesOutput()
 
     # 4. Predict whether the image contains an ant or a bee
-    predictions = model.predict("data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg")
+    trainer = Trainer()
+    datamodule = ImageClassificationData.from_files(
+        predict_files=["data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg"]
+    )
+    predictions = trainer.predict(model, datamodule=datamodule)
     print(predictions)
-    # out: [[0.5926494598388672, 0.40735048055648804]]
+    # out: [[[0.5926494598388672, 0.40735048055648804]]]

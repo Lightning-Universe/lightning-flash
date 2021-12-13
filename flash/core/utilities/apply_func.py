@@ -27,7 +27,7 @@ def get_callable_dict(fn: Union[Callable, Mapping, Sequence]) -> Union[Dict, Map
         return {get_callable_name(fn): fn}
 
 
-def _is_overriden(method_name: str, instance: object, parent: Type[object]) -> bool:
+def _is_overridden(method_name: str, instance: object, parent: Type[object]) -> bool:
     """Cropped Version of https://github.com/PyTorchLightning/pytorch-
     lightning/blob/master/pytorch_lightning/utilities/model_helpers.py."""
 
