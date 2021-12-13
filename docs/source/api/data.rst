@@ -93,7 +93,7 @@ _______________________
     ~flash.core.data.process.DeserializerMapping
     ~flash.core.data.process.Deserializer
     ~flash.core.data.io.output_transform.OutputTransform
-    ~flash.core.data.input_transform.InputTransform
+    ~flash.core.data.io.input_transform.InputTransform
 
 flash.core.data.properties
 __________________________

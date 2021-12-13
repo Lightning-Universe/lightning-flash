@@ -18,8 +18,8 @@ import torch
 from torch import nn
 from torch.utils.data._utils.collate import default_collate
 
-from flash.core.data.input_transform import InputTransform
 from flash.core.data.io.input import DataKeys
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.transforms import ApplyToKeys, merge_transforms
 from flash.core.utilities.imports import _TORCHAUDIO_AVAILABLE, _TORCHVISION_AVAILABLE
 

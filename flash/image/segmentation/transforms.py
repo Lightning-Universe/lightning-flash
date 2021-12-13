@@ -17,8 +17,8 @@ from typing import Any, Callable, Dict, Tuple
 import torch
 import torch.nn as nn
 
-from flash.core.data.input_transform import InputTransform
 from flash.core.data.io.input import DataKeys
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.utilities.imports import _KORNIA_AVAILABLE, _TORCHVISION_AVAILABLE
 
 if _KORNIA_AVAILABLE:

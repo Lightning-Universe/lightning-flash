@@ -18,8 +18,8 @@ import torch
 from torch.nn import functional as F
 
 from flash.core.classification import ClassificationTask, ProbabilitiesOutput
-from flash.core.data.input_transform import InputTransform
 from flash.core.data.io.input import DataKeys, ServeInput
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.serve import Composition
 from flash.core.utilities.imports import _TABULAR_AVAILABLE, requires
 from flash.core.utilities.types import (

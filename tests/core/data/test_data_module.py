@@ -23,8 +23,8 @@ from torch.utils.data import Dataset
 
 from flash import Task, Trainer
 from flash.core.data.data_module import DataModule, DatasetInput
-from flash.core.data.input_transform import InputTransform
 from flash.core.data.io.input import Input
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.states import PerBatchTransformOnDevice, PerSampleTransform
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 from flash.core.utilities.stages import RunningStage

@@ -25,8 +25,8 @@ from flash.audio.speech_recognition.output_transform import (
     SpeechRecognitionBackboneState,
     SpeechRecognitionOutputTransform,
 )
-from flash.core.data.input_transform import InputTransform
 from flash.core.data.io.input import ServeInput
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.states import CollateFn
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry

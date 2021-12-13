@@ -27,8 +27,8 @@ import flash
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
-from flash.core.data.input_transform import InputTransform
 from flash.core.data.io.input import DataKeys, Input, InputBase, IterableInput
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX

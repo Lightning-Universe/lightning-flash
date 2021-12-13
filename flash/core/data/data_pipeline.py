@@ -16,9 +16,8 @@ from typing import Any, Dict, List, Optional, Set, Type, Union
 
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
-from flash.core.data.input_transform import InputTransform
-from flash.core.data.input_transform import InputTransform as NewInputTransform
 from flash.core.data.io.input import Input, InputBase
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output import _OutputProcessor, Output
 from flash.core.data.io.output_transform import _OutputTransformProcessor, OutputTransform
 from flash.core.data.process import Deserializer
@@ -105,7 +104,7 @@ class DataPipeline:
         # TODO: With the new API, all hooks are implemented to improve discoverability.
         return (
             getattr(process_obj, current_method_name).__code__
-            != getattr(super_obj, current_method_name if super_obj == NewInputTransform else method_name).__code__
+            != getattr(super_obj, current_method_name if super_obj == InputTransform else method_name).__code__
         )
 
     @classmethod

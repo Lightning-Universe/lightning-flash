@@ -184,7 +184,7 @@ class InputBase(Properties, metaclass=_InputMeta):
         data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None,
         **kwargs: Any,
     ) -> None:
-        from flash.core.data.input_transform import create_transform
+        from flash.core.data.io.input_transform import create_transform
 
         self.transform = create_transform(
             transform,
@@ -200,14 +200,14 @@ class InputBase(Properties, metaclass=_InputMeta):
             self.data = self._call_load_data(*args, **kwargs)
 
     def _create_dataloader_collate_fn(self, callbacks: List[FlashCallback]) -> Optional[Callable]:
-        from flash.core.data.input_transform import _create_collate_input_transform_processors
+        from flash.core.data.io.input_transform import _create_collate_input_transform_processors
 
         if not self.transform:
             return
         return _create_collate_input_transform_processors(self.transform, callbacks)[0]
 
     def _create_on_after_batch_transfer_fn(self, callbacks: List[FlashCallback]) -> Optional[Callable]:
-        from flash.core.data.input_transform import _create_collate_input_transform_processors
+        from flash.core.data.io.input_transform import _create_collate_input_transform_processors
 
         if not self.transform:
             return

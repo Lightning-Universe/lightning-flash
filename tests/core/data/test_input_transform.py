@@ -17,7 +17,7 @@ import pytest
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data.dataloader import default_collate
 
-from flash.core.data.input_transform import Compose, InputTransform, LambdaInputTransform
+from flash.core.data.io.input_transform import Compose, InputTransform, LambdaInputTransform
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.stages import RunningStage
 
