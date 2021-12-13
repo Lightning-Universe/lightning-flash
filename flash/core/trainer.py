@@ -15,7 +15,7 @@ import inspect
 import warnings
 from argparse import ArgumentParser, Namespace
 from functools import wraps
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, List, Optional, Tuple, Union
 
 import torch
 from pytorch_lightning import LightningDataModule, LightningModule
@@ -24,12 +24,11 @@ from pytorch_lightning.callbacks import BaseFinetuning
 from pytorch_lightning.loops.fit_loop import FitLoop
 from pytorch_lightning.utilities.argparse import add_argparse_args, get_init_arguments_and_types, parse_env_variables
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from pytorch_lightning.utilities.model_helpers import is_overridden
 from torch.utils.data import DataLoader
 
 import flash
 from flash.core.model import Task
-from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_5_0, _SERVE_AVAILABLE
+from flash.core.utilities.imports import _SERVE_AVAILABLE
 
 
 def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs):
@@ -237,58 +236,3 @@ class Trainer(PlTrainer):
         # the lightning trainer implementation does not support subclasses.
         # context: https://github.com/PyTorchLightning/lightning-flash/issues/342#issuecomment-848892447
         return from_argparse_args(Trainer, args, **kwargs)
-
-    def _parse_request_dataloader_args(self, args: Tuple, kwargs: Dict):
-        """Handles backwards compatibility for ``request_dataloader``.
-
-        Possible combinations:
-
-        legacy: (model, stage)
-        (stage, model)
-        (stage, model=model)
-        """
-        model, stage, is_legacy = None, None, False
-        if len(args) == 2:
-            # Check for legacy arguments: (model, stage)
-            if isinstance(args[0], LightningModule):
-                is_legacy = True
-                model, stage = args
-            else:  # (stage, model)
-                stage, model = args
-        else:
-            stage = kwargs.get("stage", args[0])
-            model = kwargs.get("model")
-        return model, stage, is_legacy
-
-    def request_dataloader(
-        self,
-        *args,
-        **kwargs,
-    ) -> Union[DataLoader, List[DataLoader]]:
-        """Handles downloading data in the GPU or TPU case.
-
-        Returns:
-            The dataloader
-        """
-        model, stage, is_legacy = self._parse_request_dataloader_args(args, kwargs)
-
-        if is_legacy:
-            self.call_hook(f"on_{stage}_dataloader")
-            dataloader = getattr(model, f"{stage}_dataloader")()
-        else:
-            hook = f"{stage.dataloader_prefix}_dataloader"
-            self.call_hook("on_" + hook, pl_module=model)
-
-            if is_overridden(hook, model):
-                dataloader = self.call_hook(hook, pl_module=model)
-            elif _PL_GREATER_EQUAL_1_5_0:
-                source = getattr(self._data_connector, f"_{stage.dataloader_prefix}_dataloader_source")
-                dataloader = source.dataloader()
-
-        if isinstance(dataloader, tuple):
-            dataloader = list(dataloader)
-        if _PL_GREATER_EQUAL_1_5_0:
-            self.training_type_plugin.barrier("get_dataloaders")
-        else:
-            self.accelerator.barrier("get_dataloaders")
-        return dataloader
