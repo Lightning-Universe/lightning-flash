@@ -42,7 +42,8 @@ class TabularClassifier(ClassificationTask):
     Args:
         num_features: Number of columns in table (not including target column).
         num_classes: Number of classes to classify.
-        embedding_sizes: List of (num_classes, emb_dim) to form categorical embeddings.
+        embedding_sizes: List of (num_classes, emb_dim) to form categorical embeddings (or ``None`` if there are no
+            categorical fields in the data).
         loss_fn: Loss function for training, defaults to cross entropy.
         optimizer: Optimizer to use for training.
         lr_scheduler: The LR scheduler to use during training.
