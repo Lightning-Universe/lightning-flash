@@ -79,9 +79,7 @@ def test_jit(tmpdir):
 def test_serve():
     model = TextClassifier(2, TEST_BACKBONE)
 
-    # TODO: Currently only servable once an input_transform has been attached
-    model._input_transform = TransformersInputTransform(RunningStage.SERVING)
-    model._deserializer = TextDeserializer()
+    model._deserializer = TextDeserializer(transform=TransformersInputTransform(RunningStage.SERVING))
     model.eval()
     model.serve()
 

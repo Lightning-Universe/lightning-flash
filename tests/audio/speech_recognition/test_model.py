@@ -82,10 +82,8 @@ def test_jit(tmpdir):
 def test_serve():
     model = SpeechRecognition(backbone=TEST_BACKBONE)
 
-    # TODO: Currently only servable once a input_transform and postprocess have been attached
-    model._input_transform = InputTransform(RunningStage.SERVING)
+    model._deserializer = SpeechRecognitionDeserializer(transform=InputTransform(RunningStage.SERVING))
     model._output_transform = SpeechRecognitionOutputTransform()
-    model._deserializer = SpeechRecognitionDeserializer()
     model.eval()
     model.serve()
 
