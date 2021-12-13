@@ -20,7 +20,7 @@ First create a :class:`~flash.core.data.data_module.DataModule` with some predic
 
     # 2. Load the model from a checkpoint
     model = ImageClassifier.load_from_checkpoint(
-        "https://flash-weights.s3.amazonaws.com/0.6.0/image_classification_model.pt"
+        "https://flash-weights.s3.amazonaws.com/0.6.1/image_classification_model.pt"
     )
 
     # 3. Predict whether the image contains an ant or a bee
@@ -52,7 +52,7 @@ reference below).
 
     # 2. Load the model from a checkpoint
     model = ImageClassifier.load_from_checkpoint(
-        "https://flash-weights.s3.amazonaws.com/0.6.0/image_classification_model.pt"
+        "https://flash-weights.s3.amazonaws.com/0.6.1/image_classification_model.pt"
     )
 
     # 3. Attach the Output
