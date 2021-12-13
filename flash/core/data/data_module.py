@@ -329,7 +329,7 @@ class DataModule(pl.LightningDataModule):
             task._output,
             task,
         ]:
-            if properties is not None:
+            if properties is not None and hasattr(properties, "attach_data_pipeline_state"):
                 properties.attach_data_pipeline_state(data_pipeline_state)
 
     def on_after_batch_transfer(self, batch: Any, dataloader_idx: int) -> Any:

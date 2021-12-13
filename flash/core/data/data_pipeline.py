@@ -84,7 +84,9 @@ class DataPipeline:
         data_pipeline_state = data_pipeline_state or DataPipelineState()
         if self.input is not None:
             if isinstance(self.input, list):
-                [input.attach_data_pipeline_state(data_pipeline_state) for input in self.input]
+                for input in self.input:
+                    if hasattr(input, "attach_data_pipeline_state"):
+                        input.attach_data_pipeline_state(data_pipeline_state)
             else:
                 self.input.attach_data_pipeline_state(data_pipeline_state)
         self._deserializer.attach_data_pipeline_state(data_pipeline_state)
