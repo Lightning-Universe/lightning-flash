@@ -67,4 +67,5 @@ class SpeechRecognitionOutputTransform(OutputTransform):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self._tokenizer = Wav2Vec2CTCTokenizer.from_pretrained(self.backbone)
+        if self.backbone is not None:
+            self._tokenizer = Wav2Vec2CTCTokenizer.from_pretrained(self.backbone)

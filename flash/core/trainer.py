@@ -28,7 +28,6 @@ from torch.utils.data import DataLoader
 
 import flash
 from flash.core.model import Task
-from flash.core.utilities.imports import _SERVE_AVAILABLE
 
 
 def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs):
@@ -73,7 +72,7 @@ def _defaults_from_env_vars(fn: Callable) -> Callable:
 
 class Trainer(PlTrainer):
     @_defaults_from_env_vars
-    def __init__(self, *args, serve_sanity_check: bool = False, **kwargs):
+    def __init__(self, *args, **kwargs):
         if flash._IS_TESTING:
             if torch.cuda.is_available():
                 kwargs["gpus"] = 1
@@ -88,21 +87,6 @@ class Trainer(PlTrainer):
                 kwargs["accelerator"] = None
                 kwargs["precision"] = 32
         super().__init__(*args, **kwargs)
-
-        self.serve_sanity_check = serve_sanity_check
-
-    def _run_sanity_check(self, ref_model):
-        if hasattr(super(), "_run_sanity_check"):
-            super()._run_sanity_check(ref_model)
-
-        self.run_sanity_check(ref_model)
-
-    def run_sanity_check(self, ref_model):
-        if hasattr(super(), "run_sanity_check"):
-            super().run_sanity_check(ref_model)
-
-        if self.serve_sanity_check and ref_model.is_servable and _SERVE_AVAILABLE:
-            ref_model.run_serve_sanity_check()
 
     # TODO @(tchaton) remove `reset_train_val_dataloaders` from run_train function
     def _run_train(self) -> None:

@@ -22,8 +22,7 @@ import torch
 from flash import Trainer
 from flash.__main__ import main
 from flash.audio import SpeechRecognition
-from flash.audio.speech_recognition.data import InputTransform, SpeechRecognitionData, SpeechRecognitionOutputTransform
-from flash.audio.speech_recognition.input import SpeechRecognitionDeserializer
+from flash.audio.speech_recognition.data import InputTransform, SpeechRecognitionData
 from flash.core.data.io.input import DataKeys, Input
 from flash.core.utilities.imports import _AUDIO_AVAILABLE
 from flash.core.utilities.stages import RunningStage
@@ -83,11 +82,6 @@ def test_jit(tmpdir):
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = SpeechRecognition(backbone=TEST_BACKBONE)
-
-    model._deserializer = SpeechRecognitionDeserializer(transform=InputTransform(RunningStage.SERVING))
-    # TODO: Serve should share the state
-    model._deserializer.transform._state = model._state
-    model._output_transform = SpeechRecognitionOutputTransform()
     model.eval()
     model.serve()
 

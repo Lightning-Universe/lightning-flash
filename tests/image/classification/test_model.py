@@ -23,10 +23,7 @@ from flash.__main__ import main
 from flash.core.classification import ProbabilitiesOutput
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _IMAGE_AVAILABLE
-from flash.core.utilities.stages import RunningStage
 from flash.image import ImageClassifier
-from flash.image.classification.data import ImageClassificationInputTransform
-from flash.image.data import ImageDeserializer
 from tests.helpers.utils import _IMAGE_TESTING, _SERVE_TESTING
 
 # ======== Mock functions ========
@@ -138,7 +135,6 @@ def test_jit(tmpdir, jitter, args):
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = ImageClassifier(2)
-    model._deserializer = ImageDeserializer(transform=ImageClassificationInputTransform(RunningStage.SERVING))
     model.eval()
     model.serve()
 

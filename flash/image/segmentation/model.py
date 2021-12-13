@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Type, Union
 
 import torch
 from torch import nn
@@ -19,12 +19,14 @@ from torch.nn import functional as F
 from torchmetrics import IoU
 
 from flash.core.classification import ClassificationTask
-from flash.core.data.io.input import DataKeys
+from flash.core.data.io.input import DataKeys, ServeInput
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _KORNIA_AVAILABLE
+from flash.core.serve import Composition
+from flash.core.utilities.imports import _KORNIA_AVAILABLE, requires
 from flash.core.utilities.isinstance import _isinstance
 from flash.core.utilities.types import (
+    INPUT_TRANSFORM_TYPE,
     LOSS_FN_TYPE,
     LR_SCHEDULER_TYPE,
     METRICS_TYPE,
@@ -32,6 +34,8 @@ from flash.core.utilities.types import (
     OUTPUT_TRANSFORM_TYPE,
     OUTPUT_TYPE,
 )
+from flash.image import SemanticSegmentationInputTransform
+from flash.image.data import ImageDeserializer
 from flash.image.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 from flash.image.segmentation.heads import SEMANTIC_SEGMENTATION_HEADS
 from flash.image.segmentation.output import SegmentationLabelsOutput
@@ -173,6 +177,18 @@ class SemanticSegmentation(ClassificationTask):
             pretrained_weights = list(result["metadata"]["weights_paths"])
 
         return pretrained_weights
+
+    @requires("serve")
+    def serve(
+        self,
+        host: str = "127.0.0.1",
+        port: int = 8000,
+        sanity_check: bool = True,
+        input_cls: Optional[Type[ServeInput]] = ImageDeserializer,
+        transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
+        transform_kwargs: Optional[Dict] = None,
+    ) -> Composition:
+        return super().serve(host, port, sanity_check, input_cls, transform, transform_kwargs)
 
     @staticmethod
     def _ci_benchmark_fn(history: List[Dict[str, Any]]):

@@ -3,6 +3,8 @@ from typing import Any, Callable, Mapping
 
 import torch
 
+from flash.core.data.batch import _ServeInputProcessor
+from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import DataKeys
 from flash.core.serve import expose, ModelComponent
 from flash.core.serve.types.base import BaseType
@@ -46,7 +48,18 @@ class FlashOutputs(BaseType):
         return None
 
 
-def build_flash_serve_model_component(model):
+def build_flash_serve_model_component(model, serve_input):
+
+    data_pipeline_state = DataPipelineState()
+    for properties in [
+        serve_input,
+        getattr(serve_input, "transform", None),
+        model._output_transform,
+        model._output,
+        model,
+    ]:
+        if properties is not None and hasattr(properties, "attach_data_pipeline_state"):
+            properties.attach_data_pipeline_state(data_pipeline_state)
 
     data_pipeline = model.build_data_pipeline()
 
@@ -55,23 +68,22 @@ def build_flash_serve_model_component(model):
             self.model = model
             self.model.eval()
             self.data_pipeline = model.build_data_pipeline()
-            self.deserializer = self.data_pipeline._deserializer
-            self.dataloader_collate_fn = self.data_pipeline._deserializer._create_dataloader_collate_fn([])
-            self.on_after_batch_transfer_fn = self.data_pipeline._deserializer._create_on_after_batch_transfer_fn([])
+            self.serve_input = serve_input
+            self.dataloader_collate_fn = self.serve_input._create_dataloader_collate_fn([])
+            self.on_after_batch_transfer_fn = self.serve_input._create_on_after_batch_transfer_fn([])
             self.output_transform_processor = self.data_pipeline.output_transform_processor(
-                RunningStage.PREDICTING, is_serving=True
+                RunningStage.SERVING, is_serving=True
             )
             # todo (tchaton) Remove this hack
             self.extra_arguments = len(inspect.signature(self.model.transfer_batch_to_device).parameters) == 3
             self.device = self.model.device
 
         @expose(
-            inputs={"inputs": FlashInputs(data_pipeline._deserializer._call_load_sample)},
+            inputs={"inputs": FlashInputs(_ServeInputProcessor(serve_input))},
             outputs={"outputs": FlashOutputs(data_pipeline.output_processor())},
         )
         def predict(self, inputs):
             with torch.no_grad():
-                inputs = self.dataloader_collate_fn(inputs)
                 if self.extra_arguments:
                     inputs = self.model.transfer_batch_to_device(inputs, self.device, 0)
                 else:
