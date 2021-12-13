@@ -62,7 +62,7 @@ class SpeechRecognitionOutputTransform(OutputTransform):
 
     def __getstate__(self):  # TODO: Find out why this is being pickled
         state = self.__dict__.copy()
-        state.pop("_tokenizer")
+        state.pop("_tokenizer", None)
         return state
 
     def __setstate__(self, state):
