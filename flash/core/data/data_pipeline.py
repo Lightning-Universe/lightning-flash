@@ -12,16 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import inspect
-from typing import Any, Dict, List, Optional, Sequence, Set, Type, Union
+from typing import Any, Dict, List, Optional, Set, Type, Union
 
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
-from flash.core.data.batch import _DeserializeProcessorV2
-from flash.core.data.input_transform import _create_collate_input_transform_processors
 from flash.core.data.input_transform import InputTransform
 from flash.core.data.input_transform import InputTransform as NewInputTransform
 from flash.core.data.io.input import Input, InputBase
-from flash.core.data.io.input_transform import _InputTransformProcessorV2
 from flash.core.data.io.output import _OutputProcessor, Output
 from flash.core.data.io.output_transform import _OutputTransformProcessor, OutputTransform
 from flash.core.data.process import Deserializer
@@ -132,21 +129,6 @@ class DataPipeline:
         if not prefix:
             return has_different_code
         return has_different_code or cls._is_overridden_recursive(method_name, process_obj, super_obj)
-
-    @staticmethod
-    def _identity(samples: Sequence[Any]) -> Sequence[Any]:
-        return samples
-
-    def deserialize_processor(self) -> _DeserializeProcessorV2:
-        return _DeserializeProcessorV2(
-            self._deserializer,
-            self._input_transform_pipeline,
-            self._input_transform_pipeline._per_sample_transform,
-            [],
-        )
-
-    def device_input_transform_processor(self, running_stage: RunningStage) -> _InputTransformProcessorV2:
-        return _create_collate_input_transform_processors(self._input_transform_pipeline, [])[1]
 
     def output_transform_processor(self, running_stage: RunningStage, is_serving=False) -> _OutputTransformProcessor:
         return self._create_output_transform_processor(running_stage, is_serving=is_serving)

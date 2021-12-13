@@ -34,7 +34,6 @@ class SpeechRecognitionBackboneState(ProcessState):
 
 
 class SpeechRecognitionOutputTransform(OutputTransform):
-    @requires("audio")
     def __init__(self):
         super().__init__()
 
@@ -54,6 +53,7 @@ class SpeechRecognitionOutputTransform(OutputTransform):
             self._backbone = self.backbone
         return self._tokenizer
 
+    @requires("audio")
     def per_batch_transform(self, batch: Any) -> Any:
         # converts logits into greedy transcription
         pred_ids = torch.argmax(batch.logits, dim=-1)
@@ -62,9 +62,10 @@ class SpeechRecognitionOutputTransform(OutputTransform):
 
     def __getstate__(self):  # TODO: Find out why this is being pickled
         state = self.__dict__.copy()
-        state.pop("_tokenizer")
+        state.pop("_tokenizer", None)
         return state
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self._tokenizer = Wav2Vec2CTCTokenizer.from_pretrained(self.backbone)
+        if self.backbone is not None:
+            self._tokenizer = Wav2Vec2CTCTokenizer.from_pretrained(self.backbone)

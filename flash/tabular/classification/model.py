@@ -11,15 +11,25 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Tuple
+from functools import partial
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
 import torch
 from torch.nn import functional as F
 
 from flash.core.classification import ClassificationTask, ProbabilitiesOutput
-from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _TABULAR_AVAILABLE
-from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
+from flash.core.data.input_transform import InputTransform
+from flash.core.data.io.input import DataKeys, ServeInput
+from flash.core.serve import Composition
+from flash.core.utilities.imports import _TABULAR_AVAILABLE, requires
+from flash.core.utilities.types import (
+    INPUT_TRANSFORM_TYPE,
+    LR_SCHEDULER_TYPE,
+    METRICS_TYPE,
+    OPTIMIZER_TYPE,
+    OUTPUT_TYPE,
+)
+from flash.tabular.input import TabularDeserializer
 
 if _TABULAR_AVAILABLE:
     from pytorch_tabnet.tab_network import TabNet
@@ -119,3 +129,18 @@ class TabularClassifier(ClassificationTask):
     def _ci_benchmark_fn(history: List[Dict[str, Any]]):
         """This function is used only for debugging usage with CI."""
         assert history[-1]["val_accuracy"] > 0.6, history[-1]["val_accuracy"]
+
+    @requires("serve")
+    def serve(
+        self,
+        host: str = "127.0.0.1",
+        port: int = 8000,
+        sanity_check: bool = True,
+        input_cls: Optional[Type[ServeInput]] = TabularDeserializer,
+        transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        transform_kwargs: Optional[Dict] = None,
+        parameters: Optional[Dict[str, Any]] = None,
+    ) -> Composition:
+        return super().serve(
+            host, port, sanity_check, partial(input_cls, parameters=parameters), transform, transform_kwargs
+        )

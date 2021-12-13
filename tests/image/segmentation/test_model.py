@@ -24,10 +24,8 @@ from flash import Trainer
 from flash.__main__ import main
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _IMAGE_AVAILABLE
-from flash.core.utilities.stages import RunningStage
 from flash.image import SemanticSegmentation
-from flash.image.segmentation.data import SemanticSegmentationData, SemanticSegmentationInputTransform
-from flash.image.segmentation.input import SemanticSegmentationDeserializer
+from flash.image.segmentation.data import SemanticSegmentationData
 from tests.helpers.utils import _IMAGE_TESTING, _SERVE_TESTING
 
 # ======== Mock functions ========
@@ -149,10 +147,6 @@ def test_jit(tmpdir, jitter, args):
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = SemanticSegmentation(2)
-
-    model._deserializer = SemanticSegmentationDeserializer(
-        transform=SemanticSegmentationInputTransform(RunningStage.SERVING)
-    )
     model.eval()
     model.serve()
 

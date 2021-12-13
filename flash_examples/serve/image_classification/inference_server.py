@@ -11,12 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from flash import RunningStage
-from flash.image import ImageClassificationInputTransform, ImageClassifier
-from flash.image.data import ImageDeserializer
+from flash.image import ImageClassifier
 
 model = ImageClassifier.load_from_checkpoint(
     "https://flash-weights.s3.amazonaws.com/0.6.0/image_classification_model.pt"
 )
-model.deserializer = ImageDeserializer(transform=ImageClassificationInputTransform(RunningStage.SERVING))
 model.serve()

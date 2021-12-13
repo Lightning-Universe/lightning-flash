@@ -11,38 +11,27 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, List, Optional, Sequence, TYPE_CHECKING
+from typing import Any, Sequence, TYPE_CHECKING
 
 import torch
 from torch import Tensor
 
-from flash.core.data.callback import ControlFlow, FlashCallback
-from flash.core.data.utils import convert_to_modules
-from flash.core.utilities.stages import RunningStage
-
 if TYPE_CHECKING:
-    from flash.core.data.input_transform import InputTransform
-    from flash.core.data.process import Deserializer
+    from flash.core.data.io.input import ServeInput
 
 
-class _DeserializeProcessorV2(torch.nn.Module):
+class _ServeInputProcessor(torch.nn.Module):
     def __init__(
         self,
-        deserializer: "Deserializer",
-        input_transform: "InputTransform",
-        per_sample_transform: Callable,
-        callbacks: Optional[List[FlashCallback]] = None,
+        serve_input: "ServeInput",
     ):
         super().__init__()
-        self.input_transform = input_transform
-        self.callback = ControlFlow(callbacks or [])
-        self.deserializer = convert_to_modules(deserializer)
-        self.per_sample_transform = convert_to_modules(per_sample_transform)
+        self.serve_input = serve_input
+        self.dataloader_collate_fn = self.serve_input._create_dataloader_collate_fn([])
 
     def forward(self, sample: str):
-        sample = self.deserializer(sample)
-        sample = self.per_sample_transform(sample)
-        self.callback.on_per_sample_transform(sample, RunningStage.SERVING)
+        sample = self.serve_input._call_load_sample(sample)
+        sample = self.dataloader_collate_fn(sample)
         return sample
 
 

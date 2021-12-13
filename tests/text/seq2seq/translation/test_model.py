@@ -18,12 +18,9 @@ from unittest import mock
 import pytest
 import torch
 
-from flash import DataKeys, RunningStage, Trainer
-from flash.core.integrations.transformers.input_transform import TransformersInputTransform
+from flash import DataKeys, Trainer
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.text import TranslationTask
-from flash.text.input import TextDeserializer
-from flash.text.seq2seq.core.output_transform import Seq2SeqOutputTransform
 from tests.helpers.utils import _SERVE_TESTING, _TEXT_TESTING
 
 # ======== Mock functions ========
@@ -79,9 +76,6 @@ def test_jit(tmpdir):
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = TranslationTask(TEST_BACKBONE)
-    model._deserializer = TextDeserializer(transform=TransformersInputTransform(RunningStage.SERVING))
-    model._output_transform = Seq2SeqOutputTransform()
-
     model.eval()
     model.serve()
 
