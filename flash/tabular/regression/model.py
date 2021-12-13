@@ -71,7 +71,11 @@ class TabularRegressor(RegressionTask):
     ):
         self.save_hyperparameters()
 
-        cat_dims, cat_emb_dim = zip(*embedding_sizes) if embedding_sizes else ([], [])
+        if embedding_sizes:
+            cat_dims, cat_emb_dim = zip(*embedding_sizes)
+        else:
+            cat_dims, cat_emb_dim, embedding_sizes = [], [], []
+
         model = TabNet(
             input_dim=num_features,
             output_dim=1,
