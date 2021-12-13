@@ -106,7 +106,7 @@ Here's an example where we load the default transforms and merge with custom `to
     from flash.core.data.io.input import DataKeys
     from flash.core.data.transforms import ApplyToKeys, merge_transforms
     from flash.image import ImageClassificationData, ImageClassifier
-    from flash.core.data.input_transform import InputTransform
+    from flash.core.data.io.input_transform import InputTransform
     from flash.image.classification.transforms import default_transforms
     from dataclasses import dataclass
 
