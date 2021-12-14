@@ -17,7 +17,7 @@ from unittest import mock
 
 import pytest
 
-from flash.core.utilities.imports import _SKLEARN_AVAILABLE
+from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE, _SKLEARN_AVAILABLE
 from tests.examples.utils import run_test
 from tests.helpers.utils import (
     _AUDIO_TESTING,
@@ -51,6 +51,24 @@ root = Path(__file__).parent.parent.parent
         pytest.param(
             "image_classification_multi_label.py",
             marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed"),
+        ),
+        pytest.param(
+            "object_detection.py",
+            marks=pytest.mark.skipif(
+                not (_IMAGE_AVAILABLE and _ICEVISION_AVAILABLE), reason="image libraries aren't installed"
+            ),
+        ),
+        pytest.param(
+            "instance_segmentation.py",
+            marks=pytest.mark.skipif(
+                not (_IMAGE_AVAILABLE and _ICEVISION_AVAILABLE), reason="image libraries aren't installed"
+            ),
+        ),
+        pytest.param(
+            "keypoint_detection.py",
+            marks=pytest.mark.skipif(
+                not (_IMAGE_AVAILABLE and _ICEVISION_AVAILABLE), reason="image libraries aren't installed"
+            ),
         ),
         # pytest.param("finetuning", "object_detection.py"),  # TODO: takes too long.
         pytest.param(

@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, List, Optional, Type, TYPE_CHECKING
+from typing import Any, Callable, Dict, List, Optional, Type, TYPE_CHECKING, Union
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
@@ -58,7 +58,7 @@ class ObjectDetectionData(DataModule):
         val_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        parser: Type[Parser] = Parser,
+        parser: Optional[Union[Callable, Type[Parser]]] = None,
         input_cls: Type[Input] = IceVisionInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
