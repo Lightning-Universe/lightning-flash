@@ -45,7 +45,7 @@ class ClassificationMixin:
         num_classes: Optional[int] = None,
         loss_fn: Optional[Callable] = None,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
-        local_files_only: bool = False,
+        local_files: bool = Optional[str],
         multi_label: bool = False,
     ):
         if metrics is None:
