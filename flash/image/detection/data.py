@@ -152,8 +152,8 @@ class ObjectDetectionData(DataModule):
         **data_module_kwargs: Any,
     ) -> "ObjectDetectionData":
         """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders
-        and annotation files in the `PASCAL VOC (Visual Obect Challenge) <http://host.robots.ox.ac.uk/pascal/VOC/>`_
-        XML format.
+        and annotation files in the `PASCAL VOC (Visual Obect Challenge)
+        <http://host.robots.ox.ac.uk/pascal/VOC/>`_ XML format.
 
         Args:
             train_folder: The folder containing the train data.
@@ -212,8 +212,9 @@ class ObjectDetectionData(DataModule):
         **data_module_kwargs: Any,
     ) -> "ObjectDetectionData":
         """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders
-        and annotation files in the VIA (`VGG Image Annotator <https://www.robots.ox.ac.uk/~vgg/software/via/>`_) 
-        `JSON format <https://gitlab.com/vgg/via/-/blob/via-3.x.y/via-3.x.y/CodeDoc.md#structure-of-via-project-json-file>`_.
+        and annotation files in the VIA (`VGG Image Annotator <https://www.robots.ox.ac.uk/~vgg/software/via/>`_)
+        `JSON format <https://gitlab.com/vgg/via/-/blob/via-3.x.y/via-3.x.y/CodeDoc.md#structure-of-via-project-
+        json-file>`_.
 
         Args:
             train_folder: The folder containing the train data.
