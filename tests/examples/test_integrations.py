@@ -35,6 +35,13 @@ root = Path(__file__).parent.parent.parent
             ),
         ),
         pytest.param(
+            "fiftyone",
+            "object_detection.py",
+            marks=pytest.mark.skipif(
+                not (_IMAGE_AVAILABLE and _FIFTYONE_AVAILABLE), reason="fiftyone library isn't installed"
+            ),
+        ),
+        pytest.param(
             "baal",
             "image_classification_active_learning.py",
             marks=pytest.mark.skipif(not (_IMAGE_AVAILABLE and _BAAL_AVAILABLE), reason="baal library isn't installed"),

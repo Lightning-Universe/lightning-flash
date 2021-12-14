@@ -26,7 +26,7 @@ import icedata  # noqa: E402
 # 1. Create the DataModule
 data_dir = icedata.fridge.load_data()
 
-datamodule = ObjectDetectionData.from_folders(
+datamodule = ObjectDetectionData.from_icedata(
     train_folder=data_dir,
     predict_folder=data_dir,
     val_split=0.1,

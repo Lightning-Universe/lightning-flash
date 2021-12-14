@@ -22,7 +22,7 @@ import icedata  # noqa: E402
 # 1. Create the DataModule
 data_dir = icedata.biwi.load_data()
 
-datamodule = KeypointDetectionData.from_folders(
+datamodule = KeypointDetectionData.from_icedata(
     train_folder=data_dir,
     val_split=0.1,
     parser=icedata.biwi.parser,
