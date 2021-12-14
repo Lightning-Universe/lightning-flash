@@ -171,15 +171,21 @@ class TabularCSVInput(TabularDataFrameInput):
 
 
 class TabularDeserializer(Deserializer):
+    def __init__(self, *args, parameters: Optional[Dict[str, Any]] = None, **kwargs):
+        self._parameters = parameters
+        super().__init__(*args, **kwargs)
+
     @property
     def parameters(self) -> Dict[str, Any]:
+        if self._parameters is not None:
+            return self._parameters
         parameters_state = self.get_state(TabularParametersState)
-        if parameters_state is None or parameters_state.parameters is None:
-            raise MisconfigurationException(
-                "Tabular tasks must previously have been trained in order to support serving as parameters from the "
-                "train data are required."
-            )
-        return parameters_state.parameters
+        if parameters_state is not None and parameters_state.parameters is not None:
+            return parameters_state.parameters
+        raise MisconfigurationException(
+            "Tabular tasks must previously have been trained in order to support serving or the `parameters` argument "
+            "must be provided to the `serve` method."
+        )
 
     def serve_load_sample(self, data: str) -> Any:
         parameters = self.parameters

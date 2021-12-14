@@ -27,8 +27,6 @@ from torch.utils.data import DataLoader
 
 from flash import Trainer
 from flash.core.classification import ClassificationTask
-from flash.core.utilities.stages import RunningStage
-from tests.helpers.boring_model import BoringModel
 
 
 class DummyDataset(torch.utils.data.Dataset):
@@ -140,60 +138,3 @@ def test_from_argparse_args():
     trainer = Trainer.from_argparse_args(args)
     assert trainer.max_epochs == 200
     assert isinstance(trainer, Trainer)
-
-
-@pytest.mark.parametrize("stage", ["train", "val", "test"])
-def test_trainer_request_dataloaders_legacy(stage):
-    """Test to ensure that ``request_dataloaders`` can take the legacy PL ordering of arguments.
-
-    legacy: (model, stage)
-    """
-
-    class TestTrainer(Trainer):
-        recorded_on_dataloader_calls = {}
-
-        def on_train_dataloader(self) -> None:
-            self.recorded_on_dataloader_calls["train"] = True
-
-        def on_val_dataloader(self) -> None:
-            self.recorded_on_dataloader_calls["val"] = True
-
-        def on_test_dataloader(self) -> None:
-            self.recorded_on_dataloader_calls["test"] = True
-
-    model = BoringModel()
-    trainer = TestTrainer()
-
-    trainer.request_dataloader(model, stage)
-    assert trainer.recorded_on_dataloader_calls[stage]
-
-
-@pytest.mark.skip(reason="TODO: test can only be enabled once Lightning 1.5 is released.")
-@pytest.mark.parametrize("stage", [RunningStage.TRAINING, RunningStage.VALIDATING, RunningStage.TESTING])
-def test_trainer_request_dataloaders(stage):
-    """Test to ensure that ``request_dataloaders`` can take a combination of arguments, for PL 1.5 and later.
-
-    (stage, model) -> calls module on_dataloader hook (stage, model=model) -> calls module on_dataloader hook
-    """
-
-    class TestModel(BoringModel):
-        recorded_on_dataloader_calls = {}
-
-        def on_train_dataloader(self) -> None:
-            self.recorded_on_dataloader_calls[RunningStage.TRAINING] = True
-
-        def on_val_dataloader(self) -> None:
-            self.recorded_on_dataloader_calls[RunningStage.VALIDATING] = True
-
-        def on_test_dataloader(self) -> None:
-            self.recorded_on_dataloader_calls[RunningStage.TESTING] = True
-
-    trainer = Trainer()
-
-    model = TestModel()
-    trainer.request_dataloader(stage, model)
-    assert model.recorded_on_dataloader_calls[stage]
-
-    model = TestModel()
-    trainer.request_dataloader(stage, model=model)
-    assert model.recorded_on_dataloader_calls[stage]

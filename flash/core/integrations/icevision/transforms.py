@@ -16,8 +16,8 @@ from typing import Any, Callable, Dict, List, Tuple
 
 from torch import nn
 
-from flash.core.data.input_transform import InputTransform
 from flash.core.data.io.input import DataKeys
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _ICEVISION_GREATER_EQUAL_0_11_0, requires
 
 if _ICEVISION_AVAILABLE:

@@ -38,11 +38,10 @@ from torch.utils.data import DataLoader, Sampler
 
 import flash
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
-from flash.core.data.io.input import Input, InputBase
+from flash.core.data.io.input import InputBase, ServeInput
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import OutputTransform
-from flash.core.data.new_data_module import DataModule as NewDataModule
 from flash.core.data.process import Deserializer, DeserializerMapping
 from flash.core.data.properties import ProcessState
 from flash.core.finetuning import _DEFAULTS_FINETUNE_STRATEGIES, _FINETUNING_STRATEGIES_REGISTRY
@@ -355,18 +354,27 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         self.output = output
         self._wrapped_predict_step = False
 
-    def _wrap_predict_step(task, predict_step: Callable) -> Callable:
+    def _wrap_predict_step(self) -> None:
+        if not self._wrapped_predict_step:
+            process_fn = self.build_data_pipeline().output_transform_processor(RunningStage.PREDICTING)
 
-        process_fn = task.build_data_pipeline().output_transform_processor(RunningStage.PREDICTING)
+            predict_step = self.predict_step
 
-        @functools.wraps(predict_step)
-        def wrapper(self, *args, **kwargs):
-            predictions = predict_step(self, *args, **kwargs)
-            return process_fn(predictions)
+            @functools.wraps(predict_step)
+            def wrapper(*args, **kwargs):
+                predictions = predict_step(*args, **kwargs)
+                return process_fn(predictions)
 
-        task._wrapped_predict_step = True
+            self._original_predict_step = self.predict_step
+            self.predict_step = wrapper
 
-        return wrapper
+            self._wrapped_predict_step = True
+
+    def _unwrap_predict_step(self) -> None:
+        if self._wrapped_predict_step:
+            self.predict_step = self._original_predict_step
+            del self._original_predict_step
+            self._wrapped_predict_step = False
 
     def step(self, batch: Any, batch_idx: int, metrics: nn.ModuleDict) -> Any:
         """Implement the core logic for the training/validation/test step. By default this includes:
@@ -743,12 +751,6 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
         input = input or old_input
 
-        if isinstance(input, str):
-            if input_transform is None:
-                input = Input()  # TODO: warn the user that we are not using the specified data source
-            else:
-                input = input_transform.input_of_name(input)
-
         if deserializer is None or type(deserializer) is Deserializer:
             deserializer = getattr(input_transform, "deserializer", deserializer)
 
@@ -765,11 +767,6 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         self.attach_data_pipeline_state(self._data_pipeline_state)
         self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)
         return data_pipeline
-
-    @torch.jit.unused
-    @property
-    def is_servable(self) -> bool:
-        return type(self.build_data_pipeline()._deserializer) != Deserializer
 
     @torch.jit.unused
     @property
@@ -810,55 +807,10 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         return getattr(self.data_pipeline, "_output_transform", None)
 
     def on_predict_start(self) -> None:
-        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule) and not self._wrapped_predict_step:
-            self.predict_step = self._wrap_predict_step(self.predict_step)
-
-    def on_train_dataloader(self) -> None:
-        # TODO: Remove this logic when moving to the new DataModule
-        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
-            return
-        if self.data_pipeline is not None:
-            self.data_pipeline._detach_from_model(self, RunningStage.TRAINING)
-            self.data_pipeline._attach_to_model(self, RunningStage.TRAINING)
-        super().on_train_dataloader()
-
-    def on_val_dataloader(self) -> None:
-        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
-            return
-        if self.data_pipeline is not None:
-            self.data_pipeline._detach_from_model(self, RunningStage.VALIDATING)
-            self.data_pipeline._attach_to_model(self, RunningStage.VALIDATING)
-        super().on_val_dataloader()
-
-    def on_test_dataloader(self, *_) -> None:
-        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
-            return
-        if self.data_pipeline is not None:
-            self.data_pipeline._detach_from_model(self, RunningStage.TESTING)
-            self.data_pipeline._attach_to_model(self, RunningStage.TESTING)
-        super().on_test_dataloader()
-
-    def on_predict_dataloader(self) -> None:
-        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
-            return
-        if self.data_pipeline is not None:
-            self.data_pipeline._detach_from_model(self, RunningStage.PREDICTING)
-            self.data_pipeline._attach_to_model(self, RunningStage.PREDICTING)
-        super().on_predict_dataloader()
+        self._wrap_predict_step()
 
     def on_predict_end(self) -> None:
-        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
-            return
-        if self.data_pipeline is not None:
-            self.data_pipeline._detach_from_model(self)
-        super().on_predict_end()
-
-    def on_fit_end(self) -> None:
-        if self.trainer and isinstance(self.trainer.datamodule, NewDataModule):
-            return
-        if self.data_pipeline is not None:
-            self.data_pipeline._detach_from_model(self)
-        super().on_fit_end()
+        self._unwrap_predict_step()
 
     def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         # This may be an issue since here we create the same problems with pickle as in
@@ -1120,36 +1072,54 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             return [BenchmarkConvergenceCI()]
 
     @requires("serve")
-    def run_serve_sanity_check(self):
-        if not self.is_servable:
-            raise NotImplementedError("This Task is not servable. Attach a Deserializer to enable serving.")
-
+    def run_serve_sanity_check(self, serve_input: ServeInput):
         from fastapi.testclient import TestClient
 
         from flash.core.serve.flash_components import build_flash_serve_model_component
 
         print("Running serve sanity check")
-        comp = build_flash_serve_model_component(self)
+        comp = build_flash_serve_model_component(self, serve_input)
         composition = Composition(predict=comp, TESTING=True, DEBUG=True)
         app = composition.serve(host="0.0.0.0", port=8000)
 
         with TestClient(app) as tc:
-            input_str = self.data_pipeline._deserializer.example_input
+            input_str = serve_input.example_input
             body = {"session": "UUID", "payload": {"inputs": {"data": input_str}}}
             resp = tc.post("http://0.0.0.0:8000/predict", json=body)
             print(f"Sanity check response: {resp.json()}")
 
     @requires("serve")
-    def serve(self, host: str = "127.0.0.1", port: int = 8000, sanity_check: bool = True) -> "Composition":
-        if not self.is_servable:
-            raise NotImplementedError("This Task is not servable. Attach a Deserializer to enable serving.")
+    def serve(
+        self,
+        host: str = "127.0.0.1",
+        port: int = 8000,
+        sanity_check: bool = True,
+        input_cls: Optional[Type[ServeInput]] = None,
+        transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        transform_kwargs: Optional[Dict] = None,
+    ) -> "Composition":
+        """Serve the ``Task``. Override this method to provide a default ``input_cls``, ``transform``, and
+        ``transform_kwargs``.
 
+        Args:
+            host: The IP address to host the ``Task`` on.
+            port: The port to host on.
+            sanity_check: If ``True``, runs a sanity check before serving.
+            input_cls: The ``ServeInput`` type to use.
+            transform: The transform to use when serving.
+            transform_kwargs: Keyword arguments used to instantiate the transform.
+        """
         from flash.core.serve.flash_components import build_flash_serve_model_component
 
-        if sanity_check:
-            self.run_serve_sanity_check()
+        if input_cls is None:
+            raise NotImplementedError("The `input_cls` must be provided to enable serving.")
 
-        comp = build_flash_serve_model_component(self)
+        serve_input = input_cls(transform=transform, transform_kwargs=transform_kwargs)
+
+        if sanity_check:
+            self.run_serve_sanity_check(serve_input)
+
+        comp = build_flash_serve_model_component(self, serve_input)
         composition = Composition(predict=comp, TESTING=flash._IS_TESTING)
         composition.serve(host=host, port=port)
         return composition

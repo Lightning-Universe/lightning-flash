@@ -12,16 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from types import FunctionType
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 
 from flash.core.classification import ClassificationAdapterTask, LabelsOutput
+from flash.core.data.io.input import ServeInput
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
+from flash.core.serve import Composition
+from flash.core.utilities.imports import requires
+from flash.core.utilities.types import (
+    INPUT_TRANSFORM_TYPE,
+    LOSS_FN_TYPE,
+    LR_SCHEDULER_TYPE,
+    METRICS_TYPE,
+    OPTIMIZER_TYPE,
+    OUTPUT_TYPE,
+)
 from flash.image.classification.adapters import TRAINING_STRATEGIES
 from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES
+from flash.image.classification.transforms import ImageClassificationInputTransform
+from flash.image.data import ImageDeserializer
 
 
 class ImageClassifier(ClassificationAdapterTask):
@@ -147,6 +159,18 @@ class ImageClassifier(ClassificationAdapterTask):
             pretrained_weights = list(result["metadata"]["weights_paths"].keys())
 
         return pretrained_weights
+
+    @requires("serve")
+    def serve(
+        self,
+        host: str = "127.0.0.1",
+        port: int = 8000,
+        sanity_check: bool = True,
+        input_cls: Optional[Type[ServeInput]] = ImageDeserializer,
+        transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        transform_kwargs: Optional[Dict] = None,
+    ) -> Composition:
+        return super().serve(host, port, sanity_check, input_cls, transform, transform_kwargs)
 
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]):
         """This function is used only for debugging usage with CI."""

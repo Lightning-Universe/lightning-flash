@@ -13,6 +13,7 @@
 # limitations under the License.
 from dataclasses import dataclass
 from typing import Callable, Dict
+from unittest import mock
 
 import numpy as np
 import pytest
@@ -21,9 +22,9 @@ from pytorch_lightning import seed_everything
 from torch.utils.data import Dataset
 
 from flash import Task, Trainer
-from flash.core.data.input_transform import InputTransform
+from flash.core.data.data_module import DataModule, DatasetInput
 from flash.core.data.io.input import Input
-from flash.core.data.new_data_module import DataModule, DatasetInput
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.states import PerBatchTransformOnDevice, PerSampleTransform
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 from flash.core.utilities.stages import RunningStage
@@ -417,3 +418,24 @@ def test_datapipeline_transformations_overridden_by_task():
         num_sanity_val_steps=1,
     )
     trainer.fit(model, datamodule=datamodule)
+
+
+@mock.patch("flash.core.data.data_module.DataLoader")
+def test_dataloaders_with_sampler(mock_dataloader):
+    mock_sampler = mock.MagicMock()
+    datamodule = DataModule(
+        TestInput(RunningStage.TRAINING, [1]),
+        TestInput(RunningStage.VALIDATING, [1]),
+        TestInput(RunningStage.TESTING, [1]),
+        batch_size=2,
+        num_workers=0,
+        sampler=mock_sampler,
+    )
+    assert datamodule.sampler is mock_sampler
+    dl = datamodule.train_dataloader()
+    kwargs = mock_dataloader.call_args[1]
+    assert "sampler" in kwargs
+    assert kwargs["sampler"] is mock_sampler.return_value
+    for dl in [datamodule.val_dataloader(), datamodule.test_dataloader()]:
+        kwargs = mock_dataloader.call_args[1]
+        assert "sampler" not in kwargs

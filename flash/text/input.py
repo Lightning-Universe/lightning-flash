@@ -20,8 +20,8 @@ from flash.core.utilities.imports import requires
 
 class TextDeserializer(Deserializer):
     @requires("text")
-    def __init__(self, max_length: int = 128):
-        super().__init__()
+    def __init__(self, *args, max_length: int = 128, **kwargs):
+        super().__init__(*args, **kwargs)
         self.max_length = max_length
 
     def serve_load_sample(self, text: str) -> Tensor:

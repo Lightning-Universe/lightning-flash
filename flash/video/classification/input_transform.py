@@ -16,7 +16,7 @@ from typing import Callable
 
 import torch
 
-from flash.core.data.input_transform import InputTransform
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, requires
 

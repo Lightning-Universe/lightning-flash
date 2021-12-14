@@ -16,8 +16,8 @@ from typing import Any, Callable, Dict
 
 import torch
 
-from flash.core.data.input_transform import InputTransform
 from flash.core.data.io.input import DataKeys
+from flash.core.data.io.input_transform import InputTransform
 
 
 @dataclass

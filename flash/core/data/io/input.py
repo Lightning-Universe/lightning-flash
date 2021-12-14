@@ -184,7 +184,7 @@ class InputBase(Properties, metaclass=_InputMeta):
         data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None,
         **kwargs: Any,
     ) -> None:
-        from flash.core.data.input_transform import create_transform
+        from flash.core.data.io.input_transform import create_transform
 
         self.transform = create_transform(
             transform,
@@ -200,14 +200,14 @@ class InputBase(Properties, metaclass=_InputMeta):
             self.data = self._call_load_data(*args, **kwargs)
 
     def _create_dataloader_collate_fn(self, callbacks: List[FlashCallback]) -> Optional[Callable]:
-        from flash.core.data.input_transform import _create_collate_input_transform_processors
+        from flash.core.data.io.input_transform import _create_collate_input_transform_processors
 
         if not self.transform:
             return
         return _create_collate_input_transform_processors(self.transform, callbacks)[0]
 
     def _create_on_after_batch_transfer_fn(self, callbacks: List[FlashCallback]) -> Optional[Callable]:
-        from flash.core.data.input_transform import _create_collate_input_transform_processors
+        from flash.core.data.io.input_transform import _create_collate_input_transform_processors
 
         if not self.transform:
             return
@@ -332,12 +332,19 @@ class IterableInput(InputBase, IterableDataset, metaclass=_IterableInputMeta):
 class ServeInput(Input):
     def __init__(
         self,
+        transform: INPUT_TRANSFORM_TYPE = None,
+        transform_kwargs: Optional[Dict] = None,
         data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None,
     ) -> None:
         if hasattr(self, "serve_load_data"):
             raise MisconfigurationException("`serve_load_data` shouldn't be implemented.")
 
-        super().__init__(RunningStage.SERVING, data_pipeline_state=data_pipeline_state)
+        super().__init__(
+            RunningStage.SERVING,
+            transform=transform,
+            transform_kwargs=transform_kwargs,
+            data_pipeline_state=data_pipeline_state,
+        )
 
     def serve_load_sample(self, sample: Any) -> List[Any]:
         raise NotImplementedError

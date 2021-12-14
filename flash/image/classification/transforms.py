@@ -17,8 +17,8 @@ from typing import Callable, Dict, Tuple
 
 import torch
 
-from flash.core.data.input_transform import InputTransform
 from flash.core.data.io.input import DataKeys
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.transforms import ApplyToKeys, kornia_collate, merge_transforms
 from flash.core.utilities.imports import _ALBUMENTATIONS_AVAILABLE, _KORNIA_AVAILABLE, _TORCHVISION_AVAILABLE, requires
 

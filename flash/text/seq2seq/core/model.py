@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 import warnings
-from typing import Any, Dict, Iterable, List, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, Type, Union
 
 import torch
 from pytorch_lightning import Callback
@@ -21,14 +21,23 @@ from pytorch_lightning.utilities import rank_zero_info
 from torch import Tensor
 from torch.nn import Module
 
-from flash.core.data.io.input import DataKeys
+from flash.core.data.io.input import DataKeys, ServeInput
 from flash.core.data.io.output_transform import OutputTransform
+from flash.core.integrations.transformers.input_transform import TransformersInputTransform
 from flash.core.integrations.transformers.states import TransformersBackboneState
 from flash.core.model import Task
 from flash.core.registry import ExternalRegistry, FlashRegistry
-from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.core.serve import Composition
+from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 from flash.core.utilities.providers import _HUGGINGFACE
-from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
+from flash.core.utilities.types import (
+    INPUT_TRANSFORM_TYPE,
+    LOSS_FN_TYPE,
+    LR_SCHEDULER_TYPE,
+    METRICS_TYPE,
+    OPTIMIZER_TYPE,
+)
+from flash.text.input import TextDeserializer
 from flash.text.ort_callback import ORTCallback
 from flash.text.seq2seq.core.output_transform import Seq2SeqOutputTransform
 
@@ -182,3 +191,15 @@ class Seq2SeqTask(Task):
         if self.enable_ort:
             callbacks.append(ORTCallback())
         return callbacks
+
+    @requires("serve")
+    def serve(
+        self,
+        host: str = "127.0.0.1",
+        port: int = 8000,
+        sanity_check: bool = True,
+        input_cls: Optional[Type[ServeInput]] = TextDeserializer,
+        transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
+        transform_kwargs: Optional[Dict] = None,
+    ) -> Composition:
+        return super().serve(host, port, sanity_check, input_cls, transform, transform_kwargs)

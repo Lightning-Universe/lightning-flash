@@ -18,11 +18,11 @@ import torch
 
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
+from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
-from flash.core.data.input_transform import InputTransform
 from flash.core.data.io.classification_input import ClassificationInput
 from flash.core.data.io.input import DataKeys, Input
-from flash.core.data.new_data_module import DataModule
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.utilities.samples import to_samples
 from flash.core.utilities.imports import _SKLEARN_AVAILABLE
 from flash.core.utilities.stages import RunningStage

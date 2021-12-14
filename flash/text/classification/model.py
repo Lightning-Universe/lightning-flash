@@ -13,18 +13,28 @@
 # limitations under the License.
 import os
 import warnings
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Type
 
 import torch
 from pytorch_lightning import Callback
 
 from flash.core.classification import ClassificationTask, LabelsOutput
-from flash.core.data.io.input import DataKeys
+from flash.core.data.io.input import DataKeys, ServeInput
+from flash.core.integrations.transformers.input_transform import TransformersInputTransform
 from flash.core.integrations.transformers.states import TransformersBackboneState
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
-from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
+from flash.core.serve import Composition
+from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE, requires
+from flash.core.utilities.types import (
+    INPUT_TRANSFORM_TYPE,
+    LOSS_FN_TYPE,
+    LR_SCHEDULER_TYPE,
+    METRICS_TYPE,
+    OPTIMIZER_TYPE,
+    OUTPUT_TYPE,
+)
 from flash.text.classification.backbones import TEXT_CLASSIFIER_BACKBONES
+from flash.text.input import TextDeserializer
 from flash.text.ort_callback import ORTCallback
 
 if _TRANSFORMERS_AVAILABLE:
@@ -124,3 +134,15 @@ class TextClassifier(ClassificationTask):
         if self.enable_ort:
             callbacks.append(ORTCallback())
         return callbacks
+
+    @requires("serve")
+    def serve(
+        self,
+        host: str = "127.0.0.1",
+        port: int = 8000,
+        sanity_check: bool = True,
+        input_cls: Optional[Type[ServeInput]] = TextDeserializer,
+        transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
+        transform_kwargs: Optional[Dict] = None,
+    ) -> Composition:
+        return super().serve(host, port, sanity_check, input_cls, transform, transform_kwargs)

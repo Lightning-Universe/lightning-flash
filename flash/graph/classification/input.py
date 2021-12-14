@@ -15,9 +15,9 @@ from typing import Any, Mapping
 
 from torch.utils.data import Dataset
 
+from flash.core.data.data_module import DatasetInput
 from flash.core.data.io.classification_input import ClassificationInput, ClassificationState
 from flash.core.data.io.input import DataKeys
-from flash.core.data.new_data_module import DatasetInput
 from flash.core.utilities.imports import _GRAPH_AVAILABLE, requires
 
 if _GRAPH_AVAILABLE:

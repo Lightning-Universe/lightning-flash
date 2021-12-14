@@ -14,7 +14,7 @@
 from dataclasses import dataclass
 from typing import Callable
 
-from flash.core.data.input_transform import InputTransform
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 
 if _TORCHVISION_AVAILABLE:

@@ -15,7 +15,7 @@ import pytest
 import torch
 
 from flash import RunningStage, Trainer
-from flash.core.data.new_data_module import DataModule
+from flash.core.data.data_module import DataModule
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
 from flash.graph.classification.input import GraphClassificationDatasetInput
 from flash.graph.classification.input_transform import GraphClassificationInputTransform

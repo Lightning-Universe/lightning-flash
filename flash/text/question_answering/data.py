@@ -13,9 +13,9 @@
 # limitations under the License.
 from typing import Any, Dict, Optional, Type, Union
 
+from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
-from flash.core.data.new_data_module import DataModule
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE

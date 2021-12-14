@@ -17,7 +17,7 @@ import pytest
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data.dataloader import default_collate
 
-from flash.core.data.input_transform import Compose, InputTransform, LambdaInputTransform
+from flash.core.data.io.input_transform import Compose, InputTransform, LambdaInputTransform
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.stages import RunningStage
 
@@ -148,3 +148,54 @@ def test_input_transform():
             return super().input_per_batch_transform
 
     MyTransform(1, running_stage=RunningStage.TRAINING)
+
+
+class CustomInputTransform(InputTransform):
+    @staticmethod
+    def custom_transform(x):
+        return x
+
+    def train_per_sample_transform(self):
+        return self.custom_transform
+
+    def train_per_batch_transform_on_device(self, *_, **__):
+        return self.custom_transform
+
+    def test_per_sample_transform(self, *_, **__):
+        return self.custom_transform
+
+    def test_per_batch_transform(self, *_, **__):
+        return self.custom_transform
+
+    def test_per_sample_transform_on_device(self, *_, **__):
+        return self.custom_transform
+
+    def test_per_batch_transform_on_device(self, *_, **__):
+        return self.custom_transform
+
+    def val_per_batch_transform(self, *_, **__):
+        return self.custom_transform
+
+    def val_per_sample_transform_on_device(self, *_, **__):
+        return self.custom_transform
+
+    def predict_per_sample_transform(self, *_, **__):
+        return self.custom_transform
+
+    def predict_per_sample_transform_on_device(self, *_, **__):
+        return self.custom_transform
+
+    def predict_per_batch_transform_on_device(self, *_, **__):
+        return self.custom_transform
+
+
+def test_check_transforms():
+
+    input_transform = CustomInputTransform
+
+    input_transform(RunningStage.TRAINING)
+    with pytest.raises(MisconfigurationException, match="are mutually exclusive"):
+        input_transform(RunningStage.VALIDATING)
+    with pytest.raises(MisconfigurationException, match="are mutually exclusive"):
+        input_transform(RunningStage.TESTING)
+    input_transform(RunningStage.PREDICTING)
