@@ -26,6 +26,7 @@ datamodule = KeypointDetectionData.from_icedata(
     train_folder=data_dir,
     val_split=0.1,
     parser=icedata.biwi.parser,
+    batch_size=4,
 )
 
 # 2. Build the task
@@ -46,7 +47,8 @@ datamodule = KeypointDetectionData.from_files(
         str(data_dir / "biwi_sample/images/0.jpg"),
         str(data_dir / "biwi_sample/images/1.jpg"),
         str(data_dir / "biwi_sample/images/10.jpg"),
-    ]
+    ],
+    batch_size=4,
 )
 predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
