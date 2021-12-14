@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Fixed a bug when not explicitly passing `embedding_sizes` to the `TabularClassifier` and `TabularRegressor` tasks ([#1067](https://github.com/PyTorchLightning/lightning-flash/pull/1067))
+
 ### Removed
 
 ## [0.6.0] - 2021-13-12
