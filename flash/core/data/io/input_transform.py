@@ -16,7 +16,6 @@ from dataclasses import dataclass
 from functools import partial, wraps
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
-import torch
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data._utils.collate import default_collate
@@ -33,7 +32,7 @@ from flash.core.data.states import (
     PerSampleTransformOnDevice,
 )
 from flash.core.data.transforms import ApplyToKeys
-from flash.core.data.utils import _INPUT_TRANSFORM_FUNCS, _STAGES_PREFIX, convert_to_modules
+from flash.core.data.utils import _INPUT_TRANSFORM_FUNCS, _STAGES_PREFIX
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
@@ -1118,7 +1117,7 @@ def _make_collates(input_transform: "InputTransform", on_device: bool, collate: 
     return collate, input_transform._identity
 
 
-class _InputTransformProcessorV2(torch.nn.Module):
+class _InputTransformProcessorV2:
     """
     This class is used to encapsulate the following functions of a InputTransformInputTransform Object:
     Inside a worker:
@@ -1146,9 +1145,9 @@ class _InputTransformProcessorV2(torch.nn.Module):
         super().__init__()
         self.input_transform = input_transform
         self.callback = ControlFlow(callbacks or [])
-        self.collate_fn = convert_to_modules(collate_fn)
-        self.per_sample_transform = convert_to_modules(per_sample_transform)
-        self.per_batch_transform = convert_to_modules(per_batch_transform)
+        self.collate_fn = collate_fn
+        self.per_sample_transform = per_sample_transform
+        self.per_batch_transform = per_batch_transform
         self.apply_per_sample_transform = apply_per_sample_transform
         self.stage = stage
         self.on_device = on_device
@@ -1160,7 +1159,7 @@ class _InputTransformProcessorV2(torch.nn.Module):
         metadata = [s.pop(DataKeys.METADATA, None) if isinstance(s, Mapping) else None for s in samples]
         return samples, metadata if any(m is not None for m in metadata) else None
 
-    def forward(self, samples: Sequence[Any]) -> Any:
+    def __call__(self, samples: Sequence[Any]) -> Any:
         if not self.on_device:
             for sample in samples:
                 self.callback.on_load_sample(sample, self.stage)
