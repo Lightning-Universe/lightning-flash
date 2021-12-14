@@ -93,7 +93,7 @@ class ObjectDetectionData(DataModule):
         **data_module_kwargs: Any,
     ) -> "ObjectDetectionData":
         """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders
-        and annotation files in the COCO format.
+        and annotation files in the `COCO JSON format <https://cocodataset.org/#format-data>`_.
 
         Args:
             train_folder: The folder containing the train data.
@@ -152,15 +152,16 @@ class ObjectDetectionData(DataModule):
         **data_module_kwargs: Any,
     ) -> "ObjectDetectionData":
         """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders
-        and annotation files in the VOC format.
+        and annotation files in the `PASCAL VOC (Visual Obect Challenge) <http://host.robots.ox.ac.uk/pascal/VOC/>`_
+        XML format.
 
         Args:
             train_folder: The folder containing the train data.
-            train_ann_file: The COCO format annotation file.
+            train_ann_file: The VOC format annotation file.
             val_folder: The folder containing the validation data.
-            val_ann_file: The COCO format annotation file.
+            val_ann_file: The VOC format annotation file.
             test_folder: The folder containing the test data.
-            test_ann_file: The COCO format annotation file.
+            test_ann_file: The VOC format annotation file.
             predict_folder: The folder containing the predict data.
             train_transform: The dictionary of transforms to use during training which maps
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
@@ -211,15 +212,16 @@ class ObjectDetectionData(DataModule):
         **data_module_kwargs: Any,
     ) -> "ObjectDetectionData":
         """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders
-        and annotation files in the VIA format.
+        and annotation files in the VIA (`VGG Image Annotator <https://www.robots.ox.ac.uk/~vgg/software/via/>`_) 
+        `JSON format <https://gitlab.com/vgg/via/-/blob/via-3.x.y/via-3.x.y/CodeDoc.md#structure-of-via-project-json-file>`_.
 
         Args:
             train_folder: The folder containing the train data.
-            train_ann_file: The COCO format annotation file.
+            train_ann_file: The VIA format annotation file.
             val_folder: The folder containing the validation data.
-            val_ann_file: The COCO format annotation file.
+            val_ann_file: The VIA format annotation file.
             test_folder: The folder containing the test data.
-            test_ann_file: The COCO format annotation file.
+            test_ann_file: The VIA format annotation file.
             predict_folder: The folder containing the predict data.
             train_transform: The dictionary of transforms to use during training which maps
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
