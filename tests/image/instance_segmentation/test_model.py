@@ -76,9 +76,10 @@ def test_instance_segmentation_inference(tmpdir):
             str(data_dir / "images/yorkshire_terrier_12.jpg"),
             str(data_dir / "images/yorkshire_terrier_13.jpg"),
         ],
-        batch_size=2,
+        batch_size=4,
     )
     predictions = trainer.predict(model, datamodule=datamodule)
+    assert len(predictions[0]) == 3
     assert len(predictions[0][0]) == 6
 
     model_path = os.path.join(tmpdir, "model.pt")
@@ -91,7 +92,8 @@ def test_instance_segmentation_inference(tmpdir):
             str(data_dir / "images/yorkshire_terrier_12.jpg"),
             str(data_dir / "images/yorkshire_terrier_13.jpg"),
         ],
-        batch_size=2,
+        batch_size=4,
     )
     predictions = trainer.predict(model, datamodule=datamodule)
+    assert len(predictions[0]) == 3
     assert len(predictions[0][0]) == 6

@@ -211,7 +211,7 @@ def from_icevision_record(record: "BaseRecord"):
         filepath = getattr(record, "filepath", None)
         if filepath is not None:
             sample[DataKeys.METADATA]["filepath"] = filepath
-    elif record.filepath is not None:
+    elif getattr(record, "filepath", None) is not None:
         sample[DataKeys.INPUT] = record.filepath
 
     sample[DataKeys.TARGET] = from_icevision_detection(record)
