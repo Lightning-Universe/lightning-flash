@@ -90,7 +90,15 @@ class SpeechRecognition(Task):
         self.save_hyperparameters()
 
         self.set_state(SpeechRecognitionBackboneState(backbone))
-        self.set_state(CollateFn(DataCollatorCTCWithPadding(AutoProcessor.from_pretrained(backbone) if processor_backbone is None else AutoProcessor.from_pretrained(processor_backbone))))
+        self.set_state(
+            CollateFn(
+                DataCollatorCTCWithPadding(
+                    AutoProcessor.from_pretrained(backbone)
+                    if processor_backbone is None
+                    else AutoProcessor.from_pretrained(processor_backbone)
+                )
+            )
+        )
 
     def forward(self, batch: Dict[str, torch.Tensor]):
         return self.model(batch["input_values"])
