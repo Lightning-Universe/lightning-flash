@@ -136,16 +136,16 @@ def test_speed(case):
     else:
         targets = case.target * repeats
 
-    start = time.time()
+    start = time.perf_counter()
     target_mode = get_target_mode(targets)
     labels, num_classes = get_target_details(targets, target_mode)
     formatter = get_target_formatter(target_mode, labels, num_classes)
-    end = time.time()
+    end = time.perf_counter()
 
     assert (end - start) / len(targets) < 1e-5  # 0.01ms per target
 
-    start = time.time()
+    start = time.perf_counter()
     _ = [formatter(t) for t in targets]
-    end = time.time()
+    end = time.perf_counter()
 
     assert (end - start) / len(targets) < 1e-5  # 0.01ms per target
