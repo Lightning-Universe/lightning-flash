@@ -152,8 +152,9 @@ class ObjectDetectionData(DataModule):
         **data_module_kwargs: Any,
     ) -> "ObjectDetectionData":
         """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders
-        and annotation files in the `PASCAL VOC (Visual Obect Challenge)
-        <http://host.robots.ox.ac.uk/pascal/VOC/>`_ XML format.
+        and annotation files in the PASCAL VOC (Visual Object Challenge) `XML format.
+
+        <https://host.robots.ox.ac.uk/pascal/VOC/>`_.
 
         Args:
             train_folder: The folder containing the train data.
