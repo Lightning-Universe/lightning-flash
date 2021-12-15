@@ -50,6 +50,13 @@ cases = [
         ["blue", "green", "red"],
         3,
     ),
+    Case(
+        ["blue green", "green red", "red blue"],
+        [[1, 1, 0], [0, 1, 1], [1, 0, 1]],
+        TargetMode.MUTLI_SPACE_DELIMITED,
+        ["blue", "green", "red"],
+        3,
+    ),
     # Ambiguous
     Case([[0], [1, 2], [2, 0]], [[1, 0, 0], [0, 1, 1], [1, 0, 1]], TargetMode.MULTI_NUMERIC, None, 3),
     Case([[1, 0, 0], [0, 1, 1], [1, 0, 1]], [[1, 0, 0], [0, 1, 1], [1, 0, 1]], TargetMode.MULTI_BINARY, None, 3),
@@ -67,10 +74,24 @@ cases = [
         ["blue", "green", "red"],
         3,
     ),
+    Case(
+        ["blue", "green red", "red blue"],
+        [[1, 0, 0], [0, 1, 1], [1, 0, 1]],
+        TargetMode.MUTLI_SPACE_DELIMITED,
+        ["blue", "green", "red"],
+        3,
+    ),
     # Special cases
     Case(["blue ", " green", "red"], [0, 1, 2], TargetMode.SINGLE_TOKEN, ["blue", "green", "red"], 3),
     Case(
         ["blue", "green, red", "red, blue"],
+        [[1, 0, 0], [0, 1, 1], [1, 0, 1]],
+        TargetMode.MUTLI_COMMA_DELIMITED,
+        ["blue", "green", "red"],
+        3,
+    ),
+    Case(
+        ["blue", "green ,red", "red ,blue"],
         [[1, 0, 0], [0, 1, 1], [1, 0, 1]],
         TargetMode.MUTLI_COMMA_DELIMITED,
         ["blue", "green", "red"],
