@@ -41,7 +41,7 @@ from flash.core.utilities.types import (
 )
 
 if _AUDIO_AVAILABLE:
-    from transformers import Wav2Vec2Processor
+    from transformers import AutoProcessor
 
 
 class SpeechRecognition(Task):
@@ -64,6 +64,7 @@ class SpeechRecognition(Task):
     def __init__(
         self,
         backbone: str = "facebook/wav2vec2-base-960h",
+        processor_backbone: str = None,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         learning_rate: float = 1e-5,
@@ -89,7 +90,7 @@ class SpeechRecognition(Task):
         self.save_hyperparameters()
 
         self.set_state(SpeechRecognitionBackboneState(backbone))
-        self.set_state(CollateFn(DataCollatorCTCWithPadding(Wav2Vec2Processor.from_pretrained(backbone))))
+        self.set_state(CollateFn(DataCollatorCTCWithPadding(AutoProcessor.from_pretrained(backbone) if processor_backbone is None else AutoProcessor.from_pretrained(processor_backbone))))
 
     def forward(self, batch: Dict[str, torch.Tensor]):
         return self.model(batch["input_values"])
