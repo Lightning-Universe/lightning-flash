@@ -153,6 +153,7 @@ class ObjectDetectionData(DataModule):
     ) -> "ObjectDetectionData":
         """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders
         and annotation files in the `PASCAL VOC (Visual Obect Challenge)
+
         <http://host.robots.ox.ac.uk/pascal/VOC/>`_ XML format.
 
         Args:
