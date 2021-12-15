@@ -22,7 +22,7 @@ from flash.core.utilities.imports import _AUDIO_AVAILABLE
 if _AUDIO_AVAILABLE:
     from transformers import AutoProcessor
 else:
-    Wav2Vec2Processor = object
+    AutoProcessor = object
 
 
 @dataclass
