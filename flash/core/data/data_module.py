@@ -127,7 +127,7 @@ class DataModule(pl.LightningDataModule):
                 "A `val_dataset` was provided with `val_split`. Please, choose one or the other."
             )
 
-        if self._train_input is not None and (val_split is not None and self._val_input is None):
+        if self._train_input and (val_split is not None and not self._val_input):
             self._train_input, self._val_input = self._split_train_val(self._train_input, val_split)
 
         if self._train_input:
