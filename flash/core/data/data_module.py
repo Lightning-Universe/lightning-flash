@@ -110,6 +110,14 @@ class DataModule(pl.LightningDataModule):
         self._test_input = test_input
         self._predict_input = predict_input
 
+        if self._train_input and self._val_input and isinstance(val_split, float) and val_split > 0:
+            raise MisconfigurationException(
+                "A `val_dataset` was provided with `val_split`. Please, choose one or the other."
+            )
+
+        if self._train_input and (val_split is not None and not self._val_input):
+            self._train_input, self._val_input = self._split_train_val(self._train_input, val_split)
+
         self._data_fetcher: Optional[BaseDataFetcher] = data_fetcher or self.configure_data_fetcher()
 
         self._train_dataloader_collate_fn = self._resolve_dataloader_collate_fn(self._train_input)
@@ -121,14 +129,6 @@ class DataModule(pl.LightningDataModule):
         self._val_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._val_input)
         self._test_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._test_input)
         self._predict_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._predict_input)
-
-        if self._train_input and self._val_input and isinstance(val_split, float) and val_split > 0:
-            raise MisconfigurationException(
-                "A `val_dataset` was provided with `val_split`. Please, choose one or the other."
-            )
-
-        if self._train_input and (val_split is not None and not self._val_input):
-            self._train_input, self._val_input = self._split_train_val(self._train_input, val_split)
 
         if self._train_input:
             self.train_dataloader = self._train_dataloader
