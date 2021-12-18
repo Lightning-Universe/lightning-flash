@@ -87,23 +87,37 @@ class GraphNodeClassifier(ClassificationTask):
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch, batch.y)
+        if batch.training_mask is not None:
+            batch = self.mask(batch, batch.training_mask)
         return super().training_step(batch, batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch, batch.y)
+        if batch.validation_mask is not None:
+            batch = self.mask(batch, batch.validation_mask)
         return super().validation_step(batch, batch_idx)
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch, batch.y)
+        if batch.test_mask is not None:
+            batch = self.mask(batch, batch.test_mask)
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        if batch.predict_mask is not None:
+            batch = self.mask(batch, batch.predict_mask)
         return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
 
     def forward(self, data) -> torch.Tensor:
         x = self.backbone(data.x, data.edge_index)
         return self.head(x)
 
+    def mask(self, batch: Any, mask: Optional[list(bool)] = None) -> Any:
+        if not all(isinstance(item, bool) for item in mask):
+            raise ValueError("training_mask must be a list of bools")
+        if len(mask) != len(batch):
+            raise ValueError("training_mask must be the same length as the batch")
+        return batch[mask]
 
 class DefaultGraphHead(torch.nn.Module):
     def __init__(self, hidden_channels, num_classes, dropout=0.5):

@@ -23,11 +23,14 @@ from torch_geometric.datasets import Planetoid  # noqa: E402
 
 # 1. Create the DataModule
 dataset = Planetoid(root="data", name="Cora")
+dataset.validation_mask = dataset.val_mask
 
+# The dataset is the same and should contain the masks. Or they can be different datasets without masks.
 datamodule = GraphClassificationData.from_datasets(
-    train_dataset=#todo: the dataset contains dataset.train_mask,
-    val_dataset=#todo: the dataset contains dataset.val_mask,
+    train_dataset=dataset, # the dataset should contain a dataset.train_mask,
+    val_dataset=dataset # the dataset should contain a dataset.validation_mask,
 )
+
 # 2. Build the task
 backbone_kwargs = {"hidden_channels": 512, "num_layers": 4}
 model = GraphNodeClassifier(

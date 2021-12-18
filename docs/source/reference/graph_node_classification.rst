@@ -1,10 +1,10 @@
 .. customcarditem::
-   :header: Graph Classification
-   :card_description: Learn to classify graphs with Flash and build an example classifier for the KKI data set.
+   :header: Graph Node Classification
+   :card_description: Learn to classify nodes in graphs with Flash and build an example classifier for the Planetoid Cora data set.
    :image: https://pl-flash-data.s3.amazonaws.com/assets/thumbnails/graph_classification.svg
    :tags: Graph,Classification
 
-.. _graph_classification:
+.. _graph_node_classification:
 
 ####################
 Graph Node Classification
