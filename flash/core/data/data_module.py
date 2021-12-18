@@ -54,7 +54,9 @@ class DatasetInput(Input):
 
 
 class DataModule(pl.LightningDataModule):
-    """A basic DataModule class for all Flash tasks. This class includes references to a
+    """A basic DataModule class for all Flash tasks.
+
+    This class includes references to a
     :class:`~flash.core.data.datasets.Input` and a :class:`~flash.core.data.callback.BaseDataFetcher`.
     Args:
         train_input: Input dataset for training. Defaults to None.
@@ -413,6 +415,7 @@ class DataModule(pl.LightningDataModule):
     @staticmethod
     def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
         """This function is used to configure a :class:`~flash.core.data.callback.BaseDataFetcher`.
+
         Override with your custom one.
         """
         return BaseDataFetcher()
@@ -532,6 +535,7 @@ class DataModule(pl.LightningDataModule):
     ) -> Tuple[Any, Any]:
         """Utility function for splitting the training dataset into a disjoint subset of training samples and
         validation samples.
+
         Args:
             train_dataset: A instance of a :class:`torch.utils.data.Dataset`.
             val_split: A float between 0 and 1 determining the number fraction of samples that should go into the
@@ -555,6 +559,5 @@ class DataModule(pl.LightningDataModule):
         train_indices = indices[val_num_samples:]
         return (
             SplitDataset(train_dataset, train_indices, use_duplicated_indices=True),
-            SplitDataset(train_dataset, val_indices, use_duplicated_indices=
-True),
+            SplitDataset(train_dataset, val_indices, use_duplicated_indices=True),
         )
