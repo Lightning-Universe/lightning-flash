@@ -439,3 +439,15 @@ def test_dataloaders_with_sampler(mock_dataloader):
     for dl in [datamodule.val_dataloader(), datamodule.test_dataloader()]:
         kwargs = mock_dataloader.call_args[1]
         assert "sampler" not in kwargs
+
+
+def test_val_split():
+    datamodule = DataModule(
+        Input(RunningStage.TRAINING, [1] * 100),
+        batch_size=2,
+        num_workers=0,
+        val_split=0.2,
+    )
+
+    assert len(datamodule.train_dataset) == 80
+    assert len(datamodule.val_dataset) == 20

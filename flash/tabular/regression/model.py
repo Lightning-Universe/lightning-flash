@@ -40,7 +40,8 @@ class TabularRegressor(RegressionTask):
 
     Args:
         num_features: Number of columns in table (not including target column).
-        embedding_sizes: List of (num_classes, emb_dim) to form categorical embeddings.
+        embedding_sizes: List of (num_classes, emb_dim) to form categorical embeddings (or ``None`` if there are no
+            categorical fields in the data).
         loss_fn: Loss function for training, defaults to cross entropy.
         optimizer: Optimizer to use for training.
         lr_scheduler: The LR scheduler to use during training.
@@ -60,7 +61,7 @@ class TabularRegressor(RegressionTask):
     def __init__(
         self,
         num_features: int,
-        embedding_sizes: List[Tuple[int, int]] = None,
+        embedding_sizes: Optional[List[Tuple[int, int]]] = None,
         loss_fn: Callable = F.mse_loss,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
@@ -71,7 +72,11 @@ class TabularRegressor(RegressionTask):
     ):
         self.save_hyperparameters()
 
-        cat_dims, cat_emb_dim = zip(*embedding_sizes) if embedding_sizes else ([], [])
+        if embedding_sizes:
+            cat_dims, cat_emb_dim = zip(*embedding_sizes)
+        else:
+            cat_dims, cat_emb_dim, embedding_sizes = [], [], []
+
         model = TabNet(
             input_dim=num_features,
             output_dim=1,

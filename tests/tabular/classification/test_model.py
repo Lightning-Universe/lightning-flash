@@ -67,7 +67,7 @@ def test_init_train_no_num(tmpdir):
 @pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
 def test_init_train_no_cat(tmpdir):
     train_dl = torch.utils.data.DataLoader(DummyDataset(num_cat=0), batch_size=16)
-    model = TabularClassifier(num_classes=10, num_features=16, embedding_sizes=[])
+    model = TabularClassifier(num_classes=10, num_features=16)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.fit(model, train_dl)
 

@@ -119,6 +119,7 @@ class GraphNodeClassifier(ClassificationTask):
             raise ValueError("training_mask must be the same length as the batch")
         return batch[mask]
 
+
 class DefaultGraphHead(torch.nn.Module):
     def __init__(self, hidden_channels, num_classes, dropout=0.5):
         super().__init__()

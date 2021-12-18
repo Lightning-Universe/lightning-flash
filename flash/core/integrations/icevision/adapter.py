@@ -19,7 +19,11 @@ from torch.utils.data import DataLoader, Sampler
 import flash
 from flash.core.adapter import Adapter
 from flash.core.data.io.input import DataKeys, InputBase
-from flash.core.integrations.icevision.transforms import from_icevision_predictions, to_icevision_record
+from flash.core.integrations.icevision.transforms import (
+    from_icevision_predictions,
+    from_icevision_record,
+    to_icevision_record,
+)
 from flash.core.model import Task
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
 from flash.core.utilities.url_error import catch_url_error
@@ -195,8 +199,12 @@ class IceVisionAdapter(Adapter):
         return self.icevision_adapter.validation_step(batch[DataKeys.INPUT], batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch[DataKeys.PREDS] = self(batch[DataKeys.INPUT])
-        return batch
+        records = batch[DataKeys.INPUT][1]
+        return {
+            DataKeys.INPUT: [from_icevision_record(record) for record in records],
+            DataKeys.PREDS: self(batch[DataKeys.INPUT]),
+            DataKeys.METADATA: batch[DataKeys.METADATA],
+        }
 
     def forward(self, batch: Any) -> Any:
         return from_icevision_predictions(

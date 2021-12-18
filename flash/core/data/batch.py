@@ -11,10 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Sequence, TYPE_CHECKING
+from typing import Any, List, TYPE_CHECKING
 
 import torch
-from torch import Tensor
+
+from flash.core.data.utilities.classification import _is_list_like
 
 if TYPE_CHECKING:
     from flash.core.data.io.input import ServeInput
@@ -35,27 +36,39 @@ class _ServeInputProcessor(torch.nn.Module):
         return sample
 
 
-def default_uncollate(batch: Any):
-    """
-    This function is used to uncollate a batch into samples.
-    Examples:
-        >>> a, b = default_uncollate(torch.rand((2,1)))
-    """
+def _is_list_like_excluding_str(x):
+    return _is_list_like(x) and str(x) != x
 
-    batch_type = type(batch)
 
-    if isinstance(batch, Tensor):
-        if len(batch.shape) == 0:  # 0 shape tensors
-            return batch
-        return list(torch.unbind(batch, 0))
+def default_uncollate(batch: Any) -> List[Any]:
+    """This function is used to uncollate a batch into samples. The following conditions are used:
+
+    - if the ``batch`` is a ``dict``, the result will be a list of dicts
+    - if the ``batch`` is list-like, the result is guaranteed to be a list
+
+    Args:
+        batch: The batch of outputs to be uncollated.
+
+    Returns:
+        The uncollated list of predictions.
+
+    Raises:
+        ValueError: If the input is a ``dict`` whose values are not all list-like.
+        ValueError: If the input is a ``dict`` whose values are not all the same length.
+        ValueError: If the input is not a ``dict`` or list-like.
+    """
 
     if isinstance(batch, dict):
-        return [batch_type(dict(zip(batch, default_uncollate(t)))) for t in zip(*batch.values())]
+        if any(not _is_list_like_excluding_str(sub_batch) for sub_batch in batch.values()):
+            raise ValueError("When uncollating a dict, all sub-batches (values) are expected to be list-like.")
+        if len({len(sub_batch) for sub_batch in batch.values()}) > 1:
+            raise ValueError("When uncollating a dict, all sub-batches (values) are expected to have the same length.")
+        elements = list(default_uncollate(element) for element in zip(*batch.values()))
+        return [dict(zip(batch.keys(), element)) for element in elements]
 
-    if isinstance(batch, tuple) and hasattr(batch, "_fields"):  # namedtuple
-        return [batch_type(*sample) for sample in zip(*batch)]
-
-    if isinstance(batch, Sequence) and not isinstance(batch, str):
-        return [sample for sample in batch]
-
-    return batch
+    if _is_list_like_excluding_str(batch):
+        return list(batch)
+    raise ValueError(
+        "The batch of outputs to be uncollated is expected to be a `dict` or list-like "
+        "(e.g. `torch.Tensor`, `list`, `tuple`, etc.)."
+    )
