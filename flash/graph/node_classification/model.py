@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Optional, Tuple, Union, List
 
 import torch
 from torch import nn
@@ -112,7 +112,7 @@ class GraphNodeClassifier(ClassificationTask):
         x = self.backbone(data.x, data.edge_index)
         return self.head(x)
 
-    def mask(self, batch: Any, mask: Optional[list(bool)] = None) -> Any:
+    def mask(self, batch: Any, mask: Optional[List[bool]] = None) -> Any:
         if not all(isinstance(item, bool) for item in mask):
             raise ValueError("training_mask must be a list of bools")
         if len(mask) != len(batch):
