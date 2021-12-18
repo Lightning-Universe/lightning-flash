@@ -11,9 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from flash.text import SummarizationTask
+from flash.core.integrations.icevision.transforms import IceVisionInputTransform, IceVisionTransformAdapter
+from flash.core.utilities.imports import _ICEVISION_AVAILABLE, requires
 
-model = SummarizationTask.load_from_checkpoint(
-    "https://flash-weights.s3.amazonaws.com/0.7.0/summarization_model_xsum.pt"
-)
-model.serve()
+if _ICEVISION_AVAILABLE:
+    from icevision.tfms import A
+
+
+class KeypointDetectionInputTransform(IceVisionInputTransform):
+    @requires(["image", "icevision"])
+    def train_per_sample_transform(self):
+        return IceVisionTransformAdapter([*A.aug_tfms(size=self.image_size, crop_fn=None), A.Normalize()])

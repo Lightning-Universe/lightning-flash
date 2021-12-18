@@ -20,9 +20,9 @@ from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _AUDIO_AVAILABLE
 
 if _AUDIO_AVAILABLE:
-    from transformers import Wav2Vec2Processor
+    from transformers import AutoProcessor
 else:
-    Wav2Vec2Processor = object
+    AutoProcessor = object
 
 
 @dataclass
@@ -52,7 +52,7 @@ class DataCollatorCTCWithPadding:
             7.5 (Volta).
     """
 
-    processor: Wav2Vec2Processor
+    processor: AutoProcessor
     padding: Union[bool, str] = True
     max_length: Optional[int] = None
     max_length_labels: Optional[int] = None

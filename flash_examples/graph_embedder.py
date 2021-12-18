@@ -29,7 +29,7 @@ datamodule = GraphClassificationData.from_datasets(
 )
 
 # 2. Load a previously trained GraphClassifier
-model = GraphEmbedder.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/0.6.0/graph_classification_model.pt")
+model = GraphEmbedder.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/0.7.0/graph_classification_model.pt")
 
 # 3. Generate embeddings for the first 3 graphs
 trainer = flash.Trainer(gpus=torch.cuda.device_count())

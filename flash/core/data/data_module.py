@@ -28,7 +28,7 @@ from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
 from flash.core.data.io.input import DataKeys, Input, InputBase, IterableInput
-from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.io.input_transform import _InputTransformProcessorV2, InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX
@@ -110,6 +110,14 @@ class DataModule(pl.LightningDataModule):
         self._test_input = test_input
         self._predict_input = predict_input
 
+        if self._train_input and self._val_input and isinstance(val_split, float) and val_split > 0:
+            raise MisconfigurationException(
+                "A `val_dataset` was provided with `val_split`. Please, choose one or the other."
+            )
+
+        if self._train_input and (val_split is not None and not self._val_input):
+            self._train_input, self._val_input = self._split_train_val(self._train_input, val_split)
+
         self._data_fetcher: Optional[BaseDataFetcher] = data_fetcher or self.configure_data_fetcher()
 
         self._train_dataloader_collate_fn = self._resolve_dataloader_collate_fn(self._train_input)
@@ -121,14 +129,6 @@ class DataModule(pl.LightningDataModule):
         self._val_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._val_input)
         self._test_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._test_input)
         self._predict_on_after_batch_transfer_fn = self._resolve_on_after_batch_transfer_fn(self._predict_input)
-
-        if self._train_input and self._val_input and isinstance(val_split, float) and val_split > 0:
-            raise MisconfigurationException(
-                "A `val_dataset` was provided with `val_split`. Please, choose one or the other."
-            )
-
-        if self._train_input is not None and (val_split is not None and self._val_input is None):
-            self._train_input, self._val_input = self._split_train_val(self._train_input, val_split)
 
         if self._train_input:
             self.train_dataloader = self._train_dataloader
@@ -193,8 +193,18 @@ class DataModule(pl.LightningDataModule):
             return ds._create_on_after_batch_transfer_fn([self.data_fetcher])
 
     def _train_dataloader(self) -> DataLoader:
+        if isinstance(getattr(self, "trainer", None), pl.Trainer):
+            if isinstance(self.trainer.lightning_module, flash.Task):
+                self.connect(self.trainer.lightning_module)
+
         train_ds: Input = self._train_input
         collate_fn = self._train_dataloader_collate_fn
+
+        transform_processor = None
+        if isinstance(collate_fn, _InputTransformProcessorV2):
+            transform_processor = collate_fn
+            collate_fn = transform_processor.collate_fn
+
         shuffle: bool = False
         if isinstance(train_ds, IterableDataset):
             drop_last = False
@@ -208,9 +218,7 @@ class DataModule(pl.LightningDataModule):
             sampler = self.sampler(train_ds)
 
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
-            if isinstance(self.trainer.lightning_module, flash.Task):
-                self.connect(self.trainer.lightning_module)
-            return self.trainer.lightning_module.process_train_dataset(
+            dataloader = self.trainer.lightning_module.process_train_dataset(
                 train_ds,
                 trainer=self.trainer,
                 batch_size=self.batch_size,
@@ -221,27 +229,40 @@ class DataModule(pl.LightningDataModule):
                 collate_fn=collate_fn,
                 sampler=sampler,
             )
+        else:
+            dataloader = DataLoader(
+                train_ds,
+                batch_size=self.batch_size,
+                shuffle=shuffle,
+                sampler=sampler,
+                num_workers=self.num_workers,
+                pin_memory=self.pin_memory,
+                drop_last=drop_last,
+                collate_fn=collate_fn,
+                persistent_workers=self.persistent_workers,
+            )
 
-        return DataLoader(
-            train_ds,
-            batch_size=self.batch_size,
-            shuffle=shuffle,
-            sampler=sampler,
-            num_workers=self.num_workers,
-            pin_memory=self.pin_memory,
-            drop_last=drop_last,
-            collate_fn=collate_fn,
-            persistent_workers=self.persistent_workers,
-        )
+        if transform_processor is not None:
+            transform_processor.collate_fn = dataloader.collate_fn
+            dataloader.collate_fn = transform_processor
+
+        return dataloader
 
     def _val_dataloader(self) -> DataLoader:
-        val_ds: Input = self._val_input
-        collate_fn = self._val_dataloader_collate_fn
-
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
             if isinstance(self.trainer.lightning_module, flash.Task):
                 self.connect(self.trainer.lightning_module)
-            return self.trainer.lightning_module.process_val_dataset(
+
+        val_ds: Input = self._val_input
+        collate_fn = self._val_dataloader_collate_fn
+
+        transform_processor = None
+        if isinstance(collate_fn, _InputTransformProcessorV2):
+            transform_processor = collate_fn
+            collate_fn = transform_processor.collate_fn
+
+        if isinstance(getattr(self, "trainer", None), pl.Trainer):
+            dataloader = self.trainer.lightning_module.process_val_dataset(
                 val_ds,
                 trainer=self.trainer,
                 batch_size=self.batch_size,
@@ -249,24 +270,37 @@ class DataModule(pl.LightningDataModule):
                 pin_memory=self.pin_memory,
                 collate_fn=collate_fn,
             )
+        else:
+            dataloader = DataLoader(
+                val_ds,
+                batch_size=self.batch_size,
+                num_workers=self.num_workers,
+                pin_memory=self.pin_memory,
+                collate_fn=collate_fn,
+                persistent_workers=self.persistent_workers,
+            )
 
-        return DataLoader(
-            val_ds,
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-            pin_memory=self.pin_memory,
-            collate_fn=collate_fn,
-            persistent_workers=self.persistent_workers,
-        )
+        if transform_processor is not None:
+            transform_processor.collate_fn = dataloader.collate_fn
+            dataloader.collate_fn = transform_processor
+
+        return dataloader
 
     def _test_dataloader(self) -> DataLoader:
-        test_ds: Input = self._test_input
-        collate_fn = self._test_dataloader_collate_fn
-
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
             if isinstance(self.trainer.lightning_module, flash.Task):
                 self.connect(self.trainer.lightning_module)
-            return self.trainer.lightning_module.process_test_dataset(
+
+        test_ds: Input = self._test_input
+        collate_fn = self._test_dataloader_collate_fn
+
+        transform_processor = None
+        if isinstance(collate_fn, _InputTransformProcessorV2):
+            transform_processor = collate_fn
+            collate_fn = transform_processor.collate_fn
+
+        if isinstance(getattr(self, "trainer", None), pl.Trainer):
+            dataloader = self.trainer.lightning_module.process_test_dataset(
                 test_ds,
                 trainer=self.trainer,
                 batch_size=self.batch_size,
@@ -274,19 +308,34 @@ class DataModule(pl.LightningDataModule):
                 pin_memory=self.pin_memory,
                 collate_fn=collate_fn,
             )
+        else:
+            dataloader = DataLoader(
+                test_ds,
+                batch_size=self.batch_size,
+                num_workers=self.num_workers,
+                pin_memory=self.pin_memory,
+                collate_fn=collate_fn,
+                persistent_workers=self.persistent_workers,
+            )
 
-        return DataLoader(
-            test_ds,
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-            pin_memory=self.pin_memory,
-            collate_fn=collate_fn,
-            persistent_workers=self.persistent_workers,
-        )
+        if transform_processor is not None:
+            transform_processor.collate_fn = dataloader.collate_fn
+            dataloader.collate_fn = transform_processor
+
+        return dataloader
 
     def _predict_dataloader(self) -> DataLoader:
+        if isinstance(getattr(self, "trainer", None), pl.Trainer):
+            if isinstance(self.trainer.lightning_module, flash.Task):
+                self.connect(self.trainer.lightning_module)
+
         predict_ds: Input = self._predict_input
         collate_fn = self._predict_dataloader_collate_fn
+
+        transform_processor = None
+        if isinstance(collate_fn, _InputTransformProcessorV2):
+            transform_processor = collate_fn
+            collate_fn = transform_processor.collate_fn
 
         if isinstance(predict_ds, IterableDataset):
             batch_size = self.batch_size
@@ -294,24 +343,28 @@ class DataModule(pl.LightningDataModule):
             batch_size = min(self.batch_size, len(predict_ds) if len(predict_ds) > 0 else 1)
 
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
-            if isinstance(self.trainer.lightning_module, flash.Task):
-                self.connect(self.trainer.lightning_module)
-            return self.trainer.lightning_module.process_predict_dataset(
+            dataloader = self.trainer.lightning_module.process_predict_dataset(
                 predict_ds,
                 batch_size=batch_size,
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
                 collate_fn=collate_fn,
             )
+        else:
+            dataloader = DataLoader(
+                predict_ds,
+                batch_size=batch_size,
+                num_workers=self.num_workers,
+                pin_memory=self.pin_memory,
+                collate_fn=collate_fn,
+                persistent_workers=self.persistent_workers,
+            )
 
-        return DataLoader(
-            predict_ds,
-            batch_size=batch_size,
-            num_workers=self.num_workers,
-            pin_memory=self.pin_memory,
-            collate_fn=collate_fn,
-            persistent_workers=self.persistent_workers,
-        )
+        if transform_processor is not None:
+            transform_processor.collate_fn = dataloader.collate_fn
+            dataloader.collate_fn = transform_processor
+
+        return dataloader
 
     def connect(self, task: "flash.Task"):
         data_pipeline_state = DataPipelineState()

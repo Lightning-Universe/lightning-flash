@@ -36,12 +36,17 @@ def _as_list(x: Union[List, torch.Tensor, np.ndarray]) -> List:
     return x
 
 
+def _strip(x: str) -> str:
+    return x.strip(", ")
+
+
 class TargetMode(Enum):
     """The ``TargetMode`` Enum describes the different supported formats for targets in Flash."""
 
     MULTI_TOKEN = auto()
     MULTI_NUMERIC = auto()
     MUTLI_COMMA_DELIMITED = auto()
+    MUTLI_SPACE_DELIMITED = auto()
     MULTI_BINARY = auto()
 
     SINGLE_TOKEN = auto()
@@ -67,9 +72,12 @@ class TargetMode(Enum):
             target: A target that is one of: a single target, a list of targets, a comma delimited string.
         """
         if isinstance(target, str):
-            # TODO: This could be a dangerous assumption if people happen to have a label that contains a comma
+            target = _strip(target)
+            # TODO: This could be a dangerous assumption if people happen to have a label that contains a comma or space
             if "," in target:
                 return TargetMode.MUTLI_COMMA_DELIMITED
+            elif " " in target:
+                return TargetMode.MUTLI_SPACE_DELIMITED
             else:
                 return TargetMode.SINGLE_TOKEN
         elif _is_list_like(target):
@@ -88,6 +96,7 @@ class TargetMode(Enum):
         return any(
             [
                 self is TargetMode.MUTLI_COMMA_DELIMITED,
+                self is TargetMode.MUTLI_SPACE_DELIMITED,
                 self is TargetMode.MULTI_NUMERIC,
                 self is TargetMode.MULTI_TOKEN,
                 self is TargetMode.MULTI_BINARY,
@@ -116,7 +125,7 @@ class TargetMode(Enum):
 _RESOLUTION_MAPPING = {
     TargetMode.MULTI_BINARY: [TargetMode.MULTI_NUMERIC],
     TargetMode.SINGLE_BINARY: [TargetMode.MULTI_BINARY, TargetMode.MULTI_NUMERIC],
-    TargetMode.SINGLE_TOKEN: [TargetMode.MUTLI_COMMA_DELIMITED],
+    TargetMode.SINGLE_TOKEN: [TargetMode.MUTLI_COMMA_DELIMITED, TargetMode.MUTLI_SPACE_DELIMITED],
     TargetMode.SINGLE_NUMERIC: [TargetMode.MULTI_NUMERIC],
 }
 
@@ -179,7 +188,7 @@ class SingleLabelTargetFormatter(TargetFormatter):
         self.label_to_idx = {label: idx for idx, label in enumerate(labels)}
 
     def format(self, target: Any) -> Any:
-        return self.label_to_idx[(target[0] if not isinstance(target, str) else target).strip()]
+        return self.label_to_idx[_strip(target[0] if not isinstance(target, str) else target)]
 
 
 class MultiLabelTargetFormatter(SingleLabelTargetFormatter):
@@ -199,6 +208,11 @@ class MultiLabelTargetFormatter(SingleLabelTargetFormatter):
 class CommaDelimitedTargetFormatter(MultiLabelTargetFormatter):
     def format(self, target: Any) -> Any:
         return super().format(target.split(","))
+
+
+class SpaceDelimitedTargetFormatter(MultiLabelTargetFormatter):
+    def format(self, target: Any) -> Any:
+        return super().format(target.split(" "))
 
 
 class MultiNumericTargetFormatter(TargetFormatter):
@@ -245,6 +259,8 @@ def get_target_formatter(
         return SingleLabelTargetFormatter(labels)
     elif target_mode is TargetMode.MUTLI_COMMA_DELIMITED:
         return CommaDelimitedTargetFormatter(labels)
+    elif target_mode is TargetMode.MUTLI_SPACE_DELIMITED:
+        return SpaceDelimitedTargetFormatter(labels)
     return MultiLabelTargetFormatter(labels)
 
 
@@ -289,13 +305,16 @@ def get_target_details(targets: List[Any], target_mode: TargetMode) -> Tuple[Opt
         if target_mode is TargetMode.MUTLI_COMMA_DELIMITED:
             for target in targets:
                 tokens.extend(target.split(","))
+        elif target_mode is TargetMode.MUTLI_SPACE_DELIMITED:
+            for target in targets:
+                tokens.extend(target.split(" "))
         elif target_mode is TargetMode.MULTI_TOKEN:
             for target in targets:
                 tokens.extend(target)
         else:
             tokens = targets
 
-        tokens = [token.strip() for token in tokens]
+        tokens = [_strip(token) for token in tokens]
         labels = list(sorted_alphanumeric(set(tokens)))
         num_classes = len(labels)
     return labels, num_classes

@@ -24,10 +24,11 @@ import icedata  # noqa: E402
 # 1. Create the DataModule
 data_dir = icedata.pets.load_data()
 
-datamodule = InstanceSegmentationData.from_folders(
+datamodule = InstanceSegmentationData.from_icedata(
     train_folder=data_dir,
     val_split=0.1,
     parser=partial(icedata.pets.parser, mask=True),
+    batch_size=4,
 )
 
 # 2. Build the task
@@ -47,7 +48,8 @@ datamodule = InstanceSegmentationData.from_files(
         str(data_dir / "images/yorkshire_terrier_9.jpg"),
         str(data_dir / "images/yorkshire_terrier_12.jpg"),
         str(data_dir / "images/yorkshire_terrier_13.jpg"),
-    ]
+    ],
+    batch_size=4,
 )
 predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)

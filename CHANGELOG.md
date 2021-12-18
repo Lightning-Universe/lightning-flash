@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased] - YYYY-DD-MM
+
+### Added
+
+- Added support for multi-label, space delimited, targets ([#1076](https://github.com/PyTorchLightning/lightning-flash/pull/1076))
+
+### Changed
+
+- Changed `Wav2Vec2Processor` to `AutoProcessor` and seperate it from backbone [optional] ([#1075](https://github.com/PyTorchLightning/lightning-flash/pull/1075))
+
+### Deprecated
+
+### Fixed
+
+- Fixed a bug when not explicitly passing `embedding_sizes` to the `TabularClassifier` and `TabularRegressor` tasks ([#1067](https://github.com/PyTorchLightning/lightning-flash/pull/1067))
+
+- Fixed a bug where under some circumstances transforms would not get called ([#1072](https://github.com/PyTorchLightning/lightning-flash/pull/1072))
+
+- Fixed a bug where prediction would sometimes give the wrong number of outputs ([#1077](https://github.com/PyTorchLightning/lightning-flash/pull/1077))
+
+- Fixed a bug where passing the `val_split` to the `DataModule` would not have the desired effect ([#1079](https://github.com/PyTorchLightning/lightning-flash/pull/1079))
+
+### Removed
+
 ## [0.6.0] - 2021-13-12
 
 - Added `GraphNodeClassifier` task ([#986](https://github.com/PyTorchLightning/lightning-flash/pull/986))
