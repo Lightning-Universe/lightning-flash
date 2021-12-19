@@ -19,8 +19,8 @@ from torch.nn import functional as F
 from torch.nn import Linear
 
 from flash.core.classification import ClassificationTask
-from flash.core.registry import FlashRegistry
 from flash.core.data.io.input import DataKeys
+from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.graph.backbones import GRAPH_BACKBONES
@@ -89,37 +89,37 @@ class GraphNodeClassifier(ClassificationTask):
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
         x, _ = batch
-        if hasattr(x, 'train_mask'): 
-            mask = x.train_mask 
-        else: 
+        if hasattr(x, "train_mask"):
+            mask = x.train_mask
+        else:
             mask = None
-        return super().training_step(batch, batch_idx, mask = mask)
+        return super().training_step(batch, batch_idx, mask=mask)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
         x, _ = batch
-        if hasattr(x, 'val_mask'): 
-            mask = x.val_mask 
-        else: 
+        if hasattr(x, "val_mask"):
+            mask = x.val_mask
+        else:
             mask = None
         return super().validation_step(batch, batch_idx, mask)
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
         x, _ = batch
-        if hasattr(x, 'test_mask'): 
-            mask = x.test_mask 
-        else: 
+        if hasattr(x, "test_mask"):
+            mask = x.test_mask
+        else:
             mask = None
         return super().test_step(batch, batch_idx, mask)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         x, _ = batch
-        if hasattr(x, 'predict_mask'): 
-            mask = x.predict_mask 
-        else: 
+        if hasattr(x, "predict_mask"):
+            mask = x.predict_mask
+        else:
             mask = None
-        return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx, mask = mask)
+        return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx, mask=mask)
 
     def forward(self, data) -> torch.Tensor:
         x = self.backbone(data.x, data.edge_index)
