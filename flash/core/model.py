@@ -376,7 +376,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             del self._original_predict_step
             self._wrapped_predict_step = False
 
-    def step(self, batch: Any, batch_idx: int, metrics: nn.ModuleDict) -> Any:
+    def step(self, batch: Any, batch_idx: int, metrics: nn.ModuleDict, mask: Optional[List[bool]]) -> Any:
         """Implement the core logic for the training/validation/test step. By default this includes:
 
             - Inference on the current batch
@@ -395,6 +395,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         """
         x, y = batch
         y_hat = self(x)
+        y, y_hat = self.apply_mask(y, y_hat, mask)
         y, y_hat = self.apply_filtering(y, y_hat)
         output = {OutputKeys.OUTPUT: y_hat}
         y_hat = self.to_loss_format(output[OutputKeys.OUTPUT])
@@ -437,6 +438,12 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         return y, y_hat
 
     @staticmethod
+    def apply_mask(y: torch.Tensor, y_hat: torch.Tensor, mask: Optional[List[bool]]) -> Tuple[torch.Tensor, torch.Tensor]:
+        """This function is used to filter some labels or predictions based on a mask."""
+        if mask: y, y_hat =  y[mask], y_hat[mask]
+        return y, y_hat
+
+    @staticmethod
     def to_loss_format(x: torch.Tensor) -> torch.Tensor:
         return x
 
@@ -447,8 +454,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
     def forward(self, x: Any) -> Any:
         return self.model(x)
 
-    def training_step(self, batch: Any, batch_idx: int) -> Any:
-        output = self.step(batch, batch_idx, self.train_metrics)
+    def training_step(self, batch: Any, batch_idx: int, mask: Optional[List[bool]]) -> Any:
+        output = self.step(batch, batch_idx, self.train_metrics, mask = mask)
         self.log_dict(
             {f"train_{k}": v for k, v in output[OutputKeys.LOGS].items()},
             on_step=True,
@@ -457,8 +464,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         )
         return output[OutputKeys.LOSS]
 
-    def validation_step(self, batch: Any, batch_idx: int) -> None:
-        output = self.step(batch, batch_idx, self.val_metrics)
+    def validation_step(self, batch: Any, batch_idx: int, mask: Optional[List[bool]]) -> None:
+        output = self.step(batch, batch_idx, self.val_metrics, mask)
         self.log_dict(
             {f"val_{k}": v for k, v in output[OutputKeys.LOGS].items()},
             on_step=False,
@@ -466,8 +473,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             prog_bar=True,
         )
 
-    def test_step(self, batch: Any, batch_idx: int) -> None:
-        output = self.step(batch, batch_idx, self.test_metrics)
+    def test_step(self, batch: Any, batch_idx: int, mask: Optional[List[bool]]) -> None:
+        output = self.step(batch, batch_idx, self.test_metrics, mask)
         self.log_dict(
             {f"test_{k}": v for k, v in output[OutputKeys.LOGS].items()},
             on_step=False,
@@ -478,10 +485,12 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
     def predict(self, *args, **kwargs):
         raise AttributeError("`flash.Task.predict` has been removed. Use `flash.Trainer.predict` instead.")
 
-    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0, mask: Optional[List[bool]] = None) -> Any:
         if isinstance(batch, tuple):
             batch = batch[0]
+            if mask: batch = batch[mask]
         elif isinstance(batch, list):
+            if mask: batch = batch[mask]
             # Todo: Understand why stack is needed
             batch = torch.stack(batch)
         return self(batch)
