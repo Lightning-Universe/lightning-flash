@@ -89,36 +89,24 @@ class GraphNodeClassifier(ClassificationTask):
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
         x, _ = batch
-        if hasattr(x, 'train_mask'): 
-            mask = x.train_mask 
-        else: 
-            mask = None
+        if hasattr(x, 'train_mask'): mask = x.train_mask 
         return super().training_step(batch, batch_idx, mask = mask)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
         x, _ = batch
-        if hasattr(x, 'val_mask'): 
-            mask = x.val_mask 
-        else: 
-            mask = None
+        if hasattr(x, 'val_mask'): mask = x.val_mask 
         return super().validation_step(batch, batch_idx, mask)
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
         x, _ = batch
-        if hasattr(x, 'test_mask'): 
-            mask = x.test_mask 
-        else: 
-            mask = None
+        if hasattr(x, 'test_mask'): mask = x.test_mask 
         return super().test_step(batch, batch_idx, mask)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         x, _ = batch
-        if hasattr(x, 'predict_mask'): 
-            mask = x.predict_mask 
-        else: 
-            mask = None
+        if hasattr(x, 'predict_mask'): mask = x.predict_mask 
         return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx, mask = mask)
 
     def forward(self, data) -> torch.Tensor:

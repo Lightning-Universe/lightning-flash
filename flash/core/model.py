@@ -376,7 +376,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             del self._original_predict_step
             self._wrapped_predict_step = False
 
-    def step(self, batch: Any, batch_idx: int, metrics: nn.ModuleDict, mask: Optional[List[bool]]) -> Any:
+    def step(self, batch: Any, batch_idx: int, metrics: nn.ModuleDict, mask: Optional[List[bool]] = None) -> Any:
         """Implement the core logic for the training/validation/test step. By default this includes:
 
             - Inference on the current batch
@@ -438,7 +438,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         return y, y_hat
 
     @staticmethod
-    def apply_mask(y: torch.Tensor, y_hat: torch.Tensor, mask: Optional[List[bool]]) -> Tuple[torch.Tensor, torch.Tensor]:
+    def apply_mask(y: torch.Tensor, y_hat: torch.Tensor, mask: Optional[List[bool]] = None) -> Tuple[torch.Tensor, torch.Tensor]:
         """This function is used to filter some labels or predictions based on a mask."""
         if mask: y, y_hat =  y[mask], y_hat[mask]
         return y, y_hat
@@ -454,7 +454,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
     def forward(self, x: Any) -> Any:
         return self.model(x)
 
-    def training_step(self, batch: Any, batch_idx: int, mask: Optional[List[bool]]) -> Any:
+    def training_step(self, batch: Any, batch_idx: int, mask: Optional[List[bool]] = None) -> Any:
         output = self.step(batch, batch_idx, self.train_metrics, mask = mask)
         self.log_dict(
             {f"train_{k}": v for k, v in output[OutputKeys.LOGS].items()},
@@ -464,7 +464,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         )
         return output[OutputKeys.LOSS]
 
-    def validation_step(self, batch: Any, batch_idx: int, mask: Optional[List[bool]]) -> None:
+    def validation_step(self, batch: Any, batch_idx: int, mask: Optional[List[bool]] = None) -> None:
         output = self.step(batch, batch_idx, self.val_metrics, mask)
         self.log_dict(
             {f"val_{k}": v for k, v in output[OutputKeys.LOGS].items()},
@@ -473,7 +473,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             prog_bar=True,
         )
 
-    def test_step(self, batch: Any, batch_idx: int, mask: Optional[List[bool]]) -> None:
+    def test_step(self, batch: Any, batch_idx: int, mask: Optional[List[bool]] = None) -> None:
         output = self.step(batch, batch_idx, self.test_metrics, mask)
         self.log_dict(
             {f"test_{k}": v for k, v in output[OutputKeys.LOGS].items()},
