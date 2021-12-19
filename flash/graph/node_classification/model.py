@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Optional, Tuple, Union, List
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import torch
 from torch import nn
@@ -87,14 +87,14 @@ class GraphNodeClassifier(ClassificationTask):
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch, batch.y)
-        if batch.training_mask is not None:
-            batch = self.mask(batch, batch.training_mask)
+        if batch.train_mask is not None:
+            batch = self.mask(batch, batch.train_mask)
         return super().training_step(batch, batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch, batch.y)
-        if batch.validation_mask is not None:
-            batch = self.mask(batch, batch.validation_mask)
+        if batch.val_mask is not None:
+            batch = self.mask(batch, batch.val_mask)
         return super().validation_step(batch, batch_idx)
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
@@ -114,9 +114,9 @@ class GraphNodeClassifier(ClassificationTask):
 
     def mask(self, batch: Any, mask: Optional[List[bool]] = None) -> Any:
         if not all(isinstance(item, bool) for item in mask):
-            raise ValueError("training_mask must be a list of bools")
+            raise ValueError("mask must be a list of bools")
         if len(mask) != len(batch):
-            raise ValueError("training_mask must be the same length as the batch")
+            raise ValueError("mask must be the same length as the batch")
         return batch[mask]
 
 
