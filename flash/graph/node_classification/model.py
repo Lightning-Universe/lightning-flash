@@ -19,8 +19,8 @@ from torch.nn import functional as F
 from torch.nn import Linear
 
 from flash.core.classification import ClassificationTask
-from flash.core.registry import FlashRegistry
 from flash.core.data.io.input import DataKeys
+from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.graph.backbones import GRAPH_BACKBONES

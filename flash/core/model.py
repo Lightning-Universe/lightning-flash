@@ -440,7 +440,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
     @staticmethod
     def apply_mask(y: torch.Tensor, y_hat: torch.Tensor, mask: Optional[List[bool]] = None) -> Tuple[torch.Tensor, torch.Tensor]:
         """This function is used to filter some labels or predictions based on a mask."""
-        if mask: y, y_hat =  y[mask], y_hat[mask]
+        if mask:
+            y, y_hat = y[mask], y_hat[mask]
         return y, y_hat
 
     @staticmethod
@@ -485,12 +486,16 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
     def predict(self, *args, **kwargs):
         raise AttributeError("`flash.Task.predict` has been removed. Use `flash.Trainer.predict` instead.")
 
-    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0, mask: Optional[List[bool]] = None) -> Any:
+    def predict_step(
+        self, batch: Any, batch_idx: int, dataloader_idx: int = 0, mask: Optional[List[bool]] = None
+    ) -> Any:
         if isinstance(batch, tuple):
             batch = batch[0]
-            if mask: batch = batch[mask]
+            if mask:
+                batch = batch[mask]
         elif isinstance(batch, list):
-            if mask: batch = batch[mask]
+            if mask:
+                batch = batch[mask]
             # Todo: Understand why stack is needed
             batch = torch.stack(batch)
         return self(batch)
