@@ -458,7 +458,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         return self.model(x)
 
     def training_step(self, batch: Any, batch_idx: int, mask: Optional[List[bool]] = None) -> Any:
-        output = self.step(batch, batch_idx, self.train_metrics, mask = mask)
+        output = self.step(batch, batch_idx, self.train_metrics, mask=mask)
         self.log_dict(
             {f"train_{k}": v for k, v in output[OutputKeys.LOGS].items()},
             on_step=True,
@@ -468,7 +468,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         return output[OutputKeys.LOSS]
 
     def validation_step(self, batch: Any, batch_idx: int, mask: Optional[List[bool]] = None) -> None:
-        output = self.step(batch, batch_idx, self.val_metrics, mask = mask)
+        output = self.step(batch, batch_idx, self.val_metrics, mask=mask)
         self.log_dict(
             {f"val_{k}": v for k, v in output[OutputKeys.LOGS].items()},
             on_step=False,
@@ -477,7 +477,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         )
 
     def test_step(self, batch: Any, batch_idx: int, mask: Optional[List[bool]] = None) -> None:
-        output = self.step(batch, batch_idx, self.test_metrics, mask = mask)
+        output = self.step(batch, batch_idx, self.test_metrics, mask=mask)
         self.log_dict(
             {f"test_{k}": v for k, v in output[OutputKeys.LOGS].items()},
             on_step=False,
