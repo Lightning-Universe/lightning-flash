@@ -19,9 +19,9 @@ from flash import RunningStage, Trainer
 from flash.__main__ import main
 from flash.core.data.data_module import DataModule
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
-from flash.graph.node_classification import GraphNodeClassifier
 from flash.graph.classification.input import GraphClassificationDatasetInput
 from flash.graph.classification.input_transform import GraphClassificationInputTransform
+from flash.graph.node_classification import GraphNodeClassifier
 from tests.helpers.utils import _GRAPH_TESTING
 
 if _GRAPH_AVAILABLE:
@@ -41,7 +41,9 @@ def test_train(tmpdir):
     coradataset = datasets.Planetoid(root="data", name="Cora")
     model = GraphNodeClassifier(num_features=coradataset.num_features, num_classes=coradataset.num_classes)
     datamodule = DataModule(
-        GraphClassificationDatasetInput(RunningStage.TRAINING, coradataset, transform=GraphClassificationInputTransform),
+        GraphClassificationDatasetInput(
+            RunningStage.TRAINING, coradataset, transform=GraphClassificationInputTransform
+        ),
         batch_size=4,
     )
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
