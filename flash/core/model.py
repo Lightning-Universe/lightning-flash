@@ -438,7 +438,9 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         return y, y_hat
 
     @staticmethod
-    def apply_mask(y: torch.Tensor, y_hat: torch.Tensor, mask: Optional[List[bool]] = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def apply_mask(
+        y: torch.Tensor, y_hat: torch.Tensor, mask: Optional[List[bool]] = None
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """This function is used to filter some labels or predictions based on a mask."""
         if mask:
             y, y_hat = y[mask], y_hat[mask]
@@ -456,7 +458,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         return self.model(x)
 
     def training_step(self, batch: Any, batch_idx: int, mask: Optional[List[bool]] = None) -> Any:
-        output = self.step(batch, batch_idx, self.train_metrics, mask = mask)
+        output = self.step(batch, batch_idx, self.train_metrics, mask=mask)
         self.log_dict(
             {f"train_{k}": v for k, v in output[OutputKeys.LOGS].items()},
             on_step=True,
