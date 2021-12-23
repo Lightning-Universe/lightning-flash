@@ -16,7 +16,10 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
+import torchaudio
+from torchaudio.transforms import Spectrogram
 
+from flash.audio.data import AUDIO_EXTENSIONS
 from flash.core.data.io.classification_input import ClassificationInput, ClassificationState
 from flash.core.data.io.input import DataKeys
 from flash.core.data.utilities.classification import TargetMode
@@ -35,6 +38,15 @@ def spectrogram_loader(filepath: str):
     else:
         data = np.load(filepath)
     return data
+
+
+def waveform_loader(filepath: str):
+    if has_file_allowed_extension(filepath, AUDIO_EXTENSIONS):
+        waveform, sr = torchaudio.load(filepath)
+    else:
+        raise ValueError(f"File {filepath} has unsupported extension. Can only load {AUDIO_EXTENSIONS}")
+
+    return waveform, sr
 
 
 class AudioClassificationInput(ClassificationInput):
@@ -135,3 +147,26 @@ class AudioClassificationCSVInput(AudioClassificationDataFrameInput):
         if root is None:
             root = os.path.dirname(csv_file)
         return super().load_data(data_frame, input_key, target_keys, root, resolver)
+
+
+class AudioClassificationFileInputToSpectrogram(AudioClassificationInput):
+    def load_data(self, folder: PATH_TYPE) -> List[Dict[str, Any]]:
+
+        files, targets = make_dataset(folder, extensions=AUDIO_EXTENSIONS)
+
+        if targets is None:
+            files = filter_valid_files(files, valid_extensions=AUDIO_EXTENSIONS)
+            return to_samples(files)
+
+        files, targets = filter_valid_files(files, targets, valid_extensions=AUDIO_EXTENSIONS)
+        self.load_target_metadata(targets)
+        return to_samples(files, targets)
+
+    def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+        filepath = sample[DataKeys.INPUT]
+        waveform, sr = waveform_loader(filepath)
+        sample[DataKeys.INPUT] = Spectrogram(sr, normalized=True)(waveform).squeeze(0).numpy()
+
+        sample = super().load_sample(sample)
+        sample[DataKeys.METADATA]["filepath"] = filepath
+        return sample
