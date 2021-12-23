@@ -23,7 +23,7 @@ from pytorch_lightning import seed_everything
 from flash.audio import AudioClassificationData
 from flash.core.data.io.input import DataKeys
 from flash.core.data.transforms import ApplyToKeys
-from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE, _TORCHVISION_AVAILABLE, _TORCHAUDIO_AVAILABLE
 from tests.helpers.utils import _AUDIO_TESTING
 
 if _TORCHVISION_AVAILABLE:
@@ -32,12 +32,26 @@ if _TORCHVISION_AVAILABLE:
 if _PIL_AVAILABLE:
     from PIL import Image
 
+if _TORCHAUDIO_AVAILABLE:
+    import torchaudio
+
 
 def _rand_image(size: Tuple[int, int] = None):
     if size is None:
         _size = np.random.choice([196, 244])
         size = (_size, _size)
     return Image.fromarray(np.random.randint(0, 255, (*size, 3), dtype="uint8"))
+
+
+def _rand_waveform(size: int = None, sr: int = None, n_channels: int = None):
+    if size is None:
+        _size = np.random.choice([2, 3])
+    if sr is None:
+        _sr = np.random.choice([16000, 22050])
+    if n_channels is None:
+        _n_channels = np.random.choice([1, 2])
+
+    return np.random.randn(_n_channels, _sr * _size)
 
 
 @pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
