@@ -89,13 +89,15 @@ def test_from_filepaths_smoke(tmpdir):
 def test_from_data_frame_smoke(tmpdir):
     tmpdir = Path(tmpdir)
 
-    df = pd.DataFrame({"file": ["train.png", "valid.png", "test.png"], "split": ["train", "valid", "test"],
-                       "target": [0, 1, 1]})
+    df = pd.DataFrame(
+        {"file": ["train.png", "valid.png", "test.png"], "split": ["train", "valid", "test"], "target": [0, 1, 1]}
+    )
 
     [_rand_image().save(tmpdir / row.file) for i, row in df.iterrows()]
 
     img_data = ImageClassificationData.from_data_frame(
-        "file", "target",
+        "file",
+        "target",
         train_images_root=str(tmpdir),
         val_images_root=str(tmpdir),
         test_images_root=str(tmpdir),
@@ -104,7 +106,8 @@ def test_from_data_frame_smoke(tmpdir):
         test_data_frame=df[df.split == "test"],
         predict_images_root=str(tmpdir),
         batch_size=1,
-        predict_data_frame=df)
+        predict_data_frame=df,
+    )
 
     assert img_data.train_dataloader() is not None
     assert img_data.val_dataloader() is not None
