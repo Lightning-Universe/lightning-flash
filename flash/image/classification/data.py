@@ -217,7 +217,7 @@ class ImageClassificationData(DataModule):
         train_data = (train_data_frame, input_field, target_fields, train_images_root, train_resolver)
         val_data = (val_data_frame, input_field, target_fields, val_images_root, val_resolver)
         test_data = (test_data_frame, input_field, target_fields, test_images_root, test_resolver)
-        predict_data = (predict_data_frame, input_field, predict_images_root, predict_resolver)
+        predict_data = (predict_data_frame, input_field, None, predict_images_root, predict_resolver)
 
         return cls(
             input_cls(RunningStage.TRAINING, *train_data, transform=train_transform, **ds_kw),
