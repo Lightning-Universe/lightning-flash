@@ -14,6 +14,9 @@
 from typing import Any, Callable, Dict, List, Tuple
 
 import torch
+from omegaconf import OmegaConf
+from pytorch_tabular.config import OptimizerConfig
+from pytorch_tabular.models import TabNetModel, TabNetModelConfig
 from torch.nn import functional as F
 
 from flash.core.classification import ClassificationTask, Probabilities
@@ -91,6 +94,8 @@ class TabularClassifier(ClassificationTask):
         self,
         num_features: int,
         num_classes: int,
+        idx_cat: List[int],
+        idx_num: List[int],
         embedding_sizes: List[Tuple[int, int]] = None,
         loss_fn: Callable = F.cross_entropy,
         optimizer: OPTIMIZER_TYPE = "Adam",
@@ -102,16 +107,26 @@ class TabularClassifier(ClassificationTask):
         **tabnet_kwargs,
     ):
         self.save_hyperparameters()
-
         cat_dims, cat_emb_dim = zip(*embedding_sizes) if embedding_sizes else ([], [])
-        model = TabNet(
-            input_dim=num_features,
-            output_dim=num_classes,
-            cat_idxs=list(range(len(embedding_sizes))),
-            cat_dims=list(cat_dims),
-            cat_emb_dim=list(cat_emb_dim),
-            **tabnet_kwargs,
-        )
+        cat_emb_dim = [(dim, dim) for dim in cat_emb_dim]
+        model_config = TabNetModelConfig(task="classification", embedding_dims=cat_emb_dim)
+        config = dict()
+        config["categorical_dim"] = len(cat_dims)
+        config["continuous_dim"] = num_features - len(cat_dims)
+        config["output_dim"] = num_classes
+        config.update(tabnet_kwargs)
+        config = OmegaConf.merge(OmegaConf.create(config),
+                                 model_config,
+                                 OptimizerConfig(),)
+        model = TabNetModel(config=config)
+        # model = TabNet(
+        #     input_dim=num_features,
+        #     output_dim=num_classes,
+        #     cat_idxs=list(range(len(embedding_sizes))),
+        #     cat_dims=list(cat_dims),
+        #     cat_emb_dim=list(cat_emb_dim),
+        #     **tabnet_kwargs,
+        # )
 
         super().__init__(
             model=model,
@@ -130,7 +145,11 @@ class TabularClassifier(ClassificationTask):
         # TabNet takes single input, x_in is composed of (categorical, numerical)
         xs = [x for x in x_in if x.numel()]
         x = torch.cat(xs, dim=1)
-        return self.model(x)[0]
+        x = {
+            "categorical": x.index_select(1, torch.tensor(self.hparams.idx_cat)),
+            "continuous": x.index_select(1, torch.tensor(self.hparams.idx_num))
+        }
+        return self.model(x)["logits"]
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])

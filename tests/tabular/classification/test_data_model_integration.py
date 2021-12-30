@@ -47,6 +47,7 @@ def test_classification(tmpdir):
         num_workers=0,
         batch_size=2,
     )
-    model = TabularClassifier(num_features=3, num_classes=2, embedding_sizes=data.embedding_sizes)
+    model = TabularClassifier(num_features=3, num_classes=2, embedding_sizes=data.embedding_sizes,
+                              idx_cat=data.idx_cat, idx_num=data.idx_num)
     trainer = pl.Trainer(fast_dev_run=True, default_root_dir=tmpdir)
     trainer.fit(model, data)
