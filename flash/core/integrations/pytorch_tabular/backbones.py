@@ -9,13 +9,14 @@ from flash.core.utilities.imports import _PYTORCHTABULAR_AVAILABLE
 from flash.core.utilities.providers import _PYTORCH_TABULAR
 
 if _PYTORCHTABULAR_AVAILABLE:
+    import pytorch_tabular.models as models
     from pytorch_tabular.models import (
         TabTransformerConfig,
         TabNetModelConfig,
         FTTransformerConfig,
         AutoIntConfig,
         NodeConfig,
-        CategoryEmbeddingModelConfig, TabNetModel,
+        CategoryEmbeddingModelConfig,
 )
 
 
@@ -26,10 +27,13 @@ if _PYTORCHTABULAR_AVAILABLE:
 
     def load_pytorch_tabular(model_config, task_type, parameters: DictConfig, **kwargs):
         model_config = model_config(task=task_type, embedding_dims=parameters["embedding_dims"])
+        model_callable = getattr(
+            getattr(models, model_config._module_src), model_config._model_name
+        )
         config = OmegaConf.merge(OmegaConf.create(parameters),
                                  model_config,
                                  OptimizerConfig())
-        model = TabNetModel(config=config)
+        model = model_callable(config=config)
         return model
 
     for model_config, name in zip(
