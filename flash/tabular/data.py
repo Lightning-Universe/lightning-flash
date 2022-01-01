@@ -299,7 +299,7 @@ class TabularData(DataModule):
                 "categorical_cardinality": cat_dims,
                 "categorical_dim": len(cat_dims),
                 "continuous_dim": self.num_features - len(cat_dims),
-                "output_dim": self.num_classes,
+                "output_dim": self.num_classes if not self.is_regression else 1,
                 "idx_cat": self.idx_cat,
                 "idx_num": self.idx_num
                 }

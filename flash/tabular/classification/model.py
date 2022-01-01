@@ -13,62 +13,16 @@
 # limitations under the License.
 from typing import Any, Callable, Dict, List, Tuple
 
-import torch
-from omegaconf import OmegaConf
-from pytorch_tabular.config import OptimizerConfig
-from pytorch_tabular.models import TabNetModel, TabNetModelConfig
 from torch.nn import functional as F
 
-from flash.core.classification import ClassificationTask, Probabilities
-from flash.core.data.io.input import DataKeys
+from flash.core.classification import ClassificationTask
 from flash.core.integrations.pytorch_tabular.backbones import PYTORCH_TABULAR_BACKBONES
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _TABULAR_AVAILABLE
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
-
-if _TABULAR_AVAILABLE:
-    from pytorch_tabnet.tab_network import TabNet
+from flash.tabular.model import TabularModel
 
 
-# class TabularClassifier(AdapterTask):
-#     backbones: FlashRegistry = FlashRegistry("backbones") + PYTORCH_FORECASTING_BACKBONES
-#
-#     def __init__(
-#         self,
-#         parameters: Dict[str, Any],
-#         backbone: str,
-#         backbone_kwargs: Optional[Dict[str, Any]] = None,
-#         loss_fn: Optional[Callable] = None,
-#         optimizer: OPTIMIZER_TYPE = "Adam",
-#         lr_scheduler: LR_SCHEDULER_TYPE = None,
-#         metrics: Union[torchmetrics.Metric, List[torchmetrics.Metric]] = None,
-#         learning_rate: float = 4e-3,
-#     ):
-#
-#         self.save_hyperparameters()
-#
-#         if backbone_kwargs is None:
-#             backbone_kwargs = {}
-#
-#         metadata = self.backbones.get(backbone, with_metadata=True)
-#         adapter = metadata["metadata"]["adapter"].from_task(
-#             self,
-#             parameters=parameters,
-#             backbone=backbone,
-#             backbone_kwargs=backbone_kwargs,
-#             loss_fn=loss_fn,
-#             metrics=metrics,
-#         )
-#
-#         super().__init__(
-#             adapter,
-#             learning_rate=learning_rate,
-#             optimizer=optimizer,
-#             lr_scheduler=lr_scheduler,
-#         )
-
-
-class TabularClassifier(ClassificationTask):
+class TabularClassifier(TabularModel, ClassificationTask):
     """The ``TabularClassifier`` is a :class:`~flash.Task` for classifying tabular data. For more details, see
     :ref:`tabular_classification`.
 
@@ -107,56 +61,20 @@ class TabularClassifier(ClassificationTask):
         output: OUTPUT_TYPE = None,
         **tabnet_kwargs,
     ):
-        self.save_hyperparameters()
-        properties.update(tabnet_kwargs)
-        metadata = self.backbones.get(backbone, with_metadata=True)
-        adapter = metadata["metadata"]["adapter"].from_task(
-            self,
-            task_type="classification",
-            parameters=properties,
-            backbone=backbone,
-            backbone_kwargs=tabnet_kwargs,
-            loss_fn=loss_fn,
-            metrics=metrics,
-        )
-
         super().__init__(
-            adapter,
-            learning_rate=learning_rate,
-            optimizer=optimizer,
-            lr_scheduler=lr_scheduler,
+            "classification",
+            properties,
+            backbone,
+            embedding_sizes,
+            loss_fn,
+            optimizer,
+            lr_scheduler,
+            metrics,
+            learning_rate,
+            multi_label,
+            output,
+            **tabnet_kwargs
         )
-
-    def forward(self, x_in) -> torch.Tensor:
-        # TabNet takes single input, x_in is composed of (categorical, numerical)
-        #xs = [x for x in x_in if x.numel()]
-        #x = torch.cat(xs, dim=1)
-        x = {
-            "categorical": x_in[0],
-            "continuous": x_in[1]
-        }
-        return self.model.backbone(x)["logits"]
-
-    def training_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
-        return super().training_step(batch, batch_idx)
-
-    def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
-        return super().validation_step(batch, batch_idx)
-
-    def test_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
-        return super().test_step(batch, batch_idx)
-
-    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch = batch[DataKeys.INPUT]
-        return self(batch)
-
-    @classmethod
-    def from_data(cls, datamodule, **kwargs) -> "TabularClassifier":
-        model = cls(datamodule.num_features, datamodule.num_classes, datamodule.embedding_sizes, **kwargs)
-        return model
 
     @staticmethod
     def _ci_benchmark_fn(history: List[Dict[str, Any]]):
