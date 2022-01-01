@@ -295,6 +295,8 @@ class TabularData(DataModule):
         cat_dims, cat_emb_dim = zip(*self.embedding_sizes) if self.embedding_sizes else ([], [])
         cat_emb_dim = [(dim, dim) for dim in cat_emb_dim]
         return {"embedding_dims": cat_emb_dim,
+                "categorical_cols": self.cat_cols,
+                "categorical_cardinality": cat_dims,
                 "categorical_dim": len(cat_dims),
                 "continuous_dim": self.num_features - len(cat_dims),
                 "output_dim": self.num_classes,

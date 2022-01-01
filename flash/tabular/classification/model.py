@@ -127,15 +127,13 @@ class TabularClassifier(ClassificationTask):
             lr_scheduler=lr_scheduler,
         )
 
-        self.save_hyperparameters()
-
     def forward(self, x_in) -> torch.Tensor:
         # TabNet takes single input, x_in is composed of (categorical, numerical)
-        xs = [x for x in x_in if x.numel()]
-        x = torch.cat(xs, dim=1)
+        #xs = [x for x in x_in if x.numel()]
+        #x = torch.cat(xs, dim=1)
         x = {
-            "categorical": x.index_select(1, torch.tensor(self.hparams.properties["idx_cat"])),
-            "continuous": x.index_select(1, torch.tensor(self.hparams.properties["idx_num"]))
+            "categorical": x_in[0],
+            "continuous": x_in[1]
         }
         return self.model.backbone(x)["logits"]
 

@@ -32,7 +32,9 @@ if _TABULAR_AVAILABLE:
 
 
 @pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
-def test_classification(tmpdir):
+@pytest.mark.parametrize("backbone", ["tabnet", "tabtransformer", "fttransformer", "autoint",
+                                      "node", "category_embedding"])
+def test_classification(backbone, tmpdir):
 
     train_data_frame = TEST_DF_1.copy()
     val_data_frame = TEST_DF_1.copy()
@@ -47,6 +49,6 @@ def test_classification(tmpdir):
         num_workers=0,
         batch_size=2,
     )
-    model = TabularClassifier(properties=data.properties, backbone="tabnet")
+    model = TabularClassifier(properties=data.properties, backbone=backbone)
     trainer = pl.Trainer(fast_dev_run=True, default_root_dir=tmpdir)
     trainer.fit(model, data)
