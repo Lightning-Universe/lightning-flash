@@ -21,6 +21,8 @@ from torch.nn import functional as F
 
 from flash.core.classification import ClassificationTask, Probabilities
 from flash.core.data.io.input import DataKeys
+from flash.core.integrations.pytorch_tabular.backbones import PYTORCH_TABULAR_BACKBONES
+from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _TABULAR_AVAILABLE
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 
@@ -89,13 +91,12 @@ class TabularClassifier(ClassificationTask):
     """
 
     required_extras: str = "tabular"
+    backbones: FlashRegistry = FlashRegistry("backbones") + PYTORCH_TABULAR_BACKBONES
 
     def __init__(
         self,
-        num_features: int,
-        num_classes: int,
-        idx_cat: List[int],
-        idx_num: List[int],
+        properties,
+        backbone,
         embedding_sizes: List[Tuple[int, int]] = None,
         loss_fn: Callable = F.cross_entropy,
         optimizer: OPTIMIZER_TYPE = "Adam",
@@ -107,36 +108,23 @@ class TabularClassifier(ClassificationTask):
         **tabnet_kwargs,
     ):
         self.save_hyperparameters()
-        cat_dims, cat_emb_dim = zip(*embedding_sizes) if embedding_sizes else ([], [])
-        cat_emb_dim = [(dim, dim) for dim in cat_emb_dim]
-        model_config = TabNetModelConfig(task="classification", embedding_dims=cat_emb_dim)
-        config = dict()
-        config["categorical_dim"] = len(cat_dims)
-        config["continuous_dim"] = num_features - len(cat_dims)
-        config["output_dim"] = num_classes
-        config.update(tabnet_kwargs)
-        config = OmegaConf.merge(OmegaConf.create(config),
-                                 model_config,
-                                 OptimizerConfig(),)
-        model = TabNetModel(config=config)
-        # model = TabNet(
-        #     input_dim=num_features,
-        #     output_dim=num_classes,
-        #     cat_idxs=list(range(len(embedding_sizes))),
-        #     cat_dims=list(cat_dims),
-        #     cat_emb_dim=list(cat_emb_dim),
-        #     **tabnet_kwargs,
-        # )
+        properties.update(tabnet_kwargs)
+        metadata = self.backbones.get(backbone, with_metadata=True)
+        adapter = metadata["metadata"]["adapter"].from_task(
+            self,
+            task_type="classification",
+            parameters=properties,
+            backbone=backbone,
+            backbone_kwargs=tabnet_kwargs,
+            loss_fn=loss_fn,
+            metrics=metrics,
+        )
 
         super().__init__(
-            model=model,
-            loss_fn=loss_fn,
+            adapter,
+            learning_rate=learning_rate,
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
-            metrics=metrics,
-            learning_rate=learning_rate,
-            multi_label=multi_label,
-            output=output or Probabilities(),
         )
 
         self.save_hyperparameters()
@@ -146,10 +134,10 @@ class TabularClassifier(ClassificationTask):
         xs = [x for x in x_in if x.numel()]
         x = torch.cat(xs, dim=1)
         x = {
-            "categorical": x.index_select(1, torch.tensor(self.hparams.idx_cat)),
-            "continuous": x.index_select(1, torch.tensor(self.hparams.idx_num))
+            "categorical": x.index_select(1, torch.tensor(self.hparams.properties["idx_cat"])),
+            "continuous": x.index_select(1, torch.tensor(self.hparams.properties["idx_num"]))
         }
-        return self.model(x)["logits"]
+        return self.model.backbone(x)["logits"]
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])

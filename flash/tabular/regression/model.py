@@ -22,7 +22,7 @@ from flash.core.utilities.imports import _TABULAR_AVAILABLE
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 
 if _TABULAR_AVAILABLE:
-    from pytorch_tabnet.tab_network import TabNet
+    from pytorch_tabular.models.tabnet.tabnet_model import TabNetModel
 
 
 class TabularRegressor(RegressionTask):
@@ -62,14 +62,15 @@ class TabularRegressor(RegressionTask):
         self.save_hyperparameters()
 
         cat_dims, cat_emb_dim = zip(*embedding_sizes) if embedding_sizes else ([], [])
-        model = TabNet(
-            input_dim=num_features,
-            output_dim=1,
-            cat_idxs=list(range(len(embedding_sizes))),
-            cat_dims=list(cat_dims),
-            cat_emb_dim=list(cat_emb_dim),
-            **tabnet_kwargs,
-        )
+        # model = TabNetModel(
+        #     input_dim=num_features,
+        #     output_dim=1,
+        #     cat_idxs=list(range(len(embedding_sizes))),
+        #     cat_dims=list(cat_dims),
+        #     cat_emb_dim=list(cat_emb_dim),
+        #     **tabnet_kwargs,
+        # )
+        model = TabNetModel(**tabnet_kwargs)
 
         super().__init__(
             model=model,
@@ -91,7 +92,7 @@ class TabularRegressor(RegressionTask):
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
-        return super().training_step(batch, batch_idx)
+        return self.backbone.training_step(batch, batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])

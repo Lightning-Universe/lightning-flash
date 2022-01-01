@@ -59,7 +59,7 @@ class TabularDataFrameInput(Input[DataFrame]):
         self.cat_cols = cat_cols
         self.num_cols = num_cols
         self.idx_cat = []
-        self.idx_num= []
+        self.idx_num = []
         self.target_col = target_col
         self.mean = mean
         self.std = std
@@ -289,6 +289,18 @@ class TabularData(DataModule):
         num_classes = [len(self.codes[cat]) for cat in self.cat_cols]
         emb_dims = [max(int(n ** 0.25), 16) for n in num_classes]
         return list(zip(num_classes, emb_dims))
+
+    @property
+    def properties(self):
+        cat_dims, cat_emb_dim = zip(*self.embedding_sizes) if self.embedding_sizes else ([], [])
+        cat_emb_dim = [(dim, dim) for dim in cat_emb_dim]
+        return {"embedding_dims": cat_emb_dim,
+                "categorical_dim": len(cat_dims),
+                "continuous_dim": self.num_features - len(cat_dims),
+                "output_dim": self.num_classes,
+                "idx_cat": self.idx_cat,
+                "idx_num": self.idx_num
+                }
 
     @staticmethod
     def _sanetize_cols(cat_cols: Optional[Union[str, List[str]]], num_cols: Optional[Union[str, List[str]]]):
