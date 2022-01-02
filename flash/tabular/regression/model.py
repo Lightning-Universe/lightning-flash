@@ -17,13 +17,12 @@ from torch.nn import functional as F
 
 from flash.core.integrations.pytorch_tabular.backbones import PYTORCH_TABULAR_BACKBONES
 from flash.core.registry import FlashRegistry
-from flash.core.regression import RegressionTask
+from flash.core.regression import RegressionAdapterTask
 from flash.core.utilities.imports import _TABULAR_AVAILABLE
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
-from flash.tabular.model import TabularModel
 
 
-class TabularRegressor(TabularModel, RegressionTask):
+class TabularRegressor(RegressionAdapterTask):
     """The ``TabularRegressor`` is a :class:`~flash.Task` for classifying tabular data. For more details, see
     :ref:`tabular_classification`.
 
@@ -62,17 +61,24 @@ class TabularRegressor(TabularModel, RegressionTask):
         output: OUTPUT_TYPE = None,
         **tabnet_kwargs,
     ):
+        self.save_hyperparameters()
+        properties.update(tabnet_kwargs)
+        metadata = self.backbones.get(backbone, with_metadata=True)
+        adapter = metadata["metadata"]["adapter"].from_task(
+            self,
+            task_type="regression",
+            parameters=properties,
+            backbone=backbone,
+            backbone_kwargs=tabnet_kwargs,
+            loss_fn=loss_fn,
+            metrics=metrics,
+        )
         super().__init__(
-            "regression",
-            properties,
-            backbone,
-            embedding_sizes,
-            loss_fn,
-            optimizer,
-            lr_scheduler,
-            metrics,
-            learning_rate,
-            multi_label,
-            output,
-            **tabnet_kwargs
+            adapter,
+            loss_fn=loss_fn,
+            metrics=metrics,
+            learning_rate=learning_rate,
+            optimizer=optimizer,
+            lr_scheduler=lr_scheduler,
+            output=output,
         )

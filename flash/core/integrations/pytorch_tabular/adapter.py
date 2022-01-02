@@ -2,7 +2,7 @@ from typing import Dict, Any, Optional, Callable, Union, List
 
 import torchmetrics
 
-from flash import Task
+from flash import Task, DataKeys
 from flash.core.adapter import Adapter
 
 
@@ -29,7 +29,25 @@ class PytorchTabularAdapter(Adapter):
 
         adapter = cls(task.backbones.get(backbone)(task_type=task_type, parameters=parameters, **backbone_kwargs))
 
-        # Attach the required collate function
-        #adapter.set_state(CollateFn(partial(PyTorchForecastingAdapter._collate_fn, time_series_dataset._collate_fn)))
-
         return adapter
+
+    @staticmethod
+    def convert_batch(batch):
+        return {
+            "target": batch[DataKeys.TARGET].reshape(-1, 1),
+            "continuous": batch[DataKeys.INPUT][1],
+            "categorical": batch[DataKeys.INPUT][0],
+        }
+
+    def training_step(self, batch, batch_idx) -> Any:
+        return self.backbone.training_step(self.convert_batch(batch), batch_idx)
+
+    def validation_step(self, batch, batch_idx):
+        return self.backbone.validation_step(self.convert_batch(batch), batch_idx)
+
+    def test_step(self, batch, batch_idx):
+        return self.backbone.validation_step(self.convert_batch(batch), batch_idx)
+
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        batch[DataKeys.PREDS] = self(self.convert_batch(batch))
+        return batch

@@ -15,7 +15,7 @@ import pytest
 import pytorch_lightning as pl
 
 from flash.core.utilities.imports import _TABULAR_AVAILABLE
-from flash.tabular import TabularClassificationData, TabularRegressor, TabularRegressionData
+from flash.tabular import TabularRegressor, TabularRegressionData
 from tests.helpers.utils import _TABULAR_TESTING
 
 if _TABULAR_AVAILABLE:
@@ -32,7 +32,8 @@ if _TABULAR_AVAILABLE:
 
 
 @pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
-@pytest.mark.parametrize("backbone", ["tabnet"])
+@pytest.mark.parametrize("backbone", ["tabnet", "tabtransformer", "fttransformer", "autoint",
+                                      "node", "category_embedding"])
 def test_regression(backbone, tmpdir):
 
     train_data_frame = TEST_DF_1.copy()

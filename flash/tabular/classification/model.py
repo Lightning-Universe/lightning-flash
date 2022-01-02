@@ -15,14 +15,13 @@ from typing import Any, Callable, Dict, List, Tuple
 
 from torch.nn import functional as F
 
-from flash.core.classification import ClassificationTask
+from flash.core.classification import ClassificationAdapterTask, Labels
 from flash.core.integrations.pytorch_tabular.backbones import PYTORCH_TABULAR_BACKBONES
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
-from flash.tabular.model import TabularModel
 
 
-class TabularClassifier(TabularModel, ClassificationTask):
+class TabularClassifier(ClassificationAdapterTask):
     """The ``TabularClassifier`` is a :class:`~flash.Task` for classifying tabular data. For more details, see
     :ref:`tabular_classification`.
 
@@ -61,19 +60,28 @@ class TabularClassifier(TabularModel, ClassificationTask):
         output: OUTPUT_TYPE = None,
         **tabnet_kwargs,
     ):
+        self.save_hyperparameters()
+        properties.update(tabnet_kwargs)
+        metadata = self.backbones.get(backbone, with_metadata=True)
+        adapter = metadata["metadata"]["adapter"].from_task(
+            self,
+            task_type="classification",
+            parameters=properties,
+            backbone=backbone,
+            backbone_kwargs=tabnet_kwargs,
+            loss_fn=loss_fn,
+            metrics=metrics,
+        )
         super().__init__(
-            "classification",
-            properties,
-            backbone,
-            embedding_sizes,
-            loss_fn,
-            optimizer,
-            lr_scheduler,
-            metrics,
-            learning_rate,
-            multi_label,
-            output,
-            **tabnet_kwargs
+            adapter,
+            num_classes=properties["output_dim"],
+            loss_fn=loss_fn,
+            metrics=metrics,
+            learning_rate=learning_rate,
+            optimizer=optimizer,
+            lr_scheduler=lr_scheduler,
+            multi_label=multi_label,
+            output=output or Labels(multi_label=multi_label),
         )
 
     @staticmethod
