@@ -58,8 +58,6 @@ class TabularDataFrameInput(Input[DataFrame]):
 
         self.cat_cols = cat_cols
         self.num_cols = num_cols
-        self.idx_cat = []
-        self.idx_num = []
         self.target_col = target_col
         self.mean = mean
         self.std = std
@@ -77,8 +75,6 @@ class TabularDataFrameInput(Input[DataFrame]):
     ):
         # impute_data
         # compute train dataset stats
-        self.idx_cat = [df.columns.get_loc(c) for c in self.cat_cols]
-        self.idx_num = [df.columns.get_loc(c) for c in self.num_cols]
         dfs = _pre_transform(
             [df], self.num_cols, self.cat_cols, self.codes, self.mean, self.std, self.target_col, self.target_codes
         )
@@ -268,14 +264,6 @@ class TabularData(DataModule):
         return self._input.num_cols
 
     @property
-    def idx_cat(self) -> Optional[List[int]]:
-        return self._input.idx_cat
-
-    @property
-    def idx_num(self) -> Optional[List[int]]:
-        return self._input.idx_num
-
-    @property
     def num_features(self) -> int:
         return len(self.cat_cols) + len(self.num_cols)
 
@@ -299,9 +287,7 @@ class TabularData(DataModule):
                 "categorical_cardinality": cat_dims,
                 "categorical_dim": len(cat_dims),
                 "continuous_dim": self.num_features - len(cat_dims),
-                "output_dim": self.num_classes if not self.is_regression else 1,
-                "idx_cat": self.idx_cat,
-                "idx_num": self.idx_num
+                "output_dim": self.num_classes if not self.is_regression else 1
                 }
 
     @staticmethod

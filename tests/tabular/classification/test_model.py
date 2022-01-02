@@ -48,8 +48,20 @@ class DummyDataset(torch.utils.data.Dataset):
 
 
 @pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
-def test_init_train(tmpdir):
+@pytest.mark.parametrize("backbone", ["tabnet", "tabtransformer", "fttransformer", "autoint",
+                                      "node", "category_embedding"])
+def test_init_train(backbone, tmpdir):
     train_dl = torch.utils.data.DataLoader(DummyDataset(), batch_size=16)
+    data_properties = {"embedding_dims": cat_emb_dim,
+                "categorical_cols": self.cat_cols,
+                "categorical_cardinality": cat_dims,
+                "categorical_dim": 16,
+                "continuous_dim": 16,
+                "output_dim": self.num_classes if not self.is_regression else 1,
+                "idx_cat": list(range(0,15)),
+                "idx_num": self.idx_num
+                }
+    TabularClassifier(properties=data.properties, backbone=backbone)
     model = TabularClassifier(num_classes=10, num_features=16 + 16, embedding_sizes=16 * [(10, 32)])
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.fit(model, train_dl)
