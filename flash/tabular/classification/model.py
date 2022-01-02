@@ -50,7 +50,6 @@ class TabularClassifier(ClassificationAdapterTask):
         self,
         properties,
         backbone,
-        embedding_sizes: List[Tuple[int, int]] = None,
         loss_fn: Callable = F.cross_entropy,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
@@ -58,17 +57,17 @@ class TabularClassifier(ClassificationAdapterTask):
         learning_rate: float = 1e-2,
         multi_label: bool = False,
         output: OUTPUT_TYPE = None,
-        **tabnet_kwargs,
+        **backbone_kwargs,
     ):
         self.save_hyperparameters()
-        properties.update(tabnet_kwargs)
+        properties.update(backbone_kwargs)
         metadata = self.backbones.get(backbone, with_metadata=True)
         adapter = metadata["metadata"]["adapter"].from_task(
             self,
             task_type="classification",
             parameters=properties,
             backbone=backbone,
-            backbone_kwargs=tabnet_kwargs,
+            backbone_kwargs=backbone_kwargs,
             loss_fn=loss_fn,
             metrics=metrics,
         )
