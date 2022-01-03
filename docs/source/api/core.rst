@@ -26,14 +26,14 @@ _________________________
     :nosignatures:
     :template: classtemplate.rst
 
-    ~flash.core.classification.Classes
+    ~flash.core.classification.ClassesOutput
     ~flash.core.classification.ClassificationOutput
     ~flash.core.classification.ClassificationTask
-    ~flash.core.classification.FiftyOneLabels
-    ~flash.core.classification.Labels
-    ~flash.core.classification.Logits
+    ~flash.core.classification.FiftyOneLabelsOutput
+    ~flash.core.classification.LabelsOutput
+    ~flash.core.classification.LogitsOutput
     ~flash.core.classification.PredsClassificationOutput
-    ~flash.core.classification.Probabilities
+    ~flash.core.classification.ProbabilitiesOutput
 
 flash.core.finetuning
 _____________________
@@ -44,6 +44,8 @@ _____________________
     :template: classtemplate.rst
 
     ~flash.core.finetuning.FlashBaseFinetuning
+    ~flash.core.hooks.FineTuningHooks
+    ~flash.core.finetuning.Freeze
     ~flash.core.finetuning.FreezeUnfreeze
     ~flash.core.finetuning.NoFreeze
     ~flash.core.finetuning.UnfreezeMilestones
@@ -63,8 +65,14 @@ _________________________________
 .. autosummary::
     :toctree: generated/
     :nosignatures:
+    :template: classtemplate.rst
 
     ~flash.core.integrations.icevision.transforms.IceVisionTransformAdapter
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
     ~flash.core.integrations.icevision.transforms.default_transforms
     ~flash.core.integrations.icevision.transforms.train_default_transforms
 
@@ -125,4 +133,3 @@ _________
     ~flash.core.trainer.from_argparse_args
     ~flash.core.utilities.apply_func.get_callable_name
     ~flash.core.utilities.apply_func.get_callable_dict
-    ~flash.core.model.predict_context

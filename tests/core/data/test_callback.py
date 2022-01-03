@@ -16,8 +16,9 @@ from unittest.mock import ANY, call, MagicMock
 
 import torch
 
-from flash.core.data.data_module import DataModule
-from flash.core.data.io.input_transform import DefaultInputTransform
+from flash import DataKeys
+from flash.core.data.data_module import DataModule, DatasetInput
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.model import Task
 from flash.core.trainer import Trainer
 from flash.core.utilities.stages import RunningStage
@@ -30,19 +31,21 @@ def test_flash_callback(_, __, tmpdir):
 
     callback_mock = MagicMock()
 
-    inputs = [[torch.rand(1), torch.rand(1)]]
-    dm = DataModule.from_input(
-        "default", inputs, inputs, inputs, None, input_transform=DefaultInputTransform(), batch_size=1, num_workers=0
+    inputs = [(torch.rand(1), torch.rand(1))]
+    dm = DataModule(
+        DatasetInput(RunningStage.TRAINING, inputs, transform=InputTransform),
+        DatasetInput(RunningStage.VALIDATING, inputs, transform=InputTransform),
+        DatasetInput(RunningStage.TESTING, inputs, transform=InputTransform),
+        batch_size=1,
+        num_workers=0,
+        data_fetcher=callback_mock,
     )
-    dm.input_transform.callbacks += [callback_mock]
 
     _ = next(iter(dm.train_dataloader()))
 
     assert callback_mock.method_calls == [
         call.on_load_sample(ANY, RunningStage.TRAINING),
-        call.on_pre_tensor_transform(ANY, RunningStage.TRAINING),
-        call.on_to_tensor_transform(ANY, RunningStage.TRAINING),
-        call.on_post_tensor_transform(ANY, RunningStage.TRAINING),
+        call.on_per_sample_transform(ANY, RunningStage.TRAINING),
         call.on_collate(ANY, RunningStage.TRAINING),
         call.on_per_batch_transform(ANY, RunningStage.TRAINING),
     ]
@@ -51,6 +54,9 @@ def test_flash_callback(_, __, tmpdir):
         def __init__(self):
             super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
 
+        def step(self, batch, batch_idx, metrics):
+            return super().step((batch[DataKeys.INPUT], batch[DataKeys.TARGET]), batch_idx, metrics)
+
     trainer = Trainer(
         default_root_dir=tmpdir,
         max_epochs=1,
@@ -58,37 +64,33 @@ def test_flash_callback(_, __, tmpdir):
         limit_train_batches=1,
         progress_bar_refresh_rate=0,
     )
-    dm = DataModule.from_input(
-        "default", inputs, inputs, inputs, None, input_transform=DefaultInputTransform(), batch_size=1, num_workers=0
+    dm = DataModule(
+        DatasetInput(RunningStage.TRAINING, inputs, transform=InputTransform),
+        DatasetInput(RunningStage.VALIDATING, inputs, transform=InputTransform),
+        DatasetInput(RunningStage.TESTING, inputs, transform=InputTransform),
+        batch_size=1,
+        num_workers=0,
+        data_fetcher=callback_mock,
     )
-    dm.input_transform.callbacks += [callback_mock]
     trainer.fit(CustomModel(), datamodule=dm)
 
     assert callback_mock.method_calls == [
         call.on_load_sample(ANY, RunningStage.TRAINING),
-        call.on_pre_tensor_transform(ANY, RunningStage.TRAINING),
-        call.on_to_tensor_transform(ANY, RunningStage.TRAINING),
-        call.on_post_tensor_transform(ANY, RunningStage.TRAINING),
+        call.on_per_sample_transform(ANY, RunningStage.TRAINING),
         call.on_collate(ANY, RunningStage.TRAINING),
         call.on_per_batch_transform(ANY, RunningStage.TRAINING),
         call.on_load_sample(ANY, RunningStage.VALIDATING),
-        call.on_pre_tensor_transform(ANY, RunningStage.VALIDATING),
-        call.on_to_tensor_transform(ANY, RunningStage.VALIDATING),
-        call.on_post_tensor_transform(ANY, RunningStage.VALIDATING),
+        call.on_per_sample_transform(ANY, RunningStage.VALIDATING),
         call.on_collate(ANY, RunningStage.VALIDATING),
         call.on_per_batch_transform(ANY, RunningStage.VALIDATING),
         call.on_per_batch_transform_on_device(ANY, RunningStage.VALIDATING),
         call.on_load_sample(ANY, RunningStage.TRAINING),
-        call.on_pre_tensor_transform(ANY, RunningStage.TRAINING),
-        call.on_to_tensor_transform(ANY, RunningStage.TRAINING),
-        call.on_post_tensor_transform(ANY, RunningStage.TRAINING),
+        call.on_per_sample_transform(ANY, RunningStage.TRAINING),
         call.on_collate(ANY, RunningStage.TRAINING),
         call.on_per_batch_transform(ANY, RunningStage.TRAINING),
         call.on_per_batch_transform_on_device(ANY, RunningStage.TRAINING),
         call.on_load_sample(ANY, RunningStage.VALIDATING),
-        call.on_pre_tensor_transform(ANY, RunningStage.VALIDATING),
-        call.on_to_tensor_transform(ANY, RunningStage.VALIDATING),
-        call.on_post_tensor_transform(ANY, RunningStage.VALIDATING),
+        call.on_per_sample_transform(ANY, RunningStage.VALIDATING),
         call.on_collate(ANY, RunningStage.VALIDATING),
         call.on_per_batch_transform(ANY, RunningStage.VALIDATING),
         call.on_per_batch_transform_on_device(ANY, RunningStage.VALIDATING),

@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 from flash.core.data.utils import download_data
 from flash.core.utilities.flash_cli import FlashCLI
 from flash.text import QuestionAnsweringData, QuestionAnsweringTask
@@ -20,10 +19,8 @@ __all__ = ["question_answering"]
 
 
 def from_squad(
-    backbone: str = "distilbert-base-uncased",
     batch_size: int = 4,
-    num_workers: int = 0,
-    **input_transform_kwargs,
+    **data_module_kwargs,
 ) -> QuestionAnsweringData:
     """Downloads and loads a tiny subset of the squad V2 data set."""
     download_data("https://pl-flash-data.s3.amazonaws.com/squad_tiny.zip", "./data/")
@@ -31,10 +28,8 @@ def from_squad(
     return QuestionAnsweringData.from_squad_v2(
         train_file="./data/squad_tiny/train.json",
         val_file="./data/squad_tiny/val.json",
-        backbone=backbone,
         batch_size=batch_size,
-        num_workers=num_workers,
-        **input_transform_kwargs,
+        **data_module_kwargs,
     )
 
 

@@ -17,8 +17,7 @@ from unittest import mock
 
 import pytest
 
-import flash
-from flash.core.utilities.imports import _LEARN2LEARN_AVAILABLE, _SKLEARN_AVAILABLE
+from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE, _SKLEARN_AVAILABLE
 from tests.examples.utils import run_test
 from tests.helpers.utils import (
     _AUDIO_TESTING,
@@ -29,6 +28,8 @@ from tests.helpers.utils import (
     _TEXT_TESTING,
     _VIDEO_TESTING,
 )
+
+root = Path(__file__).parent.parent.parent
 
 
 @mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
@@ -52,9 +53,21 @@ from tests.helpers.utils import (
             marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed"),
         ),
         pytest.param(
-            "image_classification_meta_learning.py.py",
+            "object_detection.py",
             marks=pytest.mark.skipif(
-                not (_IMAGE_TESTING and _LEARN2LEARN_AVAILABLE), reason="image/learn2learn libraries aren't installed"
+                not (_IMAGE_AVAILABLE and _ICEVISION_AVAILABLE), reason="image libraries aren't installed"
+            ),
+        ),
+        pytest.param(
+            "instance_segmentation.py",
+            marks=pytest.mark.skipif(
+                not (_IMAGE_AVAILABLE and _ICEVISION_AVAILABLE), reason="image libraries aren't installed"
+            ),
+        ),
+        pytest.param(
+            "keypoint_detection.py",
+            marks=pytest.mark.skipif(
+                not (_IMAGE_AVAILABLE and _ICEVISION_AVAILABLE), reason="image libraries aren't installed"
             ),
         ),
         # pytest.param("finetuning", "object_detection.py"),  # TODO: takes too long.
@@ -83,6 +96,10 @@ from tests.helpers.utils import (
         pytest.param("template.py", marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")),
         pytest.param(
             "text_classification.py",
+            marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed"),
+        ),
+        pytest.param(
+            "text_embedder.py",
             marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed"),
         ),
         # pytest.param(
@@ -115,18 +132,4 @@ from tests.helpers.utils import (
     ],
 )
 def test_example(tmpdir, file):
-    run_test(str(Path(flash.PROJECT_ROOT) / "flash_examples" / file))
-
-
-@mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
-@pytest.mark.parametrize(
-    "file",
-    [
-        pytest.param(
-            "pointcloud_detection.py",
-            marks=pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed"),
-        ),
-    ],
-)
-def test_example_2(tmpdir, file):
-    run_test(str(Path(flash.PROJECT_ROOT) / "flash_examples" / file))
+    run_test(str(root / "flash_examples" / file))

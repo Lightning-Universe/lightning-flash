@@ -20,9 +20,8 @@ ____________
     ~segmentation.model.PointCloudSegmentation
     ~segmentation.data.PointCloudSegmentationData
 
-    segmentation.data.PointCloudSegmentationInputTransform
-    segmentation.data.PointCloudSegmentationFoldersInput
-    segmentation.data.PointCloudSegmentationDatasetInput
+    segmentation.input.PointCloudSegmentationFoldersInput
+    segmentation.input.PointCloudSegmentationDatasetInput
 
 Object Detection
 ________________
@@ -35,6 +34,5 @@ ________________
     ~detection.model.PointCloudObjectDetector
     ~detection.data.PointCloudObjectDetectorData
 
-    detection.data.PointCloudObjectDetectorInputTransform
-    detection.data.PointCloudObjectDetectorFoldersInput
-    detection.data.PointCloudObjectDetectorDatasetInput
+    detection.input.PointCloudObjectDetectorDatasetInput
+    detection.open3d_ml.input.PointCloudObjectDetectorFoldersInput

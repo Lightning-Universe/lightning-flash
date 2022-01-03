@@ -11,130 +11,117 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import functools
-import pathlib
-from typing import Any, Callable, Dict, Optional, Sequence, Union
+from typing import Any, Collection, Dict, Optional, Sequence, Type
 
-from torch import nn
+import numpy as np
+import torch
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import DataKeys, InputFormat
-from flash.core.data.io.input_transform import InputTransform
-from flash.core.data.transforms import ApplyToKeys
-from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
-from flash.image.classification import ImageClassificationData
-from flash.image.data import ImageNumpyInput, ImagePathsInput, ImageTensorInput
-from flash.image.style_transfer.utils import raise_not_supported
-
-if _TORCHVISION_AVAILABLE:
-    from torchvision import transforms as T
+from flash.core.data.data_pipeline import DataPipelineState
+from flash.core.data.io.input import Input
+from flash.core.utilities.stages import RunningStage
+from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
+from flash.image.classification.input import ImageClassificationFilesInput, ImageClassificationFolderInput
+from flash.image.data import ImageNumpyInput, ImageTensorInput
+from flash.image.style_transfer.input_transform import StyleTransferInputTransform
 
 __all__ = ["StyleTransferInputTransform", "StyleTransferData"]
 
 
-def _apply_to_input(
-    default_transforms_fn, keys: Union[Sequence[DataKeys], DataKeys]
-) -> Callable[..., Dict[str, ApplyToKeys]]:
-    @functools.wraps(default_transforms_fn)
-    def wrapper(*args: Any, **kwargs: Any) -> Optional[Dict[str, ApplyToKeys]]:
-        default_transforms = default_transforms_fn(*args, **kwargs)
-        if not default_transforms:
-            return default_transforms
-
-        return {hook: ApplyToKeys(keys, transform) for hook, transform in default_transforms.items()}
-
-    return wrapper
-
-
-class StyleTransferInputTransform(InputTransform):
-    def __init__(
-        self,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-        image_size: int = 256,
-    ):
-        if val_transform:
-            raise_not_supported("validation")
-        if test_transform:
-            raise_not_supported("test")
-
-        if isinstance(image_size, int):
-            image_size = (image_size, image_size)
-
-        self.image_size = image_size
-
-        super().__init__(
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
-            inputs={
-                InputFormat.FILES: ImagePathsInput(),
-                InputFormat.FOLDERS: ImagePathsInput(),
-                InputFormat.NUMPY: ImageNumpyInput(),
-                InputFormat.TENSORS: ImageTensorInput(),
-                InputFormat.TENSORS: ImageTensorInput(),
-            },
-            default_input=InputFormat.FILES,
-        )
-
-    def get_state_dict(self) -> Dict[str, Any]:
-        return {**self.transforms, "image_size": self.image_size}
+class StyleTransferData(DataModule):
+    input_transform_cls = StyleTransferInputTransform
 
     @classmethod
-    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
-        return cls(**state_dict)
+    def from_files(
+        cls,
+        train_files: Optional[Sequence[str]] = None,
+        predict_files: Optional[Sequence[str]] = None,
+        train_transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
+        input_cls: Type[Input] = ImageClassificationFilesInput,
+        transform_kwargs: Optional[Dict] = None,
+        **data_module_kwargs: Any
+    ) -> "StyleTransferData":
 
-    @functools.partial(_apply_to_input, keys=DataKeys.INPUT)
-    def default_transforms(self) -> Optional[Dict[str, Callable]]:
-        if self.training:
-            return dict(
-                to_tensor_transform=T.ToTensor(),
-                per_sample_transform_on_device=nn.Sequential(
-                    T.Resize(self.image_size),
-                    T.CenterCrop(self.image_size),
-                ),
-            )
-        if self.predicting:
-            return dict(
-                pre_tensor_transform=T.Resize(self.image_size),
-                to_tensor_transform=T.ToTensor(),
-            )
-        # Style transfer doesn't support a validation or test phase, so we return nothing here
-        return None
+        ds_kw = dict(
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
+        )
 
-
-class StyleTransferData(ImageClassificationData):
-    input_transform_cls = StyleTransferInputTransform
+        return cls(
+            input_cls(RunningStage.TRAINING, train_files, transform=train_transform, **ds_kw),
+            predict_input=input_cls(RunningStage.PREDICTING, predict_files, transform=predict_transform, **ds_kw),
+            **data_module_kwargs,
+        )
 
     @classmethod
     def from_folders(
         cls,
-        train_folder: Optional[Union[str, pathlib.Path]] = None,
-        predict_folder: Optional[Union[str, pathlib.Path]] = None,
-        train_transform: Optional[Union[str, Dict]] = None,
-        predict_transform: Optional[Union[str, Dict]] = None,
-        input_transform: Optional[InputTransform] = None,
-        **kwargs: Any,
-    ) -> "DataModule":
+        train_folder: Optional[str] = None,
+        predict_folder: Optional[str] = None,
+        train_transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
+        input_cls: Type[Input] = ImageClassificationFolderInput,
+        transform_kwargs: Optional[Dict] = None,
+        **data_module_kwargs: Any
+    ) -> "StyleTransferData":
 
-        if any(param in kwargs and kwargs[param] is not None for param in ("val_folder", "val_transform")):
-            raise_not_supported("validation")
-
-        if any(param in kwargs and kwargs[param] is not None for param in ("test_folder", "test_transform")):
-            raise_not_supported("test")
-
-        input_transform = input_transform or cls.input_transform_cls(
-            train_transform=train_transform,
-            predict_transform=predict_transform,
+        ds_kw = dict(
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
         )
 
-        return cls.from_input(
-            InputFormat.FOLDERS,
-            train_data=train_folder,
-            predict_data=predict_folder,
-            input_transform=input_transform,
-            **kwargs,
+        return cls(
+            input_cls(RunningStage.TRAINING, train_folder, transform=train_transform, **ds_kw),
+            predict_input=input_cls(RunningStage.PREDICTING, predict_folder, transform=predict_transform, **ds_kw),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_numpy(
+        cls,
+        train_data: Optional[Collection[np.ndarray]] = None,
+        predict_data: Optional[Collection[np.ndarray]] = None,
+        train_transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
+        input_cls: Type[Input] = ImageNumpyInput,
+        transform_kwargs: Optional[Dict] = None,
+        **data_module_kwargs: Any
+    ) -> "StyleTransferData":
+
+        ds_kw = dict(
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
+        )
+
+        return cls(
+            input_cls(RunningStage.TRAINING, train_data, transform=train_transform, **ds_kw),
+            predict_input=input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_tensors(
+        cls,
+        train_data: Optional[Collection[torch.Tensor]] = None,
+        predict_data: Optional[Collection[torch.Tensor]] = None,
+        train_transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
+        input_cls: Type[Input] = ImageTensorInput,
+        transform_kwargs: Optional[Dict] = None,
+        **data_module_kwargs: Any
+    ) -> "StyleTransferData":
+        ds_kw = dict(
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
+        )
+
+        return cls(
+            input_cls(RunningStage.TRAINING, train_data, transform=train_transform, **ds_kw),
+            predict_input=input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
+            **data_module_kwargs,
         )

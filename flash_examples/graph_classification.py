@@ -27,6 +27,7 @@ dataset = TUDataset(root="data", name="KKI")
 datamodule = GraphClassificationData.from_datasets(
     train_dataset=dataset,
     val_split=0.1,
+    batch_size=4,
 )
 # 2. Build the task
 backbone_kwargs = {"hidden_channels": 512, "num_layers": 4}
@@ -39,7 +40,11 @@ trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
 trainer.fit(model, datamodule=datamodule)
 
 # 4. Classify some graphs!
-predictions = model.predict(dataset[:3])
+datamodule = GraphClassificationData.from_datasets(
+    predict_dataset=dataset[:3],
+    batch_size=4,
+)
+predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
 
 # 5. Save the model!

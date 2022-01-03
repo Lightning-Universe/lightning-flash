@@ -11,13 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Mapping, Optional, Sequence, Tuple
+from typing import Any, Callable, Optional, Sequence
 
 import torch
 from torch import Tensor
 
 from flash.core.data.batch import default_uncollate
-from flash.core.data.io.input import DataKeys
 from flash.core.data.properties import Properties
 from flash.core.data.utils import convert_to_modules
 
@@ -77,19 +76,11 @@ class _OutputTransformProcessor(torch.nn.Module):
         self.output = convert_to_modules(output)
         self.is_serving = is_serving
 
-    @staticmethod
-    def _extract_metadata(batch: Any) -> Tuple[Any, Optional[Any]]:
-        metadata = None
-        if isinstance(batch, Mapping) and DataKeys.METADATA in batch:
-            metadata = batch.pop(DataKeys.METADATA, None)
-        return batch, metadata
-
     def forward(self, batch: Sequence[Any]):
-        batch, metadata = self._extract_metadata(batch)
+        if batch is None:
+            return batch
+
         uncollated = self.uncollate_fn(self.per_batch_transform(batch))
-        if metadata:
-            for sample, sample_metadata in zip(uncollated, metadata):
-                sample[DataKeys.METADATA] = sample_metadata
 
         final_preds = [self.per_sample_transform(sample) for sample in uncollated]
 

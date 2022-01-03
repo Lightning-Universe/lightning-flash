@@ -18,9 +18,12 @@ from torch.utils.data import DataLoader, Sampler
 
 import flash
 from flash.core.adapter import Adapter
-from flash.core.data.auto_dataset import BaseAutoDataset
-from flash.core.data.io.input import DataKeys
-from flash.core.integrations.icevision.transforms import from_icevision_predictions, to_icevision_record
+from flash.core.data.io.input import DataKeys, InputBase
+from flash.core.integrations.icevision.transforms import (
+    from_icevision_predictions,
+    from_icevision_record,
+    to_icevision_record,
+)
 from flash.core.model import Task
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
 from flash.core.utilities.url_error import catch_url_error
@@ -46,13 +49,14 @@ class IceVisionAdapter(Adapter):
 
     required_extras: str = "image"
 
-    def __init__(self, model_type, model, icevision_adapter, backbone):
+    def __init__(self, model_type, model, icevision_adapter, backbone, predict_kwargs):
         super().__init__()
 
         self.model_type = model_type
         self.model = model
         self.icevision_adapter = icevision_adapter
         self.backbone = backbone
+        self.predict_kwargs = predict_kwargs
 
     @classmethod
     @catch_url_error
@@ -62,6 +66,7 @@ class IceVisionAdapter(Adapter):
         num_classes: int,
         backbone: str,
         head: str,
+        predict_kwargs: Dict,
         pretrained: bool = True,
         metrics: Optional["IceVisionMetric"] = None,
         image_size: Optional = None,
@@ -77,7 +82,7 @@ class IceVisionAdapter(Adapter):
             **kwargs,
         )
         icevision_adapter = icevision_adapter(model=model, metrics=metrics)
-        return cls(model_type, model, icevision_adapter, backbone)
+        return cls(model_type, model, icevision_adapter, backbone, predict_kwargs)
 
     @staticmethod
     def _collate_fn(collate_fn, samples, metadata: Optional[List[Dict[str, Any]]] = None):
@@ -91,7 +96,7 @@ class IceVisionAdapter(Adapter):
 
     def process_train_dataset(
         self,
-        dataset: BaseAutoDataset,
+        dataset: InputBase,
         trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
@@ -115,7 +120,7 @@ class IceVisionAdapter(Adapter):
 
     def process_val_dataset(
         self,
-        dataset: BaseAutoDataset,
+        dataset: InputBase,
         trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
@@ -139,7 +144,7 @@ class IceVisionAdapter(Adapter):
 
     def process_test_dataset(
         self,
-        dataset: BaseAutoDataset,
+        dataset: InputBase,
         trainer: "flash.Trainer",
         batch_size: int,
         num_workers: int,
@@ -163,7 +168,7 @@ class IceVisionAdapter(Adapter):
 
     def process_predict_dataset(
         self,
-        dataset: BaseAutoDataset,
+        dataset: InputBase,
         batch_size: int = 1,
         num_workers: int = 0,
         pin_memory: bool = False,
@@ -194,11 +199,17 @@ class IceVisionAdapter(Adapter):
         return self.icevision_adapter.validation_step(batch[DataKeys.INPUT], batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch[DataKeys.PREDS] = self(batch[DataKeys.INPUT])
-        return batch
+        records = batch[DataKeys.INPUT][1]
+        return {
+            DataKeys.INPUT: [from_icevision_record(record) for record in records],
+            DataKeys.PREDS: self(batch[DataKeys.INPUT]),
+            DataKeys.METADATA: batch[DataKeys.METADATA],
+        }
 
     def forward(self, batch: Any) -> Any:
-        return from_icevision_predictions(self.model_type.predict_from_dl(self.model, [batch], show_pbar=False))
+        return from_icevision_predictions(
+            self.model_type.predict_from_dl(self.model, [batch], show_pbar=False, **self.predict_kwargs)
+        )
 
     def training_epoch_end(self, outputs) -> None:
         return self.icevision_adapter.training_epoch_end(outputs)

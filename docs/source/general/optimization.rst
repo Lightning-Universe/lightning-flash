@@ -149,7 +149,7 @@ Below is an example for this:
     )
 
 
-.. note:: Do not set the ``"scheduler"`` key in the Lightning Scheduler configuration, it will overriden with an instance of the provided scheduler key.
+.. note:: Do not set the ``"scheduler"`` key in the Lightning Scheduler configuration, it will overridden with an instance of the provided scheduler key.
 
 
 Pre-Registering optimizers and scheduler recipes

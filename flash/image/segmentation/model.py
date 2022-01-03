@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Type, Union
 
 import torch
 from torch import nn
@@ -19,12 +19,14 @@ from torch.nn import functional as F
 from torchmetrics import IoU
 
 from flash.core.classification import ClassificationTask
-from flash.core.data.io.input import DataKeys
+from flash.core.data.io.input import DataKeys, ServeInput
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _KORNIA_AVAILABLE
+from flash.core.serve import Composition
+from flash.core.utilities.imports import _KORNIA_AVAILABLE, requires
 from flash.core.utilities.isinstance import _isinstance
 from flash.core.utilities.types import (
+    INPUT_TRANSFORM_TYPE,
     LOSS_FN_TYPE,
     LR_SCHEDULER_TYPE,
     METRICS_TYPE,
@@ -34,7 +36,9 @@ from flash.core.utilities.types import (
 )
 from flash.image.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 from flash.image.segmentation.heads import SEMANTIC_SEGMENTATION_HEADS
-from flash.image.segmentation.output import SegmentationLabels
+from flash.image.segmentation.input import SemanticSegmentationDeserializer
+from flash.image.segmentation.output import SegmentationLabelsOutput
+from flash.image.segmentation.transforms import SemanticSegmentationInputTransform
 
 if _KORNIA_AVAILABLE:
     import kornia as K
@@ -42,7 +46,7 @@ if _KORNIA_AVAILABLE:
 
 class SemanticSegmentationOutputTransform(OutputTransform):
     def per_sample_transform(self, sample: Any) -> Any:
-        resize = K.geometry.Resize(sample[DataKeys.METADATA]["size"][-2:], interpolation="bilinear")
+        resize = K.geometry.Resize(sample[DataKeys.METADATA]["size"], interpolation="bilinear")
         sample[DataKeys.PREDS] = resize(sample[DataKeys.PREDS])
         sample[DataKeys.INPUT] = resize(sample[DataKeys.INPUT])
         return super().per_sample_transform(sample)
@@ -114,7 +118,7 @@ class SemanticSegmentation(ClassificationTask):
             lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
-            output=output or SegmentationLabels(),
+            output=output or SegmentationLabelsOutput(),
             output_transform=output_transform or self.output_transform_cls(),
         )
 
@@ -173,6 +177,18 @@ class SemanticSegmentation(ClassificationTask):
             pretrained_weights = list(result["metadata"]["weights_paths"])
 
         return pretrained_weights
+
+    @requires("serve")
+    def serve(
+        self,
+        host: str = "127.0.0.1",
+        port: int = 8000,
+        sanity_check: bool = True,
+        input_cls: Optional[Type[ServeInput]] = SemanticSegmentationDeserializer,
+        transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
+        transform_kwargs: Optional[Dict] = None,
+    ) -> Composition:
+        return super().serve(host, port, sanity_check, input_cls, transform, transform_kwargs)
 
     @staticmethod
     def _ci_benchmark_fn(history: List[Dict[str, Any]]):

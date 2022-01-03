@@ -19,23 +19,24 @@
 import collections
 import os
 import warnings
-from typing import Any, Callable, List, Mapping, Optional, Sequence, Union
+from typing import Any, Callable, Iterable, List, Mapping, Optional, Sequence, Union
 
 import numpy as np
 import torch
 from pytorch_lightning import Callback
 from pytorch_lightning.utilities import rank_zero_info
 from torch import Tensor
+from torch.nn import Module
 
 from flash.core.data.io.input import DataKeys
-from flash.core.finetuning import FlashBaseFinetuning
+from flash.core.integrations.transformers.states import TransformersBackboneState
 from flash.core.model import Task
 from flash.core.registry import ExternalRegistry, FlashRegistry
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.core.utilities.providers import _HUGGINGFACE
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.text.ort_callback import ORTCallback
-from flash.text.question_answering.finetuning import QuestionAnsweringFreezeEmbeddings
+from flash.text.question_answering.finetuning import _get_question_answering_bacbones_for_freezing
 from flash.text.seq2seq.core.metrics import RougeMetric
 
 if _TEXT_AVAILABLE:
@@ -116,6 +117,7 @@ class QuestionAnsweringTask(Task):
             metrics=metrics,
             learning_rate=learning_rate,
         )
+        self.set_state(TransformersBackboneState(backbone))
         self.model = self.backbones.get(backbone)()
         self.enable_ort = enable_ort
         self.n_best_size = n_best_size
@@ -296,8 +298,9 @@ class QuestionAnsweringTask(Task):
             rank_zero_info(f"Overriding model paramameters for {self.task} as defined within the model:\n {pars}")
             self.model.config.update(pars)
 
-    def configure_finetune_callback(self) -> List[FlashBaseFinetuning]:
-        return [QuestionAnsweringFreezeEmbeddings(self.model.config.model_type, train_bn=True)]
+    def modules_to_freeze(self) -> Union[Module, Iterable[Union[Module, Iterable]]]:
+        """Return the module attributes of the model to be frozen."""
+        return _get_question_answering_bacbones_for_freezing(self.model)
 
     def configure_callbacks(self) -> List[Callback]:
         callbacks = super().configure_callbacks() or []

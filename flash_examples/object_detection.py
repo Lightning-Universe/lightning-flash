@@ -23,7 +23,8 @@ datamodule = ObjectDetectionData.from_coco(
     train_folder="data/coco128/images/train2017/",
     train_ann_file="data/coco128/annotations/instances_train2017.json",
     val_split=0.1,
-    image_size=128,
+    transform_kwargs={"image_size": 128},
+    batch_size=4,
 )
 
 # 2. Build the task
@@ -34,13 +35,16 @@ trainer = flash.Trainer(max_epochs=1)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Detect objects in a few images!
-predictions = model.predict(
-    [
+datamodule = ObjectDetectionData.from_files(
+    predict_files=[
         "data/coco128/images/train2017/000000000625.jpg",
         "data/coco128/images/train2017/000000000626.jpg",
         "data/coco128/images/train2017/000000000629.jpg",
-    ]
+    ],
+    transform_kwargs={"image_size": 128},
+    batch_size=4,
 )
+predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
 
 # 5. Save the model!

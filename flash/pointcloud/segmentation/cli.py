@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 from flash.core.data.utils import download_data
 from flash.core.utilities.flash_cli import FlashCLI
 from flash.pointcloud import PointCloudSegmentation, PointCloudSegmentationData
@@ -21,8 +20,7 @@ __all__ = ["pointcloud_segmentation"]
 
 def from_kitti(
     batch_size: int = 4,
-    num_workers: int = 0,
-    **input_transform_kwargs,
+    **data_module_kwargs,
 ) -> PointCloudSegmentationData:
     """Downloads and loads the semantic KITTI data set."""
     download_data("https://pl-flash-data.s3.amazonaws.com/SemanticKittiTiny.zip", "data/")
@@ -30,8 +28,7 @@ def from_kitti(
         train_folder="data/SemanticKittiTiny/train",
         val_folder="data/SemanticKittiTiny/val",
         batch_size=batch_size,
-        num_workers=num_workers,
-        **input_transform_kwargs,
+        **data_module_kwargs,
     )
 
 

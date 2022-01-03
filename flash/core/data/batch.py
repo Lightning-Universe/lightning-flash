@@ -11,76 +11,64 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Sequence, TYPE_CHECKING
+from typing import Any, List, TYPE_CHECKING
 
 import torch
-from torch import Tensor
 
-from flash.core.data.callback import ControlFlow
-from flash.core.data.utils import convert_to_modules, CurrentFuncContext, CurrentRunningStageContext
-from flash.core.utilities.stages import RunningStage
+from flash.core.data.utilities.classification import _is_list_like
 
 if TYPE_CHECKING:
-    from flash.core.data.io.input_transform import InputTransform
-    from flash.core.data.process import Deserializer
+    from flash.core.data.io.input import ServeInput
 
 
-class _DeserializeProcessor(torch.nn.Module):
+class _ServeInputProcessor(torch.nn.Module):
     def __init__(
         self,
-        deserializer: "Deserializer",
-        input_transform: "InputTransform",
-        pre_tensor_transform: Callable,
-        to_tensor_transform: Callable,
+        serve_input: "ServeInput",
     ):
         super().__init__()
-        self.input_transform = input_transform
-        self.callback = ControlFlow(self.input_transform.callbacks)
-        self.deserializer = convert_to_modules(deserializer)
-        self.pre_tensor_transform = convert_to_modules(pre_tensor_transform)
-        self.to_tensor_transform = convert_to_modules(to_tensor_transform)
-
-        self._current_stage_context = CurrentRunningStageContext(RunningStage.PREDICTING, input_transform, reset=False)
-        self._pre_tensor_transform_context = CurrentFuncContext("pre_tensor_transform", input_transform)
-        self._to_tensor_transform_context = CurrentFuncContext("to_tensor_transform", input_transform)
+        self.serve_input = serve_input
+        self.dataloader_collate_fn = self.serve_input._create_dataloader_collate_fn([])
 
     def forward(self, sample: str):
-
-        sample = self.deserializer(sample)
-
-        with self._current_stage_context:
-            with self._pre_tensor_transform_context:
-                sample = self.pre_tensor_transform(sample)
-                self.callback.on_pre_tensor_transform(sample, RunningStage.PREDICTING)
-
-            with self._to_tensor_transform_context:
-                sample = self.to_tensor_transform(sample)
-                self.callback.on_to_tensor_transform(sample, RunningStage.PREDICTING)
-
+        sample = self.serve_input._call_load_sample(sample)
+        sample = self.dataloader_collate_fn(sample)
         return sample
 
 
-def default_uncollate(batch: Any):
-    """
-    This function is used to uncollate a batch into samples.
-    Examples:
-        >>> a, b = default_uncollate(torch.rand((2,1)))
-    """
+def _is_list_like_excluding_str(x):
+    return _is_list_like(x) and str(x) != x
 
-    batch_type = type(batch)
 
-    if isinstance(batch, Tensor):
-        if len(batch.shape) == 0:  # 0 shape tensors
-            return batch
-        return list(torch.unbind(batch, 0))
+def default_uncollate(batch: Any) -> List[Any]:
+    """This function is used to uncollate a batch into samples. The following conditions are used:
+
+    - if the ``batch`` is a ``dict``, the result will be a list of dicts
+    - if the ``batch`` is list-like, the result is guaranteed to be a list
+
+    Args:
+        batch: The batch of outputs to be uncollated.
+
+    Returns:
+        The uncollated list of predictions.
+
+    Raises:
+        ValueError: If the input is a ``dict`` whose values are not all list-like.
+        ValueError: If the input is a ``dict`` whose values are not all the same length.
+        ValueError: If the input is not a ``dict`` or list-like.
+    """
 
     if isinstance(batch, dict):
-        return [batch_type(dict(zip(batch, default_uncollate(t)))) for t in zip(*batch.values())]
+        if any(not _is_list_like_excluding_str(sub_batch) for sub_batch in batch.values()):
+            raise ValueError("When uncollating a dict, all sub-batches (values) are expected to be list-like.")
+        if len({len(sub_batch) for sub_batch in batch.values()}) > 1:
+            raise ValueError("When uncollating a dict, all sub-batches (values) are expected to have the same length.")
+        elements = list(default_uncollate(element) for element in zip(*batch.values()))
+        return [dict(zip(batch.keys(), element)) for element in elements]
 
-    if isinstance(batch, tuple) and hasattr(batch, "_fields"):  # namedtuple
-        return [batch_type(*sample) for sample in zip(*batch)]
-
-    if isinstance(batch, Sequence) and not isinstance(batch, str):
-        return [sample for sample in batch]
-
-    return batch
+    if _is_list_like_excluding_str(batch):
+        return list(batch)
+    raise ValueError(
+        "The batch of outputs to be uncollated is expected to be a `dict` or list-like "
+        "(e.g. `torch.Tensor`, `list`, `tuple`, etc.)."
+    )

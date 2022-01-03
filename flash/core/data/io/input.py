@@ -11,135 +11,37 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import functools
 import os
-import typing
-import warnings
+import sys
+from copy import copy, deepcopy
 from dataclasses import dataclass
 from functools import partial
-from inspect import signature
-from pathlib import Path
-from typing import (
-    Any,
-    Callable,
-    cast,
-    Dict,
-    Generic,
-    Iterable,
-    Iterator,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Tuple,
-    TYPE_CHECKING,
-    TypeVar,
-    Union,
-)
+from typing import Any, Callable, cast, Dict, Iterable, List, MutableMapping, Optional, Sequence, Tuple, Type, Union
 
-import numpy as np
-import pandas as pd
-import torch
 from pytorch_lightning.utilities.enums import LightningEnum
-from torch.nn import Module
-from torch.utils.data.dataset import Dataset
-from tqdm import tqdm
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from torch.utils.data import Dataset
 
-from flash.core.data.auto_dataset import AutoDataset, BaseAutoDataset, IterableAutoDataset
+import flash
+from flash.core.data.callback import FlashCallback
 from flash.core.data.properties import ProcessState, Properties
-from flash.core.data.utils import CurrentRunningStageFuncContext
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
+from flash.core.registry import FlashRegistry
 from flash.core.utilities.stages import RunningStage
+from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 
-SampleCollection = None
-if _FIFTYONE_AVAILABLE:
-    fol = lazy_import("fiftyone.core.labels")
-    if TYPE_CHECKING:
-        from fiftyone.core.collections import SampleCollection
+if sys.version_info < (3, 7):
+    from typing import GenericMeta
 else:
-    fol = None
+    GenericMeta = type
 
 
-# Credit to the PyTorchVision Team:
-# https://github.com/pytorch/vision/blob/master/torchvision/datasets/folder.py#L10
-def has_file_allowed_extension(filename: str, extensions: Tuple[str, ...]) -> bool:
-    """Checks if a file is an allowed extension.
-
-    Args:
-        filename (string): path to a file
-        extensions (tuple of strings): extensions to consider (lowercase)
-
-    Returns:
-        bool: True if the filename ends with one of given extensions
-    """
-    return filename.lower().endswith(extensions)
-
-
-# Credit to the PyTorchVision Team:
-# https://github.com/pytorch/vision/blob/master/torchvision/datasets/folder.py#L48
-def make_dataset(
-    directory: str,
-    class_to_idx: Dict[str, int],
-    extensions: Optional[Tuple[str, ...]] = None,
-    is_valid_file: Optional[Callable[[str], bool]] = None,
-) -> List[Tuple[str, int]]:
-    """Generates a list of samples of a form (path_to_sample, class).
-
-    Args:
-        directory (str): root dataset directory
-        class_to_idx (Dict[str, int]): dictionary mapping class name to class index
-        extensions (optional): A list of allowed extensions.
-            Either extensions or is_valid_file should be passed. Defaults to None.
-        is_valid_file (optional): A function that takes path of a file
-            and checks if the file is a valid file
-            (used to check of corrupt files) both extensions and
-            is_valid_file should not be passed. Defaults to None.
-
-    Raises:
-        ValueError: In case ``extensions`` and ``is_valid_file`` are None or both are not None.
-
-    Returns:
-        List[Tuple[str, int]]: samples of a form (path_to_sample, class)
-    """
-    instances = []
-    directory = os.path.expanduser(directory)
-    both_none = extensions is None and is_valid_file is None
-    both_something = extensions is not None and is_valid_file is not None
-    if both_none or both_something:
-        raise ValueError("Both extensions and is_valid_file cannot be None or not None at the same time")
-    if extensions is not None:
-
-        def is_valid_file(x: str) -> bool:
-            return has_file_allowed_extension(x, cast(Tuple[str, ...], extensions))
-
-    is_valid_file = cast(Callable[[str], bool], is_valid_file)
-    for target_class in sorted(class_to_idx.keys()):
-        class_index = class_to_idx[target_class]
-        target_dir = os.path.join(directory, target_class)
-        if not os.path.isdir(target_dir):
-            continue
-        for root, _, fnames in sorted(os.walk(target_dir, followlinks=True)):
-            for fname in sorted(fnames):
-                path = os.path.join(root, fname)
-                if is_valid_file(path):
-                    item = path, class_index
-                    instances.append(item)
-    return instances
-
-
-def has_len(data: Union[Sequence[Any], Iterable[Any]]) -> bool:
-    try:
-        len(data)
-        return True
-    except (TypeError, NotImplementedError):
-        return False
-
-
-@dataclass(unsafe_hash=True, frozen=True)
-class LabelsState(ProcessState):
-    """A :class:`~flash.core.data.properties.ProcessState` containing ``labels``, a mapping from class index to
-    label."""
-
-    labels: Optional[Sequence[str]]
+if not os.environ.get("READTHEDOCS", False):
+    from torch.utils.data import IterableDataset
+else:
+    # ReadTheDocs mocks the `IterableDataset` import so it's type cannot be used as a base for a metaclass, so we
+    # replace it here.
+    IterableDataset = object
 
 
 @dataclass(unsafe_hash=True, frozen=True)
@@ -160,7 +62,7 @@ class InputFormat(LightningEnum):
     JSON = "json"
     PARQUET = "parquet"
     DATASETS = "datasets"
-    HUGGINGFACE_DATASET = "hf_dataset"
+    HUGGINGFACE_DATASET = "hf_datasets"
     FIFTYONE = "fiftyone"
     DATAFRAME = "data_frame"
     LISTS = "lists"
@@ -192,519 +94,266 @@ class BaseDataFormat(LightningEnum):
         return hash(self.value)
 
 
-class MockDataset:
-    """The ``MockDataset`` catches any metadata that is attached through ``__setattr__``.
-
-    This is passed to
-    :meth:`~flash.core.data.io.input.Input.load_data` so that attributes can be set on the generated
-    data set.
-    """
-
-    def __init__(self):
-        self.metadata = {}
-
-    def __setattr__(self, key, value):
-        if key != "metadata":
-            self.metadata[key] = value
-        object.__setattr__(self, key, value)
-
-
-DATA_TYPE = TypeVar("DATA_TYPE")
-
-
-class Input(Generic[DATA_TYPE], Properties, Module):
-    """The ``Input`` class encapsulates two hooks: ``load_data`` and ``load_sample``.
-
-    The
-    :meth:`~flash.core.data.io.input.Input.to_datasets` method can then be used to automatically construct data
-    sets from the hooks.
-    """
-
-    @staticmethod
-    def load_data(
-        data: DATA_TYPE,
-        dataset: Optional[Any] = None,
-    ) -> Union[Sequence[Mapping[str, Any]], Iterable[Mapping[str, Any]]]:
-        """Given the ``data`` argument, the ``load_data`` hook produces a sequence or iterable of samples or
-        sample metadata. The ``data`` argument can be anything, but this method should return a sequence or iterable of
-        mappings from string (e.g. "input", "target", "bbox", etc.) to data (e.g. a target value) or metadata (e.g. a
-        filename). Where possible, any heavy data loading should be performed in
-        :meth:`~flash.core.data.io.input.Input.load_sample`. If the output is an iterable rather than a sequence
-        (that is, it doesn't have length) then the generated dataset will be an ``IterableDataset``.
-
-        Args:
-            data: The data required to load the sequence or iterable of samples or sample metadata.
-            dataset: Overriding methods can optionally include the dataset argument. Any attributes set on the dataset
-                (e.g. ``num_classes``) will also be set on the generated dataset.
-
-        Returns:
-            A sequence or iterable of samples or sample metadata to be used as inputs to
-            :meth:`~flash.core.data.io.input.Input.load_sample`.
-
-        Example::
-
-            # data: "."
-            # output: [{"input": "./cat/1.png", "target": 1}, ..., {"input": "./dog/10.png", "target": 0}]
-
-            output: Sequence[Mapping[str, Any]] = load_data(data)
-
-        """
-        return data
-
-    @staticmethod
-    def load_sample(sample: Mapping[str, Any], dataset: Optional[Any] = None) -> Any:
-        """Given an element from the output of a call to
-        :meth:`~flash.core.data.io.input.Input.load_data`, this hook
-        should load a single data sample. The keys and values in the ``sample`` argument will be same as the keys and
-        values in the outputs of :meth:`~flash.core.data.io.input.Input.load_data`.
-
-        Args:
-            sample: An element (sample or sample metadata) from the output of a call to
-                :meth:`~flash.core.data.io.input.Input.load_data`.
-            dataset: Overriding methods can optionally include the dataset argument. Any attributes set on the dataset
-                (e.g. ``num_classes``) will also be set on the generated dataset.
-
-        Returns:
-            The loaded sample as a mapping with string keys (e.g. "input", "target") that can be processed by the
-            :meth:`~flash.core.data.io.input_transform.InputTransform.pre_tensor_transform`.
-
-        Example::
-
-            # sample: {"input": "./cat/1.png", "target": 1}
-            # output: {"input": PIL.Image, "target": 1}
-
-            output: Mapping[str, Any] = load_sample(sample)
-
-        """
-        return sample
-
-    def to_datasets(
-        self,
-        train_data: Optional[DATA_TYPE] = None,
-        val_data: Optional[DATA_TYPE] = None,
-        test_data: Optional[DATA_TYPE] = None,
-        predict_data: Optional[DATA_TYPE] = None,
-    ) -> Tuple[Optional[BaseAutoDataset], ...]:
-        """Construct data sets (of type :class:`~flash.core.data.auto_dataset.BaseAutoDataset`) from this data
-        source by calling :meth:`~flash.core.data.io.input.Input.load_data` with each of the ``*_data`` arguments.
-        If an argument is given as ``None`` then no dataset will be created for that stage (``train``, ``val``,
-        ``test``, ``predict``).
-
-        Args:
-            train_data: The input to :meth:`~flash.core.data.io.input.Input.load_data` to use to create the
-                train dataset.
-            val_data: The input to :meth:`~flash.core.data.io.input.Input.load_data` to use to create the
-                validation dataset.
-            test_data: The input to :meth:`~flash.core.data.io.input.Input.load_data` to use to create the
-                test dataset.
-            predict_data: The input to :meth:`~flash.core.data.io.input.Input.load_data` to use to create
-                the predict dataset.
-
-        Returns:
-            A tuple of ``train_dataset``, ``val_dataset``, ``test_dataset``, ``predict_dataset``. If any ``*_data``
-            argument is not passed to this method then the corresponding ``*_dataset`` will be ``None``.
-        """
-        train_dataset = self.generate_dataset(train_data, RunningStage.TRAINING)
-        val_dataset = self.generate_dataset(val_data, RunningStage.VALIDATING)
-        test_dataset = self.generate_dataset(test_data, RunningStage.TESTING)
-        predict_dataset = self.generate_dataset(predict_data, RunningStage.PREDICTING)
-        return train_dataset, val_dataset, test_dataset, predict_dataset
-
-    def generate_dataset(
-        self,
-        data: Optional[DATA_TYPE],
-        running_stage: RunningStage,
-    ) -> Optional[Union[AutoDataset, IterableAutoDataset]]:
-        """Generate a single dataset with the given input to
-        :meth:`~flash.core.data.io.input.Input.load_data` for the given ``running_stage``.
-
-        Args:
-            data: The input to :meth:`~flash.core.data.io.input.Input.load_data` to use to create the dataset.
-            running_stage: The running_stage for this dataset.
-
-        Returns:
-            The constructed :class:`~flash.core.data.auto_dataset.BaseAutoDataset`.
-        """
-        is_none = data is None
-
-        if isinstance(data, Sequence):
-            is_none = data[0] is None
-
-        if not is_none:
-            from flash.core.data.data_pipeline import DataPipeline
-
-            mock_dataset = typing.cast(AutoDataset, MockDataset())
-            with CurrentRunningStageFuncContext(running_stage, "load_data", self):
-                resolved_func_name = DataPipeline._resolve_function_hierarchy("load_data", self, running_stage, Input)
-                load_data: Callable[[DATA_TYPE, Optional[Any]], Any] = getattr(self, resolved_func_name)
-                parameters = signature(load_data).parameters
-                if len(parameters) > 1 and "dataset" in parameters:  # TODO: This was DATASET_KEY before
-                    data = load_data(data, mock_dataset)
-                else:
-                    data = load_data(data)
-
-            if has_len(data):
-                dataset = AutoDataset(data, self, running_stage)
-            else:
-                dataset = IterableAutoDataset(data, self, running_stage)
-            dataset.__dict__.update(mock_dataset.metadata)
-            return dataset
-
-
-SEQUENCE_DATA_TYPE = TypeVar("SEQUENCE_DATA_TYPE")
-
-
-class DatasetInput(Input[Dataset]):
-    """The ``DatasetInput`` implements default behaviours for data sources which expect the input to
-    :meth:`~flash.core.data.io.input.Input.load_data` to be a :class:`torch.utils.data.dataset.Dataset`
+def _has_len(data: Union[Sequence, Iterable]) -> bool:
+    """Duck typing check to see if the argument supports getting the length.
 
     Args:
-        labels: Optionally pass the labels as a mapping from class index to label string. These will then be set as the
-            :class:`~flash.core.data.io.input.LabelsState`.
+        data: The object to check for length support.
     """
+    try:
+        len(data)
+        return True
+    except (TypeError, NotImplementedError):
+        return False
 
-    def load_sample(self, sample: Any, dataset: Optional[Any] = None) -> Mapping[str, Any]:
-        if isinstance(sample, tuple) and len(sample) == 2:
-            return {DataKeys.INPUT: sample[0], DataKeys.TARGET: sample[1]}
-        return {DataKeys.INPUT: sample}
 
-
-class SequenceInput(
-    Generic[SEQUENCE_DATA_TYPE],
-    Input[Tuple[Sequence[SEQUENCE_DATA_TYPE], Optional[Sequence]]],
-):
-    """The ``SequenceInput`` implements default behaviours for data sources which expect the input to
-    :meth:`~flash.core.data.io.input.Input.load_data` to be a sequence of tuples (``(input, target)``
-    where target can be ``None``).
+def _validate_input(input: "InputBase") -> None:
+    """Helper function to validate that the type of an ``InputBase.data`` is appropriate for the type of
+    ``InputBase`` being used.
 
     Args:
-        labels: Optionally pass the labels as a mapping from class index to label string. These will then be set as the
-            :class:`~flash.core.data.io.input.LabelsState`.
+        input: The ``InputBase`` instance to validate.
+
+    Raises:
+        RuntimeError: If the ``input`` is of type ``Input`` and it's ``data`` attribute does not support ``len``.
+        RuntimeError: If the ``input`` is of type ``IterableInput`` and it's ``data`` attribute does support ``len``.
     """
-
-    def __init__(self, labels: Optional[Sequence[str]] = None):
-        super().__init__()
-
-        self.labels = labels
-
-        if self.labels is not None:
-            self.set_state(LabelsState(self.labels))
-
-    def load_data(
-        self,
-        data: Tuple[Sequence[SEQUENCE_DATA_TYPE], Optional[Sequence]],
-        dataset: Optional[Any] = None,
-    ) -> Sequence[Mapping[str, Any]]:
-        # TODO: Bring back the code to work out how many classes there are
-        inputs, targets = data
-        if targets is None:
-            return self.predict_load_data(data)
-        return [{DataKeys.INPUT: input, DataKeys.TARGET: target} for input, target in zip(inputs, targets)]
-
-    @staticmethod
-    def predict_load_data(data: Sequence[SEQUENCE_DATA_TYPE]) -> Sequence[Mapping[str, Any]]:
-        return [{DataKeys.INPUT: input} for input in data]
+    if input.data is not None:
+        if isinstance(input, Input) and not _has_len(input.data):
+            raise RuntimeError("`Input.data` is not a sequence with a defined length. Use `IterableInput` instead.")
+        elif isinstance(input, IterableInput) and _has_len(input.data):
+            raise RuntimeError("`IterableInput.data` is a sequence with a defined length. Use `Input` instead.")
 
 
-class PathsInput(SequenceInput):
-    """The ``PathsInput`` implements default behaviours for data sources which expect the input to
-    :meth:`~flash.core.data.io.input.Input.load_data` to be either a directory with a subdirectory for
-    each class or a tuple containing list of files and corresponding list of targets.
+def _wrap_init(class_dict: Dict[str, Any]) -> None:
+    """Helper function to wrap the ``__init__`` (if present) from a class construction dict to apply the
+    ``_validate_input`` function after instantiation. Modifies the dict inplace.
 
     Args:
-        extensions: The file extensions supported by this data source (e.g. ``(".jpg", ".png")``).
-        labels: Optionally pass the labels as a mapping from class index to label string. These will then be set as the
-            :class:`~flash.core.data.io.input.LabelsState`.
+        class_dict: The class construction dict, optionally containing an init to wrap.
     """
+    if "__init__" in class_dict:
+        fn = class_dict["__init__"]
+
+        @functools.wraps(fn)
+        def wrapper(self, *args, **kwargs):
+            fn(self, *args, **kwargs)
+            _validate_input(self)
+
+        class_dict["__init__"] = wrapper
+
+
+class _InputMeta(GenericMeta):
+    """Metaclass for the ``InputBase`` which wraps any init defined in a subclass with the ``_validate_input``
+    helper."""
+
+    def __new__(mcs, name: str, bases: Tuple, class_dict: Dict[str, Any]) -> "_InputMeta":
+        _wrap_init(class_dict)
+        return cast(_InputMeta, super().__new__(mcs, name, bases, class_dict))
+
+
+class _IterableInputMeta(_InputMeta, type(IterableDataset)):
+    """Metaclass for the ``IterableInput`` which extends ``_InputMeta`` and avoids metaclass conflict with
+    ``IterableDataset``."""
+
+    def __new__(mcs, name: str, bases: Tuple, class_dict: Dict[str, Any]) -> "_IterableInputMeta":
+        return cast(_IterableInputMeta, super().__new__(mcs, name, bases, class_dict))
+
+
+class InputBase(Properties, metaclass=_InputMeta):
+    """``InputBase`` is the base class for the :class:`~flash.core.data.io.input.Input` and
+    :class:`~flash.core.data.io.input.IterableInput` dataset implementations in Flash. These datasets are
+    constructed via the ``load_data`` and ``load_sample`` hooks, which allow a single dataset object to include custom
+    loading logic according to the running stage (e.g. train, validate, test, predict).
+
+    Args:
+        running_stage: The running stage for which the input will be used.
+        *args: Any arguments that are to be passed to the ``load_data`` hook.
+        **kwargs: Any additional keyword arguments to pass to the ``load_data`` hook.
+    """
+
+    input_transforms_registry = FlashRegistry("input_transforms")
 
     def __init__(
         self,
-        extensions: Optional[Tuple[str, ...]] = None,
-        loader: Optional[Callable[[str], Any]] = None,
-        labels: Optional[Sequence[str]] = None,
-    ):
-        super().__init__(labels=labels)
+        running_stage: RunningStage,
+        *args: Any,
+        transform: INPUT_TRANSFORM_TYPE = None,
+        transform_kwargs: Optional[Dict] = None,
+        input_transforms_registry: Optional[FlashRegistry] = None,
+        data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None,
+        **kwargs: Any,
+    ) -> None:
+        from flash.core.data.io.input_transform import create_transform
 
-        self.extensions = extensions
-        self.loader = loader
+        self.transform = create_transform(
+            transform,
+            running_stage,
+            data_pipeline_state,
+            input_transforms_registry or self.input_transforms_registry,
+            transform_kwargs,
+        )
+        super().__init__(running_stage=running_stage, data_pipeline_state=data_pipeline_state)
+
+        self.data = None
+        if len(args) >= 1 and args[0] is not None:
+            self.data = self._call_load_data(*args, **kwargs)
+
+    def _create_dataloader_collate_fn(self, callbacks: List[FlashCallback]) -> Optional[Callable]:
+        from flash.core.data.io.input_transform import _create_collate_input_transform_processors
+
+        if not self.transform:
+            return
+        return _create_collate_input_transform_processors(self.transform, callbacks)[0]
+
+    def _create_on_after_batch_transfer_fn(self, callbacks: List[FlashCallback]) -> Optional[Callable]:
+        from flash.core.data.io.input_transform import _create_collate_input_transform_processors
+
+        if not self.transform:
+            return
+        return _create_collate_input_transform_processors(self.transform, callbacks)[1]
+
+    def _call_load_data(self, *args: Any, **kwargs: Any) -> Union[Sequence, Iterable]:
+        from flash.core.data.data_pipeline import DataPipeline
+
+        load_data = getattr(
+            self, DataPipeline._resolve_function_hierarchy("load_data", self, self.running_stage, InputBase)
+        )
+        return load_data(*args, **kwargs)
+
+    def _call_load_sample(self, sample: Any) -> Any:
+        from flash.core.data.data_pipeline import DataPipeline
+
+        load_sample = getattr(
+            self,
+            DataPipeline._resolve_function_hierarchy(
+                "load_sample",
+                self,
+                self.running_stage,
+                InputBase,
+            ),
+        )
+        return load_sample(copy(sample))
 
     @staticmethod
-    def find_classes(dir: str) -> Tuple[List[str], Dict[str, int]]:
-        """Finds the class folders in a dataset. Ensures that no class is a subdirectory of another.
+    def load_data(*args: Any, **kwargs: Any) -> Union[Sequence, Iterable]:
+        """The ``load_data`` hook should return a collection of samples. To reduce the memory footprint, these
+        samples should typically not have been loaded. For example, an input which loads images from disk would
+        only return the list of filenames here rather than the loaded images.
 
         Args:
-            dir: Root directory path.
-
-        Returns:
-            tuple: (classes, class_to_idx) where classes are relative to (dir), and class_to_idx is a dictionary.
+            *args: Any arguments that the input requires.
+            **kwargs: Any additional keyword arguments that the input requires.
         """
-        classes = [d.name for d in os.scandir(dir) if d.is_dir()]
-        classes.sort()
-        class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}
-        return classes, class_to_idx
+        return args[0]
 
     @staticmethod
-    def isdir(data: Union[str, Tuple[List[str], List[Any]]]) -> bool:
-        try:
-            return os.path.isdir(data)
-        except TypeError:
-            # data is not path-like (e.g. it may be a list of paths)
-            return False
+    def load_sample(sample: MutableMapping[str, Any]) -> Any:
+        """The ``load_sample`` hook is called for each ``__getitem__`` or ``__next__`` call to the dataset with a
+        single sample from the output of the ``load_data`` hook as input.
 
-    def load_data(
-        self, data: Union[str, Tuple[List[str], List[Any]]], dataset: Optional[Any] = None
-    ) -> Sequence[Mapping[str, Any]]:
-        if self.isdir(data):
-            classes, class_to_idx = self.find_classes(data)
-            if not classes:
-                return self.predict_load_data(data)
-            self.set_state(LabelsState(classes))
-
-            if dataset is not None:
-                dataset.num_classes = len(classes)
-
-            data = make_dataset(data, class_to_idx, extensions=self.extensions)
-            return [{DataKeys.INPUT: input, DataKeys.TARGET: target} for input, target in data]
-        elif dataset is not None:
-            dataset.num_classes = len(np.unique(data[1]))
-
-        return list(
-            filter(
-                lambda sample: has_file_allowed_extension(sample[DataKeys.INPUT], self.extensions),
-                super().load_data(data, dataset),
-            )
-        )
-
-    def predict_load_data(
-        self, data: Union[str, List[str]], dataset: Optional[Any] = None
-    ) -> Sequence[Mapping[str, Any]]:
-        if self.isdir(data):
-            data = [os.path.join(data, file) for file in os.listdir(data)]
-
-        if not isinstance(data, list):
-            data = [data]
-
-        data = [{DataKeys.INPUT: input} for input in data]
-
-        return list(
-            filter(
-                lambda sample: has_file_allowed_extension(sample[DataKeys.INPUT], self.extensions),
-                data,
-            )
-        )
-
-    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        path = sample[DataKeys.INPUT]
-
-        if self.loader is not None:
-            sample[DataKeys.INPUT] = self.loader(path)
-
-        sample[DataKeys.METADATA] = {
-            "filepath": path,
-        }
+        Args:
+            sample: A single sample from the output of the ``load_data`` hook.
+        """
         return sample
 
+    def __getstate__(self):
+        """Temporarily override pickle behaviour.
 
-class LoaderDataFrameInput(Input[Tuple[pd.DataFrame, str, Union[str, List[str]], Optional[str], Optional[str]]]):
-    def __init__(self, loader: Callable[[str], Any]):
-        super().__init__()
+        TODO: New DataPipeline should avoid this being pickled.
+        """
+        state = self.__dict__.copy()
+        state.pop("data")
+        if "data_iter" in state:
+            state.pop("data_iter")
+        return state
 
-        self.loader = loader
+    def __setstate__(self, newstate):
+        """Temporarily override pickle behaviour.
 
-    @staticmethod
-    def _walk_files(root: str) -> Iterator[str]:
-        for root, _, files in os.walk(root):
-            for file in files:
-                yield os.path.join(root, file)
+        TODO: New DataPipeline should avoid this being pickled.
+        """
+        newstate["data"] = None
+        self.__dict__.update(newstate)
 
-    @staticmethod
-    def _default_resolver(root: str, id: str):
-        if os.path.isabs(id):
-            return id
+    def __copy__(self):
+        """The default copy implementation seems to use ``__getstate__`` and ``__setstate__`` so we override it
+        here with a custom implementation to ensure that it includes the data list."""
+        cls = self.__class__
+        result = cls.__new__(cls)
+        result.__dict__.update(self.__dict__)
+        return result
 
-        pattern = f"*{id}*"
+    def __deepcopy__(self, memo):
+        """The default deepcopy implementation seems to use ``__getstate__`` and ``__setstate__`` so we override it
+        here with a custom implementation to ensure that it includes the data list."""
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, deepcopy(v, memo))
+        return result
 
-        try:
-            return str(next(Path(root).rglob(pattern)))
-        except StopIteration:
-            raise ValueError(
-                f"Found no matches for pattern: {pattern} in directory: {root}. File IDs should uniquely identify the "
-                "file to load."
+    def __bool__(self):
+        """If ``self.data`` is ``None`` then the ``InputBase`` is considered falsey.
+
+        This allows for quickly checking whether or not the ``InputBase`` is populated with data.
+        """
+        return self.data is not None
+
+    @classmethod
+    def register_input_transform(
+        cls, enum: Union[LightningEnum, str], fn: Union[Type["flash.InputTransform"], partial]
+    ) -> None:
+        if cls.input_transforms_registry is None:
+            raise MisconfigurationException(
+                "The class attribute `input_transforms_registry` should be set as a class attribute. "
             )
+        cls.input_transforms_registry(fn=fn, name=enum)
 
-    @staticmethod
-    def _resolve_file(resolver: Callable[[str, str], str], root: str, input_key: str, row: pd.Series) -> pd.Series:
-        row[input_key] = resolver(root, row[input_key])
-        return row
 
-    @staticmethod
-    def _resolve_target(label_to_class: Dict[str, int], target_key: str, row: pd.Series) -> pd.Series:
-        row[target_key] = label_to_class[row[target_key]]
-        return row
+class Input(InputBase, Dataset):
+    def __getitem__(self, index: int) -> Any:
+        return self._call_load_sample(self.data[index])
 
-    @staticmethod
-    def _resolve_multi_target(target_keys: List[str], row: pd.Series) -> pd.Series:
-        row[target_keys[0]] = [row[target_key] for target_key in target_keys]
-        return row
+    def __len__(self) -> int:
+        return len(self.data) if self.data is not None else 0
 
-    def load_data(
+
+class IterableInput(InputBase, IterableDataset, metaclass=_IterableInputMeta):
+    def __iter__(self):
+        self.data_iter = iter(self.data)
+        return self
+
+    def __next__(self) -> Any:
+        return self._call_load_sample(next(self.data_iter))
+
+
+class ServeInput(Input):
+    def __init__(
         self,
-        data: Tuple[pd.DataFrame, str, Union[str, List[str]], Optional[str], Optional[str]],
-        dataset: Optional[Any] = None,
-    ) -> Sequence[Mapping[str, Any]]:
-        data, input_key, target_keys, root, resolver = data
+        transform: INPUT_TRANSFORM_TYPE = None,
+        transform_kwargs: Optional[Dict] = None,
+        data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None,
+    ) -> None:
+        if hasattr(self, "serve_load_data"):
+            raise MisconfigurationException("`serve_load_data` shouldn't be implemented.")
 
-        if isinstance(data, (str, Path)):
-            data = str(data)
-            data_frame = pd.read_csv(data)
-            if root is None:
-                root = os.path.dirname(data)
-        else:
-            data_frame = data
+        super().__init__(
+            RunningStage.SERVING,
+            transform=transform,
+            transform_kwargs=transform_kwargs,
+            data_pipeline_state=data_pipeline_state,
+        )
 
-        if root is None:
-            root = ""
+    def serve_load_sample(self, sample: Any) -> List[Any]:
+        raise NotImplementedError
 
-        if resolver is None:
-            warnings.warn("Using default resolver, this may take a while.", UserWarning)
-            resolver = self._default_resolver
+    def __call__(self, sample: Any) -> Any:
+        return self._call_load_sample(sample)
 
-        tqdm.pandas(desc="Resolving files")
-        data_frame = data_frame.progress_apply(partial(self._resolve_file, resolver, root, input_key), axis=1)
+    def example_input(self) -> str:
+        raise NotImplementedError
 
-        if not self.predicting:
-            if isinstance(target_keys, List):
-                dataset.multi_label = True
-                dataset.num_classes = len(target_keys)
-                self.set_state(LabelsState(target_keys))
-                data_frame = data_frame.apply(partial(self._resolve_multi_target, target_keys), axis=1)
-                target_keys = target_keys[0]
-            else:
-                dataset.multi_label = False
-                if self.training:
-                    labels = list(sorted(data_frame[target_keys].unique()))
-                    dataset.num_classes = len(labels)
-                    self.set_state(LabelsState(labels))
-
-                labels = self.get_state(LabelsState)
-
-                if labels is not None:
-                    labels = labels.labels
-                    label_to_class = {v: k for k, v in enumerate(labels)}
-                    data_frame = data_frame.apply(partial(self._resolve_target, label_to_class, target_keys), axis=1)
-
-            return [
-                {
-                    DataKeys.INPUT: row[input_key],
-                    DataKeys.TARGET: row[target_keys],
-                }
-                for _, row in data_frame.iterrows()
-            ]
-        return [
-            {
-                DataKeys.INPUT: row[input_key],
-            }
-            for _, row in data_frame.iterrows()
-        ]
-
-    def load_sample(self, sample: Dict[str, Any], dataset: Optional[Any] = None) -> Dict[str, Any]:
-        # TODO: simplify this duplicated code from PathsInput
-        path = sample[DataKeys.INPUT]
-
-        if self.loader is not None:
-            sample[DataKeys.INPUT] = self.loader(path)
-
-        sample[DataKeys.METADATA] = {
-            "filepath": path,
-        }
-        return sample
-
-
-class TensorInput(SequenceInput[torch.Tensor]):
-    """The ``TensorInput`` is a ``SequenceInput`` which expects the input to
-    :meth:`~flash.core.data.io.input.Input.load_data` to be a sequence of ``torch.Tensor`` objects."""
-
-    def load_data(
-        self,
-        data: Tuple[Sequence[SEQUENCE_DATA_TYPE], Optional[Sequence]],
-        dataset: Optional[Any] = None,
-    ) -> Sequence[Mapping[str, Any]]:
-        # TODO: Bring back the code to work out how many classes there are
-        if len(data) == 2:
-            dataset.num_classes = len(torch.unique(torch.tensor(data[1])))
-        return super().load_data(data, dataset)
-
-
-class NumpyInput(SequenceInput[np.ndarray]):
-    """The ``NumpyInput`` is a ``SequenceInput`` which expects the input to
-    :meth:`~flash.core.data.io.input.Input.load_data` to be a sequence of ``np.ndarray`` objects."""
-
-
-class FiftyOneInput(Input[SampleCollection]):
-    """The ``FiftyOneInput`` expects the input to
-    :meth:`~flash.core.data.io.input.Input.load_data` to be a ``fiftyone.core.collections.SampleCollection``."""
-
-    def __init__(self, label_field: str = "ground_truth"):
-        super().__init__()
-        self.label_field = label_field
-
-    @property
-    @requires("fiftyone")
-    def label_cls(self):
-        return fol.Label
-
-    @requires("fiftyone")
-    def load_data(self, data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
-        self._validate(data)
-
-        label_path = data._get_label_field_path(self.label_field, "label")[1]
-
-        filepaths = data.values("filepath")
-        targets = data.values(label_path)
-
-        classes = self._get_classes(data)
-
-        if dataset is not None:
-            dataset.num_classes = len(classes)
-
-        class_to_idx = {cls_name: i for i, cls_name in enumerate(classes)}
-
-        if targets and isinstance(targets[0], list):
-
-            def to_idx(t):
-                return [class_to_idx[x] for x in t]
-
-        else:
-
-            def to_idx(t):
-                return class_to_idx[t]
-
-        return [
-            {
-                DataKeys.INPUT: f,
-                DataKeys.TARGET: to_idx(t),
-            }
-            for f, t in zip(filepaths, targets)
-        ]
-
-    @staticmethod
-    @requires("fiftyone")
-    def predict_load_data(data: SampleCollection, dataset: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
-        return [{DataKeys.INPUT: f} for f in data.values("filepath")]
-
-    def _validate(self, data):
-        label_type = data._get_label_field_type(self.label_field)
-        if not issubclass(label_type, self.label_cls):
-            raise ValueError(f"Expected field '{self.label_field}' to have type {self.label_cls}; found {label_type}")
-
-    def _get_classes(self, data):
-        classes = data.classes.get(self.label_field, None)
-
-        if not classes:
-            classes = data.default_classes
-
-        if not classes:
-            label_path = data._get_label_field_path(self.label_field, "label")[1]
-            classes = data.distinct(label_path)
-
-        return classes
+    def __bool__(self):
+        return True

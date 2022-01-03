@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 from flash.core.utilities.flash_cli import FlashCLI
 from flash.graph import GraphClassificationData, GraphClassifier
 
@@ -22,8 +21,7 @@ def from_tu_dataset(
     name: str = "KKI",
     val_split: float = 0.1,
     batch_size: int = 4,
-    num_workers: int = 0,
-    **input_transform_kwargs,
+    **data_module_kwargs,
 ) -> GraphClassificationData:
     """Downloads and loads the TU Dataset."""
     from flash.core.utilities.imports import _TORCH_GEOMETRIC_AVAILABLE
@@ -39,8 +37,7 @@ def from_tu_dataset(
         train_dataset=dataset,
         val_split=val_split,
         batch_size=batch_size,
-        num_workers=num_workers,
-        **input_transform_kwargs,
+        **data_module_kwargs,
     )
 
 

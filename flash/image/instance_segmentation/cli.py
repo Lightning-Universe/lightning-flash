@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import partial
-from typing import Callable, Optional
+from typing import Callable, Optional, Tuple
 
 from flash.core.utilities.flash_cli import FlashCLI
 from flash.core.utilities.imports import _ICEDATA_AVAILABLE, requires
@@ -26,11 +26,18 @@ __all__ = ["instance_segmentation"]
 
 @requires(["image", "icedata"])
 def from_pets(
+    train_folder: Optional[str] = None,
+    train_ann_file: Optional[str] = None,
+    val_folder: Optional[str] = None,
+    val_ann_file: Optional[str] = None,
+    test_folder: Optional[str] = None,
+    test_ann_file: Optional[str] = None,
+    predict_folder: Optional[str] = None,
     val_split: float = 0.1,
-    batch_size: int = 4,
-    num_workers: int = 0,
+    image_size: Tuple[int, int] = (128, 128),
     parser: Optional[Callable] = None,
-    **input_transform_kwargs,
+    batch_size: int = 1,
+    **data_module_kwargs,
 ) -> InstanceSegmentationData:
     """Downloads and loads the pets data set from icedata."""
     data_dir = icedata.pets.load_data()
@@ -38,13 +45,19 @@ def from_pets(
     if parser is None:
         parser = partial(icedata.pets.parser, mask=True)
 
-    return InstanceSegmentationData.from_folders(
-        train_folder=data_dir,
+    return InstanceSegmentationData.from_icedata(
+        train_folder=train_folder or data_dir,
+        train_ann_file=train_ann_file,
+        val_folder=val_folder,
+        val_ann_file=val_ann_file,
+        test_folder=test_folder,
+        test_ann_file=test_ann_file,
+        predict_folder=predict_folder,
+        transform_kwargs=dict(image_size=image_size),
+        parser=parser,
         val_split=val_split,
         batch_size=batch_size,
-        num_workers=num_workers,
-        parser=parser,
-        **input_transform_kwargs,
+        **data_module_kwargs,
     )
 
 

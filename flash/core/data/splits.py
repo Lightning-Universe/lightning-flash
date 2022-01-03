@@ -4,8 +4,11 @@ import numpy as np
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Dataset
 
+import flash
+from flash.core.data.properties import Properties
 
-class SplitDataset(Dataset):
+
+class SplitDataset(Properties, Dataset):
     """SplitDataset is used to create Dataset Subset using indices.
 
     Args:
@@ -21,9 +24,16 @@ class SplitDataset(Dataset):
         split_ds = SplitDataset(dataset, indices=[10, 10, 10, 14, 25], use_duplicated_indices=True)
     """
 
-    _INTERNAL_KEYS = ("dataset", "indices", "data")
-
     def __init__(self, dataset: Any, indices: List[int] = None, use_duplicated_indices: bool = False) -> None:
+        kwargs = {}
+        if isinstance(dataset, Properties):
+            kwargs = dict(
+                running_stage=dataset._running_stage,
+                data_pipeline_state=dataset._data_pipeline_state,
+                state=dataset._state,
+            )
+        super().__init__(**kwargs)
+
         if indices is None:
             indices = []
         if not isinstance(indices, list):
@@ -40,16 +50,15 @@ class SplitDataset(Dataset):
         self.dataset = dataset
         self.indices = indices
 
-    def __getattr__(self, key: str):
-        if key not in self._INTERNAL_KEYS:
-            return self.dataset.__getattribute__(key)
-        raise AttributeError
+    def attach_data_pipeline_state(self, data_pipeline_state: "flash.core.data.data_pipeline.DataPipelineState"):
+        super().attach_data_pipeline_state(data_pipeline_state)
+        if isinstance(self.dataset, Properties):
+            self.dataset.attach_data_pipeline_state(data_pipeline_state)
 
-    def __setattr__(self, name: str, value: Any) -> None:
-        if name in self._INTERNAL_KEYS:
-            self.__dict__[name] = value
-        else:
-            setattr(self.dataset, name, value)
+    def __getattr__(self, key: str):
+        if key != "dataset":
+            return getattr(self.dataset, key)
+        raise AttributeError
 
     def __getitem__(self, index: int) -> Any:
         return self.dataset[self.indices[index]]

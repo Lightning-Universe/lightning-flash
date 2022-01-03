@@ -81,23 +81,6 @@ To view configuration options and options for running the image classifier with 
 
 ------
 
-************
-Loading Data
-************
-
-.. autodatasources:: flash.image.classification.data ImageClassificationData
-
-    {% extends "base.rst" %}
-    {% block from_datasets %}
-    {{ super() }}
-
-    .. note::
-
-        The ``__getitem__`` of your datasets should return a dictionary with ``"input"`` and ``"target"`` keys which map to the input image (as a PIL.Image) and the target (as an int or list of ints) respectively.
-    {% endblock %}
-
-------
-
 **********************
 Custom Transformations
 **********************
@@ -106,7 +89,6 @@ Flash automatically applies some default image transformations and augmentations
 The base :class:`~flash.core.data.io.input_transform.InputTransform` defines 7 hooks for different stages in the data loading pipeline.
 To apply image augmentations you can directly import the ``default_transforms`` from ``flash.image.classification.transforms`` and then merge your custom image transformations with them using the :func:`~flash.core.data.transforms.merge_transforms` helper function.
 Here's an example where we load the default transforms and merge with custom `torchvision` transformations.
-We use the `post_tensor_transform` hook to apply the transformations after the image has been converted to a `torch.Tensor`.
 
 
 .. testsetup:: transformations
@@ -119,21 +101,49 @@ We use the `post_tensor_transform` hook to apply the transformations after the i
 
     from torchvision import transforms as T
 
+    from typing import Tuple, Callable
     import flash
     from flash.core.data.io.input import DataKeys
     from flash.core.data.transforms import ApplyToKeys, merge_transforms
     from flash.image import ImageClassificationData, ImageClassifier
+    from flash.core.data.io.input_transform import InputTransform
     from flash.image.classification.transforms import default_transforms
+    from dataclasses import dataclass
 
-    post_tensor_transform = ApplyToKeys(
-        DataKeys.INPUT,
-        T.Compose([T.RandomHorizontalFlip(), T.ColorJitter(), T.RandomAutocontrast(), T.RandomPerspective()]),
-    )
 
-    new_transforms = merge_transforms(default_transforms((64, 64)), {"post_tensor_transform": post_tensor_transform})
+    @dataclass
+    class ImageClassificationInputTransform(InputTransform):
+
+        image_size: Tuple[int, int] = (196, 196)
+
+        def input_per_sample_transform(self):
+            return T.Compose(
+                [T.ToTensor(), T.Resize(self.image_size), T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]
+            )
+
+        def train_input_per_sample_transform(self):
+            return T.Compose(
+                [
+                    T.ToTensor(),
+                    T.Resize(self.image_size),
+                    T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+                    T.RandomHorizontalFlip(),
+                    T.ColorJitter(),
+                    T.RandomAutocontrast(),
+                    T.RandomPerspective(),
+                ]
+            )
+
+        def target_per_sample_transform(self) -> Callable:
+            return torch.as_tensor
+
 
     datamodule = ImageClassificationData.from_folders(
-        train_folder="data/hymenoptera_data/train/", val_folder="data/hymenoptera_data/val/", train_transform=new_transforms
+        train_folder="data/hymenoptera_data/train/",
+        val_folder="data/hymenoptera_data/val/",
+        train_transform=ImageClassificationInputTransform,
+        transform_kwargs=dict(image_size=(128, 128)),
+        batch_size=1,
     )
 
     model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)

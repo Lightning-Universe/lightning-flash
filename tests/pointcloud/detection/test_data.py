@@ -34,7 +34,10 @@ def test_pointcloud_object_detection_data(tmpdir):
 
     download_data("https://pl-flash-data.s3.amazonaws.com/KITTI_micro.zip", tmpdir)
 
-    dm = PointCloudObjectDetectorData.from_folders(train_folder=join(tmpdir, "KITTI_Micro", "Kitti", "train"))
+    datamodule = PointCloudObjectDetectorData.from_folders(
+        train_folder=join(tmpdir, "KITTI_Micro", "Kitti", "train"),
+        batch_size=4,
+    )
 
     class MockModel(PointCloudObjectDetector):
         def training_step(self, batch, batch_idx: int):
@@ -48,11 +51,13 @@ def test_pointcloud_object_detection_data(tmpdir):
     num_classes = 19
     model = MockModel(backbone="pointpillars_kitti", num_classes=num_classes)
     trainer = Trainer(max_epochs=1, limit_train_batches=1, limit_val_batches=0)
-    trainer.fit(model, dm)
+    trainer.fit(model, datamodule=datamodule)
 
-    predict_path = join(tmpdir, "KITTI_Micro", "Kitti", "predict")
-    model.eval()
+    datamodule = PointCloudObjectDetectorData.from_files(
+        predict_files=[join(tmpdir, "KITTI_Micro", "Kitti", "predict", "scans", "000000.bin")],
+        batch_size=4,
+    )
 
-    predictions = model.predict([join(predict_path, "scans/000000.bin")])
+    predictions = trainer.predict(model, datamodule=datamodule)[0]
     assert predictions[0][DataKeys.INPUT].shape[1] == 4
     assert len(predictions[0][DataKeys.PREDS]) == 158

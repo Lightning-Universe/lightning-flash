@@ -22,8 +22,7 @@ __all__ = ["audio_classification"]
 
 def from_urban8k(
     batch_size: int = 4,
-    num_workers: int = 0,
-    **input_transform_kwargs,
+    **data_module_kwargs,
 ) -> AudioClassificationData:
     """Downloads and loads the Urban 8k sounds images data set."""
     download_data("https://pl-flash-data.s3.amazonaws.com/urban8k_images.zip", "./data")
@@ -31,8 +30,7 @@ def from_urban8k(
         train_folder="data/urban8k_images/train",
         val_folder="data/urban8k_images/val",
         batch_size=batch_size,
-        num_workers=num_workers,
-        **input_transform_kwargs,
+        **data_module_kwargs,
     )
 
 

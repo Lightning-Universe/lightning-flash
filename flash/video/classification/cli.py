@@ -24,9 +24,8 @@ def from_kinetics(
     clip_sampler: str = "uniform",
     clip_duration: int = 1,
     decode_audio: bool = False,
-    batch_size: int = 4,
-    num_workers: int = 0,
-    **input_transform_kwargs,
+    batch_size=1,
+    **data_module_kwargs,
 ) -> VideoClassificationData:
     """Downloads and loads the Kinetics data set."""
     download_data("https://pl-flash-data.s3.amazonaws.com/kinetics.zip", "./data")
@@ -37,8 +36,7 @@ def from_kinetics(
         clip_duration=clip_duration,
         decode_audio=decode_audio,
         batch_size=batch_size,
-        num_workers=num_workers,
-        **input_transform_kwargs,
+        **data_module_kwargs,
     )
 
 
@@ -49,7 +47,7 @@ def video_classification():
         VideoClassificationData,
         default_datamodule_builder=from_kinetics,
         default_arguments={
-            "trainer.max_epochs": 3,
+            "trainer.max_epochs": 1,
         },
     )
 

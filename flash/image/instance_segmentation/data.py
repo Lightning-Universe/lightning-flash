@@ -11,64 +11,24 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Type, Union
 
-from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import DataKeys, InputFormat
-from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.data_pipeline import DataPipelineState
+from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.io.output_transform import OutputTransform
-from flash.core.integrations.icevision.data import IceVisionParserInput, IceVisionPathsInput
-from flash.core.integrations.icevision.transforms import default_transforms
+from flash.core.integrations.icevision.data import IceVisionInput
+from flash.core.integrations.icevision.transforms import IceVisionInputTransform as InstanceSegmentationInputTransform
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
+from flash.core.utilities.stages import RunningStage
+from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 
 if _ICEVISION_AVAILABLE:
-    from icevision.parsers import COCOMaskParser, VOCMaskParser
+    from icevision.parsers import COCOMaskParser, Parser, VOCMaskParser
 else:
     COCOMaskParser = object
     VOCMaskParser = object
-
-
-class InstanceSegmentationInputTransform(InputTransform):
-    def __init__(
-        self,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-        image_size: Tuple[int, int] = (128, 128),
-        parser: Optional[Callable] = None,
-    ):
-        self.image_size = image_size
-
-        super().__init__(
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
-            inputs={
-                "coco": IceVisionParserInput(parser=COCOMaskParser),
-                "voc": IceVisionParserInput(parser=VOCMaskParser),
-                InputFormat.FILES: IceVisionPathsInput(),
-                InputFormat.FOLDERS: IceVisionParserInput(parser=parser),
-            },
-            default_input=InputFormat.FILES,
-        )
-
-        self._default_collate = self._identity
-
-    def get_state_dict(self) -> Dict[str, Any]:
-        return {**self.transforms}
-
-    @classmethod
-    def load_state_dict(cls, state_dict: Dict[str, Any], strict: bool = False):
-        return cls(**state_dict)
-
-    def default_transforms(self) -> Optional[Dict[str, Callable]]:
-        return default_transforms(self.image_size)
-
-    def train_default_transforms(self) -> Optional[Dict[str, Callable]]:
-        return default_transforms(self.image_size)
+    Parser = object
 
 
 class InstanceSegmentationOutputTransform(OutputTransform):
@@ -83,6 +43,36 @@ class InstanceSegmentationData(DataModule):
     output_transform_cls = InstanceSegmentationOutputTransform
 
     @classmethod
+    def from_icedata(
+        cls,
+        train_folder: Optional[str] = None,
+        train_ann_file: Optional[str] = None,
+        val_folder: Optional[str] = None,
+        val_ann_file: Optional[str] = None,
+        test_folder: Optional[str] = None,
+        test_ann_file: Optional[str] = None,
+        predict_folder: Optional[str] = None,
+        train_transform: INPUT_TRANSFORM_TYPE = InstanceSegmentationInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = InstanceSegmentationInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = InstanceSegmentationInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = InstanceSegmentationInputTransform,
+        parser: Optional[Union[Callable, Type[Parser]]] = None,
+        input_cls: Type[Input] = IceVisionInput,
+        transform_kwargs: Optional[Dict] = None,
+        **data_module_kwargs,
+    ) -> "InstanceSegmentationData":
+
+        ds_kw = dict(parser=parser, data_pipeline_state=DataPipelineState(), transform_kwargs=transform_kwargs)
+
+        return cls(
+            input_cls(RunningStage.TRAINING, train_folder, train_ann_file, transform=train_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_folder, val_ann_file, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, test_folder, test_ann_file, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_folder, transform=predict_transform, **ds_kw),
+            **data_module_kwargs,
+        )
+
+    @classmethod
     def from_coco(
         cls,
         train_folder: Optional[str] = None,
@@ -92,16 +82,13 @@ class InstanceSegmentationData(DataModule):
         test_folder: Optional[str] = None,
         test_ann_file: Optional[str] = None,
         predict_folder: Optional[str] = None,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-        data_fetcher: Optional[BaseDataFetcher] = None,
-        input_transform: Optional[InputTransform] = None,
-        val_split: Optional[float] = None,
-        batch_size: int = 4,
-        num_workers: int = 0,
-        **input_transform_kwargs: Any,
+        train_transform: INPUT_TRANSFORM_TYPE = InstanceSegmentationInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = InstanceSegmentationInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = InstanceSegmentationInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = InstanceSegmentationInputTransform,
+        input_cls: Type[Input] = IceVisionInput,
+        transform_kwargs: Optional[Dict] = None,
+        **data_module_kwargs: Any,
     ):
         """Creates a :class:`~flash.image.instance_segmentation.data.InstanceSegmentationData` object from the
         given data folders and annotation files in the COCO format.
@@ -122,43 +109,26 @@ class InstanceSegmentationData(DataModule):
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`.
-            input_transform: The :class:`~flash.core.data.data.InputTransform` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
-                will be constructed and used.
-            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
-                Will only be used if ``input_transform = None``.
-
-        Returns:
-            The constructed data module.
-
-        Examples::
-
-            data_module = InstanceSegmentationData.from_coco(
-                train_folder="train_folder",
-                train_ann_file="annotations.json",
-            )
+            input_cls: The :class:`~flash.core.data.io.input.Input` used to create the dataset.
+            transform_kwargs: Keyword arguments provided to the transform on instantiation.
+            data_module_kwargs: Keyword arguments provided to the DataModule on instantiation.
         """
-        return cls.from_input(
-            "coco",
-            (train_folder, train_ann_file) if train_folder else None,
-            (val_folder, val_ann_file) if val_folder else None,
-            (test_folder, test_ann_file) if test_folder else None,
-            predict_folder,
+        return cls.from_icedata(
+            train_folder=train_folder,
+            train_ann_file=train_ann_file,
+            val_folder=val_folder,
+            val_ann_file=val_ann_file,
+            test_folder=test_folder,
+            test_ann_file=test_ann_file,
+            predict_folder=predict_folder,
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_fetcher=data_fetcher,
-            input_transform=input_transform,
-            val_split=val_split,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            **input_transform_kwargs,
+            transform_kwargs=transform_kwargs,
+            parser=COCOMaskParser,
+            input_cls=input_cls,
+            **data_module_kwargs,
         )
 
     @classmethod
@@ -171,16 +141,13 @@ class InstanceSegmentationData(DataModule):
         test_folder: Optional[str] = None,
         test_ann_file: Optional[str] = None,
         predict_folder: Optional[str] = None,
-        train_transform: Optional[Dict[str, Callable]] = None,
-        val_transform: Optional[Dict[str, Callable]] = None,
-        test_transform: Optional[Dict[str, Callable]] = None,
-        predict_transform: Optional[Dict[str, Callable]] = None,
-        data_fetcher: Optional[BaseDataFetcher] = None,
-        input_transform: Optional[InputTransform] = None,
-        val_split: Optional[float] = None,
-        batch_size: int = 4,
-        num_workers: int = 0,
-        **input_transform_kwargs: Any,
+        train_transform: INPUT_TRANSFORM_TYPE = InstanceSegmentationInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = InstanceSegmentationInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = InstanceSegmentationInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = InstanceSegmentationInputTransform,
+        input_cls: Type[Input] = IceVisionInput,
+        transform_kwargs: Optional[Dict] = None,
+        **data_module_kwargs: Any,
     ):
         """Creates a :class:`~flash.image.instance_segmentation.data.InstanceSegmentationData` object from the
         given data folders and annotation files in the VOC format.
@@ -201,41 +168,89 @@ class InstanceSegmentationData(DataModule):
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             predict_transform: The dictionary of transforms to use during predicting which maps
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`.
-            input_transform: The :class:`~flash.core.data.data.InputTransform` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
-                will be constructed and used.
-            val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            batch_size: The ``batch_size`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            num_workers: The ``num_workers`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
-            input_transform_kwargs: Additional keyword arguments to use when constructing the input_transform.
-                Will only be used if ``input_transform = None``.
-
-        Returns:
-            The constructed data module.
-
-        Examples::
-
-            data_module = InstanceSegmentationData.from_voc(
-                train_folder="train_folder",
-                train_ann_file="annotations.json",
-            )
+            input_cls: The :class:`~flash.core.data.io.input.Input` used to create the dataset.
+            transform_kwargs: Keyword arguments provided to the transform on instantiation.
+            data_module_kwargs: Keyword arguments provided to the DataModule on instantiation.
         """
-        return cls.from_input(
-            "voc",
-            (train_folder, train_ann_file) if train_folder else None,
-            (val_folder, val_ann_file) if val_folder else None,
-            (test_folder, test_ann_file) if test_folder else None,
-            predict_folder,
+        return cls.from_icedata(
+            train_folder=train_folder,
+            train_ann_file=train_ann_file,
+            val_folder=val_folder,
+            val_ann_file=val_ann_file,
+            test_folder=test_folder,
+            test_ann_file=test_ann_file,
+            predict_folder=predict_folder,
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            data_fetcher=data_fetcher,
-            input_transform=input_transform,
-            val_split=val_split,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            **input_transform_kwargs,
+            transform_kwargs=transform_kwargs,
+            parser=VOCMaskParser,
+            input_cls=input_cls,
+            **data_module_kwargs,
         )
+
+    @classmethod
+    def from_folders(
+        cls,
+        predict_folder: Optional[str] = None,
+        predict_transform: INPUT_TRANSFORM_TYPE = InstanceSegmentationInputTransform,
+        input_cls: Type[Input] = IceVisionInput,
+        transform_kwargs: Optional[Dict] = None,
+        **data_module_kwargs: Any,
+    ) -> "DataModule":
+        """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given folders.
+
+        This is supported only for the predicting stage.
+
+        Args:
+            predict_folder: The folder containing the predict data.
+            predict_transform: The dictionary of transforms to use during predicting which maps.
+            input_cls: The :class:`~flash.core.data.io.input.Input` used to create the dataset.
+            transform_kwargs: Keyword arguments provided to the transform on instantiation.
+            data_module_kwargs: The keywords arguments for creating the datamodule.
+
+        Returns:
+            The constructed data module.
+        """
+        ds_kw = dict(transform=predict_transform, transform_kwargs=transform_kwargs)
+
+        return cls(
+            predict_input=input_cls(RunningStage.PREDICTING, predict_folder, **ds_kw),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_files(
+        cls,
+        predict_files: Optional[List[str]] = None,
+        predict_transform: INPUT_TRANSFORM_TYPE = InstanceSegmentationInputTransform,
+        input_cls: Type[Input] = IceVisionInput,
+        transform_kwargs: Optional[Dict] = None,
+        **data_module_kwargs: Any,
+    ) -> "DataModule":
+        """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given a list of files.
+
+        This is supported only for the predicting stage.
+
+        Args:
+            predict_files: The list of files containing the predict data.
+            predict_transform: The dictionary of transforms to use during predicting which maps.
+            input_cls: The :class:`~flash.core.data.io.input.Input` used to create the dataset.
+            transform_kwargs: Keyword arguments provided to the transform on instantiation.
+            data_module_kwargs: The keywords arguments for creating the datamodule.
+
+        Returns:
+            The constructed data module.
+        """
+        ds_kw = dict(transform=predict_transform, transform_kwargs=transform_kwargs)
+
+        return cls(
+            predict_input=input_cls(RunningStage.PREDICTING, predict_files, **ds_kw),
+            **data_module_kwargs,
+        )
+
+    from_tensor = None
+    from_json = None
+    from_csv = None
+    from_datasets = None

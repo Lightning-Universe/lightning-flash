@@ -15,12 +15,11 @@
 import os.path
 import tarfile
 import zipfile
-from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Set, Type
+from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Set
 
 import requests
 import torch
 from pytorch_lightning.utilities.apply_func import apply_to_collection
-from torch import Tensor
 from tqdm.auto import tqdm as tq
 
 from flash.core.utilities.imports import _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
@@ -39,18 +38,12 @@ _STAGES_PREFIX = {
     RunningStage.TESTING: "test",
     RunningStage.VALIDATING: "val",
     RunningStage.PREDICTING: "predict",
+    RunningStage.SERVING: "serve",
 }
-_STAGES_PREFIX_VALUES = {"train", "test", "val", "predict"}
-
-_INPUT_FUNCS: Set[str] = {
-    "load_data",
-    "load_sample",
-}
+_STAGES_PREFIX_VALUES = {"train", "test", "val", "predict", "serve"}
 
 _INPUT_TRANSFORM_FUNCS: Set[str] = {
-    "pre_tensor_transform",
-    "to_tensor_transform",
-    "post_tensor_transform",
+    "per_sample_transform",
     "per_batch_transform",
     "per_sample_transform_on_device",
     "per_batch_transform_on_device",
@@ -67,59 +60,6 @@ _OUTPUT_TRANSFORM_FUNCS: Set[str] = {
     "uncollate",
     "per_sample_transform",
 }
-
-
-class CurrentRunningStageContext:
-    def __init__(self, running_stage: RunningStage, obj: Any, reset: bool = True):
-        self._running_stage = running_stage
-        self._obj = obj
-        self._reset = reset
-
-    def __enter__(self):
-        if self._obj is not None:
-            if getattr(self._obj, "running_stage", None) != self._running_stage:
-                self._obj.running_stage = self._running_stage
-        return self
-
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        if self._obj is not None and self._reset:
-            self._obj.running_stage = None
-
-
-class CurrentFuncContext:
-    def __init__(self, current_fn: str, obj: Any):
-        self._current_fn = current_fn
-        self._obj = obj
-
-    def __enter__(self):
-        if self._obj is not None:
-            if getattr(self._obj, "current_fn", None) != self._current_fn:
-                self._obj.current_fn = self._current_fn
-        return self
-
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        if self._obj is not None:
-            self._obj.current_fn = None
-
-
-class CurrentRunningStageFuncContext:
-    def __init__(self, running_stage: RunningStage, current_fn: str, obj: Any):
-        self._running_stage = running_stage
-        self._current_fn = current_fn
-        self._obj = obj
-
-    def __enter__(self):
-        if self._obj is not None:
-            if getattr(self._obj, "running_stage", None) != self._running_stage:
-                self._obj.running_stage = self._running_stage
-            if getattr(self._obj, "current_fn", None) != self._current_fn:
-                self._obj.current_fn = self._current_fn
-        return self
-
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        if self._obj is not None:
-            self._obj.running_stage = None
-            self._obj.current_fn = None
 
 
 def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:
@@ -176,19 +116,6 @@ def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:
         extract_tarfile(local_filename, path, "r:bz2")
 
 
-def _contains_any_tensor(value: Any, dtype: Type = Tensor) -> bool:
-    # TODO: we should refactor FlashDatasetFolder to better integrate
-    # with DataPipeline. That way, we wouldn't need this check.
-    # This is because we are running transforms in both places.
-    if isinstance(value, dtype):
-        return True
-    if isinstance(value, (list, tuple)):
-        return any(_contains_any_tensor(v, dtype=dtype) for v in value)
-    if isinstance(value, dict):
-        return any(_contains_any_tensor(v, dtype=dtype) for v in value.values())
-    return False
-
-
 class FuncModule(torch.nn.Module):
     """This class is used to wrap a callable within a nn.Module and apply the wrapped function in `__call__`"""
 
@@ -201,6 +128,9 @@ class FuncModule(torch.nn.Module):
 
     def __str__(self) -> str:
         return f"{self.__class__.__name__}({self.func.__name__})"
+
+    def __repr__(self):
+        return str(self.func)
 
 
 def convert_to_modules(transforms: Optional[Dict[str, Callable]]):

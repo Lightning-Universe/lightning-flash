@@ -11,14 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, List
+from typing import Any, Dict, Iterable, List, Union
 
-import pytorch_lightning as pl
 import torch
+from torch.nn import Module
 
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.output import Output
-from flash.core.finetuning import FlashBaseFinetuning
 from flash.core.model import Task
 from flash.core.utilities.imports import _FASTFACE_AVAILABLE
 from flash.core.utilities.types import (
@@ -30,21 +29,12 @@ from flash.core.utilities.types import (
     OUTPUT_TYPE,
 )
 from flash.image.face_detection.backbones import FACE_DETECTION_BACKBONES
-from flash.image.face_detection.data import FaceDetectionInputTransform
 
 if _FASTFACE_AVAILABLE:
     import fastface as ff
 
 
-class FaceDetectionFineTuning(FlashBaseFinetuning):
-    def __init__(self, train_bn: bool = True) -> None:
-        super().__init__(train_bn=train_bn)
-
-    def freeze_before_training(self, pl_module: pl.LightningModule) -> None:
-        self.freeze(modules=pl_module.model.backbone, train_bn=self.train_bn)
-
-
-class DetectionLabels(Output):
+class DetectionLabelsOutput(Output):
     """A :class:`.Output` which extracts predictions from sample dict."""
 
     def transform(self, sample: Any) -> Dict[str, Any]:
@@ -80,7 +70,7 @@ class FaceDetector(Task):
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         learning_rate: float = 1e-4,
-        output: OUTPUT_TYPE = None,
+        output: OUTPUT_TYPE = DetectionLabelsOutput(),
         input_transform: INPUT_TRANSFORM_TYPE = None,
         **kwargs: Any,
     ):
@@ -98,8 +88,8 @@ class FaceDetector(Task):
             learning_rate=learning_rate,
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
-            output=output or DetectionLabels(),
-            input_transform=input_transform or FaceDetectionInputTransform(),
+            output=output,
+            input_transform=input_transform,
         )
 
     @staticmethod
@@ -117,11 +107,11 @@ class FaceDetector(Task):
         model.register_buffer("mean", getattr(pl_model, "mean"))
         model.register_buffer("std", getattr(pl_model, "std"))
 
-        # copy pasting `_output_transform` function from `fastface.FaceDetector` to `torch.nn.Module`
+        # copy pasting `_postprocess` function from `fastface.FaceDetector` to `torch.nn.Module`
         # set output_transform function
         # this is called from FaceDetector lightning module form fastface itself
         # https://github.com/borhanMorphy/fastface/blob/master/fastface/module.py#L200
-        setattr(model, "_output_transform", getattr(pl_model, "_output_transform"))
+        setattr(model, "_postprocess", getattr(pl_model, "_postprocess"))
 
         return model
 
@@ -194,5 +184,6 @@ class FaceDetector(Task):
         batch[DataKeys.PREDS] = self(images)
         return batch
 
-    def configure_finetune_callback(self):
-        return [FaceDetectionFineTuning()]
+    def modules_to_freeze(self) -> Union[Module, Iterable[Union[Module, Iterable]]]:
+        """Return the module attributes of the model to be frozen."""
+        return self.model.backbone
