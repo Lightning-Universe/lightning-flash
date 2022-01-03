@@ -1,5 +1,6 @@
 from typing import Dict, Any, Optional, Callable, Union, List
 
+import torch
 import torchmetrics
 
 from flash import Task, DataKeys
@@ -33,11 +34,13 @@ class PytorchTabularAdapter(Adapter):
 
     @staticmethod
     def convert_batch(batch):
-        return {
-            "target": batch[DataKeys.TARGET].reshape(-1, 1),
+        new_batch = {
             "continuous": batch[DataKeys.INPUT][1],
             "categorical": batch[DataKeys.INPUT][0],
         }
+        if DataKeys.TARGET in batch:
+            new_batch["target"] = batch[DataKeys.TARGET].reshape(-1, 1)
+        return new_batch
 
     def training_step(self, batch, batch_idx) -> Any:
         return self.backbone.training_step(self.convert_batch(batch), batch_idx)
@@ -51,3 +54,6 @@ class PytorchTabularAdapter(Adapter):
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         batch[DataKeys.PREDS] = self(self.convert_batch(batch))
         return batch
+
+    def forward(self, batch: Any) -> Any:
+        return self.backbone(batch)["logits"]
