@@ -75,11 +75,14 @@ class ImageClassificationData(DataModule):
         """Load the :class:`~flash.image.classification.data.ImageClassificationData` from lists of files and
         corresponding lists of targets.
 
-        The supported file extensions are: .jpg, .jpeg, .png, .ppm, .bmp, .pgm, .tif, .tiff, .webp, .npy
+        The supported file extensions are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``, ``.bmp``, ``.pgm``, ``.tif``,
+        ``.tiff``, ``.webp``, and ``.npy``.
         The targets can be in any of our
         :ref:`supported classification target formats <formatting_classification_targets>`.
         To learn how to customize the transforms applied for each stage, read our
         :ref:`customizing transforms guide <customizing_transforms>`.
+
+        Example::
 
         .. testsetup::
 
@@ -91,38 +94,22 @@ class ImageClassificationData(DataModule):
             rand_image.save("image_3.png")
             rand_image.save("predict_image.png")
 
-        .. testcode::
+        .. doctest::
 
-            from flash import Trainer
-            from flash.image import ImageClassifier, ImageClassificationData
-
-            datamodule = ImageClassificationData.from_files(
-                train_files=["image_1.png", "image_2.png", "image_3.png"],
-                train_targets=["cat", "dog", "cat"],
-                predict_files=["predict_image.png"],
-                transform_kwargs=dict(image_size=(128, 128)),
-                batch_size=2,
-            )
-
-            model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
-
-            trainer = Trainer(limit_train_batches=1, max_epochs=1)
-            trainer.fit(model, datamodule=datamodule)
-
-        .. testoutput::
-            :hide:
-
-            ...
-
-        .. testcode::
-
-            trainer.predict(model, datamodule=datamodule)  # doctest:+ELLIPSIS
-
-        .. testoutput::
-           :hide:
-           :options: +ELLIPSIS
-
-           [['...']]
+           >>> from flash import Trainer
+           >>> from flash.image import ImageClassifier, ImageClassificationData
+           >>> datamodule = ImageClassificationData.from_files(
+           ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
+           ...     train_targets=["cat", "dog", "cat"],
+           ...     predict_files=["predict_image.png"],
+           ...     transform_kwargs=dict(image_size=(128, 128)),
+           ...     batch_size=2,
+           ... )
+           >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+           >>> trainer = Trainer(limit_train_batches=1, max_epochs=1)
+           >>> trainer.fit(model, datamodule=datamodule)
+           >>> trainer.predict(model, datamodule=datamodule)
+           ['...']]
 
         Args:
             train_files: The list of image files to use when training.
