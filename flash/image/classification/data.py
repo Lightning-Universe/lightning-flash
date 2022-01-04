@@ -478,8 +478,8 @@ class ImageClassificationData(DataModule):
         :ref:`customizing transforms guide <customizing_transforms>`.
 
         Args:
-            input_field: The field in the DataFrames containing the image files.
-            target_fields: The field or list of fields in the DataFrames containing the targets.
+            input_field: The field (column name) in the DataFrames containing the image file paths.
+            target_fields: The field (column name) or list of fields in the DataFrames containing the targets.
             train_data_frame: The pandas DataFrame to use when training.
             train_images_root: The root directory containing train images.
             train_resolver: Optionally provide a function which converts an entry from the ``input_field`` into an image
@@ -615,8 +615,8 @@ class ImageClassificationData(DataModule):
         :ref:`customizing transforms guide <customizing_transforms>`.
 
         Args:
-            input_field: The field in the CSV files containing the image files.
-            target_fields: The field or list of fields in the CSV files containing the targets.
+            input_field: The field (column name) in the CSV files containing the image file paths.
+            target_fields: The field (column name) or list of fields in the CSV files containing the targets.
             train_file: The CSV file to use when training.
             train_images_root: The root directory containing train images.
             train_resolver: Optionally provide a function which converts an entry from the ``input_field`` into an image
