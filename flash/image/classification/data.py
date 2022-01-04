@@ -113,11 +113,8 @@ class ImageClassificationData(DataModule):
 
                 >>> from PIL import Image
                 >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
-                >>> rand_image.save("image_1.png")
-                >>> rand_image.save("image_2.png")
-                >>> rand_image.save("image_3.png")
-                >>> rand_image.save("predict_image_1.png")
-                >>> rand_image.save("predict_image_2.png")
+                >>> [rand_image.save(f"image_{i}.png") for i in range(3)]
+                >>> [rand_image.save(f"predict_image_{i}.png") for i in range(3)]
 
             .. doctest::
 
@@ -126,7 +123,7 @@ class ImageClassificationData(DataModule):
                 >>> datamodule = ImageClassificationData.from_files(
                 ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
                 ...     train_targets=["cat", "dog", "cat"],
-                ...     predict_files=["predict_image_1.png", "predict_image_2.png"],
+                ...     predict_files=["predict_image_1.png", "predict_image_2.png", "predict_image_3.png"],
                 ...     transform_kwargs=dict(image_size=(128, 128)),
                 ...     batch_size=2,
                 ... )
@@ -197,6 +194,7 @@ class ImageClassificationData(DataModule):
             predict_folder
             ├── predict_image_1.png
             ├── predict_image_2.png
+            ├── predict_image_3.png
             ...
 
         To learn how to customize the transforms applied for each stage, read our
@@ -230,11 +228,8 @@ class ImageClassificationData(DataModule):
                 >>> os.makedirs(os.path.join("train_folder", "cat"), exist_ok=True)
                 >>> os.makedirs(os.path.join("train_folder", "dog"), exist_ok=True)
                 >>> os.makedirs("predict_folder", exist_ok=True)
-                >>> rand_image.save(os.path.join("train_folder", "cat", "image_1.png"))
-                >>> rand_image.save(os.path.join("train_folder", "dog", "image_2.png"))
-                >>> rand_image.save(os.path.join("train_folder", "cat", "image_3.png"))
-                >>> rand_image.save(os.path.join("predict_folder", "predict_image_1.png"))
-                >>> rand_image.save(os.path.join("predict_folder", "predict_image_2.png"))
+                >>> [rand_image.save(os.path.join("train_folder", "cat", f"image_{i}.png")) for i in range(3)]
+                >>> [rand_image.save(os.path.join("predict_folder", f"predict_image_{i}.png")) for i in range(3)]
 
             .. doctest::
 
@@ -523,11 +518,8 @@ class ImageClassificationData(DataModule):
                 >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
                 >>> os.makedirs("train_folder", exist_ok=True)
                 >>> os.makedirs("predict_folder", exist_ok=True)
-                >>> rand_image.save(os.path.join("train_folder", "image_1.png"))
-                >>> rand_image.save(os.path.join("train_folder", "image_2.png"))
-                >>> rand_image.save(os.path.join("train_folder", "image_3.png"))
-                >>> rand_image.save(os.path.join("predict_folder", "predict_image_1.png"))
-                >>> rand_image.save(os.path.join("predict_folder", "predict_image_2.png"))
+                >>> [rand_image.save(os.path.join("train_folder", f"image_{i}.png")) for i in range(3)]
+                >>> [rand_image.save(os.path.join("predict_folder", f"predict_image_{i}.png")) for i in range(3)]
 
             .. doctest::
 
@@ -542,7 +534,7 @@ class ImageClassificationData(DataModule):
                 ... )
                 >>> predict_data_frame = DataFrame.from_dict(
                 ...     {
-                ...         "images": ["predict_image_1.png", "predict_image_2.png"],
+                ...         "images": ["predict_image_1.png", "predict_image_2.png", "predict_image_3.png"],
                 ...     }
                 ... )
                 >>> datamodule = ImageClassificationData.from_data_frame(
@@ -664,17 +656,14 @@ class ImageClassificationData(DataModule):
                 >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
                 >>> os.makedirs("train_folder", exist_ok=True)
                 >>> os.makedirs("predict_folder", exist_ok=True)
-                >>> rand_image.save(os.path.join("train_folder", "image_1.png"))
-                >>> rand_image.save(os.path.join("train_folder", "image_2.png"))
-                >>> rand_image.save(os.path.join("train_folder", "image_3.png"))
-                >>> rand_image.save(os.path.join("predict_folder", "predict_image_1.png"))
-                >>> rand_image.save(os.path.join("predict_folder", "predict_image_2.png"))
+                >>> [rand_image.save(os.path.join("train_folder", f"image_{i}.png")) for i in range(3)]
+                >>> [rand_image.save(os.path.join("predict_folder", f"predict_image_{i}.png")) for i in range(3)]
                 >>> DataFrame.from_dict({
                 ...     "images": ["image_1.png", "image_2.png", "image_3.png"],
                 ...     "targets": ["cat", "dog", "cat"],
                 ... }).to_csv("train_data.csv", index=False)
                 >>> DataFrame.from_dict({
-                ...     "images": ["predict_image_1.png", "predict_image_2.png"],
+                ...     "images": ["predict_image_1.png", "predict_image_2.png", "predict_image_3.png"],
                 ... }).to_csv("predict_data.csv", index=False)
 
             The file ``train_data.csv`` contains the following:
@@ -693,6 +682,7 @@ class ImageClassificationData(DataModule):
                 images
                 predict_image_1.png
                 predict_image_2.png
+                predict_image_3.png
 
             .. doctest::
 
