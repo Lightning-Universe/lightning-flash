@@ -81,8 +81,6 @@ class ImageClassificationData(DataModule):
         To learn how to customize the transforms applied for each stage, read our
         :ref:`customizing transforms guide <customizing_transforms>`.
 
-        Example:
-
         .. testsetup::
 
             from PIL import Image
