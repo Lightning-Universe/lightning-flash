@@ -43,7 +43,7 @@ from flash.image.data import SampleCollection
 
 # Skip doctests if requirements aren't available
 if not _IMAGE_AVAILABLE:
-    __doctest_skip__ = ["*"]
+    __doctest_skip__ = ["ImageClassificationData", "ImageClassificationData.*"]
 
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
