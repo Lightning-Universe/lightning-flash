@@ -218,41 +218,42 @@ class ImageClassificationData(DataModule):
         Returns:
             The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
 
-        Example::
+        Examples
+        ________
 
-            .. testsetup::
+        .. testsetup::
 
-                >>> import os
-                >>> from PIL import Image
-                >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
-                >>> os.makedirs(os.path.join("train_folder", "cat"), exist_ok=True)
-                >>> os.makedirs(os.path.join("train_folder", "dog"), exist_ok=True)
-                >>> os.makedirs("predict_folder", exist_ok=True)
-                >>> rand_image.save(os.path.join("train_folder", "cat", "image_1.png"))
-                >>> rand_image.save(os.path.join("train_folder", "dog", "image_2.png"))
-                >>> rand_image.save(os.path.join("train_folder", "cat", "image_3.png"))
-                >>> _ = [rand_image.save(os.path.join("predict_folder", f"predict_image_{i}.png")) for i in range(1, 4)]
+            >>> import os
+            >>> from PIL import Image
+            >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
+            >>> os.makedirs(os.path.join("train_folder", "cat"), exist_ok=True)
+            >>> os.makedirs(os.path.join("train_folder", "dog"), exist_ok=True)
+            >>> os.makedirs("predict_folder", exist_ok=True)
+            >>> rand_image.save(os.path.join("train_folder", "cat", "image_1.png"))
+            >>> rand_image.save(os.path.join("train_folder", "dog", "image_2.png"))
+            >>> rand_image.save(os.path.join("train_folder", "cat", "image_3.png"))
+            >>> _ = [rand_image.save(os.path.join("predict_folder", f"predict_image_{i}.png")) for i in range(1, 4)]
 
-            .. doctest::
+        .. doctest::
 
-                >>> from flash import Trainer
-                >>> from flash.image import ImageClassifier, ImageClassificationData
-                >>> datamodule = ImageClassificationData.from_folders(
-                ...     train_folder="train_folder",
-                ...     predict_folder="predict_folder",
-                ...     transform_kwargs=dict(image_size=(128, 128)),
-                ...     batch_size=2,
-                ... )
-                >>> datamodule.num_classes
-                2
-                >>> datamodule.labels
-                ['cat', 'dog']
-                >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
-                >>> trainer = Trainer(fast_dev_run=True)
-                >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-                Training...
-                >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-                Predicting...
+            >>> from flash import Trainer
+            >>> from flash.image import ImageClassifier, ImageClassificationData
+            >>> datamodule = ImageClassificationData.from_folders(
+            ...     train_folder="train_folder",
+            ...     predict_folder="predict_folder",
+            ...     transform_kwargs=dict(image_size=(128, 128)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            2
+            >>> datamodule.labels
+            ['cat', 'dog']
+            >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
         """
 
         ds_kw = dict(
