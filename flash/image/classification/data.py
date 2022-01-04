@@ -130,6 +130,10 @@ class ImageClassificationData(DataModule):
                 ...     transform_kwargs=dict(image_size=(128, 128)),
                 ...     batch_size=2,
                 ... )
+                >>> datamodule.num_classes
+                2
+                >>> datamodule.labels
+                ['cat', 'dog']
                 >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
                 >>> trainer = Trainer(limit_train_batches=1, max_epochs=1)
                 >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
@@ -223,6 +227,9 @@ class ImageClassificationData(DataModule):
                 >>> import os
                 >>> from PIL import Image
                 >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
+                >>> os.makedirs(os.path.join("train_folder", "cat"), exist_ok=True)
+                >>> os.makedirs(os.path.join("train_folder", "dog"), exist_ok=True)
+                >>> os.makedirs("predict_folder", exist_ok=True)
                 >>> rand_image.save(os.path.join("train_folder", "cat", "image_1.png"))
                 >>> rand_image.save(os.path.join("train_folder", "dog", "image_2.png"))
                 >>> rand_image.save(os.path.join("train_folder", "cat", "image_3.png"))
@@ -239,6 +246,10 @@ class ImageClassificationData(DataModule):
                 ...     transform_kwargs=dict(image_size=(128, 128)),
                 ...     batch_size=2,
                 ... )
+                >>> datamodule.num_classes
+                2
+                >>> datamodule.labels
+                ['cat', 'dog']
                 >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
                 >>> trainer = Trainer(limit_train_batches=1, max_epochs=1)
                 >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
@@ -322,6 +333,10 @@ class ImageClassificationData(DataModule):
                 ...     transform_kwargs=dict(image_size=(128, 128)),
                 ...     batch_size=2,
                 ... )
+                >>> datamodule.num_classes
+                2
+                >>> datamodule.labels
+                ['cat', 'dog']
                 >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
                 >>> trainer = Trainer(limit_train_batches=1, max_epochs=1)
                 >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
@@ -371,25 +386,25 @@ class ImageClassificationData(DataModule):
         :ref:`customizing transforms guide <customizing_transforms>`.
 
         Args:
-          train_data: The torch tensor or list of tensors to use when training.
-          train_targets: The list of targets to use when training.
-          val_data: The torch tensor or list of tensors to use when validating.
-          val_targets: The list of targets to use when validating.
-          test_data: The torch tensor or list of tensors to use when testing.
-          test_targets: The list of targets to use when testing.
-          predict_data: The torch tensor or list of tensors to use when predicting.
-          train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-          val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-          test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-          predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+            train_data: The torch tensor or list of tensors to use when training.
+            train_targets: The list of targets to use when training.
+            val_data: The torch tensor or list of tensors to use when validating.
+            val_targets: The list of targets to use when validating.
+            test_data: The torch tensor or list of tensors to use when testing.
+            test_targets: The list of targets to use when testing.
+            predict_data: The torch tensor or list of tensors to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
               predicting.
-          input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
-          transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
-          data_module_kwargs: Additional keyword arguments to provide to the
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.
 
         Returns:
-          The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
+            The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
 
         Example::
 
@@ -405,6 +420,10 @@ class ImageClassificationData(DataModule):
                 ...     transform_kwargs=dict(image_size=(128, 128)),
                 ...     batch_size=2,
                 ... )
+                >>> datamodule.num_classes
+                2
+                >>> datamodule.labels
+                ['cat', 'dog']
                 >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
                 >>> trainer = Trainer(limit_train_batches=1, max_epochs=1)
                 >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
@@ -452,6 +471,101 @@ class ImageClassificationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
+        """Load the :class:`~flash.image.classification.data.ImageClassificationData` from pandas DataFrame objects
+        containing image files and their corresponding targets.
+
+        Input images will be extracted from the ``input_field`` in the DataFrame.
+        The supported file extensions are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``, ``.bmp``, ``.pgm``, ``.tif``,
+        ``.tiff``, ``.webp``, and ``.npy``.
+        The targets will be extracted from the ``target_fields`` in the DataFrame and can be in any of our
+        :ref:`supported classification target formats <formatting_classification_targets>`.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
+        Args:
+            input_field: The field in the DataFrames containing the image files.
+            target_fields: The field or list of fields in the DataFrames containing the targets.
+            train_data_frame: The pandas DataFrame to use when training.
+            train_images_root: The root directory containing train images.
+            train_resolver: Optionally provide a function which converts an entry from the ``input_field`` into an image
+                file path.
+            val_data_frame: The pandas DataFrame to use when validating.
+            val_images_root: The root directory containing validation images.
+            val_resolver: Optionally provide a function which converts an entry from the ``input_field`` into an image
+                file path.
+            test_data_frame: The pandas DataFrame to use when testing.
+            test_images_root: The root directory containing test images.
+            test_resolver: Optionally provide a function which converts an entry from the ``input_field`` into an image
+                file path.
+            predict_data_frame: The pandas DataFrame to use when predicting.
+            predict_images_root: The root directory containing predict images.
+            predict_resolver: Optionally provide a function which converts an entry from the ``input_field`` into an
+                image file path.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+              predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+              :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
+
+        Example::
+
+            .. testsetup::
+
+                >>> import os
+                >>> from PIL import Image
+                >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
+                >>> os.makedirs("train_folder", exist_ok=True)
+                >>> os.makedirs("predict_folder", exist_ok=True)
+                >>> rand_image.save(os.path.join("train_folder", "image_1.png"))
+                >>> rand_image.save(os.path.join("train_folder", "image_2.png"))
+                >>> rand_image.save(os.path.join("train_folder", "image_3.png"))
+                >>> rand_image.save(os.path.join("predict_folder", "predict_image_1.png"))
+                >>> rand_image.save(os.path.join("predict_folder", "predict_image_2.png"))
+
+            .. doctest::
+
+                >>> from pandas import DataFrame
+                >>> from flash import Trainer
+                >>> from flash.image import ImageClassifier, ImageClassificationData
+                >>> train_data_frame = DataFrame.from_dict(
+                ...     {
+                ...         "images": ["image_1.png", "image_2.png", "image_3.png"],
+                ...         "targets": ["cat", "dog", "cat"],
+                ...     }
+                ... )
+                >>> predict_data_frame = DataFrame.from_dict(
+                ...     {
+                ...         "images": ["predict_image_1.png", "predict_image_2.png"],
+                ...     }
+                ... )
+                >>> datamodule = ImageClassificationData.from_data_frame(
+                ...     "images",
+                ...     "targets",
+                ...     train_data_frame=train_data_frame,
+                ...     train_images_root="train_folder",
+                ...     predict_data_frame=predict_data_frame,
+                ...     predict_images_root="predict_folder",
+                ...     transform_kwargs=dict(image_size=(128, 128)),
+                ...     batch_size=2,
+                ... )
+                >>> datamodule.num_classes
+                2
+                >>> datamodule.labels
+                ['cat', 'dog']
+                >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+                >>> trainer = Trainer(limit_train_batches=1, max_epochs=1)
+                >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+                Training...
+                >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+                Predicting...
+        """
 
         ds_kw = dict(
             data_pipeline_state=DataPipelineState(),
@@ -497,6 +611,114 @@ class ImageClassificationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
+        """Load the :class:`~flash.image.classification.data.ImageClassificationData` from CSV files containing
+        image file paths and their corresponding targets.
+
+        Input images will be extracted from the ``input_field`` column in the CSV files.
+        The supported file extensions are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``, ``.bmp``, ``.pgm``, ``.tif``,
+        ``.tiff``, ``.webp``, and ``.npy``.
+        The targets will be extracted from the ``target_fields`` in the CSV files and can be in any of our
+        :ref:`supported classification target formats <formatting_classification_targets>`.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
+        Args:
+            input_field: The field in the CSV files containing the image files.
+            target_fields: The field or list of fields in the CSV files containing the targets.
+            train_file: The CSV file to use when training.
+            train_images_root: The root directory containing train images.
+            train_resolver: Optionally provide a function which converts an entry from the ``input_field`` into an image
+                file path.
+            val_file: The CSV file to use when validating.
+            val_images_root: The root directory containing validation images.
+            val_resolver: Optionally provide a function which converts an entry from the ``input_field`` into an image
+                file path.
+            test_file: The CSV file to use when testing.
+            test_images_root: The root directory containing test images.
+            test_resolver: Optionally provide a function which converts an entry from the ``input_field`` into an image
+                file path.
+            predict_file: The CSV file to use when predicting.
+            predict_images_root: The root directory containing predict images.
+            predict_resolver: Optionally provide a function which converts an entry from the ``input_field`` into an
+                image file path.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+              predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+              :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
+
+        Example::
+
+            .. testsetup::
+
+                >>> import os
+                >>> from PIL import Image
+                >>> from pandas import DataFrame
+                >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
+                >>> os.makedirs("train_folder", exist_ok=True)
+                >>> os.makedirs("predict_folder", exist_ok=True)
+                >>> rand_image.save(os.path.join("train_folder", "image_1.png"))
+                >>> rand_image.save(os.path.join("train_folder", "image_2.png"))
+                >>> rand_image.save(os.path.join("train_folder", "image_3.png"))
+                >>> rand_image.save(os.path.join("predict_folder", "predict_image_1.png"))
+                >>> rand_image.save(os.path.join("predict_folder", "predict_image_2.png"))
+                >>> DataFrame.from_dict({
+                ...     "images": ["image_1.png", "image_2.png", "image_3.png"],
+                ...     "targets": ["cat", "dog", "cat"],
+                ... }).to_csv("train_data.csv", index=False)
+                >>> DataFrame.from_dict({
+                ...     "images": ["predict_image_1.png", "predict_image_2.png"],
+                ... }).to_csv("predict_data.csv", index=False)
+
+            The file ``train_data.csv`` contains the following:
+
+            .. code-block::
+
+                images,targets
+                image_1.png,cat
+                image_2.png,dog
+                image_3.png,cat
+
+            The file ``predict_data.csv`` contains the following:
+
+            .. code-block::
+
+                images
+                predict_image_1.png
+                predict_image_2.png
+
+            .. doctest::
+
+                >>> from flash import Trainer
+                >>> from flash.image import ImageClassifier, ImageClassificationData
+                >>> datamodule = ImageClassificationData.from_csv(
+                ...     "images",
+                ...     "targets",
+                ...     train_file="train_data.csv",
+                ...     train_images_root="train_folder",
+                ...     predict_file="predict_data.csv",
+                ...     predict_images_root="predict_folder",
+                ...     transform_kwargs=dict(image_size=(128, 128)),
+                ...     batch_size=2,
+                ... )
+                >>> datamodule.num_classes
+                2
+                >>> datamodule.labels
+                ['cat', 'dog']
+                >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+                >>> trainer = Trainer(limit_train_batches=1, max_epochs=1)
+                >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+                Training...
+                >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+                Predicting...
+        """
 
         ds_kw = dict(
             data_pipeline_state=DataPipelineState(),
@@ -507,7 +729,7 @@ class ImageClassificationData(DataModule):
         train_data = (train_file, input_field, target_fields, train_images_root, train_resolver)
         val_data = (val_file, input_field, target_fields, val_images_root, val_resolver)
         test_data = (test_file, input_field, target_fields, test_images_root, test_resolver)
-        predict_data = (predict_file, input_field, predict_images_root, predict_resolver)
+        predict_data = (predict_file, input_field, None, predict_images_root, predict_resolver)
 
         return cls(
             input_cls(RunningStage.TRAINING, *train_data, transform=train_transform, **ds_kw),
