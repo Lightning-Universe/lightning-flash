@@ -27,7 +27,7 @@ from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioImageClassificationInput
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, Image, requires
+from flash.core.utilities.imports import _IMAGE_AVAILABLE, _MATPLOTLIB_AVAILABLE, Image, requires
 from flash.core.utilities.stages import RunningStage
 from flash.image.classification.input import (
     ImageClassificationCSVInput,
@@ -40,6 +40,10 @@ from flash.image.classification.input import (
 )
 from flash.image.classification.transforms import ImageClassificationInputTransform
 from flash.image.data import SampleCollection
+
+# Skip doctests if requirements aren't available
+if not _IMAGE_AVAILABLE:
+    __doctest_skip__ = ["*"]
 
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
@@ -75,62 +79,58 @@ class ImageClassificationData(DataModule):
         """Load the :class:`~flash.image.classification.data.ImageClassificationData` from lists of files and
         corresponding lists of targets.
 
-        The supported file extensions are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``, ``.bmp``, ``.pgm``, ``.tif``,
-        ``.tiff``, ``.webp``, and ``.npy``.
-        The targets can be in any of our
-        :ref:`supported classification target formats <formatting_classification_targets>`.
-        To learn how to customize the transforms applied for each stage, read our
-        :ref:`customizing transforms guide <customizing_transforms>`.
+         The supported file extensions are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``, ``.bmp``, ``.pgm``, ``.tif``,
+         ``.tiff``, ``.webp``, and ``.npy``.
+         The targets can be in any of our
+         :ref:`supported classification target formats <formatting_classification_targets>`.
+         To learn how to customize the transforms applied for each stage, read our
+         :ref:`customizing transforms guide <customizing_transforms>`.
 
-        Example::
+         .. testsetup::
 
-        .. testsetup::
+             >>> from PIL import Image
+             >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
+             >>> rand_image.save("image_1.png")
+             >>> rand_image.save("image_2.png")
+             >>> rand_image.save("image_3.png")
+             >>> rand_image.save("predict_image.png")
 
-            from PIL import Image
+        >>> from flash import Trainer
+        >>> from flash.image import ImageClassifier, ImageClassificationData
+        >>> datamodule = ImageClassificationData.from_files(
+        ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
+        ...     train_targets=["cat", "dog", "cat"],
+        ...     predict_files=["predict_image.png"],
+        ...     transform_kwargs=dict(image_size=(128, 128)),
+        ...     batch_size=2,
+        ... )
+        >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+        >>> trainer = Trainer(limit_train_batches=1, max_epochs=1)
+        >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+        Training...
+        >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+        Predicting...
 
-            rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
-            rand_image.save("image_1.png")
-            rand_image.save("image_2.png")
-            rand_image.save("image_3.png")
-            rand_image.save("predict_image.png")
+         Args:
+             train_files: The list of image files to use when training.
+             train_targets: The list of targets to use when training.
+             val_files: The list of image files to use when validating.
+             val_targets: The list of targets to use when validating.
+             test_files: The list of image files to use when testing.
+             test_targets: The list of targets to use when testing.
+             predict_files: The list of image files to use when predicting.
+             train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+             val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+                 predicting.
+             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+             data_module_kwargs: Additional keyword arguments to provide to the
+                 :class:`~flash.core.data.data_module.DataModule` constructor.
 
-        .. doctest::
-
-           >>> from flash import Trainer
-           >>> from flash.image import ImageClassifier, ImageClassificationData
-           >>> datamodule = ImageClassificationData.from_files(
-           ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
-           ...     train_targets=["cat", "dog", "cat"],
-           ...     predict_files=["predict_image.png"],
-           ...     transform_kwargs=dict(image_size=(128, 128)),
-           ...     batch_size=2,
-           ... )
-           >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
-           >>> trainer = Trainer(limit_train_batches=1, max_epochs=1)
-           >>> trainer.fit(model, datamodule=datamodule)
-           >>> trainer.predict(model, datamodule=datamodule)
-           ['...']]
-
-        Args:
-            train_files: The list of image files to use when training.
-            train_targets: The list of targets to use when training.
-            val_files: The list of image files to use when validating.
-            val_targets: The list of targets to use when validating.
-            test_files: The list of image files to use when testing.
-            test_targets: The list of targets to use when testing.
-            predict_files: The list of image files to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
-            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
-            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
-            data_module_kwargs: Additional keyword arguments to provide to the
-                :class:`~flash.core.data.data_module.DataModule` constructor.
-
-        Returns:
-            The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
+         Returns:
+             The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
         """
 
         ds_kw = dict(
