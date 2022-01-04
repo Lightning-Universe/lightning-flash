@@ -124,6 +124,7 @@ class SemanticSegmentationFolderInput(SemanticSegmentationFilesInput):
     ) -> List[Dict[str, Any]]:
         self.load_labels_map(num_classes, labels_map)
         files = os.listdir(folder)
+        files.sort()
         if mask_folder is not None:
             mask_files = os.listdir(mask_folder)
 
@@ -137,6 +138,8 @@ class SemanticSegmentationFolderInput(SemanticSegmentationFilesInput):
 
             files = [os.path.join(folder, file) for file in all_files]
             mask_files = [os.path.join(mask_folder, file) for file in all_files]
+            files.sort()
+            mask_files.sort()
             return super().load_data(files, mask_files)
         return super().load_data(files)
 
