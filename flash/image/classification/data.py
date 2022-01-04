@@ -228,7 +228,9 @@ class ImageClassificationData(DataModule):
                 >>> os.makedirs(os.path.join("train_folder", "cat"), exist_ok=True)
                 >>> os.makedirs(os.path.join("train_folder", "dog"), exist_ok=True)
                 >>> os.makedirs("predict_folder", exist_ok=True)
-                >>> _ = [rand_image.save(os.path.join("train_folder", "cat", f"image_{i}.png")) for i in range(1, 4)]
+                >>> rand_image.save(os.path.join("train_folder", "cat", "image_1.png"))
+                >>> rand_image.save(os.path.join("train_folder", "dog", "image_2.png"))
+                >>> rand_image.save(os.path.join("train_folder", "cat", "image_3.png"))
                 >>> _ = [rand_image.save(os.path.join("predict_folder", f"predict_image_{i}.png")) for i in range(1, 4)]
 
             .. doctest::
