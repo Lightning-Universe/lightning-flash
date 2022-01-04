@@ -95,42 +95,44 @@ class ImageClassificationData(DataModule):
              >>> rand_image.save("image_3.png")
              >>> rand_image.save("predict_image.png")
 
-        >>> from flash import Trainer
-        >>> from flash.image import ImageClassifier, ImageClassificationData
-        >>> datamodule = ImageClassificationData.from_files(
-        ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
-        ...     train_targets=["cat", "dog", "cat"],
-        ...     predict_files=["predict_image.png"],
-        ...     transform_kwargs=dict(image_size=(128, 128)),
-        ...     batch_size=2,
-        ... )
-        >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
-        >>> trainer = Trainer(limit_train_batches=1, max_epochs=1)
-        >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-        Training...
-        >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-        Predicting...
+        .. doctest::
 
-         Args:
-             train_files: The list of image files to use when training.
-             train_targets: The list of targets to use when training.
-             val_files: The list of image files to use when validating.
-             val_targets: The list of targets to use when validating.
-             test_files: The list of image files to use when testing.
-             test_targets: The list of targets to use when testing.
-             predict_files: The list of image files to use when predicting.
-             train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-             val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                 predicting.
-             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
-             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
-             data_module_kwargs: Additional keyword arguments to provide to the
-                 :class:`~flash.core.data.data_module.DataModule` constructor.
+         >>> from flash import Trainer
+         >>> from flash.image import ImageClassifier, ImageClassificationData
+         >>> datamodule = ImageClassificationData.from_files(
+         ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
+         ...     train_targets=["cat", "dog", "cat"],
+         ...     predict_files=["predict_image.png"],
+         ...     transform_kwargs=dict(image_size=(128, 128)),
+         ...     batch_size=2,
+         ... )
+         >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+         >>> trainer = Trainer(limit_train_batches=1, max_epochs=1)
+         >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+         Training...
+         >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+         Predicting...
 
-         Returns:
-             The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
+         s:
+          train_files: The list of image files to use when training.
+          train_targets: The list of targets to use when training.
+          val_files: The list of image files to use when validating.
+          val_targets: The list of targets to use when validating.
+          test_files: The list of image files to use when testing.
+          test_targets: The list of targets to use when testing.
+          predict_files: The list of image files to use when predicting.
+          train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+          val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+          test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+          predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+              predicting.
+          input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+          transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+          data_module_kwargs: Additional keyword arguments to provide to the
+              :class:`~flash.core.data.data_module.DataModule` constructor.
+
+         urns:
+          The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
         """
 
         ds_kw = dict(
@@ -195,6 +197,54 @@ class ImageClassificationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
+        """Load the :class:`~flash.image.classification.data.ImageClassificationData` from numpy arrays (or lists
+        of arrays) and corresponding lists of targets.
+
+         The targets can be in any of our
+         :ref:`supported classification target formats <formatting_classification_targets>`.
+         To learn how to customize the transforms applied for each stage, read our
+         :ref:`customizing transforms guide <customizing_transforms>`.
+
+        .. doctest::
+
+         >>> import numpy as np
+         >>> from flash import Trainer
+         >>> from flash.image import ImageClassifier, ImageClassificationData
+         >>> datamodule = ImageClassificationData.from_numpy(
+         ...     train_data=[np.random.rand(3, 64, 64), np.random.rand(3, 64, 64), np.random.rand(3, 64, 64)],
+         ...     train_targets=["cat", "dog", "cat"],
+         ...     predict_data=[np.random.rand(3, 64, 64)],
+         ...     transform_kwargs=dict(image_size=(128, 128)),
+         ...     batch_size=2,
+         ... )
+         >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+         >>> trainer = Trainer(limit_train_batches=1, max_epochs=1)
+         >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+         Training...
+         >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+         Predicting...
+
+         s:
+          train_data: The numpy array or list of arrays to use when training.
+          train_targets: The list of targets to use when training.
+          val_data: The numpy array or list of arrays to use when validating.
+          val_targets: The list of targets to use when validating.
+          test_data: The numpy array or list of arrays to use when testing.
+          test_targets: The list of targets to use when testing.
+          predict_data: The numpy array or list of arrays to use when predicting.
+          train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+          val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+          test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+          predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+              predicting.
+          input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+          transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+          data_module_kwargs: Additional keyword arguments to provide to the
+              :class:`~flash.core.data.data_module.DataModule` constructor.
+
+         urns:
+          The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
+        """
 
         ds_kw = dict(
             data_pipeline_state=DataPipelineState(),
@@ -228,6 +278,54 @@ class ImageClassificationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
+        """Load the :class:`~flash.image.classification.data.ImageClassificationData` from torch tensors (or lists
+        of tensors) and corresponding lists of targets.
+
+         The targets can be in any of our
+         :ref:`supported classification target formats <formatting_classification_targets>`.
+         To learn how to customize the transforms applied for each stage, read our
+         :ref:`customizing transforms guide <customizing_transforms>`.
+
+        .. doctest::
+
+         >>> import torch
+         >>> from flash import Trainer
+         >>> from flash.image import ImageClassifier, ImageClassificationData
+         >>> datamodule = ImageClassificationData.from_tensors(
+         ...     train_data=[torch.rand(3, 64, 64), torch.rand(3, 64, 64), torch.rand(3, 64, 64)],
+         ...     train_targets=["cat", "dog", "cat"],
+         ...     predict_data=[torch.rand(3, 64, 64)],
+         ...     transform_kwargs=dict(image_size=(128, 128)),
+         ...     batch_size=2,
+         ... )
+         >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+         >>> trainer = Trainer(limit_train_batches=1, max_epochs=1)
+         >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+         Training...
+         >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+         Predicting...
+
+         s:
+          train_data: The torch tensor or list of tensors to use when training.
+          train_targets: The list of targets to use when training.
+          val_data: The torch tensor or list of tensors to use when validating.
+          val_targets: The list of targets to use when validating.
+          test_data: The torch tensor or list of tensors to use when testing.
+          test_targets: The list of targets to use when testing.
+          predict_data: The torch tensor or list of tensors to use when predicting.
+          train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+          val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+          test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+          predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+              predicting.
+          input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+          transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+          data_module_kwargs: Additional keyword arguments to provide to the
+              :class:`~flash.core.data.data_module.DataModule` constructor.
+
+         urns:
+          The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
+        """
 
         ds_kw = dict(
             data_pipeline_state=DataPipelineState(),
