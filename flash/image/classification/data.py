@@ -107,8 +107,8 @@ class ImageClassificationData(DataModule):
         Returns:
             The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
 
-        Examples:
-        _________
+        Examples
+        ________
 
         .. testsetup::
 
@@ -219,8 +219,8 @@ class ImageClassificationData(DataModule):
         Returns:
             The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
 
-        Examples:
-        _________
+        Examples
+        ________
 
         .. testsetup::
 
@@ -318,8 +318,8 @@ class ImageClassificationData(DataModule):
         Returns:
             The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
 
-        Examples:
-        _________
+        Examples
+        ________
 
         .. doctest::
 
@@ -406,8 +406,8 @@ class ImageClassificationData(DataModule):
         Returns:
             The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
 
-        Examples:
-        _________
+        Examples
+        ________
 
         .. doctest::
 
@@ -515,8 +515,8 @@ class ImageClassificationData(DataModule):
         Returns:
             The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
 
-        Examples:
-        _________
+        Examples
+        ________
 
         .. testsetup::
 
@@ -653,8 +653,8 @@ class ImageClassificationData(DataModule):
         Returns:
             The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
 
-        Examples:
-        _________
+        Examples
+        ________
 
         .. testsetup::
 
