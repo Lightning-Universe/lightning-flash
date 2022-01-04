@@ -496,6 +496,14 @@ class DataModule(pl.LightningDataModule):
         return n_cls_train or n_cls_val or n_cls_test
 
     @property
+    def labels(self) -> Optional[int]:
+        """Property that returns the labels if this ``DataModule`` contains classification data."""
+        n_cls_train = getattr(self.train_dataset, "labels", None)
+        n_cls_val = getattr(self.val_dataset, "labels", None)
+        n_cls_test = getattr(self.test_dataset, "labels", None)
+        return n_cls_train or n_cls_val or n_cls_test
+
+    @property
     def multi_label(self) -> Optional[bool]:
         """Property that returns ``True`` if this ``DataModule`` contains multi-label data."""
         multi_label_train = getattr(self.train_dataset, "multi_label", None)
