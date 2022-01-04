@@ -107,36 +107,37 @@ class ImageClassificationData(DataModule):
         Returns:
             The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
 
-        Example::
+        Examples
+        ________
 
-            .. testsetup::
+        .. testsetup::
 
-                >>> from PIL import Image
-                >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
-                >>> _ = [rand_image.save(f"image_{i}.png") for i in range(1, 4)]
-                >>> _ = [rand_image.save(f"predict_image_{i}.png") for i in range(1, 4)]
+            >>> from PIL import Image
+            >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
+            >>> _ = [rand_image.save(f"image_{i}.png") for i in range(1, 4)]
+            >>> _ = [rand_image.save(f"predict_image_{i}.png") for i in range(1, 4)]
 
-            .. doctest::
+        .. doctest::
 
-                >>> from flash import Trainer
-                >>> from flash.image import ImageClassifier, ImageClassificationData
-                >>> datamodule = ImageClassificationData.from_files(
-                ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
-                ...     train_targets=["cat", "dog", "cat"],
-                ...     predict_files=["predict_image_1.png", "predict_image_2.png", "predict_image_3.png"],
-                ...     transform_kwargs=dict(image_size=(128, 128)),
-                ...     batch_size=2,
-                ... )
-                >>> datamodule.num_classes
-                2
-                >>> datamodule.labels
-                ['cat', 'dog']
-                >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
-                >>> trainer = Trainer(fast_dev_run=True)
-                >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-                Training...
-                >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-                Predicting...
+            >>> from flash import Trainer
+            >>> from flash.image import ImageClassifier, ImageClassificationData
+            >>> datamodule = ImageClassificationData.from_files(
+            ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
+            ...     train_targets=["cat", "dog", "cat"],
+            ...     predict_files=["predict_image_1.png", "predict_image_2.png", "predict_image_3.png"],
+            ...     transform_kwargs=dict(image_size=(128, 128)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            2
+            >>> datamodule.labels
+            ['cat', 'dog']
+            >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
         """
 
         ds_kw = dict(
@@ -218,41 +219,42 @@ class ImageClassificationData(DataModule):
         Returns:
             The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
 
-        Example::
+        Examples
+        ________
 
-            .. testsetup::
+        .. testsetup::
 
-                >>> import os
-                >>> from PIL import Image
-                >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
-                >>> os.makedirs(os.path.join("train_folder", "cat"), exist_ok=True)
-                >>> os.makedirs(os.path.join("train_folder", "dog"), exist_ok=True)
-                >>> os.makedirs("predict_folder", exist_ok=True)
-                >>> rand_image.save(os.path.join("train_folder", "cat", "image_1.png"))
-                >>> rand_image.save(os.path.join("train_folder", "dog", "image_2.png"))
-                >>> rand_image.save(os.path.join("train_folder", "cat", "image_3.png"))
-                >>> _ = [rand_image.save(os.path.join("predict_folder", f"predict_image_{i}.png")) for i in range(1, 4)]
+            >>> import os
+            >>> from PIL import Image
+            >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
+            >>> os.makedirs(os.path.join("train_folder", "cat"), exist_ok=True)
+            >>> os.makedirs(os.path.join("train_folder", "dog"), exist_ok=True)
+            >>> os.makedirs("predict_folder", exist_ok=True)
+            >>> rand_image.save(os.path.join("train_folder", "cat", "image_1.png"))
+            >>> rand_image.save(os.path.join("train_folder", "dog", "image_2.png"))
+            >>> rand_image.save(os.path.join("train_folder", "cat", "image_3.png"))
+            >>> _ = [rand_image.save(os.path.join("predict_folder", f"predict_image_{i}.png")) for i in range(1, 4)]
 
-            .. doctest::
+        .. doctest::
 
-                >>> from flash import Trainer
-                >>> from flash.image import ImageClassifier, ImageClassificationData
-                >>> datamodule = ImageClassificationData.from_folders(
-                ...     train_folder="train_folder",
-                ...     predict_folder="predict_folder",
-                ...     transform_kwargs=dict(image_size=(128, 128)),
-                ...     batch_size=2,
-                ... )
-                >>> datamodule.num_classes
-                2
-                >>> datamodule.labels
-                ['cat', 'dog']
-                >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
-                >>> trainer = Trainer(fast_dev_run=True)
-                >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-                Training...
-                >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-                Predicting...
+            >>> from flash import Trainer
+            >>> from flash.image import ImageClassifier, ImageClassificationData
+            >>> datamodule = ImageClassificationData.from_folders(
+            ...     train_folder="train_folder",
+            ...     predict_folder="predict_folder",
+            ...     transform_kwargs=dict(image_size=(128, 128)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            2
+            >>> datamodule.labels
+            ['cat', 'dog']
+            >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
         """
 
         ds_kw = dict(
@@ -316,30 +318,31 @@ class ImageClassificationData(DataModule):
         Returns:
             The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
 
-        Example::
+        Examples
+        ________
 
-            .. doctest::
+        .. doctest::
 
-                >>> import numpy as np
-                >>> from flash import Trainer
-                >>> from flash.image import ImageClassifier, ImageClassificationData
-                >>> datamodule = ImageClassificationData.from_numpy(
-                ...     train_data=[np.random.rand(3, 64, 64), np.random.rand(3, 64, 64), np.random.rand(3, 64, 64)],
-                ...     train_targets=["cat", "dog", "cat"],
-                ...     predict_data=[np.random.rand(3, 64, 64)],
-                ...     transform_kwargs=dict(image_size=(128, 128)),
-                ...     batch_size=2,
-                ... )
-                >>> datamodule.num_classes
-                2
-                >>> datamodule.labels
-                ['cat', 'dog']
-                >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
-                >>> trainer = Trainer(fast_dev_run=True)
-                >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-                Training...
-                >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-                Predicting...
+            >>> import numpy as np
+            >>> from flash import Trainer
+            >>> from flash.image import ImageClassifier, ImageClassificationData
+            >>> datamodule = ImageClassificationData.from_numpy(
+            ...     train_data=[np.random.rand(3, 64, 64), np.random.rand(3, 64, 64), np.random.rand(3, 64, 64)],
+            ...     train_targets=["cat", "dog", "cat"],
+            ...     predict_data=[np.random.rand(3, 64, 64)],
+            ...     transform_kwargs=dict(image_size=(128, 128)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            2
+            >>> datamodule.labels
+            ['cat', 'dog']
+            >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
         """
 
         ds_kw = dict(
@@ -403,30 +406,31 @@ class ImageClassificationData(DataModule):
         Returns:
             The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
 
-        Example::
+        Examples
+        ________
 
-            .. doctest::
+        .. doctest::
 
-                >>> import torch
-                >>> from flash import Trainer
-                >>> from flash.image import ImageClassifier, ImageClassificationData
-                >>> datamodule = ImageClassificationData.from_tensors(
-                ...     train_data=[torch.rand(3, 64, 64), torch.rand(3, 64, 64), torch.rand(3, 64, 64)],
-                ...     train_targets=["cat", "dog", "cat"],
-                ...     predict_data=[torch.rand(3, 64, 64)],
-                ...     transform_kwargs=dict(image_size=(128, 128)),
-                ...     batch_size=2,
-                ... )
-                >>> datamodule.num_classes
-                2
-                >>> datamodule.labels
-                ['cat', 'dog']
-                >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
-                >>> trainer = Trainer(fast_dev_run=True)
-                >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-                Training...
-                >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-                Predicting...
+            >>> import torch
+            >>> from flash import Trainer
+            >>> from flash.image import ImageClassifier, ImageClassificationData
+            >>> datamodule = ImageClassificationData.from_tensors(
+            ...     train_data=[torch.rand(3, 64, 64), torch.rand(3, 64, 64), torch.rand(3, 64, 64)],
+            ...     train_targets=["cat", "dog", "cat"],
+            ...     predict_data=[torch.rand(3, 64, 64)],
+            ...     transform_kwargs=dict(image_size=(128, 128)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            2
+            >>> datamodule.labels
+            ['cat', 'dog']
+            >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
         """
 
         ds_kw = dict(
@@ -511,54 +515,55 @@ class ImageClassificationData(DataModule):
         Returns:
             The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
 
-        Example::
+        Examples
+        ________
 
-            .. testsetup::
+        .. testsetup::
 
-                >>> import os
-                >>> from PIL import Image
-                >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
-                >>> os.makedirs("train_folder", exist_ok=True)
-                >>> os.makedirs("predict_folder", exist_ok=True)
-                >>> _ = [rand_image.save(os.path.join("train_folder", f"image_{i}.png")) for i in range(1, 4)]
-                >>> _ = [rand_image.save(os.path.join("predict_folder", f"predict_image_{i}.png")) for i in range(1, 4)]
+            >>> import os
+            >>> from PIL import Image
+            >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
+            >>> os.makedirs("train_folder", exist_ok=True)
+            >>> os.makedirs("predict_folder", exist_ok=True)
+            >>> _ = [rand_image.save(os.path.join("train_folder", f"image_{i}.png")) for i in range(1, 4)]
+            >>> _ = [rand_image.save(os.path.join("predict_folder", f"predict_image_{i}.png")) for i in range(1, 4)]
 
-            .. doctest::
+        .. doctest::
 
-                >>> from pandas import DataFrame
-                >>> from flash import Trainer
-                >>> from flash.image import ImageClassifier, ImageClassificationData
-                >>> train_data_frame = DataFrame.from_dict(
-                ...     {
-                ...         "images": ["image_1.png", "image_2.png", "image_3.png"],
-                ...         "targets": ["cat", "dog", "cat"],
-                ...     }
-                ... )
-                >>> predict_data_frame = DataFrame.from_dict(
-                ...     {
-                ...         "images": ["predict_image_1.png", "predict_image_2.png", "predict_image_3.png"],
-                ...     }
-                ... )
-                >>> datamodule = ImageClassificationData.from_data_frame(
-                ...     "images",
-                ...     "targets",
-                ...     train_data_frame=train_data_frame,
-                ...     train_images_root="train_folder",
-                ...     predict_data_frame=predict_data_frame,
-                ...     predict_images_root="predict_folder",
-                ...     transform_kwargs=dict(image_size=(128, 128)),
-                ...     batch_size=2,
-                ... )
-                >>> datamodule.num_classes
-                2
-                >>> datamodule.labels
-                ['cat', 'dog']
-                >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
-                >>> trainer = Trainer(fast_dev_run=True)
-                >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-                Training...
-                >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-                Predicting...
+            >>> from pandas import DataFrame
+            >>> from flash import Trainer
+            >>> from flash.image import ImageClassifier, ImageClassificationData
+            >>> train_data_frame = DataFrame.from_dict(
+            ...     {
+            ...         "images": ["image_1.png", "image_2.png", "image_3.png"],
+            ...         "targets": ["cat", "dog", "cat"],
+            ...     }
+            ... )
+            >>> predict_data_frame = DataFrame.from_dict(
+            ...     {
+            ...         "images": ["predict_image_1.png", "predict_image_2.png", "predict_image_3.png"],
+            ...     }
+            ... )
+            >>> datamodule = ImageClassificationData.from_data_frame(
+            ...     "images",
+            ...     "targets",
+            ...     train_data_frame=train_data_frame,
+            ...     train_images_root="train_folder",
+            ...     predict_data_frame=predict_data_frame,
+            ...     predict_images_root="predict_folder",
+            ...     transform_kwargs=dict(image_size=(128, 128)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            2
+            >>> datamodule.labels
+            ['cat', 'dog']
+            >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
         """
 
         ds_kw = dict(
@@ -648,68 +653,69 @@ class ImageClassificationData(DataModule):
         Returns:
             The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
 
-        Example::
+        Examples
+        ________
 
-            .. testsetup::
+        .. testsetup::
 
-                >>> import os
-                >>> from PIL import Image
-                >>> from pandas import DataFrame
-                >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
-                >>> os.makedirs("train_folder", exist_ok=True)
-                >>> os.makedirs("predict_folder", exist_ok=True)
-                >>> _ = [rand_image.save(os.path.join("train_folder", f"image_{i}.png")) for i in range(1, 4)]
-                >>> _ = [rand_image.save(os.path.join("predict_folder", f"predict_image_{i}.png")) for i in range(1, 4)]
-                >>> DataFrame.from_dict({
-                ...     "images": ["image_1.png", "image_2.png", "image_3.png"],
-                ...     "targets": ["cat", "dog", "cat"],
-                ... }).to_csv("train_data.csv", index=False)
-                >>> DataFrame.from_dict({
-                ...     "images": ["predict_image_1.png", "predict_image_2.png", "predict_image_3.png"],
-                ... }).to_csv("predict_data.csv", index=False)
+            >>> import os
+            >>> from PIL import Image
+            >>> from pandas import DataFrame
+            >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
+            >>> os.makedirs("train_folder", exist_ok=True)
+            >>> os.makedirs("predict_folder", exist_ok=True)
+            >>> _ = [rand_image.save(os.path.join("train_folder", f"image_{i}.png")) for i in range(1, 4)]
+            >>> _ = [rand_image.save(os.path.join("predict_folder", f"predict_image_{i}.png")) for i in range(1, 4)]
+            >>> DataFrame.from_dict({
+            ...     "images": ["image_1.png", "image_2.png", "image_3.png"],
+            ...     "targets": ["cat", "dog", "cat"],
+            ... }).to_csv("train_data.csv", index=False)
+            >>> DataFrame.from_dict({
+            ...     "images": ["predict_image_1.png", "predict_image_2.png", "predict_image_3.png"],
+            ... }).to_csv("predict_data.csv", index=False)
 
-            The file ``train_data.csv`` contains the following:
+        The file ``train_data.csv`` contains the following:
 
-            .. code-block::
+        .. code-block::
 
-                images,targets
-                image_1.png,cat
-                image_2.png,dog
-                image_3.png,cat
+            images,targets
+            image_1.png,cat
+            image_2.png,dog
+            image_3.png,cat
 
-            The file ``predict_data.csv`` contains the following:
+        The file ``predict_data.csv`` contains the following:
 
-            .. code-block::
+        .. code-block::
 
-                images
-                predict_image_1.png
-                predict_image_2.png
-                predict_image_3.png
+            images
+            predict_image_1.png
+            predict_image_2.png
+            predict_image_3.png
 
-            .. doctest::
+        .. doctest::
 
-                >>> from flash import Trainer
-                >>> from flash.image import ImageClassifier, ImageClassificationData
-                >>> datamodule = ImageClassificationData.from_csv(
-                ...     "images",
-                ...     "targets",
-                ...     train_file="train_data.csv",
-                ...     train_images_root="train_folder",
-                ...     predict_file="predict_data.csv",
-                ...     predict_images_root="predict_folder",
-                ...     transform_kwargs=dict(image_size=(128, 128)),
-                ...     batch_size=2,
-                ... )
-                >>> datamodule.num_classes
-                2
-                >>> datamodule.labels
-                ['cat', 'dog']
-                >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
-                >>> trainer = Trainer(fast_dev_run=True)
-                >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-                Training...
-                >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-                Predicting...
+            >>> from flash import Trainer
+            >>> from flash.image import ImageClassifier, ImageClassificationData
+            >>> datamodule = ImageClassificationData.from_csv(
+            ...     "images",
+            ...     "targets",
+            ...     train_file="train_data.csv",
+            ...     train_images_root="train_folder",
+            ...     predict_file="predict_data.csv",
+            ...     predict_images_root="predict_folder",
+            ...     transform_kwargs=dict(image_size=(128, 128)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            2
+            >>> datamodule.labels
+            ['cat', 'dog']
+            >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
         """
 
         ds_kw = dict(
