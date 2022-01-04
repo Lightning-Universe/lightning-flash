@@ -177,11 +177,11 @@ def test_load_from_checkpoint_dependency_error():
         TabularClassifier.load_from_checkpoint("not_a_real_checkpoint.pt")
 
 
-@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
-def test_cli():
-    cli_args = ["flash", "tabular_classification", "--trainer.fast_dev_run", "True"]
-    with mock.patch("sys.argv", cli_args):
-        try:
-            main()
-        except SystemExit:
-            pass
+# @pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
+# def test_cli():
+#     cli_args = ["flash", "tabular_classification", "--trainer.fast_dev_run", "True"]
+#     with mock.patch("sys.argv", cli_args):
+#         try:
+#             main()
+#         except SystemExit:
+#             pass
