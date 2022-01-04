@@ -245,6 +245,5 @@ if _SERVE_AVAILABLE:
         def uid(self) -> str:
             return self._flashserve_meta_.uid
 
-
 else:
     ModelComponent = object

@@ -89,7 +89,6 @@ try:
             out = self.model(img)
             return ([out.argmax(), out.argmax()], torch.Tensor([21]))
 
-
 except TypeError:
     ClassificationInferenceRepeated = None
 
@@ -115,7 +114,6 @@ try:
             assert out.argmax() == out2.argmax()
             return out.argmax()
 
-
 except TypeError:
     ClassificationInferenceRepeated = None
 
@@ -140,7 +138,6 @@ try:
             out2 = self.model2(img)
             assert out.argmax() == out2.argmax()
             return out.argmax()
-
 
 except TypeError:
     ClassificationInferenceModelMapping = None
@@ -171,7 +168,6 @@ try:
 
             return out.argmax(), img
 
-
 except TypeError:
     ClassificationInferenceComposable = None
 
@@ -197,7 +193,6 @@ try:
             seat_num = section.item() * isle.item() * row.item() * stadium * len(self.sport)
             stadium_idx = torch.tensor(1000)
             return torch.Tensor([seat_num]), stadium_idx
-
 
 except TypeError:
     SeatClassifier = None
