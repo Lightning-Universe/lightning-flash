@@ -49,7 +49,12 @@ class TabularRegressor(RegressionAdapterTask):
 
     def __init__(
         self,
-        properties,
+        embedding_dims,
+        categorical_cols,
+        categorical_cardinality,
+        categorical_dim,
+        continuous_dim,
+        output_dim,
         backbone,
         loss_fn: Callable = F.cross_entropy,
         optimizer: OPTIMIZER_TYPE = "Adam",
@@ -60,6 +65,13 @@ class TabularRegressor(RegressionAdapterTask):
         **backbone_kwargs
     ):
         self.save_hyperparameters()
+        properties = {"embedding_dims": embedding_dims,
+                     "categorical_cols": categorical_cols,
+                     "categorical_cardinality": categorical_cardinality,
+                     "categorical_dim": categorical_dim,
+                     "continuous_dim": continuous_dim,
+                     "output_dim": output_dim
+                     }
         properties.update(backbone_kwargs)
         metadata = self.backbones.get(backbone, with_metadata=True)
         adapter = metadata["metadata"]["adapter"].from_task(
@@ -80,3 +92,22 @@ class TabularRegressor(RegressionAdapterTask):
             lr_scheduler=lr_scheduler,
             output=output,
         )
+
+    @classmethod
+    def from_data(cls, datamodule, **kwargs) -> "TabularRegressor":
+        cat_dims, cat_emb_dim = zip(*datamodule.embedding_sizes) if datamodule.embedding_sizes else ([], [])
+        cat_emb_dim = [(dim, dim) for dim in cat_emb_dim]
+        embedding_dims = cat_emb_dim
+        categorical_cols = datamodule.categorical_fields
+        categorical_cardinality = cat_dims
+        categorical_dim = len(cat_dims)
+        continuous_dim = datamodule.num_features - len(cat_dims)
+        output_dim = datamodule.num_classes if not datamodule.is_regression else 1
+        model = cls(embedding_dims=embedding_dims,
+                    categorical_cols=categorical_cols,
+                    categorical_cardinality=categorical_cardinality,
+                    categorical_dim=categorical_dim,
+                    continuous_dim=continuous_dim,
+                    output_dim=output_dim,
+                    **kwargs)
+        return model

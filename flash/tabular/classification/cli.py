@@ -48,7 +48,7 @@ def tabular_classification():
             "trainer.max_epochs": 3,
         },
         finetune=False,
-        datamodule_attributes={"num_features", "num_classes", "embedding_sizes"},
+        datamodule_attributes={"num_features", "num_classes", "embedding_sizes"}
     )
 
     cli.trainer.save_checkpoint("tabular_classification_model.pt")

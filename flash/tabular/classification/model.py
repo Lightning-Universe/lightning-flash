@@ -11,14 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Tuple
+from functools import partial
+from typing import Any, Callable, Dict, List, Tuple, Type, Optional
 
 from torch.nn import functional as F
 
+from flash import InputTransform
 from flash.core.classification import ClassificationAdapterTask, Labels
+from flash.core.data.io.input import ServeInput
 from flash.core.integrations.pytorch_tabular.backbones import PYTORCH_TABULAR_BACKBONES
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
+from flash.core.serve import Composition
+from flash.core.utilities.imports import requires
+from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE, \
+    INPUT_TRANSFORM_TYPE
+from flash.tabular.input import TabularDeserializer
 
 
 class TabularClassifier(ClassificationAdapterTask):
@@ -48,7 +55,12 @@ class TabularClassifier(ClassificationAdapterTask):
 
     def __init__(
         self,
-        properties,
+        embedding_dims,
+        categorical_cols,
+        categorical_cardinality,
+        categorical_dim,
+        continuous_dim,
+        output_dim,
         backbone,
         loss_fn: Callable = F.cross_entropy,
         optimizer: OPTIMIZER_TYPE = "Adam",
@@ -60,6 +72,13 @@ class TabularClassifier(ClassificationAdapterTask):
         **backbone_kwargs,
     ):
         self.save_hyperparameters()
+        properties = {"embedding_dims": embedding_dims,
+                      "categorical_cols": categorical_cols,
+                      "categorical_cardinality": categorical_cardinality,
+                      "categorical_dim": categorical_dim,
+                      "continuous_dim": continuous_dim,
+                      "output_dim": output_dim
+                      }
         properties.update(backbone_kwargs)
         metadata = self.backbones.get(backbone, with_metadata=True)
         adapter = metadata["metadata"]["adapter"].from_task(
@@ -87,3 +106,37 @@ class TabularClassifier(ClassificationAdapterTask):
     def _ci_benchmark_fn(history: List[Dict[str, Any]]):
         """This function is used only for debugging usage with CI."""
         assert history[-1]["val_accuracy"] > 0.6, history[-1]["val_accuracy"]
+
+    @classmethod
+    def from_data(cls, datamodule, **kwargs) -> "TabularRegressor":
+        cat_dims, cat_emb_dim = zip(*datamodule.embedding_sizes) if datamodule.embedding_sizes else ([], [])
+        cat_emb_dim = [(dim, dim) for dim in cat_emb_dim]
+        embedding_dims = cat_emb_dim
+        categorical_cols = datamodule.categorical_fields
+        categorical_cardinality = cat_dims
+        categorical_dim = len(cat_dims)
+        continuous_dim = datamodule.num_features - len(cat_dims)
+        output_dim = datamodule.num_classes if not datamodule.is_regression else 1
+        model = cls(embedding_dims=embedding_dims,
+                    categorical_cols=categorical_cols,
+                    categorical_cardinality=categorical_cardinality,
+                    categorical_dim=categorical_dim,
+                    continuous_dim=continuous_dim,
+                    output_dim=output_dim,
+                    **kwargs)
+        return model
+
+    @requires("serve")
+    def serve(
+            self,
+            host: str = "127.0.0.1",
+            port: int = 8000,
+            sanity_check: bool = True,
+            input_cls: Optional[Type[ServeInput]] = TabularDeserializer,
+            transform: INPUT_TRANSFORM_TYPE = InputTransform,
+            transform_kwargs: Optional[Dict] = None,
+            parameters: Optional[Dict[str, Any]] = None,
+    ) -> Composition:
+        return super().serve(
+            host, port, sanity_check, partial(input_cls, parameters=parameters), transform, transform_kwargs
+        )

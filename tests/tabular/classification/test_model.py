@@ -59,9 +59,10 @@ def test_init_train(backbone, tmpdir):
                 "categorical_dim": 16,
                 "continuous_dim": 16,
                 "output_dim": 10,
+                "backbone": backbone
                 }
 
-    model = TabularClassifier(properties=data_properties, backbone=backbone)
+    model = TabularClassifier(**data_properties)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.fit(model, train_dl)
 
@@ -77,9 +78,10 @@ def test_init_train_no_num(backbone, tmpdir):
                        "categorical_dim": 16,
                        "continuous_dim": 0,
                        "output_dim": 10,
+                       "backbone": backbone
                        }
 
-    model = TabularClassifier(properties=data_properties, backbone=backbone)
+    model = TabularClassifier(**data_properties)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.fit(model, train_dl)
 
@@ -95,42 +97,56 @@ def test_init_train_no_cat(backbone, tmpdir):
                        "categorical_dim": 0,
                        "continuous_dim": 16,
                        "output_dim": 10,
+                       "backbone": backbone
                        }
 
-    model = TabularClassifier(properties=data_properties, backbone=backbone)
+    model = TabularClassifier(**data_properties)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.fit(model, train_dl)
 
 
 @pytest.mark.skipif(_TABULAR_AVAILABLE, reason="tabular libraries are installed.")
 def test_module_import_error(tmpdir):
+    data_properties = {"embedding_dims": [],
+                       "categorical_cols": [],
+                       "categorical_cardinality": [],
+                       "categorical_dim": 0,
+                       "continuous_dim": 16,
+                       "output_dim": 10,
+                       "backbone": "tabnet"
+                       }
     with pytest.raises(ModuleNotFoundError, match="[tabular]"):
-        TabularClassifier(properties={}, backbone="tabnet")
+        TabularClassifier(**data_properties)
 
 
 @pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
-@pytest.mark.parametrize("backbone", ["tabnet", "tabtransformer", "autoint",
+@pytest.mark.parametrize("backbone", ["tabnet", "tabtransformer", "fttransformer", "autoint",
                                       "node", "category_embedding"])
 def test_jit(backbone, tmpdir):
-    data_properties = {"embedding_dims": [(10, 32) for _ in range(16)],
-                       "categorical_cols": list(range(16)),
-                       "categorical_cardinality": [10 for _ in range(16)],
-                       "categorical_dim": 16,
-                       "continuous_dim": 16,
+    data_properties = {"embedding_dims": [(10, 32) for _ in range(4)],
+                       "categorical_cols": list(range(4)),
+                       "categorical_cardinality": [10 for _ in range(4)],
+                       "categorical_dim": 4,
+                       "continuous_dim": 4,
                        "output_dim": 10,
+                       "backbone": backbone
                        }
-    model = TabularClassifier(properties=data_properties, backbone=backbone)
+    model = TabularClassifier(**data_properties)
     model.eval()
 
     # torch.jit.script doesn't work with tabnet
-    model = torch.jit.trace(model, ((torch.randint(0, 10, size=(1, 4)), torch.rand(1, 4)),))
+    batch = {
+        "continuous": torch.rand(1, 4),
+        "categorical": torch.randint(0, 10, size=(1, 4)),
+    }
+    model = torch.jit.trace(model, batch, check_trace=False)
 
     # TODO: torch.jit.save doesn't work with tabnet
     # path = os.path.join(tmpdir, "test.pt")
     # torch.jit.save(model, path)
     # model = torch.jit.load(path)
 
-    out = model((torch.randint(0, 10, size=(1, 4)), torch.rand(1, 4)))
+    out = model(batch)
     assert isinstance(out, torch.Tensor)
     assert out.shape == torch.Size([1, 10])
 
@@ -148,7 +164,7 @@ def test_serve(backbone):
         train_data_frame=pd.DataFrame.from_dict(train_data),
         batch_size=1,
     )
-    model = TabularClassifier(properties=datamodule.properties, backbone=backbone)
+    model = TabularClassifier.from_data(datamodule=datamodule, backbone=backbone)
     # TODO: Currently only servable once a input_transform has been attached
     model._input_transform = datamodule.input_transform
     model.eval()

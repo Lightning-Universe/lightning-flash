@@ -49,6 +49,6 @@ def test_classification(backbone, tmpdir):
         num_workers=0,
         batch_size=2,
     )
-    model = TabularClassifier(properties=data.properties, backbone=backbone)
+    model = TabularClassifier.from_data(datamodule=data, backbone=backbone)
     trainer = pl.Trainer(fast_dev_run=True, default_root_dir=tmpdir)
     trainer.fit(model, data)

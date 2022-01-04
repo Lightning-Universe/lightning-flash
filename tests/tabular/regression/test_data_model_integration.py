@@ -49,6 +49,6 @@ def test_regression(backbone, tmpdir):
         num_workers=0,
         batch_size=2,
     )
-    model = TabularRegressor(properties=data.properties, backbone=backbone)
+    model = TabularRegressor.from_data(datamodule=data, backbone=backbone)
     trainer = pl.Trainer(fast_dev_run=True, default_root_dir=tmpdir)
     trainer.fit(model, data)

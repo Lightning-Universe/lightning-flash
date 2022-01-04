@@ -52,8 +52,7 @@ class PytorchTabularAdapter(Adapter):
         return self.backbone.validation_step(self.convert_batch(batch), batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch[DataKeys.PREDS] = self(self.convert_batch(batch))
-        return batch
+        return self(self.convert_batch(batch))
 
     def forward(self, batch: Any) -> Any:
         return self.backbone(batch)["logits"]
