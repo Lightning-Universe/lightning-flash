@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from unittest import mock
-from unittest.mock import ANY, call, MagicMock
 
 import torch
 
@@ -29,7 +28,7 @@ from flash.core.utilities.stages import RunningStage
 def test_flash_callback(_, __, tmpdir):
     """Test the callback hook system for fit."""
 
-    callback_mock = MagicMock()
+    callback_mock = mock.MagicMock()
 
     inputs = [(torch.rand(1), torch.rand(1))]
     dm = DataModule(
@@ -44,10 +43,10 @@ def test_flash_callback(_, __, tmpdir):
     _ = next(iter(dm.train_dataloader()))
 
     assert callback_mock.method_calls == [
-        call.on_load_sample(ANY, RunningStage.TRAINING),
-        call.on_per_sample_transform(ANY, RunningStage.TRAINING),
-        call.on_collate(ANY, RunningStage.TRAINING),
-        call.on_per_batch_transform(ANY, RunningStage.TRAINING),
+        mock.call.on_load_sample(mock.ANY, RunningStage.TRAINING),
+        mock.call.on_per_sample_transform(mock.ANY, RunningStage.TRAINING),
+        mock.call.on_collate(mock.ANY, RunningStage.TRAINING),
+        mock.call.on_per_batch_transform(mock.ANY, RunningStage.TRAINING),
     ]
 
     class CustomModel(Task):
@@ -75,23 +74,23 @@ def test_flash_callback(_, __, tmpdir):
     trainer.fit(CustomModel(), datamodule=dm)
 
     assert callback_mock.method_calls == [
-        call.on_load_sample(ANY, RunningStage.TRAINING),
-        call.on_per_sample_transform(ANY, RunningStage.TRAINING),
-        call.on_collate(ANY, RunningStage.TRAINING),
-        call.on_per_batch_transform(ANY, RunningStage.TRAINING),
-        call.on_load_sample(ANY, RunningStage.VALIDATING),
-        call.on_per_sample_transform(ANY, RunningStage.VALIDATING),
-        call.on_collate(ANY, RunningStage.VALIDATING),
-        call.on_per_batch_transform(ANY, RunningStage.VALIDATING),
-        call.on_per_batch_transform_on_device(ANY, RunningStage.VALIDATING),
-        call.on_load_sample(ANY, RunningStage.TRAINING),
-        call.on_per_sample_transform(ANY, RunningStage.TRAINING),
-        call.on_collate(ANY, RunningStage.TRAINING),
-        call.on_per_batch_transform(ANY, RunningStage.TRAINING),
-        call.on_per_batch_transform_on_device(ANY, RunningStage.TRAINING),
-        call.on_load_sample(ANY, RunningStage.VALIDATING),
-        call.on_per_sample_transform(ANY, RunningStage.VALIDATING),
-        call.on_collate(ANY, RunningStage.VALIDATING),
-        call.on_per_batch_transform(ANY, RunningStage.VALIDATING),
-        call.on_per_batch_transform_on_device(ANY, RunningStage.VALIDATING),
+        mock.call.on_load_sample(mock.ANY, RunningStage.TRAINING),
+        mock.call.on_per_sample_transform(mock.ANY, RunningStage.TRAINING),
+        mock.call.on_collate(mock.ANY, RunningStage.TRAINING),
+        mock.call.on_per_batch_transform(mock.ANY, RunningStage.TRAINING),
+        mock.call.on_load_sample(mock.ANY, RunningStage.VALIDATING),
+        mock.call.on_per_sample_transform(mock.ANY, RunningStage.VALIDATING),
+        mock.call.on_collate(mock.ANY, RunningStage.VALIDATING),
+        mock.call.on_per_batch_transform(mock.ANY, RunningStage.VALIDATING),
+        mock.call.on_per_batch_transform_on_device(mock.ANY, RunningStage.VALIDATING),
+        mock.call.on_load_sample(mock.ANY, RunningStage.TRAINING),
+        mock.call.on_per_sample_transform(mock.ANY, RunningStage.TRAINING),
+        mock.call.on_collate(mock.ANY, RunningStage.TRAINING),
+        mock.call.on_per_batch_transform(mock.ANY, RunningStage.TRAINING),
+        mock.call.on_per_batch_transform_on_device(mock.ANY, RunningStage.TRAINING),
+        mock.call.on_load_sample(mock.ANY, RunningStage.VALIDATING),
+        mock.call.on_per_sample_transform(mock.ANY, RunningStage.VALIDATING),
+        mock.call.on_collate(mock.ANY, RunningStage.VALIDATING),
+        mock.call.on_per_batch_transform(mock.ANY, RunningStage.VALIDATING),
+        mock.call.on_per_batch_transform_on_device(mock.ANY, RunningStage.VALIDATING),
     ]

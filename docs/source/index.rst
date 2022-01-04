@@ -42,6 +42,8 @@ Lightning Flash
    general/serve
    general/backbones
    general/optimization
+   general/classification_targets
+   general/customizing_transforms
 
 .. toctree::
    :maxdepth: 1
