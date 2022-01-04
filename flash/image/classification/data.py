@@ -135,7 +135,7 @@ class ImageClassificationData(DataModule):
                 >>> datamodule.labels
                 ['cat', 'dog']
                 >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
-                >>> trainer = Trainer(limit_train_batches=1, max_epochs=1)
+                >>> trainer = Trainer(fast_dev_run=True)
                 >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
                 Training...
                 >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
@@ -251,7 +251,7 @@ class ImageClassificationData(DataModule):
                 >>> datamodule.labels
                 ['cat', 'dog']
                 >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
-                >>> trainer = Trainer(limit_train_batches=1, max_epochs=1)
+                >>> trainer = Trainer(fast_dev_run=True)
                 >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
                 Training...
                 >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
@@ -338,7 +338,7 @@ class ImageClassificationData(DataModule):
                 >>> datamodule.labels
                 ['cat', 'dog']
                 >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
-                >>> trainer = Trainer(limit_train_batches=1, max_epochs=1)
+                >>> trainer = Trainer(fast_dev_run=True)
                 >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
                 Training...
                 >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
@@ -425,7 +425,7 @@ class ImageClassificationData(DataModule):
                 >>> datamodule.labels
                 ['cat', 'dog']
                 >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
-                >>> trainer = Trainer(limit_train_batches=1, max_epochs=1)
+                >>> trainer = Trainer(fast_dev_run=True)
                 >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
                 Training...
                 >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
@@ -560,7 +560,7 @@ class ImageClassificationData(DataModule):
                 >>> datamodule.labels
                 ['cat', 'dog']
                 >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
-                >>> trainer = Trainer(limit_train_batches=1, max_epochs=1)
+                >>> trainer = Trainer(fast_dev_run=True)
                 >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
                 Training...
                 >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
@@ -713,7 +713,7 @@ class ImageClassificationData(DataModule):
                 >>> datamodule.labels
                 ['cat', 'dog']
                 >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
-                >>> trainer = Trainer(limit_train_batches=1, max_epochs=1)
+                >>> trainer = Trainer(fast_dev_run=True)
                 >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
                 Training...
                 >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
