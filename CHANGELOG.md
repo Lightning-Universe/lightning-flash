@@ -28,6 +28,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Fixed a bug where passing `predict_data_frame` to `ImageClassificationData.from_data_frame` raised an error ([#1088](https://github.com/PyTorchLightning/lightning-flash/pull/1088))
 
+- Fixed a bug where segmentation files / masks were loaded with an inconsistent ordering ([#1094](https://github.com/PyTorchLightning/lightning-flash/pull/1094))
+
 ### Removed
 
 ## [0.6.0] - 2021-13-12
