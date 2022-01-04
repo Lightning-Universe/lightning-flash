@@ -111,30 +111,30 @@ class ImageClassificationData(DataModule):
 
             .. testsetup::
 
-                 >>> from PIL import Image
-                 >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
-                 >>> rand_image.save("image_1.png")
-                 >>> rand_image.save("image_2.png")
-                 >>> rand_image.save("image_3.png")
-                 >>> rand_image.save("predict_image.png")
+                >>> from PIL import Image
+                >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
+                >>> rand_image.save("image_1.png")
+                >>> rand_image.save("image_2.png")
+                >>> rand_image.save("image_3.png")
+                >>> rand_image.save("predict_image.png")
 
             .. doctest::
 
-                 >>> from flash import Trainer
-                 >>> from flash.image import ImageClassifier, ImageClassificationData
-                 >>> datamodule = ImageClassificationData.from_files(
-                 ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
-                 ...     train_targets=["cat", "dog", "cat"],
-                 ...     predict_files=["predict_image.png"],
-                 ...     transform_kwargs=dict(image_size=(128, 128)),
-                 ...     batch_size=2,
-                 ... )
-                 >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
-                 >>> trainer = Trainer(limit_train_batches=1, max_epochs=1)
-                 >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-                 Training...
-                 >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-                 Predicting...
+                >>> from flash import Trainer
+                >>> from flash.image import ImageClassifier, ImageClassificationData
+                >>> datamodule = ImageClassificationData.from_files(
+                ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
+                ...     train_targets=["cat", "dog", "cat"],
+                ...     predict_files=["predict_image.png"],
+                ...     transform_kwargs=dict(image_size=(128, 128)),
+                ...     batch_size=2,
+                ... )
+                >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+                >>> trainer = Trainer(limit_train_batches=1, max_epochs=1)
+                >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+                Training...
+                >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+                Predicting...
         """
 
         ds_kw = dict(
@@ -202,50 +202,52 @@ class ImageClassificationData(DataModule):
         """Load the :class:`~flash.image.classification.data.ImageClassificationData` from numpy arrays (or lists
         of arrays) and corresponding lists of targets.
 
-         The targets can be in any of our
-         :ref:`supported classification target formats <formatting_classification_targets>`.
-         To learn how to customize the transforms applied for each stage, read our
-         :ref:`customizing transforms guide <customizing_transforms>`.
+        The targets can be in any of our
+        :ref:`supported classification target formats <formatting_classification_targets>`.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
 
-        .. doctest::
-
-         >>> import numpy as np
-         >>> from flash import Trainer
-         >>> from flash.image import ImageClassifier, ImageClassificationData
-         >>> datamodule = ImageClassificationData.from_numpy(
-         ...     train_data=[np.random.rand(3, 64, 64), np.random.rand(3, 64, 64), np.random.rand(3, 64, 64)],
-         ...     train_targets=["cat", "dog", "cat"],
-         ...     predict_data=[np.random.rand(3, 64, 64)],
-         ...     transform_kwargs=dict(image_size=(128, 128)),
-         ...     batch_size=2,
-         ... )
-         >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
-         >>> trainer = Trainer(limit_train_batches=1, max_epochs=1)
-         >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-         Training...
-         >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-         Predicting...
-
-         s:
-          train_data: The numpy array or list of arrays to use when training.
-          train_targets: The list of targets to use when training.
-          val_data: The numpy array or list of arrays to use when validating.
-          val_targets: The list of targets to use when validating.
-          test_data: The numpy array or list of arrays to use when testing.
-          test_targets: The list of targets to use when testing.
-          predict_data: The numpy array or list of arrays to use when predicting.
-          train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-          val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-          test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-          predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+        Args:
+            train_data: The numpy array or list of arrays to use when training.
+            train_targets: The list of targets to use when training.
+            val_data: The numpy array or list of arrays to use when validating.
+            val_targets: The list of targets to use when validating.
+            test_data: The numpy array or list of arrays to use when testing.
+            test_targets: The list of targets to use when testing.
+            predict_data: The numpy array or list of arrays to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
               predicting.
-          input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
-          transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
-          data_module_kwargs: Additional keyword arguments to provide to the
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.
 
-         urns:
-          The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
+        Returns:
+            The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
+
+        Example::
+
+            .. doctest::
+
+                >>> import numpy as np
+                >>> from flash import Trainer
+                >>> from flash.image import ImageClassifier, ImageClassificationData
+                >>> datamodule = ImageClassificationData.from_numpy(
+                ...     train_data=[np.random.rand(3, 64, 64), np.random.rand(3, 64, 64), np.random.rand(3, 64, 64)],
+                ...     train_targets=["cat", "dog", "cat"],
+                ...     predict_data=[np.random.rand(3, 64, 64)],
+                ...     transform_kwargs=dict(image_size=(128, 128)),
+                ...     batch_size=2,
+                ... )
+                >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+                >>> trainer = Trainer(limit_train_batches=1, max_epochs=1)
+                >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+                Training...
+                >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+                Predicting...
         """
 
         ds_kw = dict(
@@ -283,31 +285,12 @@ class ImageClassificationData(DataModule):
         """Load the :class:`~flash.image.classification.data.ImageClassificationData` from torch tensors (or lists
         of tensors) and corresponding lists of targets.
 
-         The targets can be in any of our
-         :ref:`supported classification target formats <formatting_classification_targets>`.
-         To learn how to customize the transforms applied for each stage, read our
-         :ref:`customizing transforms guide <customizing_transforms>`.
+        The targets can be in any of our
+        :ref:`supported classification target formats <formatting_classification_targets>`.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
 
-        .. doctest::
-
-         >>> import torch
-         >>> from flash import Trainer
-         >>> from flash.image import ImageClassifier, ImageClassificationData
-         >>> datamodule = ImageClassificationData.from_tensors(
-         ...     train_data=[torch.rand(3, 64, 64), torch.rand(3, 64, 64), torch.rand(3, 64, 64)],
-         ...     train_targets=["cat", "dog", "cat"],
-         ...     predict_data=[torch.rand(3, 64, 64)],
-         ...     transform_kwargs=dict(image_size=(128, 128)),
-         ...     batch_size=2,
-         ... )
-         >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
-         >>> trainer = Trainer(limit_train_batches=1, max_epochs=1)
-         >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-         Training...
-         >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-         Predicting...
-
-         s:
+        Args:
           train_data: The torch tensor or list of tensors to use when training.
           train_targets: The list of targets to use when training.
           val_data: The torch tensor or list of tensors to use when validating.
@@ -325,8 +308,29 @@ class ImageClassificationData(DataModule):
           data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.
 
-         urns:
+        Returns:
           The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
+
+        Example::
+
+            .. doctest::
+
+                >>> import torch
+                >>> from flash import Trainer
+                >>> from flash.image import ImageClassifier, ImageClassificationData
+                >>> datamodule = ImageClassificationData.from_tensors(
+                ...     train_data=[torch.rand(3, 64, 64), torch.rand(3, 64, 64), torch.rand(3, 64, 64)],
+                ...     train_targets=["cat", "dog", "cat"],
+                ...     predict_data=[torch.rand(3, 64, 64)],
+                ...     transform_kwargs=dict(image_size=(128, 128)),
+                ...     batch_size=2,
+                ... )
+                >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+                >>> trainer = Trainer(limit_train_batches=1, max_epochs=1)
+                >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+                Training...
+                >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+                Predicting...
         """
 
         ds_kw = dict(
