@@ -60,12 +60,12 @@ class RegressionTask(Task, RegressionMixin):
 
 class RegressionAdapterTask(AdapterTask, RegressionMixin):
     def __init__(
-            self,
-            *args,
-            loss_fn: Optional[Callable] = None,
-            metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
-            output: OUTPUT_TYPE = None,
-            **kwargs,
+        self,
+        *args,
+        loss_fn: Optional[Callable] = None,
+        metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
+        output: OUTPUT_TYPE = None,
+        **kwargs,
     ) -> None:
         metrics, loss_fn = RegressionMixin._build(loss_fn, metrics)
 
