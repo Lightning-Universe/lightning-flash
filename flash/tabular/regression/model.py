@@ -11,15 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, List, Tuple
+from functools import partial
+from typing import Any, Callable, List, Tuple, Optional, Type, Dict
 
 from torch.nn import functional as F
 
+from flash import InputTransform
+from flash.core.data.io.input import ServeInput
 from flash.core.integrations.pytorch_tabular.backbones import PYTORCH_TABULAR_BACKBONES
 from flash.core.registry import FlashRegistry
 from flash.core.regression import RegressionAdapterTask
-from flash.core.utilities.imports import _TABULAR_AVAILABLE
-from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
+from flash.core.serve import Composition
+from flash.core.utilities.imports import _TABULAR_AVAILABLE, requires
+from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE, \
+    INPUT_TRANSFORM_TYPE
+from flash.tabular.input import TabularDeserializer
 
 
 class TabularRegressor(RegressionAdapterTask):
@@ -100,3 +106,18 @@ class TabularRegressor(RegressionAdapterTask):
                     output_dim=datamodule.output_dim,
                     **kwargs)
         return model
+
+    @requires("serve")
+    def serve(
+            self,
+            host: str = "127.0.0.1",
+            port: int = 8000,
+            sanity_check: bool = True,
+            input_cls: Optional[Type[ServeInput]] = TabularDeserializer,
+            transform: INPUT_TRANSFORM_TYPE = InputTransform,
+            transform_kwargs: Optional[Dict] = None,
+            parameters: Optional[Dict[str, Any]] = None,
+    ) -> Composition:
+        return super().serve(
+            host, port, sanity_check, partial(input_cls, parameters=parameters), transform, transform_kwargs
+        )
