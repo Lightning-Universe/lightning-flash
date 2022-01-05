@@ -33,9 +33,14 @@ class TabularClassifier(ClassificationAdapterTask):
     :ref:`tabular_classification`.
 
     Args:
-        num_features: Number of columns in table (not including target column).
-        num_classes: Number of classes to classify.
+        embedding_sizes: Number of columns in table (not including target column).
+        categorical_fields: Number of classes to classify.
         embedding_sizes: List of (num_classes, emb_dim) to form categorical embeddings.
+        cat_dims: Number of distinct values for each categorical column
+        num_categorical_fields: Number of categorical columns in table
+        num_numerical_fields: Number of numerical columns in table
+        output_dim: Number of classes to classify
+        backbone: name of the model to use
         loss_fn: Loss function for training, defaults to cross entropy.
         optimizer: Optimizer to use for training.
         lr_scheduler: The LR scheduler to use during training.

@@ -22,7 +22,7 @@ from flash.core.integrations.pytorch_tabular.backbones import PYTORCH_TABULAR_BA
 from flash.core.registry import FlashRegistry
 from flash.core.regression import RegressionAdapterTask
 from flash.core.serve import Composition
-from flash.core.utilities.imports import _TABULAR_AVAILABLE, requires
+from flash.core.utilities.imports import requires
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE, \
     INPUT_TRANSFORM_TYPE
 from flash.tabular.input import TabularDeserializer
@@ -33,9 +33,14 @@ class TabularRegressor(RegressionAdapterTask):
     :ref:`tabular_classification`.
 
     Args:
-        num_features: Number of columns in table (not including target column).
-        num_classes: Number of classes to classify.
+        embedding_sizes: Number of columns in table (not including target column).
+        categorical_fields: Number of classes to classify.
         embedding_sizes: List of (num_classes, emb_dim) to form categorical embeddings.
+        cat_dims: Number of distinct values for each categorical column
+        num_categorical_fields: Number of categorical columns in table
+        num_numerical_fields: Number of numerical columns in table
+        output_dim: Number of output values
+        backbone: name of the model to use
         loss_fn: Loss function for training, defaults to cross entropy.
         optimizer: Optimizer to use for training.
         lr_scheduler: The LR scheduler to use during training.
@@ -44,7 +49,6 @@ class TabularRegressor(RegressionAdapterTask):
             containing a combination of the aforementioned. In all cases, each metric needs to have the signature
             `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training.
-        multi_label: Whether the targets are multi-label or not.
         output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
         **tabnet_kwargs: Optional additional arguments for the TabNet model, see
             `pytorch_tabnet <https://dreamquark-ai.github.io/tabnet/_modules/pytorch_tabnet/tab_network.html#TabNet>`_.
