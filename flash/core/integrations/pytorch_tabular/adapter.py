@@ -1,6 +1,5 @@
 from typing import Any, Callable, Dict, List, Optional, Union
 
-import torch
 import torchmetrics
 
 from flash import DataKeys, Task

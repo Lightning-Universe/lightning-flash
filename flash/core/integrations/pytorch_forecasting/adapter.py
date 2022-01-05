@@ -15,6 +15,7 @@ from copy import copy
 from functools import partial
 from typing import Any, Callable, Dict, List, Optional, Union
 
+import torch
 import torchmetrics
 
 from flash.core.adapter import Adapter
