@@ -23,15 +23,12 @@ import flash
 from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.process import Deserializer
 from flash.core.data.utilities.paths import filter_valid_files, list_valid_files
-from flash.core.data.utilities.samples import to_samples
+from flash.core.data.utilities.samples import to_sample, to_samples
 from flash.core.utilities.imports import _AUDIO_AVAILABLE, requires
 
 if _AUDIO_AVAILABLE:
     import librosa
-    from datasets import Dataset as HFDataset
     from datasets import load_dataset
-else:
-    HFDataset = object
 
 
 class SpeechRecognitionDeserializer(Deserializer):
@@ -139,11 +136,10 @@ class SpeechRecognitionDatasetInput(BaseSpeechRecognition):
     @requires("audio")
     def load_data(self, dataset: Dataset, sampling_rate: int = 16000) -> Sequence[Mapping[str, Any]]:
         self.sampling_rate = sampling_rate
-        if isinstance(dataset, HFDataset):
-            dataset = list(zip(dataset["file"], dataset["text"]))
         return super().load_data(dataset)
 
     def load_sample(self, sample: Any) -> Any:
+        sample = to_sample(sample)
         if isinstance(sample[DataKeys.INPUT], (str, Path)):
             sample = super().load_sample(sample, self.sampling_rate)
         return sample

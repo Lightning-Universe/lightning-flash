@@ -419,6 +419,128 @@ class SpeechRecognitionData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "SpeechRecognitionData":
+        """Load the :class:`~flash.audio.speech_recognition.data.SpeechRecognitionData` from PyTorch Dataset
+        objects.
+
+        The Dataset objects should be one of the following:
+        * A PyTorch Dataset where the ``__getitem__`` returns a tuple: ``(file_path or , target)``
+        * A PyTorch Dataset where the ``__getitem__`` returns a dict: ``{"input": file_path, "target": target}``
+
+        The supported file extensions are: ``wav``, ``ogg``, ``flac``, ``mat``, and ``mp3``.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
+        Args:
+            train_dataset: The Dataset to use when training.
+            val_dataset: The Dataset to use when validating.
+            test_dataset: The Dataset to use when testing.
+            predict_dataset: The Dataset to use when predicting.
+            sampling_rate: Sampling rate to use when loading the audio files.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+              predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+              :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.audio.speech_recognition.data.SpeechRecognitionData`.
+
+        Examples
+        ________
+
+        .. testsetup::
+
+            >>> import numpy as np
+            >>> import soundfile as sf
+            >>> samplerate = 44100
+            >>> data = np.random.uniform(-1, 1, size=(samplerate * 3, 2))
+            >>> _ = [sf.write(f"speech_{i}.wav", data, samplerate, subtype='PCM_24') for i in range(1, 4)]
+            >>> _ = [sf.write(f"predict_speech_{i}.wav", data, samplerate, subtype='PCM_24') for i in range(1, 4)]
+
+        A PyTorch Dataset where the ``__getitem__`` returns a tuple: ``(file_path, target)``:
+
+        .. doctest::
+
+            >>> from torch.utils.data import Dataset
+            >>> from flash import Trainer
+            >>> from flash.audio import SpeechRecognitionData, SpeechRecognition
+            >>>
+            >>> class CustomDataset(Dataset):
+            ...     def __init__(self, files, targets=None):
+            ...         self.files = files
+            ...         self.targets = targets
+            ...     def __getitem__(self, index):
+            ...         if self.targets is not None:
+            ...             return self.files[index], self.targets[index]
+            ...         return self.files[index]
+            ...     def __len__(self):
+            ...         return len(self.files)
+            ...
+            >>>
+            >>> datamodule = SpeechRecognitionData.from_datasets(
+            ...     train_dataset=CustomDataset(
+            ...         ["speech_1.wav", "speech_2.wav", "speech_3.wav"],
+            ...         ["some speech", "some other speech", "some more speech"],
+            ...     ),
+            ...     predict_dataset=CustomDataset(
+            ...         ["predict_speech_1.wav", "predict_speech_2.wav", "predict_speech_3.wav"],
+            ...     ),
+            ...     batch_size=2,
+            ... )
+            >>> model = SpeechRecognition(backbone="patrickvonplaten/wav2vec2_tiny_random_robust")
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        A PyTorch Dataset where the ``__getitem__`` returns a dict: ``{"input": file_path, "target": target}``:
+
+        .. doctest::
+
+            >>> from torch.utils.data import Dataset
+            >>> from flash import Trainer
+            >>> from flash.audio import SpeechRecognitionData, SpeechRecognition
+            >>>
+            >>> class CustomDataset(Dataset):
+            ...     def __init__(self, files, targets=None):
+            ...         self.files = files
+            ...         self.targets = targets
+            ...     def __getitem__(self, index):
+            ...         if self.targets is not None:
+            ...             return {"input": self.files[index], "target": self.targets[index]}
+            ...         return {"input": self.files[index]}
+            ...     def __len__(self):
+            ...         return len(self.files)
+            ...
+            >>>
+            >>> datamodule = SpeechRecognitionData.from_datasets(
+            ...     train_dataset=CustomDataset(
+            ...         ["speech_1.wav", "speech_2.wav", "speech_3.wav"],
+            ...         ["some speech", "some other speech", "some more speech"],
+            ...     ),
+            ...     predict_dataset=CustomDataset(
+            ...         ["predict_speech_1.wav", "predict_speech_2.wav", "predict_speech_3.wav"],
+            ...     ),
+            ...     batch_size=2,
+            ... )
+            >>> model = SpeechRecognition(backbone="patrickvonplaten/wav2vec2_tiny_random_robust")
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> import os
+            >>> _ = [os.remove(f"speech_{i}.wav") for i in range(1, 4)]
+            >>> _ = [os.remove(f"predict_speech_{i}.wav") for i in range(1, 4)]
+        """
 
         ds_kw = dict(
             data_pipeline_state=DataPipelineState(),
