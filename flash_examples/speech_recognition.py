@@ -21,8 +21,8 @@ from flash.core.data.utils import download_data
 download_data("https://pl-flash-data.s3.amazonaws.com/timit_data.zip", "./data")
 
 datamodule = SpeechRecognitionData.from_json(
-    input_fields="file",
-    target_fields="text",
+    "file",
+    "text",
     train_file="data/timit/train.json",
     test_file="data/timit/test.json",
     batch_size=4,
