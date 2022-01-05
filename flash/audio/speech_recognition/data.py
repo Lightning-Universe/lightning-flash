@@ -41,11 +41,11 @@ class SpeechRecognitionData(DataModule):
     def from_files(
         cls,
         train_files: Optional[Sequence[str]] = None,
-        train_targets: Optional[Sequence[Any]] = None,
+        train_targets: Optional[Sequence[str]] = None,
         val_files: Optional[Sequence[str]] = None,
-        val_targets: Optional[Sequence[Any]] = None,
+        val_targets: Optional[Sequence[str]] = None,
         test_files: Optional[Sequence[str]] = None,
-        test_targets: Optional[Sequence[Any]] = None,
+        test_targets: Optional[Sequence[str]] = None,
         predict_files: Optional[Sequence[str]] = None,
         sampling_rate: int = 16000,
         train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
@@ -56,6 +56,70 @@ class SpeechRecognitionData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "SpeechRecognitionData":
+        """Load the :class:`~flash.audio.speech_recognition.data.SpeechRecognitionData` from lists of audio files
+        and corresponding lists of targets.
+
+        The supported file extensions are: ``wav``, ``ogg``, ``flac``, ``mat``, and ``mp3``.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
+        Args:
+            train_files: The list of audio files to use when training.
+            train_targets: The list of targets (ground truth speech transcripts) to use when training.
+            val_files: The list of audio files to use when validating.
+            val_targets: The list of targets (ground truth speech transcripts) to use when validating.
+            test_files: The list of audio files to use when testing.
+            test_targets: The list of targets (ground truth speech transcripts) to use when testing.
+            predict_files: The list of audio files to use when predicting.
+            sampling_rate: Sampling rate to use when loading the audio files.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+              predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+              :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.audio.speech_recognition.data.SpeechRecognitionData`.
+
+        Examples
+        ________
+
+        .. testsetup::
+
+            >>> import numpy as np
+            >>> import soundfile as sf
+            >>> samplerate = 44100
+            >>> data = np.random.uniform(-1, 1, size=(samplerate * 3, 2))
+            >>> _ = [sf.write(f"speech_{i}.wav", data, samplerate, subtype='PCM_24') for i in range(1, 4)]
+            >>> _ = [sf.write(f"predict_speech_{i}.wav", data, samplerate, subtype='PCM_24') for i in range(1, 4)]
+
+        .. doctest::
+
+            >>> from flash import Trainer
+            >>> from flash.audio import SpeechRecognitionData, SpeechRecognition
+            >>> datamodule = SpeechRecognitionData.from_files(
+            ...     train_files=["speech_1.wav", "speech_2.wav", "speech_3.wav"],
+            ...     train_targets=["some speech", "some other speech", "some more speech"],
+            ...     predict_files=["predict_speech_1.wav", "predict_speech_2.wav", "predict_speech_3.wav"],
+            ...     batch_size=2,
+            ... )
+            >>> model = SpeechRecognition(backbone="patrickvonplaten/wav2vec2_tiny_random_robust")
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> import os
+            >>> _ = [os.remove(f"speech_{i}.wav") for i in range(1, 4)]
+            >>> _ = [os.remove(f"predict_speech_{i}.wav") for i in range(1, 4)]
+        """
 
         ds_kw = dict(
             data_pipeline_state=DataPipelineState(),
