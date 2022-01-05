@@ -33,8 +33,13 @@ from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.registry import FlashRegistry
+from flash.core.utilities.imports import _AUDIO_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 from flash.image.classification.data import MatplotlibVisualization
+
+# Skip doctests if requirements aren't available
+if not _AUDIO_AVAILABLE:
+    __doctest_skip__ = ["AudioClassificationData", "AudioClassificationData.*"]
 
 
 class AudioClassificationData(DataModule):
@@ -218,12 +223,12 @@ class AudioClassificationData(DataModule):
             >>> import os
             >>> from PIL import Image
             >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
-            >>> os.makedirs(os.path.join("train_folder", "cat"), exist_ok=True)
-            >>> os.makedirs(os.path.join("train_folder", "dog"), exist_ok=True)
+            >>> os.makedirs(os.path.join("train_folder", "meow"), exist_ok=True)
+            >>> os.makedirs(os.path.join("train_folder", "bark"), exist_ok=True)
             >>> os.makedirs("predict_folder", exist_ok=True)
-            >>> rand_image.save(os.path.join("train_folder", "cat", "spectrogram_1.png"))
-            >>> rand_image.save(os.path.join("train_folder", "dog", "spectrogram_2.png"))
-            >>> rand_image.save(os.path.join("train_folder", "cat", "spectrogram_3.png"))
+            >>> rand_image.save(os.path.join("train_folder", "meow", "spectrogram_1.png"))
+            >>> rand_image.save(os.path.join("train_folder", "bark", "spectrogram_2.png"))
+            >>> rand_image.save(os.path.join("train_folder", "meow", "spectrogram_3.png"))
             >>> _ = [rand_image.save(
             ...     os.path.join("predict_folder", f"predict_spectrogram_{i}.png")
             ... ) for i in range(1, 4)]
@@ -420,7 +425,7 @@ class AudioClassificationData(DataModule):
             >>> datamodule.num_classes
             2
             >>> datamodule.labels
-            ['meow', 'bark']
+            ['bark', 'meow']
             >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
