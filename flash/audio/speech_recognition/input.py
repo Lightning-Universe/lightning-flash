@@ -74,7 +74,7 @@ class SpeechRecognitionFileInput(BaseSpeechRecognition):
         self,
         file: str,
         input_key: str,
-        target_key: str,
+        target_key: Optional[str] = None,
         field: Optional[str] = None,
         sampling_rate: int = 16000,
         filetype: Optional[str] = None,
@@ -89,13 +89,21 @@ class SpeechRecognitionFileInput(BaseSpeechRecognition):
 
         dataset = dataset_dict[stage]
         meta = {"root": os.path.dirname(file)}
+        if target_key is not None:
+            return [
+                {
+                    DataKeys.INPUT: input_file,
+                    DataKeys.TARGET: target,
+                    DataKeys.METADATA: meta,
+                }
+                for input_file, target in zip(dataset[input_key], dataset[target_key])
+            ]
         return [
             {
                 DataKeys.INPUT: input_file,
-                DataKeys.TARGET: target,
                 DataKeys.METADATA: meta,
             }
-            for input_file, target in zip(dataset[input_key], dataset[target_key])
+            for input_file in dataset[input_key]
         ]
 
     def load_sample(self, sample: Dict[str, Any]) -> Any:
@@ -108,7 +116,7 @@ class SpeechRecognitionCSVInput(SpeechRecognitionFileInput):
         self,
         file: str,
         input_key: str,
-        target_key: str,
+        target_key: Optional[str] = None,
         sampling_rate: int = 16000,
     ):
         return super().load_data(file, input_key, target_key, sampling_rate=sampling_rate, filetype="csv")
@@ -120,7 +128,7 @@ class SpeechRecognitionJSONInput(SpeechRecognitionFileInput):
         self,
         file: str,
         input_key: str,
-        target_key: str,
+        target_key: Optional[str] = None,
         field: Optional[str] = None,
         sampling_rate: int = 16000,
     ):
