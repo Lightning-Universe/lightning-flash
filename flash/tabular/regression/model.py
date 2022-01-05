@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import partial
-from typing import Any, Callable, List, Tuple, Optional, Type, Dict
+from typing import Any, Callable, Optional, Type, Dict
 
 from torch.nn import functional as F
 

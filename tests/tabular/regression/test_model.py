@@ -23,7 +23,6 @@ from flash.__main__ import main
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _TABULAR_AVAILABLE
 from flash.tabular import TabularRegressor, TabularRegressionData
-from flash.tabular.classification.data import TabularClassificationData
 from tests.helpers.utils import _SERVE_TESTING, _TABULAR_TESTING
 
 # ======== Mock functions ========
