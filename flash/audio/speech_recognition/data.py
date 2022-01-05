@@ -27,11 +27,17 @@ from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
 from flash.core.registry import FlashRegistry
+from flash.core.utilities.imports import _AUDIO_AVAILABLE
 from flash.core.utilities.stages import RunningStage
+
+# Skip doctests if requirements aren't available
+if not _AUDIO_AVAILABLE:
+    __doctest_skip__ = ["SpeechRecognitionData", "SpeechRecognitionData.*"]
 
 
 class SpeechRecognitionData(DataModule):
-    """Data Module for text classification tasks."""
+    """The ``SpeechRecognitionData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
+    classmethods for loading data for speech recognition."""
 
     input_transform_cls = InputTransform
     output_transform_cls = SpeechRecognitionOutputTransform
