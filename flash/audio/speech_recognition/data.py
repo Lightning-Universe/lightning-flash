@@ -423,6 +423,7 @@ class SpeechRecognitionData(DataModule):
         objects.
 
         The Dataset objects should be one of the following:
+
         * A PyTorch Dataset where the ``__getitem__`` returns a tuple: ``(file_path or , target)``
         * A PyTorch Dataset where the ``__getitem__`` returns a dict: ``{"input": file_path, "target": target}``
 

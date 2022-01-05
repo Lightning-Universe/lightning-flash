@@ -28,8 +28,8 @@ def from_timit(
     """Downloads and loads the timit data set."""
     download_data("https://pl-flash-data.s3.amazonaws.com/timit_data.zip", "./data")
     return SpeechRecognitionData.from_json(
-        input_fields="file",
-        target_fields="text",
+        "file",
+        "text",
         train_file="data/timit/train.json",
         test_file="data/timit/test.json",
         val_split=val_split,
