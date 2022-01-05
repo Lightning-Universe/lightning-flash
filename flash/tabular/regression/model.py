@@ -49,13 +49,13 @@ class TabularRegressor(RegressionAdapterTask):
 
     def __init__(
         self,
-        embedding_dims,
-        categorical_cols,
-        categorical_cardinality,
-        categorical_dim,
-        continuous_dim,
-        output_dim,
-        backbone,
+        embedding_sizes: list,
+        categorical_fields: list,
+        cat_dims: list,
+        num_categorical_fields: int,
+        num_numerical_fields: int,
+        output_dim: int,
+        backbone: str,
         loss_fn: Callable = F.cross_entropy,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
@@ -65,19 +65,16 @@ class TabularRegressor(RegressionAdapterTask):
         **backbone_kwargs
     ):
         self.save_hyperparameters()
-        properties = {"embedding_dims": embedding_dims,
-                     "categorical_cols": categorical_cols,
-                     "categorical_cardinality": categorical_cardinality,
-                     "categorical_dim": categorical_dim,
-                     "continuous_dim": continuous_dim,
-                     "output_dim": output_dim
-                     }
-        properties.update(backbone_kwargs)
         metadata = self.backbones.get(backbone, with_metadata=True)
         adapter = metadata["metadata"]["adapter"].from_task(
             self,
             task_type="regression",
-            parameters=properties,
+            embedding_sizes=embedding_sizes,
+            categorical_fields=categorical_fields,
+            cat_dims=cat_dims,
+            num_categorical_fields=num_categorical_fields,
+            num_numerical_fields=num_numerical_fields,
+            output_dim=output_dim,
             backbone=backbone,
             backbone_kwargs=backbone_kwargs,
             loss_fn=loss_fn,
@@ -95,19 +92,11 @@ class TabularRegressor(RegressionAdapterTask):
 
     @classmethod
     def from_data(cls, datamodule, **kwargs) -> "TabularRegressor":
-        cat_dims, cat_emb_dim = zip(*datamodule.embedding_sizes) if datamodule.embedding_sizes else ([], [])
-        cat_emb_dim = [(dim, dim) for dim in cat_emb_dim]
-        embedding_dims = cat_emb_dim
-        categorical_cols = datamodule.categorical_fields
-        categorical_cardinality = cat_dims
-        categorical_dim = len(cat_dims)
-        continuous_dim = datamodule.num_features - len(cat_dims)
-        output_dim = datamodule.num_classes if not datamodule.is_regression else 1
-        model = cls(embedding_dims=embedding_dims,
-                    categorical_cols=categorical_cols,
-                    categorical_cardinality=categorical_cardinality,
-                    categorical_dim=categorical_dim,
-                    continuous_dim=continuous_dim,
-                    output_dim=output_dim,
+        model = cls(embedding_sizes=datamodule.embedding_sizes,
+                    categorical_fields=datamodule.categorical_fields,
+                    cat_dims=datamodule.cat_dims,
+                    num_categorical_fields=datamodule.num_categorical_fields,
+                    num_numerical_fields=datamodule.num_numerical_fields,
+                    output_dim=datamodule.output_dim,
                     **kwargs)
         return model

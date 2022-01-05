@@ -53,14 +53,14 @@ class DummyDataset(torch.utils.data.Dataset):
                                       "node", "category_embedding"])
 def test_init_train(backbone, tmpdir):
     train_dl = torch.utils.data.DataLoader(DummyDataset(), batch_size=16)
-    data_properties = {"embedding_dims": [(10, 32) for _ in range(16)],
-                "categorical_cols": list(range(16)),
-                "categorical_cardinality": [10 for _ in range(16)],
-                "categorical_dim": 16,
-                "continuous_dim": 16,
-                "output_dim": 10,
-                "backbone": backbone
-                }
+    data_properties = {"embedding_sizes": [(10, 32) for _ in range(16)],
+                       "categorical_fields": list(range(16)),
+                       "cat_dims": [10 for _ in range(16)],
+                       "num_categorical_fields": 16,
+                       "num_numerical_fields": 16,
+                       "output_dim": 10,
+                       "backbone": backbone
+                       }
 
     model = TabularClassifier(**data_properties)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
@@ -72,11 +72,11 @@ def test_init_train(backbone, tmpdir):
                                       "node", "category_embedding"])
 def test_init_train_no_num(backbone, tmpdir):
     train_dl = torch.utils.data.DataLoader(DummyDataset(num_num=0), batch_size=16)
-    data_properties = {"embedding_dims": [(10, 32) for _ in range(16)],
-                       "categorical_cols": list(range(16)),
-                       "categorical_cardinality": [10 for _ in range(16)],
-                       "categorical_dim": 16,
-                       "continuous_dim": 0,
+    data_properties = {"embedding_sizes": [(10, 32) for _ in range(16)],
+                       "categorical_fields": list(range(16)),
+                       "cat_dims": [10 for _ in range(16)],
+                       "num_categorical_fields": 16,
+                       "num_numerical_fields": 0,
                        "output_dim": 10,
                        "backbone": backbone
                        }
@@ -91,11 +91,11 @@ def test_init_train_no_num(backbone, tmpdir):
                                       "node", "category_embedding"])
 def test_init_train_no_cat(backbone, tmpdir):
     train_dl = torch.utils.data.DataLoader(DummyDataset(num_cat=0), batch_size=16)
-    data_properties = {"embedding_dims": [],
-                       "categorical_cols": [],
-                       "categorical_cardinality": [],
-                       "categorical_dim": 0,
-                       "continuous_dim": 16,
+    data_properties = {"embedding_sizes": [],
+                       "categorical_fields": [],
+                       "cat_dims": [],
+                       "num_categorical_fields": 0,
+                       "num_numerical_fields": 16,
                        "output_dim": 10,
                        "backbone": backbone
                        }
@@ -107,11 +107,11 @@ def test_init_train_no_cat(backbone, tmpdir):
 
 @pytest.mark.skipif(_TABULAR_AVAILABLE, reason="tabular libraries are installed.")
 def test_module_import_error(tmpdir):
-    data_properties = {"embedding_dims": [],
-                       "categorical_cols": [],
-                       "categorical_cardinality": [],
-                       "categorical_dim": 0,
-                       "continuous_dim": 16,
+    data_properties = {"embedding_sizes": [(10, 32) for _ in range(16)],
+                       "categorical_fields": list(range(16)),
+                       "cat_dims": [10 for _ in range(16)],
+                       "num_categorical_fields": 16,
+                       "num_numerical_fields": 16,
                        "output_dim": 10,
                        "backbone": "tabnet"
                        }
@@ -123,11 +123,11 @@ def test_module_import_error(tmpdir):
 @pytest.mark.parametrize("backbone", ["tabnet", "tabtransformer", "fttransformer", "autoint",
                                       "node", "category_embedding"])
 def test_jit(backbone, tmpdir):
-    data_properties = {"embedding_dims": [(10, 32) for _ in range(4)],
-                       "categorical_cols": list(range(4)),
-                       "categorical_cardinality": [10 for _ in range(4)],
-                       "categorical_dim": 4,
-                       "continuous_dim": 4,
+    data_properties = {"embedding_sizes": [(10, 32) for _ in range(4)],
+                       "categorical_fields": list(range(4)),
+                       "cat_dims": [10 for _ in range(4)],
+                       "num_categorical_fields": 4,
+                       "num_numerical_fields": 4,
                        "output_dim": 10,
                        "backbone": backbone
                        }
@@ -177,11 +177,11 @@ def test_load_from_checkpoint_dependency_error():
         TabularClassifier.load_from_checkpoint("not_a_real_checkpoint.pt")
 
 
-# @pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
-# def test_cli():
-#     cli_args = ["flash", "tabular_classification", "--trainer.fast_dev_run", "True"]
-#     with mock.patch("sys.argv", cli_args):
-#         try:
-#             main()
-#         except SystemExit:
-#             pass
+@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
+def test_cli():
+    cli_args = ["flash", "tabular_classification", "--trainer.fast_dev_run", "True"]
+    with mock.patch("sys.argv", cli_args):
+        try:
+            main()
+        except SystemExit:
+            pass

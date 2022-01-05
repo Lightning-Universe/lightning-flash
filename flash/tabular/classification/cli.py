@@ -46,9 +46,11 @@ def tabular_classification():
         default_datamodule_builder=from_titanic,
         default_arguments={
             "trainer.max_epochs": 3,
+            "model.backbone": "tabnet",
         },
         finetune=False,
-        datamodule_attributes={"num_features", "num_classes", "embedding_sizes"}
+        datamodule_attributes={"embedding_sizes", "categorical_fields", "num_categorical_fields",
+                               "num_numerical_fields", "cat_dims", "output_dim"}
     )
 
     cli.trainer.save_checkpoint("tabular_classification_model.pt")

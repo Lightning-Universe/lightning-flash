@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import partial
-from typing import Any, Callable, Dict, List, Tuple, Type, Optional
+from typing import Any, Callable, Dict, List, Type, Optional
 
 from torch.nn import functional as F
 
@@ -55,13 +55,13 @@ class TabularClassifier(ClassificationAdapterTask):
 
     def __init__(
         self,
-        embedding_dims,
-        categorical_cols,
-        categorical_cardinality,
-        categorical_dim,
-        continuous_dim,
-        output_dim,
-        backbone,
+        embedding_sizes: list,
+        categorical_fields: list,
+        cat_dims: list,
+        num_categorical_fields: int,
+        num_numerical_fields: int,
+        output_dim: int,
+        backbone: str,
         loss_fn: Callable = F.cross_entropy,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
@@ -72,19 +72,16 @@ class TabularClassifier(ClassificationAdapterTask):
         **backbone_kwargs,
     ):
         self.save_hyperparameters()
-        properties = {"embedding_dims": embedding_dims,
-                      "categorical_cols": categorical_cols,
-                      "categorical_cardinality": categorical_cardinality,
-                      "categorical_dim": categorical_dim,
-                      "continuous_dim": continuous_dim,
-                      "output_dim": output_dim
-                      }
-        properties.update(backbone_kwargs)
         metadata = self.backbones.get(backbone, with_metadata=True)
         adapter = metadata["metadata"]["adapter"].from_task(
             self,
             task_type="classification",
-            parameters=properties,
+            embedding_sizes=embedding_sizes,
+            categorical_fields=categorical_fields,
+            cat_dims=cat_dims,
+            num_categorical_fields=num_categorical_fields,
+            num_numerical_fields=num_numerical_fields,
+            output_dim=output_dim,
             backbone=backbone,
             backbone_kwargs=backbone_kwargs,
             loss_fn=loss_fn,
@@ -92,7 +89,7 @@ class TabularClassifier(ClassificationAdapterTask):
         )
         super().__init__(
             adapter,
-            num_classes=properties["output_dim"],
+            num_classes=output_dim,
             loss_fn=loss_fn,
             metrics=metrics,
             learning_rate=learning_rate,
@@ -108,21 +105,13 @@ class TabularClassifier(ClassificationAdapterTask):
         assert history[-1]["val_accuracy"] > 0.6, history[-1]["val_accuracy"]
 
     @classmethod
-    def from_data(cls, datamodule, **kwargs) -> "TabularRegressor":
-        cat_dims, cat_emb_dim = zip(*datamodule.embedding_sizes) if datamodule.embedding_sizes else ([], [])
-        cat_emb_dim = [(dim, dim) for dim in cat_emb_dim]
-        embedding_dims = cat_emb_dim
-        categorical_cols = datamodule.categorical_fields
-        categorical_cardinality = cat_dims
-        categorical_dim = len(cat_dims)
-        continuous_dim = datamodule.num_features - len(cat_dims)
-        output_dim = datamodule.num_classes if not datamodule.is_regression else 1
-        model = cls(embedding_dims=embedding_dims,
-                    categorical_cols=categorical_cols,
-                    categorical_cardinality=categorical_cardinality,
-                    categorical_dim=categorical_dim,
-                    continuous_dim=continuous_dim,
-                    output_dim=output_dim,
+    def from_data(cls, datamodule, **kwargs) -> "TabularClassifier":
+        model = cls(embedding_sizes=datamodule.embedding_sizes,
+                    categorical_fields=datamodule.categorical_fields,
+                    cat_dims=datamodule.cat_dims,
+                    num_categorical_fields=datamodule.num_categorical_fields,
+                    num_numerical_fields=datamodule.num_numerical_fields,
+                    output_dim=datamodule.output_dim,
                     **kwargs)
         return model
 
