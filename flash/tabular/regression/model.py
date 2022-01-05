@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import partial
-from typing import Any, Callable, Optional, Type, Dict
+from typing import Any, Callable, Dict, Optional, Type
 
 from torch.nn import functional as F
 
@@ -23,8 +23,13 @@ from flash.core.registry import FlashRegistry
 from flash.core.regression import RegressionAdapterTask
 from flash.core.serve import Composition
 from flash.core.utilities.imports import requires
-from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE, \
-    INPUT_TRANSFORM_TYPE
+from flash.core.utilities.types import (
+    INPUT_TRANSFORM_TYPE,
+    LR_SCHEDULER_TYPE,
+    METRICS_TYPE,
+    OPTIMIZER_TYPE,
+    OUTPUT_TYPE,
+)
 from flash.tabular.input import TabularDeserializer
 
 
@@ -102,25 +107,27 @@ class TabularRegressor(RegressionAdapterTask):
 
     @classmethod
     def from_data(cls, datamodule, **kwargs) -> "TabularRegressor":
-        model = cls(embedding_sizes=datamodule.embedding_sizes,
-                    categorical_fields=datamodule.categorical_fields,
-                    cat_dims=datamodule.cat_dims,
-                    num_categorical_fields=datamodule.num_categorical_fields,
-                    num_numerical_fields=datamodule.num_numerical_fields,
-                    output_dim=datamodule.output_dim,
-                    **kwargs)
+        model = cls(
+            embedding_sizes=datamodule.embedding_sizes,
+            categorical_fields=datamodule.categorical_fields,
+            cat_dims=datamodule.cat_dims,
+            num_categorical_fields=datamodule.num_categorical_fields,
+            num_numerical_fields=datamodule.num_numerical_fields,
+            output_dim=datamodule.output_dim,
+            **kwargs
+        )
         return model
 
     @requires("serve")
     def serve(
-            self,
-            host: str = "127.0.0.1",
-            port: int = 8000,
-            sanity_check: bool = True,
-            input_cls: Optional[Type[ServeInput]] = TabularDeserializer,
-            transform: INPUT_TRANSFORM_TYPE = InputTransform,
-            transform_kwargs: Optional[Dict] = None,
-            parameters: Optional[Dict[str, Any]] = None,
+        self,
+        host: str = "127.0.0.1",
+        port: int = 8000,
+        sanity_check: bool = True,
+        input_cls: Optional[Type[ServeInput]] = TabularDeserializer,
+        transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        transform_kwargs: Optional[Dict] = None,
+        parameters: Optional[Dict[str, Any]] = None,
     ) -> Composition:
         return super().serve(
             host, port, sanity_check, partial(input_cls, parameters=parameters), transform, transform_kwargs

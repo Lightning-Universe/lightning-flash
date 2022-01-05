@@ -49,8 +49,14 @@ def tabular_classification():
             "model.backbone": "tabnet",
         },
         finetune=False,
-        datamodule_attributes={"embedding_sizes", "categorical_fields", "num_categorical_fields",
-                               "num_numerical_fields", "cat_dims", "output_dim"}
+        datamodule_attributes={
+            "embedding_sizes",
+            "categorical_fields",
+            "num_categorical_fields",
+            "num_numerical_fields",
+            "cat_dims",
+            "output_dim",
+        },
     )
 
     cli.trainer.save_checkpoint("tabular_classification_model.pt")

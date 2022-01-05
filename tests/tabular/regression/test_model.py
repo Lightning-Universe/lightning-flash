@@ -22,7 +22,7 @@ from pytorch_lightning import Trainer
 from flash.__main__ import main
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _TABULAR_AVAILABLE
-from flash.tabular import TabularRegressor, TabularRegressionData
+from flash.tabular import TabularRegressionData, TabularRegressor
 from tests.helpers.utils import _SERVE_TESTING, _TABULAR_TESTING
 
 # ======== Mock functions ========
@@ -48,18 +48,20 @@ class DummyDataset(torch.utils.data.Dataset):
 
 
 @pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
-@pytest.mark.parametrize("backbone", ["tabnet", "tabtransformer", "fttransformer", "autoint",
-                                      "node", "category_embedding"])
+@pytest.mark.parametrize(
+    "backbone", ["tabnet", "tabtransformer", "fttransformer", "autoint", "node", "category_embedding"]
+)
 def test_init_train(backbone, tmpdir):
     train_dl = torch.utils.data.DataLoader(DummyDataset(), batch_size=16)
-    data_properties = {"embedding_sizes": [(10, 32) for _ in range(16)],
-                       "categorical_fields": list(range(16)),
-                       "cat_dims": [10 for _ in range(16)],
-                       "num_categorical_fields": 16,
-                       "num_numerical_fields": 16,
-                       "output_dim": 1,
-                       "backbone": backbone
-                       }
+    data_properties = {
+        "embedding_sizes": [(10, 32) for _ in range(16)],
+        "categorical_fields": list(range(16)),
+        "cat_dims": [10 for _ in range(16)],
+        "num_categorical_fields": 16,
+        "num_numerical_fields": 16,
+        "output_dim": 1,
+        "backbone": backbone,
+    }
 
     model = TabularRegressor(**data_properties)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
@@ -67,18 +69,20 @@ def test_init_train(backbone, tmpdir):
 
 
 @pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
-@pytest.mark.parametrize("backbone", ["tabnet", "tabtransformer", "fttransformer", "autoint",
-                                      "node", "category_embedding"])
+@pytest.mark.parametrize(
+    "backbone", ["tabnet", "tabtransformer", "fttransformer", "autoint", "node", "category_embedding"]
+)
 def test_init_train_no_num(backbone, tmpdir):
     train_dl = torch.utils.data.DataLoader(DummyDataset(num_num=0), batch_size=16)
-    data_properties = {"embedding_sizes": [(10, 32) for _ in range(16)],
-                       "categorical_fields": list(range(16)),
-                       "cat_dims": [10 for _ in range(16)],
-                       "num_categorical_fields": 16,
-                       "num_numerical_fields": 0,
-                       "output_dim": 1,
-                       "backbone": backbone
-                       }
+    data_properties = {
+        "embedding_sizes": [(10, 32) for _ in range(16)],
+        "categorical_fields": list(range(16)),
+        "cat_dims": [10 for _ in range(16)],
+        "num_categorical_fields": 16,
+        "num_numerical_fields": 0,
+        "output_dim": 1,
+        "backbone": backbone,
+    }
 
     model = TabularRegressor(**data_properties)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
@@ -86,18 +90,18 @@ def test_init_train_no_num(backbone, tmpdir):
 
 
 @pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
-@pytest.mark.parametrize("backbone", ["tabnet", "tabtransformer", "autoint",
-                                      "node", "category_embedding"])
+@pytest.mark.parametrize("backbone", ["tabnet", "tabtransformer", "autoint", "node", "category_embedding"])
 def test_init_train_no_cat(backbone, tmpdir):
     train_dl = torch.utils.data.DataLoader(DummyDataset(num_cat=0), batch_size=16)
-    data_properties = {"embedding_sizes": [],
-                       "categorical_fields": [],
-                       "cat_dims": [],
-                       "num_categorical_fields": 0,
-                       "num_numerical_fields": 16,
-                       "output_dim": 1,
-                       "backbone": backbone
-                       }
+    data_properties = {
+        "embedding_sizes": [],
+        "categorical_fields": [],
+        "cat_dims": [],
+        "num_categorical_fields": 0,
+        "num_numerical_fields": 16,
+        "output_dim": 1,
+        "backbone": backbone,
+    }
 
     model = TabularRegressor(**data_properties)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
@@ -106,30 +110,33 @@ def test_init_train_no_cat(backbone, tmpdir):
 
 @pytest.mark.skipif(_TABULAR_AVAILABLE, reason="tabular libraries are installed.")
 def test_module_import_error(tmpdir):
-    data_properties = {"embedding_sizes": [(10, 32) for _ in range(16)],
-                       "categorical_fields": list(range(16)),
-                       "cat_dims": [10 for _ in range(16)],
-                       "num_categorical_fields": 16,
-                       "num_numerical_fields": 16,
-                       "output_dim": 1,
-                       "backbone": "tabnet"
-                       }
+    data_properties = {
+        "embedding_sizes": [(10, 32) for _ in range(16)],
+        "categorical_fields": list(range(16)),
+        "cat_dims": [10 for _ in range(16)],
+        "num_categorical_fields": 16,
+        "num_numerical_fields": 16,
+        "output_dim": 1,
+        "backbone": "tabnet",
+    }
     with pytest.raises(ModuleNotFoundError, match="[tabular]"):
         TabularRegressor(**data_properties)
 
 
 @pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
-@pytest.mark.parametrize("backbone", ["tabnet", "tabtransformer", "fttransformer", "autoint",
-                                      "node", "category_embedding"])
+@pytest.mark.parametrize(
+    "backbone", ["tabnet", "tabtransformer", "fttransformer", "autoint", "node", "category_embedding"]
+)
 def test_jit(backbone, tmpdir):
-    data_properties = {"embedding_sizes": [(10, 32) for _ in range(4)],
-                       "categorical_fields": list(range(4)),
-                       "cat_dims": [10 for _ in range(4)],
-                       "num_categorical_fields": 4,
-                       "num_numerical_fields": 4,
-                       "output_dim": 1,
-                       "backbone": backbone
-                       }
+    data_properties = {
+        "embedding_sizes": [(10, 32) for _ in range(4)],
+        "categorical_fields": list(range(4)),
+        "cat_dims": [10 for _ in range(4)],
+        "num_categorical_fields": 4,
+        "num_numerical_fields": 4,
+        "output_dim": 1,
+        "backbone": backbone,
+    }
     model = TabularRegressor(**data_properties)
     model.eval()
 
@@ -151,8 +158,9 @@ def test_jit(backbone, tmpdir):
 
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
-@pytest.mark.parametrize("backbone", ["tabnet", "tabtransformer", "fttransformer", "autoint",
-                                      "node", "category_embedding"])
+@pytest.mark.parametrize(
+    "backbone", ["tabnet", "tabtransformer", "fttransformer", "autoint", "node", "category_embedding"]
+)
 @mock.patch("flash._IS_TESTING", True)
 def test_serve(backbone):
     train_data = {"num_col": [1.4, 2.5], "cat_col": ["positive", "negative"], "target": [1, 2]}

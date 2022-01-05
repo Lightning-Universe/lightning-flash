@@ -32,8 +32,9 @@ if _TABULAR_AVAILABLE:
 
 
 @pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
-@pytest.mark.parametrize("backbone", ["tabnet", "tabtransformer", "fttransformer", "autoint",
-                                      "node", "category_embedding"])
+@pytest.mark.parametrize(
+    "backbone", ["tabnet", "tabtransformer", "fttransformer", "autoint", "node", "category_embedding"]
+)
 def test_classification(backbone, tmpdir):
 
     train_data_frame = TEST_DF_1.copy()
