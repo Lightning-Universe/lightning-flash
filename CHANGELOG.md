@@ -32,6 +32,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Fixed a bug with `AudioClassificationData.from_numpy` ([#1096](https://github.com/PyTorchLightning/lightning-flash/pull/1096))
 
+- Fixed a bug when using `SpeechRecognitionData.from_files` for training / validating / testing ([#1097](https://github.com/PyTorchLightning/lightning-flash/pull/1097))
+
 ### Removed
 
 ## [0.6.0] - 2021-13-12
