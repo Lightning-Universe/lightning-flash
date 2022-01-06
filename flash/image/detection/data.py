@@ -48,6 +48,8 @@ if not _ICEVISION_AVAILABLE:
 
 
 class ObjectDetectionData(DataModule):
+    """The ``ObjectDetectionData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
+    classmethods for loading data for object detection."""
 
     input_transform_cls = IceVisionInputTransform
 

@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 from flash.core.data.data_module import DataModule
@@ -23,13 +24,46 @@ from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 from flash.image.keypoint_detection.input_transform import KeypointDetectionInputTransform
 
 if _ICEVISION_AVAILABLE:
+    from icevision.core import KeyPoints, KeypointsMetadata
     from icevision.parsers import COCOKeyPointsParser, Parser
 else:
     COCOKeyPointsParser = object
     Parser = object
+    KeyPoints = object
+
+
+# Skip doctests if requirements aren't available
+if not _ICEVISION_AVAILABLE:
+    __doctest_skip__ = ["KeypointDetectionData", "KeypointDetectionData.*"]
+
+
+class FlashCOCOKeyPointsParser(COCOKeyPointsParser):
+    def __init__(
+        self,
+        annotations_filepath: Union[str, Path, dict],
+        img_dir: Union[str, Path],
+    ):
+        super().__init__(annotations_filepath, img_dir)
+
+        categories = self.annotations_dict["categories"]
+        self.keypoint_labels = categories[0]["keypoints"]
+        for o in categories[1:]:
+            if not o["keypoints"] == self.keypoint_labels:
+                raise ValueError(
+                    "When performing keypoint detection with multiple categories, all categories are expected to have "
+                    f"the same keypoints. Found {self.keypoint_labels} for category with ID {categories[0]['id']} and "
+                    f"{o['keypoints']} for category with ID {o['id']}."
+                )
+
+    def keypoints(self, o) -> List[KeyPoints]:
+        meta = KeypointsMetadata()
+        meta.labels = self.keypoint_labels
+        return [KeyPoints.from_xyv(o["keypoints"], meta)] if sum(o["keypoints"]) > 0 else []
 
 
 class KeypointDetectionData(DataModule):
+    """The ``KeypointDetectionData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
+    classmethods for loading data for keypoint detection."""
 
     input_transform_cls = KeypointDetectionInputTransform
 
@@ -77,41 +111,149 @@ class KeypointDetectionData(DataModule):
         val_transform: INPUT_TRANSFORM_TYPE = KeypointDetectionInputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = KeypointDetectionInputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = KeypointDetectionInputTransform,
-        parser: Optional[Type[Parser]] = COCOKeyPointsParser,
         input_cls: Type[Input] = IceVisionInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ):
         """Creates a :class:`~flash.image.keypoint_detection.data.KeypointDetectionData` object from the given data
-        folders and annotation files in the COCO format.
+        folders and annotation files in the `COCO JSON format <https://cocodataset.org/#format-data>`_.
+
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
 
         Args:
-            train_folder: The folder containing the train data.
-            train_ann_file: The COCO format annotation file.
-            val_folder: The folder containing the validation data.
-            val_ann_file: The COCO format annotation file.
-            test_folder: The folder containing the test data.
-            test_ann_file: The COCO format annotation file.
-            predict_folder: The folder containing the predict data.
-            train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            input_cls: The :class:`~flash.core.data.io.input.Input` used to create the dataset.
-            transform_kwargs: Keyword arguments provided to the transform on instantiation.
-            data_module_kwargs: Keyword arguments provided to the DataModule on instantiation.
-        """
-        ds_kw = dict(parser=parser, data_pipeline_state=DataPipelineState(), transform_kwargs=transform_kwargs)
+            train_folder: The folder containing images to use when training.
+            train_ann_file: The COCO format annotation file to use when training.
+            val_folder: The folder containing images to use when validating.
+            val_ann_file: The COCO format annotation file to use when validating.
+            test_folder: The folder containing images to use when testing.
+            test_ann_file: The COCO format annotation file to use when testing.
+            predict_folder: The folder containing images to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+              predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+              :class:`~flash.core.data.data_module.DataModule` constructor.
 
-        return cls(
-            input_cls(RunningStage.TRAINING, train_folder, train_ann_file, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_folder, val_ann_file, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_folder, test_ann_file, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_folder, transform=predict_transform, **ds_kw),
+        Returns:
+            The constructed :class:`~flash.image.keypoint_detection.data.KeypointDetectionData`.
+
+        Examples
+        ________
+
+        .. testsetup::
+
+            >>> import os
+            >>> import json
+            >>> import numpy as np
+            >>> from PIL import Image
+            >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
+            >>> os.makedirs("train_folder", exist_ok=True)
+            >>> os.makedirs("predict_folder", exist_ok=True)
+            >>> _ = [rand_image.save(os.path.join("train_folder", f"image_{i}.png")) for i in range(1, 4)]
+            >>> _ = [rand_image.save(os.path.join("predict_folder", f"predict_image_{i}.png")) for i in range(1, 4)]
+            >>> annotations = {"annotations": [
+            ...     {"area":  50, "bbox": [10, 20, 15, 30], "num_keypoints": 2, "keypoints": [10, 15, 2, 20, 30, 2],
+            ...     "category_id": 1, "id": 1, "image_id": 1, "iscrowd": 0},
+            ...     {"area": 100, "bbox": [20, 30, 30, 40], "num_keypoints": 2, "keypoints": [20, 30, 2, 30, 40, 2],
+            ...     "category_id": 2, "id": 2, "image_id": 2, "iscrowd": 0},
+            ...     {"area": 125, "bbox": [10, 20, 15, 45], "num_keypoints": 2, "keypoints": [10, 15, 2, 20, 45, 2],
+            ...     "category_id": 1, "id": 3, "image_id": 3, "iscrowd": 0},
+            ... ], "categories": [
+            ...     {"id": 1, "name": "cat", "supercategory": "cat", "keypoints": ["left ear", "right ear"]},
+            ...     {"id": 2, "name": "dog", "supercategory": "dog", "keypoints": ["left ear", "right ear"]},
+            ... ], "images": [
+            ...     {"file_name": "image_1.png", "height": 64, "width": 64, "id": 1},
+            ...     {"file_name": "image_2.png", "height": 64, "width": 64, "id": 2},
+            ...     {"file_name": "image_3.png", "height": 64, "width": 64, "id": 3},
+            ... ]}
+            >>> with open("train_annotations.json", "w") as annotation_file:
+            ...     json.dump(annotations, annotation_file)
+
+        The folder ``train_folder`` has the following contents:
+
+        .. code-block::
+
+            train_folder
+            ├── image_1.png
+            ├── image_2.png
+            ├── image_3.png
+            ...
+
+        The file ``train_annotations.json`` contains the following:
+
+        .. code-block::
+
+            {
+                "annotations": [
+                    {
+                        "area": 50, "bbox": [10, 20, 15, 30], "num_keypoints": 2, "keypoints": [10, 15, 2, 20, 30, 2],
+                        "category_id": 1, "id": 1, "image_id": 1, "iscrowd": 0
+                    }, {
+                        "area": 100, "bbox": [20, 30, 30, 40], "num_keypoints": 2, "keypoints": [20, 30, 2, 30, 40, 2],
+                        "category_id": 2, "id": 2, "image_id": 2, "iscrowd": 0
+                    }, {
+                        "area": 125, "bbox": [10, 20, 15, 45], "num_keypoints": 2, "keypoints": [10, 15, 2, 20, 45, 2],
+                        "category_id": 1, "id": 3, "image_id": 3, "iscrowd": 0
+                    }
+                ], "categories": [
+                    {"id": 1, "name": "cat", "supercategory": "cat", "keypoints": ["left ear", "right ear"]},
+                    {"id": 2, "name": "dog", "supercategory": "dog", "keypoints": ["left ear", "right ear"]}
+                ], "images": [
+                    {"file_name": "image_1.png", "height": 64, "width": 64, "id": 1},
+                    {"file_name": "image_2.png", "height": 64, "width": 64, "id": 2},
+                    {"file_name": "image_3.png", "height": 64, "width": 64, "id": 3}
+                ]
+            }
+
+        .. doctest::
+
+            >>> from flash import Trainer
+            >>> from flash.image import KeypointDetector, KeypointDetectionData
+            >>> datamodule = KeypointDetectionData.from_coco(
+            ...     train_folder="train_folder",
+            ...     train_ann_file="train_annotations.json",
+            ...     predict_folder="predict_folder",
+            ...     transform_kwargs=dict(image_size=(128, 128)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            3
+            >>> datamodule.labels
+            ['background', 'cat', 'dog']
+            >>> model = KeypointDetector(2, num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> import shutil
+            >>> shutil.rmtree("train_folder")
+            >>> shutil.rmtree("predict_folder")
+            >>> os.remove("train_annotations.json")
+        """
+        return cls.from_icedata(
+            train_folder=train_folder,
+            train_ann_file=train_ann_file,
+            val_folder=val_folder,
+            val_ann_file=val_ann_file,
+            test_folder=test_folder,
+            test_ann_file=test_ann_file,
+            predict_folder=predict_folder,
+            train_transform=train_transform,
+            val_transform=val_transform,
+            test_transform=test_transform,
+            predict_transform=predict_transform,
+            parser=FlashCOCOKeyPointsParser,
+            input_cls=input_cls,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
