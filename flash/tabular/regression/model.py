@@ -42,8 +42,7 @@ class TabularRegressor(RegressionAdapterTask):
         categorical_fields: Number of classes to classify.
         embedding_sizes: List of (num_classes, emb_dim) to form categorical embeddings.
         cat_dims: Number of distinct values for each categorical column
-        num_categorical_fields: Number of categorical columns in table
-        num_numerical_fields: Number of numerical columns in table
+        num_features: Number of columns in table
         output_dim: Number of output values
         backbone: name of the model to use
         loss_fn: Loss function for training, defaults to cross entropy.
@@ -55,8 +54,7 @@ class TabularRegressor(RegressionAdapterTask):
             `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training.
         output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
-        **tabnet_kwargs: Optional additional arguments for the TabNet model, see
-            `pytorch_tabnet <https://dreamquark-ai.github.io/tabnet/_modules/pytorch_tabnet/tab_network.html#TabNet>`_.
+        **backbone_kwargs: Optional additional arguments for the model.
     """
 
     required_extras: str = "tabular"
@@ -67,8 +65,7 @@ class TabularRegressor(RegressionAdapterTask):
         embedding_sizes: list,
         categorical_fields: list,
         cat_dims: list,
-        num_categorical_fields: int,
-        num_numerical_fields: int,
+        num_features: int,
         output_dim: int,
         backbone: str,
         loss_fn: Callable = F.cross_entropy,
@@ -87,8 +84,7 @@ class TabularRegressor(RegressionAdapterTask):
             embedding_sizes=embedding_sizes,
             categorical_fields=categorical_fields,
             cat_dims=cat_dims,
-            num_categorical_fields=num_categorical_fields,
-            num_numerical_fields=num_numerical_fields,
+            num_features=num_features,
             output_dim=output_dim,
             backbone=backbone,
             backbone_kwargs=backbone_kwargs,
@@ -111,8 +107,7 @@ class TabularRegressor(RegressionAdapterTask):
             embedding_sizes=datamodule.embedding_sizes,
             categorical_fields=datamodule.categorical_fields,
             cat_dims=datamodule.cat_dims,
-            num_categorical_fields=datamodule.num_categorical_fields,
-            num_numerical_fields=datamodule.num_numerical_fields,
+            num_features=datamodule.num_features,
             output_dim=datamodule.output_dim,
             **kwargs
         )

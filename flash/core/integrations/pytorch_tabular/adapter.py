@@ -20,23 +20,21 @@ class PytorchTabularAdapter(Adapter):
         embedding_sizes: list,
         categorical_fields: list,
         cat_dims: list,
-        num_categorical_fields: int,
-        num_numerical_fields: int,
+        num_features: int,
         output_dim: int,
         backbone: str,
         backbone_kwargs: Optional[Dict[str, Any]] = None,
         loss_fn: Optional[Callable] = None,
         metrics: Optional[Union[torchmetrics.Metric, List[torchmetrics.Metric]]] = None,
     ) -> Adapter:
-        # Remove the single row of data from the parameters to reconstruct the `time_series_dataset`
 
         backbone_kwargs = backbone_kwargs or {}
         parameters = {
             "embedding_dims": embedding_sizes,
             "categorical_cols": categorical_fields,
             "categorical_cardinality": cat_dims,
-            "categorical_dim": num_categorical_fields,
-            "continuous_dim": num_numerical_fields,
+            "categorical_dim": len(categorical_fields),
+            "continuous_dim": num_features - len(categorical_fields),
             "output_dim": output_dim,
         }
         parameters.update(backbone_kwargs)

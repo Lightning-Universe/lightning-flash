@@ -58,8 +58,7 @@ def test_init_train(backbone, tmpdir):
         "embedding_sizes": [(10, 32) for _ in range(16)],
         "categorical_fields": list(range(16)),
         "cat_dims": [10 for _ in range(16)],
-        "num_categorical_fields": 16,
-        "num_numerical_fields": 16,
+        "num_features": 32,
         "output_dim": 10,
         "backbone": backbone,
     }
@@ -79,8 +78,7 @@ def test_init_train_no_num(backbone, tmpdir):
         "embedding_sizes": [(10, 32) for _ in range(16)],
         "categorical_fields": list(range(16)),
         "cat_dims": [10 for _ in range(16)],
-        "num_categorical_fields": 16,
-        "num_numerical_fields": 0,
+        "num_features": 16,
         "output_dim": 10,
         "backbone": backbone,
     }
@@ -98,8 +96,7 @@ def test_init_train_no_cat(backbone, tmpdir):
         "embedding_sizes": [],
         "categorical_fields": [],
         "cat_dims": [],
-        "num_categorical_fields": 0,
-        "num_numerical_fields": 16,
+        "num_features": 16,
         "output_dim": 10,
         "backbone": backbone,
     }
@@ -115,8 +112,7 @@ def test_module_import_error(tmpdir):
         "embedding_sizes": [(10, 32) for _ in range(16)],
         "categorical_fields": list(range(16)),
         "cat_dims": [10 for _ in range(16)],
-        "num_categorical_fields": 16,
-        "num_numerical_fields": 16,
+        "num_features": 32,
         "output_dim": 10,
         "backbone": "tabnet",
     }
@@ -133,8 +129,7 @@ def test_jit(backbone, tmpdir):
         "embedding_sizes": [(10, 32) for _ in range(4)],
         "categorical_fields": list(range(4)),
         "cat_dims": [10 for _ in range(4)],
-        "num_categorical_fields": 4,
-        "num_numerical_fields": 4,
+        "num_features": 8,
         "output_dim": 10,
         "backbone": backbone,
     }

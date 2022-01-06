@@ -52,8 +52,7 @@ def tabular_regression():
         datamodule_attributes={
             "embedding_sizes",
             "categorical_fields",
-            "num_categorical_fields",
-            "num_numerical_fields",
+            "num_features",
             "cat_dims",
             "output_dim",
         },

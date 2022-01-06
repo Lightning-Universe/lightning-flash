@@ -50,16 +50,8 @@ class TabularData(DataModule):
         return self.parameters["categorical_fields"]
 
     @property
-    def num_categorical_fields(self) -> int:
-        return len(self.parameters["categorical_fields"])
-
-    @property
     def numerical_fields(self) -> Optional[List[str]]:
         return self.parameters["numerical_fields"]
-
-    @property
-    def num_numerical_fields(self) -> int:
-        return len(self.parameters["numerical_fields"])
 
     @property
     def num_features(self) -> int:
