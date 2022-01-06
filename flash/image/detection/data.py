@@ -356,7 +356,7 @@ class ObjectDetectionData(DataModule):
             >>> from flash import Trainer
             >>> from flash.image import ObjectDetector, ObjectDetectionData
             >>> datamodule = ObjectDetectionData.from_voc(
-            ...     labels=["cat", "dog"],
+            ...     ["cat", "dog"],
             ...     train_folder="train_folder",
             ...     train_ann_folder="train_annotations",
             ...     predict_folder="predict_folder",
@@ -402,6 +402,8 @@ class ObjectDetectionData(DataModule):
     @classmethod
     def from_via(
         cls,
+        labels: List[str],
+        label_field: str = "label",
         train_folder: Optional[str] = None,
         train_ann_file: Optional[str] = None,
         val_folder: Optional[str] = None,
@@ -422,25 +424,135 @@ class ObjectDetectionData(DataModule):
         `JSON format <https://gitlab.com/vgg/via/-/blob/via-3.x.y/via-3.x.y/CodeDoc.md#structure-of-via-project-
         json-file>`_.
 
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
         Args:
-            train_folder: The folder containing the train data.
-            train_ann_file: The VIA format annotation file.
-            val_folder: The folder containing the validation data.
-            val_ann_file: The VIA format annotation file.
-            test_folder: The folder containing the test data.
-            test_ann_file: The VIA format annotation file.
-            predict_folder: The folder containing the predict data.
-            train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            input_cls: The :class:`~flash.core.data.io.input.Input` used to create the dataset.
-            transform_kwargs: Keyword arguments provided to the transform on instantiation.
-            data_module_kwargs: Keyword arguments provided to the DataModule on instantiation.
+            labels: A list of class labels. Not that the list should not include a label for the background class which
+                will be added automatically as class zero (additional labels will be sorted).
+            label_field: The field within ``region_attributes`` which corresponds to the region label.
+            train_folder: The folder containing images to use when training.
+            train_ann_file: The VIA format annotation file to use when training.
+            val_folder: The folder containing images to use when validating.
+            val_ann_file: The VIA format annotation file to use when validating.
+            test_folder: The folder containing images to use when testing.
+            test_ann_file: The VIA format annotation file to use when testing.
+            predict_folder: The folder containing images to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+              predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+              :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.image.detection.data.ObjectDetectionData`.
+
+        Examples
+        ________
+
+        .. testsetup::
+
+            >>> import os
+            >>> import json
+            >>> import numpy as np
+            >>> from PIL import Image
+            >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
+            >>> os.makedirs("train_folder", exist_ok=True)
+            >>> os.makedirs("predict_folder", exist_ok=True)
+            >>> _ = [rand_image.save(os.path.join("train_folder", f"image_{i}.png")) for i in range(1, 4)]
+            >>> _ = [rand_image.save(os.path.join("predict_folder", f"predict_image_{i}.png")) for i in range(1, 4)]
+            >>> annotations = {
+            ...     "image_1.png": {
+            ...         "filename": "image_1.png",
+            ...         "regions": [{
+            ...                 "shape_attributes": {"name": "rect", "x": 10, "y": 20, "width": 5, "height": 10},
+            ...                 "region_attributes": {"label": "cat"},
+            ...         }]
+            ...     }, "image_2.png": {
+            ...         "filename": "image_2.png",
+            ...         "regions": [{
+            ...                 "shape_attributes": {"name": "rect", "x": 20, "y": 30, "width": 10, "height": 10},
+            ...                 "region_attributes": {"label": "dog"},
+            ...         }]
+            ...     }, "image_3.png": {
+            ...         "filename": "image_3.png",
+            ...         "regions": [{
+            ...                 "shape_attributes": {"name": "rect", "x": 10, "y": 20, "width": 5, "height": 25},
+            ...                 "region_attributes": {"label": "cat"},
+            ...         }]
+            ...     }
+            ... }
+            >>> with open("train_annotations.json", "w") as annotation_file:
+            ...     json.dump(annotations, annotation_file)
+
+        The folder ``train_folder`` has the following contents:
+
+        .. code-block::
+
+            train_folder
+            ├── image_1.png
+            ├── image_2.png
+            ├── image_3.png
+            ...
+
+        The file ``train_annotations.json`` contains the following:
+
+        .. code-block::
+
+            {
+                "image_1.png": {
+                    "filename": "image_1.png",
+                    "regions": [{
+                        "shape_attributes": {"name": "rect", "x": 10, "y": 20, "width": 5, "height": 10},
+                        "region_attributes": {"label": "cat"}
+                    }]
+                }, "image_2.png": {
+                    "filename": "image_2.png",
+                    "regions": [{
+                        "shape_attributes": {"name": "rect", "x": 20, "y": 30, "width": 10, "height": 10},
+                        "region_attributes": {"label": "dog"}}
+                ]}, "image_3.png": {
+                    "filename": "image_3.png",
+                    "regions": [{
+                        "shape_attributes": {"name": "rect", "x": 10, "y": 20, "width": 5, "height": 25},
+                        "region_attributes": {"label": "cat"}
+                    }]
+                }
+            }
+
+        .. doctest::
+
+            >>> from flash import Trainer
+            >>> from flash.image import ObjectDetector, ObjectDetectionData
+            >>> datamodule = ObjectDetectionData.from_via(
+            ...     ["cat", "dog"],
+            ...     train_folder="train_folder",
+            ...     train_ann_file="train_annotations.json",
+            ...     predict_folder="predict_folder",
+            ...     transform_kwargs=dict(image_size=(128, 128)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            3
+            >>> datamodule.labels
+            ['background', 'cat', 'dog']
+            >>> model = ObjectDetector(num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> import shutil
+            >>> shutil.rmtree("train_folder")
+            >>> shutil.rmtree("predict_folder")
+            >>> os.remove("train_annotations.json")
         """
         return cls.from_icedata(
             train_folder=train_folder,
@@ -454,7 +566,11 @@ class ObjectDetectionData(DataModule):
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            parser=VIABBoxParser,
+            parser=partial(
+                VIABBoxParser,
+                class_map=ClassMap(list(sorted_alphanumeric(labels))),
+                label_field=label_field,
+            ),
             input_cls=input_cls,
             transform_kwargs=transform_kwargs,
             **data_module_kwargs,
