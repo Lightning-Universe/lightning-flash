@@ -21,7 +21,7 @@ from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, lazy_import
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 from flash.image.segmentation.input import (
@@ -41,6 +41,10 @@ if _FIFTYONE_AVAILABLE:
         from fiftyone.core.collections import SampleCollection
 else:
     fo = None
+
+# Skip doctests if requirements aren't available
+if not _IMAGE_AVAILABLE:
+    __doctest_skip__ = ["SemanticSegmentationData", "SemanticSegmentationData.*"]
 
 
 class SemanticSegmentationData(DataModule):
@@ -113,7 +117,7 @@ class SemanticSegmentationData(DataModule):
 
             >>> from PIL import Image
             >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
-            >>> rand_mask= Image.fromarray(np.random.randint(0, 10, (64, 64, 3), dtype="uint8"))
+            >>> rand_mask= Image.fromarray(np.random.randint(0, 10, (64, 64, 1), dtype="uint8"))
             >>> _ = [rand_image.save(f"image_{i}.png") for i in range(1, 4)]
             >>> _ = [rand_mask.save(f"mask_{i}.png") for i in range(1, 4)]
             >>> _ = [rand_image.save(f"predict_image_{i}.png") for i in range(1, 4)]
@@ -258,7 +262,7 @@ class SemanticSegmentationData(DataModule):
             >>> import os
             >>> from PIL import Image
             >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
-            >>> rand_mask = Image.fromarray(np.random.randint(0, 10, (64, 64, 3), dtype="uint8"))
+            >>> rand_mask = Image.fromarray(np.random.randint(0, 10, (64, 64, 1), dtype="uint8"))
             >>> os.makedirs("train_images", exist_ok=True)
             >>> os.makedirs("train_masks", exist_ok=True)
             >>> os.makedirs("predict_folder", exist_ok=True)
@@ -331,6 +335,65 @@ class SemanticSegmentationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "SemanticSegmentationData":
+        """Load the :class:`~flash.image.segmentation.data.SemanticSegmentationData` from numpy arrays containing
+        images (or lists of arrays) and corresponding numpy arrays containing masks (or lists of arrays).
+
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
+        Args:
+            train_data: The numpy array or list of arrays containing images to use when training.
+            train_targets: The numpy array or list of arrays containing masks to use when training.
+            val_data: The numpy array or list of arrays containing images to use when validating.
+            val_targets: The numpy array or list of arrays containing masks to use when validating.
+            test_data: The numpy array or list of arrays containing images to use when testing.
+            test_targets: The numpy array or list of arrays containing masks to use when testing.
+            predict_data: The numpy array or list of arrays to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+              predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            num_classes: The number of segmentation classes.
+            labels_map: An optional mapping from class to RGB tuple indicating the colour to use when visualizing masks.
+                If not provided, a random mapping will be used.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+              :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.image.segmentation.data.SemanticSegmentationData`.
+
+        Examples
+        ________
+
+        .. doctest::
+
+            >>> import numpy as np
+            >>> from flash import Trainer
+            >>> from flash.image import SemanticSegmentation, SemanticSegmentationData
+            >>> datamodule = SemanticSegmentationData.from_numpy(
+            ...     train_data=[np.random.rand(3, 64, 64), np.random.rand(3, 64, 64), np.random.rand(3, 64, 64)],
+            ...     train_targets=[
+            ...         np.random.randint(0, 10, (1, 64, 64), dtype="uint8"),
+            ...         np.random.randint(0, 10, (1, 64, 64), dtype="uint8"),
+            ...         np.random.randint(0, 10, (1, 64, 64), dtype="uint8"),
+            ...     ],
+            ...     predict_data=[np.random.rand(3, 64, 64)],
+            ...     transform_kwargs=dict(image_size=(128, 128)),
+            ...     num_classes=10,
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            10
+            >>> model = SemanticSegmentation(backbone="resnet18", num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+        """
 
         ds_kw = dict(
             data_pipeline_state=DataPipelineState(),
@@ -368,6 +431,65 @@ class SemanticSegmentationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "SemanticSegmentationData":
+        """Load the :class:`~flash.image.segmentation.data.SemanticSegmentationData` from torch tensors containing
+        images (or lists of tensors) and corresponding torch tensors containing masks (or lists of tensors).
+
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
+        Args:
+            train_data: The torch tensor or list of tensors containing images to use when training.
+            train_targets: The torch tensor or list of tensors containing masks to use when training.
+            val_data: The torch tensor or list of tensors containing images to use when validating.
+            val_targets: The torch tensor or list of tensors containing masks to use when validating.
+            test_data: The torch tensor or list of tensors containing images to use when testing.
+            test_targets: The torch tensor or list of tensors containing masks to use when testing.
+            predict_data: The torch tensor or list of tensors to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+              predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            num_classes: The number of segmentation classes.
+            labels_map: An optional mapping from class to RGB tuple indicating the colour to use when visualizing masks.
+                If not provided, a random mapping will be used.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+              :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.image.segmentation.data.SemanticSegmentationData`.
+
+        Examples
+        ________
+
+        .. doctest::
+
+            >>> import torch
+            >>> from flash import Trainer
+            >>> from flash.image import SemanticSegmentation, SemanticSegmentationData
+            >>> datamodule = SemanticSegmentationData.from_tensors(
+            ...     train_data=[torch.rand(3, 64, 64), torch.rand(3, 64, 64), torch.rand(3, 64, 64)],
+            ...     train_targets=[
+            ...         torch.randint(10, (1, 64, 64)),
+            ...         torch.randint(10, (1, 64, 64)),
+            ...         torch.randint(10, (1, 64, 64)),
+            ...     ],
+            ...     predict_data=[torch.rand(3, 64, 64)],
+            ...     transform_kwargs=dict(image_size=(128, 128)),
+            ...     num_classes=10,
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            10
+            >>> model = SemanticSegmentation(backbone="resnet18", num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+        """
 
         ds_kw = dict(
             data_pipeline_state=DataPipelineState(),
