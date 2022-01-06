@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 from itertools import chain
 
 import flash
@@ -28,7 +29,7 @@ data_dir = icedata.fridge.load_data()
 
 datamodule = ObjectDetectionData.from_icedata(
     train_folder=data_dir,
-    predict_folder=data_dir,
+    predict_folder=os.path.join(data_dir, "odFridgeObjects", "images"),
     val_split=0.1,
     transform_kwargs={"image_size": 128},
     parser=icedata.fridge.parser,
