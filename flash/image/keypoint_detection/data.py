@@ -174,8 +174,3 @@ class KeypointDetectionData(DataModule):
             predict_input=input_cls(RunningStage.PREDICTING, predict_files, **ds_kw),
             **data_module_kwargs,
         )
-
-    from_tensor = None
-    from_json = None
-    from_csv = None
-    from_datasets = None

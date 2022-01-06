@@ -39,6 +39,10 @@ else:
     VOCBBoxParser = object
     Parser = object
 
+# Skip doctests if requirements aren't available
+if not _ICEVISION_AVAILABLE:
+    __doctest_skip__ = ["ObjectDetectionData", "ObjectDetectionData.*"]
+
 
 class ObjectDetectionData(DataModule):
 
@@ -95,25 +99,116 @@ class ObjectDetectionData(DataModule):
         """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders
         and annotation files in the `COCO JSON format <https://cocodataset.org/#format-data>`_.
 
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
         Args:
-            train_folder: The folder containing the train data.
-            train_ann_file: The COCO format annotation file.
-            val_folder: The folder containing the validation data.
-            val_ann_file: The COCO format annotation file.
-            test_folder: The folder containing the test data.
-            test_ann_file: The COCO format annotation file.
-            predict_folder: The folder containing the predict data.
-            train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            input_cls: The :class:`~flash.core.data.io.input.Input` used to create the dataset.
-            transform_kwargs: Keyword arguments provided to the transform on instantiation.
-            data_module_kwargs: Keyword arguments provided to the DataModule on instantiation.
+            train_folder: The folder containing images to use when training.
+            train_ann_file: The COCO format annotation file to use when training.
+            val_folder: The folder containing images to use when validating.
+            val_ann_file: The COCO format annotation file to use when validating.
+            test_folder: The folder containing images to use when testing.
+            test_ann_file: The COCO format annotation file to use when testing.
+            predict_folder: The folder containing images to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+              predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+              :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.image.detection.data.ObjectDetectionData`.
+
+        Examples
+        ________
+
+        .. testsetup::
+
+            >>> import os
+            >>> import json
+            >>> import numpy as np
+            >>> from PIL import Image
+            >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
+            >>> os.makedirs("train_folder", exist_ok=True)
+            >>> os.makedirs("predict_folder", exist_ok=True)
+            >>> _ = [rand_image.save(os.path.join("train_folder", f"image_{i}.png")) for i in range(1, 4)]
+            >>> _ = [rand_image.save(os.path.join("predict_folder", f"predict_image_{i}.png")) for i in range(1, 4)]
+            >>> annotations = {"annotations": [
+            ...     {"area":  50, "bbox": [10, 20, 15, 30], "category_id": 1, "id": 1, "image_id": 1, "iscrowd": 0},
+            ...     {"area": 100, "bbox": [20, 30, 30, 40], "category_id": 2, "id": 2, "image_id": 2, "iscrowd": 0},
+            ...     {"area": 125, "bbox": [10, 20, 15, 45], "category_id": 1, "id": 3, "image_id": 3, "iscrowd": 0},
+            ... ], "categories": [
+            ...     {"id": 1, "name": "cat", "supercategory": "cat"},
+            ...     {"id": 2, "name": "dog", "supercategory": "dog"},
+            ... ], "images": [
+            ...     {"file_name": "image_1.png", "height": 64, "width": 64, "id": 1},
+            ...     {"file_name": "image_2.png", "height": 64, "width": 64, "id": 2},
+            ...     {"file_name": "image_3.png", "height": 64, "width": 64, "id": 3},
+            ... ]}
+            >>> with open("train_annotations.json", "w") as annotation_file:
+            ...     json.dump(annotations, annotation_file)
+
+        The folder ``train_folder`` has the following contents:
+
+        .. code-block::
+
+            train_folder
+            ├── image_1.png
+            ├── image_2.png
+            ├── image_3.png
+            ...
+
+        The file ``train_annotations.json`` contains the following:
+
+        .. code-block::
+
+            {
+                "annotations": [
+                    {"area": 50, "bbox": [10, 20, 15, 30], "category_id": 1, "id": 1, "image_id": 1, "iscrowd": 0},
+                    {"area": 100, "bbox": [20, 30, 30, 40], "category_id": 2, "id": 2, "image_id": 2, "iscrowd": 0},
+                    {"area": 125, "bbox": [10, 20, 15, 45], "category_id": 1, "id": 3, "image_id": 3, "iscrowd": 0}
+                ], "categories": [
+                    {"id": 1, "name": "cat", "supercategory": "cat"},
+                    {"id": 2, "name": "dog", "supercategory": "dog"}
+                ], "images": [
+                    {"file_name": "image_1.png", "height": 64, "width": 64, "id": 1},
+                    {"file_name": "image_2.png", "height": 64, "width": 64, "id": 2},
+                    {"file_name": "image_3.png", "height": 64, "width": 64, "id": 3}
+                ]
+            }
+
+        .. doctest::
+
+            >>> from flash import Trainer
+            >>> from flash.image import ObjectDetector, ObjectDetectionData
+            >>> datamodule = ObjectDetectionData.from_coco(
+            ...     train_folder="train_folder",
+            ...     train_ann_file="train_annotations.json",
+            ...     predict_folder="predict_folder",
+            ...     transform_kwargs=dict(image_size=(128, 128)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            3
+            >>> datamodule.labels
+            ['background', 'cat', 'dog']
+            >>> model = ObjectDetector(num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> import shutil
+            >>> shutil.rmtree("train_folder")
+            >>> shutil.rmtree("predict_folder")
+            >>> os.remove("train_annotations.json")
         """
         return cls.from_icedata(
             train_folder=train_folder,
@@ -340,8 +435,3 @@ class ObjectDetectionData(DataModule):
             ),
             **data_module_kwargs,
         )
-
-    from_tensor = None
-    from_json = None
-    from_csv = None
-    from_datasets = None
