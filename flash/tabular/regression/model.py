@@ -23,10 +23,7 @@ from flash.core.registry import FlashRegistry
 from flash.core.regression import RegressionAdapterTask
 from flash.core.serve import Composition
 from flash.core.utilities.imports import requires
-from flash.core.utilities.types import (
-    INPUT_TRANSFORM_TYPE,
-    METRICS_TYPE,
-)
+from flash.core.utilities.types import INPUT_TRANSFORM_TYPE, METRICS_TYPE
 from flash.tabular.input import TabularDeserializer
 
 
@@ -87,11 +84,9 @@ class TabularRegressor(RegressionAdapterTask):
             learning_rate=learning_rate,
             optimizer=optimizer,
             metrics=metrics,
-            lr_scheduler=lr_scheduler
+            lr_scheduler=lr_scheduler,
         )
-        super().__init__(
-            adapter
-        )
+        super().__init__(adapter)
 
     @classmethod
     def from_data(cls, datamodule, **kwargs) -> "TabularRegressor":

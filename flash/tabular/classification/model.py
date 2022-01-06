@@ -87,11 +87,9 @@ class TabularClassifier(ClassificationAdapterTask):
             learning_rate=learning_rate,
             optimizer=optimizer,
             metrics=metrics,
-            lr_scheduler=lr_scheduler
+            lr_scheduler=lr_scheduler,
         )
-        super().__init__(
-            adapter
-        )
+        super().__init__(adapter)
 
     @staticmethod
     def _ci_benchmark_fn(history: List[Dict[str, Any]]):

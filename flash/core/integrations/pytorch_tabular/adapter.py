@@ -40,14 +40,18 @@ class PytorchTabularAdapter(Adapter):
             "continuous_dim": num_features - len(categorical_fields),
             "output_dim": output_dim,
         }
-        adapter = cls(task.backbones.get(backbone)(task_type=task_type,
-                                                   parameters=parameters,
-                                                   loss_fn=loss_fn,
-                                                   metrics=metrics,
-                                                   learning_rate=learning_rate,
-                                                   optimizer=optimizer,
-                                                   lr_scheduler=lr_scheduler,
-                                                   **backbone_kwargs))
+        adapter = cls(
+            task.backbones.get(backbone)(
+                task_type=task_type,
+                parameters=parameters,
+                loss_fn=loss_fn,
+                metrics=metrics,
+                learning_rate=learning_rate,
+                optimizer=optimizer,
+                lr_scheduler=lr_scheduler,
+                **backbone_kwargs
+            )
+        )
 
         return adapter
 
