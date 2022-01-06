@@ -38,6 +38,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Fixed a bug where `SpeechRecognitionData.from_datasets` did not work as expected ([#1097](https://github.com/PyTorchLightning/lightning-flash/pull/1097))
 
+- Fixed a bug when passing a `predict_folder` argument to `from_coco` / `from_voc` / `from_via` in IceVision tasks ([#1102](https://github.com/PyTorchLightning/lightning-flash/pull/1102))
+
 ### Removed
 
 ## [0.6.0] - 2021-13-12
