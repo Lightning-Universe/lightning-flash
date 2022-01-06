@@ -11,11 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from functools import partial
 from typing import Any, Callable, Dict, List, Optional, Type, TYPE_CHECKING, Union
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
+from flash.core.data.utilities.sort import sorted_alphanumeric
 from flash.core.integrations.icevision.data import IceVisionInput
 from flash.core.integrations.icevision.transforms import IceVisionInputTransform
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _ICEVISION_AVAILABLE, lazy_import, requires
@@ -32,6 +34,7 @@ else:
     foc, fol = None, None
 
 if _ICEVISION_AVAILABLE:
+    from icevision.core import ClassMap
     from icevision.parsers import COCOBBoxParser, Parser, VIABBoxParser, VOCBBoxParser
 else:
     COCOBBoxParser = object
@@ -231,12 +234,13 @@ class ObjectDetectionData(DataModule):
     @classmethod
     def from_voc(
         cls,
+        labels: List[str],
         train_folder: Optional[str] = None,
-        train_ann_file: Optional[str] = None,
+        train_ann_folder: Optional[str] = None,
         val_folder: Optional[str] = None,
-        val_ann_file: Optional[str] = None,
+        val_ann_folder: Optional[str] = None,
         test_folder: Optional[str] = None,
-        test_ann_file: Optional[str] = None,
+        test_ann_folder: Optional[str] = None,
         predict_folder: Optional[str] = None,
         train_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         val_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
@@ -251,39 +255,145 @@ class ObjectDetectionData(DataModule):
         Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders
         and annotation files in the `PASCAL VOC (Visual Object Challenge) XML format <PASCAL>`_.
 
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
         Args:
-            train_folder: The folder containing the train data.
-            train_ann_file: The VOC format annotation file.
-            val_folder: The folder containing the validation data.
-            val_ann_file: The VOC format annotation file.
-            test_folder: The folder containing the test data.
-            test_ann_file: The VOC format annotation file.
-            predict_folder: The folder containing the predict data.
-            train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            input_cls: The :class:`~flash.core.data.io.input.Input` used to create the dataset.
-            transform_kwargs: Keyword arguments provided to the transform on instantiation.
-            data_module_kwargs: Keyword arguments provided to the DataModule on instantiation.
+            labels: A list of class labels. Not that the list should not include a label for the background class which
+                will be added automatically as class zero (additional labels will be sorted).
+            train_folder: The folder containing images to use when training.
+            train_ann_folder: The folder containing VOC format annotation files to use when training.
+            val_folder: The folder containing images to use when validating.
+            val_ann_folder: The folder containing VOC format annotation files to use when validating.
+            test_folder: The folder containing images to use when testing.
+            test_ann_folder: The folder containing VOC format annotation files to use when testing.
+            predict_folder: The folder containing images to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+              predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+              :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.image.detection.data.ObjectDetectionData`.
+
+        Examples
+        ________
+
+        .. testsetup::
+
+            >>> import os
+            >>> import numpy as np
+            >>> from PIL import Image
+            >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
+            >>> os.makedirs("train_folder", exist_ok=True)
+            >>> os.makedirs("train_annotations", exist_ok=True)
+            >>> os.makedirs("predict_folder", exist_ok=True)
+            >>> _ = [rand_image.save(os.path.join("train_folder", f"image_{i}.png")) for i in range(1, 4)]
+            >>> _ = [rand_image.save(os.path.join("predict_folder", f"predict_image_{i}.png")) for i in range(1, 4)]
+            >>> bboxes = [[10, 20, 15, 30], [20, 30, 30, 40], [10, 20, 15, 45]]
+            >>> labels = ["cat", "dog", "cat"]
+            >>> for i, (bbox, label) in enumerate(zip(bboxes, labels)):
+            ...     xmin, ymin, xmax, ymax = bbox
+            ...     annotation = (
+            ...         f"<annotation><folder></folder><filename>image_{i + 1}.png</filename>"
+            ...         f"<path>image_{i + 1}.png</path><source><database>example</database></source>"
+            ...         "<size><width>64</width><height>64</height><depth>3</depth></size><segmented>0</segmented>"
+            ...         f"<object><name>{label}</name><pose>Unspecified</pose><truncated>0</truncated>"
+            ...         f"<difficult>0</difficult><occluded>0</occluded><bndbox><xmin>{xmin}</xmin><xmax>{xmax}</xmax>"
+            ...         f"<ymin>{ymin}</ymin><ymax>{ymax}</ymax></bndbox></object></annotation>"
+            ...     )
+            ...     with open(os.path.join("train_annotations", f"image_{i}.xml"), "w") as file:
+            ...         _ = file.write(annotation)
+
+        The folder ``train_folder`` has the following contents:
+
+        .. code-block::
+
+            train_folder
+            ├── image_1.png
+            ├── image_2.png
+            ├── image_3.png
+            ...
+
+        The folder ``train_annotations`` has the following contents:
+
+        .. code-block::
+
+            train_annotations
+            ├── image_1.xml
+            ├── image_2.xml
+            ├── image_3.xml
+            ...
+
+        The file ``image_1.xml`` contains the following:
+
+        .. code-block::
+
+            <annotation>
+                <folder></folder>
+                <filename>image_0.png</filename>
+                <path>image_0.png</path>
+                <source><database>example</database></source>
+                <size><width>64</width><height>64</height><depth>3</depth></size>
+                <segmented>0</segmented>
+                <object>
+                    <name>cat</name>
+                    <pose>Unspecified</pose>
+                    <truncated>0</truncated>
+                    <difficult>0</difficult>
+                    <occluded>0</occluded>
+                    <bndbox><xmin>10</xmin><xmax>15</xmax><ymin>20</ymin><ymax>30</ymax></bndbox>
+                </object>
+            </annotation>
+
+        .. doctest::
+
+            >>> from flash import Trainer
+            >>> from flash.image import ObjectDetector, ObjectDetectionData
+            >>> datamodule = ObjectDetectionData.from_voc(
+            ...     labels=["cat", "dog"],
+            ...     train_folder="train_folder",
+            ...     train_ann_folder="train_annotations",
+            ...     predict_folder="predict_folder",
+            ...     transform_kwargs=dict(image_size=(128, 128)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            3
+            >>> datamodule.labels
+            ['background', 'cat', 'dog']
+            >>> model = ObjectDetector(num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> import shutil
+            >>> shutil.rmtree("train_folder")
+            >>> shutil.rmtree("predict_folder")
+            >>> shutil.rmtree("train_annotations")
         """
         return cls.from_icedata(
             train_folder=train_folder,
-            train_ann_file=train_ann_file,
+            train_ann_file=train_ann_folder,
             val_folder=val_folder,
-            val_ann_file=val_ann_file,
+            val_ann_file=val_ann_folder,
             test_folder=test_folder,
-            test_ann_file=test_ann_file,
+            test_ann_file=test_ann_folder,
             predict_folder=predict_folder,
             train_transform=train_transform,
             val_transform=val_transform,
             test_transform=test_transform,
             predict_transform=predict_transform,
-            parser=VOCBBoxParser,
+            parser=partial(VOCBBoxParser, class_map=ClassMap(list(sorted_alphanumeric(labels)))),
             input_cls=input_cls,
             transform_kwargs=transform_kwargs,
             **data_module_kwargs,

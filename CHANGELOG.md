@@ -40,6 +40,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Fixed a bug when passing a `predict_folder` argument to `from_coco` / `from_voc` / `from_via` in IceVision tasks ([#1102](https://github.com/PyTorchLightning/lightning-flash/pull/1102))
 
+- Fixed `ObjectDetectionData.from_voc` ([#1102](https://github.com/PyTorchLightning/lightning-flash/pull/1102))
+
 ### Removed
 
 ## [0.6.0] - 2021-13-12

@@ -36,9 +36,10 @@ class IceVisionInput(Input):
         ann_file: Optional[str] = None,
         parser: Optional[Type["Parser"]] = None,
     ) -> List[Dict[str, Any]]:
-        if inspect.isclass(parser) and issubclass(parser, Parser):
+        unwrapped_parser = getattr(parser, "func", parser)
+        if inspect.isclass(unwrapped_parser) and issubclass(unwrapped_parser, Parser):
             parser = parser(ann_file, root)
-        elif isinstance(parser, Callable):
+        elif isinstance(unwrapped_parser, Callable):
             parser = parser(root)
         else:
             raise ValueError("The parser must be a callable or an IceVision Parser type.")
