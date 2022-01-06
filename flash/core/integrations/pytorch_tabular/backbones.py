@@ -9,8 +9,8 @@ from flash.core.utilities.imports import _PYTORCHTABULAR_AVAILABLE
 from flash.core.utilities.providers import _PYTORCH_TABULAR
 
 if _PYTORCHTABULAR_AVAILABLE:
-    from pytorch_tabular.config import ModelConfig, OptimizerConfig
     import pytorch_tabular.models as models
+    from pytorch_tabular.config import ModelConfig, OptimizerConfig
     from pytorch_tabular.models import (
         AutoIntConfig,
         CategoryEmbeddingModelConfig,
