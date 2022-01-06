@@ -43,11 +43,3 @@ def test_image_detector_data_from_folders(tmpdir):
     data = next(iter(datamodule.predict_dataloader()))
     sample = data[0]
     assert sample[DataKeys.INPUT].shape == (128, 128, 3)
-
-
-def test_data_non_supported():
-
-    assert not InstanceSegmentationData.from_tensor
-    assert not InstanceSegmentationData.from_json
-    assert not InstanceSegmentationData.from_csv
-    assert not InstanceSegmentationData.from_datasets
