@@ -32,6 +32,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Fixed a bug with `AudioClassificationData.from_numpy` ([#1096](https://github.com/PyTorchLightning/lightning-flash/pull/1096))
 
+- Fixed a bug where loading data for prediction with `SemanticSegmentationData.from_folders` raised an error
+
 ### Removed
 
 ## [0.6.0] - 2021-13-12

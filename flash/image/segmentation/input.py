@@ -20,10 +20,9 @@ from pytorch_lightning.utilities import rank_zero_warn
 from flash.core.data.io.input import DataKeys, ImageLabelsMap, Input
 from flash.core.data.utilities.paths import filter_valid_files, PATH_TYPE
 from flash.core.data.utilities.samples import to_samples
-from flash.core.data.utils import image_default_loader
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _TORCHVISION_AVAILABLE, lazy_import
-from flash.image.data import ImageDeserializer, IMG_EXTENSIONS
+from flash.image.data import image_loader, ImageDeserializer, IMG_EXTENSIONS
 from flash.image.segmentation.output import SegmentationLabelsOutput
 
 SampleCollection = None
@@ -101,12 +100,12 @@ class SemanticSegmentationFilesInput(SemanticSegmentationInput):
         if mask_files is None:
             files = filter_valid_files(files, valid_extensions=IMG_EXTENSIONS)
         else:
-            files, masks = filter_valid_files(files, mask_files, valid_extensions=IMG_EXTENSIONS)
+            files, mask_files = filter_valid_files(files, mask_files, valid_extensions=IMG_EXTENSIONS)
         return to_samples(files, mask_files)
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         filepath = sample[DataKeys.INPUT]
-        sample[DataKeys.INPUT] = FT.to_tensor(image_default_loader(filepath))
+        sample[DataKeys.INPUT] = FT.to_tensor(image_loader(filepath))
         if DataKeys.TARGET in sample:
             sample[DataKeys.TARGET] = torchvision.io.read_image(sample[DataKeys.TARGET])[0]
         sample = super().load_sample(sample)
@@ -141,7 +140,7 @@ class SemanticSegmentationFolderInput(SemanticSegmentationFilesInput):
             files.sort()
             mask_files.sort()
             return super().load_data(files, mask_files)
-        return super().load_data(files)
+        return super().load_data([os.path.join(folder, file) for file in files])
 
 
 class SemanticSegmentationFiftyOneInput(SemanticSegmentationFilesInput):
