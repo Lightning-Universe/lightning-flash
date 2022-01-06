@@ -53,8 +53,6 @@ class TabularClassifier(ClassificationAdapterTask):
             containing a combination of the aforementioned. In all cases, each metric needs to have the signature
             `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training.
-        multi_label: Whether the targets are multi-label or not.
-        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
         **backbone_kwargs: Optional additional arguments for the model.
     """
 
@@ -70,12 +68,10 @@ class TabularClassifier(ClassificationAdapterTask):
         output_dim: int,
         backbone: str,
         loss_fn: Callable = F.cross_entropy,
-        optimizer: OPTIMIZER_TYPE = "Adam",
-        lr_scheduler: LR_SCHEDULER_TYPE = None,
+        optimizer: str = "Adam",
+        lr_scheduler: str = None,
         metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-2,
-        multi_label: bool = False,
-        output: OUTPUT_TYPE = None,
         **backbone_kwargs,
     ):
         self.save_hyperparameters()
@@ -91,18 +87,13 @@ class TabularClassifier(ClassificationAdapterTask):
             backbone=backbone,
             backbone_kwargs=backbone_kwargs,
             loss_fn=loss_fn,
-            metrics=metrics,
-        )
-        super().__init__(
-            adapter,
-            num_classes=output_dim,
-            loss_fn=loss_fn,
-            metrics=metrics,
             learning_rate=learning_rate,
             optimizer=optimizer,
-            lr_scheduler=lr_scheduler,
-            multi_label=multi_label,
-            output=output or Labels(multi_label=multi_label),
+            metrics=metrics,
+            lr_scheduler=lr_scheduler
+        )
+        super().__init__(
+            adapter
         )
 
     @staticmethod

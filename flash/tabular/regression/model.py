@@ -25,10 +25,7 @@ from flash.core.serve import Composition
 from flash.core.utilities.imports import requires
 from flash.core.utilities.types import (
     INPUT_TRANSFORM_TYPE,
-    LR_SCHEDULER_TYPE,
     METRICS_TYPE,
-    OPTIMIZER_TYPE,
-    OUTPUT_TYPE,
 )
 from flash.tabular.input import TabularDeserializer
 
@@ -53,7 +50,6 @@ class TabularRegressor(RegressionAdapterTask):
             containing a combination of the aforementioned. In all cases, each metric needs to have the signature
             `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training.
-        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
         **backbone_kwargs: Optional additional arguments for the model.
     """
 
@@ -66,14 +62,13 @@ class TabularRegressor(RegressionAdapterTask):
         categorical_fields: list,
         cat_dims: list,
         num_features: int,
-        output_dim: int,
         backbone: str,
-        loss_fn: Callable = F.cross_entropy,
-        optimizer: OPTIMIZER_TYPE = "Adam",
-        lr_scheduler: LR_SCHEDULER_TYPE = None,
+        output_dim: int = 1,
+        loss_fn: Callable = F.mse_loss,
+        optimizer: str = "Adam",
+        lr_scheduler: str = None,
         metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-2,
-        output: OUTPUT_TYPE = None,
         **backbone_kwargs
     ):
         self.save_hyperparameters()
@@ -89,16 +84,13 @@ class TabularRegressor(RegressionAdapterTask):
             backbone=backbone,
             backbone_kwargs=backbone_kwargs,
             loss_fn=loss_fn,
-            metrics=metrics,
-        )
-        super().__init__(
-            adapter,
-            loss_fn=loss_fn,
-            metrics=metrics,
             learning_rate=learning_rate,
             optimizer=optimizer,
-            lr_scheduler=lr_scheduler,
-            output=output,
+            metrics=metrics,
+            lr_scheduler=lr_scheduler
+        )
+        super().__init__(
+            adapter
         )
 
     @classmethod
