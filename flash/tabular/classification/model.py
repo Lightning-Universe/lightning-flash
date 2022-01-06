@@ -17,7 +17,7 @@ from typing import Any, Callable, Dict, List, Optional, Type
 from torch.nn import functional as F
 
 from flash import InputTransform
-from flash.core.classification import ClassificationAdapterTask, Labels
+from flash.core.classification import ClassificationAdapterTask
 from flash.core.data.io.input import ServeInput
 from flash.core.integrations.pytorch_tabular.backbones import PYTORCH_TABULAR_BACKBONES
 from flash.core.registry import FlashRegistry
@@ -25,10 +25,7 @@ from flash.core.serve import Composition
 from flash.core.utilities.imports import requires
 from flash.core.utilities.types import (
     INPUT_TRANSFORM_TYPE,
-    LR_SCHEDULER_TYPE,
-    METRICS_TYPE,
-    OPTIMIZER_TYPE,
-    OUTPUT_TYPE,
+    METRICS_TYPE
 )
 from flash.tabular.input import TabularDeserializer
 
