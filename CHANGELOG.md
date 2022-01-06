@@ -44,6 +44,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Fixed `ObjectDetectionData.from_voc` and `ObjectDetectionData.from_via` ([#1102](https://github.com/PyTorchLightning/lightning-flash/pull/1102))
 
+- Fixed a bug where `InstanceSegmentationData.from_coco` would raise an error if not using file-based masks ([#1102](https://github.com/PyTorchLightning/lightning-flash/pull/1102))
+
 ### Removed
 
 ## [0.6.0] - 2021-13-12

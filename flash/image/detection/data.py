@@ -143,9 +143,9 @@ class ObjectDetectionData(DataModule):
             >>> _ = [rand_image.save(os.path.join("train_folder", f"image_{i}.png")) for i in range(1, 4)]
             >>> _ = [rand_image.save(os.path.join("predict_folder", f"predict_image_{i}.png")) for i in range(1, 4)]
             >>> annotations = {"annotations": [
-            ...     {"area":  50, "bbox": [10, 20, 15, 30], "category_id": 1, "id": 1, "image_id": 1, "iscrowd": 0},
-            ...     {"area": 100, "bbox": [20, 30, 30, 40], "category_id": 2, "id": 2, "image_id": 2, "iscrowd": 0},
-            ...     {"area": 125, "bbox": [10, 20, 15, 45], "category_id": 1, "id": 3, "image_id": 3, "iscrowd": 0},
+            ...     {"area": 50, "bbox": [10, 20, 5, 10], "category_id": 1, "id": 1, "image_id": 1, "iscrowd": 0},
+            ...     {"area": 100, "bbox": [20, 30, 10, 10], "category_id": 2, "id": 2, "image_id": 2, "iscrowd": 0},
+            ...     {"area": 125, "bbox": [10, 20, 5, 25], "category_id": 1, "id": 3, "image_id": 3, "iscrowd": 0},
             ... ], "categories": [
             ...     {"id": 1, "name": "cat", "supercategory": "cat"},
             ...     {"id": 2, "name": "dog", "supercategory": "dog"},
@@ -173,9 +173,9 @@ class ObjectDetectionData(DataModule):
 
             {
                 "annotations": [
-                    {"area": 50, "bbox": [10, 20, 15, 30], "category_id": 1, "id": 1, "image_id": 1, "iscrowd": 0},
-                    {"area": 100, "bbox": [20, 30, 30, 40], "category_id": 2, "id": 2, "image_id": 2, "iscrowd": 0},
-                    {"area": 125, "bbox": [10, 20, 15, 45], "category_id": 1, "id": 3, "image_id": 3, "iscrowd": 0}
+                    {"area": 50, "bbox": [10, 20, 5, 10], "category_id": 1, "id": 1, "image_id": 1, "iscrowd": 0},
+                    {"area": 100, "bbox": [20, 30, 10, 10], "category_id": 2, "id": 2, "image_id": 2, "iscrowd": 0},
+                    {"area": 125, "bbox": [10, 20, 5, 25], "category_id": 1, "id": 3, "image_id": 3, "iscrowd": 0}
                 ], "categories": [
                     {"id": 1, "name": "cat", "supercategory": "cat"},
                     {"id": 2, "name": "dog", "supercategory": "dog"}

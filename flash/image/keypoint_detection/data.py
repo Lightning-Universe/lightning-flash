@@ -157,11 +157,11 @@ class KeypointDetectionData(DataModule):
             >>> _ = [rand_image.save(os.path.join("train_folder", f"image_{i}.png")) for i in range(1, 4)]
             >>> _ = [rand_image.save(os.path.join("predict_folder", f"predict_image_{i}.png")) for i in range(1, 4)]
             >>> annotations = {"annotations": [
-            ...     {"area":  50, "bbox": [10, 20, 15, 30], "num_keypoints": 2, "keypoints": [10, 15, 2, 20, 30, 2],
+            ...     {"area": 50, "bbox": [10, 20, 5, 10], "num_keypoints": 2, "keypoints": [10, 15, 2, 20, 30, 2],
             ...     "category_id": 1, "id": 1, "image_id": 1, "iscrowd": 0},
-            ...     {"area": 100, "bbox": [20, 30, 30, 40], "num_keypoints": 2, "keypoints": [20, 30, 2, 30, 40, 2],
+            ...     {"area": 100, "bbox": [20, 30, 10, 10], "num_keypoints": 2, "keypoints": [20, 30, 2, 30, 40, 2],
             ...     "category_id": 2, "id": 2, "image_id": 2, "iscrowd": 0},
-            ...     {"area": 125, "bbox": [10, 20, 15, 45], "num_keypoints": 2, "keypoints": [10, 15, 2, 20, 45, 2],
+            ...     {"area": 125, "bbox": [10, 20, 5, 25], "num_keypoints": 2, "keypoints": [10, 15, 2, 20, 45, 2],
             ...     "category_id": 1, "id": 3, "image_id": 3, "iscrowd": 0},
             ... ], "categories": [
             ...     {"id": 1, "name": "cat", "supercategory": "cat", "keypoints": ["left ear", "right ear"]},
@@ -191,13 +191,13 @@ class KeypointDetectionData(DataModule):
             {
                 "annotations": [
                     {
-                        "area": 50, "bbox": [10, 20, 15, 30], "num_keypoints": 2, "keypoints": [10, 15, 2, 20, 30, 2],
+                        "area": 50, "bbox": [10, 20, 5, 10], "num_keypoints": 2, "keypoints": [10, 15, 2, 20, 30, 2],
                         "category_id": 1, "id": 1, "image_id": 1, "iscrowd": 0
                     }, {
-                        "area": 100, "bbox": [20, 30, 30, 40], "num_keypoints": 2, "keypoints": [20, 30, 2, 30, 40, 2],
+                        "area": 100, "bbox": [20, 30, 10, 10], "num_keypoints": 2, "keypoints": [20, 30, 2, 30, 40, 2],
                         "category_id": 2, "id": 2, "image_id": 2, "iscrowd": 0
                     }, {
-                        "area": 125, "bbox": [10, 20, 15, 45], "num_keypoints": 2, "keypoints": [10, 15, 2, 20, 45, 2],
+                        "area": 125, "bbox": [10, 20, 5, 25], "num_keypoints": 2, "keypoints": [10, 15, 2, 20, 45, 2],
                         "category_id": 1, "id": 3, "image_id": 3, "iscrowd": 0
                     }
                 ], "categories": [

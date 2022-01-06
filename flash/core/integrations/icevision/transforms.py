@@ -24,7 +24,7 @@ if _ICEVISION_AVAILABLE:
     from icevision.core import tasks
     from icevision.core.bbox import BBox
     from icevision.core.keypoints import KeyPoints
-    from icevision.core.mask import EncodedRLEs, MaskArray
+    from icevision.core.mask import MaskArray
     from icevision.core.record import BaseRecord
     from icevision.core.record_components import (
         BBoxesRecordComponent,
@@ -142,20 +142,17 @@ def from_icevision_detection(record: "BaseRecord"):
             for bbox in detection.bboxes
         ]
 
-    mask_array = (
-        getattr(detection, "mask_array", None) if _ICEVISION_GREATER_EQUAL_0_11_0 else getattr(detection, "masks", None)
-    )
+    masks = getattr(detection, "masks", None)
+    mask_array = getattr(detection, "mask_array", None) if _ICEVISION_GREATER_EQUAL_0_11_0 else masks
     if mask_array is not None:
-        if isinstance(mask_array, EncodedRLEs):
+        if hasattr(mask_array, "to_mask"):
             mask_array = mask_array.to_mask(record.height, record.width)
 
         if isinstance(mask_array, MaskArray):
             result["mask_array"] = mask_array.data
         else:
             raise RuntimeError("Mask arrays are expected to be a MaskArray or EncodedRLEs.")
-
-    masks = getattr(detection, "masks", None)
-    if masks is not None and _ICEVISION_GREATER_EQUAL_0_11_0:
+    elif masks is not None and _ICEVISION_GREATER_EQUAL_0_11_0:
         result["masks"] = []
         for mask in masks:
             if isinstance(mask, MaskFile):
