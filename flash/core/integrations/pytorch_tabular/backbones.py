@@ -3,7 +3,6 @@ import os
 from typing import Callable, List, Optional, Union
 
 import torchmetrics
-from omegaconf import DictConfig, OmegaConf
 
 from flash.core.integrations.pytorch_tabular.adapter import PytorchTabularAdapter
 from flash.core.registry import FlashRegistry
@@ -12,6 +11,7 @@ from flash.core.utilities.providers import _PYTORCH_TABULAR
 
 if _PYTORCHTABULAR_AVAILABLE:
     import pytorch_tabular.models as models
+    from omegaconf import DictConfig, OmegaConf
     from pytorch_tabular.config import ModelConfig, OptimizerConfig
     from pytorch_tabular.models import (
         AutoIntConfig,
