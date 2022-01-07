@@ -83,8 +83,8 @@ class AudioClassificationNumpyInput(AudioClassificationInput):
         return to_samples(array, targets)
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        sample[DataKeys.INPUT] = np.transpose(sample[DataKeys.INPUT], (1, 2, 0))
-        return sample
+        sample[DataKeys.INPUT] = np.float32(np.transpose(sample[DataKeys.INPUT], (1, 2, 0)))
+        return super().load_sample(sample)
 
 
 class AudioClassificationTensorInput(AudioClassificationNumpyInput):
