@@ -31,6 +31,11 @@ else:
     Parser = object
 
 
+# Skip doctests if requirements aren't available
+if not _ICEVISION_AVAILABLE:
+    __doctest_skip__ = ["InstanceSegmentationData", "InstanceSegmentationData.*"]
+
+
 class InstanceSegmentationOutputTransform(OutputTransform):
     @staticmethod
     def uncollate(batch: Any) -> Any:

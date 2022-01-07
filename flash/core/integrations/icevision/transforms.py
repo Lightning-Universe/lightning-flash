@@ -14,6 +14,7 @@
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Tuple
 
+import numpy as np
 from torch import nn
 
 from flash.core.data.io.input import DataKeys
@@ -37,12 +38,19 @@ if _ICEVISION_AVAILABLE:
     )
     from icevision.data.prediction import Prediction
     from icevision.tfms import A
+else:
+    MaskArray = object
 
 if _ICEVISION_AVAILABLE and _ICEVISION_GREATER_EQUAL_0_11_0:
     from icevision.core.mask import MaskFile
     from icevision.core.record_components import InstanceMasksRecordComponent
 elif _ICEVISION_AVAILABLE:
     from icevision.core.record_components import MasksRecordComponent
+
+
+def _split_mask_array(mask_array: MaskArray) -> List[MaskArray]:
+    """Utility to split a single ``MaskArray`` object into a list of ``MaskArray`` objects (one per mask)."""
+    return [MaskArray(mask) for mask in mask_array.data]
 
 
 def to_icevision_record(sample: Dict[str, Any]):
@@ -57,6 +65,19 @@ def to_icevision_record(sample: Dict[str, Any]):
     component = ClassMapRecordComponent(tasks.detection)
     component.set_class_map(metadata.get("class_map", None))
     record.add_component(component)
+
+    if isinstance(sample[DataKeys.INPUT], str):
+        input_component = FilepathRecordComponent()
+        input_component.set_filepath(sample[DataKeys.INPUT])
+    else:
+        if "filepath" in metadata:
+            input_component = FilepathRecordComponent()
+            input_component.filepath = metadata["filepath"]
+        else:
+            input_component = ImageRecordComponent()
+        input_component.composite = record
+        input_component.set_img(sample[DataKeys.INPUT])
+    record.add_component(input_component)
 
     if "labels" in sample[DataKeys.TARGET]:
         labels_component = InstancesLabelsRecordComponent()
@@ -73,19 +94,20 @@ def to_icevision_record(sample: Dict[str, Any]):
         record.add_component(component)
 
     if _ICEVISION_GREATER_EQUAL_0_11_0:
-        mask_array = sample[DataKeys.TARGET].get("mask_array", None)
+        # mask_array = sample[DataKeys.TARGET].get("mask_array", None)
         masks = sample[DataKeys.TARGET].get("masks", None)
 
-        if mask_array is not None or masks is not None:
+        if masks is not None:
             component = InstanceMasksRecordComponent()
 
             if masks is not None:
-                masks = [MaskFile(mask) for mask in masks]
-                component.set_masks(masks)
-
-            if mask_array is not None:
-                mask_array = MaskArray(mask_array)
-                component.set_mask_array(mask_array)
+                if isinstance(masks[0], str):
+                    masks = [MaskFile(mask) for mask in masks]
+                    component.set_masks(masks)
+                else:
+                    mask_array = MaskArray(np.stack(masks, axis=0))
+                    component.set_mask_array(mask_array)
+                    component.set_masks(_split_mask_array(mask_array))
 
             record.add_component(component)
     else:
@@ -109,19 +131,6 @@ def to_icevision_record(sample: Dict[str, Any]):
         component = KeyPointsRecordComponent()
         component.set_keypoints(keypoints)
         record.add_component(component)
-
-    if isinstance(sample[DataKeys.INPUT], str):
-        input_component = FilepathRecordComponent()
-        input_component.set_filepath(sample[DataKeys.INPUT])
-    else:
-        if "filepath" in metadata:
-            input_component = FilepathRecordComponent()
-            input_component.filepath = metadata["filepath"]
-        else:
-            input_component = ImageRecordComponent()
-        input_component.composite = record
-        input_component.set_img(sample[DataKeys.INPUT])
-    record.add_component(input_component)
 
     return record
 
@@ -149,7 +158,7 @@ def from_icevision_detection(record: "BaseRecord"):
             mask_array = mask_array.to_mask(record.height, record.width)
 
         if isinstance(mask_array, MaskArray):
-            result["mask_array"] = mask_array.data
+            result["masks"] = [mask.data[0] for mask in _split_mask_array(mask_array)]
         else:
             raise RuntimeError("Mask arrays are expected to be a MaskArray or EncodedRLEs.")
     elif masks is not None and _ICEVISION_GREATER_EQUAL_0_11_0:
