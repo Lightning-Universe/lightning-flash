@@ -21,7 +21,7 @@ from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
 from flash.core.data.io.output_transform import OutputTransform
-from flash.core.utilities.imports import _PANDAS_AVAILABLE
+from flash.core.utilities.imports import _PANDAS_AVAILABLE, _TABULAR_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 from flash.tabular.forecasting.input import TabularForecastingDataFrameInput
 
@@ -31,8 +31,14 @@ else:
     DataFrame = object
 
 
+# Skip doctests if requirements aren't available
+if not _TABULAR_AVAILABLE:
+    __doctest_skip__ = ["TabularForecastingData", "TabularForecastingData.*"]
+
+
 class TabularForecastingData(DataModule):
-    """Data module for the tabular forecasting task."""
+    """The ``TabularForecastingData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
+    classmethods for loading data for tabular forecasting."""
 
     input_transform_cls = InputTransform
 
@@ -78,6 +84,84 @@ class TabularForecastingData(DataModule):
             instead. These can be obtained from the
             :attr:`~flash.tabular.forecasting.data.TabularForecastingData.parameters` attribute of the
             :class:`~flash.tabular.forecasting.data.TabularForecastingData` object that contains your training data.
+
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
+        Args:
+            time_idx: Column denoting the time index of each observation.
+            target: Column denoting the target or list of columns denoting the target.
+            group_ids: List of column names identifying a time series. This means that the group_ids identify a sample
+                together with the time_idx. If you have only one timeseries, set this to the name of a column that is
+                constant.
+            parameters: Parameters to use for the timeseries if ``time_idx``, ``target``, and ``group_ids`` are not
+                provided (e.g. when loading data for inference or validation).
+            train_data_frame: The pandas DataFrame to use when training.
+            val_data_frame: The pandas DataFrame to use when validating.
+            test_data_frame: The pandas DataFrame to use when testing.
+            predict_data_frame: The pandas DataFrame to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+                predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            input_kwargs: Additional keyword arguments to be used when creating the TimeSeriesDataset.
+
+        Returns:
+            The constructed :class:`~flash.tabular.forecasting.data.TabularForecastingData`.
+
+        Examples
+        ________
+
+        .. testsetup::
+
+            >>> from pytorch_forecasting.data.examples import generate_ar_data
+            >>> data = generate_ar_data(seasonality=10.0, timesteps=100, n_series=5, seed=42)
+
+        We have a DataFrame `data` with the following contents:
+
+        .. doctest::
+
+            >>> data.head(3)
+               series  time_idx     value
+            0       0         0 -0.000000
+            1       0         1  0.141552
+            2       0         2  0.232782
+
+        .. doctest::
+
+            >>> from pandas import DataFrame
+            >>> from flash import Trainer
+            >>> from flash.tabular import TabularForecaster, TabularForecastingData
+            >>> datamodule = TabularForecastingData.from_data_frame(
+            ...     "time_idx",
+            ...     "value",
+            ...     ["series"],
+            ...     train_data_frame=data,
+            ...     predict_data_frame=DataFrame.from_dict(
+            ...         {
+            ...             "time_idx": list(range(50)),
+            ...             "value": [0.0] * 50,
+            ...             "series": [0] * 50,
+            ...         }
+            ...     ),
+            ...     time_varying_unknown_reals=["value"],
+            ...     max_encoder_length=30,
+            ...     max_prediction_length=20,
+            ...     batch_size=32,
+            ... )
+            >>> model = TabularForecaster(
+            ...     datamodule.parameters,
+            ...     backbone="n_beats",
+            ...     backbone_kwargs={"widths": [16, 256]},
+            ... )
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
         """
 
         ds_kw = dict(
