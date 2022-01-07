@@ -80,7 +80,7 @@ def test_instance_segmentation_inference(tmpdir):
     )
     predictions = trainer.predict(model, datamodule=datamodule)
     assert len(predictions[0]) == 3
-    assert len(list(predictions[0][0].keys())) == 5
+    assert len(list(predictions[0][0].keys())) == 4
 
     model_path = os.path.join(tmpdir, "model.pt")
     trainer.save_checkpoint(model_path)
@@ -96,4 +96,4 @@ def test_instance_segmentation_inference(tmpdir):
     )
     predictions = trainer.predict(model, datamodule=datamodule)
     assert len(predictions[0]) == 3
-    assert len(list(predictions[0][0].keys())) == 5
+    assert len(list(predictions[0][0].keys())) == 4
