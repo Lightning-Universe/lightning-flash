@@ -40,6 +40,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Fixed a bug where `SpeechRecognitionData.from_datasets` did not work as expected ([#1097](https://github.com/PyTorchLightning/lightning-flash/pull/1097))
 
+- Fixed a bug where loading data for prediction with `SemanticSegmentationData.from_folders` raised an error ([#1101](https://github.com/PyTorchLightning/lightning-flash/pull/1101))
+
 - Fixed a bug when passing a `predict_folder` argument to `from_coco` / `from_voc` / `from_via` in IceVision tasks ([#1102](https://github.com/PyTorchLightning/lightning-flash/pull/1102))
 
 - Fixed `ObjectDetectionData.from_voc` and `ObjectDetectionData.from_via` ([#1102](https://github.com/PyTorchLightning/lightning-flash/pull/1102))
