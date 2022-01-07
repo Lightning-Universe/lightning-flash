@@ -25,7 +25,7 @@ if _ICEVISION_AVAILABLE:
     from icevision.core import tasks
     from icevision.core.bbox import BBox
     from icevision.core.keypoints import KeyPoints
-    from icevision.core.mask import MaskArray
+    from icevision.core.mask import Mask, MaskArray
     from icevision.core.record import BaseRecord
     from icevision.core.record_components import (
         BBoxesRecordComponent,
@@ -42,7 +42,6 @@ else:
     MaskArray = object
 
 if _ICEVISION_AVAILABLE and _ICEVISION_GREATER_EQUAL_0_11_0:
-    from icevision.core.mask import MaskFile
     from icevision.core.record_components import InstanceMasksRecordComponent
 elif _ICEVISION_AVAILABLE:
     from icevision.core.record_components import MasksRecordComponent
@@ -100,9 +99,8 @@ def to_icevision_record(sample: Dict[str, Any]):
         if masks is not None:
             component = InstanceMasksRecordComponent()
 
-            if masks is not None:
-                if isinstance(masks[0], str):
-                    masks = [MaskFile(mask) for mask in masks]
+            if masks is not None and len(masks) > 0:
+                if isinstance(masks[0], Mask):
                     component.set_masks(masks)
                 else:
                     mask_array = MaskArray(np.stack(masks, axis=0))
@@ -152,22 +150,14 @@ def from_icevision_detection(record: "BaseRecord"):
         ]
 
     masks = getattr(detection, "masks", None)
-    mask_array = getattr(detection, "mask_array", None) if _ICEVISION_GREATER_EQUAL_0_11_0 else masks
-    if mask_array is not None:
-        if hasattr(mask_array, "to_mask"):
-            mask_array = mask_array.to_mask(record.height, record.width)
+    mask_array = getattr(detection, "mask_array", None)
+    if mask_array is not None or not _ICEVISION_GREATER_EQUAL_0_11_0:
+        if not isinstance(mask_array, MaskArray) or len(mask_array.data) == 0:
+            mask_array = MaskArray.from_masks(masks, record.height, record.width)
 
-        if isinstance(mask_array, MaskArray):
-            result["masks"] = [mask.data[0] for mask in _split_mask_array(mask_array)]
-        else:
-            raise RuntimeError("Mask arrays are expected to be a MaskArray or EncodedRLEs.")
-    elif masks is not None and _ICEVISION_GREATER_EQUAL_0_11_0:
-        result["masks"] = []
-        for mask in masks:
-            if isinstance(mask, MaskFile):
-                result["masks"].append(mask.filepath)
-            else:
-                raise RuntimeError("Masks are expected to be MaskFile objects.")
+        result["masks"] = [mask.data[0] for mask in _split_mask_array(mask_array)]
+    elif masks is not None:
+        result["masks"] = masks  # Note - this doesn't unpack IceVision objects
 
     if hasattr(detection, "keypoints"):
         keypoints = detection.keypoints

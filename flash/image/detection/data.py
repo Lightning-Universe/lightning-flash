@@ -58,10 +58,13 @@ class ObjectDetectionData(DataModule):
         cls,
         train_folder: Optional[str] = None,
         train_ann_file: Optional[str] = None,
+        train_parser_kwargs: Optional[Dict[str, Any]] = None,
         val_folder: Optional[str] = None,
         val_ann_file: Optional[str] = None,
+        val_parser_kwargs: Optional[Dict[str, Any]] = None,
         test_folder: Optional[str] = None,
         test_ann_file: Optional[str] = None,
+        test_parser_kwargs: Optional[Dict[str, Any]] = None,
         predict_folder: Optional[str] = None,
         train_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         val_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
@@ -76,9 +79,30 @@ class ObjectDetectionData(DataModule):
         ds_kw = dict(parser=parser, data_pipeline_state=DataPipelineState(), transform_kwargs=transform_kwargs)
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_folder, train_ann_file, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_folder, val_ann_file, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_folder, test_ann_file, transform=test_transform, **ds_kw),
+            input_cls(
+                RunningStage.TRAINING,
+                train_folder,
+                train_ann_file,
+                parser_kwargs=train_parser_kwargs,
+                transform=train_transform,
+                **ds_kw,
+            ),
+            input_cls(
+                RunningStage.VALIDATING,
+                val_folder,
+                val_ann_file,
+                parser_kwargs=val_parser_kwargs,
+                transform=val_transform,
+                **ds_kw,
+            ),
+            input_cls(
+                RunningStage.TESTING,
+                test_folder,
+                test_ann_file,
+                parser_kwargs=test_parser_kwargs,
+                transform=test_transform,
+                **ds_kw,
+            ),
             input_cls(RunningStage.PREDICTING, predict_folder, transform=predict_transform, **ds_kw),
             **data_module_kwargs,
         )
@@ -261,7 +285,7 @@ class ObjectDetectionData(DataModule):
         :ref:`customizing transforms guide <customizing_transforms>`.
 
         Args:
-            labels: A list of class labels. Not that the list should not include a label for the background class which
+            labels: A list of class labels. Note that the list should not include a label for the background class which
                 will be added automatically as class zero (additional labels will be sorted).
             train_folder: The folder containing images to use when training.
             train_ann_folder: The folder containing VOC format annotation files to use when training.
