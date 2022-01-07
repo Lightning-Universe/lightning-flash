@@ -60,7 +60,7 @@ class TabularClassifier(ClassificationAdapterTask):
         cat_dims: list,
         num_features: int,
         output_dim: int,
-        backbone: str,
+        backbone: str = "tabnet",
         loss_fn: Callable = F.cross_entropy,
         optimizer: str = "Adam",
         lr_scheduler: str = None,

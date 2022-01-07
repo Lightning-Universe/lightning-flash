@@ -70,7 +70,6 @@ _PL_AVAILABLE = _module_available("pytorch_lightning")
 _BOLTS_AVAILABLE = _module_available("pl_bolts") and _compare_version("torch", operator.lt, "1.9.0")
 _PANDAS_AVAILABLE = _module_available("pandas")
 _SKLEARN_AVAILABLE = _module_available("sklearn")
-_TABNET_AVAILABLE = _module_available("pytorch_tabnet")
 _PYTORCHTABULAR_AVAILABLE = _module_available("pytorch_tabular")
 _FORECASTING_AVAILABLE = _module_available("pytorch_forecasting")
 _KORNIA_AVAILABLE = _module_available("kornia")
@@ -135,7 +134,7 @@ _TEXT_AVAILABLE = all(
         _SENTENCE_TRANSFORMERS_AVAILABLE,
     ]
 )
-_TABULAR_AVAILABLE = _TABNET_AVAILABLE and _PANDAS_AVAILABLE and _FORECASTING_AVAILABLE
+_TABULAR_AVAILABLE = _PANDAS_AVAILABLE and _FORECASTING_AVAILABLE and _PYTORCHTABULAR_AVAILABLE
 _VIDEO_AVAILABLE = _TORCHVISION_AVAILABLE and _PIL_AVAILABLE and _PYTORCHVIDEO_AVAILABLE and _KORNIA_AVAILABLE
 _IMAGE_AVAILABLE = all(
     [

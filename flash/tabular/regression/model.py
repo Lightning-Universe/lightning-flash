@@ -59,7 +59,7 @@ class TabularRegressor(RegressionAdapterTask):
         categorical_fields: list,
         cat_dims: list,
         num_features: int,
-        backbone: str,
+        backbone: str = "tabnet",
         output_dim: int = 1,
         loss_fn: Callable = F.mse_loss,
         optimizer: str = "Adam",
