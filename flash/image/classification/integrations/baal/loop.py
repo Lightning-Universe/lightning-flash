@@ -65,6 +65,7 @@ class ActiveLearningLoop(Loop):
         self.fit_loop: Optional[FitLoop] = None
         self.progress = Progress()
         self._model_state_dict: Optional[Dict[str, torch.Tensor]] = None
+        self._datamodule_state_dict: Optional[Dict[str, Any]] = None
         self._lightning_module: Optional[flash.Task] = None
 
     @property
@@ -78,6 +79,8 @@ class ActiveLearningLoop(Loop):
 
     def on_run_start(self, *args: Any, **kwargs: Any) -> None:
         assert isinstance(self.trainer.datamodule, ActiveLearningDataModule)
+        if self._datamodule_state_dict is not None:
+            self.trainer.datamodule.load_state_dict(self._datamodule_state_dict)
         self.trainer.predict_loop._return_predictions = True
         self._lightning_module = self.trainer.lightning_module
         self._model_state_dict = deepcopy(self._lightning_module.state_dict())
@@ -127,15 +130,16 @@ class ActiveLearningLoop(Loop):
         return super().on_advance_end()
 
     def on_run_end(self):
+        self._datamodule_state_dict = self.trainer.datamodule.state_dict()
         self._reset_fitting()
         self._teardown()
         return super().on_run_end()
 
     def on_save_checkpoint(self) -> Dict:
-        return {"datamodule_state_dict": self.trainer.datamodule.state_dict()}
+        return {"datamodule_state_dict": self._datamodule_state_dict}
 
     def on_load_checkpoint(self, state_dict) -> None:
-        self.trainer.datamodule.load_state_dict(state_dict.pop("datamodule_state_dict"))
+        self._datamodule_state_dict = state_dict.pop("datamodule_state_dict", None)
 
     def __getattr__(self, key):
         if key not in self.__dict__:
