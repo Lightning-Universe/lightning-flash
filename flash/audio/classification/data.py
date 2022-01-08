@@ -33,12 +33,18 @@ from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.registry import FlashRegistry
+from flash.core.utilities.imports import _AUDIO_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 from flash.image.classification.data import MatplotlibVisualization
 
+# Skip doctests if requirements aren't available
+if not _AUDIO_AVAILABLE:
+    __doctest_skip__ = ["AudioClassificationData", "AudioClassificationData.*"]
+
 
 class AudioClassificationData(DataModule):
-    """Data module for audio classification."""
+    """The ``AudioClassificationData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
+    classmethods for loading data for audio classification."""
 
     input_transform_cls = AudioClassificationInputTransform
     input_transforms_registry = FlashRegistry("input_transforms")
@@ -61,6 +67,80 @@ class AudioClassificationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "AudioClassificationData":
+        """Load the :class:`~flash.audio.classification.data.AudioClassificationData` from lists of files and
+        corresponding lists of targets.
+
+        The supported file extensions are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``, ``.bmp``, ``.pgm``, ``.tif``,
+        ``.tiff``, ``.webp``, and ``.npy``.
+        The targets can be in any of our
+        :ref:`supported classification target formats <formatting_classification_targets>`.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
+        Args:
+            train_files: The list of spectrogram image files to use when training.
+            train_targets: The list of targets to use when training.
+            val_files: The list of spectrogram image files to use when validating.
+            val_targets: The list of targets to use when validating.
+            test_files: The list of spectrogram image files to use when testing.
+            test_targets: The list of targets to use when testing.
+            predict_files: The list of spectrogram image files to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+              predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+              :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.audio.classification.data.AudioClassificationData`.
+
+        Examples
+        ________
+
+        .. testsetup::
+
+            >>> from PIL import Image
+            >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
+            >>> _ = [rand_image.save(f"spectrogram_{i}.png") for i in range(1, 4)]
+            >>> _ = [rand_image.save(f"predict_spectrogram_{i}.png") for i in range(1, 4)]
+
+        .. doctest::
+
+            >>> from flash import Trainer
+            >>> from flash.audio import AudioClassificationData
+            >>> from flash.image import ImageClassifier
+            >>> datamodule = AudioClassificationData.from_files(
+            ...     train_files=["spectrogram_1.png", "spectrogram_2.png", "spectrogram_3.png"],
+            ...     train_targets=["meow", "bark", "meow"],
+            ...     predict_files=[
+            ...         "predict_spectrogram_1.png",
+            ...         "predict_spectrogram_2.png",
+            ...         "predict_spectrogram_3.png",
+            ...     ],
+            ...     transform_kwargs=dict(spectrogram_size=(128, 128)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            2
+            >>> datamodule.labels
+            ['bark', 'meow']
+            >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> import os
+            >>> _ = [os.remove(f"spectrogram_{i}.png") for i in range(1, 4)]
+            >>> _ = [os.remove(f"predict_spectrogram_{i}.png") for i in range(1, 4)]
+        """
 
         ds_kw = dict(
             data_pipeline_state=DataPipelineState(),
@@ -91,6 +171,102 @@ class AudioClassificationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "AudioClassificationData":
+        """Load the :class:`~flash.audio.classification.data.AudioClassificationData` from folders containing
+        spectrogram images.
+
+        The supported file extensions are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``, ``.bmp``, ``.pgm``, ``.tif``,
+        ``.tiff``, ``.webp``, and ``.npy``.
+        For train, test, and validation data, the folders are expected to contain a sub-folder for each class.
+        Here's the required structure:
+
+        .. code-block::
+
+            train_folder
+            ├── meow
+            │   ├── spectrogram_1.png
+            │   ├── spectrogram_3.png
+            │   ...
+            └── bark
+                ├── spectrogram_2.png
+                ...
+
+        For prediction, the folder is expected to contain the files for inference, like this:
+
+        .. code-block::
+
+            predict_folder
+            ├── predict_spectrogram_1.png
+            ├── predict_spectrogram_2.png
+            ├── predict_spectrogram_3.png
+            ...
+
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
+        Args:
+            train_folder: The folder containing spectrogram images to use when training.
+            val_folder: The folder containing spectrogram images to use when validating.
+            test_folder: The folder containing spectrogram images to use when testing.
+            predict_folder: The folder containing spectrogram images to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+              predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+              :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
+
+        Examples
+        ________
+
+        .. testsetup::
+
+            >>> import os
+            >>> from PIL import Image
+            >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
+            >>> os.makedirs(os.path.join("train_folder", "meow"), exist_ok=True)
+            >>> os.makedirs(os.path.join("train_folder", "bark"), exist_ok=True)
+            >>> os.makedirs("predict_folder", exist_ok=True)
+            >>> rand_image.save(os.path.join("train_folder", "meow", "spectrogram_1.png"))
+            >>> rand_image.save(os.path.join("train_folder", "bark", "spectrogram_2.png"))
+            >>> rand_image.save(os.path.join("train_folder", "meow", "spectrogram_3.png"))
+            >>> _ = [rand_image.save(
+            ...     os.path.join("predict_folder", f"predict_spectrogram_{i}.png")
+            ... ) for i in range(1, 4)]
+
+        .. doctest::
+
+            >>> from flash import Trainer
+            >>> from flash.audio import AudioClassificationData
+            >>> from flash.image import ImageClassifier
+            >>> datamodule = AudioClassificationData.from_folders(
+            ...     train_folder="train_folder",
+            ...     predict_folder="predict_folder",
+            ...     transform_kwargs=dict(spectrogram_size=(128, 128)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            2
+            >>> datamodule.labels
+            ['bark', 'meow']
+            >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> import shutil
+            >>> shutil.rmtree("train_folder")
+            >>> shutil.rmtree("predict_folder")
+        """
 
         ds_kw = dict(
             data_pipeline_state=DataPipelineState(),
@@ -124,6 +300,62 @@ class AudioClassificationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "AudioClassificationData":
+        """Load the :class:`~flash.audio.classification.data.AudioClassificationData` from numpy arrays (or lists
+        of arrays) and corresponding lists of targets.
+
+        The targets can be in any of our
+        :ref:`supported classification target formats <formatting_classification_targets>`.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
+        Args:
+            train_data: The numpy array or list of arrays to use when training.
+            train_targets: The list of targets to use when training.
+            val_data: The numpy array or list of arrays to use when validating.
+            val_targets: The list of targets to use when validating.
+            test_data: The numpy array or list of arrays to use when testing.
+            test_targets: The list of targets to use when testing.
+            predict_data: The numpy array or list of arrays to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+              predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+              :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.audio.classification.data.AudioClassificationData`.
+
+        Examples
+        ________
+
+        .. doctest::
+
+            >>> import numpy as np
+            >>> from flash import Trainer
+            >>> from flash.audio import AudioClassificationData
+            >>> from flash.image import ImageClassifier
+            >>> datamodule = AudioClassificationData.from_numpy(
+            ...     train_data=[np.random.rand(3, 64, 64), np.random.rand(3, 64, 64), np.random.rand(3, 64, 64)],
+            ...     train_targets=["meow", "bark", "meow"],
+            ...     predict_data=[np.random.rand(3, 64, 64)],
+            ...     transform_kwargs=dict(spectrogram_size=(128, 128)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            2
+            >>> datamodule.labels
+            ['bark', 'meow']
+            >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+        """
 
         ds_kw = dict(
             data_pipeline_state=DataPipelineState(),
@@ -157,6 +389,62 @@ class AudioClassificationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "AudioClassificationData":
+        """Load the :class:`~flash.audio.classification.data.AudioClassificationData` from torch tensors (or lists
+        of tensors) and corresponding lists of targets.
+
+        The targets can be in any of our
+        :ref:`supported classification target formats <formatting_classification_targets>`.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
+        Args:
+            train_data: The torch tensor or list of tensors to use when training.
+            train_targets: The list of targets to use when training.
+            val_data: The torch tensor or list of tensors to use when validating.
+            val_targets: The list of targets to use when validating.
+            test_data: The torch tensor or list of tensors to use when testing.
+            test_targets: The list of targets to use when testing.
+            predict_data: The torch tensor or list of tensors to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+              predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+              :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.audio.classification.data.AudioClassificationData`.
+
+        Examples
+        ________
+
+        .. doctest::
+
+            >>> import torch
+            >>> from flash import Trainer
+            >>> from flash.audio import AudioClassificationData
+            >>> from flash.image import ImageClassifier
+            >>> datamodule = AudioClassificationData.from_tensors(
+            ...     train_data=[torch.rand(3, 64, 64), torch.rand(3, 64, 64), torch.rand(3, 64, 64)],
+            ...     train_targets=["meow", "bark", "meow"],
+            ...     predict_data=[torch.rand(3, 64, 64)],
+            ...     transform_kwargs=dict(spectrogram_size=(128, 128)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            2
+            >>> datamodule.labels
+            ['bark', 'meow']
+            >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+        """
 
         ds_kw = dict(
             data_pipeline_state=DataPipelineState(),
@@ -197,6 +485,112 @@ class AudioClassificationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "AudioClassificationData":
+        """Load the :class:`~flash.audio.classification.data.AudioClassificationData` from pandas DataFrame objects
+        containing spectrogram image file paths and their corresponding targets.
+
+        Input spectrogram image paths will be extracted from the ``input_field`` in the DataFrame.
+        The supported file extensions are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``, ``.bmp``, ``.pgm``, ``.tif``,
+        ``.tiff``, ``.webp``, and ``.npy``.
+        The targets will be extracted from the ``target_fields`` in the DataFrame and can be in any of our
+        :ref:`supported classification target formats <formatting_classification_targets>`.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
+        Args:
+            input_field: The field (column name) in the DataFrames containing the spectrogram image file paths.
+            target_fields: The field (column name) or list of fields in the DataFrames containing the targets.
+            train_data_frame: The pandas DataFrame to use when training.
+            train_images_root: The root directory containing train spectrogram images.
+            train_resolver: Optionally provide a function which converts an entry from the ``input_field`` into a
+                spectrogram image file path.
+            val_data_frame: The pandas DataFrame to use when validating.
+            val_images_root: The root directory containing validation spectrogram images.
+            val_resolver: Optionally provide a function which converts an entry from the ``input_field`` into a
+                spectrogram image file path.
+            test_data_frame: The pandas DataFrame to use when testing.
+            test_images_root: The root directory containing test spectrogram images.
+            test_resolver: Optionally provide a function which converts an entry from the ``input_field`` into a
+                spectrogram image file path.
+            predict_data_frame: The pandas DataFrame to use when predicting.
+            predict_images_root: The root directory containing predict spectrogram images.
+            predict_resolver: Optionally provide a function which converts an entry from the ``input_field`` into a
+                spectrogram image file path.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+              predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+              :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
+
+        Examples
+        ________
+
+        .. testsetup::
+
+            >>> import os
+            >>> from PIL import Image
+            >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
+            >>> os.makedirs("train_folder", exist_ok=True)
+            >>> os.makedirs("predict_folder", exist_ok=True)
+            >>> _ = [rand_image.save(os.path.join("train_folder", f"spectrogram_{i}.png")) for i in range(1, 4)]
+            >>> _ = [rand_image.save(
+            ...     os.path.join("predict_folder", f"predict_spectrogram_{i}.png")
+            ... ) for i in range(1, 4)]
+
+        .. doctest::
+
+            >>> from pandas import DataFrame
+            >>> from flash import Trainer
+            >>> from flash.audio import AudioClassificationData
+            >>> from flash.image import ImageClassifier
+            >>> train_data_frame = DataFrame.from_dict(
+            ...     {
+            ...         "images": ["spectrogram_1.png", "spectrogram_2.png", "spectrogram_3.png"],
+            ...         "targets": ["meow", "bark", "meow"],
+            ...     }
+            ... )
+            >>> predict_data_frame = DataFrame.from_dict(
+            ...     {
+            ...         "images": [
+            ...             "predict_spectrogram_1.png",
+            ...             "predict_spectrogram_2.png",
+            ...             "predict_spectrogram_3.png",
+            ...         ],
+            ...     }
+            ... )
+            >>> datamodule = AudioClassificationData.from_data_frame(
+            ...     "images",
+            ...     "targets",
+            ...     train_data_frame=train_data_frame,
+            ...     train_images_root="train_folder",
+            ...     predict_data_frame=predict_data_frame,
+            ...     predict_images_root="predict_folder",
+            ...     transform_kwargs=dict(spectrogram_size=(128, 128)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            2
+            >>> datamodule.labels
+            ['bark', 'meow']
+            >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> import shutil
+            >>> shutil.rmtree("train_folder")
+            >>> shutil.rmtree("predict_folder")
+        """
 
         ds_kw = dict(
             data_pipeline_state=DataPipelineState(),
@@ -242,6 +636,124 @@ class AudioClassificationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "AudioClassificationData":
+        """Load the :class:`~flash.audio.classification.data.AudioClassificationData` from CSV files containing
+        spectrogram image file paths and their corresponding targets.
+
+        Input spectrogram images will be extracted from the ``input_field`` column in the CSV files.
+        The supported file extensions are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``, ``.bmp``, ``.pgm``, ``.tif``,
+        ``.tiff``, ``.webp``, and ``.npy``.
+        The targets will be extracted from the ``target_fields`` in the CSV files and can be in any of our
+        :ref:`supported classification target formats <formatting_classification_targets>`.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
+        Args:
+            input_field: The field (column name) in the CSV files containing the spectrogram image file paths.
+            target_fields: The field (column name) or list of fields in the CSV files containing the targets.
+            train_file: The CSV file to use when training.
+            train_images_root: The root directory containing train spectrogram images.
+            train_resolver: Optionally provide a function which converts an entry from the ``input_field`` into a
+                spectrogram image file path.
+            val_file: The CSV file to use when validating.
+            val_images_root: The root directory containing validation spectrogram images.
+            val_resolver: Optionally provide a function which converts an entry from the ``input_field`` into a
+                spectrogram image file path.
+            test_file: The CSV file to use when testing.
+            test_images_root: The root directory containing test spectrogram images.
+            test_resolver: Optionally provide a function which converts an entry from the ``input_field`` into a
+                spectrogram image file path.
+            predict_file: The CSV file to use when predicting.
+            predict_images_root: The root directory containing predict spectrogram images.
+            predict_resolver: Optionally provide a function which converts an entry from the ``input_field`` into a
+                spectrogram image file path.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+              predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+              :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.audio.classification.data.AudioClassificationData`.
+
+        Examples
+        ________
+
+        .. testsetup::
+
+            >>> import os
+            >>> from PIL import Image
+            >>> from pandas import DataFrame
+            >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
+            >>> os.makedirs("train_folder", exist_ok=True)
+            >>> os.makedirs("predict_folder", exist_ok=True)
+            >>> _ = [rand_image.save(os.path.join("train_folder", f"spectrogram_{i}.png")) for i in range(1, 4)]
+            >>> _ = [rand_image.save(
+            ...     os.path.join("predict_folder", f"predict_spectrogram_{i}.png")
+            ... ) for i in range(1, 4)]
+            >>> DataFrame.from_dict({
+            ...     "images": ["spectrogram_1.png", "spectrogram_2.png", "spectrogram_3.png"],
+            ...     "targets": ["meow", "bark", "meow"],
+            ... }).to_csv("train_data.csv", index=False)
+            >>> DataFrame.from_dict({
+            ...     "images": ["predict_spectrogram_1.png", "predict_spectrogram_2.png", "predict_spectrogram_3.png"],
+            ... }).to_csv("predict_data.csv", index=False)
+
+        The file ``train_data.csv`` contains the following:
+
+        .. code-block::
+
+            images,targets
+            spectrogram_1.png,meow
+            spectrogram_2.png,bark
+            spectrogram_3.png,meow
+
+        The file ``predict_data.csv`` contains the following:
+
+        .. code-block::
+
+            images
+            predict_spectrogram_1.png
+            predict_spectrogram_2.png
+            predict_spectrogram_3.png
+
+        .. doctest::
+
+            >>> from flash import Trainer
+            >>> from flash.audio import AudioClassificationData
+            >>> from flash.image import ImageClassifier
+            >>> datamodule = AudioClassificationData.from_csv(
+            ...     "images",
+            ...     "targets",
+            ...     train_file="train_data.csv",
+            ...     train_images_root="train_folder",
+            ...     predict_file="predict_data.csv",
+            ...     predict_images_root="predict_folder",
+            ...     transform_kwargs=dict(spectrogram_size=(128, 128)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            2
+            >>> datamodule.labels
+            ['bark', 'meow']
+            >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> import shutil
+            >>> shutil.rmtree("train_folder")
+            >>> shutil.rmtree("predict_folder")
+            >>> os.remove("train_data.csv")
+            >>> os.remove("predict_data.csv")
+        """
 
         ds_kw = dict(
             data_pipeline_state=DataPipelineState(),

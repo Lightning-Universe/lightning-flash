@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any, List, Tuple
 
 import numpy as np
+import pandas as pd
 import pytest
 import torch
 import torch.nn as nn
@@ -82,6 +83,58 @@ def test_from_filepaths_smoke(tmpdir):
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2,)
     assert sorted(list(labels.numpy())) == [1, 2]
+
+
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+def test_from_data_frame_smoke(tmpdir):
+    tmpdir = Path(tmpdir)
+
+    df = pd.DataFrame(
+        {"file": ["train.png", "valid.png", "test.png"], "split": ["train", "valid", "test"], "target": [0, 1, 1]}
+    )
+
+    [_rand_image().save(tmpdir / row.file) for i, row in df.iterrows()]
+
+    img_data = ImageClassificationData.from_data_frame(
+        "file",
+        "target",
+        train_images_root=str(tmpdir),
+        val_images_root=str(tmpdir),
+        test_images_root=str(tmpdir),
+        train_data_frame=df[df.split == "train"],
+        val_data_frame=df[df.split == "valid"],
+        test_data_frame=df[df.split == "test"],
+        predict_images_root=str(tmpdir),
+        batch_size=1,
+        predict_data_frame=df,
+    )
+
+    assert img_data.train_dataloader() is not None
+    assert img_data.val_dataloader() is not None
+    assert img_data.test_dataloader() is not None
+    assert img_data.predict_dataloader() is not None
+
+    data = next(iter(img_data.train_dataloader()))
+    imgs, labels = data["input"], data["target"]
+    assert imgs.shape == (1, 3, 196, 196)
+    assert labels.shape == (1,)
+    assert sorted(list(labels.numpy())) == [0]
+
+    data = next(iter(img_data.val_dataloader()))
+    imgs, labels = data["input"], data["target"]
+    assert imgs.shape == (1, 3, 196, 196)
+    assert labels.shape == (1,)
+    assert sorted(list(labels.numpy())) == [1]
+
+    data = next(iter(img_data.test_dataloader()))
+    imgs, labels = data["input"], data["target"]
+    assert imgs.shape == (1, 3, 196, 196)
+    assert labels.shape == (1,)
+    assert sorted(list(labels.numpy())) == [1]
+
+    data = next(iter(img_data.predict_dataloader()))
+    imgs = data["input"]
+    assert imgs.shape == (1, 3, 196, 196)
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")

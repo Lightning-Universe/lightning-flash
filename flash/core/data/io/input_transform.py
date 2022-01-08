@@ -921,7 +921,7 @@ class InputTransform(Properties):
         from flash.core.data.data_pipeline import DataPipeline
 
         transforms_out = {}
-        stage = _STAGES_PREFIX[running_stage.value]
+        stage = _STAGES_PREFIX[running_stage]
 
         # iterate over all transforms hook name
         for transform_name in InputTransformPlacement:
@@ -997,7 +997,7 @@ class InputTransform(Properties):
         if transform is None:
             return transform
 
-        keys_diff = set(transform.keys()).difference([v for v in InputTransformPlacement])
+        keys_diff = set(transform.keys()).difference([v.value for v in InputTransformPlacement])
 
         if len(keys_diff) > 0:
             raise MisconfigurationException(
