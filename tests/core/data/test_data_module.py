@@ -113,7 +113,7 @@ def test_data_module():
         def test_step(self, batch, batch_idx):
             assert sum(batch < 500) == 2
 
-        def predict_step(self, batch, batch_idx):
+        def predict_step(self, batch, *args, **kwargs):
             assert sum(batch > 500) == 2
             assert torch.equal(batch, torch.tensor([1000, 1001]))
 
@@ -137,10 +137,10 @@ def test_data_module():
 
     model = TestModel(torch.nn.Linear(1, 1))
     trainer = Trainer(fast_dev_run=True)
-    trainer.fit(model, dm)
-    trainer.validate(model, dm)
-    trainer.test(model, dm)
-    trainer.predict(model, dm)
+    trainer.fit(model, datamodule=dm)
+    trainer.validate(model, datamodule=dm)
+    trainer.test(model, datamodule=dm)
+    trainer.predict(model, datamodule=dm)
 
     input = Input(RunningStage.TRAINING, transform=TestTransform)
     dm = DataModule(train_input=input, batch_size=1)
