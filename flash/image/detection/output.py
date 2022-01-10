@@ -22,7 +22,7 @@ from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requi
 
 if _FIFTYONE_AVAILABLE:
     fo = lazy_import("fiftyone")
-    Detections = lazy_import("fiftyone.Detections")
+    Detections = "fiftyone.Detections"
 else:
     fo = None
     Detections = None

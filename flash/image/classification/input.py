@@ -28,7 +28,7 @@ from flash.image.data import ImageFilesInput, ImageNumpyInput, ImageTensorInput,
 
 if _FIFTYONE_AVAILABLE:
     fol = lazy_import("fiftyone.core.labels")
-    SampleCollection = lazy_import("fiftyone.core.collections.SampleCollection")
+    SampleCollection = "fiftyone.core.collections.SampleCollection"
 else:
     fol = None
     SampleCollection = None

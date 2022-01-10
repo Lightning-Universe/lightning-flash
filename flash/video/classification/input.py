@@ -27,7 +27,7 @@ from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _PYTORCHVIDEO_AVAI
 
 if _FIFTYONE_AVAILABLE:
     fol = lazy_import("fiftyone.core.labels")
-    SampleCollection = lazy_import("fiftyone.core.collections.SampleCollection")
+    SampleCollection = "fiftyone.core.collections.SampleCollection"
 else:
     fol = None
     SampleCollection = None

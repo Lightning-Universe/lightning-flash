@@ -21,7 +21,7 @@ from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE
 from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioVideoClassificationInput
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, lazy_import, requires
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, requires
 from flash.core.utilities.stages import RunningStage
 from flash.video.classification.input import (
     VideoClassificationFiftyOneInput,
@@ -32,7 +32,7 @@ from flash.video.classification.input import (
 from flash.video.classification.input_transform import VideoClassificationInputTransform
 
 if _FIFTYONE_AVAILABLE:
-    SampleCollection = lazy_import("fiftyone.core.collections.SampleCollection")
+    SampleCollection = "fiftyone.core.collections.SampleCollection"
 else:
     SampleCollection = None
 

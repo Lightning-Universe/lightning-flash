@@ -30,7 +30,7 @@ from flash.core.utilities.imports import (
 
 if _FIFTYONE_AVAILABLE:
     fol = lazy_import("fiftyone.core.labels")
-    Segmentation = lazy_import("fiftyone.core.labels.Segmentation")
+    Segmentation = "fiftyone.core.labels.Segmentation"
 else:
     fol = None
     Segmentation = None

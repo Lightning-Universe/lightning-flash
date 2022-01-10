@@ -36,7 +36,7 @@ from flash.image.segmentation.viz import SegmentationMatplotlibVisualization
 
 if _FIFTYONE_AVAILABLE:
     fo = lazy_import("fiftyone")
-    SampleCollection = lazy_import("fiftyone.core.collections.SampleCollection")
+    SampleCollection = "fiftyone.core.collections.SampleCollection"
 else:
     fo = None
     SampleCollection = object

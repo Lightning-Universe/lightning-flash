@@ -90,7 +90,7 @@ def test_testing_raises(sample_data):
     trainer = flash.Trainer(max_epochs=1, fast_dev_run=True, gradient_clip_val=0.01)
 
     with pytest.raises(NotImplementedError, match="Backbones provided by PyTorch Forecasting don't support testing."):
-        trainer.test(model, datamodule)
+        trainer.test(model, datamodule=datamodule)
 
 
 @pytest.mark.skipif(not _TABULAR_TESTING, reason="Tabular libraries aren't installed.")

@@ -27,14 +27,7 @@ from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioImageClassificationInput
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import (
-    _FIFTYONE_AVAILABLE,
-    _IMAGE_AVAILABLE,
-    _MATPLOTLIB_AVAILABLE,
-    Image,
-    lazy_import,
-    requires,
-)
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _MATPLOTLIB_AVAILABLE, Image, requires
 from flash.core.utilities.stages import RunningStage
 from flash.image.classification.input import (
     ImageClassificationCSVInput,
@@ -48,7 +41,7 @@ from flash.image.classification.input import (
 from flash.image.classification.transforms import ImageClassificationInputTransform
 
 if _FIFTYONE_AVAILABLE:
-    SampleCollection = lazy_import("fiftyone.core.collections.SampleCollection")
+    SampleCollection = "fiftyone.core.collections.SampleCollection"
 else:
     SampleCollection = None
 

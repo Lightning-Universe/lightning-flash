@@ -27,7 +27,7 @@ from flash.image.segmentation.output import SegmentationLabelsOutput
 
 if _FIFTYONE_AVAILABLE:
     fo = lazy_import("fiftyone")
-    SampleCollection = lazy_import("fiftyone.core.collections.SampleCollection")
+    SampleCollection = "fiftyone.core.collections.SampleCollection"
 else:
     fo = None
     SampleCollection = None

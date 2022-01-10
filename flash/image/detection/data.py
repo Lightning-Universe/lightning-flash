@@ -18,13 +18,13 @@ from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
 from flash.core.integrations.icevision.data import IceVisionInput
 from flash.core.integrations.icevision.transforms import IceVisionInputTransform
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _ICEVISION_AVAILABLE, lazy_import, requires
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _ICEVISION_AVAILABLE, requires
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 from flash.image.detection.input import ObjectDetectionFiftyOneInput
 
 if _FIFTYONE_AVAILABLE:
-    SampleCollection = lazy_import("fiftyone.core.collections.SampleCollection")
+    SampleCollection = "fiftyone.core.collections.SampleCollection"
 else:
     SampleCollection = None
 

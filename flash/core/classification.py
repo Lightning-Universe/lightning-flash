@@ -27,8 +27,8 @@ from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requi
 
 if _FIFTYONE_AVAILABLE:
     fol = lazy_import("fiftyone.core.labels")
-    Classification = lazy_import("fiftyone.core.labels.Classification")
-    Classifications = lazy_import("fiftyone.core.labels.Classifications")
+    Classification = "fiftyone.core.labels.Classification"
+    Classifications = "fiftyone.core.labels.Classifications"
 else:
     fol = None
     Classification = None

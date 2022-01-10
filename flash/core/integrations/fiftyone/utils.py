@@ -7,9 +7,9 @@ from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requi
 if _FIFTYONE_AVAILABLE:
     fo = lazy_import("fiftyone")
     fol = lazy_import("fiftyone.core.labels")
-    Label = lazy_import("fiftyone.Label")
-    Session = lazy_import("fiftyone.Session")
-    SampleCollection = lazy_import("fiftyone.core.collections.SampleCollection")
+    Label = "fiftyone.Label"
+    Session = "fiftyone.Session"
+    SampleCollection = "fiftyone.core.collections.SampleCollection"
 else:
     fo = None
     fol = None
