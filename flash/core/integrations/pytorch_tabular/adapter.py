@@ -24,11 +24,8 @@ class PytorchTabularAdapter(Adapter):
         num_features: int,
         output_dim: int,
         backbone: str,
-        learning_rate: float,
         loss_fn: Optional[Callable],
         metrics: Optional[Union[torchmetrics.Metric, List[torchmetrics.Metric]]],
-        optimizer: str,
-        lr_scheduler: str,
         backbone_kwargs: Optional[Dict[str, Any]] = None,
     ) -> Adapter:
 
@@ -43,14 +40,7 @@ class PytorchTabularAdapter(Adapter):
         }
         adapter = cls(
             task.backbones.get(backbone)(
-                task_type=task_type,
-                parameters=parameters,
-                loss_fn=loss_fn,
-                metrics=metrics,
-                learning_rate=learning_rate,
-                optimizer=optimizer,
-                lr_scheduler=lr_scheduler,
-                **backbone_kwargs
+                task_type=task_type, parameters=parameters, loss_fn=loss_fn, metrics=metrics, **backbone_kwargs
             )
         )
 

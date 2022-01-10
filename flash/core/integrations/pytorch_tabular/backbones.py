@@ -12,7 +12,7 @@ from flash.core.utilities.providers import _PYTORCH_TABULAR
 if _PYTORCHTABULAR_AVAILABLE:
     import pytorch_tabular.models as models
     from omegaconf import DictConfig, OmegaConf
-    from pytorch_tabular.config import ModelConfig, OptimizerConfig
+    from pytorch_tabular.config import ModelConfig
     from pytorch_tabular.models import (
         AutoIntConfig,
         CategoryEmbeddingModelConfig,
@@ -52,22 +52,13 @@ if _PYTORCHTABULAR_AVAILABLE:
         parameters: DictConfig,
         loss_fn: Callable,
         metrics: Optional[Union[torchmetrics.Metric, List[torchmetrics.Metric]]],
-        learning_rate: float,
-        optimizer: str,
-        lr_scheduler: str,
         **model_kwargs,
     ):
-        model_config = model_config_class(
-            task=task_type, embedding_dims=parameters["embedding_dims"], learning_rate=learning_rate, **model_kwargs
-        )
+        model_config = model_config_class(task=task_type, embedding_dims=parameters["embedding_dims"], **model_kwargs)
         model_config = _read_parse_config(model_config, ModelConfig)
-        optimizer_config = _read_parse_config(
-            OptimizerConfig(optimizer=optimizer, lr_scheduler=lr_scheduler), ModelConfig
-        )
         model_callable = getattr(getattr(models, model_config._module_src), model_config._model_name)
         config = OmegaConf.merge(
             OmegaConf.create(parameters),
-            OmegaConf.to_container(optimizer_config),
             OmegaConf.to_container(model_config),
         )
         model = model_callable(config=config, custom_loss=loss_fn, custom_metrics=metrics)

@@ -65,7 +65,7 @@ class TabularClassifier(ClassificationAdapterTask):
         optimizer: str = "Adam",
         lr_scheduler: str = None,
         metrics: METRICS_TYPE = None,
-        learning_rate: float = 1e-2,
+        learning_rate: float = 5e-4,
         **backbone_kwargs,
     ):
         self.save_hyperparameters()
@@ -81,12 +81,14 @@ class TabularClassifier(ClassificationAdapterTask):
             backbone=backbone,
             backbone_kwargs=backbone_kwargs,
             loss_fn=loss_fn,
-            learning_rate=learning_rate,
-            optimizer=optimizer,
             metrics=metrics,
-            lr_scheduler=lr_scheduler,
         )
-        super().__init__(adapter)
+        super().__init__(
+            adapter,
+            optimizer=optimizer,
+            lr_scheduler=lr_scheduler,
+            learning_rate=learning_rate,
+        )
 
     @staticmethod
     def _ci_benchmark_fn(history: List[Dict[str, Any]]):

@@ -81,12 +81,14 @@ class TabularRegressor(RegressionAdapterTask):
             backbone=backbone,
             backbone_kwargs=backbone_kwargs,
             loss_fn=loss_fn,
-            learning_rate=learning_rate,
-            optimizer=optimizer,
             metrics=metrics,
-            lr_scheduler=lr_scheduler,
         )
-        super().__init__(adapter)
+        super().__init__(
+            adapter,
+            optimizer=optimizer,
+            lr_scheduler=lr_scheduler,
+            learning_rate=learning_rate,
+        )
 
     @classmethod
     def from_data(cls, datamodule, **kwargs) -> "TabularRegressor":
