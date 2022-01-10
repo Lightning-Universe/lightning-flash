@@ -23,7 +23,7 @@ from flash.core.registry import FlashRegistry
 from flash.core.regression import RegressionAdapterTask
 from flash.core.serve import Composition
 from flash.core.utilities.imports import requires
-from flash.core.utilities.types import INPUT_TRANSFORM_TYPE, METRICS_TYPE
+from flash.core.utilities.types import INPUT_TRANSFORM_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.tabular.input import TabularDeserializer
 
 
@@ -62,8 +62,8 @@ class TabularRegressor(RegressionAdapterTask):
         backbone: str = "tabnet",
         output_dim: int = 1,
         loss_fn: Callable = F.mse_loss,
-        optimizer: str = "Adam",
-        lr_scheduler: str = None,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-2,
         **backbone_kwargs

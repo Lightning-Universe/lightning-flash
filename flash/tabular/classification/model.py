@@ -23,7 +23,7 @@ from flash.core.integrations.pytorch_tabular.backbones import PYTORCH_TABULAR_BA
 from flash.core.registry import FlashRegistry
 from flash.core.serve import Composition
 from flash.core.utilities.imports import requires
-from flash.core.utilities.types import INPUT_TRANSFORM_TYPE, METRICS_TYPE
+from flash.core.utilities.types import INPUT_TRANSFORM_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.tabular.input import TabularDeserializer
 
 
@@ -62,8 +62,8 @@ class TabularClassifier(ClassificationAdapterTask):
         output_dim: int,
         backbone: str = "tabnet",
         loss_fn: Callable = F.cross_entropy,
-        optimizer: str = "Adam",
-        lr_scheduler: str = None,
+        optimizer: OPTIMIZER_TYPE = "Adam",
+        lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: METRICS_TYPE = None,
         learning_rate: float = 5e-4,
         **backbone_kwargs,
