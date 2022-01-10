@@ -265,7 +265,13 @@ class LazyModule(types.ModuleType):
             self._callback()
 
         # Actually import the module
-        module = importlib.import_module(self.__name__)
+        try:
+            module = importlib.import_module(self.__name__)
+        except ModuleNotFoundError:
+            split = self.__name__.split(".")
+            path, attribute = split[:-1], split[-1]
+            module = getattr(importlib.import_module(".".join(path)), attribute)
+
         self._module = module
 
         # Update this object's dict so that attribute references are efficient
