@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Type, TYPE_CHECKING, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import pytorch_lightning as pl
@@ -33,13 +33,7 @@ from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE
 from flash.core.utilities.stages import RunningStage
-
-if _FIFTYONE_AVAILABLE and TYPE_CHECKING:
-    pass
-else:
-    SampleCollection = None
 
 
 class DatasetInput(Input):

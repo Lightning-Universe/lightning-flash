@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import random
-from typing import Any, Dict, Optional, Tuple, TYPE_CHECKING, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -28,13 +28,12 @@ from flash.core.utilities.imports import (
     requires,
 )
 
-Segmentation = None
 if _FIFTYONE_AVAILABLE:
     fol = lazy_import("fiftyone.core.labels")
-    if TYPE_CHECKING:
-        from fiftyone.core.labels import Segmentation
+    Segmentation = lazy_import("fiftyone.core.labels.Segmentation")
 else:
     fol = None
+    Segmentation = None
 
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt

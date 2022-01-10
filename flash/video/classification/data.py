@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, Optional, Sequence, Type, TYPE_CHECKING, Union
+from typing import Any, Dict, Optional, Sequence, Type, Union
 
 import torch
 from torch.utils.data import Sampler
@@ -31,13 +31,10 @@ from flash.video.classification.input import (
 )
 from flash.video.classification.input_transform import VideoClassificationInputTransform
 
-SampleCollection = None
 if _FIFTYONE_AVAILABLE:
-    fol = lazy_import("fiftyone.core.labels")
-    if TYPE_CHECKING:
-        from fiftyone.core.collections import SampleCollection
+    SampleCollection = lazy_import("fiftyone.core.collections.SampleCollection")
 else:
-    fol = None
+    SampleCollection = None
 
 if _PYTORCHVIDEO_AVAILABLE:
     from pytorchvideo.data.clip_sampling import ClipSampler

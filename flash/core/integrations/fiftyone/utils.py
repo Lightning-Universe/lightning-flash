@@ -1,19 +1,21 @@
 from itertools import chain
-from typing import Dict, List, Optional, Type, TYPE_CHECKING, Union
+from typing import Dict, List, Optional, Type, Union
 
 import flash
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 
-Label, Session, SampleCollection = object, object, object
 if _FIFTYONE_AVAILABLE:
     fo = lazy_import("fiftyone")
     fol = lazy_import("fiftyone.core.labels")
-    if TYPE_CHECKING:
-        from fiftyone import Label, Session
-        from fiftyone.core.collections import SampleCollection
+    Label = lazy_import("fiftyone.Label")
+    Session = lazy_import("fiftyone.Session")
+    SampleCollection = lazy_import("fiftyone.core.collections.SampleCollection")
 else:
     fo = None
     fol = None
+    Label = object
+    Session = object
+    SampleCollection = object
 
 
 @requires("fiftyone")

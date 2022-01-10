@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Collection, Dict, Optional, Sequence, Tuple, Type, TYPE_CHECKING
+from typing import Any, Collection, Dict, Optional, Sequence, Tuple, Type
 
 import numpy as np
 import torch
@@ -34,13 +34,12 @@ from flash.image.segmentation.input import (
 from flash.image.segmentation.transforms import SemanticSegmentationInputTransform
 from flash.image.segmentation.viz import SegmentationMatplotlibVisualization
 
-SampleCollection = None
 if _FIFTYONE_AVAILABLE:
     fo = lazy_import("fiftyone")
-    if TYPE_CHECKING:
-        from fiftyone.core.collections import SampleCollection
+    SampleCollection = lazy_import("fiftyone.core.collections.SampleCollection")
 else:
     fo = None
+    SampleCollection = object
 
 # Skip doctests if requirements aren't available
 if not _IMAGE_AVAILABLE:
