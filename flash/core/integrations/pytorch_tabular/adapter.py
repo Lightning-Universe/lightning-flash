@@ -2,8 +2,9 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 import torchmetrics
 
-from flash import DataKeys, Task
 from flash.core.adapter import Adapter
+from flash.core.data.io.input import DataKeys
+from flash.core.model import Task
 
 
 class PytorchTabularAdapter(Adapter):

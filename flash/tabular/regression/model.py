@@ -16,8 +16,8 @@ from typing import Any, Callable, Dict, Optional, Type
 
 from torch.nn import functional as F
 
-from flash import InputTransform
 from flash.core.data.io.input import ServeInput
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.integrations.pytorch_tabular.backbones import PYTORCH_TABULAR_BACKBONES
 from flash.core.registry import FlashRegistry
 from flash.core.regression import RegressionAdapterTask
