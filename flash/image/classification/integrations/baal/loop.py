@@ -16,19 +16,24 @@ from typing import Any, Dict, Optional
 
 import torch
 from pytorch_lightning import LightningModule
-from pytorch_lightning.loops import Loop
-from pytorch_lightning.loops.fit_loop import FitLoop
-from pytorch_lightning.trainer.progress import Progress
 from pytorch_lightning.trainer.states import TrainerFn, TrainerStatus
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from pytorch_lightning.utilities.model_helpers import is_overridden
 
 import flash
 from flash.core.data.utils import _STAGES_PREFIX
-from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_5_0, requires
+from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_4_0, _PL_GREATER_EQUAL_1_5_0, requires
 from flash.core.utilities.stages import RunningStage
 from flash.image.classification.integrations.baal.data import ActiveLearningDataModule
 from flash.image.classification.integrations.baal.dropout import InferenceMCDropoutTask
+
+if _PL_GREATER_EQUAL_1_4_0:
+    from pytorch_lightning.loops import Loop
+    from pytorch_lightning.loops.fit_loop import FitLoop
+    from pytorch_lightning.trainer.progress import Progress
+else:
+    Loop = object
+    FitLoop = object
 
 if not _PL_GREATER_EQUAL_1_5_0:
     from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
@@ -37,7 +42,7 @@ else:
 
 
 class ActiveLearningLoop(Loop):
-    @requires("baal")
+    @requires(["baal", (_PL_GREATER_EQUAL_1_4_0, "pytorch-lightning>=1.4.0")])
     def __init__(self, label_epoch_frequency: int, inference_iteration: int = 2, should_reset_weights: bool = True):
         """The `ActiveLearning Loop` describes the following training procedure. This loop is connected with the
         `ActiveLearningTrainer`

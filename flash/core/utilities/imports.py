@@ -16,7 +16,7 @@ import importlib
 import operator
 import types
 from importlib.util import find_spec
-from typing import List, Union
+from typing import List, Tuple, Union
 
 from pkg_resources import DistributionNotFound
 
@@ -121,6 +121,7 @@ else:
 if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
     _PL_GREATER_EQUAL_1_4_3 = _compare_version("pytorch_lightning", operator.ge, "1.4.3")
+    _PL_GREATER_EQUAL_1_4_0 = _compare_version("pytorch_lightning", operator.ge, "1.4.0")
     _PL_GREATER_EQUAL_1_5_0 = _compare_version("pytorch_lightning", operator.ge, "1.5.0")
     _PANDAS_GREATER_EQUAL_1_3_0 = _compare_version("pandas", operator.ge, "1.3.0")
     _ICEVISION_GREATER_EQUAL_0_11_0 = _compare_version("icevision", operator.ge, "0.11.0")
@@ -165,7 +166,7 @@ _EXTRAS_AVAILABLE = {
 }
 
 
-def requires(module_paths: Union[str, List]):
+def requires(module_paths: Union[str, Tuple[bool, str], List[Union[str, Tuple[bool, str]]]]):
 
     if not isinstance(module_paths, list):
         module_paths = [module_paths]
@@ -175,14 +176,18 @@ def requires(module_paths: Union[str, List]):
         extras = []
         modules = []
         for module_path in module_paths:
-            if module_path in _EXTRAS_AVAILABLE:
-                extras.append(module_path)
-                if not _EXTRAS_AVAILABLE[module_path]:
-                    available = False
+            if isinstance(module_path, str):
+                if module_path in _EXTRAS_AVAILABLE:
+                    extras.append(module_path)
+                    if not _EXTRAS_AVAILABLE[module_path]:
+                        available = False
+                else:
+                    modules.append(module_path)
+                    if not _module_available(module_path):
+                        available = False
             else:
+                available, module_path = module_path
                 modules.append(module_path)
-                if not _module_available(module_path):
-                    available = False
 
         if not available:
             modules = [f"'{module}'" for module in modules]
