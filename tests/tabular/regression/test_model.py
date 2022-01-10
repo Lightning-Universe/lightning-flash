@@ -22,8 +22,7 @@ from pytorch_lightning import Trainer
 from flash.__main__ import main
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _TABULAR_AVAILABLE
-from flash.tabular.classification.data import TabularClassificationData
-from flash.tabular.classification.model import TabularClassifier
+from flash.tabular import TabularRegressionData, TabularRegressor
 from tests.helpers.utils import _SERVE_TESTING, _TABULAR_TESTING
 
 # ======== Mock functions ========
@@ -36,7 +35,7 @@ class DummyDataset(torch.utils.data.Dataset):
         self.num_cat = num_cat
 
     def __getitem__(self, index):
-        target = torch.randint(0, 10, size=(1,)).item()
+        target = torch.rand(1)
         cat_vars = torch.randint(0, 10, size=(self.num_cat,))
         num_vars = torch.rand(self.num_num)
         return {DataKeys.INPUT: (cat_vars, num_vars), DataKeys.TARGET: target}
@@ -59,11 +58,11 @@ def test_init_train(backbone, tmpdir):
         "categorical_fields": list(range(16)),
         "cat_dims": [10 for _ in range(16)],
         "num_features": 32,
-        "output_dim": 10,
+        "output_dim": 1,
         "backbone": backbone,
     }
 
-    model = TabularClassifier(**data_properties)
+    model = TabularRegressor(**data_properties)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.fit(model, train_dl)
 
@@ -79,11 +78,11 @@ def test_init_train_no_num(backbone, tmpdir):
         "categorical_fields": list(range(16)),
         "cat_dims": [10 for _ in range(16)],
         "num_features": 16,
-        "output_dim": 10,
+        "output_dim": 1,
         "backbone": backbone,
     }
 
-    model = TabularClassifier(**data_properties)
+    model = TabularRegressor(**data_properties)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.fit(model, train_dl)
 
@@ -97,11 +96,11 @@ def test_init_train_no_cat(backbone, tmpdir):
         "categorical_fields": [],
         "cat_dims": [],
         "num_features": 16,
-        "output_dim": 10,
+        "output_dim": 1,
         "backbone": backbone,
     }
 
-    model = TabularClassifier(**data_properties)
+    model = TabularRegressor(**data_properties)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.fit(model, train_dl)
 
@@ -113,11 +112,11 @@ def test_module_import_error(tmpdir):
         "categorical_fields": list(range(16)),
         "cat_dims": [10 for _ in range(16)],
         "num_features": 32,
-        "output_dim": 10,
+        "output_dim": 1,
         "backbone": "tabnet",
     }
     with pytest.raises(ModuleNotFoundError, match="[tabular]"):
-        TabularClassifier(**data_properties)
+        TabularRegressor(**data_properties)
 
 
 @pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
@@ -130,10 +129,10 @@ def test_jit(backbone, tmpdir):
         "categorical_fields": list(range(4)),
         "cat_dims": [10 for _ in range(4)],
         "num_features": 8,
-        "output_dim": 10,
+        "output_dim": 1,
         "backbone": backbone,
     }
-    model = TabularClassifier(**data_properties)
+    model = TabularRegressor(**data_properties)
     model.eval()
 
     # torch.jit.script doesn't work with tabnet
@@ -150,7 +149,7 @@ def test_jit(backbone, tmpdir):
 
     out = model(batch)
     assert isinstance(out, torch.Tensor)
-    assert out.shape == torch.Size([1, 10])
+    assert out.shape == torch.Size([1, 1])
 
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
@@ -160,14 +159,14 @@ def test_jit(backbone, tmpdir):
 @mock.patch("flash._IS_TESTING", True)
 def test_serve(backbone):
     train_data = {"num_col": [1.4, 2.5], "cat_col": ["positive", "negative"], "target": [1, 2]}
-    datamodule = TabularClassificationData.from_data_frame(
+    datamodule = TabularRegressionData.from_data_frame(
         "cat_col",
         "num_col",
         "target",
         train_data_frame=pd.DataFrame.from_dict(train_data),
         batch_size=1,
     )
-    model = TabularClassifier.from_data(datamodule=datamodule, backbone=backbone)
+    model = TabularRegressor.from_data(datamodule=datamodule, backbone=backbone)
     # TODO: Currently only servable once a input_transform has been attached
     model._input_transform = datamodule.input_transform
     model.eval()
@@ -177,12 +176,12 @@ def test_serve(backbone):
 @pytest.mark.skipif(_TABULAR_AVAILABLE, reason="tabular libraries are installed.")
 def test_load_from_checkpoint_dependency_error():
     with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[tabular]'")):
-        TabularClassifier.load_from_checkpoint("not_a_real_checkpoint.pt")
+        TabularRegressor.load_from_checkpoint("not_a_real_checkpoint.pt")
 
 
 @pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
 def test_cli():
-    cli_args = ["flash", "tabular_classification", "--trainer.fast_dev_run", "True"]
+    cli_args = ["flash", "tabular_regression", "--trainer.fast_dev_run", "True"]
     with mock.patch("sys.argv", cli_args):
         try:
             main()

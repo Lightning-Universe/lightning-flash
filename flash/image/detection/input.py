@@ -11,20 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, Hashable, Sequence, TYPE_CHECKING
+from typing import Any, Dict, Hashable, Sequence
 
 from flash.core.data.io.input import DataKeys
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
 from flash.core.integrations.icevision.data import IceVisionInput
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _ICEVISION_AVAILABLE, lazy_import, requires
 
-SampleCollection = None
 if _FIFTYONE_AVAILABLE:
     fol = lazy_import("fiftyone.core.labels")
-    if TYPE_CHECKING:
-        from fiftyone.core.collections import SampleCollection
+    SampleCollection = "fiftyone.core.collections.SampleCollection"
 else:
-    foc, fol = None, None
+    fol = None
+    SampleCollection = None
 
 if _ICEVISION_AVAILABLE:
     from icevision.core import BBox, ClassMap, IsCrowdsRecordComponent, ObjectDetectionRecord

@@ -51,6 +51,7 @@ tasks = [
     "flash.pointcloud.detection",
     "flash.pointcloud.segmentation",
     "flash.tabular.classification",
+    "flash.tabular.regression",
     "flash.tabular.forecasting",
     "flash.text.classification",
     "flash.text.question_answering",

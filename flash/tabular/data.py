@@ -58,15 +58,22 @@ class TabularData(DataModule):
         return len(self.categorical_fields) + len(self.numerical_fields)
 
     @property
+    def cat_dims(self) -> list:
+        return [len(self.codes[cat]) + 1 for cat in self.categorical_fields]
+
+    @property
     def embedding_sizes(self) -> list:
         """Recommended embedding sizes."""
 
         # https://developers.googleblog.com/2017/11/introducing-tensorflow-feature-columns.html
         # The following "formula" provides a general rule of thumb about the number of embedding dimensions:
         # embedding_dimensions =  number_of_categories**0.25
-        num_classes = [len(self.codes[cat]) + 1 for cat in self.categorical_fields]
-        emb_dims = [max(int(n ** 0.25), 16) for n in num_classes]
-        return list(zip(num_classes, emb_dims))
+        emb_dims = [max(int(n ** 0.25), 16) for n in self.cat_dims]
+        return list(zip(self.cat_dims, emb_dims))
+
+    @property
+    def output_dim(self) -> int:
+        return self.num_classes if not self.is_regression else 1
 
     @classmethod
     def from_data_frame(

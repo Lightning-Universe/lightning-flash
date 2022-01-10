@@ -14,7 +14,7 @@
 import base64
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Dict, List, TYPE_CHECKING
+from typing import Any, Dict, List
 
 import numpy as np
 import torch
@@ -25,21 +25,13 @@ from flash.core.data.process import Deserializer
 from flash.core.data.utilities.paths import filter_valid_files, has_file_allowed_extension, PATH_TYPE
 from flash.core.data.utilities.samples import to_samples
 from flash.core.data.utils import image_default_loader
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _TORCHVISION_AVAILABLE, Image, lazy_import, requires
+from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, Image, requires
 
 if _TORCHVISION_AVAILABLE:
     from torchvision.datasets.folder import IMG_EXTENSIONS
     from torchvision.transforms.functional import to_pil_image
 else:
     IMG_EXTENSIONS = (".jpg", ".jpeg", ".png", ".ppm", ".bmp", ".pgm", ".tif", ".tiff", ".webp")
-
-SampleCollection = None
-if _FIFTYONE_AVAILABLE:
-    fol = lazy_import("fiftyone.core.labels")
-    if TYPE_CHECKING:
-        pass
-else:
-    fol = None
 
 NP_EXTENSIONS = (".npy",)
 

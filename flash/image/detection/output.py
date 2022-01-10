@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, List, Optional, TYPE_CHECKING, Union
+from typing import Any, Dict, List, Optional, Union
 
 from pytorch_lightning.utilities import rank_zero_warn
 
@@ -20,13 +20,12 @@ from flash.core.data.io.input import DataKeys
 from flash.core.data.io.output import Output
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 
-Detections = None
 if _FIFTYONE_AVAILABLE:
     fo = lazy_import("fiftyone")
-    if TYPE_CHECKING:
-        from fiftyone import Detections
+    Detections = "fiftyone.Detections"
 else:
     fo = None
+    Detections = None
 
 
 class FiftyOneDetectionLabelsOutput(Output):

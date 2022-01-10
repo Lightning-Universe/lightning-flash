@@ -15,7 +15,7 @@ import pytest
 import pytorch_lightning as pl
 
 from flash.core.utilities.imports import _TABULAR_AVAILABLE
-from flash.tabular import TabularClassificationData, TabularClassifier
+from flash.tabular import TabularRegressionData, TabularRegressor
 from tests.helpers.utils import _TABULAR_TESTING
 
 if _TABULAR_AVAILABLE:
@@ -26,7 +26,7 @@ if _TABULAR_AVAILABLE:
             "category": ["a", "b", "c", "a", None, "c"],
             "scalar_a": [0.0, 1.0, 2.0, 3.0, None, 5.0],
             "scalar_b": [5.0, 4.0, 3.0, 2.0, None, 1.0],
-            "label": [0, 1, 0, 1, 0, 1],
+            "label": [0.0, 1.0, 2.0, 1.0, 0.0, 1.0],
         }
     )
 
@@ -35,12 +35,12 @@ if _TABULAR_AVAILABLE:
 @pytest.mark.parametrize(
     "backbone", ["tabnet", "tabtransformer", "fttransformer", "autoint", "node", "category_embedding"]
 )
-def test_classification(backbone, tmpdir):
+def test_regression(backbone, tmpdir):
 
     train_data_frame = TEST_DF_1.copy()
     val_data_frame = TEST_DF_1.copy()
     test_data_frame = TEST_DF_1.copy()
-    data = TabularClassificationData.from_data_frame(
+    data = TabularRegressionData.from_data_frame(
         categorical_fields=["category"],
         numerical_fields=["scalar_a", "scalar_b"],
         target_fields="label",
@@ -50,6 +50,6 @@ def test_classification(backbone, tmpdir):
         num_workers=0,
         batch_size=2,
     )
-    model = TabularClassifier.from_data(datamodule=data, backbone=backbone)
+    model = TabularRegressor.from_data(datamodule=data, backbone=backbone)
     trainer = pl.Trainer(fast_dev_run=True, default_root_dir=tmpdir)
     trainer.fit(model, data)
