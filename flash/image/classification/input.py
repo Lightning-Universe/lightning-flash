@@ -23,16 +23,15 @@ from flash.core.data.utilities.data_frame import read_csv, resolve_files, resolv
 from flash.core.data.utilities.paths import filter_valid_files, make_dataset, PATH_TYPE
 from flash.core.data.utilities.samples import to_samples
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
-from flash.core.utilities.imports import requires
-from flash.image.data import (
-    fol,
-    ImageFilesInput,
-    ImageNumpyInput,
-    ImageTensorInput,
-    IMG_EXTENSIONS,
-    NP_EXTENSIONS,
-    SampleCollection,
-)
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
+from flash.image.data import ImageFilesInput, ImageNumpyInput, ImageTensorInput, IMG_EXTENSIONS, NP_EXTENSIONS
+
+if _FIFTYONE_AVAILABLE:
+    fol = lazy_import("fiftyone.core.labels")
+    SampleCollection = lazy_import("fiftyone.core.collections.SampleCollection")
+else:
+    fol = None
+    SampleCollection = None
 
 
 class ImageClassificationFilesInput(ClassificationInput, ImageFilesInput):
