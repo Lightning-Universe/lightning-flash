@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pathlib
-from typing import Any, Dict, Iterable, List, Tuple, Type, TYPE_CHECKING, Union
+from typing import Any, Dict, Iterable, List, Tuple, Type, Union
 
 import numpy as np
 import torch
@@ -25,13 +25,12 @@ from flash.core.data.utilities.paths import list_valid_files
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, lazy_import
 
-SampleCollection = None
 if _FIFTYONE_AVAILABLE:
     fol = lazy_import("fiftyone.core.labels")
-    if TYPE_CHECKING:
-        from fiftyone.core.collections import SampleCollection
+    SampleCollection = "fiftyone.core.collections.SampleCollection"
 else:
     fol = None
+    SampleCollection = None
 
 if _PYTORCHVIDEO_AVAILABLE:
     from pytorchvideo.data.clip_sampling import ClipSampler, make_clip_sampler

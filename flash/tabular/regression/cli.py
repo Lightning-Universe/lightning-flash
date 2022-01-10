@@ -14,23 +14,23 @@
 
 from flash.core.data.utils import download_data
 from flash.core.utilities.flash_cli import FlashCLI
-from flash.tabular.classification.data import TabularClassificationData
-from flash.tabular.classification.model import TabularClassifier
+from flash.tabular.regression.data import TabularRegressionData
+from flash.tabular.regression.model import TabularRegressor
 
-__all__ = ["tabular_classification"]
+__all__ = ["tabular_regression"]
 
 
 def from_titanic(
     val_split: float = 0.1,
     batch_size: int = 4,
     **data_module_kwargs,
-) -> TabularClassificationData:
+) -> TabularRegressionData:
     """Downloads and loads the Titanic data set."""
     download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "./data")
-    return TabularClassificationData.from_csv(
+    return TabularRegressionData.from_csv(
         ["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
-        "Fare",
-        target_fields="Survived",
+        None,
+        target_fields="Fare",
         train_file="data/titanic/titanic.csv",
         val_split=val_split,
         batch_size=batch_size,
@@ -38,11 +38,11 @@ def from_titanic(
     )
 
 
-def tabular_classification():
+def tabular_regression():
     """Classify tabular data."""
     cli = FlashCLI(
-        TabularClassifier,
-        TabularClassificationData,
+        TabularRegressor,
+        TabularRegressionData,
         default_datamodule_builder=from_titanic,
         default_arguments={
             "trainer.max_epochs": 3,
@@ -58,8 +58,8 @@ def tabular_classification():
         },
     )
 
-    cli.trainer.save_checkpoint("tabular_classification_model.pt")
+    cli.trainer.save_checkpoint("tabular_regression_model.pt")
 
 
 if __name__ == "__main__":
-    tabular_classification()
+    tabular_regression()

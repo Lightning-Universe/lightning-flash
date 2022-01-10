@@ -276,6 +276,8 @@ class ConcatRegistry(FlashRegistry):
         if len(external_matches) == 1:
             return external_matches[0]
 
+        if len(matches) == 0 and len(external_matches) == 0:
+            raise KeyError("No matches found in registry.")
         raise KeyError("Multiple matches from external registries, a strict lookup is not possible.")
 
     def remove(self, key: str) -> None:

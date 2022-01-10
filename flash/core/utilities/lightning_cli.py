@@ -8,6 +8,7 @@ from functools import wraps
 from types import MethodType
 from typing import Any, Callable, cast, Dict, List, Optional, Tuple, Type, Union
 
+import torch
 from jsonargparse import ActionConfigFile, ArgumentParser, set_config_read_mode
 from jsonargparse.signatures import ClassFromFunctionBase
 from jsonargparse.typehints import ClassType
@@ -19,10 +20,12 @@ from pytorch_lightning.utilities.cloud_io import get_filesystem
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from pytorch_lightning.utilities.model_helpers import is_overridden
 from pytorch_lightning.utilities.seed import seed_everything
-from pytorch_lightning.utilities.types import LRSchedulerType, LRSchedulerTypeTuple
 from torch.optim import Optimizer
 
 set_config_read_mode(fsspec_enabled=True)
+
+LRSchedulerTypeTuple = (torch.optim.lr_scheduler._LRScheduler, torch.optim.lr_scheduler.ReduceLROnPlateau)
+LRSchedulerType = Union[Type[torch.optim.lr_scheduler._LRScheduler], Type[torch.optim.lr_scheduler.ReduceLROnPlateau]]
 
 
 def class_from_function(
