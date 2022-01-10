@@ -18,9 +18,9 @@ import numpy as np
 import pytest
 
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _PANDAS_AVAILABLE
+from tests.helpers.utils import _TABULAR_TESTING
 
-if _PANDAS_AVAILABLE:
+if _TABULAR_TESTING:
     import pandas as pd
 
     from flash.tabular import TabularClassificationData
@@ -45,7 +45,7 @@ if _PANDAS_AVAILABLE:
     )
 
 
-@pytest.mark.skipif(not _PANDAS_AVAILABLE, reason="pandas is required")
+@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular dependencies are required")
 def test_categorize():
     codes = _generate_codes(TEST_DF_1, ["category"])
     assert codes == {"category": ["a", "b", "c"]}
@@ -57,7 +57,7 @@ def test_categorize():
     assert list(df["category"]) == [0, 0, 0]
 
 
-@pytest.mark.skipif(not _PANDAS_AVAILABLE, reason="pandas is required")
+@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular dependencies are required")
 def test_normalize():
     num_input = ["scalar_a", "scalar_b"]
     mean, std = _compute_normalization(TEST_DF_1, num_input)
@@ -65,29 +65,27 @@ def test_normalize():
     assert np.allclose(df[num_input].mean(), 0.0)
 
 
-@pytest.mark.skipif(not _PANDAS_AVAILABLE, reason="pandas is required")
+@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular dependencies are required")
 def test_embedding_sizes():
     self = Mock()
-    self.codes = {"category": ["a", "b", "c"]}
-    self.categorical_fields = ["category"]
+
+    self.cat_dims = [4]
     # use __get__ to test property with mocked self
     es = TabularClassificationData.embedding_sizes.__get__(self)  # pylint: disable=E1101
     assert es == [(4, 16)]
 
-    self.codes = {}
-    self.categorical_fields = []
+    self.cat_dims = []
     # use __get__ to test property with mocked self
     es = TabularClassificationData.embedding_sizes.__get__(self)  # pylint: disable=E1101
     assert es == []
 
-    self.codes = {"large": ["a"] * 100_000, "larger": ["b"] * 1_000_000}
-    self.categorical_fields = ["large", "larger"]
+    self.cat_dims = [100_000, 1_000_000]
     # use __get__ to test property with mocked self
     es = TabularClassificationData.embedding_sizes.__get__(self)  # pylint: disable=E1101
-    assert es == [(100_001, 17), (1_000_001, 31)]
+    assert es == [(100_000, 17), (1_000_000, 31)]
 
 
-@pytest.mark.skipif(not _PANDAS_AVAILABLE, reason="pandas is required")
+@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular dependencies are required")
 def test_categorical_target(tmpdir):
     train_data_frame = TEST_DF_1.copy()
     val_data_frame = TEST_DF_2.copy()
@@ -115,7 +113,7 @@ def test_categorical_target(tmpdir):
         assert target.shape == (1,)
 
 
-@pytest.mark.skipif(not _PANDAS_AVAILABLE, reason="pandas is required")
+@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular dependencies are required")
 def test_from_data_frame(tmpdir):
     train_data_frame = TEST_DF_1.copy()
     val_data_frame = TEST_DF_2.copy()
@@ -139,7 +137,7 @@ def test_from_data_frame(tmpdir):
         assert target.shape == (1,)
 
 
-@pytest.mark.skipif(not _PANDAS_AVAILABLE, reason="pandas is required")
+@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular dependencies are required")
 def test_from_csv(tmpdir):
     train_csv = Path(tmpdir) / "train.csv"
     val_csv = test_csv = Path(tmpdir) / "valid.csv"
@@ -166,7 +164,7 @@ def test_from_csv(tmpdir):
         assert target.shape == (1,)
 
 
-@pytest.mark.skipif(not _PANDAS_AVAILABLE, reason="pandas is required")
+@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular dependencies are required")
 def test_empty_inputs():
     train_data_frame = TEST_DF_1.copy()
     with pytest.raises(RuntimeError):
