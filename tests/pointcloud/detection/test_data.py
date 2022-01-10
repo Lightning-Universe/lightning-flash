@@ -60,4 +60,4 @@ def test_pointcloud_object_detection_data(tmpdir):
 
     predictions = trainer.predict(model, datamodule=datamodule)[0]
     assert predictions[0][DataKeys.INPUT].shape[1] == 4
-    assert len(predictions[0][DataKeys.PREDS]) == 158
+    assert len(predictions[0][DataKeys.PREDS]) == 196
