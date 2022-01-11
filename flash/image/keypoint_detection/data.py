@@ -140,7 +140,10 @@ class KeypointDetectionData(DataModule):
         **data_module_kwargs: Any,
     ):
         """Creates a :class:`~flash.image.keypoint_detection.data.KeypointDetectionData` object from the given data
-        folders and annotation files in the `COCO JSON format <https://cocodataset.org/#format-data>`_.
+        folders and annotation files in the `COCO JSON format <https://cocodataset.org/#format-data>`_. For help
+        understanding and using this format, take a look at this tutorial: `Create COCO Annotations from Scratch.
+
+        <COCO>`__
 
         To learn how to customize the transforms applied for each stage, read our
         :ref:`customizing transforms guide <customizing_transforms>`.

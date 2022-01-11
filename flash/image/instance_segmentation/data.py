@@ -124,6 +124,8 @@ class InstanceSegmentationData(DataModule):
     ):
         """Creates a :class:`~flash.image.instance_segmentation.data.InstanceSegmentationData` object from the
         given data folders and annotation files in the `COCO JSON format <https://cocodataset.org/#format-data>`_.
+        For help understanding and using this format, take a look at this tutorial: `Create COCO Annotations from
+        Scratch. <COCO>`__
 
         To learn how to customize the transforms applied for each stage, read our
         :ref:`customizing transforms guide <customizing_transforms>`.
