@@ -330,7 +330,7 @@ class ObjectDetectionData(DataModule):
             ...         f"<difficult>0</difficult><occluded>0</occluded><bndbox><xmin>{xmin}</xmin><xmax>{xmax}</xmax>"
             ...         f"<ymin>{ymin}</ymin><ymax>{ymax}</ymax></bndbox></object></annotation>"
             ...     )
-            ...     with open(os.path.join("train_annotations", f"image_{i}.xml"), "w") as file:
+            ...     with open(os.path.join("train_annotations", f"image_{i+1}.xml"), "w") as file:
             ...         _ = file.write(annotation)
 
         The folder ``train_folder`` has the following contents:
