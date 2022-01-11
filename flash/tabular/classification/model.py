@@ -12,38 +12,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type
+from typing import Any, Callable, Dict, List, Optional, Type
 
-import torch
 from torch.nn import functional as F
 
-from flash.core.classification import ClassificationTask, ProbabilitiesOutput
-from flash.core.data.io.input import DataKeys, ServeInput
+from flash.core.classification import ClassificationAdapterTask
+from flash.core.data.io.input import ServeInput
 from flash.core.data.io.input_transform import InputTransform
+from flash.core.integrations.pytorch_tabular.backbones import PYTORCH_TABULAR_BACKBONES
+from flash.core.registry import FlashRegistry
 from flash.core.serve import Composition
-from flash.core.utilities.imports import _TABULAR_AVAILABLE, requires
-from flash.core.utilities.types import (
-    INPUT_TRANSFORM_TYPE,
-    LR_SCHEDULER_TYPE,
-    METRICS_TYPE,
-    OPTIMIZER_TYPE,
-    OUTPUT_TYPE,
-)
+from flash.core.utilities.imports import requires
+from flash.core.utilities.types import INPUT_TRANSFORM_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.tabular.input import TabularDeserializer
 
-if _TABULAR_AVAILABLE:
-    from pytorch_tabnet.tab_network import TabNet
 
-
-class TabularClassifier(ClassificationTask):
+class TabularClassifier(ClassificationAdapterTask):
     """The ``TabularClassifier`` is a :class:`~flash.Task` for classifying tabular data. For more details, see
     :ref:`tabular_classification`.
 
     Args:
-        num_features: Number of columns in table (not including target column).
-        num_classes: Number of classes to classify.
-        embedding_sizes: List of (num_classes, emb_dim) to form categorical embeddings (or ``None`` if there are no
-            categorical fields in the data).
+        embedding_sizes: Number of columns in table (not including target column).
+        categorical_fields: Number of classes to classify.
+        embedding_sizes: List of (num_classes, emb_dim) to form categorical embeddings.
+        cat_dims: Number of distinct values for each categorical column
+        num_features: Number of columns in table
+        output_dim: Number of classes to classify
+        backbone: name of the model to use
         loss_fn: Loss function for training, defaults to cross entropy.
         optimizer: Optimizer to use for training.
         lr_scheduler: The LR scheduler to use during training.
@@ -52,88 +47,65 @@ class TabularClassifier(ClassificationTask):
             containing a combination of the aforementioned. In all cases, each metric needs to have the signature
             `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training.
-        multi_label: Whether the targets are multi-label or not.
-        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
-        **tabnet_kwargs: Optional additional arguments for the TabNet model, see
-            `pytorch_tabnet <https://dreamquark-ai.github.io/tabnet/_modules/pytorch_tabnet/tab_network.html#TabNet>`_.
+        **backbone_kwargs: Optional additional arguments for the model.
     """
 
     required_extras: str = "tabular"
+    backbones: FlashRegistry = FlashRegistry("backbones") + PYTORCH_TABULAR_BACKBONES
 
     def __init__(
         self,
+        embedding_sizes: list,
+        categorical_fields: list,
+        cat_dims: list,
         num_features: int,
-        num_classes: int,
-        embedding_sizes: Optional[List[Tuple[int, int]]] = None,
+        output_dim: int,
+        backbone: str = "tabnet",
         loss_fn: Callable = F.cross_entropy,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: METRICS_TYPE = None,
-        learning_rate: float = 1e-2,
-        multi_label: bool = False,
-        output: OUTPUT_TYPE = None,
-        **tabnet_kwargs,
+        learning_rate: float = 5e-4,
+        **backbone_kwargs,
     ):
         self.save_hyperparameters()
-
-        if embedding_sizes:
-            cat_dims, cat_emb_dim = zip(*embedding_sizes)
-        else:
-            cat_dims, cat_emb_dim, embedding_sizes = [], [], []
-
-        model = TabNet(
-            input_dim=num_features,
-            output_dim=num_classes,
-            cat_idxs=list(range(len(embedding_sizes))),
-            cat_dims=list(cat_dims),
-            cat_emb_dim=list(cat_emb_dim),
-            **tabnet_kwargs,
-        )
-
-        super().__init__(
-            model=model,
+        metadata = self.backbones.get(backbone, with_metadata=True)
+        adapter = metadata["metadata"]["adapter"].from_task(
+            self,
+            task_type="classification",
+            embedding_sizes=embedding_sizes,
+            categorical_fields=categorical_fields,
+            cat_dims=cat_dims,
+            num_features=num_features,
+            output_dim=output_dim,
+            backbone=backbone,
+            backbone_kwargs=backbone_kwargs,
             loss_fn=loss_fn,
+            metrics=metrics,
+        )
+        super().__init__(
+            adapter,
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
-            metrics=metrics,
             learning_rate=learning_rate,
-            multi_label=multi_label,
-            output=output or ProbabilitiesOutput(),
         )
-
-        self.save_hyperparameters()
-
-    def forward(self, x_in) -> torch.Tensor:
-        # TabNet takes single input, x_in is composed of (categorical, numerical)
-        xs = [x for x in x_in if x.numel()]
-        x = torch.cat(xs, dim=1)
-        return self.model(x)[0]
-
-    def training_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
-        return super().training_step(batch, batch_idx)
-
-    def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
-        return super().validation_step(batch, batch_idx)
-
-    def test_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
-        return super().test_step(batch, batch_idx)
-
-    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        batch = batch[DataKeys.INPUT]
-        return self(batch)
-
-    @classmethod
-    def from_data(cls, datamodule, **kwargs) -> "TabularClassifier":
-        model = cls(datamodule.num_features, datamodule.num_classes, datamodule.embedding_sizes, **kwargs)
-        return model
 
     @staticmethod
     def _ci_benchmark_fn(history: List[Dict[str, Any]]):
         """This function is used only for debugging usage with CI."""
-        assert history[-1]["val_accuracy"] > 0.6, history[-1]["val_accuracy"]
+        assert history[-1]["valid_accuracy"] > 0.6, history[-1]["valid_accuracy"]
+
+    @classmethod
+    def from_data(cls, datamodule, **kwargs) -> "TabularClassifier":
+        model = cls(
+            embedding_sizes=datamodule.embedding_sizes,
+            categorical_fields=datamodule.categorical_fields,
+            cat_dims=datamodule.cat_dims,
+            num_features=datamodule.num_features,
+            output_dim=datamodule.output_dim,
+            **kwargs,
+        )
+        return model
 
     @requires("serve")
     def serve(

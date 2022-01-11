@@ -20,7 +20,7 @@ from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.plugins.environments import SLURMEnvironment
 
 from flash.core.utilities.compatibility import accelerator_connector
-from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_4_0, _TORCHVISION_AVAILABLE
 from flash.core.utilities.lightning_cli import (
     instantiate_class,
     LightningArgumentParser,
@@ -568,6 +568,7 @@ class EarlyExitTestModel(BoringModel):
         dict(accelerator="ddp_cpu", plugins="ddp_find_unused_parameters_false"),
     ),
 )
+@pytest.mark.skipif(not _PL_GREATER_EQUAL_1_4_0, reason="Bugs in PL < 1.4.0")
 def test_cli_ddp_spawn_save_config_callback(tmpdir, logger, trainer_kwargs):
     with mock.patch("sys.argv", ["any.py"]), pytest.raises(CustomException):
         LightningCLI(

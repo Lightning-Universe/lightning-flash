@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Type, TYPE_CHECKING, Union
+from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
@@ -20,18 +20,15 @@ from flash.core.data.io.input import Input
 from flash.core.data.utilities.sort import sorted_alphanumeric
 from flash.core.integrations.icevision.data import IceVisionInput
 from flash.core.integrations.icevision.transforms import IceVisionInputTransform
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _ICEVISION_AVAILABLE, lazy_import, requires
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _ICEVISION_AVAILABLE, requires
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 from flash.image.detection.input import ObjectDetectionFiftyOneInput
 
-SampleCollection = None
 if _FIFTYONE_AVAILABLE:
-    fol = lazy_import("fiftyone.core.labels")
-    if TYPE_CHECKING:
-        from fiftyone.core.collections import SampleCollection
+    SampleCollection = "fiftyone.core.collections.SampleCollection"
 else:
-    foc, fol = None, None
+    SampleCollection = None
 
 if _ICEVISION_AVAILABLE:
     from icevision.core import ClassMap

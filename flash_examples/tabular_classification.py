@@ -30,7 +30,7 @@ datamodule = TabularClassificationData.from_csv(
 )
 
 # 2. Build the task
-model = TabularClassifier.from_data(datamodule)
+model = TabularClassifier.from_data(datamodule, backbone="fttransformer")
 
 # 3. Create the trainer and train the model
 trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())

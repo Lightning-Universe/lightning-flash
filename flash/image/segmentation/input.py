@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import torch
 from pytorch_lightning.utilities import rank_zero_warn
@@ -25,13 +25,12 @@ from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _TORCHVISION_AVAIL
 from flash.image.data import image_loader, ImageDeserializer, IMG_EXTENSIONS
 from flash.image.segmentation.output import SegmentationLabelsOutput
 
-SampleCollection = None
 if _FIFTYONE_AVAILABLE:
     fo = lazy_import("fiftyone")
-    if TYPE_CHECKING:
-        from fiftyone.core.collections import SampleCollection
+    SampleCollection = "fiftyone.core.collections.SampleCollection"
 else:
     fo = None
+    SampleCollection = None
 
 if _TORCHVISION_AVAILABLE:
     import torchvision

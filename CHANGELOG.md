@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Added support for multi-label, space delimited, targets ([#1076](https://github.com/PyTorchLightning/lightning-flash/pull/1076))
 
+- Added support for tabular classification / regression backbones from PyTorch Tabular ([#1098](https://github.com/PyTorchLightning/lightning-flash/pull/1098))
+
+- Added Flash zero support for tabular regression ([#1098](https://github.com/PyTorchLightning/lightning-flash/pull/1098))
+
 - Added support for COCO annotations with non-default keypoint labels to `KeypointDetectionData.from_coco` ([#1102](https://github.com/PyTorchLightning/lightning-flash/pull/1102))
 
 ### Changed

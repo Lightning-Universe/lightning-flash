@@ -476,4 +476,4 @@ def test_classification_task_metrics():
     task = ClassificationTask(model)
     trainer = flash.Trainer(max_epochs=1, callbacks=CheckAccuracy(), gpus=torch.cuda.device_count())
     trainer.fit(task, train_dataloader=DataLoader(train_dataset), val_dataloaders=DataLoader(val_dataset))
-    trainer.test(task, dataloaders=DataLoader(test_dataset))
+    trainer.test(task, DataLoader(test_dataset))
