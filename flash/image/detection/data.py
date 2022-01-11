@@ -125,9 +125,10 @@ class ObjectDetectionData(DataModule):
         """.. _COCO: https://www.immersivelimit.com/tutorials/create-coco-annotations-from-scratch.
 
         Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders
-        and annotation files in the `COCO JSON format <https://cocodataset.org/#format-data>`_. For help
-        understanding and using this format, take a look at this tutorial:
-        `Create COCO Annotations from Scratch. <COCO>`__
+        and annotation files in the `COCO JSON format <https://cocodataset.org/#format-data>`_.
+
+        For help understanding and using the COCO format, take a look at this tutorial: `Create COCO annotations from
+        scratch <COCO>`__.
 
         To learn how to customize the transforms applied for each stage, read our
         :ref:`customizing transforms guide <customizing_transforms>`.
