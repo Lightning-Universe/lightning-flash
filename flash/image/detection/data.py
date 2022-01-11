@@ -323,7 +323,7 @@ class ObjectDetectionData(DataModule):
             >>> for i, (bbox, label) in enumerate(zip(bboxes, labels)):
             ...     xmin, ymin, xmax, ymax = bbox
             ...     annotation = (
-            ...         f"<annotation><folder></folder><filename>image_{i + 1}.png</filename>"
+            ...         f"<annotation><filename>image_{i + 1}.png</filename>"
             ...         f"<path>image_{i + 1}.png</path><source><database>example</database></source>"
             ...         "<size><width>64</width><height>64</height><depth>3</depth></size><segmented>0</segmented>"
             ...         f"<object><name>{label}</name><pose>Unspecified</pose><truncated>0</truncated>"
@@ -358,7 +358,6 @@ class ObjectDetectionData(DataModule):
         .. code-block::
 
             <annotation>
-                <folder></folder>
                 <filename>image_0.png</filename>
                 <path>image_0.png</path>
                 <source><database>example</database></source>
