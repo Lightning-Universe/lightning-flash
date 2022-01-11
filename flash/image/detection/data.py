@@ -330,7 +330,7 @@ class ObjectDetectionData(DataModule):
             ...         f"<difficult>0</difficult><occluded>0</occluded><bndbox><xmin>{xmin}</xmin><xmax>{xmax}</xmax>"
             ...         f"<ymin>{ymin}</ymin><ymax>{ymax}</ymax></bndbox></object></annotation>"
             ...     )
-            ...     with open(os.path.join("train_annotations", f"image_{i}.xml"), "w") as file:
+            ...     with open(os.path.join("train_annotations", f"image_{i+1}.xml"), "w") as file:
             ...         _ = file.write(annotation)
 
         The folder ``train_folder`` has the following contents:
@@ -487,25 +487,13 @@ class ObjectDetectionData(DataModule):
             >>> _ = [rand_image.save(os.path.join("train_folder", f"image_{i}.png")) for i in range(1, 4)]
             >>> _ = [rand_image.save(os.path.join("predict_folder", f"predict_image_{i}.png")) for i in range(1, 4)]
             >>> annotations = {
-            ...     "image_1.png": {
-            ...         "filename": "image_1.png",
+            ...     f"image_{i+1}.png": {
+            ...         "filename": f"image_{i+1}.png",
             ...         "regions": [{
             ...                 "shape_attributes": {"name": "rect", "x": 10, "y": 20, "width": 5, "height": 10},
-            ...                 "region_attributes": {"label": "cat"},
+            ...                 "region_attributes": {"label": lb},
             ...         }]
-            ...     }, "image_2.png": {
-            ...         "filename": "image_2.png",
-            ...         "regions": [{
-            ...                 "shape_attributes": {"name": "rect", "x": 20, "y": 30, "width": 10, "height": 10},
-            ...                 "region_attributes": {"label": "dog"},
-            ...         }]
-            ...     }, "image_3.png": {
-            ...         "filename": "image_3.png",
-            ...         "regions": [{
-            ...                 "shape_attributes": {"name": "rect", "x": 10, "y": 20, "width": 5, "height": 25},
-            ...                 "region_attributes": {"label": "cat"},
-            ...         }]
-            ...     }
+            ...     } for i, lb in enumerate(["cat", "dog", "cat"])
             ... }
             >>> with open("train_annotations.json", "w") as annotation_file:
             ...     json.dump(annotations, annotation_file)

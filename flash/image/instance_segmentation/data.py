@@ -171,8 +171,8 @@ class InstanceSegmentationData(DataModule):
             ...     {"area": 125, "bbox": [10, 20, 5, 25], "category_id": 1, "id": 3, "image_id": 3, "iscrowd": 0,
             ...     "segmentation": [[10, 20, 15, 20, 15, 45, 10, 45]]},
             ... ], "categories": [
-            ...     {"id": 1, "name": "cat", "supercategory": "cat"},
-            ...     {"id": 2, "name": "dog", "supercategory": "dog"},
+            ...     {"id": 1, "name": "cat", "supercategory": "annimal"},
+            ...     {"id": 2, "name": "dog", "supercategory": "annimal"},
             ... ], "images": [
             ...     {"file_name": "image_1.png", "height": 64, "width": 64, "id": 1},
             ...     {"file_name": "image_2.png", "height": 64, "width": 64, "id": 2},
@@ -204,8 +204,8 @@ class InstanceSegmentationData(DataModule):
                     {"area": 125, "bbox": [10, 20, 5, 25], "category_id": 1, "id": 3, "image_id": 3, "iscrowd": 0,
                     "segmentation": [[10, 20, 15, 20, 15, 45, 10, 45]]}
                 ], "categories": [
-                    {"id": 1, "name": "cat", "supercategory": "cat"},
-                    {"id": 2, "name": "dog", "supercategory": "dog"}
+                    {"id": 1, "name": "cat", "supercategory": "annimal"},
+                    {"id": 2, "name": "dog", "supercategory": "annimal"}
                 ], "images": [
                     {"file_name": "image_1.png", "height": 64, "width": 64, "id": 1},
                     {"file_name": "image_2.png", "height": 64, "width": 64, "id": 2},
