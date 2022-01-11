@@ -330,7 +330,7 @@ class InstanceSegmentationData(DataModule):
             >>> import numpy as np
             >>> from PIL import Image
             >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
-            >>> rand_mask= Image.fromarray(np.random.randint(0, 3, (64, 64), dtype="uint8"))
+            >>> rand_mask = Image.fromarray(np.random.randint(0, 3, (64, 64), dtype="uint8"))
             >>> os.makedirs("train_folder", exist_ok=True)
             >>> os.makedirs("train_masks", exist_ok=True)
             >>> os.makedirs("train_annotations", exist_ok=True)
@@ -350,7 +350,7 @@ class InstanceSegmentationData(DataModule):
             ...         f"<difficult>0</difficult><occluded>0</occluded><bndbox><xmin>{xmin}</xmin><xmax>{xmax}</xmax>"
             ...         f"<ymin>{ymin}</ymin><ymax>{ymax}</ymax></bndbox></object></annotation>"
             ...     )
-            ...     with open(os.path.join("train_annotations", f"image_{i}.xml"), "w") as file:
+            ...     with open(os.path.join("train_annotations", f"image_{i + 1}.xml"), "w") as file:
             ...         _ = file.write(annotation)
 
         The folder ``train_folder`` has the following contents:
