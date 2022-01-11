@@ -289,6 +289,9 @@ class InstanceSegmentationData(DataModule):
         given data folders, mask folders, and annotation files in the `PASCAL VOC (Visual Object Challenge) XML
         format <PASCAL>`_.
 
+        .. note:: All three arguments `*_folder`, `*_target_folder`, and `*_ann_folder` are needed to load data for a
+            particular stage.
+
         To learn how to customize the transforms applied for each stage, read our
         :ref:`customizing transforms guide <customizing_transforms>`.
 
