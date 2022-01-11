@@ -21,7 +21,6 @@ from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.utilities.paths import list_valid_files
 from flash.core.integrations.icevision.transforms import from_icevision_record
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
-from flash.image.data import image_loader, IMG_EXTENSIONS, NP_EXTENSIONS
 
 if _ICEVISION_AVAILABLE:
     from icevision.core.record import BaseRecord
@@ -36,23 +35,29 @@ class IceVisionInput(Input):
         root: str,
         ann_file: Optional[str] = None,
         parser: Optional[Type["Parser"]] = None,
+        parser_kwargs: Optional[Dict[str, Any]] = None,
     ) -> List[Dict[str, Any]]:
-        if inspect.isclass(parser) and issubclass(parser, Parser):
-            parser = parser(ann_file, root)
-        elif isinstance(parser, Callable):
-            parser = parser(root)
+        parser_kwargs = {} if parser_kwargs is None else parser_kwargs
+        unwrapped_parser = getattr(parser, "func", parser)
+        if inspect.isclass(unwrapped_parser) and issubclass(unwrapped_parser, Parser):
+            parser = parser(ann_file, root, **parser_kwargs)
+        elif isinstance(unwrapped_parser, Callable):
+            parser = parser(root, **parser_kwargs)
         else:
             raise ValueError("The parser must be a callable or an IceVision Parser type.")
-        self.num_classes = parser.class_map.num_classes
-        self.set_state(ClassificationState([parser.class_map.get_by_id(i) for i in range(self.num_classes)]))
+        class_map = getattr(parser, "class_map", None)
+        if class_map is not None:
+            self.num_classes = class_map.num_classes
+            self.labels = [class_map.get_by_id(i) for i in range(self.num_classes)]
+            self.set_state(ClassificationState(self.labels))
         records = parser.parse(data_splitter=SingleSplitSplitter())
         return [{DataKeys.INPUT: record} for record in records[0]]
 
     def predict_load_data(
-        self, paths: Union[str, List[str]], ann_file: Optional[str] = None, parser: Optional[Type["Parser"]] = None
+        self, paths: Union[str, List[str]], parser: Optional[Type["Parser"]] = None
     ) -> List[Dict[str, Any]]:
-        if parser is not None and parser != Parser:
-            return self.load_data(paths, ann_file, parser)
+        from flash.image.data import IMG_EXTENSIONS, NP_EXTENSIONS  # Import locally to prevent circular import
+
         paths = list_valid_files(paths, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
         return [{DataKeys.INPUT: path} for path in paths]
 
@@ -61,6 +66,8 @@ class IceVisionInput(Input):
         return from_icevision_record(record)
 
     def predict_load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+        from flash.image.data import image_loader  # Import locally to prevent circular import
+
         if isinstance(sample[DataKeys.INPUT], BaseRecord):
             return self.load_sample(sample)
         filepath = sample[DataKeys.INPUT]
