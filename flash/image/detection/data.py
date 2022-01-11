@@ -325,7 +325,7 @@ class ObjectDetectionData(DataModule):
             ...     annotation = (
             ...         f"<annotation><filename>image_{i + 1}.png</filename>"
             ...         f"<path>image_{i + 1}.png</path><source><database>example</database></source>"
-            ...         "<size><width>64</width><height>64</height><depth>3</depth></size><segmented>0</segmented>"
+            ...         "<size><width>64</width><height>64</height><depth>3</depth></size>"
             ...         f"<object><name>{label}</name><pose>Unspecified</pose><truncated>0</truncated>"
             ...         f"<difficult>0</difficult><occluded>0</occluded><bndbox><xmin>{xmin}</xmin><xmax>{xmax}</xmax>"
             ...         f"<ymin>{ymin}</ymin><ymax>{ymax}</ymax></bndbox></object></annotation>"
@@ -362,7 +362,6 @@ class ObjectDetectionData(DataModule):
                 <path>image_0.png</path>
                 <source><database>example</database></source>
                 <size><width>64</width><height>64</height><depth>3</depth></size>
-                <segmented>0</segmented>
                 <object>
                     <name>cat</name>
                     <pose>Unspecified</pose>
