@@ -93,6 +93,7 @@ creating a subclass of :class:`~flash.core.data.io.input_transform.InputTransfor
     from flash.core.integrations.icevision.transforms import IceVisionTransformAdapter
     from flash.image import ObjectDetectionData
 
+
     @dataclass
     class BrightnessContrastTransform(InputTransform):
         image_size: int = 128
