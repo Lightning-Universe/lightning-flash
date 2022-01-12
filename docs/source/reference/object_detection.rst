@@ -87,9 +87,11 @@ creating a subclass of :class:`~flash.core.data.io.input_transform.InputTransfor
 
 .. code-block:: python
 
+    from dataclasses import dataclass
     import albumentations as alb
     from icevision.tfms import A
 
+    from flash import InputTransform
     from flash.core.integrations.icevision.transforms import IceVisionTransformAdapter
     from flash.image import ObjectDetectionData
 
