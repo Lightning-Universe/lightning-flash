@@ -53,7 +53,7 @@ class TabularClassificationData(TabularData):
         input_cls: Type[Input] = TabularClassificationDataFrameInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
-    ) -> "TabularData":
+    ) -> "TabularClassificationData":
         """Creates a :class:`~flash.tabular.classification.data.TabularClassificationData` object from the given
         data frames.
 
@@ -191,7 +191,7 @@ class TabularClassificationData(TabularData):
         input_cls: Type[Input] = TabularClassificationCSVInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
-    ) -> "TabularData":
+    ) -> "TabularClassificationData":
         """Creates a :class:`~flash.tabular.classification.data.TabularClassificationData` object from the given
         CSV files.
 

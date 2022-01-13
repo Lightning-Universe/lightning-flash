@@ -33,7 +33,7 @@ datamodule = TabularRegressionData.from_csv(
         "Rainfall(mm)",
         "Snowfall (cm)",
     ],
-    target_fields="Rented Bike Count",
+    target_field="Rented Bike Count",
     train_file="data/SeoulBikeData.csv",
     val_split=0.1,
     batch_size=8,

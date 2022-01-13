@@ -50,8 +50,8 @@ class TabularRegressionCSVInput(TabularRegressionDataFrameInput):
         file: Optional[str],
         categorical_fields: Optional[Union[str, List[str]]] = None,
         numerical_fields: Optional[Union[str, List[str]]] = None,
-        target_fields: Optional[Union[str, List[str]]] = None,
+        target_field: Optional[str] = None,
         parameters: Dict[str, Any] = None,
     ):
         if file is not None:
-            return super().load_data(read_csv(file), categorical_fields, numerical_fields, target_fields, parameters)
+            return super().load_data(read_csv(file), categorical_fields, numerical_fields, target_field, parameters)
