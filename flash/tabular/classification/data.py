@@ -46,7 +46,7 @@ class TabularClassificationData(TabularData):
         input_cls: Type[Input] = TabularClassificationDataFrameInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
-    ) -> "TabularData":
+    ) -> "TabularClassificationData":
         ds_kw = dict(
             data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
@@ -87,7 +87,7 @@ class TabularClassificationData(TabularData):
         input_cls: Type[Input] = TabularClassificationCSVInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
-    ) -> "TabularData":
+    ) -> "TabularClassificationData":
         ds_kw = dict(
             data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,

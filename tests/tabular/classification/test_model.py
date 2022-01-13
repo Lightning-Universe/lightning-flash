@@ -59,7 +59,7 @@ def test_init_train(backbone, tmpdir):
         "categorical_fields": list(range(16)),
         "cat_dims": [10 for _ in range(16)],
         "num_features": 32,
-        "output_dim": 10,
+        "num_classes": 10,
         "backbone": backbone,
     }
 
@@ -79,7 +79,7 @@ def test_init_train_no_num(backbone, tmpdir):
         "categorical_fields": list(range(16)),
         "cat_dims": [10 for _ in range(16)],
         "num_features": 16,
-        "output_dim": 10,
+        "num_classes": 10,
         "backbone": backbone,
     }
 
@@ -97,7 +97,7 @@ def test_init_train_no_cat(backbone, tmpdir):
         "categorical_fields": [],
         "cat_dims": [],
         "num_features": 16,
-        "output_dim": 10,
+        "num_classes": 10,
         "backbone": backbone,
     }
 
@@ -113,7 +113,7 @@ def test_module_import_error(tmpdir):
         "categorical_fields": list(range(16)),
         "cat_dims": [10 for _ in range(16)],
         "num_features": 32,
-        "output_dim": 10,
+        "num_classes": 10,
         "backbone": "tabnet",
     }
     with pytest.raises(ModuleNotFoundError, match="[tabular]"):
@@ -130,7 +130,7 @@ def test_jit(backbone, tmpdir):
         "categorical_fields": list(range(4)),
         "cat_dims": [10 for _ in range(4)],
         "num_features": 8,
-        "output_dim": 10,
+        "num_classes": 10,
         "backbone": backbone,
     }
     model = TabularClassifier(**data_properties)

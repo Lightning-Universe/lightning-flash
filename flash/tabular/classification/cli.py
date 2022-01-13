@@ -54,7 +54,7 @@ def tabular_classification():
             "categorical_fields",
             "num_features",
             "cat_dims",
-            "output_dim",
+            "num_classes",
         },
     )
 

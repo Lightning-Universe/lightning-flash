@@ -46,7 +46,7 @@ class TabularRegressionData(TabularData):
         input_cls: Type[Input] = TabularRegressionDataFrameInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
-    ) -> "TabularData":
+    ) -> "TabularRegressionData":
         ds_kw = dict(
             data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
@@ -87,7 +87,7 @@ class TabularRegressionData(TabularData):
         input_cls: Type[Input] = TabularRegressionCSVInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
-    ) -> "TabularData":
+    ) -> "TabularRegressionData":
         ds_kw = dict(
             data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,

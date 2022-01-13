@@ -30,7 +30,7 @@ def from_titanic(
     return TabularRegressionData.from_csv(
         ["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
         None,
-        target_fields="Fare",
+        target_field="Fare",
         train_file="data/titanic/titanic.csv",
         val_split=val_split,
         batch_size=batch_size,
@@ -54,7 +54,6 @@ def tabular_regression():
             "categorical_fields",
             "num_features",
             "cat_dims",
-            "output_dim",
         },
     )
 
