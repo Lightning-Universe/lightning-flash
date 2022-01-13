@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional, Type, Union
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
-from flash.core.utilities.imports import _PANDAS_AVAILABLE
+from flash.core.utilities.imports import _PANDAS_AVAILABLE, _TABULAR_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 from flash.tabular.data import TabularData
 from flash.tabular.regression.input import TabularRegressionCSVInput, TabularRegressionDataFrameInput
@@ -26,8 +26,15 @@ if _PANDAS_AVAILABLE:
 else:
     DataFrame = object
 
+# Skip doctests if requirements aren't available
+if not _TABULAR_AVAILABLE:
+    __doctest_skip__ = ["TabularRegressionData", "TabularRegressionData.*"]
+
 
 class TabularRegressionData(TabularData):
+    """The ``TabularRegressionData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
+    classmethods for loading data for tabular regression."""
+
     @classmethod
     def from_data_frame(
         cls,
