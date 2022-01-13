@@ -37,7 +37,7 @@ class TabularClassifier(ClassificationAdapterTask):
         embedding_sizes: List of (num_classes, emb_dim) to form categorical embeddings.
         cat_dims: Number of distinct values for each categorical column
         num_features: Number of columns in table
-        output_dim: Number of classes to classify
+        num_classes: Number of classes to classify
         backbone: name of the model to use
         loss_fn: Loss function for training, defaults to cross entropy.
         optimizer: Optimizer to use for training.
@@ -59,7 +59,7 @@ class TabularClassifier(ClassificationAdapterTask):
         categorical_fields: list,
         cat_dims: list,
         num_features: int,
-        output_dim: int,
+        num_classes: int,
         backbone: str = "tabnet",
         loss_fn: Callable = F.cross_entropy,
         optimizer: OPTIMIZER_TYPE = "Adam",
@@ -77,7 +77,7 @@ class TabularClassifier(ClassificationAdapterTask):
             categorical_fields=categorical_fields,
             cat_dims=cat_dims,
             num_features=num_features,
-            output_dim=output_dim,
+            output_dim=num_classes,
             backbone=backbone,
             backbone_kwargs=backbone_kwargs,
             loss_fn=loss_fn,
@@ -102,7 +102,7 @@ class TabularClassifier(ClassificationAdapterTask):
             categorical_fields=datamodule.categorical_fields,
             cat_dims=datamodule.cat_dims,
             num_features=datamodule.num_features,
-            output_dim=datamodule.output_dim,
+            num_classes=datamodule.num_classes,
             **kwargs,
         )
         return model

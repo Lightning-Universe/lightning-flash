@@ -11,8 +11,101 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import Any, Dict, List, Optional, Type, Union
+
+from flash.core.data.data_pipeline import DataPipelineState
+from flash.core.data.io.input import Input
+from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
+from flash.core.utilities.imports import _PANDAS_AVAILABLE
+from flash.core.utilities.stages import RunningStage
 from flash.tabular.data import TabularData
+from flash.tabular.regression.input import TabularRegressionCSVInput, TabularRegressionDataFrameInput
+
+if _PANDAS_AVAILABLE:
+    from pandas.core.frame import DataFrame
+else:
+    DataFrame = object
 
 
 class TabularRegressionData(TabularData):
-    is_regression = True
+    @classmethod
+    def from_data_frame(
+        cls,
+        categorical_fields: Optional[Union[str, List[str]]] = None,
+        numerical_fields: Optional[Union[str, List[str]]] = None,
+        target_field: Optional[str] = None,
+        parameters: Optional[Dict[str, Any]] = None,
+        train_data_frame: Optional[DataFrame] = None,
+        val_data_frame: Optional[DataFrame] = None,
+        test_data_frame: Optional[DataFrame] = None,
+        predict_data_frame: Optional[DataFrame] = None,
+        train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        input_cls: Type[Input] = TabularRegressionDataFrameInput,
+        transform_kwargs: Optional[Dict] = None,
+        **data_module_kwargs: Any,
+    ) -> "TabularData":
+        ds_kw = dict(
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
+            categorical_fields=categorical_fields,
+            numerical_fields=numerical_fields,
+            target_field=target_field,
+            parameters=parameters,
+        )
+
+        train_input = input_cls(RunningStage.TRAINING, train_data_frame, transform=train_transform, **ds_kw)
+
+        ds_kw["parameters"] = train_input.parameters if train_input else parameters
+
+        return cls(
+            train_input,
+            input_cls(RunningStage.VALIDATING, val_data_frame, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, test_data_frame, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_data_frame, transform=predict_transform, **ds_kw),
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_csv(
+        cls,
+        categorical_fields: Optional[Union[str, List[str]]] = None,
+        numerical_fields: Optional[Union[str, List[str]]] = None,
+        target_field: Optional[str] = None,
+        parameters: Optional[Dict[str, Any]] = None,
+        train_file: Optional[str] = None,
+        val_file: Optional[str] = None,
+        test_file: Optional[str] = None,
+        predict_file: Optional[str] = None,
+        train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        input_cls: Type[Input] = TabularRegressionCSVInput,
+        transform_kwargs: Optional[Dict] = None,
+        **data_module_kwargs: Any,
+    ) -> "TabularData":
+        ds_kw = dict(
+            data_pipeline_state=DataPipelineState(),
+            transform_kwargs=transform_kwargs,
+            input_transforms_registry=cls.input_transforms_registry,
+            categorical_fields=categorical_fields,
+            numerical_fields=numerical_fields,
+            target_field=target_field,
+            parameters=parameters,
+        )
+
+        train_input = input_cls(RunningStage.TRAINING, train_file, transform=train_transform, **ds_kw)
+
+        ds_kw["parameters"] = train_input.parameters if train_input else parameters
+
+        return cls(
+            train_input,
+            input_cls(RunningStage.VALIDATING, val_file, transform=val_transform, **ds_kw),
+            input_cls(RunningStage.TESTING, test_file, transform=test_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_file, transform=predict_transform, **ds_kw),
+            **data_module_kwargs,
+        )
