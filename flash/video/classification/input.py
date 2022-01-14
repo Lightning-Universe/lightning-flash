@@ -53,7 +53,23 @@ def _make_clip_sampler(
 
 
 class VideoClassificationInput(IterableInput, ClassificationInputMixin):
-    def load_data(self, dataset: "LabeledVideoDataset") -> "LabeledVideoDataset":
+    def load_data(
+        self,
+        labelled_video_paths: LabeledVideoPaths,
+        clip_sampler: Union[str, "ClipSampler"] = "random",
+        clip_duration: float = 2,
+        clip_sampler_kwargs: Dict[str, Any] = None,
+        video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
+        decode_audio: bool = False,
+        decoder: str = "pyav",
+    ) -> "LabeledVideoDataset":
+        dataset = LabeledVideoDataset(
+            labelled_video_paths,
+            _make_clip_sampler(clip_sampler, clip_duration, clip_sampler_kwargs),
+            video_sampler=video_sampler,
+            decode_audio=decode_audio,
+            decoder=decoder,
+        )
         if not self.predicting:
             self.load_target_metadata([sample[1] for sample in dataset._labeled_videos._paths_and_labels])
         return dataset
@@ -125,14 +141,15 @@ class VideoClassificationFoldersInput(VideoClassificationInput):
         decode_audio: bool = False,
         decoder: str = "pyav",
     ) -> "LabeledVideoDataset":
-        dataset = LabeledVideoDataset(
+        return super().load_data(
             LabeledVideoPaths(list(zip(*make_dataset(path, extensions=("mp4", "avi"))))),
-            _make_clip_sampler(clip_sampler, clip_duration, clip_sampler_kwargs),
+            clip_sampler=clip_sampler,
+            clip_duration=clip_duration,
+            clip_sampler_kwargs=clip_sampler_kwargs,
             video_sampler=video_sampler,
             decode_audio=decode_audio,
             decoder=decoder,
         )
-        return super().load_data(dataset)
 
 
 class VideoClassificationFilesInput(VideoClassificationInput):
@@ -147,16 +164,15 @@ class VideoClassificationFilesInput(VideoClassificationInput):
         decode_audio: bool = False,
         decoder: str = "pyav",
     ) -> "LabeledVideoDataset":
-        data = list(zip(paths, targets))
-
-        dataset = LabeledVideoDataset(
-            LabeledVideoPaths(data),
-            _make_clip_sampler(clip_sampler, clip_duration, clip_sampler_kwargs),
+        return super().load_data(
+            LabeledVideoPaths(list(zip(paths, targets))),
+            clip_sampler=clip_sampler,
+            clip_duration=clip_duration,
+            clip_sampler_kwargs=clip_sampler_kwargs,
             video_sampler=video_sampler,
             decode_audio=decode_audio,
             decoder=decoder,
         )
-        return super().load_data(dataset)
 
 
 class VideoClassificationFiftyOneInput(VideoClassificationInput):
@@ -174,14 +190,15 @@ class VideoClassificationFiftyOneInput(VideoClassificationInput):
         label_utilities = FiftyOneLabelUtilities(label_field, fol.Classification)
         label_utilities.validate(sample_collection)
 
-        filepaths = sample_collection.values("filepath")
+        paths = sample_collection.values("filepath")
         targets = sample_collection.values(label_field + ".label")
 
-        dataset = LabeledVideoDataset(
-            LabeledVideoPaths(list(zip(filepaths, targets))),
-            _make_clip_sampler(clip_sampler, clip_duration, clip_sampler_kwargs),
+        return super().load_data(
+            LabeledVideoPaths(list(zip(paths, targets))),
+            clip_sampler=clip_sampler,
+            clip_duration=clip_duration,
+            clip_sampler_kwargs=clip_sampler_kwargs,
             video_sampler=video_sampler,
             decode_audio=decode_audio,
             decoder=decoder,
         )
-        return super().load_data(dataset)
