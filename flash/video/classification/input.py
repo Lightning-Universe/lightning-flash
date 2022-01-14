@@ -11,17 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import pathlib
 from typing import Any, Dict, Iterable, List, Tuple, Type, Union
 
-import numpy as np
 import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Sampler
 
-from flash.core.data.io.classification import ClassificationState
+from flash.core.data.io.classification import ClassificationInputMixin
 from flash.core.data.io.input import DataKeys, Input, IterableInput
-from flash.core.data.utilities.paths import list_valid_files
+from flash.core.data.utilities.paths import list_valid_files, make_dataset
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, lazy_import
 
@@ -35,7 +33,7 @@ else:
 if _PYTORCHVIDEO_AVAILABLE:
     from pytorchvideo.data.clip_sampling import ClipSampler, make_clip_sampler
     from pytorchvideo.data.encoded_video import EncodedVideo
-    from pytorchvideo.data.labeled_video_dataset import labeled_video_dataset, LabeledVideoDataset
+    from pytorchvideo.data.labeled_video_dataset import LabeledVideoDataset
     from pytorchvideo.data.labeled_video_paths import LabeledVideoPaths
 else:
     ClipSampler, LabeledVideoDataset, EncodedVideo, ApplyTransformToKey = None, None, None, None
@@ -54,15 +52,14 @@ def _make_clip_sampler(
     return make_clip_sampler(clip_sampler, clip_duration, **clip_sampler_kwargs)
 
 
-class VideoClassificationInput(IterableInput):
+class VideoClassificationInput(IterableInput, ClassificationInputMixin):
     def load_data(self, dataset: "LabeledVideoDataset") -> "LabeledVideoDataset":
-        if self.training:
-            label_to_class_mapping = {p[1]: p[0].split("/")[-2] for p in dataset._labeled_videos._paths_and_labels}
-            self.set_state(ClassificationState(label_to_class_mapping))
-            self.num_classes = len(np.unique([s[1]["label"] for s in dataset._labeled_videos]))
+        if not self.predicting:
+            self.load_target_metadata([sample[1] for sample in dataset._labeled_videos._paths_and_labels])
         return dataset
 
     def load_sample(self, sample):
+        sample["label"] = self.format_target(sample["label"])
         return sample
 
 
@@ -128,8 +125,8 @@ class VideoClassificationFoldersInput(VideoClassificationInput):
         decode_audio: bool = False,
         decoder: str = "pyav",
     ) -> "LabeledVideoDataset":
-        dataset = labeled_video_dataset(
-            pathlib.Path(path),
+        dataset = LabeledVideoDataset(
+            LabeledVideoPaths(list(zip(*make_dataset(path, extensions=("mp4", "avi"))))),
             _make_clip_sampler(clip_sampler, clip_duration, clip_sampler_kwargs),
             video_sampler=video_sampler,
             decode_audio=decode_audio,
@@ -139,16 +136,10 @@ class VideoClassificationFoldersInput(VideoClassificationInput):
 
 
 class VideoClassificationFilesInput(VideoClassificationInput):
-    def _to_multi_hot(self, label_list: List[int]) -> torch.Tensor:
-        v = torch.zeros(len(self.labels_set))
-        for label in label_list:
-            v[label] = 1
-        return v
-
     def load_data(
         self,
         paths: List[str],
-        labels: List[Union[str, List]],
+        targets: List[Any],
         clip_sampler: Union[str, "ClipSampler"] = "random",
         clip_duration: float = 2,
         clip_sampler_kwargs: Dict[str, Any] = None,
@@ -156,27 +147,7 @@ class VideoClassificationFilesInput(VideoClassificationInput):
         decode_audio: bool = False,
         decoder: str = "pyav",
     ) -> "LabeledVideoDataset":
-        self.is_multilabel = any(isinstance(label, list) for label in labels)
-        if self.is_multilabel:
-            self.labels_set = {label for label_list in labels for label in label_list}
-            self.label_to_id = {label: i for i, label in enumerate(sorted(self.labels_set))}
-            self.id_to_label = {i: label for label, i in self.label_to_id.items()}
-
-            encoded_labels = [
-                self._to_multi_hot([self.label_to_id[classname] for classname in label_list]) for label_list in labels
-            ]
-
-            data = list(
-                zip(
-                    paths,
-                    encoded_labels,
-                )
-            )
-        else:
-            self.labels_set = set(labels)
-            self.label_to_id = {label: i for i, label in enumerate(sorted(self.labels_set))}
-            self.id_to_label = {i: label for label, i in self.label_to_id.items()}
-            data = list(zip(paths, [self.label_to_id[classname] for classname in labels]))
+        data = list(zip(paths, targets))
 
         dataset = LabeledVideoDataset(
             LabeledVideoPaths(data),
@@ -185,10 +156,7 @@ class VideoClassificationFilesInput(VideoClassificationInput):
             decode_audio=decode_audio,
             decoder=decoder,
         )
-        if self.training:
-            self.set_state(ClassificationState(self.id_to_label))
-            self.num_classes = len(self.labels_set)
-        return dataset
+        return super().load_data(dataset)
 
 
 class VideoClassificationFiftyOneInput(VideoClassificationInput):
@@ -205,13 +173,9 @@ class VideoClassificationFiftyOneInput(VideoClassificationInput):
     ) -> "LabeledVideoDataset":
         label_utilities = FiftyOneLabelUtilities(label_field, fol.Classification)
         label_utilities.validate(sample_collection)
-        classes = label_utilities.get_classes(sample_collection)
-        label_to_class_mapping = dict(enumerate(classes))
-        class_to_label_mapping = {c: lab for lab, c in label_to_class_mapping.items()}
 
         filepaths = sample_collection.values("filepath")
-        labels = sample_collection.values(label_field + ".label")
-        targets = [class_to_label_mapping[lab] for lab in labels]
+        targets = sample_collection.values(label_field + ".label")
 
         dataset = LabeledVideoDataset(
             LabeledVideoPaths(list(zip(filepaths, targets))),
