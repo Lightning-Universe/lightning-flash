@@ -34,7 +34,7 @@ if not _TABULAR_AVAILABLE:
 class TabularRegressionData(TabularData):
     """The ``TabularRegressionData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
     classmethods for loading data for tabular regression."""
-
+   
     @classmethod
     def from_data_frame(
         cls,
