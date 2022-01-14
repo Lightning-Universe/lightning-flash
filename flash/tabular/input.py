@@ -18,7 +18,7 @@ from typing import Any, Dict, List, Optional, Union
 import numpy as np
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
-from flash.core.data.io.classification import ClassificationState
+from flash.core.data.io.classification_input import ClassificationState
 from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.process import Deserializer
 from flash.core.data.properties import ProcessState
