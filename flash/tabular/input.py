@@ -18,7 +18,6 @@ from typing import Any, Dict, List, Optional, Union
 import numpy as np
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
-from flash.core.data.io.classification_input import ClassificationState
 from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.process import Deserializer
 from flash.core.data.properties import ProcessState
@@ -67,50 +66,34 @@ class TabularDataFrameInput(Input):
     @staticmethod
     def compute_parameters(
         train_data_frame: DataFrame,
-        target_field: str,
         numerical_fields: List[str],
         categorical_fields: List[str],
-        is_regression: bool,
     ) -> Dict[str, Any]:
 
         mean, std = _compute_normalization(train_data_frame, numerical_fields)
 
-        classes = list(train_data_frame[target_field].unique())
-
-        if train_data_frame[target_field].dtype == object:
-            # if the target_fields is a category, not an int
-            target_codes = _generate_codes(train_data_frame, [target_field])
-        else:
-            target_codes = None
         codes = _generate_codes(train_data_frame, categorical_fields)
 
         return dict(
             mean=mean,
             std=std,
-            classes=classes,
             codes=codes,
-            target_codes=target_codes,
-            target_field=target_field,
             numerical_fields=numerical_fields,
             categorical_fields=categorical_fields,
-            is_regression=is_regression,
         )
 
-    def load_data(
+    def preprocess(
         self,
         df: DataFrame,
         categorical_fields: Optional[List[str]] = None,
         numerical_fields: Optional[List[str]] = None,
-        target_field: Optional[str] = None,
-        is_regression: bool = True,
         parameters: Dict[str, Any] = None,
     ):
         if self.training:
             categorical_fields, numerical_fields = self._sanetize_fields(categorical_fields, numerical_fields)
-            parameters = self.compute_parameters(df, target_field, numerical_fields, categorical_fields, is_regression)
+            parameters = self.compute_parameters(df, numerical_fields, categorical_fields)
 
             self.set_state(TabularParametersState(parameters))
-            self.set_state(ClassificationState(parameters["classes"]))
         else:
             parameters_state = self.get_state(TabularParametersState)
             parameters = parameters or (parameters_state.parameters if parameters_state is not None else None)
@@ -122,7 +105,6 @@ class TabularDataFrameInput(Input):
                 )
 
         self.parameters = parameters
-        self.num_classes = len(parameters["classes"])
 
         # impute and normalize data
         df = _pre_transform(
@@ -132,8 +114,6 @@ class TabularDataFrameInput(Input):
             parameters["codes"],
             parameters["mean"],
             parameters["std"],
-            parameters["target_field"],
-            parameters["target_codes"],
         )
 
         cat_vars = _to_cat_vars_numpy(df, parameters["categorical_fields"])
@@ -143,31 +123,7 @@ class TabularDataFrameInput(Input):
         cat_vars = np.stack(cat_vars, 1) if len(cat_vars) else np.zeros((num_samples, 0))
         num_vars = np.stack(num_vars, 1) if len(num_vars) else np.zeros((num_samples, 0))
 
-        if self.predicting:
-            return [{DataKeys.INPUT: (c, n)} for c, n in zip(cat_vars, num_vars)]
-        else:
-            target = (
-                df[parameters["target_field"]]
-                .to_numpy()
-                .astype(np.float32 if parameters["is_regression"] else np.int64)
-            )
-            return [{DataKeys.INPUT: (c, n), DataKeys.TARGET: t} for c, n, t in zip(cat_vars, num_vars, target)]
-
-
-class TabularCSVInput(TabularDataFrameInput):
-    def load_data(
-        self,
-        file: Optional[str],
-        categorical_fields: Optional[List[str]] = None,
-        numerical_fields: Optional[List[str]] = None,
-        target_field: Optional[str] = None,
-        parameters: Dict[str, Any] = None,
-        is_regression: bool = True,
-    ):
-        if file is not None:
-            return super().load_data(
-                read_csv(file), categorical_fields, numerical_fields, target_field, is_regression, parameters
-            )
+        return cat_vars, num_vars
 
 
 class TabularDeserializer(Deserializer):
@@ -198,8 +154,6 @@ class TabularDeserializer(Deserializer):
             parameters["codes"],
             parameters["mean"],
             parameters["std"],
-            parameters["target_field"],
-            parameters["target_codes"],
         )
 
         cat_vars = _to_cat_vars_numpy(df, parameters["categorical_fields"])

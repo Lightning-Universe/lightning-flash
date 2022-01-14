@@ -20,6 +20,9 @@ ______________
     ~classification.model.TabularClassifier
     ~classification.data.TabularClassificationData
 
+    classification.input.TabularClassificationDataFrameInput
+    classification.input.TabularClassificationCSVInput
+
 Regression
 __________
 
@@ -30,6 +33,9 @@ __________
 
     ~regression.model.TabularRegressor
     ~regression.data.TabularRegressionData
+
+    regression.input.TabularRegressionDataFrameInput
+    regression.input.TabularRegressionCSVInput
 
 Forecasting
 ___________
@@ -56,5 +62,4 @@ __________________
     ~data.TabularData
 
     input.TabularDataFrameInput
-    input.TabularCSVInput
     input.TabularDeserializer

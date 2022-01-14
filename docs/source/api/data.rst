@@ -90,8 +90,8 @@ _________________________________
     :nosignatures:
     :template: classtemplate.rst
 
-    ~flash.core.data.io.classification.ClassificationState
-    ~flash.core.data.io.classification.ClassificationInputMixin
+    ~flash.core.data.io.classification_input.ClassificationState
+    ~flash.core.data.io.classification_input.ClassificationInputMixin
 
 flash.core.data.process
 _______________________

@@ -68,14 +68,10 @@ def _pre_transform(
     codes: Dict,
     mean: DataFrame,
     std: DataFrame,
-    target: str = None,
-    target_codes: Dict = None,
 ) -> DataFrame:
     df = _impute(df, num_cols)
     df = _normalize(df, num_cols, mean=mean, std=std)
     df = _categorize(df, cat_cols, codes=codes)
-    if target_codes and target:
-        df = _categorize(df, [target], codes=target_codes)
     return df
 
 
