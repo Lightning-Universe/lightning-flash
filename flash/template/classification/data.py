@@ -20,7 +20,7 @@ from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
-from flash.core.data.io.classification import ClassificationInputMixin
+from flash.core.data.io.classification_input import ClassificationInputMixin
 from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.utilities.samples import to_samples

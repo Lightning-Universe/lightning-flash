@@ -17,7 +17,7 @@ import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Sampler
 
-from flash.core.data.io.classification import ClassificationInputMixin
+from flash.core.data.io.classification_input import ClassificationInputMixin
 from flash.core.data.io.input import DataKeys, Input, IterableInput
 from flash.core.data.utilities.paths import list_valid_files, make_dataset
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities

@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 
-from flash.core.data.io.classification import ClassificationInputMixin, ClassificationState
+from flash.core.data.io.classification_input import ClassificationInputMixin, ClassificationState
 from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.utilities.classification import TargetMode
 from flash.core.data.utilities.paths import PATH_TYPE
