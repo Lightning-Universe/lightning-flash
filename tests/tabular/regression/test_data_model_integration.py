@@ -43,7 +43,7 @@ def test_regression(backbone, tmpdir):
     data = TabularRegressionData.from_data_frame(
         categorical_fields=["category"],
         numerical_fields=["scalar_a", "scalar_b"],
-        target_fields="label",
+        target_field="label",
         train_data_frame=train_data_frame,
         val_data_frame=val_data_frame,
         test_data_frame=test_data_frame,

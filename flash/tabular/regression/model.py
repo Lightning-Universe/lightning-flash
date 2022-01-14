@@ -37,7 +37,6 @@ class TabularRegressor(RegressionAdapterTask):
         embedding_sizes: List of (num_classes, emb_dim) to form categorical embeddings.
         cat_dims: Number of distinct values for each categorical column
         num_features: Number of columns in table
-        output_dim: Number of output values
         backbone: name of the model to use
         loss_fn: Loss function for training, defaults to cross entropy.
         optimizer: Optimizer to use for training.
@@ -60,7 +59,6 @@ class TabularRegressor(RegressionAdapterTask):
         cat_dims: list,
         num_features: int,
         backbone: str = "tabnet",
-        output_dim: int = 1,
         loss_fn: Callable = F.mse_loss,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
@@ -77,7 +75,7 @@ class TabularRegressor(RegressionAdapterTask):
             categorical_fields=categorical_fields,
             cat_dims=cat_dims,
             num_features=num_features,
-            output_dim=output_dim,
+            output_dim=1,
             backbone=backbone,
             backbone_kwargs=backbone_kwargs,
             loss_fn=loss_fn,
@@ -97,7 +95,6 @@ class TabularRegressor(RegressionAdapterTask):
             categorical_fields=datamodule.categorical_fields,
             cat_dims=datamodule.cat_dims,
             num_features=datamodule.num_features,
-            output_dim=datamodule.output_dim,
             **kwargs
         )
         return model

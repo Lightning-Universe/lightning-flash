@@ -21,8 +21,8 @@ from flash.tabular import TabularClassificationData, TabularClassifier
 download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "./data")
 
 datamodule = TabularClassificationData.from_csv(
-    ["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
-    "Fare",
+    categorical_fields=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
+    numerical_fields="Fare",
     target_fields="Survived",
     train_file="data/titanic/titanic.csv",
     val_split=0.1,
