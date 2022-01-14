@@ -39,9 +39,6 @@ else:
     ClipSampler, LabeledVideoDataset, EncodedVideo, ApplyTransformToKey = None, None, None, None
 
 
-Label = Union[int, List[int]]
-
-
 def _make_clip_sampler(
     clip_sampler: Union[str, "ClipSampler"] = "random",
     clip_duration: float = 2,
