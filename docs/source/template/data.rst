@@ -27,9 +27,9 @@ Each :class:`~flash.core.data.io.input.Input` has 2 methods:
 By default these methods just return their input, so you don't need both a :meth:`~flash.core.data.io.input.Input.load_data` and a :meth:`~flash.core.data.io.input.Input.load_sample` to create a :class:`~flash.core.data.io.input.Input`.
 Where possible, you should override one of our existing :class:`~flash.core.data.io.input.Input` classes.
 
-Let's start by implementing a ``TemplateNumpyClassificationInput``, which overrides :class:`~flash.core.data.io.classification_input.ClassificationInput`.
+Let's start by implementing a ``TemplateNumpyClassificationInput``, which overrides :class:`~flash.core.data.io.classification_input.ClassificationInputMixin`.
 The main :class:`~flash.core.data.io.input.Input` method that we have to implement is :meth:`~flash.core.data.io.input.Input.load_data`.
-:class:`~flash.core.data.io.classification_input.ClassificationInput` provides utilities for handling targets within flash which need to be called from the :meth:`~flash.core.data.io.input.Input.load_data` and :meth:`~flash.core.data.io.input.Input.load_sample`.
+:class:`~flash.core.data.io.classification_input.ClassificationInputMixin` provides utilities for handling targets within flash which need to be called from the :meth:`~flash.core.data.io.input.Input.load_data` and :meth:`~flash.core.data.io.input.Input.load_sample`.
 In this ``Input``, we'll also set the ``num_features`` attribute so that we can access it later.
 
 Here's the code for our ``TemplateNumpyClassificationInput.load_data`` method:
