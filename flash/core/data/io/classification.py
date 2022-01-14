@@ -15,8 +15,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any, List, Optional, Sequence
 
-from flash.core.data.io.input import Input
-from flash.core.data.properties import ProcessState
+from flash.core.data.properties import ProcessState, Properties
 from flash.core.data.utilities.classification import (
     get_target_details,
     get_target_formatter,
@@ -34,9 +33,9 @@ class ClassificationState(ProcessState):
     num_classes: Optional[int] = None
 
 
-class ClassificationInput(Input):
-    """The ``ClassificationInput`` class provides utility methods for handling classification targets.
-    :class:`~flash.core.data.io.input.Input` objects that extend ``ClassificationInput`` should do the following:
+class ClassificationInputMixin(Properties):
+    """The ``ClassificationInputMixin`` class provides utility methods for handling classification targets.
+    :class:`~flash.core.data.io.input.Input` objects that extend ``ClassificationInputMixin`` should do the following:
 
     * In the ``load_data`` method, include a call to ``load_target_metadata``. This will determine the format of the
       targets and store metadata like ``labels`` and ``num_classes``.
@@ -47,7 +46,7 @@ class ClassificationInput(Input):
     @property
     @lru_cache(maxsize=None)
     def target_formatter(self) -> TargetFormatter:
-        """Get the :class:`~flash.core.data.utiltiies.classification.TargetFormatter` to use when formatting
+        """Get the :class:`~flash.core.data.utilities.classification.TargetFormatter` to use when formatting
         targets.
 
         This property uses ``functools.lru_cache`` so that we only instantiate the formatter once.

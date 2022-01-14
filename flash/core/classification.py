@@ -19,7 +19,7 @@ import torchmetrics
 from pytorch_lightning.utilities import rank_zero_deprecation, rank_zero_warn
 
 from flash.core.adapter import AdapterTask
-from flash.core.data.io.classification_input import ClassificationState
+from flash.core.data.io.classification import ClassificationState
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.output import Output
 from flash.core.model import Task

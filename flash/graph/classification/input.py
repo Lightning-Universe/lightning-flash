@@ -16,7 +16,7 @@ from typing import Any, Mapping
 from torch.utils.data import Dataset
 
 from flash.core.data.data_module import DatasetInput
-from flash.core.data.io.classification_input import ClassificationInput, ClassificationState
+from flash.core.data.io.classification import ClassificationInputMixin, ClassificationState
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _GRAPH_AVAILABLE, requires
 
@@ -26,7 +26,7 @@ if _GRAPH_AVAILABLE:
     from torch_geometric.data import InMemoryDataset
 
 
-class GraphClassificationDatasetInput(DatasetInput, ClassificationInput):
+class GraphClassificationDatasetInput(DatasetInput, ClassificationInputMixin):
     @requires("graph")
     def load_data(self, dataset: Dataset) -> Dataset:
         if not self.predicting:

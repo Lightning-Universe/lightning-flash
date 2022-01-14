@@ -17,8 +17,8 @@ from typing import Any, Callable, Dict, List, Optional, Union
 import numpy as np
 import pandas as pd
 
-from flash.core.data.io.classification_input import ClassificationInput, ClassificationState
-from flash.core.data.io.input import DataKeys
+from flash.core.data.io.classification import ClassificationInputMixin, ClassificationState
+from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.utilities.classification import TargetMode
 from flash.core.data.utilities.data_frame import read_csv, resolve_files, resolve_targets
 from flash.core.data.utilities.paths import filter_valid_files, has_file_allowed_extension, make_dataset, PATH_TYPE
@@ -37,7 +37,7 @@ def spectrogram_loader(filepath: str):
     return data
 
 
-class AudioClassificationInput(ClassificationInput):
+class AudioClassificationInput(Input, ClassificationInputMixin):
     @requires("audio")
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         h, w = sample[DataKeys.INPUT].shape[-2:]  # H x W
