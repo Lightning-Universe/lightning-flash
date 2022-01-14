@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import Any, Dict, List, Optional, Union
 
-from flash import DataKeys
 from flash.core.data.io.classification_input import ClassificationInputMixin
+from flash.core.data.io.input import DataKeys
 from flash.core.data.utilities.data_frame import read_csv, resolve_targets
 from flash.core.utilities.imports import _PANDAS_AVAILABLE
 from flash.tabular.input import TabularDataFrameInput
