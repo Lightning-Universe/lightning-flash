@@ -14,7 +14,7 @@
 from typing import Any, Dict, List, Optional, Union
 
 from flash import DataKeys
-from flash.core.data.io.classification_input import ClassificationInput
+from flash.core.data.io.classification_input import ClassificationInputMixin
 from flash.core.data.utilities.data_frame import read_csv, resolve_targets
 from flash.core.utilities.imports import _PANDAS_AVAILABLE
 from flash.tabular.input import TabularDataFrameInput
@@ -25,7 +25,7 @@ else:
     DataFrame = object
 
 
-class TabularClassificationDataFrameInput(TabularDataFrameInput, ClassificationInput):
+class TabularClassificationDataFrameInput(TabularDataFrameInput, ClassificationInputMixin):
     def load_data(
         self,
         data_frame: DataFrame,
