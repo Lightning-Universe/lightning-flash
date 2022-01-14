@@ -22,7 +22,7 @@ from typing import Tuple
 from deprecate import deprecated, void
 from pytorch_lightning.utilities import rank_zero_deprecation
 from torchmetrics.text import BLEUScore as _BLEUScore
-from torchmetrics.text import ROUGEScore as _ROUGEScore
+from torchmetrics.text.rouge import ROUGEScore as _ROUGEScore
 
 _deprecated_text_metrics = partial(deprecated, deprecated_in="0.6.0", remove_in="0.7.0", stream=rank_zero_deprecation)
 
