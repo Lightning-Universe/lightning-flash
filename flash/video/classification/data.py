@@ -23,7 +23,7 @@ from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioVideoClassificationInput
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, requires
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, _VIDEO_AVAILABLE, requires
 from flash.core.utilities.stages import RunningStage
 from flash.video.classification.input import (
     VideoClassificationCSVInput,
@@ -47,9 +47,14 @@ if _PYTORCHVIDEO_AVAILABLE:
 else:
     ClipSampler = None
 
+# Skip doctests if requirements aren't available
+if not _VIDEO_AVAILABLE:
+    __doctest_skip__ = ["VideoClassificationData", "VideoClassificationData.*"]
+
 
 class VideoClassificationData(DataModule):
-    """Data module for Video classification tasks."""
+    """The ``VideoClassificationData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
+    classmethods for loading data for video classification."""
 
     input_transform_cls = VideoClassificationInputTransform
 
@@ -74,10 +79,86 @@ class VideoClassificationData(DataModule):
         decode_audio: bool = False,
         decoder: str = "pyav",
         input_cls: Type[Input] = VideoClassificationFilesInput,
-        predict_input_cls: Type[Input] = VideoClassificationFilesInput,
+        predict_input_cls: Type[Input] = VideoClassificationPathsPredictInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
     ) -> "VideoClassificationData":
+        """Load the :class:`~flash.video.classification.data.VideoClassificationData` from lists of files and
+        corresponding lists of targets.
+
+        The supported file extensions are: ``.mp4``, and ``.avi``.
+        The targets can be in any of our
+        :ref:`supported classification target formats <formatting_classification_targets>`.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
+        Args:
+            train_files: The list of video files to use when training.
+            train_targets: The list of targets to use when training.
+            val_files: The list of video files to use when validating.
+            val_targets: The list of targets to use when validating.
+            test_files: The list of video files to use when testing.
+            test_targets: The list of targets to use when testing.
+            predict_files: The list of video files to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+              predicting.
+            clip_sampler:
+            clip_duration:
+            clip_sampler_kwargs:
+            video_sampler:
+            decode_audio:
+            decoder:
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            predict_input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the prediction data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+              :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.video.classification.data.VideoClassificationData`.
+
+        Examples
+        ________
+
+        .. testsetup::
+
+            >>> import torch
+            >>> from torchvision import io
+            >>> data = torch.randint(255, (10, 64, 64, 3))
+            >>> _ = [io.write_video(f"video_{i}.mp4", data, 5, "libx264rgb", {"crf": "0"}) for i in range(1, 4)]
+            >>> _ = [io.write_video(f"predict_video_{i}.mp4", data, 5, "libx264rgb", {"crf": "0"}) for i in range(1, 4)]
+
+        .. doctest::
+
+            >>> from flash import Trainer
+            >>> from flash.video import VideoClassifier, VideoClassificationData
+            >>> datamodule = VideoClassificationData.from_files(
+            ...     train_files=["video_1.mp4", "video_2.mp4", "video_3.mp4"],
+            ...     train_targets=["cat", "dog", "cat"],
+            ...     predict_files=["predict_video_1.mp4", "predict_video_2.mp4", "predict_video_3.mp4"],
+            ...     transform_kwargs=dict(image_size=(244, 244)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            2
+            >>> datamodule.labels
+            ['cat', 'dog']
+            >>> model = VideoClassifier(backbone="x3d_xs", num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> import os
+            >>> _ = [os.remove(f"video_{i}.mp4") for i in range(1, 4)]
+            >>> _ = [os.remove(f"predict_video_{i}.mp4") for i in range(1, 4)]
+        """
 
         ds_kw = dict(
             data_pipeline_state=DataPipelineState(),
