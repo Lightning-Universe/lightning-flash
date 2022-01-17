@@ -36,7 +36,9 @@ def to_sample(input: Any) -> Dict[str, Any]:
     if isinstance(input, dict) and DataKeys.INPUT in input:
         return input
     if _is_list_like(input) and len(input) == 2:
-        return {DataKeys.INPUT: input[0], DataKeys.TARGET: input[1]}
+        if input[1] is not None:
+            return {DataKeys.INPUT: input[0], DataKeys.TARGET: input[1]}
+        input = input[0]
     return {DataKeys.INPUT: input}
 
 

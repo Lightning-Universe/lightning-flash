@@ -18,14 +18,20 @@ from torch.utils.data import Dataset
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
+from flash.core.utilities.imports import _GRAPH_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 from flash.graph.classification.input import GraphClassificationDatasetInput
 from flash.graph.classification.input_transform import GraphClassificationInputTransform
 
+# Skip doctests if requirements aren't available
+if not _GRAPH_AVAILABLE:
+    __doctest_skip__ = ["GraphClassificationData", "GraphClassificationData.*"]
+
 
 class GraphClassificationData(DataModule):
-    """Data module for graph classification tasks."""
+    """The ``GraphClassificationData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
+    classmethods for loading data for graph classification."""
 
     input_transform_cls = GraphClassificationInputTransform
 
@@ -44,6 +50,121 @@ class GraphClassificationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
     ) -> "GraphClassificationData":
+        """Load the :class:`~flash.graph.classification.data.GraphClassificationData` from PyTorch Dataset objects.
+
+        The Dataset objects should be one of the following:
+
+        * A PyTorch Dataset where the ``__getitem__`` returns a tuple: ``(PyTorch Geometric Data object, target)``
+        * A PyTorch Dataset where the ``__getitem__`` returns a dict:
+            ``{"input": PyTorch Geometric Data object, "target": target}``
+
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
+        Args:
+            train_dataset: The Dataset to use when training.
+            val_dataset: The Dataset to use when validating.
+            test_dataset: The Dataset to use when testing.
+            predict_dataset: The Dataset to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+                predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+                :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.graph.classification.data.GraphClassificationData`.
+
+        Examples
+        ________
+
+        A PyTorch Dataset where the ``__getitem__`` returns a tuple: ``(PyTorch Geometric Data object, target)``:
+
+        .. doctest::
+
+            >>> import torch
+            >>> from torch.utils.data import Dataset
+            >>> from torch_geometric.data import Data
+            >>> from flash import Trainer
+            >>> from flash.graph import GraphClassificationData, GraphClassifier
+            >>>
+            >>> class CustomDataset(Dataset):
+            ...     def __init__(self, targets=None):
+            ...         self.targets = targets
+            ...     def __getitem__(self, index):
+            ...         edge_index = torch.tensor([[0, 1, 1, 2], [1, 0, 2, 1]], dtype=torch.long)
+            ...         x = torch.tensor([[-1], [0], [1]], dtype=torch.float)
+            ...         data = Data(x=x, edge_index=edge_index)
+            ...         if self.targets is not None:
+            ...             return data, self.targets[index]
+            ...         return data
+            ...     def __len__(self):
+            ...         return len(self.targets) if self.targets is not None else 3
+            ...
+            >>> datamodule = GraphClassificationData.from_datasets(
+            ...     train_dataset=CustomDataset(["cat", "dog", "cat"]),
+            ...     predict_dataset=CustomDataset(),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_features
+            1
+            >>> datamodule.num_classes
+            2
+            >>> datamodule.labels
+            ['cat', 'dog']
+            >>> model = GraphClassifier(num_features=datamodule.num_features, num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        A PyTorch Dataset where the ``__getitem__`` returns a dict:
+        ``{"input": PyTorch Geometric Data object, "target": target}``:
+
+        .. doctest::
+
+            >>> import torch  # noqa: F811
+            >>> from torch.utils.data import Dataset
+            >>> from torch_geometric.data import Data  # noqa: F811
+            >>> from flash import Trainer
+            >>> from flash.graph import GraphClassificationData, GraphClassifier
+            >>>
+            >>> class CustomDataset(Dataset):
+            ...     def __init__(self, targets=None):
+            ...         self.targets = targets
+            ...     def __getitem__(self, index):
+            ...         edge_index = torch.tensor([[0, 1, 1, 2], [1, 0, 2, 1]], dtype=torch.long)
+            ...         x = torch.tensor([[-1], [0], [1]], dtype=torch.float)
+            ...         data = Data(x=x, edge_index=edge_index)
+            ...         if self.targets is not None:
+            ...             return {"input": data, "target": self.targets[index]}
+            ...         return {"input": data}
+            ...     def __len__(self):
+            ...         return len(self.targets) if self.targets is not None else 3
+            ...
+            >>> datamodule = GraphClassificationData.from_datasets(
+            ...     train_dataset=CustomDataset(["cat", "dog", "cat"]),
+            ...     predict_dataset=CustomDataset(),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_features
+            1
+            >>> datamodule.num_classes
+            2
+            >>> datamodule.labels
+            ['cat', 'dog']
+            >>> model = GraphClassifier(num_features=datamodule.num_features, num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+        """
 
         ds_kw = dict(
             data_pipeline_state=DataPipelineState(),
@@ -61,6 +182,7 @@ class GraphClassificationData(DataModule):
 
     @property
     def num_features(self):
+        """The number of features per node in the graphs contained in this ``GraphClassificationData``."""
         n_cls_train = getattr(self.train_dataset, "num_features", None)
         n_cls_val = getattr(self.val_dataset, "num_features", None)
         n_cls_test = getattr(self.test_dataset, "num_features", None)

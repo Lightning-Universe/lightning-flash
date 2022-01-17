@@ -60,6 +60,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Fixed a bug when loading tabular data for prediction without a target field / column ([#1114](https://github.com/PyTorchLightning/lightning-flash/pull/1114))
 
+- Fixed a bug when loading prediction data for graph classification without targets
+
 ### Removed
 
 ## [0.6.0] - 2021-13-12
