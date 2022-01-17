@@ -16,7 +16,7 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 import pandas as pd
 
-from flash.core.data.io.classification_input import ClassificationInput, ClassificationState
+from flash.core.data.io.classification_input import ClassificationInputMixin, ClassificationState
 from flash.core.data.io.input import DataKeys
 from flash.core.data.utilities.classification import TargetMode
 from flash.core.data.utilities.data_frame import read_csv, resolve_files, resolve_targets
@@ -34,7 +34,7 @@ else:
     SampleCollection = None
 
 
-class ImageClassificationFilesInput(ClassificationInput, ImageFilesInput):
+class ImageClassificationFilesInput(ClassificationInputMixin, ImageFilesInput):
     def load_data(self, files: List[PATH_TYPE], targets: Optional[List[Any]] = None) -> List[Dict[str, Any]]:
         if targets is None:
             return super().load_data(files)
@@ -74,7 +74,7 @@ class ImageClassificationFiftyOneInput(ImageClassificationFilesInput):
         return super().load_data(data.values("filepath"))
 
 
-class ImageClassificationTensorInput(ClassificationInput, ImageTensorInput):
+class ImageClassificationTensorInput(ClassificationInputMixin, ImageTensorInput):
     def load_data(self, tensor: Any, targets: Optional[List[Any]] = None) -> List[Dict[str, Any]]:
         if targets is not None:
             self.load_target_metadata(targets)
@@ -87,7 +87,7 @@ class ImageClassificationTensorInput(ClassificationInput, ImageTensorInput):
         return sample
 
 
-class ImageClassificationNumpyInput(ClassificationInput, ImageNumpyInput):
+class ImageClassificationNumpyInput(ClassificationInputMixin, ImageNumpyInput):
     def load_data(self, array: Any, targets: Optional[List[Any]] = None) -> List[Dict[str, Any]]:
         if targets is not None:
             self.load_target_metadata(targets)

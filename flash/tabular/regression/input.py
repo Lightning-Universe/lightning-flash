@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 
-from flash import DataKeys
+from flash.core.data.io.input import DataKeys
 from flash.core.data.utilities.data_frame import read_csv
 from flash.core.utilities.imports import _PANDAS_AVAILABLE
 from flash.tabular.input import TabularDataFrameInput

@@ -82,6 +82,17 @@ ___________________________
     ~flash.core.data.io.input.InputFormat
     ~flash.core.data.io.input.ImageLabelsMap
 
+flash.core.data.io.classification
+_________________________________
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: classtemplate.rst
+
+    ~flash.core.data.io.classification_input.ClassificationState
+    ~flash.core.data.io.classification_input.ClassificationInputMixin
+
 flash.core.data.process
 _______________________
 
