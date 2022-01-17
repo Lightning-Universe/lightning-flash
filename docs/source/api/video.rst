@@ -22,7 +22,11 @@ ______________
 
     classification.input.VideoClassificationInput
     classification.input.VideoClassificationFiftyOneInput
-    classification.input.VideoClassificationPathsPredictInput
     classification.input.VideoClassificationFoldersInput
     classification.input.VideoClassificationFilesInput
+    classification.input.VideoClassificationDataFrameInput
+    classification.input.VideoClassificationCSVInput
+    classification.input.VideoClassificationPathsPredictInput
+    classification.input.VideoClassificationDataFramePredictInput
+    classification.input.VideoClassificationCSVPredictInput
     classification.input_transform.VideoClassificationInputTransform
