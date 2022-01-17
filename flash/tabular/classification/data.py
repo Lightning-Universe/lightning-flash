@@ -75,7 +75,7 @@ class TabularClassificationData(TabularData):
             target_fields: The field (column name) or list of fields in the data frames containing the targets.
             parameters: Parameters to use if ``categorical_fields``, ``numerical_fields``, and ``target_fields`` are not
                 provided (e.g. when loading data for inference or validation).
-            train_data_frame: The pandas DataFrame to use when training.
+            train_data_frame: The DataFrame to use when training.
             val_data_frame: The pandas DataFrame to use when validating.
             test_data_frame: The pandas DataFrame to use when testing.
             predict_data_frame: The pandas DataFrame to use when predicting.
@@ -213,10 +213,10 @@ class TabularClassificationData(TabularData):
             target_fields: The field (column name) or list of fields in the CSV files containing the targets.
             parameters: Parameters to use if ``categorical_fields``, ``numerical_fields``, and ``target_fields`` are not
                 provided (e.g. when loading data for inference or validation).
-            train_file: The CSV file to use when training.
-            val_file: The CSV file to use when validating.
-            test_file: The CSV file to use when testing.
-            predict_file: The CSV file to use when predicting.
+            train_file: The path to the CSV file to use when training.
+            val_file: The path to the CSV file to use when validating.
+            test_file: The path to the CSV file to use when testing.
+            predict_file: The path to the CSV file to use when predicting.
             train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
             val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
