@@ -76,9 +76,9 @@ class TabularClassificationData(TabularData):
             parameters: Parameters to use if ``categorical_fields``, ``numerical_fields``, and ``target_fields`` are not
                 provided (e.g. when loading data for inference or validation).
             train_data_frame: The DataFrame to use when training.
-            val_data_frame: The pandas DataFrame to use when validating.
-            test_data_frame: The pandas DataFrame to use when testing.
-            predict_data_frame: The pandas DataFrame to use when predicting.
+            val_data_frame: The DataFrame to use when validating.
+            test_data_frame: The DataFrame to use when testing.
+            predict_data_frame: The DataFrame to use when predicting.
             train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
             val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
