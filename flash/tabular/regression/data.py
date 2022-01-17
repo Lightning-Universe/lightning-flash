@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional, Type, Union
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
-from flash.core.utilities.imports import _PANDAS_AVAILABLE
+from flash.core.utilities.imports import _PANDAS_AVAILABLE, _TABULAR_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 from flash.tabular.data import TabularData
 from flash.tabular.regression.input import TabularRegressionCSVInput, TabularRegressionDataFrameInput
@@ -26,8 +26,15 @@ if _PANDAS_AVAILABLE:
 else:
     DataFrame = object
 
+# Skip doctests if requirements aren't available
+if not _TABULAR_AVAILABLE:
+    __doctest_skip__ = ["TabularRegressionData", "TabularRegressionData.*"]
+
 
 class TabularRegressionData(TabularData):
+    """The ``TabularRegressionData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
+    classmethods for loading data for tabular regression."""
+
     @classmethod
     def from_data_frame(
         cls,
@@ -47,6 +54,98 @@ class TabularRegressionData(TabularData):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TabularRegressionData":
+        """Creates a :class:`~flash.tabular.regression.data.TabularRegressionData` object from the given data
+        frames.
+
+        .. note::
+
+            The ``categorical_fields``, ``numerical_fields``, and ``target_field`` do not need to be provided if
+            ``parameters`` are passed instead. These can be obtained from the
+            :attr:`~flash.tabular.data.TabularData.parameters` attribute of the
+            :class:`~flash.tabular.data.TabularData` object that contains your training data.
+
+        The targets will be extracted from the ``target_field`` in the data frames.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
+        Args:
+            categorical_fields: The fields (column names) in the data frames containing categorical data.
+            numerical_fields: The fields (column names) in the data frames containing numerical data.
+            target_field: The field (column name) in the data frames containing the targets.
+            parameters: Parameters to use if ``categorical_fields``, ``numerical_fields``, and ``target_field`` are not
+                provided (e.g. when loading data for inference or validation).
+            train_data_frame: The DataFrame to use when training.
+            val_data_frame: The DataFrame to use when validating.
+            test_data_frame: The DataFrame to use when testing.
+            predict_data_frame: The DataFrame to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+                predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+              :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.tabular.regression.data.TabularRegressionData`.
+
+        Examples
+        ________
+
+        .. testsetup::
+
+            >>> from pandas import DataFrame
+            >>> train_data = DataFrame.from_dict({
+            ...     "age": [2, 4, 1],
+            ...     "animal": ["cat", "dog", "cat"],
+            ...     "weight": [6, 10, 5],
+            ... })
+            >>> predict_data = DataFrame.from_dict({
+            ...     "animal": ["dog", "dog", "cat"],
+            ...     "weight": [7, 12, 5],
+            ... })
+
+        We have a DataFrame ``train_data`` with the following contents:
+
+        .. doctest::
+
+            >>> train_data.head(3)
+               age animal  weight
+            0    2    cat       6
+            1    4    dog      10
+            2    1    cat       5
+
+        and a DataFrame ``predict_data`` with the following contents:
+
+        .. doctest::
+
+            >>> predict_data.head(3)
+              animal  weight
+            0    dog       7
+            1    dog      12
+            2    cat       5
+
+        .. doctest::
+
+            >>> from flash import Trainer
+            >>> from flash.tabular import TabularRegressor, TabularRegressionData
+            >>> datamodule = TabularRegressionData.from_data_frame(
+            ...     "animal",
+            ...     "weight",
+            ...     "age",
+            ...     train_data_frame=train_data,
+            ...     predict_data_frame=predict_data,
+            ...     batch_size=4,
+            ... )
+            >>> model = TabularRegressor.from_data(datamodule, backbone="tabnet")
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+        """
         ds_kw = dict(
             data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
@@ -88,6 +187,101 @@ class TabularRegressionData(TabularData):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TabularRegressionData":
+        """Creates a :class:`~flash.tabular.regression.data.TabularRegressionData` object from the given CSV files.
+
+        .. note::
+
+            The ``categorical_fields``, ``numerical_fields``, and ``target_field`` do not need to be provided if
+            ``parameters`` are passed instead. These can be obtained from the
+            :attr:`~flash.tabular.data.TabularData.parameters` attribute of the
+            :class:`~flash.tabular.data.TabularData` object that contains your training data.
+
+        The targets will be extracted from the ``target_field`` in the CSV files.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
+        Args:
+            categorical_fields: The fields (column names) in the CSV files containing categorical data.
+            numerical_fields: The fields (column names) in the CSV files containing numerical data.
+            target_field: The field (column name) in the CSV files containing the targets.
+            parameters: Parameters to use if ``categorical_fields``, ``numerical_fields``, and ``target_field`` are not
+                provided (e.g. when loading data for inference or validation).
+            train_file: The path to the CSV file to use when training.
+            val_file: The path to the CSV file to use when validating.
+            test_file: The path to the CSV file to use when testing.
+            predict_file: The path to the CSV file to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+                predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+              :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.tabular.regression.data.TabularRegressionData`.
+
+        Examples
+        ________
+
+        .. testsetup::
+
+            >>> from pandas import DataFrame
+            >>> DataFrame.from_dict({
+            ...     "age": [2, 4, 1],
+            ...     "animal": ["cat", "dog", "cat"],
+            ...     "weight": [6, 10, 5],
+            ... }).to_csv("train_data.csv")
+            >>> DataFrame.from_dict({
+            ...     "animal": ["dog", "dog", "cat"],
+            ...     "weight": [7, 12, 5],
+            ... }).to_csv("predict_data.csv")
+
+        We have a ``train_data.csv`` with the following contents:
+
+        .. code-block::
+
+            age,animal,weight
+            2,cat,6
+            4,dog,10
+            1,cat,5
+
+        and a ``predict_data.csv`` with the following contents:
+
+        .. code-block::
+
+            animal,weight
+            dog,7
+            dog,12
+            cat,5
+
+        .. doctest::
+
+            >>> from flash import Trainer
+            >>> from flash.tabular import TabularRegressor, TabularRegressionData
+            >>> datamodule = TabularRegressionData.from_csv(
+            ...     "animal",
+            ...     "weight",
+            ...     "age",
+            ...     train_file="train_data.csv",
+            ...     predict_file="predict_data.csv",
+            ...     batch_size=4,
+            ... )
+            >>> model = TabularRegressor.from_data(datamodule, backbone="tabnet")
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> import os
+            >>> os.remove("train_data.csv")
+            >>> os.remove("predict_data.csv")
+        """
         ds_kw = dict(
             data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
