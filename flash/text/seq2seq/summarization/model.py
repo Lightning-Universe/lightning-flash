@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Optional
 import torch
 from torchmetrics.text.rouge import ROUGEScore
 
+from flash.core.utilities.imports import _TM_GREATER_EQUAL_0_7_0
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.text.seq2seq.core.model import Seq2SeqTask
 
@@ -26,10 +27,6 @@ class SummarizationTask(Seq2SeqTask):
 
     You can change the backbone to any summarization model from `HuggingFace/transformers
     <https://huggingface.co/models?filter=pytorch&pipeline_tag=summarization>`_ using the ``backbone`` argument.
-
-    .. note:: When changing the backbone, make sure you pass in the same backbone to the :class:`~flash.Task` and the
-        :class:`~flash.core.data.data_module.DataModule` object! Since this is a Seq2Seq task, make sure you use a
-        Seq2Seq model.
 
     Args:
         backbone: backbone model to use for the task.
@@ -42,7 +39,6 @@ class SummarizationTask(Seq2SeqTask):
         val_target_max_length: Maximum length of targets in validation. Defaults to `128`
         num_beams: Number of beams to use in validation when generating predictions. Defaults to `4`
         use_stemmer: Whether Porter stemmer should be used to strip word suffixes to improve matching.
-        rouge_newline_sep: Add a new line at the beginning of each sentence in Rouge Metric calculation.
         enable_ort: Enable Torch ONNX Runtime Optimization: https://onnxruntime.ai/docs/#onnx-runtime-for-training
     """
 
@@ -58,7 +54,6 @@ class SummarizationTask(Seq2SeqTask):
         val_target_max_length: Optional[int] = None,
         num_beams: Optional[int] = 4,
         use_stemmer: bool = True,
-        rouge_newline_sep: bool = True,
         enable_ort: bool = False,
     ):
         self.save_hyperparameters()
@@ -74,10 +69,15 @@ class SummarizationTask(Seq2SeqTask):
             num_beams=num_beams,
             enable_ort=enable_ort,
         )
-        self.rouge = ROUGEScore(
-            newline_sep=rouge_newline_sep,
-            use_stemmer=use_stemmer,
-        )
+        if _TM_GREATER_EQUAL_0_7_0:
+            self.rouge = ROUGEScore(
+                use_stemmer=use_stemmer,
+            )
+        else:
+            self.rouge = ROUGEScore(
+                True,
+                use_stemmer=use_stemmer,
+            )
 
     @property
     def task(self) -> str:
