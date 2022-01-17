@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional
 
 from torchmetrics import BLEUScore
 
+from flash.core.utilities.imports import _TM_GREATER_EQUAL_0_7_0
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.text.seq2seq.core.model import Seq2SeqTask
 
@@ -25,10 +26,6 @@ class TranslationTask(Seq2SeqTask):
 
     You can change the backbone to any translation model from `HuggingFace/transformers
     <https://huggingface.co/models?filter=pytorch&pipeline_tag=translation>`__ using the ``backbone`` argument.
-
-    .. note:: When changing the backbone, make sure you pass in the same backbone to the :class:`~flash.Task` and the
-        :class:`~flash.core.data.data_module.DataModule` object! Since this is a Seq2Seq task, make sure you use a
-        Seq2Seq model.
 
     Args:
         backbone: backbone model to use for the task.
@@ -90,7 +87,10 @@ class TranslationTask(Seq2SeqTask):
         translate_corpus = self._output_transform.uncollate(generated_tokens)
         translate_corpus = [line for line in translate_corpus]
 
-        result = self.bleu(reference_corpus, translate_corpus)
+        if _TM_GREATER_EQUAL_0_7_0:
+            result = self.bleu(translate_corpus, reference_corpus)
+        else:
+            result = self.bleu(reference_corpus, translate_corpus)
         self.log(f"{prefix}_bleu_score", result, on_step=False, on_epoch=True, prog_bar=True)
 
     @staticmethod
