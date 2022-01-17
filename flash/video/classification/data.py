@@ -104,13 +104,15 @@ class VideoClassificationData(DataModule):
             val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
-            clip_sampler:
-            clip_duration:
-            clip_sampler_kwargs:
-            video_sampler:
-            decode_audio:
-            decoder:
+                predicting.
+            clip_sampler: The clip sampler to use. One of: ``"uniform"``, ``"random"``, ``"constant_clips_per_video"``.
+            clip_duration: The duration of clips to sample.
+            clip_sampler_kwargs: Additional keyword arguments to use when constructing the clip sampler.
+            video_sampler: Sampler for the internal video container. This defines the order videos are decoded and,
+                if necessary, the distributed split.
+            decode_audio: If True, also decode audio from video.
+            decoder: The decoder to use to decode videos. One of: ``"pyav"``, ``"torchvision"``. Not used for frame
+                videos.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             predict_input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the prediction data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
@@ -202,6 +204,112 @@ class VideoClassificationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
     ) -> "VideoClassificationData":
+        """Load the :class:`~flash.video.classification.data.VideoClassificationData` from folders containing
+        videos.
+
+        The supported file extensions are: ``.mp4``, and ``.avi``.
+        For train, test, and validation data, the folders are expected to contain a sub-folder for each class.
+        Here's the required structure:
+
+        .. code-block::
+
+            train_folder
+            ├── cat
+            │   ├── video_1.mp4
+            │   ├── video_3.mp4
+            │   ...
+            └── dog
+                ├── video_2.mp4
+                ...
+
+        For prediction, the folder is expected to contain the files for inference, like this:
+
+        .. code-block::
+
+            predict_folder
+            ├── predict_video_1.mp4
+            ├── predict_video_2.mp4
+            ├── predict_video_3.mp4
+            ...
+
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
+        Args:
+            train_folder: The folder containing videos to use when training.
+            val_folder: The folder containing videos to use when validating.
+            test_folder: The folder containing videos to use when testing.
+            predict_folder: The folder containing videos to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+                predicting.
+            clip_sampler: The clip sampler to use. One of: ``"uniform"``, ``"random"``, ``"constant_clips_per_video"``.
+            clip_duration: The duration of clips to sample.
+            clip_sampler_kwargs: Additional keyword arguments to use when constructing the clip sampler.
+            video_sampler: Sampler for the internal video container. This defines the order videos are decoded and,
+                if necessary, the distributed split.
+            decode_audio: If True, also decode audio from video.
+            decoder: The decoder to use to decode videos. One of: ``"pyav"``, ``"torchvision"``. Not used for frame
+                videos.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            predict_input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the prediction data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+              :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.video.classification.data.VideoClassificationData`.
+
+        Examples
+        ________
+
+        .. testsetup::
+
+            >>> import os
+            >>> import torch
+            >>> from torchvision import io
+            >>> data = torch.randint(255, (10, 64, 64, 3))
+            >>> os.makedirs(os.path.join("train_folder", "cat"), exist_ok=True)
+            >>> os.makedirs(os.path.join("train_folder", "dog"), exist_ok=True)
+            >>> os.makedirs("predict_folder", exist_ok=True)
+            >>> io.write_video(os.path.join("train_folder", "cat", "video_1.mp4"), data, 5, "libx264rgb", {"crf": "0"})
+            >>> io.write_video(os.path.join("train_folder", "dog", "video_2.mp4"), data, 5, "libx264rgb", {"crf": "0"})
+            >>> io.write_video(os.path.join("train_folder", "cat", "video_3.mp4"), data, 5, "libx264rgb", {"crf": "0"})
+            >>> _ = [
+            ...     io.write_video(
+            ...         os.path.join("predict_folder", f"predict_video_{i}.mp4"), data, 5, "libx264rgb", {"crf": "0"}
+            ...     ) for i in range(1, 4)
+            ... ]
+
+        .. doctest::
+
+            >>> from flash import Trainer
+            >>> from flash.video import VideoClassifier, VideoClassificationData
+            >>> datamodule = VideoClassificationData.from_folders(
+            ...     train_folder="train_folder",
+            ...     predict_folder="predict_folder",
+            ...     transform_kwargs=dict(image_size=(244, 244)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            2
+            >>> datamodule.labels
+            ['cat', 'dog']
+            >>> model = VideoClassifier(backbone="x3d_xs", num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> import shutil
+            >>> shutil.rmtree("train_folder")
+            >>> shutil.rmtree("predict_folder")
+        """
 
         ds_kw = dict(
             data_pipeline_state=DataPipelineState(),
