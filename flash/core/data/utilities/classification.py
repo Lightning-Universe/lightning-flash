@@ -11,9 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from enum import auto, Enum
+from dataclasses import dataclass
 from functools import reduce
-from typing import Any, cast, List, Optional, Tuple, Union
+from typing import Any, cast, ClassVar, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import torch
@@ -40,162 +40,161 @@ def _strip(x: str) -> str:
     return x.strip(", ")
 
 
-class TargetMode(Enum):
-    """The ``TargetMode`` Enum describes the different supported formats for targets in Flash."""
-
-    MULTI_TOKEN = auto()
-    MULTI_NUMERIC = auto()
-    MUTLI_COMMA_DELIMITED = auto()
-    MUTLI_SPACE_DELIMITED = auto()
-    MULTI_BINARY = auto()
-
-    SINGLE_TOKEN = auto()
-    SINGLE_NUMERIC = auto()
-    SINGLE_BINARY = auto()
-
-    @classmethod
-    def from_target(cls, target: Any) -> "TargetMode":
-        """Determine the ``TargetMode`` for a given target.
-
-        Multi-label targets can be:
-            * Comma delimited string - ``TargetMode.MUTLI_COMMA_DELIMITED`` (e.g. ["blue,green", "red"])
-            * List of strings - ``TargetMode.MULTI_TOKEN`` (e.g. [["blue", "green"], ["red"]])
-            * List of numbers - ``TargetMode.MULTI_NUMERIC`` (e.g. [[0, 1], [2]])
-            * Binary list - ``TargetMode.MULTI_BINARY`` (e.g. [[1, 1, 0], [0, 0, 1]])
-
-        Single-label targets can be:
-            * Single string - ``TargetMode.SINGLE_TOKEN`` (e.g. ["blue", "green", "red"])
-            * Single number - ``TargetMode.SINGLE_NUMERIC`` (e.g. [0, 1, 2])
-            * One-hot binary list - ``TargetMode.SINGLE_BINARY`` (e.g. [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-
-        Args:
-            target: A target that is one of: a single target, a list of targets, a comma delimited string.
-        """
-        if isinstance(target, str):
-            target = _strip(target)
-            # TODO: This could be a dangerous assumption if people happen to have a label that contains a comma or space
-            if "," in target:
-                return TargetMode.MUTLI_COMMA_DELIMITED
-            elif " " in target:
-                return TargetMode.MUTLI_SPACE_DELIMITED
-            else:
-                return TargetMode.SINGLE_TOKEN
-        elif _is_list_like(target):
-            if isinstance(target[0], str):
-                return TargetMode.MULTI_TOKEN
-            elif len(target) > 1:
-                if all(t == 0 or t == 1 for t in target):
-                    if sum(target) == 1:
-                        return TargetMode.SINGLE_BINARY
-                    return TargetMode.MULTI_BINARY
-                return TargetMode.MULTI_NUMERIC
-        return TargetMode.SINGLE_NUMERIC
-
-    @property
-    def multi_label(self) -> bool:
-        return any(
-            [
-                self is TargetMode.MUTLI_COMMA_DELIMITED,
-                self is TargetMode.MUTLI_SPACE_DELIMITED,
-                self is TargetMode.MULTI_NUMERIC,
-                self is TargetMode.MULTI_TOKEN,
-                self is TargetMode.MULTI_BINARY,
-            ]
-        )
-
-    @property
-    def numeric(self) -> bool:
-        return any(
-            [
-                self is TargetMode.MULTI_NUMERIC,
-                self is TargetMode.SINGLE_NUMERIC,
-            ]
-        )
-
-    @property
-    def binary(self) -> bool:
-        return any(
-            [
-                self is TargetMode.MULTI_BINARY,
-                self is TargetMode.SINGLE_BINARY,
-            ]
-        )
-
-
-_RESOLUTION_MAPPING = {
-    TargetMode.MULTI_BINARY: [TargetMode.MULTI_NUMERIC],
-    TargetMode.SINGLE_BINARY: [TargetMode.MULTI_BINARY, TargetMode.MULTI_NUMERIC],
-    TargetMode.SINGLE_TOKEN: [TargetMode.MUTLI_COMMA_DELIMITED, TargetMode.MUTLI_SPACE_DELIMITED],
-    TargetMode.SINGLE_NUMERIC: [TargetMode.MULTI_NUMERIC],
-}
-
-
-def _resolve_target_mode(a: TargetMode, b: TargetMode) -> TargetMode:
-    """The purpose of the addition here is to reduce the ``TargetMode`` over multiple targets. If one target mode
-    is a comma delimited string and the other a single string then their sum will be comma delimited. If one target
-    is multi binary and the other is single binary, their sum will be multi binary. Otherwise, we expect that both
-    target modes are the same.
-
-    Raises:
-        ValueError: If the two  target modes could not be resolved to a single mode.
-    """
-    if a is b:
-        return a
-    elif a in _RESOLUTION_MAPPING and b in _RESOLUTION_MAPPING[a]:
-        return b
-    elif b in _RESOLUTION_MAPPING and a in _RESOLUTION_MAPPING[b]:
-        return a
-    raise ValueError(
-        "Found inconsistent target modes. All targets should be either: single values, lists of values, or "
-        "comma-delimited strings."
-    )
-
-
-def get_target_mode(targets: List[Any]) -> TargetMode:
-    """Aggregate the ``TargetMode`` for a list of targets.
-
-    Args:
-        targets: The list of targets to get the label mode for.
-
-    Returns:
-        The total ``TargetMode`` of the list of targets.
-    """
-    targets = _as_list(targets)
-    return reduce(_resolve_target_mode, [TargetMode.from_target(target) for target in targets])
-
-
+@dataclass
 class TargetFormatter:
     """A ``TargetFormatter`` is used to convert targets of a given type to a standard format required by the
     task."""
+
+    multi_label: ClassVar[bool]
+    numeric: ClassVar[bool]
+    binary: ClassVar[bool]
+    labels: Optional[List[str]] = None
+    num_classes: Optional[int] = None
 
     def __call__(self, target: Any) -> Any:
         return self.format(target)
 
     def format(self, target: Any) -> Any:
-        return _as_list(target)
+        raise NotImplementedError
 
 
+@dataclass
 class SingleNumericTargetFormatter(TargetFormatter):
+    """A ``TargetFormatter`` for targets that contain a single numeric value (the class index).
+
+    Examples
+    ________
+
+    .. doctest::
+
+        >>> import torch
+        >>> from flash.core.data.utilities.classification import SingleNumericTargetFormatter
+        >>> formatter = SingleNumericTargetFormatter(num_classes=10)
+        >>> formatter(5)
+        5
+        >>> formatter([5])
+        5
+        >>> formatter(torch.tensor(5))
+        5
+    """
+
+    multi_label: ClassVar[bool] = False
+    numeric: ClassVar[bool] = True
+    binary: ClassVar[bool] = False
+
     def format(self, target: Any) -> Any:
-        result = super().format(target)
+        result = _as_list(target)
         if _is_list_like(result):
             result = result[0]
         return result
 
 
+@dataclass
 class SingleLabelTargetFormatter(TargetFormatter):
-    def __init__(self, labels: List[Any]):
-        self.label_to_idx = {label: idx for idx, label in enumerate(labels)}
+    """A ``TargetFormatter`` for targets that contain a single string label.
+
+    Examples
+    ________
+
+    .. doctest::
+
+        >>> from flash.core.data.utilities.classification import SingleLabelTargetFormatter
+        >>> formatter = SingleLabelTargetFormatter(labels=["cat", "dog"], num_classes=2)
+        >>> formatter("cat")
+        0
+        >>> formatter(["dog"])
+        1
+    """
+
+    multi_label: ClassVar[bool] = False
+    numeric: ClassVar[bool] = False
+    binary: ClassVar[bool] = False
+
+    def __post_init__(self):
+        self.label_to_idx = {label: idx for idx, label in enumerate(self.labels)}
 
     def format(self, target: Any) -> Any:
-        return self.label_to_idx[_strip(target[0] if not isinstance(target, str) else target)]
+        return self.label_to_idx[_strip(target[0] if _is_list_like(target) and not isinstance(target, str) else target)]
 
 
+@dataclass
+class SingleBinaryTargetFormatter(TargetFormatter):
+    """A ``TargetFormatter`` for targets that are one-hot encoded binaries.
+
+    Examples
+    ________
+
+    .. doctest::
+
+        >>> import torch
+        >>> from flash.core.data.utilities.classification import SingleBinaryTargetFormatter
+        >>> formatter = SingleBinaryTargetFormatter(num_classes=2)
+        >>> formatter([1, 0])
+        0
+        >>> formatter(torch.tensor([0, 1]))
+        1
+    """
+
+    multi_label: ClassVar[bool] = False
+    numeric: ClassVar[bool] = False
+    binary: ClassVar[bool] = True
+
+    def format(self, target: Any) -> Any:
+        for idx, t in enumerate(target):
+            if t == 1:
+                return idx
+        return 0
+
+
+@dataclass
+class MultiNumericTargetFormatter(TargetFormatter):
+    """A ``TargetFormatter`` for targets that contain multiple numeric values (the class indices).
+
+    Examples
+    ________
+
+    .. doctest::
+
+        >>> import torch
+        >>> from flash.core.data.utilities.classification import MultiNumericTargetFormatter
+        >>> formatter = MultiNumericTargetFormatter(num_classes=10)
+        >>> formatter([2, 5])
+        [0, 0, 1, 0, 0, 1, 0, 0, 0, 0]
+        >>> formatter(torch.tensor([2, 5]))
+        [0, 0, 1, 0, 0, 1, 0, 0, 0, 0]
+    """
+
+    multi_label: ClassVar[bool] = True
+    numeric: ClassVar[bool] = True
+    binary: ClassVar[bool] = False
+
+    def format(self, target: Any) -> Any:
+        result = [0] * self.num_classes
+        for idx in target:
+            result[idx] = 1
+        return result
+
+
+@dataclass
 class MultiLabelTargetFormatter(SingleLabelTargetFormatter):
-    def __init__(self, labels: List[Any]):
-        super().__init__(labels)
+    """A ``TargetFormatter`` for targets that contain multiple string labels in a list.
 
-        self.num_classes = len(labels)
+    Examples
+    ________
+
+    .. doctest::
+
+        >>> from flash.core.data.utilities.classification import MultiLabelTargetFormatter
+        >>> formatter = MultiLabelTargetFormatter(labels=["bird", "cat", "dog"], num_classes=3)
+        >>> formatter(["cat", "dog"])
+        [0, 1, 1]
+        >>> formatter(["bird"])
+        [1, 0, 0]
+    """
+
+    multi_label: ClassVar[bool] = True
+    numeric: ClassVar[bool] = False
+    binary: ClassVar[bool] = False
 
     def format(self, target: Any) -> Any:
         result = [0] * self.num_classes
@@ -205,67 +204,154 @@ class MultiLabelTargetFormatter(SingleLabelTargetFormatter):
         return result
 
 
-class CommaDelimitedTargetFormatter(MultiLabelTargetFormatter):
+@dataclass
+class CommaDelimitedMultiLabelTargetFormatter(MultiLabelTargetFormatter):
+    """A ``TargetFormatter`` for targets that contain a string with multiple comma-delimited labels.
+
+    Examples
+    ________
+
+    .. doctest::
+
+        >>> from flash.core.data.utilities.classification import CommaDelimitedMultiLabelTargetFormatter
+        >>> formatter = CommaDelimitedMultiLabelTargetFormatter(labels=["bird", "cat", "dog"], num_classes=3)
+        >>> formatter("cat,dog")
+        [0, 1, 1]
+        >>> formatter("bird")
+        [1, 0, 0]
+    """
+
+    multi_label: ClassVar[bool] = True
+    numeric: ClassVar[bool] = False
+    binary: ClassVar[bool] = False
+
     def format(self, target: Any) -> Any:
         return super().format(target.split(","))
 
 
+@dataclass
 class SpaceDelimitedTargetFormatter(MultiLabelTargetFormatter):
+    """A ``TargetFormatter`` for targets that contain a string with multiple space-delimited labels.
+
+    Examples
+    ________
+
+    .. doctest::
+
+        >>> from flash.core.data.utilities.classification import SpaceDelimitedTargetFormatter
+        >>> formatter = SpaceDelimitedTargetFormatter(labels=["bird", "cat", "dog"], num_classes=3)
+        >>> formatter("cat dog")
+        [0, 1, 1]
+        >>> formatter("bird")
+        [1, 0, 0]
+    """
+
+    multi_label: ClassVar[bool] = True
+    numeric: ClassVar[bool] = False
+    binary: ClassVar[bool] = False
+
     def format(self, target: Any) -> Any:
         return super().format(target.split(" "))
 
 
-class MultiNumericTargetFormatter(TargetFormatter):
-    def __init__(self, num_classes: int):
-        self.num_classes = num_classes
+@dataclass
+class MultiBinaryTargetFormatter(TargetFormatter):
+    """A ``TargetFormatter`` for targets that are multi-hot binary.
+
+    Examples
+    ________
+
+    .. doctest::
+
+        >>> import torch
+        >>> from flash.core.data.utilities.classification import MultiBinaryTargetFormatter
+        >>> formatter = MultiBinaryTargetFormatter(num_classes=3)
+        >>> formatter([0, 1, 1])
+        [0, 1, 1]
+        >>> formatter(torch.tensor([1, 0, 0]))
+        [1, 0, 0]
+    """
+
+    multi_label: ClassVar[bool] = True
+    numeric: ClassVar[bool] = False
+    binary: ClassVar[bool] = True
 
     def format(self, target: Any) -> Any:
-        result = [0] * self.num_classes
-        for idx in target:
-            result[idx] = 1
-        return result
+        return _as_list(target)
 
 
-class OneHotTargetFormatter(TargetFormatter):
-    def format(self, target: Any) -> Any:
-        for idx, t in enumerate(target):
-            if t == 1:
-                return idx
-        return 0
+def _get_target_formatter_type(target: Any) -> Type[TargetFormatter]:
+    """Determine the ``TargetFormatter`` type for a given target.
 
+    Multi-label targets can be:
+        * Comma delimited string - ``CommaDelimitedMultiLabelTargetFormatter`` (e.g. ["blue,green", "red"])
+        * Space delimited string - ``SpaceDelimitedMultiLabelTargetFormatter`` (e.g. ["blue green", "red"])
+        * List of strings - ``MultiLabelTargetFormatter`` (e.g. [["blue", "green"], ["red"]])
+        * List of numbers - ``MultiNumericTargetFormatter`` (e.g. [[0, 1], [2]])
+        * Binary list - ``MultiBinaryTargetFormatter`` (e.g. [[1, 1, 0], [0, 0, 1]])
 
-def get_target_formatter(
-    target_mode: TargetMode, labels: Optional[List[Any]], num_classes: Optional[int]
-) -> TargetFormatter:
-    """Get the ``TargetFormatter`` object to use for the given ``TargetMode``, ``labels``, and ``num_classes``.
+    Single-label targets can be:
+        * Single string - ``SingleLabelTargetFormatter`` (e.g. ["blue", "green", "red"])
+        * Single number - ``SingleNumericTargetFormatter`` (e.g. [0, 1, 2])
+        * One-hot binary list - ``SingleBinaryTargetFormatter`` (e.g. [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
     Args:
-        target_mode: The target mode to format.
-        labels: Labels used by the target (if available).
-        num_classes: The number of classes in the targets.
-
-    Returns:
-        The target formatter to use when formatting targets.
+        target: A target that is one of: a single target, a list of targets, a comma delimited string.
     """
-    if target_mode is TargetMode.MULTI_BINARY:
-        return TargetFormatter()
-    elif target_mode is TargetMode.SINGLE_NUMERIC:
-        return SingleNumericTargetFormatter()
-    elif target_mode is TargetMode.SINGLE_BINARY:
-        return OneHotTargetFormatter()
-    elif target_mode is TargetMode.MULTI_NUMERIC:
-        return MultiNumericTargetFormatter(num_classes)
-    elif target_mode is TargetMode.SINGLE_TOKEN:
-        return SingleLabelTargetFormatter(labels)
-    elif target_mode is TargetMode.MUTLI_COMMA_DELIMITED:
-        return CommaDelimitedTargetFormatter(labels)
-    elif target_mode is TargetMode.MUTLI_SPACE_DELIMITED:
-        return SpaceDelimitedTargetFormatter(labels)
-    return MultiLabelTargetFormatter(labels)
+    if isinstance(target, str):
+        target = _strip(target)
+        # TODO: This could be a dangerous assumption if people happen to have a label that contains a comma or space
+        if "," in target:
+            return CommaDelimitedMultiLabelTargetFormatter
+        elif " " in target:
+            return SpaceDelimitedTargetFormatter
+        else:
+            return SingleLabelTargetFormatter
+    elif _is_list_like(target):
+        if isinstance(target[0], str):
+            return MultiLabelTargetFormatter
+        elif len(target) > 1:
+            if all(t == 0 or t == 1 for t in target):
+                if sum(target) == 1:
+                    return SingleBinaryTargetFormatter
+                return MultiBinaryTargetFormatter
+            return MultiNumericTargetFormatter
+    return SingleNumericTargetFormatter
 
 
-def get_target_details(targets: List[Any], target_mode: TargetMode) -> Tuple[Optional[List[Any]], int]:
-    """Given a list of targets and their ``TargetMode``, this function determines the ``labels`` and
+_RESOLUTION_MAPPING: Dict[Type[TargetFormatter], List[Type[TargetFormatter]]] = {
+    MultiBinaryTargetFormatter: [MultiNumericTargetFormatter],
+    SingleBinaryTargetFormatter: [MultiBinaryTargetFormatter, MultiNumericTargetFormatter],
+    SingleLabelTargetFormatter: [CommaDelimitedMultiLabelTargetFormatter, SpaceDelimitedTargetFormatter],
+    SingleNumericTargetFormatter: [MultiNumericTargetFormatter],
+}
+
+
+def _resolve_target_formatter(a: Type[TargetFormatter], b: Type[TargetFormatter]) -> Type[TargetFormatter]:
+    """The purpose of this resolution function is to enable reduction of the ``TargetFormatter`` type over multiple
+    targets. For example, if one target formatter type is ``CommaDelimitedMultiLabelTargetFormatter`` and the other
+    type is ``SingleLabelTargetFormatter``then their reduction will be ``CommaDelimitedMultiLabelTargetFormatter``.
+
+    Raises:
+        ValueError: If the two target formatters could not be resolved.
+    """
+    if a is b:
+        return a
+    elif a in _RESOLUTION_MAPPING and b in _RESOLUTION_MAPPING[a]:
+        return b
+    elif b in _RESOLUTION_MAPPING and a in _RESOLUTION_MAPPING[b]:
+        return a
+    raise ValueError(
+        "Found inconsistent target formats. All targets should be either: single values, lists of values, or "
+        "comma-delimited strings."
+    )
+
+
+def _get_target_details(
+    targets: List[Any],
+    target_formatter_type: Type[TargetFormatter],
+) -> Tuple[Optional[List[Any]], int]:
+    """Given a list of targets and their ``TargetFormatter`` type, this function determines the ``labels`` and
     ``num_classes``. Targets can be:
 
     * Token-based: ``labels`` is the unique tokens, ``num_classes`` is the number of unique tokens.
@@ -274,16 +360,16 @@ def get_target_details(targets: List[Any], target_mode: TargetMode) -> Tuple[Opt
 
     Args:
         targets: A list of targets.
-        target_mode: The ``TargetMode`` of the targets from ``get_target_mode``.
+        target_formatter_type: The ``TargetFormatter`` type.
 
     Returns:
         (labels, num_classes): Tuple containing the inferred ``labels`` (or ``None`` if no labels could be inferred)
         and ``num_classes``.
     """
     targets = _as_list(targets)
-    if target_mode.numeric:
+    if target_formatter_type.numeric:
         # Take a max over all values
-        if target_mode is TargetMode.MULTI_NUMERIC:
+        if target_formatter_type is MultiNumericTargetFormatter:
             values = []
             for target in targets:
                 values.extend(target)
@@ -294,7 +380,7 @@ def get_target_details(targets: List[Any], target_mode: TargetMode) -> Tuple[Opt
             num_classes = num_classes[0]
         num_classes = num_classes + 1
         labels = None
-    elif target_mode.binary:
+    elif target_formatter_type.binary:
         # Take a length
         # TODO: Add a check here and error if target lengths are not all equal
         num_classes = len(targets[0])
@@ -302,13 +388,13 @@ def get_target_details(targets: List[Any], target_mode: TargetMode) -> Tuple[Opt
     else:
         # Compute tokens
         tokens = []
-        if target_mode is TargetMode.MUTLI_COMMA_DELIMITED:
+        if target_formatter_type is CommaDelimitedMultiLabelTargetFormatter:
             for target in targets:
                 tokens.extend(target.split(","))
-        elif target_mode is TargetMode.MUTLI_SPACE_DELIMITED:
+        elif target_formatter_type is SpaceDelimitedTargetFormatter:
             for target in targets:
                 tokens.extend(target.split(" "))
-        elif target_mode is TargetMode.MULTI_TOKEN:
+        elif target_formatter_type is MultiLabelTargetFormatter:
             for target in targets:
                 tokens.extend(target)
         else:
@@ -318,3 +404,25 @@ def get_target_details(targets: List[Any], target_mode: TargetMode) -> Tuple[Opt
         labels = list(sorted_alphanumeric(set(tokens)))
         num_classes = len(labels)
     return labels, num_classes
+
+
+def get_target_formatter(
+    targets: List[Any], labels: Optional[List[str]] = None, num_classes: Optional[int] = None
+) -> TargetFormatter:
+    """Get the ``TargetFormatter`` object to use for the given targets.
+
+    Args:
+        targets: The list of targets to format.
+        labels: Optionally provide ``labels`` / ``num_classes`` instead of inferring them.
+        num_classes: Optionally provide ``labels`` / ``num_classes`` instead of inferring them.
+
+    Returns:
+        The target formatter to use when formatting targets.
+    """
+    targets = _as_list(targets)
+    target_formatter_type: Type[TargetFormatter] = reduce(
+        _resolve_target_formatter, [_get_target_formatter_type(target) for target in targets]
+    )
+    if labels is None and num_classes is None:
+        labels, num_classes = _get_target_details(targets, target_formatter_type)
+    return target_formatter_type(labels=labels, num_classes=num_classes)
