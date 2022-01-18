@@ -274,9 +274,9 @@ class VideoClassificationData(DataModule):
             >>> os.makedirs(os.path.join("train_folder", "cat"), exist_ok=True)
             >>> os.makedirs(os.path.join("train_folder", "dog"), exist_ok=True)
             >>> os.makedirs("predict_folder", exist_ok=True)
-            >>> io.write_video(os.path.join("train_folder", "cat", "video_1.mp4"), data, 5, "libx264rgb", {"crf": "0"})
-            >>> io.write_video(os.path.join("train_folder", "dog", "video_2.mp4"), data, 5, "libx264rgb", {"crf": "0"})
-            >>> io.write_video(os.path.join("train_folder", "cat", "video_3.mp4"), data, 5, "libx264rgb", {"crf": "0"})
+            >>> _ = [io.write_video(
+            ...     os.path.join("train_folder", label, f"video_{i + 1}.mp4"), data, 5, "libx264rgb", {"crf": "0"}
+            ... ) for i, label in enumerate(["cat", "dog", "cat"])]
             >>> _ = [
             ...     io.write_video(
             ...         os.path.join("predict_folder", f"predict_video_{i}.mp4"), data, 5, "libx264rgb", {"crf": "0"}
@@ -425,9 +425,9 @@ class VideoClassificationData(DataModule):
             >>> data = torch.randint(255, (10, 64, 64, 3))
             >>> os.makedirs("train_folder", exist_ok=True)
             >>> os.makedirs("predict_folder", exist_ok=True)
-            >>> io.write_video(os.path.join("train_folder", "video_1.mp4"), data, 5, "libx264rgb", {"crf": "0"})
-            >>> io.write_video(os.path.join("train_folder", "video_2.mp4"), data, 5, "libx264rgb", {"crf": "0"})
-            >>> io.write_video(os.path.join("train_folder", "video_3.mp4"), data, 5, "libx264rgb", {"crf": "0"})
+            >>> _ = [io.write_video(
+            ...     os.path.join("train_folder", f"video_{i}.mp4"), data, 5, "libx264rgb", {"crf": "0"}
+            ... ) for i in range(1, 4)]
             >>> _ = [
             ...     io.write_video(
             ...         os.path.join("predict_folder", f"predict_video_{i}.mp4"), data, 5, "libx264rgb", {"crf": "0"}
@@ -598,9 +598,9 @@ class VideoClassificationData(DataModule):
             >>> data = torch.randint(255, (10, 64, 64, 3))
             >>> os.makedirs("train_folder", exist_ok=True)
             >>> os.makedirs("predict_folder", exist_ok=True)
-            >>> io.write_video(os.path.join("train_folder", "video_1.mp4"), data, 5, "libx264rgb", {"crf": "0"})
-            >>> io.write_video(os.path.join("train_folder", "video_2.mp4"), data, 5, "libx264rgb", {"crf": "0"})
-            >>> io.write_video(os.path.join("train_folder", "video_3.mp4"), data, 5, "libx264rgb", {"crf": "0"})
+            >>> _ = [io.write_video(
+            ...     os.path.join("train_folder", f"video_{i}.mp4"), data, 5, "libx264rgb", {"crf": "0"}
+            ... ) for i in range(1, 4)]
             >>> _ = [
             ...     io.write_video(
             ...         os.path.join("predict_folder", f"predict_video_{i}.mp4"), data, 5, "libx264rgb", {"crf": "0"}
