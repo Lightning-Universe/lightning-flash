@@ -61,7 +61,6 @@ class TargetFormatter:
         ...     def format(self, target: str) -> int:
         ...         return int(target.strip("#"))
         ...
-        >>>
         >>> formatter = CustomStringTargetFormatter()
         >>> formatter("#1")
         1
