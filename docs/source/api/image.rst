@@ -100,7 +100,7 @@ ____________
     :toctree: generated/
     :nosignatures:
 
-    segmentation.transforms.prepare_target
+    segmentation.input_transform.prepare_target
 
 Style Transfer
 ______________
