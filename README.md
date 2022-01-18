@@ -232,7 +232,8 @@ import numpy as np
 import albumentations
 from flash import InputTransform
 from flash.image import ImageClassificationData
-from flash.image.classification.transforms import AlbumentationsAdapter
+from flash.image.classification.input_transform import AlbumentationsAdapter
+
 
 def mixup(batch, alpha=1.0):
     images = batch["input"]
@@ -245,6 +246,7 @@ def mixup(batch, alpha=1.0):
     batch["target"] = targets * lam + targets[perm] * (1 - lam)
     return batch
 
+
 class MixUpInputTransform(InputTransform):
 
     def train_input_per_sample_transform(self):
@@ -253,6 +255,7 @@ class MixUpInputTransform(InputTransform):
     # This will be applied after transferring the batch to the device!
     def train_per_batch_transform_on_device(self):
         return mixup
+
 
 datamodule = ImageClassificationData.from_folders(
     train_folder="data/train",

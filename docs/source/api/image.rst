@@ -20,7 +20,7 @@ ______________
     ~classification.model.ImageClassifier
     ~classification.data.ImageClassificationFiftyOneInput
     ~classification.data.ImageClassificationData
-    ~classification.data.ImageClassificationInputTransform
+    ~classification.input_transform.ImageClassificationInputTransform
 
     classification.data.MatplotlibVisualization
 
@@ -62,8 +62,6 @@ _____________________
     ~instance_segmentation.model.InstanceSegmentation
     ~instance_segmentation.data.InstanceSegmentationData
 
-    instance_segmentation.data.InstanceSegmentationInputTransform
-
 Embedding
 _________
 
@@ -84,6 +82,7 @@ ____________
 
     ~segmentation.model.SemanticSegmentation
     ~segmentation.data.SemanticSegmentationData
+    ~segmentation.input_transform.SemanticSegmentationInputTransform
 
     segmentation.data.SegmentationMatplotlibVisualization
     segmentation.input.SemanticSegmentationInput
@@ -93,7 +92,6 @@ ____________
     segmentation.input.SemanticSegmentationTensorInput
     segmentation.input.SemanticSegmentationFiftyOneInput
     segmentation.input.SemanticSegmentationDeserializer
-    segmentation.transforms.SemanticSegmentationInputTransform
     segmentation.model.SemanticSegmentationOutputTransform
     segmentation.output.FiftyOneSegmentationLabelsOutput
     segmentation.output.SegmentationLabelsOutput
@@ -114,7 +112,7 @@ ______________
 
     ~style_transfer.model.StyleTransfer
     ~style_transfer.data.StyleTransferData
-    ~style_transfer.data.StyleTransferInputTransform
+    ~style_transfer.input_transform.StyleTransferInputTransform
 
 .. autosummary::
     :toctree: generated/
