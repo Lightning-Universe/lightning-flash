@@ -37,7 +37,9 @@ class ClassificationInputMixin(Properties):
       tasks.
     """
 
-    def load_target_metadata(self, targets: List[Any], target_formatter: Optional[TargetFormatter] = None) -> None:
+    def load_target_metadata(
+        self, targets: Optional[List[Any]], target_formatter: Optional[TargetFormatter] = None
+    ) -> None:
         """Determine the target format and store the ``labels`` and ``num_classes``.
 
         Args:
@@ -46,6 +48,8 @@ class ClassificationInputMixin(Properties):
                 rather than inferring from the targets.
         """
         if target_formatter is None:
+            if targets is None:
+                raise ValueError("`targets` must be provided if `target_formatter` is `None`.")
             classification_state = self.get_state(ClassificationState)
             if classification_state is not None:
                 labels, num_classes = classification_state.labels, classification_state.num_classes

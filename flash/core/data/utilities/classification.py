@@ -45,9 +45,9 @@ class TargetFormatter:
     """A ``TargetFormatter`` is used to convert targets of a given type to a standard format required by the
     task."""
 
-    multi_label: ClassVar[bool]
-    numeric: ClassVar[bool]
-    binary: ClassVar[bool]
+    multi_label: ClassVar[Optional[bool]]
+    numeric: ClassVar[Optional[bool]]
+    binary: ClassVar[Optional[bool]]
     labels: Optional[List[str]] = None
     num_classes: Optional[int] = None
 
@@ -56,6 +56,34 @@ class TargetFormatter:
 
     def format(self, target: Any) -> Any:
         raise NotImplementedError
+
+
+@dataclass
+class EmptyTargetFormatter(TargetFormatter):
+    """A ``TargetFormatter`` that just returns it's input. This should be used in situations where the target
+    formatter cannot be inferred (e.g. because a list of all targets can't be efficiently obtained).
+
+    Examples
+    ________
+
+    .. doctest::
+
+        >>> from flash.core.data.utilities.classification import EmptyTargetFormatter
+        >>> formatter = EmptyTargetFormatter()
+        >>> formatter(5)
+        5
+        >>> formatter([5])
+        [5]
+        >>> formatter("anything")
+        'anything'
+    """
+
+    multi_label: ClassVar[Optional[bool]] = None
+    numeric: ClassVar[Optional[bool]] = None
+    binary: ClassVar[Optional[bool]] = None
+
+    def format(self, target: Any) -> Any:
+        return target
 
 
 @dataclass
@@ -78,9 +106,9 @@ class SingleNumericTargetFormatter(TargetFormatter):
         5
     """
 
-    multi_label: ClassVar[bool] = False
-    numeric: ClassVar[bool] = True
-    binary: ClassVar[bool] = False
+    multi_label: ClassVar[Optional[bool]] = False
+    numeric: ClassVar[Optional[bool]] = True
+    binary: ClassVar[Optional[bool]] = False
 
     def format(self, target: Any) -> Any:
         result = _as_list(target)
@@ -106,9 +134,9 @@ class SingleLabelTargetFormatter(TargetFormatter):
         1
     """
 
-    multi_label: ClassVar[bool] = False
-    numeric: ClassVar[bool] = False
-    binary: ClassVar[bool] = False
+    multi_label: ClassVar[Optional[bool]] = False
+    numeric: ClassVar[Optional[bool]] = False
+    binary: ClassVar[Optional[bool]] = False
 
     def __post_init__(self):
         self.label_to_idx = {label: idx for idx, label in enumerate(self.labels)}
@@ -135,9 +163,9 @@ class SingleBinaryTargetFormatter(TargetFormatter):
         1
     """
 
-    multi_label: ClassVar[bool] = False
-    numeric: ClassVar[bool] = False
-    binary: ClassVar[bool] = True
+    multi_label: ClassVar[Optional[bool]] = False
+    numeric: ClassVar[Optional[bool]] = False
+    binary: ClassVar[Optional[bool]] = True
 
     def format(self, target: Any) -> Any:
         for idx, t in enumerate(target):
@@ -164,9 +192,9 @@ class MultiNumericTargetFormatter(TargetFormatter):
         [0, 0, 1, 0, 0, 1, 0, 0, 0, 0]
     """
 
-    multi_label: ClassVar[bool] = True
-    numeric: ClassVar[bool] = True
-    binary: ClassVar[bool] = False
+    multi_label: ClassVar[Optional[bool]] = True
+    numeric: ClassVar[Optional[bool]] = True
+    binary: ClassVar[Optional[bool]] = False
 
     def format(self, target: Any) -> Any:
         result = [0] * self.num_classes
@@ -192,9 +220,9 @@ class MultiLabelTargetFormatter(SingleLabelTargetFormatter):
         [1, 0, 0]
     """
 
-    multi_label: ClassVar[bool] = True
-    numeric: ClassVar[bool] = False
-    binary: ClassVar[bool] = False
+    multi_label: ClassVar[Optional[bool]] = True
+    numeric: ClassVar[Optional[bool]] = False
+    binary: ClassVar[Optional[bool]] = False
 
     def format(self, target: Any) -> Any:
         result = [0] * self.num_classes
@@ -221,9 +249,9 @@ class CommaDelimitedMultiLabelTargetFormatter(MultiLabelTargetFormatter):
         [1, 0, 0]
     """
 
-    multi_label: ClassVar[bool] = True
-    numeric: ClassVar[bool] = False
-    binary: ClassVar[bool] = False
+    multi_label: ClassVar[Optional[bool]] = True
+    numeric: ClassVar[Optional[bool]] = False
+    binary: ClassVar[Optional[bool]] = False
 
     def format(self, target: Any) -> Any:
         return super().format(target.split(","))
@@ -246,9 +274,9 @@ class SpaceDelimitedTargetFormatter(MultiLabelTargetFormatter):
         [1, 0, 0]
     """
 
-    multi_label: ClassVar[bool] = True
-    numeric: ClassVar[bool] = False
-    binary: ClassVar[bool] = False
+    multi_label: ClassVar[Optional[bool]] = True
+    numeric: ClassVar[Optional[bool]] = False
+    binary: ClassVar[Optional[bool]] = False
 
     def format(self, target: Any) -> Any:
         return super().format(target.split(" "))
@@ -272,9 +300,9 @@ class MultiBinaryTargetFormatter(TargetFormatter):
         [1, 0, 0]
     """
 
-    multi_label: ClassVar[bool] = True
-    numeric: ClassVar[bool] = False
-    binary: ClassVar[bool] = True
+    multi_label: ClassVar[Optional[bool]] = True
+    numeric: ClassVar[Optional[bool]] = False
+    binary: ClassVar[Optional[bool]] = True
 
     def format(self, target: Any) -> Any:
         return _as_list(target)

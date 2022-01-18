@@ -16,8 +16,9 @@ from typing import Any, Mapping
 from torch.utils.data import Dataset
 
 from flash.core.data.data_module import DatasetInput
-from flash.core.data.io.classification_input import ClassificationInputMixin, ClassificationState
+from flash.core.data.io.classification_input import ClassificationInputMixin
 from flash.core.data.io.input import DataKeys
+from flash.core.data.utilities.classification import EmptyTargetFormatter
 from flash.core.utilities.imports import _GRAPH_AVAILABLE, requires
 
 if _GRAPH_AVAILABLE:
@@ -36,14 +37,15 @@ class GraphClassificationDatasetInput(DatasetInput, ClassificationInputMixin):
                 if isinstance(dataset, InMemoryDataset):
                     self.load_target_metadata([sample.y for sample in dataset])
                 else:
-                    self.num_classes = dataset.num_classes
-                    self.set_state(ClassificationState(self.labels, self.num_classes))
+                    self.load_target_metadata(None, EmptyTargetFormatter(num_classes=dataset.num_classes))
+            else:
+                self.load_target_metadata(None, EmptyTargetFormatter())
         return dataset
 
     def load_sample(self, sample: Any) -> Mapping[str, Any]:
         if isinstance(sample, Data):
             sample = {DataKeys.INPUT: sample, DataKeys.TARGET: sample.y}
-            if getattr(self, "target_mode", None) is not None:
+            if not self.predicting:
                 sample[DataKeys.TARGET] = self.format_target(sample[DataKeys.TARGET])
             return sample
         return super().load_sample(sample)
