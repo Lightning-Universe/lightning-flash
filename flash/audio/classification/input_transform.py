@@ -12,15 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
-from typing import Callable, Dict, Optional, Tuple
+from typing import Callable, Optional, Tuple
 
 import torch
-from torch import nn
-from torch.utils.data._utils.collate import default_collate
 
-from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform
-from flash.core.data.transforms import ApplyToKeys, merge_transforms
 from flash.core.utilities.imports import _TORCHAUDIO_AVAILABLE, _TORCHVISION_AVAILABLE
 
 if _TORCHVISION_AVAILABLE:
@@ -28,35 +24,6 @@ if _TORCHVISION_AVAILABLE:
 
 if _TORCHAUDIO_AVAILABLE:
     from torchaudio import transforms as TAudio
-
-
-def default_transforms(spectrogram_size: Tuple[int, int]) -> Dict[str, Callable]:
-    """The default transforms for audio classification for spectrograms: resize the spectrogram, convert the
-    spectrogram and target to a tensor, and collate the batch."""
-    return {
-        "per_sample_transform": nn.Sequential(
-            ApplyToKeys(DataKeys.INPUT, T.Compose([T.ToTensor(), T.Resize(spectrogram_size)])),
-            ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
-        ),
-        "collate": default_collate,
-    }
-
-
-def train_default_transforms(
-    spectrogram_size: Tuple[int, int], time_mask_param: Optional[int], freq_mask_param: Optional[int]
-) -> Dict[str, Callable]:
-    """During training we apply the default transforms with optional ``TimeMasking`` and ``Frequency Masking``."""
-    augs = []
-
-    if time_mask_param is not None:
-        augs.append(ApplyToKeys(DataKeys.INPUT, TAudio.TimeMasking(time_mask_param=time_mask_param)))
-
-    if freq_mask_param is not None:
-        augs.append(ApplyToKeys(DataKeys.INPUT, TAudio.FrequencyMasking(freq_mask_param=freq_mask_param)))
-
-    if len(augs) > 0:
-        return merge_transforms(default_transforms(spectrogram_size), {"per_sample_transform": nn.Sequential(*augs)})
-    return default_transforms(spectrogram_size)
 
 
 @dataclass

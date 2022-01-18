@@ -220,23 +220,20 @@ model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer="Adam", lr
 
 
 Flash includes some simple augmentations for each task by default, however, you will often want to override these and control your own augmentation recipe.
-To this end, Flash supports custom transformations backed by our powerful data pipeline.
-The transform requires to be passed as a dictionary of transforms where the keys are the [hook's name](https://lightning-flash.readthedocs.io/en/latest/api/generated/flash.core.data.io.input_transform.InputTransform.html?highlight=InputTransform).
-This enable transforms to be applied per sample or per batch either on or off device.
-It is important to note that data are being processed as a dictionary for all tasks (typically containing `input`, `target`, and `metadata`),
-Therefore, you can use [`ApplyToKeys`](https://lightning-flash.readthedocs.io/en/latest/api/generated/flash.core.data.transforms.ApplyToKeys.html#flash.core.data.transforms.ApplyToKeys) utility to apply the transform to a specific key.
-Complex transforms (like MixUp) can then be implemented with ease.
-
-The example also uses our [`merge_transforms`](https://lightning-flash.readthedocs.io/en/latest/api/generated/flash.core.data.transforms.merge_transforms.html#flash.core.data.transforms.merge_transforms) utility to merge our custom augmentations with the default transforms for images (which handle resizing and converting to a tensor).
-
+To this end, Flash supports custom transformations with the [`InputTransform`](https://lightning-flash.readthedocs.io/en/stable/api/generated/flash.core.data.io.input_transform.InputTransform.html).
+The `InputTransform` is like a callback for transforms, with hooks that can be used to apply transforms to samples or batches, on and off the device / accelerator.
+In addition, hooks can be specialized to apply transforms only to the input or target.
+With these hooks, complex transforms like MixUp can be implemented with ease.
+Here's an example (with an albumentations transform thrown in too!):
 
 ```py
 import torch
 import numpy as np
 import albumentations
-from flash.core.data.transforms import ApplyToKeys, merge_transforms
+from flash import InputTransform
 from flash.image import ImageClassificationData
-from flash.image.classification.transforms import default_transforms, AlbumentationsAdapter
+from flash.image.classification.input_transform import AlbumentationsAdapter
+
 
 def mixup(batch, alpha=1.0):
     images = batch["input"]
@@ -249,24 +246,20 @@ def mixup(batch, alpha=1.0):
     batch["target"] = targets * lam + targets[perm] * (1 - lam)
     return batch
 
-train_transform = {
-    # applied only on images as ApplyToKeys is used with `input`
-    "per_sample_transform": ApplyToKeys(
-        "input", AlbumentationsAdapter(albumentations.HorizontalFlip(p=0.5))),
 
-    # applied to the entire dictionary as `ApplyToKeys` isn't used.
-    # this would be applied on GPUS !
-    "per_batch_transform_on_device": mixup,
+class MixUpInputTransform(InputTransform):
 
-    # this would be applied on CPUS within the DataLoader workers !
-    # "per_batch_transform": mixup
-}
-# merge the default transform for this task with new one.
-train_transform = merge_transforms(default_transforms((256, 256)), train_transform)
+    def train_input_per_sample_transform(self):
+        return AlbumentationsAdapter(albumentations.HorizontalFlip(p=0.5))
+
+    # This will be applied after transferring the batch to the device!
+    def train_per_batch_transform_on_device(self):
+        return mixup
+
 
 datamodule = ImageClassificationData.from_folders(
-    train_folder = "data/train",
-    train_transform=train_transform,
+    train_folder="data/train",
+    train_transform=MixUpInputTransform,
     batch_size=2,
 )
 

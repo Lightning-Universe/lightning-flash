@@ -31,7 +31,7 @@ from flash.image.segmentation.input import (
     SemanticSegmentationNumpyInput,
     SemanticSegmentationTensorInput,
 )
-from flash.image.segmentation.transforms import SemanticSegmentationInputTransform
+from flash.image.segmentation.input_transform import SemanticSegmentationInputTransform
 from flash.image.segmentation.viz import SegmentationMatplotlibVisualization
 
 if _FIFTYONE_AVAILABLE:

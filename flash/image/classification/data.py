@@ -38,7 +38,7 @@ from flash.image.classification.input import (
     ImageClassificationNumpyInput,
     ImageClassificationTensorInput,
 )
-from flash.image.classification.transforms import ImageClassificationInputTransform
+from flash.image.classification.input_transform import ImageClassificationInputTransform
 
 if _FIFTYONE_AVAILABLE:
     SampleCollection = "fiftyone.core.collections.SampleCollection"
