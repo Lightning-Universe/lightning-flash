@@ -15,7 +15,6 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, Tuple
 
 import torch
-import torch.nn as nn
 
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform
@@ -25,57 +24,12 @@ if _KORNIA_AVAILABLE:
     import kornia as K
 
 if _TORCHVISION_AVAILABLE:
-    from torchvision.transforms import Compose
-
-    from flash.core.data.transforms import ApplyToKeys, kornia_collate, KorniaParallelTransforms, merge_transforms
+    from flash.core.data.transforms import ApplyToKeys, kornia_collate, KorniaParallelTransforms
 
 
 def prepare_target(tensor: torch.Tensor) -> torch.Tensor:
     """Convert the target mask to long and remove the channel dimension."""
     return tensor.long().squeeze(1)
-
-
-def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
-    """The default transforms for semantic segmentation: resize the image and mask, collate the batch, and apply
-    normalization."""
-    return {
-        "per_sample_transform": nn.Sequential(
-            ApplyToKeys(
-                [DataKeys.INPUT, DataKeys.TARGET],
-                KorniaParallelTransforms(K.geometry.Resize(image_size, interpolation="nearest")),
-            ),
-        ),
-        "collate": Compose([kornia_collate, ApplyToKeys(DataKeys.TARGET, prepare_target)]),
-    }
-
-
-def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
-    """During training, we apply the default transforms with additional ``RandomHorizontalFlip`` and
-    ``ColorJitter``."""
-    return merge_transforms(
-        default_transforms(image_size),
-        {
-            "per_sample_transform": nn.Sequential(
-                ApplyToKeys(
-                    [DataKeys.INPUT, DataKeys.TARGET],
-                    KorniaParallelTransforms(K.augmentation.RandomHorizontalFlip(p=0.5)),
-                ),
-            ),
-        },
-    )
-
-
-def predict_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
-    """During predict, we apply the default transforms only on DataKeys.INPUT."""
-    return {
-        "per_sample_transform": nn.Sequential(
-            ApplyToKeys(
-                DataKeys.INPUT,
-                K.geometry.Resize(image_size, interpolation="nearest"),
-            ),
-        ),
-        "collate": kornia_collate,
-    }
 
 
 def remove_extra_dimensions(batch: Dict[str, Any]):

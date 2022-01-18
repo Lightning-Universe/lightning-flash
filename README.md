@@ -265,7 +265,7 @@ train_transform = {
 train_transform = merge_transforms(default_transforms((256, 256)), train_transform)
 
 datamodule = ImageClassificationData.from_folders(
-    train_folder = "data/train",
+    train_folder="data/train",
     train_transform=train_transform,
     batch_size=2,
 )
