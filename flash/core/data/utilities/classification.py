@@ -56,7 +56,7 @@ class TargetFormatter:
         >>>
         >>> @dataclass
         ... class CustomStringTargetFormatter(TargetFormatter):
-        ...     "A ``TargetFormatter`` whcih converts strings of the format '#<index>' to integers."
+        ...     "A ``TargetFormatter`` which converts strings of the format '#<index>' to integers."
         ...     multi_label: ClassVar[Optional[bool]] = False
         ...     def format(self, target: str) -> int:
         ...         return int(target.strip("#"))
