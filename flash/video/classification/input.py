@@ -273,7 +273,7 @@ class VideoClassificationPathsPredictInput(Input):
 
 
 class VideoClassificationDataFramePredictInput(VideoClassificationPathsPredictInput):
-    def load_data(
+    def predict_load_data(
         self,
         data_frame: pd.DataFrame,
         input_key: str,
@@ -286,7 +286,7 @@ class VideoClassificationDataFramePredictInput(VideoClassificationPathsPredictIn
         decode_audio: bool = False,
         decoder: str = "pyav",
     ) -> Iterable[Tuple[str, Any]]:
-        return super().load_data(
+        return super().predict_load_data(
             resolve_files(data_frame, input_key, root, resolver),
             clip_sampler=clip_sampler,
             clip_duration=clip_duration,
@@ -298,7 +298,7 @@ class VideoClassificationDataFramePredictInput(VideoClassificationPathsPredictIn
 
 
 class VideoClassificationCSVPredictInput(VideoClassificationDataFramePredictInput):
-    def load_data(
+    def predict_load_data(
         self,
         csv_file: PATH_TYPE,
         input_key: str,
@@ -314,7 +314,7 @@ class VideoClassificationCSVPredictInput(VideoClassificationDataFramePredictInpu
         data_frame = read_csv(csv_file)
         if root is None:
             root = os.path.dirname(csv_file)
-        return super().load_data(
+        return super().predict_load_data(
             data_frame,
             input_key,
             root,
