@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from typing import Any, List, Optional, Sequence
 
 from flash.core.data.properties import ProcessState, Properties
-from flash.core.data.utilities.classification import get_target_formatter
+from flash.core.data.utilities.classification import get_target_formatter, TargetFormatter
 
 
 @dataclass(unsafe_hash=True, frozen=True)
@@ -37,19 +37,24 @@ class ClassificationInputMixin(Properties):
       tasks.
     """
 
-    def load_target_metadata(self, targets: List[Any]) -> None:
+    def load_target_metadata(self, targets: List[Any], target_formatter: Optional[TargetFormatter] = None) -> None:
         """Determine the target format and store the ``labels`` and ``num_classes``.
 
         Args:
             targets: The list of targets.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter`
+                rather than inferring from the targets.
         """
-        classification_state = self.get_state(ClassificationState)
-        if classification_state is not None:
-            labels, num_classes = classification_state.labels, classification_state.num_classes
-        else:
-            labels, num_classes = None, None
+        if target_formatter is None:
+            classification_state = self.get_state(ClassificationState)
+            if classification_state is not None:
+                labels, num_classes = classification_state.labels, classification_state.num_classes
+            else:
+                labels, num_classes = None, None
 
-        self.target_formatter = get_target_formatter(targets, labels, num_classes)
+            self.target_formatter = get_target_formatter(targets, labels, num_classes)
+        else:
+            self.target_formatter = target_formatter
 
         self.multi_label = self.target_formatter.multi_label
         self.labels = self.target_formatter.labels
