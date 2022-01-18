@@ -24,14 +24,6 @@ ______________
 
     classification.data.MatplotlibVisualization
 
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-    :template:
-
-    classification.transforms.default_transforms
-    classification.transforms.train_default_transforms
-
 Object Detection
 ________________
 
@@ -110,9 +102,7 @@ ____________
     :toctree: generated/
     :nosignatures:
 
-    segmentation.transforms.default_transforms
     segmentation.transforms.prepare_target
-    segmentation.transforms.train_default_transforms
 
 Style Transfer
 ______________
