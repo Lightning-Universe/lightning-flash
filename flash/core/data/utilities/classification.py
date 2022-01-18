@@ -42,12 +42,34 @@ def _strip(x: str) -> str:
 
 @dataclass
 class TargetFormatter:
-    """A ``TargetFormatter`` is used to convert targets of a given type to a standard format required by the
-    task."""
+    """A ``TargetFormatter`` is used to convert targets of a given type to a standard format required by the loss
+    function. To implement a custom ``TargetFormatter``, simply override the ``format`` method with your own logic.
 
-    multi_label: ClassVar[Optional[bool]]
-    numeric: ClassVar[Optional[bool]]
-    binary: ClassVar[Optional[bool]]
+    Examples
+    ________
+
+    .. doctest::
+
+        >>> from dataclasses import dataclass
+        >>> from typing import ClassVar, Optional
+        >>> from flash.core.data.utilities.classification import TargetFormatter
+        >>>
+        >>> @dataclass
+        ... class CustomStringTargetFormatter(TargetFormatter):
+        ...     "A ``TargetFormatter`` whcih converts strings of the format '#<index>' to integers."
+        ...     multi_label: ClassVar[Optional[bool]] = False
+        ...     def format(self, target: str) -> int:
+        ...         return int(target.strip("#"))
+        ...
+        >>>
+        >>> formatter = CustomStringTargetFormatter()
+        >>> formatter("#1")
+        1
+    """
+
+    multi_label: ClassVar[Optional[bool]] = None
+    numeric: ClassVar[Optional[bool]] = None
+    binary: ClassVar[Optional[bool]] = None
     labels: Optional[List[str]] = None
     num_classes: Optional[int] = None
 
@@ -77,10 +99,6 @@ class EmptyTargetFormatter(TargetFormatter):
         >>> formatter("anything")
         'anything'
     """
-
-    multi_label: ClassVar[Optional[bool]] = None
-    numeric: ClassVar[Optional[bool]] = None
-    binary: ClassVar[Optional[bool]] = None
 
     def format(self, target: Any) -> Any:
         return target
