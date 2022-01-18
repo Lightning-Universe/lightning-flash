@@ -142,7 +142,6 @@ __________________________
     :toctree: generated/
     :nosignatures:
 
-    ~flash.core.data.transforms.merge_transforms
     ~flash.core.data.transforms.kornia_collate
 
 flash.core.data.utils

@@ -103,8 +103,6 @@ Here's an example:
 
     from typing import Tuple, Callable
     import flash
-    from flash.core.data.io.input import DataKeys
-    from flash.core.data.transforms import ApplyToKeys, merge_transforms
     from flash.image import ImageClassificationData, ImageClassifier
     from flash.core.data.io.input_transform import InputTransform
     from dataclasses import dataclass
