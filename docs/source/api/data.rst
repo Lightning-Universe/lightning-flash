@@ -82,8 +82,8 @@ ___________________________
     ~flash.core.data.io.input.InputFormat
     ~flash.core.data.io.input.ImageLabelsMap
 
-flash.core.data.io.classification
-_________________________________
+flash.core.data.io.classification_input
+_______________________________________
 
 .. autosummary::
     :toctree: generated/
@@ -92,6 +92,25 @@ _________________________________
 
     ~flash.core.data.io.classification_input.ClassificationState
     ~flash.core.data.io.classification_input.ClassificationInputMixin
+
+flash.core.data.utilities.classification
+________________________________________
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: classtemplate.rst
+
+    ~flash.core.data.utilities.classification.TargetFormatter
+    ~flash.core.data.utilities.classification.SingleNumericTargetFormatter
+    ~flash.core.data.utilities.classification.SingleLabelTargetFormatter
+    ~flash.core.data.utilities.classification.SingleBinaryTargetFormatter
+    ~flash.core.data.utilities.classification.MultiNumericTargetFormatter
+    ~flash.core.data.utilities.classification.MultiLabelTargetFormatter
+    ~flash.core.data.utilities.classification.CommaDelimitedMultiLabelTargetFormatter
+    ~flash.core.data.utilities.classification.SpaceDelimitedTargetFormatter
+    ~flash.core.data.utilities.classification.MultiBinaryTargetFormatter
+    ~flash.core.data.utilities.classification.get_target_formatter
 
 flash.core.data.process
 _______________________
