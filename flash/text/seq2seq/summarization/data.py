@@ -29,9 +29,14 @@ if _TEXT_AVAILABLE:
 else:
     Dataset = object
 
+# Skip doctests if requirements aren't available
+if not _TEXT_AVAILABLE:
+    __doctest_skip__ = ["ImageClassificationData", "ImageClassificationData.*"]
+
 
 class SummarizationData(DataModule):
-    """DataModule for Summarization tasks."""
+    """The ``SummarizationData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
+    classmethods for loading data for text summarization."""
 
     input_transform_cls = TransformersInputTransform
     output_transform_cls = Seq2SeqOutputTransform
@@ -86,7 +91,7 @@ class SummarizationData(DataModule):
                 :class:`~flash.core.data.data_module.DataModule` constructor.
 
         Returns:
-            The constructed :class:`~flash.text.classification.data.TextClassificationData`.
+            The constructed :class:`~flash.text.seq2seq.summarization.data.SummarizationData`.
 
         Examples
         ________
@@ -184,30 +189,91 @@ class SummarizationData(DataModule):
         padding: Union[str, bool] = "max_length",
         **data_module_kwargs: Any,
     ) -> "SummarizationData":
-        """Creates a :class:`~flash.text.seq2seq.core.data.Seq2SeqData` object from the given JSON files.
+        """Load the :class:`~flash.text.seq2seq.summarization.data.SummarizationData` from JSON files containing
+        input text snippets and their corresponding target text snippets.
+
+        Input text snippets will be extracted from the ``input_field`` column in the JSON files.
+        Target text snippets will be extracted from the ``target_field`` column in the JSON files.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
 
         Args:
-            input_field: The field (column) in the JSON file to use for the input.
-            target_field: The field (column) in the JSON file to use for the target.
-            train_file: The JSON file containing the training data.
-            val_file: The JSON file containing the validation data.
-            test_file: The JSON file containing the testing data.
-            predict_file: The JSON file containing the data to use when predicting.
-            train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            field: To specify the field that holds the data in the JSON file.
-            max_source_length: The maximum source sequence length.
-            max_target_length: The maximum target sequence length.
-            padding: The padding mode to use.
+            input_field: The field (column name) in the JSON objects containing the input text snippets.
+            target_field: The field (column name) in the JSON objects containing the target text snippets.
+            train_file: The JSON file to use when training.
+            val_file: The JSON file to use when validating.
+            test_file: The JSON file to use when testing.
+            predict_file: The JSON file to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+                predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            field: The field that holds the data in the JSON file.
+            max_source_length: The maximum length to pad / truncate input sequences to.
+            max_target_length: The maximum length to pad / truncate target sequences to.
+            padding: The type of padding to apply. One of: "longest" or ``True``, "max_length", "do_not_pad" or
+                ``False``.
+            data_module_kwargs: Additional keyword arguments to provide to the
+                :class:`~flash.core.data.data_module.DataModule` constructor.
 
         Returns:
-            The constructed data module.
+            The constructed :class:`~flash.text.seq2seq.summarization.data.SummarizationData`.
+
+        Examples
+        ________
+
+        .. testsetup::
+
+            >>> import os
+            >>> from pandas import DataFrame
+            >>> DataFrame.from_dict({
+            ...     "texts": ["A long paragraph", "A news article"],
+            ...     "summaries": ["A short paragraph", "A news headline"],
+            ... }).to_json("train_data.json", orient="records", lines=True)
+            >>> DataFrame.from_dict({
+            ...     "texts": ["A movie review", "A book chapter"],
+            ... }).to_json("predict_data.json", orient="records", lines=True)
+
+        The file ``train_data.json`` contains the following:
+
+        .. code-block::
+
+            {"texts":"A long paragraph","summaries":"A short paragraph"}
+            {"texts":"A news article","summaries":"A news headline"}
+
+        The file ``predict_data.json`` contains the following:
+
+        .. code-block::
+
+            {"texts":"A movie review"}
+            {"texts":"A book chapter"}
+
+        .. doctest::
+
+            >>> from flash import Trainer
+            >>> from flash.text import SummarizationTask, SummarizationData
+            >>> datamodule = SummarizationData.from_json(
+            ...     "texts",
+            ...     "summaries",
+            ...     train_file="train_data.json",
+            ...     predict_file="predict_data.json",
+            ...     batch_size=2,
+            ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Downloading...
+            >>> model = SummarizationTask()
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> os.remove("train_data.json")
+            >>> os.remove("predict_data.json")
         """
 
         ds_kw = dict(
