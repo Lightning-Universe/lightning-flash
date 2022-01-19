@@ -18,7 +18,7 @@ import pandas as pd
 
 from flash.core.data.io.classification_input import ClassificationInputMixin, ClassificationState
 from flash.core.data.io.input import DataKeys, Input
-from flash.core.data.utilities.classification import TargetMode
+from flash.core.data.utilities.classification import MultiBinaryTargetFormatter
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.integrations.transformers.states import TransformersBackboneState
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
@@ -55,7 +55,7 @@ class TextClassificationInput(Input, ClassificationInputMixin):
             self.load_target_metadata(targets)
 
             # If we had binary multi-class targets then we also know the labels (column names)
-            if self.target_mode is TargetMode.MULTI_BINARY and isinstance(target_keys, List):
+            if isinstance(self.target_formatter, MultiBinaryTargetFormatter) and isinstance(target_keys, List):
                 classification_state = self.get_state(ClassificationState)
                 self.set_state(ClassificationState(target_keys, classification_state.num_classes))
 
