@@ -102,7 +102,6 @@ ________________________________________
     :template: classtemplate.rst
 
     ~flash.core.data.utilities.classification.TargetFormatter
-    ~flash.core.data.utilities.classification.EmptyTargetFormatter
     ~flash.core.data.utilities.classification.SingleNumericTargetFormatter
     ~flash.core.data.utilities.classification.SingleLabelTargetFormatter
     ~flash.core.data.utilities.classification.SingleBinaryTargetFormatter
