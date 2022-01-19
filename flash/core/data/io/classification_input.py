@@ -74,4 +74,6 @@ class ClassificationInputMixin(Properties):
         Returns:
             The formatted target.
         """
-        return self.target_formatter(target)
+        if hasattr(self, "target_formatter"):
+            return self.target_formatter(target)
+        return target

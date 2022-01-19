@@ -80,30 +80,6 @@ class TargetFormatter:
 
 
 @dataclass
-class EmptyTargetFormatter(TargetFormatter):
-    """A ``TargetFormatter`` that just returns it's input. This should be used in situations where the target
-    formatter cannot be inferred (e.g. because a list of all targets can't be efficiently obtained).
-
-    Examples
-    ________
-
-    .. doctest::
-
-        >>> from flash.core.data.utilities.classification import EmptyTargetFormatter
-        >>> formatter = EmptyTargetFormatter()
-        >>> formatter(5)
-        5
-        >>> formatter([5])
-        [5]
-        >>> formatter("anything")
-        'anything'
-    """
-
-    def format(self, target: Any) -> Any:
-        return target
-
-
-@dataclass
 class SingleNumericTargetFormatter(TargetFormatter):
     """A ``TargetFormatter`` for targets that contain a single numeric value (the class index).
 
