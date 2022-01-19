@@ -18,6 +18,7 @@ from torch.utils.data import Dataset
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
+from flash.core.data.utilities.classification import TargetFormatter
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
@@ -46,6 +47,7 @@ class GraphClassificationData(DataModule):
         val_transform: INPUT_TRANSFORM_TYPE = GraphClassificationInputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = GraphClassificationInputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = GraphClassificationInputTransform,
+        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = GraphClassificationDatasetInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
@@ -71,6 +73,8 @@ class GraphClassificationData(DataModule):
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
                 predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. If ``None`` then no formatting will be applied to targets.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
@@ -91,6 +95,7 @@ class GraphClassificationData(DataModule):
             >>> from torch_geometric.data import Data
             >>> from flash import Trainer
             >>> from flash.graph import GraphClassificationData, GraphClassifier
+            >>> from flash.core.data.utilities.classification import SingleLabelTargetFormatter
             >>>
             >>> class CustomDataset(Dataset):
             ...     def __init__(self, targets=None):
@@ -108,6 +113,7 @@ class GraphClassificationData(DataModule):
             >>> datamodule = GraphClassificationData.from_datasets(
             ...     train_dataset=CustomDataset(["cat", "dog", "cat"]),
             ...     predict_dataset=CustomDataset(),
+            ...     target_formatter=SingleLabelTargetFormatter(labels=["cat", "dog"]),
             ...     batch_size=2,
             ... )
             >>> datamodule.num_features
@@ -133,6 +139,7 @@ class GraphClassificationData(DataModule):
             >>> from torch_geometric.data import Data  # noqa: F811
             >>> from flash import Trainer
             >>> from flash.graph import GraphClassificationData, GraphClassifier
+            >>> from flash.core.data.utilities.classification import SingleLabelTargetFormatter
             >>>
             >>> class CustomDataset(Dataset):
             ...     def __init__(self, targets=None):
@@ -150,6 +157,7 @@ class GraphClassificationData(DataModule):
             >>> datamodule = GraphClassificationData.from_datasets(
             ...     train_dataset=CustomDataset(["cat", "dog", "cat"]),
             ...     predict_dataset=CustomDataset(),
+            ...     target_formatter=SingleLabelTargetFormatter(labels=["cat", "dog"]),
             ...     batch_size=2,
             ... )
             >>> datamodule.num_features
@@ -167,6 +175,7 @@ class GraphClassificationData(DataModule):
         """
 
         ds_kw = dict(
+            target_formatter=target_formatter,
             data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,

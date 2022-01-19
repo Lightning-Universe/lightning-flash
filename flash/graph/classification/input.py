@@ -17,6 +17,7 @@ from torch.utils.data import Dataset
 
 from flash.core.data.io.classification_input import ClassificationInputMixin
 from flash.core.data.io.input import DataKeys, Input
+from flash.core.data.utilities.classification import TargetFormatter
 from flash.core.data.utilities.samples import to_sample
 from flash.core.utilities.imports import _GRAPH_AVAILABLE, requires
 
@@ -33,18 +34,16 @@ def _get_num_features(sample: Dict[str, Any]) -> Optional[int]:
 
 class GraphClassificationDatasetInput(Input, ClassificationInputMixin):
     @requires("graph")
-    def load_data(self, dataset: Dataset) -> Dataset:
+    def load_data(self, dataset: Dataset, target_formatter: Optional[TargetFormatter] = None) -> Dataset:
         if not self.predicting:
-            # TODO: This may be slow
-            samples = [self.load_sample(sample) for sample in dataset]
-
-            self.num_features = _get_num_features(samples[0])
-            self.load_target_metadata([sample[DataKeys.TARGET] for sample in samples])
+            self.num_features = _get_num_features(self.load_sample(dataset[0]))
+            self.load_target_metadata(None, target_formatter)
         return dataset
 
     def load_sample(self, sample: Any) -> Mapping[str, Any]:
         if isinstance(sample, Data):
             sample = (sample, sample.y)
         sample = to_sample(sample)
-        sample[DataKeys.TARGET] = self.format_target(sample[DataKeys.TARGET])
+        if DataKeys.TARGET in sample:
+            sample[DataKeys.TARGET] = self.format_target(sample[DataKeys.TARGET])
         return sample

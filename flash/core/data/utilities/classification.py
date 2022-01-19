@@ -132,6 +132,7 @@ class SingleLabelTargetFormatter(TargetFormatter):
     binary: ClassVar[Optional[bool]] = False
 
     def __post_init__(self):
+        self.num_classes = len(self.labels) if self.num_classes is None else self.num_classes
         self.label_to_idx = {label: idx for idx, label in enumerate(self.labels)}
 
     def format(self, target: Any) -> Any:
@@ -423,7 +424,7 @@ def _get_target_details(
 
         tokens = [_strip(token) for token in tokens]
         labels = list(sorted_alphanumeric(set(tokens)))
-        num_classes = len(labels)
+        num_classes = None
     return labels, num_classes
 
 

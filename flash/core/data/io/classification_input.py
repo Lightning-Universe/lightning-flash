@@ -47,9 +47,7 @@ class ClassificationInputMixin(Properties):
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter`
                 rather than inferring from the targets.
         """
-        if target_formatter is None:
-            if targets is None:
-                raise ValueError("`targets` must be provided if `target_formatter` is `None`.")
+        if target_formatter is None and targets is not None:
             classification_state = self.get_state(ClassificationState)
             if classification_state is not None:
                 labels, num_classes = classification_state.labels, classification_state.num_classes
@@ -60,10 +58,11 @@ class ClassificationInputMixin(Properties):
         else:
             self.target_formatter = target_formatter
 
-        self.multi_label = self.target_formatter.multi_label
-        self.labels = self.target_formatter.labels
-        self.num_classes = self.target_formatter.num_classes
-        self.set_state(ClassificationState(self.labels, self.num_classes))
+        if getattr(self, "target_formatter", None) is not None:
+            self.multi_label = self.target_formatter.multi_label
+            self.labels = self.target_formatter.labels
+            self.num_classes = self.target_formatter.num_classes
+            self.set_state(ClassificationState(self.labels, self.num_classes))
 
     def format_target(self, target: Any) -> Any:
         """Format a single target according to the previously computed target format and metadata.
@@ -74,6 +73,6 @@ class ClassificationInputMixin(Properties):
         Returns:
             The formatted target.
         """
-        if hasattr(self, "target_formatter"):
+        if getattr(self, "target_formatter", None) is not None:
             return self.target_formatter(target)
         return target
