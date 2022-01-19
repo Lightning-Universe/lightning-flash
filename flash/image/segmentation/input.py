@@ -15,7 +15,6 @@ import os
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import torch
-from pytorch_lightning.utilities import rank_zero_warn
 
 from flash.core.data.io.input import DataKeys, ImageLabelsMap, Input
 from flash.core.data.utilities.paths import filter_valid_files, PATH_TYPE
@@ -33,7 +32,6 @@ else:
     SampleCollection = None
 
 if _TORCHVISION_AVAILABLE:
-    import torchvision
     import torchvision.transforms.functional as FT
 
 
@@ -106,7 +104,7 @@ class SemanticSegmentationFilesInput(SemanticSegmentationInput):
         filepath = sample[DataKeys.INPUT]
         sample[DataKeys.INPUT] = FT.to_tensor(image_loader(filepath))
         if DataKeys.TARGET in sample:
-            sample[DataKeys.TARGET] = torchvision.io.read_image(sample[DataKeys.TARGET])[0]
+            sample[DataKeys.TARGET] = (FT.to_tensor(image_loader(sample[DataKeys.TARGET])) * 255).long()[0]
         sample = super().load_sample(sample)
         sample[DataKeys.METADATA]["filepath"] = filepath
         return sample
@@ -124,20 +122,17 @@ class SemanticSegmentationFolderInput(SemanticSegmentationFilesInput):
         files = os.listdir(folder)
         files.sort()
         if mask_folder is not None:
-            mask_files = os.listdir(mask_folder)
+            mask_files = {os.path.splitext(file)[0]: file for file in os.listdir(mask_folder)}
+            file_names = [os.path.splitext(file)[0] for file in files]
 
-            all_files = set(files).intersection(set(mask_files))
-            if len(all_files) != len(files) or len(all_files) != len(mask_files):
-                rank_zero_warn(
-                    f"Found inconsistent files in input folder: {folder} and mask folder: {mask_folder}. Some files"
-                    " have been dropped.",
-                    UserWarning,
+            if len(set(file_names) - mask_files.keys()) != 0:
+                raise ValueError(
+                    f"Found inconsistent files in input folder: {folder} and mask folder: {mask_folder}. All input "
+                    f"files must have a corresponding mask file with the same name."
                 )
 
-            files = [os.path.join(folder, file) for file in all_files]
-            mask_files = [os.path.join(mask_folder, file) for file in all_files]
-            files.sort()
-            mask_files.sort()
+            files = [os.path.join(folder, file) for file in files]
+            mask_files = [os.path.join(mask_folder, mask_files[file_name]) for file_name in file_names]
             return super().load_data(files, mask_files)
         return super().load_data([os.path.join(folder, file) for file in files])
 
