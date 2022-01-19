@@ -37,14 +37,14 @@ if _TEXT_AVAILABLE:
 else:
     Dataset = object
 
-
 # Skip doctests if requirements aren't available
 if not _TEXT_AVAILABLE:
     __doctest_skip__ = ["TextClassificationData", "TextClassificationData.*"]
 
 
 class TextClassificationData(DataModule):
-    """Data Module for text classification tasks."""
+    """The ``TextClassificationData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
+    classmethods for loading data for text classification."""
 
     input_transform_cls = TransformersInputTransform
 
