@@ -87,8 +87,8 @@ Custom Transformations
 
 Flash automatically applies some default image transformations and augmentations, but you may wish to customize these for your own use case.
 The base :class:`~flash.core.data.io.input_transform.InputTransform` defines 7 hooks for different stages in the data loading pipeline.
-To apply image augmentations you can directly import the ``default_transforms`` from ``flash.image.classification.transforms`` and then merge your custom image transformations with them using the :func:`~flash.core.data.transforms.merge_transforms` helper function.
-Here's an example where we load the default transforms and merge with custom `torchvision` transformations.
+To apply custom image augmentations you can create your own :class:`~flash.core.data.io.input_transform.InputTransform`.
+Here's an example:
 
 
 .. testsetup:: transformations
@@ -103,11 +103,8 @@ Here's an example where we load the default transforms and merge with custom `to
 
     from typing import Tuple, Callable
     import flash
-    from flash.core.data.io.input import DataKeys
-    from flash.core.data.transforms import ApplyToKeys, merge_transforms
     from flash.image import ImageClassificationData, ImageClassifier
     from flash.core.data.io.input_transform import InputTransform
-    from flash.image.classification.transforms import default_transforms
     from dataclasses import dataclass
 
 

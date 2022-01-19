@@ -46,6 +46,5 @@ class GraphClassificationDatasetInput(Input, ClassificationInputMixin):
         if isinstance(sample, Data):
             sample = (sample, sample.y)
         sample = to_sample(sample)
-        if getattr(self, "target_mode", None) is not None:
-            sample[DataKeys.TARGET] = self.format_target(sample[DataKeys.TARGET])
+        sample[DataKeys.TARGET] = self.format_target(sample[DataKeys.TARGET])
         return sample

@@ -20,17 +20,9 @@ ______________
     ~classification.model.ImageClassifier
     ~classification.data.ImageClassificationFiftyOneInput
     ~classification.data.ImageClassificationData
-    ~classification.data.ImageClassificationInputTransform
+    ~classification.input_transform.ImageClassificationInputTransform
 
     classification.data.MatplotlibVisualization
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-    :template:
-
-    classification.transforms.default_transforms
-    classification.transforms.train_default_transforms
 
 Object Detection
 ________________
@@ -70,8 +62,6 @@ _____________________
     ~instance_segmentation.model.InstanceSegmentation
     ~instance_segmentation.data.InstanceSegmentationData
 
-    instance_segmentation.data.InstanceSegmentationInputTransform
-
 Embedding
 _________
 
@@ -92,6 +82,7 @@ ____________
 
     ~segmentation.model.SemanticSegmentation
     ~segmentation.data.SemanticSegmentationData
+    ~segmentation.input_transform.SemanticSegmentationInputTransform
 
     segmentation.data.SegmentationMatplotlibVisualization
     segmentation.input.SemanticSegmentationInput
@@ -101,7 +92,6 @@ ____________
     segmentation.input.SemanticSegmentationTensorInput
     segmentation.input.SemanticSegmentationFiftyOneInput
     segmentation.input.SemanticSegmentationDeserializer
-    segmentation.transforms.SemanticSegmentationInputTransform
     segmentation.model.SemanticSegmentationOutputTransform
     segmentation.output.FiftyOneSegmentationLabelsOutput
     segmentation.output.SegmentationLabelsOutput
@@ -110,9 +100,7 @@ ____________
     :toctree: generated/
     :nosignatures:
 
-    segmentation.transforms.default_transforms
-    segmentation.transforms.prepare_target
-    segmentation.transforms.train_default_transforms
+    segmentation.input_transform.prepare_target
 
 Style Transfer
 ______________
@@ -124,7 +112,7 @@ ______________
 
     ~style_transfer.model.StyleTransfer
     ~style_transfer.data.StyleTransferData
-    ~style_transfer.data.StyleTransferInputTransform
+    ~style_transfer.input_transform.StyleTransferInputTransform
 
 .. autosummary::
     :toctree: generated/

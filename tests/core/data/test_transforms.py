@@ -15,11 +15,9 @@ from unittest.mock import Mock
 
 import pytest
 import torch
-from torch import nn
 
 from flash.core.data.io.input import DataKeys
-from flash.core.data.transforms import ApplyToKeys, kornia_collate, KorniaParallelTransforms, merge_transforms
-from flash.core.data.utils import convert_to_modules
+from flash.core.data.transforms import ApplyToKeys, kornia_collate, KorniaParallelTransforms
 
 
 class TestApplyToKeys:
@@ -108,58 +106,3 @@ def test_kornia_collate():
     assert torch.all(result[DataKeys.TARGET] == torch.tensor([1, 2, 3]))
     assert list(result[DataKeys.INPUT].shape) == [3, 3, 10, 10]
     assert torch.allclose(result[DataKeys.INPUT], torch.zeros(1))
-
-
-_MOCK_TRANSFORM = Mock()
-
-
-@pytest.mark.parametrize(
-    "base_transforms, additional_transforms, expected_result",
-    [
-        (
-            {"per_sample_transform": _MOCK_TRANSFORM},
-            {"per_batch_transform": _MOCK_TRANSFORM},
-            {"per_sample_transform": _MOCK_TRANSFORM, "per_batch_transform": _MOCK_TRANSFORM},
-        ),
-        (
-            {"per_sample_transform": _MOCK_TRANSFORM},
-            {"per_sample_transform": _MOCK_TRANSFORM},
-            {
-                "per_sample_transform": nn.Sequential(
-                    convert_to_modules(_MOCK_TRANSFORM), convert_to_modules(_MOCK_TRANSFORM)
-                )
-            },
-        ),
-        (
-            {"per_sample_transform": _MOCK_TRANSFORM},
-            {"per_sample_transform": _MOCK_TRANSFORM, "per_batch_transform": _MOCK_TRANSFORM},
-            {
-                "per_sample_transform": nn.Sequential(
-                    convert_to_modules(_MOCK_TRANSFORM), convert_to_modules(_MOCK_TRANSFORM)
-                ),
-                "per_batch_transform": _MOCK_TRANSFORM,
-            },
-        ),
-        (
-            {"per_sample_transform": _MOCK_TRANSFORM, "per_batch_transform": _MOCK_TRANSFORM},
-            {"per_sample_transform": _MOCK_TRANSFORM},
-            {
-                "per_sample_transform": nn.Sequential(
-                    convert_to_modules(_MOCK_TRANSFORM), convert_to_modules(_MOCK_TRANSFORM)
-                ),
-                "per_batch_transform": _MOCK_TRANSFORM,
-            },
-        ),
-    ],
-)
-def test_merge_transforms(base_transforms, additional_transforms, expected_result):
-    result = merge_transforms(base_transforms, additional_transforms)
-    assert result.keys() == expected_result.keys()
-    for key in result:
-        if result[key] == _MOCK_TRANSFORM:
-            assert expected_result[key] == _MOCK_TRANSFORM
-        elif isinstance(result[key], nn.Sequential):
-            assert isinstance(expected_result[key], nn.Sequential)
-            assert len(result[key]) == len(expected_result[key])
-            for module, expected_module in zip(result[key], expected_result[key]):
-                assert module.func == expected_module.func

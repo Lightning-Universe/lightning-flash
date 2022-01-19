@@ -19,108 +19,110 @@ import pytest
 import torch
 
 from flash.core.data.utilities.classification import (
-    get_target_details,
+    CommaDelimitedMultiLabelTargetFormatter,
     get_target_formatter,
-    get_target_mode,
-    TargetMode,
+    MultiBinaryTargetFormatter,
+    MultiLabelTargetFormatter,
+    MultiNumericTargetFormatter,
+    SingleBinaryTargetFormatter,
+    SingleLabelTargetFormatter,
+    SingleNumericTargetFormatter,
+    SpaceDelimitedTargetFormatter,
 )
 from tests.helpers.retry import retry
 
-Case = namedtuple("Case", ["target", "formatted_target", "target_mode", "labels", "num_classes"])
+Case = namedtuple("Case", ["target", "formatted_target", "target_formatter_type", "labels", "num_classes"])
 
 cases = [
     # Single
-    Case([0, 1, 2], [0, 1, 2], TargetMode.SINGLE_NUMERIC, None, 3),
-    Case([[1, 0, 0], [0, 1, 0], [0, 0, 1]], [0, 1, 2], TargetMode.SINGLE_BINARY, None, 3),
-    Case(["blue", "green", "red"], [0, 1, 2], TargetMode.SINGLE_TOKEN, ["blue", "green", "red"], 3),
+    Case([0, 1, 2], [0, 1, 2], SingleNumericTargetFormatter, None, 3),
+    Case([[1, 0, 0], [0, 1, 0], [0, 0, 1]], [0, 1, 2], SingleBinaryTargetFormatter, None, 3),
+    Case(["blue", "green", "red"], [0, 1, 2], SingleLabelTargetFormatter, ["blue", "green", "red"], 3),
     # Multi
-    Case([[0, 1], [1, 2], [2, 0]], [[1, 1, 0], [0, 1, 1], [1, 0, 1]], TargetMode.MULTI_NUMERIC, None, 3),
-    Case([[1, 1, 0], [0, 1, 1], [1, 0, 1]], [[1, 1, 0], [0, 1, 1], [1, 0, 1]], TargetMode.MULTI_BINARY, None, 3),
+    Case([[0, 1], [1, 2], [2, 0]], [[1, 1, 0], [0, 1, 1], [1, 0, 1]], MultiNumericTargetFormatter, None, 3),
+    Case([[1, 1, 0], [0, 1, 1], [1, 0, 1]], [[1, 1, 0], [0, 1, 1], [1, 0, 1]], MultiBinaryTargetFormatter, None, 3),
     Case(
         [["blue", "green"], ["green", "red"], ["red", "blue"]],
         [[1, 1, 0], [0, 1, 1], [1, 0, 1]],
-        TargetMode.MULTI_TOKEN,
+        MultiLabelTargetFormatter,
         ["blue", "green", "red"],
         3,
     ),
     Case(
         ["blue,green", "green,red", "red,blue"],
         [[1, 1, 0], [0, 1, 1], [1, 0, 1]],
-        TargetMode.MUTLI_COMMA_DELIMITED,
+        CommaDelimitedMultiLabelTargetFormatter,
         ["blue", "green", "red"],
         3,
     ),
     Case(
         ["blue green", "green red", "red blue"],
         [[1, 1, 0], [0, 1, 1], [1, 0, 1]],
-        TargetMode.MUTLI_SPACE_DELIMITED,
+        SpaceDelimitedTargetFormatter,
         ["blue", "green", "red"],
         3,
     ),
     # Ambiguous
-    Case([[0], [1, 2], [2, 0]], [[1, 0, 0], [0, 1, 1], [1, 0, 1]], TargetMode.MULTI_NUMERIC, None, 3),
-    Case([[1, 0, 0], [0, 1, 1], [1, 0, 1]], [[1, 0, 0], [0, 1, 1], [1, 0, 1]], TargetMode.MULTI_BINARY, None, 3),
+    Case([[0], [1, 2], [2, 0]], [[1, 0, 0], [0, 1, 1], [1, 0, 1]], MultiNumericTargetFormatter, None, 3),
+    Case([[1, 0, 0], [0, 1, 1], [1, 0, 1]], [[1, 0, 0], [0, 1, 1], [1, 0, 1]], MultiBinaryTargetFormatter, None, 3),
     Case(
         [["blue"], ["green", "red"], ["red", "blue"]],
         [[1, 0, 0], [0, 1, 1], [1, 0, 1]],
-        TargetMode.MULTI_TOKEN,
+        MultiLabelTargetFormatter,
         ["blue", "green", "red"],
         3,
     ),
     Case(
         ["blue", "green,red", "red,blue"],
         [[1, 0, 0], [0, 1, 1], [1, 0, 1]],
-        TargetMode.MUTLI_COMMA_DELIMITED,
+        CommaDelimitedMultiLabelTargetFormatter,
         ["blue", "green", "red"],
         3,
     ),
     Case(
         ["blue", "green red", "red blue"],
         [[1, 0, 0], [0, 1, 1], [1, 0, 1]],
-        TargetMode.MUTLI_SPACE_DELIMITED,
+        SpaceDelimitedTargetFormatter,
         ["blue", "green", "red"],
         3,
     ),
     # Special cases
-    Case(["blue ", " green", "red"], [0, 1, 2], TargetMode.SINGLE_TOKEN, ["blue", "green", "red"], 3),
+    Case(["blue ", " green", "red"], [0, 1, 2], SingleLabelTargetFormatter, ["blue", "green", "red"], 3),
     Case(
         ["blue", "green, red", "red, blue"],
         [[1, 0, 0], [0, 1, 1], [1, 0, 1]],
-        TargetMode.MUTLI_COMMA_DELIMITED,
+        CommaDelimitedMultiLabelTargetFormatter,
         ["blue", "green", "red"],
         3,
     ),
     Case(
         ["blue", "green ,red", "red ,blue"],
         [[1, 0, 0], [0, 1, 1], [1, 0, 1]],
-        TargetMode.MUTLI_COMMA_DELIMITED,
+        CommaDelimitedMultiLabelTargetFormatter,
         ["blue", "green", "red"],
         3,
     ),
     Case(
         [f"class_{i}" for i in range(10000)],
         list(range(10000)),
-        TargetMode.SINGLE_TOKEN,
+        SingleLabelTargetFormatter,
         [f"class_{i}" for i in range(10000)],
         10000,
     ),
     # Array types
-    Case(torch.tensor([[0], [1]]), [0, 1], TargetMode.SINGLE_NUMERIC, None, 2),
-    Case(torch.tensor([0, 1, 2]), [0, 1, 2], TargetMode.SINGLE_NUMERIC, None, 3),
-    Case(np.array([0, 1, 2]), [0, 1, 2], TargetMode.SINGLE_NUMERIC, None, 3),
+    Case(torch.tensor([[0], [1]]), [0, 1], SingleNumericTargetFormatter, None, 2),
+    Case(torch.tensor([0, 1, 2]), [0, 1, 2], SingleNumericTargetFormatter, None, 3),
+    Case(np.array([0, 1, 2]), [0, 1, 2], SingleNumericTargetFormatter, None, 3),
 ]
 
 
 @pytest.mark.parametrize("case", cases)
 def test_case(case):
-    target_mode = get_target_mode(case.target)
-    assert target_mode is case.target_mode
+    formatter = get_target_formatter(case.target)
 
-    labels, num_classes = get_target_details(case.target, target_mode)
-    assert labels == case.labels
-    assert num_classes == case.num_classes
-
-    formatter = get_target_formatter(target_mode, labels, num_classes)
+    assert isinstance(formatter, case.target_formatter_type)
+    assert formatter.labels == case.labels
+    assert formatter.num_classes == case.num_classes
     assert [formatter(t) for t in case.target] == case.formatted_target
 
 
@@ -137,9 +139,7 @@ def test_speed(case):
         targets = case.target * repeats
 
     start = time.perf_counter()
-    target_mode = get_target_mode(targets)
-    labels, num_classes = get_target_details(targets, target_mode)
-    formatter = get_target_formatter(target_mode, labels, num_classes)
+    formatter = get_target_formatter(targets)
     end = time.perf_counter()
 
     assert (end - start) / len(targets) < 1e-5  # 0.01ms per target

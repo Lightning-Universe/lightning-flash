@@ -21,7 +21,7 @@ from torch.utils.data import Sampler
 
 from flash.core.data.io.classification_input import ClassificationInputMixin, ClassificationState
 from flash.core.data.io.input import DataKeys, Input, IterableInput
-from flash.core.data.utilities.classification import TargetMode
+from flash.core.data.utilities.classification import MultiBinaryTargetFormatter
 from flash.core.data.utilities.data_frame import read_csv, resolve_files, resolve_targets
 from flash.core.data.utilities.paths import list_valid_files, make_dataset, PATH_TYPE
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
@@ -154,7 +154,11 @@ class VideoClassificationDataFrameInput(VideoClassificationInput):
         )
 
         # If we had binary multi-class targets then we also know the labels (column names)
-        if self.training and self.target_mode is TargetMode.MULTI_BINARY and isinstance(target_keys, List):
+        if (
+            self.training
+            and isinstance(self.target_formatter, MultiBinaryTargetFormatter)
+            and isinstance(target_keys, List)
+        ):
             classification_state = self.get_state(ClassificationState)
             self.set_state(ClassificationState(target_keys, classification_state.num_classes))
 
@@ -273,7 +277,7 @@ class VideoClassificationPathsPredictInput(Input):
 
 
 class VideoClassificationDataFramePredictInput(VideoClassificationPathsPredictInput):
-    def load_data(
+    def predict_load_data(
         self,
         data_frame: pd.DataFrame,
         input_key: str,
@@ -286,7 +290,7 @@ class VideoClassificationDataFramePredictInput(VideoClassificationPathsPredictIn
         decode_audio: bool = False,
         decoder: str = "pyav",
     ) -> Iterable[Tuple[str, Any]]:
-        return super().load_data(
+        return super().predict_load_data(
             resolve_files(data_frame, input_key, root, resolver),
             clip_sampler=clip_sampler,
             clip_duration=clip_duration,
@@ -298,7 +302,7 @@ class VideoClassificationDataFramePredictInput(VideoClassificationPathsPredictIn
 
 
 class VideoClassificationCSVPredictInput(VideoClassificationDataFramePredictInput):
-    def load_data(
+    def predict_load_data(
         self,
         csv_file: PATH_TYPE,
         input_key: str,
@@ -314,7 +318,7 @@ class VideoClassificationCSVPredictInput(VideoClassificationDataFramePredictInpu
         data_frame = read_csv(csv_file)
         if root is None:
             root = os.path.dirname(csv_file)
-        return super().load_data(
+        return super().predict_load_data(
             data_frame,
             input_key,
             root,

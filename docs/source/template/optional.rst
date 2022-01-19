@@ -7,10 +7,10 @@ Optional Extras
 Organize your transforms in transforms.py
 =========================================
 
-It can be useful to define your :class:`~flash.core.data.io.input_transform.InputTransform` in a ``transforms.py`` file.
-Here's an example from `image/classification/transforms.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash/image/classification/transforms.py>`_:
+It can be useful to define your :class:`~flash.core.data.io.input_transform.InputTransform` in an ``input_transform.py`` file.
+Here's an example from `image/classification/input_transform.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash/image/classification/input_transform.py>`_:
 
-.. literalinclude:: ../../../flash/image/classification/transforms.py
+.. literalinclude:: ../../../flash/image/classification/input_transform.py
     :language: python
     :pyobject: ImageClassificationInputTransform
 

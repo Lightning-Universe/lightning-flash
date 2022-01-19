@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import csv
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, List, Tuple
@@ -604,7 +605,8 @@ def bad_csv_no_image(image_tmpdir):
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_from_bad_csv_no_image(bad_csv_no_image):
-    with pytest.raises(ValueError, match="File ID `image_3` did not resolve to an existing file."):
+    bad_file = os.path.join(os.path.dirname(bad_csv_no_image), "image_3")
+    with pytest.raises(ValueError, match=f"File ID `image_3` resolved to `{bad_file}`, which does not exist."):
         img_data = ImageClassificationData.from_csv(
             "image",
             ["target"],
