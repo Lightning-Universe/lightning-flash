@@ -22,7 +22,7 @@ from flash.core.data.utilities.samples import to_sample
 from flash.core.utilities.imports import _GRAPH_AVAILABLE, requires
 
 if _GRAPH_AVAILABLE:
-    from torch_geometric.data import Data
+    from torch_geometric.data import Data, InMemoryDataset
 
 
 def _get_num_features(sample: Dict[str, Any]) -> Optional[int]:
@@ -37,7 +37,14 @@ class GraphClassificationDatasetInput(Input, ClassificationInputMixin):
     def load_data(self, dataset: Dataset, target_formatter: Optional[TargetFormatter] = None) -> Dataset:
         if not self.predicting:
             self.num_features = _get_num_features(self.load_sample(dataset[0]))
-            self.load_target_metadata(None, target_formatter)
+
+            if isinstance(dataset, InMemoryDataset):
+                self.load_target_metadata([sample.y for sample in dataset], target_formatter)
+            else:
+                self.load_target_metadata(None, target_formatter)
+
+            if hasattr(dataset, "num_classes"):
+                self.num_classes = dataset.num_classes
         return dataset
 
     def load_sample(self, sample: Any) -> Mapping[str, Any]:
