@@ -77,7 +77,6 @@ _______________
     :template: classtemplate.rst
 
     ~seq2seq.core.model.Seq2SeqTask
-    ~seq2seq.core.data.Seq2SeqData
 
     seq2seq.core.input.Seq2SeqInputBase
     seq2seq.core.input.Seq2SeqCSVInput
