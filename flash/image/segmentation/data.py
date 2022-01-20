@@ -203,7 +203,8 @@ class SemanticSegmentationData(DataModule):
             ├── image_3.png
             ...
 
-        your ``train_masks`` folder (passed to the ``train_target_folder`` argument) would need to look like this:
+        your ``train_masks`` folder (passed to the ``train_target_folder`` argument) would need to look like this
+        (although the file extensions could be different):
 
         .. code-block::
 
