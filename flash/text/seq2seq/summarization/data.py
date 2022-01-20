@@ -316,30 +316,70 @@ class SummarizationData(DataModule):
         padding: Union[str, bool] = "max_length",
         **data_module_kwargs: Any,
     ) -> "SummarizationData":
-        """Creates a :class:`~flash.text.seq2seq.core.data.Seq2SeqData` object from the given Hugging Face datasets
-        ``Dataset`` objects.
+        """Load the :class:`~flash.text.seq2seq.summarization.data.SummarizationData` from Hugging Face ``Dataset``
+        objects containing input text snippets and their corresponding target text snippets.
+
+        Input text snippets will be extracted from the ``input_field`` column in the ``Dataset`` objects.
+        Target text snippets will be extracted from the ``target_field`` column in the ``Dataset`` objects.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
 
         Args:
-            input_field: The field (column) in the ``Dataset`` to use for the input.
-            target_field: The field (column) in the ``Dataset`` to use for the target.
-            train_hf_dataset: The pandas ``Dataset`` containing the training data.
-            val_hf_dataset: The pandas ``Dataset`` containing the validation data.
-            test_hf_dataset: The pandas ``Dataset`` containing the testing data.
-            predict_hf_dataset: The pandas ``Dataset`` containing the data to use when predicting.
-            train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            max_source_length: The maximum source sequence length.
-            max_target_length: The maximum target sequence length.
-            padding: The padding mode to use.
+            input_field: The field (column name) in the ``Dataset`` objects containing the input text snippets.
+            target_field: The field (column name) in the ``Dataset`` objects containing the target text snippets.
+            train_hf_dataset: The ``Dataset`` to use when training.
+            val_hf_dataset: The ``Dataset`` to use when validating.
+            test_hf_dataset: The ``Dataset`` to use when testing.
+            predict_hf_dataset: The ``Dataset`` to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+                predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            max_source_length: The maximum length to pad / truncate input sequences to.
+            max_target_length: The maximum length to pad / truncate target sequences to.
+            padding: The type of padding to apply. One of: "longest" or ``True``, "max_length", "do_not_pad" or
+                ``False``.
+            data_module_kwargs: Additional keyword arguments to provide to the
+                :class:`~flash.core.data.data_module.DataModule` constructor.
 
         Returns:
-            The constructed data module.
+            The constructed :class:`~flash.text.seq2seq.summarization.data.SummarizationData`.
+
+        Examples
+        ________
+
+        .. doctest::
+
+            >>> from datasets import Dataset
+            >>> from flash import Trainer
+            >>> from flash.text import SummarizationTask, SummarizationData
+            >>> train_data = Dataset.from_dict(
+            ...     {
+            ...         "texts": ["A long paragraph", "A news article"],
+            ...         "summaries": ["A short paragraph", "A news headline"],
+            ...     }
+            ... )
+            >>> predict_data = Dataset.from_dict(
+            ...     {
+            ...         "texts": ["A movie review", "A book chapter"],
+            ...     }
+            ... )
+            >>> datamodule = SummarizationData.from_hf_datasets(
+            ...     "texts",
+            ...     "summaries",
+            ...     train_hf_dataset=train_data,
+            ...     predict_hf_dataset=predict_data,
+            ...     batch_size=2,
+            ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            >>> model = SummarizationTask()
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
         """
 
         ds_kw = dict(
@@ -365,11 +405,11 @@ class SummarizationData(DataModule):
     def from_lists(
         cls,
         train_data: Optional[List[str]] = None,
-        train_targets: Optional[Union[List[Any], List[List[Any]]]] = None,
+        train_targets: Optional[List[str]] = None,
         val_data: Optional[List[str]] = None,
-        val_targets: Optional[Union[List[Any], List[List[Any]]]] = None,
+        val_targets: Optional[List[str]] = None,
         test_data: Optional[List[str]] = None,
-        test_targets: Optional[Union[List[Any], List[List[Any]]]] = None,
+        test_targets: Optional[List[str]] = None,
         predict_data: Optional[List[str]] = None,
         train_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
         val_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
@@ -382,33 +422,56 @@ class SummarizationData(DataModule):
         padding: Union[str, bool] = "max_length",
         **data_module_kwargs: Any,
     ) -> "SummarizationData":
-        """Creates a :class:`~flash.text.seq2seq.core.data.Seq2SeqData` object from the given Python lists.
+        """Load the :class:`~flash.text.seq2seq.summarization.data.SummarizationData` from lists of input text
+        snippets and corresponding lists of target text snippets.
+
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
 
         Args:
-            train_data: A list of sentences to use as the train inputs.
-            train_targets: A list of targets to use as the train targets. For multi-label classification, the targets
-                should be provided as a list of lists, where each inner list contains the targets for a sample.
-            val_data: A list of sentences to use as the validation inputs.
-            val_targets: A list of targets to use as the validation targets. For multi-label classification, the targets
-                should be provided as a list of lists, where each inner list contains the targets for a sample.
-            test_data: A list of sentences to use as the test inputs.
-            test_targets: A list of targets to use as the test targets. For multi-label classification, the targets
-                should be provided as a list of lists, where each inner list contains the targets for a sample.
-            predict_data: A list of sentences to use when predicting.
-            train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            max_source_length: The maximum source sequence length.
-            max_target_length: The maximum target sequence length.
-            padding: The padding mode to use.
+            train_data: The list of input text snippets to use when training.
+            train_targets: The list of target text snippets to use when training.
+            val_data: The list of input text snippets to use when validating.
+            val_targets: The list of target text snippets to use when validating.
+            test_data: The list of input text snippets to use when testing.
+            test_targets: The list of target text snippets to use when testing.
+            predict_data: The list of input text snippets to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+                predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            max_source_length: The maximum length to pad / truncate input sequences to.
+            max_target_length: The maximum length to pad / truncate target sequences to.
+            padding: The type of padding to apply. One of: "longest" or ``True``, "max_length", "do_not_pad" or
+                ``False``.
+            data_module_kwargs: Additional keyword arguments to provide to the
+                :class:`~flash.core.data.data_module.DataModule` constructor.
 
         Returns:
-            The constructed data module.
+            The constructed :class:`~flash.text.seq2seq.summarization.data.SummarizationData`.
+
+        Examples
+        ________
+
+        .. doctest::
+
+            >>> from flash import Trainer
+            >>> from flash.text import SummarizationTask, SummarizationData
+            >>> datamodule = SummarizationData.from_lists(
+            ...     train_data=["A long paragraph", "A news article"],
+            ...     train_targets=["A short paragraph", "A news headline"],
+            ...     predict_data=["A movie review", "A book chapter"],
+            ...     batch_size=2,
+            ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            >>> model = SummarizationTask()
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
         """
 
         ds_kw = dict(
