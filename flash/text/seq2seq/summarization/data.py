@@ -31,7 +31,7 @@ else:
 
 # Skip doctests if requirements aren't available
 if not _TEXT_AVAILABLE:
-    __doctest_skip__ = ["ImageClassificationData", "ImageClassificationData.*"]
+    __doctest_skip__ = ["SummarizationData", "SummarizationData.*"]
 
 
 class SummarizationData(DataModule):
