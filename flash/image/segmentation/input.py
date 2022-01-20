@@ -32,7 +32,7 @@ else:
     SampleCollection = None
 
 if _TORCHVISION_AVAILABLE:
-    import torchvision.transforms.functional as FT
+    from torchvision.transforms.functional import to_tensor
 
 
 class SemanticSegmentationInput(Input):
@@ -102,9 +102,9 @@ class SemanticSegmentationFilesInput(SemanticSegmentationInput):
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         filepath = sample[DataKeys.INPUT]
-        sample[DataKeys.INPUT] = FT.to_tensor(image_loader(filepath))
+        sample[DataKeys.INPUT] = to_tensor(image_loader(filepath))
         if DataKeys.TARGET in sample:
-            sample[DataKeys.TARGET] = (FT.to_tensor(image_loader(sample[DataKeys.TARGET])) * 255).long()[0]
+            sample[DataKeys.TARGET] = (to_tensor(image_loader(sample[DataKeys.TARGET])) * 255).long()[0]
         sample = super().load_sample(sample)
         sample[DataKeys.METADATA]["filepath"] = filepath
         return sample
@@ -167,6 +167,6 @@ class SemanticSegmentationFiftyOneInput(SemanticSegmentationFilesInput):
 class SemanticSegmentationDeserializer(ImageDeserializer):
     def serve_load_sample(self, data: str) -> Dict[str, Any]:
         result = super().serve_load_sample(data)
-        result[DataKeys.INPUT] = FT.to_tensor(result[DataKeys.INPUT])
+        result[DataKeys.INPUT] = to_tensor(result[DataKeys.INPUT])
         result[DataKeys.METADATA] = {"size": result[DataKeys.INPUT].shape[-2:]}
         return result
