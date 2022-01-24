@@ -97,12 +97,6 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-${{ matrix.python-version }}-td${{ steps.times.outputs.period }}-${{ join(matrix.topic,'-') }}-${{ matrix.requires }}-pip-
 
-    - name: Install vissl
-      if: contains( matrix.topic , 'image_extras' )
-      run: |
-        pip install git+https://github.com/facebookresearch/ClassyVision.git
-        pip install git+https://github.com/facebookresearch/vissl.git
-
     - name: Install graph test dependencies
       if: contains( matrix.topic , 'graph' )
       run: |
@@ -121,6 +115,12 @@ jobs:
         pip install '.[test]' --upgrade
         pip list
       shell: bash
+
+    - name: Install vissl
+      if: contains( matrix.topic , 'image_extras' )
+      run: |
+        pip install git+https://github.com/facebookresearch/ClassyVision.git
+        pip install git+https://github.com/facebookresearch/vissl.git
 
     - name: Install serve test dependencies
       if: contains( matrix.topic , 'serve' )
