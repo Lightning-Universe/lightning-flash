@@ -64,7 +64,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Fixed a bug when loading prediction data for graph classification without targets ([#1121](https://github.com/PyTorchLightning/lightning-flash/pull/1121))
 
+- Fixed a bug where loading Seq2Seq data for prediction would not work if the target field was not present ([#1128](https://github.com/PyTorchLightning/lightning-flash/pull/1128))
+
 ### Removed
+
+- Removed the `Seq2SeqData` base class (use `TranslationData` or `SummarizationData` directly) ([#1128](https://github.com/PyTorchLightning/lightning-flash/pull/1128))
 
 ## [0.6.0] - 2021-13-12
 

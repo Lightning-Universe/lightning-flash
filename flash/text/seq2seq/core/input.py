@@ -47,7 +47,7 @@ class Seq2SeqInputBase(Input):
         if input_key != DataKeys.INPUT:
             hf_dataset = hf_dataset.rename_column(input_key, DataKeys.INPUT)
 
-        if target_key != DataKeys.TARGET:
+        if target_key in hf_dataset.column_names and target_key != DataKeys.TARGET:
             hf_dataset = hf_dataset.rename_column(target_key, DataKeys.TARGET)
 
         if flash._IS_TESTING:
