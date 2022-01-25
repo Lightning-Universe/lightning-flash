@@ -28,12 +28,12 @@ from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,
     _IMAGE_AVAILABLE,
+    _IMAGE_TESTING,
     _MATPLOTLIB_AVAILABLE,
     _PIL_AVAILABLE,
     _TORCHVISION_AVAILABLE,
 )
 from flash.image import ImageClassificationData, ImageClassificationInputTransform
-from tests.helpers.utils import _IMAGE_TESTING
 
 if _TORCHVISION_AVAILABLE:
     import torchvision.transforms as T

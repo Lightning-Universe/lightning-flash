@@ -16,8 +16,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
+from flash.core.utilities.imports import _TABULAR_TESTING
 from flash.tabular.forecasting import TabularForecastingData
-from tests.helpers.utils import _TABULAR_TESTING
 
 
 @pytest.mark.skipif(not _TABULAR_TESTING, reason="Tabular libraries aren't installed.")

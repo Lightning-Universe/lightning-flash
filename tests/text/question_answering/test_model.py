@@ -20,9 +20,8 @@ import torch
 
 from flash import Trainer
 from flash.__main__ import main
-from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.core.utilities.imports import _TEXT_AVAILABLE, _TEXT_TESTING
 from flash.text import QuestionAnsweringTask
-from tests.helpers.utils import _TEXT_TESTING
 
 # ======== Mock functions ========
 

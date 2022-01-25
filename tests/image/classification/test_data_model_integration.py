@@ -18,9 +18,8 @@ import pytest
 import torch
 
 from flash import Trainer
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _PIL_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _IMAGE_TESTING, _PIL_AVAILABLE
 from flash.image import ImageClassificationData, ImageClassifier
-from tests.helpers.utils import _IMAGE_TESTING
 
 if _PIL_AVAILABLE:
     from PIL import Image

@@ -18,7 +18,7 @@ import numpy as np
 import pytest
 
 from flash.core.data.io.input import DataKeys
-from tests.helpers.utils import _TABULAR_TESTING
+from flash.core.utilities.imports import _TABULAR_TESTING
 
 if _TABULAR_TESTING:
     import pandas as pd

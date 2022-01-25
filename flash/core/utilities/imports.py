@@ -14,6 +14,7 @@
 import functools
 import importlib
 import operator
+import os
 import types
 from importlib.util import find_spec
 from typing import List, Tuple, Union
@@ -272,3 +273,25 @@ class LazyModule(types.ModuleType):
         # Update this object's dict so that attribute references are efficient
         # (__getattr__ is only called on lookups that fail)
         self.__dict__.update(module.__dict__)
+
+
+# Global variables used for testing purposes (e.g. to only run doctests in the correct CI job)
+_IMAGE_TESTING = _IMAGE_AVAILABLE
+_VIDEO_TESTING = _VIDEO_AVAILABLE
+_TABULAR_TESTING = _TABULAR_AVAILABLE
+_TEXT_TESTING = _TEXT_AVAILABLE
+_SERVE_TESTING = _SERVE_AVAILABLE
+_POINTCLOUD_TESTING = _POINTCLOUD_AVAILABLE
+_GRAPH_TESTING = _GRAPH_AVAILABLE
+_AUDIO_TESTING = _AUDIO_AVAILABLE
+
+if "FLASH_TEST_TOPIC" in os.environ:
+    topic = os.environ["FLASH_TEST_TOPIC"]
+    _IMAGE_TESTING = topic == "image"
+    _VIDEO_TESTING = topic == "video"
+    _TABULAR_TESTING = topic == "tabular"
+    _TEXT_TESTING = topic == "text"
+    _SERVE_TESTING = topic == "serve"
+    _POINTCLOUD_TESTING = topic == "pointcloud"
+    _GRAPH_TESTING = topic == "graph"
+    _AUDIO_TESTING = topic == "audio"

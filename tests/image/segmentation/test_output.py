@@ -15,9 +15,8 @@ import pytest
 import torch
 
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _IMAGE_TESTING
 from flash.image.segmentation.output import FiftyOneSegmentationLabelsOutput, SegmentationLabelsOutput
-from tests.helpers.utils import _IMAGE_TESTING
 
 
 class TestSemanticSegmentationLabelsOutput:

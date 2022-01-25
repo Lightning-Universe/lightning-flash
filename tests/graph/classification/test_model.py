@@ -18,11 +18,10 @@ import pytest
 from flash import RunningStage, Trainer
 from flash.__main__ import main
 from flash.core.data.data_module import DataModule
-from flash.core.utilities.imports import _GRAPH_AVAILABLE
+from flash.core.utilities.imports import _GRAPH_AVAILABLE, _GRAPH_TESTING
 from flash.graph.classification import GraphClassifier
 from flash.graph.classification.input import GraphClassificationDatasetInput
 from flash.graph.classification.input_transform import GraphClassificationInputTransform
-from tests.helpers.utils import _GRAPH_TESTING
 
 if _GRAPH_AVAILABLE:
     from torch_geometric import datasets

@@ -17,17 +17,19 @@ from unittest import mock
 
 import pytest
 
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE, _SKLEARN_AVAILABLE
-from tests.examples.utils import run_test
-from tests.helpers.utils import (
+from flash.core.utilities.imports import (
     _AUDIO_TESTING,
     _GRAPH_TESTING,
+    _ICEVISION_AVAILABLE,
+    _IMAGE_AVAILABLE,
     _IMAGE_TESTING,
     _POINTCLOUD_TESTING,
+    _SKLEARN_AVAILABLE,
     _TABULAR_TESTING,
     _TEXT_TESTING,
     _VIDEO_TESTING,
 )
+from tests.examples.utils import run_test
 
 root = Path(__file__).parent.parent.parent
 

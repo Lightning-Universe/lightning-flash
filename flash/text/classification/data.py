@@ -21,7 +21,7 @@ from flash.core.data.io.input import Input
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioTextClassificationInput
 from flash.core.integrations.transformers.input_transform import TransformersInputTransform
-from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.core.utilities.imports import _TEXT_AVAILABLE, _TEXT_TESTING
 from flash.core.utilities.stages import RunningStage
 from flash.text.classification.input import (
     TextClassificationCSVInput,
@@ -38,7 +38,7 @@ else:
     Dataset = object
 
 # Skip doctests if requirements aren't available
-if not _TEXT_AVAILABLE:
+if not _TEXT_TESTING:
     __doctest_skip__ = ["TextClassificationData", "TextClassificationData.*"]
 
 

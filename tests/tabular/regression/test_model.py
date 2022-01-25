@@ -21,9 +21,8 @@ from pytorch_lightning import Trainer
 
 from flash.__main__ import main
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _TABULAR_AVAILABLE
+from flash.core.utilities.imports import _SERVE_TESTING, _TABULAR_AVAILABLE, _TABULAR_TESTING
 from flash.tabular import TabularRegressionData, TabularRegressor
-from tests.helpers.utils import _SERVE_TESTING, _TABULAR_TESTING
 
 # ======== Mock functions ========
 

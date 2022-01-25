@@ -33,12 +33,19 @@ from flash.audio import SpeechRecognition
 from flash.core.adapter import Adapter
 from flash.core.classification import ClassificationTask
 from flash.core.data.io.output_transform import OutputTransform
-from flash.core.utilities.imports import _TORCH_OPTIMIZER_AVAILABLE, _TRANSFORMERS_AVAILABLE
+from flash.core.utilities.imports import (
+    _AUDIO_TESTING,
+    _GRAPH_TESTING,
+    _IMAGE_TESTING,
+    _TABULAR_TESTING,
+    _TEXT_TESTING,
+    _TORCH_OPTIMIZER_AVAILABLE,
+    _TRANSFORMERS_AVAILABLE,
+)
 from flash.graph import GraphClassifier, GraphEmbedder
 from flash.image import ImageClassifier, SemanticSegmentation
 from flash.tabular import TabularClassifier
 from flash.text import SummarizationTask, TextClassifier, TranslationTask
-from tests.helpers.utils import _AUDIO_TESTING, _GRAPH_TESTING, _IMAGE_TESTING, _TABULAR_TESTING, _TEXT_TESTING
 
 # ======== Mock functions ========
 

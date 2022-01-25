@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional, Type, Union
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
-from flash.core.utilities.imports import _PANDAS_AVAILABLE, _TABULAR_AVAILABLE
+from flash.core.utilities.imports import _PANDAS_AVAILABLE, _TABULAR_TESTING
 from flash.core.utilities.stages import RunningStage
 from flash.tabular.classification.input import TabularClassificationCSVInput, TabularClassificationDataFrameInput
 from flash.tabular.data import TabularData
@@ -27,7 +27,7 @@ else:
     DataFrame = object
 
 # Skip doctests if requirements aren't available
-if not _TABULAR_AVAILABLE:
+if not _TABULAR_TESTING:
     __doctest_skip__ = ["TabularClassificationData", "TabularClassificationData.*"]
 
 

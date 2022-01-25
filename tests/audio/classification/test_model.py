@@ -16,8 +16,7 @@ from unittest import mock
 import pytest
 
 from flash.__main__ import main
-from flash.core.utilities.imports import _IMAGE_AVAILABLE
-from tests.helpers.utils import _AUDIO_TESTING
+from flash.core.utilities.imports import _AUDIO_TESTING, _IMAGE_AVAILABLE
 
 
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")

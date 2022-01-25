@@ -27,7 +27,7 @@ from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioImageClassificationInput
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _MATPLOTLIB_AVAILABLE, Image, requires
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_TESTING, _MATPLOTLIB_AVAILABLE, Image, requires
 from flash.core.utilities.stages import RunningStage
 from flash.image.classification.input import (
     ImageClassificationCSVInput,
@@ -46,7 +46,7 @@ else:
     SampleCollection = None
 
 # Skip doctests if requirements aren't available
-if not _IMAGE_AVAILABLE:
+if not _IMAGE_TESTING:
     __doctest_skip__ = ["ImageClassificationData", "ImageClassificationData.*"]
 
 if _MATPLOTLIB_AVAILABLE:

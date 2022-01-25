@@ -20,8 +20,8 @@ from pytorch_lightning import seed_everything
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
 from flash.core.data.utils import download_data
+from flash.core.utilities.imports import _POINTCLOUD_TESTING
 from flash.pointcloud.segmentation import PointCloudSegmentation, PointCloudSegmentationData
-from tests.helpers.utils import _POINTCLOUD_TESTING
 
 
 @pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed")

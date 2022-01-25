@@ -19,9 +19,8 @@ import pytest
 
 from flash.core.data.io.input import DataKeys
 from flash.core.integrations.transformers.states import TransformersBackboneState
-from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.core.utilities.imports import _TEXT_AVAILABLE, _TEXT_TESTING
 from flash.text import TextClassificationData
-from tests.helpers.utils import _TEXT_TESTING
 
 if _TEXT_AVAILABLE:
     from datasets import Dataset

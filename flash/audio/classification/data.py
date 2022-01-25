@@ -33,12 +33,12 @@ from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _AUDIO_AVAILABLE
+from flash.core.utilities.imports import _AUDIO_TESTING
 from flash.core.utilities.stages import RunningStage
 from flash.image.classification.data import MatplotlibVisualization
 
 # Skip doctests if requirements aren't available
-if not _AUDIO_AVAILABLE:
+if not _AUDIO_TESTING:
     __doctest_skip__ = ["AudioClassificationData", "AudioClassificationData.*"]
 
 
