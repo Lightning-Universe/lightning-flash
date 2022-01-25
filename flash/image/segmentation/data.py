@@ -584,7 +584,8 @@ class SemanticSegmentationData(DataModule):
             >>> train_dataset = fo.Dataset.from_images(
             ...     ["image_1.png", "image_2.png", "image_3.png"]
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            33%...
+            <BLANKLINE>
+            ...
             >>> samples = [train_dataset[filepath] for filepath in train_dataset.values("filepath")]
             >>> for sample in samples:
             ...     sample["ground_truth"] = fo.Segmentation(mask=np.random.randint(0, 10, (64, 64), dtype="uint8"))
@@ -593,7 +594,8 @@ class SemanticSegmentationData(DataModule):
             >>> predict_dataset = fo.Dataset.from_images(
             ...     ["predict_image_1.png", "predict_image_2.png", "predict_image_3.png"]
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            33%...
+            <BLANKLINE>
+            ...
             >>> datamodule = SemanticSegmentationData.from_fiftyone(
             ...     train_dataset=train_dataset,
             ...     predict_dataset=predict_dataset,

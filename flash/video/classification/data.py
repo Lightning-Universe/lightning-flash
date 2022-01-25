@@ -818,7 +818,8 @@ class VideoClassificationData(DataModule):
             >>> train_dataset = fo.Dataset.from_videos(
             ...     ["video_1.mp4", "video_2.mp4", "video_3.mp4"]
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            33%...
+            <BLANKLINE>
+            ...
             >>> samples = [train_dataset[filepath] for filepath in train_dataset.values("filepath")]
             >>> for sample, label in zip(samples, ["cat", "dog", "cat"]):
             ...     sample["ground_truth"] = fo.Classification(label=label)
@@ -827,7 +828,8 @@ class VideoClassificationData(DataModule):
             >>> predict_dataset = fo.Dataset.from_images(
             ...     ["predict_video_1.mp4", "predict_video_2.mp4", "predict_video_3.mp4"]
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            33%...
+            <BLANKLINE>
+            ...
             >>> datamodule = VideoClassificationData.from_fiftyone(
             ...     train_dataset=train_dataset,
             ...     predict_dataset=predict_dataset,

@@ -849,7 +849,8 @@ class ImageClassificationData(DataModule):
             >>> train_dataset = fo.Dataset.from_images(
             ...     ["image_1.png", "image_2.png", "image_3.png"]
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            33%...
+            <BLANKLINE>
+            ...
             >>> samples = [train_dataset[filepath] for filepath in train_dataset.values("filepath")]
             >>> for sample, label in zip(samples, ["cat", "dog", "cat"]):
             ...     sample["ground_truth"] = fo.Classification(label=label)
@@ -858,7 +859,8 @@ class ImageClassificationData(DataModule):
             >>> predict_dataset = fo.Dataset.from_images(
             ...     ["predict_image_1.png", "predict_image_2.png", "predict_image_3.png"]
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            33%...
+            <BLANKLINE>
+            ...
             >>> datamodule = ImageClassificationData.from_fiftyone(
             ...     train_dataset=train_dataset,
             ...     predict_dataset=predict_dataset,

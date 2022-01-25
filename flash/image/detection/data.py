@@ -655,7 +655,8 @@ class ObjectDetectionData(DataModule):
             >>> train_dataset = fo.Dataset.from_images(
             ...     ["image_1.png", "image_2.png", "image_3.png"]
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            33%...
+            <BLANKLINE>
+            ...
             >>> samples = [train_dataset[filepath] for filepath in train_dataset.values("filepath")]
             >>> for sample, label, bounding_box in zip(
             ...     samples,
@@ -670,14 +671,16 @@ class ObjectDetectionData(DataModule):
             >>> predict_dataset = fo.Dataset.from_images(
             ...     ["predict_image_1.png", "predict_image_2.png", "predict_image_3.png"]
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            33%...
+            <BLANKLINE>
+            ...
             >>> datamodule = ObjectDetectionData.from_fiftyone(
             ...     train_dataset=train_dataset,
             ...     predict_dataset=predict_dataset,
             ...     transform_kwargs=dict(image_size=(128, 128)),
             ...     batch_size=2,
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            Computing...
+            <BLANKLINE>
+            ...
             >>> datamodule.num_classes
             3
             >>> datamodule.labels
