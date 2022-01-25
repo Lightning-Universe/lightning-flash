@@ -20,7 +20,7 @@ from flash.core.data.io.input import Input
 from flash.core.data.utilities.sort import sorted_alphanumeric
 from flash.core.integrations.icevision.data import IceVisionInput
 from flash.core.integrations.icevision.transforms import IceVisionInputTransform
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _ICEVISION_AVAILABLE, requires
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _ICEVISION_AVAILABLE, _IMAGE_EXTRAS_TESTING, requires
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 from flash.image.detection.input import ObjectDetectionFiftyOneInput
@@ -40,7 +40,7 @@ else:
     Parser = object
 
 # Skip doctests if requirements aren't available
-if not _ICEVISION_AVAILABLE:
+if not _IMAGE_EXTRAS_TESTING:
     __doctest_skip__ = ["ObjectDetectionData", "ObjectDetectionData.*"]
 
 
