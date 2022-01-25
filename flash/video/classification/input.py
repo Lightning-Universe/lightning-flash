@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 import pandas as pd
 import torch
@@ -25,7 +25,7 @@ from flash.core.data.utilities.classification import MultiBinaryTargetFormatter
 from flash.core.data.utilities.data_frame import read_csv, resolve_files, resolve_targets
 from flash.core.data.utilities.paths import list_valid_files, make_dataset, PATH_TYPE
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, lazy_import
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, lazy_import, requires
 
 if _FIFTYONE_AVAILABLE:
     fol = lazy_import("fiftyone.core.labels")
@@ -199,6 +199,7 @@ class VideoClassificationCSVInput(VideoClassificationDataFrameInput):
 
 
 class VideoClassificationFiftyOneInput(VideoClassificationInput):
+    @requires("fiftyone")
     def load_data(
         self,
         sample_collection: SampleCollection,
@@ -234,8 +235,7 @@ class VideoClassificationPathsPredictInput(Input):
         clip_sampler_kwargs: Dict[str, Any] = None,
         decode_audio: bool = False,
         decoder: str = "pyav",
-        **_: Any,
-    ) -> Iterable[Tuple[str, Any]]:
+    ) -> List[str]:
         paths = list_valid_files(paths, valid_extensions=("mp4", "avi"))
         self._clip_sampler = _make_clip_sampler(clip_sampler, clip_duration, clip_sampler_kwargs)
         self._decode_audio = decode_audio
@@ -286,16 +286,14 @@ class VideoClassificationDataFramePredictInput(VideoClassificationPathsPredictIn
         clip_sampler: Union[str, "ClipSampler"] = "random",
         clip_duration: float = 2,
         clip_sampler_kwargs: Dict[str, Any] = None,
-        video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
         decode_audio: bool = False,
         decoder: str = "pyav",
-    ) -> Iterable[Tuple[str, Any]]:
+    ) -> List[str]:
         return super().predict_load_data(
             resolve_files(data_frame, input_key, root, resolver),
             clip_sampler=clip_sampler,
             clip_duration=clip_duration,
             clip_sampler_kwargs=clip_sampler_kwargs,
-            video_sampler=video_sampler,
             decode_audio=decode_audio,
             decoder=decoder,
         )
@@ -311,10 +309,9 @@ class VideoClassificationCSVPredictInput(VideoClassificationDataFramePredictInpu
         clip_sampler: Union[str, "ClipSampler"] = "random",
         clip_duration: float = 2,
         clip_sampler_kwargs: Dict[str, Any] = None,
-        video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
         decode_audio: bool = False,
         decoder: str = "pyav",
-    ) -> Iterable[Tuple[str, Any]]:
+    ) -> List[str]:
         data_frame = read_csv(csv_file)
         if root is None:
             root = os.path.dirname(csv_file)
@@ -326,7 +323,27 @@ class VideoClassificationCSVPredictInput(VideoClassificationDataFramePredictInpu
             clip_sampler=clip_sampler,
             clip_duration=clip_duration,
             clip_sampler_kwargs=clip_sampler_kwargs,
-            video_sampler=video_sampler,
+            decode_audio=decode_audio,
+            decoder=decoder,
+        )
+
+
+class VideoClassificationFiftyOnePredictInput(VideoClassificationPathsPredictInput):
+    @requires("fiftyone")
+    def predict_load_data(
+        self,
+        data: SampleCollection,
+        clip_sampler: Union[str, "ClipSampler"] = "random",
+        clip_duration: float = 2,
+        clip_sampler_kwargs: Dict[str, Any] = None,
+        decode_audio: bool = False,
+        decoder: str = "pyav",
+    ) -> List[str]:
+        return super().predict_load_data(
+            data.values("filepath"),
+            clip_sampler=clip_sampler,
+            clip_duration=clip_duration,
+            clip_sampler_kwargs=clip_sampler_kwargs,
             decode_audio=decode_audio,
             decoder=decoder,
         )

@@ -31,6 +31,7 @@ from flash.video.classification.input import (
     VideoClassificationDataFrameInput,
     VideoClassificationDataFramePredictInput,
     VideoClassificationFiftyOneInput,
+    VideoClassificationFiftyOnePredictInput,
     VideoClassificationFilesInput,
     VideoClassificationFoldersInput,
     VideoClassificationPathsPredictInput,
@@ -48,7 +49,9 @@ else:
     ClipSampler = None
 
 # Skip doctests if requirements aren't available
-if not _VIDEO_TESTING:
+if _VIDEO_TESTING and not _FIFTYONE_AVAILABLE:
+    __doctest_skip__ = ["VideoClassificationData.from_fiftyone"]
+elif not _VIDEO_TESTING:
     __doctest_skip__ = ["VideoClassificationData", "VideoClassificationData.*"]
 
 
@@ -169,15 +172,35 @@ class VideoClassificationData(DataModule):
             clip_sampler=clip_sampler,
             clip_duration=clip_duration,
             clip_sampler_kwargs=clip_sampler_kwargs,
-            video_sampler=video_sampler,
             decode_audio=decode_audio,
             decoder=decoder,
         )
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_files, train_targets, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_files, val_targets, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_files, test_targets, transform=test_transform, **ds_kw),
+            input_cls(
+                RunningStage.TRAINING,
+                train_files,
+                train_targets,
+                transform=train_transform,
+                video_sampler=video_sampler,
+                **ds_kw,
+            ),
+            input_cls(
+                RunningStage.VALIDATING,
+                val_files,
+                val_targets,
+                transform=val_transform,
+                video_sampler=video_sampler,
+                **ds_kw,
+            ),
+            input_cls(
+                RunningStage.TESTING,
+                test_files,
+                test_targets,
+                transform=test_transform,
+                video_sampler=video_sampler,
+                **ds_kw,
+            ),
             predict_input_cls(RunningStage.PREDICTING, predict_files, transform=predict_transform, **ds_kw),
             **data_module_kwargs,
         )
@@ -318,15 +341,20 @@ class VideoClassificationData(DataModule):
             clip_sampler=clip_sampler,
             clip_duration=clip_duration,
             clip_sampler_kwargs=clip_sampler_kwargs,
-            video_sampler=video_sampler,
             decode_audio=decode_audio,
             decoder=decoder,
         )
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_folder, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_folder, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_folder, transform=test_transform, **ds_kw),
+            input_cls(
+                RunningStage.TRAINING, train_folder, transform=train_transform, video_sampler=video_sampler, **ds_kw
+            ),
+            input_cls(
+                RunningStage.VALIDATING, val_folder, transform=val_transform, video_sampler=video_sampler, **ds_kw
+            ),
+            input_cls(
+                RunningStage.TESTING, test_folder, transform=test_transform, video_sampler=video_sampler, **ds_kw
+            ),
             predict_input_cls(RunningStage.PREDICTING, predict_folder, transform=predict_transform, **ds_kw),
             **data_module_kwargs,
         )
@@ -485,7 +513,6 @@ class VideoClassificationData(DataModule):
             clip_sampler=clip_sampler,
             clip_duration=clip_duration,
             clip_sampler_kwargs=clip_sampler_kwargs,
-            video_sampler=video_sampler,
             decode_audio=decode_audio,
             decoder=decoder,
         )
@@ -496,9 +523,13 @@ class VideoClassificationData(DataModule):
         predict_data = (predict_data_frame, input_field, predict_videos_root, predict_resolver)
 
         return cls(
-            input_cls(RunningStage.TRAINING, *train_data, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, *val_data, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, *test_data, transform=test_transform, **ds_kw),
+            input_cls(
+                RunningStage.TRAINING, *train_data, transform=train_transform, video_sampler=video_sampler, **ds_kw
+            ),
+            input_cls(
+                RunningStage.VALIDATING, *val_data, transform=val_transform, video_sampler=video_sampler, **ds_kw
+            ),
+            input_cls(RunningStage.TESTING, *test_data, transform=test_transform, video_sampler=video_sampler, **ds_kw),
             predict_input_cls(RunningStage.PREDICTING, *predict_data, transform=predict_transform, **ds_kw),
             **data_module_kwargs,
         )
@@ -673,7 +704,6 @@ class VideoClassificationData(DataModule):
             clip_sampler=clip_sampler,
             clip_duration=clip_duration,
             clip_sampler_kwargs=clip_sampler_kwargs,
-            video_sampler=video_sampler,
             decode_audio=decode_audio,
             decoder=decoder,
         )
@@ -684,9 +714,13 @@ class VideoClassificationData(DataModule):
         predict_data = (predict_file, input_field, predict_videos_root, predict_resolver)
 
         return cls(
-            input_cls(RunningStage.TRAINING, *train_data, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, *val_data, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, *test_data, transform=test_transform, **ds_kw),
+            input_cls(
+                RunningStage.TRAINING, *train_data, transform=train_transform, video_sampler=video_sampler, **ds_kw
+            ),
+            input_cls(
+                RunningStage.VALIDATING, *val_data, transform=val_transform, video_sampler=video_sampler, **ds_kw
+            ),
+            input_cls(RunningStage.TESTING, *test_data, transform=test_transform, video_sampler=video_sampler, **ds_kw),
             predict_input_cls(RunningStage.PREDICTING, *predict_data, transform=predict_transform, **ds_kw),
             **data_module_kwargs,
         )
@@ -711,9 +745,99 @@ class VideoClassificationData(DataModule):
         decoder: str = "pyav",
         label_field: str = "ground_truth",
         input_cls: Type[Input] = VideoClassificationFiftyOneInput,
+        predict_input_cls: Type[Input] = VideoClassificationFiftyOnePredictInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
     ) -> "VideoClassificationData":
+        """Load the :class:`~flash.video.classification.data.VideoClassificationData` from FiftyOne
+        ``SampleCollection`` objects.
+
+        The supported file extensions are: ``.mp4``, and ``.avi``.
+        The targets will be extracted from the ``label_field`` in the ``SampleCollection`` objects and can be in any
+        of our :ref:`supported classification target formats <formatting_classification_targets>`.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
+        Args:
+            train_dataset: The ``SampleCollection`` to use when training.
+            val_dataset: The ``SampleCollection`` to use when validating.
+            test_dataset: The ``SampleCollection`` to use when testing.
+            predict_dataset: The ``SampleCollection`` to use when predicting.
+            label_field: The field in the ``SampleCollection`` objects containing the targets.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+                predicting.
+            clip_sampler: The clip sampler to use. One of: ``"uniform"``, ``"random"``, ``"constant_clips_per_video"``.
+            clip_duration: The duration of clips to sample.
+            clip_sampler_kwargs: Additional keyword arguments to use when constructing the clip sampler.
+            video_sampler: Sampler for the internal video container. This defines the order videos are decoded and,
+                if necessary, the distributed split.
+            decode_audio: If True, also decode audio from video.
+            decoder: The decoder to use to decode videos. One of: ``"pyav"``, ``"torchvision"``. Not used for frame
+                videos.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            predict_input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the prediction data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+                :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.video.classification.data.VideoClassificationData`.
+
+        Examples
+        ________
+
+        .. testsetup::
+
+            >>> import torch
+            >>> from torchvision import io
+            >>> data = torch.randint(255, (10, 64, 64, 3))
+            >>> _ = [io.write_video(f"video_{i}.mp4", data, 5, "libx264rgb", {"crf": "0"}) for i in range(1, 4)]
+            >>> _ = [io.write_video(f"predict_video_{i}.mp4", data, 5, "libx264rgb", {"crf": "0"}) for i in range(1, 4)]
+
+        .. doctest::
+
+            >>> import fiftyone as fo
+            >>> from flash import Trainer
+            >>> from flash.video import VideoClassifier, VideoClassificationData
+            >>> train_dataset = fo.Dataset.from_videos(
+            ...     ["video_1.mp4", "video_2.mp4", "video_3.mp4"]
+            ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            33%...
+            >>> samples = [train_dataset[filepath] for filepath in train_dataset.values("filepath")]
+            >>> for sample, label in zip(samples, ["cat", "dog", "cat"]):
+            ...     sample["ground_truth"] = fo.Classification(label=label)
+            ...     sample.save()
+            ...
+            >>> predict_dataset = fo.Dataset.from_images(
+            ...     ["predict_video_1.mp4", "predict_video_2.mp4", "predict_video_3.mp4"]
+            ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            33%...
+            >>> datamodule = VideoClassificationData.from_fiftyone(
+            ...     train_dataset=train_dataset,
+            ...     predict_dataset=predict_dataset,
+            ...     transform_kwargs=dict(image_size=(244, 244)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            2
+            >>> datamodule.labels
+            ['cat', 'dog']
+            >>> model = VideoClassifier(backbone="x3d_xs", num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> import os
+            >>> _ = [os.remove(f"video_{i}.mp4") for i in range(1, 4)]
+            >>> _ = [os.remove(f"predict_video_{i}.mp4") for i in range(1, 4)]
+        """
 
         ds_kw = dict(
             data_pipeline_state=DataPipelineState(),
@@ -722,17 +846,36 @@ class VideoClassificationData(DataModule):
             clip_sampler=clip_sampler,
             clip_duration=clip_duration,
             clip_sampler_kwargs=clip_sampler_kwargs,
-            video_sampler=video_sampler,
             decode_audio=decode_audio,
             decoder=decoder,
-            label_field=label_field,
         )
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_dataset, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_dataset, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_dataset, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_dataset, transform=predict_transform, **ds_kw),
+            input_cls(
+                RunningStage.TRAINING,
+                train_dataset,
+                transform=train_transform,
+                video_sampler=video_sampler,
+                label_field=label_field,
+                **ds_kw,
+            ),
+            input_cls(
+                RunningStage.VALIDATING,
+                val_dataset,
+                transform=val_transform,
+                video_sampler=video_sampler,
+                label_field=label_field,
+                **ds_kw,
+            ),
+            input_cls(
+                RunningStage.TESTING,
+                test_dataset,
+                transform=test_transform,
+                video_sampler=video_sampler,
+                label_field=label_field,
+                **ds_kw,
+            ),
+            predict_input_cls(RunningStage.PREDICTING, predict_dataset, transform=predict_transform, **ds_kw),
             **data_module_kwargs,
         )
 
