@@ -23,10 +23,9 @@ from torch.utils.data import SequentialSampler
 
 import flash
 from flash.core.classification import ProbabilitiesOutput
-from flash.core.utilities.imports import _BAAL_AVAILABLE
+from flash.core.utilities.imports import _BAAL_AVAILABLE, _IMAGE_TESTING
 from flash.image import ImageClassificationData, ImageClassifier
 from flash.image.classification.integrations.baal import ActiveLearningDataModule, ActiveLearningLoop
-from tests.helpers.utils import _IMAGE_TESTING
 from tests.image.classification.test_data import _rand_image
 
 # ======== Mock functions ========

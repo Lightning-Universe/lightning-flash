@@ -19,9 +19,8 @@ import pytest
 import torch
 
 from flash.__main__ import main
-from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _IMAGE_AVAILABLE, _IMAGE_TESTING
 from flash.image.style_transfer import StyleTransfer
-from tests.helpers.utils import _IMAGE_TESTING
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")

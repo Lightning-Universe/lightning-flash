@@ -15,10 +15,9 @@ import pytest
 
 from flash import DataKeys
 from flash.core.data.io.input_transform import Compose
-from flash.core.utilities.imports import _GRAPH_AVAILABLE
+from flash.core.utilities.imports import _GRAPH_AVAILABLE, _GRAPH_TESTING
 from flash.graph.classification.data import GraphClassificationData
 from flash.graph.classification.input_transform import GraphClassificationInputTransform, PyGTransformAdapter
-from tests.helpers.utils import _GRAPH_TESTING
 
 if _GRAPH_AVAILABLE:
     from torch_geometric.datasets import TUDataset

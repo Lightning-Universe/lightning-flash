@@ -21,7 +21,7 @@ from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, lazy_import
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_TESTING, lazy_import
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 from flash.image.segmentation.input import (
@@ -42,7 +42,7 @@ else:
     SampleCollection = object
 
 # Skip doctests if requirements aren't available
-if not _IMAGE_AVAILABLE:
+if not _IMAGE_TESTING:
     __doctest_skip__ = ["SemanticSegmentationData", "SemanticSegmentationData.*"]
 
 

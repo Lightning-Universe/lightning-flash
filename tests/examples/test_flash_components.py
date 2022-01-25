@@ -17,8 +17,8 @@ from unittest import mock
 
 import pytest
 
+from flash.core.utilities.imports import _IMAGE_TESTING
 from tests.examples.utils import run_test
-from tests.helpers.utils import _IMAGE_TESTING
 
 root = Path(__file__).parent.parent.parent
 

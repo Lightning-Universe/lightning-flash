@@ -23,7 +23,7 @@ from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioVideoClassificationInput
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, _VIDEO_AVAILABLE, requires
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, _VIDEO_TESTING, requires
 from flash.core.utilities.stages import RunningStage
 from flash.video.classification.input import (
     VideoClassificationCSVInput,
@@ -48,7 +48,7 @@ else:
     ClipSampler = None
 
 # Skip doctests if requirements aren't available
-if not _VIDEO_AVAILABLE:
+if not _VIDEO_TESTING:
     __doctest_skip__ = ["VideoClassificationData", "VideoClassificationData.*"]
 
 

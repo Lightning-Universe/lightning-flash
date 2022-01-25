@@ -17,9 +17,8 @@ import pytest
 
 import flash
 from flash.__main__ import main
-from flash.core.utilities.imports import _PANDAS_AVAILABLE, _TABULAR_AVAILABLE
+from flash.core.utilities.imports import _PANDAS_AVAILABLE, _TABULAR_AVAILABLE, _TABULAR_TESTING
 from flash.tabular.forecasting import TabularForecaster, TabularForecastingData
-from tests.helpers.utils import _TABULAR_TESTING
 
 if _TABULAR_AVAILABLE:
     from pytorch_forecasting.data import NaNLabelEncoder

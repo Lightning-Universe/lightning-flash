@@ -18,7 +18,7 @@ from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.integrations.transformers.input_transform import TransformersInputTransform
-from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.core.utilities.imports import _TEXT_AVAILABLE, _TEXT_TESTING
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 from flash.text.seq2seq.core.input import Seq2SeqCSVInput, Seq2SeqInputBase, Seq2SeqJSONInput, Seq2SeqListInput
@@ -30,7 +30,7 @@ else:
     Dataset = object
 
 # Skip doctests if requirements aren't available
-if not _TEXT_AVAILABLE:
+if not _TEXT_TESTING:
     __doctest_skip__ = ["TranslationData", "TranslationData.*"]
 
 

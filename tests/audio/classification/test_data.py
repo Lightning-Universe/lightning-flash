@@ -23,8 +23,7 @@ from pytorch_lightning import seed_everything
 from flash.audio import AudioClassificationData
 from flash.core.data.io.input import DataKeys
 from flash.core.data.transforms import ApplyToKeys
-from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
-from tests.helpers.utils import _AUDIO_TESTING
+from flash.core.utilities.imports import _AUDIO_TESTING, _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
 
 if _TORCHVISION_AVAILABLE:
     import torchvision.transforms as T

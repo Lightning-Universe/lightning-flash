@@ -18,8 +18,8 @@ import pytest
 
 from flash import DataKeys
 from flash.core.integrations.transformers.states import TransformersBackboneState
+from flash.core.utilities.imports import _TEXT_TESTING
 from flash.text import SummarizationData
-from tests.helpers.utils import _TEXT_TESTING
 
 TEST_BACKBONE = "sshleifer/tiny-mbart"  # super small model for testing
 TEST_BACKBONE_STATE = TransformersBackboneState(

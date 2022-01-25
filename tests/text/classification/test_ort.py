@@ -20,11 +20,10 @@ from pytorch_lightning.core.lightning import LightningModule
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash import Trainer
-from flash.core.utilities.imports import _TORCH_ORT_AVAILABLE
+from flash.core.utilities.imports import _TEXT_TESTING, _TORCH_ORT_AVAILABLE
 from flash.text import TextClassifier
 from flash.text.ort_callback import ORTCallback
 from tests.helpers.boring_model import BoringModel
-from tests.helpers.utils import _TEXT_TESTING
 from tests.text.classification.test_model import DummyDataset, TEST_BACKBONE
 
 if _TORCH_ORT_AVAILABLE:
