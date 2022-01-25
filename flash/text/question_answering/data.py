@@ -17,6 +17,7 @@ from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
 from flash.core.data.utilities.paths import PATH_TYPE
+from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 from flash.text.question_answering.input import (
@@ -28,9 +29,14 @@ from flash.text.question_answering.input import (
 from flash.text.question_answering.input_transform import QuestionAnsweringInputTransform
 from flash.text.question_answering.output_transform import QuestionAnsweringOutputTransform
 
+# Skip doctests if requirements aren't available
+if not _TEXT_AVAILABLE:
+    __doctest_skip__ = ["QuestionAnsweringData", "QuestionAnsweringData.*"]
+
 
 class QuestionAnsweringData(DataModule):
-    """Data module for QuestionAnswering task."""
+    """The ``QuestionAnsweringData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
+    classmethods for loading data for Question Answering."""
 
     input_transform_cls = QuestionAnsweringInputTransform
     output_transform_cls = QuestionAnsweringOutputTransform
@@ -57,8 +63,14 @@ class QuestionAnsweringData(DataModule):
         doc_stride: int = 128,
         **data_module_kwargs: Any,
     ) -> "QuestionAnsweringData":
-        """Creates a :class:`~flash.text.question_answering.data.QuestionAnsweringData` object from the given CSV
-        files.
+        """Load the :class:`~flash.text.question_answering.data.QuestionAnsweringData` from CSV files containing
+        questions, contexts and their corresponding answers.
+
+        Question snippets will be extracted from the ``question_column_name`` column in the CSV files.
+        Context snippets will be extracted from the ``context_column_name`` column in the CSV files.
+        Answer snippets will be extracted from the ``answer_column_name`` column in the CSV files.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
 
         Args:
             train_file: The CSV file containing the training data.
@@ -82,7 +94,89 @@ class QuestionAnsweringData(DataModule):
             doc_stride: The stride amount to be taken when splitting up a long document into chunks.
 
         Returns:
-            The constructed data module.
+            The constructed :class:`~flash.text.question_answering.data.QuestionAnsweringData`.
+
+        Examples
+        ________
+
+        .. testsetup::
+
+            >>> import os
+            >>> from pandas import DataFrame
+            >>> DataFrame.from_dict({
+            ...     "id": ["12345", "12346", "12347", "12348"],
+            ...     "context": [
+            ...         "this is an answer one. this is a context one",
+            ...         "this is an answer two. this is a context two",
+            ...         "this is an answer three. this is a context three",
+            ...         "this is an answer four. this is a context four",
+            ...     ],
+            ...     "question": [
+            ...         "this is a question one",
+            ...         "this is a question two",
+            ...         "this is a question three",
+            ...         "this is a question four",
+            ...     ],
+            ...     "answer_text": [
+            ...         "this is an answer one",
+            ...         "this is an answer two",
+            ...         "this is an answer three",
+            ...         "this is an answer four",
+            ...     ],
+            ...     "answer_start": [0, 0, 0, 0],
+            ... }).to_csv("train_data.csv", index=False)
+            >>> DataFrame.from_dict({
+            ...     "id": ["12349", "12350"],
+            ...     "context": [
+            ...         "this is an answer four. this is a context four",
+            ...         "this is an answer five. this is a context five",
+            ...     ],
+            ...     "question": [
+            ...         "this is a question four",
+            ...         "this is a question five",
+            ...     ],
+            ... }).to_csv("predict_data.csv", index=False)
+
+        The file ``train_data.csv`` contains the following:
+
+        .. code-block::
+
+            id,context,question,answer_text,answer_start
+            12345,this is an answer one. this is a context one,this is a question one,this is an answer one,0
+            12346,this is an answer two. this is a context two,this is a question two,this is an answer two,0
+            12347,this is an answer three. this is a context three,this is a question three,this is an answer three,0
+            12348,this is an answer four. this is a context four,this is a question four,this is an answer four,0
+
+
+        The file ``predict_data.csv`` contains the following:
+
+        .. code-block::
+
+            id,context,question
+            12349,this is an answer four. this is a context four,this is a question four
+            12350,this is an answer five. this is a context five,this is a question five
+
+        .. doctest::
+
+            >>> from flash import Trainer
+            >>> from flash.text import QuestionAnsweringData, QuestionAnsweringTask
+            >>> datamodule = QuestionAnsweringData.from_csv(
+            ...     train_file="train_data.csv",
+            ...     predict_file="predict_data.csv",
+            ...     batch_size=2,
+            ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Downloading...
+            >>> model = QuestionAnsweringTask()
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> os.remove("train_data.csv")
+            >>> os.remove("predict_data.csv")
         """
 
         ds_kw = dict(
@@ -129,8 +223,14 @@ class QuestionAnsweringData(DataModule):
         doc_stride: int = 128,
         **data_module_kwargs: Any,
     ) -> "QuestionAnsweringData":
-        """Creates a :class:`~flash.text.question_answering.data.QuestionAnsweringData` object from the given JSON
-        files.
+        """Load the :class:`~flash.text.question_answering.data.QuestionAnsweringData` from JSON files containing
+        questions, contexts and their corresponding answers.
+
+        Question snippets will be extracted from the ``question_column_name`` column in the JSON files.
+        Context snippets will be extracted from the ``context_column_name`` column in the JSON files.
+        Answer snippets will be extracted from the ``answer_column_name`` column in the JSON files.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
 
         Args:
             train_file: The JSON file containing the training data.
@@ -155,7 +255,93 @@ class QuestionAnsweringData(DataModule):
             doc_stride: The stride amount to be taken when splitting up a long document into chunks.
 
         Returns:
-            The constructed data module.
+            The constructed :class:`~flash.text.question_answering.data.QuestionAnsweringData`.
+
+        Examples
+        ________
+
+        .. testsetup::
+
+            >>> import os
+            >>> from pandas import DataFrame
+            >>> DataFrame.from_dict({
+            ...     "id": ["12345", "12346", "12347", "12348"],
+            ...     "context": [
+            ...         "this is an answer one. this is a context one",
+            ...         "this is an answer two. this is a context two",
+            ...         "this is an answer three. this is a context three",
+            ...         "this is an answer four. this is a context four",
+            ...     ],
+            ...     "question": [
+            ...         "this is a question one",
+            ...         "this is a question two",
+            ...         "this is a question three",
+            ...         "this is a question four",
+            ...     ],
+            ...     "answer_text": [
+            ...         "this is an answer one",
+            ...         "this is an answer two",
+            ...         "this is an answer three",
+            ...         "this is an answer four",
+            ...     ],
+            ...     "answer_start": [0, 0, 0, 0],
+            ... }).to_json("train_data.json", orient="records", lines=True)
+            >>> DataFrame.from_dict({
+            ...     "id": ["12349", "12350"],
+            ...     "context": [
+            ...         "this is an answer four. this is a context four",
+            ...         "this is an answer five. this is a context five",
+            ...     ],
+            ...     "question": [
+            ...         "this is a question four",
+            ...         "this is a question five",
+            ...     ],
+            ... }).to_json("predict_data.json", orient="records", lines=True)
+
+        The file ``train_data.json`` contains the following:
+
+        .. code-block::
+
+            {"id":"12345","context":"this is an answer one. this is a context one","question":"this is a question one",
+            "answer_text":"this is an answer one","answer_start":0}
+            {"id":"12346","context":"this is an answer two. this is a context two","question":"this is a question two",
+            "answer_text":"this is an answer two","answer_start":0}
+            {"id":"12347","context":"this is an answer three. this is a context three","question":"this is a question
+             three","answer_text":"this is an answer three","answer_start":0}
+            {"id":"12348","context":"this is an answer four. this is a context four","question":"this is a question
+             four","answer_text":"this is an answer four","answer_start":0}
+
+
+        The file ``predict_data.json`` contains the following:
+
+        .. code-block::
+
+            {"id":"12349","context":"this is an answer four. this is a context four","question":"this is a question
+             four"}
+            {"id":"12350","context":"this is an answer five. this is a context five","question":"this is a question
+             five"}
+
+        .. doctest::
+
+            >>> from flash import Trainer
+            >>> from flash.text import QuestionAnsweringData, QuestionAnsweringTask
+            >>> datamodule = QuestionAnsweringData.from_json(
+            ...     train_file="train_data.json",
+            ...     predict_file="predict_data.json",
+            ...     batch_size=2,
+            ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Downloading...
+            >>> model = QuestionAnsweringTask()
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> os.remove("train_data.json")
+            >>> os.remove("predict_data.json")
         """
 
         ds_kw = dict(
@@ -202,8 +388,14 @@ class QuestionAnsweringData(DataModule):
         doc_stride: int = 128,
         **data_module_kwargs: Any,
     ) -> "QuestionAnsweringData":
-        """Creates a :class:`~flash.text.question_answering.data.QuestionAnsweringData` object from the given data
-        JSON files in the SQuAD2.0 format.
+        """Load the :class:`~flash.text.question_answering.data.QuestionAnsweringData` from JSON files containing
+        questions, contexts and their corresponding answers in the SQuAD2.0 format.
+
+        Question snippets will be extracted from the ``question_column_name`` column in the JSON files.
+        Context snippets will be extracted from the ``context_column_name`` column in the JSON files.
+        Answer snippets will be extracted from the ``answer_column_name`` column in the JSON files.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
 
         Args:
             train_file: The JSON file containing the training data.
@@ -273,8 +465,14 @@ class QuestionAnsweringData(DataModule):
         doc_stride: int = 128,
         **data_module_kwargs: Any,
     ) -> "QuestionAnsweringData":
-        """Creates a :class:`~flash.text.question_answering.data.QuestionAnsweringData` object from the given data
-        dictionaries.
+        """Load the :class:`~flash.text.question_answering.data.QuestionAnsweringData` from Python Dictionay
+        objects containing questions, contexts and their corresponding answers.
+
+        Question snippets will be extracted from the ``question_column_name`` column in the JSON files.
+        Context snippets will be extracted from the ``context_column_name`` column in the JSON files.
+        Answer snippets will be extracted from the ``answer_column_name`` column in the JSON files.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
 
         Args:
             train_data: The dictionary containing the training data.
@@ -298,7 +496,112 @@ class QuestionAnsweringData(DataModule):
             doc_stride: The stride amount to be taken when splitting up a long document into chunks.
 
         Returns:
-            The constructed data module.
+            The constructed :class:`~flash.text.question_answering.data.QuestionAnsweringData`.
+
+        Examples
+        ________
+
+        .. testsetup::
+
+            >>> train_data = {
+            ...     "id": ["12345", "12346", "12347", "12348"],
+            ...     "context": [
+            ...         "this is an answer one. this is a context one",
+            ...         "this is an answer two. this is a context two",
+            ...         "this is an answer three. this is a context three",
+            ...         "this is an answer four. this is a context four",
+            ...     ],
+            ...     "question": [
+            ...         "this is a question one",
+            ...         "this is a question two",
+            ...         "this is a question three",
+            ...         "this is a question four",
+            ...     ],
+            ...     "answer_text": [
+            ...         "this is an answer one",
+            ...         "this is an answer two",
+            ...         "this is an answer three",
+            ...         "this is an answer four",
+            ...     ],
+            ...     "answer_start": [0, 0, 0, 0],
+            ... }
+            >>> predict_data = {
+            ...     "id": ["12349", "12350"],
+            ...     "context": [
+            ...         "this is an answer four. this is a context four",
+            ...         "this is an answer five. this is a context five",
+            ...     ],
+            ...     "question": [
+            ...         "this is a question four",
+            ...         "this is a question five",
+            ...     ],
+            ... }
+
+        The file ``train_data.json`` contains the following:
+
+        .. code-block::
+
+            {
+                "id": ["12345", "12346", "12347", "12348"],
+                "context": [
+                    "this is an answer one. this is a context one",
+                    "this is an answer two. this is a context two",
+                    "this is an answer three. this is a context three",
+                    "this is an answer four. this is a context four",
+                ],
+                "question": [
+                    "this is a question one",
+                    "this is a question two",
+                    "this is a question three",
+                    "this is a question four",
+                ],
+                "answer_text": [
+                    "this is an answer one",
+                    "this is an answer two",
+                    "this is an answer three",
+                    "this is an answer four",
+                ],
+                "answer_start": [0, 0, 0, 0],
+            }
+
+
+        The file ``predict_data.json`` contains the following:
+
+        .. code-block::
+
+            {
+                "id": ["12349", "12350"],
+                "context": [
+                    "this is an answer four. this is a context four",
+                    "this is an answer five. this is a context five",
+                ],
+                "question": [
+                    "this is a question four",
+                    "this is a question five",
+                ],
+            }
+
+        .. doctest::
+
+            >>> from flash import Trainer
+            >>> from flash.text import QuestionAnsweringData, QuestionAnsweringTask
+            >>> datamodule = QuestionAnsweringData.from_dicts(
+            ...     train_data=train_data,
+            ...     predict_data=predict_data,
+            ...     batch_size=2,
+            ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Downloading...
+            >>> model = QuestionAnsweringTask()
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> del train_data
+            >>> del predict_data
         """
 
         ds_kw = dict(
