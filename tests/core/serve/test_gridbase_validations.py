@@ -2,8 +2,7 @@ import pytest
 
 from flash.core.serve import expose, ModelComponent
 from flash.core.serve.types import Number
-from flash.core.utilities.imports import _CYTOOLZ_AVAILABLE
-from tests.helpers.utils import _SERVE_TESTING
+from flash.core.utilities.imports import _CYTOOLZ_AVAILABLE, _SERVE_TESTING
 
 
 @pytest.mark.skipif(not _CYTOOLZ_AVAILABLE, reason="the library cytoolz is not installed.")

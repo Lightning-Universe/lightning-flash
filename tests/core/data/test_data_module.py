@@ -26,9 +26,8 @@ from flash.core.data.data_module import DataModule, DatasetInput
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.states import PerBatchTransformOnDevice, PerSampleTransform
-from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _IMAGE_TESTING, _TORCHVISION_AVAILABLE
 from flash.core.utilities.stages import RunningStage
-from tests.helpers.utils import _IMAGE_TESTING
 
 if _TORCHVISION_AVAILABLE:
     import torchvision.transforms as T

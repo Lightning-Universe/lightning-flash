@@ -2,8 +2,8 @@ import pytest
 import torch
 
 from flash.core.serve.types import Label
+from flash.core.utilities.imports import _SERVE_TESTING
 from tests.core.serve.models import ClassificationInferenceComposable, LightningSqueezenet
-from tests.helpers.utils import _SERVE_TESTING
 
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")

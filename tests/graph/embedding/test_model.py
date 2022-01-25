@@ -16,12 +16,11 @@ import torch
 
 from flash import RunningStage, Trainer
 from flash.core.data.data_module import DataModule
-from flash.core.utilities.imports import _GRAPH_AVAILABLE
+from flash.core.utilities.imports import _GRAPH_AVAILABLE, _GRAPH_TESTING
 from flash.graph.classification.input import GraphClassificationDatasetInput
 from flash.graph.classification.input_transform import GraphClassificationInputTransform
 from flash.graph.classification.model import GraphClassifier
 from flash.graph.embedding.model import GraphEmbedder
-from tests.helpers.utils import _GRAPH_TESTING
 
 if _GRAPH_AVAILABLE:
     from torch_geometric import datasets

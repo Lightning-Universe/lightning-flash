@@ -10,11 +10,11 @@ from flash.core.integrations.labelstudio.input import (
 )
 from flash.core.integrations.labelstudio.visualizer import launch_app
 from flash.core.integrations.transformers.states import TransformersBackboneState
+from flash.core.utilities.imports import _IMAGE_TESTING, _TEXT_TESTING, _VIDEO_TESTING
 from flash.core.utilities.stages import RunningStage
 from flash.image.classification.data import ImageClassificationData
 from flash.text.classification.data import TextClassificationData
 from flash.video.classification.data import LabelStudioVideoClassificationInput, VideoClassificationData
-from tests.helpers.utils import _IMAGE_TESTING, _TEXT_TESTING, _VIDEO_TESTING
 
 
 def test_utility_load():

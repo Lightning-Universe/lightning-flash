@@ -16,11 +16,10 @@ import unittest.mock
 import pytest
 import torch
 
-from flash.core.utilities.imports import _SEGMENTATION_MODELS_AVAILABLE
+from flash.core.utilities.imports import _IMAGE_TESTING, _SEGMENTATION_MODELS_AVAILABLE
 from flash.image.segmentation import SemanticSegmentation
 from flash.image.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 from flash.image.segmentation.heads import SEMANTIC_SEGMENTATION_HEADS
-from tests.helpers.utils import _IMAGE_TESTING
 
 
 @pytest.mark.parametrize(

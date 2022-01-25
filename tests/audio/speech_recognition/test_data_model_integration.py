@@ -20,7 +20,7 @@ import pytest
 import flash
 from flash import Trainer
 from flash.audio import SpeechRecognition, SpeechRecognitionData
-from tests.helpers.utils import _AUDIO_TESTING
+from flash.core.utilities.imports import _AUDIO_TESTING
 
 TEST_BACKBONE = "patrickvonplaten/wav2vec2_tiny_random_robust"  # super small model for testing
 

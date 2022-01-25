@@ -7,8 +7,7 @@ import torch
 from pytest_mock import MockerFixture
 
 from flash.core.serve.decorators import uuid4  # noqa (used in mocker.patch)
-from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
-from tests.helpers.utils import _SERVE_TESTING
+from flash.core.utilities.imports import _SERVE_TESTING, _TORCHVISION_AVAILABLE
 
 if _TORCHVISION_AVAILABLE:
     import torchvision

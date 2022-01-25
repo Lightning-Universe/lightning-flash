@@ -23,10 +23,9 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.io.input import DataKeys
 from flash.core.data.utils import _CALLBACK_FUNCS
-from flash.core.utilities.imports import _PIL_AVAILABLE
+from flash.core.utilities.imports import _IMAGE_TESTING, _PIL_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 from flash.image import ImageClassificationData
-from tests.helpers.utils import _IMAGE_TESTING
 
 if _PIL_AVAILABLE:
     from PIL import Image

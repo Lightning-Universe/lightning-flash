@@ -14,8 +14,8 @@
 import pytest
 import torch
 
+from flash.core.utilities.imports import _POINTCLOUD_TESTING
 from flash.pointcloud.segmentation import PointCloudSegmentation
-from tests.helpers.utils import _POINTCLOUD_TESTING
 
 
 @pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed")

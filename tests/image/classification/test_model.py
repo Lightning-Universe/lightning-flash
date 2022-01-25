@@ -22,9 +22,8 @@ from flash import Trainer
 from flash.__main__ import main
 from flash.core.classification import ProbabilitiesOutput
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _IMAGE_AVAILABLE, _IMAGE_TESTING, _SERVE_TESTING
 from flash.image import ImageClassifier
-from tests.helpers.utils import _IMAGE_TESTING, _SERVE_TESTING
 
 # ======== Mock functions ========
 

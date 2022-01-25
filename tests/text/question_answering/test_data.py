@@ -20,8 +20,8 @@ import pytest
 
 from flash.core.data.io.input import DataKeys
 from flash.core.integrations.transformers.states import TransformersBackboneState
+from flash.core.utilities.imports import _TEXT_TESTING
 from flash.text import QuestionAnsweringData
-from tests.helpers.utils import _TEXT_TESTING
 
 TEST_BACKBONE = "distilbert-base-uncased"
 TEST_BACKBONE_STATE = TransformersBackboneState(TEST_BACKBONE)
