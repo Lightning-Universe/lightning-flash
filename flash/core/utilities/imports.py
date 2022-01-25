@@ -277,7 +277,9 @@ class LazyModule(types.ModuleType):
 
 # Global variables used for testing purposes (e.g. to only run doctests in the correct CI job)
 _IMAGE_TESTING = _IMAGE_AVAILABLE
+_IMAGE_EXTRAS_TESTING = False  # Not for normal use
 _VIDEO_TESTING = _VIDEO_AVAILABLE
+_VIDEO_EXTRAS_TESTING = False  # Not for normal use
 _TABULAR_TESTING = _TABULAR_AVAILABLE
 _TEXT_TESTING = _TEXT_AVAILABLE
 _SERVE_TESTING = _SERVE_AVAILABLE
