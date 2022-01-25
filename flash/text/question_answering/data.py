@@ -36,7 +36,7 @@ if not _TEXT_AVAILABLE:
 
 class QuestionAnsweringData(DataModule):
     """The ``QuestionAnsweringData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
-    classmethods for loading data for Question Answering."""
+    classmethods for loading data for extractive question answering."""
 
     input_transform_cls = QuestionAnsweringInputTransform
     output_transform_cls = QuestionAnsweringOutputTransform
@@ -465,12 +465,12 @@ class QuestionAnsweringData(DataModule):
         doc_stride: int = 128,
         **data_module_kwargs: Any,
     ) -> "QuestionAnsweringData":
-        """Load the :class:`~flash.text.question_answering.data.QuestionAnsweringData` from Python Dictionay
+        """Load the :class:`~flash.text.question_answering.data.QuestionAnsweringData` from Python dictionary
         objects containing questions, contexts and their corresponding answers.
 
-        Question snippets will be extracted from the ``question_column_name`` column in the JSON files.
-        Context snippets will be extracted from the ``context_column_name`` column in the JSON files.
-        Answer snippets will be extracted from the ``answer_column_name`` column in the JSON files.
+        Question snippets will be extracted from the ``question_column_name`` field in the dictionaries.
+        Context snippets will be extracted from the ``context_column_name`` field in the dictionaries.
+        Answer snippets will be extracted from the ``answer_column_name`` field in the dictionaries.
         To learn how to customize the transforms applied for each stage, read our
         :ref:`customizing transforms guide <customizing_transforms>`.
 
@@ -537,49 +537,6 @@ class QuestionAnsweringData(DataModule):
             ...     ],
             ... }
 
-        The file ``train_data.json`` contains the following:
-
-        .. code-block::
-
-            {
-                "id": ["12345", "12346", "12347", "12348"],
-                "context": [
-                    "this is an answer one. this is a context one",
-                    "this is an answer two. this is a context two",
-                    "this is an answer three. this is a context three",
-                    "this is an answer four. this is a context four",
-                ],
-                "question": [
-                    "this is a question one",
-                    "this is a question two",
-                    "this is a question three",
-                    "this is a question four",
-                ],
-                "answer_text": [
-                    "this is an answer one",
-                    "this is an answer two",
-                    "this is an answer three",
-                    "this is an answer four",
-                ],
-                "answer_start": [0, 0, 0, 0],
-            }
-
-
-        The file ``predict_data.json`` contains the following:
-
-        .. code-block::
-
-            {
-                "id": ["12349", "12350"],
-                "context": [
-                    "this is an answer four. this is a context four",
-                    "this is an answer five. this is a context five",
-                ],
-                "question": [
-                    "this is a question four",
-                    "this is a question five",
-                ],
-            }
 
         .. doctest::
 
@@ -597,10 +554,6 @@ class QuestionAnsweringData(DataModule):
             >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Predicting...
 
-        .. testcleanup::
-
-            >>> del train_data
-            >>> del predict_data
         """
 
         ds_kw = dict(
