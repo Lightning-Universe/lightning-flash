@@ -555,6 +555,9 @@ class SemanticSegmentationData(DataModule):
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
               predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            num_classes: The number of segmentation classes.
+            labels_map: An optional mapping from class to RGB tuple indicating the colour to use when visualizing masks.
+                If not provided, a random mapping will be used.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.

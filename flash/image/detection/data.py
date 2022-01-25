@@ -598,16 +598,103 @@ class ObjectDetectionData(DataModule):
         val_dataset: Optional[SampleCollection] = None,
         test_dataset: Optional[SampleCollection] = None,
         predict_dataset: Optional[SampleCollection] = None,
+        label_field: str = "ground_truth",
+        iscrowd: str = "iscrowd",
         train_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         val_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        label_field: str = "ground_truth",
-        iscrowd: str = "iscrowd",
         input_cls: Type[Input] = ObjectDetectionFiftyOneInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ObjectDetectionData":
+        """Load the :class:`~flash.image.detection.data.ObjectDetectionData` from FiftyOne ``SampleCollection``
+        objects.
+
+        Targets will be extracted from the ``label_field`` in the ``SampleCollection`` objects.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
+        Args:
+            train_dataset: The ``SampleCollection`` to use when training.
+            val_dataset: The ``SampleCollection`` to use when validating.
+            test_dataset: The ``SampleCollection`` to use when testing.
+            predict_dataset: The ``SampleCollection`` to use when predicting.
+            label_field: The field in the ``SampleCollection`` objects containing the targets.
+            iscrowd: The field in the ``SampleCollection`` objects containing the ``iscrowd`` annotation (if required).
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+              predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+              :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.image.detection.data.ObjectDetectionData`.
+
+        Examples
+        ________
+
+        .. testsetup::
+
+            >>> import numpy as np
+            >>> from PIL import Image
+            >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
+            >>> _ = [rand_image.save(f"image_{i}.png") for i in range(1, 4)]
+            >>> _ = [rand_image.save(f"predict_image_{i}.png") for i in range(1, 4)]
+
+        .. doctest::
+
+            >>> import numpy as np
+            >>> import fiftyone as fo
+            >>> from flash import Trainer
+            >>> from flash.image import ObjectDetector, ObjectDetectionData
+            >>> train_dataset = fo.Dataset.from_images(
+            ...     ["image_1.png", "image_2.png", "image_3.png"]
+            ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            33%...
+            >>> samples = [train_dataset[filepath] for filepath in train_dataset.values("filepath")]
+            >>> for sample, label, bounding_box in zip(
+            ...     samples,
+            ...     ["cat", "dog", "cat"],
+            ...     [[0.1, 0.2, 0.15, 0.3], [0.2, 0.3, 0.3, 0.4], [0.1, 0.2, 0.15, 0.45]],
+            ... ):
+            ...     sample["ground_truth"] = fo.Detections(
+            ...         detections=[fo.Detection(label=label, bounding_box=bounding_box)],
+            ...     )
+            ...     sample.save()
+            ...
+            >>> predict_dataset = fo.Dataset.from_images(
+            ...     ["predict_image_1.png", "predict_image_2.png", "predict_image_3.png"]
+            ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            33%...
+            >>> datamodule = ObjectDetectionData.from_fiftyone(
+            ...     train_dataset=train_dataset,
+            ...     predict_dataset=predict_dataset,
+            ...     transform_kwargs=dict(image_size=(128, 128)),
+            ...     batch_size=2,
+            ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Computing...
+            >>> datamodule.num_classes
+            3
+            >>> datamodule.labels
+            ['background', 'cat', 'dog']
+            >>> model = ObjectDetector(num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> import os
+            >>> _ = [os.remove(f"image_{i}.png") for i in range(1, 4)]
+            >>> _ = [os.remove(f"predict_image_{i}.png") for i in range(1, 4)]
+        """
 
         ds_kw = dict(data_pipeline_state=DataPipelineState(), transform_kwargs=transform_kwargs)
 
@@ -615,9 +702,7 @@ class ObjectDetectionData(DataModule):
             input_cls(RunningStage.TRAINING, train_dataset, label_field, iscrowd, transform=train_transform, **ds_kw),
             input_cls(RunningStage.VALIDATING, val_dataset, label_field, iscrowd, transform=val_transform, **ds_kw),
             input_cls(RunningStage.TESTING, test_dataset, label_field, iscrowd, transform=test_transform, **ds_kw),
-            input_cls(
-                RunningStage.PREDICTING, predict_dataset, label_field, iscrowd, transform=predict_transform, **ds_kw
-            ),
+            input_cls(RunningStage.PREDICTING, predict_dataset, transform=predict_transform, **ds_kw),
             **data_module_kwargs,
         )
 
