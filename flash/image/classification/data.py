@@ -51,10 +51,19 @@ else:
     plt = None
 
 # Skip doctests if requirements aren't available
-if _IMAGE_TESTING and not _FIFTYONE_AVAILABLE:
-    __doctest_skip__ = ["ImageClassificationData.from_fiftyone"]
-elif not _IMAGE_TESTING:
-    __doctest_skip__ = ["ImageClassificationData", "ImageClassificationData.*"]
+__doctest_skip__ = []
+if not _IMAGE_TESTING:
+    __doctest_skip__ += [
+        "ImageClassificationData",
+        "ImageClassificationData.from_files",
+        "ImageClassificationData.from_folders",
+        "ImageClassificationData.from_numpy",
+        "ImageClassificationData.from_tensors",
+        "ImageClassificationData.from_data_frame",
+        "ImageClassificationData.from_csv",
+    ]
+if not _FIFTYONE_AVAILABLE:
+    __doctest_skip__ += ["ImageClassificationData.from_fiftyone"]
 
 
 class ImageClassificationData(DataModule):

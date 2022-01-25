@@ -49,10 +49,17 @@ else:
     ClipSampler = None
 
 # Skip doctests if requirements aren't available
-if _VIDEO_TESTING and not _FIFTYONE_AVAILABLE:
-    __doctest_skip__ = ["VideoClassificationData.from_fiftyone"]
-elif not _VIDEO_TESTING:
-    __doctest_skip__ = ["VideoClassificationData", "VideoClassificationData.*"]
+__doctest_skip__ = []
+if not _VIDEO_TESTING:
+    __doctest_skip__ += [
+        "VideoClassificationData",
+        "VideoClassificationData.from_files",
+        "VideoClassificationData.from_folders",
+        "VideoClassificationData.from_data_frame",
+        "VideoClassificationData.from_csv",
+    ]
+if not _FIFTYONE_AVAILABLE:
+    __doctest_skip__ += ["VideoClassificationData.from_fiftyone"]
 
 
 class VideoClassificationData(DataModule):
