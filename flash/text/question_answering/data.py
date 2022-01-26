@@ -77,14 +77,13 @@ class QuestionAnsweringData(DataModule):
             val_file: The CSV file containing the validation data.
             test_file: The CSV file containing the testing data.
             predict_file: The CSV file containing the data to use when predicting.
-            train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+                predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             max_source_length: Max length of the sequence to be considered during tokenization.
             max_target_length: Max length of each answer to be produced.
             padding: Padding type during tokenization.
@@ -237,14 +236,13 @@ class QuestionAnsweringData(DataModule):
             val_file: The JSON file containing the validation data.
             test_file: The JSON file containing the testing data.
             predict_file: The JSON file containing the data to use when predicting.
-            train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+                predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             field: The field that holds the data in the JSON file.
             max_source_length: Max length of the sequence to be considered during tokenization.
             max_target_length: Max length of each answer to be produced.
@@ -402,14 +400,13 @@ class QuestionAnsweringData(DataModule):
             val_file: The JSON file containing the validation data.
             test_file: The JSON file containing the testing data.
             predict_file: The JSON file containing the predict data.
-            train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+                predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             max_source_length: Max length of the sequence to be considered during tokenization.
             max_target_length: Max length of each answer to be produced.
             padding: Padding type during tokenization.
@@ -479,14 +476,13 @@ class QuestionAnsweringData(DataModule):
             val_data: The dictionary containing the validation data.
             test_data: The dictionary containing the testing data.
             predict_data: The dictionary containing the data to use when predicting.
-            train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+                predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             max_source_length: Max length of the sequence to be considered during tokenization.
             max_target_length: Max length of each answer to be produced.
             padding: Padding type during tokenization.
@@ -501,8 +497,10 @@ class QuestionAnsweringData(DataModule):
         Examples
         ________
 
-        .. testsetup::
+        .. doctest::
 
+            >>> from flash import Trainer
+            >>> from flash.text import QuestionAnsweringData, QuestionAnsweringTask
             >>> train_data = {
             ...     "id": ["12345", "12346", "12347", "12348"],
             ...     "context": [
@@ -536,12 +534,6 @@ class QuestionAnsweringData(DataModule):
             ...         "this is a question five",
             ...     ],
             ... }
-
-
-        .. doctest::
-
-            >>> from flash import Trainer
-            >>> from flash.text import QuestionAnsweringData, QuestionAnsweringTask
             >>> datamodule = QuestionAnsweringData.from_dicts(
             ...     train_data=train_data,
             ...     predict_data=predict_data,
