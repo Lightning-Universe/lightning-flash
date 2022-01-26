@@ -109,7 +109,11 @@ root = Path(__file__).parent.parent.parent
         #     marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed")
         # ),
         pytest.param(
-            "translation.py", marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed")
+            "translation.py",
+            marks=[
+                pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed"),
+                pytest.mark.skipif(os.name == "nt", reason="Encoding issues on Windows"),
+            ],
         ),
         pytest.param(
             "video_classification.py",
