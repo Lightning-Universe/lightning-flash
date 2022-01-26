@@ -27,7 +27,14 @@ from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioImageClassificationInput
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_TESTING, _MATPLOTLIB_AVAILABLE, Image, requires
+from flash.core.utilities.imports import (
+    _FIFTYONE_AVAILABLE,
+    _IMAGE_EXTRAS_TESTING,
+    _IMAGE_TESTING,
+    _MATPLOTLIB_AVAILABLE,
+    Image,
+    requires,
+)
 from flash.core.utilities.stages import RunningStage
 from flash.image.classification.input import (
     ImageClassificationCSVInput,
@@ -45,14 +52,25 @@ if _FIFTYONE_AVAILABLE:
 else:
     SampleCollection = None
 
-# Skip doctests if requirements aren't available
-if not _IMAGE_TESTING:
-    __doctest_skip__ = ["ImageClassificationData", "ImageClassificationData.*"]
-
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
 else:
     plt = None
+
+# Skip doctests if requirements aren't available
+__doctest_skip__ = []
+if not _IMAGE_TESTING:
+    __doctest_skip__ += [
+        "ImageClassificationData",
+        "ImageClassificationData.from_files",
+        "ImageClassificationData.from_folders",
+        "ImageClassificationData.from_numpy",
+        "ImageClassificationData.from_tensors",
+        "ImageClassificationData.from_data_frame",
+        "ImageClassificationData.from_csv",
+    ]
+if not _IMAGE_EXTRAS_TESTING:
+    __doctest_skip__ += ["ImageClassificationData.from_fiftyone"]
 
 
 class ImageClassificationData(DataModule):
@@ -784,18 +802,101 @@ class ImageClassificationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
     ) -> "ImageClassificationData":
+        """Load the :class:`~flash.image.classification.data.ImageClassificationData` from FiftyOne
+        ``SampleCollection`` objects.
+
+        The supported file extensions are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``, ``.bmp``, ``.pgm``, ``.tif``,
+        ``.tiff``, ``.webp``, and ``.npy``.
+        The targets will be extracted from the ``label_field`` in the ``SampleCollection`` objects and can be in any
+        of our :ref:`supported classification target formats <formatting_classification_targets>`.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
+        Args:
+            train_dataset: The ``SampleCollection`` to use when training.
+            val_dataset: The ``SampleCollection`` to use when validating.
+            test_dataset: The ``SampleCollection`` to use when testing.
+            predict_dataset: The ``SampleCollection`` to use when predicting.
+            label_field: The field in the ``SampleCollection`` objects containing the targets.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+              predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+              :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
+
+        Examples
+        ________
+
+        .. testsetup::
+
+            >>> from PIL import Image
+            >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
+            >>> _ = [rand_image.save(f"image_{i}.png") for i in range(1, 4)]
+            >>> _ = [rand_image.save(f"predict_image_{i}.png") for i in range(1, 4)]
+
+        .. doctest::
+
+            >>> import fiftyone as fo
+            >>> from flash import Trainer
+            >>> from flash.image import ImageClassifier, ImageClassificationData
+            >>> train_dataset = fo.Dataset.from_images(
+            ...     ["image_1.png", "image_2.png", "image_3.png"]
+            ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            <BLANKLINE>
+            ...
+            >>> samples = [train_dataset[filepath] for filepath in train_dataset.values("filepath")]
+            >>> for sample, label in zip(samples, ["cat", "dog", "cat"]):
+            ...     sample["ground_truth"] = fo.Classification(label=label)
+            ...     sample.save()
+            ...
+            >>> predict_dataset = fo.Dataset.from_images(
+            ...     ["predict_image_1.png", "predict_image_2.png", "predict_image_3.png"]
+            ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            <BLANKLINE>
+            ...
+            >>> datamodule = ImageClassificationData.from_fiftyone(
+            ...     train_dataset=train_dataset,
+            ...     predict_dataset=predict_dataset,
+            ...     transform_kwargs=dict(image_size=(128, 128)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            2
+            >>> datamodule.labels
+            ['cat', 'dog']
+            >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> import os
+            >>> _ = [os.remove(f"image_{i}.png") for i in range(1, 4)]
+            >>> _ = [os.remove(f"predict_image_{i}.png") for i in range(1, 4)]
+        """
 
         ds_kw = dict(
             data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
-            label_field=label_field,
         )
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_dataset, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_dataset, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_dataset, transform=test_transform, **ds_kw),
+            input_cls(
+                RunningStage.TRAINING, train_dataset, transform=train_transform, label_field=label_field, **ds_kw
+            ),
+            input_cls(RunningStage.VALIDATING, val_dataset, transform=val_transform, label_field=label_field, **ds_kw),
+            input_cls(RunningStage.TESTING, test_dataset, transform=test_transform, label_field=label_field, **ds_kw),
             input_cls(RunningStage.PREDICTING, predict_dataset, transform=predict_transform, **ds_kw),
             **data_module_kwargs,
         )

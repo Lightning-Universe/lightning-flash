@@ -21,7 +21,7 @@ from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_TESTING, lazy_import
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_EXTRAS_TESTING, _IMAGE_TESTING, lazy_import
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 from flash.image.segmentation.input import (
@@ -42,8 +42,17 @@ else:
     SampleCollection = object
 
 # Skip doctests if requirements aren't available
+__doctest_skip__ = []
 if not _IMAGE_TESTING:
-    __doctest_skip__ = ["SemanticSegmentationData", "SemanticSegmentationData.*"]
+    __doctest_skip__ += [
+        "SemanticSegmentationData",
+        "SemanticSegmentationData.from_files",
+        "SemanticSegmentationData.from_folders",
+        "SemanticSegmentationData.from_numpy",
+        "SemanticSegmentationData.from_tensors",
+    ]
+if not _IMAGE_EXTRAS_TESTING:
+    __doctest_skip__ += ["SemanticSegmentationData.from_fiftyone"]
 
 
 class SemanticSegmentationData(DataModule):
@@ -525,20 +534,125 @@ class SemanticSegmentationData(DataModule):
         label_field: str = "ground_truth",
         **data_module_kwargs: Any,
     ) -> "SemanticSegmentationData":
+        """Load the :class:`~flash.image.segmentation.data.SemanticSegmentationData` from FiftyOne
+        ``SampleCollection`` objects.
+
+        The supported file extensions are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``, ``.bmp``, ``.pgm``, ``.tif``,
+        ``.tiff``, ``.webp``, and ``.npy``.
+        Mask image file paths will be extracted from the ``label_field`` in the ``SampleCollection`` objects.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
+        Args:
+            train_dataset: The ``SampleCollection`` to use when training.
+            val_dataset: The ``SampleCollection`` to use when validating.
+            test_dataset: The ``SampleCollection`` to use when testing.
+            predict_dataset: The ``SampleCollection`` to use when predicting.
+            label_field: The field in the ``SampleCollection`` objects containing the targets.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+              predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            num_classes: The number of segmentation classes.
+            labels_map: An optional mapping from class to RGB tuple indicating the colour to use when visualizing masks.
+                If not provided, a random mapping will be used.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+              :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.image.segmentation.data.SemanticSegmentationData`.
+
+        Examples
+        ________
+
+        .. testsetup::
+
+            >>> from PIL import Image
+            >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
+            >>> _ = [rand_image.save(f"image_{i}.png") for i in range(1, 4)]
+            >>> _ = [rand_image.save(f"predict_image_{i}.png") for i in range(1, 4)]
+
+        .. doctest::
+
+            >>> import numpy as np
+            >>> import fiftyone as fo
+            >>> from flash import Trainer
+            >>> from flash.image import SemanticSegmentation, SemanticSegmentationData
+            >>> train_dataset = fo.Dataset.from_images(
+            ...     ["image_1.png", "image_2.png", "image_3.png"]
+            ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            <BLANKLINE>
+            ...
+            >>> samples = [train_dataset[filepath] for filepath in train_dataset.values("filepath")]
+            >>> for sample in samples:
+            ...     sample["ground_truth"] = fo.Segmentation(mask=np.random.randint(0, 10, (64, 64), dtype="uint8"))
+            ...     sample.save()
+            ...
+            >>> predict_dataset = fo.Dataset.from_images(
+            ...     ["predict_image_1.png", "predict_image_2.png", "predict_image_3.png"]
+            ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            <BLANKLINE>
+            ...
+            >>> datamodule = SemanticSegmentationData.from_fiftyone(
+            ...     train_dataset=train_dataset,
+            ...     predict_dataset=predict_dataset,
+            ...     transform_kwargs=dict(image_size=(128, 128)),
+            ...     num_classes=10,
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            10
+            >>> model = SemanticSegmentation(backbone="resnet18", num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> import os
+            >>> _ = [os.remove(f"image_{i}.png") for i in range(1, 4)]
+            >>> _ = [os.remove(f"predict_image_{i}.png") for i in range(1, 4)]
+        """
 
         ds_kw = dict(
             data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
-            label_field=label_field,
-            num_classes=num_classes,
-            labels_map=labels_map,
         )
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_dataset, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_dataset, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_dataset, transform=test_transform, **ds_kw),
+            input_cls(
+                RunningStage.TRAINING,
+                train_dataset,
+                transform=train_transform,
+                label_field=label_field,
+                num_classes=num_classes,
+                labels_map=labels_map,
+                **ds_kw,
+            ),
+            input_cls(
+                RunningStage.VALIDATING,
+                val_dataset,
+                transform=val_transform,
+                label_field=label_field,
+                num_classes=num_classes,
+                labels_map=labels_map,
+                **ds_kw,
+            ),
+            input_cls(
+                RunningStage.TESTING,
+                test_dataset,
+                transform=test_transform,
+                label_field=label_field,
+                num_classes=num_classes,
+                labels_map=labels_map,
+                **ds_kw,
+            ),
             input_cls(RunningStage.PREDICTING, predict_dataset, transform=predict_transform, **ds_kw),
             **data_module_kwargs,
         )
