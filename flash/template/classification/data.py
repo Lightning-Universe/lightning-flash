@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Collection, Dict, List, Optional, Sequence, Type
+from typing import Any, Callable, Collection, Dict, List, Optional, Sequence, Type, Union
 
 import numpy as np
 import torch
@@ -95,11 +95,16 @@ class TemplateInputTransform(InputTransform):
         """Transform which creates a tensor from the given numpy ``ndarray`` and converts it to ``float``"""
         return torch.from_numpy(input).float()
 
+    @staticmethod
+    def target_to_tensor(target: Union[int, List[int]]):
+        """Transform which creates a tensor from the given target and casts it to ``long``"""
+        return torch.as_tensor(target).long()
+
     def input_per_sample_transform(self) -> Callable:
         return self.input_to_tensor
 
     def target_per_sample_transform(self) -> Callable:
-        return torch.as_tensor
+        return self.target_to_tensor
 
 
 class TemplateData(DataModule):
