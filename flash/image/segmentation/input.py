@@ -154,13 +154,19 @@ class SemanticSegmentationFiftyOneInput(SemanticSegmentationFilesInput):
         self._fo_dataset_name = sample_collection.name
         return to_samples(sample_collection.values("filepath"))
 
+    def predict_load_data(
+        self,
+        sample_collection: SampleCollection,
+    ) -> List[Dict[str, Any]]:
+        return to_samples(sample_collection.values("filepath"))
+
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         filepath = sample[DataKeys.INPUT]
         sample = super().load_sample(sample)
         if not self.predicting:
             fo_dataset = fo.load_dataset(self._fo_dataset_name)
             fo_sample = fo_dataset[filepath]
-            sample[DataKeys.TARGET] = torch.from_numpy(fo_sample[self.label_field].mask).float()  # H x W
+            sample[DataKeys.TARGET] = torch.from_numpy(fo_sample[self.label_field].mask).float()
         return sample
 
 

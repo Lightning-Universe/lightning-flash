@@ -68,9 +68,8 @@ class ImageClassificationFiftyOneInput(ImageClassificationFilesInput):
 
         return super().load_data(filepaths, targets)
 
-    @staticmethod
     @requires("fiftyone")
-    def predict_load_data(data: SampleCollection) -> List[Dict[str, Any]]:
+    def predict_load_data(self, data: SampleCollection) -> List[Dict[str, Any]]:
         return super().load_data(data.values("filepath"))
 
 
