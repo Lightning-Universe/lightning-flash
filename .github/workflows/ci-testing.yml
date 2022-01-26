@@ -148,7 +148,6 @@ jobs:
         FIFTYONE_DO_NOT_TRACK: true
       run: |
         coverage run --source flash -m pytest flash tests -v --junitxml=junit/test-results-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.requires }}.xml
-        coverage xml
 
     - name: Upload pytest test results
       uses: actions/upload-artifact@v2
@@ -162,6 +161,7 @@ jobs:
       if: success()
       run: |
         coverage report
+        coverage xml
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
