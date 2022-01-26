@@ -493,6 +493,7 @@ class QuestionAnsweringData(DataModule):
             ...         }
             ...     )
             ... )
+            989
             >>> predict_data.write_text(
             ...     json.dumps(
             ...         {
@@ -527,6 +528,7 @@ class QuestionAnsweringData(DataModule):
             ...         }
             ...     )
             ... )
+            372
             >>> datamodule = QuestionAnsweringData.from_squad_v2(
             ...     train_file="train_data.json",
             ...     predict_file="predict_data.json",
