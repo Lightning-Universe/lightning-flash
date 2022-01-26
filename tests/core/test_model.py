@@ -151,6 +151,10 @@ class AdapterParent(Parent):
 # ================================
 
 
+def test_always_fail():
+    raise ValueError("Always fail for debugging")
+
+
 @pytest.mark.parametrize("metrics", [None, Accuracy(), {"accuracy": Accuracy()}])
 def test_classificationtask_train(tmpdir: str, metrics: Any):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
