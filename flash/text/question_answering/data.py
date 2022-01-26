@@ -127,12 +127,12 @@ class QuestionAnsweringData(DataModule):
             >>> DataFrame.from_dict({
             ...     "id": ["12349", "12350"],
             ...     "context": [
-            ...         "this is an answer four. this is a context four",
             ...         "this is an answer five. this is a context five",
+            ...         "this is an answer six. this is a context six",
             ...     ],
             ...     "question": [
-            ...         "this is a question four",
             ...         "this is a question five",
+            ...         "this is a question six",
             ...     ],
             ... }).to_csv("predict_data.csv", index=False)
 
@@ -152,8 +152,8 @@ class QuestionAnsweringData(DataModule):
         .. code-block::
 
             id,context,question
-            12349,this is an answer four. this is a context four,this is a question four
-            12350,this is an answer five. this is a context five,this is a question five
+            12349,this is an answer five. this is a context five,this is a question five
+            12350,this is an answer six. this is a context six,this is a question six
 
         .. doctest::
 
@@ -287,12 +287,12 @@ class QuestionAnsweringData(DataModule):
             >>> DataFrame.from_dict({
             ...     "id": ["12349", "12350"],
             ...     "context": [
-            ...         "this is an answer four. this is a context four",
             ...         "this is an answer five. this is a context five",
+            ...         "this is an answer six. this is a context six",
             ...     ],
             ...     "question": [
-            ...         "this is a question four",
             ...         "this is a question five",
+            ...         "this is a question six",
             ...     ],
             ... }).to_json("predict_data.json", orient="records", lines=True)
 
@@ -314,10 +314,10 @@ class QuestionAnsweringData(DataModule):
 
         .. code-block::
 
-            {"id":"12349","context":"this is an answer four. this is a context four","question":"this is a question
-             four"}
-            {"id":"12350","context":"this is an answer five. this is a context five","question":"this is a question
+            {"id":"12349","context":"this is an answer five. this is a context five","question":"this is a question
              five"}
+            {"id":"12350","context":"this is an answer six. this is a context six","question":"this is a question
+             six"}
 
         .. doctest::
 
@@ -417,6 +417,134 @@ class QuestionAnsweringData(DataModule):
 
         Returns:
             The constructed data module.
+
+        Examples
+        ________
+
+        .. doctest::
+
+            >>> import os
+            >>> import json
+            >>> from pathlib import Path
+            >>> from flash import Trainer
+            >>> from flash.text import QuestionAnsweringData, QuestionAnsweringTask
+            >>> train_data = Path("train_data.json")
+            >>> predict_data = Path("predict_data.json")
+            >>> train_data.write_text(
+            ...     json.dumps(
+            ...         {
+            ...             "version": "v2.0",
+            ...             "data": [
+            ...                 {
+            ...                     "title": "ExampleSet1",
+            ...                     "paragraphs": [
+            ...                         {
+            ...                             "qas": [
+            ...                                 {
+            ...                                     "question": "this is a question one",
+            ...                                     "id": "12345",
+            ...                                     "answers": [{"text": "this is an answer one", "answer_start": 0}],
+            ...                                     "is_impossible": False,
+            ...                                 }
+            ...                             ],
+            ...                             "context": "this is an answer one. this is a context one",
+            ...                         },
+            ...                         {
+            ...                             "qas": [
+            ...                                 {
+            ...                                     "question": "this is a question two",
+            ...                                     "id": "12346",
+            ...                                     "answers": [{"text": "this is an answer two", "answer_start": 0}],
+            ...                                     "is_impossible": False,
+            ...                                 }
+            ...                             ],
+            ...                             "context": "this is an answer two. this is a context two",
+            ...                         },
+            ...                     ],
+            ...                 },
+            ...                 {
+            ...                     "title": "ExampleSet2",
+            ...                     "paragraphs": [
+            ...                         {
+            ...                             "qas": [
+            ...                                 {
+            ...                                     "question": "this is a question three",
+            ...                                     "id": "12347",
+            ...                                     "answers": [{"text": "this is an answer three", "answer_start": 0}],
+            ...                                     "is_impossible": False,
+            ...                                 }
+            ...                             ],
+            ...                             "context": "this is an answer three. this is a context three",
+            ...                         },
+            ...                         {
+            ...                             "qas": [
+            ...                                 {
+            ...                                     "question": "this is a question four",
+            ...                                     "id": "12348",
+            ...                                     "answers": [{"text": "this is an answer four", "answer_start": 0}],
+            ...                                     "is_impossible": False,
+            ...                                 }
+            ...                             ],
+            ...                             "context": "this is an answer four. this is a context four",
+            ...                         },
+            ...                     ],
+            ...                 },
+            ...             ],
+            ...         }
+            ...     )
+            ... )
+            ... predict_data.write_text(
+            ...     json.dumps(
+            ...         {
+            ...             "version": "v2.0",
+            ...             "data": [
+            ...                 {
+            ...                     "title": "ExampleSet3",
+            ...                     "paragraphs": [
+            ...                         {
+            ...                             "qas": [
+            ...                                 {
+            ...                                     "question": "this is a question five",
+            ...                                     "id": "12349",
+            ...                                     "is_impossible": False,
+            ...                                 }
+            ...                             ],
+            ...                             "context": "this is an answer five. this is a context five",
+            ...                         },
+            ...                         {
+            ...                             "qas": [
+            ...                                 {
+            ...                                     "question": "this is a question six",
+            ...                                     "id": "12350",
+            ...                                     "is_impossible": False,
+            ...                                 }
+            ...                             ],
+            ...                             "context": "this is an answer six. this is a context six",
+            ...                         },
+            ...                     ],
+            ...                 }
+            ...             ],
+            ...         }
+            ...     )
+            ...     + "\n"
+            ... )
+            >>> datamodule = QuestionAnsweringData.from_squad_v2(
+            ...     train_file="train_data.json",
+            ...     predict_file="predict_data.json",
+            ...     batch_size=2,
+            ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Downloading...
+            >>> model = QuestionAnsweringTask()
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> os.remove("train_data.json")
+            >>> os.remove("predict_data.json")
         """
 
         ds_kw = dict(
@@ -526,12 +654,12 @@ class QuestionAnsweringData(DataModule):
             >>> predict_data = {
             ...     "id": ["12349", "12350"],
             ...     "context": [
-            ...         "this is an answer four. this is a context four",
             ...         "this is an answer five. this is a context five",
+            ...         "this is an answer six. this is a context six",
             ...     ],
             ...     "question": [
-            ...         "this is a question four",
             ...         "this is a question five",
+            ...         "this is a question six",
             ...     ],
             ... }
             >>> datamodule = QuestionAnsweringData.from_dicts(
