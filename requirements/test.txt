@@ -4,6 +4,7 @@ pytest>=5.0
 pytest-flake8
 flake8
 pytest-doctestplus
+pytest-rerunfailures>=10.0
 
 # install pkg
 check-manifest
