@@ -421,16 +421,13 @@ class QuestionAnsweringData(DataModule):
         Examples
         ________
 
-        .. doctest::
+        .. testsetup::
 
-            >>> import os
             >>> import json
             >>> from pathlib import Path
-            >>> from flash import Trainer
-            >>> from flash.text import QuestionAnsweringData, QuestionAnsweringTask
             >>> train_data = Path("train_data.json")
             >>> predict_data = Path("predict_data.json")
-            >>> train_data.write_text(
+            >>> _ = train_data.write_text(
             ...     json.dumps(
             ...         {
             ...             "version": "v2.0",
@@ -493,8 +490,7 @@ class QuestionAnsweringData(DataModule):
             ...         }
             ...     )
             ... )
-            989
-            >>> predict_data.write_text(
+            >>> _ = predict_data.write_text(
             ...     json.dumps(
             ...         {
             ...             "version": "v2.0",
@@ -528,7 +524,107 @@ class QuestionAnsweringData(DataModule):
             ...         }
             ...     )
             ... )
-            372
+
+        The file ``train_data.json`` contains the following:
+
+        .. code-block::
+
+            {
+                "version": "v2.0",
+                "data": [
+                    {
+                        "title": "ExampleSet1",
+                        "paragraphs": [
+                            {
+                                "qas": [
+                                    {
+                                        "question": "this is a question one",
+                                        "id": "12345",
+                                        "answers": [{"text": "this is an answer one", "answer_start": 0}],
+                                        "is_impossible": false
+                                    }
+                                ],
+                                "context": "this is an answer one. this is a context one"
+                            }, {
+                                "qas": [
+                                    {
+                                        "question": "this is a question two",
+                                        "id": "12346",
+                                        "answers": [{"text": "this is an answer two", "answer_start": 0}],
+                                        "is_impossible": false
+                                    }
+                                ],
+                                "context": "this is an answer two. this is a context two"
+                            }
+                        ]
+                    }, {
+                        "title": "ExampleSet2",
+                        "paragraphs": [
+                            {
+                                "qas": [
+                                    {
+                                        "question": "this is a question three",
+                                        "id": "12347",
+                                        "answers": [{"text": "this is an answer three", "answer_start": 0}],
+                                        "is_impossible": false
+                                    }
+                                ],
+                                "context": "this is an answer three. this is a context three"
+                            }, {
+                                "qas": [
+                                    {
+                                        "question": "this is a question four",
+                                        "id": "12348",
+                                        "answers": [{"text": "this is an answer four", "answer_start": 0}],
+                                        "is_impossible": false
+                                    }
+                                ],
+                                "context": "this is an answer four. this is a context four"
+                            }
+                        ]
+                    }
+                ]
+            }
+
+
+        The file ``predict_data.json`` contains the following:
+
+        .. code-block::
+
+            {
+                "version": "v2.0",
+                "data": [
+                    {
+                        "title": "ExampleSet3",
+                        "paragraphs": [
+                            {
+                                "qas": [
+                                    {
+                                        "question": "this is a question five",
+                                        "id": "12349",
+                                        "is_impossible": false
+                                    }
+                                ],
+                                "context": "this is an answer five. this is a context five"
+                            }, {
+                                "qas": [
+                                    {
+                                        "question": "this is a question six",
+                                        "id": "12350",
+                                        "is_impossible": false
+                                    }
+                                ],
+                                "context": "this is an answer six. this is a context six"
+                            }
+                        ]
+                    }
+                ]
+            }
+
+        .. doctest::
+
+            >>> from flash import Trainer
+            >>> from flash.text import QuestionAnsweringData, QuestionAnsweringTask
             >>> datamodule = QuestionAnsweringData.from_squad_v2(
             ...     train_file="train_data.json",
             ...     predict_file="predict_data.json",
@@ -543,6 +639,7 @@ class QuestionAnsweringData(DataModule):
 
         .. testcleanup::
 
+            >>> import os
             >>> os.remove("train_data.json")
             >>> os.remove("predict_data.json")
         """
