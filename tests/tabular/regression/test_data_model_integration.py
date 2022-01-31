@@ -32,16 +32,25 @@ if _TABULAR_AVAILABLE:
 
 @pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
 @pytest.mark.parametrize(
-    "backbone", ["tabnet", "tabtransformer", "fttransformer", "autoint", "node", "category_embedding"]
+    "backbone,fields",
+    [
+        ("tabnet", {"categorical_fields": ["category"], "numerical_fields": ["scalar_a", "scalar_b"]}),
+        ("tabtransformer", {"categorical_fields": ["category"], "numerical_fields": ["scalar_a", "scalar_b"]}),
+        ("fttransformer", {"categorical_fields": ["category"], "numerical_fields": ["scalar_a", "scalar_b"]}),
+        ("autoint", {"categorical_fields": ["category"], "numerical_fields": ["scalar_a", "scalar_b"]}),
+        ("node", {"categorical_fields": ["category"], "numerical_fields": ["scalar_a", "scalar_b"]}),
+        ("category_embedding", {"categorical_fields": ["category"], "numerical_fields": ["scalar_a", "scalar_b"]}),
+        # No categorical / numerical fields
+        ("tabnet", {"categorical_fields": ["category"]}),
+        ("tabnet", {"numerical_fields": ["scalar_a", "scalar_b"]}),
+    ],
 )
-def test_regression(backbone, tmpdir):
-
+def test_regression(backbone, fields, tmpdir):
     train_data_frame = TEST_DF_1.copy()
     val_data_frame = TEST_DF_1.copy()
     test_data_frame = TEST_DF_1.copy()
     data = TabularRegressionData.from_data_frame(
-        categorical_fields=["category"],
-        numerical_fields=["scalar_a", "scalar_b"],
+        **fields,
         target_field="label",
         train_data_frame=train_data_frame,
         val_data_frame=val_data_frame,
