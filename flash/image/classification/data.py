@@ -604,6 +604,8 @@ class ImageClassificationData(DataModule):
             >>> import shutil
             >>> shutil.rmtree("train_folder")
             >>> shutil.rmtree("predict_folder")
+            >>> del train_data_frame
+            >>> del predict_data_frame
         """
 
         ds_kw = dict(
@@ -883,6 +885,8 @@ class ImageClassificationData(DataModule):
             >>> import os
             >>> _ = [os.remove(f"image_{i}.png") for i in range(1, 4)]
             >>> _ = [os.remove(f"predict_image_{i}.png") for i in range(1, 4)]
+            >>> del train_dataset
+            >>> del predict_dataset
         """
 
         ds_kw = dict(

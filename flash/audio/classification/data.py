@@ -590,6 +590,8 @@ class AudioClassificationData(DataModule):
             >>> import shutil
             >>> shutil.rmtree("train_folder")
             >>> shutil.rmtree("predict_folder")
+            >>> del train_data_frame
+            >>> del predict_data_frame
         """
 
         ds_kw = dict(

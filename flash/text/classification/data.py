@@ -514,6 +514,11 @@ class TextClassificationData(DataModule):
             Training...
             >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Predicting...
+
+        .. testcleanup::
+
+            >>> del train_data
+            >>> del predict_data
         """
 
         ds_kw = dict(
@@ -618,6 +623,11 @@ class TextClassificationData(DataModule):
             Training...
             >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Predicting...
+
+        .. testcleanup::
+
+            >>> del train_data
+            >>> del predict_data
         """
 
         ds_kw = dict(
