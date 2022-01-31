@@ -13,6 +13,19 @@ if _TORCHVISION_AVAILABLE:
     import torchvision
 
 
+@pytest.fixture(autouse=True)
+def clear_memory():
+    """Delete ``model``, ``trainer``, and ``datamodule`` variables after each doctest."""
+    yield
+    g = globals()
+    if "model" in g:
+        del g["model"]
+    if "trainer" in g:
+        del g["trainer"]
+    if "datamodule" in g:
+        del g["datamodule"]
+
+
 class UUID_String(str):
     """Class to replace UUID object with str instance and hex attribute."""
 
