@@ -5,7 +5,6 @@ pytest-flake8
 flake8
 pytest-doctestplus
 pytest-rerunfailures>=10.0
-pytest-forked
 
 # install pkg
 check-manifest
