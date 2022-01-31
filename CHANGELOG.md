@@ -70,7 +70,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Fixed a bug where the `labels` property would return `None` when using `ObjectDetectionData.from_fiftyone` ([#1136](https://github.com/PyTorchLightning/lightning-flash/pull/1136))
 
-- Fixed a bug where `TabularData` would not work correctly with no categorical variables
+- Fixed a bug where `TabularData` would not work correctly with no categorical variables ([#1144](https://github.com/PyTorchLightning/lightning-flash/pull/1144))
 
 ### Removed
 
