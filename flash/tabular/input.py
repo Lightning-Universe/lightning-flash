@@ -120,8 +120,8 @@ class TabularDataFrameInput(Input):
         num_vars = _to_num_vars_numpy(df, parameters["numerical_fields"])
 
         num_samples = len(df)
-        cat_vars = np.stack(cat_vars, 1) if len(cat_vars) else np.zeros((num_samples, 0))
-        num_vars = np.stack(num_vars, 1) if len(num_vars) else np.zeros((num_samples, 0))
+        cat_vars = np.stack(cat_vars, 1) if len(cat_vars) else np.zeros((num_samples, 0), dtype=np.int64)
+        num_vars = np.stack(num_vars, 1) if len(num_vars) else np.zeros((num_samples, 0), dtype=np.float32)
 
         return cat_vars, num_vars
 
