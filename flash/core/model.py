@@ -14,6 +14,7 @@
 import functools
 import inspect
 import pickle
+import re
 from abc import ABCMeta
 from copy import deepcopy
 from importlib import import_module
@@ -267,11 +268,15 @@ class CheckDependenciesMeta(ABCMeta):
         result = ABCMeta.__new__(mcs, *args, **kwargs)
         if result.required_extras is not None:
             result.__init__ = requires(result.required_extras)(result.__init__)
-            load_from_checkpoint = getattr(result, "load_from_checkpoint", None)
-            if load_from_checkpoint is not None:
-                result.load_from_checkpoint = classmethod(
-                    requires(result.required_extras)(result.load_from_checkpoint.__func__)
-                )
+
+            patterns = ["load_from_checkpoint", "available_*"]
+            regex = "(" + ")|(".join(patterns) + ")"
+            for attribute in filter(lambda x: re.match(regex, x), result.__dict__.keys()):
+                original_attribute = getattr(result, attribute, None)
+                if original_attribute is not None:
+                    setattr(
+                        result, attribute, classmethod(requires(result.required_extras)(original_attribute.__func__))
+                    )
         return result
 
 

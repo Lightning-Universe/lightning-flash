@@ -317,6 +317,12 @@ def test_available_backbones():
     assert Foo.available_backbones() == {}
 
 
+@pytest.mark.skipif(_IMAGE_TESTING, reason="image libraries are installed.")
+def test_available_backbones_raises():
+    with pytest.raises(ModuleNotFoundError, match="Required dependencies not available."):
+        _ = ImageClassifier.available_backbones()
+
+
 @ClassificationTask.lr_schedulers
 def custom_steplr_configuration_return_as_instance(optimizer):
     return torch.optim.lr_scheduler.StepLR(optimizer, step_size=10)
