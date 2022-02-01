@@ -74,7 +74,6 @@ class TabularForecastingDataFrameInput(Input):
             time_series_dataset = TimeSeriesDataSet.from_parameters(
                 parameters,
                 data,
-                predict=True,
                 stop_randomization=True,
             )
         return time_series_dataset

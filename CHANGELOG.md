@@ -72,6 +72,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Fixed a bug where `TabularData` would not work correctly with no categorical variables ([#1144](https://github.com/PyTorchLightning/lightning-flash/pull/1144))
 
+- Fixed a bug where loading `TabularForecastingData` for prediction would only yield a single sample per series
+
 ### Removed
 
 - Removed the `Seq2SeqData` base class (use `TranslationData` or `SummarizationData` directly) ([#1128](https://github.com/PyTorchLightning/lightning-flash/pull/1128))
