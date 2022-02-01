@@ -269,14 +269,10 @@ class CheckDependenciesMeta(ABCMeta):
         if result.required_extras is not None:
             result.__init__ = requires(result.required_extras)(result.__init__)
 
-            patterns = ["load_from_checkpoint", "available_*"]
+            patterns = ["load_from_checkpoint", "available_*"]  # must match classmethods only
             regex = "(" + ")|(".join(patterns) + ")"
-            for attribute in filter(lambda x: re.match(regex, x), result.__dict__.keys()):
-                original_attribute = getattr(result, attribute, None)
-                if original_attribute is not None:
-                    setattr(
-                        result, attribute, classmethod(requires(result.required_extras)(original_attribute.__func__))
-                    )
+            for attribute_name, attribute_value in filter(lambda x: re.match(regex, x[0]), inspect.getmembers(result)):
+                setattr(result, attribute_name, classmethod(requires(result.required_extras)(attribute_value.__func__)))
         return result
 
 
