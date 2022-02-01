@@ -36,6 +36,7 @@ from flash.core.data.io.output_transform import OutputTransform
 from flash.core.utilities.imports import (
     _AUDIO_TESTING,
     _GRAPH_TESTING,
+    _IMAGE_AVAILABLE,
     _IMAGE_TESTING,
     _TABULAR_TESTING,
     _TEXT_TESTING,
@@ -317,7 +318,7 @@ def test_available_backbones():
     assert Foo.available_backbones() == {}
 
 
-@pytest.mark.skipif(_IMAGE_TESTING, reason="image libraries are installed.")
+@pytest.mark.skipif(_IMAGE_AVAILABLE, reason="image libraries are installed.")
 def test_available_backbones_raises():
     with pytest.raises(ModuleNotFoundError, match="Required dependencies not available."):
         _ = ImageClassifier.available_backbones()
