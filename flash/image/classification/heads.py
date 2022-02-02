@@ -23,6 +23,7 @@ IMAGE_CLASSIFIER_HEADS = FlashRegistry("classifier_heads")
 
 def _load_linear_head(num_features: int, num_classes: int) -> nn.Module:
     """Loads a linear head.
+
     Args:
         num_features (int): Number of input features.
         num_classes (int): Number of output classes.
