@@ -13,7 +13,6 @@
 # limitations under the License.
 from functools import partial
 
-import torch
 from torch import nn
 
 from flash.core.registry import FlashRegistry  # noqa: F401
@@ -22,40 +21,15 @@ from flash.core.registry import FlashRegistry  # noqa: F401
 IMAGE_CLASSIFIER_HEADS = FlashRegistry("classifier_heads")
 
 
-class LinearHead(nn.Module):
-    def __init__(self, num_features: int, num_classes: int) -> None:
-        """Linear head for image classification.
-
-        Args:
-            num_features (int): Number of input features.
-            num_classes (int): Number of output classes.
-        """
-        super().__init__()
-        self.linear = nn.Linear(num_features, num_classes)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass.
-
-        Args:
-            x (torch.Tensor): input tensor
-
-        Returns:
-            torch.Tensor: output tensor
-        """
-        return self.linear(x)
-
-
 def _load_linear_head(num_features: int, num_classes: int) -> nn.Module:
     """Loads a linear head.
-
     Args:
         num_features (int): Number of input features.
         num_classes (int): Number of output classes.
-
     Returns:
         nn.Module: Linear head.
     """
-    return LinearHead(num_features, num_classes)
+    return nn.Linear(num_features, num_classes)
 
 
 IMAGE_CLASSIFIER_HEADS(
