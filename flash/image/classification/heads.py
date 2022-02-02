@@ -25,8 +25,9 @@ def _load_linear_head(num_features: int, num_classes: int) -> nn.Module:
     """Loads a linear head.
 
     Args:
-        num_features (int): Number of input features.
-        num_classes (int): Number of output classes.
+        num_features: Number of input features.
+        num_classes: Number of output classes.
+        
     Returns:
         nn.Module: Linear head.
     """
@@ -36,6 +37,4 @@ def _load_linear_head(num_features: int, num_classes: int) -> nn.Module:
 IMAGE_CLASSIFIER_HEADS(
     partial(_load_linear_head),
     name="linear",
-    namespace="image/classification",
-    providers="torch",
 )
