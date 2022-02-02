@@ -27,7 +27,7 @@ def _load_linear_head(num_features: int, num_classes: int) -> nn.Module:
     Args:
         num_features: Number of input features.
         num_classes: Number of output classes.
-        
+
     Returns:
         nn.Module: Linear head.
     """
