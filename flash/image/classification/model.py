@@ -32,6 +32,7 @@ from flash.core.utilities.types import (
 )
 from flash.image.classification.adapters import TRAINING_STRATEGIES
 from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES
+from flash.image.classification.heads import IMAGE_CLASSIFIER_HEADS
 from flash.image.classification.input_transform import ImageClassificationInputTransform
 from flash.image.data import ImageDeserializer
 
@@ -79,6 +80,7 @@ class ImageClassifier(ClassificationAdapterTask):
     """
 
     backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES
+    heads: FlashRegistry = IMAGE_CLASSIFIER_HEADS
     training_strategies: FlashRegistry = TRAINING_STRATEGIES
     required_extras: str = "image"
 
@@ -123,10 +125,13 @@ class ImageClassifier(ClassificationAdapterTask):
         else:
             backbone, num_features = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
 
-        head = head(num_features, num_classes) if isinstance(head, FunctionType) else head
-        head = head or nn.Sequential(
-            nn.Linear(num_features, num_classes),
-        )
+        if isinstance(head, str):
+            head = self.heads.get(head)(num_features=num_features, num_classes=num_classes)
+        else:
+            head = head(num_features, num_classes) if isinstance(head, FunctionType) else head
+            head = head or nn.Sequential(
+                nn.Linear(num_features, num_classes),
+            )
 
         adapter_from_class = self.training_strategies.get(training_strategy)
         adapter = adapter_from_class(
