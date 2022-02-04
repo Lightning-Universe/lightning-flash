@@ -832,10 +832,12 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             self._data_pipeline_state = checkpoint["_data_pipeline_state"]
 
     @classmethod
-    def available_backbones(cls, head: Optional[str] = None) -> Union[Dict[str, List[str]], List[str]]:
+    def available_backbones(
+        cls, head: Optional[str] = None
+    ) -> Optional[Union[Dict[str, Optional[List[str]]], List[str]]]:
         if head is None:
             registry: Optional[FlashRegistry] = getattr(cls, "backbones", None)
-            if registry is not None:
+            if registry is not None and getattr(cls, "heads", None) is None:
                 return registry.available_keys()
             heads = cls.available_heads()
         else:
@@ -847,7 +849,9 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             if "backbones" in metadata:
                 backbones = metadata["backbones"].available_keys()
             else:
-                backbones = cls.available_backbones()
+                backbones = getattr(cls, "backbones", None)
+                if backbones is not None:
+                    backbones = backbones.available_keys()
             result[head] = backbones
 
         if len(result) == 1:

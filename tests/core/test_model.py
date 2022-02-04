@@ -314,7 +314,7 @@ def test_available_backbones():
     class Foo(ImageClassifier):
         backbones = None
 
-    assert Foo.available_backbones() == {}
+    assert Foo.available_backbones() is None
 
 
 @ClassificationTask.lr_schedulers
