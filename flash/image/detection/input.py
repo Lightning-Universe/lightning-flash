@@ -11,13 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, Hashable, Sequence
+from typing import Any, Dict, Hashable, List, Optional, Sequence
 
-from flash.core.data.io.classification_input import ClassificationState
+from flash.core.data.io.classification_input import ClassificationInputMixin, ClassificationState
 from flash.core.data.io.input import DataKeys
+from flash.core.data.utilities.paths import filter_valid_files, PATH_TYPE
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
 from flash.core.integrations.icevision.data import IceVisionInput
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _ICEVISION_AVAILABLE, lazy_import, requires
+from flash.image.data import ImageFilesInput, IMG_EXTENSIONS, NP_EXTENSIONS
 
 if _FIFTYONE_AVAILABLE:
     fol = lazy_import("fiftyone.core.labels")
@@ -33,6 +35,37 @@ if _ICEVISION_AVAILABLE:
     from icevision.utils import ImgSize
 else:
     Parser = object
+
+
+class ObjectDetectionFilesInput(ClassificationInputMixin, ImageFilesInput):
+    def load_data(
+        self,
+        files: List[PATH_TYPE],
+        targets: Optional[List[List[Any]]] = None,
+        bboxes: Optional[List[List[Dict[str, int]]]] = None,
+    ) -> List[Dict[str, Any]]:
+        if targets is None:
+            return super().load_data(files)
+        files, targets, bboxes = filter_valid_files(
+            files, targets, bboxes, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS
+        )
+        unrolled_targets = []
+        for target in targets:
+            unrolled_targets.extend(target)
+        self.load_target_metadata(unrolled_targets)
+
+        # Gives a list of samples
+        # [{"input": "image_1.png", "target": {"bboxes": [...], "labels": [...]}]
+
+        # return to_samples(files, targets)
+
+    def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+        sample = super().load_sample(sample)
+        if DataKeys.TARGET in sample:
+            sample[DataKeys.TARGET]["labels"] = [
+                self.format_target(label) for label in sample[DataKeys.TARGET]["labels"]
+            ]
+        return sample
 
 
 class FiftyOneParser(Parser):
