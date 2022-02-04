@@ -76,7 +76,7 @@ def test_init_train(tmpdir, backbone, metrics):
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
-@pytest.mark.parametrize("head", [None, "linear", torch.nn.Sequential(torch.nn.Linear(512, 10))])
+@pytest.mark.parametrize("head", ["linear", torch.nn.Linear(512, 10)])
 def test_init_train_head(tmpdir, head):
     model = ImageClassifier(10, backbone="resnet18", head=head, metrics=None)
     train_dl = torch.utils.data.DataLoader(DummyDataset())
