@@ -3,7 +3,7 @@ codecov>=2.1
 pytest>=5.0
 pytest-flake8
 flake8
-pytest-doctestplus
+pytest-doctestplus>=0.11.0
 pytest-rerunfailures>=10.0
 
 # install pkg
