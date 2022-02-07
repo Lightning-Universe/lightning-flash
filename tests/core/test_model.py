@@ -315,7 +315,7 @@ def test_available_backbones():
     class Foo(ImageClassifier):
         backbones = None
 
-    assert Foo.available_backbones() == {}
+    assert Foo.available_backbones() is None
 
 
 @pytest.mark.skipif(_IMAGE_AVAILABLE, reason="image libraries are installed.")
