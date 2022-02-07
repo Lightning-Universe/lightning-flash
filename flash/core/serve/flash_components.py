@@ -8,7 +8,6 @@ from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import DataKeys
 from flash.core.serve import expose, ModelComponent
 from flash.core.serve.types.base import BaseType
-from flash.core.utilities.stages import RunningStage
 
 
 class FlashInputs(BaseType):
@@ -48,14 +47,14 @@ class FlashOutputs(BaseType):
         return None
 
 
-def build_flash_serve_model_component(model, serve_input):
+def build_flash_serve_model_component(model, serve_input, output):
 
     data_pipeline_state = DataPipelineState()
     for properties in [
         serve_input,
         getattr(serve_input, "transform", None),
         model._output_transform,
-        model._output,
+        output,
         model,
     ]:
         if properties is not None and hasattr(properties, "attach_data_pipeline_state"):
@@ -67,20 +66,18 @@ def build_flash_serve_model_component(model, serve_input):
         def __init__(self, model):
             self.model = model
             self.model.eval()
-            self.data_pipeline = model.build_data_pipeline()
+            # self.data_pipeline = model.build_data_pipeline()
             self.serve_input = serve_input
             self.dataloader_collate_fn = self.serve_input._create_dataloader_collate_fn([])
             self.on_after_batch_transfer_fn = self.serve_input._create_on_after_batch_transfer_fn([])
-            self.output_transform_processor = self.data_pipeline.output_transform_processor(
-                RunningStage.SERVING, is_serving=True
-            )
+            self.output_transform = model._output_transform
             # todo (tchaton) Remove this hack
             self.extra_arguments = len(inspect.signature(self.model.transfer_batch_to_device).parameters) == 3
             self.device = self.model.device
 
         @expose(
             inputs={"inputs": FlashInputs(_ServeInputProcessor(serve_input))},
-            outputs={"outputs": FlashOutputs(data_pipeline.output_processor())},
+            outputs={"outputs": FlashOutputs(data_pipeline._output)},
         )
         def predict(self, inputs):
             with torch.no_grad():
@@ -90,7 +87,7 @@ def build_flash_serve_model_component(model, serve_input):
                     inputs = self.model.transfer_batch_to_device(inputs, self.device)
                 inputs = self.on_after_batch_transfer_fn(inputs)
                 preds = self.model.predict_step(inputs, 0)
-                preds = self.output_transform_processor(preds)
+                preds = self.output_transform(preds)
                 return preds
 
     return FlashServeModelComponent(model)

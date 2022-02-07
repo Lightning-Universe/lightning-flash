@@ -21,6 +21,7 @@ from torch.utils.data import DataLoader, Sampler
 import flash
 from flash.core.data.io.input import InputBase
 from flash.core.model import DatasetProcessor, ModuleWrapperBase, Task
+from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 
 
 class Adapter(DatasetProcessor, ModuleWrapperBase, nn.Module):
@@ -77,6 +78,14 @@ class AdapterTask(Task):
         super().__init__(**kwargs)
 
         self.adapter = adapter
+
+    @property
+    def input_transform(self) -> Optional[INPUT_TRANSFORM_TYPE]:
+        return self.adapter.input_transform
+
+    @input_transform.setter
+    def input_transform(self, input_transform: INPUT_TRANSFORM_TYPE) -> None:
+        self.adapter.input_transform = input_transform
 
     @torch.jit.unused
     @property

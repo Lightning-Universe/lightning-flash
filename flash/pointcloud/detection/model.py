@@ -20,7 +20,6 @@ from torch.utils.data import DataLoader, Sampler
 
 from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.io.output import Output
-from flash.core.data.states import CollateFn
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.apply_func import get_callable_dict
@@ -92,12 +91,9 @@ class PointCloudObjectDetector(Task):
         if isinstance(backbone, tuple):
             self.backbone, out_features = backbone
         else:
-            self.model, out_features, collate_fn = self.backbones.get(backbone)(**backbone_kwargs)
+            self.model, out_features, self.collate_fn = self.backbones.get(backbone)(**backbone_kwargs)
             self.backbone = self.model.backbone
             self.neck = self.model.neck
-            self.set_state(CollateFn(collate_fn))
-            self.set_state(CollateFn(collate_fn))
-            self.set_state(CollateFn(collate_fn))
             self.loss_fn = get_callable_dict(self.model.loss)
 
         if __FILE_EXAMPLE__ not in sys.argv[0]:

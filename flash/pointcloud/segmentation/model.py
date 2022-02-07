@@ -22,7 +22,6 @@ from torchmetrics import IoU
 from flash.core.classification import ClassificationTask
 from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.io.output import Output
-from flash.core.data.states import CollateFn
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
@@ -100,11 +99,10 @@ class PointCloudSegmentation(ClassificationTask):
         if isinstance(backbone, tuple):
             self.backbone, out_features = backbone
         else:
-            self.backbone, out_features, collate_fn = self.backbones.get(backbone)(**backbone_kwargs)
+            self.backbone, out_features, self.collate_fn = self.backbones.get(backbone)(**backbone_kwargs)
             # replace latest layer
             if not flash._IS_TESTING:
                 self.backbone.fc = nn.Identity()
-            self.set_state(CollateFn(collate_fn))
 
         self.head = nn.Identity() if flash._IS_TESTING else (head or nn.Linear(out_features, num_classes))
 

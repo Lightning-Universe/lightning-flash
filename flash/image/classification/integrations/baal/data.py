@@ -20,7 +20,6 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader, Dataset, random_split
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_pipeline import DataPipeline
 from flash.core.data.io.input import InputBase
 from flash.core.utilities.imports import _BAAL_AVAILABLE, requires
 
@@ -131,10 +130,6 @@ class ActiveLearningDataModule(DataModule):
     @property
     def num_classes(self) -> Optional[int]:
         return getattr(self.labelled, "num_classes", None) or getattr(self.unlabelled, "num_classes", None)
-
-    @property
-    def data_pipeline(self) -> "DataPipeline":
-        return self.labelled.data_pipeline
 
     def train_dataloader(self) -> "DataLoader":
         if self.val_split:

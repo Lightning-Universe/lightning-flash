@@ -11,14 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from copy import copy
-from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.io.input import DataKeys, Input
-from flash.core.data.properties import ProcessState
 from flash.core.utilities.imports import _FORECASTING_AVAILABLE, _PANDAS_AVAILABLE, requires
 
 if _PANDAS_AVAILABLE:
@@ -28,14 +25,6 @@ else:
 
 if _FORECASTING_AVAILABLE:
     from pytorch_forecasting import TimeSeriesDataSet
-
-
-@dataclass(unsafe_hash=True, frozen=True)
-class TimeSeriesDataSetParametersState(ProcessState):
-    """A :class:`~flash.core.data.properties.ProcessState` containing ``labels``, a mapping from class index to
-    label."""
-
-    parameters: Optional[Dict[str, Any]]
 
 
 class TabularForecastingDataFrameInput(Input):
@@ -58,12 +47,8 @@ class TabularForecastingDataFrameInput(Input):
             # Add some sample data so that we can recreate the `TimeSeriesDataSet` later on
             parameters["data_sample"] = data.iloc[[0]].to_dict()
 
-            self.set_state(TimeSeriesDataSetParametersState(parameters))
             self.parameters = parameters
         else:
-            parameters_state = self.get_state(TimeSeriesDataSetParametersState)
-            parameters = parameters or (parameters_state.parameters if parameters_state is not None else None)
-            parameters = copy(parameters)
             if parameters is None:
                 raise MisconfigurationException(
                     "Loading data for evaluation or inference requires parameters from the train data. Either "

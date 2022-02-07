@@ -32,8 +32,8 @@ class TabularClassifier(ClassificationAdapterTask):
     :ref:`tabular_classification`.
 
     Args:
-        embedding_sizes: Number of columns in table (not including target column).
-        categorical_fields: Number of classes to classify.
+        parameters: The parameters computed from the training data (can be obtained from the ``parameters`` attribute of
+            the ``TabularClassificationData`` object containing your training data).
         embedding_sizes: List of (num_classes, emb_dim) to form categorical embeddings.
         cat_dims: Number of distinct values for each categorical column
         num_features: Number of columns in table
@@ -55,8 +55,8 @@ class TabularClassifier(ClassificationAdapterTask):
 
     def __init__(
         self,
+        parameters: Dict[str, Any],
         embedding_sizes: list,
-        categorical_fields: list,
         cat_dims: list,
         num_features: int,
         num_classes: int,
@@ -69,12 +69,15 @@ class TabularClassifier(ClassificationAdapterTask):
         **backbone_kwargs,
     ):
         self.save_hyperparameters()
+
+        self._parameters = parameters
+
         metadata = self.backbones.get(backbone, with_metadata=True)
         adapter = metadata["metadata"]["adapter"].from_task(
             self,
             task_type="classification",
             embedding_sizes=embedding_sizes,
-            categorical_fields=categorical_fields,
+            categorical_fields=parameters["categorical_fields"],
             cat_dims=cat_dims,
             num_features=num_features,
             output_dim=num_classes,
@@ -98,8 +101,8 @@ class TabularClassifier(ClassificationAdapterTask):
     @classmethod
     def from_data(cls, datamodule, **kwargs) -> "TabularClassifier":
         model = cls(
+            parameters=datamodule.parameters,
             embedding_sizes=datamodule.embedding_sizes,
-            categorical_fields=datamodule.categorical_fields,
             cat_dims=datamodule.cat_dims,
             num_features=datamodule.num_features,
             num_classes=datamodule.num_classes,
@@ -118,6 +121,7 @@ class TabularClassifier(ClassificationAdapterTask):
         transform_kwargs: Optional[Dict] = None,
         parameters: Optional[Dict[str, Any]] = None,
     ) -> Composition:
+        parameters = parameters or self._parameters
         return super().serve(
             host, port, sanity_check, partial(input_cls, parameters=parameters), transform, transform_kwargs
         )

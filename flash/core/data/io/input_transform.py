@@ -23,14 +23,7 @@ from torch.utils.data._utils.collate import default_collate
 import flash
 from flash.core.data.callback import ControlFlow, FlashCallback
 from flash.core.data.io.input import DataKeys
-from flash.core.data.properties import ProcessState, Properties
-from flash.core.data.states import (
-    CollateFn,
-    PerBatchTransform,
-    PerBatchTransformOnDevice,
-    PerSampleTransform,
-    PerSampleTransformOnDevice,
-)
+from flash.core.data.properties import Properties
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import _INPUT_TRANSFORM_FUNCS, _STAGES_PREFIX
 from flash.core.registry import FlashRegistry
@@ -850,7 +843,7 @@ class InputTransform(Properties):
 
     @partial(transform_context, current_fn="per_sample_transform")
     def _per_sample_transform(self, sample: Any) -> Any:
-        fn = self._get_current_transform(PerSampleTransform)
+        fn = self.current_transform
         if isinstance(sample, list):
             return [fn(s) for s in sample]
         return fn(sample)
@@ -859,36 +852,19 @@ class InputTransform(Properties):
     def _per_batch_transform(self, batch: Any) -> Any:
         """Transforms to apply to a whole batch (if possible use this for efficiency).
 
-        .. note::     This option is mutually exclusive with :meth:`per_sample_transform_on_device`,     since if both
-        are specified, uncollation has to be applied.
+        .. note:: This option is mutually exclusive with :meth:`per_sample_transform_on_device`, since if both are
+        specified, uncollation has to be applied.
         """
-        return self._get_current_transform(PerBatchTransform)(batch)
+        return self.current_transform(batch)
 
     @partial(transform_context, current_fn="collate")
     def _collate(self, samples: Sequence, metadata=None) -> Any:
         """Transform to convert a sequence of samples to a collated batch."""
-        current_transform = self.current_transform
-
-        # the model can provide a custom ``collate_fn``.
-        collate_fn = self.get_state(CollateFn)
-        if collate_fn is not None:
-            collate_fn = collate_fn.collate_fn
-        else:
-            collate_fn = current_transform
-            # return collate_fn.collate_fn(samples)
-
+        collate_fn = self.current_transform
         parameters = inspect.signature(collate_fn).parameters
         if len(parameters) > 1 and DataKeys.METADATA in parameters:
             return collate_fn(samples, metadata)
         return collate_fn(samples)
-
-    def _get_current_transform(self, process_state: ProcessState):
-        fn = self.get_state(process_state)
-        if fn is not None:
-            if fn.transform is not None:
-                return fn.transform
-            return self._identity
-        return self.current_transform
 
     @partial(transform_context, current_fn="per_sample_transform_on_device")
     def _per_sample_transform_on_device(self, sample: Any) -> Any:
@@ -899,7 +875,7 @@ class InputTransform(Properties):
         workers, since to make that happen     each of the workers would have to create it's own CUDA-context which
         would pollute GPU memory (if on GPU).
         """
-        fn = self._get_current_transform(PerSampleTransformOnDevice)
+        fn = self.current_transform
         if isinstance(sample, list):
             return [fn(s) for s in sample]
         return fn(sample)
@@ -911,7 +887,7 @@ class InputTransform(Properties):
         .. note::     This function won't be called within the dataloader workers, since to make that happen     each of
         the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
         """
-        return self._get_current_transform(PerBatchTransformOnDevice)(batch)
+        return self.current_transform(batch)
 
     #############
     # UTILITIES #
@@ -1077,7 +1053,6 @@ def _sanitize_registry_transform(
 def create_transform(
     transform: INPUT_TRANSFORM_TYPE,
     running_stage: RunningStage,
-    data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None,
     input_transforms_registry: Optional[FlashRegistry] = None,
     transform_kwargs: Optional[Dict] = None,
 ) -> Optional["InputTransform"]:
@@ -1086,24 +1061,22 @@ def create_transform(
         transform_kwargs = {}
 
     if isinstance(transform, InputTransform):
-        transform._data_pipeline_state = data_pipeline_state
         return transform
 
     if inspect.isclass(transform) and issubclass(transform, InputTransform):
-        return transform(running_stage=running_stage, data_pipeline_state=data_pipeline_state, **transform_kwargs)
+        return transform(running_stage=running_stage, **transform_kwargs)
 
     if isinstance(transform, Callable):
         return LambdaInputTransform(
             running_stage=running_stage,
             transform=transform,
-            data_pipeline_state=data_pipeline_state,
             **transform_kwargs,
         )
 
     if isinstance(transform, tuple) or isinstance(transform, (LightningEnum, str)):
         enum, transform_kwargs = _sanitize_registry_transform(transform, input_transforms_registry)
         transform_cls = input_transforms_registry.get(enum)
-        return transform_cls(running_stage, data_pipeline_state=data_pipeline_state, **transform_kwargs)
+        return transform_cls(running_stage, **transform_kwargs)
 
     if not transform:
         return None

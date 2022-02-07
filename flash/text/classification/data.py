@@ -18,9 +18,9 @@ from pandas.core.frame import DataFrame
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioTextClassificationInput
-from flash.core.integrations.transformers.input_transform import TransformersInputTransform
 from flash.core.utilities.imports import _TEXT_AVAILABLE, _TEXT_TESTING
 from flash.core.utilities.stages import RunningStage
 from flash.text.classification.input import (
@@ -46,7 +46,7 @@ class TextClassificationData(DataModule):
     """The ``TextClassificationData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
     classmethods for loading data for text classification."""
 
-    input_transform_cls = TransformersInputTransform
+    input_transform_cls = InputTransform
 
     @classmethod
     def from_csv(
@@ -57,13 +57,12 @@ class TextClassificationData(DataModule):
         val_file: Optional[PATH_TYPE] = None,
         test_file: Optional[PATH_TYPE] = None,
         predict_file: Optional[PATH_TYPE] = None,
-        train_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
-        val_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
-        test_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
-        predict_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        train_transform: Optional[Dict[str, Callable]] = InputTransform,
+        val_transform: Optional[Dict[str, Callable]] = InputTransform,
+        test_transform: Optional[Dict[str, Callable]] = InputTransform,
+        predict_transform: Optional[Dict[str, Callable]] = InputTransform,
         input_cls: Type[Input] = TextClassificationCSVInput,
         transform_kwargs: Optional[Dict] = None,
-        max_length: int = 128,
         **data_module_kwargs: Any,
     ) -> "TextClassificationData":
         """Load the :class:`~flash.text.classification.data.TextClassificationData` from CSV files containing text
@@ -89,7 +88,6 @@ class TextClassificationData(DataModule):
                 predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
-            max_length: The maximum length to pad / truncate sequences to.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
 
@@ -161,7 +159,6 @@ class TextClassificationData(DataModule):
         ds_kw = dict(
             input_key=input_field,
             target_keys=target_fields,
-            max_length=max_length,
             data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
@@ -184,14 +181,13 @@ class TextClassificationData(DataModule):
         val_file: Optional[PATH_TYPE] = None,
         test_file: Optional[PATH_TYPE] = None,
         predict_file: Optional[PATH_TYPE] = None,
-        train_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
-        val_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
-        test_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
-        predict_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        train_transform: Optional[Dict[str, Callable]] = InputTransform,
+        val_transform: Optional[Dict[str, Callable]] = InputTransform,
+        test_transform: Optional[Dict[str, Callable]] = InputTransform,
+        predict_transform: Optional[Dict[str, Callable]] = InputTransform,
         input_cls: Type[Input] = TextClassificationJSONInput,
         transform_kwargs: Optional[Dict] = None,
         field: Optional[str] = None,
-        max_length: int = 128,
         **data_module_kwargs: Any,
     ) -> "TextClassificationData":
         """Load the :class:`~flash.text.classification.data.TextClassificationData` from JSON files containing text
@@ -218,7 +214,6 @@ class TextClassificationData(DataModule):
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             field: To specify the field that holds the data in the JSON file.
-            max_length: The maximum length to pad / truncate sequences to.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
 
@@ -289,7 +284,6 @@ class TextClassificationData(DataModule):
             input_key=input_field,
             target_keys=target_fields,
             field=field,
-            max_length=max_length,
             data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
@@ -312,13 +306,12 @@ class TextClassificationData(DataModule):
         val_file: Optional[PATH_TYPE] = None,
         test_file: Optional[PATH_TYPE] = None,
         predict_file: Optional[PATH_TYPE] = None,
-        train_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
-        val_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
-        test_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
-        predict_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        train_transform: Optional[Dict[str, Callable]] = InputTransform,
+        val_transform: Optional[Dict[str, Callable]] = InputTransform,
+        test_transform: Optional[Dict[str, Callable]] = InputTransform,
+        predict_transform: Optional[Dict[str, Callable]] = InputTransform,
         input_cls: Type[Input] = TextClassificationParquetInput,
         transform_kwargs: Optional[Dict] = None,
-        max_length: int = 128,
         **data_module_kwargs: Any,
     ) -> "TextClassificationData":
         """Load the :class:`~flash.text.classification.data.TextClassificationData` from PARQUET files containing
@@ -344,7 +337,6 @@ class TextClassificationData(DataModule):
                 predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
-            max_length: The maximum length to pad / truncate sequences to.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
 
@@ -416,7 +408,6 @@ class TextClassificationData(DataModule):
         ds_kw = dict(
             input_key=input_field,
             target_keys=target_fields,
-            max_length=max_length,
             data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
@@ -439,13 +430,12 @@ class TextClassificationData(DataModule):
         val_hf_dataset: Optional[Dataset] = None,
         test_hf_dataset: Optional[Dataset] = None,
         predict_hf_dataset: Optional[Dataset] = None,
-        train_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
-        val_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
-        test_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
-        predict_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        train_transform: Optional[Dict[str, Callable]] = InputTransform,
+        val_transform: Optional[Dict[str, Callable]] = InputTransform,
+        test_transform: Optional[Dict[str, Callable]] = InputTransform,
+        predict_transform: Optional[Dict[str, Callable]] = InputTransform,
         input_cls: Type[Input] = TextClassificationInput,
         transform_kwargs: Optional[Dict] = None,
-        max_length: int = 128,
         **data_module_kwargs: Any,
     ) -> "TextClassificationData":
         """Load the :class:`~flash.text.classification.data.TextClassificationData` from Hugging Face ``Dataset``
@@ -471,7 +461,6 @@ class TextClassificationData(DataModule):
                 predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
-            max_length: The maximum length to pad / truncate sequences to.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
 
@@ -524,7 +513,6 @@ class TextClassificationData(DataModule):
         ds_kw = dict(
             input_key=input_field,
             target_keys=target_fields,
-            max_length=max_length,
             data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
@@ -547,13 +535,12 @@ class TextClassificationData(DataModule):
         val_data_frame: Optional[DataFrame] = None,
         test_data_frame: Optional[DataFrame] = None,
         predict_data_frame: Optional[DataFrame] = None,
-        train_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
-        val_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
-        test_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
-        predict_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        train_transform: Optional[Dict[str, Callable]] = InputTransform,
+        val_transform: Optional[Dict[str, Callable]] = InputTransform,
+        test_transform: Optional[Dict[str, Callable]] = InputTransform,
+        predict_transform: Optional[Dict[str, Callable]] = InputTransform,
         input_cls: Type[Input] = TextClassificationDataFrameInput,
         transform_kwargs: Optional[Dict] = None,
-        max_length: int = 128,
         **data_module_kwargs: Any,
     ) -> "TextClassificationData":
         """Load the :class:`~flash.text.classification.data.TextClassificationData` from Pandas ``DataFrame``
@@ -580,7 +567,6 @@ class TextClassificationData(DataModule):
                 predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
-            max_length: The maximum length to pad / truncate sequences to.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
 
@@ -633,7 +619,6 @@ class TextClassificationData(DataModule):
         ds_kw = dict(
             input_key=input_field,
             target_keys=target_fields,
-            max_length=max_length,
             data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
@@ -657,13 +642,12 @@ class TextClassificationData(DataModule):
         test_data: Optional[List[str]] = None,
         test_targets: Optional[Union[List[Any], List[List[Any]]]] = None,
         predict_data: Optional[List[str]] = None,
-        train_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
-        val_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
-        test_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
-        predict_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        train_transform: Optional[Dict[str, Callable]] = InputTransform,
+        val_transform: Optional[Dict[str, Callable]] = InputTransform,
+        test_transform: Optional[Dict[str, Callable]] = InputTransform,
+        predict_transform: Optional[Dict[str, Callable]] = InputTransform,
         input_cls: Type[Input] = TextClassificationListInput,
         transform_kwargs: Optional[Dict] = None,
-        max_length: int = 128,
         **data_module_kwargs: Any,
     ) -> "TextClassificationData":
         """Load the :class:`~flash.text.classification.data.TextClassificationData` from lists of text snippets and
@@ -689,7 +673,6 @@ class TextClassificationData(DataModule):
                 predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
-            max_length: The maximum length to pad / truncate sequences to.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
 
@@ -722,7 +705,6 @@ class TextClassificationData(DataModule):
         """
 
         ds_kw = dict(
-            max_length=max_length,
             data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
@@ -749,15 +731,14 @@ class TextClassificationData(DataModule):
         val_data_folder: str = None,
         test_data_folder: str = None,
         predict_data_folder: str = None,
-        train_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
-        val_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
-        test_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
-        predict_transform: Optional[Dict[str, Callable]] = TransformersInputTransform,
+        train_transform: Optional[Dict[str, Callable]] = InputTransform,
+        val_transform: Optional[Dict[str, Callable]] = InputTransform,
+        test_transform: Optional[Dict[str, Callable]] = InputTransform,
+        predict_transform: Optional[Dict[str, Callable]] = InputTransform,
         input_cls: Type[Input] = LabelStudioTextClassificationInput,
         transform_kwargs: Optional[Dict] = None,
         val_split: Optional[float] = None,
         multi_label: Optional[bool] = False,
-        max_length: int = 128,
         **data_module_kwargs: Any,
     ) -> "TextClassificationData":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object
@@ -789,7 +770,6 @@ class TextClassificationData(DataModule):
                 :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             multi_label: Whether the labels are multi encoded.
-            max_length: The maximum sequence length.
             data_module_kwargs: Additional keyword arguments to use when constructing the datamodule.
 
         Returns:
@@ -812,7 +792,6 @@ class TextClassificationData(DataModule):
         )
 
         ds_kw = dict(
-            max_length=max_length,
             data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,

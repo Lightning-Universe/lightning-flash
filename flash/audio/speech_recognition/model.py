@@ -21,24 +21,14 @@ import torch.nn as nn
 from flash.audio.speech_recognition.backbone import SPEECH_RECOGNITION_BACKBONES
 from flash.audio.speech_recognition.collate import DataCollatorCTCWithPadding
 from flash.audio.speech_recognition.input import SpeechRecognitionDeserializer
-from flash.audio.speech_recognition.output_transform import (
-    SpeechRecognitionBackboneState,
-    SpeechRecognitionOutputTransform,
-)
+from flash.audio.speech_recognition.output_transform import SpeechRecognitionOutputTransform
 from flash.core.data.io.input import ServeInput
 from flash.core.data.io.input_transform import InputTransform
-from flash.core.data.states import CollateFn
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.serve import Composition
 from flash.core.utilities.imports import _AUDIO_AVAILABLE, requires
-from flash.core.utilities.types import (
-    INPUT_TRANSFORM_TYPE,
-    LR_SCHEDULER_TYPE,
-    OPTIMIZER_TYPE,
-    OUTPUT_TRANSFORM_TYPE,
-    OUTPUT_TYPE,
-)
+from flash.core.utilities.types import INPUT_TRANSFORM_TYPE, LR_SCHEDULER_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 
 if _AUDIO_AVAILABLE:
     from transformers import AutoProcessor
@@ -69,7 +59,6 @@ class SpeechRecognition(Task):
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         learning_rate: float = 1e-5,
         output: OUTPUT_TYPE = None,
-        output_transform: OUTPUT_TRANSFORM_TYPE = SpeechRecognitionOutputTransform(),
     ):
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
         # disable HF thousand warnings
@@ -84,20 +73,15 @@ class SpeechRecognition(Task):
             lr_scheduler=lr_scheduler,
             learning_rate=learning_rate,
             output=output,
-            output_transform=output_transform,
+            output_transform=SpeechRecognitionOutputTransform(backbone),
         )
 
         self.save_hyperparameters()
 
-        self.set_state(SpeechRecognitionBackboneState(backbone))
-        self.set_state(
-            CollateFn(
-                DataCollatorCTCWithPadding(
-                    AutoProcessor.from_pretrained(backbone)
-                    if processor_backbone is None
-                    else AutoProcessor.from_pretrained(processor_backbone)
-                )
-            )
+        self.collate_fn = DataCollatorCTCWithPadding(
+            AutoProcessor.from_pretrained(backbone)
+            if processor_backbone is None
+            else AutoProcessor.from_pretrained(processor_backbone)
         )
 
     def forward(self, batch: Dict[str, torch.Tensor]):

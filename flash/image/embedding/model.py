@@ -16,13 +16,6 @@ from typing import Any, Dict, List, Optional
 
 from flash.core.adapter import AdapterTask
 from flash.core.data.io.input import DataKeys
-from flash.core.data.states import (
-    CollateFn,
-    PerBatchTransform,
-    PerBatchTransformOnDevice,
-    PerSampleTransform,
-    PerSampleTransformOnDevice,
-)
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _VISSL_AVAILABLE, requires
@@ -117,20 +110,8 @@ class ImageEmbedder(AdapterTask):
             learning_rate=learning_rate,
         )
 
-        transform, collate_fn = self.transforms.get(pretraining_transform)(**pretraining_transform_kwargs)
-
-        self.adapter.set_state(CollateFn(collate_fn))
-        self.adapter.set_state(
-            PerSampleTransform(
-                ApplyToKeys(
-                    DataKeys.INPUT,
-                    transform,
-                )
-            )
-        )
-        self.adapter.set_state(PerSampleTransformOnDevice(None))
-        self.adapter.set_state(PerBatchTransform(None))
-        self.adapter.set_state(PerBatchTransformOnDevice(None))
+        input_transform, self.collate_fn = self.transforms.get(pretraining_transform)(**pretraining_transform_kwargs)
+        self.input_transform = ApplyToKeys(DataKeys.INPUT, input_transform)
 
         warnings.warn(
             "Warning: VISSL ImageEmbedder overrides any user provided transforms"

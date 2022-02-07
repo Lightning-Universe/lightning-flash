@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from dataclasses import dataclass
 from io import StringIO
 from typing import Any, Dict, List, Optional, Union
 
@@ -20,7 +19,6 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.process import Deserializer
-from flash.core.data.properties import ProcessState
 from flash.core.data.utilities.data_frame import read_csv
 from flash.core.utilities.imports import _PANDAS_AVAILABLE
 from flash.tabular.classification.utils import (
@@ -35,13 +33,6 @@ if _PANDAS_AVAILABLE:
     from pandas.core.frame import DataFrame
 else:
     DataFrame = object
-
-
-@dataclass(unsafe_hash=True, frozen=True)
-class TabularParametersState(ProcessState):
-    """A :class:`~flash.core.data.properties.ProcessState` containing tabular data ``parameters``."""
-
-    parameters: Optional[Dict[str, Any]]
 
 
 class TabularDataFrameInput(Input):
@@ -92,17 +83,12 @@ class TabularDataFrameInput(Input):
         if self.training:
             categorical_fields, numerical_fields = self._sanetize_fields(categorical_fields, numerical_fields)
             parameters = self.compute_parameters(df, numerical_fields, categorical_fields)
-
-            self.set_state(TabularParametersState(parameters))
-        else:
-            parameters_state = self.get_state(TabularParametersState)
-            parameters = parameters or (parameters_state.parameters if parameters_state is not None else None)
-            if parameters is None:
-                raise MisconfigurationException(
-                    "Loading tabular data for evaluation or inference requires parameters from the train data. Either "
-                    "construct the train data at the same time as evaluation and inference or provide the train "
-                    "`datamodule.parameters` in the `parameters` argument."
-                )
+        elif parameters is None:
+            raise MisconfigurationException(
+                "Loading tabular data for evaluation or inference requires parameters from the train data. Either "
+                "construct the train data at the same time as evaluation and inference or provide the train "
+                "`datamodule.parameters` in the `parameters` argument."
+            )
 
         self.parameters = parameters
 
@@ -131,20 +117,8 @@ class TabularDeserializer(Deserializer):
         self._parameters = parameters
         super().__init__(*args, **kwargs)
 
-    @property
-    def parameters(self) -> Dict[str, Any]:
-        if self._parameters is not None:
-            return self._parameters
-        parameters_state = self.get_state(TabularParametersState)
-        if parameters_state is not None and parameters_state.parameters is not None:
-            return parameters_state.parameters
-        raise MisconfigurationException(
-            "Tabular tasks must previously have been trained in order to support serving or the `parameters` argument "
-            "must be provided to the `serve` method."
-        )
-
     def serve_load_sample(self, data: str) -> Any:
-        parameters = self.parameters
+        parameters = self._parameters
 
         df = read_csv(StringIO(data))
         df = _pre_transform(
@@ -166,7 +140,7 @@ class TabularDeserializer(Deserializer):
 
     @property
     def example_input(self) -> str:
-        parameters = self.parameters
+        parameters = self._parameters
 
         row = {}
         for cat_col in parameters["categorical_fields"]:

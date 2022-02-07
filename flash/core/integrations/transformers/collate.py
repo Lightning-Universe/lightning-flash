@@ -15,7 +15,10 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 from typing import Any, Dict, Optional
 
-from flash.core.data.properties import ProcessState
+import torch
+from torch.utils.data._utils.collate import default_collate
+
+from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
 
 if _TRANSFORMERS_AVAILABLE:
@@ -23,12 +26,19 @@ if _TRANSFORMERS_AVAILABLE:
 
 
 @dataclass(unsafe_hash=True, frozen=True)
-class TransformersBackboneState(ProcessState):
-    """The ``TransformersBackboneState`` records the ``backbone`` in use by tasks which rely on Hugging Face
-    transformers."""
+class TransformersCollate:
 
     backbone: str
+    max_length: int = (128,)
     tokenizer_kwargs: Optional[Dict[str, Any]] = field(default_factory=dict, hash=False)
+
+    @staticmethod
+    def to_tensor(sample: Dict[str, Any]) -> Dict[str, Any]:
+        for key in sample:
+            if key is DataKeys.METADATA:
+                continue
+            sample[key] = torch.as_tensor(sample[key])
+        return sample
 
     @property
     @lru_cache(maxsize=None)
@@ -37,3 +47,15 @@ class TransformersBackboneState(ProcessState):
         if self.tokenizer_kwargs is not None:
             tokenizer_kwargs = self.tokenizer_kwargs
         return AutoTokenizer.from_pretrained(self.backbone, use_fast=True, **tokenizer_kwargs)
+
+    def __call__(self, samples):
+        tokenized_samples = []
+        for sample in samples:
+            tokenized_sample = self.tokenizer(
+                sample[DataKeys.INPUT], max_length=self.max_length, truncation=True, padding="max_length"
+            )
+            tokenized_sample = tokenized_sample.data
+            if DataKeys.TARGET in sample:
+                tokenized_sample[DataKeys.TARGET] = sample[DataKeys.TARGET]
+            tokenized_samples.append(self.to_tensor(tokenized_sample))
+        return default_collate(tokenized_samples)
