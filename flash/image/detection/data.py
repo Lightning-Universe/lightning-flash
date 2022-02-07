@@ -74,10 +74,26 @@ class ObjectDetectionData(DataModule):
         """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data list of
         image files, bounding boxes, and targets.
 
+        The supported file extensions are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``, ``.bmp``, ``.pgm``, ``.tif``,
+        ``.tiff``, ``.webp``, and ``.npy``.
+        The targets can be in any of our
+        :ref:`supported classification target formats <formatting_classification_targets>`.
+        The bounding boxes are expected to be dictionaries with integer values (representing pixels) and the following
+        keys: ``xmin``, ``ymin``, ``width``, ``height``.
         To learn how to customize the transforms applied for each stage, read our
         :ref:`customizing transforms guide <customizing_transforms>`.
 
         Args:
+            train_files: The list of image files to use when training.
+            train_targets: The list of lists of targets to use when training.
+            train_bboxes: The list of lists of bounding boxes to use when training.
+            val_files: The list of image files to use when validating.
+            val_targets: The list of lists of targets to use when validating.
+            val_bboxes: The list of lists of bounding boxes to use when validating.
+            test_files: The list of image files to use when testing.
+            test_targets: The list of lists of targets to use when testing.
+            test_bboxes: The list of lists of bounding boxes to use when testing.
+            predict_files: The list of image files to use when predicting.
             train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
             val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
