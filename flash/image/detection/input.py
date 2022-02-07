@@ -49,15 +49,12 @@ class ObjectDetectionFilesInput(ClassificationInputMixin, ImageFilesInput):
         files, targets, bboxes = filter_valid_files(
             files, targets, bboxes, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS
         )
-        unrolled_targets = []
-        for target in targets:
-            unrolled_targets.extend(target)
-        self.load_target_metadata(unrolled_targets)
+        self.load_target_metadata([t for target in targets for t in target], add_background=True)
 
-        # Gives a list of samples
-        # [{"input": "image_1.png", "target": {"bboxes": [...], "labels": [...]}]
-
-        # return to_samples(files, targets)
+        return [
+            {DataKeys.INPUT: file, DataKeys.TARGET: {"bboxes": bbox, "labels": label}}
+            for file, label, bbox in zip(files, targets, bboxes)
+        ]
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         sample = super().load_sample(sample)

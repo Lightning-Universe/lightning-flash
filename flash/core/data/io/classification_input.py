@@ -38,7 +38,10 @@ class ClassificationInputMixin(Properties):
     """
 
     def load_target_metadata(
-        self, targets: Optional[List[Any]], target_formatter: Optional[TargetFormatter] = None
+        self,
+        targets: Optional[List[Any]],
+        target_formatter: Optional[TargetFormatter] = None,
+        add_background: bool = False,
     ) -> None:
         """Determine the target format and store the ``labels`` and ``num_classes``.
 
@@ -46,6 +49,8 @@ class ClassificationInputMixin(Properties):
             targets: The list of targets.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter`
                 rather than inferring from the targets.
+            add_background: If ``True``, a background class will be inserted as class zero if ``labels`` and
+                ``num_classes`` are being inferred.
         """
         if target_formatter is None and targets is not None:
             classification_state = self.get_state(ClassificationState)
@@ -54,7 +59,7 @@ class ClassificationInputMixin(Properties):
             else:
                 labels, num_classes = None, None
 
-            self.target_formatter = get_target_formatter(targets, labels, num_classes)
+            self.target_formatter = get_target_formatter(targets, labels, num_classes, add_background=add_background)
         else:
             self.target_formatter = target_formatter
 

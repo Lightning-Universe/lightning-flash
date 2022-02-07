@@ -78,57 +78,57 @@ def to_icevision_record(sample: Dict[str, Any]):
         input_component.set_img(sample[DataKeys.INPUT])
     record.add_component(input_component)
 
-    if "labels" in sample[DataKeys.TARGET]:
-        labels_component = InstancesLabelsRecordComponent()
-        labels_component.add_labels_by_id(sample[DataKeys.TARGET]["labels"])
-        record.add_component(labels_component)
+    if DataKeys.TARGET in sample:
+        if "labels" in sample[DataKeys.TARGET]:
+            labels_component = InstancesLabelsRecordComponent()
+            labels_component.add_labels_by_id(sample[DataKeys.TARGET]["labels"])
+            record.add_component(labels_component)
 
-    if "bboxes" in sample[DataKeys.TARGET]:
-        bboxes = [
-            BBox.from_xywh(bbox["xmin"], bbox["ymin"], bbox["width"], bbox["height"])
-            for bbox in sample[DataKeys.TARGET]["bboxes"]
-        ]
-        component = BBoxesRecordComponent()
-        component.set_bboxes(bboxes)
-        record.add_component(component)
-
-    if _ICEVISION_GREATER_EQUAL_0_11_0:
-        # mask_array = sample[DataKeys.TARGET].get("mask_array", None)
-        masks = sample[DataKeys.TARGET].get("masks", None)
-
-        if masks is not None:
-            component = InstanceMasksRecordComponent()
-
-            if masks is not None and len(masks) > 0:
-                if isinstance(masks[0], Mask):
-                    component.set_masks(masks)
-                else:
-                    mask_array = MaskArray(np.stack(masks, axis=0))
-                    component.set_mask_array(mask_array)
-                    component.set_masks(_split_mask_array(mask_array))
-
-            record.add_component(component)
-    else:
-        mask_array = sample[DataKeys.TARGET].get("mask_array", None)
-        if mask_array is not None:
-            component = MasksRecordComponent()
-            component.set_masks(mask_array)
+        if "bboxes" in sample[DataKeys.TARGET]:
+            bboxes = [
+                BBox.from_xywh(bbox["xmin"], bbox["ymin"], bbox["width"], bbox["height"])
+                for bbox in sample[DataKeys.TARGET]["bboxes"]
+            ]
+            component = BBoxesRecordComponent()
+            component.set_bboxes(bboxes)
             record.add_component(component)
 
-    if "keypoints" in sample[DataKeys.TARGET]:
-        keypoints = []
+        if _ICEVISION_GREATER_EQUAL_0_11_0:
+            masks = sample[DataKeys.TARGET].get("masks", None)
 
-        for keypoints_list, keypoints_metadata in zip(
-            sample[DataKeys.TARGET]["keypoints"], sample[DataKeys.TARGET]["keypoints_metadata"]
-        ):
-            xyv = []
-            for keypoint in keypoints_list:
-                xyv.extend((keypoint["x"], keypoint["y"], keypoint["visible"]))
+            if masks is not None:
+                component = InstanceMasksRecordComponent()
 
-            keypoints.append(KeyPoints.from_xyv(xyv, keypoints_metadata))
-        component = KeyPointsRecordComponent()
-        component.set_keypoints(keypoints)
-        record.add_component(component)
+                if masks is not None and len(masks) > 0:
+                    if isinstance(masks[0], Mask):
+                        component.set_masks(masks)
+                    else:
+                        mask_array = MaskArray(np.stack(masks, axis=0))
+                        component.set_mask_array(mask_array)
+                        component.set_masks(_split_mask_array(mask_array))
+
+                record.add_component(component)
+        else:
+            mask_array = sample[DataKeys.TARGET].get("mask_array", None)
+            if mask_array is not None:
+                component = MasksRecordComponent()
+                component.set_masks(mask_array)
+                record.add_component(component)
+
+        if "keypoints" in sample[DataKeys.TARGET]:
+            keypoints = []
+
+            for keypoints_list, keypoints_metadata in zip(
+                sample[DataKeys.TARGET]["keypoints"], sample[DataKeys.TARGET]["keypoints_metadata"]
+            ):
+                xyv = []
+                for keypoint in keypoints_list:
+                    xyv.extend((keypoint["x"], keypoint["y"], keypoint["visible"]))
+
+                keypoints.append(KeyPoints.from_xyv(xyv, keypoints_metadata))
+            component = KeyPointsRecordComponent()
+            component.set_keypoints(keypoints)
+            record.add_component(component)
 
     return record
 

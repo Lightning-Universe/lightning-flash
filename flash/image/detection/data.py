@@ -23,7 +23,7 @@ from flash.core.integrations.icevision.transforms import IceVisionInputTransform
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _ICEVISION_AVAILABLE, _IMAGE_EXTRAS_TESTING, requires
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
-from flash.image.detection.input import ObjectDetectionFiftyOneInput
+from flash.image.detection.input import ObjectDetectionFiftyOneInput, ObjectDetectionFilesInput
 
 if _FIFTYONE_AVAILABLE:
     SampleCollection = "fiftyone.core.collections.SampleCollection"
@@ -67,7 +67,7 @@ class ObjectDetectionData(DataModule):
         val_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        input_cls: Type[Input] = IceVisionInput,
+        input_cls: Type[Input] = ObjectDetectionFilesInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ObjectDetectionData":
