@@ -20,6 +20,7 @@ import torch
 import flash
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.output import Output
+from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,
     _KORNIA_AVAILABLE,
@@ -27,6 +28,7 @@ from flash.core.utilities.imports import (
     lazy_import,
     requires,
 )
+from flash.core.utilities.providers import _FIFTYONE
 
 if _FIFTYONE_AVAILABLE:
     fol = lazy_import("fiftyone.core.labels")
@@ -46,13 +48,17 @@ else:
     K = None
 
 
+SEMANTIC_SEGMENTATION_OUTPUTS = FlashRegistry("outputs")
+
+
+@SEMANTIC_SEGMENTATION_OUTPUTS(name="labels")
 class SegmentationLabelsOutput(Output):
     """A :class:`.Output` which converts the model outputs to the label of the argmax classification per pixel in
     the image for semantic segmentation tasks.
 
     Args:
         labels_map: A dictionary that map the labels ids to pixel intensities.
-        visualize: Wether to visualize the image labels.
+        visualize: Whether to visualize the image labels.
     """
 
     @requires("image")
@@ -98,6 +104,7 @@ class SegmentationLabelsOutput(Output):
         return labels.tolist()
 
 
+@SEMANTIC_SEGMENTATION_OUTPUTS(name="fiftyone", providers=_FIFTYONE)
 class FiftyOneSegmentationLabelsOutput(SegmentationLabelsOutput):
     """A :class:`.Output` which converts the model outputs to FiftyOne segmentation format.
 
@@ -114,7 +121,7 @@ class FiftyOneSegmentationLabelsOutput(SegmentationLabelsOutput):
         self,
         labels_map: Optional[Dict[int, Tuple[int, int, int]]] = None,
         visualize: bool = False,
-        return_filepath: bool = False,
+        return_filepath: bool = True,
     ):
         super().__init__(labels_map=labels_map, visualize=visualize)
 

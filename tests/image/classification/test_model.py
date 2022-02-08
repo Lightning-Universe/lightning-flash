@@ -86,7 +86,7 @@ def test_init_train_head(tmpdir, head):
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_non_existent_backbone():
     with pytest.raises(KeyError):
-        ImageClassifier(2, "i am never going to implement this lol")
+        ImageClassifier(2, backbone="i am never going to implement this lol")
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")

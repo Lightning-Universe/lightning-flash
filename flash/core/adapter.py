@@ -79,6 +79,7 @@ class AdapterTask(Task):
 
         self.adapter = adapter
 
+    @torch.jit.unused
     @property
     def input_transform(self) -> Optional[INPUT_TRANSFORM_TYPE]:
         return self.adapter.input_transform

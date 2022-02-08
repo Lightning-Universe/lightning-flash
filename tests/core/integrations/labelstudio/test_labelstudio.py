@@ -170,7 +170,7 @@ def test_input_labelstudio_image():
 
     train_data, val_data = LabelStudioInput._split_train_val_data(data, split=0.2)
     train = LabelStudioImageClassificationInput(RunningStage.TRAINING, train_data)
-    val = LabelStudioImageClassificationInput(RunningStage.VALIDATING, val_data)
+    val = LabelStudioImageClassificationInput(RunningStage.VALIDATING, val_data, parameters=train.parameters)
 
     train_sample = train[0]
     val_sample = val[0]
@@ -233,8 +233,8 @@ def test_input_labelstudio_text():
     train_data, test_data = LabelStudioInput._split_train_test_data(data)
     train_data, val_data = LabelStudioInput._split_train_val_data(train_data, split=0.2)
     train = LabelStudioTextClassificationInput(RunningStage.TRAINING, train_data)
-    val = LabelStudioTextClassificationInput(RunningStage.VALIDATING, val_data)
-    test = LabelStudioTextClassificationInput(RunningStage.TESTING, test_data)
+    val = LabelStudioTextClassificationInput(RunningStage.VALIDATING, val_data, parameters=train.parameters)
+    test = LabelStudioTextClassificationInput(RunningStage.TESTING, test_data, parameters=train.parameters)
 
     assert train._data_pipeline_state == val._data_pipeline_state
     assert train._data_pipeline_state == test._data_pipeline_state

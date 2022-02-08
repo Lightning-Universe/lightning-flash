@@ -21,6 +21,7 @@ from torchmetrics import IoU
 from flash.core.classification import ClassificationTask
 from flash.core.data.io.input import DataKeys, ServeInput
 from flash.core.data.io.output_transform import OutputTransform
+from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.serve import Composition
 from flash.core.utilities.imports import _KORNIA_AVAILABLE, requires
@@ -37,6 +38,7 @@ from flash.image.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 from flash.image.segmentation.heads import SEMANTIC_SEGMENTATION_HEADS
 from flash.image.segmentation.input import SemanticSegmentationDeserializer
 from flash.image.segmentation.input_transform import SemanticSegmentationInputTransform
+from flash.image.segmentation.output import SEMANTIC_SEGMENTATION_OUTPUTS
 
 if _KORNIA_AVAILABLE:
     import kornia as K
@@ -77,8 +79,8 @@ class SemanticSegmentation(ClassificationTask):
     output_transform_cls = SemanticSegmentationOutputTransform
 
     backbones: FlashRegistry = SEMANTIC_SEGMENTATION_BACKBONES
-
     heads: FlashRegistry = SEMANTIC_SEGMENTATION_HEADS
+    outputs: FlashRegistry = Task.outputs + SEMANTIC_SEGMENTATION_OUTPUTS
 
     required_extras: str = "image"
 

@@ -106,7 +106,7 @@ def test_predict_tensor():
     model = SemanticSegmentation(2, backbone="mobilenetv3_large_100")
     datamodule = SemanticSegmentationData.from_tensors(predict_data=img, batch_size=1)
     trainer = Trainer()
-    out = trainer.predict(model, datamodule=datamodule)
+    out = trainer.predict(model, datamodule=datamodule, output="labels")
     assert isinstance(out[0][0], list)
     assert len(out[0][0]) == 64
     assert len(out[0][0][0]) == 64
@@ -118,7 +118,7 @@ def test_predict_numpy():
     model = SemanticSegmentation(2, backbone="mobilenetv3_large_100")
     datamodule = SemanticSegmentationData.from_numpy(predict_data=img, batch_size=1)
     trainer = Trainer()
-    out = trainer.predict(model, datamodule=datamodule)
+    out = trainer.predict(model, datamodule=datamodule, output="labels")
     assert isinstance(out[0][0], list)
     assert len(out[0][0]) == 64
     assert len(out[0][0][0]) == 64

@@ -89,7 +89,7 @@ def test_predict_dataset(tmpdir):
         batch_size=4,
     )
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    out = trainer.predict(model, datamodule=datamodule)
+    out = trainer.predict(model, datamodule=datamodule, output="classes")
     assert isinstance(out[0][0], int)
 
 
