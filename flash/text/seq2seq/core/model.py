@@ -126,6 +126,7 @@ class Seq2SeqTask(Task):
             max_target_length=max_target_length,
             padding=padding,
         )
+        self.model = self.backbones.get(backbone)()
         self.enable_ort = enable_ort
         self.max_source_length = max_source_length
         self.max_target_length = max_target_length
