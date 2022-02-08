@@ -16,19 +16,16 @@ from typing import Any, Dict, Optional, Sequence, Type
 from torch.utils.data import Dataset
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 from flash.image.classification.data import ImageClassificationFilesInput, ImageClassificationFolderInput
 from flash.image.face_detection.input import FaceDetectionInput
 from flash.image.face_detection.input_transform import FaceDetectionInputTransform
-from flash.image.face_detection.output_transform import FaceDetectionOutputTransform
 
 
 class FaceDetectionData(DataModule):
     input_transform_cls = FaceDetectionInputTransform
-    output_transform_cls = FaceDetectionOutputTransform
 
     @classmethod
     def from_datasets(
@@ -46,14 +43,13 @@ class FaceDetectionData(DataModule):
         **data_module_kwargs,
     ) -> "FaceDetectionData":
 
-        ds_kw = dict(data_pipeline_state=DataPipelineState(), transform_kwargs=transform_kwargs)
+        ds_kw = dict(transform_kwargs=transform_kwargs)
 
         return cls(
             input_cls(RunningStage.TRAINING, train_dataset, transform=train_transform, **ds_kw),
             input_cls(RunningStage.VALIDATING, val_dataset, transform=val_transform, **ds_kw),
             input_cls(RunningStage.TESTING, test_dataset, transform=test_transform, **ds_kw),
             input_cls(RunningStage.PREDICTING, predict_dataset, transform=predict_transform, **ds_kw),
-            output_transform=cls.output_transform_cls(),
             **data_module_kwargs,
         )
 
@@ -71,7 +67,6 @@ class FaceDetectionData(DataModule):
 
         return cls(
             predict_input=input_cls(RunningStage.PREDICTING, predict_files, **ds_kw),
-            output_transform=cls.output_transform_cls(),
             **data_module_kwargs,
         )
 
@@ -89,6 +84,5 @@ class FaceDetectionData(DataModule):
 
         return cls(
             predict_input=input_cls(RunningStage.PREDICTING, predict_folder, **ds_kw),
-            output_transform=cls.output_transform_cls(),
             **data_module_kwargs,
         )

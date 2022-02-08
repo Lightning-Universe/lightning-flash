@@ -20,10 +20,6 @@ from flash.core.data.io.input_transform import InputTransform
 from flash.core.utilities.stages import RunningStage
 
 
-class DataPipelineState:
-    """A class to store and share all process states once a :class:`.DataPipeline` has been initialized."""
-
-
 class DataPipeline:
     """
     DataPipeline holds the engineering logic to connect

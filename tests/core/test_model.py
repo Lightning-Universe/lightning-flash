@@ -197,32 +197,6 @@ def test_classification_task_trainer_predict(tmpdir):
     assert len(list(chain.from_iterable(predictions))) == 10
 
 
-def test_task_datapipeline_save(tmpdir):
-    model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
-    train_dl = torch.utils.data.DataLoader(DummyDataset())
-    task = ClassificationTask(model, loss_fn=F.nll_loss, output_transform=DummyOutputTransform())
-
-    # to check later
-    task.output_transform.test = True
-
-    # generate a checkpoint
-    trainer = pl.Trainer(
-        default_root_dir=tmpdir,
-        limit_train_batches=1,
-        max_epochs=1,
-        progress_bar_refresh_rate=0,
-        weights_summary=None,
-        logger=False,
-    )
-    trainer.fit(task, train_dl)
-    path = str(tmpdir / "model.ckpt")
-    trainer.save_checkpoint(path)
-
-    # load from file
-    task = ClassificationTask.load_from_checkpoint(path, model=model)
-    assert task.output_transform.test
-
-
 @pytest.mark.parametrize(
     ["cls", "filename"],
     [

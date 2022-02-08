@@ -23,7 +23,6 @@ from flash.audio.speech_recognition.input import (
 )
 from flash.audio.speech_recognition.output_transform import SpeechRecognitionOutputTransform
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
 from flash.core.registry import FlashRegistry
@@ -128,7 +127,6 @@ class SpeechRecognitionData(DataModule):
         """
 
         ds_kw = dict(
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
             sampling_rate=sampling_rate,
@@ -257,7 +255,6 @@ class SpeechRecognitionData(DataModule):
         """
 
         ds_kw = dict(
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
             input_key=input_field,
@@ -387,7 +384,6 @@ class SpeechRecognitionData(DataModule):
         """
 
         ds_kw = dict(
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
             input_key=input_field,
@@ -544,7 +540,6 @@ class SpeechRecognitionData(DataModule):
         """
 
         ds_kw = dict(
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
             sampling_rate=sampling_rate,

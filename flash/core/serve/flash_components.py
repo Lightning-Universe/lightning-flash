@@ -4,7 +4,6 @@ from typing import Any, Callable, Mapping
 import torch
 
 from flash.core.data.batch import _ServeInputProcessor
-from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import DataKeys
 from flash.core.serve import expose, ModelComponent
 from flash.core.serve.types.base import BaseType
@@ -48,25 +47,10 @@ class FlashOutputs(BaseType):
 
 
 def build_flash_serve_model_component(model, serve_input, output):
-
-    data_pipeline_state = DataPipelineState()
-    for properties in [
-        serve_input,
-        getattr(serve_input, "transform", None),
-        model._output_transform,
-        output,
-        model,
-    ]:
-        if properties is not None and hasattr(properties, "attach_data_pipeline_state"):
-            properties.attach_data_pipeline_state(data_pipeline_state)
-
-    data_pipeline = model.build_data_pipeline()
-
     class FlashServeModelComponent(ModelComponent):
         def __init__(self, model):
             self.model = model
             self.model.eval()
-            # self.data_pipeline = model.build_data_pipeline()
             self.serve_input = serve_input
             self.dataloader_collate_fn = self.serve_input._create_dataloader_collate_fn([])
             self.on_after_batch_transfer_fn = self.serve_input._create_on_after_batch_transfer_fn([])
@@ -77,7 +61,7 @@ def build_flash_serve_model_component(model, serve_input, output):
 
         @expose(
             inputs={"inputs": FlashInputs(_ServeInputProcessor(serve_input))},
-            outputs={"outputs": FlashOutputs(data_pipeline._output)},
+            outputs={"outputs": FlashOutputs(output)},
         )
         def predict(self, inputs):
             with torch.no_grad():

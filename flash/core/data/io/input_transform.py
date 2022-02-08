@@ -20,7 +20,6 @@ from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data._utils.collate import default_collate
 
-import flash
 from flash.core.data.callback import ControlFlow, FlashCallback
 from flash.core.data.io.input import DataKeys
 from flash.core.data.properties import Properties
@@ -86,7 +85,6 @@ class Compose:
 class InputTransform(Properties):
 
     running_stage: RunningStage
-    data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None
 
     def __post_init__(self):
         # used to keep track of provided transforms
@@ -1011,7 +1009,6 @@ class InputTransform(Properties):
 class LambdaInputTransform(InputTransform):
 
     transform: Callable = InputTransform._identity
-    data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None
 
     def per_sample_transform(self) -> Callable:
         return self.transform

@@ -34,10 +34,15 @@ def test_init():
     train_input = DatasetInput(RunningStage.TRAINING, DummyDataset())
     val_input = DatasetInput(RunningStage.VALIDATING, DummyDataset())
     test_input = DatasetInput(RunningStage.TESTING, DummyDataset())
-    DataModule(train_input, batch_size=1)
-    DataModule(train_input, val_input, batch_size=1)
-    DataModule(train_input, val_input, test_input, batch_size=1)
-    assert DataModule(batch_size=1).data_pipeline
+
+    data_module = DataModule(train_input, batch_size=1)
+    assert data_module.train_dataset and not data_module.val_dataset and not data_module.test_dataset
+
+    data_module = DataModule(train_input, val_input, batch_size=1)
+    assert data_module.train_dataset and data_module.val_dataset and not data_module.test_dataset
+
+    data_module = DataModule(train_input, val_input, test_input, batch_size=1)
+    assert data_module.train_dataset and data_module.val_dataset and data_module.test_dataset
 
 
 def test_dataloaders():

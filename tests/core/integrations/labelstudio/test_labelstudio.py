@@ -1,6 +1,5 @@
 import pytest
 
-from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.utils import download_data
 from flash.core.integrations.labelstudio.input import (
     _load_json_data,
@@ -148,10 +147,9 @@ def test_input_labelstudio():
         "multi_label": False,
     }
 
-    data_pipeline_state = DataPipelineState()
     train_data, val_data = LabelStudioInput._split_train_val_data(data, split=0.1)
-    train = LabelStudioInput(RunningStage.TRAINING, train_data, data_pipeline_state=data_pipeline_state)
-    val = LabelStudioInput(RunningStage.VALIDATING, val_data, data_pipeline_state=data_pipeline_state)
+    train = LabelStudioInput(RunningStage.TRAINING, train_data)
+    val = LabelStudioInput(RunningStage.VALIDATING, val_data)
 
     train_sample = train[0]
     val_sample = val[0]
@@ -170,15 +168,9 @@ def test_input_labelstudio_image():
         "multi_label": True,
     }
 
-    data_pipeline_state = DataPipelineState()
     train_data, val_data = LabelStudioInput._split_train_val_data(data, split=0.2)
-    train = LabelStudioImageClassificationInput(
-        RunningStage.TRAINING, train_data, data_pipeline_state=data_pipeline_state
-    )
-    val = LabelStudioImageClassificationInput(
-        RunningStage.VALIDATING, val_data, data_pipeline_state=data_pipeline_state
-    )
-    assert train._data_pipeline_state == val._data_pipeline_state == data_pipeline_state
+    train = LabelStudioImageClassificationInput(RunningStage.TRAINING, train_data)
+    val = LabelStudioImageClassificationInput(RunningStage.VALIDATING, val_data)
 
     train_sample = train[0]
     val_sample = val[0]
@@ -238,14 +230,11 @@ def test_input_labelstudio_text():
         "multi_label": False,
     }
 
-    data_pipeline_state = DataPipelineState()
     train_data, test_data = LabelStudioInput._split_train_test_data(data)
     train_data, val_data = LabelStudioInput._split_train_val_data(train_data, split=0.2)
-    train = LabelStudioTextClassificationInput(
-        RunningStage.TRAINING, train_data, data_pipeline_state=data_pipeline_state
-    )
-    val = LabelStudioTextClassificationInput(RunningStage.VALIDATING, val_data, data_pipeline_state=data_pipeline_state)
-    test = LabelStudioTextClassificationInput(RunningStage.TESTING, test_data, data_pipeline_state=data_pipeline_state)
+    train = LabelStudioTextClassificationInput(RunningStage.TRAINING, train_data)
+    val = LabelStudioTextClassificationInput(RunningStage.VALIDATING, val_data)
+    test = LabelStudioTextClassificationInput(RunningStage.TESTING, test_data)
 
     assert train._data_pipeline_state == val._data_pipeline_state
     assert train._data_pipeline_state == test._data_pipeline_state

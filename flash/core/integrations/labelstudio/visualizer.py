@@ -5,7 +5,6 @@ import string
 from pytorch_lightning.utilities.cloud_io import get_filesystem
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.integrations.labelstudio.input import LabelStudioState
 
 
@@ -14,9 +13,7 @@ class App:
 
     def __init__(self, datamodule: DataModule):
         ds = datamodule.inputs
-        data_pipeline_state: DataPipelineState = (
-            ds[0]._data_pipeline_state if isinstance(ds, list) else ds._data_pipeline_state
-        )
+        data_pipeline_state = ds[0]._data_pipeline_state if isinstance(ds, list) else ds._data_pipeline_state
         self.state: LabelStudioState = data_pipeline_state.get_state(LabelStudioState)
 
     def show_predictions(self, predictions):

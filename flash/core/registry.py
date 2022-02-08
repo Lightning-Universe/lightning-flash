@@ -67,7 +67,7 @@ class FlashRegistry:
             registries += [self]
 
         if isinstance(other, ConcatRegistry):
-            registries = other.registries + registries
+            registries = other.registries + tuple(registries)
         else:
             registries = [other] + registries
 

@@ -11,7 +11,6 @@ from pytorch_lightning.utilities.cloud_io import get_filesystem
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Sampler
 
-import flash
 from flash.core.data.io.input import DataKeys, Input, IterableInput
 from flash.core.data.properties import Properties
 from flash.core.data.utils import image_default_loader
@@ -228,11 +227,10 @@ class LabelStudioInput(BaseLabelStudioInput, Input):
         self,
         running_stage: RunningStage,
         *args: Any,
-        data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None,
         **kwargs: Any,
     ):
         self.state = None
-        super().__init__(running_stage, *args, data_pipeline_state=data_pipeline_state, **kwargs)
+        super().__init__(running_stage, *args, **kwargs)
 
 
 class LabelStudioIterableInput(BaseLabelStudioInput, IterableInput):
@@ -243,11 +241,10 @@ class LabelStudioIterableInput(BaseLabelStudioInput, IterableInput):
         self,
         running_stage: RunningStage,
         *args: Any,
-        data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None,
         **kwargs: Any,
     ):
         self.state = None
-        super().__init__(running_stage, *args, data_pipeline_state=data_pipeline_state, **kwargs)
+        super().__init__(running_stage, *args, **kwargs)
 
 
 class LabelStudioImageClassificationInput(LabelStudioInput):
