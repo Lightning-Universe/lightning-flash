@@ -21,19 +21,14 @@ from torchmetrics import IoU
 
 from flash.core.classification import ClassificationTask
 from flash.core.data.io.input import DataKeys, Input
-from flash.core.data.io.output import Output
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
-from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
+from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.pointcloud.segmentation.backbones import POINTCLOUD_SEGMENTATION_BACKBONES
 
 if _POINTCLOUD_AVAILABLE:
     from open3d._ml3d.torch.modules.losses.semseg_loss import filter_valid_label
     from open3d.ml.torch.dataloaders import TorchDataloader
-
-
-class PointCloudSegmentationOutput(Output):
-    pass
 
 
 class PointCloudSegmentation(ClassificationTask):
@@ -54,7 +49,6 @@ class PointCloudSegmentation(ClassificationTask):
             by the :class:`~flash.core.classification.ClassificationTask` depending on the ``multi_label`` argument.
         learning_rate: The learning rate for the optimizer.
         multi_label: If ``True``, this will be treated as a multi-label classification problem.
-        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
     """
 
     backbones: FlashRegistry = POINTCLOUD_SEGMENTATION_BACKBONES
@@ -73,7 +67,6 @@ class PointCloudSegmentation(ClassificationTask):
         metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-2,
         multi_label: bool = False,
-        output: OUTPUT_TYPE = PointCloudSegmentationOutput(),
     ):
         import flash
 
@@ -88,7 +81,6 @@ class PointCloudSegmentation(ClassificationTask):
             metrics=metrics,
             learning_rate=learning_rate,
             multi_label=multi_label,
-            output=output,
         )
 
         self.save_hyperparameters()

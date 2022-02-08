@@ -16,7 +16,6 @@ from typing import Any, Dict, List, Optional, Type
 from torch.utils.data import Dataset
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.utilities.stages import RunningStage
@@ -45,7 +44,6 @@ class PointCloudSegmentationData(DataModule):
     ) -> "PointCloudSegmentationData":
 
         ds_kw = dict(
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
@@ -69,7 +67,6 @@ class PointCloudSegmentationData(DataModule):
     ) -> "PointCloudSegmentationData":
 
         ds_kw = dict(
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
@@ -96,7 +93,6 @@ class PointCloudSegmentationData(DataModule):
     ) -> "PointCloudSegmentationData":
 
         ds_kw = dict(
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
