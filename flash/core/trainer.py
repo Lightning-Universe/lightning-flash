@@ -184,10 +184,8 @@ class Trainer(PlTrainer):
         self,
         model: Optional[LightningModule] = None,
         dataloaders: Optional[Union[DataLoader, LightningDataModule]] = None,
-        datamodule: Optional[LightningDataModule] = None,
-        return_predictions: Optional[bool] = None,
-        ckpt_path: Optional[str] = None,
         output: Union[Output, str] = None,
+        **kwargs,
     ):
         r"""
         Run inference on your data.
@@ -196,19 +194,11 @@ class Trainer(PlTrainer):
 
         Args:
             model: The model to predict with.
-
             dataloaders: A :class:`torch.utils.data.DataLoader` or a sequence of them,
                 or a :class:`~pytorch_lightning.core.datamodule.LightningDataModule` specifying prediction samples.
+            output: The :class:`~flash.core.data.io.output.Output` to use to transform predict outputs.
+            kwargs: Additional keyword arguments to pass to ``pytorch_lightning.Trainer.predict``.
 
-            datamodule: The datamodule with a predict_dataloader method that returns one or more dataloaders.
-
-            return_predictions: Whether to return predictions.
-                ``True`` by default except when an accelerator that spawns processes is used (not supported).
-
-            ckpt_path: Either ``best`` or path to the checkpoint you wish to predict.
-                If ``None`` and the model instance was passed, use the current weights.
-                Otherwise, the best model checkpoint from the previous ``trainer.fit`` call will be loaded
-                if a checkpoint callback is configured.
 
         Returns:
             Returns a list of dictionaries, one for each provided dataloader containing their respective predictions.
@@ -221,7 +211,7 @@ class Trainer(PlTrainer):
             output = getattr(model, "outputs", FlashRegistry("outputs")).get(output).from_task(model)
 
         with self._wrap_predict_step(model, output_transform, output):
-            return super().predict(model, dataloaders, datamodule, return_predictions, ckpt_path)
+            return super().predict(model, dataloaders, **kwargs)
 
     def _resolve_callbacks(
         self,
