@@ -14,7 +14,6 @@
 from typing import Any, Dict, List, Optional, Type
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.utilities.paths import PATH_TYPE
@@ -143,7 +142,6 @@ class SummarizationData(DataModule):
         ds_kw = dict(
             input_key=input_field,
             target_key=target_field,
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
@@ -261,7 +259,6 @@ class SummarizationData(DataModule):
             input_key=input_field,
             target_key=target_field,
             field=field,
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
@@ -361,7 +358,6 @@ class SummarizationData(DataModule):
         ds_kw = dict(
             input_key=input_field,
             target_key=target_field,
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
@@ -441,7 +437,6 @@ class SummarizationData(DataModule):
         """
 
         ds_kw = dict(
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )

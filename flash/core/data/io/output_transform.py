@@ -41,7 +41,7 @@ class OutputTransform(Properties):
     def uncollate(batch: Any) -> Any:
         """Uncollates a batch into single samples.
 
-        Tries to preserve the type whereever possible.
+        Tries to preserve the type wherever possible.
         """
         return default_uncollate(batch)
 

@@ -74,7 +74,6 @@ class DataModule(pl.LightningDataModule):
     """
 
     input_transform_cls = InputTransform
-    output_transform_cls = OutputTransform
     input_transforms_registry: Optional[FlashRegistry] = None
 
     def __init__(
@@ -90,7 +89,6 @@ class DataModule(pl.LightningDataModule):
         sampler: Optional[Type[Sampler]] = None,
         pin_memory: bool = True,
         persistent_workers: bool = True,
-        output_transform: Optional[OutputTransform] = None,
     ) -> None:
 
         if not batch_size:
@@ -100,7 +98,6 @@ class DataModule(pl.LightningDataModule):
             batch_size = 16
 
         self._input_transform: Optional[OutputTransform] = None
-        self._output_transform: Optional[OutputTransform] = output_transform
         self._viz: Optional[BaseVisualization] = None
 
         self._train_input = train_input

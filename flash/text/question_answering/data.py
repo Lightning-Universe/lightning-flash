@@ -11,11 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, Optional, Type, Union
+from typing import Any, Dict, Optional, Type
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.core.utilities.stages import RunningStage
@@ -26,8 +26,6 @@ from flash.text.question_answering.input import (
     QuestionAnsweringJSONInput,
     QuestionAnsweringSQuADInput,
 )
-from flash.text.question_answering.input_transform import QuestionAnsweringInputTransform
-from flash.text.question_answering.output_transform import QuestionAnsweringOutputTransform
 
 # Skip doctests if requirements aren't available
 if not _TEXT_AVAILABLE:
@@ -38,8 +36,7 @@ class QuestionAnsweringData(DataModule):
     """The ``QuestionAnsweringData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
     classmethods for loading data for extractive question answering."""
 
-    input_transform_cls = QuestionAnsweringInputTransform
-    output_transform_cls = QuestionAnsweringOutputTransform
+    input_transform_cls = InputTransform
 
     @classmethod
     def from_csv(
@@ -48,19 +45,15 @@ class QuestionAnsweringData(DataModule):
         val_file: Optional[PATH_TYPE] = None,
         test_file: Optional[PATH_TYPE] = None,
         predict_file: Optional[PATH_TYPE] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = QuestionAnsweringInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = QuestionAnsweringInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = QuestionAnsweringInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = QuestionAnsweringInputTransform,
+        train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         input_cls: Type[Input] = QuestionAnsweringCSVInput,
         transform_kwargs: Optional[Dict] = None,
-        max_source_length: int = 384,
-        max_target_length: int = 30,
-        padding: Union[str, bool] = "max_length",
         question_column_name: str = "question",
         context_column_name: str = "context",
         answer_column_name: str = "answer",
-        doc_stride: int = 128,
         **data_module_kwargs: Any,
     ) -> "QuestionAnsweringData":
         """Load the :class:`~flash.text.question_answering.data.QuestionAnsweringData` from CSV files containing
@@ -84,13 +77,9 @@ class QuestionAnsweringData(DataModule):
                 predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
-            max_source_length: Max length of the sequence to be considered during tokenization.
-            max_target_length: Max length of each answer to be produced.
-            padding: Padding type during tokenization.
             question_column_name: The key in the JSON file to recognize the question field.
             context_column_name: The key in the JSON file to recognize the context field.
             answer_column_name: The key in the JSON file to recognize the answer field.
-            doc_stride: The stride amount to be taken when splitting up a long document into chunks.
 
         Returns:
             The constructed :class:`~flash.text.question_answering.data.QuestionAnsweringData`.
@@ -179,14 +168,9 @@ class QuestionAnsweringData(DataModule):
         """
 
         ds_kw = dict(
-            max_source_length=max_source_length,
-            max_target_length=max_target_length,
-            padding=padding,
             question_column_name=question_column_name,
             context_column_name=context_column_name,
             answer_column_name=answer_column_name,
-            doc_stride=doc_stride,
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
@@ -206,20 +190,16 @@ class QuestionAnsweringData(DataModule):
         val_file: Optional[PATH_TYPE] = None,
         test_file: Optional[PATH_TYPE] = None,
         predict_file: Optional[PATH_TYPE] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = QuestionAnsweringInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = QuestionAnsweringInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = QuestionAnsweringInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = QuestionAnsweringInputTransform,
+        train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         input_cls: Type[Input] = QuestionAnsweringJSONInput,
         transform_kwargs: Optional[Dict] = None,
         field: Optional[str] = None,
-        max_source_length: int = 384,
-        max_target_length: int = 30,
-        padding: Union[str, bool] = "max_length",
         question_column_name: str = "question",
         context_column_name: str = "context",
         answer_column_name: str = "answer",
-        doc_stride: int = 128,
         **data_module_kwargs: Any,
     ) -> "QuestionAnsweringData":
         """Load the :class:`~flash.text.question_answering.data.QuestionAnsweringData` from JSON files containing
@@ -244,13 +224,9 @@ class QuestionAnsweringData(DataModule):
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             field: The field that holds the data in the JSON file.
-            max_source_length: Max length of the sequence to be considered during tokenization.
-            max_target_length: Max length of each answer to be produced.
-            padding: Padding type during tokenization.
             question_column_name: The key in the JSON file to recognize the question field.
             context_column_name: The key in the JSON file to recognize the context field.
             answer_column_name: The key in the JSON file to recognize the answer field.
-            doc_stride: The stride amount to be taken when splitting up a long document into chunks.
 
         Returns:
             The constructed :class:`~flash.text.question_answering.data.QuestionAnsweringData`.
@@ -344,14 +320,9 @@ class QuestionAnsweringData(DataModule):
 
         ds_kw = dict(
             field=field,
-            max_source_length=max_source_length,
-            max_target_length=max_target_length,
-            padding=padding,
             question_column_name=question_column_name,
             context_column_name=context_column_name,
             answer_column_name=answer_column_name,
-            doc_stride=doc_stride,
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
@@ -371,19 +342,15 @@ class QuestionAnsweringData(DataModule):
         val_file: Optional[str] = None,
         test_file: Optional[str] = None,
         predict_file: Optional[str] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = QuestionAnsweringInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = QuestionAnsweringInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = QuestionAnsweringInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = QuestionAnsweringInputTransform,
+        train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         input_cls: Type[Input] = QuestionAnsweringSQuADInput,
         transform_kwargs: Optional[Dict] = None,
-        max_source_length: int = 384,
-        max_target_length: int = 30,
-        padding: Union[str, bool] = "max_length",
         question_column_name: str = "question",
         context_column_name: str = "context",
         answer_column_name: str = "answer",
-        doc_stride: int = 128,
         **data_module_kwargs: Any,
     ) -> "QuestionAnsweringData":
         """Load the :class:`~flash.text.question_answering.data.QuestionAnsweringData` from JSON files containing
@@ -407,13 +374,9 @@ class QuestionAnsweringData(DataModule):
                 predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
-            max_source_length: Max length of the sequence to be considered during tokenization.
-            max_target_length: Max length of each answer to be produced.
-            padding: Padding type during tokenization.
             question_column_name: The key in the JSON file to recognize the question field.
             context_column_name: The key in the JSON file to recognize the context field.
             answer_column_name: The key in the JSON file to recognize the answer field.
-            doc_stride: The stride amount to be taken when splitting up a long document into chunks.
 
         Returns:
             The constructed data module.
@@ -645,14 +608,9 @@ class QuestionAnsweringData(DataModule):
         """
 
         ds_kw = dict(
-            max_source_length=max_source_length,
-            max_target_length=max_target_length,
-            padding=padding,
             question_column_name=question_column_name,
             context_column_name=context_column_name,
             answer_column_name=answer_column_name,
-            doc_stride=doc_stride,
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
@@ -672,19 +630,15 @@ class QuestionAnsweringData(DataModule):
         val_data: Optional[Dict[str, Any]] = None,
         test_data: Optional[Dict[str, Any]] = None,
         predict_data: Optional[Dict[str, Any]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = QuestionAnsweringInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = QuestionAnsweringInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = QuestionAnsweringInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = QuestionAnsweringInputTransform,
+        train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         input_cls: Type[Input] = QuestionAnsweringDictionaryInput,
         transform_kwargs: Optional[Dict] = None,
-        max_source_length: int = 384,
-        max_target_length: int = 30,
-        padding: Union[str, bool] = "max_length",
         question_column_name: str = "question",
         context_column_name: str = "context",
         answer_column_name: str = "answer",
-        doc_stride: int = 128,
         **data_module_kwargs: Any,
     ) -> "QuestionAnsweringData":
         """Load the :class:`~flash.text.question_answering.data.QuestionAnsweringData` from Python dictionary
@@ -708,13 +662,9 @@ class QuestionAnsweringData(DataModule):
                 predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
-            max_source_length: Max length of the sequence to be considered during tokenization.
-            max_target_length: Max length of each answer to be produced.
-            padding: Padding type during tokenization.
             question_column_name: The key in the JSON file to recognize the question field.
             context_column_name: The key in the JSON file to recognize the context field.
             answer_column_name: The key in the JSON file to recognize the answer field.
-            doc_stride: The stride amount to be taken when splitting up a long document into chunks.
 
         Returns:
             The constructed :class:`~flash.text.question_answering.data.QuestionAnsweringData`.
@@ -778,14 +728,9 @@ class QuestionAnsweringData(DataModule):
         """
 
         ds_kw = dict(
-            max_source_length=max_source_length,
-            max_target_length=max_target_length,
-            padding=padding,
             question_column_name=question_column_name,
             context_column_name=context_column_name,
             answer_column_name=answer_column_name,
-            doc_stride=doc_stride,
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )

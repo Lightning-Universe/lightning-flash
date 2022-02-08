@@ -213,7 +213,7 @@ class Trainer(PlTrainer):
             Returns a list of dictionaries, one for each provided dataloader containing their respective predictions.
         """
         model = model or self.lightning_module
-        output_transform = getattr(model, "_output_transform", None) or OutputTransform()
+        output_transform = getattr(model, "_output_transform", OutputTransform())
         output = output or Output()
         if isinstance(output, str) and isinstance(model, Task):
             output = getattr(model, "outputs", FlashRegistry("outputs")).get(output).from_task(model)

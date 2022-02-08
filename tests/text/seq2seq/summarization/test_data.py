@@ -17,14 +17,8 @@ from pathlib import Path
 import pytest
 
 from flash import DataKeys
-from flash.core.integrations.transformers.states import TransformersBackboneState
 from flash.core.utilities.imports import _TEXT_TESTING
 from flash.text import SummarizationData
-
-TEST_BACKBONE = "sshleifer/tiny-mbart"  # super small model for testing
-TEST_BACKBONE_STATE = TransformersBackboneState(
-    TEST_BACKBONE, tokenizer_kwargs=dict(src_lang="en_XX", tgt_lang="en_XX")
-)
 
 TEST_CSV_DATA = """input,target
 this is a sentence one,this is a summarized sentence one
@@ -68,10 +62,9 @@ def json_data_with_field(tmpdir):
 def test_from_csv(tmpdir):
     csv_path = csv_data(tmpdir)
     dm = SummarizationData.from_csv("input", "target", train_file=csv_path, batch_size=1)
-    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
     batch = next(iter(dm.train_dataloader()))
-    assert DataKeys.TARGET in batch
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
+    assert isinstance(batch[DataKeys.TARGET][0], str)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -86,14 +79,13 @@ def test_from_files(tmpdir):
         test_file=csv_path,
         batch_size=1,
     )
-    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
     batch = next(iter(dm.val_dataloader()))
-    assert DataKeys.TARGET in batch
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
+    assert isinstance(batch[DataKeys.TARGET][0], str)
 
     batch = next(iter(dm.test_dataloader()))
-    assert DataKeys.TARGET in batch
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
+    assert isinstance(batch[DataKeys.TARGET][0], str)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -106,10 +98,9 @@ def test_from_json(tmpdir):
         train_file=json_path,
         batch_size=1,
     )
-    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
     batch = next(iter(dm.train_dataloader()))
-    assert DataKeys.TARGET in batch
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
+    assert isinstance(batch[DataKeys.TARGET][0], str)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -123,7 +114,6 @@ def test_from_json_with_field(tmpdir):
         batch_size=1,
         field="data",
     )
-    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
     batch = next(iter(dm.train_dataloader()))
-    assert DataKeys.TARGET in batch
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
+    assert isinstance(batch[DataKeys.TARGET][0], str)

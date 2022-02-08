@@ -36,7 +36,9 @@ from flash.core.utilities.imports import _TEXT_AVAILABLE, _TM_GREATER_EQUAL_0_7_
 from flash.core.utilities.providers import _HUGGINGFACE
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.text.ort_callback import ORTCallback
+from flash.text.question_answering.collate import TextQuestionAnsweringCollate
 from flash.text.question_answering.finetuning import _get_question_answering_bacbones_for_freezing
+from flash.text.question_answering.output_transform import QuestionAnsweringOutputTransform
 
 if _TEXT_AVAILABLE:
     from transformers import AutoModelForQuestionAnswering
@@ -66,6 +68,10 @@ class QuestionAnsweringTask(Task):
 
     Args:
         backbone: backbone model to use for the task.
+        max_source_length: Max length of the sequence to be considered during tokenization.
+        max_target_length: Max length of each answer to be produced.
+        padding: Padding type during tokenization.
+        doc_stride: The stride amount to be taken when splitting up a long document into chunks.
         loss_fn: Loss function for training.
         optimizer: Optimizer to use for training.
         lr_scheduler: The LR scheduler to use during training.
@@ -90,6 +96,10 @@ class QuestionAnsweringTask(Task):
     def __init__(
         self,
         backbone: str = "distilbert-base-uncased",
+        max_source_length: int = 384,
+        max_target_length: int = 30,
+        padding: Union[str, bool] = "max_length",
+        doc_stride: int = 128,
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
@@ -113,8 +123,18 @@ class QuestionAnsweringTask(Task):
             lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
+            output_transform=QuestionAnsweringOutputTransform(),
         )
-        # self.set_state(TransformersBackboneState(backbone))
+
+        self.collate_fn = TextQuestionAnsweringCollate(
+            backbone=backbone,
+            max_source_length=max_source_length,
+            max_target_length=max_target_length,
+            padding=padding,
+            doc_stride=doc_stride,
+            model=self,
+        )
+
         self.model = self.backbones.get(backbone)()
         self.enable_ort = enable_ort
         self.n_best_size = n_best_size

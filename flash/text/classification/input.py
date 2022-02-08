@@ -65,6 +65,7 @@ class TextClassificationInput(Input, ClassificationInputMixin):
         return hf_dataset
 
     def load_sample(self, sample: Dict[str, Any]) -> Any:
+        sample[DataKeys.INPUT] = sample[DataKeys.INPUT]
         if DataKeys.TARGET in sample:
             sample[DataKeys.TARGET] = self.format_target(sample[DataKeys.TARGET])
         return sample
