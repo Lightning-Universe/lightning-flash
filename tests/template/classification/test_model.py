@@ -106,7 +106,7 @@ def test_predict_numpy():
     model = TemplateSKLearnClassifier(num_features=DummyDataset.num_features, num_classes=DummyDataset.num_classes)
     datamodule = TemplateData.from_numpy(predict_data=row, batch_size=1)
     trainer = Trainer()
-    out = trainer.predict(model, datamodule=datamodule)
+    out = trainer.predict(model, datamodule=datamodule, output="classes")
     assert isinstance(out[0][0], int)
 
 
@@ -117,7 +117,7 @@ def test_predict_sklearn():
     model = TemplateSKLearnClassifier(num_features=DummyDataset.num_features, num_classes=DummyDataset.num_classes)
     datamodule = TemplateData.from_sklearn(predict_bunch=bunch, batch_size=1)
     trainer = Trainer()
-    out = trainer.predict(model, datamodule=datamodule)
+    out = trainer.predict(model, datamodule=datamodule, output="classes")
     assert isinstance(out[0][0], int)
 
 

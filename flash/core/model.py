@@ -93,6 +93,7 @@ class DatasetProcessor:
         self._collate_fn = None
         self._input_transform = None
 
+    @torch.jit.unused
     @property
     def collate_fn(self) -> Optional[Callable]:
         return self._collate_fn
@@ -101,6 +102,7 @@ class DatasetProcessor:
     def collate_fn(self, collate_fn: Callable) -> None:
         self._collate_fn = collate_fn
 
+    @torch.jit.unused
     @property
     def input_transform(self) -> Optional[INPUT_TRANSFORM_TYPE]:
         return self._input_transform

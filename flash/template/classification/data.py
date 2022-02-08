@@ -78,7 +78,7 @@ class TemplateSKLearnClassificationInput(TemplateNumpyClassificationInput):
         Returns:
             A sequence of samples / sample metadata.
         """
-        return super().load_data(data.data, data.target)
+        return super().load_data(data.data, data.target, target_formatter=target_formatter)
 
     def predict_load_data(self, data: Bunch) -> Sequence[Dict[str, Any]]:
         """Avoid including targets when predicting.
@@ -170,12 +170,26 @@ class TemplateData(DataModule):
         )
 
         train_input = input_cls(RunningStage.TRAINING, train_data, train_targets, transform=train_transform, **ds_kw)
-        ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
+        target_formatter = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, val_data, val_targets, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_data, test_targets, transform=test_transform, **ds_kw),
+            input_cls(
+                RunningStage.VALIDATING,
+                val_data,
+                val_targets,
+                transform=val_transform,
+                target_formatter=target_formatter,
+                **ds_kw,
+            ),
+            input_cls(
+                RunningStage.TESTING,
+                test_data,
+                test_targets,
+                transform=test_transform,
+                target_formatter=target_formatter,
+                **ds_kw,
+            ),
             input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
             **data_module_kwargs,
         )
@@ -221,12 +235,24 @@ class TemplateData(DataModule):
         )
 
         train_input = input_cls(RunningStage.TRAINING, train_bunch, transform=train_transform, **ds_kw)
-        ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
+        target_formatter = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, val_bunch, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_bunch, transform=test_transform, **ds_kw),
+            input_cls(
+                RunningStage.VALIDATING,
+                val_bunch,
+                transform=val_transform,
+                target_formatter=target_formatter,
+                **ds_kw,
+            ),
+            input_cls(
+                RunningStage.TESTING,
+                test_bunch,
+                transform=test_transform,
+                target_formatter=target_formatter,
+                **ds_kw,
+            ),
             input_cls(RunningStage.PREDICTING, predict_bunch, transform=predict_transform, **ds_kw),
             **data_module_kwargs,
         )
