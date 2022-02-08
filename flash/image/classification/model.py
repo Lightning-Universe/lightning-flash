@@ -31,6 +31,7 @@ from flash.core.utilities.types import (
 )
 from flash.image.classification.adapters import TRAINING_STRATEGIES
 from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES
+from flash.image.classification.heads import IMAGE_CLASSIFIER_HEADS
 from flash.image.classification.input_transform import ImageClassificationInputTransform
 from flash.image.data import ImageDeserializer
 
@@ -60,6 +61,8 @@ class ImageClassifier(ClassificationAdapterTask):
     Args:
         num_classes: Number of classes to classify.
         backbone: A string or (model, num_features) tuple to use to compute image features, defaults to ``"resnet18"``.
+        head: A string from ``ImageClassifier.available_heads()``, an ``nn.Module``, or a function of (``num_features``,
+            ``num_classes``) which returns an ``nn.Module`` to use as the model head.
         pretrained: A bool or string to specify the pretrained weights of the backbone, defaults to ``True``
             which loads the default supervised pretrained weights.
         loss_fn: Loss function for training, defaults to :func:`torch.nn.functional.cross_entropy`.
@@ -77,6 +80,7 @@ class ImageClassifier(ClassificationAdapterTask):
     """
 
     backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES
+    heads: FlashRegistry = IMAGE_CLASSIFIER_HEADS
     training_strategies: FlashRegistry = TRAINING_STRATEGIES
     required_extras: str = "image"
 
@@ -86,7 +90,7 @@ class ImageClassifier(ClassificationAdapterTask):
         labels: Optional[List[str]] = None,
         backbone: Union[str, Tuple[nn.Module, int]] = "resnet18",
         backbone_kwargs: Optional[Dict] = None,
-        head: Optional[Union[FunctionType, nn.Module]] = None,
+        head: Union[str, FunctionType, nn.Module] = "linear",
         pretrained: Union[bool, str] = True,
         loss_fn: LOSS_FN_TYPE = None,
         optimizer: OPTIMIZER_TYPE = "Adam",
@@ -123,10 +127,10 @@ class ImageClassifier(ClassificationAdapterTask):
         else:
             backbone, num_features = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
 
-        head = head(num_features, num_classes) if isinstance(head, FunctionType) else head
-        head = head or nn.Sequential(
-            nn.Linear(num_features, num_classes),
-        )
+        if isinstance(head, str):
+            head = self.heads.get(head)(num_features=num_features, num_classes=num_classes)
+        else:
+            head = head(num_features, num_classes) if isinstance(head, FunctionType) else head
 
         adapter_from_class = self.training_strategies.get(training_strategy)
         adapter = adapter_from_class(

@@ -28,6 +28,7 @@ from pytorch_forecasting.data.examples import generate_ar_data  # noqa: E402
 data = generate_ar_data(seasonality=10.0, timesteps=400, n_series=100, seed=42)
 data["date"] = pd.Timestamp("2020-01-01") + pd.to_timedelta(data.time_idx, "D")
 
+max_encoder_length = 60
 max_prediction_length = 20
 
 training_cutoff = data["time_idx"].max() - max_prediction_length
@@ -39,10 +40,11 @@ datamodule = TabularForecastingData.from_data_frame(
     group_ids=["series"],
     # only unknown variable is "value" - and N-Beats can also not take any additional variables
     time_varying_unknown_reals=["value"],
-    max_encoder_length=60,
+    max_encoder_length=max_encoder_length,
     max_prediction_length=max_prediction_length,
     train_data_frame=data[lambda x: x.time_idx <= training_cutoff],
-    val_data_frame=data,
+    # validate on the last sequence
+    val_data_frame=data[lambda x: x.time_idx > training_cutoff - max_encoder_length],
     batch_size=32,
 )
 
@@ -58,7 +60,11 @@ trainer = flash.Trainer(max_epochs=1, gpus=torch.cuda.device_count(), gradient_c
 trainer.fit(model, datamodule=datamodule)
 
 # 4. Generate predictions
-datamodule = TabularForecastingData.from_data_frame(predict_data_frame=data, parameters=datamodule.parameters)
+datamodule = TabularForecastingData.from_data_frame(
+    predict_data_frame=data[lambda x: x.time_idx > training_cutoff - max_encoder_length],
+    parameters=datamodule.parameters,
+    batch_size=32,
+)
 predictions = trainer.predict(model, datamodule=datamodule)
 print(predictions)
 

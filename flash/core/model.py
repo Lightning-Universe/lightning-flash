@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import inspect
+import pickle
+import re
 from abc import ABCMeta
 from copy import deepcopy
 from importlib import import_module
@@ -249,11 +251,11 @@ class CheckDependenciesMeta(ABCMeta):
         result = ABCMeta.__new__(mcs, *args, **kwargs)
         if result.required_extras is not None:
             result.__init__ = requires(result.required_extras)(result.__init__)
-            load_from_checkpoint = getattr(result, "load_from_checkpoint", None)
-            if load_from_checkpoint is not None:
-                result.load_from_checkpoint = classmethod(
-                    requires(result.required_extras)(result.load_from_checkpoint.__func__)
-                )
+
+            patterns = ["load_from_checkpoint", "available_*"]  # must match classmethods only
+            regex = "(" + ")|(".join(patterns) + ")"
+            for attribute_name, attribute_value in filter(lambda x: re.match(regex, x[0]), inspect.getmembers(result)):
+                setattr(result, attribute_name, classmethod(requires(result.required_extras)(attribute_value.__func__)))
         return result
 
 
@@ -525,10 +527,12 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         return [finetuning_strategy_fn(**finetuning_strategy_metadata)]
 
     @classmethod
-    def available_backbones(cls, head: Optional[str] = None) -> Union[Dict[str, List[str]], List[str]]:
+    def available_backbones(
+        cls, head: Optional[str] = None
+    ) -> Optional[Union[Dict[str, Optional[List[str]]], List[str]]]:
         if head is None:
             registry: Optional[FlashRegistry] = getattr(cls, "backbones", None)
-            if registry is not None:
+            if registry is not None and getattr(cls, "heads", None) is None:
                 return registry.available_keys()
             heads = cls.available_heads()
         else:
@@ -540,7 +544,9 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             if "backbones" in metadata:
                 backbones = metadata["backbones"].available_keys()
             else:
-                backbones = cls.available_backbones()
+                backbones = getattr(cls, "backbones", None)
+                if backbones is not None:
+                    backbones = backbones.available_keys()
             result[head] = backbones
 
         if len(result) == 1:
