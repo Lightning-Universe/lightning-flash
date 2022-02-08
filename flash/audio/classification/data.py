@@ -143,13 +143,15 @@ class AudioClassificationData(DataModule):
         """
 
         ds_kw = dict(
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
 
+        train_input = input_cls(RunningStage.TRAINING, train_files, train_targets, transform=train_transform, **ds_kw)
+        ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
+
         return cls(
-            input_cls(RunningStage.TRAINING, train_files, train_targets, transform=train_transform, **ds_kw),
+            train_input,
             input_cls(RunningStage.VALIDATING, val_files, val_targets, transform=val_transform, **ds_kw),
             input_cls(RunningStage.TESTING, test_files, test_targets, transform=test_transform, **ds_kw),
             input_cls(RunningStage.PREDICTING, predict_files, transform=predict_transform, **ds_kw),
@@ -269,13 +271,15 @@ class AudioClassificationData(DataModule):
         """
 
         ds_kw = dict(
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
 
+        train_input = input_cls(RunningStage.TRAINING, train_folder, transform=train_transform, **ds_kw)
+        ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
+
         return cls(
-            input_cls(RunningStage.TRAINING, train_folder, transform=train_transform, **ds_kw),
+            train_input,
             input_cls(RunningStage.VALIDATING, val_folder, transform=val_transform, **ds_kw),
             input_cls(RunningStage.TESTING, test_folder, transform=test_transform, **ds_kw),
             input_cls(RunningStage.PREDICTING, predict_folder, transform=predict_transform, **ds_kw),
@@ -358,13 +362,15 @@ class AudioClassificationData(DataModule):
         """
 
         ds_kw = dict(
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
 
+        train_input = input_cls(RunningStage.TRAINING, train_data, train_targets, transform=train_transform, **ds_kw)
+        ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
+
         return cls(
-            input_cls(RunningStage.TRAINING, train_data, train_targets, transform=train_transform, **ds_kw),
+            train_input,
             input_cls(RunningStage.VALIDATING, val_data, val_targets, transform=val_transform, **ds_kw),
             input_cls(RunningStage.TESTING, test_data, test_targets, transform=test_transform, **ds_kw),
             input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
@@ -447,13 +453,15 @@ class AudioClassificationData(DataModule):
         """
 
         ds_kw = dict(
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
 
+        train_input = input_cls(RunningStage.TRAINING, train_data, train_targets, transform=train_transform, **ds_kw)
+        ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
+
         return cls(
-            input_cls(RunningStage.TRAINING, train_data, train_targets, transform=train_transform, **ds_kw),
+            train_input,
             input_cls(RunningStage.VALIDATING, val_data, val_targets, transform=val_transform, **ds_kw),
             input_cls(RunningStage.TESTING, test_data, test_targets, transform=test_transform, **ds_kw),
             input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
@@ -595,7 +603,6 @@ class AudioClassificationData(DataModule):
         """
 
         ds_kw = dict(
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
@@ -605,8 +612,11 @@ class AudioClassificationData(DataModule):
         test_data = (test_data_frame, input_field, target_fields, test_images_root, test_resolver)
         predict_data = (predict_data_frame, input_field, None, predict_images_root, predict_resolver)
 
+        train_input = input_cls(RunningStage.TRAINING, *train_data, transform=train_transform, **ds_kw)
+        ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
+
         return cls(
-            input_cls(RunningStage.TRAINING, *train_data, transform=train_transform, **ds_kw),
+            train_input,
             input_cls(RunningStage.VALIDATING, *val_data, transform=val_transform, **ds_kw),
             input_cls(RunningStage.TESTING, *test_data, transform=test_transform, **ds_kw),
             input_cls(RunningStage.PREDICTING, *predict_data, transform=predict_transform, **ds_kw),
@@ -768,8 +778,11 @@ class AudioClassificationData(DataModule):
         test_data = (test_file, input_field, target_fields, test_images_root, test_resolver)
         predict_data = (predict_file, input_field, None, predict_images_root, predict_resolver)
 
+        train_input = input_cls(RunningStage.TRAINING, *train_data, transform=train_transform, **ds_kw)
+        ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
+
         return cls(
-            input_cls(RunningStage.TRAINING, *train_data, transform=train_transform, **ds_kw),
+            train_input,
             input_cls(RunningStage.VALIDATING, *val_data, transform=val_transform, **ds_kw),
             input_cls(RunningStage.TESTING, *test_data, transform=test_transform, **ds_kw),
             input_cls(RunningStage.PREDICTING, *predict_data, transform=predict_transform, **ds_kw),

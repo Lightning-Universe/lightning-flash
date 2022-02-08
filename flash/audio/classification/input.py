@@ -19,7 +19,7 @@ import pandas as pd
 
 from flash.core.data.io.classification_input import ClassificationInputMixin
 from flash.core.data.io.input import DataKeys, Input
-from flash.core.data.utilities.classification import MultiBinaryTargetFormatter
+from flash.core.data.utilities.classification import MultiBinaryTargetFormatter, TargetFormatter
 from flash.core.data.utilities.data_frame import read_csv, resolve_files, resolve_targets
 from flash.core.data.utilities.paths import filter_valid_files, has_file_allowed_extension, make_dataset, PATH_TYPE
 from flash.core.data.utilities.samples import to_samples
@@ -54,12 +54,13 @@ class AudioClassificationFilesInput(AudioClassificationInput):
         self,
         files: List[PATH_TYPE],
         targets: Optional[List[Any]] = None,
+        target_formatter: Optional[TargetFormatter] = None,
     ) -> List[Dict[str, Any]]:
         if targets is None:
             files = filter_valid_files(files, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
             return to_samples(files)
         files, targets = filter_valid_files(files, targets, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
-        self.load_target_metadata(targets)
+        self.load_target_metadata(targets, target_formatter=target_formatter)
         return to_samples(files, targets)
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
@@ -71,15 +72,17 @@ class AudioClassificationFilesInput(AudioClassificationInput):
 
 
 class AudioClassificationFolderInput(AudioClassificationFilesInput):
-    def load_data(self, folder: PATH_TYPE) -> List[Dict[str, Any]]:
+    def load_data(self, folder: PATH_TYPE, target_formatter: Optional[TargetFormatter] = None) -> List[Dict[str, Any]]:
         files, targets = make_dataset(folder, extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
-        return super().load_data(files, targets)
+        return super().load_data(files, targets, target_formatter=target_formatter)
 
 
 class AudioClassificationNumpyInput(AudioClassificationInput):
-    def load_data(self, array: Any, targets: Optional[List[Any]] = None) -> List[Dict[str, Any]]:
+    def load_data(
+        self, array: Any, targets: Optional[List[Any]] = None, target_formatter: Optional[TargetFormatter] = None
+    ) -> List[Dict[str, Any]]:
         if targets is not None:
-            self.load_target_metadata(targets)
+            self.load_target_metadata(targets, target_formatter=target_formatter)
         return to_samples(array, targets)
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
@@ -88,9 +91,11 @@ class AudioClassificationNumpyInput(AudioClassificationInput):
 
 
 class AudioClassificationTensorInput(AudioClassificationNumpyInput):
-    def load_data(self, tensor: Any, targets: Optional[List[Any]] = None) -> List[Dict[str, Any]]:
+    def load_data(
+        self, tensor: Any, targets: Optional[List[Any]] = None, target_formatter: Optional[TargetFormatter] = None
+    ) -> List[Dict[str, Any]]:
         if targets is not None:
-            self.load_target_metadata(targets)
+            self.load_target_metadata(targets, target_formatter=target_formatter)
         return to_samples(tensor, targets)
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
@@ -106,13 +111,14 @@ class AudioClassificationDataFrameInput(AudioClassificationFilesInput):
         target_keys: Optional[Union[str, List[str]]] = None,
         root: Optional[PATH_TYPE] = None,
         resolver: Optional[Callable[[Optional[PATH_TYPE], Any], PATH_TYPE]] = None,
+        target_formatter: Optional[TargetFormatter] = None,
     ) -> List[Dict[str, Any]]:
         files = resolve_files(data_frame, input_key, root, resolver)
         if target_keys is not None:
             targets = resolve_targets(data_frame, target_keys)
         else:
             targets = None
-        result = super().load_data(files, targets)
+        result = super().load_data(files, targets, target_formatter=target_formatter)
 
         # If we had binary multi-class targets then we also know the labels (column names)
         if (
@@ -133,8 +139,9 @@ class AudioClassificationCSVInput(AudioClassificationDataFrameInput):
         target_keys: Optional[Union[str, List[str]]] = None,
         root: Optional[PATH_TYPE] = None,
         resolver: Optional[Callable[[Optional[PATH_TYPE], Any], PATH_TYPE]] = None,
+        target_formatter: Optional[TargetFormatter] = None,
     ) -> List[Dict[str, Any]]:
         data_frame = read_csv(csv_file)
         if root is None:
             root = os.path.dirname(csv_file)
-        return super().load_data(data_frame, input_key, target_keys, root, resolver)
+        return super().load_data(data_frame, input_key, target_keys, root, resolver, target_formatter=target_formatter)
