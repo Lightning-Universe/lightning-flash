@@ -26,6 +26,7 @@ class Output(Properties):
     @abstractmethod
     def from_task(cls, task: "flash.Task", **kwargs) -> "Output":
         """Instantiate the output from the given :class:`~flash.core.model.Task`."""
+        return cls()
 
     @staticmethod
     def transform(sample: Any) -> Any:

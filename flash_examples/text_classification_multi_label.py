@@ -27,12 +27,13 @@ datamodule = TextClassificationData.from_csv(
     ["toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"],
     train_file="data/jigsaw_toxic_comments/train.csv",
     val_split=0.1,
+    batch_size=4,
 )
 
 # 2. Build the task
 model = TextClassifier(
     backbone="unitary/toxic-bert",
-    num_classes=datamodule.num_classes,
+    labels=datamodule.labels,
     multi_label=datamodule.multi_label,
 )
 
@@ -46,9 +47,10 @@ datamodule = TextClassificationData.from_lists(
         "No, he is an arrogant, self serving, immature idiot. Get it right.",
         "U SUCK HANNAH MONTANA",
         "Would you care to vote? Thx.",
-    ]
+    ],
+    batch_size=4,
 )
-predictions = trainer.predict(model, datamodule=datamodule)
+predictions = trainer.predict(model, datamodule=datamodule, output="labels")
 print(predictions)
 
 # 5. Save the model!

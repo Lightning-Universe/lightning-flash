@@ -17,7 +17,7 @@ from typing import Any, Callable, Dict, List, Optional, Union
 import numpy as np
 import pandas as pd
 
-from flash.core.data.io.classification_input import ClassificationInputMixin, ClassificationState
+from flash.core.data.io.classification_input import ClassificationInputMixin
 from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.utilities.classification import MultiBinaryTargetFormatter
 from flash.core.data.utilities.data_frame import read_csv, resolve_files, resolve_targets
@@ -120,8 +120,7 @@ class AudioClassificationDataFrameInput(AudioClassificationFilesInput):
             and isinstance(self.target_formatter, MultiBinaryTargetFormatter)
             and isinstance(target_keys, List)
         ):
-            classification_state = self.get_state(ClassificationState)
-            self.set_state(ClassificationState(target_keys, classification_state.num_classes))
+            self.labels = target_keys
 
         return result
 

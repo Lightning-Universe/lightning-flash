@@ -12,33 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import inspect
-from typing import Any, Dict, Optional, Type
+from typing import Any, Optional, Type
 
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.io.input_transform import InputTransform
-from flash.core.data.properties import ProcessState
 from flash.core.utilities.stages import RunningStage
 
 
 class DataPipelineState:
     """A class to store and share all process states once a :class:`.DataPipeline` has been initialized."""
-
-    def __init__(self):
-        self._state: Dict[Type[ProcessState], ProcessState] = {}
-
-    def set_state(self, state: ProcessState):
-        """Add the given :class:`.ProcessState` to the :class:`.DataPipelineState`."""
-
-        self._state[type(state)] = state
-
-    def get_state(self, state_type: Type[ProcessState]) -> Optional[ProcessState]:
-        """Get the :class:`.ProcessState` of the given type from the :class:`.DataPipelineState`."""
-
-        return self._state.get(state_type, None)
-
-    def __str__(self) -> str:
-        return f"{self.__class__.__name__}(state={self._state})"
 
 
 class DataPipeline:

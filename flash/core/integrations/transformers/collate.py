@@ -29,7 +29,6 @@ if _TRANSFORMERS_AVAILABLE:
 class TransformersCollate:
 
     backbone: str
-    max_length: int = (128,)
     tokenizer_kwargs: Optional[Dict[str, Any]] = field(default_factory=dict, hash=False)
 
     @staticmethod
@@ -48,14 +47,12 @@ class TransformersCollate:
             tokenizer_kwargs = self.tokenizer_kwargs
         return AutoTokenizer.from_pretrained(self.backbone, use_fast=True, **tokenizer_kwargs)
 
+    def tokenize(self, sample):
+        raise NotImplementedError
+
     def __call__(self, samples):
         tokenized_samples = []
         for sample in samples:
-            tokenized_sample = self.tokenizer(
-                sample[DataKeys.INPUT], max_length=self.max_length, truncation=True, padding="max_length"
-            )
-            tokenized_sample = tokenized_sample.data
-            if DataKeys.TARGET in sample:
-                tokenized_sample[DataKeys.TARGET] = sample[DataKeys.TARGET]
+            tokenized_sample = self.tokenize(sample)
             tokenized_samples.append(self.to_tensor(tokenized_sample))
         return default_collate(tokenized_samples)

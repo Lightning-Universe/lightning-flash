@@ -11,12 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from itertools import chain
-
 import torch
 
 import flash
-from flash.core.classification import FiftyOneLabelsOutput, LabelsOutput
 from flash.core.data.utils import download_data
 from flash.core.integrations.fiftyone import visualize
 from flash.image import ImageClassificationData, ImageClassifier
@@ -30,20 +27,17 @@ datamodule = ImageClassificationData.from_folders(
     val_folder="data/hymenoptera_data/val/",
     test_folder="data/hymenoptera_data/test/",
     predict_folder="data/hymenoptera_data/predict/",
-    batch_size=1,
+    batch_size=16,
 )
 
 # 3 Fine tune a model
 model = ImageClassifier(
     backbone="resnet18",
-    num_classes=datamodule.num_classes,
-    output=LabelsOutput(),
+    labels=datamodule.labels,
 )
 trainer = flash.Trainer(
     max_epochs=1,
     gpus=torch.cuda.device_count(),
-    limit_train_batches=1,
-    limit_val_batches=1,
 )
 trainer.finetune(
     model,
@@ -56,10 +50,8 @@ trainer.save_checkpoint("image_classification_model.pt")
 model = ImageClassifier.load_from_checkpoint(
     "https://flash-weights.s3.amazonaws.com/0.7.0/image_classification_model.pt"
 )
-model.output = FiftyOneLabelsOutput(return_filepath=True)  # output FiftyOne format
-predictions = trainer.predict(model, datamodule=datamodule)
-predictions = list(chain.from_iterable(predictions))  # flatten batches
+predictions = trainer.predict(model, datamodule=datamodule, output="fiftyone")  # output FiftyOne format
 
 # 5 Visualize predictions in FiftyOne App
 # Optional: pass `wait=True` to block execution until App is closed
-session = visualize(predictions)
+session = visualize(predictions, wait=True)

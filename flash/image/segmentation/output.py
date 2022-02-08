@@ -18,7 +18,7 @@ import numpy as np
 import torch
 
 import flash
-from flash.core.data.io.input import DataKeys, ImageLabelsMap
+from flash.core.data.io.input import DataKeys
 from flash.core.data.io.output import Output
 from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,
@@ -83,8 +83,6 @@ class SegmentationLabelsOutput(Output):
 
     @requires("matplotlib")
     def _visualize(self, labels):
-        if self.labels_map is None:
-            self.labels_map = self.get_state(ImageLabelsMap).labels_map
         labels_vis = self.labels_to_image(labels, self.labels_map)
         labels_vis = K.utils.tensor_to_image(labels_vis)
         plt.imshow(labels_vis)

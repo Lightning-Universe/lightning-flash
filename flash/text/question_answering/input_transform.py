@@ -17,11 +17,10 @@ from typing import Any, Callable, Dict, List
 from torch.utils.data.dataloader import default_collate
 
 from flash.core.data.io.input import DataKeys
-from flash.core.integrations.transformers.input_transform import TransformersInputTransform
 
 
 @dataclass
-class QuestionAnsweringInputTransform(TransformersInputTransform):
+class QuestionAnsweringInputTransform:
     @staticmethod
     def default_collate(samples: List[List[Dict[str, Any]]]) -> Dict[str, Any]:
         # TODO: This should be handled by the InputTransformProcessor

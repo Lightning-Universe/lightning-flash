@@ -11,20 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from dataclasses import dataclass
-from typing import Any, List, Optional, Sequence
+from typing import Any, List, Optional
 
-from flash.core.data.properties import ProcessState, Properties
+from flash.core.data.properties import Properties
 from flash.core.data.utilities.classification import get_target_formatter, TargetFormatter
-
-
-@dataclass(unsafe_hash=True, frozen=True)
-class ClassificationState(ProcessState):
-    """A :class:`~flash.core.data.properties.ProcessState` containing ``labels`` (a mapping from class index to
-    label) and ``num_classes``."""
-
-    labels: Optional[Sequence[str]]
-    num_classes: Optional[int] = None
 
 
 class ClassificationInputMixin(Properties):
@@ -47,22 +37,14 @@ class ClassificationInputMixin(Properties):
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter`
                 rather than inferring from the targets.
         """
+        self.target_formatter = target_formatter
         if target_formatter is None and targets is not None:
-            classification_state = self.get_state(ClassificationState)
-            if classification_state is not None:
-                labels, num_classes = classification_state.labels, classification_state.num_classes
-            else:
-                labels, num_classes = None, None
+            self.target_formatter = get_target_formatter(targets)
 
-            self.target_formatter = get_target_formatter(targets, labels, num_classes)
-        else:
-            self.target_formatter = target_formatter
-
-        if getattr(self, "target_formatter", None) is not None:
+        if self.target_formatter is not None:
             self.multi_label = self.target_formatter.multi_label
             self.labels = self.target_formatter.labels
             self.num_classes = self.target_formatter.num_classes
-            self.set_state(ClassificationState(self.labels, self.num_classes))
 
     def format_target(self, target: Any) -> Any:
         """Format a single target according to the previously computed target format and metadata.

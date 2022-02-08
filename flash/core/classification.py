@@ -19,10 +19,10 @@ import torchmetrics
 from pytorch_lightning.utilities import rank_zero_deprecation, rank_zero_warn
 
 from flash.core.adapter import AdapterTask
-from flash.core.data.io.classification_input import ClassificationState
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.output import Output
 from flash.core.model import Task
+from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 
 if _FIFTYONE_AVAILABLE:
@@ -35,21 +35,29 @@ else:
     Classifications = None
 
 
+CLASSIFICATION_OUTPUTS = FlashRegistry("outputs")
+
+
 def binary_cross_entropy_with_logits(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     """Calls BCE with logits and cast the target one_hot (y) encoding to floating point precision."""
     return F.binary_cross_entropy_with_logits(x, y.float())
 
 
 class ClassificationMixin:
-    @staticmethod
     def _build(
+        self,
         num_classes: Optional[int] = None,
+        labels: Optional[List[str]] = None,
         loss_fn: Optional[Callable] = None,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         multi_label: bool = False,
     ):
+        self.num_classes = num_classes
+        self.multi_label = multi_label
+        self.labels = labels
+
         if metrics is None:
-            metrics = torchmetrics.F1(num_classes) if (multi_label and num_classes) else torchmetrics.Accuracy()
+            metrics = torchmetrics.F1(self.num_classes) if multi_label else torchmetrics.Accuracy()
 
         if loss_fn is None:
             loss_fn = binary_cross_entropy_with_logits if multi_label else F.cross_entropy
@@ -63,6 +71,9 @@ class ClassificationMixin:
 
 
 class ClassificationTask(Task, ClassificationMixin):
+
+    outputs: FlashRegistry = CLASSIFICATION_OUTPUTS
+
     def __init__(
         self,
         *args,
@@ -70,22 +81,24 @@ class ClassificationTask(Task, ClassificationMixin):
         loss_fn: Optional[Callable] = None,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         multi_label: bool = False,
-        output: Optional[Union[Output, Mapping[str, Output]]] = None,
+        labels: Optional[List[str]] = None,
         **kwargs,
     ) -> None:
 
-        metrics, loss_fn = ClassificationMixin._build(num_classes, loss_fn, metrics, multi_label)
+        metrics, loss_fn = self._build(num_classes, labels, loss_fn, metrics, multi_label)
 
         super().__init__(
             *args,
             loss_fn=loss_fn,
             metrics=metrics,
-            output=output or ClassesOutput(multi_label=multi_label),
             **kwargs,
         )
 
 
 class ClassificationAdapterTask(AdapterTask, ClassificationMixin):
+
+    outputs: FlashRegistry = CLASSIFICATION_OUTPUTS
+
     def __init__(
         self,
         *args,
@@ -93,17 +106,16 @@ class ClassificationAdapterTask(AdapterTask, ClassificationMixin):
         loss_fn: Optional[Callable] = None,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         multi_label: bool = False,
-        output: Optional[Union[Output, Mapping[str, Output]]] = None,
+        labels: Optional[List[str]] = None,
         **kwargs,
     ) -> None:
 
-        metrics, loss_fn = ClassificationMixin._build(num_classes, loss_fn, metrics, multi_label)
+        metrics, loss_fn = self._build(num_classes, labels, loss_fn, metrics, multi_label)
 
         super().__init__(
             *args,
             loss_fn=loss_fn,
             metrics=metrics,
-            output=output or ClassesOutput(multi_label=multi_label),
             **kwargs,
         )
 
@@ -120,11 +132,16 @@ class ClassificationOutput(Output):
 
         self._mutli_label = multi_label
 
+    @classmethod
+    def from_task(cls, task: Task, **kwargs) -> Output:
+        return cls(multi_label=getattr(task, "multi_label", False))
+
     @property
     def multi_label(self) -> bool:
         return self._mutli_label
 
 
+@CLASSIFICATION_OUTPUTS(name="preds")
 class PredsClassificationOutput(ClassificationOutput):
     """A :class:`~flash.core.classification.ClassificationOutput` which gets the
     :attr:`~flash.core.data.io.input.InputFormat.PREDS` from the sample.
@@ -138,6 +155,7 @@ class PredsClassificationOutput(ClassificationOutput):
         return sample
 
 
+@CLASSIFICATION_OUTPUTS(name="logits")
 class LogitsOutput(PredsClassificationOutput):
     """A :class:`.Output` which simply converts the model outputs (assumed to be logits) to a list."""
 
@@ -145,6 +163,7 @@ class LogitsOutput(PredsClassificationOutput):
         return super().transform(sample).tolist()
 
 
+@CLASSIFICATION_OUTPUTS(name="probabilities")
 class ProbabilitiesOutput(PredsClassificationOutput):
     """A :class:`.Output` which applies a softmax to the model outputs (assumed to be logits) and converts to a
     list."""
@@ -156,6 +175,7 @@ class ProbabilitiesOutput(PredsClassificationOutput):
         return torch.softmax(sample, -1).tolist()
 
 
+@CLASSIFICATION_OUTPUTS(name="classes")
 class ClassesOutput(PredsClassificationOutput):
     """A :class:`.Output` which applies an argmax to the model outputs (either logits or probabilities) and
     converts to a list.
@@ -182,13 +202,13 @@ class ClassesOutput(PredsClassificationOutput):
         return torch.argmax(sample, -1).tolist()
 
 
+@CLASSIFICATION_OUTPUTS(name="labels")
 class LabelsOutput(ClassesOutput):
     """A :class:`.Output` which converts the model outputs (either logits or probabilities) to the label of the
     argmax classification.
 
     Args:
-        labels: A list of labels, assumed to map the class index to the label for that class. If ``labels`` is not
-            provided, will attempt to get them from the :class:`.ClassificationState`.
+        labels: A list of labels, assumed to map the class index to the label for that class.
         multi_label: If true, treats outputs as multi label logits.
         threshold: The threshold to use for multi_label classification.
     """
@@ -197,35 +217,27 @@ class LabelsOutput(ClassesOutput):
         super().__init__(multi_label=multi_label, threshold=threshold)
         self._labels = labels
 
-        if labels is not None:
-            self.set_state(ClassificationState(labels))
+    @classmethod
+    def from_task(cls, task: Task, **kwargs) -> Output:
+        return cls(labels=getattr(task, "labels", None), multi_label=getattr(task, "multi_label", False))
 
     def transform(self, sample: Any) -> Union[int, List[int], str, List[str]]:
-        labels = None
-
-        if self._labels is not None:
-            labels = self._labels
-        else:
-            state = self.get_state(ClassificationState)
-            if state is not None:
-                labels = state.labels
-
         classes = super().transform(sample)
 
-        if labels is not None:
+        if self._labels is not None:
             if self.multi_label:
-                return [labels[cls] for cls in classes]
-            return labels[classes]
-        rank_zero_warn("No ClassificationState was found, this output will act as a Classes output.", UserWarning)
+                return [self._labels[cls] for cls in classes]
+            return self._labels[classes]
+        rank_zero_warn("No labels were provided, this output will act as a Classes output.", UserWarning)
         return classes
 
 
+@CLASSIFICATION_OUTPUTS(name="fiftyone")
 class FiftyOneLabelsOutput(ClassificationOutput):
     """A :class:`.Output` which converts the model outputs to FiftyOne classification format.
 
     Args:
-        labels: A list of labels, assumed to map the class index to the label for that class. If ``labels`` is not
-            provided, will attempt to get them from the :class:`.ClassificationState`.
+        labels: A list of labels, assumed to map the class index to the label for that class.
         multi_label: If true, treats outputs as multi label logits.
         threshold: A threshold to use to filter candidate labels. In the single label case, predictions below this
             threshold will be replaced with None
@@ -242,7 +254,7 @@ class FiftyOneLabelsOutput(ClassificationOutput):
         multi_label: bool = False,
         threshold: Optional[float] = None,
         store_logits: bool = False,
-        return_filepath: bool = False,
+        return_filepath: bool = True,
     ):
         if multi_label and threshold is None:
             threshold = 0.5
@@ -253,8 +265,9 @@ class FiftyOneLabelsOutput(ClassificationOutput):
         self.store_logits = store_logits
         self.return_filepath = return_filepath
 
-        if labels is not None:
-            self.set_state(ClassificationState(labels))
+    @classmethod
+    def from_task(cls, task: Task, **kwargs) -> Output:
+        return cls(labels=getattr(task, "labels", None), multi_label=getattr(task, "multi_label", False))
 
     def transform(
         self,
@@ -262,15 +275,6 @@ class FiftyOneLabelsOutput(ClassificationOutput):
     ) -> Union[Classification, Classifications, Dict[str, Any]]:
         pred = sample[DataKeys.PREDS] if isinstance(sample, Dict) else sample
         pred = torch.tensor(pred)
-
-        labels = None
-
-        if self._labels is not None:
-            labels = self._labels
-        else:
-            state = self.get_state(ClassificationState)
-            if state is not None:
-                labels = state.labels
 
         logits = None
         if self.store_logits:
@@ -287,12 +291,12 @@ class FiftyOneLabelsOutput(ClassificationOutput):
             classes = torch.argmax(pred, -1).tolist()
             probabilities = torch.softmax(pred, -1).tolist()
 
-        if labels is not None:
+        if self._labels is not None:
             if self.multi_label:
                 classifications = []
                 for idx in classes:
                     fo_cls = fol.Classification(
-                        label=labels[idx],
+                        label=self._labels[idx],
                         confidence=probabilities[idx],
                     )
                     classifications.append(fo_cls)
@@ -306,12 +310,12 @@ class FiftyOneLabelsOutput(ClassificationOutput):
                     fo_predictions = None
                 else:
                     fo_predictions = fol.Classification(
-                        label=labels[classes],
+                        label=self._labels[classes],
                         confidence=confidence,
                         logits=logits,
                     )
         else:
-            rank_zero_warn("No ClassificationState was found, int targets will be used as label strings", UserWarning)
+            rank_zero_warn("No labels were provided, int targets will be used as label strings", UserWarning)
 
             if self.multi_label:
                 classifications = []

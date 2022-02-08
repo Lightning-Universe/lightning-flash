@@ -23,7 +23,6 @@ import flash
 from flash.core.data.batch import default_uncollate
 from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.utilities.paths import PATH_TYPE
-from flash.core.integrations.transformers.states import TransformersBackboneState
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 
 if _TEXT_AVAILABLE:
@@ -34,7 +33,8 @@ else:
 
 class QuestionAnsweringInputBase(Input):
     def _tokenize_fn(self, samples: Any) -> Callable:
-        tokenizer = self.get_state(TransformersBackboneState).tokenizer
+        tokenizer = ...
+        # tokenizer = self.get_state(TransformersBackboneState).tokenizer
         pad_on_right = tokenizer.padding_side == "right"
 
         samples[self.question_column_name] = [q.lstrip() for q in samples[self.question_column_name]]

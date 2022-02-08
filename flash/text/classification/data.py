@@ -16,7 +16,6 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Type, Union
 from pandas.core.frame import DataFrame
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.utilities.paths import PATH_TYPE
@@ -159,13 +158,15 @@ class TextClassificationData(DataModule):
         ds_kw = dict(
             input_key=input_field,
             target_keys=target_fields,
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
 
+        train_input = input_cls(RunningStage.TRAINING, train_file, transform=train_transform, **ds_kw)
+        ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
+
         return cls(
-            input_cls(RunningStage.TRAINING, train_file, transform=train_transform, **ds_kw),
+            train_input,
             input_cls(RunningStage.VALIDATING, val_file, transform=val_transform, **ds_kw),
             input_cls(RunningStage.TESTING, test_file, transform=test_transform, **ds_kw),
             input_cls(RunningStage.PREDICTING, predict_file, transform=predict_transform, **ds_kw),
@@ -284,13 +285,15 @@ class TextClassificationData(DataModule):
             input_key=input_field,
             target_keys=target_fields,
             field=field,
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
 
+        train_input = input_cls(RunningStage.TRAINING, train_file, transform=train_transform, **ds_kw)
+        ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
+
         return cls(
-            input_cls(RunningStage.TRAINING, train_file, transform=train_transform, **ds_kw),
+            train_input,
             input_cls(RunningStage.VALIDATING, val_file, transform=val_transform, **ds_kw),
             input_cls(RunningStage.TESTING, test_file, transform=test_transform, **ds_kw),
             input_cls(RunningStage.PREDICTING, predict_file, transform=predict_transform, **ds_kw),
@@ -408,13 +411,15 @@ class TextClassificationData(DataModule):
         ds_kw = dict(
             input_key=input_field,
             target_keys=target_fields,
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
 
+        train_input = input_cls(RunningStage.TRAINING, train_file, transform=train_transform, **ds_kw)
+        ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
+
         return cls(
-            input_cls(RunningStage.TRAINING, train_file, transform=train_transform, **ds_kw),
+            train_input,
             input_cls(RunningStage.VALIDATING, val_file, transform=val_transform, **ds_kw),
             input_cls(RunningStage.TESTING, test_file, transform=test_transform, **ds_kw),
             input_cls(RunningStage.PREDICTING, predict_file, transform=predict_transform, **ds_kw),
@@ -513,13 +518,15 @@ class TextClassificationData(DataModule):
         ds_kw = dict(
             input_key=input_field,
             target_keys=target_fields,
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
 
+        train_input = input_cls(RunningStage.TRAINING, train_hf_dataset, transform=train_transform, **ds_kw)
+        ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
+
         return cls(
-            input_cls(RunningStage.TRAINING, train_hf_dataset, transform=train_transform, **ds_kw),
+            train_input,
             input_cls(RunningStage.VALIDATING, val_hf_dataset, transform=val_transform, **ds_kw),
             input_cls(RunningStage.TESTING, test_hf_dataset, transform=test_transform, **ds_kw),
             input_cls(RunningStage.PREDICTING, predict_hf_dataset, transform=predict_transform, **ds_kw),
@@ -619,13 +626,15 @@ class TextClassificationData(DataModule):
         ds_kw = dict(
             input_key=input_field,
             target_keys=target_fields,
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
 
+        train_input = input_cls(RunningStage.TRAINING, train_data_frame, transform=train_transform, **ds_kw)
+        ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
+
         return cls(
-            input_cls(RunningStage.TRAINING, train_data_frame, transform=train_transform, **ds_kw),
+            train_input,
             input_cls(RunningStage.VALIDATING, val_data_frame, transform=val_transform, **ds_kw),
             input_cls(RunningStage.TESTING, test_data_frame, transform=test_transform, **ds_kw),
             input_cls(RunningStage.PREDICTING, predict_data_frame, transform=predict_transform, **ds_kw),
@@ -705,13 +714,15 @@ class TextClassificationData(DataModule):
         """
 
         ds_kw = dict(
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
 
+        train_input = input_cls(RunningStage.TRAINING, train_data, train_targets, transform=train_transform, **ds_kw)
+        ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
+
         return cls(
-            input_cls(RunningStage.TRAINING, train_data, train_targets, transform=train_transform, **ds_kw),
+            train_input,
             input_cls(RunningStage.VALIDATING, val_data, val_targets, transform=val_transform, **ds_kw),
             input_cls(RunningStage.TESTING, test_data, test_targets, transform=test_transform, **ds_kw),
             input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
@@ -792,7 +803,6 @@ class TextClassificationData(DataModule):
         )
 
         ds_kw = dict(
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )

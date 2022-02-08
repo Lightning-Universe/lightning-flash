@@ -13,9 +13,8 @@ from torch.utils.data import Sampler
 
 import flash
 from flash.core.data.io.input import DataKeys, Input, IterableInput
-from flash.core.data.properties import ProcessState, Properties
+from flash.core.data.properties import Properties
 from flash.core.data.utils import image_default_loader
-from flash.core.integrations.transformers.states import TransformersBackboneState
 from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 
@@ -24,7 +23,7 @@ if _PYTORCHVIDEO_AVAILABLE:
 
 
 @dataclass(unsafe_hash=True, frozen=True)
-class LabelStudioState(ProcessState):
+class LabelStudioState:
     """The ``LabelStudioState`` stores the metadata loaded from the data."""
 
     multi_label: bool
@@ -274,10 +273,6 @@ class LabelStudioTextClassificationInput(LabelStudioInput):
     Export data should point to text data
     """
 
-    def __init__(self, *args, max_length=128, **kwargs):
-        self.max_length = max_length
-        super().__init__(*args, **kwargs)
-
     def load_sample(self, sample: Mapping[str, Any] = None) -> Any:
         """Load 1 sample from dataset."""
         if not self.state:
@@ -288,14 +283,7 @@ class LabelStudioTextClassificationInput(LabelStudioInput):
         data = ""
         for key in sample.get("data"):
             data += sample.get("data").get(key)
-        tokenized_data = self.get_state(TransformersBackboneState).tokenizer(
-            data, max_length=self.max_length, truncation=True, padding="max_length"
-        )
-        for key in tokenized_data:
-            tokenized_data[key] = torch.tensor(tokenized_data[key])
-        tokenized_data["labels"] = _get_labels_from_sample(sample["label"], self.state.classes)
-        # separate text data type block
-        return tokenized_data
+        return {DataKeys.INPUT: data, DataKeys.TARGET: _get_labels_from_sample(sample["label"], self.state.classes)}
 
 
 class LabelStudioVideoClassificationInput(LabelStudioIterableInput):

@@ -19,7 +19,7 @@ import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Sampler
 
-from flash.core.data.io.classification_input import ClassificationInputMixin, ClassificationState
+from flash.core.data.io.classification_input import ClassificationInputMixin
 from flash.core.data.io.input import DataKeys, Input, IterableInput
 from flash.core.data.utilities.classification import MultiBinaryTargetFormatter
 from flash.core.data.utilities.data_frame import read_csv, resolve_files, resolve_targets
@@ -159,8 +159,7 @@ class VideoClassificationDataFrameInput(VideoClassificationInput):
             and isinstance(self.target_formatter, MultiBinaryTargetFormatter)
             and isinstance(target_keys, List)
         ):
-            classification_state = self.get_state(ClassificationState)
-            self.set_state(ClassificationState(target_keys, classification_state.num_classes))
+            self.labels = target_keys
 
         return result
 

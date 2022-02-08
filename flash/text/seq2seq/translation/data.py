@@ -11,18 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Dict, List, Optional, Type
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.utilities.paths import PATH_TYPE
-from flash.core.integrations.transformers.input_transform import TransformersInputTransform
 from flash.core.utilities.imports import _TEXT_AVAILABLE, _TEXT_TESTING
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 from flash.text.seq2seq.core.input import Seq2SeqCSVInput, Seq2SeqInputBase, Seq2SeqJSONInput, Seq2SeqListInput
-from flash.text.seq2seq.core.output_transform import Seq2SeqOutputTransform
 
 if _TEXT_AVAILABLE:
     from datasets import Dataset
@@ -38,8 +37,7 @@ class TranslationData(DataModule):
     """The ``TranslationData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
     classmethods for loading data for text translation."""
 
-    input_transform_cls = TransformersInputTransform
-    output_transform_cls = Seq2SeqOutputTransform
+    input_transform_cls = InputTransform
 
     @classmethod
     def from_csv(
@@ -50,15 +48,12 @@ class TranslationData(DataModule):
         val_file: Optional[PATH_TYPE] = None,
         test_file: Optional[PATH_TYPE] = None,
         predict_file: Optional[PATH_TYPE] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
+        train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         input_cls: Type[Input] = Seq2SeqCSVInput,
         transform_kwargs: Optional[Dict] = None,
-        max_source_length: int = 128,
-        max_target_length: int = 128,
-        padding: Union[str, bool] = "max_length",
         **data_module_kwargs: Any,
     ) -> "TranslationData":
         """Load the :class:`~flash.text.seq2seq.translation.data.TranslationData` from CSV files containing input
@@ -83,10 +78,6 @@ class TranslationData(DataModule):
                 predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
-            max_source_length: The maximum length to pad / truncate input sequences to.
-            max_target_length: The maximum length to pad / truncate target sequences to.
-            padding: The type of padding to apply. One of: "longest" or ``True``, "max_length", "do_not_pad" or
-                ``False``.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
 
@@ -151,9 +142,6 @@ class TranslationData(DataModule):
         ds_kw = dict(
             input_key=input_field,
             target_key=target_field,
-            max_source_length=max_source_length,
-            max_target_length=max_target_length,
-            padding=padding,
             data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
@@ -176,16 +164,13 @@ class TranslationData(DataModule):
         val_file: Optional[PATH_TYPE] = None,
         test_file: Optional[PATH_TYPE] = None,
         predict_file: Optional[PATH_TYPE] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
+        train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         input_cls: Type[Input] = Seq2SeqJSONInput,
         transform_kwargs: Optional[Dict] = None,
         field: Optional[str] = None,
-        max_source_length: int = 128,
-        max_target_length: int = 128,
-        padding: Union[str, bool] = "max_length",
         **data_module_kwargs: Any,
     ) -> "TranslationData":
         """Load the :class:`~flash.text.seq2seq.translation.data.TranslationData` from JSON files containing input
@@ -211,10 +196,6 @@ class TranslationData(DataModule):
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             field: The field that holds the data in the JSON file.
-            max_source_length: The maximum length to pad / truncate input sequences to.
-            max_target_length: The maximum length to pad / truncate target sequences to.
-            padding: The type of padding to apply. One of: "longest" or ``True``, "max_length", "do_not_pad" or
-                ``False``.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
 
@@ -278,9 +259,6 @@ class TranslationData(DataModule):
             input_key=input_field,
             target_key=target_field,
             field=field,
-            max_source_length=max_source_length,
-            max_target_length=max_target_length,
-            padding=padding,
             data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
@@ -303,15 +281,12 @@ class TranslationData(DataModule):
         val_hf_dataset: Optional[Dataset] = None,
         test_hf_dataset: Optional[Dataset] = None,
         predict_hf_dataset: Optional[Dataset] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
+        train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         input_cls: Type[Input] = Seq2SeqInputBase,
         transform_kwargs: Optional[Dict] = None,
-        max_source_length: int = 128,
-        max_target_length: int = 128,
-        padding: Union[str, bool] = "max_length",
         **data_module_kwargs: Any,
     ) -> "TranslationData":
         """Load the :class:`~flash.text.seq2seq.translation.data.TranslationData` from Hugging Face ``Dataset``
@@ -336,10 +311,6 @@ class TranslationData(DataModule):
                 predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
-            max_source_length: The maximum length to pad / truncate input sequences to.
-            max_target_length: The maximum length to pad / truncate target sequences to.
-            padding: The type of padding to apply. One of: "longest" or ``True``, "max_length", "do_not_pad" or
-                ``False``.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
 
@@ -388,9 +359,6 @@ class TranslationData(DataModule):
         ds_kw = dict(
             input_key=input_field,
             target_key=target_field,
-            max_source_length=max_source_length,
-            max_target_length=max_target_length,
-            padding=padding,
             data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
@@ -414,15 +382,12 @@ class TranslationData(DataModule):
         test_data: Optional[List[str]] = None,
         test_targets: Optional[List[str]] = None,
         predict_data: Optional[List[str]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
+        train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         input_cls: Type[Input] = Seq2SeqListInput,
         transform_kwargs: Optional[Dict] = None,
-        max_source_length: int = 128,
-        max_target_length: int = 128,
-        padding: Union[str, bool] = "max_length",
         **data_module_kwargs: Any,
     ) -> "TranslationData":
         """Load the :class:`~flash.text.seq2seq.translation.data.TranslationData` from lists of input text snippets
@@ -446,10 +411,6 @@ class TranslationData(DataModule):
                 predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
-            max_source_length: The maximum length to pad / truncate input sequences to.
-            max_target_length: The maximum length to pad / truncate target sequences to.
-            padding: The type of padding to apply. One of: "longest" or ``True``, "max_length", "do_not_pad" or
-                ``False``.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
 
@@ -478,9 +439,6 @@ class TranslationData(DataModule):
         """
 
         ds_kw = dict(
-            max_source_length=max_source_length,
-            max_target_length=max_target_length,
-            padding=padding,
             data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,

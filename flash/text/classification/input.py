@@ -16,9 +16,9 @@ from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 
-from flash.core.data.io.classification_input import ClassificationInputMixin, ClassificationState
+from flash.core.data.io.classification_input import ClassificationInputMixin
 from flash.core.data.io.input import DataKeys, Input
-from flash.core.data.utilities.classification import MultiBinaryTargetFormatter
+from flash.core.data.utilities.classification import MultiBinaryTargetFormatter, TargetFormatter
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 
@@ -43,17 +43,17 @@ class TextClassificationInput(Input, ClassificationInputMixin):
         hf_dataset: Dataset,
         input_key: str,
         target_keys: Optional[Union[str, List[str]]] = None,
+        target_formatter: Optional[TargetFormatter] = None,
     ) -> Dataset:
         """Loads data into HuggingFace datasets.Dataset."""
         if not self.predicting:
             hf_dataset = hf_dataset.map(partial(self._resolve_target, target_keys))
             targets = hf_dataset.to_dict()[DataKeys.TARGET]
-            self.load_target_metadata(targets)
+            self.load_target_metadata(targets, target_formatter=target_formatter)
 
             # If we had binary multi-class targets then we also know the labels (column names)
             if isinstance(self.target_formatter, MultiBinaryTargetFormatter) and isinstance(target_keys, List):
-                classification_state = self.get_state(ClassificationState)
-                self.set_state(ClassificationState(target_keys, classification_state.num_classes))
+                self.labels = target_keys
 
         # remove extra columns
         extra_columns = set(hf_dataset.column_names) - {input_key, DataKeys.TARGET}
@@ -77,9 +77,10 @@ class TextClassificationCSVInput(TextClassificationInput):
         csv_file: PATH_TYPE,
         input_key: str,
         target_keys: Optional[Union[str, List[str]]] = None,
+        target_formatter: Optional[TargetFormatter] = None,
     ) -> Dataset:
         dataset_dict = load_dataset("csv", data_files={"data": str(csv_file)})
-        return super().load_data(dataset_dict["data"], input_key, target_keys)
+        return super().load_data(dataset_dict["data"], input_key, target_keys, target_formatter=target_formatter)
 
 
 class TextClassificationJSONInput(TextClassificationInput):
@@ -90,9 +91,10 @@ class TextClassificationJSONInput(TextClassificationInput):
         field: str,
         input_key: str,
         target_keys: Optional[Union[str, List[str]]] = None,
+        target_formatter: Optional[TargetFormatter] = None,
     ) -> Dataset:
         dataset_dict = load_dataset("json", data_files={"data": str(json_file)}, field=field)
-        return super().load_data(dataset_dict["data"], input_key, target_keys)
+        return super().load_data(dataset_dict["data"], input_key, target_keys, target_formatter=target_formatter)
 
 
 class TextClassificationDataFrameInput(TextClassificationInput):
@@ -102,8 +104,11 @@ class TextClassificationDataFrameInput(TextClassificationInput):
         data_frame: pd.DataFrame,
         input_key: str,
         target_keys: Optional[Union[str, List[str]]] = None,
+        target_formatter: Optional[TargetFormatter] = None,
     ) -> Dataset:
-        return super().load_data(Dataset.from_pandas(data_frame), input_key, target_keys)
+        return super().load_data(
+            Dataset.from_pandas(data_frame), input_key, target_keys, target_formatter=target_formatter
+        )
 
 
 class TextClassificationParquetInput(TextClassificationInput):
@@ -113,8 +118,11 @@ class TextClassificationParquetInput(TextClassificationInput):
         parquet_file: PATH_TYPE,
         input_key: str,
         target_keys: Optional[Union[str, List[str]]] = None,
+        target_formatter: Optional[TargetFormatter] = None,
     ) -> Dataset:
-        return super().load_data(Dataset.from_parquet(str(parquet_file)), input_key, target_keys)
+        return super().load_data(
+            Dataset.from_parquet(str(parquet_file)), input_key, target_keys, target_formatter=target_formatter
+        )
 
 
 class TextClassificationListInput(TextClassificationInput):
@@ -123,9 +131,10 @@ class TextClassificationListInput(TextClassificationInput):
         self,
         inputs: List[str],
         targets: Optional[List[Any]] = None,
+        target_formatter: Optional[TargetFormatter] = None,
     ) -> Dataset:
         if targets is not None:
             hf_dataset = Dataset.from_dict({DataKeys.INPUT: inputs, DataKeys.TARGET: targets})
         else:
             hf_dataset = Dataset.from_dict({DataKeys.INPUT: inputs})
-        return super().load_data(hf_dataset, DataKeys.INPUT, DataKeys.TARGET)
+        return super().load_data(hf_dataset, DataKeys.INPUT, DataKeys.TARGET, target_formatter=target_formatter)

@@ -13,7 +13,6 @@
 # limitations under the License.
 from typing import Any, Dict, Hashable, Sequence
 
-from flash.core.data.io.classification_input import ClassificationState
 from flash.core.data.io.input import DataKeys
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
 from flash.core.integrations.icevision.data import IceVisionInput
@@ -112,7 +111,6 @@ class ObjectDetectionFiftyOneInput(IceVisionInput):
         class_map = ClassMap(classes)
         self.num_classes = len(class_map)
         self.labels = [class_map.get_by_id(i) for i in range(self.num_classes)]
-        self.set_state(ClassificationState(self.labels))
 
         parser = FiftyOneParser(sample_collection, class_map, label_field, iscrowd)
         records = parser.parse(data_splitter=SingleSplitSplitter())

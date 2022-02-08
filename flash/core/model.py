@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import inspect
-import pickle
 from abc import ABCMeta
 from copy import deepcopy
 from importlib import import_module
@@ -24,7 +23,6 @@ import torchmetrics
 from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.callbacks.finetuning import BaseFinetuning
-from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
@@ -523,26 +521,6 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             )
 
         return [finetuning_strategy_fn(**finetuning_strategy_metadata)]
-
-    def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
-        # This may be an issue since here we create the same problems with pickle as in
-        # https://pytorch.org/docs/stable/notes/serialization.html
-        if self.data_pipeline is not None and "data_pipeline" not in checkpoint:
-            try:
-                pickle.dumps(self.data_pipeline)  # TODO: DataPipeline not always pickleable
-                checkpoint["data_pipeline"] = self.data_pipeline
-            except AttributeError:
-                rank_zero_warn("DataPipeline couldn't be added to the checkpoint.")
-        if self._data_pipeline_state is not None and "_data_pipeline_state" not in checkpoint:
-            checkpoint["_data_pipeline_state"] = self._data_pipeline_state
-        super().on_save_checkpoint(checkpoint)
-
-    def on_load_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
-        super().on_load_checkpoint(checkpoint)
-        if "data_pipeline" in checkpoint:
-            self.data_pipeline = checkpoint["data_pipeline"]
-        if "_data_pipeline_state" in checkpoint:
-            self._data_pipeline_state = checkpoint["_data_pipeline_state"]
 
     @classmethod
     def available_backbones(cls, head: Optional[str] = None) -> Union[Dict[str, List[str]], List[str]]:

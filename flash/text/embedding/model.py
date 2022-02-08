@@ -19,11 +19,11 @@ from typing import Any, Dict, List, Optional
 import torch
 from pytorch_lightning import Callback
 
-from flash.core.integrations.transformers.states import TransformersBackboneState
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry, print_provider_info
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.core.utilities.providers import _SENTENCE_TRANSFORMERS
+from flash.text.classification.collate import TextClassificationCollate
 from flash.text.embedding.backbones import HUGGINGFACE_BACKBONES
 from flash.text.ort_callback import ORTCallback
 
@@ -55,6 +55,7 @@ class TextEmbedder(Task):
     def __init__(
         self,
         backbone: str = "sentence-transformers/all-MiniLM-L6-v2",
+        max_length: int = 128,
         tokenizer_backbone: Optional[str] = None,
         tokenizer_kwargs: Optional[Dict[str, Any]] = None,
         enable_ort: bool = False,
@@ -68,7 +69,10 @@ class TextEmbedder(Task):
 
         if tokenizer_backbone is None:
             tokenizer_backbone = backbone
-        self.set_state(TransformersBackboneState(tokenizer_backbone, tokenizer_kwargs=tokenizer_kwargs))
+        self.max_length = max_length
+        self.collate_fn = TextClassificationCollate(
+            backbone=tokenizer_backbone, max_length=max_length, tokenizer_kwargs=tokenizer_kwargs
+        )
         self.model = self.backbones.get(backbone)()
         self.pooling = Pooling(self.model.config.hidden_size)
         self.enable_ort = enable_ort

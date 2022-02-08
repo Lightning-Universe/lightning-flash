@@ -16,7 +16,6 @@ from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 import numpy as np
 
-from flash.core.data.io.classification_input import ClassificationState
 from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.utilities.paths import list_valid_files
 from flash.core.integrations.icevision.transforms import from_icevision_record
@@ -49,7 +48,6 @@ class IceVisionInput(Input):
         if class_map is not None:
             self.num_classes = class_map.num_classes
             self.labels = [class_map.get_by_id(i) for i in range(self.num_classes)]
-            self.set_state(ClassificationState(self.labels))
         records = parser.parse(data_splitter=SingleSplitSplitter())
         return [{DataKeys.INPUT: record} for record in records[0]]
 

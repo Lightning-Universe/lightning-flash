@@ -15,7 +15,6 @@ import functools
 import os
 import sys
 from copy import copy, deepcopy
-from dataclasses import dataclass
 from functools import partial
 from typing import Any, Callable, cast, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
 
@@ -25,7 +24,7 @@ from torch.utils.data import Dataset
 
 import flash
 from flash.core.data.callback import FlashCallback
-from flash.core.data.properties import ProcessState, Properties
+from flash.core.data.properties import Properties
 from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.stages import RunningStage
@@ -43,12 +42,6 @@ else:
     # ReadTheDocs mocks the `IterableDataset` import so it's type cannot be used as a base for a metaclass, so we
     # replace it here.
     IterableDataset = object
-
-
-@dataclass(unsafe_hash=True, frozen=True)
-class ImageLabelsMap(ProcessState):
-
-    labels_map: Optional[Dict[int, Tuple[int, int, int]]]
 
 
 class InputFormat(LightningEnum):
@@ -196,7 +189,7 @@ class InputBase(Properties, metaclass=_InputMeta):
 
         self.data = None
         if len(args) >= 1 and args[0] is not None:
-            self.data = getattr(self, f"{_STAGES_PREFIX(running_stage)}_load_data")(*args, **kwargs)
+            self.data = getattr(self, f"{_STAGES_PREFIX[running_stage]}_load_data")(*args, **kwargs)
 
     def _create_dataloader_collate_fn(self, callbacks: List[FlashCallback]) -> Optional[Callable]:
         from flash.core.data.io.input_transform import _create_collate_input_transform_processors
