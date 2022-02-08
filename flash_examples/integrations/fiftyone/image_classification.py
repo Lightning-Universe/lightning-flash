@@ -38,6 +38,7 @@ model = ImageClassifier(
 trainer = flash.Trainer(
     max_epochs=1,
     gpus=torch.cuda.device_count(),
+    fast_dev_run=True,
 )
 trainer.finetune(
     model,
@@ -47,9 +48,7 @@ trainer.finetune(
 trainer.save_checkpoint("image_classification_model.pt")
 
 # 4 Predict from checkpoint
-model = ImageClassifier.load_from_checkpoint(
-    "https://flash-weights.s3.amazonaws.com/0.7.0/image_classification_model.pt"
-)
+model = ImageClassifier.load_from_checkpoint("image_classification_model.pt")
 predictions = trainer.predict(model, datamodule=datamodule, output="fiftyone")  # output FiftyOne format
 
 # 5 Visualize predictions in FiftyOne App

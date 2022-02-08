@@ -17,6 +17,7 @@ import fiftyone as fo
 import torch
 
 import flash
+from flash.core.classification import FiftyOneLabelsOutput
 from flash.core.data.utils import download_data
 from flash.image import ImageClassificationData, ImageClassifier
 
@@ -42,12 +43,13 @@ datamodule = ImageClassificationData.from_fiftyone(
     train_dataset=train_dataset,
     val_dataset=val_dataset,
     test_dataset=test_dataset,
+    batch_size=4,
 )
 
 # 4 Fine tune model
 model = ImageClassifier(
     backbone="resnet18",
-    num_classes=datamodule.num_classes,
+    labels=datamodule.labels,
 )
 trainer = flash.Trainer(
     max_epochs=1,
@@ -63,12 +65,12 @@ trainer.finetune(
 trainer.save_checkpoint("image_classification_model.pt")
 
 # 5 Predict from checkpoint on data with ground truth
-model = ImageClassifier.load_from_checkpoint(
-    "https://flash-weights.s3.amazonaws.com/0.7.0/image_classification_model.pt"
-)
-datamodule = ImageClassificationData.from_fiftyone(predict_dataset=test_dataset)
-predictions = trainer.predict(model, datamodule=datamodule, output="fiftyone")  # output FiftyOne format
-predictions = list(chain.from_iterable(predictions))  # flatten batches
+model = ImageClassifier.load_from_checkpoint("image_classification_model.pt")
+datamodule = ImageClassificationData.from_fiftyone(predict_dataset=test_dataset, batch_size=4)
+predictions = trainer.predict(
+    model, datamodule=datamodule, output=FiftyOneLabelsOutput(model.labels, return_filepath=False)
+)  # output FiftyOne format
+predictions = list(chain.from_iterable(predictions))
 
 # 6 Add predictions to dataset
 test_dataset.set_values("predictions", predictions)
