@@ -50,11 +50,12 @@ def tabular_classification():
         },
         finetune=False,
         datamodule_attributes={
+            "parameters",
             "embedding_sizes",
-            "categorical_fields",
-            "num_features",
             "cat_dims",
+            "num_features",
             "num_classes",
+            "labels",
         },
     )
 

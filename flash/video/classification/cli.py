@@ -49,6 +49,7 @@ def video_classification():
         default_arguments={
             "trainer.max_epochs": 1,
         },
+        datamodule_attributes={"num_classes", "labels"},
     )
 
     cli.trainer.save_checkpoint("video_classification.pt")

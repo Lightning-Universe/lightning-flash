@@ -43,6 +43,7 @@ def audio_classification():
         default_arguments={
             "trainer.max_epochs": 3,
         },
+        datamodule_attributes={"num_classes", "labels", "multi_label"},
     )
 
     cli.trainer.save_checkpoint("audio_classification_model.pt")
