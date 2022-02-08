@@ -22,8 +22,8 @@ if _PYTORCHVIDEO_AVAILABLE:
 
 
 @dataclass(unsafe_hash=True, frozen=True)
-class LabelStudioState:
-    """The ``LabelStudioState`` stores the metadata loaded from the data."""
+class LabelStudioParameters:
+    """The ``LabelStudioParameters`` stores the metadata loaded from the data."""
 
     multi_label: bool
     num_classes: Optional[int]
@@ -104,7 +104,9 @@ def _load_json_data(data, data_folder, multi_label=False):
 
 
 class BaseLabelStudioInput(Properties):
-    def load_data(self, data: Optional[Any]) -> Sequence[Mapping[str, Any]]:
+    def load_data(
+        self, data: Optional[Any], parameters: Optional[LabelStudioParameters] = None
+    ) -> Sequence[Mapping[str, Any]]:
         """Iterate through all tasks in exported data and construct train\test\val results."""
         if data and isinstance(data, dict):
             data_folder = data.get("data_folder")
@@ -117,26 +119,23 @@ class BaseLabelStudioInput(Properties):
                 _raw_data, data_folder=data_folder, multi_label=multi_label
             )
             if self.training:
-                self.set_state(
-                    LabelStudioState(
-                        classes=classes,
-                        data_types=data_types,
-                        tag_types=tag_types,
-                        multi_label=multi_label,
-                        num_classes=len(classes),
-                    )
+                self.parameters = LabelStudioParameters(
+                    classes=classes,
+                    data_types=data_types,
+                    tag_types=tag_types,
+                    multi_label=multi_label,
+                    num_classes=len(classes),
                 )
+            else:
+                self.parameters = parameters
             return test_results if self.testing else results
         return []
 
     def load_sample(self, sample: Mapping[str, Any] = None) -> Any:
         """Load 1 sample from dataset."""
-        if not self.state:
-            self.state = self.get_state(LabelStudioState)
-        assert self.state
         # all other data types
         # separate label from data
-        label = _get_labels_from_sample(sample["label"], self.state.classes)
+        label = _get_labels_from_sample(sample["label"], self.parameters.classes)
         # delete label from input data
         del sample["label"]
         result = {
@@ -223,28 +222,10 @@ class LabelStudioInput(BaseLabelStudioInput, Input):
     """The ``LabelStudioInput`` expects the input to
     :meth:`~flash.core.data.io.input.Input.load_data` to be a json export from label studio."""
 
-    def __init__(
-        self,
-        running_stage: RunningStage,
-        *args: Any,
-        **kwargs: Any,
-    ):
-        self.state = None
-        super().__init__(running_stage, *args, **kwargs)
-
 
 class LabelStudioIterableInput(BaseLabelStudioInput, IterableInput):
     """The ``LabelStudioInput`` expects the input to
     :meth:`~flash.core.data.io.input.Input.load_data` to be a json export from label studio."""
-
-    def __init__(
-        self,
-        running_stage: RunningStage,
-        *args: Any,
-        **kwargs: Any,
-    ):
-        self.state = None
-        super().__init__(running_stage, *args, **kwargs)
 
 
 class LabelStudioImageClassificationInput(LabelStudioInput):
@@ -254,13 +235,13 @@ class LabelStudioImageClassificationInput(LabelStudioInput):
 
     def load_sample(self, sample: Mapping[str, Any] = None) -> Any:
         """Load 1 sample from dataset."""
-        if not self.state:
-            self.state = self.get_state(LabelStudioState)
-        assert self.state
         p = sample["file_upload"]
         # loading image
         image = image_default_loader(p)
-        result = {DataKeys.INPUT: image, DataKeys.TARGET: _get_labels_from_sample(sample["label"], self.state.classes)}
+        result = {
+            DataKeys.INPUT: image,
+            DataKeys.TARGET: _get_labels_from_sample(sample["label"], self.parameters.classes),
+        }
         return result
 
 
@@ -272,15 +253,13 @@ class LabelStudioTextClassificationInput(LabelStudioInput):
 
     def load_sample(self, sample: Mapping[str, Any] = None) -> Any:
         """Load 1 sample from dataset."""
-        if not self.state:
-            self.state = self.get_state(LabelStudioState)
-
-        assert self.state
-
         data = ""
         for key in sample.get("data"):
             data += sample.get("data").get(key)
-        return {DataKeys.INPUT: data, DataKeys.TARGET: _get_labels_from_sample(sample["label"], self.state.classes)}
+        return {
+            DataKeys.INPUT: data,
+            DataKeys.TARGET: _get_labels_from_sample(sample["label"], self.parameters.classes),
+        }
 
 
 class LabelStudioVideoClassificationInput(LabelStudioIterableInput):
@@ -317,19 +296,16 @@ class LabelStudioVideoClassificationInput(LabelStudioIterableInput):
         """Load 1 sample from dataset."""
         return sample
 
-    def load_data(self, data: Optional[Any] = None) -> Sequence[Mapping[str, Any]]:
+    def load_data(
+        self, data: Optional[Any] = None, parameters: Optional[LabelStudioParameters] = None
+    ) -> Sequence[Mapping[str, Any]]:
         """load_data produces a sequence or iterable of samples."""
-        res = super().load_data(data)
+        res = super().load_data(data, parameters=parameters)
         return self.convert_to_encodedvideo(res)
 
     def convert_to_encodedvideo(self, dataset):
         """Converting dataset to EncodedVideoDataset."""
         if len(dataset) > 0:
-
-            if not self.state:
-                self.state = self.get_state(LabelStudioState)
-
-            assert self.state
 
             from pytorchvideo.data import LabeledVideoDataset
 
@@ -337,7 +313,7 @@ class LabelStudioVideoClassificationInput(LabelStudioIterableInput):
                 [
                     (
                         os.path.join(self._data_folder, sample["file_upload"]),
-                        {"label": _get_labels_from_sample(sample["label"], self.state.classes)},
+                        {"label": _get_labels_from_sample(sample["label"], self.parameters.classes)},
                     )
                     for sample in dataset
                 ],

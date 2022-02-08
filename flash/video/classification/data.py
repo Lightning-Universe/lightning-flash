@@ -1055,8 +1055,11 @@ class VideoClassificationData(DataModule):
             decoder=decoder,
         )
 
+        train_input = input_cls(RunningStage.TRAINING, train_data, transform=train_transform, **ds_kw)
+        ds_kw["parameters"] = getattr(train_input, "parameters", None)
+
         return cls(
-            input_cls(RunningStage.TRAINING, train_data, transform=train_transform, **ds_kw),
+            train_input,
             input_cls(RunningStage.VALIDATING, val_data, transform=val_transform, **ds_kw),
             input_cls(RunningStage.TESTING, test_data, transform=test_transform, **ds_kw),
             input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),

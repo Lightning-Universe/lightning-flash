@@ -149,7 +149,7 @@ def test_input_labelstudio():
 
     train_data, val_data = LabelStudioInput._split_train_val_data(data, split=0.1)
     train = LabelStudioInput(RunningStage.TRAINING, train_data)
-    val = LabelStudioInput(RunningStage.VALIDATING, val_data)
+    val = LabelStudioInput(RunningStage.VALIDATING, val_data, parameters=train.parameters)
 
     train_sample = train[0]
     val_sample = val[0]
