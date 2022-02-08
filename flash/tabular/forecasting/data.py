@@ -17,7 +17,6 @@ from torch.utils.data.sampler import Sampler
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
 from flash.core.data.io.output_transform import OutputTransform
@@ -169,7 +168,6 @@ class TabularForecastingData(DataModule):
         """
 
         ds_kw = dict(
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
             time_idx=time_idx,
@@ -180,7 +178,6 @@ class TabularForecastingData(DataModule):
         )
 
         train_input = input_cls(RunningStage.TRAINING, train_data_frame, transform=train_transform, **ds_kw)
-
         ds_kw["parameters"] = train_input.parameters if train_input else parameters
 
         return cls(
