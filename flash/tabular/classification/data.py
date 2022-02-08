@@ -13,7 +13,6 @@
 # limitations under the License.
 from typing import Any, Dict, List, Optional, Type, Union
 
-from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
 from flash.core.utilities.imports import _PANDAS_AVAILABLE, _TABULAR_TESTING
@@ -157,7 +156,6 @@ class TabularClassificationData(TabularData):
             >>> del predict_data
         """
         ds_kw = dict(
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
             categorical_fields=categorical_fields,
@@ -167,8 +165,8 @@ class TabularClassificationData(TabularData):
         )
 
         train_input = input_cls(RunningStage.TRAINING, train_data_frame, transform=train_transform, **ds_kw)
-
         ds_kw["parameters"] = train_input.parameters if train_input else parameters
+        ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,
@@ -299,7 +297,6 @@ class TabularClassificationData(TabularData):
             >>> os.remove("predict_data.csv")
         """
         ds_kw = dict(
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
             categorical_fields=categorical_fields,
@@ -309,8 +306,8 @@ class TabularClassificationData(TabularData):
         )
 
         train_input = input_cls(RunningStage.TRAINING, train_file, transform=train_transform, **ds_kw)
-
         ds_kw["parameters"] = train_input.parameters if train_input else parameters
+        ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,

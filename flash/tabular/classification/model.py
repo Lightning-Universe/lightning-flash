@@ -60,6 +60,7 @@ class TabularClassifier(ClassificationAdapterTask):
         cat_dims: list,
         num_features: int,
         num_classes: int,
+        labels: Optional[List[str]] = None,
         backbone: str = "tabnet",
         loss_fn: Callable = F.cross_entropy,
         optimizer: OPTIMIZER_TYPE = "Adam",
@@ -91,6 +92,7 @@ class TabularClassifier(ClassificationAdapterTask):
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
             learning_rate=learning_rate,
+            labels=labels,
         )
 
     @staticmethod

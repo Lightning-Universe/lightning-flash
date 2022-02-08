@@ -42,7 +42,7 @@ datamodule = TabularClassificationData.from_csv(
     parameters=datamodule.parameters,
     batch_size=8,
 )
-predictions = trainer.predict(model, datamodule=datamodule)
+predictions = trainer.predict(model, datamodule=datamodule, output="classes")
 print(predictions)
 
 # 5. Save the model!

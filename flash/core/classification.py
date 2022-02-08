@@ -57,7 +57,7 @@ class ClassificationMixin:
         self.labels = labels
 
         if metrics is None:
-            metrics = torchmetrics.F1(self.num_classes) if multi_label else torchmetrics.Accuracy()
+            metrics = torchmetrics.F1(self.num_classes) if multi_label and num_classes else torchmetrics.Accuracy()
 
         if loss_fn is None:
             loss_fn = binary_cross_entropy_with_logits if multi_label else F.cross_entropy

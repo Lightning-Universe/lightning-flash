@@ -19,6 +19,7 @@ from flash.core.utilities.imports import _PANDAS_AVAILABLE
 
 if _PANDAS_AVAILABLE:
     import pandas as pd
+    from pandas import Series
     from pandas.core.frame import DataFrame
 else:
     DataFrame = None
@@ -31,10 +32,12 @@ def _impute(df: DataFrame, num_cols: List) -> DataFrame:
 
 
 def _compute_normalization(df: DataFrame, num_cols: List) -> Tuple:
-    return df[num_cols].mean(), df[num_cols].std()
+    return df[num_cols].mean().to_dict(), df[num_cols].std().to_dict()
 
 
-def _normalize(df: DataFrame, num_cols: List, mean: DataFrame, std: DataFrame) -> DataFrame:
+def _normalize(df: DataFrame, num_cols: List, mean: Dict, std: Dict) -> DataFrame:
+    mean = Series(mean)
+    std = Series(std)
     df[num_cols] = (df[num_cols] - mean) / std
     return df
 
@@ -66,8 +69,8 @@ def _pre_transform(
     num_cols: List[str],
     cat_cols: List[str],
     codes: Dict,
-    mean: DataFrame,
-    std: DataFrame,
+    mean: Dict,
+    std: Dict,
 ) -> DataFrame:
     df = _impute(df, num_cols)
     df = _normalize(df, num_cols, mean=mean, std=std)
