@@ -44,7 +44,7 @@ datamodule = GraphClassificationData.from_datasets(
     predict_dataset=dataset[:3],
     batch_size=4,
 )
-predictions = trainer.predict(model, datamodule=datamodule)
+predictions = trainer.predict(model, datamodule=datamodule, output="classes")
 print(predictions)
 
 # 5. Save the model!
