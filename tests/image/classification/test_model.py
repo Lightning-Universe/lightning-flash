@@ -20,7 +20,6 @@ import torch
 
 from flash import Trainer
 from flash.__main__ import main
-from flash.core.classification import ProbabilitiesOutput
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _IMAGE_AVAILABLE, _IMAGE_TESTING, _SERVE_TESTING
 from flash.image import ImageClassifier
@@ -111,11 +110,11 @@ def test_multilabel(tmpdir):
 
     num_classes = 4
     ds = DummyMultiLabelDataset(num_classes)
-    model = ImageClassifier(num_classes, multi_label=True, output=ProbabilitiesOutput(multi_label=True))
+    model = ImageClassifier(num_classes, multi_label=True)
     train_dl = torch.utils.data.DataLoader(ds, batch_size=2)
     trainer = Trainer(default_root_dir=tmpdir, max_epochs=2, limit_train_batches=5)
     trainer.finetune(model, train_dl, strategy=("freeze_unfreeze", 1))
-    predictions = trainer.predict(model, train_dl)[0]
+    predictions = trainer.predict(model, train_dl, output="probabilities")[0]
     assert (torch.tensor(predictions) > 1).sum() == 0
     assert (torch.tensor(predictions) < 0).sum() == 0
     assert len(predictions[0]) == num_classes

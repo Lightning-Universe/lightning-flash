@@ -28,7 +28,7 @@ from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.serve import Composition
 from flash.core.utilities.imports import _AUDIO_AVAILABLE, requires
-from flash.core.utilities.types import INPUT_TRANSFORM_TYPE, LR_SCHEDULER_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
+from flash.core.utilities.types import INPUT_TRANSFORM_TYPE, LR_SCHEDULER_TYPE, OPTIMIZER_TYPE
 
 if _AUDIO_AVAILABLE:
     from transformers import AutoProcessor
@@ -44,7 +44,6 @@ class SpeechRecognition(Task):
         learning_rate: Learning rate to use for training, defaults to ``1e-5``.
         optimizer: Optimizer to use for training.
         lr_scheduler: The LR scheduler to use during training.
-        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
     """
 
     backbones: FlashRegistry = SPEECH_RECOGNITION_BACKBONES
@@ -58,7 +57,6 @@ class SpeechRecognition(Task):
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         learning_rate: float = 1e-5,
-        output: OUTPUT_TYPE = None,
     ):
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
         # disable HF thousand warnings
@@ -72,7 +70,6 @@ class SpeechRecognition(Task):
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
             learning_rate=learning_rate,
-            output=output,
             output_transform=SpeechRecognitionOutputTransform(backbone),
         )
 

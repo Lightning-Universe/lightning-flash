@@ -22,6 +22,7 @@ from torch.utils.data import DataLoader, Dataset, random_split
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import InputBase
 from flash.core.utilities.imports import _BAAL_AVAILABLE, requires
+from flash.core.utilities.stages import RunningStage
 
 if _BAAL_AVAILABLE:
     from baal.active.dataset import ActiveLearningDataset
@@ -145,7 +146,9 @@ class ActiveLearningDataModule(DataModule):
     def _val_dataloader(self) -> "DataLoader":
         self.labelled._val_input = train_val_split(self._dataset, self.val_split)[1]
         self.labelled._val_dataloader_collate_fn = self.labelled._train_dataloader_collate_fn
-        self.labelled._val_on_after_batch_transfer_fn = self.labelled._train_on_after_batch_transfer_fn
+        self.labelled._on_after_batch_transfer_fns[
+            RunningStage.VALIDATING
+        ] = self.labelled._on_after_batch_transfer_fns[RunningStage.TRAINING]
         return self.labelled._val_dataloader()
 
     def _test_dataloader(self) -> "DataLoader":
@@ -154,7 +157,9 @@ class ActiveLearningDataModule(DataModule):
     def predict_dataloader(self) -> "DataLoader":
         self.labelled._predict_input = self.filter_unlabelled_data(self._dataset.pool)
         self.labelled._predict_dataloader_collate_fn = self.labelled._train_dataloader_collate_fn
-        self.labelled._predict_on_after_batch_transfer_fn = self.labelled._train_on_after_batch_transfer_fn
+        self.labelled._on_after_batch_transfer_fns[
+            RunningStage.PREDICTING
+        ] = self.labelled._on_after_batch_transfer_fns[RunningStage.TRAINING]
         return self.labelled._predict_dataloader()
 
     def label(self, probabilities: List[torch.Tensor] = None, indices=None):

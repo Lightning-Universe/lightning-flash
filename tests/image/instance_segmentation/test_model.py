@@ -63,7 +63,6 @@ def test_instance_segmentation_inference(tmpdir):
         head="mask_rcnn",
         backbone="resnet18_fpn",
         num_classes=datamodule.num_classes,
-        output=None,
     )
 
     # 3. Create the trainer and finetune the model

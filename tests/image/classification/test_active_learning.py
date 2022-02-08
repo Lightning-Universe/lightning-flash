@@ -22,7 +22,6 @@ from torch import nn
 from torch.utils.data import SequentialSampler
 
 import flash
-from flash.core.classification import ProbabilitiesOutput
 from flash.core.utilities.imports import _BAAL_AVAILABLE, _IMAGE_TESTING
 from flash.image import ImageClassificationData, ImageClassifier
 from flash.image.classification.integrations.baal import ActiveLearningDataModule, ActiveLearningLoop
@@ -68,15 +67,13 @@ def test_active_learning_training(simple_datamodule, initial_num_labels, query_s
     seed_everything(42)
 
     if initial_num_labels == 0:
-        with pytest.warns(UserWarning) as record:
+        with pytest.warns(UserWarning, match="No labels provided for the initial step"):
             active_learning_dm = ActiveLearningDataModule(
                 simple_datamodule,
                 initial_num_labels=initial_num_labels,
                 query_size=query_size,
                 val_split=0.5,
             )
-            assert len(record) == 1
-            assert "No labels provided for the initial step" in record[0].message.args[0]
     else:
         active_learning_dm = ActiveLearningDataModule(
             simple_datamodule,
@@ -90,9 +87,7 @@ def test_active_learning_training(simple_datamodule, initial_num_labels, query_s
         nn.Linear(512, active_learning_dm.num_classes),
     )
 
-    model = ImageClassifier(
-        backbone="resnet18", head=head, num_classes=active_learning_dm.num_classes, output=ProbabilitiesOutput()
-    )
+    model = ImageClassifier(backbone="resnet18", head=head, num_classes=active_learning_dm.num_classes)
     trainer = flash.Trainer(max_epochs=3, num_sanity_val_steps=0)
     active_learning_loop = ActiveLearningLoop(label_epoch_frequency=1, inference_iteration=3)
     active_learning_loop.connect(trainer.fit_loop)
@@ -142,9 +137,7 @@ def test_no_validation_loop(simple_datamodule):
         nn.Linear(512, active_learning_dm.num_classes),
     )
 
-    model = ImageClassifier(
-        backbone="resnet18", head=head, num_classes=active_learning_dm.num_classes, output=ProbabilitiesOutput()
-    )
+    model = ImageClassifier(backbone="resnet18", head=head, num_classes=active_learning_dm.num_classes)
     trainer = flash.Trainer(max_epochs=3)
     active_learning_loop = ActiveLearningLoop(label_epoch_frequency=1, inference_iteration=3)
     active_learning_loop.connect(trainer.fit_loop)
