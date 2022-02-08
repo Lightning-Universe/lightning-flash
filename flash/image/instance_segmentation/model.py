@@ -14,9 +14,8 @@
 from typing import Any, Dict, List, Optional
 
 from flash.core.adapter import AdapterTask
-from flash.core.data.output import PredsOutput
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE, OUTPUT_TRANSFORM_TYPE, OUTPUT_TYPE
+from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE, OUTPUT_TRANSFORM_TYPE
 from flash.image.instance_segmentation.backbones import INSTANCE_SEGMENTATION_HEADS
 from flash.image.instance_segmentation.data import InstanceSegmentationOutputTransform
 
@@ -33,7 +32,6 @@ class InstanceSegmentation(AdapterTask):
         optimizer: Optimizer to use for training.
         lr_scheduler: The LR scheduler to use during training.
         learning_rate: The learning rate to use for training.
-        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
         predict_kwargs: dictionary containing parameters that will be used during the prediction phase.
         **kwargs: additional kwargs used for initializing the task
     """
@@ -52,7 +50,6 @@ class InstanceSegmentation(AdapterTask):
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         learning_rate: float = 5e-4,
         output_transform: OUTPUT_TRANSFORM_TYPE = InstanceSegmentationOutputTransform(),
-        output: OUTPUT_TYPE = PredsOutput(),
         predict_kwargs: Dict = None,
         **kwargs: Any,
     ):
@@ -76,7 +73,6 @@ class InstanceSegmentation(AdapterTask):
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
             output_transform=output_transform,
-            output=output,
         )
 
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]) -> None:
