@@ -169,8 +169,9 @@ class Trainer(PlTrainer):
         @functools.wraps(predict_step)
         def wrapper(*args, **kwargs):
             predictions = predict_step(*args, **kwargs)
-            predictions = output_transform(predictions)
-            predictions = [output(prediction) for prediction in predictions]
+            if predictions is not None:
+                predictions = output_transform(predictions)
+                predictions = [output(prediction) for prediction in predictions]
             return predictions
 
         model.predict_step = wrapper
@@ -213,8 +214,9 @@ class Trainer(PlTrainer):
             Returns a list of dictionaries, one for each provided dataloader containing their respective predictions.
         """
         model = model or self.lightning_module
-        output_transform = getattr(model, "_output_transform", OutputTransform())
-        output = output or Output()
+        output_transform = getattr(model, "_output_transform", None) or OutputTransform()
+        if output is None:
+            output = Output()
         if isinstance(output, str) and isinstance(model, Task):
             output = getattr(model, "outputs", FlashRegistry("outputs")).get(output).from_task(model)
 

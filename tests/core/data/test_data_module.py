@@ -25,7 +25,6 @@ from flash import Task, Trainer
 from flash.core.data.data_module import DataModule, DatasetInput
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import InputTransform
-from flash.core.data.states import PerBatchTransformOnDevice, PerSampleTransform
 from flash.core.utilities.imports import _IMAGE_TESTING, _TORCHVISION_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 
@@ -380,16 +379,17 @@ def test_datapipeline_transformations_overridden_by_task():
         def per_batch_transform_on_device(self) -> Callable:
             return T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 
+    class OverrideInputTransform(InputTransform):
+        def per_sample_transform(self) -> Callable:
+            return T.Compose([T.ToTensor(), T.Resize(128)])
+
     # define task which overrides transforms using set_state
     class CustomModel(Task):
         def __init__(self):
             super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
 
             # override default transform to resize images
-            self.set_state(PerSampleTransform(T.Compose([T.ToTensor(), T.Resize(128)])))
-
-            # remove normalization, => image still in [0, 1] range
-            self.set_state(PerBatchTransformOnDevice(None))
+            self.input_transform = OverrideInputTransform
 
         def training_step(self, batch, batch_idx):
             assert batch.shape == torch.Size([2, 3, 128, 128])

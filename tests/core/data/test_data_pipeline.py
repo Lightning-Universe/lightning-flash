@@ -11,59 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import cast, Tuple
-
 import pytest
-import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torch import Tensor
 
-from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
-from flash.core.data.io.input import Input
+from flash.core.data.data_pipeline import DataPipeline
 from flash.core.data.io.input_transform import InputTransform
-from flash.core.data.io.output import Output
-from flash.core.data.io.output_transform import OutputTransform
-from flash.core.data.process import Deserializer
-from flash.core.data.properties import ProcessState
 from flash.core.utilities.stages import RunningStage
-
-
-class DummyDataset(torch.utils.data.Dataset):
-    def __getitem__(self, index: int) -> Tuple[Tensor, Tensor]:
-        return torch.rand(1), torch.rand(1)
-
-    def __len__(self) -> int:
-        return 5
-
-
-class TestDataPipelineState:
-    @staticmethod
-    def test_str():
-        state = DataPipelineState()
-        state.set_state(ProcessState())
-
-        assert str(state) == (
-            "DataPipelineState(state={<class 'flash.core.data.properties.ProcessState'>: ProcessState()})"
-        )
-
-    @staticmethod
-    def test_get_state():
-        state = DataPipelineState()
-        assert state.get_state(ProcessState) is None
-
-
-def test_data_pipeline_str():
-    data_pipeline = DataPipeline(
-        input=cast(Input, "input"),
-        input_transform=cast(InputTransform, "input_transform"),
-        output_transform=cast(OutputTransform, "output_transform"),
-        output=cast(Output, "output"),
-        deserializer=cast(Deserializer, "deserializer"),
-    )
-
-    expected = "input=input, deserializer=deserializer, "
-    expected += "input_transform=input_transform, output_transform=output_transform, output=output"
-    assert str(data_pipeline) == (f"DataPipeline({expected})")
 
 
 def test_is_overridden_recursive(tmpdir):
