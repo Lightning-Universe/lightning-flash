@@ -35,6 +35,7 @@ from flash.core.data.io.input import InputBase, ServeInput
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import OutputTransform
+from flash.core.data.output import BASE_OUTPUTS
 from flash.core.finetuning import _DEFAULTS_FINETUNE_STRATEGIES, _FINETUNING_STRATEGIES_REGISTRY
 from flash.core.hooks import FineTuningHooks
 from flash.core.optimizers.optimizers import _OPTIMIZERS_REGISTRY
@@ -289,6 +290,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
     optimizers: FlashRegistry = _OPTIMIZERS_REGISTRY
     lr_schedulers: FlashRegistry = _SCHEDULERS_REGISTRY
     finetuning_strategies: FlashRegistry = _FINETUNING_STRATEGIES_REGISTRY
+    outputs: FlashRegistry = BASE_OUTPUTS
 
     required_extras: Optional[Union[str, List[str]]] = None
 

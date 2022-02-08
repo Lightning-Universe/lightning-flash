@@ -24,6 +24,7 @@ from flash.core.data.io.output import Output
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
+from flash.core.utilities.providers import _FIFTYONE
 
 if _FIFTYONE_AVAILABLE:
     fol = lazy_import("fiftyone.core.labels")
@@ -72,7 +73,7 @@ class ClassificationMixin:
 
 class ClassificationTask(Task, ClassificationMixin):
 
-    outputs: FlashRegistry = CLASSIFICATION_OUTPUTS
+    outputs: FlashRegistry = Task.outputs + CLASSIFICATION_OUTPUTS
 
     def __init__(
         self,
@@ -97,7 +98,7 @@ class ClassificationTask(Task, ClassificationMixin):
 
 class ClassificationAdapterTask(AdapterTask, ClassificationMixin):
 
-    outputs: FlashRegistry = CLASSIFICATION_OUTPUTS
+    outputs: FlashRegistry = Task.outputs + CLASSIFICATION_OUTPUTS
 
     def __init__(
         self,
@@ -232,7 +233,7 @@ class LabelsOutput(ClassesOutput):
         return classes
 
 
-@CLASSIFICATION_OUTPUTS(name="fiftyone")
+@CLASSIFICATION_OUTPUTS(name="fiftyone", providers=_FIFTYONE)
 class FiftyOneLabelsOutput(ClassificationOutput):
     """A :class:`.Output` which converts the model outputs to FiftyOne classification format.
 

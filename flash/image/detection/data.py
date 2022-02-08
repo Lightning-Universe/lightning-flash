@@ -73,7 +73,7 @@ class ObjectDetectionData(DataModule):
         **data_module_kwargs,
     ) -> "ObjectDetectionData":
 
-        ds_kw = dict(parser=parser, data_pipeline_state=DataPipelineState(), transform_kwargs=transform_kwargs)
+        ds_kw = dict(parser=parser, transform_kwargs=transform_kwargs)
 
         return cls(
             input_cls(

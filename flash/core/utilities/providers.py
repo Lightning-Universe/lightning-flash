@@ -50,3 +50,4 @@ _VISSL = Provider("Facebook Research/vissl", "https://github.com/facebookresearc
 _PYTORCH_FORECASTING = Provider("jdb78/PyTorch-Forecasting", "https://github.com/jdb78/pytorch-forecasting")
 _PYTORCH_GEOMETRIC = Provider("PyG/PyTorch Geometric", "https://github.com/pyg-team/pytorch_geometric")
 _PYTORCH_TABULAR = Provider("manujosephv/PyTorch Tabular", "https://github.com/manujosephv/pytorch_tabular")
+_FIFTYONE = Provider("voxel51/fiftyone", "https://github.com/voxel51/fiftyone")

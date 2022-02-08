@@ -12,13 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from itertools import chain
 
 import flash
 from flash.core.integrations.fiftyone import visualize
 from flash.core.utilities.imports import example_requires
 from flash.image import ObjectDetectionData, ObjectDetector
-from flash.image.detection.output import FiftyOneDetectionLabelsOutput
 
 example_requires("image")
 
@@ -37,16 +35,14 @@ datamodule = ObjectDetectionData.from_icedata(
 )
 
 # 2. Build the task
-model = ObjectDetector(head="efficientdet", backbone="d0", num_classes=datamodule.num_classes, image_size=128)
+model = ObjectDetector(head="efficientdet", backbone="d0", labels=datamodule.labels, image_size=128)
 
 # 3. Create the trainer and finetune the model
 trainer = flash.Trainer(max_epochs=1)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Set the output and get some predictions
-model.output = FiftyOneDetectionLabelsOutput(return_filepath=True)  # output FiftyOne format
-predictions = trainer.predict(model, datamodule=datamodule)
-predictions = list(chain.from_iterable(predictions))  # flatten batches
+predictions = trainer.predict(model, datamodule=datamodule, output="fiftyone")  # output FiftyOne format
 
 # 5. Visualize predictions in FiftyOne app
 # Optional: pass `wait=True` to block execution until App is closed

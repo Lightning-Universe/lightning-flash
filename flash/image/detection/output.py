@@ -16,7 +16,9 @@ from typing import Any, Dict, List, Optional, Union
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.output import Output
 from flash.core.model import Task
+from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
+from flash.core.utilities.providers import _FIFTYONE
 
 if _FIFTYONE_AVAILABLE:
     fo = lazy_import("fiftyone")
@@ -26,6 +28,10 @@ else:
     Detections = None
 
 
+OBJECT_DETECTION_OUTPUTS = FlashRegistry("outputs")
+
+
+@OBJECT_DETECTION_OUTPUTS(name="fiftyone", providers=_FIFTYONE)
 class FiftyOneDetectionLabelsOutput(Output):
     """A :class:`.Output` which converts model outputs to FiftyOne detection format.
 
@@ -42,7 +48,7 @@ class FiftyOneDetectionLabelsOutput(Output):
         self,
         labels: Optional[List[str]] = None,
         threshold: Optional[float] = None,
-        return_filepath: bool = False,
+        return_filepath: bool = True,
     ):
         super().__init__()
         self._labels = labels
@@ -51,7 +57,7 @@ class FiftyOneDetectionLabelsOutput(Output):
 
     @classmethod
     def from_task(cls, task: Task, **kwargs) -> Output:
-        return cls(labels=getattr(task, "labels", None), multi_label=getattr(task, "multi_label", False))
+        return cls(labels=getattr(task, "labels", None))
 
     def transform(self, sample: Dict[str, Any]) -> Union[Detections, Dict[str, Any]]:
         if DataKeys.METADATA not in sample:

@@ -31,6 +31,7 @@ import flash
 from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.model import Task
+from flash.core.registry import FlashRegistry
 
 
 def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs):
@@ -215,7 +216,7 @@ class Trainer(PlTrainer):
         output_transform = getattr(model, "_output_transform", None) or OutputTransform()
         output = output or Output()
         if isinstance(output, str) and isinstance(model, Task):
-            output = model.outputs.get(output).from_task(model)
+            output = getattr(model, "outputs", FlashRegistry("outputs")).get(output).from_task(model)
 
         with self._wrap_predict_step(model, output_transform, output):
             return super().predict(model, dataloaders, datamodule, return_predictions, ckpt_path)
