@@ -18,7 +18,7 @@ from flash.core.data.io.input import DataKeys
 from flash.core.integrations.transformers.collate import TransformersCollate
 
 
-@dataclass(unsafe_hash=True, frozen=True)
+@dataclass(unsafe_hash=True)
 class TextSeq2SeqCollate(TransformersCollate):
     max_source_length: int = 128
     max_target_length: int = 128

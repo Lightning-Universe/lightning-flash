@@ -24,7 +24,7 @@ from flash.core.integrations.transformers.collate import TransformersCollate
 from flash.core.model import Task
 
 
-@dataclass(unsafe_hash=True, frozen=True)
+@dataclass(unsafe_hash=True)
 class TextQuestionAnsweringCollate(TransformersCollate):
     max_source_length: int = 384
     max_target_length: int = 30

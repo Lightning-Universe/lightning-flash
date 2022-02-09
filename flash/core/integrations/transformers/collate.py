@@ -23,7 +23,7 @@ if _TRANSFORMERS_AVAILABLE:
     from transformers import AutoTokenizer
 
 
-@dataclass(unsafe_hash=True, frozen=True)
+@dataclass(unsafe_hash=True)
 class TransformersCollate:
 
     backbone: str
