@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass, field
-from functools import lru_cache
 from typing import Any, Dict, Optional
 
 import torch
@@ -30,6 +29,12 @@ class TransformersCollate:
     backbone: str
     tokenizer_kwargs: Optional[Dict[str, Any]] = field(default_factory=dict, hash=False)
 
+    def __post_init__(self):
+        tokenizer_kwargs = {}
+        if self.tokenizer_kwargs is not None:
+            tokenizer_kwargs = self.tokenizer_kwargs
+        self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True, **tokenizer_kwargs)
+
     @staticmethod
     def to_tensor(sample: Dict[str, Any]) -> Dict[str, Any]:
         for key in sample:
@@ -37,14 +42,6 @@ class TransformersCollate:
                 continue
             sample[key] = torch.as_tensor(sample[key])
         return sample
-
-    @property
-    @lru_cache(maxsize=1)
-    def tokenizer(self):
-        tokenizer_kwargs = {}
-        if self.tokenizer_kwargs is not None:
-            tokenizer_kwargs = self.tokenizer_kwargs
-        return AutoTokenizer.from_pretrained(self.backbone, use_fast=True, **tokenizer_kwargs)
 
     def tokenize(self, sample):
         raise NotImplementedError
