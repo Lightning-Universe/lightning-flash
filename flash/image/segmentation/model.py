@@ -16,14 +16,13 @@ from typing import Any, Dict, List, Optional, Type, Union
 import torch
 from torch import nn
 from torch.nn import functional as F
-from torchmetrics import IoU
 
 from flash.core.classification import ClassificationTask
 from flash.core.data.io.input import DataKeys, ServeInput
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.registry import FlashRegistry
 from flash.core.serve import Composition
-from flash.core.utilities.imports import _KORNIA_AVAILABLE, requires
+from flash.core.utilities.imports import _KORNIA_AVAILABLE, _TM_GREATER_EQUAL_0_7_0, requires
 from flash.core.utilities.isinstance import _isinstance
 from flash.core.utilities.types import (
     INPUT_TRANSFORM_TYPE,
@@ -42,6 +41,11 @@ from flash.image.segmentation.output import SegmentationLabelsOutput
 
 if _KORNIA_AVAILABLE:
     import kornia as K
+
+if _TM_GREATER_EQUAL_0_7_0:
+    from torchmetrics import JaccardIndex
+else:
+    from torchmetrics import IoU as JaccardIndex
 
 
 class SemanticSegmentationOutputTransform(OutputTransform):
@@ -102,7 +106,7 @@ class SemanticSegmentation(ClassificationTask):
         output_transform: OUTPUT_TRANSFORM_TYPE = None,
     ) -> None:
         if metrics is None:
-            metrics = IoU(num_classes=num_classes)
+            metrics = JaccardIndex(num_classes=num_classes)
 
         if loss_fn is None:
             loss_fn = F.cross_entropy

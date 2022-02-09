@@ -17,20 +17,24 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, Sampler
-from torchmetrics import IoU
 
 from flash.core.classification import ClassificationTask
 from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.io.output import Output
 from flash.core.data.states import CollateFn
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
+from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE, _TM_GREATER_EQUAL_0_7_0
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
 from flash.pointcloud.segmentation.backbones import POINTCLOUD_SEGMENTATION_BACKBONES
 
 if _POINTCLOUD_AVAILABLE:
     from open3d._ml3d.torch.modules.losses.semseg_loss import filter_valid_label
     from open3d.ml.torch.dataloaders import TorchDataloader
+
+if _TM_GREATER_EQUAL_0_7_0:
+    from torchmetrics import JaccardIndex
+else:
+    from torchmetrics import IoU as JaccardIndex
 
 
 class PointCloudSegmentationOutput(Output):
@@ -79,7 +83,7 @@ class PointCloudSegmentation(ClassificationTask):
         import flash
 
         if metrics is None:
-            metrics = IoU(num_classes=num_classes)
+            metrics = JaccardIndex(num_classes=num_classes)
 
         super().__init__(
             model=None,
