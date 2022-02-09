@@ -332,6 +332,7 @@ class Learn2LearnAdapter(Adapter):
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
     ) -> DataLoader:
         dataset = self._convert_dataset(
             trainer=trainer,
@@ -356,6 +357,7 @@ class Learn2LearnAdapter(Adapter):
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            persistent_workers=persistent_workers,
         )
 
     def process_val_dataset(
@@ -369,6 +371,7 @@ class Learn2LearnAdapter(Adapter):
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
     ) -> DataLoader:
         dataset = self._convert_dataset(
             trainer=trainer,
@@ -393,6 +396,7 @@ class Learn2LearnAdapter(Adapter):
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            persistent_workers=persistent_workers,
         )
 
     def process_test_dataset(
@@ -406,6 +410,7 @@ class Learn2LearnAdapter(Adapter):
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
     ) -> DataLoader:
         dataset = self._convert_dataset(
             trainer=trainer,
@@ -430,6 +435,7 @@ class Learn2LearnAdapter(Adapter):
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            persistent_workers=persistent_workers,
         )
 
     def process_predict_dataset(
@@ -442,6 +448,7 @@ class Learn2LearnAdapter(Adapter):
         shuffle: bool = False,
         drop_last: bool = True,
         sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
     ) -> DataLoader:
 
         if not self._algorithm_has_validated:
@@ -458,6 +465,7 @@ class Learn2LearnAdapter(Adapter):
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            persistent_workers=persistent_workers,
         )
 
 

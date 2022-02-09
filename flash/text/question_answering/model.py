@@ -111,11 +111,14 @@ class QuestionAnsweringTask(Task):
         null_score_diff_threshold: float = 0.0,
         use_stemmer: bool = True,
     ):
+        self.save_hyperparameters()
+
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
         # disable HF thousand warnings
         warnings.simplefilter("ignore")
         # set os environ variable for multiprocesses
         os.environ["PYTHONWARNINGS"] = "ignore"
+
         super().__init__(
             loss_fn=loss_fn,
             optimizer=optimizer,

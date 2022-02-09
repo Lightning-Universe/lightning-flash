@@ -30,22 +30,21 @@ class TransformersCollate:
     tokenizer_kwargs: Optional[Dict[str, Any]] = field(default_factory=dict, hash=False)
 
     def __post_init__(self):
-        tokenizer_kwargs = {}
-        if self.tokenizer_kwargs is not None:
-            tokenizer_kwargs = self.tokenizer_kwargs
+        tokenizer_kwargs = self.tokenizer_kwargs or {}
         self.tokenizer = AutoTokenizer.from_pretrained(self.backbone, use_fast=True, **tokenizer_kwargs)
 
     @staticmethod
     def to_tensor(sample: Dict[str, Any]) -> Dict[str, Any]:
+        tensor_sample = {}
         for key in sample:
             if key is DataKeys.METADATA:
-                continue
-            sample[key] = torch.as_tensor(sample[key])
-        return sample
+                tensor_sample[key] = sample[key]
+            else:
+                tensor_sample[key] = torch.tensor(sample[key])
+        return tensor_sample
 
     def tokenize(self, sample):
         raise NotImplementedError
 
     def __call__(self, samples):
-        samples = {key: [sample[key] for sample in samples] for key in samples[0].keys()}
-        return self.to_tensor(self.tokenize(samples))
+        return self.to_tensor(self.tokenize({key: [sample[key] for sample in samples] for key in samples[0].keys()}))

@@ -142,7 +142,7 @@ class TextClassificationData(DataModule):
             3
             >>> datamodule.labels
             ['negative', 'neutral', 'positive']
-            >>> model = TextClassifier(num_classes=datamodule.num_classes)
+            >>> model = TextClassifier(num_classes=datamodule.num_classes, backbone="prajjwal1/bert-tiny")
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -268,7 +268,7 @@ class TextClassificationData(DataModule):
             3
             >>> datamodule.labels
             ['negative', 'neutral', 'positive']
-            >>> model = TextClassifier(num_classes=datamodule.num_classes)
+            >>> model = TextClassifier(num_classes=datamodule.num_classes, backbone="prajjwal1/bert-tiny")
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -395,7 +395,7 @@ class TextClassificationData(DataModule):
             3
             >>> datamodule.labels
             ['negative', 'neutral', 'positive']
-            >>> model = TextClassifier(num_classes=datamodule.num_classes)
+            >>> model = TextClassifier(num_classes=datamodule.num_classes, backbone="prajjwal1/bert-tiny")
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -502,7 +502,7 @@ class TextClassificationData(DataModule):
             3
             >>> datamodule.labels
             ['negative', 'neutral', 'positive']
-            >>> model = TextClassifier(num_classes=datamodule.num_classes)
+            >>> model = TextClassifier(num_classes=datamodule.num_classes, backbone="prajjwal1/bert-tiny")
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -610,7 +610,7 @@ class TextClassificationData(DataModule):
             3
             >>> datamodule.labels
             ['negative', 'neutral', 'positive']
-            >>> model = TextClassifier(num_classes=datamodule.num_classes)
+            >>> model = TextClassifier(num_classes=datamodule.num_classes, backbone="prajjwal1/bert-tiny")
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -705,7 +705,7 @@ class TextClassificationData(DataModule):
             3
             >>> datamodule.labels
             ['negative', 'neutral', 'positive']
-            >>> model = TextClassifier(num_classes=datamodule.num_classes)
+            >>> model = TextClassifier(num_classes=datamodule.num_classes, backbone="prajjwal1/bert-tiny")
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...

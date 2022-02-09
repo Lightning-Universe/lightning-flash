@@ -88,7 +88,7 @@ class DataModule(pl.LightningDataModule):
         num_workers: int = 0,
         sampler: Optional[Type[Sampler]] = None,
         pin_memory: bool = True,
-        persistent_workers: bool = True,
+        persistent_workers: bool = False,
     ) -> None:
 
         if not batch_size:
@@ -143,8 +143,6 @@ class DataModule(pl.LightningDataModule):
 
         self.batch_size = batch_size
 
-        if num_workers is None:
-            num_workers = 0
         self.num_workers = num_workers
         self.persistent_workers = persistent_workers and num_workers > 0
         self.pin_memory = pin_memory
@@ -224,6 +222,7 @@ class DataModule(pl.LightningDataModule):
                 drop_last=drop_last,
                 collate_fn=collate_fn,
                 sampler=sampler,
+                persistent_workers=self.persistent_workers,
             )
         else:
             dataloader = DataLoader(
@@ -268,6 +267,7 @@ class DataModule(pl.LightningDataModule):
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
                 collate_fn=collate_fn,
+                persistent_workers=self.persistent_workers,
             )
         else:
             dataloader = DataLoader(
@@ -309,6 +309,7 @@ class DataModule(pl.LightningDataModule):
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
                 collate_fn=collate_fn,
+                persistent_workers=self.persistent_workers,
             )
         else:
             dataloader = DataLoader(
@@ -354,6 +355,7 @@ class DataModule(pl.LightningDataModule):
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
                 collate_fn=collate_fn,
+                persistent_workers=self.persistent_workers,
             )
         else:
             dataloader = DataLoader(

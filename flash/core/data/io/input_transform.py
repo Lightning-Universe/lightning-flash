@@ -1122,43 +1122,37 @@ class _InputTransformProcessorV2:
             for sample in samples:
                 self.callback.on_load_sample(sample, self.stage)
 
-        # we create a new dict to prevent from potential memory leaks
-        # assuming that the dictionary samples are stored in between and
-        # potentially modified before the transforms are applied.
-        if isinstance(samples, dict):
-            samples = dict(samples.items())
-
         if self.apply_per_sample_transform:
-            _samples = []
+            if not isinstance(samples, list):
+                list_samples = [samples]
+            else:
+                list_samples = samples
 
-            if isinstance(samples, Mapping):
-                samples = [samples]
+            transformed_samples = [self.per_sample_transform(sample) for sample in list_samples]
 
-            for sample in samples:
-                sample = self.per_sample_transform(sample)
+            for sample in transformed_samples:
                 if self.on_device:
                     self.callback.on_per_sample_transform_on_device(sample, self.stage)
                 else:
                     self.callback.on_per_sample_transform(sample, self.stage)
-                _samples.append(sample)
 
-            samples = type(_samples)(_samples)
-
-            samples, metadata = self._extract_metadata(samples)
+            extracted_samples, metadata = self._extract_metadata(transformed_samples)
             try:
-                samples = self.collate_fn(samples, metadata)
+                collated_samples = self.collate_fn(extracted_samples, metadata)
             except TypeError:
-                samples = self.collate_fn(samples)
-            if metadata and isinstance(samples, dict):
-                samples[DataKeys.METADATA] = metadata
-            self.callback.on_collate(samples, self.stage)
-
-        samples = self.per_batch_transform(samples)
-        if self.on_device:
-            self.callback.on_per_batch_transform_on_device(samples, self.stage)
+                collated_samples = self.collate_fn(extracted_samples)
+            if metadata and isinstance(collated_samples, dict):
+                collated_samples[DataKeys.METADATA] = metadata
+            self.callback.on_collate(collated_samples, self.stage)
         else:
-            self.callback.on_per_batch_transform(samples, self.stage)
-        return samples
+            collated_samples = samples
+
+        transformed_collated_samples = self.per_batch_transform(collated_samples)
+        if self.on_device:
+            self.callback.on_per_batch_transform_on_device(transformed_collated_samples, self.stage)
+        else:
+            self.callback.on_per_batch_transform(transformed_collated_samples, self.stage)
+        return transformed_collated_samples
 
     def __str__(self) -> str:
         # todo: define repr function which would take object and string attributes to be shown

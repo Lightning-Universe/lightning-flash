@@ -105,6 +105,7 @@ class IceVisionAdapter(Adapter):
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
     ) -> DataLoader:
         data_loader = self.model_type.train_dl(
             dataset,
@@ -114,6 +115,7 @@ class IceVisionAdapter(Adapter):
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            persistent_workers=persistent_workers,
         )
         data_loader.collate_fn = functools.partial(self._wrap_collate_fn, data_loader.collate_fn)
         return data_loader
@@ -129,6 +131,7 @@ class IceVisionAdapter(Adapter):
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
     ) -> DataLoader:
         data_loader = self.model_type.valid_dl(
             dataset,
@@ -138,6 +141,7 @@ class IceVisionAdapter(Adapter):
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            persistent_workers=persistent_workers,
         )
         data_loader.collate_fn = functools.partial(self._wrap_collate_fn, data_loader.collate_fn)
         return data_loader
@@ -153,6 +157,7 @@ class IceVisionAdapter(Adapter):
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
     ) -> DataLoader:
         data_loader = self.model_type.valid_dl(
             dataset,
@@ -162,6 +167,7 @@ class IceVisionAdapter(Adapter):
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            persistent_workers=persistent_workers,
         )
         data_loader.collate_fn = functools.partial(self._wrap_collate_fn, data_loader.collate_fn)
         return data_loader
@@ -176,6 +182,7 @@ class IceVisionAdapter(Adapter):
         shuffle: bool = False,
         drop_last: bool = True,
         sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
     ) -> DataLoader:
         data_loader = self.model_type.infer_dl(
             dataset,
@@ -185,6 +192,7 @@ class IceVisionAdapter(Adapter):
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            persistent_workers=persistent_workers,
         )
         data_loader.collate_fn = functools.partial(self._wrap_collate_fn, data_loader.collate_fn)
         return data_loader

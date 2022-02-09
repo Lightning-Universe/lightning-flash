@@ -126,7 +126,7 @@ class SummarizationData(DataModule):
             ...     batch_size=2,
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Downloading...
-            >>> model = SummarizationTask()
+            >>> model = SummarizationTask(backbone="sshleifer/tiny-mbart")
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -242,7 +242,7 @@ class SummarizationData(DataModule):
             ...     batch_size=2,
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Downloading...
-            >>> model = SummarizationTask()
+            >>> model = SummarizationTask(backbone="sshleifer/tiny-mbart")
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -342,7 +342,7 @@ class SummarizationData(DataModule):
             ...     predict_hf_dataset=predict_data,
             ...     batch_size=2,
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            >>> model = SummarizationTask()
+            >>> model = SummarizationTask(backbone="sshleifer/tiny-mbart")
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -428,7 +428,7 @@ class SummarizationData(DataModule):
             ...     predict_data=["A movie review", "A book chapter"],
             ...     batch_size=2,
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            >>> model = SummarizationTask()
+            >>> model = SummarizationTask(backbone="sshleifer/tiny-mbart")
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...

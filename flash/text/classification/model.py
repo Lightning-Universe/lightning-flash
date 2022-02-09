@@ -105,7 +105,6 @@ class TextClassifier(ClassificationTask):
         self.max_length = max_length
         self.collate_fn = TextClassificationCollate(backbone=backbone, max_length=max_length)
         self.model = self.backbones.get(backbone)(num_labels=num_classes)
-        self.save_hyperparameters()
 
     @property
     def backbone(self):

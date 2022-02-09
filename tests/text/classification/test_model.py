@@ -46,7 +46,7 @@ TEST_BACKBONE = "prajjwal1/bert-tiny"  # super small model for testing
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_init_train(tmpdir):
-    model = TextClassifier(2, TEST_BACKBONE)
+    model = TextClassifier(2, backbone=TEST_BACKBONE)
     train_dl = torch.utils.data.DataLoader(DummyDataset())
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.fit(model, train_dl)
@@ -57,7 +57,7 @@ def test_jit(tmpdir):
     sample_input = {"input_ids": torch.randint(1000, size=(1, 100))}
     path = os.path.join(tmpdir, "test.pt")
 
-    model = TextClassifier(2, TEST_BACKBONE)
+    model = TextClassifier(2, backbone=TEST_BACKBONE)
     model.eval()
 
     # Huggingface bert model only supports `torch.jit.trace` with `strict=False`

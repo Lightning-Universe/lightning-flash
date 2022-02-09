@@ -128,17 +128,19 @@ class AdapterTask(Task):
         shuffle: bool = False,
         drop_last: bool = True,
         sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
     ) -> DataLoader:
         return self.adapter.process_train_dataset(
             dataset,
             trainer,
-            batch_size,
-            num_workers,
-            pin_memory,
-            collate_fn,
-            shuffle,
-            drop_last,
-            sampler,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
+            persistent_workers=persistent_workers,
         )
 
     def process_val_dataset(
@@ -152,17 +154,19 @@ class AdapterTask(Task):
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
     ) -> DataLoader:
         return self.adapter.process_val_dataset(
             dataset,
             trainer,
-            batch_size,
-            num_workers,
-            pin_memory,
-            collate_fn,
-            shuffle,
-            drop_last,
-            sampler,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
+            persistent_workers=persistent_workers,
         )
 
     def process_test_dataset(
@@ -176,17 +180,19 @@ class AdapterTask(Task):
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
     ) -> DataLoader:
         return self.adapter.process_test_dataset(
             dataset,
             trainer,
-            batch_size,
-            num_workers,
-            pin_memory,
-            collate_fn,
-            shuffle,
-            drop_last,
-            sampler,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
+            persistent_workers=persistent_workers,
         )
 
     def process_predict_dataset(
@@ -199,6 +205,7 @@ class AdapterTask(Task):
         shuffle: bool = False,
         drop_last: bool = True,
         sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
     ) -> DataLoader:
         return self.adapter.process_predict_dataset(
             dataset,
@@ -209,4 +216,5 @@ class AdapterTask(Task):
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            persistent_workers=persistent_workers,
         )
