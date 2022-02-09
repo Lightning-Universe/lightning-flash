@@ -33,7 +33,9 @@ class _ServeInputProcessor(torch.nn.Module):
 
     def forward(self, sample: str):
         sample = self.serve_input._call_load_sample(sample)
-        sample = self.collate_fn([sample])
+        if not isinstance(sample, list):
+            sample = [sample]
+        sample = self.collate_fn(sample)
         return sample
 
 
