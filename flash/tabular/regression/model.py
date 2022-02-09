@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import partial
-from typing import Any, Callable, Dict, Optional, Type
+from typing import Any, Callable, Dict, Optional, Type, Union
 
 from torch.nn import functional as F
 
 from flash.core.data.io.input import ServeInput
 from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.io.output import Output
 from flash.core.integrations.pytorch_tabular.backbones import PYTORCH_TABULAR_BACKBONES
 from flash.core.registry import FlashRegistry
 from flash.core.regression import RegressionAdapterTask
@@ -111,9 +112,10 @@ class TabularRegressor(RegressionAdapterTask):
         input_cls: Optional[Type[ServeInput]] = TabularDeserializer,
         transform: INPUT_TRANSFORM_TYPE = InputTransform,
         transform_kwargs: Optional[Dict] = None,
+        output: Optional[Union[str, Output]] = None,
         parameters: Optional[Dict[str, Any]] = None,
     ) -> Composition:
         parameters = parameters or self._parameters
         return super().serve(
-            host, port, sanity_check, partial(input_cls, parameters=parameters), transform, transform_kwargs
+            host, port, sanity_check, partial(input_cls, parameters=parameters), transform, transform_kwargs, output
         )

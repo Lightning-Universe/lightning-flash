@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 import warnings
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, Optional, Type, Union
 
 import torch
 import torch.nn as nn
@@ -24,6 +24,7 @@ from flash.audio.speech_recognition.input import SpeechRecognitionDeserializer
 from flash.audio.speech_recognition.output_transform import SpeechRecognitionOutputTransform
 from flash.core.data.io.input import ServeInput
 from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.io.output import Output
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.serve import Composition
@@ -101,5 +102,6 @@ class SpeechRecognition(Task):
         input_cls: Optional[Type[ServeInput]] = SpeechRecognitionDeserializer,
         transform: INPUT_TRANSFORM_TYPE = InputTransform,
         transform_kwargs: Optional[Dict] = None,
+        output: Optional[Union[str, Output]] = None,
     ) -> Composition:
-        return super().serve(host, port, sanity_check, input_cls, transform, transform_kwargs)
+        return super().serve(host, port, sanity_check, input_cls, transform, transform_kwargs, output)

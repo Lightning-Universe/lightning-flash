@@ -52,9 +52,10 @@ class DummyDataset(torch.utils.data.Dataset):
 )
 def test_init_train(backbone, tmpdir):
     train_dl = torch.utils.data.DataLoader(DummyDataset(), batch_size=16)
+
     data_properties = {
+        "parameters": {"categorical_fields": list(range(16))},
         "embedding_sizes": [(10, 32) for _ in range(16)],
-        "categorical_fields": list(range(16)),
         "cat_dims": [10 for _ in range(16)],
         "num_features": 32,
         "backbone": backbone,
@@ -72,8 +73,8 @@ def test_init_train(backbone, tmpdir):
 def test_init_train_no_num(backbone, tmpdir):
     train_dl = torch.utils.data.DataLoader(DummyDataset(num_num=0), batch_size=16)
     data_properties = {
+        "parameters": {"categorical_fields": list(range(16))},
         "embedding_sizes": [(10, 32) for _ in range(16)],
-        "categorical_fields": list(range(16)),
         "cat_dims": [10 for _ in range(16)],
         "num_features": 16,
         "backbone": backbone,
@@ -89,8 +90,8 @@ def test_init_train_no_num(backbone, tmpdir):
 def test_init_train_no_cat(backbone, tmpdir):
     train_dl = torch.utils.data.DataLoader(DummyDataset(num_cat=0), batch_size=16)
     data_properties = {
+        "parameters": {"categorical_fields": []},
         "embedding_sizes": [],
-        "categorical_fields": [],
         "cat_dims": [],
         "num_features": 16,
         "backbone": backbone,
@@ -104,8 +105,8 @@ def test_init_train_no_cat(backbone, tmpdir):
 @pytest.mark.skipif(_TABULAR_AVAILABLE, reason="tabular libraries are installed.")
 def test_module_import_error(tmpdir):
     data_properties = {
+        "parameters": {"categorical_fields": list(range(16))},
         "embedding_sizes": [(10, 32) for _ in range(16)],
-        "categorical_fields": list(range(16)),
         "cat_dims": [10 for _ in range(16)],
         "num_features": 32,
         "backbone": "tabnet",
@@ -120,8 +121,8 @@ def test_module_import_error(tmpdir):
 )
 def test_jit(backbone, tmpdir):
     data_properties = {
+        "parameters": {"categorical_fields": list(range(4))},
         "embedding_sizes": [(10, 32) for _ in range(4)],
-        "categorical_fields": list(range(4)),
         "cat_dims": [10 for _ in range(4)],
         "num_features": 8,
         "backbone": backbone,
@@ -161,8 +162,6 @@ def test_serve(backbone):
         batch_size=1,
     )
     model = TabularRegressor.from_data(datamodule=datamodule, backbone=backbone)
-    # TODO: Currently only servable once a input_transform has been attached
-    model._input_transform = datamodule.input_transform
     model.eval()
     model.serve(parameters=datamodule.parameters)
 

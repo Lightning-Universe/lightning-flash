@@ -24,6 +24,7 @@ from torch.nn import Module
 
 from flash.core.data.io.input import DataKeys, ServeInput
 from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.model import Task
 from flash.core.registry import ExternalRegistry, FlashRegistry
@@ -220,6 +221,7 @@ class Seq2SeqTask(Task):
         input_cls: Optional[Type[ServeInput]] = TextDeserializer,
         transform: INPUT_TRANSFORM_TYPE = InputTransform,
         transform_kwargs: Optional[Dict] = None,
+        output: Optional[Union[str, Output]] = None,
     ) -> Composition:
         input_cls = partial(input_cls, max_length=self.max_source_length, tokenizer=self.collate_fn.tokenizer)
-        return super().serve(host, port, sanity_check, input_cls, transform, transform_kwargs)
+        return super().serve(host, port, sanity_check, input_cls, transform, transform_kwargs, output)

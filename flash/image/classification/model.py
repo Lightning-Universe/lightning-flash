@@ -19,6 +19,7 @@ from torch import nn
 
 from flash.core.classification import ClassificationAdapterTask
 from flash.core.data.io.input import ServeInput
+from flash.core.data.io.output import Output
 from flash.core.registry import FlashRegistry
 from flash.core.serve import Composition
 from flash.core.utilities.imports import requires
@@ -173,8 +174,9 @@ class ImageClassifier(ClassificationAdapterTask):
         input_cls: Optional[Type[ServeInput]] = ImageDeserializer,
         transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
+        output: Optional[Union[str, Output]] = None,
     ) -> Composition:
-        return super().serve(host, port, sanity_check, input_cls, transform, transform_kwargs)
+        return super().serve(host, port, sanity_check, input_cls, transform, transform_kwargs, output)
 
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]):
         """This function is used only for debugging usage with CI."""

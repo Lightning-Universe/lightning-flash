@@ -5,6 +5,7 @@ import torch
 
 from flash.core.data.batch import _ServeInputProcessor
 from flash.core.data.io.input import DataKeys
+from flash.core.data.io.output_transform import OutputTransform
 from flash.core.serve import expose, ModelComponent
 from flash.core.serve.types.base import BaseType
 
@@ -54,7 +55,7 @@ def build_flash_serve_model_component(model, serve_input, output):
             self.serve_input = serve_input
             self.dataloader_collate_fn = self.serve_input._create_dataloader_collate_fn([])
             self.on_after_batch_transfer_fn = self.serve_input._create_on_after_batch_transfer_fn([])
-            self.output_transform = model._output_transform
+            self.output_transform = getattr(model, "_output_transform", None) or OutputTransform()
             # todo (tchaton) Remove this hack
             self.extra_arguments = len(inspect.signature(self.model.transfer_batch_to_device).parameters) == 3
             self.device = self.model.device

@@ -14,7 +14,7 @@
 import os
 import warnings
 from functools import partial
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional, Type, Union
 
 import torch
 from pytorch_lightning import Callback
@@ -22,6 +22,7 @@ from pytorch_lightning import Callback
 from flash.core.classification import ClassificationTask
 from flash.core.data.io.input import DataKeys, ServeInput
 from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.io.output import Output
 from flash.core.registry import FlashRegistry
 from flash.core.serve import Composition
 from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE, requires
@@ -147,6 +148,7 @@ class TextClassifier(ClassificationTask):
         input_cls: Optional[Type[ServeInput]] = TextDeserializer,
         transform: INPUT_TRANSFORM_TYPE = InputTransform,
         transform_kwargs: Optional[Dict] = None,
+        output: Optional[Union[str, Output]] = None,
     ) -> Composition:
         input_cls = partial(input_cls, max_length=self.max_length, tokenizer=self.collate_fn.tokenizer)
-        return super().serve(host, port, sanity_check, input_cls, transform, transform_kwargs)
+        return super().serve(host, port, sanity_check, input_cls, transform, transform_kwargs, output)
