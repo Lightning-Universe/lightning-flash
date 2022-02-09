@@ -154,7 +154,7 @@ class QuestionAnsweringData(DataModule):
             ...     batch_size=2,
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Downloading...
-            >>> model = QuestionAnsweringTask()
+            >>> model = QuestionAnsweringTask(max_source_length=32, max_target_length=32)
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -305,7 +305,7 @@ class QuestionAnsweringData(DataModule):
             ...     batch_size=2,
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Downloading...
-            >>> model = QuestionAnsweringTask()
+            >>> model = QuestionAnsweringTask(max_source_length=32, max_target_length=32)
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -593,7 +593,7 @@ class QuestionAnsweringData(DataModule):
             ...     predict_file="predict_data.json",
             ...     batch_size=2,
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            >>> model = QuestionAnsweringTask()
+            >>> model = QuestionAnsweringTask(max_source_length=32, max_target_length=32)
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -714,7 +714,7 @@ class QuestionAnsweringData(DataModule):
             ...     predict_data=predict_data,
             ...     batch_size=2,
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            >>> model = QuestionAnsweringTask()
+            >>> model = QuestionAnsweringTask(max_source_length=32, max_target_length=32)
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...

@@ -108,7 +108,6 @@ class QuestionAnsweringTask(Task):
         enable_ort: bool = False,
         n_best_size: int = 20,
         version_2_with_negative: bool = True,
-        max_answer_length: int = 30,
         null_score_diff_threshold: float = 0.0,
         use_stemmer: bool = True,
     ):
@@ -139,7 +138,7 @@ class QuestionAnsweringTask(Task):
         self.enable_ort = enable_ort
         self.n_best_size = n_best_size
         self.version_2_with_negative = version_2_with_negative
-        self.max_answer_length = max_answer_length
+        self.max_target_length = max_target_length
         self.null_score_diff_threshold = null_score_diff_threshold
         self._initialize_model_specific_parameters()
 
@@ -186,7 +185,7 @@ class QuestionAnsweringTask(Task):
                 -1 : -self.n_best_size - 1 : -1
             ].tolist()
 
-            max_answer_length: int = 30
+            max_answer_length = self.max_target_length
             for start_index in start_indexes:
                 for end_index in end_indexes:
                     # Don't consider out-of-scope answers, either because the indices are out of bounds or correspond
