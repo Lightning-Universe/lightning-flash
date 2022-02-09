@@ -39,7 +39,7 @@ class TransformersCollate:
         return sample
 
     @property
-    @lru_cache(maxsize=None)
+    @lru_cache(maxsize=1)
     def tokenizer(self):
         tokenizer_kwargs = {}
         if self.tokenizer_kwargs is not None:
