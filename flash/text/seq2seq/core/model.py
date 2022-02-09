@@ -166,9 +166,7 @@ class Seq2SeqTask(Task):
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         output = super().predict_step(batch, batch_idx, dataloader_idx)
-        tokenizer = self.collate_fn.tokenizer
-        pred_str = tokenizer.batch_decode(output, skip_special_tokens=True)
-        return [str.strip(s) for s in pred_str]
+        return self.decode(output)
 
     def compute_metrics(self, generated_tokens, batch, prefix):
         pass
@@ -186,9 +184,9 @@ class Seq2SeqTask(Task):
             rank_zero_info(f"Overriding model paramameters for {self.task} as defined within the model:\n {pars}")
             self.model.config.update(pars)
 
-    def tokenize_labels(self, labels: Tensor) -> List[str]:
-        label_str = self.collate_fn.tokenizer.batch_decode(labels, skip_special_tokens=True)
-        return [str.strip(s) for s in label_str]
+    def decode(self, tokens: Tensor) -> List[str]:
+        decoded_str = self.collate_fn.tokenizer.batch_decode(tokens, skip_special_tokens=True)
+        return [str.strip(s) for s in decoded_str]
 
     def modules_to_freeze(self) -> Union[Module, Iterable[Union[Module, Iterable]]]:
         """Return the module attributes of the model to be frozen."""

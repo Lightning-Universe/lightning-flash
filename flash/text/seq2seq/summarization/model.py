@@ -91,8 +91,8 @@ class SummarizationTask(Seq2SeqTask):
         return "summarization"
 
     def compute_metrics(self, generated_tokens: torch.Tensor, batch: Dict, prefix: str) -> None:
-        tgt_lns = self.tokenize_labels(batch["labels"])
-        result = self.rouge(self._output_transform.uncollate(generated_tokens), tgt_lns)
+        tgt_lns = self.decode(batch["labels"])
+        result = self.rouge(self.decode(generated_tokens), tgt_lns)
         self.log_dict(result, on_step=False, on_epoch=True, prog_bar=True)
 
     @staticmethod

@@ -87,11 +87,11 @@ class TranslationTask(Seq2SeqTask):
         return "translation"
 
     def compute_metrics(self, generated_tokens, batch, prefix):
-        reference_corpus = self.tokenize_labels(batch["labels"])
+        reference_corpus = self.decode(batch["labels"])
         # wrap targets in list as score expects a list of potential references
         reference_corpus = [[reference] for reference in reference_corpus]
 
-        translate_corpus = self._output_transform.uncollate(generated_tokens)
+        translate_corpus = self.decode(generated_tokens)
         translate_corpus = [line for line in translate_corpus]
 
         if _TM_GREATER_EQUAL_0_7_0:

@@ -95,7 +95,7 @@ class QuestionAnsweringTask(Task):
 
     def __init__(
         self,
-        backbone: str = "distilbert-base-uncased",
+        backbone: str = "sshleifer/tiny-distilbert-base-cased-distilled-squad",
         max_source_length: int = 384,
         max_target_length: int = 30,
         padding: Union[str, bool] = "max_length",
