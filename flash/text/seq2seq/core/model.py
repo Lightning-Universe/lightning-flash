@@ -13,7 +13,6 @@
 # limitations under the License.
 import os
 import warnings
-from functools import partial
 from typing import Any, Dict, Iterable, List, Optional, Type, Union
 
 import torch
@@ -223,5 +222,4 @@ class Seq2SeqTask(Task):
         transform_kwargs: Optional[Dict] = None,
         output: Optional[Union[str, Output]] = None,
     ) -> Composition:
-        input_cls = partial(input_cls, max_length=self.max_source_length, tokenizer=self.collate_fn.tokenizer)
         return super().serve(host, port, sanity_check, input_cls, transform, transform_kwargs, output)

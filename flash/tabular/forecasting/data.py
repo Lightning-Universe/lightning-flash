@@ -19,7 +19,6 @@ from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
-from flash.core.data.io.output_transform import OutputTransform
 from flash.core.utilities.imports import _PANDAS_AVAILABLE, _TABULAR_TESTING
 from flash.core.utilities.stages import RunningStage
 from flash.tabular.forecasting.input import TabularForecastingDataFrameInput
@@ -71,7 +70,6 @@ class TabularForecastingData(DataModule):
         sampler: Optional[Type[Sampler]] = None,
         pin_memory: bool = True,
         persistent_workers: bool = True,
-        output_transform: Optional[OutputTransform] = None,
         **input_kwargs: Any,
     ) -> "TabularForecastingData":
         """Creates a :class:`~flash.tabular.forecasting.data.TabularForecastingData` object from the given data
@@ -192,5 +190,4 @@ class TabularForecastingData(DataModule):
             sampler=sampler,
             pin_memory=pin_memory,
             persistent_workers=persistent_workers,
-            output_transform=output_transform,
         )

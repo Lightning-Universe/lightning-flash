@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, List, TYPE_CHECKING
+from typing import Any, Callable, List, TYPE_CHECKING
 
 import torch
 
@@ -25,14 +25,15 @@ class _ServeInputProcessor(torch.nn.Module):
     def __init__(
         self,
         serve_input: "ServeInput",
+        collate_fn: Callable,
     ):
         super().__init__()
         self.serve_input = serve_input
-        self.dataloader_collate_fn = self.serve_input._create_dataloader_collate_fn([])
+        self.collate_fn = collate_fn
 
     def forward(self, sample: str):
         sample = self.serve_input._call_load_sample(sample)
-        sample = self.dataloader_collate_fn(sample)
+        sample = self.collate_fn([sample])
         return sample
 
 

@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from copy import copy
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -55,6 +56,7 @@ class TabularForecastingDataFrameInput(Input):
                     "construct the train data at the same time as evaluation and inference or provide the train "
                     "`datamodule.parameters` to `from_data_frame` in the `parameters` argument."
                 )
+            parameters = copy(parameters)
             parameters.pop("data_sample")
             time_series_dataset = TimeSeriesDataSet.from_parameters(
                 parameters,

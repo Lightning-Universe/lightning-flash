@@ -13,7 +13,6 @@
 # limitations under the License.
 import os
 import warnings
-from functools import partial
 from typing import Any, Dict, List, Optional, Type, Union
 
 import torch
@@ -150,5 +149,4 @@ class TextClassifier(ClassificationTask):
         transform_kwargs: Optional[Dict] = None,
         output: Optional[Union[str, Output]] = None,
     ) -> Composition:
-        input_cls = partial(input_cls, max_length=self.max_length, tokenizer=self.collate_fn.tokenizer)
         return super().serve(host, port, sanity_check, input_cls, transform, transform_kwargs, output)

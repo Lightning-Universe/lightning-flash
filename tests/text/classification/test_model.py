@@ -74,7 +74,7 @@ def test_jit(tmpdir):
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
-    model = TextClassifier(2, TEST_BACKBONE)
+    model = TextClassifier(2, backbone=TEST_BACKBONE)
     model.eval()
     model.serve()
 
