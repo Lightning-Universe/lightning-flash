@@ -53,7 +53,7 @@ def test_init_train(tmpdir):
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_jit(tmpdir):
     sample_input = {
-        "input_ids": torch.randint(1000, size=(1, 32)),
+        "input_ids": torch.randint(128, size=(1, 32)),
         "attention_mask": torch.randint(1, size=(1, 32)),
     }
     path = os.path.join(tmpdir, "test.pt")
@@ -62,7 +62,7 @@ def test_jit(tmpdir):
     model.eval()
 
     # Huggingface only supports `torch.jit.trace`
-    model = torch.jit.trace(model, [sample_input])
+    model = torch.jit.trace(model, [sample_input], check_trace=False)
 
     torch.jit.save(model, path)
     model = torch.jit.load(path)

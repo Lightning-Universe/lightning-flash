@@ -58,11 +58,11 @@ def test_jit(tmpdir):
     }
     path = os.path.join(tmpdir, "test.pt")
 
-    model = TranslationTask(TEST_BACKBONE, val_target_max_length=None)
+    model = TranslationTask(TEST_BACKBONE)
     model.eval()
 
     # Huggingface only supports `torch.jit.trace`
-    model = torch.jit.trace(model, [sample_input])
+    model = torch.jit.trace(model, [sample_input], check_trace=False)
 
     torch.jit.save(model, path)
     model = torch.jit.load(path)

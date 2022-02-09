@@ -236,8 +236,6 @@ def test_input_labelstudio_text():
     val = LabelStudioTextClassificationInput(RunningStage.VALIDATING, val_data, parameters=train.parameters)
     test = LabelStudioTextClassificationInput(RunningStage.TESTING, test_data, parameters=train.parameters)
 
-    assert train._data_pipeline_state == val._data_pipeline_state
-    assert train._data_pipeline_state == test._data_pipeline_state
     train_sample = train[0]
     val_sample = val[0]
     assert train_sample
