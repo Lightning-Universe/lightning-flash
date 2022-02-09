@@ -43,7 +43,6 @@ __________________
     question_answering.input.QuestionAnsweringJSONInput
     question_answering.input.QuestionAnsweringSQuADInput
     question_answering.input.QuestionAnsweringDictionaryInput
-    question_answering.input_transform.QuestionAnsweringInputTransform
     question_answering.output_transform.QuestionAnsweringOutputTransform
 
 Summarization
@@ -82,7 +81,6 @@ _______________
     seq2seq.core.input.Seq2SeqCSVInput
     seq2seq.core.input.Seq2SeqJSONInput
     seq2seq.core.input.Seq2SeqListInput
-    seq2seq.core.output_transform.Seq2SeqOutputTransform
 
 flash.text.input
 ________________

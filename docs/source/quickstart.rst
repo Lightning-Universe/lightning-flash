@@ -104,7 +104,7 @@ Here's an example of inference:
         ],
         batch_size=4,
     )
-    predictions = trainer.predict(model, datamodule=datamodule)
+    predictions = trainer.predict(model, datamodule=datamodule, output="labels")
     print(predictions)
 
 We get the following output:
