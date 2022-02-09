@@ -57,9 +57,3 @@ def test_dataloaders():
     ]:
         x = next(iter(dl))[DataKeys.INPUT]
         assert x.shape == (1, 1, 28, 28)
-
-
-def test_cpu_count_none():
-    train_input = DatasetInput(RunningStage.TRAINING, DummyDataset())
-    dm = DataModule(train_input, num_workers=None, batch_size=1)
-    assert dm.num_workers == 0
