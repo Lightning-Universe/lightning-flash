@@ -17,7 +17,7 @@
 # https://github.com/huggingface/transformers/blob/master/examples/pytorch/question-answering/utils_qa.py
 
 from dataclasses import dataclass
-from typing import Any, Callable, Optional, Union
+from typing import Any, Optional, Union
 
 from flash.core.data.io.input import DataKeys
 from flash.core.integrations.transformers.collate import TransformersCollate
@@ -122,7 +122,7 @@ class TextQuestionAnsweringCollate(TransformersCollate):
 
         return tokenized_samples
 
-    def _tokenize_fn(self, samples: Any) -> Callable:
+    def tokenize(self, samples: Any):
         pad_on_right = self.tokenizer.padding_side == "right"
 
         samples["question"] = [q.lstrip() for q in samples["question"]]
@@ -170,8 +170,4 @@ class TextQuestionAnsweringCollate(TransformersCollate):
             del contexts
             del answers
 
-        return tokenized_samples
-
-    def __call__(self, samples):
-        samples = {key: [sample[key] for sample in samples] for key in samples[0].keys()}
-        return self.to_tensor(self._tokenize_fn(samples).data)
+        return tokenized_samples.data

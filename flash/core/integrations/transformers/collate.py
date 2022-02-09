@@ -16,7 +16,6 @@ from functools import lru_cache
 from typing import Any, Dict, Optional
 
 import torch
-from torch.utils.data._utils.collate import default_collate
 
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
@@ -51,8 +50,5 @@ class TransformersCollate:
         raise NotImplementedError
 
     def __call__(self, samples):
-        tokenized_samples = []
-        for sample in samples:
-            tokenized_sample = self.tokenize(sample)
-            tokenized_samples.append(self.to_tensor(tokenized_sample))
-        return default_collate(tokenized_samples)
+        samples = {key: [sample[key] for sample in samples] for key in samples[0].keys()}
+        return self.to_tensor(self.tokenize(samples))
