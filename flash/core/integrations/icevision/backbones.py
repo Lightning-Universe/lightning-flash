@@ -36,7 +36,7 @@ def load_icevision(adapter, model_type, backbone, num_classes, **kwargs):
     model = model_type.model(backbone=backbone, num_classes=num_classes, **kwargs)
 
     backbone = nn.Module()
-    params = model.param_groups()[0]
+    params = sum(model.param_groups()[:-1], [])
     for i, param in enumerate(params):
         backbone.register_parameter(f"backbone_{i}", param)
 
