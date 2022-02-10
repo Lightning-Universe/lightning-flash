@@ -27,6 +27,16 @@ ______________
     classification.input.TextClassificationParquetInput
     classification.input.TextClassificationListInput
 
+Embedding
+_________
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: classtemplate.rst
+
+    ~embedding.model.TextEmbedder
+
 Question Answering
 __________________
 
