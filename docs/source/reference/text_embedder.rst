@@ -9,7 +9,7 @@ The Task
 ********
 
 This task consists of creating a Sentence Embedding. That is, a vector of sentence representations which can be used for a downstream task.
-The  :class:`~flash.text.TextEmbedder` implementation relies on components from `sentence-transformers <https://github.com/UKPLab/sentence-transformers`_.
+The  :class:`~flash.text.TextEmbedder` implementation relies on components from `sentence-transformers <https://github.com/UKPLab/sentence-transformers>`_.
 
 ------
 
