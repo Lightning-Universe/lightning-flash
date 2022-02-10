@@ -1,6 +1,8 @@
-# Installation
+# Installation & Troubleshooting
 
-## Install with pip
+## Installation options
+
+### Install with pip
 
 ```bash
 pip install lightning-flash
@@ -32,14 +34,14 @@ cd lightning-flash
 pip install -e '.[dev]'
 ```
 
-## Install with conda
+### Install with conda
 
 Flash is available via conda forge. Install it with:
 ```bash
 conda install -c conda-forge lightning-flash
 ```
 
-## Install from source
+### Install from source
 
 You can install Flash from source without any domain specific dependencies with:
 ```bash
@@ -56,4 +58,27 @@ You can again install dependencies for multiple domains by separating them with 
 
 ## Troubleshooting
 
-As of September 26th, 2021 there is a known issue with some packages used by Flash that cause installation issues. If you experience an issue installing Flash, see  [Issue 803](https://github.com/PyTorchLightning/lightning-flash/issues/803) for potential workarounds.
+### Torchtext incompatibility
+
+If you install Flash in an environment that already has a version of torchtext installed, you may see an error like this when you try to import it:
+
+```bash
+ImportError: /usr/local/lib/python3.7/dist-packages/torchtext/_torchtext.so: undefined symbol: _ZN2at6detail10noopDeleteEPv
+```
+
+The workaround is to uninstall torchtext __before__ installing Flash, like this:
+
+```bash
+pip uninstall -y torchtext
+pip install lightning-flash[...]
+```
+
+### FiftyOne incompatibility on Google Colab
+
+When installing Flash (or PyTorch Lightning) alongside FiftyOne in a Google Colab environment, you may get the following error when importing FiftyOne:
+
+```bash
+ServiceListenTimeout: fiftyone.core.service.DatabaseService failed to bind to port
+```
+
+There is no known workaround for this issue at the time of writing, but you can view the latest updates on the [associated github issue](https://github.com/voxel51/fiftyone/issues/1376).
