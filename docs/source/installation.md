@@ -1,6 +1,8 @@
-# Installation
+# Installation & Troubleshooting
 
-## Install with pip
+## Installation options
+
+### Install with pip
 
 ```bash
 pip install lightning-flash
@@ -32,14 +34,14 @@ cd lightning-flash
 pip install -e '.[dev]'
 ```
 
-## Install with conda
+### Install with conda
 
 Flash is available via conda forge. Install it with:
 ```bash
 conda install -c conda-forge lightning-flash
 ```
 
-## Install from source
+### Install from source
 
 You can install Flash from source without any domain specific dependencies with:
 ```bash
