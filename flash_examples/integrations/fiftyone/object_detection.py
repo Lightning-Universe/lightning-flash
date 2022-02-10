@@ -33,14 +33,20 @@ datamodule = ObjectDetectionData.from_icedata(
     val_split=0.1,
     transform_kwargs={"image_size": 128},
     parser=icedata.fridge.parser,
-    batch_size=4,
+    batch_size=8,
 )
 
 # 2. Build the task
-model = ObjectDetector(head="efficientdet", backbone="d0", num_classes=datamodule.num_classes, image_size=128)
+model = ObjectDetector(
+    head="efficientdet",
+    backbone="d0",
+    num_classes=datamodule.num_classes,
+    image_size=128,
+    lr_scheduler=("multisteplr", {"milestones": [20]}),
+)
 
 # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(max_epochs=1)
+trainer = flash.Trainer(max_epochs=30)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Set the output and get some predictions
