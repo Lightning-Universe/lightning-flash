@@ -15,15 +15,15 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union
 
 import torch
 import torch.nn.functional as F
-import torchmetrics
 from pytorch_lightning.utilities import rank_zero_deprecation, rank_zero_warn
+from torchmetrics import Accuracy, Metric
 
 from flash.core.adapter import AdapterTask
 from flash.core.data.io.classification_input import ClassificationState
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.output import Output
 from flash.core.model import Task
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _TM_GREATER_EQUAL_0_7_0, lazy_import, requires
 
 if _FIFTYONE_AVAILABLE:
     fol = lazy_import("fiftyone.core.labels")
@@ -33,6 +33,11 @@ else:
     fol = None
     Classification = None
     Classifications = None
+
+if _TM_GREATER_EQUAL_0_7_0:
+    from torchmetrics import F1Score
+else:
+    from torchmetrics import F1 as F1Score
 
 
 def binary_cross_entropy_with_logits(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
@@ -45,11 +50,11 @@ class ClassificationMixin:
     def _build(
         num_classes: Optional[int] = None,
         loss_fn: Optional[Callable] = None,
-        metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
+        metrics: Union[Metric, Mapping, Sequence, None] = None,
         multi_label: bool = False,
     ):
         if metrics is None:
-            metrics = torchmetrics.F1(num_classes) if (multi_label and num_classes) else torchmetrics.Accuracy()
+            metrics = F1Score(num_classes) if (multi_label and num_classes) else Accuracy()
 
         if loss_fn is None:
             loss_fn = binary_cross_entropy_with_logits if multi_label else F.cross_entropy
@@ -68,7 +73,7 @@ class ClassificationTask(Task, ClassificationMixin):
         *args,
         num_classes: Optional[int] = None,
         loss_fn: Optional[Callable] = None,
-        metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
+        metrics: Union[Metric, Mapping, Sequence, None] = None,
         multi_label: bool = False,
         output: Optional[Union[Output, Mapping[str, Output]]] = None,
         **kwargs,
@@ -91,7 +96,7 @@ class ClassificationAdapterTask(AdapterTask, ClassificationMixin):
         *args,
         num_classes: Optional[int] = None,
         loss_fn: Optional[Callable] = None,
-        metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
+        metrics: Union[Metric, Mapping, Sequence, None] = None,
         multi_label: bool = False,
         output: Optional[Union[Output, Mapping[str, Output]]] = None,
         **kwargs,
