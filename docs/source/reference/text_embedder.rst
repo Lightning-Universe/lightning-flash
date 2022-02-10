@@ -1,3 +1,9 @@
+.. customcarditem::
+   :header: Text Embedding
+   :card_description: Learn to generate sentence embeddings with Flash.
+   :image: https://pl-flash-data.s3.amazonaws.com/assets/thumbnails/multi_label_text_classification.svg
+   :tags: Text,Embedding
+
 .. _text_embedder:
 
 ##############
