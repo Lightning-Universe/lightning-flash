@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Type, Union
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input
@@ -22,7 +22,7 @@ from flash.core.integrations.icevision.transforms import IceVisionInputTransform
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _ICEVISION_AVAILABLE, _IMAGE_EXTRAS_TESTING, requires
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
-from flash.image.detection.input import ObjectDetectionFiftyOneInput
+from flash.image.detection.input import ObjectDetectionFiftyOneInput, ObjectDetectionFilesInput
 
 if _FIFTYONE_AVAILABLE:
     SampleCollection = "fiftyone.core.collections.SampleCollection"
@@ -48,6 +48,139 @@ class ObjectDetectionData(DataModule):
     classmethods for loading data for object detection."""
 
     input_transform_cls = IceVisionInputTransform
+
+    @classmethod
+    def from_files(
+        cls,
+        train_files: Optional[Sequence[str]] = None,
+        train_targets: Optional[Sequence[Sequence[Any]]] = None,
+        train_bboxes: Optional[Sequence[Sequence[Dict[str, int]]]] = None,
+        val_files: Optional[Sequence[str]] = None,
+        val_targets: Optional[Sequence[Sequence[Any]]] = None,
+        val_bboxes: Optional[Sequence[Sequence[Dict[str, int]]]] = None,
+        test_files: Optional[Sequence[str]] = None,
+        test_targets: Optional[Sequence[Sequence[Any]]] = None,
+        test_bboxes: Optional[Sequence[Sequence[Dict[str, int]]]] = None,
+        predict_files: Optional[Sequence[str]] = None,
+        train_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        val_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        test_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        input_cls: Type[Input] = ObjectDetectionFilesInput,
+        transform_kwargs: Optional[Dict] = None,
+        **data_module_kwargs: Any,
+    ) -> "ObjectDetectionData":
+        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data list of
+        image files, bounding boxes, and targets.
+
+        The supported file extensions are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``, ``.bmp``, ``.pgm``, ``.tif``,
+        ``.tiff``, ``.webp``, and ``.npy``.
+        The targets can be in any of our
+        :ref:`supported classification target formats <formatting_classification_targets>`.
+        The bounding boxes are expected to be dictionaries with integer values (representing pixels) and the following
+        keys: ``xmin``, ``ymin``, ``width``, ``height``.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
+        Args:
+            train_files: The list of image files to use when training.
+            train_targets: The list of lists of targets to use when training.
+            train_bboxes: The list of lists of bounding boxes to use when training.
+            val_files: The list of image files to use when validating.
+            val_targets: The list of lists of targets to use when validating.
+            val_bboxes: The list of lists of bounding boxes to use when validating.
+            test_files: The list of image files to use when testing.
+            test_targets: The list of lists of targets to use when testing.
+            test_bboxes: The list of lists of bounding boxes to use when testing.
+            predict_files: The list of image files to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+              predicting.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+              :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.image.detection.data.ObjectDetectionData`.
+
+        Examples
+        ________
+
+        .. testsetup::
+
+            >>> import numpy as np
+            >>> from PIL import Image
+            >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
+            >>> _ = [rand_image.save(f"image_{i}.png") for i in range(1, 4)]
+            >>> _ = [rand_image.save(f"predict_image_{i}.png") for i in range(1, 4)]
+
+        .. doctest::
+
+            >>> from flash import Trainer
+            >>> from flash.image import ObjectDetector, ObjectDetectionData
+            >>> datamodule = ObjectDetectionData.from_files(
+            ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
+            ...     train_targets=[["cat"], ["dog"], ["cat"]],
+            ...     train_bboxes=[
+            ...         [{"xmin": 10, "ymin": 20, "width": 5, "height": 10}],
+            ...         [{"xmin": 20, "ymin": 30, "width": 10, "height": 10}],
+            ...         [{"xmin": 10, "ymin": 20, "width": 5, "height": 25}],
+            ...     ],
+            ...     predict_files=["predict_image_1.png", "predict_image_2.png", "predict_image_3.png"],
+            ...     transform_kwargs=dict(image_size=(128, 128)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            3
+            >>> datamodule.labels
+            ['background', 'cat', 'dog']
+            >>> model = ObjectDetector(num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> import os
+            >>> _ = [os.remove(f"image_{i}.png") for i in range(1, 4)]
+            >>> _ = [os.remove(f"predict_image_{i}.png") for i in range(1, 4)]
+        """
+
+        ds_kw = dict(data_pipeline_state=DataPipelineState(), transform_kwargs=transform_kwargs)
+
+        return cls(
+            input_cls(
+                RunningStage.TRAINING,
+                train_files,
+                train_targets,
+                train_bboxes,
+                transform=train_transform,
+                **ds_kw,
+            ),
+            input_cls(
+                RunningStage.VALIDATING,
+                val_files,
+                val_targets,
+                val_bboxes,
+                transform=val_transform,
+                **ds_kw,
+            ),
+            input_cls(
+                RunningStage.TESTING,
+                test_files,
+                test_targets,
+                test_bboxes,
+                transform=test_transform,
+                **ds_kw,
+            ),
+            input_cls(RunningStage.PREDICTING, predict_files, transform=predict_transform, **ds_kw),
+            **data_module_kwargs,
+        )
 
     @classmethod
     def from_icedata(
@@ -731,34 +864,6 @@ class ObjectDetectionData(DataModule):
         return cls(
             predict_input=input_cls(
                 RunningStage.PREDICTING, predict_folder, transform=predict_transform, transform_kwargs=transform_kwargs
-            ),
-            **data_module_kwargs,
-        )
-
-    @classmethod
-    def from_files(
-        cls,
-        predict_files: Optional[List[str]] = None,
-        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        input_cls: Type[Input] = IceVisionInput,
-        transform_kwargs: Optional[Dict] = None,
-        **data_module_kwargs: Any,
-    ) -> "DataModule":
-        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data files.
-
-        This is currently support only for the predicting stage.
-
-        Args:
-            predict_files: The list of files containing the predict data.
-            predict_transform: The dictionary of transforms to use during predicting which maps
-            data_module_kwargs: The keywords arguments for creating the datamodule.
-
-        Returns:
-            The constructed data module.
-        """
-        return cls(
-            predict_input=input_cls(
-                RunningStage.PREDICTING, predict_files, transform=predict_transform, transform_kwargs=transform_kwargs
             ),
             **data_module_kwargs,
         )
