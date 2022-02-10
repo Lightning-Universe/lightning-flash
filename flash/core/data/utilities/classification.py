@@ -429,7 +429,10 @@ def _get_target_details(
 
 
 def get_target_formatter(
-    targets: List[Any], labels: Optional[List[str]] = None, num_classes: Optional[int] = None
+    targets: List[Any],
+    labels: Optional[List[str]] = None,
+    num_classes: Optional[int] = None,
+    add_background: bool = False,
 ) -> TargetFormatter:
     """Get the ``TargetFormatter`` object to use for the given targets.
 
@@ -437,6 +440,8 @@ def get_target_formatter(
         targets: The list of targets to format.
         labels: Optionally provide ``labels`` / ``num_classes`` instead of inferring them.
         num_classes: Optionally provide ``labels`` / ``num_classes`` instead of inferring them.
+        add_background: If ``True``, a background class will be inserted as class zero if ``labels`` and
+                ``num_classes`` are being inferred.
 
     Returns:
         The target formatter to use when formatting targets.
@@ -447,4 +452,7 @@ def get_target_formatter(
     )
     if labels is None and num_classes is None:
         labels, num_classes = _get_target_details(targets, target_formatter_type)
+        if add_background:
+            labels = ["background"] + labels if labels is not None else labels
+            num_classes = num_classes + 1 if num_classes is not None else num_classes
     return target_formatter_type(labels=labels, num_classes=num_classes)
