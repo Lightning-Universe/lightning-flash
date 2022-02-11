@@ -136,7 +136,7 @@ Here's an example:
     >>> datamodule.num_classes
     3
     >>> datamodule.labels
-    ["cat", "dog", "rabbit"]
+    ['cat', 'dog', 'rabbit']
     >>> datamodule.multi_label
     True
 
@@ -161,7 +161,7 @@ Here's an example:
     >>> datamodule.num_classes
     3
     >>> datamodule.labels
-    ["cat", "dog", "rabbit"]
+    ['cat', 'dog', 'rabbit']
     >>> datamodule.multi_label
     True
 
@@ -186,7 +186,7 @@ Here's an example:
     >>> datamodule.num_classes
     3
     >>> datamodule.labels
-    ["cat", "dog", "rabbit"]
+    ['cat', 'dog', 'rabbit']
     >>> datamodule.multi_label
     True
 
