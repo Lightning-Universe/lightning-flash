@@ -114,3 +114,103 @@ Here's an example:
     True
     >>> datamodule.multi_label
     True
+
+Multi Labels
+____________
+
+Multi labels are targets represented by a list of strings (`multi_label = True`).
+The inferred `labels` will be the unique labels in the train targets sorted alphanumerically.
+The inferred `num_classes` is the number of labels.
+Here's an example:
+
+.. doctest:: targets
+
+    >>> from flash import Trainer
+    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> datamodule = ImageClassificationData.from_files(
+    ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
+    ...     train_targets=[["cat"], ["cat", "dog"], ["dog", "rabbit"]],
+    ...     transform_kwargs=dict(image_size=(128, 128)),
+    ...     batch_size=2,
+    ... )
+    >>> datamodule.num_classes
+    3
+    >>> datamodule.labels
+    ["cat", "dog", "rabbit"]
+    >>> datamodule.multi_label
+    True
+
+Comma Delimited
+_______________
+
+Comma delimited targets are mutli label targets where the labels are given as comma delimited strings (`multi_label = True`).
+The inferred `labels` will be the unique labels in the train targets sorted alphanumerically.
+The inferred `num_classes` is the number of labels.
+Here's an example:
+
+.. doctest:: targets
+
+    >>> from flash import Trainer
+    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> datamodule = ImageClassificationData.from_files(
+    ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
+    ...     train_targets=["cat", "cat,dog", "dog,rabbit"],
+    ...     transform_kwargs=dict(image_size=(128, 128)),
+    ...     batch_size=2,
+    ... )
+    >>> datamodule.num_classes
+    3
+    >>> datamodule.labels
+    ["cat", "dog", "rabbit"]
+    >>> datamodule.multi_label
+    True
+
+Space Delimited
+_______________
+
+Space delimited targets are mutli label targets where the labels are given as space delimited strings (`multi_label = True`).
+The inferred `labels` will be the unique labels in the train targets sorted alphanumerically.
+The inferred `num_classes` is the number of labels.
+Here's an example:
+
+.. doctest:: targets
+
+    >>> from flash import Trainer
+    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> datamodule = ImageClassificationData.from_files(
+    ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
+    ...     train_targets=["cat", "cat dog", "dog rabbit"],
+    ...     transform_kwargs=dict(image_size=(128, 128)),
+    ...     batch_size=2,
+    ... )
+    >>> datamodule.num_classes
+    3
+    >>> datamodule.labels
+    ["cat", "dog", "rabbit"]
+    >>> datamodule.multi_label
+    True
+
+Multi Binary
+____________
+
+Multi binary targets are represented by a multi-hot encoded binary list (`multi_label = False`).
+No `labels` will be inferred.
+The inferred `num_classes` is the length of the binary list.
+Here's an example:
+
+.. doctest:: targets
+
+    >>> from flash import Trainer
+    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> datamodule = ImageClassificationData.from_files(
+    ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
+    ...     train_targets=[[1, 0, 0], [1, 1, 0], [0, 1, 1]],
+    ...     transform_kwargs=dict(image_size=(128, 128)),
+    ...     batch_size=2,
+    ... )
+    >>> datamodule.num_classes
+    3
+    >>> datamodule.labels is None
+    True
+    >>> datamodule.multi_label
+    True
