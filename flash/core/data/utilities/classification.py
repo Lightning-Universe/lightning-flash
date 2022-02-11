@@ -345,7 +345,7 @@ _RESOLUTION_MAPPING: Dict[Type[TargetFormatter], List[Type[TargetFormatter]]] = 
     MultiBinaryTargetFormatter: [MultiNumericTargetFormatter],
     SingleBinaryTargetFormatter: [MultiBinaryTargetFormatter, MultiNumericTargetFormatter],
     SingleLabelTargetFormatter: [CommaDelimitedMultiLabelTargetFormatter, SpaceDelimitedTargetFormatter],
-    SingleNumericTargetFormatter: [MultiNumericTargetFormatter],
+    SingleNumericTargetFormatter: [SingleBinaryTargetFormatter, MultiNumericTargetFormatter],
 }
 
 
