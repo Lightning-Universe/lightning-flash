@@ -35,8 +35,8 @@ Here's an example:
     ... )
     >>> datamodule.num_classes
     2
-    >>> datamodule.labels
-    None
+    >>> datamodule.labels is None
+    True
     >>> datamodule.multi_label
     False
 
@@ -85,7 +85,32 @@ Here's an example:
     ... )
     >>> datamodule.num_classes
     2
-    >>> datamodule.labels
-    None
+    >>> datamodule.labels is None
+    True
     >>> datamodule.multi_label
     False
+
+Multi Numeric
+_____________
+
+Multi numeric targets are represented by a list of integer class indexes (`multi_label = True`).
+No `labels` will be inferred.
+The inferred `num_classes` is the maximum target value plus one (we assume that targets are zero-based).
+Here's an example:
+
+.. doctest:: targets
+
+    >>> from flash import Trainer
+    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> datamodule = ImageClassificationData.from_files(
+    ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
+    ...     train_targets=[[0], [0, 1], [1, 2]],
+    ...     transform_kwargs=dict(image_size=(128, 128)),
+    ...     batch_size=2,
+    ... )
+    >>> datamodule.num_classes
+    3
+    >>> datamodule.labels is None
+    True
+    >>> datamodule.multi_label
+    True
