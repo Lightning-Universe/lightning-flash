@@ -185,6 +185,7 @@ class ActiveLearningLoop(Loop):
             if is_overridden(dataloader_name, self.trainer.datamodule)
             else None
         )
+
         if dataloader:
             if _PL_GREATER_EQUAL_1_5_0:
                 setattr(

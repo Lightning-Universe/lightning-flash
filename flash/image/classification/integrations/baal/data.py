@@ -141,7 +141,10 @@ class ActiveLearningDataModule(DataModule):
         if self.has_labelled_data and self.val_split:
             self.val_dataloader = self._val_dataloader
 
-        return self.labelled.train_dataloader()
+        if self.has_labelled_data:
+            return self.labelled.train_dataloader()
+        # Return a dummy dataloader, will be replaced by the loop
+        return DataLoader(["dummy"])
 
     def _val_dataloader(self) -> "DataLoader":
         self.labelled._val_input = train_val_split(self._dataset, self.val_split)[1]
