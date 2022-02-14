@@ -14,7 +14,7 @@
 import functools
 import os
 import sys
-from copy import copy, deepcopy
+from copy import deepcopy
 from dataclasses import dataclass
 from functools import partial
 from typing import Any, Callable, cast, Dict, Iterable, List, MutableMapping, Optional, Sequence, Tuple, Type, Union
@@ -233,7 +233,9 @@ class InputBase(Properties, metaclass=_InputMeta):
                 InputBase,
             ),
         )
-        return load_sample(copy(sample))
+
+        # Deepcopy the sample to avoid leaks with complex data structures
+        return load_sample(deepcopy(sample))
 
     @staticmethod
     def load_data(*args: Any, **kwargs: Any) -> Union[Sequence, Iterable]:
