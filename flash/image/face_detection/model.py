@@ -71,7 +71,7 @@ class FaceDetector(Task):
             learning_rate=learning_rate,
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
-            output_transform=FaceDetectionOutputTransform,
+            output_transform=FaceDetectionOutputTransform(),
         )
 
     @staticmethod

@@ -11,10 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from unittest import mock
+
 import pytest
-import torch
 
 import flash
+from flash.__main__ import main
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _FASTFACE_AVAILABLE
 from flash.image import FaceDetectionData, FaceDetector
@@ -43,15 +45,6 @@ def test_fastface_training():
 
 
 @pytest.mark.skipif(not _FASTFACE_AVAILABLE, reason="fastface not installed.")
-def test_fastface_forward():
-    model = FaceDetector(model="lffd_slim")
-    mock_batch = torch.randn(2, 3, 256, 256)
-
-    # test model forward (tests: _prepare_batch, logits_to_preds, _output_transform from ff)
-    model(mock_batch)
-
-
-@pytest.mark.skipif(not _FASTFACE_AVAILABLE, reason="fastface not installed.")
 def test_fastface_backbones_registry():
     backbones = FACE_DETECTION_BACKBONES.available_keys()
     assert "lffd_slim" in backbones
@@ -59,3 +52,13 @@ def test_fastface_backbones_registry():
 
     backbone, _ = FACE_DETECTION_BACKBONES.get("lffd_original")(pretrained=False)
     assert isinstance(backbone, LFFD)
+
+
+@pytest.mark.skipif(not _FASTFACE_AVAILABLE, reason="fastface not installed.")
+def test_cli():
+    cli_args = ["flash", "face_detection", "--trainer.fast_dev_run", "True"]
+    with mock.patch("sys.argv", cli_args):
+        try:
+            main()
+        except SystemExit:
+            pass
