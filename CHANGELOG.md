@@ -22,7 +22,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Added `FlashRegistry` of Available Heads for `flash.image.ImageClassifier` ([#1152](https://github.com/PyTorchLightning/lightning-flash/pull/1152))
 
-- Added support for `objectDetectionData.from_files` ([#1154](https://github.com/PyTorchLightning/lightning-flash/pull/1154))
+- Added support for `ObjectDetectionData.from_files` ([#1154](https://github.com/PyTorchLightning/lightning-flash/pull/1154))
+
+- Added support for passing the `Output` object (or a string e.g. `"labels"`) to the `flash.Trainer.predict` method ([#1157](https://github.com/PyTorchLightning/lightning-flash/pull/1157))
 
 ### Changed
 
@@ -85,6 +87,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Removed the `Seq2SeqData` base class (use `TranslationData` or `SummarizationData` directly) ([#1128](https://github.com/PyTorchLightning/lightning-flash/pull/1128))
+
+- Removed the ability to attach the `Output` object directly to the model ([#1157](https://github.com/PyTorchLightning/lightning-flash/pull/1157))
 
 ## [0.6.0] - 2021-13-12
 
