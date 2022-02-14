@@ -49,7 +49,7 @@ class ActiveLearningLoop(Loop):
 
         Example::
 
-            while unlabelled data or budget critera not reached:
+            while unlabelled data or budget criteria not reached:
 
                 if labelled data
                     trainer.fit(model, labelled data)

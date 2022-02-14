@@ -22,7 +22,7 @@ from torch import nn
 from torch.utils.data import SequentialSampler
 
 import flash
-from flash.core.utilities.imports import _BAAL_AVAILABLE, _IMAGE_TESTING
+from flash.core.utilities.imports import _IMAGE_EXTRAS_TESTING
 from flash.image import ImageClassificationData, ImageClassifier
 from flash.image.classification.integrations.baal import ActiveLearningDataModule, ActiveLearningLoop
 from tests.image.classification.test_data import _rand_image
@@ -61,7 +61,7 @@ def simple_datamodule(tmpdir):
     return dm
 
 
-@pytest.mark.skipif(not (_IMAGE_TESTING and _BAAL_AVAILABLE), reason="image and baal libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image and baal libraries aren't installed.")
 @pytest.mark.parametrize("initial_num_labels, query_size", [(0, 5), (5, 5)])
 def test_active_learning_training(simple_datamodule, initial_num_labels, query_size):
     seed_everything(42)
@@ -123,7 +123,7 @@ def test_active_learning_training(simple_datamodule, initial_num_labels, query_s
         assert len(active_learning_dm.val_dataloader()) == 5
 
 
-@pytest.mark.skipif(not (_IMAGE_TESTING and _BAAL_AVAILABLE), reason="image and baal libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image and baal libraries aren't installed.")
 def test_no_validation_loop(simple_datamodule):
     active_learning_dm = ActiveLearningDataModule(
         simple_datamodule,
