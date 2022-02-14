@@ -28,7 +28,7 @@ sys.path.append(os.path.join(_PATH_RAW_NB, ".actions"))
 _SHOULD_COPY_NOTEBOOKS = True
 
 try:
-    from helpers import HelperCLI
+    from assistant import AssistantCLI
 except Exception:
     _SHOULD_COPY_NOTEBOOKS = False
     warnings.warn("To build the code, please run: `git submodule update --init --recursive`", stacklevel=2)
@@ -62,7 +62,7 @@ author = "PyTorch Lightning"
 
 # -- Project documents -------------------------------------------------------
 if _SHOULD_COPY_NOTEBOOKS:
-    HelperCLI.copy_notebooks(_PATH_RAW_NB, _PATH_HERE, "notebooks", patterns=["flash_tutorials"])
+    AssistantCLI.copy_notebooks(_PATH_RAW_NB, _PATH_HERE, "notebooks", patterns=["flash_tutorials"])
 
 
 def _transform_changelog(path_in: str, path_out: str) -> None:

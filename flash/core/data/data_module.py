@@ -495,29 +495,27 @@ class DataModule(pl.LightningDataModule):
         stage_name: str = _STAGES_PREFIX[RunningStage.PREDICTING]
         self._show_batch(stage_name, hooks_names, reset=reset)
 
+    def _get_property(self, property_name: str) -> Optional[Any]:
+        train = getattr(self.train_dataset, property_name, None)
+        val = getattr(self.val_dataset, property_name, None)
+        test = getattr(self.test_dataset, property_name, None)
+        filtered = list(filter(lambda x: x is not None, [train, val, test]))
+        return filtered[0] if len(filtered) > 0 else None
+
     @property
     def num_classes(self) -> Optional[int]:
         """Property that returns the number of classes of the datamodule if a multiclass task."""
-        n_cls_train = getattr(self.train_dataset, "num_classes", None)
-        n_cls_val = getattr(self.val_dataset, "num_classes", None)
-        n_cls_test = getattr(self.test_dataset, "num_classes", None)
-        return n_cls_train or n_cls_val or n_cls_test
+        return self._get_property("num_classes")
 
     @property
     def labels(self) -> Optional[int]:
         """Property that returns the labels if this ``DataModule`` contains classification data."""
-        n_cls_train = getattr(self.train_dataset, "labels", None)
-        n_cls_val = getattr(self.val_dataset, "labels", None)
-        n_cls_test = getattr(self.test_dataset, "labels", None)
-        return n_cls_train or n_cls_val or n_cls_test
+        return self._get_property("labels")
 
     @property
     def multi_label(self) -> Optional[bool]:
         """Property that returns ``True`` if this ``DataModule`` contains multi-label data."""
-        multi_label_train = getattr(self.train_dataset, "multi_label", None)
-        multi_label_val = getattr(self.val_dataset, "multi_label", None)
-        multi_label_test = getattr(self.test_dataset, "multi_label", None)
-        return multi_label_train or multi_label_val or multi_label_test
+        return self._get_property("multi_label")
 
     @property
     def inputs(self) -> Optional[Union[Input, List[InputBase]]]:

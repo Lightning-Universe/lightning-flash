@@ -14,7 +14,7 @@
 import functools
 import os
 import sys
-from copy import copy, deepcopy
+from copy import deepcopy
 from functools import partial
 from typing import Any, Callable, cast, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
 
@@ -206,7 +206,8 @@ class InputBase(Properties, metaclass=_InputMeta):
         return _create_collate_input_transform_processors(self.transform, callbacks)[1]
 
     def _call_load_sample(self, sample: Any) -> Any:
-        return getattr(self, f"{_STAGES_PREFIX[self.running_stage]}_load_sample")(copy(sample))
+        # Deepcopy the sample to avoid leaks with complex data structures
+        return getattr(self, f"{_STAGES_PREFIX[self.running_stage]}_load_sample")(deepcopy(sample))
 
     @staticmethod
     def load_data(*args: Any, **kwargs: Any) -> Union[Sequence, Iterable]:
