@@ -16,7 +16,6 @@ from typing import Any, Dict, List, Optional, Type
 from torch.utils.data import Dataset
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import BaseDataFormat, Input
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.utilities.stages import RunningStage
@@ -57,7 +56,6 @@ class PointCloudObjectDetectorData(DataModule):
             labels_folder_name=labels_folder_name,
             calibrations_folder_name=calibrations_folder_name,
             data_format=data_format,
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
@@ -89,7 +87,6 @@ class PointCloudObjectDetectorData(DataModule):
             labels_folder_name=labels_folder_name,
             calibrations_folder_name=calibrations_folder_name,
             data_format=data_format,
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
@@ -116,7 +113,6 @@ class PointCloudObjectDetectorData(DataModule):
     ) -> "PointCloudObjectDetectorData":
 
         ds_kw = dict(
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )

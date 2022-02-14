@@ -14,7 +14,6 @@
 import torch
 
 import flash
-from flash.core.classification import ProbabilitiesOutput
 from flash.core.data.utils import download_data
 from flash.image import ImageClassificationData, ImageClassifier
 from flash.image.classification.integrations.baal import ActiveLearningDataModule, ActiveLearningLoop
@@ -33,9 +32,7 @@ head = torch.nn.Sequential(
     torch.nn.Dropout(p=0.1),
     torch.nn.Linear(512, datamodule.num_classes),
 )
-model = ImageClassifier(
-    backbone="resnet18", head=head, num_classes=datamodule.num_classes, output=ProbabilitiesOutput()
-)
+model = ImageClassifier(backbone="resnet18", head=head, num_classes=datamodule.num_classes)
 
 # 3.1 Create the trainer
 trainer = flash.Trainer(max_epochs=3)
@@ -53,7 +50,7 @@ datamodule = ImageClassificationData.from_files(
     predict_files=["data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg"],
     batch_size=1,
 )
-predictions = trainer.predict(model, datamodule=datamodule)
+predictions = trainer.predict(model, datamodule=datamodule, output="probabilities")
 print(predictions)
 
 # 5. Save the model!

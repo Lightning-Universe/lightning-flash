@@ -14,10 +14,11 @@
 from typing import Any, Dict, List, Optional
 
 from flash.core.adapter import AdapterTask
-from flash.core.data.output import PredsOutput
+from flash.core.model import Task
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
+from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE
 from flash.image.detection.backbones import OBJECT_DETECTION_HEADS
+from flash.image.detection.output import OBJECT_DETECTION_OUTPUTS
 
 
 class ObjectDetector(AdapterTask):
@@ -38,23 +39,30 @@ class ObjectDetector(AdapterTask):
     """
 
     heads: FlashRegistry = OBJECT_DETECTION_HEADS
+    outputs = Task.outputs + OBJECT_DETECTION_OUTPUTS
 
     required_extras: List[str] = ["image", "icevision", "effdet"]
 
     def __init__(
         self,
-        num_classes: int,
+        num_classes: Optional[int] = None,
+        labels: Optional[List[str]] = None,
         backbone: Optional[str] = "resnet18_fpn",
         head: Optional[str] = "retinanet",
         pretrained: bool = True,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         learning_rate: float = 1e-2,
-        output: OUTPUT_TYPE = None,
         predict_kwargs: Dict = None,
         **kwargs: Any,
     ):
         self.save_hyperparameters()
+
+        if labels is not None and num_classes is None:
+            num_classes = len(labels)
+
+        self.labels = labels
+        self.num_classes = num_classes
 
         predict_kwargs = predict_kwargs if predict_kwargs else {}
         metadata = self.heads.get(head, with_metadata=True)
@@ -73,7 +81,6 @@ class ObjectDetector(AdapterTask):
             learning_rate=learning_rate,
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
-            output=output or PredsOutput(),
         )
 
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]) -> None:

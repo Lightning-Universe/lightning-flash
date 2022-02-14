@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import functools
+import inspect
 import itertools
 from typing import Any, Callable, Dict, List, Optional, Union
 
@@ -32,10 +33,20 @@ def print_provider_info(name, providers, func):
         providers = providers[:-1]
     message = f"Using '{name}' provided by {', '.join(str(provider) for provider in providers)}."
 
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        rank_zero_info(message)
-        return func(*args, **kwargs)
+    def build_wrapper(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            rank_zero_info(message)
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    wrapper = build_wrapper(func)
+
+    if inspect.isclass(func):
+        callables = [f for f in dir(func) if callable(getattr(func, f)) and not f.startswith("_")]
+        for c in callables:
+            setattr(wrapper, c, build_wrapper(getattr(func, c)))
 
     return wrapper
 
@@ -56,9 +67,9 @@ class FlashRegistry:
             registries += [self]
 
         if isinstance(other, ConcatRegistry):
-            registries += other.registries
+            registries = other.registries + tuple(registries)
         else:
-            registries += [other]
+            registries = [other] + registries
 
         return ConcatRegistry(*registries)
 

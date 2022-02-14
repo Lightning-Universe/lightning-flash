@@ -30,14 +30,15 @@ from torch.nn import Module
 from torchmetrics.text.rouge import ROUGEScore
 
 from flash.core.data.io.input import DataKeys
-from flash.core.integrations.transformers.states import TransformersBackboneState
 from flash.core.model import Task
 from flash.core.registry import ExternalRegistry, FlashRegistry
 from flash.core.utilities.imports import _TEXT_AVAILABLE, _TM_GREATER_EQUAL_0_7_0
 from flash.core.utilities.providers import _HUGGINGFACE
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.text.ort_callback import ORTCallback
+from flash.text.question_answering.collate import TextQuestionAnsweringCollate
 from flash.text.question_answering.finetuning import _get_question_answering_bacbones_for_freezing
+from flash.text.question_answering.output_transform import QuestionAnsweringOutputTransform
 
 if _TEXT_AVAILABLE:
     from transformers import AutoModelForQuestionAnswering
@@ -67,6 +68,10 @@ class QuestionAnsweringTask(Task):
 
     Args:
         backbone: backbone model to use for the task.
+        max_source_length: Max length of the sequence to be considered during tokenization.
+        max_target_length: Max length of each answer to be produced.
+        padding: Padding type during tokenization.
+        doc_stride: The stride amount to be taken when splitting up a long document into chunks.
         loss_fn: Loss function for training.
         optimizer: Optimizer to use for training.
         lr_scheduler: The LR scheduler to use during training.
@@ -90,7 +95,11 @@ class QuestionAnsweringTask(Task):
 
     def __init__(
         self,
-        backbone: str = "distilbert-base-uncased",
+        backbone: str = "sshleifer/tiny-distilbert-base-cased-distilled-squad",
+        max_source_length: int = 384,
+        max_target_length: int = 30,
+        padding: Union[str, bool] = "max_length",
+        doc_stride: int = 128,
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
@@ -99,28 +108,40 @@ class QuestionAnsweringTask(Task):
         enable_ort: bool = False,
         n_best_size: int = 20,
         version_2_with_negative: bool = True,
-        max_answer_length: int = 30,
         null_score_diff_threshold: float = 0.0,
         use_stemmer: bool = True,
     ):
+        self.save_hyperparameters()
+
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
         # disable HF thousand warnings
         warnings.simplefilter("ignore")
         # set os environ variable for multiprocesses
         os.environ["PYTHONWARNINGS"] = "ignore"
+
         super().__init__(
             loss_fn=loss_fn,
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
+            output_transform=QuestionAnsweringOutputTransform(),
         )
-        self.set_state(TransformersBackboneState(backbone))
+
+        self.collate_fn = TextQuestionAnsweringCollate(
+            backbone=backbone,
+            max_source_length=max_source_length,
+            max_target_length=max_target_length,
+            padding=padding,
+            doc_stride=doc_stride,
+            model=self,
+        )
+
         self.model = self.backbones.get(backbone)()
         self.enable_ort = enable_ort
         self.n_best_size = n_best_size
         self.version_2_with_negative = version_2_with_negative
-        self.max_answer_length = max_answer_length
+        self.max_target_length = max_target_length
         self.null_score_diff_threshold = null_score_diff_threshold
         self._initialize_model_specific_parameters()
 
@@ -167,7 +188,7 @@ class QuestionAnsweringTask(Task):
                 -1 : -self.n_best_size - 1 : -1
             ].tolist()
 
-            max_answer_length: int = 30
+            max_answer_length = self.max_target_length
             for start_index in start_indexes:
                 for end_index in end_indexes:
                     # Don't consider out-of-scope answers, either because the indices are out of bounds or correspond

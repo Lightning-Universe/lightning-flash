@@ -13,12 +13,12 @@
 # limitations under the License.
 from typing import Any, Dict, List, Optional, Union
 
-from pytorch_lightning.utilities import rank_zero_warn
-
-from flash.core.data.io.classification_input import ClassificationState
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.output import Output
+from flash.core.model import Task
+from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
+from flash.core.utilities.providers import _FIFTYONE
 
 if _FIFTYONE_AVAILABLE:
     fo = lazy_import("fiftyone")
@@ -28,12 +28,15 @@ else:
     Detections = None
 
 
+OBJECT_DETECTION_OUTPUTS = FlashRegistry("outputs")
+
+
+@OBJECT_DETECTION_OUTPUTS(name="fiftyone", providers=_FIFTYONE)
 class FiftyOneDetectionLabelsOutput(Output):
     """A :class:`.Output` which converts model outputs to FiftyOne detection format.
 
     Args:
-        labels: A list of labels, assumed to map the class index to the label for that class. If ``labels`` is not
-            provided, will attempt to get them from the :class:`.ClassificationState`.
+        labels: A list of labels, assumed to map the class index to the label for that class.
         threshold: a score threshold to apply to candidate detections.
         return_filepath: Boolean determining whether to return a dict
             containing filepath and FiftyOne labels (True) or only a
@@ -45,31 +48,20 @@ class FiftyOneDetectionLabelsOutput(Output):
         self,
         labels: Optional[List[str]] = None,
         threshold: Optional[float] = None,
-        return_filepath: bool = False,
+        return_filepath: bool = True,
     ):
         super().__init__()
         self._labels = labels
         self.threshold = threshold
         self.return_filepath = return_filepath
 
-        if labels is not None:
-            self.set_state(ClassificationState(labels))
+    @classmethod
+    def from_task(cls, task: Task, **kwargs) -> Output:
+        return cls(labels=getattr(task, "labels", None))
 
     def transform(self, sample: Dict[str, Any]) -> Union[Detections, Dict[str, Any]]:
         if DataKeys.METADATA not in sample:
             raise ValueError("sample requires DefaultDataKeys.METADATA to use a FiftyOneDetectionLabelsOutput output.")
-
-        labels = None
-        if self._labels is not None:
-            labels = self._labels
-        else:
-            state = self.get_state(ClassificationState)
-            if state is not None:
-                labels = state.labels
-            else:
-                rank_zero_warn(
-                    "No ClassificationState was found, int targets will be used as label strings", UserWarning
-                )
 
         height, width = sample[DataKeys.METADATA]["size"]
 
@@ -92,8 +84,8 @@ class FiftyOneDetectionLabelsOutput(Output):
             ]
 
             label = label.item()
-            if labels is not None:
-                label = labels[label]
+            if self._labels is not None:
+                label = self._labels[label]
             else:
                 label = str(int(label))
 

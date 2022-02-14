@@ -25,7 +25,7 @@ datamodule = QuestionAnsweringData.from_squad_v2(
 )
 
 # 2. Build the task
-model = QuestionAnsweringTask()
+model = QuestionAnsweringTask(backbone="distilbert-base-uncased")
 
 # 3. Create the trainer and finetune the model
 trainer = Trainer(max_epochs=3)

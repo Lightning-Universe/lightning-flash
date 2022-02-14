@@ -16,7 +16,6 @@ from typing import Dict, Optional, Type
 from torch.utils.data import Dataset
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
 from flash.core.data.utilities.classification import TargetFormatter
 from flash.core.utilities.imports import _GRAPH_TESTING
@@ -176,13 +175,15 @@ class GraphClassificationData(DataModule):
 
         ds_kw = dict(
             target_formatter=target_formatter,
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
 
+        train_input = input_cls(RunningStage.TRAINING, train_dataset, transform=train_transform, **ds_kw)
+        ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
+
         return cls(
-            input_cls(RunningStage.TRAINING, train_dataset, transform=train_transform, **ds_kw),
+            train_input,
             input_cls(RunningStage.VALIDATING, val_dataset, transform=val_transform, **ds_kw),
             input_cls(RunningStage.TESTING, test_dataset, transform=test_transform, **ds_kw),
             input_cls(RunningStage.PREDICTING, predict_dataset, transform=predict_transform, **ds_kw),

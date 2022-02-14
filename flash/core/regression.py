@@ -19,7 +19,6 @@ import torchmetrics
 
 from flash.core.adapter import AdapterTask
 from flash.core.model import Task
-from flash.core.utilities.types import OUTPUT_TYPE
 
 
 class RegressionMixin:
@@ -43,7 +42,6 @@ class RegressionTask(Task, RegressionMixin):
         *args,
         loss_fn: Optional[Callable] = None,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
-        output: OUTPUT_TYPE = None,
         **kwargs,
     ) -> None:
 
@@ -53,7 +51,6 @@ class RegressionTask(Task, RegressionMixin):
             *args,
             loss_fn=loss_fn,
             metrics=metrics,
-            output=output,
             **kwargs,
         )
 
@@ -64,7 +61,6 @@ class RegressionAdapterTask(AdapterTask, RegressionMixin):
         *args,
         loss_fn: Optional[Callable] = None,
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
-        output: OUTPUT_TYPE = None,
         **kwargs,
     ) -> None:
         metrics, loss_fn = RegressionMixin._build(loss_fn, metrics)
@@ -73,6 +69,5 @@ class RegressionAdapterTask(AdapterTask, RegressionMixin):
             *args,
             loss_fn=loss_fn,
             metrics=metrics,
-            output=output,
             **kwargs,
         )

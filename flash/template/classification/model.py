@@ -11,15 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import torch
 from torch import nn
 
-from flash.core.classification import ClassificationTask, LabelsOutput
+from flash.core.classification import ClassificationTask
 from flash.core.data.io.input import DataKeys
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
+from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.template.classification.backbones import TEMPLATE_BACKBONES
 
 
@@ -40,7 +40,6 @@ class TemplateSKLearnClassifier(ClassificationTask):
             by the :class:`~flash.core.classification.ClassificationTask` depending on the ``multi_label`` argument.
         learning_rate: The learning rate for the optimizer.
         multi_label: If ``True``, this will be treated as a multi-label classification problem.
-        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
     """
 
     backbones: FlashRegistry = TEMPLATE_BACKBONES
@@ -48,7 +47,8 @@ class TemplateSKLearnClassifier(ClassificationTask):
     def __init__(
         self,
         num_features: int,
-        num_classes: int,
+        num_classes: Optional[int] = None,
+        labels: Optional[List[str]] = None,
         backbone: Union[str, Tuple[nn.Module, int]] = "mlp-128",
         backbone_kwargs: Optional[Dict] = None,
         loss_fn: LOSS_FN_TYPE = None,
@@ -57,8 +57,12 @@ class TemplateSKLearnClassifier(ClassificationTask):
         metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-2,
         multi_label: bool = False,
-        output: OUTPUT_TYPE = LabelsOutput(),
     ):
+        self.save_hyperparameters()
+
+        if labels is not None and num_classes is None:
+            num_classes = len(labels)
+
         super().__init__(
             model=None,
             loss_fn=loss_fn,
@@ -67,10 +71,9 @@ class TemplateSKLearnClassifier(ClassificationTask):
             metrics=metrics,
             learning_rate=learning_rate,
             multi_label=multi_label,
-            output=output,
+            num_classes=num_classes,
+            labels=labels,
         )
-
-        self.save_hyperparameters()
 
         if not backbone_kwargs:
             backbone_kwargs = {}

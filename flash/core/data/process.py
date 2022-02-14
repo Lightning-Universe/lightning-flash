@@ -17,7 +17,6 @@ from warnings import warn
 
 from deprecate import deprecated
 
-import flash
 from flash.core.data.io.input import ServeInput as Deserializer
 from flash.core.data.io.output import Output
 
@@ -35,10 +34,6 @@ class DeserializerMapping(Deserializer):
         if isinstance(sample, Mapping):
             return {key: deserializer.deserialize(sample[key]) for key, deserializer in self._deserializers.items()}
         raise ValueError("The model output must be a mapping when using a DeserializerMapping.")
-
-    def attach_data_pipeline_state(self, data_pipeline_state: "flash.core.data.data_pipeline.DataPipelineState"):
-        for deserializer in self._deserializers.values():
-            deserializer.attach_data_pipeline_state(data_pipeline_state)
 
 
 class Serializer(Output):

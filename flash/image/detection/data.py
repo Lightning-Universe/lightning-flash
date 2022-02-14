@@ -15,7 +15,6 @@ from functools import partial
 from typing import Any, Callable, Dict, List, Optional, Sequence, Type, Union
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
 from flash.core.data.utilities.sort import sorted_alphanumeric
 from flash.core.integrations.icevision.data import IceVisionInput
@@ -138,7 +137,7 @@ class ObjectDetectionData(DataModule):
             3
             >>> datamodule.labels
             ['background', 'cat', 'dog']
-            >>> model = ObjectDetector(num_classes=datamodule.num_classes)
+            >>> model = ObjectDetector(labels=datamodule.labels)
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -152,17 +151,20 @@ class ObjectDetectionData(DataModule):
             >>> _ = [os.remove(f"predict_image_{i}.png") for i in range(1, 4)]
         """
 
-        ds_kw = dict(data_pipeline_state=DataPipelineState(), transform_kwargs=transform_kwargs)
+        ds_kw = dict(transform_kwargs=transform_kwargs)
+
+        train_input = input_cls(
+            RunningStage.TRAINING,
+            train_files,
+            train_targets,
+            train_bboxes,
+            transform=train_transform,
+            **ds_kw,
+        )
+        ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
 
         return cls(
-            input_cls(
-                RunningStage.TRAINING,
-                train_files,
-                train_targets,
-                train_bboxes,
-                transform=train_transform,
-                **ds_kw,
-            ),
+            train_input,
             input_cls(
                 RunningStage.VALIDATING,
                 val_files,
@@ -206,7 +208,7 @@ class ObjectDetectionData(DataModule):
         **data_module_kwargs,
     ) -> "ObjectDetectionData":
 
-        ds_kw = dict(parser=parser, data_pipeline_state=DataPipelineState(), transform_kwargs=transform_kwargs)
+        ds_kw = dict(parser=parser, transform_kwargs=transform_kwargs)
 
         return cls(
             input_cls(
@@ -832,7 +834,7 @@ class ObjectDetectionData(DataModule):
             >>> _ = [os.remove(f"predict_image_{i}.png") for i in range(1, 4)]
         """
 
-        ds_kw = dict(data_pipeline_state=DataPipelineState(), transform_kwargs=transform_kwargs)
+        ds_kw = dict(transform_kwargs=transform_kwargs)
 
         return cls(
             input_cls(RunningStage.TRAINING, train_dataset, label_field, iscrowd, transform=train_transform, **ds_kw),

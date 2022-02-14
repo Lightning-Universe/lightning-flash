@@ -31,15 +31,15 @@ datamodule = VideoClassificationData.from_folders(
 )
 
 # 2. Build the task
-model = VideoClassifier(backbone="x3d_xs", num_classes=datamodule.num_classes, pretrained=False)
+model = VideoClassifier(backbone="x3d_xs", labels=datamodule.labels, pretrained=False)
 
 # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
+trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count(), fast_dev_run=True)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Make a prediction
 datamodule = VideoClassificationData.from_folders(predict_folder="data/kinetics/predict", batch_size=1)
-predictions = trainer.predict(model, datamodule=datamodule)
+predictions = trainer.predict(model, datamodule=datamodule, output="labels")
 print(predictions)
 
 # 5. Save the model!

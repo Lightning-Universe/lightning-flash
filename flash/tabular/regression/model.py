@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import partial
-from typing import Any, Callable, Dict, Optional, Type
+from typing import Any, Callable, Dict, Optional, Type, Union
 
 from torch.nn import functional as F
 
 from flash.core.data.io.input import ServeInput
 from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.io.output import Output
 from flash.core.integrations.pytorch_tabular.backbones import PYTORCH_TABULAR_BACKBONES
 from flash.core.registry import FlashRegistry
 from flash.core.regression import RegressionAdapterTask
@@ -32,8 +33,8 @@ class TabularRegressor(RegressionAdapterTask):
     :ref:`tabular_classification`.
 
     Args:
-        embedding_sizes: Number of columns in table (not including target column).
-        categorical_fields: Number of classes to classify.
+        parameters: The parameters computed from the training data (can be obtained from the ``parameters`` attribute of
+            the ``TabularRegressionData`` object containing your training data).
         embedding_sizes: List of (num_classes, emb_dim) to form categorical embeddings.
         cat_dims: Number of distinct values for each categorical column
         num_features: Number of columns in table
@@ -54,8 +55,8 @@ class TabularRegressor(RegressionAdapterTask):
 
     def __init__(
         self,
+        parameters: Dict[str, Any],
         embedding_sizes: list,
-        categorical_fields: list,
         cat_dims: list,
         num_features: int,
         backbone: str = "tabnet",
@@ -67,12 +68,15 @@ class TabularRegressor(RegressionAdapterTask):
         **backbone_kwargs
     ):
         self.save_hyperparameters()
+
+        self._parameters = parameters
+
         metadata = self.backbones.get(backbone, with_metadata=True)
         adapter = metadata["metadata"]["adapter"].from_task(
             self,
             task_type="regression",
             embedding_sizes=embedding_sizes,
-            categorical_fields=categorical_fields,
+            categorical_fields=parameters["categorical_fields"],
             cat_dims=cat_dims,
             num_features=num_features,
             output_dim=1,
@@ -91,8 +95,8 @@ class TabularRegressor(RegressionAdapterTask):
     @classmethod
     def from_data(cls, datamodule, **kwargs) -> "TabularRegressor":
         model = cls(
+            parameters=datamodule.parameters,
             embedding_sizes=datamodule.embedding_sizes,
-            categorical_fields=datamodule.categorical_fields,
             cat_dims=datamodule.cat_dims,
             num_features=datamodule.num_features,
             **kwargs
@@ -108,8 +112,10 @@ class TabularRegressor(RegressionAdapterTask):
         input_cls: Optional[Type[ServeInput]] = TabularDeserializer,
         transform: INPUT_TRANSFORM_TYPE = InputTransform,
         transform_kwargs: Optional[Dict] = None,
+        output: Optional[Union[str, Output]] = None,
         parameters: Optional[Dict[str, Any]] = None,
     ) -> Composition:
+        parameters = parameters or self._parameters
         return super().serve(
-            host, port, sanity_check, partial(input_cls, parameters=parameters), transform, transform_kwargs
+            host, port, sanity_check, partial(input_cls, parameters=parameters), transform, transform_kwargs, output
         )

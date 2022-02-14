@@ -67,7 +67,6 @@ _____________________________
     :template: classtemplate.rst
 
     ~flash.core.data.data_pipeline.DataPipeline
-    ~flash.core.data.data_pipeline.DataPipelineState
 
 flash.core.data.io.input
 ___________________________
@@ -80,7 +79,6 @@ ___________________________
     ~flash.core.data.io.input.Input
     ~flash.core.data.io.input.DataKeys
     ~flash.core.data.io.input.InputFormat
-    ~flash.core.data.io.input.ImageLabelsMap
 
 flash.core.data.io.classification_input
 _______________________________________
@@ -90,7 +88,6 @@ _______________________________________
     :nosignatures:
     :template: classtemplate.rst
 
-    ~flash.core.data.io.classification_input.ClassificationState
     ~flash.core.data.io.classification_input.ClassificationInputMixin
 
 flash.core.data.utilities.classification
@@ -133,7 +130,6 @@ __________________________
     :nosignatures:
     :template: classtemplate.rst
 
-    ~flash.core.data.properties.ProcessState
     ~flash.core.data.properties.Properties
 
 flash.core.data.splits

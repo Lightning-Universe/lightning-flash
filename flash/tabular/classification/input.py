@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from flash.core.data.io.classification_input import ClassificationInputMixin
 from flash.core.data.io.input import DataKeys
+from flash.core.data.utilities.classification import TargetFormatter
 from flash.core.data.utilities.data_frame import read_csv, resolve_targets
 from flash.core.utilities.imports import _PANDAS_AVAILABLE
 from flash.tabular.input import TabularDataFrameInput
@@ -33,12 +34,13 @@ class TabularClassificationDataFrameInput(TabularDataFrameInput, ClassificationI
         numerical_fields: Optional[Union[str, List[str]]] = None,
         target_fields: Optional[Union[str, List[str]]] = None,
         parameters: Dict[str, Any] = None,
+        target_formatter: Optional[TargetFormatter] = None,
     ):
         cat_vars, num_vars = self.preprocess(data_frame, categorical_fields, numerical_fields, parameters)
 
         if not self.predicting:
             targets = resolve_targets(data_frame, target_fields)
-            self.load_target_metadata(targets)
+            self.load_target_metadata(targets, target_formatter=target_formatter)
             return [{DataKeys.INPUT: (c, n), DataKeys.TARGET: t} for c, n, t in zip(cat_vars, num_vars, targets)]
         else:
             return [{DataKeys.INPUT: (c, n)} for c, n in zip(cat_vars, num_vars)]
@@ -57,6 +59,9 @@ class TabularClassificationCSVInput(TabularClassificationDataFrameInput):
         numerical_fields: Optional[Union[str, List[str]]] = None,
         target_fields: Optional[Union[str, List[str]]] = None,
         parameters: Dict[str, Any] = None,
+        target_formatter: Optional[TargetFormatter] = None,
     ):
         if file is not None:
-            return super().load_data(read_csv(file), categorical_fields, numerical_fields, target_fields, parameters)
+            return super().load_data(
+                read_csv(file), categorical_fields, numerical_fields, target_fields, parameters, target_formatter
+            )

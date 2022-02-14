@@ -15,7 +15,6 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
 from flash.core.integrations.icevision.data import IceVisionInput
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
@@ -90,7 +89,7 @@ class KeypointDetectionData(DataModule):
         **data_module_kwargs: Any,
     ) -> "KeypointDetectionData":
 
-        ds_kw = dict(parser=parser, data_pipeline_state=DataPipelineState(), transform_kwargs=transform_kwargs)
+        ds_kw = dict(parser=parser, transform_kwargs=transform_kwargs)
 
         return cls(
             input_cls(

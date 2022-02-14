@@ -28,7 +28,7 @@ datamodule = ImageClassificationData.from_folders(
 )
 
 # 2. Build the task
-model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+model = ImageClassifier(backbone="resnet18", labels=datamodule.labels)
 
 # 3. Create the trainer and finetune the model
 trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
@@ -43,7 +43,7 @@ datamodule = ImageClassificationData.from_files(
     ],
     batch_size=3,
 )
-predictions = trainer.predict(model, datamodule=datamodule)
+predictions = trainer.predict(model, datamodule=datamodule, output="labels")
 print(predictions)
 
 # 5. Save the model!

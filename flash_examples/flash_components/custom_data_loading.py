@@ -24,7 +24,6 @@ from pytorch_lightning import seed_everything
 
 from flash import _PACKAGE_ROOT, RunningStage
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
 from flash.core.data.utils import download_data
@@ -289,13 +288,11 @@ class ImageClassificationDataModule(DataModule):
         **data_module_kwargs: Any,
     ) -> "ImageClassificationDataModule":
 
-        kw = dict(data_pipeline_state=DataPipelineState())
-
         return cls(
-            MultipleFoldersImageInput(RunningStage.TRAINING, train_folders, transform=train_transform, **kw),
-            MultipleFoldersImageInput(RunningStage.VALIDATING, val_folders, transform=val_transform, **kw),
-            MultipleFoldersImageInput(RunningStage.VALIDATING, test_folders, transform=test_transform, **kw),
-            MultipleFoldersImageInput(RunningStage.PREDICTING, predict_folder, transform=predict_transform, **kw),
+            MultipleFoldersImageInput(RunningStage.TRAINING, train_folders, transform=train_transform),
+            MultipleFoldersImageInput(RunningStage.VALIDATING, val_folders, transform=val_transform),
+            MultipleFoldersImageInput(RunningStage.VALIDATING, test_folders, transform=test_transform),
+            MultipleFoldersImageInput(RunningStage.PREDICTING, predict_folder, transform=predict_transform),
             **data_module_kwargs,
         )
 

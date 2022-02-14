@@ -15,8 +15,13 @@ from typing import Any, List, Union
 
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.output import Output
+from flash.core.registry import FlashRegistry
+
+BASE_OUTPUTS = FlashRegistry("outputs")
+BASE_OUTPUTS(name="raw")(Output)
 
 
+@BASE_OUTPUTS(name="preds")
 class PredsOutput(Output):
     """A :class:`~flash.core.data.io.output.Output` which returns the "preds" from the model outputs."""
 

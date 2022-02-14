@@ -26,7 +26,7 @@ datamodule = TemplateData.from_sklearn(
 )
 
 # 2. Build the task
-model = TemplateSKLearnClassifier(num_features=datamodule.num_features, num_classes=datamodule.num_classes, output=None)
+model = TemplateSKLearnClassifier(num_features=datamodule.num_features, num_classes=datamodule.num_classes)
 
 # 3. Create the trainer and train the model
 trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
@@ -41,7 +41,7 @@ datamodule = TemplateData.from_numpy(
     ],
     batch_size=4,
 )
-predictions = trainer.predict(model, datamodule=datamodule)
+predictions = trainer.predict(model, datamodule=datamodule, output="classes")
 print(predictions)
 
 # 5. Save the model!

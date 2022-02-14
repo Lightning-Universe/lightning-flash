@@ -15,7 +15,6 @@ from functools import partial
 from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.utilities.sort import sorted_alphanumeric
@@ -73,7 +72,7 @@ class InstanceSegmentationData(DataModule):
         **data_module_kwargs,
     ) -> "InstanceSegmentationData":
 
-        ds_kw = dict(parser=parser, data_pipeline_state=DataPipelineState(), transform_kwargs=transform_kwargs)
+        ds_kw = dict(parser=parser, transform_kwargs=transform_kwargs)
 
         return cls(
             input_cls(

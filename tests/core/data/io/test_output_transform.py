@@ -13,21 +13,19 @@
 # limitations under the License.
 import torch
 
-from flash.core.data.batch import default_uncollate
-from flash.core.data.io.output_transform import _OutputTransformProcessor
+from flash.core.data.io.output_transform import OutputTransform
 
 
-def test_output_transform_processor_str():
-    output_transform_processor = _OutputTransformProcessor(
-        default_uncollate,
-        torch.relu,
-        torch.softmax,
-        None,
-    )
-    assert str(output_transform_processor) == (
-        "_OutputTransformProcessor:\n"
-        "\t(per_batch_transform): FuncModule(relu)\n"
-        "\t(uncollate_fn): FuncModule(default_uncollate)\n"
-        "\t(per_sample_transform): FuncModule(softmax)\n"
-        "\t(output): None"
-    )
+def test_output_transform():
+    class CustomOutputTransform(OutputTransform):
+        @staticmethod
+        def per_batch_transform(batch):
+            return batch * 2
+
+        @staticmethod
+        def per_sample_transform(sample):
+            return sample + 1
+
+    output_transform = CustomOutputTransform()
+    transformed = output_transform(torch.ones(10))
+    assert all(torch.isclose(t, torch.tensor(3.0)) for t in transformed)

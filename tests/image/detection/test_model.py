@@ -18,11 +18,11 @@ from unittest import mock
 import numpy as np
 import pytest
 import torch
-from pytorch_lightning import Trainer
 from torch.utils.data import Dataset
 
 from flash.__main__ import main
 from flash.core.data.io.input import DataKeys
+from flash.core.trainer import Trainer
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE
 from flash.image import ObjectDetector
 
@@ -146,8 +146,8 @@ def test_predict(tmpdir, head):
     dl = model.process_train_dataset(ds, trainer, 2, 0, False, None)
     trainer.fit(model, dl)
     dl = model.process_predict_dataset(ds, batch_size=2)
-    predictions = trainer.predict(model, dl)
+    predictions = trainer.predict(model, dl, output="preds")
     assert len(predictions[0][0]["bboxes"]) > 0
     model.predict_kwargs = {"detection_threshold": 2}
-    predictions = trainer.predict(model, dl)
+    predictions = trainer.predict(model, dl, output="preds")
     assert len(predictions[0][0]["bboxes"]) == 0

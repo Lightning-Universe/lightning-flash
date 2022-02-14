@@ -19,9 +19,9 @@ import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Sampler
 
-from flash.core.data.io.classification_input import ClassificationInputMixin, ClassificationState
+from flash.core.data.io.classification_input import ClassificationInputMixin
 from flash.core.data.io.input import DataKeys, Input, IterableInput
-from flash.core.data.utilities.classification import MultiBinaryTargetFormatter
+from flash.core.data.utilities.classification import MultiBinaryTargetFormatter, TargetFormatter
 from flash.core.data.utilities.data_frame import read_csv, resolve_files, resolve_targets
 from flash.core.data.utilities.paths import list_valid_files, make_dataset, PATH_TYPE
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
@@ -64,6 +64,7 @@ class VideoClassificationInput(IterableInput, ClassificationInputMixin):
         video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
         decode_audio: bool = False,
         decoder: str = "pyav",
+        target_formatter: Optional[TargetFormatter] = None,
     ) -> "LabeledVideoDataset":
         dataset = LabeledVideoDataset(
             LabeledVideoPaths(list(zip(files, targets))),
@@ -73,7 +74,9 @@ class VideoClassificationInput(IterableInput, ClassificationInputMixin):
             decoder=decoder,
         )
         if not self.predicting:
-            self.load_target_metadata([sample[1] for sample in dataset._labeled_videos._paths_and_labels])
+            self.load_target_metadata(
+                [sample[1] for sample in dataset._labeled_videos._paths_and_labels], target_formatter=target_formatter
+            )
         return dataset
 
     def load_sample(self, sample):
@@ -91,6 +94,7 @@ class VideoClassificationFoldersInput(VideoClassificationInput):
         video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
         decode_audio: bool = False,
         decoder: str = "pyav",
+        target_formatter: Optional[TargetFormatter] = None,
     ) -> "LabeledVideoDataset":
         return super().load_data(
             *make_dataset(path, extensions=("mp4", "avi")),
@@ -100,6 +104,7 @@ class VideoClassificationFoldersInput(VideoClassificationInput):
             video_sampler=video_sampler,
             decode_audio=decode_audio,
             decoder=decoder,
+            target_formatter=target_formatter,
         )
 
 
@@ -114,6 +119,7 @@ class VideoClassificationFilesInput(VideoClassificationInput):
         video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
         decode_audio: bool = False,
         decoder: str = "pyav",
+        target_formatter: Optional[TargetFormatter] = None,
     ) -> "LabeledVideoDataset":
         return super().load_data(
             paths,
@@ -124,6 +130,7 @@ class VideoClassificationFilesInput(VideoClassificationInput):
             video_sampler=video_sampler,
             decode_audio=decode_audio,
             decoder=decoder,
+            target_formatter=target_formatter,
         )
 
 
@@ -141,6 +148,7 @@ class VideoClassificationDataFrameInput(VideoClassificationInput):
         video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
         decode_audio: bool = False,
         decoder: str = "pyav",
+        target_formatter: Optional[TargetFormatter] = None,
     ) -> "LabeledVideoDataset":
         result = super().load_data(
             resolve_files(data_frame, input_key, root, resolver),
@@ -151,6 +159,7 @@ class VideoClassificationDataFrameInput(VideoClassificationInput):
             video_sampler=video_sampler,
             decode_audio=decode_audio,
             decoder=decoder,
+            target_formatter=target_formatter,
         )
 
         # If we had binary multi-class targets then we also know the labels (column names)
@@ -159,8 +168,7 @@ class VideoClassificationDataFrameInput(VideoClassificationInput):
             and isinstance(self.target_formatter, MultiBinaryTargetFormatter)
             and isinstance(target_keys, List)
         ):
-            classification_state = self.get_state(ClassificationState)
-            self.set_state(ClassificationState(target_keys, classification_state.num_classes))
+            self.labels = target_keys
 
         return result
 
@@ -179,6 +187,7 @@ class VideoClassificationCSVInput(VideoClassificationDataFrameInput):
         video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
         decode_audio: bool = False,
         decoder: str = "pyav",
+        target_formatter: Optional[TargetFormatter] = None,
     ) -> "LabeledVideoDataset":
         data_frame = read_csv(csv_file)
         if root is None:
@@ -195,6 +204,7 @@ class VideoClassificationCSVInput(VideoClassificationDataFrameInput):
             video_sampler=video_sampler,
             decode_audio=decode_audio,
             decoder=decoder,
+            target_formatter=target_formatter,
         )
 
 
@@ -210,6 +220,7 @@ class VideoClassificationFiftyOneInput(VideoClassificationInput):
         decode_audio: bool = False,
         decoder: str = "pyav",
         label_field: str = "ground_truth",
+        target_formatter: Optional[TargetFormatter] = None,
     ) -> "LabeledVideoDataset":
         label_utilities = FiftyOneLabelUtilities(label_field, fol.Classification)
         label_utilities.validate(sample_collection)
@@ -223,6 +234,7 @@ class VideoClassificationFiftyOneInput(VideoClassificationInput):
             video_sampler=video_sampler,
             decode_audio=decode_audio,
             decoder=decoder,
+            target_formatter=target_formatter,
         )
 
 

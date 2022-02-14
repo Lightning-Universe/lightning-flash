@@ -49,24 +49,3 @@ class RunningStage(LightningEnum):
         if self == self.VALIDATING:
             return "val"
         return self.value
-
-
-_STAGES_PREFIX = {
-    RunningStage.TRAINING: "train",
-    RunningStage.TESTING: "test",
-    RunningStage.VALIDATING: "val",
-    RunningStage.PREDICTING: "predict",
-    RunningStage.SERVING: "serve",
-}
-
-_STAGES_PREFIX_VALUES = {"train", "test", "val", "predict", "serve"}
-
-_RUNNING_STAGE_MAPPING = {
-    RunningStage.TRAINING: RunningStage.TRAINING,
-    RunningStage.SANITY_CHECKING: RunningStage.VALIDATING,
-    RunningStage.VALIDATING: RunningStage.VALIDATING,
-    RunningStage.TESTING: RunningStage.TESTING,
-    RunningStage.PREDICTING: RunningStage.PREDICTING,
-    RunningStage.SERVING: RunningStage.SERVING,
-    RunningStage.TUNING: RunningStage.TUNING,
-}

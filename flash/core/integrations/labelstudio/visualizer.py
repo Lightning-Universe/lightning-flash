@@ -5,19 +5,14 @@ import string
 from pytorch_lightning.utilities.cloud_io import get_filesystem
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_pipeline import DataPipelineState
-from flash.core.integrations.labelstudio.input import LabelStudioState
+from flash.core.integrations.labelstudio.input import LabelStudioParameters
 
 
 class App:
     """App for visualizing predictions in Label Studio results format."""
 
     def __init__(self, datamodule: DataModule):
-        ds = datamodule.inputs
-        data_pipeline_state: DataPipelineState = (
-            ds[0]._data_pipeline_state if isinstance(ds, list) else ds._data_pipeline_state
-        )
-        self.state: LabelStudioState = data_pipeline_state.get_state(LabelStudioState)
+        self.parameters: LabelStudioParameters = datamodule.train_dataset.parameters
 
     def show_predictions(self, predictions):
         """Converts predictions to Label Studio results."""
@@ -30,7 +25,7 @@ class App:
     def show_tasks(self, predictions, export_json=None):
         """Converts predictions to tasks format."""
         results = self.show_predictions(predictions)
-        data_type = list(self.state.data_types)[0]
+        data_type = list(self.parameters.data_types)[0]
         meta = {"ids": [], "data": [], "meta": [], "max_predictions_id": 0, "project": None}
         if export_json:
             fs = get_filesystem(export_json)
@@ -77,13 +72,13 @@ class App:
         """Construction Label Studio result from data source and prediction values."""
         # get label
         if isinstance(pred, list):
-            label = [list(self.state.classes)[p] for p in pred]
+            label = [list(self.parameters.classes)[p] for p in pred]
         else:
-            label = list(self.state.classes)[pred]
+            label = list(self.parameters.classes)[pred]
         # get data type, if len(data_types) > 1 take first data type
-        data_type = list(self.state.data_types)[0]
+        data_type = list(self.parameters.data_types)[0]
         # get tag type, if len(tag_types) > 1 take first tag
-        tag_type = list(self.state.tag_types)[0]
+        tag_type = list(self.parameters.tag_types)[0]
         js = {
             "result": [
                 {

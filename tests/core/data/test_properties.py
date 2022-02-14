@@ -13,36 +13,8 @@
 # limitations under the License.
 import pytest
 
-from flash.core.data.data_pipeline import DataPipelineState
-from flash.core.data.properties import ProcessState, Properties
+from flash.core.data.properties import Properties
 from flash.core.utilities.stages import RunningStage
-
-
-def test_properties_data_pipeline_state():
-    """Tests that ``get_state`` and ``set_state`` work for properties and that ``DataPipelineState`` is attached
-    correctly."""
-
-    class MyProcessState1(ProcessState):
-        pass
-
-    class MyProcessState2(ProcessState):
-        pass
-
-    class OtherProcessState(ProcessState):
-        pass
-
-    my_properties = Properties()
-    my_properties.set_state(MyProcessState1())
-    assert my_properties._state == {MyProcessState1: MyProcessState1()}
-    assert my_properties.get_state(OtherProcessState) is None
-
-    data_pipeline_state = DataPipelineState()
-    data_pipeline_state.set_state(OtherProcessState())
-    my_properties.attach_data_pipeline_state(data_pipeline_state)
-    assert my_properties.get_state(OtherProcessState) == OtherProcessState()
-
-    my_properties.set_state(MyProcessState2())
-    assert data_pipeline_state.get_state(MyProcessState2) == MyProcessState2()
 
 
 @pytest.mark.parametrize(

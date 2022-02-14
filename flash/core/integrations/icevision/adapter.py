@@ -85,7 +85,7 @@ class IceVisionAdapter(Adapter):
         return cls(model_type, model, icevision_adapter, backbone, predict_kwargs)
 
     @staticmethod
-    def _collate_fn(collate_fn, samples, metadata: Optional[List[Dict[str, Any]]] = None):
+    def _wrap_collate_fn(collate_fn, samples, metadata: Optional[List[Dict[str, Any]]] = None):
         metadata = metadata or [None] * len(samples)
         return {
             DataKeys.INPUT: collate_fn(
@@ -105,6 +105,7 @@ class IceVisionAdapter(Adapter):
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
     ) -> DataLoader:
         data_loader = self.model_type.train_dl(
             dataset,
@@ -114,8 +115,9 @@ class IceVisionAdapter(Adapter):
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            persistent_workers=persistent_workers,
         )
-        data_loader.collate_fn = functools.partial(self._collate_fn, data_loader.collate_fn)
+        data_loader.collate_fn = functools.partial(self._wrap_collate_fn, data_loader.collate_fn)
         return data_loader
 
     def process_val_dataset(
@@ -129,6 +131,7 @@ class IceVisionAdapter(Adapter):
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
     ) -> DataLoader:
         data_loader = self.model_type.valid_dl(
             dataset,
@@ -138,8 +141,9 @@ class IceVisionAdapter(Adapter):
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            persistent_workers=persistent_workers,
         )
-        data_loader.collate_fn = functools.partial(self._collate_fn, data_loader.collate_fn)
+        data_loader.collate_fn = functools.partial(self._wrap_collate_fn, data_loader.collate_fn)
         return data_loader
 
     def process_test_dataset(
@@ -153,6 +157,7 @@ class IceVisionAdapter(Adapter):
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
     ) -> DataLoader:
         data_loader = self.model_type.valid_dl(
             dataset,
@@ -162,8 +167,9 @@ class IceVisionAdapter(Adapter):
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            persistent_workers=persistent_workers,
         )
-        data_loader.collate_fn = functools.partial(self._collate_fn, data_loader.collate_fn)
+        data_loader.collate_fn = functools.partial(self._wrap_collate_fn, data_loader.collate_fn)
         return data_loader
 
     def process_predict_dataset(
@@ -176,6 +182,7 @@ class IceVisionAdapter(Adapter):
         shuffle: bool = False,
         drop_last: bool = True,
         sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
     ) -> DataLoader:
         data_loader = self.model_type.infer_dl(
             dataset,
@@ -185,8 +192,9 @@ class IceVisionAdapter(Adapter):
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            persistent_workers=persistent_workers,
         )
-        data_loader.collate_fn = functools.partial(self._collate_fn, data_loader.collate_fn)
+        data_loader.collate_fn = functools.partial(self._wrap_collate_fn, data_loader.collate_fn)
         return data_loader
 
     def training_step(self, batch, batch_idx) -> Any:

@@ -51,7 +51,7 @@ def graph_classification():
             "trainer.max_epochs": 3,
         },
         finetune=False,
-        datamodule_attributes={"num_classes", "num_features"},
+        datamodule_attributes={"num_classes", "labels", "num_features"},
     )
 
     cli.trainer.save_checkpoint("graph_classification.pt")

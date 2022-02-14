@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import torch
 
-from flash.core.data.io.input import DataKeys, ImageLabelsMap, Input
+from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.utilities.paths import filter_valid_files, PATH_TYPE
 from flash.core.data.utilities.samples import to_samples
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
@@ -44,7 +44,6 @@ class SemanticSegmentationInput(Input):
             labels_map = labels_map or SegmentationLabelsOutput.create_random_labels_map(num_classes)
 
         if labels_map is not None:
-            self.set_state(ImageLabelsMap(labels_map))
             self.labels_map = labels_map
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:

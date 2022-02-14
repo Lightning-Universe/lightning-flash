@@ -39,4 +39,3 @@ __________________
     speech_recognition.input.SpeechRecognitionDatasetInput
     speech_recognition.input.SpeechRecognitionDeserializer
     speech_recognition.output_transform.SpeechRecognitionOutputTransform
-    speech_recognition.output_transform.SpeechRecognitionBackboneState

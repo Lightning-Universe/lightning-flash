@@ -17,7 +17,6 @@ import numpy as np
 import torch
 
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
 from flash.core.utilities.imports import _IMAGE_TESTING
 from flash.core.utilities.stages import RunningStage
@@ -104,7 +103,6 @@ class StyleTransferData(DataModule):
         """
 
         ds_kw = dict(
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
@@ -195,7 +193,6 @@ class StyleTransferData(DataModule):
         """
 
         ds_kw = dict(
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
@@ -260,7 +257,6 @@ class StyleTransferData(DataModule):
         """
 
         ds_kw = dict(
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
@@ -325,7 +321,6 @@ class StyleTransferData(DataModule):
         """
 
         ds_kw = dict(
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )

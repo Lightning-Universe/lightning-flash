@@ -12,23 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
-from typing import Any, Callable, Dict
-
-import torch
 
 from flash.core.data.io.input import DataKeys
-from flash.core.data.io.input_transform import InputTransform
+from flash.core.integrations.transformers.collate import TransformersCollate
 
 
-@dataclass
-class TransformersInputTransform(InputTransform):
-    @staticmethod
-    def to_tensor(sample: Dict[str, Any]) -> Dict[str, Any]:
-        for key in sample:
-            if key is DataKeys.METADATA:
-                continue
-            sample[key] = torch.as_tensor(sample[key])
-        return sample
+@dataclass(unsafe_hash=True)
+class TextClassificationCollate(TransformersCollate):
 
-    def per_sample_transform(self) -> Callable:
-        return self.to_tensor
+    max_length: int = 128
+
+    def tokenize(self, sample):
+        tokenized_sample = self.tokenizer(
+            sample[DataKeys.INPUT], max_length=self.max_length, truncation=True, padding="max_length"
+        )
+        tokenized_sample = tokenized_sample.data
+        if DataKeys.TARGET in sample:
+            tokenized_sample[DataKeys.TARGET] = sample[DataKeys.TARGET]
+        return tokenized_sample

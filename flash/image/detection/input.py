@@ -13,8 +13,9 @@
 # limitations under the License.
 from typing import Any, Dict, Hashable, List, Optional, Sequence
 
-from flash.core.data.io.classification_input import ClassificationInputMixin, ClassificationState
+from flash.core.data.io.classification_input import ClassificationInputMixin
 from flash.core.data.io.input import DataKeys
+from flash.core.data.utilities.classification import TargetFormatter
 from flash.core.data.utilities.paths import filter_valid_files, PATH_TYPE
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
 from flash.core.integrations.icevision.data import IceVisionInput
@@ -43,13 +44,16 @@ class ObjectDetectionFilesInput(ClassificationInputMixin, ImageFilesInput):
         files: List[PATH_TYPE],
         targets: Optional[List[List[Any]]] = None,
         bboxes: Optional[List[List[Dict[str, int]]]] = None,
+        target_formatter: Optional[TargetFormatter] = None,
     ) -> List[Dict[str, Any]]:
         if targets is None:
             return super().load_data(files)
         files, targets, bboxes = filter_valid_files(
             files, targets, bboxes, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS
         )
-        self.load_target_metadata([t for target in targets for t in target], add_background=True)
+        self.load_target_metadata(
+            [t for target in targets for t in target], add_background=True, target_formatter=target_formatter
+        )
 
         return [
             {DataKeys.INPUT: file, DataKeys.TARGET: {"bboxes": bbox, "labels": label}}
@@ -142,7 +146,6 @@ class ObjectDetectionFiftyOneInput(IceVisionInput):
         class_map = ClassMap(classes)
         self.num_classes = len(class_map)
         self.labels = [class_map.get_by_id(i) for i in range(self.num_classes)]
-        self.set_state(ClassificationState(self.labels))
 
         parser = FiftyOneParser(sample_collection, class_map, label_field, iscrowd)
         records = parser.parse(data_splitter=SingleSplitSplitter())

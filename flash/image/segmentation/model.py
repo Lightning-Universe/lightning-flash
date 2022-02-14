@@ -19,7 +19,9 @@ from torch.nn import functional as F
 
 from flash.core.classification import ClassificationTask
 from flash.core.data.io.input import DataKeys, ServeInput
+from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import OutputTransform
+from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.serve import Composition
 from flash.core.utilities.imports import _KORNIA_AVAILABLE, _TM_GREATER_EQUAL_0_7_0, requires
@@ -31,13 +33,12 @@ from flash.core.utilities.types import (
     METRICS_TYPE,
     OPTIMIZER_TYPE,
     OUTPUT_TRANSFORM_TYPE,
-    OUTPUT_TYPE,
 )
 from flash.image.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 from flash.image.segmentation.heads import SEMANTIC_SEGMENTATION_HEADS
 from flash.image.segmentation.input import SemanticSegmentationDeserializer
 from flash.image.segmentation.input_transform import SemanticSegmentationInputTransform
-from flash.image.segmentation.output import SegmentationLabelsOutput
+from flash.image.segmentation.output import SEMANTIC_SEGMENTATION_OUTPUTS
 
 if _KORNIA_AVAILABLE:
     import kornia as K
@@ -83,8 +84,8 @@ class SemanticSegmentation(ClassificationTask):
     output_transform_cls = SemanticSegmentationOutputTransform
 
     backbones: FlashRegistry = SEMANTIC_SEGMENTATION_BACKBONES
-
     heads: FlashRegistry = SEMANTIC_SEGMENTATION_HEADS
+    outputs: FlashRegistry = Task.outputs + SEMANTIC_SEGMENTATION_OUTPUTS
 
     required_extras: str = "image"
 
@@ -102,7 +103,6 @@ class SemanticSegmentation(ClassificationTask):
         metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-3,
         multi_label: bool = False,
-        output: OUTPUT_TYPE = None,
         output_transform: OUTPUT_TRANSFORM_TYPE = None,
     ) -> None:
         if metrics is None:
@@ -122,7 +122,6 @@ class SemanticSegmentation(ClassificationTask):
             lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
-            output=output or SegmentationLabelsOutput(),
             output_transform=output_transform or self.output_transform_cls(),
         )
 
@@ -191,8 +190,9 @@ class SemanticSegmentation(ClassificationTask):
         input_cls: Optional[Type[ServeInput]] = SemanticSegmentationDeserializer,
         transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
         transform_kwargs: Optional[Dict] = None,
+        output: Optional[Union[str, Output]] = None,
     ) -> Composition:
-        return super().serve(host, port, sanity_check, input_cls, transform, transform_kwargs)
+        return super().serve(host, port, sanity_check, input_cls, transform, transform_kwargs, output)
 
     @staticmethod
     def _ci_benchmark_fn(history: List[Dict[str, Any]]):

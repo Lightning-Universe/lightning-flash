@@ -29,7 +29,7 @@ datamodule = TextClassificationData.from_csv(
 )
 
 # 2. Build the task
-model = TextClassifier(backbone="prajjwal1/bert-medium", num_classes=datamodule.num_classes)
+model = TextClassifier(backbone="prajjwal1/bert-medium", labels=datamodule.labels)
 
 # 3. Create the trainer and finetune the model
 trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
@@ -44,7 +44,7 @@ datamodule = TextClassificationData.from_lists(
     ],
     batch_size=4,
 )
-predictions = trainer.predict(model, datamodule=datamodule)
+predictions = trainer.predict(model, datamodule=datamodule, output="labels")
 print(predictions)
 
 # 5. Save the model!

@@ -17,10 +17,8 @@ from torch.utils.data.sampler import Sampler
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
-from flash.core.data.data_pipeline import DataPipelineState
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
-from flash.core.data.io.output_transform import OutputTransform
 from flash.core.utilities.imports import _PANDAS_AVAILABLE, _TABULAR_TESTING
 from flash.core.utilities.stages import RunningStage
 from flash.tabular.forecasting.input import TabularForecastingDataFrameInput
@@ -72,7 +70,6 @@ class TabularForecastingData(DataModule):
         sampler: Optional[Type[Sampler]] = None,
         pin_memory: bool = True,
         persistent_workers: bool = True,
-        output_transform: Optional[OutputTransform] = None,
         **input_kwargs: Any,
     ) -> "TabularForecastingData":
         """Creates a :class:`~flash.tabular.forecasting.data.TabularForecastingData` object from the given data
@@ -169,7 +166,6 @@ class TabularForecastingData(DataModule):
         """
 
         ds_kw = dict(
-            data_pipeline_state=DataPipelineState(),
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
             time_idx=time_idx,
@@ -180,7 +176,6 @@ class TabularForecastingData(DataModule):
         )
 
         train_input = input_cls(RunningStage.TRAINING, train_data_frame, transform=train_transform, **ds_kw)
-
         ds_kw["parameters"] = train_input.parameters if train_input else parameters
 
         return cls(
@@ -195,5 +190,4 @@ class TabularForecastingData(DataModule):
             sampler=sampler,
             pin_memory=pin_memory,
             persistent_workers=persistent_workers,
-            output_transform=output_transform,
         )

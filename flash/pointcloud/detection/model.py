@@ -19,19 +19,13 @@ from torch import nn
 from torch.utils.data import DataLoader, Sampler
 
 from flash.core.data.io.input import DataKeys, Input
-from flash.core.data.io.output import Output
-from flash.core.data.states import CollateFn
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.apply_func import get_callable_dict
-from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
+from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.pointcloud.detection.backbones import POINTCLOUD_OBJECT_DETECTION_BACKBONES
 
 __FILE_EXAMPLE__ = "pointcloud_detection"
-
-
-class PointCloudObjectDetectorOutput(Output):
-    pass
 
 
 class PointCloudObjectDetector(Task):
@@ -49,7 +43,6 @@ class PointCloudObjectDetector(Task):
         metrics: Any metrics to use with this :class:`~flash.core.model.Task`. If ``None``, a default will be selected
             by the :class:`~flash.core.classification.ClassificationTask` depending on the ``multi_label`` argument.
         learning_rate: The learning rate for the optimizer.
-        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
         lambda_loss_cls: The value to scale the loss classification.
         lambda_loss_bbox: The value to scale the bounding boxes loss.
         lambda_loss_dir: The value to scale the bounding boxes direction loss.
@@ -68,7 +61,6 @@ class PointCloudObjectDetector(Task):
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: METRICS_TYPE = None,
         learning_rate: float = 1e-2,
-        output: OUTPUT_TYPE = PointCloudObjectDetectorOutput(),
         lambda_loss_cls: float = 1.0,
         lambda_loss_bbox: float = 1.0,
         lambda_loss_dir: float = 1.0,
@@ -81,7 +73,6 @@ class PointCloudObjectDetector(Task):
             lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
-            output=output,
         )
 
         self.save_hyperparameters()
@@ -92,12 +83,9 @@ class PointCloudObjectDetector(Task):
         if isinstance(backbone, tuple):
             self.backbone, out_features = backbone
         else:
-            self.model, out_features, collate_fn = self.backbones.get(backbone)(**backbone_kwargs)
+            self.model, out_features, self.collate_fn = self.backbones.get(backbone)(**backbone_kwargs)
             self.backbone = self.model.backbone
             self.neck = self.model.neck
-            self.set_state(CollateFn(collate_fn))
-            self.set_state(CollateFn(collate_fn))
-            self.set_state(CollateFn(collate_fn))
             self.loss_fn = get_callable_dict(self.model.loss)
 
         if __FILE_EXAMPLE__ not in sys.argv[0]:
