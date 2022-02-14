@@ -62,7 +62,7 @@ cases = [
         3,
     ),
     # Ambiguous
-    Case([[0], [1, 2], [2, 0]], [[1, 0, 0], [0, 1, 1], [1, 0, 1]], MultiNumericTargetFormatter, None, 3),
+    Case([[0], [0, 1], [1, 2]], [[1, 0, 0], [1, 1, 0], [0, 1, 1]], MultiNumericTargetFormatter, None, 3),
     Case([[1, 0, 0], [0, 1, 1], [1, 0, 1]], [[1, 0, 0], [0, 1, 1], [1, 0, 1]], MultiBinaryTargetFormatter, None, 3),
     Case(
         [["blue"], ["green", "red"], ["red", "blue"]],
