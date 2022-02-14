@@ -511,7 +511,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             if strategy not in self.available_finetuning_strategies():
                 raise MisconfigurationException(
                     f"Please provide a valid strategy from {_DEFAULTS_FINETUNE_STRATEGIES[:2]}."
-                    " For more details and advanced options about finetuning see docs:"
+                    " For more details and advanced finetuning options see our docs:"
                     " https://lightning-flash.readthedocs.io/en/stable/general/finetuning.html"
                 )
             finetuning_strategy_fn: Callable = self.finetuning_strategies.get(key=strategy)
