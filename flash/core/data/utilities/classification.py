@@ -73,7 +73,7 @@ class TargetFormatter:
     num_classes: Optional[int] = None
 
     def __post_init__(self):
-        self.num_classes = len(self.labels) if self.num_classes is None else self.num_classes
+        self.num_classes = len(self.labels) if self.labels is not None else self.num_classes
 
     def __call__(self, target: Any) -> Any:
         return self.format(target)
