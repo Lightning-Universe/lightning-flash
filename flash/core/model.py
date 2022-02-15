@@ -283,7 +283,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
     Args:
         model: Model to use for the task.
         loss_fn: Loss function for training.
-        learning_rate: Learning rate to use for training, defaults to ``5e-5``.
+        learning_rate: Learning rate to use for training. If ``None`` (the default) then the default LR for your chosen
+            optimizer will be used.
         optimizer: Optimizer to use for training.
         lr_scheduler: The LR scheduler to use during training.
         metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
@@ -305,7 +306,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         self,
         model: MODEL_TYPE = None,
         loss_fn: LOSS_FN_TYPE = None,
-        learning_rate: float = 5e-5,
+        learning_rate: Optional[float] = None,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: METRICS_TYPE = None,
@@ -458,12 +459,11 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
     def configure_optimizers(self) -> Union[Optimizer, Tuple[List[Optimizer], List[_LRScheduler]]]:
         """Implement how optimizer and optionally learning rate schedulers should be configured."""
+        optimizers_kwargs: Dict[str, Any] = {}
         if isinstance(self.optimizer, str):
             optimizer_fn = self._get_optimizer_class_from_registry(self.optimizer.lower())
-            optimizers_kwargs: Dict[str, Any] = {"lr": self.learning_rate}
         elif isinstance(self.optimizer, Callable):
             optimizer_fn = self.optimizer
-            optimizers_kwargs: Dict[str, Any] = {"lr": self.learning_rate}
         elif isinstance(self.optimizer, Tuple):
             if len(self.optimizer) != 2:
                 raise MisconfigurationException(
@@ -485,12 +485,14 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
             optimizer_fn: Callable = self._get_optimizer_class_from_registry(self.optimizer[0])
             optimizers_kwargs: Dict[str, Any] = self.optimizer[1]
-            optimizers_kwargs["lr"] = self.learning_rate
         else:
             raise TypeError(
                 f"""Optimizer should be of type string or callable or tuple(string, dictionary)
                 but got {type(self.optimizer)}."""
             )
+
+        if self.learning_rate is not None:
+            optimizers_kwargs["lr"] = self.learning_rate
 
         model_parameters = filter(lambda p: p.requires_grad, self.parameters())
         optimizer: Optimizer = optimizer_fn(model_parameters, **optimizers_kwargs)

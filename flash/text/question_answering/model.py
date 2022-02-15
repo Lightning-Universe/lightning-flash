@@ -104,7 +104,7 @@ class QuestionAnsweringTask(Task):
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: METRICS_TYPE = None,
-        learning_rate: float = 5e-5,
+        learning_rate: Optional[float] = None,
         enable_ort: bool = False,
         n_best_size: int = 20,
         version_2_with_negative: bool = True,

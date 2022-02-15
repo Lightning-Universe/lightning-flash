@@ -75,7 +75,7 @@ class TextClassifier(ClassificationTask):
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: METRICS_TYPE = None,
-        learning_rate: float = 1e-2,
+        learning_rate: Optional[float] = None,
         multi_label: bool = False,
         enable_ort: bool = False,
     ):

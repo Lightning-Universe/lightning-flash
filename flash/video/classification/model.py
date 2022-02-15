@@ -77,10 +77,10 @@ class VideoClassifier(ClassificationTask):
         backbone_kwargs: Optional[Dict] = None,
         pretrained: bool = True,
         loss_fn: LOSS_FN_TYPE = F.cross_entropy,
-        optimizer: OPTIMIZER_TYPE = "SGD",
+        optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: METRICS_TYPE = Accuracy(),
-        learning_rate: float = 1e-3,
+        learning_rate: Optional[float] = None,
         head: Optional[Union[FunctionType, nn.Module]] = None,
     ):
         self.save_hyperparameters()

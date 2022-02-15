@@ -75,7 +75,8 @@ class SemanticSegmentation(ClassificationTask):
             package, a custom metric inherenting from `torchmetrics.Metric`, a callable function or a list/dict
             containing a combination of the aforementioned. In all cases, each metric needs to have the signature
             `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.IOU`.
-        learning_rate: Learning rate to use for training.
+        learning_rate: Learning rate to use for training. If ``None`` (the default) then the default LR for your chosen
+            optimizer will be used.
         multi_label: Whether the targets are multi-label or not.
         output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
         output_transform: :class:`~flash.core.data.io.output_transform.OutputTransform` use for post processing samples.
@@ -101,7 +102,7 @@ class SemanticSegmentation(ClassificationTask):
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: METRICS_TYPE = None,
-        learning_rate: float = 1e-3,
+        learning_rate: Optional[float] = None,
         multi_label: bool = False,
         output_transform: OUTPUT_TRANSFORM_TYPE = None,
     ) -> None:

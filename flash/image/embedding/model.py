@@ -74,7 +74,7 @@ class ImageEmbedder(AdapterTask):
         pretrained: bool = False,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
-        learning_rate: float = 1e-3,
+        learning_rate: Optional[float] = None,
         backbone_kwargs: Optional[Dict[str, Any]] = None,
         training_strategy_kwargs: Optional[Dict[str, Any]] = None,
         pretraining_transform_kwargs: Optional[Dict[str, Any]] = None,

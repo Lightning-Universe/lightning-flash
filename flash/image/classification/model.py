@@ -97,7 +97,7 @@ class ImageClassifier(ClassificationAdapterTask):
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: METRICS_TYPE = None,
-        learning_rate: float = 1e-3,
+        learning_rate: Optional[float] = None,
         multi_label: bool = False,
         training_strategy: Optional[str] = "default",
         training_strategy_kwargs: Optional[Dict[str, Any]] = None,

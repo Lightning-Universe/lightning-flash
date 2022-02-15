@@ -78,7 +78,7 @@ class StyleTransfer(Task):
         style_weight: float = 1e10,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
-        learning_rate: float = 1e-3,
+        learning_rate: Optional[float] = None,
     ):
         self.save_hyperparameters(ignore="style_image")
 

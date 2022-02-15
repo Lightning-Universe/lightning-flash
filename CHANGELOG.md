@@ -34,6 +34,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Renamed `ClassificationInput` to `ClassificationInputMixin` ([#1116](https://github.com/PyTorchLightning/lightning-flash/pull/1116))
 
+- Changed the default `learning_rate` for all tasks to be `None`, corresponding to the default for your chosen optimizer ([#1172](https://github.com/PyTorchLightning/lightning-flash/pull/1172))
+
 ### Deprecated
 
 ### Fixed
