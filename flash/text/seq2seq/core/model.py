@@ -100,7 +100,7 @@ class Seq2SeqTask(Task):
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: METRICS_TYPE = None,
-        learning_rate: float = 5e-5,
+        learning_rate: Optional[float] = None,
         num_beams: Optional[int] = None,
         enable_ort: bool = False,
         output_transform: Optional[OutputTransform] = None,

@@ -64,7 +64,7 @@ class TabularRegressor(RegressionAdapterTask):
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: METRICS_TYPE = None,
-        learning_rate: float = 1e-2,
+        learning_rate: Optional[float] = None,
         **backbone_kwargs
     ):
         self.save_hyperparameters()

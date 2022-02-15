@@ -66,7 +66,7 @@ class GraphClassifier(ClassificationTask):
         pooling_fn: Optional[Union[str, Callable]] = "mean",
         head: Optional[Union[Callable, nn.Module]] = None,
         loss_fn: LOSS_FN_TYPE = F.cross_entropy,
-        learning_rate: float = 1e-3,
+        learning_rate: Optional[float] = None,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: METRICS_TYPE = None,

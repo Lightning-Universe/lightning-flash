@@ -52,7 +52,7 @@ class ObjectDetector(AdapterTask):
         pretrained: bool = True,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
-        learning_rate: float = 1e-2,
+        learning_rate: Optional[float] = None,
         predict_kwargs: Dict = None,
         **kwargs: Any,
     ):

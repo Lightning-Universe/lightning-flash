@@ -35,7 +35,7 @@ class TabularForecaster(AdapterTask):
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: Union[torchmetrics.Metric, List[torchmetrics.Metric]] = None,
-        learning_rate: float = 4e-3,
+        learning_rate: Optional[float] = None,
     ):
         self.save_hyperparameters()
 

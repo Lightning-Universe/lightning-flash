@@ -49,7 +49,7 @@ class KeypointDetector(AdapterTask):
         pretrained: bool = True,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
-        learning_rate: float = 5e-4,
+        learning_rate: Optional[float] = None,
         predict_kwargs: Dict = None,
         **kwargs: Any,
     ):

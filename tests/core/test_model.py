@@ -17,6 +17,8 @@ from copy import deepcopy
 from itertools import chain
 from numbers import Number
 from typing import Any, Tuple
+from unittest import mock
+from unittest.mock import MagicMock
 
 import pytest
 import pytorch_lightning as pl
@@ -29,6 +31,7 @@ from torch.utils.data import DataLoader
 from torchmetrics import Accuracy
 
 import flash
+from flash import Task
 from flash.audio import SpeechRecognition
 from flash.core.adapter import Adapter
 from flash.core.classification import ClassificationTask
@@ -355,6 +358,21 @@ def test_optimizers_and_schedulers(tmpdir, optim, sched, interval):
         max_epochs=1,
     )
     trainer.fit(task, train_dl)
+
+
+def test_optimizer_learning_rate():
+    mock_optimizer = MagicMock()
+    Task.optimizers(mock_optimizer, "test")
+
+    model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
+
+    ClassificationTask(model, optimizer="test").configure_optimizers()
+    mock_optimizer.assert_called_once_with(mock.ANY)
+
+    mock_optimizer.reset_mock()
+
+    ClassificationTask(model, optimizer="test", learning_rate=10).configure_optimizers()
+    mock_optimizer.assert_called_once_with(mock.ANY, lr=10)
 
 
 @pytest.mark.skipif(not _TORCH_OPTIMIZER_AVAILABLE, reason="torch_optimizer isn't installed.")

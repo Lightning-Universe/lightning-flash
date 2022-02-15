@@ -57,7 +57,7 @@ class SpeechRecognition(Task):
         processor_backbone: str = None,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
-        learning_rate: float = 1e-5,
+        learning_rate: Optional[float] = None,
     ):
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
         # disable HF thousand warnings

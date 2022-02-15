@@ -56,7 +56,7 @@ class TranslationTask(Seq2SeqTask):
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: METRICS_TYPE = None,
-        learning_rate: float = 1e-5,
+        learning_rate: Optional[float] = None,
         num_beams: Optional[int] = 4,
         n_gram: bool = 4,
         smooth: bool = True,
