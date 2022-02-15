@@ -135,6 +135,7 @@ class SingleLabelTargetFormatter(TargetFormatter):
     binary: ClassVar[Optional[bool]] = False
 
     def __post_init__(self):
+        super().__post_init__()
         self.label_to_idx = {label: idx for idx, label in enumerate(self.labels)}
 
     def format(self, target: Any) -> Any:
