@@ -25,7 +25,6 @@ if _TORCH_AVAILABLE:
     from flash.core.data.io.input_transform import InputTransform
     from flash.core.data.io.output import Output
     from flash.core.data.io.output_transform import OutputTransform
-    from flash.core.data.process import Serializer
     from flash.core.model import Task
     from flash.core.trainer import Trainer
     from flash.core.utilities.stages import RunningStage
@@ -49,7 +48,6 @@ if _TORCH_AVAILABLE:
         "Output",
         "OutputTransform",
         "RunningStage",
-        "Serializer",
         "Task",
         "Trainer",
     ]

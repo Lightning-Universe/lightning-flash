@@ -17,8 +17,7 @@ from typing import Any, Dict, List, Optional, Union
 import numpy as np
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
-from flash.core.data.io.input import DataKeys, Input
-from flash.core.data.process import Deserializer
+from flash.core.data.io.input import DataKeys, Input, ServeInput
 from flash.core.data.utilities.data_frame import read_csv
 from flash.core.utilities.imports import _PANDAS_AVAILABLE
 from flash.tabular.classification.utils import (
@@ -112,7 +111,7 @@ class TabularDataFrameInput(Input):
         return cat_vars, num_vars
 
 
-class TabularDeserializer(Deserializer):
+class TabularDeserializer(ServeInput):
     def __init__(self, *args, parameters: Optional[Dict[str, Any]] = None, **kwargs):
         self._parameters = parameters
         super().__init__(*args, **kwargs)

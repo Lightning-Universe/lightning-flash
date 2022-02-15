@@ -13,11 +13,10 @@
 # limitations under the License.
 from typing import Any, Dict
 
-from flash.core.data.io.input import DataKeys
-from flash.core.data.process import Deserializer
+from flash.core.data.io.input import DataKeys, ServeInput
 
 
-class TextDeserializer(Deserializer):
+class TextDeserializer(ServeInput):
     def serve_load_sample(self, text: str) -> Dict[str, Any]:
         return {DataKeys.INPUT: text}
 
