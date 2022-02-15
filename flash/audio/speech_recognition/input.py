@@ -20,8 +20,7 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Union
 from torch.utils.data import Dataset
 
 import flash
-from flash.core.data.io.input import DataKeys, Input
-from flash.core.data.process import Deserializer
+from flash.core.data.io.input import DataKeys, Input, ServeInput
 from flash.core.data.utilities.paths import filter_valid_files, list_valid_files
 from flash.core.data.utilities.samples import to_sample, to_samples
 from flash.core.utilities.imports import _AUDIO_AVAILABLE, requires
@@ -31,7 +30,7 @@ if _AUDIO_AVAILABLE:
     from datasets import load_dataset
 
 
-class SpeechRecognitionDeserializer(Deserializer):
+class SpeechRecognitionDeserializer(ServeInput):
     @requires("audio")
     def __init__(self, sampling_rate: int = 16000, **kwargs):
         super().__init__(**kwargs)

@@ -29,7 +29,6 @@ LR_SCHEDULER_TYPE = TypeVar(
 METRICS_TYPE = TypeVar("METRICS_TYPE", Metric, Mapping, Sequence, None)
 
 # Data Pipeline
-DESERIALIZER_TYPE = TypeVar("DESERIALIZER_TYPE", "flash.core.data.process.Deserializer", None)
 INPUT_TRANSFORM_TYPE = TypeVar(
     "INPUT_TRANSFORM_TYPE",
     Type["flash.core.data.io.input_transform.InputTransform"],

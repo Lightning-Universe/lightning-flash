@@ -20,8 +20,7 @@ import numpy as np
 import torch
 
 import flash
-from flash.core.data.io.input import DataKeys, Input
-from flash.core.data.process import Deserializer
+from flash.core.data.io.input import DataKeys, Input, ServeInput
 from flash.core.data.utilities.paths import filter_valid_files, has_file_allowed_extension, PATH_TYPE
 from flash.core.data.utilities.samples import to_samples
 from flash.core.data.utils import image_default_loader
@@ -49,7 +48,7 @@ def image_loader(filepath: str):
     return img
 
 
-class ImageDeserializer(Deserializer):
+class ImageDeserializer(ServeInput):
     @requires("image")
     def serve_load_sample(self, data: str) -> Dict:
         encoded_with_padding = (data + "===").encode("ascii")

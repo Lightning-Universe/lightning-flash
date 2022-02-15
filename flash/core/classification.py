@@ -15,7 +15,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union
 
 import torch
 import torch.nn.functional as F
-from pytorch_lightning.utilities import rank_zero_deprecation, rank_zero_warn
+from pytorch_lightning.utilities import rank_zero_warn
 from torchmetrics import Accuracy, Metric
 
 from flash.core.adapter import AdapterTask
@@ -71,12 +71,12 @@ class ClassificationMixin:
         return metrics, loss_fn
 
     def to_metrics_format(self, x: torch.Tensor) -> torch.Tensor:
-        if getattr(self.hparams, "multi_label", False):
+        if getattr(self, "multi_label", False):
             return torch.sigmoid(x)
         return torch.softmax(x, dim=1)
 
 
-class ClassificationTask(Task, ClassificationMixin):
+class ClassificationTask(ClassificationMixin, Task):
 
     outputs: FlashRegistry = Task.outputs + CLASSIFICATION_OUTPUTS
 
@@ -101,7 +101,7 @@ class ClassificationTask(Task, ClassificationMixin):
         )
 
 
-class ClassificationAdapterTask(AdapterTask, ClassificationMixin):
+class ClassificationAdapterTask(ClassificationMixin, AdapterTask):
 
     outputs: FlashRegistry = Task.outputs + CLASSIFICATION_OUTPUTS
 
@@ -350,20 +350,3 @@ class FiftyOneLabelsOutput(ClassificationOutput):
             filepath = sample[DataKeys.METADATA]["filepath"]
             return {"filepath": filepath, "predictions": fo_predictions}
         return fo_predictions
-
-
-class Labels(LabelsOutput):
-    def __init__(self, labels: Optional[List[str]] = None, multi_label: bool = False, threshold: float = 0.5):
-        rank_zero_deprecation(
-            "`Labels` was deprecated in v0.6.0 and will be removed in v0.7.0." "Please use `LabelsOutput` instead."
-        )
-        super().__init__(labels=labels, multi_label=multi_label, threshold=threshold)
-
-
-class Probabilities(ProbabilitiesOutput):
-    def __init__(self, multi_label: bool = False):
-        rank_zero_deprecation(
-            "`Probabilities` was deprecated in v0.6.0 and will be removed in v0.7.0."
-            "Please use `ProbabilitiesOutput` instead."
-        )
-        super().__init__(multi_label=multi_label)
