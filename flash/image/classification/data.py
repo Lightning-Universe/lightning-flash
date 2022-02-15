@@ -23,6 +23,7 @@ from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule, DatasetInput
 from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE
+from flash.core.data.utilities.classification import TargetFormatter
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioImageClassificationInput
 from flash.core.registry import FlashRegistry
@@ -93,6 +94,7 @@ class ImageClassificationData(DataModule):
         val_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = ImageClassificationFilesInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -119,11 +121,13 @@ class ImageClassificationData(DataModule):
             val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
+                predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
-              :class:`~flash.core.data.data_module.DataModule` constructor.
+                :class:`~flash.core.data.data_module.DataModule` constructor.
 
         Returns:
             The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
@@ -166,8 +170,8 @@ class ImageClassificationData(DataModule):
             >>> _ = [os.remove(f"image_{i}.png") for i in range(1, 4)]
             >>> _ = [os.remove(f"predict_image_{i}.png") for i in range(1, 4)]
         """
-
         ds_kw = dict(
+            target_formatter=target_formatter,
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
@@ -194,6 +198,7 @@ class ImageClassificationData(DataModule):
         val_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = ImageClassificationFolderInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -239,11 +244,13 @@ class ImageClassificationData(DataModule):
             val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
+                predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
-              :class:`~flash.core.data.data_module.DataModule` constructor.
+                :class:`~flash.core.data.data_module.DataModule` constructor.
 
         Returns:
             The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
@@ -291,8 +298,8 @@ class ImageClassificationData(DataModule):
             >>> shutil.rmtree("train_folder")
             >>> shutil.rmtree("predict_folder")
         """
-
         ds_kw = dict(
+            target_formatter=target_formatter,
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
@@ -322,6 +329,7 @@ class ImageClassificationData(DataModule):
         val_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = ImageClassificationNumpyInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -346,11 +354,13 @@ class ImageClassificationData(DataModule):
             val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
+                predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
-              :class:`~flash.core.data.data_module.DataModule` constructor.
+                :class:`~flash.core.data.data_module.DataModule` constructor.
 
         Returns:
             The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
@@ -381,8 +391,8 @@ class ImageClassificationData(DataModule):
             >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Predicting...
         """
-
         ds_kw = dict(
+            target_formatter=target_formatter,
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
@@ -412,6 +422,7 @@ class ImageClassificationData(DataModule):
         val_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = ImageClassificationTensorInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -436,11 +447,13 @@ class ImageClassificationData(DataModule):
             val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
+                predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
-              :class:`~flash.core.data.data_module.DataModule` constructor.
+                :class:`~flash.core.data.data_module.DataModule` constructor.
 
         Returns:
             The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
@@ -471,8 +484,8 @@ class ImageClassificationData(DataModule):
             >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Predicting...
         """
-
         ds_kw = dict(
+            target_formatter=target_formatter,
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
@@ -509,6 +522,7 @@ class ImageClassificationData(DataModule):
         val_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = ImageClassificationDataFrameInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -547,11 +561,13 @@ class ImageClassificationData(DataModule):
             val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
+                predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
-              :class:`~flash.core.data.data_module.DataModule` constructor.
+                :class:`~flash.core.data.data_module.DataModule` constructor.
 
         Returns:
             The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
@@ -614,8 +630,8 @@ class ImageClassificationData(DataModule):
             >>> del train_data_frame
             >>> del predict_data_frame
         """
-
         ds_kw = dict(
+            target_formatter=target_formatter,
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
@@ -657,6 +673,7 @@ class ImageClassificationData(DataModule):
         val_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = ImageClassificationCSVInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -695,11 +712,13 @@ class ImageClassificationData(DataModule):
             val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
+                predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
-              :class:`~flash.core.data.data_module.DataModule` constructor.
+                :class:`~flash.core.data.data_module.DataModule` constructor.
 
         Returns:
             The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
@@ -776,8 +795,8 @@ class ImageClassificationData(DataModule):
             >>> os.remove("train_data.csv")
             >>> os.remove("predict_data.csv")
         """
-
         ds_kw = dict(
+            target_formatter=target_formatter,
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
@@ -811,6 +830,7 @@ class ImageClassificationData(DataModule):
         val_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = ImageClassificationFiftyOneInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
@@ -835,11 +855,13 @@ class ImageClassificationData(DataModule):
             val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
+                predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
-              :class:`~flash.core.data.data_module.DataModule` constructor.
+                :class:`~flash.core.data.data_module.DataModule` constructor.
 
         Returns:
             The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
@@ -899,8 +921,8 @@ class ImageClassificationData(DataModule):
             >>> del train_dataset
             >>> del predict_dataset
         """
-
         ds_kw = dict(
+            target_formatter=target_formatter,
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
