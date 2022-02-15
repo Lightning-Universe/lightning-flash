@@ -4,94 +4,57 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased] - YYYY-DD-MM
+## [0.7.0] - 2022-15-02
 
 ### Added
 
 - Added support for multi-label, space delimited, targets ([#1076](https://github.com/PyTorchLightning/lightning-flash/pull/1076))
-
 - Added support for tabular classification / regression backbones from PyTorch Tabular ([#1098](https://github.com/PyTorchLightning/lightning-flash/pull/1098))
-
 - Added Flash zero support for tabular regression ([#1098](https://github.com/PyTorchLightning/lightning-flash/pull/1098))
-
 - Added support for COCO annotations with non-default keypoint labels to `KeypointDetectionData.from_coco` ([#1102](https://github.com/PyTorchLightning/lightning-flash/pull/1102))
-
 - Added support for `from_csv` and `from_data_frame` to `VideoClassificationData` ([#1117](https://github.com/PyTorchLightning/lightning-flash/pull/1117))
-
 - Added support for `SemanticSegmentationData.from_folders` where mask files have different extensions to the image files ([#1130](https://github.com/PyTorchLightning/lightning-flash/pull/1130))
-
 - Added `FlashRegistry` of Available Heads for `flash.image.ImageClassifier` ([#1152](https://github.com/PyTorchLightning/lightning-flash/pull/1152))
-
 - Added support for `ObjectDetectionData.from_files` ([#1154](https://github.com/PyTorchLightning/lightning-flash/pull/1154))
-
 - Added support for passing the `Output` object (or a string e.g. `"labels"`) to the `flash.Trainer.predict` method ([#1157](https://github.com/PyTorchLightning/lightning-flash/pull/1157))
-
 - Added support for passing the `TargetFormatter` object to `from_*` methods for classification to override target handling ([#1171](https://github.com/PyTorchLightning/lightning-flash/pull/1171))
 
 ### Changed
 
 - Changed `Wav2Vec2Processor` to `AutoProcessor` and seperate it from backbone [optional] ([#1075](https://github.com/PyTorchLightning/lightning-flash/pull/1075))
-
 - Renamed `ClassificationInput` to `ClassificationInputMixin` ([#1116](https://github.com/PyTorchLightning/lightning-flash/pull/1116))
-
 - Changed the default `learning_rate` for all tasks to be `None`, corresponding to the default for your chosen optimizer ([#1172](https://github.com/PyTorchLightning/lightning-flash/pull/1172))
-
-### Deprecated
 
 ### Fixed
 
 - Fixed a bug when not explicitly passing `embedding_sizes` to the `TabularClassifier` and `TabularRegressor` tasks ([#1067](https://github.com/PyTorchLightning/lightning-flash/pull/1067))
-
 - Fixed a bug where under some circumstances transforms would not get called ([#1072](https://github.com/PyTorchLightning/lightning-flash/pull/1072))
-
 - Fixed a bug where prediction would sometimes give the wrong number of outputs ([#1077](https://github.com/PyTorchLightning/lightning-flash/pull/1077))
-
 - Fixed a bug where passing the `val_split` to the `DataModule` would not have the desired effect ([#1079](https://github.com/PyTorchLightning/lightning-flash/pull/1079))
-
 - Fixed a bug where passing `predict_data_frame` to `ImageClassificationData.from_data_frame` raised an error ([#1088](https://github.com/PyTorchLightning/lightning-flash/pull/1088))
-
 - Fixed a bug where segmentation files / masks were loaded with an inconsistent ordering ([#1094](https://github.com/PyTorchLightning/lightning-flash/pull/1094))
-
 - Fixed a bug with `AudioClassificationData.from_numpy` ([#1096](https://github.com/PyTorchLightning/lightning-flash/pull/1096))
-
 - Fixed a bug when using `SpeechRecognitionData.from_files` for training / validating / testing ([#1097](https://github.com/PyTorchLightning/lightning-flash/pull/1097))
-
 - Fixed a bug when using `SpeechRecognitionData.from_csv` or `from_json` when predicting without targets ([#1097](https://github.com/PyTorchLightning/lightning-flash/pull/1097))
-
 - Fixed a bug where `SpeechRecognitionData.from_datasets` did not work as expected ([#1097](https://github.com/PyTorchLightning/lightning-flash/pull/1097))
-
 - Fixed a bug where loading data for prediction with `SemanticSegmentationData.from_folders` raised an error ([#1101](https://github.com/PyTorchLightning/lightning-flash/pull/1101))
-
 - Fixed a bug when passing a `predict_folder` argument to `from_coco` / `from_voc` / `from_via` in IceVision tasks ([#1102](https://github.com/PyTorchLightning/lightning-flash/pull/1102))
-
 - Fixed `ObjectDetectionData.from_voc` and `ObjectDetectionData.from_via` ([#1102](https://github.com/PyTorchLightning/lightning-flash/pull/1102))
-
 - Fixed a bug where `InstanceSegmentationData.from_coco` would raise an error if not using file-based masks ([#1102](https://github.com/PyTorchLightning/lightning-flash/pull/1102))
-
 - Fixed `InstanceSegmentationData.from_voc` ([#1102](https://github.com/PyTorchLightning/lightning-flash/pull/1102))
-
 - Fixed a bug when loading tabular data for prediction without a target field / column ([#1114](https://github.com/PyTorchLightning/lightning-flash/pull/1114))
-
 - Fixed a bug when loading prediction data for graph classification without targets ([#1121](https://github.com/PyTorchLightning/lightning-flash/pull/1121))
-
 - Fixed a bug where loading Seq2Seq data for prediction would not work if the target field was not present ([#1128](https://github.com/PyTorchLightning/lightning-flash/pull/1128))
-
 - Fixed a bug where `from_fiftyone` classmethods did not work correctly with a `predict_dataset` ([#1136](https://github.com/PyTorchLightning/lightning-flash/pull/1136))
-
 - Fixed a bug where the `labels` property would return `None` when using `ObjectDetectionData.from_fiftyone` ([#1136](https://github.com/PyTorchLightning/lightning-flash/pull/1136))
-
 - Fixed a bug where `TabularData` would not work correctly with no categorical variables ([#1144](https://github.com/PyTorchLightning/lightning-flash/pull/1144))
-
 - Fixed a bug where loading `TabularForecastingData` for prediction would only yield a single sample per series ([#1149](https://github.com/PyTorchLightning/lightning-flash/pull/1149))
-
 - Fixed a bug where backbones for the `ObjectDetector`, `KeypointDetector`, and `InstanceSegmentation` tasks were not always frozen correctly when finetuning ([#1163](https://github.com/PyTorchLightning/lightning-flash/pull/1163))
-
 - Fixed a bug where `DataModule.multi_label` would sometimes be `None` when it had been inferred to be `False` ([#1165](https://github.com/PyTorchLightning/lightning-flash/pull/1165))
 
 ### Removed
 
 - Removed the `Seq2SeqData` base class (use `TranslationData` or `SummarizationData` directly) ([#1128](https://github.com/PyTorchLightning/lightning-flash/pull/1128))
-
 - Removed the ability to attach the `Output` object directly to the model ([#1157](https://github.com/PyTorchLightning/lightning-flash/pull/1157))
 
 ## [0.6.0] - 2021-13-12
