@@ -4,7 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [0.7.0] - 2022-15-02
+## [Unreleased] - YYYY-MM-DD
+
+### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+## [0.7.0] - 2022-02-15
 
 ### Added
 
@@ -57,7 +69,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Removed the `Seq2SeqData` base class (use `TranslationData` or `SummarizationData` directly) ([#1128](https://github.com/PyTorchLightning/lightning-flash/pull/1128))
 - Removed the ability to attach the `Output` object directly to the model ([#1157](https://github.com/PyTorchLightning/lightning-flash/pull/1157))
 
-## [0.6.0] - 2021-13-12
+## [0.6.0] - 2021-12-13
 
 ### Added
 
