@@ -72,6 +72,9 @@ class TargetFormatter:
     labels: Optional[List[str]] = None
     num_classes: Optional[int] = None
 
+    def __post_init__(self):
+        self.num_classes = len(self.labels) if self.num_classes is None else self.num_classes
+
     def __call__(self, target: Any) -> Any:
         return self.format(target)
 
@@ -132,7 +135,6 @@ class SingleLabelTargetFormatter(TargetFormatter):
     binary: ClassVar[Optional[bool]] = False
 
     def __post_init__(self):
-        self.num_classes = len(self.labels) if self.num_classes is None else self.num_classes
         self.label_to_idx = {label: idx for idx, label in enumerate(self.labels)}
 
     def format(self, target: Any) -> Any:

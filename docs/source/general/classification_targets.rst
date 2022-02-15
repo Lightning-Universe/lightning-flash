@@ -6,6 +6,7 @@ Formatting Classification Targets
 
 This guide details the different target formats supported by classification tasks in Flash.
 By default, the target format and any additional metadata (``labels``, ``num_classes``, ``multi_label``) will be inferred from your training data.
+You can override this behaviour by passing your own :class:`~flash.core.data.utilities.classification.TargetFormatter` using the ``target_formatter`` argument.
 
 .. testsetup:: targets
 
@@ -45,6 +46,28 @@ Here's an example:
     >>> datamodule.multi_label
     False
 
+Alternatively, you can provide a :class:`~flash.core.data.utilities.classification.SingleNumericTargetFormatter` to override the behaviour.
+Here's an example:
+
+.. doctest:: targets
+
+    >>> from flash import Trainer
+    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> from flash.core.data.utilities.classification import SingleNumericTargetFormatter
+    >>> datamodule = ImageClassificationData.from_files(
+    ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
+    ...     train_targets=[0, 1, 0],
+    ...     target_formatter=SingleNumericTargetFormatter(labels=["dog", "cat", "rabbit"]),
+    ...     transform_kwargs=dict(image_size=(128, 128)),
+    ...     batch_size=2,
+    ... )
+    >>> datamodule.num_classes
+    3
+    >>> datamodule.labels
+    ['dog', 'cat', 'rabbit']
+    >>> datamodule.multi_label
+    False
+
 Labels
 ______
 
@@ -70,6 +93,28 @@ Here's an example:
     >>> datamodule.multi_label
     False
 
+Alternatively, you can provide a :class:`~flash.core.data.utilities.classification.SingleLabelTargetFormatter` to override the behaviour.
+Here's an example:
+
+.. doctest:: targets
+
+    >>> from flash import Trainer
+    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> from flash.core.data.utilities.classification import SingleLabelTargetFormatter
+    >>> datamodule = ImageClassificationData.from_files(
+    ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
+    ...     train_targets=["cat", "dog", "cat"],
+    ...     target_formatter=SingleLabelTargetFormatter(labels=["dog", "cat", "rabbit"]),
+    ...     transform_kwargs=dict(image_size=(128, 128)),
+    ...     batch_size=2,
+    ... )
+    >>> datamodule.num_classes
+    3
+    >>> datamodule.labels
+    ['dog', 'cat', 'rabbit']
+    >>> datamodule.multi_label
+    False
+
 One-hot Binaries
 ________________
 
@@ -92,6 +137,28 @@ Here's an example:
     2
     >>> datamodule.labels is None
     True
+    >>> datamodule.multi_label
+    False
+
+Alternatively, you can provide a :class:`~flash.core.data.utilities.classification.SingleBinaryTargetFormatter` to override the behaviour.
+Here's an example:
+
+.. doctest:: targets
+
+    >>> from flash import Trainer
+    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> from flash.core.data.utilities.classification import SingleBinaryTargetFormatter
+    >>> datamodule = ImageClassificationData.from_files(
+    ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
+    ...     train_targets=[[1, 0], [0, 1], [1, 0]],
+    ...     target_formatter=SingleLabelTargetFormatter(labels=["dog", "cat"]),
+    ...     transform_kwargs=dict(image_size=(128, 128)),
+    ...     batch_size=2,
+    ... )
+    >>> datamodule.num_classes
+    2
+    >>> datamodule.labels
+    ['dog', 'cat']
     >>> datamodule.multi_label
     False
 
@@ -125,6 +192,28 @@ Here's an example:
     >>> datamodule.multi_label
     True
 
+Alternatively, you can provide a :class:`~flash.core.data.utilities.classification.MultiNumericTargetFormatter` to override the behaviour.
+Here's an example:
+
+.. doctest:: targets
+
+    >>> from flash import Trainer
+    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> from flash.core.data.utilities.classification import MultiNumericTargetFormatter
+    >>> datamodule = ImageClassificationData.from_files(
+    ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
+    ...     train_targets=[[0], [0, 1], [1, 2]],
+    ...     target_formatter=MultiNumericTargetFormatter(labels=["dog", "cat", "rabbit"]),
+    ...     transform_kwargs=dict(image_size=(128, 128)),
+    ...     batch_size=2,
+    ... )
+    >>> datamodule.num_classes
+    3
+    >>> datamodule.labels
+    ['dog', 'cat', 'rabbit']
+    >>> datamodule.multi_label
+    True
+
 Labels
 ______
 
@@ -147,6 +236,28 @@ Here's an example:
     3
     >>> datamodule.labels
     ['cat', 'dog', 'rabbit']
+    >>> datamodule.multi_label
+    True
+
+Alternatively, you can provide a :class:`~flash.core.data.utilities.classification.MultiLabelTargetFormatter` to override the behaviour.
+Here's an example:
+
+.. doctest:: targets
+
+    >>> from flash import Trainer
+    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> from flash.core.data.utilities.classification import MultiLabelTargetFormatter
+    >>> datamodule = ImageClassificationData.from_files(
+    ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
+    ...     train_targets=[["cat"], ["cat", "dog"], ["dog", "rabbit"]],
+    ...     target_formatter=MultiLabelTargetFormatter(labels=["dog", "cat", "rabbit"]),
+    ...     transform_kwargs=dict(image_size=(128, 128)),
+    ...     batch_size=2,
+    ... )
+    >>> datamodule.num_classes
+    3
+    >>> datamodule.labels
+    ['dog', 'cat', 'rabbit']
     >>> datamodule.multi_label
     True
 
@@ -175,6 +286,28 @@ Here's an example:
     >>> datamodule.multi_label
     True
 
+Alternatively, you can provide a :class:`~flash.core.data.utilities.classification.CommaDelimitedMultiLabelTargetFormatter` to override the behaviour.
+Here's an example:
+
+.. doctest:: targets
+
+    >>> from flash import Trainer
+    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> from flash.core.data.utilities.classification import CommaDelimitedMultiLabelTargetFormatter
+    >>> datamodule = ImageClassificationData.from_files(
+    ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
+    ...     train_targets=["cat", "cat,dog", "dog,rabbit"],
+    ...     target_formatter=CommaDelimitedMultiLabelTargetFormatter(labels=["dog", "cat", "rabbit"]),
+    ...     transform_kwargs=dict(image_size=(128, 128)),
+    ...     batch_size=2,
+    ... )
+    >>> datamodule.num_classes
+    3
+    >>> datamodule.labels
+    ['dog', 'cat', 'rabbit']
+    >>> datamodule.multi_label
+    True
+
 Space Delimited
 _______________
 
@@ -200,6 +333,28 @@ Here's an example:
     >>> datamodule.multi_label
     True
 
+Alternatively, you can provide a :class:`~flash.core.data.utilities.classification.SpaceDelimitedTargetFormatter` to override the behaviour.
+Here's an example:
+
+.. doctest:: targets
+
+    >>> from flash import Trainer
+    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> from flash.core.data.utilities.classification import SpaceDelimitedTargetFormatter
+    >>> datamodule = ImageClassificationData.from_files(
+    ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
+    ...     train_targets=["cat", "cat dog", "dog rabbit"],
+    ...     target_formatter=SpaceDelimitedTargetFormatter(labels=["dog", "cat", "rabbit"]),
+    ...     transform_kwargs=dict(image_size=(128, 128)),
+    ...     batch_size=2,
+    ... )
+    >>> datamodule.num_classes
+    3
+    >>> datamodule.labels
+    ['dog', 'cat', 'rabbit']
+    >>> datamodule.multi_label
+    True
+
 Multi-hot Binaries
 __________________
 
@@ -222,5 +377,27 @@ Here's an example:
     3
     >>> datamodule.labels is None
     True
+    >>> datamodule.multi_label
+    True
+
+Alternatively, you can provide a :class:`~flash.core.data.utilities.classification.MultiBinaryTargetFormatter` to override the behaviour.
+Here's an example:
+
+.. doctest:: targets
+
+    >>> from flash import Trainer
+    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> from flash.core.data.utilities.classification import MultiBinaryTargetFormatter
+    >>> datamodule = ImageClassificationData.from_files(
+    ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
+    ...     train_targets=[[1, 0, 0], [1, 1, 0], [0, 1, 1]],
+    ...     target_formatter=MultiBinaryTargetFormatter(labels=["dog", "cat", "rabbit"]),
+    ...     transform_kwargs=dict(image_size=(128, 128)),
+    ...     batch_size=2,
+    ... )
+    >>> datamodule.num_classes
+    3
+    >>> datamodule.labels
+    ['dog', 'cat', 'rabbit']
     >>> datamodule.multi_label
     True
