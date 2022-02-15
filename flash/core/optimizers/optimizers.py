@@ -1,3 +1,4 @@
+from functools import partial
 from inspect import isclass
 from typing import Callable, List
 
@@ -17,7 +18,16 @@ if _TORCH_AVAILABLE:
             _optimizers.append(_optimizer)
 
     for fn in _optimizers:
-        _OPTIMIZERS_REGISTRY(fn, name=fn.__name__.lower())
+        name = fn.__name__.lower()
+        if name == "sgd":
+
+            def wrapper(fn, parameters, lr=None, **kwargs):
+                if lr is None:
+                    raise TypeError("The `learning_rate` argument is required when the optimizer is SGD.")
+                return fn(parameters, lr, **kwargs)
+
+            fn = partial(wrapper, fn)
+        _OPTIMIZERS_REGISTRY(fn, name=name)
 
 
 if _TORCH_OPTIMIZER_AVAILABLE:

@@ -374,6 +374,11 @@ def test_optimizer_learning_rate():
     ClassificationTask(model, optimizer="test", learning_rate=10).configure_optimizers()
     mock_optimizer.assert_called_once_with(mock.ANY, lr=10)
 
+    mock_optimizer.reset_mock()
+
+    with pytest.raises(TypeError, match="The `learning_rate` argument is required"):
+        ClassificationTask(model, optimizer="sgd").configure_optimizers()
+
 
 @pytest.mark.skipif(not _TORCH_OPTIMIZER_AVAILABLE, reason="torch_optimizer isn't installed.")
 @pytest.mark.parametrize("optim", ["Yogi"])
