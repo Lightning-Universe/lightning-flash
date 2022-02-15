@@ -65,10 +65,8 @@ class DataModule(pl.LightningDataModule):
             :meth:`~flash.core.data.data_module.DataModule.configure_data_fetcher` will be used.
         val_split: An optional float which gives the relative amount of the training dataset to use for the validation
             dataset.
-        batch_size: The batch size to be used by the DataLoader. Defaults to 1.
+        batch_size: The batch size to be used by the DataLoader.
         num_workers: The number of workers to use for parallelized loading.
-            Defaults to None which equals the number of available CPU threads,
-            or 0 for Windows or Darwin platform.
         sampler: A sampler following the :class:`~torch.utils.data.sampler.Sampler` type.
             Will be passed to the DataLoader for the training dataset. Defaults to None.
     """
