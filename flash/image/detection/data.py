@@ -16,6 +16,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Type, Union
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input
+from flash.core.data.utilities.classification import TargetFormatter
 from flash.core.data.utilities.sort import sorted_alphanumeric
 from flash.core.integrations.icevision.data import IceVisionInput
 from flash.core.integrations.icevision.transforms import IceVisionInputTransform
@@ -66,6 +67,7 @@ class ObjectDetectionData(DataModule):
         val_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = ObjectDetectionFilesInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -97,11 +99,13 @@ class ObjectDetectionData(DataModule):
             val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
+                predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
-              :class:`~flash.core.data.data_module.DataModule` constructor.
+                :class:`~flash.core.data.data_module.DataModule` constructor.
 
         Returns:
             The constructed :class:`~flash.image.detection.data.ObjectDetectionData`.
@@ -151,7 +155,10 @@ class ObjectDetectionData(DataModule):
             >>> _ = [os.remove(f"predict_image_{i}.png") for i in range(1, 4)]
         """
 
-        ds_kw = dict(transform_kwargs=transform_kwargs)
+        ds_kw = dict(
+            target_formatter=target_formatter,
+            transform_kwargs=transform_kwargs,
+        )
 
         train_input = input_cls(
             RunningStage.TRAINING,
