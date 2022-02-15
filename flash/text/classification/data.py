@@ -18,6 +18,7 @@ from pandas.core.frame import DataFrame
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.utilities.classification import TargetFormatter
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioTextClassificationInput
 from flash.core.utilities.imports import _TEXT_AVAILABLE, _TEXT_TESTING
@@ -60,6 +61,7 @@ class TextClassificationData(DataModule):
         val_transform: Optional[Dict[str, Callable]] = InputTransform,
         test_transform: Optional[Dict[str, Callable]] = InputTransform,
         predict_transform: Optional[Dict[str, Callable]] = InputTransform,
+        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = TextClassificationCSVInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -85,6 +87,8 @@ class TextClassificationData(DataModule):
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
                 predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
@@ -154,8 +158,8 @@ class TextClassificationData(DataModule):
             >>> os.remove("train_data.csv")
             >>> os.remove("predict_data.csv")
         """
-
         ds_kw = dict(
+            target_formatter=target_formatter,
             input_key=input_field,
             target_keys=target_fields,
             transform_kwargs=transform_kwargs,
@@ -186,6 +190,7 @@ class TextClassificationData(DataModule):
         val_transform: Optional[Dict[str, Callable]] = InputTransform,
         test_transform: Optional[Dict[str, Callable]] = InputTransform,
         predict_transform: Optional[Dict[str, Callable]] = InputTransform,
+        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = TextClassificationJSONInput,
         transform_kwargs: Optional[Dict] = None,
         field: Optional[str] = None,
@@ -212,6 +217,8 @@ class TextClassificationData(DataModule):
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
                 predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             field: To specify the field that holds the data in the JSON file.
@@ -280,8 +287,8 @@ class TextClassificationData(DataModule):
             >>> os.remove("train_data.json")
             >>> os.remove("predict_data.json")
         """
-
         ds_kw = dict(
+            target_formatter=target_formatter,
             input_key=input_field,
             target_keys=target_fields,
             field=field,
@@ -313,6 +320,7 @@ class TextClassificationData(DataModule):
         val_transform: Optional[Dict[str, Callable]] = InputTransform,
         test_transform: Optional[Dict[str, Callable]] = InputTransform,
         predict_transform: Optional[Dict[str, Callable]] = InputTransform,
+        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = TextClassificationParquetInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -338,6 +346,8 @@ class TextClassificationData(DataModule):
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
                 predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
@@ -407,8 +417,8 @@ class TextClassificationData(DataModule):
             >>> os.remove("train_data.parquet")
             >>> os.remove("predict_data.parquet")
         """
-
         ds_kw = dict(
+            target_formatter=target_formatter,
             input_key=input_field,
             target_keys=target_fields,
             transform_kwargs=transform_kwargs,
@@ -439,6 +449,7 @@ class TextClassificationData(DataModule):
         val_transform: Optional[Dict[str, Callable]] = InputTransform,
         test_transform: Optional[Dict[str, Callable]] = InputTransform,
         predict_transform: Optional[Dict[str, Callable]] = InputTransform,
+        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = TextClassificationInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -464,6 +475,8 @@ class TextClassificationData(DataModule):
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
                 predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
@@ -514,8 +527,8 @@ class TextClassificationData(DataModule):
             >>> del train_data
             >>> del predict_data
         """
-
         ds_kw = dict(
+            target_formatter=target_formatter,
             input_key=input_field,
             target_keys=target_fields,
             transform_kwargs=transform_kwargs,
@@ -546,6 +559,7 @@ class TextClassificationData(DataModule):
         val_transform: Optional[Dict[str, Callable]] = InputTransform,
         test_transform: Optional[Dict[str, Callable]] = InputTransform,
         predict_transform: Optional[Dict[str, Callable]] = InputTransform,
+        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = TextClassificationDataFrameInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -572,6 +586,8 @@ class TextClassificationData(DataModule):
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
                 predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
@@ -622,8 +638,8 @@ class TextClassificationData(DataModule):
             >>> del train_data
             >>> del predict_data
         """
-
         ds_kw = dict(
+            target_formatter=target_formatter,
             input_key=input_field,
             target_keys=target_fields,
             transform_kwargs=transform_kwargs,
@@ -655,6 +671,7 @@ class TextClassificationData(DataModule):
         val_transform: Optional[Dict[str, Callable]] = InputTransform,
         test_transform: Optional[Dict[str, Callable]] = InputTransform,
         predict_transform: Optional[Dict[str, Callable]] = InputTransform,
+        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = TextClassificationListInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -680,6 +697,8 @@ class TextClassificationData(DataModule):
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
                 predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
@@ -712,8 +731,8 @@ class TextClassificationData(DataModule):
             >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Predicting...
         """
-
         ds_kw = dict(
+            target_formatter=target_formatter,
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )

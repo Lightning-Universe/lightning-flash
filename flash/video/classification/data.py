@@ -20,6 +20,7 @@ from torch.utils.data import Sampler
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE
+from flash.core.data.utilities.classification import TargetFormatter
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioVideoClassificationInput
 from flash.core.utilities.imports import (
@@ -87,6 +88,7 @@ class VideoClassificationData(DataModule):
         val_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
+        target_formatter: Optional[TargetFormatter] = None,
         clip_sampler: Union[str, "ClipSampler"] = "random",
         clip_duration: float = 2,
         clip_sampler_kwargs: Dict[str, Any] = None,
@@ -120,6 +122,8 @@ class VideoClassificationData(DataModule):
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
                 predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             clip_sampler: The clip sampler to use. One of: ``"uniform"``, ``"random"``, ``"constant_clips_per_video"``.
             clip_duration: The duration of clips to sample.
             clip_sampler_kwargs: Additional keyword arguments to use when constructing the clip sampler.
@@ -176,7 +180,6 @@ class VideoClassificationData(DataModule):
             >>> _ = [os.remove(f"video_{i}.mp4") for i in range(1, 4)]
             >>> _ = [os.remove(f"predict_video_{i}.mp4") for i in range(1, 4)]
         """
-
         ds_kw = dict(
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
@@ -193,6 +196,7 @@ class VideoClassificationData(DataModule):
             train_targets,
             transform=train_transform,
             video_sampler=video_sampler,
+            target_formatter=target_formatter,
             **ds_kw,
         )
         target_formatter = getattr(train_input, "target_formatter", None)
@@ -232,6 +236,7 @@ class VideoClassificationData(DataModule):
         val_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
+        target_formatter: Optional[TargetFormatter] = None,
         clip_sampler: Union[str, "ClipSampler"] = "random",
         clip_duration: float = 2,
         clip_sampler_kwargs: Dict[str, Any] = None,
@@ -284,6 +289,8 @@ class VideoClassificationData(DataModule):
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
                 predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             clip_sampler: The clip sampler to use. One of: ``"uniform"``, ``"random"``, ``"constant_clips_per_video"``.
             clip_duration: The duration of clips to sample.
             clip_sampler_kwargs: Additional keyword arguments to use when constructing the clip sampler.
@@ -349,7 +356,6 @@ class VideoClassificationData(DataModule):
             >>> shutil.rmtree("train_folder")
             >>> shutil.rmtree("predict_folder")
         """
-
         ds_kw = dict(
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
@@ -361,7 +367,12 @@ class VideoClassificationData(DataModule):
         )
 
         train_input = input_cls(
-            RunningStage.TRAINING, train_folder, transform=train_transform, video_sampler=video_sampler, **ds_kw
+            RunningStage.TRAINING,
+            train_folder,
+            transform=train_transform,
+            video_sampler=video_sampler,
+            target_formatter=target_formatter,
+            **ds_kw,
         )
         target_formatter = getattr(train_input, "target_formatter", None)
 
@@ -408,6 +419,7 @@ class VideoClassificationData(DataModule):
         val_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
+        target_formatter: Optional[TargetFormatter] = None,
         clip_sampler: Union[str, "ClipSampler"] = "random",
         clip_duration: float = 2,
         clip_sampler_kwargs: Dict[str, Any] = None,
@@ -453,6 +465,8 @@ class VideoClassificationData(DataModule):
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
                 predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             clip_sampler: The clip sampler to use. One of: ``"uniform"``, ``"random"``, ``"constant_clips_per_video"``.
             clip_duration: The duration of clips to sample.
             clip_sampler_kwargs: Additional keyword arguments to use when constructing the clip sampler.
@@ -535,7 +549,6 @@ class VideoClassificationData(DataModule):
             >>> del train_data_frame
             >>> del predict_data_frame
         """
-
         ds_kw = dict(
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
@@ -552,7 +565,12 @@ class VideoClassificationData(DataModule):
         predict_data = (predict_data_frame, input_field, predict_videos_root, predict_resolver)
 
         train_input = input_cls(
-            RunningStage.TRAINING, *train_data, transform=train_transform, video_sampler=video_sampler, **ds_kw
+            RunningStage.TRAINING,
+            *train_data,
+            transform=train_transform,
+            video_sampler=video_sampler,
+            target_formatter=target_formatter,
+            **ds_kw,
         )
         target_formatter = getattr(train_input, "target_formatter", None)
 
@@ -599,6 +617,7 @@ class VideoClassificationData(DataModule):
         val_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
+        target_formatter: Optional[TargetFormatter] = None,
         clip_sampler: Union[str, "ClipSampler"] = "random",
         clip_duration: float = 2,
         clip_sampler_kwargs: Dict[str, Any] = None,
@@ -644,6 +663,8 @@ class VideoClassificationData(DataModule):
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
                 predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             clip_sampler: The clip sampler to use. One of: ``"uniform"``, ``"random"``, ``"constant_clips_per_video"``.
             clip_duration: The duration of clips to sample.
             clip_sampler_kwargs: Additional keyword arguments to use when constructing the clip sampler.
@@ -740,7 +761,6 @@ class VideoClassificationData(DataModule):
             >>> os.remove("train_data.csv")
             >>> os.remove("predict_data.csv")
         """
-
         ds_kw = dict(
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
@@ -757,7 +777,12 @@ class VideoClassificationData(DataModule):
         predict_data = (predict_file, input_field, predict_videos_root, predict_resolver)
 
         train_input = input_cls(
-            RunningStage.TRAINING, *train_data, transform=train_transform, video_sampler=video_sampler, **ds_kw
+            RunningStage.TRAINING,
+            *train_data,
+            transform=train_transform,
+            video_sampler=video_sampler,
+            target_formatter=target_formatter,
+            **ds_kw,
         )
         target_formatter = getattr(train_input, "target_formatter", None)
 
@@ -795,6 +820,7 @@ class VideoClassificationData(DataModule):
         val_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
+        target_formatter: Optional[TargetFormatter] = None,
         clip_sampler: Union[str, "ClipSampler"] = "random",
         clip_duration: float = 2,
         clip_sampler_kwargs: Dict[str, Any] = None,
@@ -827,6 +853,8 @@ class VideoClassificationData(DataModule):
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
                 predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             clip_sampler: The clip sampler to use. One of: ``"uniform"``, ``"random"``, ``"constant_clips_per_video"``.
             clip_duration: The duration of clips to sample.
             clip_sampler_kwargs: Additional keyword arguments to use when constructing the clip sampler.
@@ -900,7 +928,6 @@ class VideoClassificationData(DataModule):
             >>> del train_dataset
             >>> del predict_dataset
         """
-
         ds_kw = dict(
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
@@ -917,6 +944,7 @@ class VideoClassificationData(DataModule):
             transform=train_transform,
             video_sampler=video_sampler,
             label_field=label_field,
+            target_formatter=target_formatter,
             **ds_kw,
         )
         target_formatter = getattr(train_input, "target_formatter", None)

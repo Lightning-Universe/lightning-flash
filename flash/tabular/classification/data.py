@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional, Type, Union
 
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
+from flash.core.data.utilities.classification import TargetFormatter
 from flash.core.utilities.imports import _PANDAS_AVAILABLE, _TABULAR_TESTING
 from flash.core.utilities.stages import RunningStage
 from flash.tabular.classification.input import TabularClassificationCSVInput, TabularClassificationDataFrameInput
@@ -49,6 +50,7 @@ class TabularClassificationData(TabularData):
         val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = TabularClassificationDataFrameInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -83,10 +85,12 @@ class TabularClassificationData(TabularData):
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
                 predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
-              :class:`~flash.core.data.data_module.DataModule` constructor.
+                :class:`~flash.core.data.data_module.DataModule` constructor.
 
         Returns:
             The constructed :class:`~flash.tabular.classification.data.TabularClassificationData`.
@@ -156,6 +160,7 @@ class TabularClassificationData(TabularData):
             >>> del predict_data
         """
         ds_kw = dict(
+            target_formatter=target_formatter,
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
             categorical_fields=categorical_fields,
@@ -191,6 +196,7 @@ class TabularClassificationData(TabularData):
         val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = TabularClassificationCSVInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -225,6 +231,8 @@ class TabularClassificationData(TabularData):
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
                 predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
@@ -297,6 +305,7 @@ class TabularClassificationData(TabularData):
             >>> os.remove("predict_data.csv")
         """
         ds_kw = dict(
+            target_formatter=target_formatter,
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
             categorical_fields=categorical_fields,

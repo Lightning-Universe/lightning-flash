@@ -30,6 +30,7 @@ from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE
+from flash.core.data.utilities.classification import TargetFormatter
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _AUDIO_TESTING
@@ -62,6 +63,7 @@ class AudioClassificationData(DataModule):
         val_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = AudioClassificationFilesInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -88,11 +90,13 @@ class AudioClassificationData(DataModule):
             val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
+                predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
-              :class:`~flash.core.data.data_module.DataModule` constructor.
+                :class:`~flash.core.data.data_module.DataModule` constructor.
 
         Returns:
             The constructed :class:`~flash.audio.classification.data.AudioClassificationData`.
@@ -142,6 +146,7 @@ class AudioClassificationData(DataModule):
         """
 
         ds_kw = dict(
+            target_formatter=target_formatter,
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
@@ -168,6 +173,7 @@ class AudioClassificationData(DataModule):
         val_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = AudioClassificationFolderInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -213,11 +219,13 @@ class AudioClassificationData(DataModule):
             val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
+                predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
-              :class:`~flash.core.data.data_module.DataModule` constructor.
+                :class:`~flash.core.data.data_module.DataModule` constructor.
 
         Returns:
             The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
@@ -270,6 +278,7 @@ class AudioClassificationData(DataModule):
         """
 
         ds_kw = dict(
+            target_formatter=target_formatter,
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
@@ -299,6 +308,7 @@ class AudioClassificationData(DataModule):
         val_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = AudioClassificationNumpyInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -323,11 +333,13 @@ class AudioClassificationData(DataModule):
             val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
+                predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
-              :class:`~flash.core.data.data_module.DataModule` constructor.
+                :class:`~flash.core.data.data_module.DataModule` constructor.
 
         Returns:
             The constructed :class:`~flash.audio.classification.data.AudioClassificationData`.
@@ -361,6 +373,7 @@ class AudioClassificationData(DataModule):
         """
 
         ds_kw = dict(
+            target_formatter=target_formatter,
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
@@ -390,6 +403,7 @@ class AudioClassificationData(DataModule):
         val_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = AudioClassificationTensorInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -414,11 +428,13 @@ class AudioClassificationData(DataModule):
             val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
+                predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
-              :class:`~flash.core.data.data_module.DataModule` constructor.
+                :class:`~flash.core.data.data_module.DataModule` constructor.
 
         Returns:
             The constructed :class:`~flash.audio.classification.data.AudioClassificationData`.
@@ -452,6 +468,7 @@ class AudioClassificationData(DataModule):
         """
 
         ds_kw = dict(
+            target_formatter=target_formatter,
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
@@ -488,6 +505,7 @@ class AudioClassificationData(DataModule):
         val_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = AudioClassificationDataFrameInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -526,11 +544,13 @@ class AudioClassificationData(DataModule):
             val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
+                predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
-              :class:`~flash.core.data.data_module.DataModule` constructor.
+                :class:`~flash.core.data.data_module.DataModule` constructor.
 
         Returns:
             The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
@@ -602,6 +622,7 @@ class AudioClassificationData(DataModule):
         """
 
         ds_kw = dict(
+            target_formatter=target_formatter,
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
@@ -643,6 +664,7 @@ class AudioClassificationData(DataModule):
         val_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
+        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = AudioClassificationCSVInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -681,11 +703,13 @@ class AudioClassificationData(DataModule):
             val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
             test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
             predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
+                predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
-              :class:`~flash.core.data.data_module.DataModule` constructor.
+                :class:`~flash.core.data.data_module.DataModule` constructor.
 
         Returns:
             The constructed :class:`~flash.audio.classification.data.AudioClassificationData`.
@@ -767,6 +791,7 @@ class AudioClassificationData(DataModule):
         """
 
         ds_kw = dict(
+            target_formatter=target_formatter,
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
         )
