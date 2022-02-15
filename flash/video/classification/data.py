@@ -181,7 +181,6 @@ class VideoClassificationData(DataModule):
             >>> _ = [os.remove(f"predict_video_{i}.mp4") for i in range(1, 4)]
         """
         ds_kw = dict(
-            target_formatter=target_formatter,
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
             clip_sampler=clip_sampler,
@@ -197,6 +196,7 @@ class VideoClassificationData(DataModule):
             train_targets,
             transform=train_transform,
             video_sampler=video_sampler,
+            target_formatter=target_formatter,
             **ds_kw,
         )
         target_formatter = getattr(train_input, "target_formatter", None)
@@ -357,7 +357,6 @@ class VideoClassificationData(DataModule):
             >>> shutil.rmtree("predict_folder")
         """
         ds_kw = dict(
-            target_formatter=target_formatter,
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
             clip_sampler=clip_sampler,
@@ -368,7 +367,12 @@ class VideoClassificationData(DataModule):
         )
 
         train_input = input_cls(
-            RunningStage.TRAINING, train_folder, transform=train_transform, video_sampler=video_sampler, **ds_kw
+            RunningStage.TRAINING,
+            train_folder,
+            transform=train_transform,
+            video_sampler=video_sampler,
+            target_formatter=target_formatter,
+            **ds_kw,
         )
         target_formatter = getattr(train_input, "target_formatter", None)
 
@@ -546,7 +550,6 @@ class VideoClassificationData(DataModule):
             >>> del predict_data_frame
         """
         ds_kw = dict(
-            target_formatter=target_formatter,
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
             clip_sampler=clip_sampler,
@@ -562,7 +565,12 @@ class VideoClassificationData(DataModule):
         predict_data = (predict_data_frame, input_field, predict_videos_root, predict_resolver)
 
         train_input = input_cls(
-            RunningStage.TRAINING, *train_data, transform=train_transform, video_sampler=video_sampler, **ds_kw
+            RunningStage.TRAINING,
+            *train_data,
+            transform=train_transform,
+            video_sampler=video_sampler,
+            target_formatter=target_formatter,
+            **ds_kw,
         )
         target_formatter = getattr(train_input, "target_formatter", None)
 
@@ -754,7 +762,6 @@ class VideoClassificationData(DataModule):
             >>> os.remove("predict_data.csv")
         """
         ds_kw = dict(
-            target_formatter=target_formatter,
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
             clip_sampler=clip_sampler,
@@ -770,7 +777,12 @@ class VideoClassificationData(DataModule):
         predict_data = (predict_file, input_field, predict_videos_root, predict_resolver)
 
         train_input = input_cls(
-            RunningStage.TRAINING, *train_data, transform=train_transform, video_sampler=video_sampler, **ds_kw
+            RunningStage.TRAINING,
+            *train_data,
+            transform=train_transform,
+            video_sampler=video_sampler,
+            target_formatter=target_formatter,
+            **ds_kw,
         )
         target_formatter = getattr(train_input, "target_formatter", None)
 
@@ -917,7 +929,6 @@ class VideoClassificationData(DataModule):
             >>> del predict_dataset
         """
         ds_kw = dict(
-            target_formatter=target_formatter,
             transform_kwargs=transform_kwargs,
             input_transforms_registry=cls.input_transforms_registry,
             clip_sampler=clip_sampler,
@@ -933,6 +944,7 @@ class VideoClassificationData(DataModule):
             transform=train_transform,
             video_sampler=video_sampler,
             label_field=label_field,
+            target_formatter=target_formatter,
             **ds_kw,
         )
         target_formatter = getattr(train_input, "target_formatter", None)
