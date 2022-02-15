@@ -61,7 +61,7 @@ class FiftyOneDetectionLabelsOutput(Output):
 
     def transform(self, sample: Dict[str, Any]) -> Union[Detections, Dict[str, Any]]:
         if DataKeys.METADATA not in sample:
-            raise ValueError("sample requires DefaultDataKeys.METADATA to use a FiftyOneDetectionLabelsOutput output.")
+            raise ValueError("sample requires DataKeys.METADATA to use a FiftyOneDetectionLabelsOutput output.")
 
         height, width = sample[DataKeys.METADATA]["size"]
 
