@@ -147,7 +147,7 @@ class DataModule(pl.LightningDataModule):
 
         self.sampler = sampler
 
-        super().__init__(self)
+        super().__init__()
 
     @property
     def train_dataset(self) -> Optional[Input]:
