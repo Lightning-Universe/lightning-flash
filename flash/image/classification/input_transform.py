@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
-from typing import Callable, Tuple
+from typing import Callable, Tuple, Union
 
 import torch
 
@@ -43,20 +43,15 @@ class AlbumentationsAdapter(torch.nn.Module):
 class ImageClassificationInputTransform(InputTransform):
 
     image_size: Tuple[int, int] = (196, 196)
+    mean: Union[float, Tuple[float, float, float]] = (0.485, 0.456, 0.406)
+    std: Union[float, Tuple[float, float, float]] = (0.229, 0.224, 0.225)
 
     def input_per_sample_transform(self):
-        return T.Compose(
-            [T.ToTensor(), T.Resize(self.image_size), T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]
-        )
+        return T.Compose([T.ToTensor(), T.Resize(self.image_size), T.Normalize(self.mean, self.std)])
 
     def train_input_per_sample_transform(self):
         return T.Compose(
-            [
-                T.ToTensor(),
-                T.Resize(self.image_size),
-                T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-                T.RandomHorizontalFlip(),
-            ]
+            [T.ToTensor(), T.Resize(self.image_size), T.Normalize(self.mean, self.std), T.RandomHorizontalFlip()]
         )
 
     def target_per_sample_transform(self) -> Callable:
