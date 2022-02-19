@@ -101,7 +101,7 @@ Here's an example:
 
     from torchvision import transforms as T
 
-    from typing import Tuple, Callable
+    from typing import Callable, Tuple, Union
     import flash
     from flash.image import ImageClassificationData, ImageClassifier
     from flash.core.data.io.input_transform import InputTransform
