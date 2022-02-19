@@ -101,7 +101,7 @@ Here's an example:
 
     from torchvision import transforms as T
 
-    from typing import Tuple, Callable
+    from typing import Callable, Tuple, Union
     import flash
     from flash.image import ImageClassificationData, ImageClassifier
     from flash.core.data.io.input_transform import InputTransform
@@ -112,18 +112,18 @@ Here's an example:
     class ImageClassificationInputTransform(InputTransform):
 
         image_size: Tuple[int, int] = (196, 196)
+        mean: Union[float, Tuple[float, float, float]] = (0.485, 0.456, 0.406)
+        std: Union[float, Tuple[float, float, float]] = (0.229, 0.224, 0.225)
 
         def input_per_sample_transform(self):
-            return T.Compose(
-                [T.ToTensor(), T.Resize(self.image_size), T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]
-            )
+            return T.Compose([T.ToTensor(), T.Resize(self.image_size), T.Normalize(self.mean, self.std)])
 
         def train_input_per_sample_transform(self):
             return T.Compose(
                 [
                     T.ToTensor(),
                     T.Resize(self.image_size),
-                    T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+                    T.Normalize(self.mean, self.std),
                     T.RandomHorizontalFlip(),
                     T.ColorJitter(),
                     T.RandomAutocontrast(),

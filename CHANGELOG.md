@@ -4,7 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [0.7.0] - 2022-15-02
+## [0.7.1] - 2022-03-01
+
+### Added
+
+- Added the normalization parameters of ```torchvision.transforms.Normalize``` as ```transform_kwargs``` in the ```ImageClassificationInputTransform``` ([#1178](https://github.com/PyTorchLightning/lightning-flash/pull/1178))
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+## [0.7.0] - 2022-02-15
 
 ### Added
 
