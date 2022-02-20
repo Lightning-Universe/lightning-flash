@@ -40,6 +40,8 @@ Here's the full example:
     :language: python
     :lines: 14-
 
+To learn more about available for this task, see :ref:`backbones_heads`.
+
 .. note::
 
     Read more about :ref:`our integration with PyTorch Forecasting <pytorch_forecasting>` to see how to use your Flash model with their built-in plotting capabilities.

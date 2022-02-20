@@ -39,3 +39,5 @@ This task can now be sent to the ``fit()`` method of :class:`~flash.core.trainer
 .. literalinclude:: ../../../flash_examples/image_embedder.py
     :language: python
     :lines: 14-
+
+To learn more about available for this task, see :ref:`backbones_heads`.

@@ -33,3 +33,5 @@ Here's the full example:
 .. literalinclude:: ../../../flash_examples/text_embedder.py
     :language: python
     :lines: 14-
+
+To learn more about available for this task, see :ref:`backbones_heads`.

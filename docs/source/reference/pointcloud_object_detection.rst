@@ -81,6 +81,8 @@ Here's the full example:
     :language: python
     :lines: 14-
 
+To learn more about available for this task, see :ref:`backbones_heads`.
+
 .. image:: https://raw.githubusercontent.com/intel-isl/Open3D-ML/master/docs/images/visualizer_BoundingBoxes.png
    :width: 100%
 
