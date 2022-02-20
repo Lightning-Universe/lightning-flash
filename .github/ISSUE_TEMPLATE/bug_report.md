@@ -13,13 +13,6 @@ assignees: ''
 
 ### To Reproduce
 
-Steps to reproduce the behavior:
-
-1. Go to '...'
-2. Run '....'
-3. Scroll down to '....'
-4. See error
-
 <!-- If you have a code sample, error messages, stack traces, please provide it here as well -->
 
 
@@ -33,12 +26,9 @@ Minimal means having the shortest code but still preserving the bug. -->
 
 ### Environment
 
- - PyTorch Version (e.g., 1.0):
  - OS (e.g., Linux):
- - How you installed PyTorch (`conda`, `pip`, source):
- - Build command you used (if compiling from source):
  - Python version:
- - CUDA/cuDNN version:
+ - PyTorch/Lightning Version (e.g., 1.0):
  - GPU models and configuration:
  - Any other relevant information:
 
