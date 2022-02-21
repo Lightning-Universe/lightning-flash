@@ -28,7 +28,7 @@ Minimal means having the shortest code but still preserving the bug. -->
 
  - OS (e.g., Linux):
  - Python version:
- - PyTorch/Lightning Version (e.g., 1.0):
+ - PyTorch/Lightning/Flash Version (e.g., 1.10/1.5/0.7):
  - GPU models and configuration:
  - Any other relevant information:
 
