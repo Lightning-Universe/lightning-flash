@@ -14,3 +14,6 @@ jobs:
     - "image"
     - "text"
     - "tabular"
+    gpu_inds:
+    - "0"
+    - "0,1"
