@@ -1,3 +1,5 @@
+.. _backbones_heads:
+
 *******************
 Backbones and Heads
 *******************
