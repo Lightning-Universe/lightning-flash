@@ -30,6 +30,7 @@ from flash.core.utilities.imports import (
     _VIDEO_TESTING,
 )
 from tests.examples.utils import run_test
+from tests.helpers.forked import forked
 
 root = Path(__file__).parent.parent.parent
 
@@ -141,6 +142,6 @@ root = Path(__file__).parent.parent.parent
         ),
     ],
 )
-@pytest.mark.forked
+@forked
 def test_example(tmpdir, file):
     run_test(str(root / "flash_examples" / file))
