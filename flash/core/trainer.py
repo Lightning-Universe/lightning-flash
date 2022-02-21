@@ -78,7 +78,7 @@ class Trainer(PlTrainer):
     def __init__(self, *args, **kwargs):
         if flash._IS_TESTING:
             if torch.cuda.is_available():
-                kwargs["gpus"] = torch.cuda.device_count()
+                kwargs["gpus"] = -1
                 kwargs["max_epochs"] = 3
                 kwargs["limit_train_batches"] = 1.0
                 kwargs["limit_val_batches"] = 1.0
