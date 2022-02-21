@@ -77,7 +77,7 @@ class QuestionAnsweringInputBase(Input):
 
         if flash._IS_TESTING:
             # NOTE: must subset in this way to return a Dataset
-            hf_dataset = hf_dataset.select(range(20))
+            hf_dataset = hf_dataset.select(range(20), keep_in_memory=True)
 
         return hf_dataset
 

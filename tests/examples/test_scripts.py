@@ -16,6 +16,7 @@ from pathlib import Path
 from unittest import mock
 
 import pytest
+import torch.cuda
 
 from flash.core.utilities.imports import (
     _AUDIO_TESTING,
@@ -83,7 +84,11 @@ root = Path(__file__).parent.parent.parent
             marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed"),
         ),
         pytest.param(
-            "style_transfer.py", marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed")
+            "style_transfer.py",
+            marks=[
+                pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed"),
+                pytest.mark.skipif(torch.cuda.device_count() >= 2, reason="PyStiche doesn't support DDP"),
+            ],
         ),
         pytest.param(
             "summarization.py", marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed")
