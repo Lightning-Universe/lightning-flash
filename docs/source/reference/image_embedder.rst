@@ -40,4 +40,4 @@ This task can now be sent to the ``fit()`` method of :class:`~flash.core.trainer
     :language: python
     :lines: 14-
 
-To learn how to the available backbones / heads for this task, see :ref:`backbones_heads`.
+To learn how to view the available backbones / heads for this task, see :ref:`backbones_heads`.

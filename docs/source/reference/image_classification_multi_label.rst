@@ -54,7 +54,7 @@ Here's the full example:
     :language: python
     :lines: 14-
 
-To learn how to the available backbones / heads for this task, see :ref:`backbones_heads`.
+To learn how to view the available backbones / heads for this task, see :ref:`backbones_heads`.
 
 
 ------
