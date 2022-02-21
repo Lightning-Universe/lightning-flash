@@ -44,7 +44,7 @@ class Seq2SeqInputBase(Input):
 
         if flash._IS_TESTING:
             # NOTE: must subset in this way to return a Dataset
-            hf_dataset = [sample for sample in hf_dataset.select(range(20), keep_in_memory=True)]
+            hf_dataset = [sample for sample in hf_dataset.select(range(40), keep_in_memory=True)]
 
         return hf_dataset
 
