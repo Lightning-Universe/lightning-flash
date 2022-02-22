@@ -16,7 +16,7 @@ from pathlib import Path
 from unittest import mock
 
 import pytest
-import torch.cuda
+import torch
 
 from flash.core.utilities.imports import (
     _AUDIO_TESTING,
