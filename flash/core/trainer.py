@@ -11,8 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import contextlib
-import functools
 import inspect
 import warnings
 from argparse import ArgumentParser, Namespace
@@ -30,6 +28,7 @@ from torch.utils.data import DataLoader
 import flash
 from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import OutputTransform
+from flash.core.data.io.transform_predictions import TransformPredictions
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 
@@ -79,7 +78,7 @@ class Trainer(PlTrainer):
     def __init__(self, *args, **kwargs):
         if flash._IS_TESTING:
             if torch.cuda.is_available():
-                kwargs["gpus"] = 1
+                kwargs["gpus"] = -1
                 kwargs["max_epochs"] = 3
                 kwargs["limit_train_batches"] = 1.0
                 kwargs["limit_val_batches"] = 1.0
@@ -162,24 +161,6 @@ class Trainer(PlTrainer):
         self._resolve_callbacks(model, strategy, train_bn=train_bn)
         return super().fit(model, train_dataloader, val_dataloaders, datamodule)
 
-    @contextlib.contextmanager
-    def _wrap_predict_step(self, model, output_transform, output) -> None:
-        predict_step = model.predict_step
-
-        @functools.wraps(predict_step)
-        def wrapper(*args, **kwargs):
-            predictions = predict_step(*args, **kwargs)
-            if predictions is not None:
-                predictions = output_transform(predictions)
-                predictions = [output(prediction) for prediction in predictions]
-            return predictions
-
-        model.predict_step = wrapper
-        try:
-            yield
-        finally:
-            model.predict_step = predict_step
-
     def predict(
         self,
         model: Optional[LightningModule] = None,
@@ -210,8 +191,14 @@ class Trainer(PlTrainer):
         if isinstance(output, str) and isinstance(model, Task):
             output = getattr(model, "outputs", FlashRegistry("outputs")).get(output).from_task(model)
 
-        with self._wrap_predict_step(model, output_transform, output):
-            return super().predict(model, dataloaders, **kwargs)
+        old_callbacks = self.callbacks
+        self.callbacks = self._merge_callbacks(self.callbacks, [TransformPredictions(output_transform, output)])
+
+        result = super().predict(model, dataloaders, **kwargs)
+
+        self.callbacks = old_callbacks
+
+        return result
 
     def _resolve_callbacks(
         self,

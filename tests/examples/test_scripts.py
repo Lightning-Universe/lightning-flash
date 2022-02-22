@@ -16,6 +16,7 @@ from pathlib import Path
 from unittest import mock
 
 import pytest
+import torch
 
 from flash.core.utilities.imports import (
     _AUDIO_TESTING,
@@ -30,6 +31,7 @@ from flash.core.utilities.imports import (
     _VIDEO_TESTING,
 )
 from tests.examples.utils import run_test
+from tests.helpers.forked import forked
 
 root = Path(__file__).parent.parent.parent
 
@@ -82,7 +84,11 @@ root = Path(__file__).parent.parent.parent
             marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed"),
         ),
         pytest.param(
-            "style_transfer.py", marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed")
+            "style_transfer.py",
+            marks=[
+                pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed"),
+                pytest.mark.skipif(torch.cuda.device_count() >= 2, reason="PyStiche doesn't support DDP"),
+            ],
         ),
         pytest.param(
             "summarization.py", marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed")
@@ -141,5 +147,6 @@ root = Path(__file__).parent.parent.parent
         ),
     ],
 )
+@forked
 def test_example(tmpdir, file):
     run_test(str(root / "flash_examples" / file))
