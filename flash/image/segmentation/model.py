@@ -198,4 +198,4 @@ class SemanticSegmentation(ClassificationTask):
     @staticmethod
     def _ci_benchmark_fn(history: List[Dict[str, Any]]):
         """This function is used only for debugging usage with CI."""
-        assert history[-1]["val_iou"] > 0.2
+        assert history[-1]["val_jaccardindex"] > 0.2

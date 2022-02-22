@@ -22,10 +22,13 @@ def call_script(
     timeout: Optional[int] = 60 * 10,
 ) -> Tuple[int, str, str]:
     with open(filepath) as original:
-        data = original.read()
+        data = original.readlines()
 
     with open(filepath, "w") as modified:
-        modified.write("import pytorch_lightning as pl\npl.seed_everything(42)\n" + data)
+        modified.write("import pytorch_lightning as pl\npl.seed_everything(42)\n")
+        modified.write("if __name__ == '__main__':\n")
+        for line in data:
+            modified.write(f"    {line}\n")
 
     if args is None:
         args = []
@@ -42,7 +45,7 @@ def call_script(
     stderr = stderr.decode("utf-8")
 
     with open(filepath, "w") as modified:
-        modified.write(data)
+        modified.writelines(data)
 
     return p.returncode, stdout, stderr
 
