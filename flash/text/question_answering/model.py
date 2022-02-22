@@ -291,13 +291,11 @@ class QuestionAnsweringTask(Task):
         self.log_dict(result, on_step=False, on_epoch=True, prog_bar=False)
 
     def compute_metrics(self, generated_tokens, batch):
-        for example in batch:
-            predicted_answer = generated_tokens[example["example_id"]]
-            target_answer = example["answer"]["text"][0] if len(example["answer"]["text"]) > 0 else ""
-            self.rouge.update(predicted_answer, target_answer)
-
-        result = self.rouge.compute()
-        return result
+        predicted_answers = [generated_tokens[example["example_id"]] for example in batch]
+        target_answers = [
+            example["answer"]["text"][0] if len(example["answer"]["text"]) > 0 else "" for example in batch
+        ]
+        return self.rouge(predicted_answers, target_answers)
 
     def validation_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0):
         self.common_step("val", batch)
