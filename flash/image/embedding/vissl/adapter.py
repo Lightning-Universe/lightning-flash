@@ -126,6 +126,7 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
     def get_model_config_template():
         cfg = AttrDict(
             {
+                "BASE_MODEL_NAME": "multi_input_output_model",
                 "SINGLE_PASS_EVERY_CROP": False,
                 "INPUT_TYPE": "rgb",
                 "MULTI_INPUT_HEAD_MAPPING": [],
