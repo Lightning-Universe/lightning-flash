@@ -24,7 +24,7 @@ The :class:`~flash.image.detection.model.ObjectDetector` and :class:`~flash.imag
 Example
 *******
 
-Let's look at object detection with the COCO 128 data set, which contains `91 object classes <https://cocodataset.org/#explore>`_.
+Let's look at object detection with the COCO 128 data set, which contains `80 object classes <https://cocodataset.org/#explore>`_.
 This is a subset of `COCO train2017 <https://cocodataset.org/>`_ with only 128 images.
 The data set is organized following the COCO format.
 Here's an outline:
