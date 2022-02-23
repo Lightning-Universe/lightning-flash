@@ -34,7 +34,9 @@ datamodule = VideoClassificationData.from_folders(
 model = VideoClassifier(backbone="x3d_xs", labels=datamodule.labels, pretrained=False)
 
 # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count(), fast_dev_run=True)
+trainer = flash.Trainer(
+    max_epochs=1, gpus=torch.cuda.device_count(), strategy="ddp" if torch.cuda.device_count() > 1 else None
+)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Make a prediction
