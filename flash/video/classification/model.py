@@ -147,8 +147,3 @@ class VideoClassifier(ClassificationTask):
     def modules_to_freeze(self) -> Union[nn.Module, Iterable[Union[nn.Module, Iterable]]]:
         """Return the module attributes of the model to be frozen."""
         return list(self.backbone.children())
-
-    @staticmethod
-    def _ci_benchmark_fn(history: List[Dict[str, Any]]):
-        """This function is used only for debugging usage with CI."""
-        assert history[-1]["val_accuracy"] > 0.70
