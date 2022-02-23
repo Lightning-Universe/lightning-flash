@@ -66,3 +66,7 @@ reference below).
     predictions = trainer.predict(model, datamodule=datamodule)
     print(predictions)
     # out: [[[0.5926494598388672, 0.40735048055648804]]]
+
+
+.. note::
+    Actually, we do not support returning predictions directly when you run multi-GPU configuration (DDP).
