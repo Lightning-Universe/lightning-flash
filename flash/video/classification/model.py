@@ -120,13 +120,13 @@ class VideoClassifier(ClassificationTask):
 
     def on_train_start(self) -> None:
         if accelerator_connector(self.trainer).is_distributed:
-            encoded_dataset = self.trainer.train_dataloader.loaders.dataset.dataset
+            encoded_dataset = self.trainer.train_dataloader.loaders.dataset.data
             encoded_dataset._video_sampler = DistributedSampler(encoded_dataset._labeled_videos)
         super().on_train_start()
 
     def on_train_epoch_start(self) -> None:
         if accelerator_connector(self.trainer).is_distributed:
-            encoded_dataset = self.trainer.train_dataloader.loaders.dataset.dataset
+            encoded_dataset = self.trainer.train_dataloader.loaders.dataset.data
             encoded_dataset._video_sampler.set_epoch(self.trainer.current_epoch)
         super().on_train_epoch_start()
 
@@ -147,8 +147,3 @@ class VideoClassifier(ClassificationTask):
     def modules_to_freeze(self) -> Union[nn.Module, Iterable[Union[nn.Module, Iterable]]]:
         """Return the module attributes of the model to be frozen."""
         return list(self.backbone.children())
-
-    @staticmethod
-    def _ci_benchmark_fn(history: List[Dict[str, Any]]):
-        """This function is used only for debugging usage with CI."""
-        assert history[-1]["val_accuracy"] > 0.70
