@@ -2,6 +2,7 @@ import inspect
 from typing import Any, Callable, Mapping
 
 import torch
+from torch import Tensor
 
 from flash.core.data.batch import _ServeInputProcessor
 from flash.core.data.data_module import DataModule
@@ -41,6 +42,8 @@ class FlashOutputs(BaseType):
                 result = self._output(output)
                 if isinstance(result, Mapping):
                     result = result[DataKeys.PREDS]
+                if isinstance(result, Tensor):
+                    result = result.tolist()
                 results.append(result)
         if len(results) == 1:
             return results[0]
