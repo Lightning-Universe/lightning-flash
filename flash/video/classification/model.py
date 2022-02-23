@@ -120,13 +120,13 @@ class VideoClassifier(ClassificationTask):
 
     def on_train_start(self) -> None:
         if accelerator_connector(self.trainer).is_distributed:
-            encoded_dataset = self.trainer.train_dataloader.loaders.dataset.dataset
+            encoded_dataset = self.trainer.train_dataloader.loaders.dataset.data
             encoded_dataset._video_sampler = DistributedSampler(encoded_dataset._labeled_videos)
         super().on_train_start()
 
     def on_train_epoch_start(self) -> None:
         if accelerator_connector(self.trainer).is_distributed:
-            encoded_dataset = self.trainer.train_dataloader.loaders.dataset.dataset
+            encoded_dataset = self.trainer.train_dataloader.loaders.dataset.data
             encoded_dataset._video_sampler.set_epoch(self.trainer.current_epoch)
         super().on_train_epoch_start()
 
