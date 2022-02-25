@@ -79,14 +79,8 @@ class AdapterTask(Task):
 
         self.adapter = adapter
 
-    @torch.jit.unused
-    @property
-    def input_transform(self) -> Optional[INPUT_TRANSFORM_TYPE]:
-        return self.adapter.input_transform
-
-    @input_transform.setter
-    def input_transform(self, input_transform: INPUT_TRANSFORM_TYPE) -> None:
-        self.adapter.input_transform = input_transform
+    def set_transform(self, inp_transform):
+        self.adapter.input_transform = inp_transform
 
     @torch.jit.unused
     @property
