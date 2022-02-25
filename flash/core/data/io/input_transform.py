@@ -1128,7 +1128,8 @@ class _InputTransformProcessorV2:
             else:
                 list_samples = samples
 
-            transformed_samples = [self.per_sample_transform(sample) for sample in list_samples]
+            # breakpoint()
+            transformed_samples = [self.per_sample_transform(list(sample.values())[0]) for sample in list_samples]
 
             for sample in transformed_samples:
                 if self.on_device:

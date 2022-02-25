@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, Mapping, Sequence, Union
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, Mapping, Sequence, Union
 
 import torch
 from torch import nn
@@ -68,6 +69,32 @@ class ApplyToKeys(nn.Sequential):
 
         return f"{self.__class__.__name__}(keys={repr(keys)}, transform={repr(transform)})"
 
+
+class ConvertToModule(nn.Sequential):
+    def __init__(self, keys: Union[str, Sequence[str]], *args):
+        super().__init__(*(convert_to_modules(arg) for arg in args))
+        if isinstance(keys, str):
+            keys = [keys]
+        self.keys = keys
+
+    def __repr__(self):
+        transform = list(self.children())
+
+        keys = self.keys[0] if len(self.keys) == 1 else self.keys
+        transform = transform[0] if len(transform) == 1 else transform
+
+        return f"{self.__class__.__name__}(keys={repr(keys)}, transform={repr(transform)})"
+
+    def get_transform(self):
+        return list(self.children())
+
+# @dataclass
+# class LambdaInputTransform(InputTransform):
+
+#     transform: Callable = InputTransform._identity
+
+#     def per_sample_transform(self) -> Callable:
+#         return self.transform
 
 class KorniaParallelTransforms(nn.Sequential):
     """The ``KorniaParallelTransforms`` class is an ``nn.Sequential`` which will apply the given transforms to each

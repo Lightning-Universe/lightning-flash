@@ -80,6 +80,7 @@ class ModuleWrapperBase:
             if hasattr(self, "_children"):
                 for child in self._children:
                     setattr(getattr(self, child), key, value)
+        print(key, value)
         super().__setattr__(key, value)
 
 

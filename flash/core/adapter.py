@@ -84,8 +84,13 @@ class AdapterTask(Task):
     def input_transform(self) -> Optional[INPUT_TRANSFORM_TYPE]:
         return self.adapter.input_transform
 
-    @input_transform.setter
-    def input_transform(self, input_transform: INPUT_TRANSFORM_TYPE) -> None:
+    # @input_transform.setter
+    # def input_transform(self, input_transform: INPUT_TRANSFORM_TYPE) -> None:
+    #     self.adapter.input_transform = input_transform
+
+    def set_transform(self, input_transform: INPUT_TRANSFORM_TYPE) -> None:
+        # breakpoint()
+        # print(input_transform[0], type(input_transform[0]))
         self.adapter.input_transform = input_transform
 
     @torch.jit.unused

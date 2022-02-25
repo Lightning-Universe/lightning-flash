@@ -169,6 +169,7 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
         return model_output
 
     def shared_step(self, batch: Any, train: bool = True) -> Any:
+        breakpoint()
         out = self.ssl_forward(batch[DataKeys.INPUT])
 
         # for moco and dino
