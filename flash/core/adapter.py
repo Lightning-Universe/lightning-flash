@@ -21,7 +21,6 @@ from torch.utils.data import DataLoader, Sampler
 import flash
 from flash.core.data.io.input import InputBase
 from flash.core.model import DatasetProcessor, ModuleWrapperBase, Task
-from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 
 
 class Adapter(DatasetProcessor, ModuleWrapperBase, nn.Module):
