@@ -11,14 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from dataclasses import dataclass
 import warnings
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from flash.core.adapter import AdapterTask
 from flash.core.data.io.input import DataKeys
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _VISSL_AVAILABLE, requires
+from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE
 
 if _VISSL_AVAILABLE:
@@ -110,9 +113,20 @@ class ImageEmbedder(AdapterTask):
             learning_rate=learning_rate,
         )
 
+        @dataclass
+        class LambdaInputTransform(InputTransform):
+
+            transform: Callable = InputTransform._identity
+
+            def per_sample_transform(self) -> Callable:
+                return self.transform
+
         input_transform, self.collate_fn = self.transforms.get(pretraining_transform)(**pretraining_transform_kwargs)
         output = ApplyToKeys(DataKeys.INPUT, input_transform)
-        self.set_transform(output.get_transform())
+        self.input_transform = LambdaInputTransform(
+            RunningStage.TRAINING,
+            transform=output
+        ) 
 
         warnings.warn(
             "Warning: VISSL ImageEmbedder overrides any user provided transforms"

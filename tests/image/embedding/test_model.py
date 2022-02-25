@@ -51,7 +51,7 @@ def test_load_from_checkpoint_dependency_error():
 
 
 @pytest.mark.skipif(not (_TORCHVISION_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
-@pytest.mark.parametrize("backbone, training_strategy", [("resnet", "barlow_twins")])
+@pytest.mark.parametrize("backbone, training_strategy", [("vision_transformer", "dino")])
 def test_vissl_training(tmpdir, backbone, training_strategy):
     datamodule = ImageClassificationData.from_datasets(
         train_dataset=FakeData(),
@@ -61,8 +61,8 @@ def test_vissl_training(tmpdir, backbone, training_strategy):
     embedder = ImageEmbedder(
         backbone=backbone,
         training_strategy=training_strategy,
-        head="simclr_head",
-        pretraining_transform="barlow_twins_transform",
+        head="dino_head",
+        pretraining_transform="dino_transform",
         training_strategy_kwargs={"latent_embedding_dim": 128},
         pretraining_transform_kwargs={
             "total_num_crops": 2,
