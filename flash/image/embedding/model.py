@@ -14,6 +14,7 @@
 import warnings
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional
+from functools import partial
 
 from flash.core.adapter import AdapterTask
 from flash.core.data.io.input import DataKeys
@@ -123,7 +124,7 @@ class ImageEmbedder(AdapterTask):
 
         input_transform, self.collate_fn = self.transforms.get(pretraining_transform)(**pretraining_transform_kwargs)
         output = ApplyToKeys(DataKeys.INPUT, input_transform)
-        self.input_transform = LambdaInputTransform(RunningStage.TRAINING, transform=output)
+        self.input_transform = partial(LambdaInputTransform, transform=output)
 
         warnings.warn(
             "Warning: VISSL ImageEmbedder overrides any user provided transforms"
