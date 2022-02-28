@@ -13,8 +13,8 @@
 # limitations under the License.
 import warnings
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional
 from functools import partial
+from typing import Any, Callable, Dict, List, Optional
 
 from flash.core.adapter import AdapterTask
 from flash.core.data.io.input import DataKeys
