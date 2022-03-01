@@ -66,3 +66,7 @@ reference below).
     predictions = trainer.predict(model, datamodule=datamodule)
     print(predictions)
     # out: [[[0.5926494598388672, 0.40735048055648804]]]
+
+
+.. note::
+    PyTorch Lightning does not return predictions directly from `predict` when using a multi-GPU configuration (DDP). Instead you should use a :class:`pytorch_lightning.callbacks.BasePredictionWriter`.
