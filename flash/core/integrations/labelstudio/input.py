@@ -104,6 +104,8 @@ def _load_json_data(data, data_folder, multi_label=False):
 
 
 class BaseLabelStudioInput(Properties):
+    parameters: LabelStudioParameters
+
     def load_data(
         self, data: Optional[Any], parameters: Optional[LabelStudioParameters] = None
     ) -> Sequence[Mapping[str, Any]]:

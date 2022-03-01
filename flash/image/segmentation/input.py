@@ -36,6 +36,8 @@ if _TORCHVISION_AVAILABLE:
 
 
 class SemanticSegmentationInput(Input):
+    num_classes: int
+    labels_map: Dict[int, Tuple[int, int, int]]
     def load_labels_map(
         self, num_classes: Optional[int] = None, labels_map: Optional[Dict[int, Tuple[int, int, int]]] = None
     ) -> None:
@@ -137,6 +139,7 @@ class SemanticSegmentationFolderInput(SemanticSegmentationFilesInput):
 
 
 class SemanticSegmentationFiftyOneInput(SemanticSegmentationFilesInput):
+    label_field: str
     def load_data(
         self,
         sample_collection: SampleCollection,

@@ -26,6 +26,10 @@ class ClassificationInputMixin(Properties):
     * In the ``load_sample`` method, use ``format_target`` to convert the target to a standard format for use with our
       tasks.
     """
+    target_formatter: TargetFormatter
+    multi_label: bool
+    labels: list
+    num_classes: int
 
     def load_target_metadata(
         self,

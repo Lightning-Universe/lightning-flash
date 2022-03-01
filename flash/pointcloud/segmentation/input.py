@@ -21,6 +21,8 @@ from flash.pointcloud.segmentation.open3d_ml.sequences_dataset import SequencesD
 
 
 class PointCloudSegmentationDatasetInput(Input):
+    num_classes: Dataset
+    dataset: Dataset
     @requires("pointcloud")
     def load_data(self, dataset: Dataset) -> Any:
         if self.training and hasattr(dataset, "num_classes"):

@@ -19,6 +19,7 @@ from flash.core.data.io.input import DataKeys, Input
 
 
 class PointCloudObjectDetectorDatasetInput(Input):
+    dataset: Dataset
     def load_data(self, dataset: Dataset) -> Any:
         self.dataset = dataset
         return range(len(self.dataset))

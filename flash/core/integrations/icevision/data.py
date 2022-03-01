@@ -29,6 +29,9 @@ if _ICEVISION_AVAILABLE:
 
 
 class IceVisionInput(Input):
+    num_classes: int
+    labels: list
+
     def load_data(
         self,
         root: str,
