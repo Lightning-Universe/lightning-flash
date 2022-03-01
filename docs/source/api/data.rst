@@ -65,6 +65,7 @@ ________________________________________
     ~flash.core.data.utilities.classification.CommaDelimitedMultiLabelTargetFormatter
     ~flash.core.data.utilities.classification.SpaceDelimitedTargetFormatter
     ~flash.core.data.utilities.classification.MultiBinaryTargetFormatter
+    ~flash.core.data.utilities.classification.MultiSoftTargetFormatter
     ~flash.core.data.utilities.classification.get_target_formatter
 
 flash.core.data.properties
