@@ -78,9 +78,6 @@ class AdapterTask(Task):
 
         self.adapter = adapter
 
-    def set_transform(self, inp_transform):
-        self.adapter.input_transform = inp_transform
-
     @torch.jit.unused
     @property
     def backbone(self) -> nn.Module:

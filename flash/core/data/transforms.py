@@ -60,10 +60,6 @@ class ApplyToKeys(nn.Sequential):
         # result is simply returned if len(inputs) == 0
         return result
 
-    def get_transform(self):
-        transform = list(self.children())
-        return transform[0] if len(transform) == 1 else transform
-
     def __repr__(self):
         transform = list(self.children())
 
