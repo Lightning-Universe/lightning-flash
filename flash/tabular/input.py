@@ -36,6 +36,7 @@ else:
 
 class TabularDataFrameInput(Input):
     parameters: dict
+
     @staticmethod
     def _sanetize_fields(
         categorical_fields: Optional[Union[str, List[str]]], numerical_fields: Optional[Union[str, List[str]]]

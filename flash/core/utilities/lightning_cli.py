@@ -221,12 +221,13 @@ class SaveConfigCallback(Callback):
 
 class LightningCLI:
     """Implementation of a configurable command line tool for pytorch-lightning."""
+
     parser: LightningArgumentParser
     config: Namespace
     config_init: Namespace
     datamodule: LightningDataModule
     model: LightningModule
-    trainer:Trainer
+    trainer: Trainer
     fit_kwargs: dict
 
     def __init__(

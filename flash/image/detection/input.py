@@ -134,6 +134,7 @@ class FiftyOneParser(Parser):
 class ObjectDetectionFiftyOneInput(IceVisionInput):
     num_classes: int
     labels: list
+
     @requires("fiftyone")
     def load_data(
         self,

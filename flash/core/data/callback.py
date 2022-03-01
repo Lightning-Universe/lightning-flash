@@ -147,6 +147,7 @@ class BaseDataFetcher(FlashCallback):
             'predict': {}
         }
     """
+
     batches: dict
 
     def __init__(self, enabled: bool = False):
