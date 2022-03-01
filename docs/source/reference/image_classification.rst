@@ -61,7 +61,7 @@ Here's the full example:
     :lines: 14-
 
 To learn how to view the available backbones / heads for this task, see :ref:`backbones_heads`.
-Moreover, the benchmarks of different backbones of PyTorch Image Models (TIMM) can be found here:
+Benchmarks for backbones provided by PyTorch Image Models (TIMM) can be found here:
 https://github.com/rwightman/pytorch-image-models/blob/master/results/results-imagenet-real.csv
 
 ------
