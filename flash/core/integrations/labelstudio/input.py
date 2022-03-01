@@ -60,9 +60,9 @@ def _load_json_data(data, data_folder, multi_label=False):
                     if isinstance(label, list) and not multi_label:
                         for sublabel in label:
                             classes.add(sublabel)
-                            temp = {}
-                            temp["file_upload"] = task.get("file_upload")
-                            temp["data"] = task.get("data")
+                            temp = {"file_upload": task.get("file_upload"),
+                            "data": task.get("data"), "label": sublabel,
+                            "result": res.get("value")}
                             if temp["file_upload"]:
                                 temp["file_upload"] = os.path.join(data_folder, temp["file_upload"])
                             else:
@@ -71,8 +71,6 @@ def _load_json_data(data, data_folder, multi_label=False):
                                 path = Path(p)
                                 if path and data_folder:
                                     temp["file_upload"] = os.path.join(data_folder, path.name)
-                            temp["label"] = sublabel
-                            temp["result"] = res.get("value")
                             if annotation["ground_truth"]:
                                 test_results.append(temp)
                             elif not annotation["ground_truth"]:
@@ -83,9 +81,7 @@ def _load_json_data(data, data_folder, multi_label=False):
                                 classes.add(item)
                         else:
                             classes.add(label)
-                        temp = {}
-                        temp["file_upload"] = task.get("file_upload")
-                        temp["data"] = task.get("data")
+                        temp = {"file_upload": task.get("file_upload"), "data": task.get("data"), "label": label, "result": res.get("value")}
                         if temp["file_upload"] and data_folder:
                             temp["file_upload"] = os.path.join(data_folder, temp["file_upload"])
                         else:
@@ -94,8 +90,6 @@ def _load_json_data(data, data_folder, multi_label=False):
                             path = Path(p)
                             if path and data_folder:
                                 temp["file_upload"] = os.path.join(data_folder, path.name)
-                        temp["label"] = label
-                        temp["result"] = res.get("value")
                         if annotation["ground_truth"]:
                             test_results.append(temp)
                         elif not annotation["ground_truth"]:

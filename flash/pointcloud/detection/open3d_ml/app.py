@@ -45,8 +45,8 @@ if _POINTCLOUD_AVAILABLE:
             """
             # Setup the labels
             lut = LabelLUT()
-            for id, color in dataset.color_map.items():
-                lut.add_label(id, id, color=color)
+            for idx, color in dataset.color_map.items():
+                lut.add_label(idx, idx, color=color)
             self.set_lut("label", lut)
 
             self._consolidate_bounding_boxes = True
@@ -148,8 +148,8 @@ if _POINTCLOUD_AVAILABLE:
 
                 viz = Visualizer()
                 lut = LabelLUT()
-                for id, color in dataset.color_map.items():
-                    lut.add_label(id, id, color=color)
+                for idx, color in dataset.color_map.items():
+                    lut.add_label(idx, idx, color=color)
                 viz.set_lut("label", lut)
 
                 for prediction_batch in predictions:
