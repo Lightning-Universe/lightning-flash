@@ -60,9 +60,12 @@ def _load_json_data(data, data_folder, multi_label=False):
                     if isinstance(label, list) and not multi_label:
                         for sublabel in label:
                             classes.add(sublabel)
-                            temp = {"file_upload": task.get("file_upload"),
-                            "data": task.get("data"), "label": sublabel,
-                            "result": res.get("value")}
+                            temp = {
+                                "file_upload": task.get("file_upload"),
+                                "data": task.get("data"),
+                                "label": sublabel,
+                                "result": res.get("value"),
+                            }
                             if temp["file_upload"]:
                                 temp["file_upload"] = os.path.join(data_folder, temp["file_upload"])
                             else:
@@ -81,7 +84,12 @@ def _load_json_data(data, data_folder, multi_label=False):
                                 classes.add(item)
                         else:
                             classes.add(label)
-                        temp = {"file_upload": task.get("file_upload"), "data": task.get("data"), "label": label, "result": res.get("value")}
+                        temp = {
+                            "file_upload": task.get("file_upload"),
+                            "data": task.get("data"),
+                            "label": label,
+                            "result": res.get("value"),
+                        }
                         if temp["file_upload"] and data_folder:
                             temp["file_upload"] = os.path.join(data_folder, temp["file_upload"])
                         else:

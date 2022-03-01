@@ -263,7 +263,8 @@ class ResNet(nn.Module):
                 norm_layer(planes * block.expansion),
             )
 
-        layers = [block(
+        layers = [
+            block(
                 self.inplanes,
                 planes,
                 stride,
@@ -272,7 +273,8 @@ class ResNet(nn.Module):
                 self.base_width,
                 previous_dilation,
                 norm_layer,
-            )]
+            )
+        ]
         self.inplanes = planes * block.expansion
         for _ in range(1, blocks):
             layers.append(
