@@ -20,4 +20,5 @@ def forked(callable):
     # PyTest forked not available in Windows
     if os.name == "nt":
         return callable
+    os.environ["MKL_SERVICE_FORCE_INTEL"] = "1"
     return pytest.mark.forked(callable)
