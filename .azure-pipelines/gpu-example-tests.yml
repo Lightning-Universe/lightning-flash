@@ -1,9 +1,13 @@
 trigger:
   branches:
-    include: ["master"]
+    include:
+      - "master"
+      - "release/*"
 pr:
   branches:
-    include: ["master"]
+    include:
+      - "master"
+      - "release/*"
   autoCancel: true
   drafts: true
 
