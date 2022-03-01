@@ -419,7 +419,7 @@ def test_datapipeline_transformations_overridden_by_task():
     trainer.fit(model, datamodule=datamodule)
 
 
-@pytest.mark.parametrize("sampler,callable", [(mock.MagicMock(), True), (mock.NonCallableMock(), False)])
+@pytest.mark.parametrize("sampler, callable", [(mock.MagicMock(), True), (mock.NonCallableMock(), False)])
 @mock.patch("flash.core.data.data_module.DataLoader")
 def test_dataloaders_with_sampler(mock_dataloader, sampler, callable):
     train_input = TestInput(RunningStage.TRAINING, [1])
