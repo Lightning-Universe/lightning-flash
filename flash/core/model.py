@@ -600,6 +600,24 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             return []
         return registry.available_keys()
 
+    @classmethod
+    def available_outputs(cls) -> List[str]:
+        """Returns the list of available outputs (that can be used during prediction or serving) for this ``Task``.
+
+        Examples
+        ________
+
+        ..testsetup::
+
+            >>> from flash import Task
+
+        .. doctest::
+
+            >>> print(Task.available_outputs())
+            ['preds', 'raw']
+        """
+        return cls.outputs.available_keys()
+
     def get_num_training_steps(self) -> int:
         """Total training steps inferred from datamodule and devices."""
         if not getattr(self, "trainer", None):
