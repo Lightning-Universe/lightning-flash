@@ -488,3 +488,12 @@ def test_classification_task_metrics():
     trainer = flash.Trainer(max_epochs=1, callbacks=CheckAccuracy(), gpus=torch.cuda.device_count())
     trainer.fit(task, train_dataloader=DataLoader(train_dataset), val_dataloaders=DataLoader(val_dataset))
     trainer.test(task, DataLoader(test_dataset))
+
+
+def test_loss_fn_buffer():
+    weight = torch.rand(10)
+    model = Task(loss_fn=nn.CrossEntropyLoss(weight=weight))
+    state_dict = model.state_dict()
+
+    assert len(state_dict) == 1
+    assert torch.allclose(state_dict["loss_fn.crossentropyloss.weight"], weight)
