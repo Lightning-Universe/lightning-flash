@@ -69,4 +69,4 @@ reference below).
 
 
 .. note::
-    Actually, we do not support returning predictions directly when you run multi-GPU configuration (DDP).
+    PyTorch Lightning does not return predictions directly from `predict` when using a multi-GPU configuration (DDP). Instead you should use a :class:`pytorch_lightning.callbacks.BasePredictionWriter`.
