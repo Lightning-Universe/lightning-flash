@@ -67,7 +67,7 @@ def identity_collate_fn(x):
 
 class AdapterTask(Task):
     """The ``AdapterTask`` is a :class:`~flash.core.model.Task` which wraps an :class:`~flash.core.adapter.Adapter`
-    and forwards all of the hooks.
+    and forwards all the hooks.
 
     Args:
         adapter: The :class:`~flash.core.adapter.Adapter` to wrap.

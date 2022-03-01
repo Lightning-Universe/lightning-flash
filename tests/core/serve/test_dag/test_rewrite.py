@@ -122,7 +122,7 @@ def test_matches():
     assert len(matches) == 2
     assert matches[0] == (rule1, {"a": 1})
     assert matches[1] == (rule2, {"a": 1})
-    # Test matches unhashable. What it's getting rewritten to doesn't make
+    # Test matches unhashable. What it's getting rewritten to don't make
     # sense, this is just to test that it works. :)
     term = (add, [1], [1])
     matches = list(rs.iter_matches(term))

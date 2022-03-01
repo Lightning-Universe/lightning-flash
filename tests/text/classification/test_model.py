@@ -40,7 +40,7 @@ class DummyDataset(torch.utils.data.Dataset):
 
 # ==============================
 
-TEST_BACKBONE = "prajjwal1/bert-tiny"  # super small model for testing
+TEST_BACKBONE = "prajjwal1/bert-tiny"  # tiny model for testing
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")

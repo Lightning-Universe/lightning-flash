@@ -29,7 +29,7 @@ def visualize(
     """Visualizes predictions from a model with a FiftyOne Output in the
     :ref:`FiftyOne App <fiftyone:fiftyone-app>`.
 
-    This method can be used in all of the following environments:
+    This method can be used in all the following environments:
 
     -   **Local Python shell**: The App will launch in a new tab in your
         default web browser.

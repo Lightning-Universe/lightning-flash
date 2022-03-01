@@ -69,7 +69,7 @@ class SegmentationLabelsOutput(Output):
 
     @staticmethod
     def labels_to_image(img_labels: torch.Tensor, labels_map: Dict[int, Tuple[int, int, int]]) -> torch.Tensor:
-        """Function that given an image with labels ids and their pixels intrensity mapping, creates a RGB
+        """Function that given an image with labels ids and their pixels' intensity mapping, creates an RGB
         representation for visualisation purposes."""
         assert len(img_labels.shape) == 2, img_labels.shape
         H, W = img_labels.shape

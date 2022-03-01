@@ -26,7 +26,7 @@ def funcname(func):
     if "numpy" in module_name and type_name == "vectorize":
         return ("vectorize_" + funcname(func.pyfunc))[:50]
 
-    # All other callables
+    # All others callables
     try:
         name = func.__name__
         if name == "<lambda>":

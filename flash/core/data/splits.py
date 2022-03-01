@@ -12,7 +12,7 @@ class SplitDataset(Properties, Dataset):
 
     Args:
 
-        dataset: A dataset to be splitted
+        dataset: A dataset to be split
         indices: List of indices to expose from the dataset
         use_duplicated_indices: Whether to allow duplicated indices.
 

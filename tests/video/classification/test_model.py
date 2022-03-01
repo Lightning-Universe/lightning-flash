@@ -68,7 +68,7 @@ def temp_encoded_video(num_frames: int, fps: int, height=10, width=10, prefix=No
 @contextlib.contextmanager
 def mock_video_data_frame():
     """
-    Creates a temporary mock encoded video dataset with 4 videos labeled from 0 - 4.
+    Creates a temporary mock encoded video dataset with 4 videos labeled from 0 to 4.
     Returns a labeled video file which points to this mock encoded video dataset, the
     ordered label and videos tuples and the video duration in seconds.
     """

@@ -33,7 +33,7 @@ def load_mlp_128(num_features, **_):
 
 @TEMPLATE_BACKBONES(name="mlp-128-256", namespace="template/classification")
 def load_mlp_128_256(num_features, **_):
-    """An two layer MLP backbone with 128 and 256 hidden units respectively."""
+    """Two layer MLP backbone with 128 and 256 hidden units respectively."""
     return (
         nn.Sequential(
             nn.Linear(num_features, 128),

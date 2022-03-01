@@ -27,11 +27,11 @@ class Endpoint:
     route
         The API route name to construct as the servicing POST endpoint.
     inputs
-        The full name of a component input. Typically specified by just passing
-        in the component parameter attribute (ie.``component.inputs.foo``).
+        The full name of a component input. Typically, specified by just passing
+        in the component parameter attribute (i.e.``component.inputs.foo``).
     outputs
-        The full name of a component output. Typically specified by just passing
-        in the component parameter attribute (ie.``component.outputs.bar``).
+        The full name of a component output. Typically, specified by just passing
+        in the component parameter attribute (i.e.``component.outputs.bar``).
     """
 
     route: str
@@ -146,7 +146,7 @@ class Servable:
 class Connection(NamedTuple):
     """A connection maps one output to one input.
 
-    This is a self contained data structure, which when given in the context of
+    This is a self-contained data structure, which when given in the context of
     the other components in a composition, will map input/output keys/indices
     between components.
 
@@ -183,7 +183,7 @@ class Connection(NamedTuple):
 
 @dataclass
 class Parameter:
-    """Holder class for each grid type of a component and connections from those to the types of other components.
+    """Holder class for each grid type of component and connections from those to the types of other components.
 
     Parameters
     ----------

@@ -39,7 +39,7 @@ def from_pets(
     batch_size: int = 1,
     **data_module_kwargs,
 ) -> InstanceSegmentationData:
-    """Downloads and loads the pets data set from icedata."""
+    """Downloads and loads the pets' data set from icedata."""
     data_dir = icedata.pets.load_data()
 
     if parser is None:
