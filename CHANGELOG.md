@@ -22,6 +22,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Fixed DDP support for `VideoClassifier` ([#1189](https://github.com/PyTorchLightning/lightning-flash/pull/1189))
 
+- Fixed support for passing a sampler instance to `from_*` methods / the `DataModule`
+
 ## [0.7.0] - 2022-02-15
 
 ### Added

@@ -419,22 +419,28 @@ def test_datapipeline_transformations_overridden_by_task():
     trainer.fit(model, datamodule=datamodule)
 
 
+@pytest.mark.parametrize("sampler,callable", [(mock.MagicMock(), True), (mock.NonCallableMock(), False)])
 @mock.patch("flash.core.data.data_module.DataLoader")
-def test_dataloaders_with_sampler(mock_dataloader):
-    mock_sampler = mock.MagicMock()
+def test_dataloaders_with_sampler(mock_dataloader, sampler, callable):
+    train_input = TestInput(RunningStage.TRAINING, [1])
     datamodule = DataModule(
-        TestInput(RunningStage.TRAINING, [1]),
+        train_input,
         TestInput(RunningStage.VALIDATING, [1]),
         TestInput(RunningStage.TESTING, [1]),
         batch_size=2,
         num_workers=0,
-        sampler=mock_sampler,
+        sampler=sampler,
     )
-    assert datamodule.sampler is mock_sampler
+
+    assert datamodule.sampler is sampler
     dl = datamodule.train_dataloader()
+
+    if callable:
+        sampler.assert_called_once_with(train_input)
+
     kwargs = mock_dataloader.call_args[1]
     assert "sampler" in kwargs
-    assert kwargs["sampler"] is mock_sampler.return_value
+    assert kwargs["sampler"] is (sampler.return_value if callable else sampler)
     for dl in [datamodule.val_dataloader(), datamodule.test_dataloader()]:
         kwargs = mock_dataloader.call_args[1]
         assert "sampler" not in kwargs
