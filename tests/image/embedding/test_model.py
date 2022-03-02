@@ -51,26 +51,26 @@ def test_load_from_checkpoint_dependency_error():
 
 
 @pytest.mark.skipif(not (_TORCHVISION_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
-@pytest.mark.parametrize("backbone, training_strategy", [("vision_transformer", "dino")])
-def test_vissl_training(tmpdir, backbone, training_strategy):
+@pytest.mark.parametrize("backbone, training_strategy, head, pretraining_transform",
+                        [("vision_transformer", "simclr", "simclr_head", "simclr_transform"),
+                         ("vision_transformer", "dino", "dino_head", "dino_transform"),
+                         ("vision_transformer", "simclr", "moco_head", "moco_transform"),
+                         ("vision_transformer", "barlow_twins", "simclr_head", "barlow_twins_transform"),
+                         ("vision_transformer", "swav", "swav_head", "swav_transform")])
+def test_vissl_training(backbone, training_strategy, head, pretraining_transform):
     datamodule = ImageClassificationData.from_datasets(
         train_dataset=FakeData(),
         batch_size=4,
     )
 
+    training_strategy_kwargs = {"latent_embedding_dim": 256} if training_strategy == "barlow_twins" else {"embedding_dim": 256}
     embedder = ImageEmbedder(
         backbone=backbone,
         training_strategy=training_strategy,
-        head="dino_head",
-        pretraining_transform="dino_transform",
-        training_strategy_kwargs={"latent_embedding_dim": 128},
-        pretraining_transform_kwargs={
-            "total_num_crops": 2,
-            "num_crops": [2],
-            "size_crops": [96],
-            "crop_scales": [[0.4, 1]],
-        },
+        head=head,
+        pretraining_transform=pretraining_transform,
+        training_strategy_kwargs=training_strategy_kwargs,
     )
 
-    trainer = flash.Trainer(max_steps=3, max_epochs=1, gpus=torch.cuda.device_count())
+    trainer = flash.Trainer(max_steps=3, max_epochs=1, gpus=torch.cuda.device_count(), strategy="ddp")
     trainer.fit(embedder, datamodule=datamodule)
