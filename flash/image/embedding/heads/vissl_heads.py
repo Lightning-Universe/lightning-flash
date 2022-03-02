@@ -89,7 +89,7 @@ if _VISSL_AVAILABLE:
 
 
 def simclr_head(
-    dims: List[int] = [384, 2048, 2048, 256],
+    dims: List[int] = [2048, 2048, 256],
     use_bn: bool = True,
     **kwargs,
 ) -> nn.Module:
@@ -108,7 +108,7 @@ def simclr_head(
 
 
 def swav_head(
-    dims: List[int] = [384, 2048, 2048, 128],
+    dims: List[int] = [2048, 2048, 128],
     use_bn: bool = True,
     num_clusters: Union[int, List[int]] = [3000],
     use_bias: bool = True,
