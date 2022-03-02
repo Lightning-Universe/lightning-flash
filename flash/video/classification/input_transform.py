@@ -25,12 +25,12 @@ if _KORNIA_AVAILABLE:
 
 if _PYTORCHVIDEO_AVAILABLE:
     from pytorchvideo.transforms import UniformTemporalSubsample
-    from torchvision.transforms import CenterCrop, Compose, Lambda, RandomCrop
+    from torchvision.transforms import CenterCrop, Compose, RandomCrop
 else:
     ClipSampler, LabeledVideoDataset, EncodedVideo, ApplyTransformToKey = None, None, None, None
 
 
-def lambda_tmp(x: torch.Tensor) -> torch.Tensor:
+def normalize(x: torch.Tensor) -> torch.Tensor:
     return x / 255.0
 
 
@@ -53,7 +53,7 @@ class VideoClassificationInputTransform(InputTransform):
 
         return ApplyToKeys(
             "video",
-            Compose([UniformTemporalSubsample(self.temporal_sub_sample), Lambda(lambda_tmp)] + per_sample_transform),
+            Compose([UniformTemporalSubsample(self.temporal_sub_sample), normalize] + per_sample_transform),
         )
 
     def per_batch_transform_on_device(self) -> Callable:
