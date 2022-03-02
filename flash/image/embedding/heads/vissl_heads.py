@@ -141,7 +141,7 @@ def swav_head(
 
 
 def barlow_twins_head(**kwargs) -> nn.Module:
-    return simclr_head(dims=[2048, 8192, 8192, 8192], **kwargs)
+    return simclr_head(**kwargs)
 
 
 def moco_head(**kwargs) -> nn.Module:
@@ -150,7 +150,6 @@ def moco_head(**kwargs) -> nn.Module:
 
 def dino_head(**kwargs) -> nn.Module:
     return swav_head(
-        dims=[384, 2048, 2048, 256],
         use_bn=False,
         return_embeddings=False,
         activation_name="GELU",

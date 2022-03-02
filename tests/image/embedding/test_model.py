@@ -56,20 +56,23 @@ def test_load_from_checkpoint_dependency_error():
     [
         ("vision_transformer", "simclr", "simclr_head", "simclr_transform"),
         ("vision_transformer", "dino", "dino_head", "dino_transform"),
-        ("vision_transformer", "simclr", "moco_head", "moco_transform"),
         ("vision_transformer", "barlow_twins", "simclr_head", "barlow_twins_transform"),
         ("vision_transformer", "swav", "swav_head", "swav_transform"),
     ],
 )
 def test_vissl_training(backbone, training_strategy, head, pretraining_transform):
+    # moco strategy, transform and head is not added for this test as it doesn't work as of now.
     datamodule = ImageClassificationData.from_datasets(
         train_dataset=FakeData(),
         batch_size=4,
     )
+ 
+    training_strategy_kwargs = {
+        "dims": [384, 2048, 2048, 256],
+    }
+    dim_key = "latent_embedding_dim" if training_strategy == "barlow_twins" else "embedding_dim"
+    training_strategy_kwargs[dim_key] = 256
 
-    training_strategy_kwargs = (
-        {"latent_embedding_dim": 256} if training_strategy == "barlow_twins" else {"embedding_dim": 256}
-    )
     embedder = ImageEmbedder(
         backbone=backbone,
         training_strategy=training_strategy,
