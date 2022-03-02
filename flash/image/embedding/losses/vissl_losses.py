@@ -109,7 +109,10 @@ def swav_loss(
 
 
 def barlow_twins_loss(
-    lambda_: float = 0.0051, scale_loss: float = 0.024, latent_embedding_dim: int = 8192, **kwargs,
+    lambda_: float = 0.0051,
+    scale_loss: float = 0.024,
+    latent_embedding_dim: int = 8192,
+    **kwargs,
 ) -> ClassyLoss:
     loss_name = "barlow_twins_loss"
     cfg = AttrDict(
