@@ -69,6 +69,37 @@ class DataModule(pl.LightningDataModule):
         num_workers: The number of workers to use for parallelized loading.
         sampler: A sampler following the :class:`~torch.utils.data.sampler.Sampler` type.
             Will be passed to the DataLoader for the training dataset. Defaults to None.
+
+    Examples
+    ________
+
+    .. testsetup::
+
+        >>> from flash import DataModule
+        >>> from flash.core.utilities.stages import RunningStage
+        >>> from torch.utils.data.sampler import SequentialSampler, WeightedRandomSampler
+        >>> class TestInput(Input):
+        ...     def train_load_data(self, _):
+        ...         return [(0, 1, 2, 3), (0, 1, 2, 3)]
+        >>> train_input = TestInput(RunningStage.TRAINING, [1])
+
+    You can provide the sampler to use for the train dataloader using the ``sampler`` argument.
+    The sampler can be a function or type that needs the dataset as an argument:
+
+    .. doctest::
+
+        >>> datamodule = DataModule(train_input, sampler=SequentialSampler, batch_size=1)
+        >>> print(datamodule.train_dataloader().sampler)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+        <torch.utils.data.sampler.SequentialSampler object at ...>
+
+    Alternatively, you can pass a sampler instance:
+
+    .. doctest::
+
+        >>> datamodule = DataModule(train_input, sampler=WeightedRandomSampler([0.1, 0.5], 2), batch_size=1)
+        >>> print(datamodule.train_dataloader().sampler)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+        <torch.utils.data.sampler.WeightedRandomSampler object at ...>
+
     """
 
     input_transform_cls = InputTransform
@@ -84,7 +115,7 @@ class DataModule(pl.LightningDataModule):
         val_split: Optional[float] = None,
         batch_size: Optional[int] = None,
         num_workers: int = 0,
-        sampler: Optional[Type[Sampler]] = None,
+        sampler: Optional[Union[Callable, Sampler, Type[Sampler]]] = None,
         pin_memory: bool = True,
         persistent_workers: bool = False,
     ) -> None:
@@ -206,8 +237,10 @@ class DataModule(pl.LightningDataModule):
         if self.sampler is None:
             sampler = None
             shuffle = not isinstance(train_ds, IterableDataset)
-        else:
+        elif callable(self.sampler):
             sampler = self.sampler(train_ds)
+        else:
+            sampler = self.sampler
 
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
             dataloader = self.trainer.lightning_module.process_train_dataset(

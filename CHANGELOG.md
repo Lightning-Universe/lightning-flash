@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Added the normalization parameters of ```torchvision.transforms.Normalize``` as ```transform_kwargs``` in the ```ImageClassificationInputTransform``` ([#1178](https://github.com/PyTorchLightning/lightning-flash/pull/1178))
 
+- Added `available_outputs` method to the `Task` ([#1206](https://github.com/PyTorchLightning/lightning-flash/pull/1206))
+
 ### Changed
 
 ### Deprecated
@@ -21,6 +23,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Fixed a bug where DDP would not work with Flash tasks ([#1182](https://github.com/PyTorchLightning/lightning-flash/pull/1182))
 
 - Fixed DDP support for `VideoClassifier` ([#1189](https://github.com/PyTorchLightning/lightning-flash/pull/1189))
+
+- Fixed a bug where buffers in loss functions were not correctly registered in the `Task` ([#1203](https://github.com/PyTorchLightning/lightning-flash/pull/1203))
+
+- Fixed support for passing a sampler instance to `from_*` methods / the `DataModule` ([#1204](https://github.com/PyTorchLightning/lightning-flash/pull/1204))
 
 ## [0.7.0] - 2022-02-15
 

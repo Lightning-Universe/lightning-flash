@@ -13,12 +13,16 @@
 # limitations under the License.
 from typing import Callable, Dict, Mapping, Sequence, Type, Union
 
+from torch import nn
+
 
 def get_callable_name(fn_or_class: Union[Callable, object]) -> str:
     return getattr(fn_or_class, "__name__", fn_or_class.__class__.__name__).lower()
 
 
-def get_callable_dict(fn: Union[Callable, Mapping, Sequence]) -> Union[Dict, Mapping]:
+def get_callable_dict(fn: Union[nn.Module, Callable, Mapping, Sequence]) -> Union[Dict, Mapping]:
+    if isinstance(fn, nn.Module):
+        return nn.ModuleDict({get_callable_name(fn): fn})
     if isinstance(fn, Mapping):
         return fn
     if isinstance(fn, Sequence):
