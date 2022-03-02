@@ -66,7 +66,7 @@ def test_vissl_training(backbone, training_strategy, head, pretraining_transform
         train_dataset=FakeData(),
         batch_size=4,
     )
- 
+
     training_strategy_kwargs = {
         "dims": [384, 2048, 2048, 256],
     }
