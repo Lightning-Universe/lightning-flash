@@ -49,6 +49,8 @@ class BasePointCloudObjectDetectorLoader:
 
 
 class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
+    meta: dict
+
     def __init__(
         self,
         image_size: tuple = (375, 1242),
