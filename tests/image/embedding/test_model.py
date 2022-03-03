@@ -87,5 +87,5 @@ def test_vissl_training(backbone, training_strategy, head, pretraining_transform
         training_strategy_kwargs=training_strategy_kwargs,
     )
 
-    trainer = flash.Trainer(max_steps=3, max_epochs=1, gpus=torch.cuda.device_count(), strategy="ddp")
+    trainer = flash.Trainer(max_steps=3, max_epochs=1, gpus=torch.cuda.device_count())
     trainer.fit(embedder, datamodule=datamodule)
