@@ -116,6 +116,8 @@ class ImageClassificationNumpyInput(ClassificationInputMixin, ImageNumpyInput):
 
 
 class ImageClassificationDataFrameInput(ImageClassificationFilesInput):
+    labels: list
+
     def load_data(
         self,
         data_frame: pd.DataFrame,

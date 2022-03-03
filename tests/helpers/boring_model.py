@@ -97,6 +97,13 @@ class BoringModel(LightningModule):
 
 
 class BoringDataModule(LightningDataModule):
+
+    random_full: Dataset
+    random_train: Subset
+    random_val: Subset
+    random_test: Subset
+    random_predict: Subset
+
     def __init__(self, data_dir: str = "./"):
         super().__init__()
         self.data_dir = data_dir

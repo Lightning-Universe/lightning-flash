@@ -28,6 +28,13 @@ if _POINTCLOUD_AVAILABLE:
 
 
 class SequencesDataset(Dataset):
+    meta: dict
+    split: str
+    dataset_path = str
+    label_to_names = dict
+    num_classes: int
+    path_list: list
+
     def __init__(
         self,
         data,
@@ -127,7 +134,7 @@ class SequencesDataset(Dataset):
         self.load_meta(root_dir)
 
     def get_label_to_names(self):
-        """Returns a label to names dictonary object.
+        """Returns a label to names dictionary object.
 
         Returns:
             A dict where keys are label numbers and
