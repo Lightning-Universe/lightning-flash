@@ -18,7 +18,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from flash.core.adapter import AdapterTask
 from flash.core.data.io.input import DataKeys
-from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.io.input_transform import InputTransform, LambdaInputTransform
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _VISSL_AVAILABLE, requires
@@ -112,14 +112,6 @@ class ImageEmbedder(AdapterTask):
             lr_scheduler=lr_scheduler,
             learning_rate=learning_rate,
         )
-
-        @dataclass
-        class LambdaInputTransform(InputTransform):
-
-            transform: Callable = InputTransform._identity
-
-            def per_sample_transform(self) -> Callable:
-                return self.transform
 
         input_transform, self.collate_fn = self.transforms.get(pretraining_transform)(**pretraining_transform_kwargs)
         output = ApplyToKeys(DataKeys.INPUT, input_transform)
