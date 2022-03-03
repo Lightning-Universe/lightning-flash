@@ -14,6 +14,12 @@
 from flash import Trainer
 from flash.core.data.utils import download_data
 from flash.text import QuestionAnsweringData, QuestionAnsweringTask
+from flash.core.utilities.imports import example_requires
+
+example_requires("text")
+
+import nltk  # noqa: E402
+nltk.download('punkt')
 
 # 1. Create the DataModule
 download_data("https://pl-flash-data.s3.amazonaws.com/squad_tiny.zip", "./data/")
