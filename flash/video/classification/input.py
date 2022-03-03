@@ -135,6 +135,8 @@ class VideoClassificationFilesInput(VideoClassificationInput):
 
 
 class VideoClassificationDataFrameInput(VideoClassificationInput):
+    labels: list
+
     def load_data(
         self,
         data_frame: pd.DataFrame,
