@@ -65,6 +65,8 @@ class BaseSpeechRecognition(Input):
 
 
 class SpeechRecognitionFileInput(BaseSpeechRecognition):
+    sampling_rate: int
+
     @requires("audio")
     def load_data(
         self,
@@ -132,6 +134,8 @@ class SpeechRecognitionJSONInput(SpeechRecognitionFileInput):
 
 
 class SpeechRecognitionDatasetInput(BaseSpeechRecognition):
+    sampling_rate: int
+
     @requires("audio")
     def load_data(self, dataset: Dataset, sampling_rate: int = 16000) -> Sequence[Mapping[str, Any]]:
         self.sampling_rate = sampling_rate
@@ -145,6 +149,8 @@ class SpeechRecognitionDatasetInput(BaseSpeechRecognition):
 
 
 class SpeechRecognitionPathsInput(BaseSpeechRecognition):
+    sampling_rate: int
+
     @requires("audio")
     def load_data(
         self,

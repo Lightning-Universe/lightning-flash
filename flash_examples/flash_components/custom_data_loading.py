@@ -65,6 +65,8 @@ PREDICT_FOLDER = os.path.join(FOLDER_PATH, "ants")
 
 
 class MultipleFoldersImageInput(Input):
+    num_classes: int
+
     def load_data(self, folders: List[str]) -> List[Dict[DataKeys, Any]]:
         if self.training:
             self.num_classes = len(folders)
