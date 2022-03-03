@@ -51,7 +51,7 @@ class BaseType(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def deserialize(self, *args, **kwargs):  # pragma: no cover
-        """Take the inputs from the network and deserilize/convert them them.
+        """Take the inputs from the network and deserialize/convert them.
 
         Output from this method will go to the exposed method as arguments.
         """
@@ -62,7 +62,7 @@ class BaseType(metaclass=abc.ABCMeta):
 
         While it does not seem to be doing much, and always does one thing, the benefit comes when building
         sophisticated datatypes (such as Repeated) where the developer wants to dictate how the unpacking happens. For
-        simple cases like Image or Bbox etc, developer would never need to know the existence of this. Task graph would
+        simple cases like Image or Bbox etc., developer would never need to know the existence of this. Task graph would
         never call deserialize directly but always call this method.
         """
         return self.deserialize(**kwargs)

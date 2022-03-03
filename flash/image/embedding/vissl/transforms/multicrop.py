@@ -53,7 +53,7 @@ class StandardMultiCropSSLTransform(nn.Module):
             size_crops (List or Tuple of ints): Specifies the height (height = width)
                                                 of each patch
             crop_scales (List or Tuple containing [float, float]): Scale of the crop
-            gaussian_blur (bool): Specifies if the transforms composition has Gaussian Blur
+            gaussian_blur (bool): Specifies if the transforms' composition has Gaussian Blur
             jitter_strength (float): Specify the coefficient for color jitter transform
             normalize (Optional): Normalize transform from torchvision with params set
                                   according to the dataset

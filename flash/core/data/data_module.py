@@ -197,7 +197,7 @@ class DataModule(pl.LightningDataModule):
 
     @property
     def predict_dataset(self) -> Optional[Input]:
-        """This property returns the predict dataset."""
+        """This property returns the prediction dataset."""
         return self._predict_input
 
     def _resolve_dataloader_collate_fn(self, ds: Optional[Input]) -> Optional[Callable]:
@@ -522,7 +522,7 @@ class DataModule(pl.LightningDataModule):
         self._show_batch(stage_name, hooks_names, reset=reset)
 
     def show_predict_batch(self, hooks_names: Union[str, List[str]] = "load_sample", reset: bool = True) -> None:
-        """This function is used to visualize a batch from the predict dataloader."""
+        """This function is used to visualize a batch from the prediction dataloader."""
         stage_name: str = _STAGES_PREFIX[RunningStage.PREDICTING]
         self._show_batch(stage_name, hooks_names, reset=reset)
 

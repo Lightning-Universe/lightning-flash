@@ -36,7 +36,7 @@ def from_synthetic_ar_data(
     num_workers: int = 0,
     **time_series_dataset_kwargs,
 ) -> TabularForecastingData:
-    """Creates and loads a synthetic auto-regressive (AR) data set."""
+    """Creates and loads a synthetic Auto-Regressive (AR) data set."""
     data = generate_ar_data(seasonality=seasonality, timesteps=timesteps, n_series=n_series, seed=42)
     data["date"] = pd.Timestamp("2020-01-01") + pd.to_timedelta(data.time_idx, "D")
 
