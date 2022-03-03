@@ -58,6 +58,7 @@ def dino_loss(
             "ema_center": ema_center,
             "normalize_last_layer": normalize_last_layer,
             "output_dim": output_dim,
+            "use_gpu": False,
         }
     )
 
@@ -102,6 +103,7 @@ def swav_loss(
                     "local_queue_length": local_queue_length,
                 }
             ),
+            "use_gpu": False,
         }
     )
 
@@ -120,6 +122,7 @@ def barlow_twins_loss(
             "lambda_": lambda_,
             "scale_loss": scale_loss,
             "embedding_dim": latent_embedding_dim,
+            "use_gpu": False,
         }
     )
 
@@ -144,6 +147,7 @@ def simclr_loss(
                     "effective_batch_size": effective_batch_size,
                 }
             ),
+            "use_gpu": False,
         }
     )
 
@@ -166,6 +170,7 @@ def moco_loss(
             "momentum": momentum,
             "temperature": temperature,
             "shuffle_batch": shuffle_batch,
+            "use_gpu": False,
         }
     )
 
