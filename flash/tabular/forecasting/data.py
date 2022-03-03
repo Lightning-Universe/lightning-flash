@@ -42,7 +42,7 @@ class TabularForecastingData(DataModule):
 
     @property
     def parameters(self) -> Optional[Dict[str, Any]]:
-        """The parameters' dictionary from the ``TimeSeriesDataSet`` object created from the train data when
+        """The ``parameters`` dictionary from the ``TimeSeriesDataSet`` object created from the train data when
         constructing the ``TabularForecastingData`` object."""
         return getattr(self.train_dataset, "parameters", None)
 
