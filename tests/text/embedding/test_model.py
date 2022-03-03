@@ -29,7 +29,7 @@ predict_data = [
 ]
 # ==============================
 
-TEST_BACKBONE = "sentence-transformers/all-MiniLM-L6-v2"  # super small model for testing
+TEST_BACKBONE = "sentence-transformers/all-MiniLM-L6-v2"  # tiny model for testing
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
