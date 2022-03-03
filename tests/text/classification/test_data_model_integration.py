@@ -20,7 +20,7 @@ from flash.core.trainer import Trainer
 from flash.core.utilities.imports import _TEXT_TESTING
 from flash.text import TextClassificationData, TextClassifier
 
-TEST_BACKBONE = "prajjwal1/bert-tiny"  # super small model for testing
+TEST_BACKBONE = "prajjwal1/bert-tiny"  # tiny model for testing
 
 TEST_CSV_DATA = """sentence,label
 this is a sentence one,0
