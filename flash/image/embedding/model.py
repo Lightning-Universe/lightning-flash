@@ -121,6 +121,9 @@ class ImageEmbedder(AdapterTask):
             " with pre-defined transforms for the training strategy."
         )
 
+    def on_epoch_start(self) -> None:
+        self.adapter.on_epoch_start()
+
     def on_train_start(self) -> None:
         self.adapter.on_train_start()
 

@@ -122,6 +122,13 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
 
         return result
 
+    def on_epoch_start(self) -> None:
+        use_gpu = self.adapter_task.device != torch.device("cpu") and self.adapter_task.device != "cpu"
+        if hasattr(self.loss_fn, "info_criterion"):
+            self.loss_fn.info_criterion.use_gpu = use_gpu
+        if hasattr(self.loss_fn, "swav_criterion"):
+            self.loss_fn.swav_criterion.use_gpu = use_gpu
+
     @staticmethod
     def get_model_config_template():
         cfg = AttrDict(
