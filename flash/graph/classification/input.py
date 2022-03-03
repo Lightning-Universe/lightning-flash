@@ -33,6 +33,9 @@ def _get_num_features(sample: Dict[str, Any]) -> Optional[int]:
 
 
 class GraphClassificationDatasetInput(Input, ClassificationInputMixin):
+    num_features: int
+    num_classes: int
+
     @requires("graph")
     def load_data(self, dataset: Dataset, target_formatter: Optional[TargetFormatter] = None) -> Dataset:
         if not self.predicting:

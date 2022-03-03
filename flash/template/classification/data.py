@@ -37,6 +37,8 @@ else:
 class TemplateNumpyClassificationInput(Input, ClassificationInputMixin):
     """An example data source that records ``num_features`` on the dataset."""
 
+    num_features: int
+
     def load_data(
         self,
         examples: Collection[np.ndarray],

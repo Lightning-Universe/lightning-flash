@@ -27,6 +27,11 @@ class ClassificationInputMixin(Properties):
       tasks.
     """
 
+    target_formatter: TargetFormatter
+    multi_label: bool
+    labels: list
+    num_classes: int
+
     def load_target_metadata(
         self,
         targets: Optional[List[Any]],
