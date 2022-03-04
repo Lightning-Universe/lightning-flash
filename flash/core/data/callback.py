@@ -148,6 +148,8 @@ class BaseDataFetcher(FlashCallback):
         }
     """
 
+    batches: dict
+
     def __init__(self, enabled: bool = False):
         self.enabled = enabled
         self._input_transform = None

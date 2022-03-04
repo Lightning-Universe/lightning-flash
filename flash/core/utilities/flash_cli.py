@@ -113,6 +113,11 @@ def get_overlapping_args(func_a, func_b) -> Set[str]:
 
 
 class FlashCLI(LightningCLI):
+
+    datamodule: DataModule
+    config_init: Namespace
+    model: LightningModule
+
     def __init__(
         self,
         model_class: Type[pl.LightningModule],

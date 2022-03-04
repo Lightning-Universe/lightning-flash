@@ -22,7 +22,7 @@ from flash import Trainer
 from flash.audio import SpeechRecognition, SpeechRecognitionData
 from flash.core.utilities.imports import _AUDIO_TESTING
 
-TEST_BACKBONE = "patrickvonplaten/wav2vec2_tiny_random_robust"  # super small model for testing
+TEST_BACKBONE = "patrickvonplaten/wav2vec2_tiny_random_robust"  # tiny model for testing
 
 path = str(Path(flash.ASSETS_ROOT) / "example.wav")
 sample = {"file": path, "text": "example input."}

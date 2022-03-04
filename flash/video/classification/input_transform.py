@@ -30,6 +30,10 @@ else:
     ClipSampler, LabeledVideoDataset, EncodedVideo, ApplyTransformToKey = None, None, None, None
 
 
+def normalize(x: torch.Tensor) -> torch.Tensor:
+    return x / 255.0
+
+
 @requires("video")
 @dataclass
 class VideoClassificationInputTransform(InputTransform):
@@ -48,7 +52,8 @@ class VideoClassificationInputTransform(InputTransform):
             per_sample_transform = [CenterCrop(self.image_size)]
 
         return ApplyToKeys(
-            "video", Compose([UniformTemporalSubsample(self.temporal_sub_sample)] + per_sample_transform)
+            "video",
+            Compose([UniformTemporalSubsample(self.temporal_sub_sample), normalize] + per_sample_transform),
         )
 
     def per_batch_transform_on_device(self) -> Callable:
