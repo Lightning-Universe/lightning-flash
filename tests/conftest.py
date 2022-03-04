@@ -14,7 +14,7 @@ if _TORCHVISION_AVAILABLE:
 
 
 class UUID_String(str):
-    """Class to replace UUID object with str instance and hex attribute."""
+    """Class to replace UUID with str instance and hex attribute."""
 
     @property
     def hex(self):

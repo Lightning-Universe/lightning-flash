@@ -79,7 +79,7 @@ class TextQuestionAnsweringCollate(TransformersCollate):
                     tokenized_samples["start_positions"].append(cls_index)
                     tokenized_samples["end_positions"].append(cls_index)
                 else:
-                    # Otherwise move the token_start_index and token_end_index to the two ends of the answer.
+                    # Otherwise, move the token_start_index and token_end_index to the two ends of the answer.
                     # Note: we could go after the last offset if the answer is the last word (edge case).
                     while token_start_index < len(offsets) and offsets[token_start_index][0] <= start_char:
                         token_start_index += 1
@@ -96,7 +96,7 @@ class TextQuestionAnsweringCollate(TransformersCollate):
         sample_mapping = tokenized_samples.pop("overflow_to_sample_mapping")
 
         # For evaluation, we will need to convert our predictions to substrings of the context, so we keep the
-        # corresponding example_id and we will store the offset mappings.
+        # corresponding example_id, and we will store the offset mappings.
         tokenized_samples["example_id"] = []
         tokenized_samples["context"] = []
         tokenized_samples["answer"] = []
@@ -113,7 +113,7 @@ class TextQuestionAnsweringCollate(TransformersCollate):
             if "answer" in samples:
                 tokenized_samples["answer"].append(samples["answer"][sample_index])
 
-            # Set to None the offset_mapping that are not part of the context so it's easy to determine if a token
+            # Set to None the offset_mapping that are not part of the context, so it's easy to determine if a token
             # position is part of the context or not.
             tokenized_samples["offset_mapping"][i] = [
                 (o if sequence_ids[k] == context_index else None)
