@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import warnings
+from functools import partial
 from typing import Any, Dict, List, Optional
 
 from flash.core.adapter import AdapterTask
 from flash.core.data.io.input import DataKeys
+from flash.core.data.io.input_transform import LambdaInputTransform
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _VISSL_AVAILABLE, requires
@@ -111,12 +113,16 @@ class ImageEmbedder(AdapterTask):
         )
 
         input_transform, self.collate_fn = self.transforms.get(pretraining_transform)(**pretraining_transform_kwargs)
-        self.input_transform = ApplyToKeys(DataKeys.INPUT, input_transform)
+        output = ApplyToKeys(DataKeys.INPUT, input_transform)
+        self.input_transform = partial(LambdaInputTransform, transform=output)
 
         warnings.warn(
             "Warning: VISSL ImageEmbedder overrides any user provided transforms"
             " with pre-defined transforms for the training strategy."
         )
+
+    def on_epoch_start(self) -> None:
+        self.adapter.on_epoch_start()
 
     def on_train_start(self) -> None:
         self.adapter.on_train_start()

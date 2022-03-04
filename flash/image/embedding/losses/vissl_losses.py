@@ -18,6 +18,7 @@ from flash.core.utilities.imports import _VISSL_AVAILABLE
 
 if _VISSL_AVAILABLE:
     import vissl.losses  # noqa: F401
+    from classy_vision.generic.distributed_util import set_cpu_device
     from classy_vision.losses import ClassyLoss, LOSS_REGISTRY
     from vissl.config.attr_dict import AttrDict
 else:
@@ -26,6 +27,7 @@ else:
 
 
 def get_loss_fn(loss_name: str, cfg: AttrDict):
+    set_cpu_device()
     loss_fn = LOSS_REGISTRY[loss_name](cfg)
     loss_fn.__dict__["loss_name"] = loss_name
 
@@ -79,6 +81,7 @@ def swav_loss(
     queue_length: int = 0,
     start_iter: int = 0,
     local_queue_length: int = 0,
+    **kwargs,
 ) -> ClassyLoss:
     loss_name = "swav_loss"
     cfg = AttrDict(
@@ -108,7 +111,10 @@ def swav_loss(
 
 
 def barlow_twins_loss(
-    lambda_: float = 0.0051, scale_loss: float = 0.024, latent_embedding_dim: int = 8192
+    lambda_: float = 0.0051,
+    scale_loss: float = 0.024,
+    latent_embedding_dim: int = 8192,
+    **kwargs,
 ) -> ClassyLoss:
     loss_name = "barlow_twins_loss"
     cfg = AttrDict(
@@ -127,6 +133,7 @@ def simclr_loss(
     embedding_dim: int = 128,
     effective_batch_size: int = 1,  # set by setup training hook
     world_size: int = 1,  # set by setup training hook
+    **kwargs,
 ) -> ClassyLoss:
     loss_name = "simclr_info_nce_loss"
     cfg = AttrDict(
@@ -151,6 +158,7 @@ def moco_loss(
     momentum: float = 0.999,
     temperature: int = 0.2,
     shuffle_batch: bool = True,
+    **kwargs,
 ) -> ClassyLoss:
     loss_name = "moco_loss"
     cfg = AttrDict(
