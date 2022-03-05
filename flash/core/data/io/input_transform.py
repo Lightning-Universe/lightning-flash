@@ -1009,13 +1009,13 @@ class InputTransform(Properties):
 class LambdaInputTransform(InputTransform):
 
     transform: Callable = InputTransform._identity
-    collate_fn: Callable = None
+    transform_collate_fn: Callable = default_collate
 
     def per_sample_transform(self) -> Callable:
         return self.transform
 
-    def collate(self) -> Callable:
-        return self.collate_fn
+    def predict_collate(self) -> Callable:
+        return self.transform_collate_fn
 
 
 def _sanitize_registry_transform(

@@ -23,6 +23,8 @@ from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _VISSL_AVAILABLE, requires
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE
 
+from torch.utils.data._utils.collate import default_collate
+
 if _VISSL_AVAILABLE:
     import classy_vision
     import classy_vision.generic.distributed_util
@@ -112,9 +114,9 @@ class ImageEmbedder(AdapterTask):
             learning_rate=learning_rate,
         )
 
-        input_transform, self.collate_fn = self.transforms.get(pretraining_transform)(**pretraining_transform_kwargs)
+        input_transform, self.transform_collate_fn = self.transforms.get(pretraining_transform)(**pretraining_transform_kwargs)
         output = ApplyToKeys(DataKeys.INPUT, input_transform)
-        self.input_transform = partial(LambdaInputTransform, collate_fn=self.collate_fn, transform=output)
+        self.input_transform = partial(LambdaInputTransform, transform_collate_fn=self.transform_collate_fn, transform=output)
 
         warnings.warn(
             "Warning: VISSL ImageEmbedder overrides any user provided transforms"
