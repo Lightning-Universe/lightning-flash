@@ -15,8 +15,6 @@ import warnings
 from functools import partial
 from typing import Any, Dict, List, Optional
 
-from torch.utils.data._utils.collate import default_collate
-
 from flash.core.adapter import AdapterTask
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import LambdaInputTransform
