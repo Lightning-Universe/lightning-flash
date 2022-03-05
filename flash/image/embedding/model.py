@@ -114,7 +114,7 @@ class ImageEmbedder(AdapterTask):
 
         input_transform, self.collate_fn = self.transforms.get(pretraining_transform)(**pretraining_transform_kwargs)
         output = ApplyToKeys(DataKeys.INPUT, input_transform)
-        self.input_transform = partial(LambdaInputTransform, transform=output)
+        self.input_transform = partial(LambdaInputTransform, collate_fn=self.collate_fn, transform=output)
 
         warnings.warn(
             "Warning: VISSL ImageEmbedder overrides any user provided transforms"

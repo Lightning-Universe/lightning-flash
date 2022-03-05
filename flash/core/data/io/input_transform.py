@@ -94,7 +94,7 @@ class InputTransform(Properties):
 
         # Hack
         Properties.__init__(self, running_stage=self.running_stage)
-
+ 
     @property
     def current_transform(self) -> Callable:
         if self._transform:
@@ -822,7 +822,7 @@ class InputTransform(Properties):
     def serve_collate(self) -> Callable:
         """Defines the transform to be applied on a list of serving sample to create a serving batch."""
         return default_collate
-
+    
     def collate(self) -> Callable:
         """Defines the transform to be applied on a list of sample to create a batch for all stages."""
         return default_collate
@@ -1009,9 +1009,13 @@ class InputTransform(Properties):
 class LambdaInputTransform(InputTransform):
 
     transform: Callable = InputTransform._identity
+    collate_fn: Callable = None
 
     def per_sample_transform(self) -> Callable:
         return self.transform
+    
+    def collate(self) -> Callable:
+        return self.collate_fn
 
 
 def _sanitize_registry_transform(
