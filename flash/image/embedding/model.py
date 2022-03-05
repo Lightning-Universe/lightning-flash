@@ -23,8 +23,6 @@ from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _VISSL_AVAILABLE, requires
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE
 
-from torch.utils.data._utils.collate import default_collate
-
 if _VISSL_AVAILABLE:
     import classy_vision
     import classy_vision.generic.distributed_util
