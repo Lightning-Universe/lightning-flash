@@ -15,6 +15,8 @@ import warnings
 from functools import partial
 from typing import Any, Dict, List, Optional
 
+from torch.utils.data._utils.collate import default_collate
+
 from flash.core.adapter import AdapterTask
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import LambdaInputTransform
@@ -112,9 +114,13 @@ class ImageEmbedder(AdapterTask):
             learning_rate=learning_rate,
         )
 
-        input_transform, self.transform_collate_fn = self.transforms.get(pretraining_transform)(**pretraining_transform_kwargs)
+        input_transform, self.transform_collate_fn = self.transforms.get(pretraining_transform)(
+            **pretraining_transform_kwargs
+        )
         output = ApplyToKeys(DataKeys.INPUT, input_transform)
-        self.input_transform = partial(LambdaInputTransform, transform_collate_fn=self.transform_collate_fn, transform=output)
+        self.input_transform = partial(
+            LambdaInputTransform, transform_collate_fn=self.transform_collate_fn, transform=output
+        )
 
         warnings.warn(
             "Warning: VISSL ImageEmbedder overrides any user provided transforms"

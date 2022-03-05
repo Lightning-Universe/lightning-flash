@@ -90,6 +90,7 @@ def test_vissl_training(backbone, training_strategy, head, pretraining_transform
     trainer = flash.Trainer(max_steps=3, max_epochs=1, gpus=torch.cuda.device_count())
     trainer.fit(embedder, datamodule=datamodule)
 
+
 @pytest.mark.skipif(not (_TORCHVISION_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
 @pytest.mark.parametrize(
     "backbone, training_strategy, head, pretraining_transform",
@@ -128,9 +129,6 @@ def test_vissl_prediction(backbone, training_strategy, head, pretraining_transfo
 
     trainer = flash.Trainer(max_steps=3, max_epochs=1, gpus=torch.cuda.device_count())
 
-    predict_datamodule = ImageClassificationData.from_datasets(
-        predict_dataset=FakeData(),
-        batch_size=4
-    )
+    predict_datamodule = ImageClassificationData.from_datasets(predict_dataset=FakeData(), batch_size=4)
     trainer.fit(embedder, datamodule=datamodule)
     trainer.predict(embedder, datamodule=predict_datamodule)
