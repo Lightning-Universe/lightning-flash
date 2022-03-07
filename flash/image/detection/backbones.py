@@ -100,17 +100,19 @@ if _ICEVISION_AVAILABLE:
 
     if _module_available("effdet"):
 
-        def _icevision_effdet_model_adapter(model_type):
-            class IceVisionEffdetModelAdapter(icevision_model_adapter(model_type)):
-                def validation_step(self, batch, batch_idx):
-                    images = batch[0][0]
-                    batch[0][1]["img_scale"] = torch.ones_like(images[:, 0, 0, 0]).unsqueeze(1)
-                    batch[0][1]["img_size"] = (
-                        (torch.ones_like(images[:, 0, 0, 0]) * images[0].shape[-1]).unsqueeze(1).repeat(1, 2)
-                    )
-                    return super().validation_step(batch, batch_idx)
+        def _icevision_effdet_validation_step(original_validation_step, batch, batch_idx):
+            images = batch[0][0]
+            batch[0][1]["img_scale"] = torch.ones_like(images[:, 0, 0, 0]).unsqueeze(1)
+            batch[0][1]["img_size"] = (
+                (torch.ones_like(images[:, 0, 0, 0]) * images[0].shape[-1]).unsqueeze(1).repeat(1, 2)
+            )
+            return original_validation_step(batch, batch_idx)
 
-            return IceVisionEffdetModelAdapter
+        def _icevision_effdet_model_adapter(model_type):
+            adapter = icevision_model_adapter(model_type)
+            original_validation_step = adapter.validation_step
+            adapter.validation_step = partial(_icevision_effdet_validation_step, original_validation_step)
+            return adapter
 
         model_type = icevision_models.ross.efficientdet
         OBJECT_DETECTION_HEADS(

@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from functools import partial
 from inspect import getmembers
 
 from torch import nn
@@ -22,14 +23,17 @@ if _ICEVISION_AVAILABLE:
     from icevision.backbones import BackboneConfig
 
 
-def icevision_model_adapter(model_type):
-    class IceVisionModelAdapter(model_type.lightning.ModelAdapter):
-        def log(self, name, value, **kwargs):
-            if "prog_bar" not in kwargs:
-                kwargs["prog_bar"] = True
-            return super().log(name.split("/")[-1], value, **kwargs)
+def _log_with_prog_bar_override(original_log, name, value, **kwargs):
+    if "prog_bar" not in kwargs:
+        kwargs["prog_bar"] = True
+    return original_log(name.split("/")[-1], value, **kwargs)
 
-    return IceVisionModelAdapter
+
+def icevision_model_adapter(model_type):
+    adapter = model_type.lightning.ModelAdapter
+    original_log = adapter.log
+    adapter.log = partial(_log_with_prog_bar_override, original_log)
+    return adapter
 
 
 def load_icevision(adapter, model_type, backbone, num_classes, **kwargs):
