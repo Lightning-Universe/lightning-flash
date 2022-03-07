@@ -35,6 +35,10 @@ jobs:
         displayName: 'Sanity check'
 
       - bash: |
+          pip uninstall -y torchtext
+        displayname: 'Remove torchtext'
+
+      - bash: |
           # python -m pip install "pip==20.1"
           pip install '.[${{config}}]'
           pip install '.[test]' --upgrade-strategy only-if-needed
