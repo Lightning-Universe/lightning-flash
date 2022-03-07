@@ -36,7 +36,7 @@ jobs:
 
       - bash: |
           pip uninstall -y torchtext
-        displayname: 'Remove torchtext'
+        displayName: 'Remove torchtext'
 
       - bash: |
           # python -m pip install "pip==20.1"
