@@ -50,8 +50,8 @@ class Visualizer(Open3dVisualizer):
         # Setup the labels
         lut = LabelLUT()
         color_map = dataset.color_map
-        for idx, val in dataset.label_to_names.items():
-            lut.add_label(val, idx, color=color_map[idx])
+        for id_color, val in dataset.label_to_names.items():
+            lut.add_label(str(id_color), id_color, color=color_map[idx])
         self.set_lut("labels", lut)
 
         self._consolidate_bounding_boxes = True
@@ -97,8 +97,8 @@ class App:
             viz = Visualizer()
             lut = LabelLUT()
             color_map = dataset.color_map
-            for idx, val in dataset.label_to_names.items():
-                lut.add_label(val, idx, color=color_map[idx])
+            for id_color, val in dataset.label_to_names.items():
+                lut.add_label(str(id_color), id_color, color=color_map[idx])
             viz.set_lut("labels", lut)
             viz.set_lut("predictions", lut)
             viz.visualize(predictions_visualizations)
