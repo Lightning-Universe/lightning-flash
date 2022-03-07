@@ -35,7 +35,7 @@ jobs:
         displayName: 'Sanity check'
 
       - bash: |
-          pip uninstall -y torchtext
+          sudo pip uninstall -y torchtext
         displayName: 'Remove torchtext'
 
       - bash: |
