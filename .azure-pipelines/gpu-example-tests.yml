@@ -12,6 +12,7 @@ jobs:
   parameters:
     configs:
     - "image"
+    - "image_extras"
     - "text"
     - "tabular"
     - "video"
