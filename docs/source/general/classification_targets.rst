@@ -413,7 +413,7 @@ Here's an example:
 .. doctest:: targets
 
     >>> from flash import Trainer
-    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> from flash.image import ImageClassificationData
     >>> datamodule = ImageClassificationData.from_files(
     ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
     ...     train_targets=[[0.1, 0, 0], [0.9, 0.7, 0], [0, 0.5, 0.6]],
@@ -433,12 +433,34 @@ Here's an example:
 .. doctest:: targets
 
     >>> from flash import Trainer
-    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> from flash.image import ImageClassificationData
     >>> from flash.core.data.utilities.classification import MultiSoftTargetFormatter
     >>> datamodule = ImageClassificationData.from_files(
     ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
     ...     train_targets=[[0.1, 0, 0], [0.9, 0.7, 0], [0, 0.5, 0.6]],
     ...     target_formatter=MultiSoftTargetFormatter(labels=["dog", "cat", "rabbit"]),
+    ...     transform_kwargs=dict(image_size=(128, 128)),
+    ...     batch_size=2,
+    ... )
+    >>> datamodule.num_classes
+    3
+    >>> datamodule.labels
+    ['dog', 'cat', 'rabbit']
+    >>> datamodule.multi_label
+    True
+
+Also, you can use Pandas DataFrame, here's an example:
+
+.. doctest:: targets
+
+    >>> from flash import Trainer
+    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> df = pd.DataFrame(
+    ...     [["image_1.png", 0.1, 0, 0], ["image_2.png", 0.9, 0.7, 0], ["image_3.png"0, 0.5, 0.6]],
+    ...     columns=["image", "dog", "cat", "rabbit"])
+    >>> datamodule = ImageClassificationData.from_data_frame(
+    ...     train_data_frame=df,
+    ...     ["dog", "cat", "rabbit"],
     ...     transform_kwargs=dict(image_size=(128, 128)),
     ...     batch_size=2,
     ... )
