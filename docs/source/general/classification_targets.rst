@@ -458,6 +458,7 @@ Also, you can use Pandas DataFrame, here's an example:
     >>> df = pd.DataFrame(
     ...     [["image_1.png", 0.1, 0, 0], ["image_2.png", 0.9, 0.7, 0], ["image_3.png"0, 0.5, 0.6]],
     ...     columns=["image", "dog", "cat", "rabbit"])
+    ...
     >>> datamodule = ImageClassificationData.from_data_frame(
     ...     train_data_frame=df,
     ...     ["dog", "cat", "rabbit"],
