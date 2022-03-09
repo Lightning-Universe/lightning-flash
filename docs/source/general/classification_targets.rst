@@ -460,8 +460,9 @@ Also, you can use Pandas DataFrame, here's an example:
     ...     columns=["image", "dog", "cat", "rabbit"])
     ...
     >>> datamodule = ImageClassificationData.from_data_frame(
+    ...     input_field="image",
+    ...     target_fields=["dog", "cat", "rabbit"],
     ...     train_data_frame=df,
-    ...     ["dog", "cat", "rabbit"],
     ...     transform_kwargs=dict(image_size=(128, 128)),
     ...     batch_size=2,
     ... )
