@@ -47,11 +47,8 @@ class SummarizationData(DataModule):
         val_file: Optional[PATH_TYPE] = None,
         test_file: Optional[PATH_TYPE] = None,
         predict_file: Optional[PATH_TYPE] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         input_cls: Type[Input] = Seq2SeqCSVInput,
+        transform: INPUT_TRANSFORM_TYPE = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "SummarizationData":
@@ -142,15 +139,15 @@ class SummarizationData(DataModule):
         ds_kw = dict(
             input_key=input_field,
             target_key=target_field,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_file, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_file, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_file, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_file, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_file, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_file, **ds_kw),
+            input_cls(RunningStage.TESTING, test_file, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_file, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -163,11 +160,8 @@ class SummarizationData(DataModule):
         val_file: Optional[PATH_TYPE] = None,
         test_file: Optional[PATH_TYPE] = None,
         predict_file: Optional[PATH_TYPE] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         input_cls: Type[Input] = Seq2SeqJSONInput,
+        transform: INPUT_TRANSFORM_TYPE = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         field: Optional[str] = None,
         **data_module_kwargs: Any,
@@ -259,15 +253,15 @@ class SummarizationData(DataModule):
             input_key=input_field,
             target_key=target_field,
             field=field,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_file, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_file, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_file, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_file, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_file, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_file, **ds_kw),
+            input_cls(RunningStage.TESTING, test_file, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_file, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -280,11 +274,8 @@ class SummarizationData(DataModule):
         val_hf_dataset: Optional[Dataset] = None,
         test_hf_dataset: Optional[Dataset] = None,
         predict_hf_dataset: Optional[Dataset] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         input_cls: Type[Input] = Seq2SeqInputBase,
+        transform: INPUT_TRANSFORM_TYPE = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "SummarizationData":
@@ -358,15 +349,15 @@ class SummarizationData(DataModule):
         ds_kw = dict(
             input_key=input_field,
             target_key=target_field,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_hf_dataset, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_hf_dataset, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_hf_dataset, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_hf_dataset, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_hf_dataset, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_hf_dataset, **ds_kw),
+            input_cls(RunningStage.TESTING, test_hf_dataset, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_hf_dataset, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -380,11 +371,8 @@ class SummarizationData(DataModule):
         test_data: Optional[List[str]] = None,
         test_targets: Optional[List[str]] = None,
         predict_data: Optional[List[str]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         input_cls: Type[Input] = Seq2SeqListInput,
+        transform: INPUT_TRANSFORM_TYPE = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "SummarizationData":
@@ -436,15 +424,14 @@ class SummarizationData(DataModule):
             Predicting...
         """
 
-        ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
-        )
+        ds_kw = dict()
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_data, train_targets, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_data, val_targets, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_data, test_targets, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_data, train_targets, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_data, val_targets, **ds_kw),
+            input_cls(RunningStage.TESTING, test_data, test_targets, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_data, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )

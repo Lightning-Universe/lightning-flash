@@ -57,12 +57,9 @@ class TextClassificationData(DataModule):
         val_file: Optional[PATH_TYPE] = None,
         test_file: Optional[PATH_TYPE] = None,
         predict_file: Optional[PATH_TYPE] = None,
-        train_transform: Optional[Dict[str, Callable]] = InputTransform,
-        val_transform: Optional[Dict[str, Callable]] = InputTransform,
-        test_transform: Optional[Dict[str, Callable]] = InputTransform,
-        predict_transform: Optional[Dict[str, Callable]] = InputTransform,
         target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = TextClassificationCSVInput,
+        transform: Optional[Dict[str, Callable]] = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TextClassificationData":
@@ -162,18 +159,18 @@ class TextClassificationData(DataModule):
             target_formatter=target_formatter,
             input_key=input_field,
             target_keys=target_fields,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
-        train_input = input_cls(RunningStage.TRAINING, train_file, transform=train_transform, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, train_file, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, val_file, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_file, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_file, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_file, **ds_kw),
+            input_cls(RunningStage.TESTING, test_file, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_file, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -186,12 +183,9 @@ class TextClassificationData(DataModule):
         val_file: Optional[PATH_TYPE] = None,
         test_file: Optional[PATH_TYPE] = None,
         predict_file: Optional[PATH_TYPE] = None,
-        train_transform: Optional[Dict[str, Callable]] = InputTransform,
-        val_transform: Optional[Dict[str, Callable]] = InputTransform,
-        test_transform: Optional[Dict[str, Callable]] = InputTransform,
-        predict_transform: Optional[Dict[str, Callable]] = InputTransform,
         target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = TextClassificationJSONInput,
+        transform: Optional[Dict[str, Callable]] = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         field: Optional[str] = None,
         **data_module_kwargs: Any,
@@ -292,18 +286,18 @@ class TextClassificationData(DataModule):
             input_key=input_field,
             target_keys=target_fields,
             field=field,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
-        train_input = input_cls(RunningStage.TRAINING, train_file, transform=train_transform, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, train_file, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, val_file, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_file, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_file, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_file, **ds_kw),
+            input_cls(RunningStage.TESTING, test_file, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_file, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -316,12 +310,9 @@ class TextClassificationData(DataModule):
         val_file: Optional[PATH_TYPE] = None,
         test_file: Optional[PATH_TYPE] = None,
         predict_file: Optional[PATH_TYPE] = None,
-        train_transform: Optional[Dict[str, Callable]] = InputTransform,
-        val_transform: Optional[Dict[str, Callable]] = InputTransform,
-        test_transform: Optional[Dict[str, Callable]] = InputTransform,
-        predict_transform: Optional[Dict[str, Callable]] = InputTransform,
         target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = TextClassificationParquetInput,
+        transform: Optional[Dict[str, Callable]] = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TextClassificationData":
@@ -421,18 +412,18 @@ class TextClassificationData(DataModule):
             target_formatter=target_formatter,
             input_key=input_field,
             target_keys=target_fields,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
-        train_input = input_cls(RunningStage.TRAINING, train_file, transform=train_transform, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, train_file, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, val_file, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_file, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_file, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_file, **ds_kw),
+            input_cls(RunningStage.TESTING, test_file, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_file, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -445,12 +436,9 @@ class TextClassificationData(DataModule):
         val_hf_dataset: Optional[Dataset] = None,
         test_hf_dataset: Optional[Dataset] = None,
         predict_hf_dataset: Optional[Dataset] = None,
-        train_transform: Optional[Dict[str, Callable]] = InputTransform,
-        val_transform: Optional[Dict[str, Callable]] = InputTransform,
-        test_transform: Optional[Dict[str, Callable]] = InputTransform,
-        predict_transform: Optional[Dict[str, Callable]] = InputTransform,
         target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = TextClassificationInput,
+        transform: Optional[Dict[str, Callable]] = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TextClassificationData":
@@ -531,18 +519,18 @@ class TextClassificationData(DataModule):
             target_formatter=target_formatter,
             input_key=input_field,
             target_keys=target_fields,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
-        train_input = input_cls(RunningStage.TRAINING, train_hf_dataset, transform=train_transform, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, train_hf_dataset, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, val_hf_dataset, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_hf_dataset, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_hf_dataset, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_hf_dataset, **ds_kw),
+            input_cls(RunningStage.TESTING, test_hf_dataset, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_hf_dataset, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -555,12 +543,9 @@ class TextClassificationData(DataModule):
         val_data_frame: Optional[DataFrame] = None,
         test_data_frame: Optional[DataFrame] = None,
         predict_data_frame: Optional[DataFrame] = None,
-        train_transform: Optional[Dict[str, Callable]] = InputTransform,
-        val_transform: Optional[Dict[str, Callable]] = InputTransform,
-        test_transform: Optional[Dict[str, Callable]] = InputTransform,
-        predict_transform: Optional[Dict[str, Callable]] = InputTransform,
         target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = TextClassificationDataFrameInput,
+        transform: Optional[Dict[str, Callable]] = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TextClassificationData":
@@ -642,18 +627,18 @@ class TextClassificationData(DataModule):
             target_formatter=target_formatter,
             input_key=input_field,
             target_keys=target_fields,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
-        train_input = input_cls(RunningStage.TRAINING, train_data_frame, transform=train_transform, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, train_data_frame, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, val_data_frame, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_data_frame, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_data_frame, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_data_frame, **ds_kw),
+            input_cls(RunningStage.TESTING, test_data_frame, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_data_frame, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -667,12 +652,9 @@ class TextClassificationData(DataModule):
         test_data: Optional[List[str]] = None,
         test_targets: Optional[Union[List[Any], List[List[Any]]]] = None,
         predict_data: Optional[List[str]] = None,
-        train_transform: Optional[Dict[str, Callable]] = InputTransform,
-        val_transform: Optional[Dict[str, Callable]] = InputTransform,
-        test_transform: Optional[Dict[str, Callable]] = InputTransform,
-        predict_transform: Optional[Dict[str, Callable]] = InputTransform,
         target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = TextClassificationListInput,
+        transform: Optional[Dict[str, Callable]] = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TextClassificationData":
@@ -733,18 +715,18 @@ class TextClassificationData(DataModule):
         """
         ds_kw = dict(
             target_formatter=target_formatter,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
-        train_input = input_cls(RunningStage.TRAINING, train_data, train_targets, transform=train_transform, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, train_data, train_targets, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, val_data, val_targets, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_data, test_targets, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_data, val_targets, **ds_kw),
+            input_cls(RunningStage.TESTING, test_data, test_targets, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_data, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -761,11 +743,8 @@ class TextClassificationData(DataModule):
         val_data_folder: str = None,
         test_data_folder: str = None,
         predict_data_folder: str = None,
-        train_transform: Optional[Dict[str, Callable]] = InputTransform,
-        val_transform: Optional[Dict[str, Callable]] = InputTransform,
-        test_transform: Optional[Dict[str, Callable]] = InputTransform,
-        predict_transform: Optional[Dict[str, Callable]] = InputTransform,
         input_cls: Type[Input] = LabelStudioTextClassificationInput,
+        transform: Optional[Dict[str, Callable]] = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         val_split: Optional[float] = None,
         multi_label: Optional[bool] = False,
@@ -821,18 +800,17 @@ class TextClassificationData(DataModule):
             multi_label=multi_label,
         )
 
-        ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
-        )
+        ds_kw = dict()
 
-        train_input = input_cls(RunningStage.TRAINING, train_data, transform=train_transform, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, train_data, **ds_kw)
         ds_kw["parameters"] = getattr(train_input, "parameters", None)
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, val_data, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_data, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_data, **ds_kw),
+            input_cls(RunningStage.TESTING, test_data, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_data, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
