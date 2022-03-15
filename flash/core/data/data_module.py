@@ -444,7 +444,7 @@ class DataModule(pl.LightningDataModule):
                     )
                     transform = create_device_input_transform_processor(
                         stage if stage != RunningStage.SANITY_CHECKING else RunningStage.VALIDATING,
-                        self._input_transform,
+                        input_transform,
                         [self.data_fetcher],
                     )
             self._model_on_after_batch_transfer_fns[stage] = transform
