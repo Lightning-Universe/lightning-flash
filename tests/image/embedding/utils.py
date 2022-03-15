@@ -57,10 +57,7 @@ def ssl_datamodule(
 
     datamodule = ImageClassificationData.from_datasets(
         train_dataset=FakeData(),
-        train_transform=SSLInputTransform,
-        val_transform=SSLInputTransform,
-        test_transform=SSLInputTransform,
-        predict_transform=SSLInputTransform,
+        transform=SSLInputTransform,
         transform_kwargs=transform_kwargs,
         batch_size=batch_size,
     )
