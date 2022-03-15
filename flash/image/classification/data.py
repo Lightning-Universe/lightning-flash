@@ -26,7 +26,6 @@ from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE
 from flash.core.data.utilities.classification import TargetFormatter
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioImageClassificationInput
-from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,
     _IMAGE_EXTRAS_TESTING,
@@ -77,7 +76,6 @@ class ImageClassificationData(DataModule):
     """The ``ImageClassificationData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
     classmethods for loading data for image classification."""
 
-    input_transforms_registry = FlashRegistry("input_transforms")
     input_transform_cls = ImageClassificationInputTransform
 
     @classmethod
@@ -90,12 +88,9 @@ class ImageClassificationData(DataModule):
         test_files: Optional[Sequence[str]] = None,
         test_targets: Optional[Sequence[Any]] = None,
         predict_files: Optional[Sequence[str]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = ImageClassificationFilesInput,
+        transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
@@ -172,18 +167,18 @@ class ImageClassificationData(DataModule):
         """
         ds_kw = dict(
             target_formatter=target_formatter,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
-        train_input = input_cls(RunningStage.TRAINING, train_files, train_targets, transform=train_transform, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, train_files, train_targets, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, val_files, val_targets, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_files, test_targets, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_files, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_files, val_targets, **ds_kw),
+            input_cls(RunningStage.TESTING, test_files, test_targets, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_files, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -194,12 +189,9 @@ class ImageClassificationData(DataModule):
         val_folder: Optional[str] = None,
         test_folder: Optional[str] = None,
         predict_folder: Optional[str] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = ImageClassificationFolderInput,
+        transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
@@ -300,18 +292,18 @@ class ImageClassificationData(DataModule):
         """
         ds_kw = dict(
             target_formatter=target_formatter,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
-        train_input = input_cls(RunningStage.TRAINING, train_folder, transform=train_transform, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, train_folder, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, val_folder, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_folder, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_folder, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_folder, **ds_kw),
+            input_cls(RunningStage.TESTING, test_folder, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_folder, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -325,12 +317,9 @@ class ImageClassificationData(DataModule):
         test_data: Optional[Collection[np.ndarray]] = None,
         test_targets: Optional[Sequence[Any]] = None,
         predict_data: Optional[Collection[np.ndarray]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = ImageClassificationNumpyInput,
+        transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
@@ -393,18 +382,18 @@ class ImageClassificationData(DataModule):
         """
         ds_kw = dict(
             target_formatter=target_formatter,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
-        train_input = input_cls(RunningStage.TRAINING, train_data, train_targets, transform=train_transform, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, train_data, train_targets, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, val_data, val_targets, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_data, test_targets, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_data, val_targets, **ds_kw),
+            input_cls(RunningStage.TESTING, test_data, test_targets, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_data, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -418,12 +407,9 @@ class ImageClassificationData(DataModule):
         test_data: Optional[Collection[torch.Tensor]] = None,
         test_targets: Optional[Sequence[Any]] = None,
         predict_data: Optional[Collection[torch.Tensor]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = ImageClassificationTensorInput,
+        transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
@@ -486,18 +472,18 @@ class ImageClassificationData(DataModule):
         """
         ds_kw = dict(
             target_formatter=target_formatter,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
-        train_input = input_cls(RunningStage.TRAINING, train_data, train_targets, transform=train_transform, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, train_data, train_targets, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, val_data, val_targets, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_data, test_targets, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_data, val_targets, **ds_kw),
+            input_cls(RunningStage.TESTING, test_data, test_targets, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_data, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -518,12 +504,9 @@ class ImageClassificationData(DataModule):
         predict_data_frame: Optional[pd.DataFrame] = None,
         predict_images_root: Optional[str] = None,
         predict_resolver: Optional[Callable[[str, str], str]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = ImageClassificationDataFrameInput,
+        transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
@@ -632,8 +615,6 @@ class ImageClassificationData(DataModule):
         """
         ds_kw = dict(
             target_formatter=target_formatter,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
         train_data = (train_data_frame, input_field, target_fields, train_images_root, train_resolver)
@@ -641,14 +622,16 @@ class ImageClassificationData(DataModule):
         test_data = (test_data_frame, input_field, target_fields, test_images_root, test_resolver)
         predict_data = (predict_data_frame, input_field, None, predict_images_root, predict_resolver)
 
-        train_input = input_cls(RunningStage.TRAINING, *train_data, transform=train_transform, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, *train_data, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, *val_data, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, *test_data, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, *predict_data, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, *val_data, **ds_kw),
+            input_cls(RunningStage.TESTING, *test_data, **ds_kw),
+            input_cls(RunningStage.PREDICTING, *predict_data, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -669,12 +652,9 @@ class ImageClassificationData(DataModule):
         predict_file: Optional[str] = None,
         predict_images_root: Optional[str] = None,
         predict_resolver: Optional[Callable[[PATH_TYPE, Any], PATH_TYPE]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = ImageClassificationCSVInput,
+        transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
@@ -797,8 +777,6 @@ class ImageClassificationData(DataModule):
         """
         ds_kw = dict(
             target_formatter=target_formatter,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
         train_data = (train_file, input_field, target_fields, train_images_root, train_resolver)
@@ -806,14 +784,16 @@ class ImageClassificationData(DataModule):
         test_data = (test_file, input_field, target_fields, test_images_root, test_resolver)
         predict_data = (predict_file, input_field, None, predict_images_root, predict_resolver)
 
-        train_input = input_cls(RunningStage.TRAINING, *train_data, transform=train_transform, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, *train_data, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, *val_data, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, *test_data, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, *predict_data, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, *val_data, **ds_kw),
+            input_cls(RunningStage.TESTING, *test_data, **ds_kw),
+            input_cls(RunningStage.PREDICTING, *predict_data, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -826,12 +806,9 @@ class ImageClassificationData(DataModule):
         test_dataset: Optional[SampleCollection] = None,
         predict_dataset: Optional[SampleCollection] = None,
         label_field: str = "ground_truth",
-        train_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = ImageClassificationFiftyOneInput,
+        transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
     ) -> "ImageClassificationData":
@@ -923,20 +900,18 @@ class ImageClassificationData(DataModule):
         """
         ds_kw = dict(
             target_formatter=target_formatter,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
-        train_input = input_cls(
-            RunningStage.TRAINING, train_dataset, transform=train_transform, label_field=label_field, **ds_kw
-        )
+        train_input = input_cls(RunningStage.TRAINING, train_dataset, label_field=label_field, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, val_dataset, transform=val_transform, label_field=label_field, **ds_kw),
-            input_cls(RunningStage.TESTING, test_dataset, transform=test_transform, label_field=label_field, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_dataset, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_dataset, label_field=label_field, **ds_kw),
+            input_cls(RunningStage.TESTING, test_dataset, label_field=label_field, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_dataset, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -953,11 +928,8 @@ class ImageClassificationData(DataModule):
         val_data_folder: str = None,
         test_data_folder: str = None,
         predict_data_folder: str = None,
-        train_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         input_cls: Type[Input] = LabelStudioImageClassificationInput,
+        transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
         val_split: Optional[float] = None,
         multi_label: Optional[bool] = False,
@@ -1027,19 +999,18 @@ class ImageClassificationData(DataModule):
             multi_label=multi_label,
         )
 
-        ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
-        )
+        ds_kw = dict()
 
-        train_input = input_cls(RunningStage.TRAINING, train_data, transform=train_transform, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, train_data, **ds_kw)
         ds_kw["parameters"] = getattr(train_input, "parameters", None)
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, val_data, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, val_data, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_data, **ds_kw),
+            input_cls(RunningStage.TESTING, val_data, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_data, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -1050,11 +1021,8 @@ class ImageClassificationData(DataModule):
         val_dataset: Optional[Dataset] = None,
         test_dataset: Optional[Dataset] = None,
         predict_dataset: Optional[Dataset] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         input_cls: Type[Input] = DatasetInput,
+        transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "DataModule":
@@ -1089,16 +1057,15 @@ class ImageClassificationData(DataModule):
                 train_dataset=train_dataset,
             )
         """
-        ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
-        )
+        ds_kw = dict()
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_dataset, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_dataset, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_dataset, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_dataset, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_dataset, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_dataset, **ds_kw),
+            input_cls(RunningStage.TESTING, test_dataset, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_dataset, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 

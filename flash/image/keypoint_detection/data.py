@@ -79,17 +79,14 @@ class KeypointDetectionData(DataModule):
         test_ann_file: Optional[str] = None,
         test_parser_kwargs: Optional[Dict[str, Any]] = None,
         predict_folder: Optional[str] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = KeypointDetectionInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = KeypointDetectionInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = KeypointDetectionInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = KeypointDetectionInputTransform,
         parser: Optional[Union[Callable, Type[Parser]]] = None,
         input_cls: Type[Input] = IceVisionInput,
+        transform: INPUT_TRANSFORM_TYPE = KeypointDetectionInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "KeypointDetectionData":
 
-        ds_kw = dict(parser=parser, transform_kwargs=transform_kwargs)
+        ds_kw = dict(parser=parser)
 
         return cls(
             input_cls(
@@ -97,7 +94,6 @@ class KeypointDetectionData(DataModule):
                 train_folder,
                 train_ann_file,
                 parser_kwargs=train_parser_kwargs,
-                transform=train_transform,
                 **ds_kw,
             ),
             input_cls(
@@ -105,7 +101,6 @@ class KeypointDetectionData(DataModule):
                 val_folder,
                 val_ann_file,
                 parser_kwargs=val_parser_kwargs,
-                transform=val_transform,
                 **ds_kw,
             ),
             input_cls(
@@ -113,10 +108,11 @@ class KeypointDetectionData(DataModule):
                 test_folder,
                 test_ann_file,
                 parser_kwargs=test_parser_kwargs,
-                transform=test_transform,
                 **ds_kw,
             ),
-            input_cls(RunningStage.PREDICTING, predict_folder, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_folder, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -130,11 +126,8 @@ class KeypointDetectionData(DataModule):
         test_folder: Optional[str] = None,
         test_ann_file: Optional[str] = None,
         predict_folder: Optional[str] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = KeypointDetectionInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = KeypointDetectionInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = KeypointDetectionInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = KeypointDetectionInputTransform,
         input_cls: Type[Input] = IceVisionInput,
+        transform: INPUT_TRANSFORM_TYPE = KeypointDetectionInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ):
@@ -273,12 +266,9 @@ class KeypointDetectionData(DataModule):
             test_folder=test_folder,
             test_ann_file=test_ann_file,
             predict_folder=predict_folder,
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
             parser=FlashCOCOKeyPointsParser,
             input_cls=input_cls,
+            transform=transform,
             transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
@@ -306,10 +296,10 @@ class KeypointDetectionData(DataModule):
         Returns:
             The constructed data module.
         """
-        ds_kw = dict(transform=predict_transform, transform_kwargs=transform_kwargs)
-
         return cls(
-            predict_input=input_cls(RunningStage.PREDICTING, predict_folder, **ds_kw),
+            predict_input=input_cls(RunningStage.PREDICTING, predict_folder),
+            transform=predict_transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -336,9 +326,9 @@ class KeypointDetectionData(DataModule):
         Returns:
             The constructed data module.
         """
-        ds_kw = dict(transform=predict_transform, transform_kwargs=transform_kwargs)
-
         return cls(
-            predict_input=input_cls(RunningStage.PREDICTING, predict_files, **ds_kw),
+            predict_input=input_cls(RunningStage.PREDICTING, predict_files),
+            transform=predict_transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )

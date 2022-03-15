@@ -41,9 +41,8 @@ class StyleTransferData(DataModule):
         cls,
         train_files: Optional[Sequence[str]] = None,
         predict_files: Optional[Sequence[str]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
         input_cls: Type[Input] = ImageClassificationFilesInput,
+        transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any
     ) -> "StyleTransferData":
@@ -102,14 +101,11 @@ class StyleTransferData(DataModule):
             >>> _ = [os.remove(f"predict_image_{i}.png") for i in range(1, 4)]
         """
 
-        ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
-        )
-
         return cls(
-            input_cls(RunningStage.TRAINING, train_files, transform=train_transform, **ds_kw),
-            predict_input=input_cls(RunningStage.PREDICTING, predict_files, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_files),
+            predict_input=input_cls(RunningStage.PREDICTING, predict_files),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -118,9 +114,8 @@ class StyleTransferData(DataModule):
         cls,
         train_folder: Optional[str] = None,
         predict_folder: Optional[str] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
         input_cls: Type[Input] = ImageClassificationFolderInput,
+        transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any
     ) -> "StyleTransferData":
@@ -192,14 +187,11 @@ class StyleTransferData(DataModule):
             >>> shutil.rmtree("predict_folder")
         """
 
-        ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
-        )
-
         return cls(
-            input_cls(RunningStage.TRAINING, train_folder, transform=train_transform, **ds_kw),
-            predict_input=input_cls(RunningStage.PREDICTING, predict_folder, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_folder),
+            predict_input=input_cls(RunningStage.PREDICTING, predict_folder),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -208,9 +200,8 @@ class StyleTransferData(DataModule):
         cls,
         train_data: Optional[Collection[np.ndarray]] = None,
         predict_data: Optional[Collection[np.ndarray]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
         input_cls: Type[Input] = ImageNumpyInput,
+        transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any
     ) -> "StyleTransferData":
@@ -256,14 +247,11 @@ class StyleTransferData(DataModule):
             Predicting...
         """
 
-        ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
-        )
-
         return cls(
-            input_cls(RunningStage.TRAINING, train_data, transform=train_transform, **ds_kw),
-            predict_input=input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_data),
+            predict_input=input_cls(RunningStage.PREDICTING, predict_data),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -272,9 +260,8 @@ class StyleTransferData(DataModule):
         cls,
         train_data: Optional[Collection[torch.Tensor]] = None,
         predict_data: Optional[Collection[torch.Tensor]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
         input_cls: Type[Input] = ImageTensorInput,
+        transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any
     ) -> "StyleTransferData":
@@ -320,13 +307,10 @@ class StyleTransferData(DataModule):
             Predicting...
         """
 
-        ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
-        )
-
         return cls(
-            input_cls(RunningStage.TRAINING, train_data, transform=train_transform, **ds_kw),
-            predict_input=input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_data),
+            predict_input=input_cls(RunningStage.PREDICTING, predict_data),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )

@@ -284,8 +284,7 @@ def test_from_filepaths_splits(tmpdir):
         dm = ImageClassificationData.from_files(
             train_files=train_filepaths,
             train_targets=train_labels,
-            train_transform=transform,
-            val_transform=transform,
+            transform=transform,
             batch_size=B,
             num_workers=0,
             val_split=val_split,

@@ -63,12 +63,9 @@ class ObjectDetectionData(DataModule):
         test_targets: Optional[Sequence[Sequence[Any]]] = None,
         test_bboxes: Optional[Sequence[Sequence[Dict[str, int]]]] = None,
         predict_files: Optional[Sequence[str]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = ObjectDetectionFilesInput,
+        transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ObjectDetectionData":
@@ -157,7 +154,6 @@ class ObjectDetectionData(DataModule):
 
         ds_kw = dict(
             target_formatter=target_formatter,
-            transform_kwargs=transform_kwargs,
         )
 
         train_input = input_cls(
@@ -165,7 +161,6 @@ class ObjectDetectionData(DataModule):
             train_files,
             train_targets,
             train_bboxes,
-            transform=train_transform,
             **ds_kw,
         )
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
@@ -177,7 +172,6 @@ class ObjectDetectionData(DataModule):
                 val_files,
                 val_targets,
                 val_bboxes,
-                transform=val_transform,
                 **ds_kw,
             ),
             input_cls(
@@ -185,10 +179,11 @@ class ObjectDetectionData(DataModule):
                 test_files,
                 test_targets,
                 test_bboxes,
-                transform=test_transform,
                 **ds_kw,
             ),
-            input_cls(RunningStage.PREDICTING, predict_files, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_files, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -205,10 +200,7 @@ class ObjectDetectionData(DataModule):
         test_ann_file: Optional[str] = None,
         test_parser_kwargs: Optional[Dict[str, Any]] = None,
         predict_folder: Optional[str] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         parser: Optional[Union[Callable, Type[Parser]]] = None,
         input_cls: Type[Input] = IceVisionInput,
         transform_kwargs: Optional[Dict] = None,
@@ -223,7 +215,6 @@ class ObjectDetectionData(DataModule):
                 train_folder,
                 train_ann_file,
                 parser_kwargs=train_parser_kwargs,
-                transform=train_transform,
                 **ds_kw,
             ),
             input_cls(
@@ -231,7 +222,6 @@ class ObjectDetectionData(DataModule):
                 val_folder,
                 val_ann_file,
                 parser_kwargs=val_parser_kwargs,
-                transform=val_transform,
                 **ds_kw,
             ),
             input_cls(
@@ -239,10 +229,11 @@ class ObjectDetectionData(DataModule):
                 test_folder,
                 test_ann_file,
                 parser_kwargs=test_parser_kwargs,
-                transform=test_transform,
                 **ds_kw,
             ),
-            input_cls(RunningStage.PREDICTING, predict_folder, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_folder, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -256,10 +247,7 @@ class ObjectDetectionData(DataModule):
         test_folder: Optional[str] = None,
         test_ann_file: Optional[str] = None,
         predict_folder: Optional[str] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         input_cls: Type[Input] = IceVisionInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -391,12 +379,9 @@ class ObjectDetectionData(DataModule):
             test_folder=test_folder,
             test_ann_file=test_ann_file,
             predict_folder=predict_folder,
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
             parser=COCOBBoxParser,
             input_cls=input_cls,
+            transform=transform,
             transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
@@ -412,10 +397,7 @@ class ObjectDetectionData(DataModule):
         test_folder: Optional[str] = None,
         test_ann_folder: Optional[str] = None,
         predict_folder: Optional[str] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         input_cls: Type[Input] = IceVisionInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -557,12 +539,9 @@ class ObjectDetectionData(DataModule):
             test_folder=test_folder,
             test_ann_file=test_ann_folder,
             predict_folder=predict_folder,
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
             parser=partial(VOCBBoxParser, class_map=ClassMap(list(sorted_alphanumeric(labels)))),
             input_cls=input_cls,
+            transform=transform,
             transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
@@ -579,10 +558,7 @@ class ObjectDetectionData(DataModule):
         test_folder: Optional[str] = None,
         test_ann_file: Optional[str] = None,
         predict_folder: Optional[str] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         input_cls: Type[Input] = IceVisionInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -718,16 +694,13 @@ class ObjectDetectionData(DataModule):
             test_folder=test_folder,
             test_ann_file=test_ann_file,
             predict_folder=predict_folder,
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
             parser=partial(
                 VIABBoxParser,
                 class_map=ClassMap(list(sorted_alphanumeric(labels))),
                 label_field=label_field,
             ),
             input_cls=input_cls,
+            transform=transform,
             transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
@@ -742,10 +715,7 @@ class ObjectDetectionData(DataModule):
         predict_dataset: Optional[SampleCollection] = None,
         label_field: str = "ground_truth",
         iscrowd: str = "iscrowd",
-        train_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         input_cls: Type[Input] = ObjectDetectionFiftyOneInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -844,10 +814,12 @@ class ObjectDetectionData(DataModule):
         ds_kw = dict(transform_kwargs=transform_kwargs)
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_dataset, label_field, iscrowd, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_dataset, label_field, iscrowd, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_dataset, label_field, iscrowd, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_dataset, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_dataset, label_field, iscrowd, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_dataset, label_field, iscrowd, **ds_kw),
+            input_cls(RunningStage.TESTING, test_dataset, label_field, iscrowd, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_dataset, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -872,8 +844,8 @@ class ObjectDetectionData(DataModule):
             The constructed data module.
         """
         return cls(
-            predict_input=input_cls(
-                RunningStage.PREDICTING, predict_folder, transform=predict_transform, transform_kwargs=transform_kwargs
-            ),
+            predict_input=input_cls(RunningStage.PREDICTING, predict_folder),
+            transform=predict_transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )

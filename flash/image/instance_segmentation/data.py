@@ -62,17 +62,14 @@ class InstanceSegmentationData(DataModule):
         test_ann_file: Optional[str] = None,
         test_parser_kwargs: Optional[Dict[str, Any]] = None,
         predict_folder: Optional[str] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         parser: Optional[Union[Callable, Type[Parser]]] = None,
         input_cls: Type[Input] = IceVisionInput,
+        transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
     ) -> "InstanceSegmentationData":
 
-        ds_kw = dict(parser=parser, transform_kwargs=transform_kwargs)
+        ds_kw = dict(parser=parser)
 
         return cls(
             input_cls(
@@ -80,7 +77,6 @@ class InstanceSegmentationData(DataModule):
                 train_folder,
                 train_ann_file,
                 parser_kwargs=train_parser_kwargs,
-                transform=train_transform,
                 **ds_kw,
             ),
             input_cls(
@@ -88,7 +84,6 @@ class InstanceSegmentationData(DataModule):
                 val_folder,
                 val_ann_file,
                 parser_kwargs=val_parser_kwargs,
-                transform=val_transform,
                 **ds_kw,
             ),
             input_cls(
@@ -96,10 +91,11 @@ class InstanceSegmentationData(DataModule):
                 test_folder,
                 test_ann_file,
                 parser_kwargs=test_parser_kwargs,
-                transform=test_transform,
                 **ds_kw,
             ),
-            input_cls(RunningStage.PREDICTING, predict_folder, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_folder, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -113,11 +109,8 @@ class InstanceSegmentationData(DataModule):
         test_folder: Optional[str] = None,
         test_ann_file: Optional[str] = None,
         predict_folder: Optional[str] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         input_cls: Type[Input] = IceVisionInput,
+        transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ):
@@ -252,13 +245,10 @@ class InstanceSegmentationData(DataModule):
             test_folder=test_folder,
             test_ann_file=test_ann_file,
             predict_folder=predict_folder,
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
-            transform_kwargs=transform_kwargs,
             parser=COCOMaskParser,
             input_cls=input_cls,
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -276,11 +266,8 @@ class InstanceSegmentationData(DataModule):
         test_target_folder: Optional[str] = None,
         test_ann_folder: Optional[str] = None,
         predict_folder: Optional[str] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         input_cls: Type[Input] = IceVisionInput,
+        transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ):
@@ -444,13 +431,10 @@ class InstanceSegmentationData(DataModule):
             test_ann_file=test_ann_folder,
             test_parser_kwargs={"masks_dir": test_target_folder},
             predict_folder=predict_folder,
-            train_transform=train_transform,
-            val_transform=val_transform,
-            test_transform=test_transform,
-            predict_transform=predict_transform,
-            transform_kwargs=transform_kwargs,
             parser=partial(VOCMaskParser, class_map=ClassMap(list(sorted_alphanumeric(labels)))),
             input_cls=input_cls,
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -477,10 +461,10 @@ class InstanceSegmentationData(DataModule):
         Returns:
             The constructed data module.
         """
-        ds_kw = dict(transform=predict_transform, transform_kwargs=transform_kwargs)
-
         return cls(
-            predict_input=input_cls(RunningStage.PREDICTING, predict_folder, **ds_kw),
+            predict_input=input_cls(RunningStage.PREDICTING, predict_folder),
+            transform=predict_transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -507,9 +491,9 @@ class InstanceSegmentationData(DataModule):
         Returns:
             The constructed data module.
         """
-        ds_kw = dict(transform=predict_transform, transform_kwargs=transform_kwargs)
-
         return cls(
-            predict_input=input_cls(RunningStage.PREDICTING, predict_files, **ds_kw),
+            predict_input=input_cls(RunningStage.PREDICTING, predict_files),
+            transform=predict_transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
