@@ -134,11 +134,8 @@ class TemplateData(DataModule):
         test_data: Optional[Collection[np.ndarray]] = None,
         test_targets: Optional[Sequence[Any]] = None,
         predict_data: Optional[Collection[np.ndarray]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = TemplateInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = TemplateInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = TemplateInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = TemplateInputTransform,
         input_cls: Type[Input] = TemplateNumpyClassificationInput,
+        transform: INPUT_TRANSFORM_TYPE = TemplateInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TemplateData":
@@ -166,33 +163,18 @@ class TemplateData(DataModule):
             The constructed data module.
         """
 
-        ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
-        )
+        ds_kw = dict()
 
-        train_input = input_cls(RunningStage.TRAINING, train_data, train_targets, transform=train_transform, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, train_data, train_targets, **ds_kw)
         target_formatter = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,
-            input_cls(
-                RunningStage.VALIDATING,
-                val_data,
-                val_targets,
-                transform=val_transform,
-                target_formatter=target_formatter,
-                **ds_kw,
-            ),
-            input_cls(
-                RunningStage.TESTING,
-                test_data,
-                test_targets,
-                transform=test_transform,
-                target_formatter=target_formatter,
-                **ds_kw,
-            ),
-            input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_data, val_targets, target_formatter=target_formatter, **ds_kw),
+            input_cls(RunningStage.TESTING, test_data, test_targets, target_formatter=target_formatter, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_data, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -203,11 +185,8 @@ class TemplateData(DataModule):
         val_bunch: Optional[Bunch] = None,
         test_bunch: Optional[Bunch] = None,
         predict_bunch: Optional[Bunch] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = TemplateInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = TemplateInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = TemplateInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = TemplateInputTransform,
         input_cls: Type[Input] = TemplateSKLearnClassificationInput,
+        transform: INPUT_TRANSFORM_TYPE = TemplateInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TemplateData":
@@ -231,31 +210,18 @@ class TemplateData(DataModule):
         Returns:
             The constructed data module.
         """
-        ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
-        )
+        ds_kw = dict()
 
-        train_input = input_cls(RunningStage.TRAINING, train_bunch, transform=train_transform, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, train_bunch, **ds_kw)
         target_formatter = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,
-            input_cls(
-                RunningStage.VALIDATING,
-                val_bunch,
-                transform=val_transform,
-                target_formatter=target_formatter,
-                **ds_kw,
-            ),
-            input_cls(
-                RunningStage.TESTING,
-                test_bunch,
-                transform=test_transform,
-                target_formatter=target_formatter,
-                **ds_kw,
-            ),
-            input_cls(RunningStage.PREDICTING, predict_bunch, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_bunch, target_formatter=target_formatter, **ds_kw),
+            input_cls(RunningStage.TESTING, test_bunch, target_formatter=target_formatter, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_bunch, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
