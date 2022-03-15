@@ -3,4 +3,4 @@ torch-sparse
 torch-geometric>=2.0.0
 torch-cluster
 networkx
-class-resolver
+class-resolver>=0.3.2
