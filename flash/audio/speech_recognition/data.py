@@ -526,7 +526,6 @@ class SpeechRecognitionData(DataModule):
         """
 
         ds_kw = dict(
-            input_transforms_registry=cls.input_transforms_registry,
             sampling_rate=sampling_rate,
         )
 
