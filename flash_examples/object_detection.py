@@ -23,12 +23,12 @@ datamodule = ObjectDetectionData.from_coco(
     train_folder="data/coco128/images/train2017/",
     train_ann_file="data/coco128/annotations/instances_train2017.json",
     val_split=0.1,
-    transform_kwargs={"image_size": 128},
+    transform_kwargs={"image_size": 512},
     batch_size=4,
 )
 
 # 2. Build the task
-model = ObjectDetector(head="efficientdet", backbone="d0", num_classes=datamodule.num_classes, image_size=128)
+model = ObjectDetector(head="efficientdet", backbone="d0", num_classes=datamodule.num_classes, image_size=512)
 
 # 3. Create the trainer and finetune the model
 trainer = flash.Trainer(max_epochs=1)
@@ -41,7 +41,7 @@ datamodule = ObjectDetectionData.from_files(
         "data/coco128/images/train2017/000000000626.jpg",
         "data/coco128/images/train2017/000000000629.jpg",
     ],
-    transform_kwargs={"image_size": 128},
+    transform_kwargs={"image_size": 512},
     batch_size=4,
 )
 predictions = trainer.predict(model, datamodule=datamodule)
