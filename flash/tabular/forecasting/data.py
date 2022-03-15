@@ -57,11 +57,8 @@ class TabularForecastingData(DataModule):
         val_data_frame: Optional[DataFrame] = None,
         test_data_frame: Optional[DataFrame] = None,
         predict_data_frame: Optional[DataFrame] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         input_cls: Type[Input] = TabularForecastingDataFrameInput,
+        transform: INPUT_TRANSFORM_TYPE = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
         val_split: Optional[float] = None,
@@ -166,8 +163,6 @@ class TabularForecastingData(DataModule):
         """
 
         ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
             time_idx=time_idx,
             group_ids=group_ids,
             target=target,
@@ -175,14 +170,16 @@ class TabularForecastingData(DataModule):
             **input_kwargs,
         )
 
-        train_input = input_cls(RunningStage.TRAINING, train_data_frame, transform=train_transform, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, train_data_frame, **ds_kw)
         ds_kw["parameters"] = train_input.parameters if train_input else parameters
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, val_data_frame, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_data_frame, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_data_frame, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_data_frame, **ds_kw),
+            input_cls(RunningStage.TESTING, test_data_frame, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_data_frame, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             data_fetcher=data_fetcher,
             val_split=val_split,
             batch_size=batch_size,
