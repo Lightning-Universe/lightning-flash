@@ -18,7 +18,7 @@ pip install 'lightning-flash[text]'
 ...
 ```
 
-For muliple domains, use: `pip install 'lightning-flash[{DOMAIN_1, DOMAIN_2, ...}]'`.
+For multiple domains, use: `pip install 'lightning-flash[{DOMAIN_1, DOMAIN_2, ...}]'`.
 ```bash
 pip install 'lightning-flash[audio,image]'
 ...
