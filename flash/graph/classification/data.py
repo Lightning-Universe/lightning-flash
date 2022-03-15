@@ -42,13 +42,10 @@ class GraphClassificationData(DataModule):
         val_dataset: Optional[Dataset] = None,
         test_dataset: Optional[Dataset] = None,
         predict_dataset: Optional[Dataset] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = GraphClassificationInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = GraphClassificationInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = GraphClassificationInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = GraphClassificationInputTransform,
-        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = GraphClassificationDatasetInput,
+        transform: INPUT_TRANSFORM_TYPE = GraphClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
+        target_formatter: Optional[TargetFormatter] = None,
         **data_module_kwargs,
     ) -> "GraphClassificationData":
         """Load the :class:`~flash.graph.classification.data.GraphClassificationData` from PyTorch Dataset objects.
@@ -175,18 +172,18 @@ class GraphClassificationData(DataModule):
 
         ds_kw = dict(
             target_formatter=target_formatter,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
-        train_input = input_cls(RunningStage.TRAINING, train_dataset, transform=train_transform, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, train_dataset, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, val_dataset, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_dataset, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_dataset, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_dataset, **ds_kw),
+            input_cls(RunningStage.TESTING, test_dataset, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_dataset, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
