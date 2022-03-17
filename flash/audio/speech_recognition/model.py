@@ -19,7 +19,6 @@ import torch
 import torch.nn as nn
 
 from flash.audio.speech_recognition.backbone import SPEECH_RECOGNITION_BACKBONES
-from flash.audio.speech_recognition.collate import DataCollatorCTCWithPadding
 from flash.audio.speech_recognition.input import SpeechRecognitionDeserializer
 from flash.audio.speech_recognition.output_transform import SpeechRecognitionOutputTransform
 from flash.core.data.io.input import ServeInput
@@ -28,11 +27,8 @@ from flash.core.data.io.output import Output
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.serve import Composition
-from flash.core.utilities.imports import _AUDIO_AVAILABLE, requires
+from flash.core.utilities.imports import requires
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE, LR_SCHEDULER_TYPE, OPTIMIZER_TYPE
-
-if _AUDIO_AVAILABLE:
-    from transformers import AutoProcessor
 
 
 class SpeechRecognition(Task):
@@ -75,12 +71,6 @@ class SpeechRecognition(Task):
         )
 
         self.save_hyperparameters()
-
-        self.collate_fn = DataCollatorCTCWithPadding(
-            AutoProcessor.from_pretrained(backbone)
-            if processor_backbone is None
-            else AutoProcessor.from_pretrained(processor_backbone)
-        )
 
     def forward(self, batch: Dict[str, torch.Tensor]):
         return self.model(batch["input_values"])

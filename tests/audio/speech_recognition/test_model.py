@@ -22,7 +22,7 @@ import torch
 from flash import Trainer
 from flash.__main__ import main
 from flash.audio import SpeechRecognition
-from flash.audio.speech_recognition.data import InputTransform, SpeechRecognitionData
+from flash.audio.speech_recognition.data import SpeechRecognitionData
 from flash.core.data.io.input import DataKeys, Input
 from flash.core.utilities.imports import _AUDIO_AVAILABLE, _AUDIO_TESTING, _SERVE_TESTING
 from flash.core.utilities.stages import RunningStage
@@ -51,9 +51,7 @@ TEST_BACKBONE = "patrickvonplaten/wav2vec2_tiny_random_robust"  # tiny model for
 @pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 def test_init_train(tmpdir):
     model = SpeechRecognition(backbone=TEST_BACKBONE)
-    datamodule = SpeechRecognitionData(
-        Input(RunningStage.TRAINING, DummyDataset(), transform=InputTransform), batch_size=2
-    )
+    datamodule = SpeechRecognitionData(Input(RunningStage.TRAINING, DummyDataset()), batch_size=2)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
     trainer.fit(model, datamodule=datamodule)
 
