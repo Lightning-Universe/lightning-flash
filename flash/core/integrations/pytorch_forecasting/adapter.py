@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from copy import copy
-from functools import partial
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import torch
@@ -54,14 +53,7 @@ class PyTorchForecastingAdapter(Adapter):
 
     def __init__(self, backbone):
         super().__init__()
-
         self.backbone = backbone
-
-    @staticmethod
-    def _collate_fn(collate_fn, samples):
-        samples = [(sample[DataKeys.INPUT], sample[DataKeys.TARGET]) for sample in samples]
-        batch = collate_fn(samples)
-        return {DataKeys.INPUT: batch[0], DataKeys.TARGET: batch[1]}
 
     @classmethod
     def from_task(
@@ -87,9 +79,6 @@ class PyTorchForecastingAdapter(Adapter):
         backbone_kwargs = backbone_kwargs or {}
 
         adapter = cls(task.backbones.get(backbone)(time_series_dataset=time_series_dataset, **backbone_kwargs))
-
-        # Attach the required collate function
-        adapter.collate_fn = partial(PyTorchForecastingAdapter._collate_fn, time_series_dataset._collate_fn)
 
         return adapter
 
