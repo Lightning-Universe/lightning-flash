@@ -25,7 +25,7 @@ from flash.audio.speech_recognition.input_transform import SpeechRecognitionInpu
 from flash.audio.speech_recognition.output_transform import SpeechRecognitionOutputTransform
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input
-from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
+from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE
 from flash.core.utilities.imports import _AUDIO_TESTING
 from flash.core.utilities.stages import RunningStage
 
@@ -38,7 +38,7 @@ class SpeechRecognitionData(DataModule):
     """The ``SpeechRecognitionData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
     classmethods for loading data for speech recognition."""
 
-    input_transform_cls = InputTransform
+    input_transform_cls = SpeechRecognitionInputCollateTransform
     output_transform_cls = SpeechRecognitionOutputTransform
 
     @classmethod
