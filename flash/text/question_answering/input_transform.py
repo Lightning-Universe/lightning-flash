@@ -108,7 +108,7 @@ class QuestionAnsweringInputTransform(TransformersTextInputTransform):
         #       But, later we might support long input chunking and this might be needed. Hence commenting this part.
         # # Since one example might give us several features if it has a long context, we need a map from a feature to
         # # its corresponding example. This key gives us just that.
-        # sample_mapping = tokenized_sample.pop("overflow_to_sample_mapping")
+        _ = tokenized_sample.pop("overflow_to_sample_mapping")
 
         # For evaluation, we will need to convert our predictions to substrings of the context, so we keep the
         # corresponding example_id, and we will store the offset mappings.
