@@ -22,6 +22,8 @@ from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
 
 if _TRANSFORMERS_AVAILABLE:
     from transformers import DataCollatorForSeq2Seq
+else:
+    DataCollatorForSeq2Seq = object
 
 
 @dataclass(unsafe_hash=True)

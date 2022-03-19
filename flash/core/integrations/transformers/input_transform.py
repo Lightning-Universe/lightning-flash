@@ -24,6 +24,12 @@ if _TRANSFORMERS_AVAILABLE:
     from transformers import AutoTokenizer
     from transformers.file_utils import PaddingStrategy
     from transformers.tokenization_utils_base import PreTokenizedInput, TextInput, TruncationStrategy
+else:
+    AutoTokenizer = object
+    PaddingStrategy = object
+    PreTokenizedInput = object
+    TextInput = object
+    TruncationStrategy = object
 
 
 @dataclass(unsafe_hash=True)

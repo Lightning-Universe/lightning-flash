@@ -27,6 +27,9 @@ from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
 
 if _TRANSFORMERS_AVAILABLE:
     from transformers import DataCollatorWithPadding, default_data_collator
+else:
+    DataCollatorWithPadding = object
+    default_data_collator = object
 
 
 @dataclass(unsafe_hash=True)
