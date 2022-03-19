@@ -19,7 +19,7 @@
 import collections
 import os
 import warnings
-from typing import Any, Callable, Iterable, List, Mapping, Optional, Sequence, Union
+from typing import Any, Callable, Iterable, List, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
@@ -36,7 +36,6 @@ from flash.core.utilities.imports import _TEXT_AVAILABLE, _TM_GREATER_EQUAL_0_7_
 from flash.core.utilities.providers import _HUGGINGFACE
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.text.ort_callback import ORTCallback
-from flash.text.question_answering.collate import TextQuestionAnsweringCollate
 from flash.text.question_answering.finetuning import _get_question_answering_bacbones_for_freezing
 from flash.text.question_answering.output_transform import QuestionAnsweringOutputTransform
 
@@ -68,10 +67,7 @@ class QuestionAnsweringTask(Task):
 
     Args:
         backbone: backbone model to use for the task.
-        max_source_length: Max length of the sequence to be considered during tokenization.
         max_target_length: Max length of each answer to be produced.
-        padding: Padding type during tokenization.
-        doc_stride: The stride amount to be taken when splitting up a long document into chunks.
         loss_fn: Loss function for training.
         optimizer: Optimizer to use for training.
         lr_scheduler: The LR scheduler to use during training.
@@ -96,10 +92,7 @@ class QuestionAnsweringTask(Task):
     def __init__(
         self,
         backbone: str = "sshleifer/tiny-distilbert-base-cased-distilled-squad",
-        max_source_length: int = 384,
         max_target_length: int = 30,
-        padding: Union[str, bool] = "max_length",
-        doc_stride: int = 128,
         loss_fn: Optional[Union[Callable, Mapping, Sequence]] = None,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
@@ -126,15 +119,6 @@ class QuestionAnsweringTask(Task):
             metrics=metrics,
             learning_rate=learning_rate,
             output_transform=QuestionAnsweringOutputTransform(),
-        )
-
-        self.collate_fn = TextQuestionAnsweringCollate(
-            backbone=backbone,
-            max_source_length=max_source_length,
-            max_target_length=max_target_length,
-            padding=padding,
-            doc_stride=doc_stride,
-            model=self,
         )
 
         self.model = self.backbones.get(backbone)()
@@ -167,7 +151,7 @@ class QuestionAnsweringTask(Task):
 
             start_logits: Tensor = pred_start_logits[example_index]
             end_logits: Tensor = pred_end_logits[example_index]
-            offset_mapping: List[List[int]] = example["offset_mapping"]
+            offset_mapping: List[Optional[Tuple[int, int]]] = example["offset_mapping"]
             token_is_max_context = example.get("token_is_max_context", None)
 
             # Update minimum null prediction.
@@ -248,10 +232,8 @@ class QuestionAnsweringTask(Task):
                 pred["probability"] = prob
 
             # Pick the best prediction. If the null answer is not possible, this is easy.
-            if not self.version_2_with_negative:
-                all_predictions[example["example_id"]] = predictions[0]["text"]
-            else:
-                # Otherwise we first need to find the best non-empty prediction.
+            if self.version_2_with_negative:
+                # We first need to find the best non-empty prediction.
                 i = 0
                 while predictions[i]["text"] == "":
                     i += 1
@@ -264,6 +246,8 @@ class QuestionAnsweringTask(Task):
                     all_predictions[example["example_id"]] = ""
                 else:
                     all_predictions[example["example_id"]] = best_non_null_pred["text"]
+            else:
+                all_predictions[example["example_id"]] = predictions[0]["text"]
 
         return all_predictions
 
@@ -278,24 +262,21 @@ class QuestionAnsweringTask(Task):
         batch[DataKeys.METADATA] = metadata
         return loss, generated_answers
 
-    def training_step(self, batch: Any, batch_idx: int) -> Tensor:
-        outputs = self.model(**batch)
-        loss = outputs.loss
-        self.log("train_loss", loss)
-        return loss
-
     def common_step(self, prefix: str, batch: Any) -> torch.Tensor:
         loss, generated_answers = self(batch)
         result = self.compute_metrics(generated_answers, batch[DataKeys.METADATA])
         self.log(f"{prefix}_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log_dict(result, on_step=False, on_epoch=True, prog_bar=False)
 
-    def compute_metrics(self, generated_tokens, batch):
-        predicted_answers = [generated_tokens[example["example_id"]] for example in batch]
+    def compute_metrics(self, generated_answers, batch):
+        predicted_answers = [generated_answers[example["example_id"]] for example in batch]
         target_answers = [
             example["answer"]["text"][0] if len(example["answer"]["text"]) > 0 else "" for example in batch
         ]
         return self.rouge(predicted_answers, target_answers)
+
+    def training_step(self, batch: Any, batch_idx: int) -> Tensor:
+        self.common_step("train", batch)
 
     def validation_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0):
         self.common_step("val", batch)

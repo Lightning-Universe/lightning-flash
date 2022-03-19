@@ -39,7 +39,6 @@ from flash.core.utilities.types import (
 )
 from flash.text.input import TextDeserializer
 from flash.text.ort_callback import ORTCallback
-from flash.text.seq2seq.core.collate import TextSeq2SeqCollate
 
 if _TEXT_AVAILABLE:
     from transformers import AutoModelForSeq2SeqLM
@@ -119,13 +118,6 @@ class Seq2SeqTask(Task):
             output_transform=output_transform,
         )
 
-        self.collate_fn = TextSeq2SeqCollate(
-            backbone=backbone,
-            tokenizer_kwargs=tokenizer_kwargs,
-            max_source_length=max_source_length,
-            max_target_length=max_target_length,
-            padding=padding,
-        )
         self.model = self.backbones.get(backbone)()
         self.enable_ort = enable_ort
         self.max_source_length = max_source_length
@@ -133,11 +125,14 @@ class Seq2SeqTask(Task):
         self.num_beams = num_beams
         self._initialize_model_specific_parameters()
 
-    def forward(self, x: Any) -> Any:
+    def forward(self, batch: Any) -> Any:
         max_length = self.max_target_length
         num_beams = self.num_beams if self.num_beams else self.model.config.num_beams
         generated_tokens = self.model.generate(
-            input_ids=x["input_ids"], attention_mask=x["attention_mask"], max_length=max_length, num_beams=num_beams
+            input_ids=batch["input_ids"],
+            attention_mask=batch["attention_mask"],
+            max_length=max_length,
+            num_beams=num_beams,
         )
         # in case the batch is shorter than max length, the output should be padded
         if generated_tokens.shape[-1] < max_length:
@@ -148,6 +143,14 @@ class Seq2SeqTask(Task):
 
     def training_step(self, batch: Any, batch_idx: int) -> Tensor:
         batch["labels"] = batch.pop(DataKeys.TARGET)
+        if (
+            batch["labels"] is not None
+            and self.model is not None
+            and hasattr(self.model, "prepare_decoder_input_ids_from_labels")
+        ):
+            decoder_input_ids = self.model.prepare_decoder_input_ids_from_labels(labels=batch["labels"])
+            batch["decoder_input_ids"] = decoder_input_ids
+
         outputs = self.model(**batch)
         loss = outputs[0]
         self.log("train_loss", loss)
@@ -185,7 +188,7 @@ class Seq2SeqTask(Task):
             self.model.config.update(pars)
 
     def decode(self, tokens: Tensor) -> List[str]:
-        decoded_str = self.collate_fn.tokenizer.batch_decode(tokens, skip_special_tokens=True)
+        decoded_str = self.trainer.datamodule.input_transform.tokenizer.batch_decode(tokens, skip_special_tokens=True)
         return [str.strip(s) for s in decoded_str]
 
     def modules_to_freeze(self) -> Union[Module, Iterable[Union[Module, Iterable]]]:

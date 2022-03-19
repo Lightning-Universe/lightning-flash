@@ -33,7 +33,6 @@ from flash.core.utilities.types import (
     OPTIMIZER_TYPE,
 )
 from flash.text.classification.backbones import TEXT_CLASSIFIER_BACKBONES
-from flash.text.classification.collate import TextClassificationCollate
 from flash.text.input import TextDeserializer
 from flash.text.ort_callback import ORTCallback
 
@@ -103,7 +102,6 @@ class TextClassifier(ClassificationTask):
         )
         self.enable_ort = enable_ort
         self.max_length = max_length
-        self.collate_fn = TextClassificationCollate(backbone=backbone, max_length=max_length)
         self.model = self.backbones.get(backbone)(num_labels=num_classes)
 
     @property
@@ -111,7 +109,11 @@ class TextClassifier(ClassificationTask):
         return self.model.base_model
 
     def forward(self, batch: Dict[str, torch.Tensor]):
-        result = self.model(input_ids=batch.get("input_ids", None), attention_mask=batch.get("attention_mask", None))
+        result = self.model(
+            input_ids=batch.get("input_ids", None),
+            attention_mask=batch.get("attention_mask", None),
+            token_type_ids=batch.get("token_type_ids", None),
+        )
         if isinstance(result, (SequenceClassifierOutput, Seq2SeqSequenceClassifierOutput)):
             result = result.logits
         return result

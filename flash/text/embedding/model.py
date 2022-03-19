@@ -23,7 +23,6 @@ from flash.core.model import Task
 from flash.core.registry import FlashRegistry, print_provider_info
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.core.utilities.providers import _SENTENCE_TRANSFORMERS
-from flash.text.classification.collate import TextClassificationCollate
 from flash.text.embedding.backbones import HUGGINGFACE_BACKBONES
 from flash.text.ort_callback import ORTCallback
 
@@ -70,9 +69,6 @@ class TextEmbedder(Task):
         if tokenizer_backbone is None:
             tokenizer_backbone = backbone
         self.max_length = max_length
-        self.collate_fn = TextClassificationCollate(
-            backbone=tokenizer_backbone, max_length=max_length, tokenizer_kwargs=tokenizer_kwargs
-        )
         self.model = self.backbones.get(backbone)()
         self.pooling = Pooling(self.model.config.hidden_size)
         self.enable_ort = enable_ort

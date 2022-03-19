@@ -13,11 +13,14 @@
 # limitations under the License.
 import os
 from pathlib import Path
+from typing import Any, Dict
 
 import pytest
+from torch import Tensor
 
 from flash import DataKeys
 from flash.core.utilities.imports import _TEXT_TESTING
+from flash.core.utilities.stages import RunningStage
 from flash.text import TranslationData
 
 TEST_CSV_DATA = """input,target
@@ -57,6 +60,15 @@ def json_data_with_field(tmpdir):
     return path
 
 
+def assert_batch_values_ok(batch: Dict[str, Any], stage: RunningStage):
+    assert all(key in batch.keys() for key in ["input_ids", "attention_mask"])
+    assert isinstance(batch["input_ids"], Tensor)
+    assert isinstance(batch["attention_mask"], Tensor)
+
+    if stage in [RunningStage.TRAINING, RunningStage.VALIDATING, RunningStage.TESTING]:
+        assert isinstance(batch[DataKeys.TARGET], Tensor)
+
+
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_csv(tmpdir):
@@ -68,8 +80,7 @@ def test_from_csv(tmpdir):
         batch_size=1,
     )
     batch = next(iter(dm.train_dataloader()))
-    assert isinstance(batch[DataKeys.INPUT][0], str)
-    assert isinstance(batch[DataKeys.TARGET][0], str)
+    assert_batch_values_ok(batch, RunningStage.TRAINING)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -85,12 +96,10 @@ def test_from_files(tmpdir):
         batch_size=1,
     )
     batch = next(iter(dm.val_dataloader()))
-    assert isinstance(batch[DataKeys.INPUT][0], str)
-    assert isinstance(batch[DataKeys.TARGET][0], str)
+    assert_batch_values_ok(batch, RunningStage.VALIDATING)
 
     batch = next(iter(dm.test_dataloader()))
-    assert isinstance(batch[DataKeys.INPUT][0], str)
-    assert isinstance(batch[DataKeys.TARGET][0], str)
+    assert_batch_values_ok(batch, RunningStage.TESTING)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -104,8 +113,7 @@ def test_from_json(tmpdir):
         batch_size=1,
     )
     batch = next(iter(dm.train_dataloader()))
-    assert isinstance(batch[DataKeys.INPUT][0], str)
-    assert isinstance(batch[DataKeys.TARGET][0], str)
+    assert_batch_values_ok(batch, RunningStage.TRAINING)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -120,5 +128,4 @@ def test_from_json_with_field(tmpdir):
         field="data",
     )
     batch = next(iter(dm.train_dataloader()))
-    assert isinstance(batch[DataKeys.INPUT][0], str)
-    assert isinstance(batch[DataKeys.TARGET][0], str)
+    assert_batch_values_ok(batch, RunningStage.TRAINING)

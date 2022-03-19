@@ -15,12 +15,12 @@ from typing import Any, Dict, List, Optional, Type
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input
-from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.utilities.imports import _TEXT_AVAILABLE, _TEXT_TESTING
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 from flash.text.seq2seq.core.input import Seq2SeqCSVInput, Seq2SeqInputBase, Seq2SeqJSONInput, Seq2SeqListInput
+from flash.text.seq2seq.core.input_transform import Seq2SeqInputTransform
 
 if _TEXT_AVAILABLE:
     from datasets import Dataset
@@ -36,7 +36,7 @@ class TranslationData(DataModule):
     """The ``TranslationData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
     classmethods for loading data for text translation."""
 
-    input_transform_cls = InputTransform
+    input_transform_cls = Seq2SeqInputTransform
 
     @classmethod
     def from_csv(
@@ -48,7 +48,7 @@ class TranslationData(DataModule):
         test_file: Optional[PATH_TYPE] = None,
         predict_file: Optional[PATH_TYPE] = None,
         input_cls: Type[Input] = Seq2SeqCSVInput,
-        transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        transform: INPUT_TRANSFORM_TYPE = Seq2SeqInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TranslationData":
@@ -67,12 +67,8 @@ class TranslationData(DataModule):
             val_file: The CSV file to use when validating.
             test_file: The CSV file to use when testing.
             predict_file: The CSV file to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -160,7 +156,7 @@ class TranslationData(DataModule):
         test_file: Optional[PATH_TYPE] = None,
         predict_file: Optional[PATH_TYPE] = None,
         input_cls: Type[Input] = Seq2SeqJSONInput,
-        transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        transform: INPUT_TRANSFORM_TYPE = Seq2SeqInputTransform,
         transform_kwargs: Optional[Dict] = None,
         field: Optional[str] = None,
         **data_module_kwargs: Any,
@@ -180,12 +176,8 @@ class TranslationData(DataModule):
             val_file: The JSON file to use when validating.
             test_file: The JSON file to use when testing.
             predict_file: The JSON file to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             field: The field that holds the data in the JSON file.
             data_module_kwargs: Additional keyword arguments to provide to the
@@ -273,7 +265,7 @@ class TranslationData(DataModule):
         test_hf_dataset: Optional[Dataset] = None,
         predict_hf_dataset: Optional[Dataset] = None,
         input_cls: Type[Input] = Seq2SeqInputBase,
-        transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        transform: INPUT_TRANSFORM_TYPE = Seq2SeqInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TranslationData":
@@ -292,12 +284,8 @@ class TranslationData(DataModule):
             val_hf_dataset: The ``Dataset`` to use when validating.
             test_hf_dataset: The ``Dataset`` to use when testing.
             predict_hf_dataset: The ``Dataset`` to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -370,7 +358,7 @@ class TranslationData(DataModule):
         test_targets: Optional[List[str]] = None,
         predict_data: Optional[List[str]] = None,
         input_cls: Type[Input] = Seq2SeqListInput,
-        transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        transform: INPUT_TRANSFORM_TYPE = Seq2SeqInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TranslationData":
@@ -388,12 +376,8 @@ class TranslationData(DataModule):
             test_data: The list of input text snippets to use when testing.
             test_targets: The list of target text snippets to use when testing.
             predict_data: The list of input text snippets to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.

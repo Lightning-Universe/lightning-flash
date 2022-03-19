@@ -15,7 +15,6 @@ from typing import Any, Dict, Optional, Type
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input
-from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.core.utilities.stages import RunningStage
@@ -26,6 +25,7 @@ from flash.text.question_answering.input import (
     QuestionAnsweringJSONInput,
     QuestionAnsweringSQuADInput,
 )
+from flash.text.question_answering.input_transform import QuestionAnsweringInputTransform
 
 # Skip doctests if requirements aren't available
 if not _TEXT_AVAILABLE:
@@ -36,7 +36,7 @@ class QuestionAnsweringData(DataModule):
     """The ``QuestionAnsweringData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
     classmethods for loading data for extractive question answering."""
 
-    input_transform_cls = InputTransform
+    input_transform_cls = QuestionAnsweringInputTransform
 
     @classmethod
     def from_csv(
@@ -46,7 +46,7 @@ class QuestionAnsweringData(DataModule):
         test_file: Optional[PATH_TYPE] = None,
         predict_file: Optional[PATH_TYPE] = None,
         input_cls: Type[Input] = QuestionAnsweringCSVInput,
-        transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        transform: INPUT_TRANSFORM_TYPE = QuestionAnsweringInputTransform,
         transform_kwargs: Optional[Dict] = None,
         question_column_name: str = "question",
         context_column_name: str = "context",
@@ -67,12 +67,8 @@ class QuestionAnsweringData(DataModule):
             val_file: The CSV file containing the validation data.
             test_file: The CSV file containing the testing data.
             predict_file: The CSV file containing the data to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             question_column_name: The key in the JSON file to recognize the question field.
             context_column_name: The key in the JSON file to recognize the context field.
@@ -151,7 +147,7 @@ class QuestionAnsweringData(DataModule):
             ...     batch_size=2,
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Downloading...
-            >>> model = QuestionAnsweringTask(max_source_length=32, max_target_length=32)
+            >>> model = QuestionAnsweringTask(max_target_length=32)
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -188,7 +184,7 @@ class QuestionAnsweringData(DataModule):
         test_file: Optional[PATH_TYPE] = None,
         predict_file: Optional[PATH_TYPE] = None,
         input_cls: Type[Input] = QuestionAnsweringJSONInput,
-        transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        transform: INPUT_TRANSFORM_TYPE = QuestionAnsweringInputTransform,
         transform_kwargs: Optional[Dict] = None,
         field: Optional[str] = None,
         question_column_name: str = "question",
@@ -210,12 +206,8 @@ class QuestionAnsweringData(DataModule):
             val_file: The JSON file containing the validation data.
             test_file: The JSON file containing the testing data.
             predict_file: The JSON file containing the data to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             field: The field that holds the data in the JSON file.
             question_column_name: The key in the JSON file to recognize the question field.
@@ -299,7 +291,7 @@ class QuestionAnsweringData(DataModule):
             ...     batch_size=2,
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Downloading...
-            >>> model = QuestionAnsweringTask(max_source_length=32, max_target_length=32)
+            >>> model = QuestionAnsweringTask(max_target_length=32)
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -337,7 +329,7 @@ class QuestionAnsweringData(DataModule):
         test_file: Optional[str] = None,
         predict_file: Optional[str] = None,
         input_cls: Type[Input] = QuestionAnsweringSQuADInput,
-        transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        transform: INPUT_TRANSFORM_TYPE = QuestionAnsweringInputTransform,
         transform_kwargs: Optional[Dict] = None,
         question_column_name: str = "question",
         context_column_name: str = "context",
@@ -358,12 +350,8 @@ class QuestionAnsweringData(DataModule):
             val_file: The JSON file containing the validation data.
             test_file: The JSON file containing the testing data.
             predict_file: The JSON file containing the predict data.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             question_column_name: The key in the JSON file to recognize the question field.
             context_column_name: The key in the JSON file to recognize the context field.
@@ -584,7 +572,7 @@ class QuestionAnsweringData(DataModule):
             ...     predict_file="predict_data.json",
             ...     batch_size=2,
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            >>> model = QuestionAnsweringTask(max_source_length=32, max_target_length=32)
+            >>> model = QuestionAnsweringTask(max_target_length=32)
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -622,7 +610,7 @@ class QuestionAnsweringData(DataModule):
         test_data: Optional[Dict[str, Any]] = None,
         predict_data: Optional[Dict[str, Any]] = None,
         input_cls: Type[Input] = QuestionAnsweringDictionaryInput,
-        transform: INPUT_TRANSFORM_TYPE = InputTransform,
+        transform: INPUT_TRANSFORM_TYPE = QuestionAnsweringInputTransform,
         transform_kwargs: Optional[Dict] = None,
         question_column_name: str = "question",
         context_column_name: str = "context",
@@ -643,12 +631,8 @@ class QuestionAnsweringData(DataModule):
             val_data: The dictionary containing the validation data.
             test_data: The dictionary containing the testing data.
             predict_data: The dictionary containing the data to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             question_column_name: The key in the JSON file to recognize the question field.
             context_column_name: The key in the JSON file to recognize the context field.
@@ -702,7 +686,7 @@ class QuestionAnsweringData(DataModule):
             ...     predict_data=predict_data,
             ...     batch_size=2,
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            >>> model = QuestionAnsweringTask(max_source_length=32, max_target_length=32)
+            >>> model = QuestionAnsweringTask(max_target_length=32)
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
