@@ -96,15 +96,11 @@ class SemanticSegmentationData(DataModule):
             test_files: The list of image files to use when testing.
             test_targets: The list of mask files to use when testing.
             predict_files: The list of image files to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             num_classes: The number of segmentation classes.
             labels_map: An optional mapping from class to RGB tuple indicating the colour to use when visualizing masks.
                 If not provided, a random mapping will be used.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -237,15 +233,11 @@ class SemanticSegmentationData(DataModule):
             test_target_folder: The folder containing masks to use when testing (files should have the same name as
                 the files in the ``train_folder``).
             predict_folder: The folder containing images to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             num_classes: The number of segmentation classes.
             labels_map: An optional mapping from class to RGB tuple indicating the colour to use when visualizing masks.
                 If not provided, a random mapping will be used.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -344,15 +336,11 @@ class SemanticSegmentationData(DataModule):
             test_data: The numpy array or list of arrays containing images to use when testing.
             test_targets: The numpy array or list of arrays containing masks to use when testing.
             predict_data: The numpy array or list of arrays to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             num_classes: The number of segmentation classes.
             labels_map: An optional mapping from class to RGB tuple indicating the colour to use when visualizing masks.
                 If not provided, a random mapping will be used.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -436,15 +424,11 @@ class SemanticSegmentationData(DataModule):
             test_data: The torch tensor or list of tensors containing images to use when testing.
             test_targets: The torch tensor or list of tensors containing masks to use when testing.
             predict_data: The torch tensor or list of tensors to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             num_classes: The number of segmentation classes.
             labels_map: An optional mapping from class to RGB tuple indicating the colour to use when visualizing masks.
                 If not provided, a random mapping will be used.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -527,15 +511,11 @@ class SemanticSegmentationData(DataModule):
             test_dataset: The ``SampleCollection`` to use when testing.
             predict_dataset: The ``SampleCollection`` to use when predicting.
             label_field: The field in the ``SampleCollection`` objects containing the targets.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             num_classes: The number of segmentation classes.
             labels_map: An optional mapping from class to RGB tuple indicating the colour to use when visualizing masks.
                 If not provided, a random mapping will be used.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.

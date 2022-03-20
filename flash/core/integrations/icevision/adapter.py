@@ -26,6 +26,7 @@ from flash.core.integrations.icevision.transforms import (
 )
 from flash.core.model import Task
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
+from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.url_error import catch_url_error
 
 if _ICEVISION_AVAILABLE:
@@ -85,7 +86,7 @@ class IceVisionAdapter(Adapter):
         return cls(model_type, model, icevision_adapter, backbone, predict_kwargs)
 
     @staticmethod
-    def _wrap_collate_fn(collate_fn, samples, metadata: Optional[List[Dict[str, Any]]] = None):
+    def _wrap_collate_fn(collate_fn, samples, _: RunningStage, metadata: Optional[List[Dict[str, Any]]] = None):
         metadata = metadata or [None] * len(samples)
         return {
             DataKeys.INPUT: collate_fn(
