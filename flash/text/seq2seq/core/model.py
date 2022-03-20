@@ -158,6 +158,12 @@ class Seq2SeqTask(Task):
 
     def common_step(self, prefix: str, batch: Any) -> torch.Tensor:
         batch["labels"] = batch.pop(DataKeys.TARGET)
+        if self.trainer.datamodule.input_transform.ignore_pad_token_for_loss:
+            batch["labels"] = torch.where(
+                batch["labels"] != -100,
+                batch["labels"],
+                self.trainer.datamodule.input_transform.tokenizer.pad_token_id,
+            )
         generated_tokens = self(batch)
         self.compute_metrics(generated_tokens, batch, prefix)
 

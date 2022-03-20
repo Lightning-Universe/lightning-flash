@@ -83,9 +83,10 @@ class Seq2SeqInputTransform(TransformersTextInputTransform):
         return self.tokenize_per_sample
 
     def collate(self) -> Callable:
+        label_pad_token_id = -100 if self.ignore_pad_token_for_loss else self.tokenizer.pad_token_id
         _collate_fn = DataCollatorForSeq2Seq(
             self.tokenizer,
-            label_pad_token_id=self.tokenizer.pad_token_id,
+            label_pad_token_id=label_pad_token_id,
             pad_to_multiple_of=None,
         )
         return _collate_fn
