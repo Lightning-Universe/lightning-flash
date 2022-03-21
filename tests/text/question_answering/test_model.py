@@ -11,15 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# import os
+import os
 import re
 from unittest import mock
 
 import pytest
 import torch
 
+from flash import Trainer
 from flash.__main__ import main
-from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _TEXT_AVAILABLE, _TEXT_TESTING
 from flash.text import QuestionAnsweringTask
 
@@ -35,14 +35,6 @@ class DummyDataset(torch.utils.data.Dataset):
             "attention_mask": torch.randint(1, size=(SEQUENCE_LENGTH,)),
             "start_positions": torch.randint(1000, size=(1,)),
             "end_positions": torch.randint(1000, size=(1,)),
-            DataKeys.METADATA: [
-                {
-                    "context": "This is a context",
-                    "example_id": 1234,
-                    "answer": {"answer_start": [0], "text": ["this is an answer"]},
-                    "offset_mapping": [(i, i + 1) for i in range(SEQUENCE_LENGTH)],
-                }
-            ],
         }
 
     def __len__(self) -> int:
@@ -54,13 +46,13 @@ class DummyDataset(torch.utils.data.Dataset):
 TEST_BACKBONE = "distilbert-base-uncased"
 
 
-# @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-# @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-# def test_init_train(tmpdir):
-#     model = QuestionAnsweringTask(TEST_BACKBONE)
-#     train_dl = torch.utils.data.DataLoader(DummyDataset())
-#     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-#     trainer.fit(model, train_dl)
+@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+def test_init_train(tmpdir):
+    model = QuestionAnsweringTask(TEST_BACKBONE)
+    train_dl = torch.utils.data.DataLoader(DummyDataset())
+    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
+    trainer.fit(model, train_dl)
 
 
 @pytest.mark.skipif(_TEXT_AVAILABLE, reason="text libraries are installed.")

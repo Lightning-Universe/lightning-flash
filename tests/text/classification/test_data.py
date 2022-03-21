@@ -13,15 +13,12 @@
 # limitations under the License.
 import os
 from pathlib import Path
-from typing import Any, Dict
 
 import pandas as pd
 import pytest
-from torch import Tensor
 
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _TEXT_AVAILABLE, _TEXT_TESTING
-from flash.core.utilities.stages import RunningStage
 from flash.text import TextClassificationData
 
 if _TEXT_AVAILABLE:
@@ -119,19 +116,6 @@ def parquet_data(tmpdir, multilabel: bool):
     return path
 
 
-def assert_batch_values_ok(batch: Dict[str, Any], stage: RunningStage, multilabel=False):
-    assert all(key in batch.keys() for key in ["input_ids", "token_type_ids", "attention_mask"])
-    assert isinstance(batch["input_ids"], Tensor)
-    assert isinstance(batch["token_type_ids"], Tensor)
-    assert isinstance(batch["attention_mask"], Tensor)
-
-    if stage in [RunningStage.TRAINING, RunningStage.VALIDATING, RunningStage.TESTING]:
-        if multilabel:
-            assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
-        else:
-            assert batch[DataKeys.TARGET].item() in [0, 1]
-
-
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_from_csv(tmpdir):
@@ -147,16 +131,19 @@ def test_from_csv(tmpdir):
     )
 
     batch = next(iter(dm.train_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.TRAINING)
+    assert batch[DataKeys.TARGET].item() in [0, 1]
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.VALIDATING)
+    assert batch[DataKeys.TARGET].item() in [0, 1]
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.TESTING)
+    assert batch[DataKeys.TARGET].item() in [0, 1]
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.PREDICTING)
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -176,16 +163,19 @@ def test_from_csv_multilabel(tmpdir):
     assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.TRAINING, multilabel=True)
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.VALIDATING, multilabel=True)
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.TESTING, multilabel=True)
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.PREDICTING, multilabel=True)
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -203,16 +193,19 @@ def test_from_json(tmpdir):
     )
 
     batch = next(iter(dm.train_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.TRAINING)
+    assert batch[DataKeys.TARGET].item() in [0, 1]
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.VALIDATING)
+    assert batch[DataKeys.TARGET].item() in [0, 1]
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.TESTING)
+    assert batch[DataKeys.TARGET].item() in [0, 1]
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.PREDICTING)
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -232,16 +225,19 @@ def test_from_json_multilabel(tmpdir):
     assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.TRAINING, multilabel=True)
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.VALIDATING, multilabel=True)
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.TESTING, multilabel=True)
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.PREDICTING, multilabel=True)
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -260,16 +256,19 @@ def test_from_json_with_field(tmpdir):
     )
 
     batch = next(iter(dm.train_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.TRAINING)
+    assert batch[DataKeys.TARGET].item() in [0, 1]
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.VALIDATING)
+    assert batch[DataKeys.TARGET].item() in [0, 1]
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.TESTING)
+    assert batch[DataKeys.TARGET].item() in [0, 1]
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.PREDICTING)
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -290,16 +289,19 @@ def test_from_json_with_field_multilabel(tmpdir):
     assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.TRAINING, multilabel=True)
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.VALIDATING, multilabel=True)
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.TESTING, multilabel=True)
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.PREDICTING, multilabel=True)
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -317,16 +319,19 @@ def test_from_parquet(tmpdir):
     )
 
     batch = next(iter(dm.train_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.TRAINING)
+    assert batch[DataKeys.TARGET].item() in [0, 1]
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.VALIDATING)
+    assert batch[DataKeys.TARGET].item() in [0, 1]
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.TESTING)
+    assert batch[DataKeys.TARGET].item() in [0, 1]
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.PREDICTING)
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -346,16 +351,19 @@ def test_from_parquet_multilabel(tmpdir):
     assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.TRAINING, multilabel=True)
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.VALIDATING, multilabel=True)
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.TESTING, multilabel=True)
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.PREDICTING, multilabel=True)
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -372,16 +380,19 @@ def test_from_data_frame():
     )
 
     batch = next(iter(dm.train_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.TRAINING)
+    assert batch[DataKeys.TARGET].item() in [0, 1]
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.VALIDATING)
+    assert batch[DataKeys.TARGET].item() in [0, 1]
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.TESTING)
+    assert batch[DataKeys.TARGET].item() in [0, 1]
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.PREDICTING)
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -400,16 +411,19 @@ def test_from_data_frame_multilabel():
     assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.TRAINING, multilabel=True)
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.VALIDATING, multilabel=True)
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.TESTING, multilabel=True)
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.PREDICTING, multilabel=True)
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -427,16 +441,19 @@ def test_from_hf_datasets():
     )
 
     batch = next(iter(dm.train_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.TRAINING)
+    assert batch[DataKeys.TARGET].item() in [0, 1]
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.VALIDATING)
+    assert batch[DataKeys.TARGET].item() in [0, 1]
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.TESTING)
+    assert batch[DataKeys.TARGET].item() in [0, 1]
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.PREDICTING)
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -456,16 +473,19 @@ def test_from_hf_datasets_multilabel():
     assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.TRAINING, multilabel=True)
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.VALIDATING, multilabel=True)
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.TESTING, multilabel=True)
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.PREDICTING, multilabel=True)
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -483,16 +503,19 @@ def test_from_lists():
     )
 
     batch = next(iter(dm.train_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.TRAINING)
+    assert batch[DataKeys.TARGET].item() in [0, 1]
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.VALIDATING)
+    assert batch[DataKeys.TARGET].item() in [0, 1]
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.TESTING)
+    assert batch[DataKeys.TARGET].item() in [0, 1]
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.PREDICTING)
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -512,16 +535,19 @@ def test_from_lists_multilabel():
     assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.TRAINING, multilabel=True)
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.VALIDATING, multilabel=True)
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.TESTING, multilabel=True)
+    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
-    assert_batch_values_ok(batch, RunningStage.PREDICTING, multilabel=True)
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
 @pytest.mark.skipif(_TEXT_AVAILABLE, reason="text libraries are installed.")

@@ -142,7 +142,7 @@ Here's an example:
     datamodule = ImageClassificationData.from_folders(
         train_folder="data/hymenoptera_data/train/",
         val_folder="data/hymenoptera_data/val/",
-        transform=ImageClassificationInputTransform,
+        train_transform=ImageClassificationInputTransform,
         transform_kwargs=dict(image_size=(128, 128)),
         batch_size=1,
     )

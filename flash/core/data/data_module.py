@@ -66,8 +66,6 @@ class DataModule(pl.LightningDataModule):
         data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to attach to the
             :class:`~flash.core.data.io.input_transform.InputTransform`. If ``None``, the output from
             :meth:`~flash.core.data.data_module.DataModule.configure_data_fetcher` will be used.
-        transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
-        transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
         val_split: An optional float which gives the relative amount of the training dataset to use for the validation
             dataset.
         batch_size: The batch size to be used by the DataLoader.

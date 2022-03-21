@@ -92,10 +92,14 @@ class ObjectDetectionData(DataModule):
             test_targets: The list of lists of targets to use when testing.
             test_bboxes: The list of lists of bounding boxes to use when testing.
             predict_files: The list of image files to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+                predicting.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
-            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -203,7 +207,7 @@ class ObjectDetectionData(DataModule):
         **data_module_kwargs,
     ) -> "ObjectDetectionData":
 
-        ds_kw = dict(parser=parser)
+        ds_kw = dict(parser=parser, transform_kwargs=transform_kwargs)
 
         return cls(
             input_cls(
@@ -267,8 +271,12 @@ class ObjectDetectionData(DataModule):
             test_folder: The folder containing images to use when testing.
             test_ann_file: The COCO format annotation file to use when testing.
             predict_folder: The folder containing images to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+              predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
-            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -412,8 +420,12 @@ class ObjectDetectionData(DataModule):
             test_folder: The folder containing images to use when testing.
             test_ann_folder: The folder containing VOC format annotation files to use when testing.
             predict_folder: The folder containing images to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+              predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
-            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -570,8 +582,12 @@ class ObjectDetectionData(DataModule):
             test_folder: The folder containing images to use when testing.
             test_ann_file: The VIA format annotation file to use when testing.
             predict_folder: The folder containing images to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+              predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
-            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -718,8 +734,12 @@ class ObjectDetectionData(DataModule):
             predict_dataset: The ``SampleCollection`` to use when predicting.
             label_field: The field in the ``SampleCollection`` objects containing the targets.
             iscrowd: The field in the ``SampleCollection`` objects containing the ``iscrowd`` annotation (if required).
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+              predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
-            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -791,7 +811,7 @@ class ObjectDetectionData(DataModule):
             >>> _ = [os.remove(f"predict_image_{i}.png") for i in range(1, 4)]
         """
 
-        ds_kw = dict()
+        ds_kw = dict(transform_kwargs=transform_kwargs)
 
         return cls(
             input_cls(RunningStage.TRAINING, train_dataset, label_field, iscrowd, **ds_kw),
@@ -807,8 +827,8 @@ class ObjectDetectionData(DataModule):
     def from_folders(
         cls,
         predict_folder: Optional[str] = None,
-        input_cls: Type[Input] = IceVisionInput,
         predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        input_cls: Type[Input] = IceVisionInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "DataModule":
@@ -817,9 +837,7 @@ class ObjectDetectionData(DataModule):
 
         Args:
             predict_folder: The folder containing the predict data.
-            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             predict_transform: The dictionary of transforms to use during predicting which maps
-            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: The keywords arguments for creating the datamodule.
 
         Returns:

@@ -34,11 +34,11 @@ Here's an example:
     from flash.core.integrations.icevision.transforms import IceVisionTransformAdapter
     from flash.image import ObjectDetectionData
 
-    transform = {
+    train_transform = {
         "per_sample_transform": IceVisionTransformAdapter([A.HorizontalFlip(), A.Normalize()]),
     }
 
     datamodule = ObjectDetectionData.from_coco(
         ...,
-        transform=transform,
+        train_transform=train_transform,
     )

@@ -17,6 +17,7 @@ from pandas.core.frame import DataFrame
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.utilities.classification import TargetFormatter
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioTextClassificationInput
@@ -30,7 +31,6 @@ from flash.text.classification.input import (
     TextClassificationListInput,
     TextClassificationParquetInput,
 )
-from flash.text.classification.input_transform import TextClassificationInputTransform
 
 if _TEXT_AVAILABLE:
     from datasets import Dataset
@@ -46,7 +46,7 @@ class TextClassificationData(DataModule):
     """The ``TextClassificationData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
     classmethods for loading data for text classification."""
 
-    input_transform_cls = TextClassificationInputTransform
+    input_transform_cls = InputTransform
 
     @classmethod
     def from_csv(
@@ -59,7 +59,7 @@ class TextClassificationData(DataModule):
         predict_file: Optional[PATH_TYPE] = None,
         target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = TextClassificationCSVInput,
-        transform: Optional[Dict[str, Callable]] = TextClassificationInputTransform,
+        transform: Optional[Dict[str, Callable]] = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TextClassificationData":
@@ -79,10 +79,14 @@ class TextClassificationData(DataModule):
             val_file: The CSV file to use when validating.
             test_file: The CSV file to use when testing.
             predict_file: The CSV file to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+                predicting.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
-            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -181,7 +185,7 @@ class TextClassificationData(DataModule):
         predict_file: Optional[PATH_TYPE] = None,
         target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = TextClassificationJSONInput,
-        transform: Optional[Dict[str, Callable]] = TextClassificationInputTransform,
+        transform: Optional[Dict[str, Callable]] = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         field: Optional[str] = None,
         **data_module_kwargs: Any,
@@ -202,10 +206,14 @@ class TextClassificationData(DataModule):
             val_file: The JSON file to use when validating.
             test_file: The JSON file to use when testing.
             predict_file: The JSON file to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+                predicting.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
-            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             field: To specify the field that holds the data in the JSON file.
             data_module_kwargs: Additional keyword arguments to provide to the
@@ -304,7 +312,7 @@ class TextClassificationData(DataModule):
         predict_file: Optional[PATH_TYPE] = None,
         target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = TextClassificationParquetInput,
-        transform: Optional[Dict[str, Callable]] = TextClassificationInputTransform,
+        transform: Optional[Dict[str, Callable]] = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TextClassificationData":
@@ -324,10 +332,14 @@ class TextClassificationData(DataModule):
             val_file: The PARQUET file to use when validating.
             test_file: The PARQUET file to use when testing.
             predict_file: The PARQUET file to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+                predicting.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
-            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -426,7 +438,7 @@ class TextClassificationData(DataModule):
         predict_hf_dataset: Optional[Dataset] = None,
         target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = TextClassificationInput,
-        transform: Optional[Dict[str, Callable]] = TextClassificationInputTransform,
+        transform: Optional[Dict[str, Callable]] = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TextClassificationData":
@@ -446,10 +458,14 @@ class TextClassificationData(DataModule):
             val_hf_dataset: The ``Dataset`` to use when validating.
             test_hf_dataset: The ``Dataset`` to use when testing.
             predict_hf_dataset: The ``Dataset`` to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+                predicting.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
-            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -529,7 +545,7 @@ class TextClassificationData(DataModule):
         predict_data_frame: Optional[DataFrame] = None,
         target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = TextClassificationDataFrameInput,
-        transform: Optional[Dict[str, Callable]] = TextClassificationInputTransform,
+        transform: Optional[Dict[str, Callable]] = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TextClassificationData":
@@ -550,11 +566,14 @@ class TextClassificationData(DataModule):
             val_data_frame: The ``DataFrame`` to use when validating.
             test_data_frame: The ``DataFrame`` to use when testing.
             predict_data_frame: The ``DataFrame`` to use when predicting.
-
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+                predicting.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
-            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -635,7 +654,7 @@ class TextClassificationData(DataModule):
         predict_data: Optional[List[str]] = None,
         target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = TextClassificationListInput,
-        transform: Optional[Dict[str, Callable]] = TextClassificationInputTransform,
+        transform: Optional[Dict[str, Callable]] = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TextClassificationData":
@@ -655,11 +674,14 @@ class TextClassificationData(DataModule):
             test_data: The list of text snippets to use when testing.
             test_targets: The list of targets to use when testing.
             predict_data: The list of text snippets to use when predicting.
-
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+                predicting.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
-            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -722,7 +744,7 @@ class TextClassificationData(DataModule):
         test_data_folder: str = None,
         predict_data_folder: str = None,
         input_cls: Type[Input] = LabelStudioTextClassificationInput,
-        transform: Optional[Dict[str, Callable]] = TextClassificationInputTransform,
+        transform: Optional[Dict[str, Callable]] = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         val_split: Optional[float] = None,
         multi_label: Optional[bool] = False,
@@ -736,18 +758,25 @@ class TextClassificationData(DataModule):
 
         Args:
             export_json: path to label studio export file
-            train_export_json: path to label studio export file for train set, overrides export_json if specified
+            train_export_json: path to label studio export file for train set,
+            overrides export_json if specified
             val_export_json: path to label studio export file for validation
             test_export_json: path to label studio export file for test
             predict_export_json: path to label studio export file for predict
             data_folder: path to label studio data folder
-            train_data_folder: path to label studio data folder for train data set, overrides data_folder if specified
+            train_data_folder: path to label studio data folder for train data set,
+            overrides data_folder if specified
             val_data_folder: path to label studio data folder for validation data
             test_data_folder: path to label studio data folder for test data
             predict_data_folder: path to label studio data folder for predict data
-            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
-            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
-            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            train_transform: The dictionary of transforms to use during training which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            val_transform: The dictionary of transforms to use during validation which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            test_transform: The dictionary of transforms to use during testing which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            predict_transform: The dictionary of transforms to use during predicting which maps
+                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             multi_label: Whether the labels are multi encoded.
             data_module_kwargs: Additional keyword arguments to use when constructing the datamodule.

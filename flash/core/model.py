@@ -438,7 +438,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             batch = torch.stack(batch)
         return self(batch)
 
-    def modules_to_freeze(self) -> Optional[nn.Module]:
+    def modules_to_freeze(self) -> Optional[Union[nn.Module]]:
         """By default, we try to get the ``backbone`` attribute from the task and return it or ``None`` if not
         present.
 

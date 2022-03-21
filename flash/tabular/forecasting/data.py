@@ -18,11 +18,10 @@ from torch.utils.data.sampler import Sampler
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input
-from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE
+from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
 from flash.core.utilities.imports import _PANDAS_AVAILABLE, _TABULAR_TESTING
 from flash.core.utilities.stages import RunningStage
 from flash.tabular.forecasting.input import TabularForecastingDataFrameInput
-from flash.tabular.forecasting.input_transform import TabularForecastingInputCollateTransform
 
 if _PANDAS_AVAILABLE:
     from pandas.core.frame import DataFrame
@@ -39,7 +38,7 @@ class TabularForecastingData(DataModule):
     """The ``TabularForecastingData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
     classmethods for loading data for tabular forecasting."""
 
-    input_transform_cls = TabularForecastingInputCollateTransform
+    input_transform_cls = InputTransform
 
     @property
     def parameters(self) -> Optional[Dict[str, Any]]:
@@ -59,7 +58,7 @@ class TabularForecastingData(DataModule):
         test_data_frame: Optional[DataFrame] = None,
         predict_data_frame: Optional[DataFrame] = None,
         input_cls: Type[Input] = TabularForecastingDataFrameInput,
-        transform: INPUT_TRANSFORM_TYPE = TabularForecastingInputCollateTransform,
+        transform: INPUT_TRANSFORM_TYPE = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         data_fetcher: Optional[BaseDataFetcher] = None,
         val_split: Optional[float] = None,
@@ -95,8 +94,12 @@ class TabularForecastingData(DataModule):
             val_data_frame: The pandas DataFrame to use when validating.
             test_data_frame: The pandas DataFrame to use when testing.
             predict_data_frame: The pandas DataFrame to use when predicting.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
+            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
+            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
+            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
+                predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
-            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             input_kwargs: Additional keyword arguments to be used when creating the TimeSeriesDataset.
 
