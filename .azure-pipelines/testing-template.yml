@@ -12,7 +12,7 @@ jobs:
       # this need to have installed docker in the base image...
       container:
         # base ML image: mcr.microsoft.com/azureml/openmpi3.1.2-cuda10.2-cudnn8-ubuntu18.04
-        image: "pytorchlightning/pytorch_lightning:base-cuda-py3.9-torch1.8"
+        image: "pytorchlightning/pytorch_lightning:base-cuda-py3.9-torch1.9"
         # image: "pytorch/pytorch:1.8.1-cuda11.0-cudnn8-runtime"
         options: "-it --rm --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all --shm-size=32g"
 
