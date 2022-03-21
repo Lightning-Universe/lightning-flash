@@ -259,7 +259,7 @@ class MixUpInputTransform(InputTransform):
 
 datamodule = ImageClassificationData.from_folders(
     train_folder="data/train",
-    transform=MixUpInputTransform,
+    train_transform=MixUpInputTransform,
     batch_size=2,
 )
 

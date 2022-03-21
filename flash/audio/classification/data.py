@@ -401,7 +401,7 @@ class AudioClassificationData(DataModule):
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
-            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
+            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
