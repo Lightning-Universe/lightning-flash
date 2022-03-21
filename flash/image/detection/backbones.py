@@ -110,8 +110,9 @@ if _ICEVISION_AVAILABLE:
 
         def _icevision_effdet_model_adapter(model_type):
             adapter = icevision_model_adapter(model_type)
-            adapter._original_validation_step = adapter.validation_step
-            adapter.validation_step = _icevision_effdet_validation_step
+            if not hasattr(adapter, "_original_validation_step"):
+                adapter._original_validation_step = adapter.validation_step
+                adapter.validation_step = _icevision_effdet_validation_step
             return adapter
 
         model_type = icevision_models.ross.efficientdet

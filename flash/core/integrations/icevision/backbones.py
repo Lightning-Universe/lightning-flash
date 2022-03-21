@@ -30,8 +30,9 @@ def _log_with_prog_bar_override(self, name, value, **kwargs):
 
 def icevision_model_adapter(model_type):
     adapter = model_type.lightning.ModelAdapter
-    adapter._original_log = adapter.log
-    adapter.log = _log_with_prog_bar_override
+    if not hasattr(adapter, "_original_log"):
+        adapter._original_log = adapter.log
+        adapter.log = _log_with_prog_bar_override
     return adapter
 
 
