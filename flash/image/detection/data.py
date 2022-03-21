@@ -207,7 +207,7 @@ class ObjectDetectionData(DataModule):
         **data_module_kwargs,
     ) -> "ObjectDetectionData":
 
-        ds_kw = dict(parser=parser, transform_kwargs=transform_kwargs)
+        ds_kw = dict(parser=parser)
 
         return cls(
             input_cls(
@@ -811,7 +811,7 @@ class ObjectDetectionData(DataModule):
             >>> _ = [os.remove(f"predict_image_{i}.png") for i in range(1, 4)]
         """
 
-        ds_kw = dict(transform_kwargs=transform_kwargs)
+        ds_kw = dict()
 
         return cls(
             input_cls(RunningStage.TRAINING, train_dataset, label_field, iscrowd, **ds_kw),

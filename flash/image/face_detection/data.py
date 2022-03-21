@@ -40,7 +40,7 @@ class FaceDetectionData(DataModule):
         **data_module_kwargs,
     ) -> "FaceDetectionData":
 
-        ds_kw = dict(transform_kwargs=transform_kwargs)
+        ds_kw = dict()
 
         return cls(
             input_cls(RunningStage.TRAINING, train_dataset, **ds_kw),

@@ -869,7 +869,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         if input_cls is None:
             raise NotImplementedError("The `input_cls` must be provided to enable serving.")
 
-        serve_input = input_cls(transform=transform, transform_kwargs=transform_kwargs)
+        serve_input = input_cls()
 
         output = output or Output()
         if isinstance(output, str):
@@ -878,7 +878,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         if sanity_check:
             self.run_serve_sanity_check(serve_input, output)
 
-        comp = build_flash_serve_model_component(self, serve_input, output)
+        comp = build_flash_serve_model_component(self, serve_input, output, transform, transform_kwargs)
         composition = Composition(predict=comp, TESTING=flash._IS_TESTING)
         composition.serve(host=host, port=port)
         return composition

@@ -310,7 +310,7 @@ def test_from_folders_only_train(tmpdir):
     _rand_image().save(train_dir / "b" / "1.png")
     _rand_image().save(train_dir / "b" / "2.png")
 
-    spectrograms_data = AudioClassificationData.from_folders(train_dir, transform=None, batch_size=1)
+    spectrograms_data = AudioClassificationData.from_folders(train_dir, batch_size=1)
 
     data = next(iter(spectrograms_data.train_dataloader()))
     imgs, labels = data["input"], data["target"]

@@ -24,7 +24,6 @@ from torch.utils.data import Dataset
 from flash.core.data.properties import Properties
 from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.utilities.stages import RunningStage
-from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 
 if sys.version_info < (3, 7):
     from typing import GenericMeta
@@ -291,17 +290,11 @@ class IterableInput(InputBase, IterableDataset, metaclass=_IterableInputMeta):
 
 
 class ServeInput(Input):
-    def __init__(
-        self,
-        transform: INPUT_TRANSFORM_TYPE = None,
-    ) -> None:
+    def __init__(self) -> None:
         if hasattr(self, "serve_load_data"):
             raise MisconfigurationException("`serve_load_data` shouldn't be implemented.")
 
-        super().__init__(
-            RunningStage.SERVING,
-            transform=transform,
-        )
+        super().__init__(RunningStage.SERVING)
 
     def serve_load_sample(self, sample: Any) -> List[Any]:
         raise NotImplementedError
