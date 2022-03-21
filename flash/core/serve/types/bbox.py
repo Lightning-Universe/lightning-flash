@@ -20,12 +20,11 @@ class BBox(BaseType):
 
     def __post_init__(self):
         self._valid_size = torch.Size([4])
-        self._invalid_types = {torch.bool, torch.complex32, torch.complex64, torch.complex128}
 
     def _validate(self, elem):
         if elem.shape != self._valid_size:
             raise ValueError("Each box must consist of (only) four elements each " "corresponding to x1, x2, y1 and y2")
-        if elem.dtype in self._invalid_types:
+        if elem.dtype == torch.bool or torch.is_complex(elem):
             raise TypeError(f"Found unsupported datatype for " f"bounding boxes: {elem.dtype}")
 
     def deserialize(self, box: Tuple[float, ...]) -> torch.Tensor:
