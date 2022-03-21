@@ -162,13 +162,7 @@ class InputBase(Properties, metaclass=_InputMeta):
         **kwargs: Any additional keyword arguments to pass to the ``load_data`` hook.
     """
 
-    def __init__(
-        self,
-        running_stage: RunningStage,
-        *args: Any,
-        # transform: INPUT_TRANSFORM_TYPE = None,
-        **kwargs: Any,
-    ) -> None:
+    def __init__(self, running_stage: RunningStage, *args: Any, **kwargs: Any) -> None:
 
         super().__init__(running_stage=running_stage)
 

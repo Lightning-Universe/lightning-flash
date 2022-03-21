@@ -22,6 +22,7 @@ from torch.utils.data import Dataset
 
 from flash.__main__ import main
 from flash.core.data.io.input import DataKeys
+from flash.core.integrations.icevision.transforms import IceVisionInputTransform
 from flash.core.trainer import Trainer
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE
 from flash.image import ObjectDetector
@@ -94,7 +95,7 @@ def test_training(tmpdir, head):
     model = ObjectDetector(num_classes=2, head=head, pretrained=False)
     ds = DummyDetectionDataset((128, 128, 3), 1, 2, 10)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    dl = model.process_train_dataset(ds, trainer, 2, 0, False, None)
+    dl = model.process_train_dataset(ds, trainer, IceVisionInputTransform(), 2, 0, False, None)
     trainer.fit(model, dl)
 
 
@@ -143,9 +144,9 @@ def test_predict(tmpdir, head):
     model = ObjectDetector(num_classes=2, head=head, pretrained=False)
     ds = DummyDetectionDataset((128, 128, 3), 1, 2, 10)
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    dl = model.process_train_dataset(ds, trainer, 2, 0, False, None)
+    dl = model.process_train_dataset(ds, trainer, IceVisionInputTransform(), 2, 0, False, None)
     trainer.fit(model, dl)
-    dl = model.process_predict_dataset(ds, batch_size=2)
+    dl = model.process_predict_dataset(ds, input_transform=IceVisionInputTransform(), batch_size=2)
     predictions = trainer.predict(model, dl, output="preds")
     assert len(predictions[0][0]["bboxes"]) > 0
     model.predict_kwargs = {"detection_threshold": 2}

@@ -20,6 +20,7 @@ from torch.utils.data import DataLoader, Sampler
 
 from flash.core.classification import ClassificationTask
 from flash.core.data.io.input import DataKeys, Input
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE, _TM_GREATER_EQUAL_0_7_0
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
@@ -143,6 +144,7 @@ class PointCloudSegmentation(ClassificationTask):
     def _process_dataset(
         self,
         dataset: Input,
+        input_transform: InputTransform,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -160,6 +162,11 @@ class PointCloudSegmentation(ClassificationTask):
                 transform=self.backbone.transform,
                 use_cache=False,
             )
+
+        if self.input_transform is None:
+            self.input_transform = input_transform
+        if self.collate_fn is not None:
+            self.input_transform.inject_collate_fn(self.collate_fn)
 
         return DataLoader(
             dataset,

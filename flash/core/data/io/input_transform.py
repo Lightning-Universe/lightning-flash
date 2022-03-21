@@ -98,6 +98,7 @@ class InputTransform(Properties):
         self._populate_transforms_for_stage(RunningStage.VALIDATING)
         self._populate_transforms_for_stage(RunningStage.TESTING)
         self._populate_transforms_for_stage(RunningStage.PREDICTING)
+        self._populate_transforms_for_stage(RunningStage.SERVING)
 
         super().__init__()
 
@@ -879,6 +880,13 @@ class InputTransform(Properties):
     #############
     # UTILITIES #
     #############
+
+    def inject_collate_fn(self, collate_fn: Callable):
+        self._transform[RunningStage.TRAINING].transforms[InputTransformPlacement.COLLATE] = collate_fn
+        self._transform[RunningStage.VALIDATING].transforms[InputTransformPlacement.COLLATE] = collate_fn
+        self._transform[RunningStage.TESTING].transforms[InputTransformPlacement.COLLATE] = collate_fn
+        self._transform[RunningStage.PREDICTING].transforms[InputTransformPlacement.COLLATE] = collate_fn
+        self._transform[RunningStage.SERVING].transforms[InputTransformPlacement.COLLATE] = collate_fn
 
     def _populate_transforms_for_stage(self, running_stage: RunningStage):
         transform, collate_in_worker = self.__check_transforms(

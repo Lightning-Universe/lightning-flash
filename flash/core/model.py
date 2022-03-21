@@ -104,16 +104,17 @@ class DatasetProcessor:
 
     @torch.jit.unused
     @property
-    def input_transform(self) -> Optional[INPUT_TRANSFORM_TYPE]:
+    def input_transform(self) -> Optional[InputTransform]:
         return self._input_transform
 
     @input_transform.setter
-    def input_transform(self, input_transform: INPUT_TRANSFORM_TYPE) -> None:
+    def input_transform(self, input_transform: InputTransform) -> None:
         self._input_transform = input_transform
 
     def _process_dataset(
         self,
         dataset: InputBase,
+        input_transform: InputTransform,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -123,6 +124,16 @@ class DatasetProcessor:
         sampler: Optional[Sampler] = None,
         persistent_workers: bool = False,
     ) -> DataLoader:
+
+        # Assign the InputTransform
+        if self.input_transform is None:
+            self.input_transform = input_transform
+
+        # Now inject the `self.collate_fn` so that it doesn't override `InputTransform._collate` but is called through
+        # the `InputTransform._collate` method.
+        if self.collate_fn is not None:
+            self.input_transform.inject_collate_fn(self.collate_fn)
+
         return DataLoader(
             dataset,
             batch_size=batch_size,
@@ -131,7 +142,7 @@ class DatasetProcessor:
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
-            collate_fn=self.collate_fn if self.collate_fn is not None else collate_fn,
+            collate_fn=collate_fn,
             persistent_workers=persistent_workers,
         )
 
@@ -139,6 +150,7 @@ class DatasetProcessor:
         self,
         dataset: InputBase,
         trainer: "flash.Trainer",
+        input_transform: InputTransform,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -150,10 +162,11 @@ class DatasetProcessor:
     ) -> DataLoader:
         return self._process_dataset(
             dataset,
+            input_transform=input_transform,
             batch_size=batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
-            collate_fn=self.collate_fn if self.collate_fn is not None else collate_fn,
+            collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
@@ -164,6 +177,7 @@ class DatasetProcessor:
         self,
         dataset: InputBase,
         trainer: "flash.Trainer",
+        input_transform: InputTransform,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -175,10 +189,11 @@ class DatasetProcessor:
     ) -> DataLoader:
         return self._process_dataset(
             dataset,
+            input_transform=input_transform,
             batch_size=batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
-            collate_fn=self.collate_fn if self.collate_fn is not None else collate_fn,
+            collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
@@ -189,6 +204,7 @@ class DatasetProcessor:
         self,
         dataset: InputBase,
         trainer: "flash.Trainer",
+        input_transform: InputTransform,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -200,10 +216,11 @@ class DatasetProcessor:
     ) -> DataLoader:
         return self._process_dataset(
             dataset,
+            input_transform=input_transform,
             batch_size=batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
-            collate_fn=self.collate_fn if self.collate_fn is not None else collate_fn,
+            collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
@@ -213,6 +230,7 @@ class DatasetProcessor:
     def process_predict_dataset(
         self,
         dataset: InputBase,
+        input_transform: InputTransform,
         batch_size: int = 1,
         num_workers: int = 0,
         pin_memory: bool = False,
@@ -224,10 +242,11 @@ class DatasetProcessor:
     ) -> DataLoader:
         return self._process_dataset(
             dataset,
+            input_transform=input_transform,
             batch_size=batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
-            collate_fn=self.collate_fn if self.collate_fn is not None else collate_fn,
+            collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
@@ -438,7 +457,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             batch = torch.stack(batch)
         return self(batch)
 
-    def modules_to_freeze(self) -> Optional[Union[nn.Module]]:
+    def modules_to_freeze(self) -> Optional[nn.Module]:
         """By default, we try to get the ``backbone`` attribute from the task and return it or ``None`` if not
         present.
 
