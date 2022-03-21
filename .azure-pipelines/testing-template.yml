@@ -37,7 +37,7 @@ jobs:
       - bash: |
           # python -m pip install "pip==20.1"
           pip uninstall -y torchtext
-          if [ "${{config}}" == "image_extras" ]; then pip install '.[image]' icevision effdet icedata; else pip install '.[${{config}}]'; fi
+          if [ "${{config}}" == "image,image_extras" ]; then pip install '.[image]' icevision effdet icedata; else pip install '.[${{config}}]'; fi
           pip install '.[test]' --upgrade-strategy only-if-needed
           pip list
         displayName: 'Install dependencies'
@@ -47,10 +47,11 @@ jobs:
           pip uninstall -y opencv-python-headless
           pip install opencv-python-headless==4.5.5.64
         displayName: 'Install OpenCV dependencies'
-        condition: eq('${{ config }}', 'image_extras')
+        condition: eq('${{ config }}', 'image,image_extras')
 
       - bash: |
           python -c "import torch; print(f'found GPUs: {torch.cuda.device_count()}')"
+          export FLASH_TEST_TOPIC="{{ config }}"
           python -m coverage run --source flash -m pytest tests/examples/test_scripts.py -v --junitxml=$(Build.StagingDirectory)/test-results.xml --durations=30
         env:
           CUDA_VISIBLE_DEVICES: ${{gids}}
