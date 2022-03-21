@@ -36,7 +36,7 @@ jobs:
 
       - bash: |
           # python -m pip install "pip==20.1"
-          if [ "${{config}}" == "image_extras" ]; then pip install . icevision effdet; else pip install '.[${{config}}]' torchtext --upgrade; fi
+          if [ "${{config}}" == "image_extras" ]; then pip install '.[image]' icevision effdet; else pip install '.[${{config}}]' torchtext --upgrade; fi
           pip install '.[test]' --upgrade-strategy only-if-needed
           pip list
         displayName: 'Install dependencies'
