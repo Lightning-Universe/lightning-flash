@@ -35,16 +35,16 @@ jobs:
         displayName: 'Sanity check'
 
       - bash: |
-          sudo apt-get install libgl1
-        displayName: 'Install OpenCV dependencies'
-        condition: eq('${{ config }}', 'image_extras')
-
-      - bash: |
           # python -m pip install "pip==20.1"
           if [ "${{config}}" == "image_extras" ]; then pip install '.[image]' icevision effdet; else pip install '.[${{config}}]' torchtext --upgrade; fi
           pip install '.[test]' --upgrade-strategy only-if-needed
           pip list
         displayName: 'Install dependencies'
+
+      - bash: |
+          pip install opencv-python-headless
+        displayName: 'Install OpenCV dependencies'
+        condition: eq('${{ config }}', 'image_extras')
 
       - bash: |
           python -c "import torch; print(f'found GPUs: {torch.cuda.device_count()}')"
