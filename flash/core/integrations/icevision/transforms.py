@@ -99,13 +99,12 @@ def to_icevision_record(sample: Dict[str, Any]):
             if masks is not None:
                 component = InstanceMasksRecordComponent()
 
-                if masks is not None and len(masks) > 0:
-                    if isinstance(masks[0], Mask):
-                        component.set_masks(masks)
-                    else:
-                        mask_array = MaskArray(np.stack(masks, axis=0))
-                        component.set_mask_array(mask_array)
-                        component.set_masks(_split_mask_array(mask_array))
+                if len(masks) > 0 and isinstance(masks[0], Mask):
+                    component.set_masks(masks)
+                else:
+                    mask_array = MaskArray(np.stack(masks, axis=0)) if len(masks) > 0 else MaskArray(np.array([]))
+                    component.set_mask_array(mask_array)
+                    component.set_masks(_split_mask_array(mask_array))
 
                 record.add_component(component)
         else:
