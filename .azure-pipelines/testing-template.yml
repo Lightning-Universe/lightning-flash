@@ -43,7 +43,7 @@ jobs:
 
       - bash: |
           pip uninstall -y opencv-python
-          pip install opencv-python-headless>=4.1.1,<5
+          pip install opencv-python-headless==4.5.5.64
         displayName: 'Install OpenCV dependencies'
         condition: eq('${{ config }}', 'image_extras')
 
