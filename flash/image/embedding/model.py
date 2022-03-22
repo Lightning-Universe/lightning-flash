@@ -12,13 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import warnings
-from functools import partial
 from typing import Any, Dict, List, Optional
 
 from flash.core.adapter import AdapterTask
-from flash.core.data.io.input import DataKeys
-from flash.core.data.io.input_transform import LambdaInputTransform
-from flash.core.data.transforms import ApplyToKeys
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _VISSL_AVAILABLE, requires
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE
@@ -92,10 +88,10 @@ class ImageEmbedder(AdapterTask):
         if pretraining_transform_kwargs is None:
             pretraining_transform_kwargs = {}
 
-        backbone, _ = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
+        backbone, num_features = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
 
         metadata = self.training_strategies.get(training_strategy, with_metadata=True)
-        loss_fn, head, hooks = metadata["fn"](head=head, **training_strategy_kwargs)
+        loss_fn, head, hooks = metadata["fn"](head=head, num_features=num_features, **training_strategy_kwargs)
 
         adapter = metadata["metadata"]["adapter"].from_task(
             self,
@@ -112,13 +108,7 @@ class ImageEmbedder(AdapterTask):
             learning_rate=learning_rate,
         )
 
-        input_transform, self.transform_collate_fn = self.transforms.get(pretraining_transform)(
-            **pretraining_transform_kwargs
-        )
-        output = ApplyToKeys(DataKeys.INPUT, input_transform)
-        self.input_transform = partial(
-            LambdaInputTransform, transform_collate_fn=self.transform_collate_fn, transform=output
-        )
+        self.input_transform = self.transforms.get(pretraining_transform)(**pretraining_transform_kwargs)
 
         warnings.warn(
             "Warning: VISSL ImageEmbedder overrides any user provided transforms"

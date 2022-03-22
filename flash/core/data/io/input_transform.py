@@ -1009,13 +1009,9 @@ class InputTransform(Properties):
 class LambdaInputTransform(InputTransform):
 
     transform: Callable = InputTransform._identity
-    transform_collate_fn: Callable = default_collate
 
     def per_sample_transform(self) -> Callable:
         return self.transform
-
-    def predict_collate(self) -> Callable:
-        return self.transform_collate_fn
 
 
 def _sanitize_registry_transform(
@@ -1055,7 +1051,7 @@ def create_transform(
     if inspect.isclass(transform) and issubclass(transform, InputTransform):
         return transform(running_stage=running_stage, **transform_kwargs)
 
-    if isinstance(transform, partial) and transform.func.__name__ == "LambdaInputTransform":
+    if isinstance(transform, partial):
         return transform(running_stage=running_stage, **transform_kwargs)
 
     if isinstance(transform, Callable):

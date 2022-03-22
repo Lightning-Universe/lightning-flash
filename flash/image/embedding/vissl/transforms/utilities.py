@@ -46,9 +46,7 @@ def multicrop_collate_fn(samples):
     for idx, ele in enumerate(inputs):
         inputs[idx] = torch.stack(ele)
 
-    # TODO @krshrimali: This can be slow
-    for input in inputs:
-        result[DataKeys.INPUT] = torch.as_tensor(input, device=input.device, dtype=input.dtype)
+    result[DataKeys.INPUT] = inputs
 
     return result
 
