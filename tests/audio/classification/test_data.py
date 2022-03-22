@@ -314,7 +314,7 @@ def test_from_folders_only_train(tmpdir):
 
     data = next(iter(spectrograms_data.train_dataloader()))
     imgs, labels = data["input"], data["target"]
-    assert imgs.shape == (1, 196, 196, 3)
+    assert imgs.shape == (1, 3, 128, 128)
     assert labels.shape == (1,)
 
 

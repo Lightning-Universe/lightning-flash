@@ -826,13 +826,15 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             return [BenchmarkConvergenceCI()]
 
     @requires("serve")
-    def run_serve_sanity_check(self, serve_input: ServeInput, output: Output):
+    def run_serve_sanity_check(
+        self, serve_input: ServeInput, transform: INPUT_TRANSFORM_TYPE, transform_kwargs: Optional[Dict], output: Output
+    ):
         from fastapi.testclient import TestClient
 
         from flash.core.serve.flash_components import build_flash_serve_model_component
 
         print("Running serve sanity check")
-        comp = build_flash_serve_model_component(self, serve_input, output)
+        comp = build_flash_serve_model_component(self, serve_input, output, transform, transform_kwargs)
         composition = Composition(predict=comp, TESTING=True, DEBUG=True)
         app = composition.serve(host="0.0.0.0", port=8000)
 
@@ -876,7 +878,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             output = self.outputs.get(output).from_task(self)
 
         if sanity_check:
-            self.run_serve_sanity_check(serve_input, output)
+            self.run_serve_sanity_check(serve_input, transform, transform_kwargs, output)
 
         comp = build_flash_serve_model_component(self, serve_input, output, transform, transform_kwargs)
         composition = Composition(predict=comp, TESTING=flash._IS_TESTING)

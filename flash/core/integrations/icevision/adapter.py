@@ -122,7 +122,13 @@ class IceVisionAdapter(Adapter):
         # Assign the InputTransform
         if self.input_transform is None:
             self.input_transform = input_transform
+
+        # Inject the actual `collate function` into the InputTransform object.
         self.input_transform.inject_collate_fn(functools.partial(self._wrap_collate_fn, data_loader.collate_fn))
+
+        # Replace the collate_fn with _InputTransformProcessor object so that the complete
+        # InputTransform sequence is called.
+        data_loader.collate_fn = collate_fn
         return data_loader
 
     def process_val_dataset(
@@ -153,6 +159,7 @@ class IceVisionAdapter(Adapter):
         if self.input_transform is None:
             self.input_transform = input_transform
         self.input_transform.inject_collate_fn(functools.partial(self._wrap_collate_fn, data_loader.collate_fn))
+        data_loader.collate_fn = collate_fn
         return data_loader
 
     def process_test_dataset(
@@ -183,6 +190,7 @@ class IceVisionAdapter(Adapter):
         if self.input_transform is None:
             self.input_transform = input_transform
         self.input_transform.inject_collate_fn(functools.partial(self._wrap_collate_fn, data_loader.collate_fn))
+        data_loader.collate_fn = collate_fn
         return data_loader
 
     def process_predict_dataset(
@@ -212,6 +220,7 @@ class IceVisionAdapter(Adapter):
         if self.input_transform is None:
             self.input_transform = input_transform
         self.input_transform.inject_collate_fn(functools.partial(self._wrap_collate_fn, data_loader.collate_fn))
+        data_loader.collate_fn = collate_fn
         return data_loader
 
     def training_step(self, batch, batch_idx) -> Any:
