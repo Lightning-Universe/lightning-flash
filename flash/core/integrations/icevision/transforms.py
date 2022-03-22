@@ -102,14 +102,15 @@ def to_icevision_record(sample: Dict[str, Any]):
                 if len(masks) > 0 and isinstance(masks[0], Mask):
                     component.set_masks(masks)
                 else:
-                    if len(masks) > 0:
-                        data = np.stack(masks, axis=0)
-                    else:
+                    # TODO: This treats invalid examples as negative examples
+                    if len(masks) == 0 or not (
+                        len(masks) == len(record.detection.bboxes) == len(record.detection.label_ids)
+                    ):
                         data = np.zeros((0, record.height, record.width), np.uint8)
-                        if hasattr(record.detection, "label_ids"):
-                            labels_component.label_ids = []
-                        if hasattr(record.detection, "bboxes"):
-                            bboxes_component.bboxes = []
+                        labels_component.label_ids = []
+                        bboxes_component.bboxes = []
+                    else:
+                        data = np.stack(masks, axis=0)
                     mask_array = MaskArray(data)
                     component.set_mask_array(mask_array)
                     component.set_masks(_split_mask_array(mask_array))
