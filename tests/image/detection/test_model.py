@@ -21,10 +21,13 @@ import torch
 from torch.utils.data import Dataset
 
 from flash.__main__ import main
+from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.io.input import DataKeys
+from flash.core.data.io.input_transform import create_worker_input_transform_processor
 from flash.core.integrations.icevision.transforms import IceVisionInputTransform
 from flash.core.trainer import Trainer
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE
+from flash.core.utilities.stages import RunningStage
 from flash.image import ObjectDetector
 
 
@@ -76,7 +79,16 @@ def test_init():
 
     batch_size = 2
     ds = DummyDetectionDataset((128, 128, 3), 1, 2, 10)
-    dl = model.process_predict_dataset(ds, batch_size=batch_size)
+    input_transform = IceVisionInputTransform()
+    predict_collate_fn = create_worker_input_transform_processor(
+        RunningStage.PREDICTING, input_transform, [BaseDataFetcher()]
+    )
+    dl = model.process_predict_dataset(
+        dataset=ds,
+        input_transform=input_transform,
+        batch_size=batch_size,
+        collate_fn=predict_collate_fn,
+    )
     data = next(iter(dl))
 
     out = model.forward(data[DataKeys.INPUT])
@@ -143,10 +155,32 @@ def test_cli():
 def test_predict(tmpdir, head):
     model = ObjectDetector(num_classes=2, head=head, pretrained=False)
     ds = DummyDetectionDataset((128, 128, 3), 1, 2, 10)
+
+    input_transform = IceVisionInputTransform()
+    data_fetcher = BaseDataFetcher()
+    train_collate_fn = create_worker_input_transform_processor(RunningStage.TRAINING, input_transform, [data_fetcher])
+    predict_collate_fn = create_worker_input_transform_processor(
+        RunningStage.PREDICTING, input_transform, [data_fetcher]
+    )
+
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    dl = model.process_train_dataset(ds, trainer, IceVisionInputTransform(), 2, 0, False, None)
+    dl = model.process_train_dataset(
+        dataset=ds,
+        trainer=trainer,
+        input_transform=input_transform,
+        batch_size=2,
+        num_workers=0,
+        pin_memory=False,
+        collate_fn=train_collate_fn,
+    )
     trainer.fit(model, dl)
-    dl = model.process_predict_dataset(ds, input_transform=IceVisionInputTransform(), batch_size=2)
+
+    dl = model.process_predict_dataset(
+        dataset=ds,
+        input_transform=input_transform,
+        batch_size=2,
+        collate_fn=predict_collate_fn,
+    )
     predictions = trainer.predict(model, dl, output="preds")
     assert len(predictions[0][0]["bboxes"]) > 0
     model.predict_kwargs = {"detection_threshold": 2}
