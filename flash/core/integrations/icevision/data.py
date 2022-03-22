@@ -79,23 +79,3 @@ class IceVisionInput(Input):
         record.set_img(image)
         record.add_component(ClassMapRecordComponent(task=tasks.detection))
         return from_icevision_record(record)
-
-
-class IceVisionInstanceSegmentationInput(IceVisionInput):
-    def load_data(
-        self,
-        root: str,
-        ann_file: Optional[str] = None,
-        parser: Optional[Type["Parser"]] = None,
-        parser_kwargs: Optional[Dict[str, Any]] = None,
-    ) -> List[Dict[str, Any]]:
-        records = super().load_data(root, ann_file=ann_file, parser=parser, parser_kwargs=parser_kwargs)
-        return list(
-            filter(
-                lambda record: not (
-                    hasattr(record[DataKeys.INPUT].detection, "masks")
-                    and len(record[DataKeys.INPUT].detection.masks) == 0
-                ),
-                records,
-            )
-        )
