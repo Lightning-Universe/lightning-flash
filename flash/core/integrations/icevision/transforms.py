@@ -89,9 +89,9 @@ def to_icevision_record(sample: Dict[str, Any]):
                 BBox.from_xywh(bbox["xmin"], bbox["ymin"], bbox["width"], bbox["height"])
                 for bbox in sample[DataKeys.TARGET]["bboxes"]
             ]
-            component = BBoxesRecordComponent()
-            component.set_bboxes(bboxes)
-            record.add_component(component)
+            bboxes_component = BBoxesRecordComponent()
+            bboxes_component.set_bboxes(bboxes)
+            record.add_component(bboxes_component)
 
         if _ICEVISION_GREATER_EQUAL_0_11_0:
             masks = sample[DataKeys.TARGET].get("masks", None)
@@ -99,14 +99,20 @@ def to_icevision_record(sample: Dict[str, Any]):
             if masks is not None:
                 component = InstanceMasksRecordComponent()
 
-                if len(masks) > 0:
-                    if isinstance(masks[0], Mask):
-                        component.set_masks(masks)
-                    else:
+                if len(masks) > 0 and isinstance(masks[0], Mask):
+                    component.set_masks(masks)
+                else:
+                    if len(masks) > 0:
                         data = np.stack(masks, axis=0)
-                        mask_array = MaskArray(data)
-                        component.set_mask_array(mask_array)
-                        component.set_masks(_split_mask_array(mask_array))
+                    else:
+                        data = np.zeros((0, record.height, record.width), np.uint8)
+                        if hasattr(record.detection, "label_ids"):
+                            labels_component.label_ids = []
+                        if hasattr(record.detection, "bboxes"):
+                            bboxes_component.bboxes = []
+                    mask_array = MaskArray(data)
+                    component.set_mask_array(mask_array)
+                    component.set_masks(_split_mask_array(mask_array))
 
                 record.add_component(component)
         else:
