@@ -22,7 +22,7 @@ download_data("https://github.com/zhiqwang/yolov5-rt-stack/releases/download/v0.
 datamodule = ObjectDetectionData.from_coco(
     train_folder="data/coco128/images/train2017/",
     train_ann_file="data/coco128/annotations/instances_train2017.json",
-    # val_split=0.1,
+    val_split=0.1,
     transform_kwargs={"image_size": 512},
     batch_size=4,
 )
