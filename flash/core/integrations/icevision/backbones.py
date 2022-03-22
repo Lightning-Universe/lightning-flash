@@ -44,8 +44,10 @@ def load_icevision(adapter, model_type, backbone, num_classes, **kwargs):
     for i, param in enumerate(params):
         backbone.register_parameter(f"backbone_{i}", param)
 
-    # Param groups causes a pickle error so we remove it
+    # Param groups cause a pickle error so we remove them
     del model.param_groups
+    if hasattr(model, "backbone") and hasattr(model.backbone, "param_groups"):
+        del model.backbone.param_groups
 
     return model_type, model, adapter(model_type), backbone
 
