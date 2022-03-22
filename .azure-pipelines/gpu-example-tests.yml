@@ -11,11 +11,7 @@ jobs:
 - template: testing-template.yml
   parameters:
     configs:
-    - "image"
     - "image,image_extras"
-    - "text"
-    - "tabular"
-    - "video"
     gpu_inds:
     - "0"
     - "0,1"
