@@ -882,11 +882,11 @@ class InputTransform(Properties):
     #############
 
     def inject_collate_fn(self, collate_fn: Callable):
-        self._transform[RunningStage.TRAINING].transforms[InputTransformPlacement.COLLATE] = collate_fn
-        self._transform[RunningStage.VALIDATING].transforms[InputTransformPlacement.COLLATE] = collate_fn
-        self._transform[RunningStage.TESTING].transforms[InputTransformPlacement.COLLATE] = collate_fn
-        self._transform[RunningStage.PREDICTING].transforms[InputTransformPlacement.COLLATE] = collate_fn
-        self._transform[RunningStage.SERVING].transforms[InputTransformPlacement.COLLATE] = collate_fn
+        self._transform[RunningStage.TRAINING].transforms[InputTransformPlacement.COLLATE.value] = collate_fn
+        self._transform[RunningStage.VALIDATING].transforms[InputTransformPlacement.COLLATE.value] = collate_fn
+        self._transform[RunningStage.TESTING].transforms[InputTransformPlacement.COLLATE.value] = collate_fn
+        self._transform[RunningStage.PREDICTING].transforms[InputTransformPlacement.COLLATE.value] = collate_fn
+        self._transform[RunningStage.SERVING].transforms[InputTransformPlacement.COLLATE.value] = collate_fn
 
     def _populate_transforms_for_stage(self, running_stage: RunningStage):
         transform, collate_in_worker = self.__check_transforms(
@@ -1065,9 +1065,9 @@ def create_or_configure_input_transform(
     if inspect.isclass(transform) and issubclass(transform, InputTransform):
         # Deprecation Warning
         rank_zero_warn(
-            "Please pass an instantiated object of the `InputTransform` class. Passing the Class and keyword argument"
-            " separartely will be deprecated in v.8.0.",
-            UserWarning,
+            "Please pass an instantiated object of the `InputTransform` class. Passing the Class and keyword arguments"
+            " separartely will be deprecated in v0.9.0.",
+            FutureWarning,
         )
         return transform(**transform_kwargs)
 
