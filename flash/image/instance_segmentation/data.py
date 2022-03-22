@@ -18,7 +18,7 @@ from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.utilities.sort import sorted_alphanumeric
-from flash.core.integrations.icevision.data import IceVisionInput
+from flash.core.integrations.icevision.data import IceVisionInput, IceVisionInstanceSegmentationInput
 from flash.core.integrations.icevision.transforms import IceVisionInputTransform
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
 from flash.core.utilities.stages import RunningStage
@@ -67,7 +67,7 @@ class InstanceSegmentationData(DataModule):
         test_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         parser: Optional[Union[Callable, Type[Parser]]] = None,
-        input_cls: Type[Input] = IceVisionInput,
+        input_cls: Type[Input] = IceVisionInstanceSegmentationInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
     ) -> "InstanceSegmentationData":
@@ -117,7 +117,7 @@ class InstanceSegmentationData(DataModule):
         val_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        input_cls: Type[Input] = IceVisionInput,
+        input_cls: Type[Input] = IceVisionInstanceSegmentationInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ):
@@ -280,7 +280,7 @@ class InstanceSegmentationData(DataModule):
         val_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         test_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
         predict_transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
-        input_cls: Type[Input] = IceVisionInput,
+        input_cls: Type[Input] = IceVisionInstanceSegmentationInput,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ):
