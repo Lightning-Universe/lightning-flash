@@ -96,13 +96,17 @@ def to_icevision_record(sample: Dict[str, Any]):
         if _ICEVISION_GREATER_EQUAL_0_11_0:
             masks = sample[DataKeys.TARGET].get("masks", None)
 
-            if masks is not None and len(masks) > 0:
+            if masks is not None:
                 component = InstanceMasksRecordComponent()
 
-                if isinstance(masks[0], Mask):
+                if len(masks) > 0 and isinstance(masks[0], Mask):
                     component.set_masks(masks)
                 else:
-                    mask_array = MaskArray(np.stack(masks, axis=0))
+                    if len(masks) > 0:
+                        data = np.stack(masks, axis=0)
+                    else:
+                        data = np.zeros((0, record.height, record.width), dtype=np.uint8)
+                    mask_array = MaskArray(data)
                     component.set_mask_array(mask_array)
                     component.set_masks(_split_mask_array(mask_array))
 
@@ -237,8 +241,19 @@ class IceVisionTransformAdapter(nn.Module):
 
     def forward(self, x):
         record = to_icevision_record(x)
+
+        removed_masks = False
+        if hasattr(record.detection, "masks") and len(record.detection.masks) == 0:
+            record.remove_component_by_type(InstanceMasksRecordComponent)
+            removed_masks = True
+
         record = self.transform(record)
-        return from_icevision_record(record)
+        x = from_icevision_record(record)
+
+        if removed_masks:
+            x[DataKeys.TARGET]["masks"] = []
+
+        return x
 
 
 @dataclass
