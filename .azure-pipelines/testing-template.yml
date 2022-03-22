@@ -36,7 +36,6 @@ jobs:
 
       - bash: |
           # python -m pip install "pip==20.1"
-          pip uninstall -y torchtext
           if [ "${{config}}" == "image,image_extras" ]; then pip install '.[image]' icevision effdet icedata; else pip install '.[${{config}}]'; fi
           pip install '.[test]' --upgrade-strategy only-if-needed
           pip list
