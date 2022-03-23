@@ -38,23 +38,25 @@ download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", f"{
 # Your loader would take a list of individual class folder and load the images from them    #
 # The folder paths are independent and when loading the order of folder.                    #
 # would determine the classification label.                                                 #
-# Note: This is simple enough to show you the flexibility of the Flash API.                 #
+# NOTE: This is simple enough to show you the flexibility of the Flash API.                 #
 #############################################################################################
 
 
 #############################################################################################
-#                         Step 1 / 2: Implement a Input                                     #
+#                         Step 1 / 3: Implement a Input                                     #
 #                                                                                           #
 # An `Input` is a state-aware (c.f training, validating, testing and predicting)            #
-# dataset.                                                                                  #
-# and with specialized hooks (c.f load_data, load_sample) for each of those stages.         #
+# dataset and with specialized hooks (c.f load_data, load_sample) for each of those stages. #
+#                                                                                           #
 # The hook resolution for the function is done in the following way.                        #
-# If {state}_load_data is implemented then it would be used exclusively for that stage.     #
-# Otherwise, it would use the load_data function.                                           #
+#     If {state}_load_data is implemented then it would be used exclusively for that stage. #
+#     Otherwise, it would use the load_data function.                                       #
+#                                                                                           #
 # If you use Input outside of Flash, the only requirements are to return a Sequence         #
 # from load_data with Input or an Iterable with FlashIterableDataset.                       #
+#                                                                                           #
 # When using Input with Flash Tasks, the model expects the `load_sample` to return a        #
-#  dictionary with `DataKeys` as its keys (c.f `input`, `target`, metadata)                 #
+# dictionary with `DataKeys` as its keys (c.f `input`, `target`, `metadata`)                #
 #                                                                                           #
 #############################################################################################
 
@@ -92,11 +94,22 @@ predict_dataset = MultipleFoldersImageInput(RunningStage.PREDICTING, PREDICT_FOL
 
 
 #############################################################################################
-#                   Step 2 / 2: [optional] Implement a InputTransform                       #
+#                   Step 2 / 3: [optional] Implement a InputTransform                       #
 #                                                                                           #
 # A `InputTransform` is a state-aware (c.f training, validating, testing and predicting)    #
-# transform. You would have to implement a `configure_transforms` hook with your transform  #
+# python dataclass that acts as a callback resolver for each stage of the pipeline with     #
+# specialized hooks (c.f per_sample_transform, per_sample_transform_on_device,              #
+# per_batch_transform, per_batch_transform_on_device, collate_fn) for each of those stages. #
+# Each of the hooks returns a Callable type that acts on the samples to transform them.     #
 #                                                                                           #
+#                                                                                           #
+# The hook resolution for the function is done in the following way.                        #
+#     - If {state}_per_sample_transform is implemented then it would be used exclusively    #
+#       for that stage. Otherwise, it would use the per_sample_transform function.          #
+#     - If {state}_{key}_per_sample_transform is implemented then it would be used          #
+#       exclusively for that stage and the specific key of the sample. Otherwise, it would  #
+#       use the per_sample_transform function.                                              #
+
 #############################################################################################
 
 
@@ -105,7 +118,7 @@ class BaseImageInputTransform(InputTransform):
 
     image_size: Tuple[int, int] = (224, 224)
 
-    def input_per_sample_transform(self) -> Any:
+    def input_per_sample_transform(self) -> Callable:
         # this will be used to transform only the input value associated with
         # the `input` key within each sample.
         return T.Compose([T.Resize(self.image_size), T.ToTensor()])
@@ -119,107 +132,39 @@ class ImageRandomRotationInputTransform(BaseImageInputTransform):
 
     rotation: float = 0
 
-    def input_per_sample_transform(self) -> Any:
+    def train_input_per_sample_transform(self) -> Callable:
+        # this will be used to transform only the input value associated with
+        # the `input` key within each sample of the train batch.
+        transforms = [T.Resize(self.image_size), T.ToTensor(), T.RandomRotation(self.rotation)]
+        return T.Compose(transforms)
+
+    def input_per_sample_transform(self) -> Callable:
         # this will be used to transform only the input value associated with
         # the `input` key within each sample.
         transforms = [T.Resize(self.image_size), T.ToTensor()]
-        if self.training:
-            transforms += [T.RandomRotation(self.rotation)]
         return T.Compose(transforms)
 
 
-# Register your transform within the Flash Dataset registry
+# Register your transform within the InputTransform registry of the Flash DataModule
 # Note: Registries can be shared by multiple dataset.
-MultipleFoldersImageInput.register_input_transform("base", BaseImageInputTransform)
-MultipleFoldersImageInput.register_input_transform("random_rotation", ImageRandomRotationInputTransform)
-MultipleFoldersImageInput.register_input_transform(
-    "random_90_def_rotation", partial(ImageRandomRotationInputTransform, rotation=90)
-)
-
-train_dataset = MultipleFoldersImageInput(
-    RunningStage.TRAINING,
-    TRAIN_FOLDERS,
-    transform=("random_rotation", {"rotation": 45}),
-)
-
-# Out:
-# ImageRandomRotationInputTransform(
-#   running_stage=train,
-#   state: {'image_size': (224, 224), 'rotation': 45}
-#   transform={
-#      'per_sample_transform': Compose(
-#           ApplyToKeys(keys='input', transform=Compose(
-#                Resize(size=(224, 224), interpolation=bilinear, max_size=None, antialias=None)
-#                ToTensor()
-#                RandomRotation(degrees=[-45.0, 45.0], interpolation=nearest, expand=False, fill=0))),
-#            ApplyToKeys(keys='target', transform=<built-in method as_tensor ...>)
-#      ),
-#      'collate': <function default_collate at 0x12be64670>
-#  }
-# )
-
-train_dataset = MultipleFoldersImageInput(
-    RunningStage.TRAINING,
-    TRAIN_FOLDERS,
-    transform="random_90_def_rotation",
-)
-
-print(train_dataset.transform)
-# Out:
-# ImageRandomRotationInputTransform(
-#   running_stage=train,
-#   state: {'image_size': (224, 224), 'rotation': 90}
-#   transform={
-#      'per_sample_transform': Compose(
-#           ApplyToKeys(keys='input', transform=Compose(
-#                Resize(size=(224, 224), interpolation=bilinear, max_size=None, antialias=None)
-#                ToTensor()
-#                RandomRotation(degrees=[-90.0, 90.0], interpolation=nearest, expand=False, fill=0))),
-#            ApplyToKeys(keys='target', transform=<built-in method as_tensor ...>)
-#      ),
-#      'collate': <function default_collate at 0x12be64670>
-#  }
-# )
-
-val_dataset = MultipleFoldersImageInput(RunningStage.VALIDATING, VAL_FOLDERS, transform="base")
-print(val_dataset.transform)
-# Out:
-# ImageRandomRotationInputTransform(
-#   running_stage=train,
-#   state: {'image_size': (224, 224), 'rotation': 90}
-#   transform={
-#      'per_sample_transform': Compose(
-#           ApplyToKeys(keys='input', transform=Compose(
-#                Resize(size=(224, 224), interpolation=bilinear, max_size=None, antialias=None)
-#                ToTensor()
-#            ),
-#            ApplyToKeys(keys='target', transform=<built-in method as_tensor ...>)
-#      ),
-#      'collate': <function default_collate at 0x12be64670>
-#  }
-# )
-
-print(train_dataset[0])
-# Out:
-# {
-#   <DataKeys.INPUT: 'input'>: <PIL.JpegImagePlugin.JpegImageFile image mode=RGB size=500x375 at 0x...>,
-#   <DataKeys.TARGET: 'target'>: 0,
-#   <DataKeys.METADATA: 'metadata'>: (500, 375)
-# }
+DataModule.register_input_transform("base", BaseImageInputTransform)
+DataModule.register_input_transform("random_rotation", ImageRandomRotationInputTransform)
+DataModule.register_input_transform("random_90_def_rotation", partial(ImageRandomRotationInputTransform, rotation=90))
 
 #############################################################################################
-#                           Step 4 / 5: Create a DataModule                                 #
+#                       Step 3 / 3: Create a DataModule (Part 1)                            #
 #                                                                                           #
-# The `DataModule` class is a collection of Input and you can pass them directly to         #
-# its init function.                                                                        #
+# The `DataModule` class is a collection of `Input` for various stages and the              #
+# `InputTransform` and you can pass them directly to its init function.                     #
 #                                                                                           #
 #############################################################################################
 
 
 datamodule = DataModule(
-    train_input=MultipleFoldersImageInput(RunningStage.TRAINING, TRAIN_FOLDERS, transform="random_rotation"),
-    val_input=MultipleFoldersImageInput(RunningStage.VALIDATING, VAL_FOLDERS, transform="base"),
-    predict_input=MultipleFoldersImageInput(RunningStage.PREDICTING, PREDICT_FOLDER, transform="base"),
+    train_input=MultipleFoldersImageInput(RunningStage.TRAINING, TRAIN_FOLDERS),
+    val_input=MultipleFoldersImageInput(RunningStage.VALIDATING, VAL_FOLDERS),
+    predict_input=MultipleFoldersImageInput(RunningStage.PREDICTING, PREDICT_FOLDER),
+    transform="random_rotation",
     batch_size=2,
 )
 
@@ -267,10 +212,10 @@ print(batch)
 
 
 #############################################################################################
-#                Step 5 / 5: Provide your new utility with your DataModule                  #
+#            Step 5 / 5: Provide your new utility with your DataModule (Part 2)             #
 #                                                                                           #
-# The `DataModule` class is a collection of Input and you can pass them directly to         #
-# its init function.                                                                        #
+# The `DataModule` class is a collection of `Input` for various stages and the              #
+# `InputTransform` and you can create an extended utility method.                           #
 #                                                                                           #
 #############################################################################################
 
@@ -283,18 +228,18 @@ class ImageClassificationDataModule(DataModule):
         val_folders: Optional[List[str]] = None,
         test_folders: Optional[List[str]] = None,
         predict_folder: Optional[str] = None,
-        train_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
-        val_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
-        test_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
-        predict_transform: Optional[INPUT_TRANSFORM_TYPE] = None,
+        transform: Optional[INPUT_TRANSFORM_TYPE] = None,
+        transform_kwargs: Optional[Dict[str, Any]] = None,
         **data_module_kwargs: Any,
     ) -> "ImageClassificationDataModule":
 
         return cls(
-            MultipleFoldersImageInput(RunningStage.TRAINING, train_folders, transform=train_transform),
-            MultipleFoldersImageInput(RunningStage.VALIDATING, val_folders, transform=val_transform),
-            MultipleFoldersImageInput(RunningStage.VALIDATING, test_folders, transform=test_transform),
-            MultipleFoldersImageInput(RunningStage.PREDICTING, predict_folder, transform=predict_transform),
+            MultipleFoldersImageInput(RunningStage.TRAINING, train_folders),
+            MultipleFoldersImageInput(RunningStage.VALIDATING, val_folders),
+            MultipleFoldersImageInput(RunningStage.VALIDATING, test_folders),
+            MultipleFoldersImageInput(RunningStage.PREDICTING, predict_folder),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -304,9 +249,7 @@ datamodule = ImageClassificationDataModule.from_multiple_folders(
     train_folders=TRAIN_FOLDERS,
     val_folders=VAL_FOLDERS,
     predict_folder=PREDICT_FOLDER,
-    train_transform="random_rotation",
-    val_transform="base",
-    predict_transform="base",
+    transform="random_90_def_rotation",
     batch_size=2,
 )
 
