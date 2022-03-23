@@ -22,14 +22,18 @@ if _ICEVISION_AVAILABLE:
     from icevision.backbones import BackboneConfig
 
 
-def icevision_model_adapter(model_type):
-    class IceVisionModelAdapter(model_type.lightning.ModelAdapter):
-        def log(self, name, value, **kwargs):
-            if "prog_bar" not in kwargs:
-                kwargs["prog_bar"] = True
-            return super().log(name.split("/")[-1], value, **kwargs)
+def _log_with_prog_bar_override(self, name, value, **kwargs):
+    if "prog_bar" not in kwargs:
+        kwargs["prog_bar"] = True
+    return self._original_log(name.split("/")[-1], value, **kwargs)
 
-    return IceVisionModelAdapter
+
+def icevision_model_adapter(model_type):
+    adapter = model_type.lightning.ModelAdapter
+    if not hasattr(adapter, "_original_log"):
+        adapter._original_log = adapter.log
+        adapter.log = _log_with_prog_bar_override
+    return adapter
 
 
 def load_icevision(adapter, model_type, backbone, num_classes, **kwargs):
@@ -39,6 +43,11 @@ def load_icevision(adapter, model_type, backbone, num_classes, **kwargs):
     params = sum(model.param_groups()[:-1], [])
     for i, param in enumerate(params):
         backbone.register_parameter(f"backbone_{i}", param)
+
+    # Param groups cause a pickle error so we remove them
+    del model.param_groups
+    if hasattr(model, "backbone") and hasattr(model.backbone, "param_groups"):
+        del model.backbone.param_groups
 
     return model_type, model, adapter(model_type), backbone
 

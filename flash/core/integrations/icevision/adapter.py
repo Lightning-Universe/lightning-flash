@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import functools
+from importlib import import_module
 from typing import Any, Callable, Dict, List, Optional
 
 from torch.utils.data import DataLoader, Sampler
@@ -53,7 +54,8 @@ class IceVisionAdapter(Adapter):
     def __init__(self, model_type, model, icevision_adapter, backbone, predict_kwargs):
         super().__init__()
 
-        self.model_type = model_type
+        # Modules can't be pickled so just store the name
+        self.model_type = model_type.__name__
         self.model = model
         self.icevision_adapter = icevision_adapter
         self.backbone = backbone
@@ -109,7 +111,7 @@ class IceVisionAdapter(Adapter):
         sampler: Optional[Sampler] = None,
         persistent_workers: bool = False,
     ) -> DataLoader:
-        data_loader = self.model_type.train_dl(
+        data_loader = import_module(self.model_type).train_dl(
             dataset,
             batch_size=batch_size,
             num_workers=num_workers,
@@ -145,7 +147,7 @@ class IceVisionAdapter(Adapter):
         sampler: Optional[Sampler] = None,
         persistent_workers: bool = False,
     ) -> DataLoader:
-        data_loader = self.model_type.valid_dl(
+        data_loader = import_module(self.model_type).valid_dl(
             dataset,
             batch_size=batch_size,
             num_workers=num_workers,
@@ -176,7 +178,7 @@ class IceVisionAdapter(Adapter):
         sampler: Optional[Sampler] = None,
         persistent_workers: bool = False,
     ) -> DataLoader:
-        data_loader = self.model_type.valid_dl(
+        data_loader = import_module(self.model_type).valid_dl(
             dataset,
             batch_size=batch_size,
             num_workers=num_workers,
@@ -206,7 +208,7 @@ class IceVisionAdapter(Adapter):
         sampler: Optional[Sampler] = None,
         persistent_workers: bool = False,
     ) -> DataLoader:
-        data_loader = self.model_type.infer_dl(
+        data_loader = import_module(self.model_type).infer_dl(
             dataset,
             batch_size=batch_size,
             num_workers=num_workers,
@@ -242,7 +244,7 @@ class IceVisionAdapter(Adapter):
 
     def forward(self, batch: Any) -> Any:
         return from_icevision_predictions(
-            self.model_type.predict_from_dl(self.model, [batch], show_pbar=False, **self.predict_kwargs)
+            import_module(self.model_type).predict_from_dl(self.model, [batch], show_pbar=False, **self.predict_kwargs)
         )
 
     def training_epoch_end(self, outputs) -> None:
