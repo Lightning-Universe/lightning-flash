@@ -4,6 +4,8 @@
    :image: https://pl-flash-data.s3.amazonaws.com/assets/thumbnails/point_cloud_segmentation.svg
    :tags: Point-Cloud,Segmentation
 
+.. beta:: task
+
 .. _pointcloud_segmentation:
 
 ########################

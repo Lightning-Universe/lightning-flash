@@ -4,6 +4,8 @@
    :image: https://pl-flash-data.s3.amazonaws.com/assets/thumbnails/point_cloud_object_detection.svg
    :tags: Point-Cloud,Detection
 
+.. beta:: task
+
 .. _pointcloud_object_detection:
 
 ############################
