@@ -106,8 +106,21 @@ def test_init():
 def test_training(tmpdir, head):
     model = ObjectDetector(num_classes=2, head=head, pretrained=False)
     ds = DummyDetectionDataset((128, 128, 3), 1, 2, 10)
+
+    input_transform = IceVisionInputTransform()
+    data_fetcher = BaseDataFetcher()
+    train_collate_fn = create_worker_input_transform_processor(RunningStage.TRAINING, input_transform, [data_fetcher])
+
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    dl = model.process_train_dataset(ds, trainer, IceVisionInputTransform(), 2, 0, False, None)
+    dl = model.process_train_dataset(
+        dataset=ds,
+        trainer=trainer,
+        input_transform=input_transform,
+        batch_size=2,
+        num_workers=0,
+        pin_memory=False,
+        collate_fn=train_collate_fn,
+    )
     trainer.fit(model, dl)
 
 

@@ -56,10 +56,9 @@ class StyleTransferData(DataModule):
         Args:
             train_files: The list of image files to use when training.
             predict_files: The list of image files to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -139,10 +138,9 @@ class StyleTransferData(DataModule):
         Args:
             train_folder: The folder containing images to use when training.
             predict_folder: The folder containing images to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -214,10 +212,9 @@ class StyleTransferData(DataModule):
         Args:
             train_data: The numpy array or list of arrays to use when training.
             predict_data: The numpy array or list of arrays to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -274,10 +271,9 @@ class StyleTransferData(DataModule):
         Args:
             train_data: The torch tensor or list of tensors to use when training.
             predict_data: The torch tensor or list of tensors to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.

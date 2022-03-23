@@ -67,12 +67,8 @@ class QuestionAnsweringData(DataModule):
             val_file: The CSV file containing the validation data.
             test_file: The CSV file containing the testing data.
             predict_file: The CSV file containing the data to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             question_column_name: The key in the JSON file to recognize the question field.
             context_column_name: The key in the JSON file to recognize the context field.
@@ -210,12 +206,8 @@ class QuestionAnsweringData(DataModule):
             val_file: The JSON file containing the validation data.
             test_file: The JSON file containing the testing data.
             predict_file: The JSON file containing the data to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             field: The field that holds the data in the JSON file.
             question_column_name: The key in the JSON file to recognize the question field.
@@ -358,12 +350,8 @@ class QuestionAnsweringData(DataModule):
             val_file: The JSON file containing the validation data.
             test_file: The JSON file containing the testing data.
             predict_file: The JSON file containing the predict data.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             question_column_name: The key in the JSON file to recognize the question field.
             context_column_name: The key in the JSON file to recognize the context field.
@@ -643,12 +631,8 @@ class QuestionAnsweringData(DataModule):
             val_data: The dictionary containing the validation data.
             test_data: The dictionary containing the testing data.
             predict_data: The dictionary containing the data to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             question_column_name: The key in the JSON file to recognize the question field.
             context_column_name: The key in the JSON file to recognize the context field.

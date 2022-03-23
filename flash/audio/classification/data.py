@@ -81,14 +81,10 @@ class AudioClassificationData(DataModule):
             test_files: The list of spectrogram image files to use when testing.
             test_targets: The list of targets to use when testing.
             predict_files: The list of spectrogram image files to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -207,14 +203,10 @@ class AudioClassificationData(DataModule):
             val_folder: The folder containing spectrogram images to use when validating.
             test_folder: The folder containing spectrogram images to use when testing.
             predict_folder: The folder containing spectrogram images to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -318,14 +310,10 @@ class AudioClassificationData(DataModule):
             test_data: The numpy array or list of arrays to use when testing.
             test_targets: The list of targets to use when testing.
             predict_data: The numpy array or list of arrays to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -410,14 +398,10 @@ class AudioClassificationData(DataModule):
             test_data: The torch tensor or list of tensors to use when testing.
             test_targets: The list of targets to use when testing.
             predict_data: The torch tensor or list of tensors to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -523,14 +507,10 @@ class AudioClassificationData(DataModule):
             predict_images_root: The root directory containing predict spectrogram images.
             predict_resolver: Optionally provide a function which converts an entry from the ``input_field`` into a
                 spectrogram image file path.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -679,14 +659,10 @@ class AudioClassificationData(DataModule):
             predict_images_root: The root directory containing predict spectrogram images.
             predict_resolver: Optionally provide a function which converts an entry from the ``input_field`` into a
                 spectrogram image file path.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.

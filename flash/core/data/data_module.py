@@ -65,6 +65,8 @@ class DataModule(pl.LightningDataModule):
         data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to attach to the
             :class:`~flash.core.data.io.input_transform.InputTransform`. If ``None``, the output from
             :meth:`~flash.core.data.data_module.DataModule.configure_data_fetcher` will be used.
+        transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
+        transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
         val_split: An optional float which gives the relative amount of the training dataset to use for the validation
             dataset.
         batch_size: The batch size to be used by the DataLoader.
@@ -247,7 +249,7 @@ class DataModule(pl.LightningDataModule):
         # `transform_processor` is an _InputTransformProcessor object
         # Use the `transform_processor` object directly as the collate_fn for the DataLoader.
 
-        # `input_transform` is an InputTransform object
+        # `self.input_transform` is an InputTransform object
         # Inject the `self.collate_fn` returned by the model into the `transforms` dict of the `input_transform` object
         # through the process_train_dataset method of the model.
 
@@ -294,6 +296,13 @@ class DataModule(pl.LightningDataModule):
                 )
                 self.input_transform = input_transform
 
+        # `transform_processor` is an _InputTransformProcessor object
+        # Use the `transform_processor` object directly as the collate_fn for the DataLoader.
+
+        # `self.input_transform` is an InputTransform object
+        # Inject the `self.collate_fn` returned by the model into the `transforms` dict of the `input_transform` object
+        # through the process_train_dataset method of the model.
+
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
             dataloader = self.trainer.lightning_module.process_val_dataset(
                 val_ds,
@@ -330,6 +339,13 @@ class DataModule(pl.LightningDataModule):
                     RunningStage.TESTING, input_transform, [self.data_fetcher]
                 )
                 self.input_transform = input_transform
+
+        # `transform_processor` is an _InputTransformProcessor object
+        # Use the `transform_processor` object directly as the collate_fn for the DataLoader.
+
+        # `self.input_transform` is an InputTransform object
+        # Inject the `self.collate_fn` returned by the model into the `transforms` dict of the `input_transform` object
+        # through the process_train_dataset method of the model.
 
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
             dataloader = self.trainer.lightning_module.process_test_dataset(
@@ -373,6 +389,13 @@ class DataModule(pl.LightningDataModule):
         else:
             batch_size = min(self.batch_size, len(predict_ds) if len(predict_ds) > 0 else 1)
 
+        # `transform_processor` is an _InputTransformProcessor object
+        # Use the `transform_processor` object directly as the collate_fn for the DataLoader.
+
+        # `self.input_transform` is an InputTransform object
+        # Inject the `self.collate_fn` returned by the model into the `transforms` dict of the `input_transform` object
+        # through the process_train_dataset method of the model.
+
         if isinstance(getattr(self, "trainer", None), pl.Trainer):
             dataloader = self.trainer.lightning_module.process_predict_dataset(
                 predict_ds,
@@ -396,9 +419,9 @@ class DataModule(pl.LightningDataModule):
         self._model_on_after_batch_transfer_fns = None
         return dataloader
 
-    ###############################################################
-    # METHODS PERTAINING TO on_after_batch_transfer FUNCTIONALITY #
-    ###############################################################
+    ############################################################
+    # METHODS RELATED TO on_after_batch_transfer FUNCTIONALITY #
+    ############################################################
 
     def _load_model_on_after_batch_transfer_fns(self) -> None:
         self._model_on_after_batch_transfer_fns = {}
@@ -441,9 +464,9 @@ class DataModule(pl.LightningDataModule):
             batch = transform(batch)
         return batch
 
-    ######################################
-    # METHODS PERTAINING TO DATA FETCHER #
-    ######################################
+    ###################################
+    # METHODS RELATED TO DATA FETCHER #
+    ###################################
 
     @staticmethod
     def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
@@ -462,9 +485,9 @@ class DataModule(pl.LightningDataModule):
     def data_fetcher(self, data_fetcher: BaseDataFetcher) -> None:
         self._data_fetcher = data_fetcher
 
-    #########################################
-    # METHODS PERTAINING TO INPUT TRANSFORM #
-    #########################################
+    ######################################
+    # METHODS RELATED TO INPUT TRANSFORM #
+    ######################################
 
     @property
     def input_transform(self) -> InputTransform:
@@ -499,9 +522,9 @@ class DataModule(pl.LightningDataModule):
             )
         cls.input_transforms_registry(fn=fn, name=enum)
 
-    #######################################
-    # METHODS PERTAINING TO VISUALIZATION #
-    #######################################
+    ####################################
+    # METHODS RELATED TO VISUALIZATION #
+    ####################################
 
     @property
     def viz(self) -> BaseVisualization:

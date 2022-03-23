@@ -94,12 +94,8 @@ class TabularForecastingData(DataModule):
             val_data_frame: The pandas DataFrame to use when validating.
             test_data_frame: The pandas DataFrame to use when testing.
             predict_data_frame: The pandas DataFrame to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             input_kwargs: Additional keyword arguments to be used when creating the TimeSeriesDataset.
 
