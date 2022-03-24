@@ -20,8 +20,14 @@ ADMONITION_TEMPLATE = """
 
     <div class="admonition warning {type}">
     <p class="admonition-title">{title}</p>
-    <p>This {scope} is currently in Beta. The interfaces and functionality may change without warning in future
-    releases.</p>
+    <p>
+
+This {scope} is currently in Beta. The API and functionality may change without warning in future
+releases. :ref:`More details <stability>`.
+
+.. raw:: html
+
+    </p>
     </div>
 """
 
