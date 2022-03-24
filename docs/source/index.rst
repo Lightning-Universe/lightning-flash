@@ -144,6 +144,7 @@ Lightning Flash
    :caption: Community
 
    governance
+   stability
    generated/CONTRIBUTING.md
    generated/CHANGELOG.md
 
