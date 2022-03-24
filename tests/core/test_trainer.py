@@ -96,7 +96,7 @@ def test_resolve_callbacks_invalid_strategy(tmpdir):
     trainer = Trainer(fast_dev_run=True, default_root_dir=tmpdir)
     task = ClassificationTask(model, loss_fn=F.nll_loss)
     with pytest.raises(MisconfigurationException, match="should be a ``pytorch_lightning.callbacks.BaseFinetuning``"):
-        trainer._resolve_callbacks(task, EarlyStopping())
+        trainer._resolve_callbacks(task, EarlyStopping("test"))
 
 
 class MultiFinetuneClassificationTask(ClassificationTask):
