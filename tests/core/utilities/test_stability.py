@@ -13,7 +13,7 @@
 # limitations under the License.
 import pytest
 
-from flash.core.utilities.stability import beta
+from flash.core.utilities.stability import _raise_beta_warning, beta
 
 
 @beta()
@@ -46,5 +46,8 @@ def _beta_func_custom_message():
     ],
 )
 def test_beta(callable, match):
+    # Clear warning cache
+    _raise_beta_warning.cache_clear()
+
     with pytest.warns(UserWarning, match=match):
         callable()

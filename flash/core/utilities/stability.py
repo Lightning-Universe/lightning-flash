@@ -23,8 +23,8 @@ def _raise_beta_warning(message: str, stacklevel: int = 6):
     rank_zero_warn(
         f"{message} The API and functionality may change without warning in future releases. "
         "More details: https://lightning-flash.readthedocs.io/en/latest/stability.html",
-        UserWarning,
         stacklevel=stacklevel,
+        category=UserWarning,
     )
 
 
