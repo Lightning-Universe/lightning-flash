@@ -23,3 +23,4 @@ For beta features, any or all of the following may be true:
 - the feature has unstable dependencies
 - the API may change without notice in future versions
 - the performance of the feature has not been verified
+- the docs for this feature are under active development
