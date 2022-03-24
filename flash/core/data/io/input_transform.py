@@ -94,11 +94,11 @@ class InputTransform(Properties):
 
         # used to keep track of provided transforms
         self._transform: Dict[RunningStage, _InputTransformPerStage] = {}
-        self._populate_transforms_for_stage(RunningStage.TRAINING)
-        self._populate_transforms_for_stage(RunningStage.VALIDATING)
-        self._populate_transforms_for_stage(RunningStage.TESTING)
-        self._populate_transforms_for_stage(RunningStage.PREDICTING)
-        self._populate_transforms_for_stage(RunningStage.SERVING)
+
+        # For all the stages possible, set/load the transforms.
+        for stage in RunningStage:
+            if stage not in [RunningStage.SANITY_CHECKING, RunningStage.TUNING]:
+                self._populate_transforms_for_stage(stage)
 
         super().__init__()
 
@@ -884,7 +884,8 @@ class InputTransform(Properties):
     def inject_collate_fn(self, collate_fn: Callable):
         # For all the stages possible, set collate function
         for stage in RunningStage:
-            self._transform[stage].transforms[InputTransformPlacement.COLLATE.value] = collate_fn
+            if stage not in [RunningStage.SANITY_CHECKING, RunningStage.TUNING]:
+                self._transform[stage].transforms[InputTransformPlacement.COLLATE.value] = collate_fn
 
     def _populate_transforms_for_stage(self, running_stage: RunningStage):
         transform, collate_in_worker = self.__check_transforms(
