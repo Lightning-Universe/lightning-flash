@@ -882,11 +882,9 @@ class InputTransform(Properties):
     #############
 
     def inject_collate_fn(self, collate_fn: Callable):
-        self._transform[RunningStage.TRAINING].transforms[InputTransformPlacement.COLLATE.value] = collate_fn
-        self._transform[RunningStage.VALIDATING].transforms[InputTransformPlacement.COLLATE.value] = collate_fn
-        self._transform[RunningStage.TESTING].transforms[InputTransformPlacement.COLLATE.value] = collate_fn
-        self._transform[RunningStage.PREDICTING].transforms[InputTransformPlacement.COLLATE.value] = collate_fn
-        self._transform[RunningStage.SERVING].transforms[InputTransformPlacement.COLLATE.value] = collate_fn
+        # For all the stages possible, set collate function
+        for stage in RunningStage:
+            self._transform[stage].transforms[InputTransformPlacement.COLLATE.value] = collate_fn
 
     def _populate_transforms_for_stage(self, running_stage: RunningStage):
         transform, collate_in_worker = self.__check_transforms(
@@ -1054,7 +1052,7 @@ def create_or_configure_input_transform(
     transform: INPUT_TRANSFORM_TYPE,
     input_transforms_registry: Optional[FlashRegistry] = None,
     transform_kwargs: Optional[Dict] = None,
-) -> Optional["InputTransform"]:
+) -> Optional[InputTransform]:
 
     if not transform_kwargs:
         transform_kwargs = {}
@@ -1093,7 +1091,7 @@ def create_or_configure_input_transform(
 
 class _InputTransformProcessor:
     """
-    This class is used to encapsulate the following functions of a InputTransformInputTransform Object:
+    This class is used to encapsulate the following functions of an `InputTransform` Object:
     Inside a worker:
         per_sample_transform: Function to transform an individual sample
         collate: Function to merge sample into a batch
@@ -1183,14 +1181,16 @@ class _InputTransformProcessor:
         )
 
 
-def __make_collates(input_transform: "InputTransform", on_device: bool, collate: Callable) -> Tuple[Callable, Callable]:
+def __make_collates(input_transform: InputTransform, on_device: bool, collate: Callable) -> Tuple[Callable, Callable]:
+    """Returns the appropriate collate functions based on whether the transforms happen in a DataLoader worker or
+    on the device (main process)."""
     if on_device:
         return input_transform._identity, collate
     return collate, input_transform._identity
 
 
 def __configure_worker_and_device_collate_fn(
-    running_stage: RunningStage, input_transform: "InputTransform"
+    running_stage: RunningStage, input_transform: InputTransform
 ) -> Tuple[Callable, Callable]:
 
     from flash.core.data.data_pipeline import DataPipeline
@@ -1230,12 +1230,10 @@ def __configure_worker_and_device_collate_fn(
 
 
 def create_worker_input_transform_processor(
-    running_stage: RunningStage, input_transform: "InputTransform", callbacks: List[FlashCallback]
+    running_stage: RunningStage, input_transform: InputTransform, callbacks: List[FlashCallback]
 ) -> _InputTransformProcessor:
     """This utility is used to create the 2 `_InputTransformProcessor` objects which contain the transforms used as
     the DataLoader `collate_fn`."""
-    # _create_collate_input_transform_processors(stage, self.transform, callbacks)[0]
-
     worker_collate_fn, _ = __configure_worker_and_device_collate_fn(
         running_stage=running_stage, input_transform=input_transform
     )
@@ -1251,12 +1249,10 @@ def create_worker_input_transform_processor(
 
 
 def create_device_input_transform_processor(
-    running_stage: RunningStage, input_transform: "InputTransform", callbacks: List[FlashCallback]
+    running_stage: RunningStage, input_transform: InputTransform, callbacks: List[FlashCallback]
 ) -> _InputTransformProcessor:
     """This utility is used to create a `_InputTransformProcessor` object which contain the transforms used as the
     DataModule `on_after_batch_transfer` hook."""
-    # _create_collate_input_transform_processors(stage, self.transform, callbacks)[1]
-
     _, device_collate_fn = __configure_worker_and_device_collate_fn(
         running_stage=running_stage, input_transform=input_transform
     )

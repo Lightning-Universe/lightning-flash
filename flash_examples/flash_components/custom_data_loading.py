@@ -43,7 +43,7 @@ download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", f"{
 
 
 #############################################################################################
-#                         Step 1 / 3: Implement a Input                                     #
+#                        Step 1 / 3: Implement a custom Input                               #
 #                                                                                           #
 # An `Input` is a state-aware (c.f training, validating, testing and predicting)            #
 # dataset and with specialized hooks (c.f load_data, load_sample) for each of those stages. #
@@ -94,9 +94,9 @@ predict_dataset = MultipleFoldersImageInput(RunningStage.PREDICTING, PREDICT_FOL
 
 
 #############################################################################################
-#                   Step 2 / 3: [optional] Implement a InputTransform                       #
+#                Step 2 / 3: [optional] Implement a custom InputTransform                   #
 #                                                                                           #
-# A `InputTransform` is a state-aware (c.f training, validating, testing and predicting)    #
+# An `InputTransform` is a state-aware (c.f training, validating, testing and predicting)   #
 # python dataclass that acts as a callback resolver for each stage of the pipeline with     #
 # specialized hooks (c.f per_sample_transform, per_sample_transform_on_device,              #
 # per_batch_transform, per_batch_transform_on_device, collate_fn) for each of those stages. #
