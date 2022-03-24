@@ -18,6 +18,7 @@ from torch.utils.data import Dataset
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import BaseDataFormat, Input
 from flash.core.data.io.input_transform import InputTransform
+from flash.core.utilities.stability import beta
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 from flash.pointcloud.detection.input import PointCloudObjectDetectorDatasetInput
@@ -27,6 +28,7 @@ from flash.pointcloud.detection.open3d_ml.input import (
 )
 
 
+@beta("Point cloud object detection is currently in Beta.")
 class PointCloudObjectDetectorData(DataModule):
 
     input_transform_cls = InputTransform
