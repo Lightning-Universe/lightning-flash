@@ -200,11 +200,12 @@ number of warmup steps based on the flags that are set in the Trainer.
 
 .. testsetup::
 
-    >>> import numpy as np
-    >>> from PIL import Image
-    >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
-    >>> _ = [rand_image.save(f"image_{i}.png") for i in range(1, 4)]
-    >>> _ = [rand_image.save(f"predict_image_{i}.png") for i in range(1, 4)]
+    import numpy as np
+    from PIL import Image
+
+    rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
+    _ = [rand_image.save(f"image_{i}.png") for i in range(1, 4)]
+    _ = [rand_image.save(f"predict_image_{i}.png") for i in range(1, 4)]
 
 .. doctest::
 
@@ -231,6 +232,7 @@ number of warmup steps based on the flags that are set in the Trainer.
 
 .. testcleanup::
 
-    >>> import os
-    >>> _ = [os.remove(f"image_{i}.png") for i in range(1, 4)]
-    >>> _ = [os.remove(f"predict_image_{i}.png") for i in range(1, 4)]
+    import os
+
+    _ = [os.remove(f"image_{i}.png") for i in range(1, 4)]
+    _ = [os.remove(f"predict_image_{i}.png") for i in range(1, 4)]
