@@ -86,10 +86,7 @@ class TestGraphClassificationData:
             val_dataset=val_dataset,
             test_dataset=test_dataset,
             predict_dataset=predict_dataset,
-            train_transform=TestInputTransform,
-            val_transform=TestInputTransform,
-            test_transform=TestInputTransform,
-            predict_transform=TestInputTransform,
+            transform=TestInputTransform,
             batch_size=2,
         )
         assert dm is not None

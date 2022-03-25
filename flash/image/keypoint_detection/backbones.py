@@ -16,11 +16,7 @@ from typing import Optional
 
 from flash.core.adapter import Adapter
 from flash.core.integrations.icevision.adapter import IceVisionAdapter
-from flash.core.integrations.icevision.backbones import (
-    get_backbones,
-    icevision_model_adapter,
-    load_icevision_ignore_image_size,
-)
+from flash.core.integrations.icevision.backbones import get_backbones, load_icevision_ignore_image_size
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _TORCHVISION_AVAILABLE
@@ -64,7 +60,7 @@ if _ICEVISION_AVAILABLE:
     if _TORCHVISION_AVAILABLE:
         model_type = icevision_models.torchvision.keypoint_rcnn
         KEYPOINT_DETECTION_HEADS(
-            partial(load_icevision_ignore_image_size, icevision_model_adapter, model_type),
+            partial(load_icevision_ignore_image_size, model_type),
             model_type.__name__.split(".")[-1],
             backbones=get_backbones(model_type),
             adapter=IceVisionKeypointDetectionAdapter,

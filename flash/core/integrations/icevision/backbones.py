@@ -22,21 +22,7 @@ if _ICEVISION_AVAILABLE:
     from icevision.backbones import BackboneConfig
 
 
-def _log_with_prog_bar_override(self, name, value, **kwargs):
-    if "prog_bar" not in kwargs:
-        kwargs["prog_bar"] = True
-    return self._original_log(name.split("/")[-1], value, **kwargs)
-
-
-def icevision_model_adapter(model_type):
-    adapter = model_type.lightning.ModelAdapter
-    if not hasattr(adapter, "_original_log"):
-        adapter._original_log = adapter.log
-        adapter.log = _log_with_prog_bar_override
-    return adapter
-
-
-def load_icevision(adapter, model_type, backbone, num_classes, **kwargs):
+def load_icevision(model_type, backbone, num_classes, **kwargs):
     model = model_type.model(backbone=backbone, num_classes=num_classes, **kwargs)
 
     backbone = nn.Module()
@@ -49,16 +35,16 @@ def load_icevision(adapter, model_type, backbone, num_classes, **kwargs):
     if hasattr(model, "backbone") and hasattr(model.backbone, "param_groups"):
         del model.backbone.param_groups
 
-    return model_type, model, adapter(model_type), backbone
+    return model_type, model, model_type.lightning.ModelAdapter, backbone
 
 
-def load_icevision_ignore_image_size(adapter, model_type, backbone, num_classes, image_size=None, **kwargs):
-    return load_icevision(adapter, model_type, backbone, num_classes, **kwargs)
+def load_icevision_ignore_image_size(model_type, backbone, num_classes, image_size=None, **kwargs):
+    return load_icevision(model_type, backbone, num_classes, **kwargs)
 
 
-def load_icevision_with_image_size(adapter, model_type, backbone, num_classes, image_size=None, **kwargs):
+def load_icevision_with_image_size(model_type, backbone, num_classes, image_size=None, **kwargs):
     kwargs["img_size"] = image_size
-    return load_icevision(adapter, model_type, backbone, num_classes, **kwargs)
+    return load_icevision(model_type, backbone, num_classes, **kwargs)
 
 
 def get_backbones(model_type):

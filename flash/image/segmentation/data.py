@@ -19,7 +19,6 @@ import torch
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input
-from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_EXTRAS_TESTING, _IMAGE_TESTING, lazy_import
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
@@ -58,7 +57,6 @@ class SemanticSegmentationData(DataModule):
     """The ``SemanticSegmentationData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
     classmethods for loading data for semantic segmentation."""
 
-    input_transforms_registry = FlashRegistry("input_transforms")
     input_transform_cls = SemanticSegmentationInputTransform
 
     @property
@@ -75,13 +73,10 @@ class SemanticSegmentationData(DataModule):
         test_files: Optional[Sequence[str]] = None,
         test_targets: Optional[Sequence[str]] = None,
         predict_files: Optional[Sequence[str]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
         input_cls: Type[Input] = SemanticSegmentationFilesInput,
         num_classes: Optional[int] = None,
         labels_map: Dict[int, Tuple[int, int, int]] = None,
+        transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "SemanticSegmentationData":
@@ -101,15 +96,11 @@ class SemanticSegmentationData(DataModule):
             test_files: The list of image files to use when testing.
             test_targets: The list of mask files to use when testing.
             predict_files: The list of image files to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             num_classes: The number of segmentation classes.
             labels_map: An optional mapping from class to RGB tuple indicating the colour to use when visualizing masks.
                 If not provided, a random mapping will be used.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -159,17 +150,17 @@ class SemanticSegmentationData(DataModule):
         """
 
         ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
             num_classes=num_classes,
             labels_map=labels_map,
         )
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_files, train_targets, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_files, val_targets, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_files, test_targets, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_files, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_files, train_targets, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_files, val_targets, **ds_kw),
+            input_cls(RunningStage.TESTING, test_files, test_targets, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_files, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -183,13 +174,10 @@ class SemanticSegmentationData(DataModule):
         test_folder: Optional[str] = None,
         test_target_folder: Optional[str] = None,
         predict_folder: Optional[str] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
         input_cls: Type[Input] = SemanticSegmentationFolderInput,
         num_classes: Optional[int] = None,
         labels_map: Dict[int, Tuple[int, int, int]] = None,
+        transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "SemanticSegmentationData":
@@ -245,15 +233,11 @@ class SemanticSegmentationData(DataModule):
             test_target_folder: The folder containing masks to use when testing (files should have the same name as
                 the files in the ``train_folder``).
             predict_folder: The folder containing images to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             num_classes: The number of segmentation classes.
             labels_map: An optional mapping from class to RGB tuple indicating the colour to use when visualizing masks.
                 If not provided, a random mapping will be used.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -307,17 +291,17 @@ class SemanticSegmentationData(DataModule):
         """
 
         ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
             num_classes=num_classes,
             labels_map=labels_map,
         )
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_folder, train_target_folder, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_folder, val_target_folder, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_folder, test_target_folder, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_folder, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_folder, train_target_folder, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_folder, val_target_folder, **ds_kw),
+            input_cls(RunningStage.TESTING, test_folder, test_target_folder, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_folder, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -331,13 +315,10 @@ class SemanticSegmentationData(DataModule):
         test_data: Optional[Collection[np.ndarray]] = None,
         test_targets: Optional[Collection[np.ndarray]] = None,
         predict_data: Optional[Collection[np.ndarray]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
         input_cls: Type[Input] = SemanticSegmentationNumpyInput,
         num_classes: Optional[int] = None,
         labels_map: Dict[int, Tuple[int, int, int]] = None,
+        transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "SemanticSegmentationData":
@@ -355,15 +336,11 @@ class SemanticSegmentationData(DataModule):
             test_data: The numpy array or list of arrays containing images to use when testing.
             test_targets: The numpy array or list of arrays containing masks to use when testing.
             predict_data: The numpy array or list of arrays to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             num_classes: The number of segmentation classes.
             labels_map: An optional mapping from class to RGB tuple indicating the colour to use when visualizing masks.
                 If not provided, a random mapping will be used.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -402,17 +379,17 @@ class SemanticSegmentationData(DataModule):
         """
 
         ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
             num_classes=num_classes,
             labels_map=labels_map,
         )
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_data, train_targets, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_data, val_targets, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_data, test_targets, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_data, train_targets, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_data, val_targets, **ds_kw),
+            input_cls(RunningStage.TESTING, test_data, test_targets, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_data, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -426,13 +403,10 @@ class SemanticSegmentationData(DataModule):
         test_data: Optional[Collection[torch.Tensor]] = None,
         test_targets: Optional[Collection[torch.Tensor]] = None,
         predict_data: Optional[Collection[torch.Tensor]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
         input_cls: Type[Input] = SemanticSegmentationTensorInput,
         num_classes: Optional[int] = None,
         labels_map: Dict[int, Tuple[int, int, int]] = None,
+        transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "SemanticSegmentationData":
@@ -450,15 +424,11 @@ class SemanticSegmentationData(DataModule):
             test_data: The torch tensor or list of tensors containing images to use when testing.
             test_targets: The torch tensor or list of tensors containing masks to use when testing.
             predict_data: The torch tensor or list of tensors to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             num_classes: The number of segmentation classes.
             labels_map: An optional mapping from class to RGB tuple indicating the colour to use when visualizing masks.
                 If not provided, a random mapping will be used.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -497,17 +467,17 @@ class SemanticSegmentationData(DataModule):
         """
 
         ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
             num_classes=num_classes,
             labels_map=labels_map,
         )
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_data, train_targets, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_data, val_targets, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_data, test_targets, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_data, train_targets, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_data, val_targets, **ds_kw),
+            input_cls(RunningStage.TESTING, test_data, test_targets, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_data, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -518,13 +488,10 @@ class SemanticSegmentationData(DataModule):
         val_dataset: Optional[SampleCollection] = None,
         test_dataset: Optional[SampleCollection] = None,
         predict_dataset: Optional[SampleCollection] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
         input_cls: Type[Input] = SemanticSegmentationFiftyOneInput,
         num_classes: Optional[int] = None,
         labels_map: Dict[int, Tuple[int, int, int]] = None,
+        transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
         transform_kwargs: Optional[Dict] = None,
         label_field: str = "ground_truth",
         **data_module_kwargs: Any,
@@ -544,15 +511,11 @@ class SemanticSegmentationData(DataModule):
             test_dataset: The ``SampleCollection`` to use when testing.
             predict_dataset: The ``SampleCollection`` to use when predicting.
             label_field: The field in the ``SampleCollection`` objects containing the targets.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             num_classes: The number of segmentation classes.
             labels_map: An optional mapping from class to RGB tuple indicating the colour to use when visualizing masks.
                 If not provided, a random mapping will be used.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -614,40 +577,31 @@ class SemanticSegmentationData(DataModule):
             >>> _ = [os.remove(f"predict_image_{i}.png") for i in range(1, 4)]
         """
 
-        ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
-        )
-
         return cls(
             input_cls(
                 RunningStage.TRAINING,
                 train_dataset,
-                transform=train_transform,
                 label_field=label_field,
                 num_classes=num_classes,
                 labels_map=labels_map,
-                **ds_kw,
             ),
             input_cls(
                 RunningStage.VALIDATING,
                 val_dataset,
-                transform=val_transform,
                 label_field=label_field,
                 num_classes=num_classes,
                 labels_map=labels_map,
-                **ds_kw,
             ),
             input_cls(
                 RunningStage.TESTING,
                 test_dataset,
-                transform=test_transform,
                 label_field=label_field,
                 num_classes=num_classes,
                 labels_map=labels_map,
-                **ds_kw,
             ),
-            input_cls(RunningStage.PREDICTING, predict_dataset, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_dataset),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 

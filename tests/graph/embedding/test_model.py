@@ -39,11 +39,10 @@ def test_not_trainable(tmpdir):
     tudataset = datasets.TUDataset(root=tmpdir, name="KKI")
     model = GraphEmbedder(GraphClassifier(num_features=1, num_classes=1).backbone)
     datamodule = DataModule(
-        GraphClassificationDatasetInput(RunningStage.TRAINING, tudataset, transform=GraphClassificationInputTransform),
-        GraphClassificationDatasetInput(
-            RunningStage.VALIDATING, tudataset, transform=GraphClassificationInputTransform
-        ),
-        GraphClassificationDatasetInput(RunningStage.TESTING, tudataset, transform=GraphClassificationInputTransform),
+        GraphClassificationDatasetInput(RunningStage.TRAINING, tudataset),
+        GraphClassificationDatasetInput(RunningStage.VALIDATING, tudataset),
+        GraphClassificationDatasetInput(RunningStage.TESTING, tudataset),
+        transform=GraphClassificationInputTransform,
         batch_size=4,
     )
     trainer = Trainer(default_root_dir=tmpdir, num_sanity_val_steps=0)
@@ -65,9 +64,8 @@ def test_predict_dataset(tmpdir):
         GraphClassifier(num_features=tudataset.num_features, num_classes=tudataset.num_classes).backbone
     )
     datamodule = DataModule(
-        predict_input=GraphClassificationDatasetInput(
-            RunningStage.PREDICTING, tudataset, transform=GraphClassificationInputTransform
-        ),
+        predict_input=GraphClassificationDatasetInput(RunningStage.PREDICTING, tudataset),
+        transform=GraphClassificationInputTransform,
         batch_size=4,
     )
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
