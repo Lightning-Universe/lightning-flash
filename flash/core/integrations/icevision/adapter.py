@@ -26,6 +26,7 @@ from flash.core.integrations.icevision.transforms import (
     from_icevision_record,
     to_icevision_record,
 )
+from flash.core.integrations.icevision.wrappers import wrap_icevision_adapter
 from flash.core.model import Task
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
 from flash.core.utilities.url_error import catch_url_error
@@ -57,7 +58,7 @@ class IceVisionAdapter(Adapter):
         # Modules can't be pickled so just store the name
         self.model_type = model_type.__name__
         self.model = model
-        self.icevision_adapter = icevision_adapter
+        self.icevision_adapter = wrap_icevision_adapter(icevision_adapter)
         self.backbone = backbone
         self.predict_kwargs = predict_kwargs
 
@@ -255,3 +256,9 @@ class IceVisionAdapter(Adapter):
 
     def test_epoch_end(self, outputs) -> None:
         return self.icevision_adapter.validation_epoch_end(outputs)
+
+    def __setstate__(self, newstate):
+        super().__setstate__(newstate)
+
+        # Re-wrap IceVision adapter
+        self.icevision_adapter = wrap_icevision_adapter(self.icevision_adapter)
