@@ -218,7 +218,6 @@ class TestInputTransform(InputTransform):
     test_per_sample_transform_called = False
 
     def _train_per_sample_transform(self, sample):
-        assert self.current_fn == "per_sample_transform"
         self.train_per_sample_transform_called = True
         return sample + (5,)
 
@@ -226,7 +225,6 @@ class TestInputTransform(InputTransform):
         return self._train_per_sample_transform
 
     def _train_collate(self, samples):
-        assert self.current_fn == "collate"
         self.train_collate_called = True
         return torch.tensor([list(s) for s in samples])
 
@@ -234,7 +232,6 @@ class TestInputTransform(InputTransform):
         return self._train_collate
 
     def _train_per_batch_transform_on_device(self, batch):
-        assert self.current_fn == "per_batch_transform_on_device"
         self.train_per_batch_transform_on_device_called = True
         assert torch.equal(batch, torch.tensor([[0, 1, 2, 3, 5], [0, 1, 2, 3, 5]]))
 
@@ -242,7 +239,6 @@ class TestInputTransform(InputTransform):
         return self._train_per_batch_transform_on_device
 
     def _val_per_sample_transform(self, sample):
-        assert self.current_fn == "per_sample_transform"
         self.val_per_sample_transform_called = True
         return sample
 
@@ -250,7 +246,6 @@ class TestInputTransform(InputTransform):
         return self._val_per_sample_transform
 
     def _val_collate(self, samples):
-        assert self.current_fn == "collate"
         self.val_collate_called = True
         _count = samples[0]["a"]
         assert samples == [{"a": _count, "b": _count + 1}, {"a": _count + 1, "b": _count + 2}]
@@ -260,7 +255,6 @@ class TestInputTransform(InputTransform):
         return self._val_collate
 
     def _val_per_batch_transform_on_device(self, batch):
-        assert self.current_fn == "per_batch_transform_on_device"
         self.val_per_batch_transform_on_device_called = True
         if isinstance(batch, list):
             batch = batch[0]
@@ -272,7 +266,6 @@ class TestInputTransform(InputTransform):
         return self._val_per_batch_transform_on_device
 
     def _test_per_sample_transform(self, sample):
-        assert self.current_fn == "per_sample_transform"
         self.test_per_sample_transform_called = True
         return sample
 

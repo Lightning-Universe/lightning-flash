@@ -13,7 +13,7 @@
 # limitations under the License.
 import inspect
 from dataclasses import dataclass
-from functools import partial, wraps
+from functools import partial
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 from pytorch_lightning.utilities.enums import LightningEnum
@@ -23,7 +23,6 @@ from torch.utils.data._utils.collate import default_collate
 
 from flash.core.data.callback import ControlFlow, FlashCallback
 from flash.core.data.io.input import DataKeys
-from flash.core.data.properties import Properties
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import _INPUT_TRANSFORM_FUNCS, _STAGES_PREFIX
 from flash.core.registry import FlashRegistry
@@ -46,15 +45,7 @@ class ApplyToKeyPrefix(LightningEnum):
     TARGET = "target"
 
 
-def transform_context(func: Callable, current_fn: str) -> Callable:
-    @wraps(func)
-    def wrapper(self, *args, **kwargs) -> Any:
-        self.current_fn = current_fn
-        result = func(self, *args, **kwargs)
-        self.current_fn = None
-        return result
-
-    return wrapper
+INVALID_STAGES_FOR_INPUT_TRANSFORMS = [RunningStage.SANITY_CHECKING, RunningStage.TUNING]
 
 
 # Credit to Torchvision Team:
@@ -89,7 +80,7 @@ class _InputTransformPerStage:
 
 
 @dataclass
-class InputTransform(Properties):
+class InputTransform:
     def __post_init__(self):
 
         # used to keep track of provided transforms
@@ -97,15 +88,24 @@ class InputTransform(Properties):
 
         # For all the stages possible, set/load the transforms.
         for stage in RunningStage:
-            if stage not in [RunningStage.SANITY_CHECKING, RunningStage.TUNING]:
+            if stage not in INVALID_STAGES_FOR_INPUT_TRANSFORMS:
                 self._populate_transforms_for_stage(stage)
 
-        super().__init__()
+    def current_transform(self, stage: RunningStage, current_fn: str) -> Callable:
+        if stage in [RunningStage.SANITY_CHECKING, RunningStage.TUNING]:
+            raise KeyError(
+                f"Transforms are only defined for stages:"
+                f"\t{[stage for stage in RunningStage if stage not in INVALID_STAGES_FOR_INPUT_TRANSFORMS]}"
+                f"But received {stage} instead."
+            )
 
-    def current_transform(self, stage: RunningStage) -> Callable:
-        if self._transform[stage].transforms:
-            return self._get_transform(self._transform[stage].transforms)
-        return self._identity
+        # Check is transforms are present and the key is from the Enum defined above.
+        if InputTransformPlacement.from_str(current_fn) is None:
+            raise KeyError(
+                f"{[fn for fn in InputTransformPlacement]} are the only allowed keys to retreive the transform."
+                f"But received {current_fn} instead."
+            )
+        return self._transform[stage].transforms.get(current_fn, self._identity)
 
     ########################
     # PER SAMPLE TRANSFORM #
@@ -829,32 +829,28 @@ class InputTransform(Properties):
     # HOOKS CALLED INTERNALLY WITHIN FLASH #
     ########################################
 
-    @partial(transform_context, current_fn="per_sample_transform")
     def _per_sample_transform(self, sample: Any, stage: RunningStage) -> Any:
-        fn = self.current_transform(stage=stage)
+        fn = self.current_transform(stage=stage, current_fn="per_sample_transform")
         if isinstance(sample, list):
             return [fn(s) for s in sample]
         return fn(sample)
 
-    @partial(transform_context, current_fn="per_batch_transform")
     def _per_batch_transform(self, batch: Any, stage: RunningStage) -> Any:
         """Transforms to apply to a whole batch (if possible use this for efficiency).
 
         .. note:: This option is mutually exclusive with :meth:`per_sample_transform_on_device`, since if both are
         specified, uncollation has to be applied.
         """
-        return self.current_transform(stage=stage)(batch)
+        return self.current_transform(stage=stage, current_fn="per_batch_transform")(batch)
 
-    @partial(transform_context, current_fn="collate")
     def _collate(self, samples: Sequence, stage: RunningStage, metadata=None) -> Any:
         """Transform to convert a sequence of samples to a collated batch."""
-        collate_fn = self.current_transform(stage=stage)
+        collate_fn = self.current_transform(stage=stage, current_fn="collate")
         parameters = inspect.signature(collate_fn).parameters
         if len(parameters) > 1 and DataKeys.METADATA in parameters:
             return collate_fn(samples, metadata)
         return collate_fn(samples)
 
-    @partial(transform_context, current_fn="per_sample_transform_on_device")
     def _per_sample_transform_on_device(self, sample: Any, stage: RunningStage) -> Any:
         """Transforms to apply to the data before the collation (per-sample basis).
 
@@ -863,19 +859,18 @@ class InputTransform(Properties):
         workers, since to make that happen     each of the workers would have to create it's own CUDA-context which
         would pollute GPU memory (if on GPU).
         """
-        fn = self.current_transform(stage=stage)
+        fn = self.current_transform(stage=stage, current_fn="per_sample_transform_on_device")
         if isinstance(sample, list):
             return [fn(s) for s in sample]
         return fn(sample)
 
-    @partial(transform_context, current_fn="per_batch_transform_on_device")
     def _per_batch_transform_on_device(self, batch: Any, stage: RunningStage) -> Any:
         """Transforms to apply to a whole batch (if possible use this for efficiency).
 
         .. note::     This function won't be called within the dataloader workers, since to make that happen     each of
         the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
         """
-        return self.current_transform(stage=stage)(batch)
+        return self.current_transform(stage=stage, current_fn="per_batch_transform_on_device")(batch)
 
     #############
     # UTILITIES #
@@ -1006,11 +1001,6 @@ class InputTransform(Properties):
     @staticmethod
     def _identity(x: Any) -> Any:
         return x
-
-    def _get_transform(self, transform: Dict[str, Callable]) -> Callable:
-        if self.current_fn in transform:
-            return transform[self.current_fn]
-        return self._identity
 
     def __str__(self) -> str:
         return f"{self.__class__.__name__}(" + f"running_stage={self.running_stage}, transform={self._transform})"
