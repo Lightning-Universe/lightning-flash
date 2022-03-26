@@ -22,7 +22,7 @@ ADMONITION_TEMPLATE = """
     <p class="admonition-title">{title}</p>
     <p>
 
-This {scope} is currently in Beta. The API and functionality may change without warning in future
+{message} The API and functionality may change without warning in future
 releases. :ref:`More details <stability>`.
 
 .. raw:: html
@@ -33,15 +33,16 @@ releases. :ref:`More details <stability>`.
 
 
 class Beta(Directive):
-    has_content = True
+    has_content = False
     required_arguments = 1
     optional_arguments = 0
+    final_argument_whitespace = True
 
     def run(self):
 
-        scope = self.arguments[0]
+        message = self.arguments[-1].strip()
 
-        admonition_rst = ADMONITION_TEMPLATE.format(type="beta", title="Beta", scope=scope)
+        admonition_rst = ADMONITION_TEMPLATE.format(type="beta", title="Beta", message=message)
         admonition_list = StringList(admonition_rst.split("\n"))
         admonition = nodes.paragraph()
         self.state.nested_parse(admonition_list, self.content_offset, admonition)
