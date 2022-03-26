@@ -40,7 +40,6 @@ _STAGES_PREFIX = {
     RunningStage.PREDICTING: "predict",
     RunningStage.SERVING: "serve",
 }
-_STAGES_PREFIX_VALUES = {"train", "test", "val", "predict", "serve"}
 
 _INPUT_TRANSFORM_FUNCS: Set[str] = {
     "per_sample_transform",
