@@ -19,6 +19,7 @@ import torch
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input
 from flash.core.utilities.imports import _IMAGE_TESTING
+from flash.core.utilities.stability import beta
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 from flash.image.classification.input import ImageClassificationFilesInput, ImageClassificationFolderInput
@@ -30,6 +31,7 @@ if not _IMAGE_TESTING:
     __doctest_skip__ = ["StyleTransferData", "StyleTransferData.*"]
 
 
+@beta("Style transfer is currently in Beta.")
 class StyleTransferData(DataModule):
     """The ``StyleTransferData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
     classmethods for loading data for image style transfer."""

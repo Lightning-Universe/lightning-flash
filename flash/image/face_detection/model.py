@@ -19,6 +19,7 @@ from torch.nn import Module
 from flash.core.data.io.input import DataKeys
 from flash.core.model import Task
 from flash.core.utilities.imports import _FASTFACE_AVAILABLE
+from flash.core.utilities.stability import beta
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.image.face_detection.backbones import FACE_DETECTION_BACKBONES
 from flash.image.face_detection.output_transform import FaceDetectionOutputTransform
@@ -27,6 +28,7 @@ if _FASTFACE_AVAILABLE:
     import fastface as ff
 
 
+@beta("Face detection is currently in Beta.")
 class FaceDetector(Task):
     """The ``FaceDetector`` is a :class:`~flash.Task` for detecting faces in images.
 
