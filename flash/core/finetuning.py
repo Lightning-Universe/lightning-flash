@@ -22,7 +22,6 @@ from torch.nn import Module
 from torch.optim import Optimizer
 
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _PL_AVAILABLE
 
 
 class FinetuningStrategies(LightningEnum):
