@@ -21,23 +21,23 @@ from flash.image import ImageClassificationData, ImageEmbedder
 # 1. Download the data and prepare the datamodule
 datamodule = ImageClassificationData.from_datasets(
     train_dataset=CIFAR10(".", download=True),
-    batch_size=16,
+    batch_size=4,
 )
 
 # 2. Build the task
 embedder = ImageEmbedder(
-    backbone="resnet",
+    backbone="vision_transformer",
     training_strategy="barlow_twins",
     head="barlow_twins_head",
     pretraining_transform="barlow_twins_transform",
     training_strategy_kwargs={"latent_embedding_dim": 128},
-    pretraining_transform_kwargs={"size_crops": [196]},
+    pretraining_transform_kwargs={"size_crops": [32]},
 )
 
 # 3. Create the trainer and pre-train the encoder
 # use accelerator='ddp' when using GPU(s),
 # i.e. flash.Trainer(max_epochs=3, gpus=1, accelerator='ddp')
-trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
+trainer = flash.Trainer(max_epochs=1, gpus=torch.cuda.device_count())
 trainer.fit(embedder, datamodule=datamodule)
 
 # 4. Save the model!
