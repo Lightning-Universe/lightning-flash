@@ -104,16 +104,17 @@ class DatasetProcessor:
 
     @torch.jit.unused
     @property
-    def input_transform(self) -> Optional[INPUT_TRANSFORM_TYPE]:
+    def input_transform(self) -> Optional[InputTransform]:
         return self._input_transform
 
     @input_transform.setter
-    def input_transform(self, input_transform: INPUT_TRANSFORM_TYPE) -> None:
+    def input_transform(self, input_transform: InputTransform) -> None:
         self._input_transform = input_transform
 
     def _process_dataset(
         self,
         dataset: InputBase,
+        input_transform: InputTransform,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -123,6 +124,16 @@ class DatasetProcessor:
         sampler: Optional[Sampler] = None,
         persistent_workers: bool = False,
     ) -> DataLoader:
+
+        # Assign the InputTransform
+        if self.input_transform is None:
+            self.input_transform = input_transform
+
+        # Now inject the `self.collate_fn` so that it doesn't override `InputTransform._collate` but is called through
+        # the `InputTransform._collate` method.
+        if self.collate_fn is not None:
+            self.input_transform.inject_collate_fn(self.collate_fn)
+
         return DataLoader(
             dataset,
             batch_size=batch_size,
@@ -131,7 +142,7 @@ class DatasetProcessor:
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
-            collate_fn=self.collate_fn if self.collate_fn is not None else collate_fn,
+            collate_fn=collate_fn,
             persistent_workers=persistent_workers,
         )
 
@@ -139,6 +150,7 @@ class DatasetProcessor:
         self,
         dataset: InputBase,
         trainer: "flash.Trainer",
+        input_transform: InputTransform,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -150,10 +162,11 @@ class DatasetProcessor:
     ) -> DataLoader:
         return self._process_dataset(
             dataset,
+            input_transform=input_transform,
             batch_size=batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
-            collate_fn=self.collate_fn if self.collate_fn is not None else collate_fn,
+            collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
@@ -164,6 +177,7 @@ class DatasetProcessor:
         self,
         dataset: InputBase,
         trainer: "flash.Trainer",
+        input_transform: InputTransform,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -175,10 +189,11 @@ class DatasetProcessor:
     ) -> DataLoader:
         return self._process_dataset(
             dataset,
+            input_transform=input_transform,
             batch_size=batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
-            collate_fn=self.collate_fn if self.collate_fn is not None else collate_fn,
+            collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
@@ -189,6 +204,7 @@ class DatasetProcessor:
         self,
         dataset: InputBase,
         trainer: "flash.Trainer",
+        input_transform: InputTransform,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -200,10 +216,11 @@ class DatasetProcessor:
     ) -> DataLoader:
         return self._process_dataset(
             dataset,
+            input_transform=input_transform,
             batch_size=batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
-            collate_fn=self.collate_fn if self.collate_fn is not None else collate_fn,
+            collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
@@ -213,6 +230,7 @@ class DatasetProcessor:
     def process_predict_dataset(
         self,
         dataset: InputBase,
+        input_transform: InputTransform,
         batch_size: int = 1,
         num_workers: int = 0,
         pin_memory: bool = False,
@@ -224,10 +242,11 @@ class DatasetProcessor:
     ) -> DataLoader:
         return self._process_dataset(
             dataset,
+            input_transform=input_transform,
             batch_size=batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
-            collate_fn=self.collate_fn if self.collate_fn is not None else collate_fn,
+            collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
@@ -438,7 +457,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             batch = torch.stack(batch)
         return self(batch)
 
-    def modules_to_freeze(self) -> Optional[Union[nn.Module]]:
+    def modules_to_freeze(self) -> Optional[nn.Module]:
         """By default, we try to get the ``backbone`` attribute from the task and return it or ``None`` if not
         present.
 
@@ -807,13 +826,15 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             return [BenchmarkConvergenceCI()]
 
     @requires("serve")
-    def run_serve_sanity_check(self, serve_input: ServeInput, output: Output):
+    def run_serve_sanity_check(
+        self, serve_input: ServeInput, transform: INPUT_TRANSFORM_TYPE, transform_kwargs: Optional[Dict], output: Output
+    ):
         from fastapi.testclient import TestClient
 
         from flash.core.serve.flash_components import build_flash_serve_model_component
 
         print("Running serve sanity check")
-        comp = build_flash_serve_model_component(self, serve_input, output)
+        comp = build_flash_serve_model_component(self, serve_input, output, transform, transform_kwargs)
         composition = Composition(predict=comp, TESTING=True, DEBUG=True)
         app = composition.serve(host="0.0.0.0", port=8000)
 
@@ -850,16 +871,16 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         if input_cls is None:
             raise NotImplementedError("The `input_cls` must be provided to enable serving.")
 
-        serve_input = input_cls(transform=transform, transform_kwargs=transform_kwargs)
+        serve_input = input_cls()
 
         output = output or Output()
         if isinstance(output, str):
             output = self.outputs.get(output).from_task(self)
 
         if sanity_check:
-            self.run_serve_sanity_check(serve_input, output)
+            self.run_serve_sanity_check(serve_input, transform, transform_kwargs, output)
 
-        comp = build_flash_serve_model_component(self, serve_input, output)
+        comp = build_flash_serve_model_component(self, serve_input, output, transform, transform_kwargs)
         composition = Composition(predict=comp, TESTING=flash._IS_TESTING)
         composition.serve(host=host, port=port)
         return composition

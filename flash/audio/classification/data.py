@@ -32,7 +32,6 @@ from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE
 from flash.core.data.utilities.classification import TargetFormatter
 from flash.core.data.utilities.paths import PATH_TYPE
-from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _AUDIO_TESTING
 from flash.core.utilities.stages import RunningStage
 from flash.image.classification.data import MatplotlibVisualization
@@ -47,7 +46,6 @@ class AudioClassificationData(DataModule):
     classmethods for loading data for audio classification."""
 
     input_transform_cls = AudioClassificationInputTransform
-    input_transforms_registry = FlashRegistry("input_transforms")
 
     @classmethod
     def from_files(
@@ -59,13 +57,10 @@ class AudioClassificationData(DataModule):
         test_files: Optional[Sequence[str]] = None,
         test_targets: Optional[Sequence[Any]] = None,
         predict_files: Optional[Sequence[str]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
-        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = AudioClassificationFilesInput,
+        transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
+        target_formatter: Optional[TargetFormatter] = None,
         **data_module_kwargs: Any,
     ) -> "AudioClassificationData":
         """Load the :class:`~flash.audio.classification.data.AudioClassificationData` from lists of files and
@@ -86,14 +81,10 @@ class AudioClassificationData(DataModule):
             test_files: The list of spectrogram image files to use when testing.
             test_targets: The list of targets to use when testing.
             predict_files: The list of spectrogram image files to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -147,18 +138,18 @@ class AudioClassificationData(DataModule):
 
         ds_kw = dict(
             target_formatter=target_formatter,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
-        train_input = input_cls(RunningStage.TRAINING, train_files, train_targets, transform=train_transform, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, train_files, train_targets, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, val_files, val_targets, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_files, test_targets, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_files, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_files, val_targets, **ds_kw),
+            input_cls(RunningStage.TESTING, test_files, test_targets, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_files, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -169,13 +160,10 @@ class AudioClassificationData(DataModule):
         val_folder: Optional[str] = None,
         test_folder: Optional[str] = None,
         predict_folder: Optional[str] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
-        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = AudioClassificationFolderInput,
+        transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
+        target_formatter: Optional[TargetFormatter] = None,
         **data_module_kwargs: Any,
     ) -> "AudioClassificationData":
         """Load the :class:`~flash.audio.classification.data.AudioClassificationData` from folders containing
@@ -215,14 +203,10 @@ class AudioClassificationData(DataModule):
             val_folder: The folder containing spectrogram images to use when validating.
             test_folder: The folder containing spectrogram images to use when testing.
             predict_folder: The folder containing spectrogram images to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -279,18 +263,18 @@ class AudioClassificationData(DataModule):
 
         ds_kw = dict(
             target_formatter=target_formatter,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
-        train_input = input_cls(RunningStage.TRAINING, train_folder, transform=train_transform, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, train_folder, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, val_folder, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_folder, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_folder, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_folder, **ds_kw),
+            input_cls(RunningStage.TESTING, test_folder, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_folder, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -304,13 +288,10 @@ class AudioClassificationData(DataModule):
         test_data: Optional[Collection[np.ndarray]] = None,
         test_targets: Optional[Sequence[Any]] = None,
         predict_data: Optional[Collection[np.ndarray]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
-        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = AudioClassificationNumpyInput,
+        transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
+        target_formatter: Optional[TargetFormatter] = None,
         **data_module_kwargs: Any,
     ) -> "AudioClassificationData":
         """Load the :class:`~flash.audio.classification.data.AudioClassificationData` from numpy arrays (or lists
@@ -329,14 +310,10 @@ class AudioClassificationData(DataModule):
             test_data: The numpy array or list of arrays to use when testing.
             test_targets: The list of targets to use when testing.
             predict_data: The numpy array or list of arrays to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -374,18 +351,18 @@ class AudioClassificationData(DataModule):
 
         ds_kw = dict(
             target_formatter=target_formatter,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
-        train_input = input_cls(RunningStage.TRAINING, train_data, train_targets, transform=train_transform, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, train_data, train_targets, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, val_data, val_targets, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_data, test_targets, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_data, val_targets, **ds_kw),
+            input_cls(RunningStage.TESTING, test_data, test_targets, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_data, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -399,13 +376,10 @@ class AudioClassificationData(DataModule):
         test_data: Optional[Collection[torch.Tensor]] = None,
         test_targets: Optional[Sequence[Any]] = None,
         predict_data: Optional[Collection[torch.Tensor]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
-        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = AudioClassificationTensorInput,
+        transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
+        target_formatter: Optional[TargetFormatter] = None,
         **data_module_kwargs: Any,
     ) -> "AudioClassificationData":
         """Load the :class:`~flash.audio.classification.data.AudioClassificationData` from torch tensors (or lists
@@ -424,14 +398,10 @@ class AudioClassificationData(DataModule):
             test_data: The torch tensor or list of tensors to use when testing.
             test_targets: The list of targets to use when testing.
             predict_data: The torch tensor or list of tensors to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -469,18 +439,18 @@ class AudioClassificationData(DataModule):
 
         ds_kw = dict(
             target_formatter=target_formatter,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
-        train_input = input_cls(RunningStage.TRAINING, train_data, train_targets, transform=train_transform, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, train_data, train_targets, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, val_data, val_targets, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_data, test_targets, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_data, val_targets, **ds_kw),
+            input_cls(RunningStage.TESTING, test_data, test_targets, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_data, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -501,13 +471,10 @@ class AudioClassificationData(DataModule):
         predict_data_frame: Optional[pd.DataFrame] = None,
         predict_images_root: Optional[str] = None,
         predict_resolver: Optional[Callable[[str, str], str]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
-        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = AudioClassificationDataFrameInput,
+        transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
+        target_formatter: Optional[TargetFormatter] = None,
         **data_module_kwargs: Any,
     ) -> "AudioClassificationData":
         """Load the :class:`~flash.audio.classification.data.AudioClassificationData` from pandas DataFrame objects
@@ -540,14 +507,10 @@ class AudioClassificationData(DataModule):
             predict_images_root: The root directory containing predict spectrogram images.
             predict_resolver: Optionally provide a function which converts an entry from the ``input_field`` into a
                 spectrogram image file path.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -623,8 +586,6 @@ class AudioClassificationData(DataModule):
 
         ds_kw = dict(
             target_formatter=target_formatter,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
         train_data = (train_data_frame, input_field, target_fields, train_images_root, train_resolver)
@@ -632,14 +593,16 @@ class AudioClassificationData(DataModule):
         test_data = (test_data_frame, input_field, target_fields, test_images_root, test_resolver)
         predict_data = (predict_data_frame, input_field, None, predict_images_root, predict_resolver)
 
-        train_input = input_cls(RunningStage.TRAINING, *train_data, transform=train_transform, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, *train_data, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, *val_data, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, *test_data, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, *predict_data, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, *val_data, **ds_kw),
+            input_cls(RunningStage.TESTING, *test_data, **ds_kw),
+            input_cls(RunningStage.PREDICTING, *predict_data, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -660,13 +623,10 @@ class AudioClassificationData(DataModule):
         predict_file: Optional[str] = None,
         predict_images_root: Optional[str] = None,
         predict_resolver: Optional[Callable[[PATH_TYPE, Any], PATH_TYPE]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
-        target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = AudioClassificationCSVInput,
+        transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
+        target_formatter: Optional[TargetFormatter] = None,
         **data_module_kwargs: Any,
     ) -> "AudioClassificationData":
         """Load the :class:`~flash.audio.classification.data.AudioClassificationData` from CSV files containing
@@ -699,14 +659,10 @@ class AudioClassificationData(DataModule):
             predict_images_root: The root directory containing predict spectrogram images.
             predict_resolver: Optionally provide a function which converts an entry from the ``input_field`` into a
                 spectrogram image file path.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -792,8 +748,6 @@ class AudioClassificationData(DataModule):
 
         ds_kw = dict(
             target_formatter=target_formatter,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
         train_data = (train_file, input_field, target_fields, train_images_root, train_resolver)
@@ -801,14 +755,16 @@ class AudioClassificationData(DataModule):
         test_data = (test_file, input_field, target_fields, test_images_root, test_resolver)
         predict_data = (predict_file, input_field, None, predict_images_root, predict_resolver)
 
-        train_input = input_cls(RunningStage.TRAINING, *train_data, transform=train_transform, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, *train_data, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, *val_data, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, *test_data, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, *predict_data, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, *val_data, **ds_kw),
+            input_cls(RunningStage.TESTING, *test_data, **ds_kw),
+            input_cls(RunningStage.PREDICTING, *predict_data, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 

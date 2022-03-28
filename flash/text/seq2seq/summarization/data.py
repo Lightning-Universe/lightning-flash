@@ -47,11 +47,8 @@ class SummarizationData(DataModule):
         val_file: Optional[PATH_TYPE] = None,
         test_file: Optional[PATH_TYPE] = None,
         predict_file: Optional[PATH_TYPE] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         input_cls: Type[Input] = Seq2SeqCSVInput,
+        transform: INPUT_TRANSFORM_TYPE = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "SummarizationData":
@@ -70,12 +67,8 @@ class SummarizationData(DataModule):
             val_file: The CSV file to use when validating.
             test_file: The CSV file to use when testing.
             predict_file: The CSV file to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -142,15 +135,15 @@ class SummarizationData(DataModule):
         ds_kw = dict(
             input_key=input_field,
             target_key=target_field,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_file, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_file, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_file, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_file, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_file, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_file, **ds_kw),
+            input_cls(RunningStage.TESTING, test_file, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_file, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -163,11 +156,8 @@ class SummarizationData(DataModule):
         val_file: Optional[PATH_TYPE] = None,
         test_file: Optional[PATH_TYPE] = None,
         predict_file: Optional[PATH_TYPE] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         input_cls: Type[Input] = Seq2SeqJSONInput,
+        transform: INPUT_TRANSFORM_TYPE = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         field: Optional[str] = None,
         **data_module_kwargs: Any,
@@ -187,12 +177,8 @@ class SummarizationData(DataModule):
             val_file: The JSON file to use when validating.
             test_file: The JSON file to use when testing.
             predict_file: The JSON file to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             field: The field that holds the data in the JSON file.
             data_module_kwargs: Additional keyword arguments to provide to the
@@ -259,15 +245,15 @@ class SummarizationData(DataModule):
             input_key=input_field,
             target_key=target_field,
             field=field,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_file, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_file, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_file, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_file, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_file, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_file, **ds_kw),
+            input_cls(RunningStage.TESTING, test_file, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_file, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -280,11 +266,8 @@ class SummarizationData(DataModule):
         val_hf_dataset: Optional[Dataset] = None,
         test_hf_dataset: Optional[Dataset] = None,
         predict_hf_dataset: Optional[Dataset] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         input_cls: Type[Input] = Seq2SeqInputBase,
+        transform: INPUT_TRANSFORM_TYPE = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "SummarizationData":
@@ -303,12 +286,8 @@ class SummarizationData(DataModule):
             val_hf_dataset: The ``Dataset`` to use when validating.
             test_hf_dataset: The ``Dataset`` to use when testing.
             predict_hf_dataset: The ``Dataset`` to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -358,15 +337,15 @@ class SummarizationData(DataModule):
         ds_kw = dict(
             input_key=input_field,
             target_key=target_field,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_hf_dataset, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_hf_dataset, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_hf_dataset, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_hf_dataset, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_hf_dataset, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_hf_dataset, **ds_kw),
+            input_cls(RunningStage.TESTING, test_hf_dataset, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_hf_dataset, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -380,11 +359,8 @@ class SummarizationData(DataModule):
         test_data: Optional[List[str]] = None,
         test_targets: Optional[List[str]] = None,
         predict_data: Optional[List[str]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         input_cls: Type[Input] = Seq2SeqListInput,
+        transform: INPUT_TRANSFORM_TYPE = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "SummarizationData":
@@ -402,12 +378,8 @@ class SummarizationData(DataModule):
             test_data: The list of input text snippets to use when testing.
             test_targets: The list of target text snippets to use when testing.
             predict_data: The list of input text snippets to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -436,15 +408,14 @@ class SummarizationData(DataModule):
             Predicting...
         """
 
-        ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
-        )
+        ds_kw = dict()
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_data, train_targets, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_data, val_targets, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_data, test_targets, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_data, train_targets, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_data, val_targets, **ds_kw),
+            input_cls(RunningStage.TESTING, test_data, test_targets, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_data, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )

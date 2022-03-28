@@ -37,14 +37,16 @@ def test_input_transform():
         MisconfigurationException,
         match="Only one of per_batch_transform or input_per_batch_transform can be overridden",
     ):
-        MyTransform(running_stage=RunningStage.TRAINING)
+        transform = MyTransform()
+        transform._populate_transforms_for_stage(RunningStage.TRAINING)
 
     class MyTransform(InputTransform):
         def input_per_batch_transform(self) -> Callable:
             return None
 
     with pytest.raises(MisconfigurationException, match="The hook input_per_batch_transform should return a function."):
-        MyTransform(running_stage=RunningStage.TRAINING)
+        transform = MyTransform()
+        transform._populate_transforms_for_stage(RunningStage.TRAINING)
 
     class MyTransform(InputTransform):
         def target_per_batch_transform(self) -> Callable:
@@ -53,11 +55,14 @@ def test_input_transform():
         def input_per_batch_transform(self) -> Callable:
             return fn
 
-    transform = MyTransform(running_stage=RunningStage.TRAINING)
-    assert list(transform._transform.keys()) == ["per_batch_transform", "collate"]
-    assert isinstance(transform._transform["per_batch_transform"], ApplyToKeys)
-    assert transform._transform["per_batch_transform"].keys == ["input"]
-    assert transform._transform["collate"] == default_collate
+    transform = MyTransform()
+    for stage in [RunningStage.TRAINING, RunningStage.VALIDATING, RunningStage.TESTING, RunningStage.PREDICTING]:
+        transform._populate_transforms_for_stage(stage)
+        transforms = transform._transform[stage].transforms
+        assert list(transforms.keys()) == ["per_batch_transform", "collate"]
+        assert isinstance(transforms["per_batch_transform"], ApplyToKeys)
+        assert transforms["per_batch_transform"].keys == ["input"]
+        assert transforms["collate"] == default_collate
 
     class MyTransform(InputTransform):
         def train_per_batch_transform(self) -> Callable:
@@ -69,13 +74,19 @@ def test_input_transform():
         def input_per_batch_transform(self) -> Callable:
             return self.input_per_batch_transform
 
-    transform = MyTransform(running_stage=RunningStage.TRAINING)
-    assert list(transform._transform.keys()) == ["per_batch_transform", "collate"]
-    assert transform._transform["per_batch_transform"] == transform.train_per_batch_transform
+    transform = MyTransform()
 
-    transform = MyTransform(running_stage=RunningStage.VALIDATING)
-    assert isinstance(transform._transform["per_batch_transform"], Compose)
-    assert len(transform._transform["per_batch_transform"].transforms) == 2
+    # Tests for RunningStage.TRAINING
+    transform._populate_transforms_for_stage(RunningStage.TRAINING)
+    train_transforms = transform._transform[RunningStage.TRAINING].transforms
+    assert list(train_transforms.keys()) == ["per_batch_transform", "collate"]
+    assert train_transforms["per_batch_transform"] == transform.train_per_batch_transform
+
+    # Tests for RunningStage.VALIDATING
+    transform._populate_transforms_for_stage(RunningStage.VALIDATING)
+    val_transforms = transform._transform[RunningStage.VALIDATING].transforms
+    assert isinstance(val_transforms["per_batch_transform"], Compose)
+    assert len(val_transforms["per_batch_transform"].transforms) == 2
 
     class MyTransform(InputTransform):
         def train_per_batch_transform(self) -> Callable:
@@ -91,7 +102,8 @@ def test_input_transform():
         MisconfigurationException,
         match="Only one of train_per_batch_transform or train_target_per_batch_transform can be overridden.",
     ):
-        MyTransform(running_stage=RunningStage.TRAINING)
+        transform = MyTransform()
+        transform._populate_transforms_for_stage(RunningStage.TRAINING)
 
     class MyTransform(InputTransform):
         def per_batch_transform(self) -> Callable:
@@ -109,24 +121,33 @@ def test_input_transform():
         def collate(self) -> Callable:
             return self.collate
 
-    transform = MyTransform(running_stage=RunningStage.TRAINING)
-    assert list(transform._transform.keys()) == ["per_batch_transform", "collate"]
-    assert isinstance(transform._transform["per_batch_transform"], Compose)
-    assert len(transform._transform["per_batch_transform"].transforms) == 2
-    assert transform._transform["collate"] == transform.train_collate
+    transform = MyTransform()
 
-    transform = MyTransform(running_stage=RunningStage.VALIDATING)
-    assert list(transform._transform.keys()) == ["per_batch_transform", "collate"]
-    assert transform._transform["per_batch_transform"] == transform.train_per_batch_transform
-    assert transform._transform["collate"] == transform.collate
+    # Tests for RunningStage.TRAINING
+    transform._populate_transforms_for_stage(RunningStage.TRAINING)
+    train_transforms = transform._transform[RunningStage.TRAINING].transforms
+    assert list(train_transforms.keys()) == ["per_batch_transform", "collate"]
+    assert isinstance(train_transforms["per_batch_transform"], Compose)
+    assert len(train_transforms["per_batch_transform"].transforms) == 2
+    assert train_transforms["collate"] == transform.train_collate
 
-    transform = LambdaInputTransform(RunningStage.TRAINING, transform=fn)
-    assert list(transform._transform.keys()) == ["per_sample_transform", "collate"]
-    assert transform._transform["per_sample_transform"] == fn
+    # Tests for RunningStage.VALIDATING
+    transform._populate_transforms_for_stage(RunningStage.VALIDATING)
+    val_transforms = transform._transform[RunningStage.VALIDATING].transforms
+    assert list(val_transforms.keys()) == ["per_batch_transform", "collate"]
+    assert val_transforms["per_batch_transform"] == transform.train_per_batch_transform
+    assert val_transforms["collate"] == transform.collate
+
+    transform = LambdaInputTransform(transform=fn)
+    for stage in [RunningStage.TRAINING, RunningStage.VALIDATING, RunningStage.TESTING, RunningStage.PREDICTING]:
+        transform._populate_transforms_for_stage(stage)
+        transforms = transform._transform[stage].transforms
+        assert list(transforms.keys()) == ["per_sample_transform", "collate"]
+        assert transforms["per_sample_transform"] == fn
 
     class MyTransform(InputTransform):
-        def __init__(self, value: int, running_stage: RunningStage):
-            super().__init__(running_stage)
+        def __init__(self, value: int):
+            super().__init__()
             self.value = value
 
         def input_per_batch_transform(self) -> Callable:
@@ -135,19 +156,19 @@ def test_input_transform():
             return super().input_per_batch_transform
 
     with pytest.raises(AttributeError, match="__init__"):
-        MyTransform(1, running_stage=RunningStage.TRAINING)
+        MyTransform(1)
 
     class MyTransform(InputTransform):
-        def __init__(self, value: int, running_stage: RunningStage):
+        def __init__(self, value: int):
             self.value = value
-            super().__init__(running_stage)
+            super().__init__()
 
         def input_per_batch_transform(self) -> Callable:
             if self.value > 0:
                 return self.input_per_batch_transform
             return super().input_per_batch_transform
 
-    MyTransform(1, running_stage=RunningStage.TRAINING)
+    MyTransform(1)
 
 
 class CustomInputTransform(InputTransform):
@@ -193,9 +214,9 @@ def test_check_transforms():
 
     input_transform = CustomInputTransform
 
-    input_transform(RunningStage.TRAINING)
+    # input_transform._populate_transforms_for_stage(RunningStage.TRAINING)
     with pytest.raises(MisconfigurationException, match="are mutually exclusive"):
-        input_transform(RunningStage.VALIDATING)
-    with pytest.raises(MisconfigurationException, match="are mutually exclusive"):
-        input_transform(RunningStage.TESTING)
-    input_transform(RunningStage.PREDICTING)
+        input_transform()
+    # with pytest.raises(MisconfigurationException, match="are mutually exclusive"):
+    #     input_transform._populate_transforms_for_stage(RunningStage.TESTING)
+    # input_transform._populate_transforms_for_stage(RunningStage.PREDICTING)

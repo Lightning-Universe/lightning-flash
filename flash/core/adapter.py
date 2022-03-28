@@ -20,6 +20,7 @@ from torch.utils.data import DataLoader, Sampler
 
 import flash
 from flash.core.data.io.input import InputBase
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.model import DatasetProcessor, ModuleWrapperBase, Task
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 
@@ -130,6 +131,7 @@ class AdapterTask(Task):
         self,
         dataset: InputBase,
         trainer: "flash.Trainer",
+        input_transform: InputTransform,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -140,8 +142,9 @@ class AdapterTask(Task):
         persistent_workers: bool = False,
     ) -> DataLoader:
         return self.adapter.process_train_dataset(
-            dataset,
-            trainer,
+            dataset=dataset,
+            trainer=trainer,
+            input_transform=input_transform,
             batch_size=batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
@@ -156,6 +159,7 @@ class AdapterTask(Task):
         self,
         dataset: InputBase,
         trainer: "flash.Trainer",
+        input_transform: InputTransform,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -166,8 +170,9 @@ class AdapterTask(Task):
         persistent_workers: bool = False,
     ) -> DataLoader:
         return self.adapter.process_val_dataset(
-            dataset,
-            trainer,
+            dataset=dataset,
+            trainer=trainer,
+            input_transform=input_transform,
             batch_size=batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
@@ -182,6 +187,7 @@ class AdapterTask(Task):
         self,
         dataset: InputBase,
         trainer: "flash.Trainer",
+        input_transform: InputTransform,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -192,8 +198,9 @@ class AdapterTask(Task):
         persistent_workers: bool = False,
     ) -> DataLoader:
         return self.adapter.process_test_dataset(
-            dataset,
-            trainer,
+            dataset=dataset,
+            trainer=trainer,
+            input_transform=input_transform,
             batch_size=batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
@@ -207,6 +214,7 @@ class AdapterTask(Task):
     def process_predict_dataset(
         self,
         dataset: InputBase,
+        input_transform: InputTransform,
         batch_size: int = 1,
         num_workers: int = 0,
         pin_memory: bool = False,
@@ -217,7 +225,8 @@ class AdapterTask(Task):
         persistent_workers: bool = False,
     ) -> DataLoader:
         return self.adapter.process_predict_dataset(
-            dataset,
+            dataset=dataset,
+            input_transform=input_transform,
             batch_size=batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,

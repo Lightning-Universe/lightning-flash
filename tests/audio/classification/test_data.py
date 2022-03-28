@@ -281,8 +281,7 @@ def test_from_filepaths_splits(tmpdir):
         dm = AudioClassificationData.from_files(
             train_files=train_filepaths,
             train_targets=train_labels,
-            train_transform=transform,
-            val_transform=transform,
+            transform=transform,
             batch_size=B,
             num_workers=0,
             val_split=val_split,
@@ -311,11 +310,11 @@ def test_from_folders_only_train(tmpdir):
     _rand_image().save(train_dir / "b" / "1.png")
     _rand_image().save(train_dir / "b" / "2.png")
 
-    spectrograms_data = AudioClassificationData.from_folders(train_dir, train_transform=None, batch_size=1)
+    spectrograms_data = AudioClassificationData.from_folders(train_dir, batch_size=1)
 
     data = next(iter(spectrograms_data.train_dataloader()))
     imgs, labels = data["input"], data["target"]
-    assert imgs.shape == (1, 196, 196, 3)
+    assert imgs.shape == (1, 3, 128, 128)
     assert labels.shape == (1,)
 
 

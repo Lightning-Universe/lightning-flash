@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import functools
+from importlib import import_module
 from typing import Any, Callable, Dict, List, Optional
 
 from torch.utils.data import DataLoader, Sampler
@@ -19,11 +20,13 @@ from torch.utils.data import DataLoader, Sampler
 import flash
 from flash.core.adapter import Adapter
 from flash.core.data.io.input import DataKeys, InputBase
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.integrations.icevision.transforms import (
     from_icevision_predictions,
     from_icevision_record,
     to_icevision_record,
 )
+from flash.core.integrations.icevision.wrappers import wrap_icevision_adapter
 from flash.core.model import Task
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
 from flash.core.utilities.url_error import catch_url_error
@@ -52,9 +55,10 @@ class IceVisionAdapter(Adapter):
     def __init__(self, model_type, model, icevision_adapter, backbone, predict_kwargs):
         super().__init__()
 
-        self.model_type = model_type
+        # Modules can't be pickled so just store the name
+        self.model_type = model_type.__name__
         self.model = model
-        self.icevision_adapter = icevision_adapter
+        self.icevision_adapter = wrap_icevision_adapter(icevision_adapter)
         self.backbone = backbone
         self.predict_kwargs = predict_kwargs
 
@@ -98,6 +102,7 @@ class IceVisionAdapter(Adapter):
         self,
         dataset: InputBase,
         trainer: "flash.Trainer",
+        input_transform: InputTransform,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -107,7 +112,7 @@ class IceVisionAdapter(Adapter):
         sampler: Optional[Sampler] = None,
         persistent_workers: bool = False,
     ) -> DataLoader:
-        data_loader = self.model_type.train_dl(
+        data_loader = import_module(self.model_type).train_dl(
             dataset,
             batch_size=batch_size,
             num_workers=num_workers,
@@ -117,13 +122,23 @@ class IceVisionAdapter(Adapter):
             sampler=sampler,
             persistent_workers=persistent_workers,
         )
-        data_loader.collate_fn = functools.partial(self._wrap_collate_fn, data_loader.collate_fn)
+        # Assign the InputTransform
+        if self.input_transform is None:
+            self.input_transform = input_transform
+
+        # Inject the actual `collate function` into the InputTransform object.
+        self.input_transform.inject_collate_fn(functools.partial(self._wrap_collate_fn, data_loader.collate_fn))
+
+        # Replace the collate_fn with _InputTransformProcessor object so that the complete
+        # InputTransform sequence is called.
+        data_loader.collate_fn = collate_fn
         return data_loader
 
     def process_val_dataset(
         self,
         dataset: InputBase,
         trainer: "flash.Trainer",
+        input_transform: InputTransform,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -133,7 +148,7 @@ class IceVisionAdapter(Adapter):
         sampler: Optional[Sampler] = None,
         persistent_workers: bool = False,
     ) -> DataLoader:
-        data_loader = self.model_type.valid_dl(
+        data_loader = import_module(self.model_type).valid_dl(
             dataset,
             batch_size=batch_size,
             num_workers=num_workers,
@@ -143,13 +158,18 @@ class IceVisionAdapter(Adapter):
             sampler=sampler,
             persistent_workers=persistent_workers,
         )
-        data_loader.collate_fn = functools.partial(self._wrap_collate_fn, data_loader.collate_fn)
+        # Assign the InputTransform
+        if self.input_transform is None:
+            self.input_transform = input_transform
+        self.input_transform.inject_collate_fn(functools.partial(self._wrap_collate_fn, data_loader.collate_fn))
+        data_loader.collate_fn = collate_fn
         return data_loader
 
     def process_test_dataset(
         self,
         dataset: InputBase,
         trainer: "flash.Trainer",
+        input_transform: InputTransform,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -159,7 +179,7 @@ class IceVisionAdapter(Adapter):
         sampler: Optional[Sampler] = None,
         persistent_workers: bool = False,
     ) -> DataLoader:
-        data_loader = self.model_type.valid_dl(
+        data_loader = import_module(self.model_type).valid_dl(
             dataset,
             batch_size=batch_size,
             num_workers=num_workers,
@@ -169,12 +189,17 @@ class IceVisionAdapter(Adapter):
             sampler=sampler,
             persistent_workers=persistent_workers,
         )
-        data_loader.collate_fn = functools.partial(self._wrap_collate_fn, data_loader.collate_fn)
+        # Assign the InputTransform
+        if self.input_transform is None:
+            self.input_transform = input_transform
+        self.input_transform.inject_collate_fn(functools.partial(self._wrap_collate_fn, data_loader.collate_fn))
+        data_loader.collate_fn = collate_fn
         return data_loader
 
     def process_predict_dataset(
         self,
         dataset: InputBase,
+        input_transform: InputTransform,
         batch_size: int = 1,
         num_workers: int = 0,
         pin_memory: bool = False,
@@ -184,7 +209,7 @@ class IceVisionAdapter(Adapter):
         sampler: Optional[Sampler] = None,
         persistent_workers: bool = False,
     ) -> DataLoader:
-        data_loader = self.model_type.infer_dl(
+        data_loader = import_module(self.model_type).infer_dl(
             dataset,
             batch_size=batch_size,
             num_workers=num_workers,
@@ -194,7 +219,11 @@ class IceVisionAdapter(Adapter):
             sampler=sampler,
             persistent_workers=persistent_workers,
         )
-        data_loader.collate_fn = functools.partial(self._wrap_collate_fn, data_loader.collate_fn)
+        # Assign the InputTransform
+        if self.input_transform is None:
+            self.input_transform = input_transform
+        self.input_transform.inject_collate_fn(functools.partial(self._wrap_collate_fn, data_loader.collate_fn))
+        data_loader.collate_fn = collate_fn
         return data_loader
 
     def training_step(self, batch, batch_idx) -> Any:
@@ -216,7 +245,7 @@ class IceVisionAdapter(Adapter):
 
     def forward(self, batch: Any) -> Any:
         return from_icevision_predictions(
-            self.model_type.predict_from_dl(self.model, [batch], show_pbar=False, **self.predict_kwargs)
+            import_module(self.model_type).predict_from_dl(self.model, [batch], show_pbar=False, **self.predict_kwargs)
         )
 
     def training_epoch_end(self, outputs) -> None:
@@ -227,3 +256,9 @@ class IceVisionAdapter(Adapter):
 
     def test_epoch_end(self, outputs) -> None:
         return self.icevision_adapter.validation_epoch_end(outputs)
+
+    def __setstate__(self, newstate):
+        super().__setstate__(newstate)
+
+        # Re-wrap IceVision adapter
+        self.icevision_adapter = wrap_icevision_adapter(self.icevision_adapter)

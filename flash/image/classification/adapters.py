@@ -29,6 +29,7 @@ from torch.utils.data import DataLoader, IterableDataset, Sampler
 import flash
 from flash.core.adapter import Adapter, AdapterTask
 from flash.core.data.io.input import DataKeys, InputBase
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.compatibility import accelerator_connector
@@ -325,6 +326,7 @@ class Learn2LearnAdapter(Adapter):
         self,
         dataset: InputBase,
         trainer: "flash.Trainer",
+        input_transform: InputTransform,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -350,10 +352,11 @@ class Learn2LearnAdapter(Adapter):
         return super().process_train_dataset(
             dataset,
             trainer,
-            self._sanetize_batch_size(batch_size),
-            num_workers,
-            False,
-            collate_fn,
+            input_transform=input_transform,
+            batch_size=self._sanetize_batch_size(batch_size),
+            num_workers=num_workers,
+            pin_memory=False,
+            collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
@@ -364,6 +367,7 @@ class Learn2LearnAdapter(Adapter):
         self,
         dataset: InputBase,
         trainer: "flash.Trainer",
+        input_transform: InputTransform,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -387,12 +391,13 @@ class Learn2LearnAdapter(Adapter):
             shuffle = False
             sampler = None
         return super().process_train_dataset(
-            dataset,
-            trainer,
-            self._sanetize_batch_size(batch_size),
-            num_workers,
-            False,
-            collate_fn,
+            dataset=dataset,
+            trainer=trainer,
+            input_transform=input_transform,
+            batch_size=self._sanetize_batch_size(batch_size),
+            num_workers=num_workers,
+            pin_memory=False,
+            collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
@@ -403,6 +408,7 @@ class Learn2LearnAdapter(Adapter):
         self,
         dataset: InputBase,
         trainer: "flash.Trainer",
+        input_transform: InputTransform,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -426,12 +432,13 @@ class Learn2LearnAdapter(Adapter):
             shuffle = False
             sampler = None
         return super().process_train_dataset(
-            dataset,
-            trainer,
-            self._sanetize_batch_size(batch_size),
-            num_workers,
-            False,
-            collate_fn,
+            dataset=dataset,
+            trainer=trainer,
+            input_transform=input_transform,
+            batch_size=self._sanetize_batch_size(batch_size),
+            num_workers=num_workers,
+            pin_memory=False,
+            collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
@@ -441,6 +448,7 @@ class Learn2LearnAdapter(Adapter):
     def process_predict_dataset(
         self,
         dataset: InputBase,
+        input_transform: InputTransform,
         batch_size: int = 1,
         num_workers: int = 0,
         pin_memory: bool = False,
@@ -457,11 +465,12 @@ class Learn2LearnAdapter(Adapter):
             )
 
         return super().process_predict_dataset(
-            dataset,
-            batch_size,
-            num_workers,
-            pin_memory,
-            collate_fn,
+            dataset=dataset,
+            input_transform=input_transform,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,

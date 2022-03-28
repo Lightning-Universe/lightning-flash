@@ -12,7 +12,7 @@ jobs:
       # this need to have installed docker in the base image...
       container:
         # base ML image: mcr.microsoft.com/azureml/openmpi3.1.2-cuda10.2-cudnn8-ubuntu18.04
-        image: "pytorchlightning/pytorch_lightning:base-cuda-py3.9-torch1.8"
+        image: "pytorchlightning/pytorch_lightning:base-cuda-py3.9-torch1.10"
         # image: "pytorch/pytorch:1.8.1-cuda11.0-cudnn8-runtime"
         options: "-it --rm --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all --shm-size=32g"
 
@@ -36,16 +36,24 @@ jobs:
 
       - bash: |
           # python -m pip install "pip==20.1"
-          pip install '.[${{config}}]'
+          if [ "${{config}}" == "image,image_extras" ]; then pip install '.[image]' icevision effdet icedata; else pip install '.[${{config}}]'; fi
           pip install '.[test]' --upgrade-strategy only-if-needed
           pip list
         displayName: 'Install dependencies'
+
+      - bash: |
+          pip uninstall -y opencv-python
+          pip uninstall -y opencv-python-headless
+          pip install opencv-python-headless==4.5.5.64
+        displayName: 'Install OpenCV dependencies'
+        condition: eq('${{ config }}', 'image,image_extras')
 
       - bash: |
           python -c "import torch; print(f'found GPUs: {torch.cuda.device_count()}')"
           python -m coverage run --source flash -m pytest tests/examples/test_scripts.py -v --junitxml=$(Build.StagingDirectory)/test-results.xml --durations=30
         env:
           CUDA_VISIBLE_DEVICES: ${{gids}}
+          FLASH_TEST_TOPIC: ${{ config }}
         displayName: 'Testing'
 
       - bash: |
