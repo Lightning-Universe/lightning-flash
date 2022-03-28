@@ -1051,7 +1051,7 @@ def create_transform(
     if inspect.isclass(transform) and issubclass(transform, InputTransform):
         return transform(running_stage=running_stage, **transform_kwargs)
 
-    if isinstance(transform, partial) and transform.func.__name__ == "LambdaInputTransform":
+    if isinstance(transform, partial):
         return transform(running_stage=running_stage, **transform_kwargs)
 
     if isinstance(transform, Callable):
