@@ -49,6 +49,7 @@ jobs:
         condition: eq('${{ config }}', 'icevision')
 
       - bash: |
+          pip install fairscale
           pip install git+https://github.com/facebookresearch/ClassyVision.git
           pip install git+https://github.com/facebookresearch/vissl.git
         displayName: 'Install VISSL dependencies'
