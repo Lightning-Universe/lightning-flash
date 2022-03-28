@@ -46,10 +46,15 @@ class VideoClassificationInputTransform(InputTransform):
     same_on_frame: bool = False
 
     def per_sample_transform(self) -> Callable:
-        if self.training:
-            per_sample_transform = [RandomCrop(self.image_size, pad_if_needed=True)]
-        else:
-            per_sample_transform = [CenterCrop(self.image_size)]
+        per_sample_transform = [CenterCrop(self.image_size)]
+
+        return ApplyToKeys(
+            "video",
+            Compose([UniformTemporalSubsample(self.temporal_sub_sample), normalize] + per_sample_transform),
+        )
+
+    def train_per_sample_transform(self) -> Callable:
+        per_sample_transform = [RandomCrop(self.image_size, pad_if_needed=True)]
 
         return ApplyToKeys(
             "video",

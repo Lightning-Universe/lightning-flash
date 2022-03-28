@@ -31,10 +31,12 @@ def test_flash_callback(_, __, tmpdir):
     callback_mock = mock.MagicMock()
 
     inputs = [(torch.rand(1), torch.rand(1))]
+    transform = InputTransform()
     dm = DataModule(
-        DatasetInput(RunningStage.TRAINING, inputs, transform=InputTransform),
-        DatasetInput(RunningStage.VALIDATING, inputs, transform=InputTransform),
-        DatasetInput(RunningStage.TESTING, inputs, transform=InputTransform),
+        DatasetInput(RunningStage.TRAINING, inputs),
+        DatasetInput(RunningStage.VALIDATING, inputs),
+        DatasetInput(RunningStage.TESTING, inputs),
+        transform=transform,
         batch_size=1,
         num_workers=0,
         data_fetcher=callback_mock,
@@ -63,10 +65,12 @@ def test_flash_callback(_, __, tmpdir):
         limit_train_batches=1,
         progress_bar_refresh_rate=0,
     )
+    transform = InputTransform()
     dm = DataModule(
-        DatasetInput(RunningStage.TRAINING, inputs, transform=InputTransform),
-        DatasetInput(RunningStage.VALIDATING, inputs, transform=InputTransform),
-        DatasetInput(RunningStage.TESTING, inputs, transform=InputTransform),
+        DatasetInput(RunningStage.TRAINING, inputs),
+        DatasetInput(RunningStage.VALIDATING, inputs),
+        DatasetInput(RunningStage.TESTING, inputs),
+        transform=transform,
         batch_size=1,
         num_workers=0,
         data_fetcher=callback_mock,

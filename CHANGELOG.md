@@ -20,9 +20,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Fixed a bug where `pretraining_transforms` in the `ImageEmbedder` was never called. ([1196](https://github.com/PyTorchLightning/lightning-flash/pull/1196))
+- Fixed a bug where collate functions were never called in the `ImageEmbedder` class. ([#1217](https://github.com/PyTorchLightning/lightning-flash/pull/1217))
 
-- Fixed a bug where `BASE_MODEL_NAME` was not in the dict for dino and moco strategies. ([1196](https://github.com/PyTorchLightning/lightning-flash/pull/1196))
+- Fixed a bug where `pretraining_transforms` in the `ImageEmbedder` was never called. ([#1196](https://github.com/PyTorchLightning/lightning-flash/pull/1196))
+
+- Fixed a bug where `BASE_MODEL_NAME` was not in the dict for dino and moco strategies. ([#1196](https://github.com/PyTorchLightning/lightning-flash/pull/1196))
 
 - Fixed normalizing inputs to video classification ([#1213](https://github.com/PyTorchLightning/lightning-flash/pull/1213))
 
@@ -41,6 +43,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Fixed DDP spawn support for `ObjectDetector`, `InstanceSegmentation`, and `KeypointDetector` ([#1222](https://github.com/PyTorchLightning/lightning-flash/pull/1222))
 
 - Fixed a bug where `InstanceSegmentation` would fail if samples had an inconsistent number of bboxes, labels, and masks (these will now be treated as negative samples) ([#1222](https://github.com/PyTorchLightning/lightning-flash/pull/1222))
+
+- Fixed a bug where `ObjectDetector`, `InstanceSegmentation`, and `KeypointDetector` would log train and validation metrics with the same name ([#1252](https://github.com/PyTorchLightning/lightning-flash/pull/1252))
 
 - Fixed a bug where using `ReduceLROnPlateau` would raise an error ([#1251](https://github.com/PyTorchLightning/lightning-flash/pull/1251))
 

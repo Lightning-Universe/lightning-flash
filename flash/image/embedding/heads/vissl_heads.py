@@ -89,13 +89,15 @@ if _VISSL_AVAILABLE:
 
 
 def simclr_head(
-    dims: List[int] = [2048, 2048, 256],
+    num_features: int = 2048,
+    embedding_dim: int = 128,
+    dims: List[int] = [2048],
     use_bn: bool = True,
     **kwargs,
 ) -> nn.Module:
     cfg = VISSLAdapter.get_model_config_template()
     head_kwargs = {
-        "dims": dims,
+        "dims": [num_features] + dims + [embedding_dim],
         "use_bn": use_bn,
     }
 
@@ -108,7 +110,9 @@ def simclr_head(
 
 
 def swav_head(
-    dims: List[int] = [2048, 2048, 128],
+    num_features: int = 2048,
+    embedding_dim: int = 128,
+    dims: List[int] = [2048],
     use_bn: bool = True,
     num_clusters: Union[int, List[int]] = [3000],
     use_bias: bool = True,
@@ -121,7 +125,7 @@ def swav_head(
 ) -> nn.Module:
     cfg = VISSLAdapter.get_model_config_template()
     head_kwargs = {
-        "dims": dims,
+        "dims": [num_features] + dims + [embedding_dim],
         "use_bn": use_bn,
         "num_clusters": [num_clusters] if isinstance(num_clusters, int) else num_clusters,
         "use_bias": use_bias,
@@ -140,8 +144,11 @@ def swav_head(
     return head
 
 
-def barlow_twins_head(**kwargs) -> nn.Module:
-    return simclr_head(**kwargs)
+def barlow_twins_head(
+    latent_embedding_dim: int = 8192,
+    **kwargs,
+) -> nn.Module:
+    return simclr_head(embedding_dim=latent_embedding_dim, **kwargs)
 
 
 def moco_head(**kwargs) -> nn.Module:

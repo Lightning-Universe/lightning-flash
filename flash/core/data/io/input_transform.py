@@ -13,16 +13,16 @@
 # limitations under the License.
 import inspect
 from dataclasses import dataclass
-from functools import partial, wraps
+from functools import partial
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from pytorch_lightning.utilities.warnings import rank_zero_warn
 from torch.utils.data._utils.collate import default_collate
 
 from flash.core.data.callback import ControlFlow, FlashCallback
 from flash.core.data.io.input import DataKeys
-from flash.core.data.properties import Properties
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import _INPUT_TRANSFORM_FUNCS, _STAGES_PREFIX
 from flash.core.registry import FlashRegistry
@@ -45,15 +45,7 @@ class ApplyToKeyPrefix(LightningEnum):
     TARGET = "target"
 
 
-def transform_context(func: Callable, current_fn: str) -> Callable:
-    @wraps(func)
-    def wrapper(self, *args, **kwargs) -> Any:
-        self.current_fn = current_fn
-        result = func(self, *args, **kwargs)
-        self.current_fn = None
-        return result
-
-    return wrapper
+INVALID_STAGES_FOR_INPUT_TRANSFORMS = [RunningStage.SANITY_CHECKING, RunningStage.TUNING]
 
 
 # Credit to Torchvision Team:
@@ -82,32 +74,38 @@ class Compose:
 
 
 @dataclass
-class InputTransform(Properties):
+class _InputTransformPerStage:
+    collate_in_worker_from_transform: Optional[bool] = None
+    transforms: Optional[Dict[str, Callable]] = None
 
-    running_stage: RunningStage
 
+@dataclass
+class InputTransform:
     def __post_init__(self):
+
         # used to keep track of provided transforms
-        self._collate_in_worker_from_transform: Optional[bool] = None
-        self._transform = None
-        self._transform = self._check_transforms(self._resolve_transforms(self.running_stage), self.running_stage)
+        self._transform: Dict[RunningStage, _InputTransformPerStage] = {}
 
-        # Hack
-        Properties.__init__(self, running_stage=self.running_stage)
+        # For all the stages possible, set/load the transforms.
+        for stage in RunningStage:
+            if stage not in INVALID_STAGES_FOR_INPUT_TRANSFORMS:
+                self._populate_transforms_for_stage(stage)
 
-    @property
-    def current_transform(self) -> Callable:
-        if self._transform:
-            return self._get_transform(self._transform)
-        return self._identity
+    def current_transform(self, stage: RunningStage, current_fn: str) -> Callable:
+        if stage in [RunningStage.SANITY_CHECKING, RunningStage.TUNING]:
+            raise KeyError(
+                f"Transforms are only defined for stages:"
+                f"\t{[stage for stage in RunningStage if stage not in INVALID_STAGES_FOR_INPUT_TRANSFORMS]}"
+                f"But received {stage} instead."
+            )
 
-    @property
-    def transforms(self) -> Dict[str, Optional[Dict[str, Callable]]]:
-        """The transforms currently being used by this
-        :class:`~flash.core.data.io.input_transform.InputTransform`."""
-        return {
-            "transform": self._transform,
-        }
+        # Check is transforms are present and the key is from the Enum defined above.
+        if InputTransformPlacement.from_str(current_fn) is None:
+            raise KeyError(
+                f"{[fn for fn in InputTransformPlacement]} are the only allowed keys to retreive the transform."
+                f"But received {current_fn} instead."
+            )
+        return self._transform[stage].transforms.get(current_fn, self._identity)
 
     ########################
     # PER SAMPLE TRANSFORM #
@@ -831,33 +829,29 @@ class InputTransform(Properties):
     # HOOKS CALLED INTERNALLY WITHIN FLASH #
     ########################################
 
-    @partial(transform_context, current_fn="per_sample_transform")
-    def _per_sample_transform(self, sample: Any) -> Any:
-        fn = self.current_transform
+    def _per_sample_transform(self, sample: Any, stage: RunningStage) -> Any:
+        fn = self.current_transform(stage=stage, current_fn="per_sample_transform")
         if isinstance(sample, list):
             return [fn(s) for s in sample]
         return fn(sample)
 
-    @partial(transform_context, current_fn="per_batch_transform")
-    def _per_batch_transform(self, batch: Any) -> Any:
+    def _per_batch_transform(self, batch: Any, stage: RunningStage) -> Any:
         """Transforms to apply to a whole batch (if possible use this for efficiency).
 
         .. note:: This option is mutually exclusive with :meth:`per_sample_transform_on_device`, since if both are
         specified, uncollation has to be applied.
         """
-        return self.current_transform(batch)
+        return self.current_transform(stage=stage, current_fn="per_batch_transform")(batch)
 
-    @partial(transform_context, current_fn="collate")
-    def _collate(self, samples: Sequence, metadata=None) -> Any:
+    def _collate(self, samples: Sequence, stage: RunningStage, metadata=None) -> Any:
         """Transform to convert a sequence of samples to a collated batch."""
-        collate_fn = self.current_transform
+        collate_fn = self.current_transform(stage=stage, current_fn="collate")
         parameters = inspect.signature(collate_fn).parameters
         if len(parameters) > 1 and DataKeys.METADATA in parameters:
             return collate_fn(samples, metadata)
         return collate_fn(samples)
 
-    @partial(transform_context, current_fn="per_sample_transform_on_device")
-    def _per_sample_transform_on_device(self, sample: Any) -> Any:
+    def _per_sample_transform_on_device(self, sample: Any, stage: RunningStage) -> Any:
         """Transforms to apply to the data before the collation (per-sample basis).
 
         .. note::     This option is mutually exclusive with :meth:`per_batch_transform`,     since if both are
@@ -865,25 +859,41 @@ class InputTransform(Properties):
         workers, since to make that happen     each of the workers would have to create it's own CUDA-context which
         would pollute GPU memory (if on GPU).
         """
-        fn = self.current_transform
+        fn = self.current_transform(stage=stage, current_fn="per_sample_transform_on_device")
         if isinstance(sample, list):
             return [fn(s) for s in sample]
         return fn(sample)
 
-    @partial(transform_context, current_fn="per_batch_transform_on_device")
-    def _per_batch_transform_on_device(self, batch: Any) -> Any:
+    def _per_batch_transform_on_device(self, batch: Any, stage: RunningStage) -> Any:
         """Transforms to apply to a whole batch (if possible use this for efficiency).
 
         .. note::     This function won't be called within the dataloader workers, since to make that happen     each of
         the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
         """
-        return self.current_transform(batch)
+        return self.current_transform(stage=stage, current_fn="per_batch_transform_on_device")(batch)
 
     #############
     # UTILITIES #
     #############
 
-    def _resolve_transforms(self, running_stage: RunningStage) -> Optional[Dict[str, Callable]]:
+    def inject_collate_fn(self, collate_fn: Callable):
+        # For all the stages possible, set collate function
+        for stage in RunningStage:
+            if stage not in [RunningStage.SANITY_CHECKING, RunningStage.TUNING]:
+                self._transform[stage].transforms[InputTransformPlacement.COLLATE.value] = collate_fn
+
+    def _populate_transforms_for_stage(self, running_stage: RunningStage):
+        transform, collate_in_worker = self.__check_transforms(
+            transform=self.__resolve_transforms(running_stage), stage=running_stage
+        )
+        if self._transform is None:
+            self._transform = {}
+        self._transform[running_stage] = _InputTransformPerStage(
+            collate_in_worker_from_transform=collate_in_worker,
+            transforms=transform,
+        )
+
+    def __resolve_transforms(self, running_stage: RunningStage) -> Optional[Dict[str, Callable]]:
         from flash.core.data.data_pipeline import DataPipeline
 
         transforms_out = {}
@@ -957,9 +967,9 @@ class InputTransform(Properties):
 
         return transforms_out
 
-    def _check_transforms(
+    def __check_transforms(
         self, transform: Optional[Dict[str, Callable]], stage: RunningStage
-    ) -> Optional[Dict[str, Callable]]:
+    ) -> Tuple[Optional[Dict[str, Callable]], Optional[bool]]:
         if transform is None:
             return transform
 
@@ -986,17 +996,11 @@ class InputTransform(Properties):
         elif is_per_sample_transform_on_device_in:
             collate_in_worker = False
 
-        self._collate_in_worker_from_transform = collate_in_worker
-        return transform
+        return transform, collate_in_worker
 
     @staticmethod
     def _identity(x: Any) -> Any:
         return x
-
-    def _get_transform(self, transform: Dict[str, Callable]) -> Callable:
-        if self.current_fn in transform:
-            return transform[self.current_fn]
-        return self._identity
 
     def __str__(self) -> str:
         return f"{self.__class__.__name__}(" + f"running_stage={self.running_stage}, transform={self._transform})"
@@ -1035,12 +1039,11 @@ def _sanitize_registry_transform(
     return enum, transform_kwargs
 
 
-def create_transform(
+def create_or_configure_input_transform(
     transform: INPUT_TRANSFORM_TYPE,
-    running_stage: RunningStage,
     input_transforms_registry: Optional[FlashRegistry] = None,
     transform_kwargs: Optional[Dict] = None,
-) -> Optional["InputTransform"]:
+) -> Optional[InputTransform]:
 
     if not transform_kwargs:
         transform_kwargs = {}
@@ -1049,14 +1052,19 @@ def create_transform(
         return transform
 
     if inspect.isclass(transform) and issubclass(transform, InputTransform):
-        return transform(running_stage=running_stage, **transform_kwargs)
+        # Deprecation Warning
+        rank_zero_warn(
+            "Please pass an instantiated object of the `InputTransform` class. Passing the Class and keyword arguments"
+            " separartely will be deprecated in v0.9.0.",
+            FutureWarning,
+        )
+        return transform(**transform_kwargs)
 
-    if isinstance(transform, partial) and transform.func.__name__ == "LambdaInputTransform":
-        return transform(running_stage=running_stage, **transform_kwargs)
+    if isinstance(transform, partial):
+        return transform(**transform_kwargs)
 
     if isinstance(transform, Callable):
         return LambdaInputTransform(
-            running_stage=running_stage,
             transform=transform,
             **transform_kwargs,
         )
@@ -1064,7 +1072,7 @@ def create_transform(
     if isinstance(transform, tuple) or isinstance(transform, (LightningEnum, str)):
         enum, transform_kwargs = _sanitize_registry_transform(transform, input_transforms_registry)
         transform_cls = input_transforms_registry.get(enum)
-        return transform_cls(running_stage, **transform_kwargs)
+        return transform_cls(**transform_kwargs)
 
     if not transform:
         return None
@@ -1072,15 +1080,9 @@ def create_transform(
     raise MisconfigurationException(f"The format for the transform isn't correct. Found {transform}")
 
 
-def _make_collates(input_transform: "InputTransform", on_device: bool, collate: Callable) -> Tuple[Callable, Callable]:
-    if on_device:
-        return input_transform._identity, collate
-    return collate, input_transform._identity
-
-
-class _InputTransformProcessorV2:
+class _InputTransformProcessor:
     """
-    This class is used to encapsulate the following functions of a InputTransformInputTransform Object:
+    This class is used to encapsulate the following functions of an `InputTransform` Object:
     Inside a worker:
         per_sample_transform: Function to transform an individual sample
         collate: Function to merge sample into a batch
@@ -1131,7 +1133,7 @@ class _InputTransformProcessorV2:
             else:
                 list_samples = samples
 
-            transformed_samples = [self.per_sample_transform(sample) for sample in list_samples]
+            transformed_samples = [self.per_sample_transform(sample, self.stage) for sample in list_samples]
 
             for sample in transformed_samples:
                 if self.on_device:
@@ -1141,16 +1143,16 @@ class _InputTransformProcessorV2:
 
             extracted_samples, metadata = self._extract_metadata(transformed_samples)
             try:
-                collated_samples = self.collate_fn(extracted_samples, metadata)
+                collated_samples = self.collate_fn(extracted_samples, self.stage, metadata)
             except TypeError:
-                collated_samples = self.collate_fn(extracted_samples)
+                collated_samples = self.collate_fn(extracted_samples, self.stage)
             if metadata and isinstance(collated_samples, dict):
                 collated_samples[DataKeys.METADATA] = metadata
             self.callback.on_collate(collated_samples, self.stage)
         else:
             collated_samples = samples
 
-        transformed_collated_samples = self.per_batch_transform(collated_samples)
+        transformed_collated_samples = self.per_batch_transform(collated_samples, self.stage)
         if self.on_device:
             self.callback.on_per_batch_transform_on_device(transformed_collated_samples, self.stage)
         else:
@@ -1170,15 +1172,22 @@ class _InputTransformProcessorV2:
         )
 
 
-def _create_collate_input_transform_processors(
-    input_transform: "InputTransform", callbacks: List[FlashCallback]
-) -> Tuple[_InputTransformProcessorV2, _InputTransformProcessorV2]:
-    """This utility is used to create the 2 `_InputTransformProcessorV2` objects which contain the transforms used
-    as the DataLoader `collate_fn` and the DataModule `on_after_batch_transfer` hook."""
+def __make_collates(input_transform: InputTransform, on_device: bool, collate: Callable) -> Tuple[Callable, Callable]:
+    """Returns the appropriate collate functions based on whether the transforms happen in a DataLoader worker or
+    on the device (main process)."""
+    if on_device:
+        return input_transform._identity, collate
+    return collate, input_transform._identity
+
+
+def __configure_worker_and_device_collate_fn(
+    running_stage: RunningStage, input_transform: InputTransform
+) -> Tuple[Callable, Callable]:
 
     from flash.core.data.data_pipeline import DataPipeline
 
-    prefix: str = _STAGES_PREFIX[input_transform.running_stage]
+    prefix: str = _STAGES_PREFIX[running_stage]
+    transform_for_stage: _InputTransformPerStage = input_transform._transform[running_stage]
 
     per_batch_transform_overridden: bool = DataPipeline._is_overridden_recursive(
         "per_batch_transform", input_transform, InputTransform, prefix=prefix
@@ -1189,41 +1198,63 @@ def _create_collate_input_transform_processors(
     )
 
     is_per_overridden = per_batch_transform_overridden and per_sample_transform_on_device_overridden
-    if input_transform._collate_in_worker_from_transform is None and is_per_overridden:
+    if transform_for_stage.collate_in_worker_from_transform is None and is_per_overridden:
         raise MisconfigurationException(
             f"{input_transform.__class__.__name__}: `per_batch_transform` and `per_sample_transform_on_device` "
-            f"are mutually exclusive for stage {input_transform.running_stage}"
+            f"are mutually exclusive for stage {running_stage}"
         )
 
-    if isinstance(input_transform._collate_in_worker_from_transform, bool):
-        worker_collate_fn, device_collate_fn = _make_collates(
-            input_transform, not input_transform._collate_in_worker_from_transform, input_transform._collate
+    if isinstance(transform_for_stage.collate_in_worker_from_transform, bool):
+        worker_collate_fn, device_collate_fn = __make_collates(
+            input_transform, not transform_for_stage.collate_in_worker_from_transform, input_transform._collate
         )
     else:
-        worker_collate_fn, device_collate_fn = _make_collates(
+        worker_collate_fn, device_collate_fn = __make_collates(
             input_transform, per_sample_transform_on_device_overridden, input_transform._collate
         )
 
     worker_collate_fn = (
-        worker_collate_fn.collate_fn if isinstance(worker_collate_fn, _InputTransformProcessorV2) else worker_collate_fn
+        worker_collate_fn.collate_fn if isinstance(worker_collate_fn, _InputTransformProcessor) else worker_collate_fn
     )
 
-    worker_input_transform_processor = _InputTransformProcessorV2(
+    return worker_collate_fn, device_collate_fn
+
+
+def create_worker_input_transform_processor(
+    running_stage: RunningStage, input_transform: InputTransform, callbacks: List[FlashCallback]
+) -> _InputTransformProcessor:
+    """This utility is used to create the 2 `_InputTransformProcessor` objects which contain the transforms used as
+    the DataLoader `collate_fn`."""
+    worker_collate_fn, _ = __configure_worker_and_device_collate_fn(
+        running_stage=running_stage, input_transform=input_transform
+    )
+    worker_input_transform_processor = _InputTransformProcessor(
         input_transform,
         worker_collate_fn,
         input_transform._per_sample_transform,
         input_transform._per_batch_transform,
-        input_transform.running_stage,
+        running_stage,
         callbacks=callbacks,
     )
-    device_input_transform_processor = _InputTransformProcessorV2(
+    return worker_input_transform_processor
+
+
+def create_device_input_transform_processor(
+    running_stage: RunningStage, input_transform: InputTransform, callbacks: List[FlashCallback]
+) -> _InputTransformProcessor:
+    """This utility is used to create a `_InputTransformProcessor` object which contain the transforms used as the
+    DataModule `on_after_batch_transfer` hook."""
+    _, device_collate_fn = __configure_worker_and_device_collate_fn(
+        running_stage=running_stage, input_transform=input_transform
+    )
+    device_input_transform_processor = _InputTransformProcessor(
         input_transform,
         device_collate_fn,
         input_transform._per_sample_transform_on_device,
         input_transform._per_batch_transform_on_device,
-        input_transform.running_stage,
+        running_stage,
         apply_per_sample_transform=device_collate_fn != input_transform._identity,
         on_device=True,
         callbacks=callbacks,
     )
-    return worker_input_transform_processor, device_input_transform_processor
+    return device_input_transform_processor

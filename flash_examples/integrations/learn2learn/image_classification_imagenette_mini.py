@@ -34,7 +34,7 @@ warnings.simplefilter("ignore")
 train_dataset = l2l.vision.datasets.MiniImagenet(root="data", mode="train", download=True)
 val_dataset = l2l.vision.datasets.MiniImagenet(root="data", mode="validation", download=True)
 
-train_transform = {
+transform = {
     "per_sample_transform": nn.Sequential(
         ApplyToKeys(
             DataKeys.INPUT,
@@ -70,7 +70,7 @@ datamodule = ImageClassificationData.from_tensors(
     train_targets=torch.from_numpy(train_dataset.y.astype(int)),
     val_data=val_dataset.x,
     val_targets=torch.from_numpy(val_dataset.y.astype(int)),
-    train_transform=train_transform,
+    transform=transform,
 )
 
 model = ImageClassifier(

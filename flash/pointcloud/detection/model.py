@@ -19,6 +19,7 @@ from torch import nn
 from torch.utils.data import DataLoader, Sampler
 
 from flash.core.data.io.input import DataKeys, Input
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.apply_func import get_callable_dict
@@ -134,6 +135,7 @@ class PointCloudObjectDetector(Task):
     def _process_dataset(
         self,
         dataset: Input,
+        input_transform: InputTransform,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -145,6 +147,11 @@ class PointCloudObjectDetector(Task):
     ) -> DataLoader:
         dataset.input_transform_fn = self.model.preprocess
         dataset.transform_fn = self.model.transform
+
+        if self.input_transform is None:
+            self.input_transform = input_transform
+        if self.collate_fn is not None:
+            self.input_transform.inject_collate_fn(self.collate_fn)
 
         return DataLoader(
             dataset,
