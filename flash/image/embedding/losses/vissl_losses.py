@@ -14,7 +14,6 @@
 from typing import List, Union
 
 import torch.cuda
-from torch import nn
 
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _VISSL_AVAILABLE
@@ -30,12 +29,14 @@ else:
 
 
 def _recursive_register(module):
-    for key, value in module.__dict__.items():
-        if isinstance(value, torch.Tensor):
-            delattr(module, key)
-            module.register_buffer(key, value)
-        if isinstance(value, nn.Module):
-            _recursive_register(value)
+    named_tensors = [(key, value) for key, value in module.__dict__.items() if isinstance(value, torch.Tensor)]
+    for name, tensor in named_tensors:
+        delattr(module, name)
+        module.register_buffer(name, tensor)
+
+    for child_module in module.modules():
+        if child_module is not module:
+            _recursive_register(child_module)
 
 
 def get_loss_fn(loss_name: str, cfg: AttrDict):
