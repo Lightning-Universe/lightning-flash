@@ -5,8 +5,3 @@ from flash.image.embedding.vissl.transforms.utilities import (  # noqa: F401
     multicrop_collate_fn,
     simclr_collate_fn,
 )
-
-if _VISSL_AVAILABLE:
-    from classy_vision.dataset.transforms import register_transform  # noqa: F401
-
-    register_transform("multicrop_ssl_transform")(StandardMultiCropSSLTransform)

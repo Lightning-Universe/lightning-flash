@@ -62,30 +62,28 @@ def test_load_from_checkpoint_dependency_error():
             "dino_transform",
             marks=pytest.mark.skipif(torch.cuda.device_count() < 1, reason="VISSL DINO calls all_reduce internally."),
         ),
-        ("vision_transformer", "barlow_twins", "simclr_head", "barlow_twins_transform"),
+        ("vision_transformer", "barlow_twins", "barlow_twins_head", "barlow_twins_transform"),
         ("vision_transformer", "swav", "swav_head", "swav_transform"),
     ],
 )
 def test_vissl_training(backbone, training_strategy, head, pretraining_transform):
     # moco strategy, transform and head is not added for this test as it doesn't work as of now.
     datamodule = ImageClassificationData.from_datasets(
-        train_dataset=FakeData(),
+        train_dataset=FakeData(16),
+        predict_dataset=FakeData(4),
         batch_size=4,
     )
-
-    training_strategy_kwargs = {
-        "dims": [384, 2048, 2048, 256],
-    }
-    dim_key = "latent_embedding_dim" if training_strategy == "barlow_twins" else "embedding_dim"
-    training_strategy_kwargs[dim_key] = 256
 
     embedder = ImageEmbedder(
         backbone=backbone,
         training_strategy=training_strategy,
         head=head,
         pretraining_transform=pretraining_transform,
-        training_strategy_kwargs=training_strategy_kwargs,
     )
 
     trainer = flash.Trainer(max_steps=3, max_epochs=1, gpus=torch.cuda.device_count())
     trainer.fit(embedder, datamodule=datamodule)
+    predictions = trainer.predict(embedder, datamodule=datamodule)
+    for prediction_batch in predictions:
+        for prediction in prediction_batch:
+            assert prediction.size(0) == 384
