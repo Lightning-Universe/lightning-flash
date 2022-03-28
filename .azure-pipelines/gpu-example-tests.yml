@@ -13,6 +13,7 @@ jobs:
     configs:
     - "image"
     - "icevision"
+    - "vissl"
     - "text"
     - "tabular"
     - "video"
