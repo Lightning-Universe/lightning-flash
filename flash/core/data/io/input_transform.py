@@ -1060,7 +1060,7 @@ def create_or_configure_input_transform(
         )
         return transform(**transform_kwargs)
 
-    if isinstance(transform, partial) and transform.func.__name__ == "LambdaInputTransform":
+    if isinstance(transform, partial):
         return transform(**transform_kwargs)
 
     if isinstance(transform, Callable):

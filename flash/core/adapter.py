@@ -91,6 +91,15 @@ class AdapterTask(Task):
 
     @torch.jit.unused
     @property
+    def collate_fn(self) -> Optional[Callable]:
+        return self.adapter.collate_fn
+
+    @collate_fn.setter
+    def collate_fn(self, collate_fn: Callable) -> None:
+        self.adapter.collate_fn = collate_fn
+
+    @torch.jit.unused
+    @property
     def backbone(self) -> nn.Module:
         return self.adapter.backbone
 
