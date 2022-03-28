@@ -35,9 +35,10 @@ embedder = ImageEmbedder(
 )
 
 # 3. Create the trainer and pre-train the encoder
-# use accelerator='ddp' when using GPU(s),
-# i.e. flash.Trainer(max_epochs=3, gpus=1, accelerator='ddp')
-trainer = flash.Trainer(max_epochs=1, gpus=torch.cuda.device_count())
+# use strategy='ddp' when using GPU(s)
+trainer = flash.Trainer(
+    max_epochs=1, gpus=torch.cuda.device_count(), strategy="ddp" if torch.cuda.device_count() > 1 else None
+)
 trainer.fit(embedder, datamodule=datamodule)
 
 # 4. Save the model!
