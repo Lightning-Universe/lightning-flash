@@ -29,6 +29,7 @@ from flash.core.utilities.imports import (
     _TABULAR_TESTING,
     _TEXT_TESTING,
     _VIDEO_TESTING,
+    _VISSL_AVAILABLE,
 )
 from tests.examples.utils import run_test
 from tests.helpers.forked import forked
@@ -57,6 +58,12 @@ root = Path(__file__).parent.parent.parent
             marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed"),
         ),
         pytest.param(
+            "image_embedder.py",
+            marks=pytest.mark.skipif(
+                not (_IMAGE_AVAILABLE and _VISSL_AVAILABLE), reason="image libraries aren't installed"
+            ),
+        ),
+        pytest.param(
             "object_detection.py",
             marks=pytest.mark.skipif(
                 not (_IMAGE_AVAILABLE and _ICEVISION_AVAILABLE), reason="image libraries aren't installed"
@@ -74,7 +81,6 @@ root = Path(__file__).parent.parent.parent
                 not (_IMAGE_AVAILABLE and _ICEVISION_AVAILABLE), reason="image libraries aren't installed"
             ),
         ),
-        # pytest.param("finetuning", "object_detection.py"),  # TODO: takes too long.
         pytest.param(
             "question_answering.py",
             marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed"),
