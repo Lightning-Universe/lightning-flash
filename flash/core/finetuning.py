@@ -22,7 +22,6 @@ from torch.nn import Module
 from torch.optim import Optimizer
 
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _PL_AVAILABLE
 
 
 class FinetuningStrategies(LightningEnum):
@@ -170,12 +169,11 @@ _DEFAULTS_FINETUNE_STRATEGIES = [
 
 _FINETUNING_STRATEGIES_REGISTRY = FlashRegistry("finetuning_strategies")
 
-if _PL_AVAILABLE:
-    for strategy in FinetuningStrategies:
-        _FINETUNING_STRATEGIES_REGISTRY(
-            name=strategy.value,
-            fn=partial(FlashBaseFinetuning, strategy_key=strategy),
-        )
+for strategy in FinetuningStrategies:
+    _FINETUNING_STRATEGIES_REGISTRY(
+        name=strategy.value,
+        fn=partial(FlashBaseFinetuning, strategy_key=strategy),
+    )
 
 
 class NoFreeze(FlashBaseFinetuning):
