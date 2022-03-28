@@ -13,6 +13,9 @@
 # limitations under the License.
 from typing import List, Union
 
+import torch.cuda
+from torch import nn
+
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _VISSL_AVAILABLE
 
@@ -26,11 +29,21 @@ else:
     ClassyLoss = object
 
 
+def _recursive_register(module):
+    for key, value in module.__dict__.items():
+        if isinstance(value, torch.Tensor):
+            delattr(module, key)
+            module.register_buffer(key, value)
+        if isinstance(value, nn.Module):
+            _recursive_register(value)
+
+
 def get_loss_fn(loss_name: str, cfg: AttrDict):
     set_cpu_device()
     loss_fn = LOSS_REGISTRY[loss_name](cfg)
     loss_fn.__dict__["loss_name"] = loss_name
 
+    _recursive_register(loss_fn)
     return loss_fn
 
 

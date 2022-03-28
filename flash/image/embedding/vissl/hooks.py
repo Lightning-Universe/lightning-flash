@@ -49,7 +49,11 @@ class TrainingSetupHook(ClassyHook):
 
         # get around vissl distributed training by setting MockTask flags
         num_nodes = lightning_module.trainer.num_nodes
-        accelerators_ids = accelerator_connector(lightning_module.trainer).parallel_device_ids
+        accelerators_ids = getattr(
+            lightning_module.trainer,
+            "device_ids",
+            getattr(accelerator_connector(lightning_module.trainer), "parallel_device_ids", None),
+        )
         accelerator_per_node = len(accelerators_ids) if accelerators_ids is not None else 1
         task.world_size = num_nodes * accelerator_per_node
 
