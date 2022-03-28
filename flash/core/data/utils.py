@@ -39,6 +39,7 @@ _STAGES_PREFIX = {
     RunningStage.VALIDATING: "val",
     RunningStage.PREDICTING: "predict",
     RunningStage.SERVING: "serve",
+    RunningStage.SANITY_CHECKING: "val",
 }
 _STAGES_PREFIX_VALUES = {"train", "test", "val", "predict", "serve"}
 
