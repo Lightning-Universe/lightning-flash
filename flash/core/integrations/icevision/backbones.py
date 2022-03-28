@@ -15,6 +15,7 @@ from inspect import getmembers
 
 from torch import nn
 
+from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
 
@@ -22,17 +23,19 @@ if _ICEVISION_AVAILABLE:
     from icevision.backbones import BackboneConfig
 
 
-def _log_with_prog_bar_override(self, name, value, **kwargs):
+def _log_with_name_and_prog_bar_override(self, name, value, **kwargs):
     if "prog_bar" not in kwargs:
         kwargs["prog_bar"] = True
-    return self._original_log(name.split("/")[-1], value, **kwargs)
+    metric = name.split("/")[-1]
+    metric = f"{_STAGES_PREFIX[self.trainer.state.stage]}_{metric}"
+    return self._original_log(metric, value, **kwargs)
 
 
 def icevision_model_adapter(model_type):
     adapter = model_type.lightning.ModelAdapter
     if not hasattr(adapter, "_original_log"):
         adapter._original_log = adapter.log
-        adapter.log = _log_with_prog_bar_override
+        adapter.log = _log_with_name_and_prog_bar_override
     return adapter
 
 
