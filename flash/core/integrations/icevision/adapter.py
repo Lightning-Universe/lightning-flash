@@ -40,8 +40,8 @@ class SimpleCOCOMetric(COCOMetric):
     def finalize(self) -> Dict[str, float]:
         logs = super().finalize()
         return {
-            "Precision (IoU=0.50:0.95,area=all)": logs["AP (IoU=0.50:0.95) area=all"],
-            "Recall (IoU=0.50:0.95,area=all,maxDets=100)": logs["AR (IoU=0.50:0.95) area=all maxDets=100"],
+            "precision (IoU=0.50:0.95,area=all)": logs["AP (IoU=0.50:0.95) area=all"],
+            "recall (IoU=0.50:0.95,area=all,maxDets=100)": logs["AR (IoU=0.50:0.95) area=all maxDets=100"],
         }
 
 
