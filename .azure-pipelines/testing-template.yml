@@ -36,7 +36,7 @@ jobs:
 
       - bash: |
           # python -m pip install "pip==20.1"
-          if [ "${{config}}" == "icevision" ]; then pip install '.[image]' icevision effdet icedata; elif [ "${{config}}" == "icevision" ]; then pip install '.[image]'; else pip install '.[${{config}}]'; fi
+          if [ "${{config}}" == "icevision" ]; then pip install '.[image]' icevision effdet icedata; elif [ "${{config}}" == "vissl" ]; then pip install '.[image]'; else pip install '.[${{config}}]'; fi
           pip install '.[test]' --upgrade-strategy only-if-needed
           pip list
         displayName: 'Install dependencies'

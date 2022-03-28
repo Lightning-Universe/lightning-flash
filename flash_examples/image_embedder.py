@@ -50,7 +50,8 @@ datamodule = ImageClassificationData.from_files(
     predict_files=[
         "data/hymenoptera_data/predict/153783656_85f9c3ac70.jpg",
         "data/hymenoptera_data/predict/2039585088_c6f47c592e.jpg",
-    ]
+    ],
+    batch_size=3,
 )
 embeddings = trainer.predict(embedder, datamodule=datamodule)
 
