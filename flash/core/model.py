@@ -774,12 +774,6 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         # 2) If return value is a dictionary, check for the lr_scheduler_config `only keys` and return the config.
         lr_scheduler: Union[_LRScheduler, Dict[str, Any]] = lr_scheduler_fn(optimizer, **lr_scheduler_kwargs)
 
-        if not isinstance(lr_scheduler, (_LRScheduler, Dict)):
-            raise MisconfigurationException(
-                f"Please make sure that your custom configuration outputs either an LR Scheduler or a scheduler"
-                f" configuration with keys belonging to {list(default_scheduler_config.keys())}."
-            )
-
         if isinstance(lr_scheduler, Dict):
             dummy_config = default_scheduler_config
             if not all(config_key in dummy_config.keys() for config_key in lr_scheduler.keys()):
