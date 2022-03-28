@@ -41,7 +41,6 @@ _STAGES_PREFIX = {
     RunningStage.SERVING: "serve",
     RunningStage.SANITY_CHECKING: "val",
 }
-_STAGES_PREFIX_VALUES = {"train", "test", "val", "predict", "serve"}
 
 _INPUT_TRANSFORM_FUNCS: Set[str] = {
     "per_sample_transform",
