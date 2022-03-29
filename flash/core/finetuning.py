@@ -11,17 +11,25 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 from functools import partial
 from typing import Iterable, Optional, Tuple, Union
 
 from pytorch_lightning import LightningModule
 from pytorch_lightning.callbacks import BaseFinetuning
-from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.nn import Module
 from torch.optim import Optimizer
 
 from flash.core.registry import FlashRegistry
+
+if not os.environ.get("READTHEDOCS", False):
+    from pytorch_lightning.utilities.enums import LightningEnum
+else:
+    # ReadTheDocs mocks the `LightningEnum` import to be a regular type, so we replace it with a plain Enum here.
+    from enum import Enum
+
+    LightningEnum = Enum
 
 
 class FinetuningStrategies(LightningEnum):
@@ -63,7 +71,8 @@ class FlashBaseFinetuning(BaseFinetuning):
 
         if self.strategy == FinetuningStrategies.FREEZE_UNFREEZE and not isinstance(self.strategy_metadata, int):
             raise MisconfigurationException(
-                "`freeze_unfreeze` stratgey only accepts one integer denoting the epoch number to switch."
+                "The `freeze_unfreeze` strategy requires an integer denoting the epoch number to unfreeze at. Example: "
+                "`strategy=('freeze_unfreeze', 7)`"
             )
         if self.strategy == FinetuningStrategies.UNFREEZE_MILESTONES and not (
             isinstance(self.strategy_metadata, Tuple)
@@ -73,8 +82,8 @@ class FlashBaseFinetuning(BaseFinetuning):
             and isinstance(self.strategy_metadata[0][1], int)
         ):
             raise MisconfigurationException(
-                "`unfreeze_milestones` strategy only accepts the format Tuple[Tuple[int, int], int]. HINT example: "
-                "((5, 10), 15)."
+                "The `unfreeze_milestones` strategy requires the format Tuple[Tuple[int, int], int]. Example: "
+                "`strategy=('unfreeze_milestones', ((5, 10), 15))`"
             )
 
     def _get_modules_to_freeze(self, pl_module: LightningModule) -> Union[Module, Iterable[Union[Module, Iterable]]]:
@@ -158,19 +167,11 @@ class FlashBaseFinetuning(BaseFinetuning):
             self._unfreeze_milestones_function(pl_module, epoch, optimizer, opt_idx, self.strategy_metadata)
 
 
-# Used for properly verifying input and providing neat and helpful error messages for users.
-_DEFAULTS_FINETUNE_STRATEGIES = [
-    FinetuningStrategies.NO_FREEZE.value,
-    FinetuningStrategies.FREEZE.value,
-    FinetuningStrategies.FREEZE_UNFREEZE.value,
-    FinetuningStrategies.UNFREEZE_MILESTONES.value,
-]
-
 _FINETUNING_STRATEGIES_REGISTRY = FlashRegistry("finetuning_strategies")
 
-for strategy in _DEFAULTS_FINETUNE_STRATEGIES:
+for strategy in FinetuningStrategies:
     _FINETUNING_STRATEGIES_REGISTRY(
-        name=strategy,
+        name=strategy.value,
         fn=partial(FlashBaseFinetuning, strategy_key=strategy),
     )
 
