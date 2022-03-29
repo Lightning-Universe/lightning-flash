@@ -55,16 +55,16 @@ def test_load_from_checkpoint_dependency_error():
 @pytest.mark.parametrize(
     "backbone, training_strategy, head, pretraining_transform",
     [
-        ("vision_transformer", "simclr", "simclr_head", "simclr_transform"),
-        pytest.param(
-            "vision_transformer",
-            "dino",
-            "dino_head",
-            "dino_transform",
-            marks=pytest.mark.skipif(torch.cuda.device_count() < 1, reason="VISSL DINO calls all_reduce internally."),
-        ),
+        # ("vision_transformer", "simclr", "simclr_head", "simclr_transform"),
+        # pytest.param(
+        #     "vision_transformer",
+        #     "dino",
+        #     "dino_head",
+        #     "dino_transform",
+        #     marks=pytest.mark.skipif(torch.cuda.device_count() < 1, reason="VISSL DINO calls all_reduce internally."),
+        # ),
         ("vision_transformer", "barlow_twins", "barlow_twins_head", "barlow_twins_transform"),
-        ("vision_transformer", "swav", "swav_head", "swav_transform"),
+        # ("vision_transformer", "swav", "swav_head", "swav_transform"),
     ],
 )
 @spawned
