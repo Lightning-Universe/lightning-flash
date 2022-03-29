@@ -19,7 +19,7 @@ import torch
 import flash
 from flash.core.utilities.imports import _IMAGE_AVAILABLE, _TORCHVISION_AVAILABLE, _VISSL_AVAILABLE
 from flash.image import ImageClassificationData, ImageEmbedder
-from tests.helpers.forked import forked
+from tests.helpers.decorators import spawned
 
 if _TORCHVISION_AVAILABLE:
     from torchvision.datasets import FakeData
@@ -67,7 +67,7 @@ def test_load_from_checkpoint_dependency_error():
         ("vision_transformer", "swav", "swav_head", "swav_transform"),
     ],
 )
-@forked
+@spawned
 def test_vissl_training(backbone, training_strategy, head, pretraining_transform):
     # moco strategy, transform and head is not added for this test as it doesn't work as of now.
     datamodule = ImageClassificationData.from_datasets(

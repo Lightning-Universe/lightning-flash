@@ -32,7 +32,7 @@ from flash.core.utilities.imports import (
     _VISSL_AVAILABLE,
 )
 from tests.examples.utils import run_test
-from tests.helpers.forked import forked
+from tests.helpers.decorators import forked
 
 root = Path(__file__).parent.parent.parent
 
