@@ -33,7 +33,7 @@ This task can now be sent to the ``fit()`` method of :class:`~flash.core.trainer
 
 .. warning::
 
-   The VISSL integration does not support multi-GPU training.
+   The VISSL integration does not support multi-GPU training. All training strategies support single-GPU training and all except for DINO support CPU training.
 
 .. literalinclude:: ../../../flash_examples/image_embedder.py
     :language: python

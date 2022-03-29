@@ -87,7 +87,6 @@ def test_vissl_training(backbone, training_strategy, head, pretraining_transform
         max_steps=3,
         max_epochs=1,
         gpus=torch.cuda.device_count(),
-        strategy="ddp" if (training_strategy == "dino" or torch.cuda.device_count() > 1) else None,
     )
 
     trainer.fit(embedder, datamodule=datamodule)
