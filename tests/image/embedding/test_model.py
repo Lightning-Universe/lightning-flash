@@ -19,7 +19,6 @@ import torch
 import flash
 from flash.core.utilities.imports import _IMAGE_AVAILABLE, _TORCHVISION_AVAILABLE, _VISSL_AVAILABLE
 from flash.image import ImageClassificationData, ImageEmbedder
-from tests.helpers.decorators import spawned
 
 if _TORCHVISION_AVAILABLE:
     from torchvision.datasets import FakeData
@@ -51,23 +50,23 @@ def test_load_from_checkpoint_dependency_error():
         ImageEmbedder.load_from_checkpoint("not_a_real_checkpoint.pt")
 
 
+@pytest.mark.skipif(torch.cuda.device_count() > 1, reason="DDP not working.")
 @pytest.mark.skipif(not (_TORCHVISION_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
 @pytest.mark.parametrize(
     "backbone, training_strategy, head, pretraining_transform",
     [
-        # ("vision_transformer", "simclr", "simclr_head", "simclr_transform"),
-        # pytest.param(
-        #     "vision_transformer",
-        #     "dino",
-        #     "dino_head",
-        #     "dino_transform",
-        #     marks=pytest.mark.skipif(torch.cuda.device_count() < 1, reason="VISSL DINO calls all_reduce internally."),
-        # ),
+        ("vision_transformer", "simclr", "simclr_head", "simclr_transform"),
+        pytest.param(
+            "vision_transformer",
+            "dino",
+            "dino_head",
+            "dino_transform",
+            marks=pytest.mark.skipif(torch.cuda.device_count() < 1, reason="VISSL DINO calls all_reduce internally."),
+        ),
         ("vision_transformer", "barlow_twins", "barlow_twins_head", "barlow_twins_transform"),
-        # ("vision_transformer", "swav", "swav_head", "swav_transform"),
+        ("vision_transformer", "swav", "swav_head", "swav_transform"),
     ],
 )
-@spawned
 def test_vissl_training(backbone, training_strategy, head, pretraining_transform):
     # moco strategy, transform and head is not added for this test as it doesn't work as of now.
     datamodule = ImageClassificationData.from_datasets(
