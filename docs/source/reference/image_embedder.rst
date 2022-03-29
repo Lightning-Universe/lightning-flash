@@ -31,10 +31,9 @@ Then the user can configure the :class:`~flash.image.embedding.model.ImageEmbedd
 There are options provided to send additional arguments to config selections.
 This task can now be sent to the ``fit()`` method of :class:`~flash.core.trainer.Trainer`.
 
-.. note::
+.. warning::
 
-   A lot of VISSL loss functions use hard-coded ``torch.distributed`` methods. The user is suggested to use ``accelerator=ddp`` even with a single GPU.
-   Only ``barlow_twins`` training strategy works on the CPU. All other loss functions are configured to work on GPUs.
+   The VISSL integration does not support multi-GPU training.
 
 .. literalinclude:: ../../../flash_examples/image_embedder.py
     :language: python

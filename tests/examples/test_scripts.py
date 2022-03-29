@@ -59,9 +59,12 @@ root = Path(__file__).parent.parent.parent
         ),
         pytest.param(
             "image_embedder.py",
-            marks=pytest.mark.skipif(
-                not (_IMAGE_AVAILABLE and _VISSL_AVAILABLE), reason="image libraries aren't installed"
-            ),
+            marks=[
+                pytest.mark.skipif(
+                    not (_IMAGE_AVAILABLE and _VISSL_AVAILABLE), reason="image libraries aren't installed"
+                ),
+                pytest.mark.skipif(torch.cuda.device_count() > 1, reason="VISSL integration doesn't support multi-GPU"),
+            ],
         ),
         pytest.param(
             "object_detection.py",

@@ -50,7 +50,7 @@ def test_load_from_checkpoint_dependency_error():
         ImageEmbedder.load_from_checkpoint("not_a_real_checkpoint.pt")
 
 
-@pytest.mark.skipif(torch.cuda.device_count() > 1, reason="DDP not working.")
+@pytest.mark.skipif(torch.cuda.device_count() > 1, reason="VISSL integration doesn't support multi-GPU")
 @pytest.mark.skipif(not (_TORCHVISION_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
 @pytest.mark.parametrize(
     "backbone, training_strategy, head, pretraining_transform",
