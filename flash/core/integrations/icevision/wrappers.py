@@ -15,16 +15,19 @@ from functools import partial
 
 import torch
 
+from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
 
 if _ICEVISION_AVAILABLE:
     from icevision.models.ross.efficientdet.lightning.model_adapter import ModelAdapter as EffDetModelAdapter
 
 
-def _log_with_prog_bar_override(log, name, value, **kwargs):
+def _log_with_name_and_prog_bar_override(log, adapter, name, value, **kwargs):
     if "prog_bar" not in kwargs:
         kwargs["prog_bar"] = True
-    return log(name.split("/")[-1], value, **kwargs)
+    metric = name.split("/")[-1]
+    metric = f"{_STAGES_PREFIX[adapter.trainer.state.stage]}_{metric}"
+    return log(metric, value, **kwargs)
 
 
 def _effdet_validation_step(validation_step, batch, batch_idx):
@@ -36,7 +39,7 @@ def _effdet_validation_step(validation_step, batch, batch_idx):
 
 def wrap_icevision_adapter(adapter):
     if not isinstance(adapter.log, partial):
-        adapter.log = partial(_log_with_prog_bar_override, adapter.log)
+        adapter.log = partial(_log_with_name_and_prog_bar_override, adapter.log, adapter)
 
     if isinstance(adapter, EffDetModelAdapter) and not isinstance(adapter.validation_step, partial):
         adapter.validation_step = partial(_effdet_validation_step, adapter.validation_step)
