@@ -24,7 +24,6 @@ import pytest
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning.callbacks import Callback
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn, Tensor
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
@@ -443,18 +442,6 @@ def test_errors_and_exceptions_optimizers_and_schedulers():
         task = ClassificationTask(model, optimizer="Adam", lr_scheduler="not_a_valid_key")
         task.configure_optimizers()
 
-    @ClassificationTask.lr_schedulers
-    def i_will_create_a_misconfiguration_exception(optimizer):
-        return "Done. Created."
-
-    with pytest.raises(MisconfigurationException):
-        task = ClassificationTask(model, optimizer="Adam", lr_scheduler="i_will_create_a_misconfiguration_exception")
-        task.configure_optimizers()
-
-    with pytest.raises(MisconfigurationException):
-        task = ClassificationTask(model, optimizer="Adam", lr_scheduler=i_will_create_a_misconfiguration_exception)
-        task.configure_optimizers()
-
     with pytest.raises(TypeError):
         task = ClassificationTask(model, optimizer="Adam", lr_scheduler=["not", "a", "valid", "type"])
         task.configure_optimizers()
@@ -464,8 +451,6 @@ def test_errors_and_exceptions_optimizers_and_schedulers():
             model, optimizer="Adam", lr_scheduler=(["not", "a", "valid", "type"], {"random_kwarg": 10})
         )
         task.configure_optimizers()
-
-    pass
 
 
 def test_classification_task_metrics():

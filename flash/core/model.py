@@ -37,7 +37,7 @@ from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.output import BASE_OUTPUTS
-from flash.core.finetuning import _DEFAULTS_FINETUNE_STRATEGIES, _FINETUNING_STRATEGIES_REGISTRY
+from flash.core.finetuning import _FINETUNING_STRATEGIES_REGISTRY
 from flash.core.hooks import FineTuningHooks
 from flash.core.optimizers.optimizers import _OPTIMIZERS_REGISTRY
 from flash.core.optimizers.schedulers import _SCHEDULERS_REGISTRY
@@ -531,7 +531,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         if isinstance(strategy, str):
             if strategy not in self.available_finetuning_strategies():
                 raise MisconfigurationException(
-                    f"Please provide a valid strategy from {_DEFAULTS_FINETUNE_STRATEGIES[:2]}."
+                    f"The `strategy` should be one of: {', '.join(self.available_finetuning_strategies())}."
                     " For more details and advanced finetuning options see our docs:"
                     " https://lightning-flash.readthedocs.io/en/stable/general/finetuning.html"
                 )
@@ -540,16 +540,15 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         elif isinstance(strategy, Tuple):
             if not isinstance(strategy[0], str) or strategy[0] not in self.available_finetuning_strategies():
                 raise MisconfigurationException(
-                    f"First input of `strategy` in a tuple configuration should be a string within"
-                    f" {_DEFAULTS_FINETUNE_STRATEGIES[3:]}"
+                    f"The first input of `strategy` in a tuple configuration should be one of:"
+                    f" {', '.join(self.available_finetuning_strategies())}."
                 )
             finetuning_strategy_fn: Callable = self.finetuning_strategies.get(key=strategy[0])
             finetuning_strategy_metadata = {"strategy_metadata": strategy[1], "train_bn": train_bn}
         else:
             raise MisconfigurationException(
-                "`strategy` should be a ``pytorch_lightning.callbacks.BaseFinetuning``"
-                f"callback or a str within {list(_DEFAULTS_FINETUNE_STRATEGIES[:3])}"
-                f"or a tuple configuration with {list(_DEFAULTS_FINETUNE_STRATEGIES[3:])}"
+                "The `strategy` should be a ``pytorch_lightning.callbacks.BaseFinetuning`` callback or one of: "
+                f"{', '.join(self.available_finetuning_strategies())}."
             )
 
         return [finetuning_strategy_fn(**finetuning_strategy_metadata)]
@@ -773,12 +772,6 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         # 1) If return value is an instance of _LR_Scheduler -> Add to current config and return the config.
         # 2) If return value is a dictionary, check for the lr_scheduler_config `only keys` and return the config.
         lr_scheduler: Union[_LRScheduler, Dict[str, Any]] = lr_scheduler_fn(optimizer, **lr_scheduler_kwargs)
-
-        if not isinstance(lr_scheduler, (_LRScheduler, Dict)):
-            raise MisconfigurationException(
-                f"Please make sure that your custom configuration outputs either an LR Scheduler or a scheduler"
-                f" configuration with keys belonging to {list(default_scheduler_config.keys())}."
-            )
 
         if isinstance(lr_scheduler, Dict):
             dummy_config = default_scheduler_config
