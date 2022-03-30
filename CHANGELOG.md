@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Added `available_outputs` method to the `Task` ([#1206](https://github.com/PyTorchLightning/lightning-flash/pull/1206))
 
+- Added support for using the `ImageEmbedder` SSL training for all image classifier backbones ([#1264](https://github.com/PyTorchLightning/lightning-flash/pull/1264))
+
 ### Changed
 
 ### Deprecated
