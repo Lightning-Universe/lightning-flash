@@ -13,9 +13,11 @@
 # limitations under the License.
 import pytest
 
+from flash.core.utilities.imports import _VISSL_AVAILABLE
 from flash.image.embedding.model import ImageEmbedder
 
 
+@pytest.mark.skipif(not _VISSL_AVAILABLE, reason="vissl not installed.")
 @pytest.mark.parametrize(
     "deprecated_backbone, alternative_backbone",
     [("resnet", "resnet50"), ("vision_transformer", "vit_small_patch16_224")],
