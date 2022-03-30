@@ -14,17 +14,21 @@
 import warnings
 from typing import Any, Dict, List, Optional
 
+from pytorch_lightning.utilities import rank_zero_warn
+
 from flash.core.adapter import AdapterTask
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _VISSL_AVAILABLE, requires
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE
-from flash.image.embedding.backbones import IMAGE_EMBEDDER_BACKBONES
+from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES
 from flash.image.embedding.strategies import IMAGE_EMBEDDER_STRATEGIES
 from flash.image.embedding.transforms import IMAGE_EMBEDDER_TRANSFORMS
 
 if _VISSL_AVAILABLE:
     import classy_vision
     import classy_vision.generic.distributed_util
+    from vissl.config.attr_dict import AttrDict
+    from vissl.models.trunks import MODEL_TRUNKS_REGISTRY
 
     # patch this to avoid classy vision/vissl based distributed training
     classy_vision.generic.distributed_util.get_world_size = lambda: 1
@@ -61,7 +65,7 @@ class ImageEmbedder(AdapterTask):
     """
 
     training_strategies: FlashRegistry = IMAGE_EMBEDDER_STRATEGIES
-    backbones: FlashRegistry = IMAGE_EMBEDDER_BACKBONES
+    backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES
     transforms: FlashRegistry = IMAGE_EMBEDDER_TRANSFORMS
 
     required_extras: List[str] = ["image", "vissl", "fairscale"]
@@ -71,7 +75,7 @@ class ImageEmbedder(AdapterTask):
         training_strategy: str,
         head: str,
         pretraining_transform: str,
-        backbone: str = "resnet",
+        backbone: str = "resnet18",
         pretrained: bool = False,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
@@ -91,7 +95,30 @@ class ImageEmbedder(AdapterTask):
         if pretraining_transform_kwargs is None:
             pretraining_transform_kwargs = {}
 
+        if backbone == "vision_transformer":
+            rank_zero_warn(
+                "The 'vision_transformer' backbone for the `ImageEmbedder` is deprecated in v0.8 and will be removed "
+                "in v0.9. Use 'vit_small_patch16_384' instead.",
+                category=FutureWarning,
+            )
+            backbone = "vit_small_patch16_384"
+
+        if backbone == "resnet":
+            rank_zero_warn(
+                "The 'resnet' backbone for the `ImageEmbedder` is deprecated in v0.8 and will be removed in v0.9. Use "
+                "'resnet50' instead.",
+                category=FutureWarning,
+            )
+            backbone = "resnet50"
+
         backbone, num_features = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
+
+        backbone.model_config = AttrDict({})
+        backbone.model_config.TRUNK = AttrDict({"NAME": "flash_backbone"})
+        backbone.original_forward = backbone.forward
+        backbone.forward = lambda batch, _: [backbone.original_forward(batch)]
+
+        MODEL_TRUNKS_REGISTRY["flash_backbone"] = lambda _, __: backbone
 
         metadata = self.training_strategies.get(training_strategy, with_metadata=True)
         loss_fn, head, hooks = metadata["fn"](head=head, num_features=num_features, **training_strategy_kwargs)

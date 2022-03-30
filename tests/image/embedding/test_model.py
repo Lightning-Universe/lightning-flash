@@ -60,9 +60,9 @@ def test_load_from_checkpoint_dependency_error():
 @pytest.mark.parametrize(
     "backbone, training_strategy, head, pretraining_transform",
     [
-        ("vision_transformer", "simclr", "simclr_head", "simclr_transform"),
+        ("resnet18", "simclr", "simclr_head", "simclr_transform"),
         pytest.param(
-            "vision_transformer",
+            "resnet18",
             "dino",
             "dino_head",
             "dino_transform",
