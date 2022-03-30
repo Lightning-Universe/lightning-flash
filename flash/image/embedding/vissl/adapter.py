@@ -51,6 +51,9 @@ class MockVISSLTask:
         # set for momentum teacher based hooks
         self.last_batch = AttrDict({"sample": AttrDict({"input": None, "data_momentum": None})})
 
+        # used in dino
+        self.additional_log_data = {}
+
 
 class VISSLAdapter(Adapter, AdaptVISSLHooks):
     """The ``VISSLAdapter`` is an :class:`~flash.core.adapter.Adapter` for integrating with VISSL.
