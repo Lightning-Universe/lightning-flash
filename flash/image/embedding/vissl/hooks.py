@@ -19,7 +19,6 @@ from pytorch_lightning.core.hooks import ModelHooks
 import flash
 from flash.core.utilities.compatibility import accelerator_connector
 from flash.core.utilities.imports import _VISSL_AVAILABLE
-from flash.image.embedding.losses.vissl_losses import _recursive_register
 
 if _VISSL_AVAILABLE:
     from classy_vision.hooks.classy_hook import ClassyHook
@@ -82,8 +81,7 @@ class SimCLRTrainingSetupHook(TrainingSetupHook):
 
         task.loss.info_criterion.precompute_pos_neg_mask()
 
-        # Re-register params / devices
-        _recursive_register(task.loss)
+        # Cast the loss to the correct device / dtype
         task.loss.to(task.vissl_adapter.adapter_task.device, task.vissl_adapter.adapter_task.dtype)
 
 
