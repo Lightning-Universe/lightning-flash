@@ -92,9 +92,9 @@ def test_vissl_training(backbone, training_strategy, head, pretraining_transform
     # DINO only works with DDP
     if training_strategy == "dino":
         if _PL_GREATER_EQUAL_1_5_0:
-            kwargs["strategy"] = "DDP"
+            kwargs["strategy"] = "ddp"
         else:
-            kwargs["accelerator"] = "DDP"
+            kwargs["accelerator"] = "ddp"
 
     trainer = flash.Trainer(
         max_steps=3,

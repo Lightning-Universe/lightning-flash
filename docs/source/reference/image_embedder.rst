@@ -46,7 +46,7 @@ You can view the available training strategies with the :meth:`~flash.image.embe
 
 .. note::
 
-    The ``"dino"`` training strategy only supports single GPU training with ``strategy="DDP"``.
+    The ``"dino"`` training strategy only supports single GPU training with ``strategy="ddp"``.
 
 The ``head`` and ``pretraining_transform`` arguments should match the choice of ``training_strategy`` following this table:
 
