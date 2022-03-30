@@ -16,6 +16,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Fixed normalizing inputs to video classification ([#1213](https://github.com/PyTorchLightning/lightning-flash/pull/1213))
 - Fixed a bug where `pretraining_transforms` in the `ImageEmbedder` was never called. ([1196](https://github.com/PyTorchLightning/lightning-flash/pull/1196))
 - Fixed a bug where `BASE_MODEL_NAME` was not in the dict for dino and moco strategies. ([1196](https://github.com/PyTorchLightning/lightning-flash/pull/1196))
+- Fixed support for `torch==1.11.0` ([#1234](https://github.com/PyTorchLightning/lightning-flash/pull/1234))
+- Fixed DDP spawn support for `ObjectDetector`, `InstanceSegmentation`, and `KeypointDetector` ([#1222](https://github.com/PyTorchLightning/lightning-flash/pull/1222))
+- Fixed a bug where `InstanceSegmentation` would fail if samples had an inconsistent number of bboxes, labels, and masks (these will now be treated as negative samples) ([#1222](https://github.com/PyTorchLightning/lightning-flash/pull/1222))
 
 ### Removed
 
@@ -32,12 +35,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Fixed DDP support for `VideoClassifier` ([#1189](https://github.com/PyTorchLightning/lightning-flash/pull/1189))
 - Fixed a bug where buffers in loss functions were not correctly registered in the `Task` ([#1203](https://github.com/PyTorchLightning/lightning-flash/pull/1203))
 - Fixed support for passing a sampler instance to `from_*` methods / the `DataModule` ([#1204](https://github.com/PyTorchLightning/lightning-flash/pull/1204))
-
-- Fixed support for `torch==1.11.0` ([#1234](https://github.com/PyTorchLightning/lightning-flash/pull/1234))
-
-- Fixed DDP spawn support for `ObjectDetector`, `InstanceSegmentation`, and `KeypointDetector` ([#1222](https://github.com/PyTorchLightning/lightning-flash/pull/1222))
-
-- Fixed a bug where `InstanceSegmentation` would fail if samples had an inconsistent number of bboxes, labels, and masks (these will now be treated as negative samples) ([#1222](https://github.com/PyTorchLightning/lightning-flash/pull/1222))
 
 ## [0.7.0] - 2022-02-15
 
