@@ -50,11 +50,11 @@ You can view the available training strategies with the :meth:`~flash.image.embe
 
 The ``head`` and ``pretraining_transform`` arguments should match the choice of ``training_strategy`` following this table:
 
-=====================  ================  ==========================
-``training_strategy``  ``head``          ``pretraining_transform``
-=====================  ================  ==========================
-``simclr``             ``simclr_head``   ``simclr_transform``
-``barlow_twins``       ``barlow_twins``  ``barlow_twins_transform``
-``swav``               ``swav_head``     ``swav_transform``
-``dino``               ``dino_head``     ``dino_transform``
-=====================  ================  ==========================
+=====================  =====================  ==========================
+``training_strategy``  ``head``               ``pretraining_transform``
+=====================  =====================  ==========================
+``simclr``             ``simclr_head``        ``simclr_transform``
+``barlow_twins``       ``barlow_twins_head``  ``barlow_twins_transform``
+``swav``               ``swav_head``          ``swav_transform``
+``dino``               ``dino_head``          ``dino_transform``
+=====================  =====================  ==========================
