@@ -27,9 +27,25 @@ if _VISSL_AVAILABLE:
     from classy_vision.losses import ClassyLoss
     from vissl.config.attr_dict import AttrDict
     from vissl.models.base_ssl_model import BaseSSLMultiInputOutputModel
+    from vissl.models.trunks import MODEL_TRUNKS_REGISTRY
 else:
     ClassyLoss = object
     ClassyHook = object
+
+
+class _VISSLBackboneWrapper(nn.Module):
+    """VISSL backbones take additional arguments in ``forward`` that are not needed for our integration.
+
+    This wrapper can be applied to a Flash backbone to ignore any additional arguments to ``forward``.
+    """
+
+    def __init__(self, backbone: nn.Module):
+        super().__init__()
+
+        self.backbone = backbone
+
+    def forward(self, x, *args, **kwargs):
+        return [self.backbone(x)]
 
 
 class MockVISSLTask:
@@ -114,8 +130,14 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
         head: Union[nn.Module, List[nn.Module]],
         hooks: List[ClassyHook],
     ) -> Adapter:
+        vissl_backbone = _VISSLBackboneWrapper(backbone)
+        vissl_backbone.model_config = AttrDict({})
+        vissl_backbone.model_config.TRUNK = AttrDict({"NAME": "flash_backbone"})
+
+        MODEL_TRUNKS_REGISTRY["flash_backbone"] = lambda _, __: vissl_backbone
+
         result = cls(
-            backbone=backbone,
+            backbone=vissl_backbone,
             head=head,
             loss_fn=loss_fn,
             hooks=hooks,
@@ -167,9 +189,6 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
 
         return cfg
 
-    def forward(self, batch: torch.Tensor) -> Any:
-        return self.vissl_base_model.trunk(batch, [])[0]
-
     def ssl_forward(self, batch) -> Any:
         model_output = self.vissl_base_model(batch)
 
@@ -213,8 +232,3 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
         self.adapter_task.log_dict({"test_loss": loss})
 
         return loss
-
-    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        input_image = batch[DataKeys.INPUT]
-
-        return self(input_image)

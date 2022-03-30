@@ -14,9 +14,11 @@
 import warnings
 from typing import Any, Dict, List, Optional
 
+import torch
 from pytorch_lightning.utilities import rank_zero_warn
 
 from flash.core.adapter import AdapterTask
+from flash.core.data.io.input import DataKeys
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _VISSL_AVAILABLE, requires
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE
@@ -27,8 +29,6 @@ from flash.image.embedding.transforms import IMAGE_EMBEDDER_TRANSFORMS
 if _VISSL_AVAILABLE:
     import classy_vision
     import classy_vision.generic.distributed_util
-    from vissl.config.attr_dict import AttrDict
-    from vissl.models.trunks import MODEL_TRUNKS_REGISTRY
 
     # patch this to avoid classy vision/vissl based distributed training
     classy_vision.generic.distributed_util.get_world_size = lambda: 1
@@ -40,6 +40,11 @@ if not _VISSL_AVAILABLE:
         "ImageEmbedder",
         "ImageEmbedder.*",
     ]
+
+_deprecated_backbones = {
+    "resnet": "resnet50",
+    "vision_transformer": "vit_small_patch16_224",
+}
 
 
 class ImageEmbedder(AdapterTask):
@@ -95,30 +100,15 @@ class ImageEmbedder(AdapterTask):
         if pretraining_transform_kwargs is None:
             pretraining_transform_kwargs = {}
 
-        if backbone == "vision_transformer":
+        if backbone in _deprecated_backbones:
             rank_zero_warn(
-                "The 'vision_transformer' backbone for the `ImageEmbedder` is deprecated in v0.8 and will be removed "
-                "in v0.9. Use 'vit_small_patch16_384' instead.",
+                f"The '{backbone}' backbone for the `ImageEmbedder` is deprecated in v0.8 and will be removed "
+                f"in v0.9. Use '{_deprecated_backbones[backbone]}' instead.",
                 category=FutureWarning,
             )
-            backbone = "vit_small_patch16_384"
+            backbone = _deprecated_backbones[backbone]
 
-        if backbone == "resnet":
-            rank_zero_warn(
-                "The 'resnet' backbone for the `ImageEmbedder` is deprecated in v0.8 and will be removed in v0.9. Use "
-                "'resnet50' instead.",
-                category=FutureWarning,
-            )
-            backbone = "resnet50"
-
-        backbone, num_features = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
-
-        backbone.model_config = AttrDict({})
-        backbone.model_config.TRUNK = AttrDict({"NAME": "flash_backbone"})
-        backbone.original_forward = backbone.forward
-        backbone.forward = lambda batch, _: [backbone.original_forward(batch)]
-
-        MODEL_TRUNKS_REGISTRY["flash_backbone"] = lambda _, __: backbone
+        model, num_features = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
 
         metadata = self.training_strategies.get(training_strategy, with_metadata=True)
         loss_fn, head, hooks = metadata["fn"](head=head, num_features=num_features, **training_strategy_kwargs)
@@ -126,13 +116,14 @@ class ImageEmbedder(AdapterTask):
         adapter = metadata["metadata"]["adapter"].from_task(
             self,
             loss_fn=loss_fn,
-            backbone=backbone,
+            backbone=model,
             head=head,
             hooks=hooks,
         )
 
         super().__init__(
             adapter=adapter,
+            model=model,
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
             learning_rate=learning_rate,
@@ -144,6 +135,12 @@ class ImageEmbedder(AdapterTask):
             "Warning: VISSL ImageEmbedder overrides any user provided transforms"
             " with pre-defined transforms for the training strategy."
         )
+
+    def forward(self, x: torch.Tensor) -> Any:
+        return self.model(x)
+
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        return self(batch[DataKeys.INPUT])
 
     def on_epoch_start(self) -> None:
         self.adapter.on_epoch_start()
