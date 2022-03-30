@@ -81,6 +81,9 @@ class SimCLRTrainingSetupHook(TrainingSetupHook):
 
         task.loss.info_criterion.precompute_pos_neg_mask()
 
+        # Cast the loss to the correct device / dtype
+        task.loss.to(lightning_module.device, lightning_module.dtype)
+
 
 class AdaptVISSLHooks(ModelHooks):
     def __init__(self, hooks: List[ClassyHook], task) -> None:
