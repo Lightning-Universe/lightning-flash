@@ -17,7 +17,12 @@ import pytest
 import torch
 
 import flash
-from flash.core.utilities.imports import _IMAGE_AVAILABLE, _TORCHVISION_AVAILABLE, _VISSL_AVAILABLE
+from flash.core.utilities.imports import (
+    _IMAGE_AVAILABLE,
+    _PL_GREATER_EQUAL_1_5_0,
+    _TORCHVISION_AVAILABLE,
+    _VISSL_AVAILABLE,
+)
 from flash.image import ImageClassificationData, ImageEmbedder
 
 if _TORCHVISION_AVAILABLE:
@@ -82,11 +87,20 @@ def test_vissl_training(backbone, training_strategy, head, pretraining_transform
         pretraining_transform=pretraining_transform,
     )
 
+    kwargs = {}
+
     # DINO only works with DDP
+    if training_strategy == "dino":
+        if _PL_GREATER_EQUAL_1_5_0:
+            kwargs["strategy"] = "DDP"
+        else:
+            kwargs["accelerator"] = "DDP"
+
     trainer = flash.Trainer(
         max_steps=3,
         max_epochs=1,
         gpus=torch.cuda.device_count(),
+        **kwargs,
     )
 
     trainer.fit(embedder, datamodule=datamodule)
