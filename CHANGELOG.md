@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [0.7.2] - 2022-03-30
+
+### Added
+
+### Changed
+
+### Fixed
+
+- Fixed examples (question answering), where NLTK's `punkt` module needs to be downloaded first. ([#1215](https://github.com/PyTorchLightning/lightning-flash/pull/1215/files))
+
+### Removed
+
 ## [0.7.1] - 2022-03-01
 
 ### Added
@@ -12,8 +24,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Added `available_outputs` method to the `Task` ([#1206](https://github.com/PyTorchLightning/lightning-flash/pull/1206))
 
 ### Fixed
-
-- Fixed examples (question answering), where NLTK's `punkt` module needs to be downloaded first. ([#1215](https://github.com/PyTorchLightning/lightning-flash/pull/1215/files))
 
 - Fixed a bug where DDP would not work with Flash tasks ([#1182](https://github.com/PyTorchLightning/lightning-flash/pull/1182))
 - Fixed DDP support for `VideoClassifier` ([#1189](https://github.com/PyTorchLightning/lightning-flash/pull/1189))
