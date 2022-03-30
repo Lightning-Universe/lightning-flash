@@ -6,10 +6,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [0.7.2] - 2022-03-30
 
-### Added
-
-### Changed
-
 ### Fixed
 
 - Fixed examples (question answering), where NLTK's `punkt` module needs to be downloaded first. ([#1215](https://github.com/PyTorchLightning/lightning-flash/pull/1215/files))
@@ -22,8 +18,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Fixed a bug where collate functions were never called in the `ImageEmbedder` class. ([#1217](https://github.com/PyTorchLightning/lightning-flash/pull/1217))
 - Fixed a bug where `ObjectDetector`, `InstanceSegmentation`, and `KeypointDetector` would log train and validation metrics with the same name ([#1252](https://github.com/PyTorchLightning/lightning-flash/pull/1252))
 - Fixed a bug where using `ReduceLROnPlateau` would raise an error ([#1251](https://github.com/PyTorchLightning/lightning-flash/pull/1251))
-
-### Removed
+- Fixed GPU support for self-supervised training with the `ImageEmbedder` ([#1256](https://github.com/PyTorchLightning/lightning-flash/pull/1256))
 
 ## [0.7.1] - 2022-03-01
 

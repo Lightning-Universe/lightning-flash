@@ -16,7 +16,8 @@ jobs:
   parameters:
     configs:
     - "image"
-    - "image,image_extras"
+    - "icevision"
+    - "vissl"
     - "text"
     - "tabular"
     - "video"

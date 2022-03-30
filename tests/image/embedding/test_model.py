@@ -17,7 +17,12 @@ import pytest
 import torch
 
 import flash
-from flash.core.utilities.imports import _IMAGE_AVAILABLE, _TORCHVISION_AVAILABLE, _VISSL_AVAILABLE
+from flash.core.utilities.imports import (
+    _IMAGE_AVAILABLE,
+    _PL_GREATER_EQUAL_1_5_0,
+    _TORCHVISION_AVAILABLE,
+    _VISSL_AVAILABLE,
+)
 from flash.image import ImageClassificationData, ImageEmbedder
 
 if _TORCHVISION_AVAILABLE:
@@ -50,6 +55,7 @@ def test_load_from_checkpoint_dependency_error():
         ImageEmbedder.load_from_checkpoint("not_a_real_checkpoint.pt")
 
 
+@pytest.mark.skipif(torch.cuda.device_count() > 1, reason="VISSL integration doesn't support multi-GPU")
 @pytest.mark.skipif(not (_TORCHVISION_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
 @pytest.mark.parametrize(
     "backbone, training_strategy, head, pretraining_transform",
@@ -70,7 +76,7 @@ def test_vissl_training(backbone, training_strategy, head, pretraining_transform
     # moco strategy, transform and head is not added for this test as it doesn't work as of now.
     datamodule = ImageClassificationData.from_datasets(
         train_dataset=FakeData(16),
-        predict_dataset=FakeData(4),
+        predict_dataset=FakeData(8),
         batch_size=4,
     )
 
@@ -81,7 +87,22 @@ def test_vissl_training(backbone, training_strategy, head, pretraining_transform
         pretraining_transform=pretraining_transform,
     )
 
-    trainer = flash.Trainer(max_steps=3, max_epochs=1, gpus=torch.cuda.device_count())
+    kwargs = {}
+
+    # DINO only works with DDP
+    if training_strategy == "dino":
+        if _PL_GREATER_EQUAL_1_5_0:
+            kwargs["strategy"] = "ddp"
+        else:
+            kwargs["accelerator"] = "ddp"
+
+    trainer = flash.Trainer(
+        max_steps=3,
+        max_epochs=1,
+        gpus=torch.cuda.device_count(),
+        **kwargs,
+    )
+
     trainer.fit(embedder, datamodule=datamodule)
     predictions = trainer.predict(embedder, datamodule=datamodule)
     for prediction_batch in predictions:

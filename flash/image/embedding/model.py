@@ -18,21 +18,24 @@ from flash.core.adapter import AdapterTask
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _VISSL_AVAILABLE, requires
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE
+from flash.image.embedding.backbones import IMAGE_EMBEDDER_BACKBONES
+from flash.image.embedding.strategies import IMAGE_EMBEDDER_STRATEGIES
+from flash.image.embedding.transforms import IMAGE_EMBEDDER_TRANSFORMS
 
 if _VISSL_AVAILABLE:
     import classy_vision
     import classy_vision.generic.distributed_util
 
-    from flash.image.embedding.backbones import IMAGE_EMBEDDER_BACKBONES
-    from flash.image.embedding.strategies import IMAGE_EMBEDDER_STRATEGIES
-    from flash.image.embedding.transforms import IMAGE_EMBEDDER_TRANSFORMS
-
     # patch this to avoid classy vision/vissl based distributed training
     classy_vision.generic.distributed_util.get_world_size = lambda: 1
-else:
-    IMAGE_EMBEDDER_BACKBONES = FlashRegistry("backbones")
-    IMAGE_EMBEDDER_STRATEGIES = FlashRegistry("embedder_training_strategies")
-    IMAGE_EMBEDDER_TRANSFORMS = FlashRegistry("embedder_transforms")
+
+# Skip doctests if requirements aren't available
+__doctest_skip__ = []
+if not _VISSL_AVAILABLE:
+    __doctest_skip__ += [
+        "ImageEmbedder",
+        "ImageEmbedder.*",
+    ]
 
 
 class ImageEmbedder(AdapterTask):
@@ -130,6 +133,18 @@ class ImageEmbedder(AdapterTask):
     @classmethod
     @requires(["image", "vissl", "fairscale"])
     def available_training_strategies(cls) -> List[str]:
+        """Get the list of available training strategies (passed to the ``training_strategy`` argument) for this
+        task.
+
+        Examples
+        ________
+
+        .. doctest::
+
+            >>> from flash.image import ImageEmbedder
+            >>> ImageEmbedder.available_training_strategies()  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            ['barlow_twins', ..., 'swav']
+        """
         registry: Optional[FlashRegistry] = getattr(cls, "training_strategies", None)
         if registry is None:
             return []

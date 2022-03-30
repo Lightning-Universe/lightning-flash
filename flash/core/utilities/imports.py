@@ -291,7 +291,7 @@ _AUDIO_TESTING = _AUDIO_AVAILABLE
 if "FLASH_TEST_TOPIC" in os.environ:
     topic = os.environ["FLASH_TEST_TOPIC"]
     _IMAGE_TESTING = topic == "image"
-    _IMAGE_EXTRAS_TESTING = topic == "image,image_extras"
+    _IMAGE_EXTRAS_TESTING = topic == "image,image_extras" or topic == "icevision" or topic == "vissl"
     _VIDEO_TESTING = topic == "video"
     _VIDEO_EXTRAS_TESTING = topic == "video,video_extras"
     _TABULAR_TESTING = topic == "tabular"
