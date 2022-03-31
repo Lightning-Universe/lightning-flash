@@ -89,6 +89,8 @@ def coco_keypoints(tmpdir):
     return COCODataConfig(train_folder, train_ann_file, predict_folder)
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _ICEVISION_AVAILABLE, reason="IceVision is not installed for testing")
 @pytest.mark.parametrize("backbone, head", [("resnet18_fpn", "keypoint_rcnn")])
 def test_model(coco_keypoints, backbone, head):
     datamodule = KeypointDetectionData.from_coco(
