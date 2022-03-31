@@ -132,7 +132,12 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
     ) -> Adapter:
         vissl_backbone = _VISSLBackboneWrapper(backbone)
         vissl_backbone.model_config = AttrDict({})
-        vissl_backbone.model_config.TRUNK = AttrDict({"NAME": "flash_backbone"})
+        vissl_backbone.model_config.TRUNK = AttrDict(
+            {
+                "NAME": "flash_backbone",
+                "VISION_TRANSFORMERS": AttrDict({"DROP_PATH_RATE": 0.0}),
+            }
+        )
 
         MODEL_TRUNKS_REGISTRY["flash_backbone"] = lambda _, __: vissl_backbone
 
