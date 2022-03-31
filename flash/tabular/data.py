@@ -55,5 +55,5 @@ class TabularData(DataModule):
         # https://developers.googleblog.com/2017/11/introducing-tensorflow-feature-columns.html
         # The following "formula" provides a general rule of thumb about the number of embedding dimensions:
         # embedding_dimensions =  number_of_categories**0.25
-        emb_dims = [max(int(n ** 0.25), 16) for n in self.cat_dims]
+        emb_dims = [max(int(n**0.25), 16) for n in self.cat_dims]
         return list(zip(self.cat_dims, emb_dims))
