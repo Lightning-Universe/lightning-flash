@@ -18,12 +18,14 @@ from unittest import mock
 
 import numpy as np
 import pytest
-from PIL import Image
 
 from flash import Trainer
 from flash.__main__ import main
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE
 from flash.image import InstanceSegmentation, InstanceSegmentationData
+
+if _IMAGE_AVAILABLE:
+    from PIL import Image
 
 COCODataConfig = collections.namedtuple("COCODataConfig", "train_folder train_ann_file predict_folder")
 
