@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [0.7.3] - 2022-04-13
+
+### Fixed
+
+- Fixed a bug where some backbones were incorrectly listed as available for the `ObjectDetector`, `InstanceSegmentation`, and `KeypointDetector` ([#1267](https://github.com/PyTorchLightning/lightning-flash/pull/1267))
+
 ## [0.7.2] - 2022-03-30
 
 ### Fixed
