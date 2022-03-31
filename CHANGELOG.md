@@ -50,6 +50,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Fixed a bug where using `ReduceLROnPlateau` would raise an error ([#1251](https://github.com/PyTorchLightning/lightning-flash/pull/1251))
 
+- Fixed a bug where some backbones were incorrectly listed as available for the `ObjectDetector`, `InstanceSegmentation`, and `KeypointDetector` ([#1267](https://github.com/PyTorchLightning/lightning-flash/pull/1267))
+
 ## [0.7.0] - 2022-02-15
 
 ### Added
