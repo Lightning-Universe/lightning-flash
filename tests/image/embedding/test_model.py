@@ -103,11 +103,11 @@ def test_vissl_training(backbone, training_strategy, head, pretraining_transform
         max_steps=3,
         max_epochs=1,
         gpus=torch.cuda.device_count(),
+        detect_anomaly=True,
         **kwargs,
     )
 
-    with torch.autograd.set_detect_anomaly(True):
-        trainer.fit(embedder, datamodule=datamodule)
+    trainer.fit(embedder, datamodule=datamodule)
     predictions = trainer.predict(embedder, datamodule=datamodule)
     for prediction_batch in predictions:
         for prediction in prediction_batch:
