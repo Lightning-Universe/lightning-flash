@@ -106,7 +106,8 @@ def test_vissl_training(backbone, training_strategy, head, pretraining_transform
         **kwargs,
     )
 
-    trainer.fit(embedder, datamodule=datamodule)
+    with torch.autograd.set_detect_anomaly(True):
+        trainer.fit(embedder, datamodule=datamodule)
     predictions = trainer.predict(embedder, datamodule=datamodule)
     for prediction_batch in predictions:
         for prediction in prediction_batch:
