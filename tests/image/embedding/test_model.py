@@ -103,6 +103,7 @@ def test_vissl_training(backbone, training_strategy, head, pretraining_transform
         max_steps=3,
         max_epochs=1,
         gpus=torch.cuda.device_count(),
+        detect_anomaly=True,
         **kwargs,
     )
 
