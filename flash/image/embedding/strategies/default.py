@@ -2,13 +2,13 @@ from typing import Any, Optional
 
 import torch
 
-from flash.image.embedding.heads import IMAGE_EMBEDDER_HEADS
-from flash.image.embedding.losses import IMAGE_EMBEDDER_LOSS_FUNCTIONS
-from flash.core.registry import FlashRegistry
 from flash.core.adapter import Adapter, AdapterTask
 from flash.core.data.io.input import DataKeys
 from flash.core.model import Task
+from flash.core.registry import FlashRegistry
 from flash.core.utilities.url_error import catch_url_error
+from flash.image.embedding.heads import IMAGE_EMBEDDER_HEADS
+from flash.image.embedding.losses import IMAGE_EMBEDDER_LOSS_FUNCTIONS
 
 
 class DefaultAdapter(Adapter):

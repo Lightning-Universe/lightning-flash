@@ -14,7 +14,6 @@
 import fiftyone as fo
 import fiftyone.brain as fob
 import numpy as np
-
 import torch
 
 import flash
