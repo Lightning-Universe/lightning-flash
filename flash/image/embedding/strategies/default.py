@@ -37,8 +37,9 @@ class DefaultAdapter(Adapter):
         return adapter
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
-        return Task.training_step(self._task, batch, batch_idx)
+        raise NotImplementedError(
+            "Training a `ImageEmbedder` with `DefaultAdapter` is not supported. Use a different strategy instead."
+        )
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
