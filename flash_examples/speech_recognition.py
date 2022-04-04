@@ -29,16 +29,17 @@ datamodule = SpeechRecognitionData.from_json(
 )
 
 # 2. Build the task
-model = SpeechRecognition(backbone="facebook/wav2vec2-base-960h")
+model = SpeechRecognition(backbone="facebook/wav2vec2-base-960h", learning_rate=1e-5)
 
 # 3. Create the trainer and finetune the model
 trainer = flash.Trainer(max_epochs=1, gpus=torch.cuda.device_count())
 trainer.finetune(model, datamodule=datamodule, strategy="no_freeze")
 
 # 4. Predict on audio files!
-datamodule = SpeechRecognitionData.from_files(predict_files=["data/timit/example.wav"], batch_size=4)
-predictions = trainer.predict(model, datamodule=datamodule)
-print(predictions)
+predict_datamodule = SpeechRecognitionData.from_files(predict_files=["data/timit/example.wav"], batch_size=4)
+predictions = trainer.predict(model, datamodule=predict_datamodule)
+
+print("Predictions: ", predictions)
 
 # 5. Save the model!
 trainer.save_checkpoint("speech_recognition_model.pt")
