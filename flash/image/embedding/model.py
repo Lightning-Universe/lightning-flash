@@ -77,7 +77,7 @@ class ImageEmbedder(AdapterTask):
 
     def __init__(
         self,
-        training_strategy: Optional[str] = "default",
+        training_strategy: str = "default",
         head: Optional[str] = None,
         pretraining_transform: Optional[str] = None,
         backbone: str = "resnet18",
