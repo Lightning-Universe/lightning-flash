@@ -87,3 +87,31 @@ def test_vissl_training(backbone, training_strategy, head, pretraining_transform
     for prediction_batch in predictions:
         for prediction in prediction_batch:
             assert prediction.size(0) == embedding_size
+
+
+@pytest.mark.skipif(not _TORCHVISION_AVAILABLE, reason="torch vision not installed.")
+@pytest.mark.parametrize(
+    "backbone, embedding_size",
+    [
+        ("resnet18", 512),
+        ("vit_small_patch16_224", 384),
+    ],
+)
+def test_only_embedding(backbone, embedding_size):
+    datamodule = ImageClassificationData.from_datasets(
+        predict_dataset=FakeData(8),
+        batch_size=4,
+        transform_kwargs=dict(image_size=(224, 224)),
+    )
+
+    embedder = ImageEmbedder(backbone=backbone)
+
+    trainer = flash.Trainer(
+        gpus=torch.cuda.device_count(),
+        detect_anomaly=True,
+    )
+
+    predictions = trainer.predict(embedder, datamodule=datamodule)
+    for prediction_batch in predictions:
+        for prediction in prediction_batch:
+            assert prediction.size(0) == embedding_size
