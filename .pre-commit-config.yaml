@@ -35,7 +35,7 @@ repos:
       - id: detect-private-key
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.31.0
+    rev: v2.31.1
     hooks:
       - id: pyupgrade
         args: [--py36-plus]
@@ -66,7 +66,7 @@ repos:
         name: Format code
 
   - repo: https://github.com/asottile/blacken-docs
-    rev: v1.12.0
+    rev: v1.12.1
     hooks:
       - id: blacken-docs
         args: [ --line-length=120, --skip-errors ]
