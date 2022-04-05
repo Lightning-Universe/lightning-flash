@@ -57,7 +57,7 @@ def swav_transform(
     normalize: Optional[nn.Module] = None,
     collate_fn: Callable = multicrop_collate_fn,
 ) -> partial:
-    """For swav and dino."""
+    """For swav."""
     transform = partial(
         StandardMultiCropSSLTransform,
         total_num_crops=total_num_crops,
@@ -75,7 +75,6 @@ def swav_transform(
 
 barlow_twins_transform = partial(simclr_transform, collate_fn=simclr_collate_fn)
 moco_transform = partial(simclr_transform, collate_fn=moco_collate_fn)
-dino_transform = partial(swav_transform, total_num_crops=10, num_crops=[2, 8], collate_fn=multicrop_collate_fn)
 
 
 transforms = [
@@ -83,7 +82,6 @@ transforms = [
     "swav_transform",
     "barlow_twins_transform",
     "moco_transform",
-    "dino_transform",
 ]
 
 
@@ -94,7 +92,6 @@ def register_vissl_transforms(register: FlashRegistry):
             swav_transform,
             barlow_twins_transform,
             moco_transform,
-            dino_transform,
         )
     ):
         register(transform, name=transforms[idx])

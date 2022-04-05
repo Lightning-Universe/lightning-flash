@@ -155,17 +155,6 @@ def moco_head(**kwargs) -> nn.Module:
     return simclr_head(**kwargs)
 
 
-def dino_head(**kwargs) -> nn.Module:
-    return swav_head(
-        use_bn=False,
-        return_embeddings=False,
-        activation_name="GELU",
-        num_clusters=[65536],
-        use_weight_norm_prototypes=True,
-        **kwargs,
-    )
-
-
 def register_vissl_heads(register: FlashRegistry):
-    for ssl_head in (swav_head, simclr_head, moco_head, dino_head, barlow_twins_head):
+    for ssl_head in (swav_head, simclr_head, moco_head, barlow_twins_head):
         register(ssl_head)

@@ -69,9 +69,6 @@ class MockVISSLTask:
         # set for momentum teacher based hooks
         self.last_batch = AttrDict({"sample": AttrDict({"input": None, "data_momentum": None})})
 
-        # used in dino
-        self.additional_log_data = {}
-
 
 class VISSLAdapter(Adapter, AdaptVISSLHooks):
     """The ``VISSLAdapter`` is an :class:`~flash.core.adapter.Adapter` for integrating with VISSL.
@@ -208,7 +205,7 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
     def shared_step(self, batch: Any, train: bool = True) -> Any:
         out = self.ssl_forward(batch[DataKeys.INPUT])
 
-        # for moco and dino
+        # for moco
         self.task.last_batch["sample"]["input"] = batch[DataKeys.INPUT]
         if "data_momentum" in batch.keys():
             self.task.last_batch["sample"]["data_momentum"] = [batch["data_momentum"]]

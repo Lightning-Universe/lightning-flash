@@ -17,12 +17,7 @@ import pytest
 import torch
 
 import flash
-from flash.core.utilities.imports import (
-    _IMAGE_AVAILABLE,
-    _PL_GREATER_EQUAL_1_5_0,
-    _TORCHVISION_AVAILABLE,
-    _VISSL_AVAILABLE,
-)
+from flash.core.utilities.imports import _IMAGE_AVAILABLE, _TORCHVISION_AVAILABLE, _VISSL_AVAILABLE
 from flash.image import ImageClassificationData, ImageEmbedder
 
 if _TORCHVISION_AVAILABLE:
@@ -61,14 +56,6 @@ def test_load_from_checkpoint_dependency_error():
     "backbone, training_strategy, head, pretraining_transform, embedding_size",
     [
         ("resnet18", "simclr", "simclr_head", "simclr_transform", 512),
-        pytest.param(
-            "resnet18",
-            "dino",
-            "dino_head",
-            "dino_transform",
-            512,
-            marks=pytest.mark.skipif(torch.cuda.device_count() < 1, reason="VISSL DINO calls all_reduce internally."),
-        ),
         ("resnet18", "barlow_twins", "barlow_twins_head", "barlow_twins_transform", 512),
         ("resnet18", "swav", "swav_head", "swav_transform", 512),
         ("vit_small_patch16_224", "simclr", "simclr_head", "simclr_transform", 384),
@@ -90,21 +77,10 @@ def test_vissl_training(backbone, training_strategy, head, pretraining_transform
         pretraining_transform=pretraining_transform,
     )
 
-    kwargs = {}
-
-    # DINO only works with DDP
-    if training_strategy == "dino":
-        if _PL_GREATER_EQUAL_1_5_0:
-            kwargs["strategy"] = "ddp"
-        else:
-            kwargs["accelerator"] = "ddp"
-
     trainer = flash.Trainer(
         max_steps=3,
         max_epochs=1,
         gpus=torch.cuda.device_count(),
-        detect_anomaly=True,
-        **kwargs,
     )
 
     trainer.fit(embedder, datamodule=datamodule)
