@@ -131,7 +131,7 @@ class TaskTesterMeta(ABCMeta):
         # Attach error check test
         result.test_load_from_checkpoint_dependency_error = pytest.mark.skipif(
             result.is_available, reason="Dependencies available."
-        )(_test_load_from_checkpoint_dependency_error)
+        )(_copy_func(_test_load_from_checkpoint_dependency_error))
 
         return result
 
