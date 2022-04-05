@@ -113,14 +113,12 @@ class TaskTesterMeta(ABCMeta):
             setattr(
                 result,
                 attribute_name,
-                pytest.mark.skipif(not result.dependencies_available, reason="Dependencies not available.")(
-                    attribute_value
-                ),
+                pytest.mark.skipif(not result.is_testing, reason="Dependencies not available.")(attribute_value),
             )
 
         # Attach error check test
         result.test_load_from_checkpoint_dependency_error = pytest.mark.skipif(
-            result.dependencies_available, reason="Dependencies available."
+            result.is_available, reason="Dependencies available."
         )(_test_load_from_checkpoint_dependency_error)
 
         return result
@@ -137,9 +135,10 @@ class TaskTester(metaclass=TaskTesterMeta):
     task_args: Tuple = ()
     task_kwargs: Dict = {}
     cli_command: Optional[str] = None
-    dependencies_available: bool = True
     traceable: bool = True
     scriptable: bool = True
+    is_available: bool = True
+    is_testing: bool = True
 
     @property
     def instantiated_task(self):

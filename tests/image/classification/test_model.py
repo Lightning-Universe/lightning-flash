@@ -19,7 +19,7 @@ import torch
 
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _IMAGE_TESTING, _SERVE_TESTING
+from flash.core.utilities.imports import _IMAGE_AVAILABLE, _IMAGE_TESTING, _SERVE_TESTING
 from flash.image import ImageClassifier
 from tests.helpers.task_tester import TaskTester
 
@@ -58,8 +58,9 @@ class TestImageClassifier(TaskTester):
 
     task = ImageClassifier
     task_args = (2,)
-    dependencies_available = _IMAGE_TESTING
     cli_command = "image_classification"
+    is_testing = _IMAGE_TESTING
+    is_available = _IMAGE_AVAILABLE
 
     @property
     def example_forward_input(self):
