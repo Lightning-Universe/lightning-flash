@@ -11,8 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import functools
 import inspect
 import os
+import types
 from abc import ABCMeta, abstractmethod
 from typing import Any, Dict, Optional, Tuple
 from unittest import mock
@@ -22,6 +24,14 @@ import torch
 
 from flash.__main__ import main
 from flash.core.model import Task
+
+
+def _copy_func(f):
+    """Based on http://stackoverflow.com/a/6528148/190597 (Glenn Maynard)"""
+    g = types.FunctionType(f.__code__, f.__globals__, name=f.__name__, argdefs=f.__defaults__, closure=f.__closure__)
+    g = functools.update_wrapper(g, f)
+    g.__kwdefaults__ = f.__kwdefaults__
+    return g
 
 
 def _test_forward(self):
@@ -113,7 +123,9 @@ class TaskTesterMeta(ABCMeta):
             setattr(
                 result,
                 attribute_name,
-                pytest.mark.skipif(not result.is_testing, reason="Dependencies not available.")(attribute_value),
+                pytest.mark.skipif(result.is_testing, reason="Dependencies not available.")(
+                    _copy_func(attribute_value)
+                ),
             )
 
         # Attach error check test
