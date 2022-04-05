@@ -123,7 +123,7 @@ class TaskTesterMeta(ABCMeta):
             setattr(
                 result,
                 attribute_name,
-                pytest.mark.skipif(result.is_testing, reason="Dependencies not available.")(
+                pytest.mark.skipif(not result.is_testing, reason="Dependencies not available.")(
                     _copy_func(attribute_value)
                 ),
             )
