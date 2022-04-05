@@ -26,6 +26,7 @@ from flash.core.model import Task
 
 
 def _test_jit_trace(self, tmpdir):
+    """Tests that the task can be traced and saved with JIT then reloaded and used."""
     path = os.path.join(tmpdir, "test.pt")
 
     model = self.instantiated_task
@@ -40,6 +41,7 @@ def _test_jit_trace(self, tmpdir):
 
 
 def _test_jit_script(self, tmpdir):
+    """Tests that the task can be scripted and saved with JIT then reloaded and used."""
     path = os.path.join(tmpdir, "test.pt")
 
     model = self.instantiated_task
@@ -54,6 +56,7 @@ def _test_jit_script(self, tmpdir):
 
 
 def _test_cli(self):
+    """Tests that the default Flash zero configuration runs for the task."""
     cli_args = ["flash", self.cli_command, "--trainer.fast_dev_run", "True"]
     with mock.patch("sys.argv", cli_args):
         try:
@@ -63,11 +66,20 @@ def _test_cli(self):
 
 
 def _test_load_from_checkpoint_dependency_error(self):
+    """Tests that a ``ModuleNotFoundError`` is raised when ``load_from_checkpoint`` is called if the required
+    dependencies are not available."""
     with pytest.raises(ModuleNotFoundError, match=re.escape("Required dependencies not available.")):
         self.task.load_from_checkpoint("not_a_real_checkpoint.pt")
 
 
 class TaskTesterMeta(ABCMeta):
+    """The ``TaskTesterMeta`` is a metaclass which attaches a suite of tests to classes that extend ``TaskTester``
+    based on the configuration variables they define.
+
+    These tests will also be wrapped with the appropriate marks to skip them if the required dependencies are not
+    available.
+    """
+
     def __new__(mcs, *args, **kwargs):
         result = ABCMeta.__new__(mcs, *args, **kwargs)
 
@@ -101,6 +113,11 @@ class TaskTesterMeta(ABCMeta):
 
 
 class TaskTester(metaclass=TaskTesterMeta):
+    """The ``TaskTester`` should be extended to automatically run a suite of tests for each ``Task``.
+
+    Use the class attributes to control which tests will be run. For example, if ``traceable`` is ``False`` then no JIT
+    tracing test will be performed.
+    """
 
     task: Task
     forward_input_shape: Tuple
@@ -117,4 +134,5 @@ class TaskTester(metaclass=TaskTesterMeta):
 
     @abstractmethod
     def check_forward_output(self, output: Any):
+        """Override this hook to check the output of ``Task.forward`` with random data of the required shape."""
         pass
