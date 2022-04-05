@@ -1,3 +1,4 @@
+import warnings
 from typing import Any, Optional
 
 import torch
@@ -7,8 +8,6 @@ from flash.core.data.io.input import DataKeys
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.url_error import catch_url_error
-from flash.image.embedding.heads import IMAGE_EMBEDDER_HEADS
-from flash.image.embedding.losses import IMAGE_EMBEDDER_LOSS_FUNCTIONS
 
 
 class DefaultAdapter(Adapter):
@@ -63,16 +62,13 @@ class DefaultAdapter(Adapter):
 
 
 def default(head: Optional[str] = None, loss_fn: Optional[str] = None, **kwargs):
-    if loss_fn in IMAGE_EMBEDDER_LOSS_FUNCTIONS:
-        loss_fn = IMAGE_EMBEDDER_LOSS_FUNCTIONS.get(loss_fn)(**kwargs)
-    else:
-        loss_fn = None
-    if head in IMAGE_EMBEDDER_HEADS:
-        head = IMAGE_EMBEDDER_HEADS.get(head)(**kwargs)
-    else:
-        head = None
+    if head is not None:
+        warnings.warn(f"default strategy has no heads. So given head({head}) is ignored.")
 
-    return loss_fn, head, []
+    if loss_fn is not None:
+        warnings.warn(f"default strategy has no loss functions. So given loss_fn({loss_fn}) is ignored.")
+
+    return None, None, []
 
 
 def register_default_strategy(register: FlashRegistry):
