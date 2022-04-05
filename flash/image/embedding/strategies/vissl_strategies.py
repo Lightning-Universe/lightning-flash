@@ -20,7 +20,6 @@ from flash.image.embedding.vissl.adapter import VISSLAdapter
 from flash.image.embedding.vissl.hooks import SimCLRTrainingSetupHook, TrainingSetupHook
 
 if _VISSL_AVAILABLE:
-    from vissl.hooks.moco_hooks import MoCoHook
     from vissl.hooks.swav_hooks import NormalizePrototypesHook, SwAVUpdateQueueScoresHook
 
 
@@ -38,17 +37,6 @@ def simclr(head: str = "simclr_head", **kwargs):
     return loss_fn, head, [SimCLRTrainingSetupHook()]
 
 
-def moco(head: str = "simclr_head", **kwargs):
-    loss_fn = IMAGE_EMBEDDER_LOSS_FUNCTIONS.get("moco_loss")(**kwargs)
-    head = IMAGE_EMBEDDER_HEADS.get(head)(**kwargs)
-
-    return (
-        loss_fn,
-        head,
-        [MoCoHook(loss_fn.loss_config.momentum, loss_fn.loss_config.shuffle_batch), TrainingSetupHook()],
-    )
-
-
 def barlow_twins(head: str = "barlow_twins_head", **kwargs):
     loss_fn = IMAGE_EMBEDDER_LOSS_FUNCTIONS.get("barlow_twins_loss")(**kwargs)
     head = IMAGE_EMBEDDER_HEADS.get(head)(**kwargs)
@@ -58,5 +46,5 @@ def barlow_twins(head: str = "barlow_twins_head", **kwargs):
 
 def register_vissl_strategies(register: FlashRegistry):
     if _VISSL_AVAILABLE:
-        for training_strategy in (swav, simclr, moco, barlow_twins):
+        for training_strategy in (swav, simclr, barlow_twins):
             register(training_strategy, name=training_strategy.__name__, adapter=VISSLAdapter, providers=_VISSL)

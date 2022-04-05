@@ -63,7 +63,6 @@ def test_load_from_checkpoint_dependency_error():
     ],
 )
 def test_vissl_training(backbone, training_strategy, head, pretraining_transform, embedding_size):
-    # moco strategy, transform and head is not added for this test as it doesn't work as of now.
     datamodule = ImageClassificationData.from_datasets(
         train_dataset=FakeData(16),
         predict_dataset=FakeData(8),

@@ -205,11 +205,6 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
     def shared_step(self, batch: Any, train: bool = True) -> Any:
         out = self.ssl_forward(batch[DataKeys.INPUT])
 
-        # for moco
-        self.task.last_batch["sample"]["input"] = batch[DataKeys.INPUT]
-        if "data_momentum" in batch.keys():
-            self.task.last_batch["sample"]["data_momentum"] = [batch["data_momentum"]]
-
         if train:
             # call forward hook from VISSL (momentum updates)
             for hook in self.hooks:

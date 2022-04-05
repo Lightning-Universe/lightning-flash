@@ -134,28 +134,6 @@ def simclr_loss(
     return get_loss_fn(loss_name, cfg)
 
 
-def moco_loss(
-    embedding_dim: int = 128,
-    queue_size: int = 65536,
-    momentum: float = 0.999,
-    temperature: int = 0.2,
-    shuffle_batch: bool = True,
-    **kwargs,
-) -> ClassyLoss:
-    loss_name = "moco_loss"
-    cfg = AttrDict(
-        {
-            "embedding_dim": embedding_dim,
-            "queue_size": queue_size,
-            "momentum": momentum,
-            "temperature": temperature,
-            "shuffle_batch": shuffle_batch,
-        }
-    )
-
-    return get_loss_fn(loss_name, cfg)
-
-
 def register_vissl_losses(register: FlashRegistry):
-    for loss_fn in (swav_loss, barlow_twins_loss, simclr_loss, moco_loss):
+    for loss_fn in (swav_loss, barlow_twins_loss, simclr_loss):
         register(loss_fn)
