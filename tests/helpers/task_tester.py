@@ -90,6 +90,10 @@ class TaskTesterMeta(ABCMeta):
     def __new__(mcs, *args, **kwargs):
         result = ABCMeta.__new__(mcs, *args, **kwargs)
 
+        # Skip attaching for the base class
+        if args[0] == "TaskTester":
+            return result
+
         # Attach forward test
         result.test_forward = _test_forward
 
