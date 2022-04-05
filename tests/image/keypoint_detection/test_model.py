@@ -107,7 +107,7 @@ class TestKeypointDetector(TaskTester):
 
     @property
     def example_forward_input(self):
-        return [torch.rand(3, 32, 32)]
+        return torch.rand(1, 3, 32, 32)
 
     def check_forward_output(self, output: Any):
         assert {"keypoints", "labels", "scores"} <= output[0].keys()

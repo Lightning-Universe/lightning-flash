@@ -84,10 +84,10 @@ class TestObjectDetector(TaskTester):
 
     @property
     def example_forward_input(self):
-        return [torch.rand(3, 32, 32)]
+        return torch.rand(1, 3, 32, 32)
 
     def check_forward_output(self, output: Any):
-        assert {"boxes", "labels", "scores"} <= output[0].keys()
+        assert {"bboxes", "labels", "scores"} <= output[0].keys()
 
 
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
