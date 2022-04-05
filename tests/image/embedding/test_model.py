@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import re
+from typing import Any
 
 import pytest
 import torch
@@ -24,39 +24,40 @@ from flash.core.utilities.imports import (
     _VISSL_AVAILABLE,
 )
 from flash.image import ImageClassificationData, ImageEmbedder
+from tests.helpers.task_tester import TaskTester
 
 if _TORCHVISION_AVAILABLE:
     from torchvision.datasets import FakeData
 else:
     FakeData = object
 
-# TODO: Figure out why VISSL can't be jitted
-# @pytest.mark.skipif(not (_TORCHVISION_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
-# @pytest.mark.parametrize("jitter, args", [(torch.jit.trace, (torch.rand(1, 3, 64, 64),))])
-# def test_jit(tmpdir, jitter, args):
-#     path = os.path.join(tmpdir, "test.pt")
-#
-#     model = ImageEmbedder(training_strategy="barlow_twins")
-#     model.eval()
-#
-#     model = jitter(model, *args)
-#
-#     torch.jit.save(model, path)
-#     model = torch.jit.load(path)
-#
-#     out = model(torch.rand(1, 3, 64, 64))
-#     assert isinstance(out, torch.Tensor)
-#     assert out.shape == torch.Size([1, 2048])
 
+class TestImageEmbedder(TaskTester):
 
-@pytest.mark.skipif(_IMAGE_AVAILABLE, reason="image libraries are installed.")
-def test_load_from_checkpoint_dependency_error():
-    with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[image]'")):
-        ImageEmbedder.load_from_checkpoint("not_a_real_checkpoint.pt")
+    task = ImageEmbedder
+    task_kwargs = dict(
+        backbone="vision_transformer",
+        training_strategy="simclr",
+        head="simclr_head",
+        pretraining_transform="simclr_transform",
+    )
+    is_testing = is_available = _IMAGE_AVAILABLE and _VISSL_AVAILABLE
+
+    # TODO: Figure out why VISSL can't be jitted
+    traceable = False
+    scriptable = False
+
+    @property
+    def example_forward_input(self):
+        return torch.rand(1, 3, 64, 64)
+
+    def check_forward_output(self, output: Any):
+        assert isinstance(output, torch.Tensor)
+        assert output.shape == torch.Size([1, 384])
 
 
 @pytest.mark.skipif(torch.cuda.device_count() > 1, reason="VISSL integration doesn't support multi-GPU")
-@pytest.mark.skipif(not (_TORCHVISION_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
+@pytest.mark.skipif(not (_IMAGE_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
 @pytest.mark.parametrize(
     "backbone, training_strategy, head, pretraining_transform",
     [
