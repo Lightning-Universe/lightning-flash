@@ -142,8 +142,8 @@ class TaskTester(metaclass=TaskTesterMeta):
     def instantiated_task(self):
         return self.task(*self.task_args, **self.task_kwargs)
 
-    @abstractmethod
     @property
+    @abstractmethod
     def example_forward_input(self):
         pass
 
