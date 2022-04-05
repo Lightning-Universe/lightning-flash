@@ -13,7 +13,6 @@
 # limitations under the License.
 import inspect
 import os
-import re
 from abc import ABCMeta, abstractmethod
 from typing import Any, Dict, Optional, Tuple
 from unittest import mock
@@ -28,6 +27,7 @@ from flash.core.model import Task
 def _test_forward(self):
     """Tests that ``Task.forward`` applied to the example input gives the expected output."""
     model = self.instantiated_task
+    model.eval()
     output = model(self.example_forward_input)
     self.check_forward_output(output)
 
@@ -75,7 +75,7 @@ def _test_cli(self):
 def _test_load_from_checkpoint_dependency_error(self):
     """Tests that a ``ModuleNotFoundError`` is raised when ``load_from_checkpoint`` is called if the required
     dependencies are not available."""
-    with pytest.raises(ModuleNotFoundError, match=re.escape("Required dependencies not available.")):
+    with pytest.raises(ModuleNotFoundError, match="Required dependencies not available."):
         self.task.load_from_checkpoint("not_a_real_checkpoint.pt")
 
 
@@ -105,8 +105,7 @@ class TaskTesterMeta(ABCMeta):
             result.test_cli = _test_cli
 
         # Skip tests if dependencies not available
-        regex = "( test_* )"
-        for attribute_name, attribute_value in filter(lambda x: re.match(regex, x[0]), inspect.getmembers(result)):
+        for attribute_name, attribute_value in filter(lambda x: x[0].startswith("test"), inspect.getmembers(result)):
             setattr(
                 result,
                 attribute_name,
