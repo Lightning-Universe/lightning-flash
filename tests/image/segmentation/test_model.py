@@ -49,7 +49,7 @@ class TestSemanticSegmentation(TaskTester):
 
     task = SemanticSegmentation
     task_args = (2,)
-    cli_command = "image_classification"
+    cli_command = "semantic_segmentation"
     is_testing = _IMAGE_TESTING
     is_available = _IMAGE_AVAILABLE
     scriptable = False
