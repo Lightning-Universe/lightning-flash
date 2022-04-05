@@ -94,7 +94,8 @@ class TestInstanceSegmentation(TaskTester):
     task = InstanceSegmentation
     task_kwargs = {"num_classes": 2}
     cli_command = "instance_segmentation"
-    is_testing = is_available = _IMAGE_AVAILABLE and _ICEVISION_AVAILABLE
+    is_testing = _IMAGE_AVAILABLE and _ICEVISION_AVAILABLE
+    is_available = _IMAGE_AVAILABLE and _ICEVISION_AVAILABLE
 
     # TODO: Resolve JIT support
     traceable = False

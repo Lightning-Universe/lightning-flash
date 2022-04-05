@@ -75,7 +75,8 @@ class TestObjectDetector(TaskTester):
     task = ObjectDetector
     task_kwargs = {"num_classes": 2}
     cli_command = "object_detection"
-    is_testing = is_available = _IMAGE_AVAILABLE and _ICEVISION_AVAILABLE
+    is_testing = _IMAGE_AVAILABLE and _ICEVISION_AVAILABLE
+    is_available = _IMAGE_AVAILABLE and _ICEVISION_AVAILABLE
 
     # TODO: Resolve JIT support
     traceable = False

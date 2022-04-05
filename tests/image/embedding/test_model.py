@@ -41,7 +41,8 @@ class TestImageEmbedder(TaskTester):
         head="simclr_head",
         pretraining_transform="simclr_transform",
     )
-    is_testing = is_available = _IMAGE_AVAILABLE and _VISSL_AVAILABLE
+    is_testing = _IMAGE_AVAILABLE and _VISSL_AVAILABLE
+    is_available = _IMAGE_AVAILABLE and _VISSL_AVAILABLE
 
     # TODO: Figure out why VISSL can't be jitted
     traceable = False
