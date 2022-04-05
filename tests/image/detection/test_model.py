@@ -12,15 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import random
-import re
-from unittest import mock
+from typing import Any
 
 import numpy as np
 import pytest
 import torch
 from torch.utils.data import Dataset
 
-from flash.__main__ import main
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import create_worker_input_transform_processor
@@ -29,6 +27,7 @@ from flash.core.trainer import Trainer
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 from flash.image import ObjectDetector
+from tests.helpers.task_tester import TaskTester
 
 
 def collate_fn(samples):
@@ -69,6 +68,25 @@ class DummyDetectionDataset(Dataset):
             sample[DataKeys.TARGET]["labels"].append(random.randint(0, self.num_classes - 1))
 
         return sample
+
+
+class TestObjectDetector(TaskTester):
+
+    task = ObjectDetector
+    task_kwargs = {"num_classes": 2}
+    dependencies_available = _IMAGE_AVAILABLE and _ICEVISION_AVAILABLE
+    cli_command = "object_detection"
+
+    # TODO: Resolve JIT support
+    traceable = False
+    scriptable = False
+
+    @property
+    def example_forward_input(self):
+        return [torch.rand(3, 32, 32)]
+
+    def check_forward_output(self, output: Any):
+        assert {"boxes", "labels", "scores"} <= output[0].keys()
 
 
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
@@ -122,44 +140,6 @@ def test_training(tmpdir, head):
         collate_fn=train_collate_fn,
     )
     trainer.fit(model, dl)
-
-
-# TODO: resolve JIT issues
-# @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
-# def test_jit(tmpdir):
-#     path = os.path.join(tmpdir, "test.pt")
-#
-#     model = ObjectDetector(2)
-#     model.eval()
-#
-#     model = torch.jit.script(model)  # torch.jit.trace doesn't work with torchvision RCNN
-#
-#     torch.jit.save(model, path)
-#     model = torch.jit.load(path)
-#
-#     out = model([torch.rand(3, 32, 32)])
-#
-#     # torchvision RCNN always returns a (Losses, Detections) tuple in scripting
-#     out = out[1]
-#
-#     assert {"boxes", "labels", "scores"} <= out[0].keys()
-
-
-@pytest.mark.skipif(_IMAGE_AVAILABLE, reason="image libraries are installed.")
-def test_load_from_checkpoint_dependency_error():
-    with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[image]'")):
-        ObjectDetector.load_from_checkpoint("not_a_real_checkpoint.pt")
-
-
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
-@pytest.mark.skipif(not _ICEVISION_AVAILABLE, reason="IceVision is not installed for testing")
-def test_cli():
-    cli_args = ["flash", "object_detection", "--trainer.fast_dev_run", "True"]
-    with mock.patch("sys.argv", cli_args):
-        try:
-            main()
-        except SystemExit:
-            pass
 
 
 @pytest.mark.parametrize("head", ["retinanet"])

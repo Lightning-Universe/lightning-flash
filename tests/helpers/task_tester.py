@@ -15,7 +15,7 @@ import inspect
 import os
 import re
 from abc import ABCMeta, abstractmethod
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Optional, Tuple
 from unittest import mock
 
 import pytest
@@ -25,6 +25,13 @@ from flash.__main__ import main
 from flash.core.model import Task
 
 
+def _test_forward(self):
+    """Tests that ``Task.forward`` applied to the example input gives the expected output."""
+    model = self.instantiated_task
+    output = model(self.example_forward_input)
+    self.check_forward_output(output)
+
+
 def _test_jit_trace(self, tmpdir):
     """Tests that the task can be traced and saved with JIT then reloaded and used."""
     path = os.path.join(tmpdir, "test.pt")
@@ -32,12 +39,12 @@ def _test_jit_trace(self, tmpdir):
     model = self.instantiated_task
     model.eval()
 
-    model = torch.jit.trace(model, torch.rand(1, *self.forward_input_shape))
+    model = torch.jit.trace(model, self.example_forward_input)
 
     torch.jit.save(model, path)
     model = torch.jit.load(path)
 
-    self.check_forward_output(model(torch.rand(1, *self.forward_input_shape)))
+    self.check_forward_output(model(self.example_forward_input))
 
 
 def _test_jit_script(self, tmpdir):
@@ -52,7 +59,7 @@ def _test_jit_script(self, tmpdir):
     torch.jit.save(model, path)
     model = torch.jit.load(path)
 
-    self.check_forward_output(model(torch.rand(1, *self.forward_input_shape)))
+    self.check_forward_output(model(self.example_forward_input))
 
 
 def _test_cli(self):
@@ -83,6 +90,9 @@ class TaskTesterMeta(ABCMeta):
     def __new__(mcs, *args, **kwargs):
         result = ABCMeta.__new__(mcs, *args, **kwargs)
 
+        # Attach forward test
+        result.test_forward = _test_forward
+
         # Attach JIT tests
         if result.traceable:
             result.test_jit_trace = _test_jit_trace
@@ -91,7 +101,8 @@ class TaskTesterMeta(ABCMeta):
             result.test_jit_script = _test_jit_script
 
         # Attach CLI test
-        result.test_cli = _test_cli
+        if result.cli_command is not None:
+            result.test_cli = _test_cli
 
         # Skip tests if dependencies not available
         regex = "( test_* )"
@@ -120,10 +131,9 @@ class TaskTester(metaclass=TaskTesterMeta):
     """
 
     task: Task
-    forward_input_shape: Tuple
-    cli_command: str
     task_args: Tuple = ()
     task_kwargs: Dict = {}
+    cli_command: Optional[str] = None
     dependencies_available: bool = True
     traceable: bool = True
     scriptable: bool = True
@@ -131,6 +141,11 @@ class TaskTester(metaclass=TaskTesterMeta):
     @property
     def instantiated_task(self):
         return self.task(*self.task_args, **self.task_kwargs)
+
+    @abstractmethod
+    @property
+    def example_forward_input(self):
+        pass
 
     @abstractmethod
     def check_forward_output(self, output: Any):

@@ -58,8 +58,12 @@ class TestImageClassifier(TaskTester):
 
     task = ImageClassifier
     task_args = (2,)
-    forward_input_shape = (3, 32, 32)
+    dependencies_available = _IMAGE_TESTING
     cli_command = "image_classification"
+
+    @property
+    def example_forward_input(self):
+        return torch.rand(1, 3, 32, 32)
 
     def check_forward_output(self, output: Any):
         assert isinstance(output, torch.Tensor)
