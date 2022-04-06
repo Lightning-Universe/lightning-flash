@@ -72,7 +72,7 @@ class ImageEmbedder(AdapterTask):
     backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES
     transforms: FlashRegistry = IMAGE_EMBEDDER_TRANSFORMS
 
-    required_extras: List[str] = ["image", "vissl", "fairscale"]
+    required_extras: str = "image"
 
     def __init__(
         self,
