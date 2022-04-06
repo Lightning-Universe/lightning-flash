@@ -71,20 +71,3 @@ def simclr_collate_fn(samples):
     result[DataKeys.INPUT] = torch.stack(inputs)
 
     return result
-
-
-def moco_collate_fn(samples):
-    """MOCO collate function for VISSL integration.
-
-    Run custom collate on a single key since VISSL transforms affect only DataKeys.INPUT
-    """
-    result = vissl_collate_helper(samples)
-
-    inputs = []
-    for batch_ele in samples:
-        inputs.append(torch.stack(batch_ele[DataKeys.INPUT]))
-
-    result[DataKeys.INPUT] = torch.stack(inputs).squeeze()[:, 0, :, :, :].squeeze()
-    result["data_momentum"] = torch.stack(inputs).squeeze()[:, 1, :, :, :].squeeze()
-
-    return result
