@@ -20,6 +20,7 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Union
 from torch.utils.data import Dataset
 
 import flash
+from flash.audio.data import AUDIO_EXTENSIONS
 from flash.core.data.io.input import DataKeys, Input, ServeInput
 from flash.core.data.utilities.paths import filter_valid_files, list_valid_files
 from flash.core.data.utilities.samples import to_sample, to_samples
@@ -160,8 +161,8 @@ class SpeechRecognitionPathsInput(BaseSpeechRecognition):
     ) -> Sequence:
         self.sampling_rate = sampling_rate
         if targets is None:
-            return to_samples(list_valid_files(paths, ("wav", "ogg", "flac", "mat", "mp3")))
-        return to_samples(*filter_valid_files(paths, targets, valid_extensions=("wav", "ogg", "flac", "mat", "mp3")))
+            return to_samples(list_valid_files(paths, AUDIO_EXTENSIONS))
+        return to_samples(*filter_valid_files(paths, targets, valid_extensions=AUDIO_EXTENSIONS))
 
     def load_sample(self, sample: Dict[str, Any]) -> Any:
         return super().load_sample(sample, self.sampling_rate)
