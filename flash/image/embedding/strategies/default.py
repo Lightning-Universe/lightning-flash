@@ -55,8 +55,9 @@ class DefaultAdapter(Adapter):
         )
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
-        return Task.validation_step(self._task, batch, batch_idx)
+        raise NotImplementedError(
+            "Validation an `ImageEmbedder` with `strategy="default"` is not supported. Use a different strategy instead."
+        )
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
