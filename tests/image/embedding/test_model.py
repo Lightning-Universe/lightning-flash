@@ -17,12 +17,7 @@ import pytest
 import torch
 
 import flash
-from flash.core.utilities.imports import (
-    _IMAGE_AVAILABLE,
-    _PL_GREATER_EQUAL_1_5_0,
-    _TORCHVISION_AVAILABLE,
-    _VISSL_AVAILABLE,
-)
+from flash.core.utilities.imports import _IMAGE_AVAILABLE, _TORCHVISION_AVAILABLE, _VISSL_AVAILABLE
 from flash.image import ImageClassificationData, ImageEmbedder
 
 if _TORCHVISION_AVAILABLE:
@@ -58,22 +53,16 @@ def test_load_from_checkpoint_dependency_error():
 @pytest.mark.skipif(torch.cuda.device_count() > 1, reason="VISSL integration doesn't support multi-GPU")
 @pytest.mark.skipif(not (_TORCHVISION_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
 @pytest.mark.parametrize(
-    "backbone, training_strategy, head, pretraining_transform",
+    "backbone, training_strategy, head, pretraining_transform, embedding_size",
     [
-        ("vision_transformer", "simclr", "simclr_head", "simclr_transform"),
-        pytest.param(
-            "vision_transformer",
-            "dino",
-            "dino_head",
-            "dino_transform",
-            marks=pytest.mark.skipif(torch.cuda.device_count() < 1, reason="VISSL DINO calls all_reduce internally."),
-        ),
-        ("vision_transformer", "barlow_twins", "barlow_twins_head", "barlow_twins_transform"),
-        ("vision_transformer", "swav", "swav_head", "swav_transform"),
+        ("resnet18", "simclr", "simclr_head", "simclr_transform", 512),
+        ("resnet18", "barlow_twins", "barlow_twins_head", "barlow_twins_transform", 512),
+        ("resnet18", "swav", "swav_head", "swav_transform", 512),
+        ("vit_small_patch16_224", "simclr", "simclr_head", "simclr_transform", 384),
+        ("vit_small_patch16_224", "barlow_twins", "barlow_twins_head", "barlow_twins_transform", 384),
     ],
 )
-def test_vissl_training(backbone, training_strategy, head, pretraining_transform):
-    # moco strategy, transform and head is not added for this test as it doesn't work as of now.
+def test_vissl_training(backbone, training_strategy, head, pretraining_transform, embedding_size):
     datamodule = ImageClassificationData.from_datasets(
         train_dataset=FakeData(16),
         predict_dataset=FakeData(8),
@@ -87,24 +76,14 @@ def test_vissl_training(backbone, training_strategy, head, pretraining_transform
         pretraining_transform=pretraining_transform,
     )
 
-    kwargs = {}
-
-    # DINO only works with DDP
-    if training_strategy == "dino":
-        if _PL_GREATER_EQUAL_1_5_0:
-            kwargs["strategy"] = "ddp"
-        else:
-            kwargs["accelerator"] = "ddp"
-
     trainer = flash.Trainer(
         max_steps=3,
         max_epochs=1,
         gpus=torch.cuda.device_count(),
-        **kwargs,
     )
 
     trainer.fit(embedder, datamodule=datamodule)
     predictions = trainer.predict(embedder, datamodule=datamodule)
     for prediction_batch in predictions:
         for prediction in prediction_batch:
-            assert prediction.size(0) == 384
+            assert prediction.size(0) == embedding_size

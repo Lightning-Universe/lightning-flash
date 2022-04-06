@@ -44,10 +44,6 @@ Here's the full example:
 To learn how to view the available backbones / heads for this task, see :ref:`backbones_heads`.
 You can view the available training strategies with the :meth:`~flash.image.embedding.model.ImageEmbedder.available_training_strategies` method.
 
-.. note::
-
-    The ``"dino"`` training strategy only supports single GPU training with ``strategy="ddp"``.
-
 The ``head`` and ``pretraining_transform`` arguments should match the choice of ``training_strategy`` following this table:
 
 =====================  =====================  ==========================
@@ -56,5 +52,4 @@ The ``head`` and ``pretraining_transform`` arguments should match the choice of 
 ``simclr``             ``simclr_head``        ``simclr_transform``
 ``barlow_twins``       ``barlow_twins_head``  ``barlow_twins_transform``
 ``swav``               ``swav_head``          ``swav_transform``
-``dino``               ``dino_head``          ``dino_transform``
 =====================  =====================  ==========================
