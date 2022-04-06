@@ -14,13 +14,10 @@
 from functools import partial
 from typing import Optional
 
-import torch
-
 from flash.core.adapter import Adapter
 from flash.core.integrations.icevision.adapter import IceVisionAdapter, SimpleCOCOMetric
 from flash.core.integrations.icevision.backbones import (
     get_backbones,
-    icevision_model_adapter,
     load_icevision_ignore_image_size,
     load_icevision_with_image_size,
 )
@@ -66,7 +63,7 @@ if _ICEVISION_AVAILABLE:
     if _TORCHVISION_AVAILABLE:
         for model_type in [icevision_models.torchvision.retinanet, icevision_models.torchvision.faster_rcnn]:
             OBJECT_DETECTION_HEADS(
-                partial(load_icevision_ignore_image_size, icevision_model_adapter, model_type),
+                partial(load_icevision_ignore_image_size, model_type),
                 model_type.__name__.split(".")[-1],
                 backbones=get_backbones(model_type),
                 adapter=IceVisionObjectDetectionAdapter,
@@ -76,7 +73,7 @@ if _ICEVISION_AVAILABLE:
     if _module_available("yolov5"):
         model_type = icevision_models.ultralytics.yolov5
         OBJECT_DETECTION_HEADS(
-            partial(load_icevision_with_image_size, icevision_model_adapter, model_type),
+            partial(load_icevision_with_image_size, model_type),
             model_type.__name__.split(".")[-1],
             backbones=get_backbones(model_type),
             adapter=IceVisionObjectDetectionAdapter,
@@ -91,7 +88,7 @@ if _ICEVISION_AVAILABLE:
             icevision_models.mmdet.sparse_rcnn,
         ]:
             OBJECT_DETECTION_HEADS(
-                partial(load_icevision_ignore_image_size, icevision_model_adapter, model_type),
+                partial(load_icevision_ignore_image_size, model_type),
                 f"mmdet_{model_type.__name__.split('.')[-1]}",
                 backbones=get_backbones(model_type),
                 adapter=IceVisionObjectDetectionAdapter,
@@ -100,21 +97,9 @@ if _ICEVISION_AVAILABLE:
 
     if _module_available("effdet"):
 
-        def _icevision_effdet_model_adapter(model_type):
-            class IceVisionEffdetModelAdapter(icevision_model_adapter(model_type)):
-                def validation_step(self, batch, batch_idx):
-                    images = batch[0][0]
-                    batch[0][1]["img_scale"] = torch.ones_like(images[:, 0, 0, 0]).unsqueeze(1)
-                    batch[0][1]["img_size"] = (
-                        (torch.ones_like(images[:, 0, 0, 0]) * images[0].shape[-1]).unsqueeze(1).repeat(1, 2)
-                    )
-                    return super().validation_step(batch, batch_idx)
-
-            return IceVisionEffdetModelAdapter
-
         model_type = icevision_models.ross.efficientdet
         OBJECT_DETECTION_HEADS(
-            partial(load_icevision_with_image_size, _icevision_effdet_model_adapter, model_type),
+            partial(load_icevision_with_image_size, model_type),
             model_type.__name__.split(".")[-1],
             backbones=get_backbones(model_type),
             adapter=IceVisionObjectDetectionAdapter,

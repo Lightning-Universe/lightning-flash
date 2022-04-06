@@ -37,6 +37,5 @@ class FaceDetectionOutputTransform(OutputTransform):
         # preds: list of torch.Tensor(N, 5) as x1, y1, x2, y2, score
         preds = [preds[preds[:, 5] == batch_idx, :5] for batch_idx in range(len(preds))]
         preds = ff.utils.preprocess.adjust_results(preds, scales, paddings)
-        batch[DataKeys.PREDS] = preds
 
-        return batch
+        return preds

@@ -19,9 +19,8 @@ import pytest
 import torch
 
 from flash import DataKeys, Trainer
-from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.core.utilities.imports import _SERVE_TESTING, _TEXT_AVAILABLE, _TEXT_TESTING
 from flash.text import TranslationTask
-from tests.helpers.utils import _SERVE_TESTING, _TEXT_TESTING
 
 # ======== Mock functions ========
 
@@ -39,7 +38,7 @@ class DummyDataset(torch.utils.data.Dataset):
 
 # ==============================
 
-TEST_BACKBONE = "sshleifer/tiny-mbart"  # super small model for testing
+TEST_BACKBONE = "sshleifer/tiny-mbart"  # tiny model for testing
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -59,11 +58,11 @@ def test_jit(tmpdir):
     }
     path = os.path.join(tmpdir, "test.pt")
 
-    model = TranslationTask(TEST_BACKBONE, val_target_max_length=None)
+    model = TranslationTask(TEST_BACKBONE)
     model.eval()
 
     # Huggingface only supports `torch.jit.trace`
-    model = torch.jit.trace(model, [sample_input])
+    model = torch.jit.trace(model, [sample_input], check_trace=False)
 
     torch.jit.save(model, path)
     model = torch.jit.load(path)

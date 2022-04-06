@@ -42,6 +42,8 @@ Lightning Flash
    general/serve
    general/backbones
    general/optimization
+   general/classification_targets
+   general/customizing_transforms
 
 .. toctree::
    :maxdepth: 1
@@ -142,6 +144,7 @@ Lightning Flash
    :caption: Community
 
    governance
+   stability
    generated/CONTRIBUTING.md
    generated/CHANGELOG.md
 

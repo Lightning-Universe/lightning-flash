@@ -17,8 +17,9 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 
-from flash.core.classification import ClassificationAdapterTask, LabelsOutput
+from flash.core.classification import ClassificationAdapterTask
 from flash.core.data.io.input import ServeInput
+from flash.core.data.io.output import Output
 from flash.core.registry import FlashRegistry
 from flash.core.serve import Composition
 from flash.core.utilities.imports import requires
@@ -28,11 +29,11 @@ from flash.core.utilities.types import (
     LR_SCHEDULER_TYPE,
     METRICS_TYPE,
     OPTIMIZER_TYPE,
-    OUTPUT_TYPE,
 )
 from flash.image.classification.adapters import TRAINING_STRATEGIES
 from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES
-from flash.image.classification.transforms import ImageClassificationInputTransform
+from flash.image.classification.heads import IMAGE_CLASSIFIER_HEADS
+from flash.image.classification.input_transform import ImageClassificationInputTransform
 from flash.image.data import ImageDeserializer
 
 
@@ -61,6 +62,8 @@ class ImageClassifier(ClassificationAdapterTask):
     Args:
         num_classes: Number of classes to classify.
         backbone: A string or (model, num_features) tuple to use to compute image features, defaults to ``"resnet18"``.
+        head: A string from ``ImageClassifier.available_heads()``, an ``nn.Module``, or a function of (``num_features``,
+            ``num_classes``) which returns an ``nn.Module`` to use as the model head.
         pretrained: A bool or string to specify the pretrained weights of the backbone, defaults to ``True``
             which loads the default supervised pretrained weights.
         loss_fn: Loss function for training, defaults to :func:`torch.nn.functional.cross_entropy`.
@@ -72,35 +75,37 @@ class ImageClassifier(ClassificationAdapterTask):
             `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
         multi_label: Whether the targets are multi-label or not.
-        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
         training_strategy: string indicating the training strategy. Adjust if you want to use `learn2learn`
             for doing meta-learning research
         training_strategy_kwargs: Additional kwargs for setting the training strategy
     """
 
     backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES
+    heads: FlashRegistry = IMAGE_CLASSIFIER_HEADS
     training_strategies: FlashRegistry = TRAINING_STRATEGIES
     required_extras: str = "image"
 
     def __init__(
         self,
         num_classes: Optional[int] = None,
+        labels: Optional[List[str]] = None,
         backbone: Union[str, Tuple[nn.Module, int]] = "resnet18",
         backbone_kwargs: Optional[Dict] = None,
-        head: Optional[Union[FunctionType, nn.Module]] = None,
+        head: Union[str, FunctionType, nn.Module] = "linear",
         pretrained: Union[bool, str] = True,
         loss_fn: LOSS_FN_TYPE = None,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: METRICS_TYPE = None,
-        learning_rate: float = 1e-3,
+        learning_rate: Optional[float] = None,
         multi_label: bool = False,
-        output: OUTPUT_TYPE = None,
         training_strategy: Optional[str] = "default",
         training_strategy_kwargs: Optional[Dict[str, Any]] = None,
     ):
-
         self.save_hyperparameters()
+
+        if labels is not None and num_classes is None:
+            num_classes = len(labels)
 
         if not backbone_kwargs:
             backbone_kwargs = {}
@@ -109,8 +114,8 @@ class ImageClassifier(ClassificationAdapterTask):
             training_strategy_kwargs = {}
 
         if training_strategy == "default":
-            if not num_classes:
-                raise MisconfigurationException("`num_classes` should be provided.")
+            if num_classes is None and labels is None:
+                raise MisconfigurationException("`num_classes` or `labels` should be provided.")
         else:
             num_classes = training_strategy_kwargs.get("ways", None)
             if not num_classes:
@@ -123,10 +128,10 @@ class ImageClassifier(ClassificationAdapterTask):
         else:
             backbone, num_features = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
 
-        head = head(num_features, num_classes) if isinstance(head, FunctionType) else head
-        head = head or nn.Sequential(
-            nn.Linear(num_features, num_classes),
-        )
+        if isinstance(head, str):
+            head = self.heads.get(head)(num_features=num_features, num_classes=num_classes)
+        else:
+            head = head(num_features, num_classes) if isinstance(head, FunctionType) else head
 
         adapter_from_class = self.training_strategies.get(training_strategy)
         adapter = adapter_from_class(
@@ -147,7 +152,7 @@ class ImageClassifier(ClassificationAdapterTask):
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
             multi_label=multi_label,
-            output=output or LabelsOutput(multi_label=multi_label),
+            labels=labels,
         )
 
     @classmethod
@@ -169,12 +174,13 @@ class ImageClassifier(ClassificationAdapterTask):
         input_cls: Optional[Type[ServeInput]] = ImageDeserializer,
         transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
+        output: Optional[Union[str, Output]] = None,
     ) -> Composition:
-        return super().serve(host, port, sanity_check, input_cls, transform, transform_kwargs)
+        return super().serve(host, port, sanity_check, input_cls, transform, transform_kwargs, output)
 
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]):
         """This function is used only for debugging usage with CI."""
         if self.hparams.multi_label:
-            assert history[-1]["val_f1"] > 0.30, history[-1]["val_f1"]
+            assert history[-1]["val_f1score"] > 0.30, history[-1]["val_f1score"]
         else:
             assert history[-1]["val_accuracy"] > 0.85, history[-1]["val_accuracy"]

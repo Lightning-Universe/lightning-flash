@@ -4,8 +4,7 @@ from dataclasses import asdict
 import pytest
 
 from flash.core.serve import Composition, Endpoint
-from flash.core.utilities.imports import _FASTAPI_AVAILABLE
-from tests.helpers.utils import _SERVE_TESTING
+from flash.core.utilities.imports import _FASTAPI_AVAILABLE, _SERVE_TESTING
 
 if _FASTAPI_AVAILABLE:
     from fastapi.testclient import TestClient

@@ -18,16 +18,11 @@ import pandas as pd
 import pytest
 
 from flash.core.data.io.input import DataKeys
-from flash.core.integrations.transformers.states import TransformersBackboneState
-from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.core.utilities.imports import _TEXT_AVAILABLE, _TEXT_TESTING
 from flash.text import TextClassificationData
-from tests.helpers.utils import _TEXT_TESTING
 
 if _TEXT_AVAILABLE:
     from datasets import Dataset
-
-TEST_BACKBONE = "prajjwal1/bert-tiny"  # super small model for testing
-TEST_BACKBONE_STATE = TransformersBackboneState(TEST_BACKBONE)
 
 TEST_CSV_DATA = """sentence,label
 this is a sentence one,0
@@ -135,22 +130,20 @@ def test_from_csv(tmpdir):
         batch_size=1,
     )
 
-    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
-
     batch = next(iter(dm.train_dataloader()))
     assert batch[DataKeys.TARGET].item() in [0, 1]
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
     assert batch[DataKeys.TARGET].item() in [0, 1]
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
     assert batch[DataKeys.TARGET].item() in [0, 1]
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -167,24 +160,22 @@ def test_from_csv_multilabel(tmpdir):
         batch_size=1,
     )
 
-    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
-
     assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -201,22 +192,20 @@ def test_from_json(tmpdir):
         batch_size=1,
     )
 
-    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
-
     batch = next(iter(dm.train_dataloader()))
     assert batch[DataKeys.TARGET].item() in [0, 1]
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
     assert batch[DataKeys.TARGET].item() in [0, 1]
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
     assert batch[DataKeys.TARGET].item() in [0, 1]
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -233,24 +222,22 @@ def test_from_json_multilabel(tmpdir):
         batch_size=1,
     )
 
-    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
-
     assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -268,22 +255,20 @@ def test_from_json_with_field(tmpdir):
         field="data",
     )
 
-    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
-
     batch = next(iter(dm.train_dataloader()))
     assert batch[DataKeys.TARGET].item() in [0, 1]
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
     assert batch[DataKeys.TARGET].item() in [0, 1]
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
     assert batch[DataKeys.TARGET].item() in [0, 1]
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -301,24 +286,22 @@ def test_from_json_with_field_multilabel(tmpdir):
         field="data",
     )
 
-    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
-
     assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -335,22 +318,20 @@ def test_from_parquet(tmpdir):
         batch_size=1,
     )
 
-    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
-
     batch = next(iter(dm.train_dataloader()))
     assert batch[DataKeys.TARGET].item() in [0, 1]
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
     assert batch[DataKeys.TARGET].item() in [0, 1]
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
     assert batch[DataKeys.TARGET].item() in [0, 1]
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -367,24 +348,22 @@ def test_from_parquet_multilabel(tmpdir):
         batch_size=1,
     )
 
-    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
-
     assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -400,22 +379,20 @@ def test_from_data_frame():
         batch_size=1,
     )
 
-    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
-
     batch = next(iter(dm.train_dataloader()))
     assert batch[DataKeys.TARGET].item() in [0, 1]
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
     assert batch[DataKeys.TARGET].item() in [0, 1]
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
     assert batch[DataKeys.TARGET].item() in [0, 1]
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -431,24 +408,22 @@ def test_from_data_frame_multilabel():
         batch_size=1,
     )
 
-    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
-
     assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -465,22 +440,20 @@ def test_from_hf_datasets():
         batch_size=1,
     )
 
-    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
-
     batch = next(iter(dm.train_dataloader()))
     assert batch[DataKeys.TARGET].item() in [0, 1]
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
     assert batch[DataKeys.TARGET].item() in [0, 1]
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
     assert batch[DataKeys.TARGET].item() in [0, 1]
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -497,24 +470,22 @@ def test_from_hf_datasets_multilabel():
         batch_size=1,
     )
 
-    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
-
     assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -531,22 +502,20 @@ def test_from_lists():
         batch_size=1,
     )
 
-    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
-
     batch = next(iter(dm.train_dataloader()))
     assert batch[DataKeys.TARGET].item() in [0, 1]
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
     assert batch[DataKeys.TARGET].item() in [0, 1]
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
     assert batch[DataKeys.TARGET].item() in [0, 1]
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -563,24 +532,22 @@ def test_from_lists_multilabel():
         batch_size=1,
     )
 
-    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
-
     assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
     assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
-    assert "input_ids" in batch
+    assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
 @pytest.mark.skipif(_TEXT_AVAILABLE, reason="text libraries are installed.")

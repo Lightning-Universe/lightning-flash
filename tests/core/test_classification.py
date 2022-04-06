@@ -65,15 +65,17 @@ def test_classification_outputs_fiftyone():
     assert predictions["predictions"].label == "class_3"
     assert predictions["filepath"] == "something"
 
-    predictions = FiftyOneLabelsOutput(store_logits=True).transform(example_output)
+    predictions = FiftyOneLabelsOutput(store_logits=True, return_filepath=False).transform(example_output)
     assert torch.allclose(torch.tensor(predictions.logits), logits)
     assert torch.allclose(torch.tensor(predictions.confidence), torch.softmax(logits, -1)[-1])
     assert predictions.label == "2"
-    predictions = FiftyOneLabelsOutput(labels, store_logits=True).transform(example_output)
+    predictions = FiftyOneLabelsOutput(labels, store_logits=True, return_filepath=False).transform(example_output)
     assert predictions.label == "class_3"
 
-    predictions = FiftyOneLabelsOutput(store_logits=True, multi_label=True).transform(example_output)
+    predictions = FiftyOneLabelsOutput(store_logits=True, multi_label=True, return_filepath=False).transform(
+        example_output
+    )
     assert torch.allclose(torch.tensor(predictions.logits), logits)
     assert [c.label for c in predictions.classifications] == ["1", "2"]
-    predictions = FiftyOneLabelsOutput(labels, multi_label=True).transform(example_output)
+    predictions = FiftyOneLabelsOutput(labels, multi_label=True, return_filepath=False).transform(example_output)
     assert [c.label for c in predictions.classifications] == ["class_2", "class_3"]

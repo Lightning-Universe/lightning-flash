@@ -9,9 +9,14 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE
+from flash.core.utilities.imports import (
+    _FIFTYONE_AVAILABLE,
+    _IMAGE_AVAILABLE,
+    _IMAGE_TESTING,
+    _MATPLOTLIB_AVAILABLE,
+    _PIL_AVAILABLE,
+)
 from flash.image import SemanticSegmentation, SemanticSegmentationData, SemanticSegmentationInputTransform
-from tests.helpers.utils import _IMAGE_TESTING
 
 if _PIL_AVAILABLE:
     from PIL import Image
@@ -126,7 +131,69 @@ class TestSemanticSegmentationData:
 
     @staticmethod
     @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
-    def test_from_folders_warning(tmpdir):
+    def test_from_folders_different_extensions(tmpdir):
+        tmp_dir = Path(tmpdir)
+
+        # create random dummy data
+
+        os.makedirs(str(tmp_dir / "images"))
+        os.makedirs(str(tmp_dir / "targets"))
+
+        images = [
+            str(tmp_dir / "images" / "img1.png"),
+            str(tmp_dir / "images" / "img2.png"),
+            str(tmp_dir / "images" / "img3.png"),
+        ]
+
+        targets = [
+            str(tmp_dir / "targets" / "img1.tiff"),
+            str(tmp_dir / "targets" / "img2.tiff"),
+            str(tmp_dir / "targets" / "img3.tiff"),
+        ]
+
+        num_classes: int = 2
+        img_size: Tuple[int, int] = (128, 128)
+        create_random_data(images, targets, img_size, num_classes)
+
+        # instantiate the data module
+
+        dm = SemanticSegmentationData.from_folders(
+            train_folder=str(tmp_dir / "images"),
+            train_target_folder=str(tmp_dir / "targets"),
+            val_folder=str(tmp_dir / "images"),
+            val_target_folder=str(tmp_dir / "targets"),
+            test_folder=str(tmp_dir / "images"),
+            test_target_folder=str(tmp_dir / "targets"),
+            batch_size=2,
+            num_workers=0,
+            num_classes=num_classes,
+        )
+        assert dm is not None
+        assert dm.train_dataloader() is not None
+        assert dm.val_dataloader() is not None
+        assert dm.test_dataloader() is not None
+
+        # check training data
+        data = next(iter(dm.train_dataloader()))
+        imgs, labels = data[DataKeys.INPUT], data[DataKeys.TARGET]
+        assert imgs.shape == (2, 3, 128, 128)
+        assert labels.shape == (2, 128, 128)
+
+        # check val data
+        data = next(iter(dm.val_dataloader()))
+        imgs, labels = data[DataKeys.INPUT], data[DataKeys.TARGET]
+        assert imgs.shape == (2, 3, 128, 128)
+        assert labels.shape == (2, 128, 128)
+
+        # check test data
+        data = next(iter(dm.test_dataloader()))
+        imgs, labels = data[DataKeys.INPUT], data[DataKeys.TARGET]
+        assert imgs.shape == (2, 3, 128, 128)
+        assert labels.shape == (2, 128, 128)
+
+    @staticmethod
+    @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+    def test_from_folders_error(tmpdir):
         tmp_dir = Path(tmpdir)
 
         # create random dummy data
@@ -150,22 +217,14 @@ class TestSemanticSegmentationData:
 
         # instantiate the data module
 
-        with pytest.warns(UserWarning, match="Found inconsistent files"):
-            dm = SemanticSegmentationData.from_folders(
+        with pytest.raises(ValueError, match="Found inconsistent files"):
+            SemanticSegmentationData.from_folders(
                 train_folder=str(tmp_dir / "images"),
                 train_target_folder=str(tmp_dir / "targets"),
                 batch_size=1,
                 num_workers=0,
                 num_classes=num_classes,
             )
-        assert dm is not None
-        assert dm.train_dataloader() is not None
-
-        # check training data
-        data = next(iter(dm.train_dataloader()))
-        imgs, labels = data[DataKeys.INPUT], data[DataKeys.TARGET]
-        assert imgs.shape == (1, 3, 128, 128)
-        assert labels.shape == (1, 128, 128)
 
     @staticmethod
     @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")

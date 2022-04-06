@@ -15,9 +15,9 @@ import urllib.error
 
 import pytest
 
+from flash.core.utilities.imports import _IMAGE_TESTING
 from flash.core.utilities.url_error import catch_url_error
 from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES
-from tests.helpers.utils import _IMAGE_TESTING
 
 
 @pytest.mark.parametrize(

@@ -18,13 +18,8 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from flash.core.data.io.input import DataKeys
-from flash.core.integrations.transformers.states import TransformersBackboneState
+from flash.core.utilities.imports import _TEXT_TESTING
 from flash.text import QuestionAnsweringData
-from tests.helpers.utils import _TEXT_TESTING
-
-TEST_BACKBONE = "distilbert-base-uncased"
-TEST_BACKBONE_STATE = TransformersBackboneState(TEST_BACKBONE)
 
 TEST_CSV_DATA = {
     "id": ["12345", "12346", "12347", "12348"],
@@ -115,12 +110,10 @@ def test_from_csv(tmpdir):
         train_file=csv_path,
         batch_size=2,
     )
-    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
     batch = next(iter(dm.train_dataloader()))
-    assert "input_ids" in batch
-    assert "attention_mask" in batch
-    assert "start_positions" in batch
-    assert "end_positions" in batch
+    assert isinstance(batch["question"][0], str)
+    assert isinstance(batch["context"][0], str)
+    assert isinstance(batch["answer"], dict)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -136,28 +129,15 @@ def test_from_files(tmpdir):
         test_file=csv_path,
         batch_size=2,
     )
-    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
     batch = next(iter(dm.val_dataloader()))
-    assert "input_ids" in batch
-    assert "attention_mask" in batch
-    assert "start_positions" in batch
-    assert "end_positions" in batch
-    assert DataKeys.METADATA in batch
-    assert "context" in batch[DataKeys.METADATA][0]
-    assert "answer" in batch[DataKeys.METADATA][0]
-    assert "example_id" in batch[DataKeys.METADATA][0]
-    assert "offset_mapping" in batch[DataKeys.METADATA][0]
+    assert isinstance(batch["question"][0], str)
+    assert isinstance(batch["context"][0], str)
+    assert isinstance(batch["answer"], dict)
 
     batch = next(iter(dm.test_dataloader()))
-    assert "input_ids" in batch
-    assert "attention_mask" in batch
-    assert "start_positions" in batch
-    assert "end_positions" in batch
-    assert DataKeys.METADATA in batch
-    assert "context" in batch[DataKeys.METADATA][0]
-    assert "answer" in batch[DataKeys.METADATA][0]
-    assert "example_id" in batch[DataKeys.METADATA][0]
-    assert "offset_mapping" in batch[DataKeys.METADATA][0]
+    assert isinstance(batch["question"][0], str)
+    assert isinstance(batch["context"][0], str)
+    assert isinstance(batch["answer"], dict)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -171,12 +151,10 @@ def test_from_json(tmpdir):
         train_file=json_path,
         batch_size=2,
     )
-    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
     batch = next(iter(dm.train_dataloader()))
-    assert "input_ids" in batch
-    assert "attention_mask" in batch
-    assert "start_positions" in batch
-    assert "end_positions" in batch
+    assert isinstance(batch["question"][0], str)
+    assert isinstance(batch["context"][0], str)
+    assert isinstance(batch["answer"], dict)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
@@ -191,12 +169,10 @@ def test_from_json_with_field(tmpdir):
         field="data",
         batch_size=2,
     )
-    dm.train_dataset.set_state(TEST_BACKBONE_STATE)
     batch = next(iter(dm.train_dataloader()))
-    assert "input_ids" in batch
-    assert "attention_mask" in batch
-    assert "start_positions" in batch
-    assert "end_positions" in batch
+    assert isinstance(batch["question"][0], str)
+    assert isinstance(batch["context"][0], str)
+    assert isinstance(batch["answer"], dict)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")

@@ -11,24 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import functools
 import inspect
-import pickle
+import re
 from abc import ABCMeta
 from copy import deepcopy
 from importlib import import_module
-from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple, Type, Union
-from warnings import warn
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import pytorch_lightning as pl
 import torch
 import torchmetrics
-from deprecate import deprecated
 from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.callbacks.finetuning import BaseFinetuning
-from pytorch_lightning.trainer.optimizers import _get_default_scheduler_config
-from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
@@ -37,14 +32,12 @@ from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader, Sampler
 
 import flash
-from flash.core.data.data_pipeline import DataPipeline, DataPipelineState
 from flash.core.data.io.input import InputBase, ServeInput
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import OutputTransform
-from flash.core.data.process import Deserializer, DeserializerMapping
-from flash.core.data.properties import ProcessState
-from flash.core.finetuning import _DEFAULTS_FINETUNE_STRATEGIES, _FINETUNING_STRATEGIES_REGISTRY
+from flash.core.data.output import BASE_OUTPUTS
+from flash.core.finetuning import _FINETUNING_STRATEGIES_REGISTRY
 from flash.core.hooks import FineTuningHooks
 from flash.core.optimizers.optimizers import _OPTIMIZERS_REGISTRY
 from flash.core.optimizers.schedulers import _SCHEDULERS_REGISTRY
@@ -53,9 +46,7 @@ from flash.core.serve.composition import Composition
 from flash.core.utilities.apply_func import get_callable_dict
 from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_5_0, requires
 from flash.core.utilities.providers import _HUGGINGFACE
-from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import (
-    DESERIALIZER_TYPE,
     INPUT_TRANSFORM_TYPE,
     LOSS_FN_TYPE,
     LR_SCHEDULER_TYPE,
@@ -63,7 +54,6 @@ from flash.core.utilities.types import (
     MODEL_TYPE,
     OPTIMIZER_TYPE,
     OUTPUT_TRANSFORM_TYPE,
-    OUTPUT_TYPE,
 )
 
 
@@ -82,12 +72,6 @@ class ModuleWrapperBase:
 
         self._children = []
 
-        # TODO: create enum values to define what are the exact states
-        self._data_pipeline_state: DataPipelineState = DataPipelineState()
-
-        # model own internal state shared with the data pipeline.
-        self._state: Dict[Type[ProcessState], ProcessState] = {}
-
     def __setattr__(self, key, value):
         if isinstance(value, (LightningModule, ModuleWrapperBase)):
             self._children.append(key)
@@ -98,38 +82,39 @@ class ModuleWrapperBase:
                     setattr(getattr(self, child), key, value)
         super().__setattr__(key, value)
 
-    def get_state(self, state_type):
-        if state_type in self._state:
-            return self._state[state_type]
-        if self._data_pipeline_state is not None:
-            return self._data_pipeline_state.get_state(state_type)
-        return None
-
-    def set_state(self, state: ProcessState):
-        self._state[type(state)] = state
-        if self._data_pipeline_state is not None:
-            self._data_pipeline_state.set_state(state)
-
-    def attach_data_pipeline_state(self, data_pipeline_state: "DataPipelineState"):
-        for state in self._state.values():
-            data_pipeline_state.set_state(state)
-        if self._data_pipeline_state:
-            for state in self._data_pipeline_state._state.values():
-                data_pipeline_state.set_state(state)
-        self._data_pipeline_state = data_pipeline_state
-        for child in self._children:
-            child = getattr(self, child)
-            if hasattr(child, "attach_data_pipeline_state"):
-                child.attach_data_pipeline_state(data_pipeline_state)
-
 
 class DatasetProcessor:
     """The ``DatasetProcessor`` mixin provides hooks for classes which need custom logic for producing the data
     loaders for each running stage given the corresponding dataset."""
 
+    def __init__(self):
+        super().__init__()
+
+        self._collate_fn = None
+        self._input_transform = None
+
+    @torch.jit.unused
+    @property
+    def collate_fn(self) -> Optional[Callable]:
+        return self._collate_fn
+
+    @collate_fn.setter
+    def collate_fn(self, collate_fn: Callable) -> None:
+        self._collate_fn = collate_fn
+
+    @torch.jit.unused
+    @property
+    def input_transform(self) -> Optional[InputTransform]:
+        return self._input_transform
+
+    @input_transform.setter
+    def input_transform(self, input_transform: InputTransform) -> None:
+        self._input_transform = input_transform
+
     def _process_dataset(
         self,
         dataset: InputBase,
+        input_transform: InputTransform,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -137,8 +122,18 @@ class DatasetProcessor:
         shuffle: bool = False,
         drop_last: bool = True,
         sampler: Optional[Sampler] = None,
-        persistent_workers: bool = True,
+        persistent_workers: bool = False,
     ) -> DataLoader:
+
+        # Assign the InputTransform
+        if self.input_transform is None:
+            self.input_transform = input_transform
+
+        # Now inject the `self.collate_fn` so that it doesn't override `InputTransform._collate` but is called through
+        # the `InputTransform._collate` method.
+        if self.collate_fn is not None:
+            self.input_transform.inject_collate_fn(self.collate_fn)
+
         return DataLoader(
             dataset,
             batch_size=batch_size,
@@ -155,6 +150,7 @@ class DatasetProcessor:
         self,
         dataset: InputBase,
         trainer: "flash.Trainer",
+        input_transform: InputTransform,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -162,9 +158,11 @@ class DatasetProcessor:
         shuffle: bool = False,
         drop_last: bool = True,
         sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
     ) -> DataLoader:
         return self._process_dataset(
             dataset,
+            input_transform=input_transform,
             batch_size=batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
@@ -172,13 +170,14 @@ class DatasetProcessor:
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
-            persistent_workers=num_workers > 0,
+            persistent_workers=persistent_workers,
         )
 
     def process_val_dataset(
         self,
         dataset: InputBase,
         trainer: "flash.Trainer",
+        input_transform: InputTransform,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -186,9 +185,11 @@ class DatasetProcessor:
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
     ) -> DataLoader:
         return self._process_dataset(
             dataset,
+            input_transform=input_transform,
             batch_size=batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
@@ -196,13 +197,14 @@ class DatasetProcessor:
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
-            persistent_workers=num_workers > 0,
+            persistent_workers=persistent_workers,
         )
 
     def process_test_dataset(
         self,
         dataset: InputBase,
         trainer: "flash.Trainer",
+        input_transform: InputTransform,
         batch_size: int,
         num_workers: int,
         pin_memory: bool,
@@ -210,9 +212,11 @@ class DatasetProcessor:
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
     ) -> DataLoader:
         return self._process_dataset(
             dataset,
+            input_transform=input_transform,
             batch_size=batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
@@ -220,12 +224,13 @@ class DatasetProcessor:
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
-            persistent_workers=num_workers > 0,
+            persistent_workers=persistent_workers,
         )
 
     def process_predict_dataset(
         self,
         dataset: InputBase,
+        input_transform: InputTransform,
         batch_size: int = 1,
         num_workers: int = 0,
         pin_memory: bool = False,
@@ -233,9 +238,11 @@ class DatasetProcessor:
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
     ) -> DataLoader:
         return self._process_dataset(
             dataset,
+            input_transform=input_transform,
             batch_size=batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
@@ -243,7 +250,7 @@ class DatasetProcessor:
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
-            persistent_workers=False,
+            persistent_workers=persistent_workers,
         )
 
 
@@ -268,11 +275,11 @@ class CheckDependenciesMeta(ABCMeta):
         result = ABCMeta.__new__(mcs, *args, **kwargs)
         if result.required_extras is not None:
             result.__init__ = requires(result.required_extras)(result.__init__)
-            load_from_checkpoint = getattr(result, "load_from_checkpoint", None)
-            if load_from_checkpoint is not None:
-                result.load_from_checkpoint = classmethod(
-                    requires(result.required_extras)(result.load_from_checkpoint.__func__)
-                )
+
+            patterns = ["load_from_checkpoint", "available_*"]  # must match classmethods only
+            regex = "(" + ")|(".join(patterns) + ")"
+            for attribute_name, attribute_value in filter(lambda x: re.match(regex, x[0]), inspect.getmembers(result)):
+                setattr(result, attribute_name, classmethod(requires(result.required_extras)(attribute_value.__func__)))
         return result
 
 
@@ -295,25 +302,22 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
     Args:
         model: Model to use for the task.
         loss_fn: Loss function for training.
-        learning_rate: Learning rate to use for training, defaults to ``5e-5``.
+        learning_rate: Learning rate to use for training. If ``None`` (the default) then the default LR for your chosen
+            optimizer will be used.
         optimizer: Optimizer to use for training.
         lr_scheduler: The LR scheduler to use during training.
         metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
             package, a custom metric inheriting from `torchmetrics.Metric`, a callable function or a list/dict
             containing a combination of the aforementioned. In all cases, each metric needs to have the signature
             `metric(preds,target)` and return a single scalar tensor.
-        deserializer: Either a single :class:`~flash.core.data.process.Deserializer` or a mapping of these to
-            deserialize the input
-        input_transform: :class:`~flash.core.data.io.input_transform.InputTransform` to use as the default
-            for this task.
         output_transform: :class:`~flash.core.data.io.output_transform.OutputTransform` to use as the default for this
             task.
-        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
     """
 
     optimizers: FlashRegistry = _OPTIMIZERS_REGISTRY
     lr_schedulers: FlashRegistry = _SCHEDULERS_REGISTRY
     finetuning_strategies: FlashRegistry = _FINETUNING_STRATEGIES_REGISTRY
+    outputs: FlashRegistry = BASE_OUTPUTS
 
     required_extras: Optional[Union[str, List[str]]] = None
 
@@ -321,14 +325,11 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         self,
         model: MODEL_TYPE = None,
         loss_fn: LOSS_FN_TYPE = None,
-        learning_rate: float = 5e-5,
+        learning_rate: Optional[float] = None,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: METRICS_TYPE = None,
-        deserializer: DESERIALIZER_TYPE = None,
-        input_transform: INPUT_TRANSFORM_TYPE = None,
         output_transform: OUTPUT_TRANSFORM_TYPE = None,
-        output: OUTPUT_TYPE = None,
     ):
         super().__init__()
         if model is not None:
@@ -344,37 +345,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         # TODO: should we save more? Bug on some regarding yaml if we save metrics
         self.save_hyperparameters("learning_rate", "optimizer")
 
-        self._deserializer: Optional[Deserializer] = None
-        self._input_transform: Optional[InputTransform] = input_transform
         self._output_transform: Optional[OutputTransform] = output_transform
-        self._output: Optional[Output] = None
-
-        # Explicitly set the output to call the setter
-        self.deserializer = deserializer
-        self.output = output
-        self._wrapped_predict_step = False
-
-    def _wrap_predict_step(self) -> None:
-        if not self._wrapped_predict_step:
-            process_fn = self.build_data_pipeline().output_transform_processor(RunningStage.PREDICTING)
-
-            predict_step = self.predict_step
-
-            @functools.wraps(predict_step)
-            def wrapper(*args, **kwargs):
-                predictions = predict_step(*args, **kwargs)
-                return process_fn(predictions)
-
-            self._original_predict_step = self.predict_step
-            self.predict_step = wrapper
-
-            self._wrapped_predict_step = True
-
-    def _unwrap_predict_step(self) -> None:
-        if self._wrapped_predict_step:
-            self.predict_step = self._original_predict_step
-            del self._original_predict_step
-            self._wrapped_predict_step = False
 
     def step(self, batch: Any, batch_idx: int, metrics: nn.ModuleDict) -> Any:
         """Implement the core logic for the training/validation/test step. By default this includes:
@@ -486,7 +457,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             batch = torch.stack(batch)
         return self(batch)
 
-    def modules_to_freeze(self) -> Optional[Union[nn.Module]]:
+    def modules_to_freeze(self) -> Optional[nn.Module]:
         """By default, we try to get the ``backbone`` attribute from the task and return it or ``None`` if not
         present.
 
@@ -507,12 +478,11 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
     def configure_optimizers(self) -> Union[Optimizer, Tuple[List[Optimizer], List[_LRScheduler]]]:
         """Implement how optimizer and optionally learning rate schedulers should be configured."""
+        optimizers_kwargs: Dict[str, Any] = {}
         if isinstance(self.optimizer, str):
             optimizer_fn = self._get_optimizer_class_from_registry(self.optimizer.lower())
-            optimizers_kwargs: Dict[str, Any] = {"lr": self.learning_rate}
         elif isinstance(self.optimizer, Callable):
             optimizer_fn = self.optimizer
-            optimizers_kwargs: Dict[str, Any] = {"lr": self.learning_rate}
         elif isinstance(self.optimizer, Tuple):
             if len(self.optimizer) != 2:
                 raise MisconfigurationException(
@@ -534,12 +504,14 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
             optimizer_fn: Callable = self._get_optimizer_class_from_registry(self.optimizer[0])
             optimizers_kwargs: Dict[str, Any] = self.optimizer[1]
-            optimizers_kwargs["lr"] = self.learning_rate
         else:
             raise TypeError(
                 f"""Optimizer should be of type string or callable or tuple(string, dictionary)
                 but got {type(self.optimizer)}."""
             )
+
+        if self.learning_rate is not None:
+            optimizers_kwargs["lr"] = self.learning_rate
 
         model_parameters = filter(lambda p: p.requires_grad, self.parameters())
         optimizer: Optimizer = optimizer_fn(model_parameters, **optimizers_kwargs)
@@ -559,284 +531,35 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         if isinstance(strategy, str):
             if strategy not in self.available_finetuning_strategies():
                 raise MisconfigurationException(
-                    f"Please provide a valid strategy from {_DEFAULTS_FINETUNE_STRATEGIES[:3]}."
+                    f"The `strategy` should be one of: {', '.join(self.available_finetuning_strategies())}."
+                    " For more details and advanced finetuning options see our docs:"
+                    " https://lightning-flash.readthedocs.io/en/stable/general/finetuning.html"
                 )
             finetuning_strategy_fn: Callable = self.finetuning_strategies.get(key=strategy)
             finetuning_strategy_metadata = {"strategy_metadata": None, "train_bn": train_bn}
         elif isinstance(strategy, Tuple):
             if not isinstance(strategy[0], str) or strategy[0] not in self.available_finetuning_strategies():
                 raise MisconfigurationException(
-                    f"First input of `strategy` in a tuple configuration should be a string within"
-                    f" {_DEFAULTS_FINETUNE_STRATEGIES[3:]}"
+                    f"The first input of `strategy` in a tuple configuration should be one of:"
+                    f" {', '.join(self.available_finetuning_strategies())}."
                 )
             finetuning_strategy_fn: Callable = self.finetuning_strategies.get(key=strategy[0])
             finetuning_strategy_metadata = {"strategy_metadata": strategy[1], "train_bn": train_bn}
         else:
             raise MisconfigurationException(
-                "`strategy` should be a ``pytorch_lightning.callbacks.BaseFinetuning``"
-                f"callback or a str within {list(_DEFAULTS_FINETUNE_STRATEGIES[:3])}"
-                f"or a tuple configuration with {list(_DEFAULTS_FINETUNE_STRATEGIES[3:])}"
+                "The `strategy` should be a ``pytorch_lightning.callbacks.BaseFinetuning`` callback or one of: "
+                f"{', '.join(self.available_finetuning_strategies())}."
             )
 
         return [finetuning_strategy_fn(**finetuning_strategy_metadata)]
 
-    @staticmethod
-    def _resolve(
-        old_deserializer: Optional[Deserializer],
-        old_input_transform: Optional[InputTransform],
-        old_output_transform: Optional[OutputTransform],
-        old_output: Optional[Output],
-        new_deserializer: Optional[Deserializer],
-        new_input_transform: Optional[InputTransform],
-        new_output_transform: Optional[OutputTransform],
-        new_output: Optional[Output],
-    ) -> Tuple[Optional[Deserializer], Optional[InputTransform], Optional[OutputTransform], Optional[Output]]:
-        """Resolves the correct :class:`~flash.core.data.io.input_transform.InputTransform`,
-        :class:`~flash.core.data.io.output_transform.OutputTransform`, and :class:`~flash.core.data.io.output.Output`
-        to use, choosing ``new_*`` if it is not None or a base class
-        (:class:`~flash.core.data.io.input_transform.InputTransform`,
-        :class:`~flash.core.data.io.output_transform.OutputTransform`, or :class:`~flash.core.data.io.output.Output`)
-        and ``old_*`` otherwise.
-
-        Args:
-            old_input_transform: :class:`~flash.core.data.io.input_transform.InputTransform` to be overridden.
-            old_output_transform: :class:`~flash.core.data.io.output_transform.OutputTransform` to be overridden.
-            old_output: :class:`~flash.core.data.io.output.Output` to be overridden.
-            new_input_transform: :class:`~flash.core.data.io.input_transform.InputTransform` to override with.
-            new_output_transform: :class:`~flash.core.data.io.output_transform.OutputTransform` to override with.
-            new_output: :class:`~flash.core.data.io.output.Output` to override with.
-
-        Returns:
-            The resolved :class:`~flash.core.data.io.input_transform.InputTransform`,
-            :class:`~flash.core.data.io.output_transform.OutputTransform`, and
-            :class:`~flash.core.data.io.output.Output`.
-        """
-        deserializer = old_deserializer
-        if new_deserializer is not None and type(new_deserializer) != Deserializer:
-            deserializer = new_deserializer
-
-        input_transform = old_input_transform
-        if new_input_transform is not None and type(new_input_transform) != InputTransform:
-            input_transform = new_input_transform
-
-        output_transform = old_output_transform
-        if new_output_transform is not None and type(new_output_transform) != OutputTransform:
-            output_transform = new_output_transform
-
-        output = old_output
-        if new_output is not None and type(new_output) != Output:
-            output = new_output
-
-        return deserializer, input_transform, output_transform, output
-
-    @torch.jit.unused
-    @property
-    def deserializer(self) -> Optional[Deserializer]:
-        return self._deserializer
-
-    @deserializer.setter
-    def deserializer(self, deserializer: Union[Deserializer, Mapping[str, Deserializer]]):
-        if isinstance(deserializer, Mapping):
-            deserializer = DeserializerMapping(deserializer)
-        self._deserializer = deserializer
-
-    @torch.jit.unused
-    @property
-    def output(self) -> Optional[Output]:
-        """The current :class:`.Output` associated with this model."""
-        return self._output
-
-    @torch.jit.unused
-    @output.setter
-    def output(self, output: Output):
-        self._output = output
-
-    @torch.jit.unused
-    @property
-    @deprecated(
-        None,
-        "0.6.0",
-        "0.7.0",
-        template_mgs="`Task.serializer` was deprecated in v%(deprecated_in)s in favor of `Task.output`. "
-        "It will be removed in v%(remove_in)s.",
-        stream=functools.partial(warn, category=FutureWarning),
-    )
-    def serializer(self) -> Optional[Output]:
-        """Deprecated.
-
-        Use ``Task.output`` instead.
-        """
-        return self.output
-
-    @torch.jit.unused
-    @serializer.setter
-    @deprecated(
-        None,
-        "0.6.0",
-        "0.7.0",
-        template_mgs="`Task.serializer` was deprecated in v%(deprecated_in)s in favor of `Task.output`. "
-        "It will be removed in v%(remove_in)s.",
-        stream=functools.partial(warn, category=FutureWarning),
-    )
-    def serializer(self, serializer: Output):
-        self.output = serializer
-
-    def build_data_pipeline(
-        self,
-        input: Optional[str] = None,
-        deserializer: Optional[Deserializer] = None,
-        data_pipeline: Optional[DataPipeline] = None,
-    ) -> Optional[DataPipeline]:
-        """Build a :class:`.DataPipeline` incorporating available
-        :class:`~flash.core.data.io.input_transform.InputTransform` and
-        :class:`~flash.core.data.io.output_transform.OutputTransform`
-        objects. These will be overridden in the following resolution order (lowest priority first):
-
-        - Lightning ``Datamodule``, either attached to the :class:`.Trainer` or to the :class:`.Task`.
-        - :class:`.Task` defaults given to :meth:`.Task.__init__`.
-        - :class:`.Task` manual overrides by setting :py:attr:`~data_pipeline`.
-        - :class:`.DataPipeline` passed to this method.
-
-        Args:
-            input: A string that indicates the format of the data source to use which will override
-                the current data source format used.
-            deserializer: deserializer to use
-            data_pipeline: Optional highest priority source of
-                :class:`~flash.core.data.io.input_transform.InputTransform` and
-                :class:`~flash.core.data.io.output_transform.OutputTransform`.
-
-        Returns:
-            The fully resolved :class:`.DataPipeline`.
-        """
-        deserializer, old_input, input_transform, output_transform, output = None, None, None, None, None
-
-        # Datamodule
-        datamodule = None
-        if self.trainer is not None and hasattr(self.trainer, "datamodule"):
-            datamodule = self.trainer.datamodule
-        elif getattr(self, "datamodule", None) is not None:
-            datamodule = self.datamodule
-
-        if getattr(datamodule, "data_pipeline", None) is not None:
-            old_input = getattr(datamodule.data_pipeline, "input", None)
-            input_transform = getattr(datamodule.data_pipeline, "_input_transform_pipeline", None)
-            output_transform = getattr(datamodule.data_pipeline, "_output_transform", None)
-            output = getattr(datamodule.data_pipeline, "_output", None)
-            deserializer = getattr(datamodule.data_pipeline, "_deserializer", None)
-
-        # Defaults / task attributes
-        deserializer, input_transform, output_transform, output = Task._resolve(
-            deserializer,
-            input_transform,
-            output_transform,
-            output,
-            self._deserializer,
-            self._input_transform,
-            self._output_transform,
-            self._output,
-        )
-
-        # Datapipeline
-        if data_pipeline is not None:
-            deserializer, input_transform, output_transform, output = Task._resolve(
-                deserializer,
-                input_transform,
-                output_transform,
-                output,
-                getattr(data_pipeline, "_deserializer", None),
-                getattr(data_pipeline, "_input_transform_pipeline", None),
-                getattr(data_pipeline, "_output_transform", None),
-                getattr(data_pipeline, "_output", None),
-            )
-
-        input = input or old_input
-
-        if deserializer is None or type(deserializer) is Deserializer:
-            deserializer = getattr(input_transform, "deserializer", deserializer)
-
-        data_pipeline = DataPipeline(
-            input=input,
-            input_transform=input_transform,
-            output_transform=output_transform,
-            deserializer=deserializer,
-            output=output,
-        )
-
-        self._data_pipeline_state = self._data_pipeline_state or DataPipelineState()
-
-        self.attach_data_pipeline_state(self._data_pipeline_state)
-        self._data_pipeline_state = data_pipeline.initialize(self._data_pipeline_state)
-        return data_pipeline
-
-    @torch.jit.unused
-    @property
-    def data_pipeline(self) -> DataPipeline:
-        """The current :class:`.DataPipeline`.
-
-        If set, the new value will override the :class:`.Task` defaults. See
-        :py:meth:`~build_data_pipeline` for more details on the resolution order.
-        """
-        return self.build_data_pipeline()
-
-    @torch.jit.unused
-    @data_pipeline.setter
-    def data_pipeline(self, data_pipeline: Optional[DataPipeline]) -> None:
-        self._deserializer, self._input_transform, self._output_transform, self.output = Task._resolve(
-            self._deserializer,
-            self._input_transform,
-            self._output_transform,
-            self._output,
-            getattr(data_pipeline, "_deserializer", None),
-            getattr(data_pipeline, "_input_transform_pipeline", None),
-            getattr(data_pipeline, "_output_transform", None),
-            getattr(data_pipeline, "_output", None),
-        )
-
-        # self._input_transform.state_dict()
-        if getattr(self._input_transform, "_ddp_params_and_buffers_to_ignore", None):
-            self._ddp_params_and_buffers_to_ignore = self._input_transform._ddp_params_and_buffers_to_ignore
-
-    @torch.jit.unused
-    @property
-    def input_transform(self) -> InputTransform:
-        return getattr(self.data_pipeline, "_input_transform_pipeline", None)
-
-    @torch.jit.unused
-    @property
-    def output_transform(self) -> OutputTransform:
-        return getattr(self.data_pipeline, "_output_transform", None)
-
-    def on_predict_start(self) -> None:
-        self._wrap_predict_step()
-
-    def on_predict_end(self) -> None:
-        self._unwrap_predict_step()
-
-    def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
-        # This may be an issue since here we create the same problems with pickle as in
-        # https://pytorch.org/docs/stable/notes/serialization.html
-        if self.data_pipeline is not None and "data_pipeline" not in checkpoint:
-            try:
-                pickle.dumps(self.data_pipeline)  # TODO: DataPipeline not always pickleable
-                checkpoint["data_pipeline"] = self.data_pipeline
-            except AttributeError:
-                rank_zero_warn("DataPipeline couldn't be added to the checkpoint.")
-        if self._data_pipeline_state is not None and "_data_pipeline_state" not in checkpoint:
-            checkpoint["_data_pipeline_state"] = self._data_pipeline_state
-        super().on_save_checkpoint(checkpoint)
-
-    def on_load_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
-        super().on_load_checkpoint(checkpoint)
-        if "data_pipeline" in checkpoint:
-            self.data_pipeline = checkpoint["data_pipeline"]
-        if "_data_pipeline_state" in checkpoint:
-            self._data_pipeline_state = checkpoint["_data_pipeline_state"]
-
     @classmethod
-    def available_backbones(cls, head: Optional[str] = None) -> Union[Dict[str, List[str]], List[str]]:
+    def available_backbones(
+        cls, head: Optional[str] = None
+    ) -> Optional[Union[Dict[str, Optional[List[str]]], List[str]]]:
         if head is None:
             registry: Optional[FlashRegistry] = getattr(cls, "backbones", None)
-            if registry is not None:
+            if registry is not None and getattr(cls, "heads", None) is None:
                 return registry.available_keys()
             heads = cls.available_heads()
         else:
@@ -848,7 +571,9 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             if "backbones" in metadata:
                 backbones = metadata["backbones"].available_keys()
             else:
-                backbones = cls.available_backbones()
+                backbones = getattr(cls, "backbones", None)
+                if backbones is not None:
+                    backbones = backbones.available_keys()
             result[head] = backbones
 
         if len(result) == 1:
@@ -892,6 +617,24 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         if registry is None:
             return []
         return registry.available_keys()
+
+    @classmethod
+    def available_outputs(cls) -> List[str]:
+        """Returns the list of available outputs (that can be used during prediction or serving) for this ``Task``.
+
+        Examples
+        ________
+
+        ..testsetup::
+
+            >>> from flash import Task
+
+        .. doctest::
+
+            >>> print(Task.available_outputs())
+            ['preds', 'raw']
+        """
+        return cls.outputs.available_keys()
 
     def get_num_training_steps(self) -> int:
         """Total training steps inferred from datamodule and devices."""
@@ -939,12 +682,22 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         return deepcopy(lr_scheduler_fn)
 
     def _instantiate_lr_scheduler(self, optimizer: Optimizer) -> Dict[str, Any]:
+        default_scheduler_config = {
+            "scheduler": None,
+            "name": None,
+            "interval": "epoch",
+            "frequency": 1,
+            "reduce_on_plateau": False,
+            "monitor": None,
+            "strict": True,
+            "opt_idx": None,
+        }
         if isinstance(self.lr_scheduler, str):
             lr_scheduler_data: Dict[str, Any] = self._get_lr_scheduler_class_from_registry(self.lr_scheduler)
             lr_scheduler_fn = lr_scheduler_data.pop("fn")
             lr_scheduler_metadata: Dict[str, Any] = lr_scheduler_data.pop("metadata", None)
             lr_scheduler_kwargs: Dict[str, Any] = {}
-            lr_scheduler_config = _get_default_scheduler_config()
+            lr_scheduler_config = default_scheduler_config
             for key, value in lr_scheduler_config.items():
                 lr_scheduler_config[key] = lr_scheduler_metadata.pop(key, None) or value
 
@@ -953,7 +706,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             lr_scheduler_fn = self.lr_scheduler
             lr_scheduler_metadata: Dict[str, Any] = None
             lr_scheduler_kwargs: Dict[str, Any] = {}
-            lr_scheduler_config = _get_default_scheduler_config()
+            lr_scheduler_config = default_scheduler_config
 
         elif isinstance(self.lr_scheduler, Tuple):
             if len(self.lr_scheduler) not in [2, 3]:
@@ -964,7 +717,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
                     f"2) Of length 3 with the first index containing a str from {self.available_lr_schedulers()} and"
                     f" the second index containing the required keyword arguments to initialize the LR Scheduler and"
                     f" the third index containing a Lightning scheduler configuration dictionary of the format"
-                    f" {_get_default_scheduler_config()}. NOTE: Do not set the `scheduler` key in the"
+                    f" {default_scheduler_config}. NOTE: Do not set the `scheduler` key in the"
                     f" lr_scheduler_config, it will overridden with an instance of the provided scheduler key."
                 )
 
@@ -990,7 +743,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             lr_scheduler_fn = lr_scheduler_data.pop("fn")
             lr_scheduler_metadata: Dict[str, Any] = lr_scheduler_data.pop("metadata", None)
             lr_scheduler_kwargs: Dict[str, Any] = self.lr_scheduler[1]
-            lr_scheduler_config = _get_default_scheduler_config()
+            lr_scheduler_config = default_scheduler_config
             for key, value in lr_scheduler_config.items():
                 lr_scheduler_config[key] = lr_scheduler_metadata.pop(key, None) or value
             if len(self.lr_scheduler) == 3:
@@ -1020,14 +773,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         # 2) If return value is a dictionary, check for the lr_scheduler_config `only keys` and return the config.
         lr_scheduler: Union[_LRScheduler, Dict[str, Any]] = lr_scheduler_fn(optimizer, **lr_scheduler_kwargs)
 
-        if not isinstance(lr_scheduler, (_LRScheduler, Dict)):
-            raise MisconfigurationException(
-                f"Please make sure that your custom configuration outputs either an LR Scheduler or a scheduler"
-                f" configuration with keys belonging to {list(_get_default_scheduler_config().keys())}."
-            )
-
         if isinstance(lr_scheduler, Dict):
-            dummy_config = _get_default_scheduler_config()
+            dummy_config = default_scheduler_config
             if not all(config_key in dummy_config.keys() for config_key in lr_scheduler.keys()):
                 raise MisconfigurationException(
                     f"Please make sure that your custom configuration outputs either an LR Scheduler or a scheduler"
@@ -1072,13 +819,15 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             return [BenchmarkConvergenceCI()]
 
     @requires("serve")
-    def run_serve_sanity_check(self, serve_input: ServeInput):
+    def run_serve_sanity_check(
+        self, serve_input: ServeInput, transform: INPUT_TRANSFORM_TYPE, transform_kwargs: Optional[Dict], output: Output
+    ):
         from fastapi.testclient import TestClient
 
         from flash.core.serve.flash_components import build_flash_serve_model_component
 
         print("Running serve sanity check")
-        comp = build_flash_serve_model_component(self, serve_input)
+        comp = build_flash_serve_model_component(self, serve_input, output, transform, transform_kwargs)
         composition = Composition(predict=comp, TESTING=True, DEBUG=True)
         app = composition.serve(host="0.0.0.0", port=8000)
 
@@ -1097,6 +846,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         input_cls: Optional[Type[ServeInput]] = None,
         transform: INPUT_TRANSFORM_TYPE = InputTransform,
         transform_kwargs: Optional[Dict] = None,
+        output: Optional[Union[str, Output]] = None,
     ) -> "Composition":
         """Serve the ``Task``. Override this method to provide a default ``input_cls``, ``transform``, and
         ``transform_kwargs``.
@@ -1114,12 +864,16 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         if input_cls is None:
             raise NotImplementedError("The `input_cls` must be provided to enable serving.")
 
-        serve_input = input_cls(transform=transform, transform_kwargs=transform_kwargs)
+        serve_input = input_cls()
+
+        output = output or Output()
+        if isinstance(output, str):
+            output = self.outputs.get(output).from_task(self)
 
         if sanity_check:
-            self.run_serve_sanity_check(serve_input)
+            self.run_serve_sanity_check(serve_input, transform, transform_kwargs, output)
 
-        comp = build_flash_serve_model_component(self, serve_input)
+        comp = build_flash_serve_model_component(self, serve_input, output, transform, transform_kwargs)
         composition = Composition(predict=comp, TESTING=flash._IS_TESTING)
         composition.serve(host=host, port=port)
         return composition

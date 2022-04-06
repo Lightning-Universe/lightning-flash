@@ -16,19 +16,24 @@ from typing import Any, Dict, Optional
 
 import torch
 from pytorch_lightning import LightningModule
-from pytorch_lightning.loops import Loop
-from pytorch_lightning.loops.fit_loop import FitLoop
-from pytorch_lightning.trainer.progress import Progress
 from pytorch_lightning.trainer.states import TrainerFn, TrainerStatus
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from pytorch_lightning.utilities.model_helpers import is_overridden
 
 import flash
 from flash.core.data.utils import _STAGES_PREFIX
-from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_5_0, requires
+from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_4_0, _PL_GREATER_EQUAL_1_5_0, requires
 from flash.core.utilities.stages import RunningStage
 from flash.image.classification.integrations.baal.data import ActiveLearningDataModule
 from flash.image.classification.integrations.baal.dropout import InferenceMCDropoutTask
+
+if _PL_GREATER_EQUAL_1_4_0:
+    from pytorch_lightning.loops import Loop
+    from pytorch_lightning.loops.fit_loop import FitLoop
+    from pytorch_lightning.trainer.progress import Progress
+else:
+    Loop = object
+    FitLoop = object
 
 if not _PL_GREATER_EQUAL_1_5_0:
     from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
@@ -37,14 +42,17 @@ else:
 
 
 class ActiveLearningLoop(Loop):
-    @requires("baal")
+    max_epochs: int
+    inference_model: InferenceMCDropoutTask
+
+    @requires(["baal", (_PL_GREATER_EQUAL_1_4_0, "pytorch-lightning>=1.4.0")])
     def __init__(self, label_epoch_frequency: int, inference_iteration: int = 2, should_reset_weights: bool = True):
         """The `ActiveLearning Loop` describes the following training procedure. This loop is connected with the
         `ActiveLearningTrainer`
 
         Example::
 
-            while unlabelled data or budget critera not reached:
+            while unlabelled data or budget criteria not reached:
 
                 if labelled data
                     trainer.fit(model, labelled data)
@@ -65,6 +73,7 @@ class ActiveLearningLoop(Loop):
         self.fit_loop: Optional[FitLoop] = None
         self.progress = Progress()
         self._model_state_dict: Optional[Dict[str, torch.Tensor]] = None
+        self._datamodule_state_dict: Optional[Dict[str, Any]] = None
         self._lightning_module: Optional[flash.Task] = None
 
     @property
@@ -78,6 +87,8 @@ class ActiveLearningLoop(Loop):
 
     def on_run_start(self, *args: Any, **kwargs: Any) -> None:
         assert isinstance(self.trainer.datamodule, ActiveLearningDataModule)
+        if self._datamodule_state_dict is not None:
+            self.trainer.datamodule.load_state_dict(self._datamodule_state_dict)
         self.trainer.predict_loop._return_predictions = True
         self._lightning_module = self.trainer.lightning_module
         self._model_state_dict = deepcopy(self._lightning_module.state_dict())
@@ -127,15 +138,16 @@ class ActiveLearningLoop(Loop):
         return super().on_advance_end()
 
     def on_run_end(self):
+        self._datamodule_state_dict = self.trainer.datamodule.state_dict()
         self._reset_fitting()
         self._teardown()
         return super().on_run_end()
 
     def on_save_checkpoint(self) -> Dict:
-        return {"datamodule_state_dict": self.trainer.datamodule.state_dict()}
+        return {"datamodule_state_dict": self._datamodule_state_dict}
 
     def on_load_checkpoint(self, state_dict) -> None:
-        self.trainer.datamodule.load_state_dict(state_dict.pop("datamodule_state_dict"))
+        self._datamodule_state_dict = state_dict.pop("datamodule_state_dict", None)
 
     def __getattr__(self, key):
         if key not in self.__dict__:
@@ -176,6 +188,7 @@ class ActiveLearningLoop(Loop):
             if is_overridden(dataloader_name, self.trainer.datamodule)
             else None
         )
+
         if dataloader:
             if _PL_GREATER_EQUAL_1_5_0:
                 setattr(

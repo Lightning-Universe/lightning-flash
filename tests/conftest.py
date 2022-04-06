@@ -7,15 +7,14 @@ import torch
 from pytest_mock import MockerFixture
 
 from flash.core.serve.decorators import uuid4  # noqa (used in mocker.patch)
-from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
-from tests.helpers.utils import _SERVE_TESTING
+from flash.core.utilities.imports import _SERVE_TESTING, _TORCHVISION_AVAILABLE
 
 if _TORCHVISION_AVAILABLE:
     import torchvision
 
 
 class UUID_String(str):
-    """Class to replace UUID object with str instance and hex attribute."""
+    """Class to replace UUID with str instance and hex attribute."""
 
     @property
     def hex(self):

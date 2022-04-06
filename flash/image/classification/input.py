@@ -16,31 +16,35 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 import pandas as pd
 
-from flash.core.data.io.classification_input import ClassificationInput, ClassificationState
+from flash.core.data.io.classification_input import ClassificationInputMixin
 from flash.core.data.io.input import DataKeys
-from flash.core.data.utilities.classification import TargetMode
+from flash.core.data.utilities.classification import MultiBinaryTargetFormatter, TargetFormatter
 from flash.core.data.utilities.data_frame import read_csv, resolve_files, resolve_targets
 from flash.core.data.utilities.paths import filter_valid_files, make_dataset, PATH_TYPE
 from flash.core.data.utilities.samples import to_samples
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
-from flash.core.utilities.imports import requires
-from flash.image.data import (
-    fol,
-    ImageFilesInput,
-    ImageNumpyInput,
-    ImageTensorInput,
-    IMG_EXTENSIONS,
-    NP_EXTENSIONS,
-    SampleCollection,
-)
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
+from flash.image.data import ImageFilesInput, ImageNumpyInput, ImageTensorInput, IMG_EXTENSIONS, NP_EXTENSIONS
+
+if _FIFTYONE_AVAILABLE:
+    fol = lazy_import("fiftyone.core.labels")
+    SampleCollection = "fiftyone.core.collections.SampleCollection"
+else:
+    fol = None
+    SampleCollection = None
 
 
-class ImageClassificationFilesInput(ClassificationInput, ImageFilesInput):
-    def load_data(self, files: List[PATH_TYPE], targets: Optional[List[Any]] = None) -> List[Dict[str, Any]]:
+class ImageClassificationFilesInput(ClassificationInputMixin, ImageFilesInput):
+    def load_data(
+        self,
+        files: List[PATH_TYPE],
+        targets: Optional[List[Any]] = None,
+        target_formatter: Optional[TargetFormatter] = None,
+    ) -> List[Dict[str, Any]]:
         if targets is None:
             return super().load_data(files)
         files, targets = filter_valid_files(files, targets, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
-        self.load_target_metadata(targets)
+        self.load_target_metadata(targets, target_formatter=target_formatter)
         return to_samples(files, targets)
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
@@ -51,14 +55,19 @@ class ImageClassificationFilesInput(ClassificationInput, ImageFilesInput):
 
 
 class ImageClassificationFolderInput(ImageClassificationFilesInput):
-    def load_data(self, folder: PATH_TYPE) -> List[Dict[str, Any]]:
+    def load_data(self, folder: PATH_TYPE, target_formatter: Optional[TargetFormatter] = None) -> List[Dict[str, Any]]:
         files, targets = make_dataset(folder, extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
-        return super().load_data(files, targets)
+        return super().load_data(files, targets, target_formatter=target_formatter)
 
 
 class ImageClassificationFiftyOneInput(ImageClassificationFilesInput):
     @requires("fiftyone")
-    def load_data(self, sample_collection: SampleCollection, label_field: str = "ground_truth") -> List[Dict[str, Any]]:
+    def load_data(
+        self,
+        sample_collection: SampleCollection,
+        label_field: str = "ground_truth",
+        target_formatter: Optional[TargetFormatter] = None,
+    ) -> List[Dict[str, Any]]:
         label_utilities = FiftyOneLabelUtilities(label_field, fol.Label)
         label_utilities.validate(sample_collection)
 
@@ -67,18 +76,21 @@ class ImageClassificationFiftyOneInput(ImageClassificationFilesInput):
         filepaths = sample_collection.values("filepath")
         targets = sample_collection.values(label_path)
 
-        return super().load_data(filepaths, targets)
+        return super().load_data(filepaths, targets, target_formatter=target_formatter)
 
-    @staticmethod
     @requires("fiftyone")
-    def predict_load_data(data: SampleCollection) -> List[Dict[str, Any]]:
-        return super().load_data(data.values("filepath"))
+    def predict_load_data(
+        self, data: SampleCollection, target_formatter: Optional[TargetFormatter] = None
+    ) -> List[Dict[str, Any]]:
+        return super().load_data(data.values("filepath"), target_formatter=target_formatter)
 
 
-class ImageClassificationTensorInput(ClassificationInput, ImageTensorInput):
-    def load_data(self, tensor: Any, targets: Optional[List[Any]] = None) -> List[Dict[str, Any]]:
+class ImageClassificationTensorInput(ClassificationInputMixin, ImageTensorInput):
+    def load_data(
+        self, tensor: Any, targets: Optional[List[Any]] = None, target_formatter: Optional[TargetFormatter] = None
+    ) -> List[Dict[str, Any]]:
         if targets is not None:
-            self.load_target_metadata(targets)
+            self.load_target_metadata(targets, target_formatter=target_formatter)
         return to_samples(tensor, targets)
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
@@ -88,10 +100,12 @@ class ImageClassificationTensorInput(ClassificationInput, ImageTensorInput):
         return sample
 
 
-class ImageClassificationNumpyInput(ClassificationInput, ImageNumpyInput):
-    def load_data(self, array: Any, targets: Optional[List[Any]] = None) -> List[Dict[str, Any]]:
+class ImageClassificationNumpyInput(ClassificationInputMixin, ImageNumpyInput):
+    def load_data(
+        self, array: Any, targets: Optional[List[Any]] = None, target_formatter: Optional[TargetFormatter] = None
+    ) -> List[Dict[str, Any]]:
         if targets is not None:
-            self.load_target_metadata(targets)
+            self.load_target_metadata(targets, target_formatter=target_formatter)
         return to_samples(array, targets)
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
@@ -102,6 +116,8 @@ class ImageClassificationNumpyInput(ClassificationInput, ImageNumpyInput):
 
 
 class ImageClassificationDataFrameInput(ImageClassificationFilesInput):
+    labels: list
+
     def load_data(
         self,
         data_frame: pd.DataFrame,
@@ -109,18 +125,22 @@ class ImageClassificationDataFrameInput(ImageClassificationFilesInput):
         target_keys: Optional[Union[str, List[str]]] = None,
         root: Optional[PATH_TYPE] = None,
         resolver: Optional[Callable[[Optional[PATH_TYPE], Any], PATH_TYPE]] = None,
+        target_formatter: Optional[TargetFormatter] = None,
     ) -> List[Dict[str, Any]]:
         files = resolve_files(data_frame, input_key, root, resolver)
         if target_keys is not None:
             targets = resolve_targets(data_frame, target_keys)
         else:
             targets = None
-        result = super().load_data(files, targets)
+        result = super().load_data(files, targets, target_formatter=target_formatter)
 
         # If we had binary multi-class targets then we also know the labels (column names)
-        if self.training and self.target_mode is TargetMode.MULTI_BINARY and isinstance(target_keys, List):
-            classification_state = self.get_state(ClassificationState)
-            self.set_state(ClassificationState(target_keys, classification_state.num_classes))
+        if (
+            self.training
+            and isinstance(self.target_formatter, MultiBinaryTargetFormatter)
+            and isinstance(target_keys, List)
+        ):
+            self.labels = target_keys
 
         return result
 
@@ -133,8 +153,9 @@ class ImageClassificationCSVInput(ImageClassificationDataFrameInput):
         target_keys: Optional[Union[str, List[str]]] = None,
         root: Optional[PATH_TYPE] = None,
         resolver: Optional[Callable[[Optional[PATH_TYPE], Any], PATH_TYPE]] = None,
+        target_formatter: Optional[TargetFormatter] = None,
     ) -> List[Dict[str, Any]]:
         data_frame = read_csv(csv_file)
         if root is None:
             root = os.path.dirname(csv_file)
-        return super().load_data(data_frame, input_key, target_keys, root, resolver)
+        return super().load_data(data_frame, input_key, target_keys, root, resolver, target_formatter=target_formatter)

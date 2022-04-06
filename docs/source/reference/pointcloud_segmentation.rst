@@ -3,6 +3,9 @@
    :card_description: Learn to segment objects in point clouds with Flash and build an example network with the KITTI data set.
    :image: https://pl-flash-data.s3.amazonaws.com/assets/thumbnails/point_cloud_segmentation.svg
    :tags: Point-Cloud,Segmentation
+   :beta:
+
+.. beta:: task
 
 .. _pointcloud_segmentation:
 
@@ -71,6 +74,8 @@ Here's the full example:
 .. literalinclude:: ../../../flash_examples/pointcloud_segmentation.py
     :language: python
     :lines: 14-
+
+To learn how to view the available backbones / heads for this task, see :ref:`backbones_heads`.
 
 .. image:: https://raw.githubusercontent.com/intel-isl/Open3D-ML/master/docs/images/getting_started_ml_visualizer.gif
    :width: 100%

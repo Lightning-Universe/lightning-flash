@@ -14,9 +14,8 @@
 import pytest
 import pytorch_lightning as pl
 
-from flash.core.utilities.imports import _TABULAR_AVAILABLE
+from flash.core.utilities.imports import _TABULAR_AVAILABLE, _TABULAR_TESTING
 from flash.tabular import TabularClassificationData, TabularClassifier
-from tests.helpers.utils import _TABULAR_TESTING
 
 if _TABULAR_AVAILABLE:
     import pandas as pd
@@ -32,14 +31,26 @@ if _TABULAR_AVAILABLE:
 
 
 @pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
-def test_classification(tmpdir):
-
+@pytest.mark.parametrize(
+    "backbone,fields",
+    [
+        ("tabnet", {"categorical_fields": ["category"], "numerical_fields": ["scalar_a", "scalar_b"]}),
+        ("tabtransformer", {"categorical_fields": ["category"], "numerical_fields": ["scalar_a", "scalar_b"]}),
+        ("fttransformer", {"categorical_fields": ["category"], "numerical_fields": ["scalar_a", "scalar_b"]}),
+        ("autoint", {"categorical_fields": ["category"], "numerical_fields": ["scalar_a", "scalar_b"]}),
+        ("node", {"categorical_fields": ["category"], "numerical_fields": ["scalar_a", "scalar_b"]}),
+        ("category_embedding", {"categorical_fields": ["category"], "numerical_fields": ["scalar_a", "scalar_b"]}),
+        # No categorical / numerical fields
+        ("tabnet", {"categorical_fields": ["category"]}),
+        ("tabnet", {"numerical_fields": ["scalar_a", "scalar_b"]}),
+    ],
+)
+def test_classification(backbone, fields, tmpdir):
     train_data_frame = TEST_DF_1.copy()
     val_data_frame = TEST_DF_1.copy()
     test_data_frame = TEST_DF_1.copy()
     data = TabularClassificationData.from_data_frame(
-        categorical_fields=["category"],
-        numerical_fields=["scalar_a", "scalar_b"],
+        **fields,
         target_fields="label",
         train_data_frame=train_data_frame,
         val_data_frame=val_data_frame,
@@ -47,6 +58,6 @@ def test_classification(tmpdir):
         num_workers=0,
         batch_size=2,
     )
-    model = TabularClassifier(num_features=3, num_classes=2, embedding_sizes=data.embedding_sizes)
+    model = TabularClassifier.from_data(datamodule=data, backbone=backbone)
     trainer = pl.Trainer(fast_dev_run=True, default_root_dir=tmpdir)
     trainer.fit(model, data)

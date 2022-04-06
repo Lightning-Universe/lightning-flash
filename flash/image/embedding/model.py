@@ -14,34 +14,37 @@
 import warnings
 from typing import Any, Dict, List, Optional
 
+import torch
+from pytorch_lightning.utilities import rank_zero_warn
+
 from flash.core.adapter import AdapterTask
 from flash.core.data.io.input import DataKeys
-from flash.core.data.states import (
-    CollateFn,
-    PerBatchTransform,
-    PerBatchTransformOnDevice,
-    PerSampleTransform,
-    PerSampleTransformOnDevice,
-)
-from flash.core.data.transforms import ApplyToKeys
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _VISSL_AVAILABLE, requires
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE
+from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES
+from flash.image.embedding.strategies import IMAGE_EMBEDDER_STRATEGIES
+from flash.image.embedding.transforms import IMAGE_EMBEDDER_TRANSFORMS
 
 if _VISSL_AVAILABLE:
     import classy_vision
     import classy_vision.generic.distributed_util
 
-    from flash.image.embedding.backbones import IMAGE_EMBEDDER_BACKBONES
-    from flash.image.embedding.strategies import IMAGE_EMBEDDER_STRATEGIES
-    from flash.image.embedding.transforms import IMAGE_EMBEDDER_TRANSFORMS
-
     # patch this to avoid classy vision/vissl based distributed training
     classy_vision.generic.distributed_util.get_world_size = lambda: 1
-else:
-    IMAGE_EMBEDDER_BACKBONES = FlashRegistry("backbones")
-    IMAGE_EMBEDDER_STRATEGIES = FlashRegistry("embedder_training_strategies")
-    IMAGE_EMBEDDER_TRANSFORMS = FlashRegistry("embedder_transforms")
+
+# Skip doctests if requirements aren't available
+__doctest_skip__ = []
+if not _VISSL_AVAILABLE:
+    __doctest_skip__ += [
+        "ImageEmbedder",
+        "ImageEmbedder.*",
+    ]
+
+_deprecated_backbones = {
+    "resnet": "resnet50",
+    "vision_transformer": "vit_small_patch16_224",
+}
 
 
 class ImageEmbedder(AdapterTask):
@@ -50,12 +53,11 @@ class ImageEmbedder(AdapterTask):
 
     Args:
         training_strategy: Training strategy from VISSL,
-            select between 'simclr', 'swav', 'dino', 'moco', or 'barlow_twins'.
+            select between 'simclr', 'swav', or 'barlow_twins'.
         head: projection head used for task, select between
-            'simclr_head', 'swav_head', 'dino_head', 'moco_head', or 'barlow_twins_head'.
+            'simclr_head', 'swav_head', or 'barlow_twins_head'.
         pretraining_transform: transform applied to input image for pre-training SSL model.
-            Select between 'simclr_transform', 'swav_transform', 'dino_transform',
-            'moco_transform', or 'barlow_twins_transform'.
+            Select between 'simclr_transform', 'swav_transform', or 'barlow_twins_transform'.
         backbone: VISSL backbone, defaults to ``resnet``.
         pretrained: Use a pretrained backbone, defaults to ``False``.
         optimizer: Optimizer to use for training.
@@ -67,7 +69,7 @@ class ImageEmbedder(AdapterTask):
     """
 
     training_strategies: FlashRegistry = IMAGE_EMBEDDER_STRATEGIES
-    backbones: FlashRegistry = IMAGE_EMBEDDER_BACKBONES
+    backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES
     transforms: FlashRegistry = IMAGE_EMBEDDER_TRANSFORMS
 
     required_extras: List[str] = ["image", "vissl", "fairscale"]
@@ -77,11 +79,11 @@ class ImageEmbedder(AdapterTask):
         training_strategy: str,
         head: str,
         pretraining_transform: str,
-        backbone: str = "resnet",
+        backbone: str = "resnet18",
         pretrained: bool = False,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
-        learning_rate: float = 1e-3,
+        learning_rate: Optional[float] = None,
         backbone_kwargs: Optional[Dict[str, Any]] = None,
         training_strategy_kwargs: Optional[Dict[str, Any]] = None,
         pretraining_transform_kwargs: Optional[Dict[str, Any]] = None,
@@ -97,45 +99,50 @@ class ImageEmbedder(AdapterTask):
         if pretraining_transform_kwargs is None:
             pretraining_transform_kwargs = {}
 
-        backbone, _ = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
+        if backbone in _deprecated_backbones:
+            rank_zero_warn(
+                f"The '{backbone}' backbone for the `ImageEmbedder` is deprecated in v0.8 and will be removed "
+                f"in v0.9. Use '{_deprecated_backbones[backbone]}' instead.",
+                category=FutureWarning,
+            )
+            backbone = _deprecated_backbones[backbone]
+
+        model, num_features = self.backbones.get(backbone)(pretrained=pretrained, **backbone_kwargs)
 
         metadata = self.training_strategies.get(training_strategy, with_metadata=True)
-        loss_fn, head, hooks = metadata["fn"](head=head, **training_strategy_kwargs)
+        loss_fn, head, hooks = metadata["fn"](head=head, num_features=num_features, **training_strategy_kwargs)
 
         adapter = metadata["metadata"]["adapter"].from_task(
             self,
             loss_fn=loss_fn,
-            backbone=backbone,
+            backbone=model,
             head=head,
             hooks=hooks,
         )
 
         super().__init__(
             adapter=adapter,
+            model=model,
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
             learning_rate=learning_rate,
         )
 
-        transform, collate_fn = self.transforms.get(pretraining_transform)(**pretraining_transform_kwargs)
-
-        self.adapter.set_state(CollateFn(collate_fn))
-        self.adapter.set_state(
-            PerSampleTransform(
-                ApplyToKeys(
-                    DataKeys.INPUT,
-                    transform,
-                )
-            )
-        )
-        self.adapter.set_state(PerSampleTransformOnDevice(None))
-        self.adapter.set_state(PerBatchTransform(None))
-        self.adapter.set_state(PerBatchTransformOnDevice(None))
+        self.input_transform = self.transforms.get(pretraining_transform)(**pretraining_transform_kwargs)
 
         warnings.warn(
             "Warning: VISSL ImageEmbedder overrides any user provided transforms"
             " with pre-defined transforms for the training strategy."
         )
+
+    def forward(self, x: torch.Tensor) -> Any:
+        return self.model(x)
+
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        return self(batch[DataKeys.INPUT])
+
+    def on_epoch_start(self) -> None:
+        self.adapter.on_epoch_start()
 
     def on_train_start(self) -> None:
         self.adapter.on_train_start()
@@ -149,6 +156,18 @@ class ImageEmbedder(AdapterTask):
     @classmethod
     @requires(["image", "vissl", "fairscale"])
     def available_training_strategies(cls) -> List[str]:
+        """Get the list of available training strategies (passed to the ``training_strategy`` argument) for this
+        task.
+
+        Examples
+        ________
+
+        .. doctest::
+
+            >>> from flash.image import ImageEmbedder
+            >>> ImageEmbedder.available_training_strategies()  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            ['barlow_twins', ..., 'swav']
+        """
         registry: Optional[FlashRegistry] = getattr(cls, "training_strategies", None)
         if registry is None:
             return []

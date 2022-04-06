@@ -41,7 +41,7 @@ if _FIFTYONE_AVAILABLE:
 
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _ICEVISION_AVAILABLE, reason="IceVision is not installed for testing")
-@pytest.mark.parametrize(["head", "backbone"], [("retinanet", "resnet18_fpn")])
+@pytest.mark.parametrize(["head", "backbone"], [("retinanet", "resnet18_fpn"), ("faster_rcnn", "resnet18_fpn")])
 def test_detection(tmpdir, head, backbone):
 
     train_folder, coco_ann_path = _create_synth_coco_dataset(tmpdir)

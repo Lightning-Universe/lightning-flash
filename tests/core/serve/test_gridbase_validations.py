@@ -2,8 +2,7 @@ import pytest
 
 from flash.core.serve import expose, ModelComponent
 from flash.core.serve.types import Number
-from flash.core.utilities.imports import _CYTOOLZ_AVAILABLE
-from tests.helpers.utils import _SERVE_TESTING
+from flash.core.utilities.imports import _CYTOOLZ_AVAILABLE, _SERVE_TESTING
 
 
 @pytest.mark.skipif(not _CYTOOLZ_AVAILABLE, reason="the library cytoolz is not installed.")
@@ -181,8 +180,8 @@ def test_ModelComponent_raises_if_exposed_input_keys_differ_from_decorated_metho
 ):
     """This occurs when the instance is being initialized.
 
-    This is noted because it differes from some of the other metaclass validations which will raise an exception at
-    class defiition time.
+    This is noted because it differs from some other metaclass validations which will raise an exception at class
+    definition time.
     """
     from tests.core.serve.models import ClassificationInference
 
@@ -204,8 +203,8 @@ def test_ModelComponent_raises_if_exposed_input_keys_differ_from_decorated_metho
 def test_ModelComponent_raises_if_config_is_empty_dict(lightning_squeezenet1_1_obj):
     """This occurs when the instance is being initialized.
 
-    This is noted because it differes from some of the other metaclass validations which will raise an exception at
-    class defiition time.
+    This is noted because it differs from some other metaclass validations which will raise an exception at class
+    definition time.
     """
 
     class ConfigComponent(ModelComponent):
@@ -224,8 +223,8 @@ def test_ModelComponent_raises_if_config_is_empty_dict(lightning_squeezenet1_1_o
 def test_ModelComponent_raises_if_model_is_empty_iterable():
     """This occurs when the instance is being initialized.
 
-    This is noted because it differes from some of the other metaclass validations which will raise an exception at
-    class defiition time.
+    This is noted because it differs from some other metaclass validations which will raise an exception at class
+    definition time.
     """
 
     class ConfigComponent(ModelComponent):

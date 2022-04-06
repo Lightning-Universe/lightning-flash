@@ -23,12 +23,13 @@ _PATH_HERE = os.path.abspath(os.path.dirname(__file__))
 _PATH_ROOT = os.path.join(_PATH_HERE, "..", "..")
 _PATH_RAW_NB = os.path.join(_PATH_ROOT, "_notebooks")
 sys.path.insert(0, os.path.abspath(_PATH_ROOT))
+sys.path.insert(0, os.path.abspath(os.path.join(_PATH_HERE, "..", "extensions")))
 sys.path.append(os.path.join(_PATH_RAW_NB, ".actions"))
 
 _SHOULD_COPY_NOTEBOOKS = True
 
 try:
-    from helpers import HelperCLI
+    from assistant import AssistantCLI
 except Exception:
     _SHOULD_COPY_NOTEBOOKS = False
     warnings.warn("To build the code, please run: `git submodule update --init --recursive`", stacklevel=2)
@@ -62,7 +63,7 @@ author = "PyTorch Lightning"
 
 # -- Project documents -------------------------------------------------------
 if _SHOULD_COPY_NOTEBOOKS:
-    HelperCLI.copy_notebooks(_PATH_RAW_NB, _PATH_HERE, "notebooks", patterns=["flash_tutorials"])
+    AssistantCLI.copy_notebooks(_PATH_RAW_NB, _PATH_HERE, "notebooks", patterns=["flash_tutorials"])
 
 
 def _transform_changelog(path_in: str, path_out: str) -> None:
@@ -122,6 +123,7 @@ extensions = [
     "sphinx_paramlinks",
     "sphinx_togglebutton",
     "pt_lightning_sphinx_theme.extensions.lightning_tutorials",
+    "stability",
 ]
 
 # autodoc: Default to members and undoc-members

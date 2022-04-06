@@ -24,9 +24,8 @@ from flash.__main__ import main
 from flash.audio import SpeechRecognition
 from flash.audio.speech_recognition.data import InputTransform, SpeechRecognitionData
 from flash.core.data.io.input import DataKeys, Input
-from flash.core.utilities.imports import _AUDIO_AVAILABLE
+from flash.core.utilities.imports import _AUDIO_AVAILABLE, _AUDIO_TESTING, _SERVE_TESTING
 from flash.core.utilities.stages import RunningStage
-from tests.helpers.utils import _AUDIO_TESTING, _SERVE_TESTING
 
 # ======== Mock functions ========
 
@@ -45,7 +44,7 @@ class DummyDataset(torch.utils.data.Dataset):
 
 # ==============================
 
-TEST_BACKBONE = "patrickvonplaten/wav2vec2_tiny_random_robust"  # super small model for testing
+TEST_BACKBONE = "patrickvonplaten/wav2vec2_tiny_random_robust"  # tiny model for testing
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")

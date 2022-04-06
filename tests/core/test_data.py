@@ -34,10 +34,15 @@ def test_init():
     train_input = DatasetInput(RunningStage.TRAINING, DummyDataset())
     val_input = DatasetInput(RunningStage.VALIDATING, DummyDataset())
     test_input = DatasetInput(RunningStage.TESTING, DummyDataset())
-    DataModule(train_input, batch_size=1)
-    DataModule(train_input, val_input, batch_size=1)
-    DataModule(train_input, val_input, test_input, batch_size=1)
-    assert DataModule(batch_size=1).data_pipeline
+
+    data_module = DataModule(train_input, batch_size=1)
+    assert data_module.train_dataset and not data_module.val_dataset and not data_module.test_dataset
+
+    data_module = DataModule(train_input, val_input, batch_size=1)
+    assert data_module.train_dataset and data_module.val_dataset and not data_module.test_dataset
+
+    data_module = DataModule(train_input, val_input, test_input, batch_size=1)
+    assert data_module.train_dataset and data_module.val_dataset and data_module.test_dataset
 
 
 def test_dataloaders():
@@ -52,9 +57,3 @@ def test_dataloaders():
     ]:
         x = next(iter(dl))[DataKeys.INPUT]
         assert x.shape == (1, 1, 28, 28)
-
-
-def test_cpu_count_none():
-    train_input = DatasetInput(RunningStage.TRAINING, DummyDataset())
-    dm = DataModule(train_input, num_workers=None, batch_size=1)
-    assert dm.num_workers == 0

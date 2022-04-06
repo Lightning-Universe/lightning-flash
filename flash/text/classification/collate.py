@@ -11,14 +11,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import pytest
+from dataclasses import dataclass
 
-from flash.core.data.data_source import DefaultDataKeys
 from flash.core.data.io.input import DataKeys
+from flash.core.integrations.transformers.collate import TransformersCollate
 
 
-def test_default_data_keys_deprecation():
-    with pytest.warns(FutureWarning, match="`DefaultDataKeys` was deprecated in 0.6.0"):
-        _ = DefaultDataKeys.INPUT
+@dataclass(unsafe_hash=True)
+class TextClassificationCollate(TransformersCollate):
 
-    assert DefaultDataKeys.INPUT == DataKeys.INPUT
+    max_length: int = 128
+
+    def tokenize(self, sample):
+        tokenized_sample = self.tokenizer(
+            sample[DataKeys.INPUT], max_length=self.max_length, truncation=True, padding="max_length"
+        )
+        tokenized_sample = tokenized_sample.data
+        if DataKeys.TARGET in sample:
+            tokenized_sample[DataKeys.TARGET] = sample[DataKeys.TARGET]
+        return tokenized_sample

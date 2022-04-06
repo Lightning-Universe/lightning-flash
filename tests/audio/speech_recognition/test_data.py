@@ -20,8 +20,7 @@ import pytest
 import flash
 from flash.audio import SpeechRecognitionData
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _AUDIO_AVAILABLE
-from tests.helpers.utils import _AUDIO_TESTING
+from flash.core.utilities.imports import _AUDIO_AVAILABLE, _AUDIO_TESTING
 
 path = str(Path(flash.ASSETS_ROOT) / "example.wav")
 sample = {"file": path, "text": "example input."}

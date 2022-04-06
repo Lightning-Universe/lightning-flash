@@ -16,12 +16,11 @@ import torch
 
 from flash import RunningStage, Trainer
 from flash.core.data.data_module import DataModule
-from flash.core.utilities.imports import _GRAPH_AVAILABLE
+from flash.core.utilities.imports import _GRAPH_AVAILABLE, _GRAPH_TESTING
 from flash.graph.classification.input import GraphClassificationDatasetInput
 from flash.graph.classification.input_transform import GraphClassificationInputTransform
 from flash.graph.classification.model import GraphClassifier
 from flash.graph.embedding.model import GraphEmbedder
-from tests.helpers.utils import _GRAPH_TESTING
 
 if _GRAPH_AVAILABLE:
     from torch_geometric import datasets
@@ -40,11 +39,10 @@ def test_not_trainable(tmpdir):
     tudataset = datasets.TUDataset(root=tmpdir, name="KKI")
     model = GraphEmbedder(GraphClassifier(num_features=1, num_classes=1).backbone)
     datamodule = DataModule(
-        GraphClassificationDatasetInput(RunningStage.TRAINING, tudataset, transform=GraphClassificationInputTransform),
-        GraphClassificationDatasetInput(
-            RunningStage.VALIDATING, tudataset, transform=GraphClassificationInputTransform
-        ),
-        GraphClassificationDatasetInput(RunningStage.TESTING, tudataset, transform=GraphClassificationInputTransform),
+        GraphClassificationDatasetInput(RunningStage.TRAINING, tudataset),
+        GraphClassificationDatasetInput(RunningStage.VALIDATING, tudataset),
+        GraphClassificationDatasetInput(RunningStage.TESTING, tudataset),
+        transform=GraphClassificationInputTransform,
         batch_size=4,
     )
     trainer = Trainer(default_root_dir=tmpdir, num_sanity_val_steps=0)
@@ -66,9 +64,8 @@ def test_predict_dataset(tmpdir):
         GraphClassifier(num_features=tudataset.num_features, num_classes=tudataset.num_classes).backbone
     )
     datamodule = DataModule(
-        predict_input=GraphClassificationDatasetInput(
-            RunningStage.PREDICTING, tudataset, transform=GraphClassificationInputTransform
-        ),
+        predict_input=GraphClassificationDatasetInput(RunningStage.PREDICTING, tudataset),
+        transform=GraphClassificationInputTransform,
         batch_size=4,
     )
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)

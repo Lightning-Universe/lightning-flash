@@ -20,20 +20,17 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Union
 from torch.utils.data import Dataset
 
 import flash
-from flash.core.data.io.input import DataKeys, Input
-from flash.core.data.process import Deserializer
-from flash.core.data.utilities.paths import list_valid_files
+from flash.core.data.io.input import DataKeys, Input, ServeInput
+from flash.core.data.utilities.paths import filter_valid_files, list_valid_files
+from flash.core.data.utilities.samples import to_sample, to_samples
 from flash.core.utilities.imports import _AUDIO_AVAILABLE, requires
 
 if _AUDIO_AVAILABLE:
     import librosa
-    from datasets import Dataset as HFDataset
     from datasets import load_dataset
-else:
-    HFDataset = object
 
 
-class SpeechRecognitionDeserializer(Deserializer):
+class SpeechRecognitionDeserializer(ServeInput):
     @requires("audio")
     def __init__(self, sampling_rate: int = 16000, **kwargs):
         super().__init__(**kwargs)
@@ -68,12 +65,14 @@ class BaseSpeechRecognition(Input):
 
 
 class SpeechRecognitionFileInput(BaseSpeechRecognition):
+    sampling_rate: int
+
     @requires("audio")
     def load_data(
         self,
         file: str,
         input_key: str,
-        target_key: str,
+        target_key: Optional[str] = None,
         field: Optional[str] = None,
         sampling_rate: int = 16000,
         filetype: Optional[str] = None,
@@ -88,13 +87,21 @@ class SpeechRecognitionFileInput(BaseSpeechRecognition):
 
         dataset = dataset_dict[stage]
         meta = {"root": os.path.dirname(file)}
+        if target_key is not None:
+            return [
+                {
+                    DataKeys.INPUT: input_file,
+                    DataKeys.TARGET: target,
+                    DataKeys.METADATA: meta,
+                }
+                for input_file, target in zip(dataset[input_key], dataset[target_key])
+            ]
         return [
             {
                 DataKeys.INPUT: input_file,
-                DataKeys.TARGET: target,
                 DataKeys.METADATA: meta,
             }
-            for input_file, target in zip(dataset[input_key], dataset[target_key])
+            for input_file in dataset[input_key]
         ]
 
     def load_sample(self, sample: Dict[str, Any]) -> Any:
@@ -107,7 +114,7 @@ class SpeechRecognitionCSVInput(SpeechRecognitionFileInput):
         self,
         file: str,
         input_key: str,
-        target_key: str,
+        target_key: Optional[str] = None,
         sampling_rate: int = 16000,
     ):
         return super().load_data(file, input_key, target_key, sampling_rate=sampling_rate, filetype="csv")
@@ -119,7 +126,7 @@ class SpeechRecognitionJSONInput(SpeechRecognitionFileInput):
         self,
         file: str,
         input_key: str,
-        target_key: str,
+        target_key: Optional[str] = None,
         field: Optional[str] = None,
         sampling_rate: int = 16000,
     ):
@@ -127,24 +134,34 @@ class SpeechRecognitionJSONInput(SpeechRecognitionFileInput):
 
 
 class SpeechRecognitionDatasetInput(BaseSpeechRecognition):
+    sampling_rate: int
+
     @requires("audio")
     def load_data(self, dataset: Dataset, sampling_rate: int = 16000) -> Sequence[Mapping[str, Any]]:
         self.sampling_rate = sampling_rate
-        if isinstance(dataset, HFDataset):
-            dataset = list(zip(dataset["file"], dataset["text"]))
         return super().load_data(dataset)
 
     def load_sample(self, sample: Any) -> Any:
+        sample = to_sample(sample)
         if isinstance(sample[DataKeys.INPUT], (str, Path)):
             sample = super().load_sample(sample, self.sampling_rate)
         return sample
 
 
 class SpeechRecognitionPathsInput(BaseSpeechRecognition):
+    sampling_rate: int
+
     @requires("audio")
-    def load_data(self, paths: Union[str, List[str]], sampling_rate: int = 16000) -> Sequence:
+    def load_data(
+        self,
+        paths: Union[str, List[str]],
+        targets: Optional[List[str]] = None,
+        sampling_rate: int = 16000,
+    ) -> Sequence:
         self.sampling_rate = sampling_rate
-        return [{DataKeys.INPUT: file} for file in list_valid_files(paths, ("wav", "ogg", "flac", "mat", "mp3"))]
+        if targets is None:
+            return to_samples(list_valid_files(paths, ("wav", "ogg", "flac", "mat", "mp3")))
+        return to_samples(*filter_valid_files(paths, targets, valid_extensions=("wav", "ogg", "flac", "mat", "mp3")))
 
     def load_sample(self, sample: Dict[str, Any]) -> Any:
         return super().load_sample(sample, self.sampling_rate)

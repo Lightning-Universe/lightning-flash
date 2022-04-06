@@ -7,6 +7,10 @@ on: # Trigger the workflow on push or pull request, but only for the master bran
   pull_request:
     branches: [master]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.head_ref }}
+  cancel-in-progress: ${{ ! (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/')) }}
+
 jobs:
   pytest:
 
@@ -18,7 +22,7 @@ jobs:
         # PyTorch 1.5 is failing on Win and bolts requires torchvision>=0.5
         os: [ubuntu-20.04, macOS-10.15, windows-2019]
         python-version: [3.6, 3.8]
-        requires: ['minimal', 'latest']
+        requires: ['oldest', 'latest']
         topic: [['devel']]
         release: [ 'stable' ]
         exclude:
@@ -26,61 +30,17 @@ jobs:
             python-version: 3.8
             requires: 'latest'
         include:
-          - os: ubuntu-20.04
-            python-version: 3.9
-            requires: 'latest'
-            topic: ['devel']
-            release: 'pre'
-          - os: ubuntu-20.04
-            python-version: 3.8
-            requires: 'latest'
-            topic: ['image']
-            release: 'stable'
-          - os: ubuntu-20.04
-            python-version: 3.8
-            requires: 'latest'
-            topic: ['image','image_extras']
-            release: 'stable'
-          - os: ubuntu-20.04
-            python-version: 3.8
-            requires: 'latest'
-            topic: ['video']
-            release: 'stable'
-          - os: ubuntu-20.04
-            python-version: 3.8
-            requires: 'latest'
-            topic: ['video','video_extras']
-            release: 'stable'
-          - os: ubuntu-20.04
-            python-version: 3.8
-            requires: 'latest'
-            topic: ['tabular']
-            release: 'stable'
-          - os: ubuntu-20.04
-            python-version: 3.8
-            requires: 'latest'
-            topic: ['text']
-            release: 'stable'
-          - os: ubuntu-20.04
-            python-version: 3.8
-            requires: 'latest'
-            topic: ['pointcloud']
-            release: 'stable'
-          - os: ubuntu-20.04
-            python-version: 3.8
-            requires: 'latest'
-            topic: ['serve']
-            release: 'stable'
-          - os: ubuntu-20.04
-            python-version: 3.8
-            requires: 'latest'
-            topic: ['graph']
-            release: 'stable'
-          - os: ubuntu-20.04
-            python-version: 3.8
-            requires: 'latest'
-            topic: ['audio']
-            release: 'stable'
+          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'pre', topic: [ 'devel' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'image' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'image','image_extras' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'video' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'video','video_extras' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'tabular' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'text' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'pointcloud' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'serve' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'graph' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'audio' ] }
 
     # Timeout: https://stackoverflow.com/a/59076067/4521646
     timeout-minutes: 35
@@ -100,12 +60,12 @@ jobs:
         brew install libomp  # https://github.com/pytorch/pytorch/issues/20030
 
     - name: Install graphviz
-      if: matrix.topic[0] == 'serve'
+      if: contains( matrix.topic , 'serve' )
       run: |
         sudo apt-get install graphviz
 
     - name: Set min. dependencies
-      if: matrix.requires == 'minimal'
+      if: matrix.requires == 'oldest'
       run: |
         python -c "req = open('requirements.txt').read().replace('>', '=') ; open('requirements.txt', 'w').write(req)"
 
@@ -118,6 +78,10 @@ jobs:
           open(fname, 'w').writelines(lines)
       shell: python
 
+    - run: echo "::set-output name=period::$(python -c 'import time ; days = time.time() / 60 / 60 / 24 ; print(int(days / 7))' 2>&1)"
+      if: matrix.requires == 'latest'
+      id: times
+
     # Note: This uses an internal pip API and may not always work
     # https://github.com/actions/cache/blob/master/examples.md#multiple-oss-in-a-workflow
     - name: Get pip cache
@@ -129,23 +93,17 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ${{ steps.pip-cache.outputs.dir }}
-        key: ${{ runner.os }}-${{ matrix.python-version }}-${{ join(matrix.topic,'-') }}-${{ matrix.requires }}-pip-${{ hashFiles('requirements.txt') }}
+        key: ${{ runner.os }}-${{ matrix.python-version }}-td${{ steps.times.outputs.period }}-${{ join(matrix.topic,'-') }}-${{ matrix.requires }}-pip-${{ hashFiles('requirements.txt') }}
         restore-keys: |
-          ${{ runner.os }}-${{ matrix.python-version }}-${{ join(matrix.topic,'-') }}-${{ matrix.requires }}-pip-
-
-    - name: Install vissl
-      if: matrix.topic[1] == 'image_extras'
-      run: |
-        pip install git+https://github.com/facebookresearch/ClassyVision.git
-        pip install git+https://github.com/facebookresearch/vissl.git
+          ${{ runner.os }}-${{ matrix.python-version }}-td${{ steps.times.outputs.period }}-${{ join(matrix.topic,'-') }}-${{ matrix.requires }}-pip-
 
     - name: Install graph test dependencies
-      if: matrix.topic[0] == 'graph'
+      if: contains( matrix.topic , 'graph' )
       run: |
-        pip install torch==1.9.0+cpu torchvision==0.10.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
-        pip install torch-scatter -f https://data.pyg.org/whl/torch-1.9.0+cpu.html
-        pip install torch-sparse -f https://data.pyg.org/whl/torch-1.9.0+cpu.html
-        pip install torch-cluster -f https://data.pyg.org/whl/torch-1.9.0+cpu.html
+        pip install torch==1.11.0+cpu torchvision==0.12.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+        pip install torch-scatter -f https://data.pyg.org/whl/torch-1.11.0+cpu.html
+        pip install torch-sparse -f https://data.pyg.org/whl/torch-1.11.0+cpu.html
+        pip install torch-cluster -f https://data.pyg.org/whl/torch-1.11.0+cpu.html
 
     - name: Install dependencies
       run: |
@@ -153,19 +111,25 @@ jobs:
         pip --version
         flag=$(python -c "print('--pre' if '${{matrix.release}}' == 'pre' else '')" 2>&1)
         pip install torch>=1.7.1
-        pip install '.[${{ join(matrix.topic,',') }}]' --upgrade $flag --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
+        pip install '.[${{ join(matrix.topic, ',') }}]' --upgrade $flag --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
         pip install '.[test]' --upgrade
         pip list
       shell: bash
 
+    - name: Install vissl
+      if: contains( matrix.topic , 'image_extras' )
+      run: |
+        pip install git+https://github.com/facebookresearch/ClassyVision.git
+        pip install git+https://github.com/facebookresearch/vissl.git
+
     - name: Install serve test dependencies
-      if: matrix.topic[0] == 'serve'
+      if: contains( matrix.topic , 'serve' )
       run: |
         sudo apt-get install libsndfile1
         pip install '.[all,audio]' --upgrade
 
     - name: Install audio test dependencies
-      if: matrix.topic[0] == 'audio'
+      if: contains( matrix.topic , 'audio' )
       run: |
         sudo apt-get install libsndfile1
         pip install matplotlib
@@ -183,22 +147,20 @@ jobs:
         FLASH_TEST_TOPIC: ${{ join(matrix.topic,',') }}
         FIFTYONE_DO_NOT_TRACK: true
       run: |
-        # tox --sitepackages
-        coverage run --source flash -m pytest flash tests -v --junitxml=junit/test-results-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.requires }}.xml
-        coverage xml
+        coverage run --source flash -m pytest flash tests --reruns 3 --reruns-delay 2 -v --junitxml=junit/test-results-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.requires }}.xml
 
     - name: Upload pytest test results
       uses: actions/upload-artifact@v2
       with:
         name: pytest-results-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.requires }}
         path: junit/test-results-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.requires }}.xml
-      # Use always() to always run this step to publish test results when there are test failures
       if: failure()
 
     - name: Statistics
       if: success()
       run: |
         coverage report
+        coverage xml
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
@@ -209,8 +171,3 @@ jobs:
         env_vars: OS,PYTHON
         name: codecov-umbrella
         fail_ci_if_error: false
-
-    - name: Uninstall
-      run: |
-        pip uninstall lightning-flash -y
-      shell: bash

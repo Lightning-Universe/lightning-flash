@@ -33,7 +33,7 @@ Here's an example of finetuning.
     )
 
     # 2. Build the model using desired Task
-    model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+    model = ImageClassifier(backbone="resnet18", labels=datamodule.labels)
 
     # 3. Create the trainer (run one epoch for demo)
     trainer = flash.Trainer(max_epochs=1, gpus=torch.cuda.device_count())
@@ -56,9 +56,6 @@ Once you've finetuned, use the model to predict:
 
 .. testcode:: finetune
 
-    # Output predictions as labels, automatically inferred from the training data in part 2.
-    model.output = LabelsOutput()
-
     predict_datamodule = ImageClassificationData.from_files(
         predict_files=[
             "data/hymenoptera_data/val/bees/65038344_52a45d090d.jpg",
@@ -66,7 +63,7 @@ Once you've finetuned, use the model to predict:
         ],
         batch_size=1,
     )
-    predictions = trainer.predict(model, datamodule=predict_datamodule)
+    predictions = trainer.predict(model, datamodule=predict_datamodule, output="labels")
     print(predictions)
 
 We get the following output:

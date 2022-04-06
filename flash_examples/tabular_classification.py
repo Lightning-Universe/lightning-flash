@@ -21,8 +21,8 @@ from flash.tabular import TabularClassificationData, TabularClassifier
 download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "./data")
 
 datamodule = TabularClassificationData.from_csv(
-    ["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
-    "Fare",
+    categorical_fields=["Sex", "Age", "SibSp", "Parch", "Ticket", "Cabin", "Embarked"],
+    numerical_fields="Fare",
     target_fields="Survived",
     train_file="data/titanic/titanic.csv",
     val_split=0.1,
@@ -30,7 +30,7 @@ datamodule = TabularClassificationData.from_csv(
 )
 
 # 2. Build the task
-model = TabularClassifier.from_data(datamodule)
+model = TabularClassifier.from_data(datamodule, backbone="fttransformer")
 
 # 3. Create the trainer and train the model
 trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
@@ -42,7 +42,7 @@ datamodule = TabularClassificationData.from_csv(
     parameters=datamodule.parameters,
     batch_size=8,
 )
-predictions = trainer.predict(model, datamodule=datamodule)
+predictions = trainer.predict(model, datamodule=datamodule, output="classes")
 print(predictions)
 
 # 5. Save the model!

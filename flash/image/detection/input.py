@@ -11,20 +11,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, Hashable, Sequence, TYPE_CHECKING
+from typing import Any, Dict, Hashable, List, Optional, Sequence
 
+from flash.core.data.io.classification_input import ClassificationInputMixin
 from flash.core.data.io.input import DataKeys
+from flash.core.data.utilities.classification import TargetFormatter
+from flash.core.data.utilities.paths import filter_valid_files, PATH_TYPE
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
 from flash.core.integrations.icevision.data import IceVisionInput
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _ICEVISION_AVAILABLE, lazy_import, requires
+from flash.image.data import ImageFilesInput, IMG_EXTENSIONS, NP_EXTENSIONS
 
-SampleCollection = None
 if _FIFTYONE_AVAILABLE:
     fol = lazy_import("fiftyone.core.labels")
-    if TYPE_CHECKING:
-        from fiftyone.core.collections import SampleCollection
+    SampleCollection = "fiftyone.core.collections.SampleCollection"
 else:
-    foc, fol = None, None
+    fol = None
+    SampleCollection = None
 
 if _ICEVISION_AVAILABLE:
     from icevision.core import BBox, ClassMap, IsCrowdsRecordComponent, ObjectDetectionRecord
@@ -33,6 +36,37 @@ if _ICEVISION_AVAILABLE:
     from icevision.utils import ImgSize
 else:
     Parser = object
+
+
+class ObjectDetectionFilesInput(ClassificationInputMixin, ImageFilesInput):
+    def load_data(
+        self,
+        files: List[PATH_TYPE],
+        targets: Optional[List[List[Any]]] = None,
+        bboxes: Optional[List[List[Dict[str, int]]]] = None,
+        target_formatter: Optional[TargetFormatter] = None,
+    ) -> List[Dict[str, Any]]:
+        if targets is None:
+            return super().load_data(files)
+        files, targets, bboxes = filter_valid_files(
+            files, targets, bboxes, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS
+        )
+        self.load_target_metadata(
+            [t for target in targets for t in target], add_background=True, target_formatter=target_formatter
+        )
+
+        return [
+            {DataKeys.INPUT: file, DataKeys.TARGET: {"bboxes": bbox, "labels": label}}
+            for file, label, bbox in zip(files, targets, bboxes)
+        ]
+
+    def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+        sample = super().load_sample(sample)
+        if DataKeys.TARGET in sample:
+            sample[DataKeys.TARGET]["labels"] = [
+                self.format_target(label) for label in sample[DataKeys.TARGET]["labels"]
+            ]
+        return sample
 
 
 class FiftyOneParser(Parser):
@@ -98,6 +132,9 @@ class FiftyOneParser(Parser):
 
 
 class ObjectDetectionFiftyOneInput(IceVisionInput):
+    num_classes: int
+    labels: list
+
     @requires("fiftyone")
     def load_data(
         self,
@@ -111,6 +148,7 @@ class ObjectDetectionFiftyOneInput(IceVisionInput):
         classes = label_utilities.get_classes(sample_collection)
         class_map = ClassMap(classes)
         self.num_classes = len(class_map)
+        self.labels = [class_map.get_by_id(i) for i in range(self.num_classes)]
 
         parser = FiftyOneParser(sample_collection, class_map, label_field, iscrowd)
         records = parser.parse(data_splitter=SingleSplitSplitter())

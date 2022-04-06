@@ -18,22 +18,22 @@ from flash.core.data.utils import download_data
 from flash.tabular import TabularRegressionData, TabularRegressor
 
 # 1. Create the DataModule
-download_data("https://archive.ics.uci.edu/ml/machine-learning-databases/00560/SeoulBikeData.csv", "./data")
+download_data("https://pl-flash-data.s3.amazonaws.com/SeoulBikeData.csv", "./data")
 
 datamodule = TabularRegressionData.from_csv(
     categorical_fields=["Seasons", "Holiday", "Functioning Day"],
     numerical_fields=[
         "Hour",
-        "Temperature(C)",
-        "Humidity(%)",
-        "Wind speed (m/s)",
-        "Visibility (10m)",
-        "Dew point temperature(C)",
-        "Solar Radiation (MJ/m2)",
-        "Rainfall(mm)",
-        "Snowfall (cm)",
+        "Temperature",
+        "Humidity",
+        "Wind speed",
+        "Visibility",
+        "Dew point temperature",
+        "Solar Radiation",
+        "Rainfall",
+        "Snowfall",
     ],
-    target_fields="Rented Bike Count",
+    target_field="Rented Bike Count",
     train_file="data/SeoulBikeData.csv",
     val_split=0.1,
     batch_size=8,

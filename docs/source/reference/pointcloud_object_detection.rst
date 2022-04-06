@@ -3,6 +3,9 @@
    :card_description: Learn to detect objects in point clouds with Flash and build an example detector with the KITTI data set.
    :image: https://pl-flash-data.s3.amazonaws.com/assets/thumbnails/point_cloud_object_detection.svg
    :tags: Point-Cloud,Detection
+   :beta:
+
+.. beta:: task
 
 .. _pointcloud_object_detection:
 
@@ -80,6 +83,8 @@ Here's the full example:
 .. literalinclude:: ../../../flash_examples/pointcloud_detection.py
     :language: python
     :lines: 14-
+
+To learn how to view the available backbones / heads for this task, see :ref:`backbones_heads`.
 
 .. image:: https://raw.githubusercontent.com/intel-isl/Open3D-ML/master/docs/images/visualizer_BoundingBoxes.png
    :width: 100%

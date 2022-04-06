@@ -20,8 +20,8 @@ from pytorch_lightning import seed_everything
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
 from flash.core.data.utils import download_data
+from flash.core.utilities.imports import _POINTCLOUD_TESTING
 from flash.pointcloud.detection import PointCloudObjectDetector, PointCloudObjectDetectorData
-from tests.helpers.utils import _POINTCLOUD_TESTING
 
 if _POINTCLOUD_TESTING:
     from flash.pointcloud.detection.open3d_ml.backbones import ObjectDetectBatchCollator
@@ -60,4 +60,4 @@ def test_pointcloud_object_detection_data(tmpdir):
 
     predictions = trainer.predict(model, datamodule=datamodule)[0]
     assert predictions[0][DataKeys.INPUT].shape[1] == 4
-    assert len(predictions[0][DataKeys.PREDS]) == 158
+    assert len(predictions[0][DataKeys.PREDS]) == 196

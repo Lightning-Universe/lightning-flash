@@ -1,3 +1,3 @@
-pytorch-tabnet==3.1
 scikit-learn
-pytorch-forecasting
+pytorch-forecasting>=0.9.0
+pytorch-tabular==0.7.0

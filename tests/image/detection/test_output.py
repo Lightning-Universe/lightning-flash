@@ -18,10 +18,10 @@ class TestFiftyOneDetectionLabelsOutput:
     @staticmethod
     def test_serialize_fiftyone():
         labels = ["class_1", "class_2", "class_3"]
-        serial = FiftyOneDetectionLabelsOutput()
+        serial = FiftyOneDetectionLabelsOutput(return_filepath=False)
         filepath_serial = FiftyOneDetectionLabelsOutput(return_filepath=True)
-        threshold_serial = FiftyOneDetectionLabelsOutput(threshold=0.9)
-        labels_serial = FiftyOneDetectionLabelsOutput(labels=labels)
+        threshold_serial = FiftyOneDetectionLabelsOutput(threshold=0.9, return_filepath=False)
+        labels_serial = FiftyOneDetectionLabelsOutput(labels=labels, return_filepath=False)
 
         sample = {
             DataKeys.PREDS: {

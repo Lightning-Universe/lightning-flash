@@ -21,13 +21,16 @@ import torch
 from pytorch_lightning import LightningDataModule, LightningModule
 from pytorch_lightning import Trainer as PlTrainer
 from pytorch_lightning.callbacks import BaseFinetuning
-from pytorch_lightning.loops.fit_loop import FitLoop
 from pytorch_lightning.utilities.argparse import add_argparse_args, get_init_arguments_and_types, parse_env_variables
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader
 
 import flash
+from flash.core.data.io.output import Output
+from flash.core.data.io.output_transform import OutputTransform
+from flash.core.data.io.transform_predictions import TransformPredictions
 from flash.core.model import Task
+from flash.core.registry import FlashRegistry
 
 
 def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs):
@@ -75,8 +78,7 @@ class Trainer(PlTrainer):
     def __init__(self, *args, **kwargs):
         if flash._IS_TESTING:
             if torch.cuda.is_available():
-                kwargs["gpus"] = 1
-                kwargs["max_epochs"] = 3
+                kwargs["gpus"] = -1
                 kwargs["limit_train_batches"] = 1.0
                 kwargs["limit_val_batches"] = 1.0
                 kwargs["limit_test_batches"] = 1.0
@@ -87,28 +89,6 @@ class Trainer(PlTrainer):
                 kwargs["accelerator"] = None
                 kwargs["precision"] = 32
         super().__init__(*args, **kwargs)
-
-    # TODO @(tchaton) remove `reset_train_val_dataloaders` from run_train function
-    def _run_train(self) -> None:
-        self._pre_training_routine()
-
-        if not self.is_global_zero and self.progress_bar_callback is not None:
-            self.progress_bar_callback.disable()
-
-        self._run_sanity_check(self.lightning_module)
-
-        # enable train mode
-        self.model.train()
-        torch.set_grad_enabled(True)
-
-        # reload data when needed
-        model = self.lightning_module
-
-        if isinstance(self.fit_loop, FitLoop):
-            self.reset_train_val_dataloaders(model)
-
-        self.fit_loop.trainer = self
-        self.fit_loop.run()
 
     def fit(
         self,
@@ -179,6 +159,45 @@ class Trainer(PlTrainer):
         """
         self._resolve_callbacks(model, strategy, train_bn=train_bn)
         return super().fit(model, train_dataloader, val_dataloaders, datamodule)
+
+    def predict(
+        self,
+        model: Optional[LightningModule] = None,
+        dataloaders: Optional[Union[DataLoader, LightningDataModule]] = None,
+        output: Union[Output, str] = None,
+        **kwargs,
+    ):
+        r"""
+        Run inference on your data.
+        This will call the model forward function to compute predictions. Useful to perform distributed
+        and batched predictions. Logging is disabled in the prediction hooks.
+
+        Args:
+            model: The model to predict with.
+            dataloaders: A :class:`torch.utils.data.DataLoader` or a sequence of them,
+                or a :class:`~pytorch_lightning.core.datamodule.LightningDataModule` specifying prediction samples.
+            output: The :class:`~flash.core.data.io.output.Output` to use to transform predict outputs.
+            kwargs: Additional keyword arguments to pass to ``pytorch_lightning.Trainer.predict``.
+
+
+        Returns:
+            Returns a list of dictionaries, one for each provided dataloader containing their respective predictions.
+        """
+        model = model or self.lightning_module
+        output_transform = getattr(model, "_output_transform", None) or OutputTransform()
+        if output is None:
+            output = Output()
+        if isinstance(output, str) and isinstance(model, Task):
+            output = getattr(model, "outputs", FlashRegistry("outputs")).get(output).from_task(model)
+
+        old_callbacks = self.callbacks
+        self.callbacks = self._merge_callbacks(self.callbacks, [TransformPredictions(output_transform, output)])
+
+        result = super().predict(model, dataloaders, **kwargs)
+
+        self.callbacks = old_callbacks
+
+        return result
 
     def _resolve_callbacks(
         self,

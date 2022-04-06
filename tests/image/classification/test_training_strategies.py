@@ -20,10 +20,9 @@ from torch.utils.data import DataLoader
 
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _LEARN2LEARN_AVAILABLE
+from flash.core.utilities.imports import _IMAGE_TESTING, _LEARN2LEARN_AVAILABLE
 from flash.image import ImageClassificationData, ImageClassifier
 from flash.image.classification.adapters import TRAINING_STRATEGIES
-from tests.helpers.utils import _IMAGE_TESTING
 from tests.image.classification.test_data import _rand_image
 
 # ======== Mock functions ========

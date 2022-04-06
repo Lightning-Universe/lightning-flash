@@ -104,6 +104,11 @@ The freeze strategy keeps the backbone frozen throughout.
 
     trainer.finetune(model, datamodule, strategy="freeze")
 
+.. testoutput:: strategies
+    :hide:
+
+    ...
+
 The pseudocode looks like:
 
 .. code-block:: python
@@ -135,6 +140,11 @@ For example, to unfreeze after epoch 7:
 
     trainer.finetune(model, datamodule, strategy=("freeze_unfreeze", 7))
 
+.. testoutput:: strategies
+    :hide:
+
+    ...
+
 Under the hood, the pseudocode looks like:
 
 .. code-block:: python
@@ -155,7 +165,8 @@ Under the hood, the pseudocode looks like:
 
 unfreeze_milestones
 -------------------
-This strategy allows you to unfreeze part of the backbone at predetermined intervals
+
+This strategy allows you to unfreeze part of the backbone at predetermined intervals.
 
 Here's an example where:
 
@@ -168,6 +179,11 @@ Here's an example where:
 .. testcode:: strategies
 
     trainer.finetune(model, datamodule, strategy=("unfreeze_milestones", ((3, 8), 2)))
+
+.. testoutput:: strategies
+    :hide:
+
+    ...
 
 Under the hood, the pseudocode looks like:
 
@@ -220,3 +236,8 @@ For even more customization, create your own finetuning callback. Learn more abo
 
     # Pass the callback to trainer.finetune
     trainer.finetune(model, datamodule, strategy=FeatureExtractorFreezeUnfreeze(unfreeze_epoch=5))
+
+.. testoutput:: strategies
+    :hide:
+
+    ...

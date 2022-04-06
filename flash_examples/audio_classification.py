@@ -29,13 +29,13 @@ datamodule = AudioClassificationData.from_folders(
 )
 
 # 2. Build the model.
-model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+model = ImageClassifier(backbone="resnet18", labels=datamodule.labels)
 
 # 3. Create the trainer and finetune the model
 trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
 trainer.finetune(model, datamodule=datamodule, strategy=("freeze_unfreeze", 1))
 
-# 4. Predict what's on few images! air_conditioner, children_playing, siren e.t.c
+# 4. Predict what's on few images! air_conditioner, children_playing, siren etc.
 datamodule = AudioClassificationData.from_files(
     predict_files=[
         "data/urban8k_images/test/air_conditioner/13230-0-0-5.wav.jpg",
@@ -44,7 +44,7 @@ datamodule = AudioClassificationData.from_files(
     ],
     batch_size=3,
 )
-predictions = trainer.predict(model, datamodule=datamodule)
+predictions = trainer.predict(model, datamodule=datamodule, output="labels")
 print(predictions)
 
 # 5. Save the model!

@@ -22,11 +22,9 @@ from torch import nn
 from torch.utils.data import SequentialSampler
 
 import flash
-from flash.core.classification import ProbabilitiesOutput
-from flash.core.utilities.imports import _BAAL_AVAILABLE
+from flash.core.utilities.imports import _BAAL_AVAILABLE, _IMAGE_AVAILABLE
 from flash.image import ImageClassificationData, ImageClassifier
 from flash.image.classification.integrations.baal import ActiveLearningDataModule, ActiveLearningLoop
-from tests.helpers.utils import _IMAGE_TESTING
 from tests.image.classification.test_data import _rand_image
 
 # ======== Mock functions ========
@@ -63,21 +61,19 @@ def simple_datamodule(tmpdir):
     return dm
 
 
-@pytest.mark.skipif(not (_IMAGE_TESTING and _BAAL_AVAILABLE), reason="image and baal libraries aren't installed.")
+@pytest.mark.skipif(not (_IMAGE_AVAILABLE and _BAAL_AVAILABLE), reason="image and baal libraries aren't installed.")
 @pytest.mark.parametrize("initial_num_labels, query_size", [(0, 5), (5, 5)])
 def test_active_learning_training(simple_datamodule, initial_num_labels, query_size):
     seed_everything(42)
 
     if initial_num_labels == 0:
-        with pytest.warns(UserWarning) as record:
+        with pytest.warns(UserWarning, match="No labels provided for the initial step"):
             active_learning_dm = ActiveLearningDataModule(
                 simple_datamodule,
                 initial_num_labels=initial_num_labels,
                 query_size=query_size,
                 val_split=0.5,
             )
-            assert len(record) == 1
-            assert "No labels provided for the initial step" in record[0].message.args[0]
     else:
         active_learning_dm = ActiveLearningDataModule(
             simple_datamodule,
@@ -91,9 +87,7 @@ def test_active_learning_training(simple_datamodule, initial_num_labels, query_s
         nn.Linear(512, active_learning_dm.num_classes),
     )
 
-    model = ImageClassifier(
-        backbone="resnet18", head=head, num_classes=active_learning_dm.num_classes, output=ProbabilitiesOutput()
-    )
+    model = ImageClassifier(backbone="resnet18", head=head, num_classes=active_learning_dm.num_classes)
     trainer = flash.Trainer(max_epochs=3, num_sanity_val_steps=0)
     active_learning_loop = ActiveLearningLoop(label_epoch_frequency=1, inference_iteration=3)
     active_learning_loop.connect(trainer.fit_loop)
@@ -129,7 +123,7 @@ def test_active_learning_training(simple_datamodule, initial_num_labels, query_s
         assert len(active_learning_dm.val_dataloader()) == 5
 
 
-@pytest.mark.skipif(not (_IMAGE_TESTING and _BAAL_AVAILABLE), reason="image and baal libraries aren't installed.")
+@pytest.mark.skipif(not (_IMAGE_AVAILABLE and _BAAL_AVAILABLE), reason="image and baal libraries aren't installed.")
 def test_no_validation_loop(simple_datamodule):
     active_learning_dm = ActiveLearningDataModule(
         simple_datamodule,
@@ -143,9 +137,7 @@ def test_no_validation_loop(simple_datamodule):
         nn.Linear(512, active_learning_dm.num_classes),
     )
 
-    model = ImageClassifier(
-        backbone="resnet18", head=head, num_classes=active_learning_dm.num_classes, output=ProbabilitiesOutput()
-    )
+    model = ImageClassifier(backbone="resnet18", head=head, num_classes=active_learning_dm.num_classes)
     trainer = flash.Trainer(max_epochs=3)
     active_learning_loop = ActiveLearningLoop(label_epoch_frequency=1, inference_iteration=3)
     active_learning_loop.connect(trainer.fit_loop)

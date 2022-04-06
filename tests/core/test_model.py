@@ -17,28 +17,39 @@ from copy import deepcopy
 from itertools import chain
 from numbers import Number
 from typing import Any, Tuple
+from unittest import mock
+from unittest.mock import MagicMock
 
 import pytest
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning.callbacks import Callback
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn, Tensor
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
 from torchmetrics import Accuracy
 
 import flash
+from flash import Task
 from flash.audio import SpeechRecognition
 from flash.core.adapter import Adapter
 from flash.core.classification import ClassificationTask
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
-from flash.core.utilities.imports import _TORCH_OPTIMIZER_AVAILABLE, _TRANSFORMERS_AVAILABLE
+from flash.core.utilities.imports import (
+    _AUDIO_TESTING,
+    _GRAPH_TESTING,
+    _IMAGE_AVAILABLE,
+    _IMAGE_TESTING,
+    _TABULAR_TESTING,
+    _TEXT_TESTING,
+    _TORCH_OPTIMIZER_AVAILABLE,
+    _TRANSFORMERS_AVAILABLE,
+)
 from flash.graph import GraphClassifier, GraphEmbedder
 from flash.image import ImageClassifier, SemanticSegmentation
 from flash.tabular import TabularClassifier
 from flash.text import SummarizationTask, TextClassifier, TranslationTask
-from tests.helpers.utils import _AUDIO_TESTING, _GRAPH_TESTING, _IMAGE_TESTING, _TABULAR_TESTING, _TEXT_TESTING
 
 # ======== Mock functions ========
 
@@ -183,36 +194,10 @@ def test_classification_task_trainer_predict(tmpdir):
     task = ClassificationTask(model)
     ds = PredictDummyDataset(10)
     batch_size = 6
-    predict_dl = task.process_predict_dataset(ds, batch_size=batch_size)
+    predict_dl = task.process_predict_dataset(ds, input_transform=InputTransform(), batch_size=batch_size)
     trainer = pl.Trainer(default_root_dir=tmpdir)
     predictions = trainer.predict(task, predict_dl)
     assert len(list(chain.from_iterable(predictions))) == 10
-
-
-def test_task_datapipeline_save(tmpdir):
-    model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
-    train_dl = torch.utils.data.DataLoader(DummyDataset())
-    task = ClassificationTask(model, loss_fn=F.nll_loss, output_transform=DummyOutputTransform())
-
-    # to check later
-    task.output_transform.test = True
-
-    # generate a checkpoint
-    trainer = pl.Trainer(
-        default_root_dir=tmpdir,
-        limit_train_batches=1,
-        max_epochs=1,
-        progress_bar_refresh_rate=0,
-        weights_summary=None,
-        logger=False,
-    )
-    trainer.fit(task, train_dl)
-    path = str(tmpdir / "model.ckpt")
-    trainer.save_checkpoint(path)
-
-    # load from file
-    task = ClassificationTask.load_from_checkpoint(path, model=model)
-    assert task.output_transform.test
 
 
 @pytest.mark.parametrize(
@@ -307,7 +292,13 @@ def test_available_backbones():
     class Foo(ImageClassifier):
         backbones = None
 
-    assert Foo.available_backbones() == {}
+    assert Foo.available_backbones() is None
+
+
+@pytest.mark.skipif(_IMAGE_AVAILABLE, reason="image libraries are installed.")
+def test_available_backbones_raises():
+    with pytest.raises(ModuleNotFoundError, match="Required dependencies not available."):
+        _ = ImageClassifier.available_backbones()
 
 
 @ClassificationTask.lr_schedulers
@@ -367,6 +358,26 @@ def test_optimizers_and_schedulers(tmpdir, optim, sched, interval):
         max_epochs=1,
     )
     trainer.fit(task, train_dl)
+
+
+def test_optimizer_learning_rate():
+    mock_optimizer = MagicMock()
+    Task.optimizers(mock_optimizer, "test")
+
+    model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
+
+    ClassificationTask(model, optimizer="test").configure_optimizers()
+    mock_optimizer.assert_called_once_with(mock.ANY)
+
+    mock_optimizer.reset_mock()
+
+    ClassificationTask(model, optimizer="test", learning_rate=10).configure_optimizers()
+    mock_optimizer.assert_called_once_with(mock.ANY, lr=10)
+
+    mock_optimizer.reset_mock()
+
+    with pytest.raises(TypeError, match="The `learning_rate` argument is required"):
+        ClassificationTask(model, optimizer="sgd").configure_optimizers()
 
 
 @pytest.mark.skipif(not _TORCH_OPTIMIZER_AVAILABLE, reason="torch_optimizer isn't installed.")
@@ -431,18 +442,6 @@ def test_errors_and_exceptions_optimizers_and_schedulers():
         task = ClassificationTask(model, optimizer="Adam", lr_scheduler="not_a_valid_key")
         task.configure_optimizers()
 
-    @ClassificationTask.lr_schedulers
-    def i_will_create_a_misconfiguration_exception(optimizer):
-        return "Done. Created."
-
-    with pytest.raises(MisconfigurationException):
-        task = ClassificationTask(model, optimizer="Adam", lr_scheduler="i_will_create_a_misconfiguration_exception")
-        task.configure_optimizers()
-
-    with pytest.raises(MisconfigurationException):
-        task = ClassificationTask(model, optimizer="Adam", lr_scheduler=i_will_create_a_misconfiguration_exception)
-        task.configure_optimizers()
-
     with pytest.raises(TypeError):
         task = ClassificationTask(model, optimizer="Adam", lr_scheduler=["not", "a", "valid", "type"])
         task.configure_optimizers()
@@ -452,8 +451,6 @@ def test_errors_and_exceptions_optimizers_and_schedulers():
             model, optimizer="Adam", lr_scheduler=(["not", "a", "valid", "type"], {"random_kwarg": 10})
         )
         task.configure_optimizers()
-
-    pass
 
 
 def test_classification_task_metrics():
@@ -476,4 +473,13 @@ def test_classification_task_metrics():
     task = ClassificationTask(model)
     trainer = flash.Trainer(max_epochs=1, callbacks=CheckAccuracy(), gpus=torch.cuda.device_count())
     trainer.fit(task, train_dataloader=DataLoader(train_dataset), val_dataloaders=DataLoader(val_dataset))
-    trainer.test(task, dataloaders=DataLoader(test_dataset))
+    trainer.test(task, DataLoader(test_dataset))
+
+
+def test_loss_fn_buffer():
+    weight = torch.rand(10)
+    model = Task(loss_fn=nn.CrossEntropyLoss(weight=weight))
+    state_dict = model.state_dict()
+
+    assert len(state_dict) == 1
+    assert torch.allclose(state_dict["loss_fn.crossentropyloss.weight"], weight)

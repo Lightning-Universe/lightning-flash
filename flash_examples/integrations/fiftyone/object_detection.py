@@ -11,13 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from itertools import chain
+import os
 
 import flash
 from flash.core.integrations.fiftyone import visualize
 from flash.core.utilities.imports import example_requires
 from flash.image import ObjectDetectionData, ObjectDetector
-from flash.image.detection.output import FiftyOneDetectionLabelsOutput
 
 example_requires("image")
 
@@ -28,24 +27,28 @@ data_dir = icedata.fridge.load_data()
 
 datamodule = ObjectDetectionData.from_icedata(
     train_folder=data_dir,
-    predict_folder=data_dir,
+    predict_folder=os.path.join(data_dir, "odFridgeObjects", "images"),
     val_split=0.1,
     transform_kwargs={"image_size": 128},
     parser=icedata.fridge.parser,
-    batch_size=4,
+    batch_size=8,
 )
 
 # 2. Build the task
-model = ObjectDetector(head="efficientdet", backbone="d0", num_classes=datamodule.num_classes, image_size=128)
+model = ObjectDetector(
+    head="efficientdet",
+    backbone="d0",
+    labels=datamodule.labels,
+    image_size=128,
+    lr_scheduler=("multisteplr", {"milestones": [20]}),
+)
 
 # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(max_epochs=1)
+trainer = flash.Trainer(max_epochs=30)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Set the output and get some predictions
-model.output = FiftyOneDetectionLabelsOutput(return_filepath=True)  # output FiftyOne format
-predictions = trainer.predict(model, datamodule=datamodule)
-predictions = list(chain.from_iterable(predictions))  # flatten batches
+predictions = trainer.predict(model, datamodule=datamodule, output="fiftyone")  # output FiftyOne format
 
 # 5. Visualize predictions in FiftyOne app
 # Optional: pass `wait=True` to block execution until App is closed

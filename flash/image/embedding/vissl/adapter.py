@@ -27,9 +27,27 @@ if _VISSL_AVAILABLE:
     from classy_vision.losses import ClassyLoss
     from vissl.config.attr_dict import AttrDict
     from vissl.models.base_ssl_model import BaseSSLMultiInputOutputModel
+    from vissl.models.trunks import MODEL_TRUNKS_REGISTRY
 else:
     ClassyLoss = object
     ClassyHook = object
+
+
+class _VISSLBackboneWrapper(nn.Module):
+    """VISSL backbones take additional arguments in ``forward`` that are not needed for our integration.
+
+    This wrapper can be applied to a Flash backbone to ignore any additional arguments to ``forward``.
+    """
+
+    def __init__(self, backbone: nn.Module):
+        super().__init__()
+
+        self.backbone = backbone
+
+    def forward(self, x, *args, **kwargs):
+        x = self.backbone(x)
+        x = x.unsqueeze(0)
+        return x
 
 
 class MockVISSLTask:
@@ -111,8 +129,19 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
         head: Union[nn.Module, List[nn.Module]],
         hooks: List[ClassyHook],
     ) -> Adapter:
+        vissl_backbone = _VISSLBackboneWrapper(backbone)
+        vissl_backbone.model_config = AttrDict({})
+        vissl_backbone.model_config.TRUNK = AttrDict(
+            {
+                "NAME": "flash_backbone",
+                "VISION_TRANSFORMERS": AttrDict({"DROP_PATH_RATE": 0.0}),
+            }
+        )
+
+        MODEL_TRUNKS_REGISTRY["flash_backbone"] = lambda _, __: vissl_backbone
+
         result = cls(
-            backbone=backbone,
+            backbone=vissl_backbone,
             head=head,
             loss_fn=loss_fn,
             hooks=hooks,
@@ -122,10 +151,18 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
 
         return result
 
+    def on_epoch_start(self) -> None:
+        use_gpu = self.adapter_task.device != torch.device("cpu") and self.adapter_task.device != "cpu"
+        if hasattr(self.loss_fn, "info_criterion"):
+            self.loss_fn.info_criterion.use_gpu = use_gpu
+        if hasattr(self.loss_fn, "swav_criterion"):
+            self.loss_fn.swav_criterion.use_gpu = use_gpu
+
     @staticmethod
     def get_model_config_template():
         cfg = AttrDict(
             {
+                "BASE_MODEL_NAME": "multi_input_output_model",
                 "SINGLE_PASS_EVERY_CROP": False,
                 "INPUT_TYPE": "rgb",
                 "MULTI_INPUT_HEAD_MAPPING": [],
@@ -156,9 +193,6 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
 
         return cfg
 
-    def forward(self, batch: torch.Tensor) -> Any:
-        return self.vissl_base_model.trunk(batch, [])[0]
-
     def ssl_forward(self, batch) -> Any:
         model_output = self.vissl_base_model(batch)
 
@@ -170,11 +204,6 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
 
     def shared_step(self, batch: Any, train: bool = True) -> Any:
         out = self.ssl_forward(batch[DataKeys.INPUT])
-
-        # for moco and dino
-        self.task.last_batch["sample"]["input"] = batch[DataKeys.INPUT]
-        if "data_momentum" in batch.keys():
-            self.task.last_batch["sample"]["data_momentum"] = [batch["data_momentum"]]
 
         if train:
             # call forward hook from VISSL (momentum updates)
@@ -202,8 +231,3 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
         self.adapter_task.log_dict({"test_loss": loss})
 
         return loss
-
-    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        input_image = batch[DataKeys.INPUT]
-
-        return self(input_image)

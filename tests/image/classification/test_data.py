@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import csv
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, List, Tuple
 
 import numpy as np
+import pandas as pd
 import pytest
 import torch
 import torch.nn as nn
@@ -26,12 +28,12 @@ from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,
     _IMAGE_AVAILABLE,
+    _IMAGE_TESTING,
     _MATPLOTLIB_AVAILABLE,
     _PIL_AVAILABLE,
     _TORCHVISION_AVAILABLE,
 )
 from flash.image import ImageClassificationData, ImageClassificationInputTransform
-from tests.helpers.utils import _IMAGE_TESTING
 
 if _TORCHVISION_AVAILABLE:
     import torchvision.transforms as T
@@ -82,6 +84,58 @@ def test_from_filepaths_smoke(tmpdir):
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2,)
     assert sorted(list(labels.numpy())) == [1, 2]
+
+
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+def test_from_data_frame_smoke(tmpdir):
+    tmpdir = Path(tmpdir)
+
+    df = pd.DataFrame(
+        {"file": ["train.png", "valid.png", "test.png"], "split": ["train", "valid", "test"], "target": [0, 1, 1]}
+    )
+
+    [_rand_image().save(tmpdir / row.file) for i, row in df.iterrows()]
+
+    img_data = ImageClassificationData.from_data_frame(
+        "file",
+        "target",
+        train_images_root=str(tmpdir),
+        val_images_root=str(tmpdir),
+        test_images_root=str(tmpdir),
+        train_data_frame=df[df.split == "train"],
+        val_data_frame=df[df.split == "valid"],
+        test_data_frame=df[df.split == "test"],
+        predict_images_root=str(tmpdir),
+        batch_size=1,
+        predict_data_frame=df,
+    )
+
+    assert img_data.train_dataloader() is not None
+    assert img_data.val_dataloader() is not None
+    assert img_data.test_dataloader() is not None
+    assert img_data.predict_dataloader() is not None
+
+    data = next(iter(img_data.train_dataloader()))
+    imgs, labels = data["input"], data["target"]
+    assert imgs.shape == (1, 3, 196, 196)
+    assert labels.shape == (1,)
+    assert sorted(list(labels.numpy())) == [0]
+
+    data = next(iter(img_data.val_dataloader()))
+    imgs, labels = data["input"], data["target"]
+    assert imgs.shape == (1, 3, 196, 196)
+    assert labels.shape == (1,)
+    assert sorted(list(labels.numpy())) == [1]
+
+    data = next(iter(img_data.test_dataloader()))
+    imgs, labels = data["input"], data["target"]
+    assert imgs.shape == (1, 3, 196, 196)
+    assert labels.shape == (1,)
+    assert sorted(list(labels.numpy())) == [1]
+
+    data = next(iter(img_data.predict_dataloader()))
+    imgs = data["input"]
+    assert imgs.shape == (1, 3, 196, 196)
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
@@ -230,8 +284,7 @@ def test_from_filepaths_splits(tmpdir):
         dm = ImageClassificationData.from_files(
             train_files=train_filepaths,
             train_targets=train_labels,
-            train_transform=transform,
-            val_transform=transform,
+            transform=transform,
             batch_size=B,
             num_workers=0,
             val_split=val_split,
@@ -257,7 +310,7 @@ def test_from_folders_only_train(tmpdir):
     _rand_image().save(train_dir / "b" / "1.png")
     _rand_image().save(train_dir / "b" / "2.png")
 
-    img_data = ImageClassificationData.from_folders(train_dir, train_transform=None, batch_size=1)
+    img_data = ImageClassificationData.from_folders(train_dir, batch_size=1)
 
     data = img_data.train_dataset[0]
     imgs, labels = data["input"], data["target"]
@@ -551,7 +604,8 @@ def bad_csv_no_image(image_tmpdir):
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_from_bad_csv_no_image(bad_csv_no_image):
-    with pytest.raises(ValueError, match="File ID `image_3` did not resolve to an existing file."):
+    bad_file = os.path.join(os.path.dirname(bad_csv_no_image), "image_3")
+    with pytest.raises(ValueError, match=f"File ID `image_3` resolved to `{bad_file}`, which does not exist."):
         img_data = ImageClassificationData.from_csv(
             "image",
             ["target"],
@@ -591,7 +645,7 @@ def test_mixup(single_target_csv):
         train_file=single_target_csv,
         batch_size=2,
         num_workers=0,
-        train_transform=MyTransform,
+        transform=MyTransform,
     )
 
     batch = next(iter(img_data.train_dataloader()))

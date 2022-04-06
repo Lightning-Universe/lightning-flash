@@ -22,13 +22,13 @@ from torch.utils.data import DistributedSampler
 from torchmetrics import Accuracy
 
 import flash
-from flash.core.classification import ClassificationTask, LabelsOutput
+from flash.core.classification import ClassificationTask
 from flash.core.data.io.input import DataKeys
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.compatibility import accelerator_connector
 from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE
 from flash.core.utilities.providers import _PYTORCHVIDEO
-from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE, OUTPUT_TYPE
+from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 
 _VIDEO_CLASSIFIER_BACKBONES = FlashRegistry("backbones")
 
@@ -63,7 +63,6 @@ class VideoClassifier(ClassificationTask):
         head: either a `nn.Module` or a callable function that converts the features extrated from the backbone
             into class log probabilities (assuming default loss function). If `None`, will default to using
             a single linear layer.
-        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
     """
 
     backbones: FlashRegistry = _VIDEO_CLASSIFIER_BACKBONES
@@ -72,18 +71,23 @@ class VideoClassifier(ClassificationTask):
 
     def __init__(
         self,
-        num_classes: int,
+        num_classes: Optional[int] = None,
+        labels: Optional[List[str]] = None,
         backbone: Union[str, nn.Module] = "x3d_xs",
         backbone_kwargs: Optional[Dict] = None,
         pretrained: bool = True,
         loss_fn: LOSS_FN_TYPE = F.cross_entropy,
-        optimizer: OPTIMIZER_TYPE = "SGD",
+        optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: METRICS_TYPE = Accuracy(),
-        learning_rate: float = 1e-3,
+        learning_rate: Optional[float] = None,
         head: Optional[Union[FunctionType, nn.Module]] = None,
-        output: OUTPUT_TYPE = None,
     ):
+        self.save_hyperparameters()
+
+        if labels is not None and num_classes is None:
+            num_classes = len(labels)
+
         super().__init__(
             model=None,
             loss_fn=loss_fn,
@@ -91,10 +95,9 @@ class VideoClassifier(ClassificationTask):
             lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
-            output=output or LabelsOutput(),
+            num_classes=num_classes,
+            labels=labels,
         )
-
-        self.save_hyperparameters()
 
         if not backbone_kwargs:
             backbone_kwargs = {}
@@ -117,13 +120,13 @@ class VideoClassifier(ClassificationTask):
 
     def on_train_start(self) -> None:
         if accelerator_connector(self.trainer).is_distributed:
-            encoded_dataset = self.trainer.train_dataloader.loaders.dataset.dataset
+            encoded_dataset = self.trainer.train_dataloader.loaders.dataset.data
             encoded_dataset._video_sampler = DistributedSampler(encoded_dataset._labeled_videos)
         super().on_train_start()
 
     def on_train_epoch_start(self) -> None:
         if accelerator_connector(self.trainer).is_distributed:
-            encoded_dataset = self.trainer.train_dataloader.loaders.dataset.dataset
+            encoded_dataset = self.trainer.train_dataloader.loaders.dataset.data
             encoded_dataset._video_sampler.set_epoch(self.trainer.current_epoch)
         super().on_train_epoch_start()
 
@@ -144,8 +147,3 @@ class VideoClassifier(ClassificationTask):
     def modules_to_freeze(self) -> Union[nn.Module, Iterable[Union[nn.Module, Iterable]]]:
         """Return the module attributes of the model to be frozen."""
         return list(self.backbone.children())
-
-    @staticmethod
-    def _ci_benchmark_fn(history: List[Dict[str, Any]]):
-        """This function is used only for debugging usage with CI."""
-        assert history[-1]["val_accuracy"] > 0.70

@@ -11,17 +11,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from abc import abstractmethod
 from typing import Any
 
-import torch
-
+import flash
 from flash.core.data.properties import Properties
-from flash.core.data.utils import convert_to_modules
 
 
 class Output(Properties):
     """An :class:`.Output` encapsulates a single :meth:`~flash.core.data.io.output.Output.transform` method which
     is used to convert the model output into the desired output format when predicting."""
+
+    @classmethod
+    @abstractmethod
+    def from_task(cls, task: "flash.Task", **kwargs) -> "Output":
+        """Instantiate the output from the given :class:`~flash.core.model.Task`."""
+        return cls()
 
     @staticmethod
     def transform(sample: Any) -> Any:
@@ -37,15 +42,3 @@ class Output(Properties):
 
     def __call__(self, sample: Any) -> Any:
         return self.transform(sample)
-
-
-class _OutputProcessor(torch.nn.Module):
-    def __init__(
-        self,
-        output: "Output",
-    ):
-        super().__init__()
-        self.output = convert_to_modules(output)
-
-    def forward(self, sample):
-        return self.output(sample)

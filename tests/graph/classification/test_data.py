@@ -15,10 +15,9 @@ import pytest
 
 from flash import DataKeys
 from flash.core.data.io.input_transform import Compose
-from flash.core.utilities.imports import _GRAPH_AVAILABLE
+from flash.core.utilities.imports import _GRAPH_AVAILABLE, _GRAPH_TESTING
 from flash.graph.classification.data import GraphClassificationData
 from flash.graph.classification.input_transform import GraphClassificationInputTransform, PyGTransformAdapter
-from tests.helpers.utils import _GRAPH_TESTING
 
 if _GRAPH_AVAILABLE:
     from torch_geometric.datasets import TUDataset
@@ -87,10 +86,7 @@ class TestGraphClassificationData:
             val_dataset=val_dataset,
             test_dataset=test_dataset,
             predict_dataset=predict_dataset,
-            train_transform=TestInputTransform,
-            val_transform=TestInputTransform,
-            test_transform=TestInputTransform,
-            predict_transform=TestInputTransform,
+            transform=TestInputTransform,
             batch_size=2,
         )
         assert dm is not None

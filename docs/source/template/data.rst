@@ -27,9 +27,9 @@ Each :class:`~flash.core.data.io.input.Input` has 2 methods:
 By default these methods just return their input, so you don't need both a :meth:`~flash.core.data.io.input.Input.load_data` and a :meth:`~flash.core.data.io.input.Input.load_sample` to create a :class:`~flash.core.data.io.input.Input`.
 Where possible, you should override one of our existing :class:`~flash.core.data.io.input.Input` classes.
 
-Let's start by implementing a ``TemplateNumpyClassificationInput``, which overrides :class:`~flash.core.data.io.classification_input.ClassificationInput`.
+Let's start by implementing a ``TemplateNumpyClassificationInput``, which overrides :class:`~flash.core.data.io.classification_input.ClassificationInputMixin`.
 The main :class:`~flash.core.data.io.input.Input` method that we have to implement is :meth:`~flash.core.data.io.input.Input.load_data`.
-:class:`~flash.core.data.io.classification_input.ClassificationInput` provides utilities for handling targets within flash which need to be called from the :meth:`~flash.core.data.io.input.Input.load_data` and :meth:`~flash.core.data.io.input.Input.load_sample`.
+:class:`~flash.core.data.io.classification_input.ClassificationInputMixin` provides utilities for handling targets within flash which need to be called from the :meth:`~flash.core.data.io.input.Input.load_data` and :meth:`~flash.core.data.io.input.Input.load_sample`.
 In this ``Input``, we'll also set the ``num_features`` attribute so that we can access it later.
 
 Here's the code for our ``TemplateNumpyClassificationInput.load_data`` method:
@@ -172,11 +172,11 @@ OutputTransform
 
 :class:`~flash.core.data.io.output_transform.OutputTransform` contains any transforms that need to be applied *after* the model.
 You may want to use it for: converting tokens back into text, applying an inverse normalization to an output image, resizing a generated image back to the size of the input, etc.
-As an example, here's the :class:`~text.seq2seq.core.output_transform.Seq2SeqOutputTransform` which decodes tokenized model outputs:
+As an example, here's the :class:`~image.segmentation.model.SemanticSegmentationOutputTransform` which decodes tokenized model outputs:
 
-.. literalinclude:: ../../../flash/text/seq2seq/core/output_transform.py
+.. literalinclude:: ../../../flash/image/segmentation/model.py
     :language: python
-    :pyobject: Seq2SeqOutputTransform
+    :pyobject: SemanticSegmentationOutputTransform
 
 In your :class:`~flash.core.data.io.input.Input` or :class:`~flash.core.data.io.input_transform.InputTransform`, you can add metadata to the batch using the :attr:`~flash.core.data.io.input.DataKeys.METADATA` key.
 Your :class:`~flash.core.data.io.output_transform.OutputTransform` can then use this metadata in its transforms.

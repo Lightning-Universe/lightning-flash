@@ -18,6 +18,7 @@ from torch.utils.data.dataloader import default_collate
 
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.utilities.samples import to_sample
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
 
 if _GRAPH_AVAILABLE:
@@ -37,19 +38,21 @@ class PyGTransformAdapter:
 
     transform: Callable[[Data], Data]
 
-    def __call__(self, x):
+    def __call__(self, x: Dict[str, Any]):
         data = x[DataKeys.INPUT]
-        data.y = x[DataKeys.TARGET]
+        data.y = x.get(DataKeys.TARGET, None)
         data = self.transform(data)
-        return {DataKeys.INPUT: data, DataKeys.TARGET: data.y}
+        return to_sample((data, data.y))
 
 
 class GraphClassificationInputTransform(InputTransform):
     @staticmethod
     def _pyg_collate(samples: List[Dict[str, Any]]) -> Dict[str, Any]:
         inputs = Batch.from_data_list([sample[DataKeys.INPUT] for sample in samples])
-        targets = default_collate([sample[DataKeys.TARGET] for sample in samples])
-        return {DataKeys.INPUT: inputs, DataKeys.TARGET: targets}
+        if DataKeys.TARGET in samples[0]:
+            targets = default_collate([sample[DataKeys.TARGET] for sample in samples])
+            return {DataKeys.INPUT: inputs, DataKeys.TARGET: targets}
+        return {DataKeys.INPUT: inputs}
 
     def collate(self) -> Callable:
         return self._pyg_collate

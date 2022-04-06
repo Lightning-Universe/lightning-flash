@@ -23,22 +23,13 @@ from pytorch_lightning import seed_everything
 from flash.audio import AudioClassificationData
 from flash.core.data.io.input import DataKeys
 from flash.core.data.transforms import ApplyToKeys
-from flash.core.utilities.imports import (
-    _MATPLOTLIB_AVAILABLE,
-    _PIL_AVAILABLE,
-    _TORCHAUDIO_AVAILABLE,
-    _TORCHVISION_AVAILABLE,
-)
-from tests.helpers.utils import _AUDIO_TESTING
+from flash.core.utilities.imports import _AUDIO_TESTING, _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
 
 if _TORCHVISION_AVAILABLE:
     import torchvision.transforms as T
 
 if _PIL_AVAILABLE:
     from PIL import Image
-
-if _TORCHAUDIO_AVAILABLE:
-    import torchaudio
 
 
 def _rand_image(size: Tuple[int, int] = None):
@@ -301,8 +292,7 @@ def test_from_filepaths_splits(tmpdir):
         dm = AudioClassificationData.from_files(
             train_files=train_filepaths,
             train_targets=train_labels,
-            train_transform=transform,
-            val_transform=transform,
+            transform=transform,
             batch_size=B,
             num_workers=0,
             val_split=val_split,
@@ -331,11 +321,11 @@ def test_from_folders_only_train(tmpdir):
     _rand_image().save(train_dir / "b" / "1.png")
     _rand_image().save(train_dir / "b" / "2.png")
 
-    spectrograms_data = AudioClassificationData.from_folders(train_dir, train_transform=None, batch_size=1)
+    spectrograms_data = AudioClassificationData.from_folders(train_dir, batch_size=1)
 
     data = next(iter(spectrograms_data.train_dataloader()))
     imgs, labels = data["input"], data["target"]
-    assert imgs.shape == (1, 196, 196, 3)
+    assert imgs.shape == (1, 3, 128, 128)
     assert labels.shape == (1,)
 
 

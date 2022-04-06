@@ -16,8 +16,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
+from flash.core.utilities.imports import _TABULAR_TESTING
 from flash.tabular.forecasting import TabularForecastingData
-from tests.helpers.utils import _TABULAR_TESTING
 
 
 @pytest.mark.skipif(not _TABULAR_TESTING, reason="Tabular libraries aren't installed.")
@@ -45,7 +45,7 @@ def test_from_data_frame_time_series_data_set_single_call(patch_time_series_data
     )
 
     patch_time_series_data_set.from_parameters.assert_called_once_with(
-        {"test": None}, val_data, predict=True, stop_randomization=True
+        {"test": None}, val_data, stop_randomization=True
     )
 
 
@@ -79,7 +79,7 @@ def test_from_data_frame_time_series_data_set_multi_call(patch_time_series_data_
     )
 
     patch_time_series_data_set.from_parameters.assert_called_once_with(
-        {"test": None}, val_data, predict=True, stop_randomization=True
+        {"test": None}, val_data, stop_randomization=True
     )
 
 

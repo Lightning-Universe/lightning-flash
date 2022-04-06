@@ -11,32 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from dataclasses import dataclass
-from functools import lru_cache
-from typing import Any, List, Optional, Sequence
+from typing import Any, List, Optional
 
-from flash.core.data.io.input import Input
-from flash.core.data.properties import ProcessState
-from flash.core.data.utilities.classification import (
-    get_target_details,
-    get_target_formatter,
-    get_target_mode,
-    TargetFormatter,
-)
+from flash.core.data.properties import Properties
+from flash.core.data.utilities.classification import get_target_formatter, TargetFormatter
 
 
-@dataclass(unsafe_hash=True, frozen=True)
-class ClassificationState(ProcessState):
-    """A :class:`~flash.core.data.properties.ProcessState` containing ``labels`` (a mapping from class index to
-    label) and ``num_classes``."""
-
-    labels: Optional[Sequence[str]]
-    num_classes: Optional[int] = None
-
-
-class ClassificationInput(Input):
-    """The ``ClassificationInput`` class provides utility methods for handling classification targets.
-    :class:`~flash.core.data.io.input.Input` objects that extend ``ClassificationInput`` should do the following:
+class ClassificationInputMixin(Properties):
+    """The ``ClassificationInputMixin`` class provides utility methods for handling classification targets.
+    :class:`~flash.core.data.io.input.Input` objects that extend ``ClassificationInputMixin`` should do the following:
 
     * In the ``load_data`` method, include a call to ``load_target_metadata``. This will determine the format of the
       targets and store metadata like ``labels`` and ``num_classes``.
@@ -44,28 +27,34 @@ class ClassificationInput(Input):
       tasks.
     """
 
-    @property
-    @lru_cache(maxsize=None)
-    def target_formatter(self) -> TargetFormatter:
-        """Get the :class:`~flash.core.data.utiltiies.classification.TargetFormatter` to use when formatting
-        targets.
+    target_formatter: TargetFormatter
+    multi_label: bool
+    labels: list
+    num_classes: int
 
-        This property uses ``functools.lru_cache`` so that we only instantiate the formatter once.
-        """
-        classification_state = self.get_state(ClassificationState)
-        return get_target_formatter(self.target_mode, classification_state.labels, classification_state.num_classes)
-
-    def load_target_metadata(self, targets: List[Any]) -> None:
+    def load_target_metadata(
+        self,
+        targets: Optional[List[Any]],
+        target_formatter: Optional[TargetFormatter] = None,
+        add_background: bool = False,
+    ) -> None:
         """Determine the target format and store the ``labels`` and ``num_classes``.
 
         Args:
             targets: The list of targets.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter`
+                rather than inferring from the targets.
+            add_background: If ``True``, a background class will be inserted as class zero if ``labels`` and
+                ``num_classes`` are being inferred.
         """
-        self.target_mode = get_target_mode(targets)
-        self.multi_label = self.target_mode.multi_label
-        if self.get_state(ClassificationState) is None:
-            self.labels, self.num_classes = get_target_details(targets, self.target_mode)
-            self.set_state(ClassificationState(self.labels, self.num_classes))
+        self.target_formatter = target_formatter
+        if target_formatter is None and targets is not None:
+            self.target_formatter = get_target_formatter(targets, add_background=add_background)
+
+        if self.target_formatter is not None:
+            self.multi_label = self.target_formatter.multi_label
+            self.labels = self.target_formatter.labels
+            self.num_classes = self.target_formatter.num_classes
 
     def format_target(self, target: Any) -> Any:
         """Format a single target according to the previously computed target format and metadata.
@@ -76,4 +65,4 @@ class ClassificationInput(Input):
         Returns:
             The formatted target.
         """
-        return self.target_formatter(target)
+        return getattr(self, "target_formatter", lambda x: x)(target)

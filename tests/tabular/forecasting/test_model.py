@@ -17,9 +17,8 @@ import pytest
 
 import flash
 from flash.__main__ import main
-from flash.core.utilities.imports import _PANDAS_AVAILABLE, _TABULAR_AVAILABLE
+from flash.core.utilities.imports import _PANDAS_AVAILABLE, _TABULAR_AVAILABLE, _TABULAR_TESTING
 from flash.tabular.forecasting import TabularForecaster, TabularForecastingData
-from tests.helpers.utils import _TABULAR_TESTING
 
 if _TABULAR_AVAILABLE:
     from pytorch_forecasting.data import NaNLabelEncoder
@@ -90,7 +89,7 @@ def test_testing_raises(sample_data):
     trainer = flash.Trainer(max_epochs=1, fast_dev_run=True, gradient_clip_val=0.01)
 
     with pytest.raises(NotImplementedError, match="Backbones provided by PyTorch Forecasting don't support testing."):
-        trainer.test(model, datamodule)
+        trainer.test(model, datamodule=datamodule)
 
 
 @pytest.mark.skipif(not _TABULAR_TESTING, reason="Tabular libraries aren't installed.")

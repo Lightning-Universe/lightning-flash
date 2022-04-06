@@ -13,7 +13,6 @@
 # limitations under the License.
 import contextlib
 import os
-import random
 import re
 import tempfile
 from pathlib import Path
@@ -21,13 +20,13 @@ from unittest import mock
 
 import pytest
 import torch
+from pandas import DataFrame
 from torch.utils.data import SequentialSampler
 
 import flash
 from flash.__main__ import main
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _VIDEO_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _VIDEO_AVAILABLE, _VIDEO_TESTING
 from flash.video import VideoClassificationData, VideoClassifier
-from tests.helpers.utils import _VIDEO_TESTING
 
 if _FIFTYONE_AVAILABLE:
     import fiftyone as fo
@@ -67,11 +66,11 @@ def temp_encoded_video(num_frames: int, fps: int, height=10, width=10, prefix=No
 
 
 @contextlib.contextmanager
-def mock_encoded_video_dataset_file():
-    """
-    Creates a temporary mock encoded video dataset with 4 videos labeled from 0 - 4.
-    Returns a labeled video file which points to this mock encoded video dataset, the
-    ordered label and videos tuples and the video duration in seconds.
+def mock_video_data_frame():
+    """Creates a temporary mock encoded video dataset with 4 videos labeled from 0 to 4.
+
+    Returns a labeled video file which points to this mock encoded video dataset, the ordered label and videos tuples
+    and the video duration in seconds.
     """
     num_frames = 10
     fps = 5
@@ -83,20 +82,23 @@ def mock_encoded_video_dataset_file():
             video_file_name_2,
             data_2,
         ):
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as f:
-                f.write(f"{video_file_name_1} 0\n".encode())
-                f.write(f"{video_file_name_2} 1\n".encode())
-                f.write(f"{video_file_name_1} 2\n".encode())
-                f.write(f"{video_file_name_2} 3\n".encode())
+            data_frame = DataFrame.from_dict(
+                {
+                    "file": [video_file_name_1, video_file_name_2, video_file_name_1, video_file_name_2],
+                    "target": ["cat", "dog", "cat", "dog"],
+                }
+            )
 
-            label_videos = [
-                (0, data_1),
-                (1, data_2),
-                (2, data_1),
-                (3, data_2),
-            ]
             video_duration = num_frames / fps
-            yield f.name, label_videos, video_duration
+            yield data_frame, video_duration
+
+
+@contextlib.contextmanager
+def mock_video_csv_file(tmpdir):
+    with mock_video_data_frame() as (data_frame, video_duration):
+        csv_file = os.path.join(tmpdir, "data.csv")
+        data_frame.to_csv(csv_file)
+        yield csv_file, video_duration
 
 
 @contextlib.contextmanager
@@ -119,13 +121,13 @@ def mock_encoded_video_dataset_folder(tmpdir):
 
 
 @pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
-def test_video_classifier_finetune_from_folders(tmpdir):
-    with mock_encoded_video_dataset_file() as (mock_csv, _, total_duration):
+def test_video_classifier_finetune_from_folder(tmpdir):
+    with mock_encoded_video_dataset_folder(tmpdir) as (mock_folder, total_duration):
 
         half_duration = total_duration / 2 - 1e-9
 
         datamodule = VideoClassificationData.from_folders(
-            train_folder=mock_csv,
+            train_folder=mock_folder,
             clip_sampler="uniform",
             clip_duration=half_duration,
             video_sampler=SequentialSampler,
@@ -136,17 +138,6 @@ def test_video_classifier_finetune_from_folders(tmpdir):
         for sample in datamodule.train_dataset.data:
             expected_t_shape = 5
             assert sample["video"].shape[1] == expected_t_shape
-
-        assert len(VideoClassifier.available_backbones()) > 5
-
-        datamodule = VideoClassificationData.from_folders(
-            train_folder=mock_csv,
-            clip_sampler="uniform",
-            clip_duration=half_duration,
-            video_sampler=SequentialSampler,
-            decode_audio=False,
-            batch_size=1,
-        )
 
         model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50")
         trainer = flash.Trainer(default_root_dir=tmpdir, fast_dev_run=True, gpus=torch.cuda.device_count())
@@ -155,25 +146,13 @@ def test_video_classifier_finetune_from_folders(tmpdir):
 
 @pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
 def test_video_classifier_finetune_from_files(tmpdir):
-    with mock_encoded_video_dataset_file() as (mock_csv, _, total_duration):
-        label_names = ["label_1", "label_2", "label_3", "label_4"]
+    with mock_video_data_frame() as (mock_data_frame, total_duration):
+
         half_duration = total_duration / 2 - 1e-9
 
-        files = []
-        labels = []
-        with open(mock_csv) as fin:
-            for line in fin:
-                if not line:
-                    break
-                splits = line.split()
-                fname = splits[0]
-                label = label_names[random.randint(0, len(labels))]
-                files.append(fname)
-                labels.append(label)
-
         datamodule = VideoClassificationData.from_files(
-            train_files=files,
-            train_targets=labels,
+            train_files=mock_data_frame["file"],
+            train_targets=mock_data_frame["target"],
             clip_sampler="uniform",
             clip_duration=half_duration,
             video_sampler=SequentialSampler,
@@ -185,17 +164,57 @@ def test_video_classifier_finetune_from_files(tmpdir):
             expected_t_shape = 5
             assert sample["video"].shape[1] == expected_t_shape
 
-        assert len(VideoClassifier.available_backbones()) > 5
+        model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50")
+        trainer = flash.Trainer(default_root_dir=tmpdir, fast_dev_run=True, gpus=torch.cuda.device_count())
+        trainer.finetune(model, datamodule=datamodule)
 
-        datamodule = VideoClassificationData.from_files(
-            train_files=files,
-            train_targets=labels,
+
+@pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
+def test_video_classifier_finetune_from_data_frame(tmpdir):
+    with mock_video_data_frame() as (mock_data_frame, total_duration):
+
+        half_duration = total_duration / 2 - 1e-9
+
+        datamodule = VideoClassificationData.from_data_frame(
+            "file",
+            "target",
+            train_data_frame=mock_data_frame,
             clip_sampler="uniform",
             clip_duration=half_duration,
             video_sampler=SequentialSampler,
             decode_audio=False,
             batch_size=1,
         )
+
+        for sample in datamodule.train_dataset.data:
+            expected_t_shape = 5
+            assert sample["video"].shape[1] == expected_t_shape
+
+        model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50")
+        trainer = flash.Trainer(default_root_dir=tmpdir, fast_dev_run=True, gpus=torch.cuda.device_count())
+        trainer.finetune(model, datamodule=datamodule)
+
+
+@pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
+def test_video_classifier_finetune_from_csv(tmpdir):
+    with mock_video_csv_file(tmpdir) as (mock_csv, total_duration):
+
+        half_duration = total_duration / 2 - 1e-9
+
+        datamodule = VideoClassificationData.from_csv(
+            "file",
+            "target",
+            train_file=mock_csv,
+            clip_sampler="uniform",
+            clip_duration=half_duration,
+            video_sampler=SequentialSampler,
+            decode_audio=False,
+            batch_size=1,
+        )
+
+        for sample in datamodule.train_dataset.data:
+            expected_t_shape = 5
+            assert sample["video"].shape[1] == expected_t_shape
 
         model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50")
         trainer = flash.Trainer(default_root_dir=tmpdir, fast_dev_run=True, gpus=torch.cuda.device_count())
@@ -229,17 +248,6 @@ def test_video_classifier_finetune_fiftyone(tmpdir):
         for sample in datamodule.train_dataset.data:
             expected_t_shape = 5
             assert sample["video"].shape[1] == expected_t_shape
-
-        assert len(VideoClassifier.available_backbones()) > 5
-
-        datamodule = VideoClassificationData.from_fiftyone(
-            train_dataset=train_dataset,
-            clip_sampler="uniform",
-            clip_duration=half_duration,
-            video_sampler=SequentialSampler,
-            decode_audio=False,
-            batch_size=1,
-        )
 
         model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50")
         trainer = flash.Trainer(fast_dev_run=True, gpus=torch.cuda.device_count())

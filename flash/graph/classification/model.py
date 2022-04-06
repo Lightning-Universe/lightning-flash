@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import torch
 from torch import nn
@@ -59,19 +59,22 @@ class GraphClassifier(ClassificationTask):
     def __init__(
         self,
         num_features: int,
-        num_classes: int,
+        num_classes: Optional[int] = None,
+        labels: Optional[List[str]] = None,
         backbone: Union[str, Tuple[nn.Module, int]] = "GCN",
         backbone_kwargs: Optional[Dict] = {},
         pooling_fn: Optional[Union[str, Callable]] = "mean",
         head: Optional[Union[Callable, nn.Module]] = None,
         loss_fn: LOSS_FN_TYPE = F.cross_entropy,
-        learning_rate: float = 1e-3,
+        learning_rate: Optional[float] = None,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: METRICS_TYPE = None,
     ):
-
         self.save_hyperparameters()
+
+        if labels is not None and num_classes is None:
+            num_classes = len(labels)
 
         super().__init__(
             loss_fn=loss_fn,
@@ -79,6 +82,8 @@ class GraphClassifier(ClassificationTask):
             lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
+            num_classes=num_classes,
+            labels=labels,
         )
 
         self.save_hyperparameters()

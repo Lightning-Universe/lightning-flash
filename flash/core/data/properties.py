@@ -11,54 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from dataclasses import dataclass
-from typing import Dict, Optional, Type, TypeVar
+from typing import Optional
 
-import flash
 from flash.core.utilities.stages import RunningStage
-
-
-@dataclass(unsafe_hash=True, frozen=True)
-class ProcessState:
-    """Base class for all process states."""
-
-
-STATE_TYPE = TypeVar("STATE_TYPE", bound=ProcessState)
 
 
 class Properties:
     def __init__(
         self,
         running_stage: Optional[RunningStage] = None,
-        data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None,
-        state: Dict[Type[ProcessState], ProcessState] = None,
     ):
         super().__init__()
 
         self._running_stage = running_stage
         self._current_fn: Optional[str] = None
-        self._data_pipeline_state = data_pipeline_state
-        self._state: Dict[Type[ProcessState], ProcessState] = {} if state is None else state
-
-    def get_state(self, state_type: Type[STATE_TYPE]) -> Optional[STATE_TYPE]:
-        if state_type in self._state:
-            return self._state[state_type]
-        if self._data_pipeline_state is not None:
-            return self._data_pipeline_state.get_state(state_type)
-        return None
-
-    def set_state(self, state: ProcessState):
-        self._state[type(state)] = state
-        if self._data_pipeline_state is not None:
-            self._data_pipeline_state.set_state(state)
-
-    def attach_data_pipeline_state(self, data_pipeline_state: "flash.core.data.data_pipeline.DataPipelineState"):
-        for state in self._state.values():
-            data_pipeline_state.set_state(state)
-        if self._data_pipeline_state:
-            for state in self._data_pipeline_state._state.values():
-                data_pipeline_state.set_state(state)
-        self._data_pipeline_state = data_pipeline_state
 
     @property
     def current_fn(self) -> Optional[str]:

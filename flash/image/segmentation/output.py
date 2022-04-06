@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import random
-from typing import Any, Dict, Optional, Tuple, TYPE_CHECKING, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 import numpy as np
 import torch
 
 import flash
-from flash.core.data.io.input import DataKeys, ImageLabelsMap
+from flash.core.data.io.input import DataKeys
 from flash.core.data.io.output import Output
+from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,
     _KORNIA_AVAILABLE,
@@ -27,14 +28,14 @@ from flash.core.utilities.imports import (
     lazy_import,
     requires,
 )
+from flash.core.utilities.providers import _FIFTYONE
 
-Segmentation = None
 if _FIFTYONE_AVAILABLE:
     fol = lazy_import("fiftyone.core.labels")
-    if TYPE_CHECKING:
-        from fiftyone.core.labels import Segmentation
+    Segmentation = "fiftyone.core.labels.Segmentation"
 else:
     fol = None
+    Segmentation = None
 
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt
@@ -47,13 +48,17 @@ else:
     K = None
 
 
+SEMANTIC_SEGMENTATION_OUTPUTS = FlashRegistry("outputs")
+
+
+@SEMANTIC_SEGMENTATION_OUTPUTS(name="labels")
 class SegmentationLabelsOutput(Output):
     """A :class:`.Output` which converts the model outputs to the label of the argmax classification per pixel in
     the image for semantic segmentation tasks.
 
     Args:
         labels_map: A dictionary that map the labels ids to pixel intensities.
-        visualize: Wether to visualize the image labels.
+        visualize: Whether to visualize the image labels.
     """
 
     @requires("image")
@@ -64,7 +69,7 @@ class SegmentationLabelsOutput(Output):
 
     @staticmethod
     def labels_to_image(img_labels: torch.Tensor, labels_map: Dict[int, Tuple[int, int, int]]) -> torch.Tensor:
-        """Function that given an image with labels ids and their pixels intrensity mapping, creates a RGB
+        """Function that given an image with labels ids and their pixel intensity mapping, creates an RGB
         representation for visualisation purposes."""
         assert len(img_labels.shape) == 2, img_labels.shape
         H, W = img_labels.shape
@@ -84,8 +89,6 @@ class SegmentationLabelsOutput(Output):
 
     @requires("matplotlib")
     def _visualize(self, labels):
-        if self.labels_map is None:
-            self.labels_map = self.get_state(ImageLabelsMap).labels_map
         labels_vis = self.labels_to_image(labels, self.labels_map)
         labels_vis = K.utils.tensor_to_image(labels_vis)
         plt.imshow(labels_vis)
@@ -101,6 +104,7 @@ class SegmentationLabelsOutput(Output):
         return labels.tolist()
 
 
+@SEMANTIC_SEGMENTATION_OUTPUTS(name="fiftyone", providers=_FIFTYONE)
 class FiftyOneSegmentationLabelsOutput(SegmentationLabelsOutput):
     """A :class:`.Output` which converts the model outputs to FiftyOne segmentation format.
 
@@ -117,7 +121,7 @@ class FiftyOneSegmentationLabelsOutput(SegmentationLabelsOutput):
         self,
         labels_map: Optional[Dict[int, Tuple[int, int, int]]] = None,
         visualize: bool = False,
-        return_filepath: bool = False,
+        return_filepath: bool = True,
     ):
         super().__init__(labels_map=labels_map, visualize=visualize)
 

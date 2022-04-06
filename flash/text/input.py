@@ -11,23 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from torch import Tensor
+from typing import Any, Dict
 
-from flash.core.data.process import Deserializer
-from flash.core.integrations.transformers.states import TransformersBackboneState
-from flash.core.utilities.imports import requires
+from flash.core.data.io.input import DataKeys, ServeInput
 
 
-class TextDeserializer(Deserializer):
-    @requires("text")
-    def __init__(self, *args, max_length: int = 128, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.max_length = max_length
-
-    def serve_load_sample(self, text: str) -> Tensor:
-        return self.get_state(TransformersBackboneState).tokenizer(
-            text, max_length=self.max_length, truncation=True, padding="max_length"
-        )
+class TextDeserializer(ServeInput):
+    def serve_load_sample(self, text: str) -> Dict[str, Any]:
+        return {DataKeys.INPUT: text}
 
     @property
     def example_input(self) -> str:

@@ -39,8 +39,8 @@ _STAGES_PREFIX = {
     RunningStage.VALIDATING: "val",
     RunningStage.PREDICTING: "predict",
     RunningStage.SERVING: "serve",
+    RunningStage.SANITY_CHECKING: "val",
 }
-_STAGES_PREFIX_VALUES = {"train", "test", "val", "predict", "serve"}
 
 _INPUT_TRANSFORM_FUNCS: Set[str] = {
     "per_sample_transform",
@@ -72,9 +72,6 @@ def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:
     Usage:
         download_file('http://web4host.net/5MB.zip')
     """
-    if url == "NEED_TO_BE_CREATED":
-        raise NotImplementedError
-
     if not os.path.exists(path):
         os.makedirs(path)
     local_filename = os.path.join(path, url.split("/")[-1])

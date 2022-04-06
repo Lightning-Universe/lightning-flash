@@ -11,34 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, Iterable, List, Union
+from typing import Any, Iterable, List, Optional, Union
 
 import torch
 from torch.nn import Module
 
 from flash.core.data.io.input import DataKeys
-from flash.core.data.io.output import Output
 from flash.core.model import Task
 from flash.core.utilities.imports import _FASTFACE_AVAILABLE
-from flash.core.utilities.types import (
-    INPUT_TRANSFORM_TYPE,
-    LOSS_FN_TYPE,
-    LR_SCHEDULER_TYPE,
-    METRICS_TYPE,
-    OPTIMIZER_TYPE,
-    OUTPUT_TYPE,
-)
+from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.image.face_detection.backbones import FACE_DETECTION_BACKBONES
+from flash.image.face_detection.output_transform import FaceDetectionOutputTransform
 
 if _FASTFACE_AVAILABLE:
     import fastface as ff
-
-
-class DetectionLabelsOutput(Output):
-    """A :class:`.Output` which extracts predictions from sample dict."""
-
-    def transform(self, sample: Any) -> Dict[str, Any]:
-        return sample[DataKeys.PREDS] if isinstance(sample, Dict) else sample
 
 
 class FaceDetector(Task):
@@ -55,7 +41,6 @@ class FaceDetector(Task):
         optimizer: Optimizer to use for training.
         lr_scheduler: The LR scheduler to use during training.
         learning_rate: The learning rate to use for training.
-        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
         kwargs: additional kwargs nessesary for initializing face detector backbone
     """
 
@@ -69,9 +54,7 @@ class FaceDetector(Task):
         metrics: METRICS_TYPE = None,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
-        learning_rate: float = 1e-4,
-        output: OUTPUT_TYPE = DetectionLabelsOutput(),
-        input_transform: INPUT_TRANSFORM_TYPE = None,
+        learning_rate: Optional[float] = None,
         **kwargs: Any,
     ):
         self.save_hyperparameters()
@@ -88,8 +71,7 @@ class FaceDetector(Task):
             learning_rate=learning_rate,
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
-            output=output,
-            input_transform=input_transform,
+            output_transform=FaceDetectionOutputTransform(),
         )
 
     @staticmethod

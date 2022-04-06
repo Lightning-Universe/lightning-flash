@@ -22,9 +22,9 @@ from torch import Tensor
 from torch.nn import Module
 
 from flash.core.data.io.input import DataKeys, ServeInput
+from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import OutputTransform
-from flash.core.integrations.transformers.input_transform import TransformersInputTransform
-from flash.core.integrations.transformers.states import TransformersBackboneState
 from flash.core.model import Task
 from flash.core.registry import ExternalRegistry, FlashRegistry
 from flash.core.serve import Composition
@@ -39,7 +39,7 @@ from flash.core.utilities.types import (
 )
 from flash.text.input import TextDeserializer
 from flash.text.ort_callback import ORTCallback
-from flash.text.seq2seq.core.output_transform import Seq2SeqOutputTransform
+from flash.text.seq2seq.core.collate import TextSeq2SeqCollate
 
 if _TEXT_AVAILABLE:
     from transformers import AutoModelForSeq2SeqLM
@@ -72,12 +72,15 @@ class Seq2SeqTask(Task):
     """General Task for Sequence2Sequence.
 
     Args:
+        max_source_length: The maximum length to pad / truncate input sequences to.
+        max_target_length: The maximum length to pad / truncate target sequences to.
+        padding: The type of padding to apply. One of: "longest" or ``True``, "max_length", "do_not_pad" or
+            ``False``.
         loss_fn: Loss function for training
         optimizer: Optimizer to use for training.
         lr_scheduler: The LR scheduler to use during training.
         metrics: Metrics to compute for training and evaluation. Changing this argument currently has no effect
         learning_rate: Learning rate to use for training, defaults to `3e-4`
-        val_target_max_length: Maximum length of targets in validation. Defaults to `128`
         num_beams: Number of beams to use in validation when generating predictions. Defaults to `4`
         enable_ort: Enable Torch ONNX Runtime Optimization: https://onnxruntime.ai/docs/#onnx-runtime-for-training
     """
@@ -90,15 +93,17 @@ class Seq2SeqTask(Task):
         self,
         backbone: str = "t5-small",
         tokenizer_kwargs: Optional[Dict[str, Any]] = None,
+        max_source_length: int = 128,
+        max_target_length: int = 128,
+        padding: Union[str, bool] = "max_length",
         loss_fn: LOSS_FN_TYPE = None,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: METRICS_TYPE = None,
-        learning_rate: float = 5e-5,
-        val_target_max_length: Optional[int] = None,
+        learning_rate: Optional[float] = None,
         num_beams: Optional[int] = None,
         enable_ort: bool = False,
-        output_transform: Optional[OutputTransform] = Seq2SeqOutputTransform(),
+        output_transform: Optional[OutputTransform] = None,
     ):
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
         # disable HF thousand warnings
@@ -113,15 +118,23 @@ class Seq2SeqTask(Task):
             learning_rate=learning_rate,
             output_transform=output_transform,
         )
-        self.set_state(TransformersBackboneState(backbone, tokenizer_kwargs=tokenizer_kwargs))
+
+        self.collate_fn = TextSeq2SeqCollate(
+            backbone=backbone,
+            tokenizer_kwargs=tokenizer_kwargs,
+            max_source_length=max_source_length,
+            max_target_length=max_target_length,
+            padding=padding,
+        )
         self.model = self.backbones.get(backbone)()
         self.enable_ort = enable_ort
-        self.val_target_max_length = val_target_max_length
+        self.max_source_length = max_source_length
+        self.max_target_length = max_target_length
         self.num_beams = num_beams
         self._initialize_model_specific_parameters()
 
     def forward(self, x: Any) -> Any:
-        max_length = self.val_target_max_length if self.val_target_max_length else self.model.config.max_length
+        max_length = self.max_target_length
         num_beams = self.num_beams if self.num_beams else self.model.config.num_beams
         generated_tokens = self.model.generate(
             input_ids=x["input_ids"], attention_mask=x["attention_mask"], max_length=max_length, num_beams=num_beams
@@ -151,6 +164,10 @@ class Seq2SeqTask(Task):
     def test_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0):
         self.common_step("test", batch)
 
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        output = super().predict_step(batch, batch_idx, dataloader_idx)
+        return self.decode(output)
+
     def compute_metrics(self, generated_tokens, batch, prefix):
         pass
 
@@ -167,9 +184,9 @@ class Seq2SeqTask(Task):
             rank_zero_info(f"Overriding model paramameters for {self.task} as defined within the model:\n {pars}")
             self.model.config.update(pars)
 
-    def tokenize_labels(self, labels: Tensor) -> List[str]:
-        label_str = self.get_state(TransformersBackboneState).tokenizer.batch_decode(labels, skip_special_tokens=True)
-        return [str.strip(s) for s in label_str]
+    def decode(self, tokens: Tensor) -> List[str]:
+        decoded_str = self.collate_fn.tokenizer.batch_decode(tokens, skip_special_tokens=True)
+        return [str.strip(s) for s in decoded_str]
 
     def modules_to_freeze(self) -> Union[Module, Iterable[Union[Module, Iterable]]]:
         """Return the module attributes of the model to be frozen."""
@@ -199,7 +216,8 @@ class Seq2SeqTask(Task):
         port: int = 8000,
         sanity_check: bool = True,
         input_cls: Optional[Type[ServeInput]] = TextDeserializer,
-        transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
+        transform: INPUT_TRANSFORM_TYPE = InputTransform,
         transform_kwargs: Optional[Dict] = None,
+        output: Optional[Union[str, Output]] = None,
     ) -> Composition:
-        return super().serve(host, port, sanity_check, input_cls, transform, transform_kwargs)
+        return super().serve(host, port, sanity_check, input_cls, transform, transform_kwargs, output)

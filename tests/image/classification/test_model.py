@@ -20,11 +20,9 @@ import torch
 
 from flash import Trainer
 from flash.__main__ import main
-from flash.core.classification import ProbabilitiesOutput
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _IMAGE_AVAILABLE, _IMAGE_TESTING, _SERVE_TESTING
 from flash.image import ImageClassifier
-from tests.helpers.utils import _IMAGE_TESTING, _SERVE_TESTING
 
 # ======== Mock functions ========
 
@@ -77,9 +75,18 @@ def test_init_train(tmpdir, backbone, metrics):
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.parametrize("head", ["linear", torch.nn.Linear(512, 10)])
+def test_init_train_head(tmpdir, head):
+    model = ImageClassifier(10, backbone="resnet18", head=head, metrics=None)
+    train_dl = torch.utils.data.DataLoader(DummyDataset())
+    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
+    trainer.finetune(model, train_dl, strategy="freeze")
+
+
+@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_non_existent_backbone():
     with pytest.raises(KeyError):
-        ImageClassifier(2, "i am never going to implement this lol")
+        ImageClassifier(2, backbone="i am never going to implement this lol")
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
@@ -103,11 +110,11 @@ def test_multilabel(tmpdir):
 
     num_classes = 4
     ds = DummyMultiLabelDataset(num_classes)
-    model = ImageClassifier(num_classes, multi_label=True, output=ProbabilitiesOutput(multi_label=True))
+    model = ImageClassifier(num_classes, multi_label=True)
     train_dl = torch.utils.data.DataLoader(ds, batch_size=2)
     trainer = Trainer(default_root_dir=tmpdir, max_epochs=2, limit_train_batches=5)
     trainer.finetune(model, train_dl, strategy=("freeze_unfreeze", 1))
-    predictions = trainer.predict(model, train_dl)[0]
+    predictions = trainer.predict(model, train_dl, output="probabilities")[0]
     assert (torch.tensor(predictions) > 1).sum() == 0
     assert (torch.tensor(predictions) < 0).sum() == 0
     assert len(predictions[0]) == num_classes

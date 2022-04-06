@@ -27,6 +27,16 @@ ______________
     classification.input.TextClassificationParquetInput
     classification.input.TextClassificationListInput
 
+Embedding
+_________
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+    :template: classtemplate.rst
+
+    ~embedding.model.TextEmbedder
+
 Question Answering
 __________________
 
@@ -43,7 +53,6 @@ __________________
     question_answering.input.QuestionAnsweringJSONInput
     question_answering.input.QuestionAnsweringSQuADInput
     question_answering.input.QuestionAnsweringDictionaryInput
-    question_answering.input_transform.QuestionAnsweringInputTransform
     question_answering.output_transform.QuestionAnsweringOutputTransform
 
 Summarization
@@ -77,13 +86,11 @@ _______________
     :template: classtemplate.rst
 
     ~seq2seq.core.model.Seq2SeqTask
-    ~seq2seq.core.data.Seq2SeqData
 
     seq2seq.core.input.Seq2SeqInputBase
     seq2seq.core.input.Seq2SeqCSVInput
     seq2seq.core.input.Seq2SeqJSONInput
     seq2seq.core.input.Seq2SeqListInput
-    seq2seq.core.output_transform.Seq2SeqOutputTransform
 
 flash.text.input
 ________________

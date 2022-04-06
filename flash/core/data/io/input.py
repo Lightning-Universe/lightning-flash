@@ -14,21 +14,16 @@
 import functools
 import os
 import sys
-from copy import copy, deepcopy
-from dataclasses import dataclass
-from functools import partial
-from typing import Any, Callable, cast, Dict, Iterable, List, MutableMapping, Optional, Sequence, Tuple, Type, Union
+from copy import deepcopy
+from typing import Any, cast, Dict, Iterable, List, Sequence, Tuple, Union
 
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Dataset
 
-import flash
-from flash.core.data.callback import FlashCallback
-from flash.core.data.properties import ProcessState, Properties
-from flash.core.registry import FlashRegistry
+from flash.core.data.properties import Properties
+from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.utilities.stages import RunningStage
-from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 
 if sys.version_info < (3, 7):
     from typing import GenericMeta
@@ -42,12 +37,6 @@ else:
     # ReadTheDocs mocks the `IterableDataset` import so it's type cannot be used as a base for a metaclass, so we
     # replace it here.
     IterableDataset = object
-
-
-@dataclass(unsafe_hash=True, frozen=True)
-class ImageLabelsMap(ProcessState):
-
-    labels_map: Optional[Dict[int, Tuple[int, int, int]]]
 
 
 class InputFormat(LightningEnum):
@@ -172,68 +161,17 @@ class InputBase(Properties, metaclass=_InputMeta):
         **kwargs: Any additional keyword arguments to pass to the ``load_data`` hook.
     """
 
-    input_transforms_registry = FlashRegistry("input_transforms")
+    def __init__(self, running_stage: RunningStage, *args: Any, **kwargs: Any) -> None:
 
-    def __init__(
-        self,
-        running_stage: RunningStage,
-        *args: Any,
-        transform: INPUT_TRANSFORM_TYPE = None,
-        transform_kwargs: Optional[Dict] = None,
-        input_transforms_registry: Optional[FlashRegistry] = None,
-        data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None,
-        **kwargs: Any,
-    ) -> None:
-        from flash.core.data.io.input_transform import create_transform
-
-        self.transform = create_transform(
-            transform,
-            running_stage,
-            data_pipeline_state,
-            input_transforms_registry or self.input_transforms_registry,
-            transform_kwargs,
-        )
-        super().__init__(running_stage=running_stage, data_pipeline_state=data_pipeline_state)
+        super().__init__(running_stage=running_stage)
 
         self.data = None
         if len(args) >= 1 and args[0] is not None:
-            self.data = self._call_load_data(*args, **kwargs)
-
-    def _create_dataloader_collate_fn(self, callbacks: List[FlashCallback]) -> Optional[Callable]:
-        from flash.core.data.io.input_transform import _create_collate_input_transform_processors
-
-        if not self.transform:
-            return
-        return _create_collate_input_transform_processors(self.transform, callbacks)[0]
-
-    def _create_on_after_batch_transfer_fn(self, callbacks: List[FlashCallback]) -> Optional[Callable]:
-        from flash.core.data.io.input_transform import _create_collate_input_transform_processors
-
-        if not self.transform:
-            return
-        return _create_collate_input_transform_processors(self.transform, callbacks)[1]
-
-    def _call_load_data(self, *args: Any, **kwargs: Any) -> Union[Sequence, Iterable]:
-        from flash.core.data.data_pipeline import DataPipeline
-
-        load_data = getattr(
-            self, DataPipeline._resolve_function_hierarchy("load_data", self, self.running_stage, InputBase)
-        )
-        return load_data(*args, **kwargs)
+            self.data = getattr(self, f"{_STAGES_PREFIX[running_stage]}_load_data")(*args, **kwargs)
 
     def _call_load_sample(self, sample: Any) -> Any:
-        from flash.core.data.data_pipeline import DataPipeline
-
-        load_sample = getattr(
-            self,
-            DataPipeline._resolve_function_hierarchy(
-                "load_sample",
-                self,
-                self.running_stage,
-                InputBase,
-            ),
-        )
-        return load_sample(copy(sample))
+        # Deepcopy the sample to avoid leaks with complex data structures
+        return getattr(self, f"{_STAGES_PREFIX[self.running_stage]}_load_sample")(deepcopy(sample))
 
     @staticmethod
     def load_data(*args: Any, **kwargs: Any) -> Union[Sequence, Iterable]:
@@ -247,8 +185,44 @@ class InputBase(Properties, metaclass=_InputMeta):
         """
         return args[0]
 
+    def train_load_data(self, *args: Any, **kwargs: Any) -> Union[Sequence, Iterable]:
+        """Override the ``train_load_data`` hook with data loading logic that is only required during training.
+
+        Args:
+            *args: Any arguments that the input requires.
+            **kwargs: Any additional keyword arguments that the input requires.
+        """
+        return self.load_data(*args, **kwargs)
+
+    def val_load_data(self, *args: Any, **kwargs: Any) -> Union[Sequence, Iterable]:
+        """Override the ``val_load_data`` hook with data loading logic that is only required during validating.
+
+        Args:
+            *args: Any arguments that the input requires.
+            **kwargs: Any additional keyword arguments that the input requires.
+        """
+        return self.load_data(*args, **kwargs)
+
+    def test_load_data(self, *args: Any, **kwargs: Any) -> Union[Sequence, Iterable]:
+        """Override the ``test_load_data`` hook with data loading logic that is only required during testing.
+
+        Args:
+            *args: Any arguments that the input requires.
+            **kwargs: Any additional keyword arguments that the input requires.
+        """
+        return self.load_data(*args, **kwargs)
+
+    def predict_load_data(self, *args: Any, **kwargs: Any) -> Union[Sequence, Iterable]:
+        """Override the ``predict_load_data`` hook with data loading logic that is only required during predicting.
+
+        Args:
+            *args: Any arguments that the input requires.
+            **kwargs: Any additional keyword arguments that the input requires.
+        """
+        return self.load_data(*args, **kwargs)
+
     @staticmethod
-    def load_sample(sample: MutableMapping[str, Any]) -> Any:
+    def load_sample(sample: Dict[str, Any]) -> Any:
         """The ``load_sample`` hook is called for each ``__getitem__`` or ``__next__`` call to the dataset with a
         single sample from the output of the ``load_data`` hook as input.
 
@@ -257,42 +231,38 @@ class InputBase(Properties, metaclass=_InputMeta):
         """
         return sample
 
-    def __getstate__(self):
-        """Temporarily override pickle behaviour.
+    def train_load_sample(self, sample: Dict[str, Any]) -> Any:
+        """Override the ``train_load_sample`` hook with data loading logic that is only required during training.
 
-        TODO: New DataPipeline should avoid this being pickled.
+        Args:
+            sample: A single sample from the output of the ``load_data`` hook.
         """
-        state = self.__dict__.copy()
-        state.pop("data")
-        if "data_iter" in state:
-            state.pop("data_iter")
-        return state
+        return self.load_sample(sample)
 
-    def __setstate__(self, newstate):
-        """Temporarily override pickle behaviour.
+    def val_load_sample(self, sample: Dict[str, Any]) -> Any:
+        """Override the ``val_load_sample`` hook with data loading logic that is only required during validating.
 
-        TODO: New DataPipeline should avoid this being pickled.
+        Args:
+            sample: A single sample from the output of the ``load_data`` hook.
         """
-        newstate["data"] = None
-        self.__dict__.update(newstate)
+        return self.load_sample(sample)
 
-    def __copy__(self):
-        """The default copy implementation seems to use ``__getstate__`` and ``__setstate__`` so we override it
-        here with a custom implementation to ensure that it includes the data list."""
-        cls = self.__class__
-        result = cls.__new__(cls)
-        result.__dict__.update(self.__dict__)
-        return result
+    def test_load_sample(self, sample: Dict[str, Any]) -> Any:
+        """Override the ``test_load_sample`` hook with data loading logic that is only required during testing.
 
-    def __deepcopy__(self, memo):
-        """The default deepcopy implementation seems to use ``__getstate__`` and ``__setstate__`` so we override it
-        here with a custom implementation to ensure that it includes the data list."""
-        cls = self.__class__
-        result = cls.__new__(cls)
-        memo[id(self)] = result
-        for k, v in self.__dict__.items():
-            setattr(result, k, deepcopy(v, memo))
-        return result
+        Args:
+            sample: A single sample from the output of the ``load_data`` hook.
+        """
+        return self.load_sample(sample)
+
+    def predict_load_sample(self, sample: Dict[str, Any]) -> Any:
+        """Override the ``predict_load_sample`` hook with data loading logic that is only required during
+        predicting.
+
+        Args:
+            sample: A single sample from the output of the ``load_data`` hook.
+        """
+        return self.load_sample(sample)
 
     def __bool__(self):
         """If ``self.data`` is ``None`` then the ``InputBase`` is considered falsey.
@@ -300,16 +270,6 @@ class InputBase(Properties, metaclass=_InputMeta):
         This allows for quickly checking whether or not the ``InputBase`` is populated with data.
         """
         return self.data is not None
-
-    @classmethod
-    def register_input_transform(
-        cls, enum: Union[LightningEnum, str], fn: Union[Type["flash.InputTransform"], partial]
-    ) -> None:
-        if cls.input_transforms_registry is None:
-            raise MisconfigurationException(
-                "The class attribute `input_transforms_registry` should be set as a class attribute. "
-            )
-        cls.input_transforms_registry(fn=fn, name=enum)
 
 
 class Input(InputBase, Dataset):
@@ -330,21 +290,11 @@ class IterableInput(InputBase, IterableDataset, metaclass=_IterableInputMeta):
 
 
 class ServeInput(Input):
-    def __init__(
-        self,
-        transform: INPUT_TRANSFORM_TYPE = None,
-        transform_kwargs: Optional[Dict] = None,
-        data_pipeline_state: Optional["flash.core.data.data_pipeline.DataPipelineState"] = None,
-    ) -> None:
+    def __init__(self) -> None:
         if hasattr(self, "serve_load_data"):
             raise MisconfigurationException("`serve_load_data` shouldn't be implemented.")
 
-        super().__init__(
-            RunningStage.SERVING,
-            transform=transform,
-            transform_kwargs=transform_kwargs,
-            data_pipeline_state=data_pipeline_state,
-        )
+        super().__init__(RunningStage.SERVING)
 
     def serve_load_sample(self, sample: Any) -> List[Any]:
         raise NotImplementedError

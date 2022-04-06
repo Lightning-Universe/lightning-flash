@@ -11,39 +11,49 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Mapping
+from typing import Any, Dict, Mapping, Optional
 
 from torch.utils.data import Dataset
 
-from flash.core.data.data_module import DatasetInput
-from flash.core.data.io.classification_input import ClassificationInput, ClassificationState
-from flash.core.data.io.input import DataKeys
+from flash.core.data.io.classification_input import ClassificationInputMixin
+from flash.core.data.io.input import DataKeys, Input
+from flash.core.data.utilities.classification import TargetFormatter
+from flash.core.data.utilities.samples import to_sample
 from flash.core.utilities.imports import _GRAPH_AVAILABLE, requires
 
 if _GRAPH_AVAILABLE:
-    from torch_geometric.data import Data
-    from torch_geometric.data import Dataset as TorchGeometricDataset
-    from torch_geometric.data import InMemoryDataset
+    from torch_geometric.data import Data, InMemoryDataset
 
 
-class GraphClassificationDatasetInput(DatasetInput, ClassificationInput):
+def _get_num_features(sample: Dict[str, Any]) -> Optional[int]:
+    """Get the number of features per node in the given dataset."""
+    data = sample[DataKeys.INPUT]
+    data = data[0] if isinstance(data, tuple) else data
+    return getattr(data, "num_node_features", None)
+
+
+class GraphClassificationDatasetInput(Input, ClassificationInputMixin):
+    num_features: int
+    num_classes: int
+
     @requires("graph")
-    def load_data(self, dataset: Dataset) -> Dataset:
+    def load_data(self, dataset: Dataset, target_formatter: Optional[TargetFormatter] = None) -> Dataset:
         if not self.predicting:
-            if isinstance(dataset, TorchGeometricDataset):
-                self.num_features = dataset.num_features
+            self.num_features = _get_num_features(self.load_sample(dataset[0]))
 
-                if isinstance(dataset, InMemoryDataset):
-                    self.load_target_metadata([sample.y for sample in dataset])
-                else:
-                    self.num_classes = dataset.num_classes
-                    self.set_state(ClassificationState(self.labels, self.num_classes))
+            if isinstance(dataset, InMemoryDataset):
+                self.load_target_metadata([sample.y for sample in dataset], target_formatter)
+            else:
+                self.load_target_metadata(None, target_formatter)
+
+            if hasattr(dataset, "num_classes"):
+                self.num_classes = dataset.num_classes
         return dataset
 
     def load_sample(self, sample: Any) -> Mapping[str, Any]:
         if isinstance(sample, Data):
-            sample = {DataKeys.INPUT: sample, DataKeys.TARGET: sample.y}
-            if getattr(self, "target_mode", None) is not None:
-                sample[DataKeys.TARGET] = self.format_target(sample[DataKeys.TARGET])
-            return sample
-        return super().load_sample(sample)
+            sample = (sample, sample.y)
+        sample = to_sample(sample)
+        if DataKeys.TARGET in sample:
+            sample[DataKeys.TARGET] = self.format_target(sample[DataKeys.TARGET])
+        return sample

@@ -21,7 +21,6 @@ import torchmetrics
 from flash.core.adapter import Adapter
 from flash.core.data.batch import default_uncollate
 from flash.core.data.io.input import DataKeys
-from flash.core.data.states import CollateFn
 from flash.core.model import Task
 from flash.core.utilities.imports import _FORECASTING_AVAILABLE, _PANDAS_AVAILABLE
 
@@ -90,7 +89,7 @@ class PyTorchForecastingAdapter(Adapter):
         adapter = cls(task.backbones.get(backbone)(time_series_dataset=time_series_dataset, **backbone_kwargs))
 
         # Attach the required collate function
-        adapter.set_state(CollateFn(partial(PyTorchForecastingAdapter._collate_fn, time_series_dataset._collate_fn)))
+        adapter.collate_fn = partial(PyTorchForecastingAdapter._collate_fn, time_series_dataset._collate_fn)
 
         return adapter
 

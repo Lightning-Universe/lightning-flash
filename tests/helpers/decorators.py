@@ -11,16 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
+
 import pytest
 
-from flash.core.classification import Labels, Probabilities
 
-
-def test_v0_7_deprecated_labels(tmpdir):
-    with pytest.deprecated_call(match="`Labels` was deprecated in v0.6.0 and will be removed in v0.7.0."):
-        Labels()
-
-
-def test_v0_7_deprecated_probabilities(tmpdir):
-    with pytest.deprecated_call(match="`Probabilities` was deprecated in v0.6.0 and will be removed in v0.7.0."):
-        Probabilities()
+def forked(callable):
+    # PyTest forked not available in Windows
+    if os.name == "nt":
+        return callable
+    os.environ["MKL_SERVICE_FORCE_INTEL"] = "1"
+    return pytest.mark.forked(callable)

@@ -13,15 +13,15 @@
 # limitations under the License.
 import os
 import warnings
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional, Type, Union
 
 import torch
 from pytorch_lightning import Callback
 
-from flash.core.classification import ClassificationTask, LabelsOutput
+from flash.core.classification import ClassificationTask
 from flash.core.data.io.input import DataKeys, ServeInput
-from flash.core.integrations.transformers.input_transform import TransformersInputTransform
-from flash.core.integrations.transformers.states import TransformersBackboneState
+from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.io.output import Output
 from flash.core.registry import FlashRegistry
 from flash.core.serve import Composition
 from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE, requires
@@ -31,9 +31,9 @@ from flash.core.utilities.types import (
     LR_SCHEDULER_TYPE,
     METRICS_TYPE,
     OPTIMIZER_TYPE,
-    OUTPUT_TYPE,
 )
 from flash.text.classification.backbones import TEXT_CLASSIFIER_BACKBONES
+from flash.text.classification.collate import TextClassificationCollate
 from flash.text.input import TextDeserializer
 from flash.text.ort_callback import ORTCallback
 
@@ -48,7 +48,8 @@ class TextClassifier(ClassificationTask):
 
     Args:
         num_classes: Number of classes to classify.
-        backbone: A model to use to compute text features can be any BERT model from HuggingFace/transformersimage .
+        backbone: A model to use to compute text features can be any BERT model from HuggingFace/transformersimage.
+        max_length: The maximum length to pad / truncate sequences to.
         optimizer: Optimizer to use for training.
         lr_scheduler: The LR scheduler to use during training.
         metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
@@ -57,7 +58,6 @@ class TextClassifier(ClassificationTask):
             `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training, defaults to `1e-3`
         multi_label: Whether the targets are multi-label or not.
-        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
         enable_ort: Enable Torch ONNX Runtime Optimization: https://onnxruntime.ai/docs/#onnx-runtime-for-training
     """
 
@@ -67,18 +67,22 @@ class TextClassifier(ClassificationTask):
 
     def __init__(
         self,
-        num_classes: int,
+        num_classes: Optional[int] = None,
+        labels: Optional[List[str]] = None,
         backbone: str = "prajjwal1/bert-medium",
+        max_length: int = 128,
         loss_fn: LOSS_FN_TYPE = None,
         optimizer: OPTIMIZER_TYPE = "Adam",
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: METRICS_TYPE = None,
-        learning_rate: float = 1e-2,
+        learning_rate: Optional[float] = None,
         multi_label: bool = False,
-        output: OUTPUT_TYPE = None,
         enable_ort: bool = False,
     ):
         self.save_hyperparameters()
+
+        if labels is not None and num_classes is None:
+            num_classes = len(labels)
 
         os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
         # disable HF thousand warnings
@@ -95,12 +99,12 @@ class TextClassifier(ClassificationTask):
             metrics=metrics,
             learning_rate=learning_rate,
             multi_label=multi_label,
-            output=output or LabelsOutput(multi_label=multi_label),
+            labels=labels,
         )
         self.enable_ort = enable_ort
-        self.set_state(TransformersBackboneState(backbone))
+        self.max_length = max_length
+        self.collate_fn = TextClassificationCollate(backbone=backbone, max_length=max_length)
         self.model = self.backbones.get(backbone)(num_labels=num_classes)
-        self.save_hyperparameters()
 
     @property
     def backbone(self):
@@ -123,7 +127,7 @@ class TextClassifier(ClassificationTask):
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]):
         """This function is used only for debugging usage with CI."""
         if self.hparams.multi_label:
-            assert history[-1]["val_f1"] > 0.40, history[-1]["val_f1"]
+            assert history[-1]["val_f1score"] > 0.40, history[-1]["val_f1score"]
         else:
             assert history[-1]["val_accuracy"] > 0.70, history[-1]["val_accuracy"]
 
@@ -140,7 +144,8 @@ class TextClassifier(ClassificationTask):
         port: int = 8000,
         sanity_check: bool = True,
         input_cls: Optional[Type[ServeInput]] = TextDeserializer,
-        transform: INPUT_TRANSFORM_TYPE = TransformersInputTransform,
+        transform: INPUT_TRANSFORM_TYPE = InputTransform,
         transform_kwargs: Optional[Dict] = None,
+        output: Optional[Union[str, Output]] = None,
     ) -> Composition:
-        return super().serve(host, port, sanity_check, input_cls, transform, transform_kwargs)
+        return super().serve(host, port, sanity_check, input_cls, transform, transform_kwargs, output)

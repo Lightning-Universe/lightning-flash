@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List
 
+import numpy as np
 from torch import nn
 
 from flash.core.data.io.input import DataKeys
@@ -24,7 +25,7 @@ if _ICEVISION_AVAILABLE:
     from icevision.core import tasks
     from icevision.core.bbox import BBox
     from icevision.core.keypoints import KeyPoints
-    from icevision.core.mask import EncodedRLEs, MaskArray
+    from icevision.core.mask import Mask, MaskArray
     from icevision.core.record import BaseRecord
     from icevision.core.record_components import (
         BBoxesRecordComponent,
@@ -37,12 +38,18 @@ if _ICEVISION_AVAILABLE:
     )
     from icevision.data.prediction import Prediction
     from icevision.tfms import A
+else:
+    MaskArray = object
 
 if _ICEVISION_AVAILABLE and _ICEVISION_GREATER_EQUAL_0_11_0:
-    from icevision.core.mask import MaskFile
     from icevision.core.record_components import InstanceMasksRecordComponent
 elif _ICEVISION_AVAILABLE:
     from icevision.core.record_components import MasksRecordComponent
+
+
+def _split_mask_array(mask_array: MaskArray) -> List[MaskArray]:
+    """Utility to split a single ``MaskArray`` object into a list of ``MaskArray`` objects (one per mask)."""
+    return [MaskArray(mask) for mask in mask_array.data]
 
 
 def to_icevision_record(sample: Dict[str, Any]):
@@ -58,58 +65,6 @@ def to_icevision_record(sample: Dict[str, Any]):
     component.set_class_map(metadata.get("class_map", None))
     record.add_component(component)
 
-    if "labels" in sample[DataKeys.TARGET]:
-        labels_component = InstancesLabelsRecordComponent()
-        labels_component.add_labels_by_id(sample[DataKeys.TARGET]["labels"])
-        record.add_component(labels_component)
-
-    if "bboxes" in sample[DataKeys.TARGET]:
-        bboxes = [
-            BBox.from_xywh(bbox["xmin"], bbox["ymin"], bbox["width"], bbox["height"])
-            for bbox in sample[DataKeys.TARGET]["bboxes"]
-        ]
-        component = BBoxesRecordComponent()
-        component.set_bboxes(bboxes)
-        record.add_component(component)
-
-    if _ICEVISION_GREATER_EQUAL_0_11_0:
-        mask_array = sample[DataKeys.TARGET].get("mask_array", None)
-        masks = sample[DataKeys.TARGET].get("masks", None)
-
-        if mask_array is not None or masks is not None:
-            component = InstanceMasksRecordComponent()
-
-            if masks is not None:
-                masks = [MaskFile(mask) for mask in masks]
-                component.set_masks(masks)
-
-            if mask_array is not None:
-                mask_array = MaskArray(mask_array)
-                component.set_mask_array(mask_array)
-
-            record.add_component(component)
-    else:
-        mask_array = sample[DataKeys.TARGET].get("mask_array", None)
-        if mask_array is not None:
-            component = MasksRecordComponent()
-            component.set_masks(mask_array)
-            record.add_component(component)
-
-    if "keypoints" in sample[DataKeys.TARGET]:
-        keypoints = []
-
-        for keypoints_list, keypoints_metadata in zip(
-            sample[DataKeys.TARGET]["keypoints"], sample[DataKeys.TARGET]["keypoints_metadata"]
-        ):
-            xyv = []
-            for keypoint in keypoints_list:
-                xyv.extend((keypoint["x"], keypoint["y"], keypoint["visible"]))
-
-            keypoints.append(KeyPoints.from_xyv(xyv, keypoints_metadata))
-        component = KeyPointsRecordComponent()
-        component.set_keypoints(keypoints)
-        record.add_component(component)
-
     if isinstance(sample[DataKeys.INPUT], str):
         input_component = FilepathRecordComponent()
         input_component.set_filepath(sample[DataKeys.INPUT])
@@ -122,6 +77,66 @@ def to_icevision_record(sample: Dict[str, Any]):
         input_component.composite = record
         input_component.set_img(sample[DataKeys.INPUT])
     record.add_component(input_component)
+
+    if DataKeys.TARGET in sample:
+        if "labels" in sample[DataKeys.TARGET]:
+            labels_component = InstancesLabelsRecordComponent()
+            labels_component.add_labels_by_id(sample[DataKeys.TARGET]["labels"])
+            record.add_component(labels_component)
+
+        if "bboxes" in sample[DataKeys.TARGET]:
+            bboxes = [
+                BBox.from_xywh(bbox["xmin"], bbox["ymin"], bbox["width"], bbox["height"])
+                for bbox in sample[DataKeys.TARGET]["bboxes"]
+            ]
+            bboxes_component = BBoxesRecordComponent()
+            bboxes_component.set_bboxes(bboxes)
+            record.add_component(bboxes_component)
+
+        if _ICEVISION_GREATER_EQUAL_0_11_0:
+            masks = sample[DataKeys.TARGET].get("masks", None)
+
+            if masks is not None:
+                component = InstanceMasksRecordComponent()
+
+                if len(masks) > 0 and isinstance(masks[0], Mask):
+                    component.set_masks(masks)
+                else:
+                    # TODO: This treats invalid examples as negative examples
+                    if len(masks) == 0 or not (
+                        len(masks) == len(record.detection.bboxes) == len(record.detection.label_ids)
+                    ):
+                        data = np.zeros((0, record.height, record.width), np.uint8)
+                        labels_component.label_ids = []
+                        bboxes_component.bboxes = []
+                    else:
+                        data = np.stack(masks, axis=0)
+                    mask_array = MaskArray(data)
+                    component.set_mask_array(mask_array)
+                    component.set_masks(_split_mask_array(mask_array))
+
+                record.add_component(component)
+        else:
+            mask_array = sample[DataKeys.TARGET].get("mask_array", None)
+            if mask_array is not None:
+                component = MasksRecordComponent()
+                component.set_masks(mask_array)
+                record.add_component(component)
+
+        if "keypoints" in sample[DataKeys.TARGET]:
+            keypoints = []
+
+            for keypoints_list, keypoints_metadata in zip(
+                sample[DataKeys.TARGET]["keypoints"], sample[DataKeys.TARGET]["keypoints_metadata"]
+            ):
+                xyv = []
+                for keypoint in keypoints_list:
+                    xyv.extend((keypoint["x"], keypoint["y"], keypoint["visible"]))
+
+                keypoints.append(KeyPoints.from_xyv(xyv, keypoints_metadata))
+            component = KeyPointsRecordComponent()
+            component.set_keypoints(keypoints)
+            record.add_component(component)
 
     return record
 
@@ -142,26 +157,15 @@ def from_icevision_detection(record: "BaseRecord"):
             for bbox in detection.bboxes
         ]
 
-    mask_array = (
-        getattr(detection, "mask_array", None) if _ICEVISION_GREATER_EQUAL_0_11_0 else getattr(detection, "masks", None)
-    )
-    if mask_array is not None:
-        if isinstance(mask_array, EncodedRLEs):
-            mask_array = mask_array.to_mask(record.height, record.width)
-
-        if isinstance(mask_array, MaskArray):
-            result["mask_array"] = mask_array.data
-        else:
-            raise RuntimeError("Mask arrays are expected to be a MaskArray or EncodedRLEs.")
-
     masks = getattr(detection, "masks", None)
-    if masks is not None and _ICEVISION_GREATER_EQUAL_0_11_0:
-        result["masks"] = []
-        for mask in masks:
-            if isinstance(mask, MaskFile):
-                result["masks"].append(mask.filepath)
-            else:
-                raise RuntimeError("Masks are expected to be MaskFile objects.")
+    mask_array = getattr(detection, "mask_array", None)
+    if mask_array is not None or not _ICEVISION_GREATER_EQUAL_0_11_0:
+        if not isinstance(mask_array, MaskArray) or len(mask_array.data) == 0:
+            mask_array = MaskArray.from_masks(masks, record.height, record.width)
+
+        result["masks"] = [mask.data[0] for mask in _split_mask_array(mask_array)]
+    elif masks is not None:
+        result["masks"] = masks  # Note - this doesn't unpack IceVision objects
 
     if hasattr(detection, "keypoints"):
         keypoints = detection.keypoints
@@ -244,22 +248,6 @@ class IceVisionTransformAdapter(nn.Module):
         record = to_icevision_record(x)
         record = self.transform(record)
         return from_icevision_record(record)
-
-
-@requires(["image", "icevision"])
-def default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
-    """The default transforms from IceVision."""
-    return {
-        "per_sample_transform": IceVisionTransformAdapter([*A.resize_and_pad(image_size), A.Normalize()]),
-    }
-
-
-@requires(["image", "icevision"])
-def train_default_transforms(image_size: Tuple[int, int]) -> Dict[str, Callable]:
-    """The default augmentations from IceVision."""
-    return {
-        "per_sample_transform": IceVisionTransformAdapter([*A.aug_tfms(size=image_size), A.Normalize()]),
-    }
 
 
 @dataclass

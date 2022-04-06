@@ -60,6 +60,10 @@ Here's the full example:
     :language: python
     :lines: 14-
 
+To learn how to view the available backbones / heads for this task, see :ref:`backbones_heads`.
+Benchmarks for backbones provided by PyTorch Image Models (TIMM) can be found here:
+https://github.com/rwightman/pytorch-image-models/blob/master/results/results-imagenet-real.csv
+
 ------
 
 **********
@@ -87,8 +91,8 @@ Custom Transformations
 
 Flash automatically applies some default image transformations and augmentations, but you may wish to customize these for your own use case.
 The base :class:`~flash.core.data.io.input_transform.InputTransform` defines 7 hooks for different stages in the data loading pipeline.
-To apply image augmentations you can directly import the ``default_transforms`` from ``flash.image.classification.transforms`` and then merge your custom image transformations with them using the :func:`~flash.core.data.transforms.merge_transforms` helper function.
-Here's an example where we load the default transforms and merge with custom `torchvision` transformations.
+To apply custom image augmentations you can create your own :class:`~flash.core.data.io.input_transform.InputTransform`.
+Here's an example:
 
 
 .. testsetup:: transformations
@@ -101,13 +105,10 @@ Here's an example where we load the default transforms and merge with custom `to
 
     from torchvision import transforms as T
 
-    from typing import Tuple, Callable
+    from typing import Callable, Tuple, Union
     import flash
-    from flash.core.data.io.input import DataKeys
-    from flash.core.data.transforms import ApplyToKeys, merge_transforms
     from flash.image import ImageClassificationData, ImageClassifier
     from flash.core.data.io.input_transform import InputTransform
-    from flash.image.classification.transforms import default_transforms
     from dataclasses import dataclass
 
 
@@ -115,18 +116,18 @@ Here's an example where we load the default transforms and merge with custom `to
     class ImageClassificationInputTransform(InputTransform):
 
         image_size: Tuple[int, int] = (196, 196)
+        mean: Union[float, Tuple[float, float, float]] = (0.485, 0.456, 0.406)
+        std: Union[float, Tuple[float, float, float]] = (0.229, 0.224, 0.225)
 
         def input_per_sample_transform(self):
-            return T.Compose(
-                [T.ToTensor(), T.Resize(self.image_size), T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]
-            )
+            return T.Compose([T.ToTensor(), T.Resize(self.image_size), T.Normalize(self.mean, self.std)])
 
         def train_input_per_sample_transform(self):
             return T.Compose(
                 [
                     T.ToTensor(),
                     T.Resize(self.image_size),
-                    T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+                    T.Normalize(self.mean, self.std),
                     T.RandomHorizontalFlip(),
                     T.ColorJitter(),
                     T.RandomAutocontrast(),
@@ -141,7 +142,7 @@ Here's an example where we load the default transforms and merge with custom `to
     datamodule = ImageClassificationData.from_folders(
         train_folder="data/hymenoptera_data/train/",
         val_folder="data/hymenoptera_data/val/",
-        train_transform=ImageClassificationInputTransform,
+        transform=ImageClassificationInputTransform,
         transform_kwargs=dict(image_size=(128, 128)),
         batch_size=1,
     )

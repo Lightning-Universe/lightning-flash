@@ -16,18 +16,23 @@ from pathlib import Path
 from unittest import mock
 
 import pytest
+import torch
 
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE, _SKLEARN_AVAILABLE
-from tests.examples.utils import run_test
-from tests.helpers.utils import (
+from flash.core.utilities.imports import (
     _AUDIO_TESTING,
     _GRAPH_TESTING,
+    _ICEVISION_AVAILABLE,
+    _IMAGE_AVAILABLE,
     _IMAGE_TESTING,
     _POINTCLOUD_TESTING,
+    _SKLEARN_AVAILABLE,
     _TABULAR_TESTING,
     _TEXT_TESTING,
     _VIDEO_TESTING,
+    _VISSL_AVAILABLE,
 )
+from tests.examples.utils import run_test
+from tests.helpers.decorators import forked
 
 root = Path(__file__).parent.parent.parent
 
@@ -53,6 +58,15 @@ root = Path(__file__).parent.parent.parent
             marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed"),
         ),
         pytest.param(
+            "image_embedder.py",
+            marks=[
+                pytest.mark.skipif(
+                    not (_IMAGE_AVAILABLE and _VISSL_AVAILABLE), reason="image libraries aren't installed"
+                ),
+                pytest.mark.skipif(torch.cuda.device_count() > 1, reason="VISSL integration doesn't support multi-GPU"),
+            ],
+        ),
+        pytest.param(
             "object_detection.py",
             marks=pytest.mark.skipif(
                 not (_IMAGE_AVAILABLE and _ICEVISION_AVAILABLE), reason="image libraries aren't installed"
@@ -70,7 +84,6 @@ root = Path(__file__).parent.parent.parent
                 not (_IMAGE_AVAILABLE and _ICEVISION_AVAILABLE), reason="image libraries aren't installed"
             ),
         ),
-        # pytest.param("finetuning", "object_detection.py"),  # TODO: takes too long.
         pytest.param(
             "question_answering.py",
             marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed"),
@@ -80,7 +93,11 @@ root = Path(__file__).parent.parent.parent
             marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed"),
         ),
         pytest.param(
-            "style_transfer.py", marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed")
+            "style_transfer.py",
+            marks=[
+                pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed"),
+                pytest.mark.skipif(torch.cuda.device_count() >= 2, reason="PyStiche doesn't support DDP"),
+            ],
         ),
         pytest.param(
             "summarization.py", marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed")
@@ -91,6 +108,10 @@ root = Path(__file__).parent.parent.parent
         ),
         pytest.param(
             "tabular_regression.py",
+            marks=pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed"),
+        ),
+        pytest.param(
+            "tabular_forecasting.py",
             marks=pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed"),
         ),
         pytest.param("template.py", marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")),
@@ -107,7 +128,11 @@ root = Path(__file__).parent.parent.parent
         #     marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed")
         # ),
         pytest.param(
-            "translation.py", marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed")
+            "translation.py",
+            marks=[
+                pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed"),
+                pytest.mark.skipif(os.name == "nt", reason="Encoding issues on Windows"),
+            ],
         ),
         pytest.param(
             "video_classification.py",
@@ -131,5 +156,6 @@ root = Path(__file__).parent.parent.parent
         ),
     ],
 )
+@forked
 def test_example(tmpdir, file):
     run_test(str(root / "flash_examples" / file))
