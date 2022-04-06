@@ -20,6 +20,7 @@ from flash.core.data.io.input import DataKeys
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.core.utilities.stability import beta
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE
 from flash.image.style_transfer import STYLE_TRANSFER_BACKBONES
 
@@ -46,6 +47,7 @@ from flash.image.style_transfer.utils import raise_not_supported
 __all__ = ["StyleTransfer"]
 
 
+@beta("Style transfer is currently in Beta.")
 class StyleTransfer(Task):
     """``StyleTransfer`` is a :class:`~flash.Task` for transferring the style from one image onto another. For more
     details, see :ref:`style_transfer`.

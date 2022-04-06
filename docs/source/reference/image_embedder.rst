@@ -3,6 +3,9 @@
    :card_description: Learn to generate embeddings from images with Flash.
    :image: https://pl-flash-data.s3.amazonaws.com/assets/thumbnails/image_embedder.svg
    :tags: Image,Embedding
+   :beta:
+
+.. beta:: The VISSL integration is currently in Beta.
 
 .. warning::
 

@@ -20,6 +20,7 @@ from flash.core.adapter import Adapter
 from flash.core.data.io.input import DataKeys
 from flash.core.model import Task
 from flash.core.utilities.imports import _VISSL_AVAILABLE
+from flash.core.utilities.stability import beta
 from flash.image.embedding.vissl.hooks import AdaptVISSLHooks
 
 if _VISSL_AVAILABLE:
@@ -70,6 +71,7 @@ class MockVISSLTask:
         self.last_batch = AttrDict({"sample": AttrDict({"input": None, "data_momentum": None})})
 
 
+@beta("The VISSL integration is currently in Beta.")
 class VISSLAdapter(Adapter, AdaptVISSLHooks):
     """The ``VISSLAdapter`` is an :class:`~flash.core.adapter.Adapter` for integrating with VISSL.
 
