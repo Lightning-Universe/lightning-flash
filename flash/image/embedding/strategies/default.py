@@ -15,6 +15,7 @@ import warnings
 from typing import Any, Optional
 
 import torch
+import torch.nn as nn
 
 from flash.core.adapter import Adapter, AdapterTask
 from flash.core.data.io.input import DataKeys
@@ -81,7 +82,7 @@ def default(head: Optional[str] = None, loss_fn: Optional[str] = None, **kwargs)
     if loss_fn is not None:
         warnings.warn(f"default strategy has no loss functions. So given loss_fn({loss_fn}) is ignored.")
 
-    return None, None, []
+    return None, nn.Identity(), []
 
 
 def register_default_strategy(register: FlashRegistry):
