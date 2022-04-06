@@ -48,7 +48,7 @@ class DefaultAdapter(Adapter):
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         raise NotImplementedError(
-            "Training a `ImageEmbedder` with `DefaultAdapter` is not supported. Use a different strategy instead."
+            "Training an `ImageEmbedder` with `strategy="default"` is not supported. Use a different strategy instead."
         )
 
     def validation_step(self, batch: Any, batch_idx: int) -> Any:
