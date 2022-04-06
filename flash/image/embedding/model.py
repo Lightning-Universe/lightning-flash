@@ -132,7 +132,8 @@ class ImageEmbedder(AdapterTask):
             self.input_transform = self.transforms.get(pretraining_transform)(**pretraining_transform_kwargs)
 
         if "providers" in metadata["metadata"] and metadata["metadata"]["providers"].name == "Facebook Research/vissl":
-            assert pretraining_transform is not None, "Correct pretraining_transform must be set to use VISSL"
+            if pretraining_transform is None:
+                raise ValueError("Correct pretraining_transform must be set to use VISSL")
             warnings.warn(
                 "Warning: VISSL ImageEmbedder overrides any user provided transforms"
                 " with pre-defined transforms for the training strategy."
