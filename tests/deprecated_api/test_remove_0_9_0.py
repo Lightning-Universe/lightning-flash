@@ -22,7 +22,7 @@ from flash.image.embedding.model import ImageEmbedder
     "deprecated_backbone, alternative_backbone",
     [("resnet", "resnet50"), ("vision_transformer", "vit_small_patch16_224")],
 )
-def test_0_8_0_embedder_models(deprecated_backbone, alternative_backbone):
+def test_0_9_0_embedder_models(deprecated_backbone, alternative_backbone):
     with pytest.warns(FutureWarning, match=f"Use '{alternative_backbone}' instead."):
         ImageEmbedder(
             backbone=deprecated_backbone,

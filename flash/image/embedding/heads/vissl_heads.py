@@ -74,7 +74,7 @@ class SimCLRHead(nn.Module):
                     )
                 )
 
-            layers.append(nn.ReLU())
+            layers.append(nn.ReLU(inplace=True))
             last_dim = dim
 
         layers.append(nn.Linear(last_dim, self.dims[-1]))

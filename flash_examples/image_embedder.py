@@ -54,4 +54,4 @@ datamodule = ImageClassificationData.from_files(
 embeddings = trainer.predict(embedder, datamodule=datamodule)
 
 # list of embeddings for images sent to the predict function
-print(len(embeddings[0][0]))
+print(embeddings)
