@@ -16,6 +16,7 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
+import torch
 
 from flash.audio.data import AUDIO_EXTENSIONS
 from flash.core.data.io.classification_input import ClassificationInputMixin
@@ -39,7 +40,7 @@ def spectrogram_loader(filepath: str, sampling_rate: int = 16000, n_fft: int = 4
         data = np.array(img)
     elif has_file_allowed_extension(filepath, AUDIO_EXTENSIONS):
         waveform, _ = librosa.load(filepath, sr=sampling_rate)
-        data = Spectrogram(n_fft, normalized=True)(waveform).squeeze(0).numpy()
+        data = Spectrogram(n_fft, normalized=True)(torch.from_numpy(waveform).unsqueeze(0)).permute(1, 2, 0).numpy()
     else:
         data = np.load(filepath)
     return data
@@ -73,9 +74,11 @@ class AudioClassificationFilesInput(AudioClassificationInput):
         self.n_fft = n_fft
 
         if targets is None:
-            files = filter_valid_files(files, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
+            files = filter_valid_files(files, valid_extensions=AUDIO_EXTENSIONS + IMG_EXTENSIONS + NP_EXTENSIONS)
             return to_samples(files)
-        files, targets = filter_valid_files(files, targets, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
+        files, targets = filter_valid_files(
+            files, targets, valid_extensions=AUDIO_EXTENSIONS + IMG_EXTENSIONS + NP_EXTENSIONS
+        )
         self.load_target_metadata(targets, target_formatter=target_formatter)
         return to_samples(files, targets)
 
