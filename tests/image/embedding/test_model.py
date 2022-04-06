@@ -108,7 +108,6 @@ def test_only_embedding(backbone, embedding_size):
 
     trainer = flash.Trainer(
         gpus=torch.cuda.device_count(),
-        detect_anomaly=True,
     )
 
     predictions = trainer.predict(embedder, datamodule=datamodule)
