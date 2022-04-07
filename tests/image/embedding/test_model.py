@@ -113,6 +113,7 @@ def test_only_embedding(backbone, embedding_size):
             assert prediction.size(0) == embedding_size
 
 
+@pytest.mark.skipif(not _TORCHVISION_AVAILABLE, reason="torch vision not installed.")
 def test_not_implemented_steps():
     embedder = ImageEmbedder(backbone="resnet18")
 
