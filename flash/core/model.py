@@ -290,6 +290,7 @@ class OutputKeys(LightningEnum):
     TARGET = "y"
     LOGS = "logs"
     LOSS = "loss"
+    BATCH_SIZE = "batch_size"
 
     # TODO: Create a FlashEnum class???
     def __hash__(self) -> int:
@@ -393,6 +394,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         output[OutputKeys.LOSS] = self.compute_loss(losses)
         output[OutputKeys.LOGS] = self.compute_logs(logs, losses)
         output[OutputKeys.TARGET] = y
+        output[OutputKeys.BATCH_SIZE] = y.shape[0] if isinstance(y, torch.Tensor) else None
         return output
 
     def compute_loss(self, losses: Dict[str, torch.Tensor]) -> torch.Tensor:
@@ -420,8 +422,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         output = self.step(batch, batch_idx, self.train_metrics)
-        batch_size = batch[1].shape[0] if isinstance(batch[1], torch.Tensor) else None
-        log_kwargs = {"batch_size": batch_size} if _PL_GREATER_EQUAL_1_4_0 else {}
+        log_kwargs = {"batch_size": output.get(OutputKeys.BATCH_SIZE, None)} if _PL_GREATER_EQUAL_1_4_0 else {}
         self.log_dict(
             {f"train_{k}": v for k, v in output[OutputKeys.LOGS].items()},
             on_step=True,
@@ -433,8 +434,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
     def validation_step(self, batch: Any, batch_idx: int) -> None:
         output = self.step(batch, batch_idx, self.val_metrics)
-        batch_size = batch[1].shape[0] if isinstance(batch[1], torch.Tensor) else None
-        log_kwargs = {"batch_size": batch_size} if _PL_GREATER_EQUAL_1_4_0 else {}
+        log_kwargs = {"batch_size": output.get(OutputKeys.BATCH_SIZE, None)} if _PL_GREATER_EQUAL_1_4_0 else {}
         self.log_dict(
             {f"val_{k}": v for k, v in output[OutputKeys.LOGS].items()},
             on_step=False,
@@ -445,8 +445,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
     def test_step(self, batch: Any, batch_idx: int) -> None:
         output = self.step(batch, batch_idx, self.test_metrics)
-        batch_size = batch[1].shape[0] if isinstance(batch[1], torch.Tensor) else None
-        log_kwargs = {"batch_size": batch_size} if _PL_GREATER_EQUAL_1_4_0 else {}
+        log_kwargs = {"batch_size": output.get(OutputKeys.BATCH_SIZE, None)} if _PL_GREATER_EQUAL_1_4_0 else {}
         self.log_dict(
             {f"test_{k}": v for k, v in output[OutputKeys.LOGS].items()},
             on_step=False,
