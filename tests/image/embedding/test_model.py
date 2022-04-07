@@ -105,12 +105,20 @@ def test_only_embedding(backbone, embedding_size):
     )
 
     embedder = ImageEmbedder(backbone=backbone)
-
-    trainer = flash.Trainer(
-        gpus=torch.cuda.device_count(),
-    )
+    trainer = flash.Trainer()
 
     predictions = trainer.predict(embedder, datamodule=datamodule)
     for prediction_batch in predictions:
         for prediction in prediction_batch:
             assert prediction.size(0) == embedding_size
+
+
+def test_not_implemented_steps():
+    embedder = ImageEmbedder(backbone='resnet18')
+
+    with pytest.raises(NotImplementedError):
+        embedder.training_step([], 0)
+    with pytest.raises(NotImplementedError):
+        embedder.validation_step([], 0)
+    with pytest.raises(NotImplementedError):
+        embedder.test_step([], 0)
