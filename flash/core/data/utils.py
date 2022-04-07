@@ -77,9 +77,9 @@ def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:
 
         >>> import os
         >>> from flash.core.data.utils import download_data
-        >>> download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip", "./data")
-        >>> os.listdir("./data")
-        ['hymenoptera_data.zip', 'hymenoptera_data']
+        >>> download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "./data")
+        >>> os.listdir("./data")  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+        [...]
     """
     # Disable warning about making an insecure request
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
