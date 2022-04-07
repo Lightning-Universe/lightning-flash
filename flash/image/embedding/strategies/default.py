@@ -60,8 +60,9 @@ class DefaultAdapter(Adapter):
         )
 
     def test_step(self, batch: Any, batch_idx: int) -> Any:
-        batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
-        return Task.test_step(self._task, batch, batch_idx)
+        raise NotImplementedError(
+            "Testing an `ImageEmbedder` with `strategy=\"default\"` is not supported. Use a different strategy instead."
+        )
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         batch[DataKeys.PREDS] = Task.predict_step(
