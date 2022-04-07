@@ -97,7 +97,9 @@ def test_vissl_training(backbone, training_strategy, head, pretraining_transform
         ("resnet18", "simclr", None, "simclr_transform", KeyError),
     ],
 )
-def test_vissl_training_with_wrong_arguments(backbone, training_strategy, head, pretraining_transform, expected_exception):
+def test_vissl_training_with_wrong_arguments(
+    backbone, training_strategy, head, pretraining_transform, expected_exception
+):
     with pytest.raises(expected_exception):
         ImageEmbedder(
             backbone=backbone,
