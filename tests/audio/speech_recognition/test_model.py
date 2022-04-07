@@ -47,6 +47,12 @@ class DummyDataset(torch.utils.data.Dataset):
 TEST_BACKBONE = "patrickvonplaten/wav2vec2_tiny_random_robust"  # tiny model for testing
 
 
+@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
+def test_modules_to_freeze():
+    model = SpeechRecognition(backbone=TEST_BACKBONE)
+    assert model.modules_to_freeze() is model.model.wav2vec2
+
+
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 def test_init_train(tmpdir):

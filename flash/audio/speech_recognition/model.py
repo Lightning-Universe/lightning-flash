@@ -82,6 +82,9 @@ class SpeechRecognition(Task):
             else AutoProcessor.from_pretrained(processor_backbone)
         )
 
+    def modules_to_freeze(self) -> Optional[nn.Module]:
+        return self.model.base_model
+
     def forward(self, batch: Dict[str, torch.Tensor]):
         return self.model(batch["input_values"])
 
