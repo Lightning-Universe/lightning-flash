@@ -87,4 +87,6 @@ def default(head: Optional[str] = None, loss_fn: Optional[str] = None, **kwargs)
 
 
 def register_default_strategy(register: FlashRegistry):
+    """Register ``DefaultAdapter`` given ``FlashRegistry``."""
+
     register(default, name="default", adapter=DefaultAdapter)
