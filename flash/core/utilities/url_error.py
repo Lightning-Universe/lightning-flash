@@ -31,7 +31,7 @@ def catch_url_error(fn):
                 "Failed to download pretrained weights for the selected backbone. The backbone has been created with"
                 " `pretrained=False` instead. If you are loading from a local checkpoint, this warning can be safely"
                 " ignored.",
-                UserWarning,
+                category=UserWarning,
             )
             return result
 

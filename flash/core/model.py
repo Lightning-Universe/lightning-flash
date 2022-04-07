@@ -44,7 +44,7 @@ from flash.core.optimizers.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.registry import FlashRegistry
 from flash.core.serve.composition import Composition
 from flash.core.utilities.apply_func import get_callable_dict
-from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_5_0, requires
+from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_4_0, _PL_GREATER_EQUAL_1_5_0, requires
 from flash.core.utilities.providers import _HUGGINGFACE
 from flash.core.utilities.types import (
     INPUT_TRANSFORM_TYPE,
@@ -343,7 +343,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         self.test_metrics = nn.ModuleDict({} if metrics is None else get_callable_dict(deepcopy(metrics)))
         self.learning_rate = learning_rate
         # TODO: should we save more? Bug on some regarding yaml if we save metrics
-        self.save_hyperparameters("learning_rate", "optimizer")
+        self.save_hyperparameters("learning_rate", "optimizer", ignore=["model", "backbone", "head", "adapter"])
 
         self._output_transform: Optional[OutputTransform] = output_transform
 
@@ -420,30 +420,39 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         output = self.step(batch, batch_idx, self.train_metrics)
+        batch_size = batch[1].shape[0] if isinstance(batch[1], torch.Tensor) else None
+        log_kwargs = {"batch_size": batch_size} if _PL_GREATER_EQUAL_1_4_0 else {}
         self.log_dict(
             {f"train_{k}": v for k, v in output[OutputKeys.LOGS].items()},
             on_step=True,
             on_epoch=True,
             prog_bar=True,
+            **log_kwargs,
         )
         return output[OutputKeys.LOSS]
 
     def validation_step(self, batch: Any, batch_idx: int) -> None:
         output = self.step(batch, batch_idx, self.val_metrics)
+        batch_size = batch[1].shape[0] if isinstance(batch[1], torch.Tensor) else None
+        log_kwargs = {"batch_size": batch_size} if _PL_GREATER_EQUAL_1_4_0 else {}
         self.log_dict(
             {f"val_{k}": v for k, v in output[OutputKeys.LOGS].items()},
             on_step=False,
             on_epoch=True,
             prog_bar=True,
+            **log_kwargs,
         )
 
     def test_step(self, batch: Any, batch_idx: int) -> None:
         output = self.step(batch, batch_idx, self.test_metrics)
+        batch_size = batch[1].shape[0] if isinstance(batch[1], torch.Tensor) else None
+        log_kwargs = {"batch_size": batch_size} if _PL_GREATER_EQUAL_1_4_0 else {}
         self.log_dict(
             {f"test_{k}": v for k, v in output[OutputKeys.LOGS].items()},
             on_step=False,
             on_epoch=True,
             prog_bar=True,
+            **log_kwargs,
         )
 
     def predict(self, *args, **kwargs):
