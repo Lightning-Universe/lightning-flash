@@ -114,7 +114,7 @@ def test_only_embedding(backbone, embedding_size):
 
 
 def test_not_implemented_steps():
-    embedder = ImageEmbedder(backbone='resnet18')
+    embedder = ImageEmbedder(backbone="resnet18")
 
     with pytest.raises(NotImplementedError):
         embedder.training_step([], 0)
