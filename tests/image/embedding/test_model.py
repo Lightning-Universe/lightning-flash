@@ -89,7 +89,7 @@ def test_vissl_training(backbone, training_strategy, head, pretraining_transform
             assert prediction.size(0) == embedding_size
 
 
-@pytest.mark.skipif(not (_TORCHVISION_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
+@pytest.mark.skipif(not (_IMAGE_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
 @pytest.mark.parametrize(
     "backbone, training_strategy, head, pretraining_transform, expected_exception",
     [
@@ -109,7 +109,7 @@ def test_vissl_training_with_wrong_arguments(
         )
 
 
-@pytest.mark.skipif(not _TORCHVISION_AVAILABLE, reason="torch vision not installed.")
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="torch vision not installed.")
 @pytest.mark.parametrize(
     "backbone, embedding_size",
     [
@@ -133,7 +133,7 @@ def test_only_embedding(backbone, embedding_size):
             assert prediction.size(0) == embedding_size
 
 
-@pytest.mark.skipif(not (_TORCHVISION_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
+@pytest.mark.skipif(not (_IMAGE_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
 def test_vissl_with_wrong_head():
     embedder = ImageEmbedder(backbone="resnet18")
 
@@ -145,7 +145,7 @@ def test_vissl_with_wrong_head():
         embedder.test_step([], 0)
 
 
-@pytest.mark.skipif(not _TORCHVISION_AVAILABLE, reason="torch vision not installed.")
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="torch vision not installed.")
 def test_not_implemented_steps():
     embedder = ImageEmbedder(backbone="resnet18")
 
