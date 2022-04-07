@@ -38,7 +38,6 @@ class DefaultAdapter(Adapter):
     def from_task(
         cls,
         task: AdapterTask,
-        *args,
         backbone: torch.nn.Module,
         **kwargs,
     ) -> Adapter:
