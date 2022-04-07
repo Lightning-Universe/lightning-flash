@@ -46,6 +46,12 @@ class DummyDataset(torch.utils.data.Dataset):
 TEST_BACKBONE = "distilbert-base-uncased"
 
 
+@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+def test_modules_to_freeze():
+    model = QuestionAnsweringTask(backbone=TEST_BACKBONE)
+    assert model.modules_to_freeze() is model.model.distilbert
+
+
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_init_train(tmpdir):

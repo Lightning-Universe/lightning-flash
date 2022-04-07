@@ -33,7 +33,7 @@ model = SpeechRecognition(backbone="facebook/wav2vec2-base-960h")
 
 # 3. Create the trainer and finetune the model
 trainer = flash.Trainer(max_epochs=1, gpus=torch.cuda.device_count())
-trainer.finetune(model, datamodule=datamodule, strategy="no_freeze")
+trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Predict on audio files!
 datamodule = SpeechRecognitionData.from_files(predict_files=["data/timit/example.wav"], batch_size=4)
