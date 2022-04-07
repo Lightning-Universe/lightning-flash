@@ -1055,7 +1055,7 @@ def create_or_configure_input_transform(
         # Deprecation Warning
         rank_zero_warn(
             "Please pass an instantiated object of the `InputTransform` class. Passing the Class and keyword arguments"
-            " separartely will be deprecated in v0.9.0.",
+            " separately has been deprecated since v0.8.0 and will be removed in v0.9.0.",
             stacklevel=8,
             category=FutureWarning,
         )
