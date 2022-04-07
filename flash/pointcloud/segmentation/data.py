@@ -18,11 +18,13 @@ from torch.utils.data import Dataset
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import InputTransform
+from flash.core.utilities.stability import beta
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 from flash.pointcloud.segmentation.input import PointCloudSegmentationDatasetInput, PointCloudSegmentationFoldersInput
 
 
+@beta("Point cloud segmentation is currently in Beta.")
 class PointCloudSegmentationData(DataModule):
 
     input_transform_cls = InputTransform

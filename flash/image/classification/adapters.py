@@ -35,6 +35,7 @@ from flash.core.registry import FlashRegistry
 from flash.core.utilities.compatibility import accelerator_connector
 from flash.core.utilities.imports import _LEARN2LEARN_AVAILABLE
 from flash.core.utilities.providers import _LEARN2LEARN
+from flash.core.utilities.stability import beta
 from flash.core.utilities.url_error import catch_url_error
 from flash.image.classification.integrations.learn2learn import TaskDataParallel, TaskDistributedDataParallel
 
@@ -72,6 +73,7 @@ class Model(torch.nn.Module):
         return self.head(x)
 
 
+@beta("The Learn2Learn integration is currently in Beta.")
 class Learn2LearnAdapter(Adapter):
 
     required_extras: str = "image"

@@ -57,6 +57,8 @@ class AudioClassificationData(DataModule):
         test_files: Optional[Sequence[str]] = None,
         test_targets: Optional[Sequence[Any]] = None,
         predict_files: Optional[Sequence[str]] = None,
+        sampling_rate: int = 16000,
+        n_fft: int = 400,
         input_cls: Type[Input] = AudioClassificationFilesInput,
         transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
@@ -66,8 +68,10 @@ class AudioClassificationData(DataModule):
         """Load the :class:`~flash.audio.classification.data.AudioClassificationData` from lists of files and
         corresponding lists of targets.
 
-        The supported file extensions are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``, ``.bmp``, ``.pgm``, ``.tif``,
-        ``.tiff``, ``.webp``, and ``.npy``.
+        The supported file extensions for precomputed spectrograms are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``,
+        ``.bmp``, ``.pgm``, ``.tif``, ``.tiff``, ``.webp``, and ``.npy``.
+        The supported file extensions for raw audio (where spectrograms will be computed automatically) are: ``.wav``,
+        ``.ogg``, ``.flac``, ``.mat``, and ``.mp3``.
         The targets can be in any of our
         :ref:`supported classification target formats <formatting_classification_targets>`.
         To learn how to customize the transforms applied for each stage, read our
@@ -81,6 +85,8 @@ class AudioClassificationData(DataModule):
             test_files: The list of spectrogram image files to use when testing.
             test_targets: The list of targets to use when testing.
             predict_files: The list of spectrogram image files to use when predicting.
+            sampling_rate: Sampling rate to use when loading raw audio files.
+            n_fft: The size of the FFT to use when creating spectrograms from raw audio.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
@@ -137,6 +143,8 @@ class AudioClassificationData(DataModule):
         """
 
         ds_kw = dict(
+            sampling_rate=sampling_rate,
+            n_fft=n_fft,
             target_formatter=target_formatter,
         )
 
@@ -160,6 +168,8 @@ class AudioClassificationData(DataModule):
         val_folder: Optional[str] = None,
         test_folder: Optional[str] = None,
         predict_folder: Optional[str] = None,
+        sampling_rate: int = 16000,
+        n_fft: int = 400,
         input_cls: Type[Input] = AudioClassificationFolderInput,
         transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
@@ -169,8 +179,10 @@ class AudioClassificationData(DataModule):
         """Load the :class:`~flash.audio.classification.data.AudioClassificationData` from folders containing
         spectrogram images.
 
-        The supported file extensions are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``, ``.bmp``, ``.pgm``, ``.tif``,
-        ``.tiff``, ``.webp``, and ``.npy``.
+        The supported file extensions for precomputed spectrograms are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``,
+        ``.bmp``, ``.pgm``, ``.tif``, ``.tiff``, ``.webp``, and ``.npy``.
+        The supported file extensions for raw audio (where spectrograms will be computed automatically) are: ``.wav``,
+        ``.ogg``, ``.flac``, ``.mat``, and ``.mp3``.
         For train, test, and validation data, the folders are expected to contain a sub-folder for each class.
         Here's the required structure:
 
@@ -203,6 +215,8 @@ class AudioClassificationData(DataModule):
             val_folder: The folder containing spectrogram images to use when validating.
             test_folder: The folder containing spectrogram images to use when testing.
             predict_folder: The folder containing spectrogram images to use when predicting.
+            sampling_rate: Sampling rate to use when loading raw audio files.
+            n_fft: The size of the FFT to use when creating spectrograms from raw audio.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
@@ -262,6 +276,8 @@ class AudioClassificationData(DataModule):
         """
 
         ds_kw = dict(
+            sampling_rate=sampling_rate,
+            n_fft=n_fft,
             target_formatter=target_formatter,
         )
 
@@ -471,6 +487,8 @@ class AudioClassificationData(DataModule):
         predict_data_frame: Optional[pd.DataFrame] = None,
         predict_images_root: Optional[str] = None,
         predict_resolver: Optional[Callable[[str, str], str]] = None,
+        sampling_rate: int = 16000,
+        n_fft: int = 400,
         input_cls: Type[Input] = AudioClassificationDataFrameInput,
         transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
@@ -481,8 +499,10 @@ class AudioClassificationData(DataModule):
         containing spectrogram image file paths and their corresponding targets.
 
         Input spectrogram image paths will be extracted from the ``input_field`` in the DataFrame.
-        The supported file extensions are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``, ``.bmp``, ``.pgm``, ``.tif``,
-        ``.tiff``, ``.webp``, and ``.npy``.
+        The supported file extensions for precomputed spectrograms are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``,
+        ``.bmp``, ``.pgm``, ``.tif``, ``.tiff``, ``.webp``, and ``.npy``.
+        The supported file extensions for raw audio (where spectrograms will be computed automatically) are: ``.wav``,
+        ``.ogg``, ``.flac``, ``.mat``, and ``.mp3``.
         The targets will be extracted from the ``target_fields`` in the DataFrame and can be in any of our
         :ref:`supported classification target formats <formatting_classification_targets>`.
         To learn how to customize the transforms applied for each stage, read our
@@ -507,6 +527,8 @@ class AudioClassificationData(DataModule):
             predict_images_root: The root directory containing predict spectrogram images.
             predict_resolver: Optionally provide a function which converts an entry from the ``input_field`` into a
                 spectrogram image file path.
+            sampling_rate: Sampling rate to use when loading raw audio files.
+            n_fft: The size of the FFT to use when creating spectrograms from raw audio.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
@@ -585,6 +607,8 @@ class AudioClassificationData(DataModule):
         """
 
         ds_kw = dict(
+            sampling_rate=sampling_rate,
+            n_fft=n_fft,
             target_formatter=target_formatter,
         )
 
@@ -623,6 +647,8 @@ class AudioClassificationData(DataModule):
         predict_file: Optional[str] = None,
         predict_images_root: Optional[str] = None,
         predict_resolver: Optional[Callable[[PATH_TYPE, Any], PATH_TYPE]] = None,
+        sampling_rate: int = 16000,
+        n_fft: int = 400,
         input_cls: Type[Input] = AudioClassificationCSVInput,
         transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
@@ -633,8 +659,10 @@ class AudioClassificationData(DataModule):
         spectrogram image file paths and their corresponding targets.
 
         Input spectrogram images will be extracted from the ``input_field`` column in the CSV files.
-        The supported file extensions are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``, ``.bmp``, ``.pgm``, ``.tif``,
-        ``.tiff``, ``.webp``, and ``.npy``.
+        The supported file extensions for precomputed spectrograms are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``,
+        ``.bmp``, ``.pgm``, ``.tif``, ``.tiff``, ``.webp``, and ``.npy``.
+        The supported file extensions for raw audio (where spectrograms will be computed automatically) are: ``.wav``,
+        ``.ogg``, ``.flac``, ``.mat``, and ``.mp3``.
         The targets will be extracted from the ``target_fields`` in the CSV files and can be in any of our
         :ref:`supported classification target formats <formatting_classification_targets>`.
         To learn how to customize the transforms applied for each stage, read our
@@ -659,6 +687,8 @@ class AudioClassificationData(DataModule):
             predict_images_root: The root directory containing predict spectrogram images.
             predict_resolver: Optionally provide a function which converts an entry from the ``input_field`` into a
                 spectrogram image file path.
+            sampling_rate: Sampling rate to use when loading raw audio files.
+            n_fft: The size of the FFT to use when creating spectrograms from raw audio.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
@@ -747,6 +777,8 @@ class AudioClassificationData(DataModule):
         """
 
         ds_kw = dict(
+            sampling_rate=sampling_rate,
+            n_fft=n_fft,
             target_formatter=target_formatter,
         )
 
