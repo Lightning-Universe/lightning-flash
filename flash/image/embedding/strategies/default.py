@@ -39,8 +39,8 @@ class DefaultAdapter(Adapter):
     @catch_url_error
     def from_task(
         cls,
-        *args,
         task: AdapterTask,
+        *args,
         backbone: torch.nn.Module,
         head: torch.nn.Module,
         **kwargs,
