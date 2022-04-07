@@ -15,7 +15,6 @@ import warnings
 from typing import Any, Optional
 
 import torch
-import torch.nn as nn
 
 from flash.core.adapter import Adapter, AdapterTask
 from flash.core.data.io.input import DataKeys
@@ -29,11 +28,10 @@ class DefaultAdapter(Adapter):
 
     required_extras: str = "image"
 
-    def __init__(self, backbone: torch.nn.Module, head: torch.nn.Module):
+    def __init__(self, backbone: torch.nn.Module):
         super().__init__()
 
         self.backbone = backbone
-        self.head = head
 
     @classmethod
     @catch_url_error
@@ -42,10 +40,9 @@ class DefaultAdapter(Adapter):
         task: AdapterTask,
         *args,
         backbone: torch.nn.Module,
-        head: torch.nn.Module,
         **kwargs,
     ) -> Adapter:
-        adapter = cls(backbone, head)
+        adapter = cls(backbone)
         adapter.__dict__["_task"] = task
         return adapter
 
@@ -87,7 +84,7 @@ def default(head: Optional[str] = None, loss_fn: Optional[str] = None, **kwargs)
     if loss_fn is not None:
         warnings.warn(f"default strategy has no loss functions. So given loss_fn({loss_fn}) is ignored.")
 
-    return None, nn.Identity(), []
+    return None, None, []
 
 
 def register_default_strategy(register: FlashRegistry):
