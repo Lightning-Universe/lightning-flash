@@ -129,15 +129,15 @@ class ImageEmbedder(AdapterTask):
         )
 
         if pretraining_transform is not None:
+            warnings.warn(
+                "Overriding any transforms from the `DataModule` with the pretraining transform: "
+                f"{pretraining_transform}."
+            )
             self.input_transform = self.transforms.get(pretraining_transform)(**pretraining_transform_kwargs)
 
         if "providers" in metadata["metadata"] and metadata["metadata"]["providers"].name == "Facebook Research/vissl":
             if pretraining_transform is None:
                 raise ValueError("Correct pretraining_transform must be set to use VISSL")
-            warnings.warn(
-                "Warning: VISSL ImageEmbedder overrides any user provided transforms"
-                " with pre-defined transforms for the training strategy."
-            )
 
     def forward(self, x: torch.Tensor) -> Any:
         return self.model(x)
