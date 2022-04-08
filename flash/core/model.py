@@ -44,7 +44,7 @@ from flash.core.optimizers.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.registry import FlashRegistry
 from flash.core.serve.composition import Composition
 from flash.core.utilities.apply_func import get_callable_dict
-from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_4_0, _PL_GREATER_EQUAL_1_5_0, requires
+from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_5_0, requires
 from flash.core.utilities.providers import _HUGGINGFACE
 from flash.core.utilities.types import (
     INPUT_TRANSFORM_TYPE,
@@ -422,7 +422,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         output = self.step(batch, batch_idx, self.train_metrics)
-        log_kwargs = {"batch_size": output.get(OutputKeys.BATCH_SIZE, None)} if _PL_GREATER_EQUAL_1_4_0 else {}
+        log_kwargs = {"batch_size": output.get(OutputKeys.BATCH_SIZE, None)} if _PL_GREATER_EQUAL_1_5_0 else {}
         self.log_dict(
             {f"train_{k}": v for k, v in output[OutputKeys.LOGS].items()},
             on_step=True,
@@ -434,7 +434,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
     def validation_step(self, batch: Any, batch_idx: int) -> None:
         output = self.step(batch, batch_idx, self.val_metrics)
-        log_kwargs = {"batch_size": output.get(OutputKeys.BATCH_SIZE, None)} if _PL_GREATER_EQUAL_1_4_0 else {}
+        log_kwargs = {"batch_size": output.get(OutputKeys.BATCH_SIZE, None)} if _PL_GREATER_EQUAL_1_5_0 else {}
         self.log_dict(
             {f"val_{k}": v for k, v in output[OutputKeys.LOGS].items()},
             on_step=False,
@@ -445,7 +445,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
     def test_step(self, batch: Any, batch_idx: int) -> None:
         output = self.step(batch, batch_idx, self.test_metrics)
-        log_kwargs = {"batch_size": output.get(OutputKeys.BATCH_SIZE, None)} if _PL_GREATER_EQUAL_1_4_0 else {}
+        log_kwargs = {"batch_size": output.get(OutputKeys.BATCH_SIZE, None)} if _PL_GREATER_EQUAL_1_5_0 else {}
         self.log_dict(
             {f"test_{k}": v for k, v in output[OutputKeys.LOGS].items()},
             on_step=False,
