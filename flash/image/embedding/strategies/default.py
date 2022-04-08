@@ -69,12 +69,6 @@ class DefaultAdapter(Adapter):
         )
         return batch
 
-    def forward(self, x) -> torch.Tensor:
-        # TODO: Resolve this hack
-        if x.dim() == 3:
-            x = x.unsqueeze(0)
-        return self.backbone(x)
-
 
 def default(head: Optional[str] = None, loss_fn: Optional[str] = None, **kwargs):
     """Return `(None, None, [])` as loss function, head and hooks.
