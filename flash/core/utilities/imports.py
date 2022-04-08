@@ -194,7 +194,9 @@ def requires(module_paths: Union[str, Tuple[bool, str], List[Union[str, Tuple[bo
 
         if not available:
             modules = [f"'{module}'" for module in modules]
-            modules.append(f"'lightning-flash[{','.join(extras)}]'")
+
+            if extras:
+                modules.append(f"'lightning-flash[{','.join(extras)}]'")
 
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
