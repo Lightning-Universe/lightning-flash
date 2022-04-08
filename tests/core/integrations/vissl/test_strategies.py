@@ -19,25 +19,17 @@ from flash.image.embedding.heads.vissl_heads import SimCLRHead
 from flash.image.embedding.vissl.hooks import TrainingSetupHook
 
 if _VISSL_AVAILABLE:
-    from vissl.hooks.dino_hooks import DINOHook
-    from vissl.hooks.moco_hooks import MoCoHook
     from vissl.hooks.swav_hooks import NormalizePrototypesHook, SwAVUpdateQueueScoresHook
     from vissl.losses.barlow_twins_loss import BarlowTwinsLoss
-    from vissl.losses.dino_loss import DINOLoss
-    from vissl.losses.moco_loss import MoCoLoss
     from vissl.losses.swav_loss import SwAVLoss
     from vissl.models.heads.swav_prototypes_head import SwAVPrototypesHead
 
     from flash.image.embedding.strategies import IMAGE_EMBEDDER_STRATEGIES
 else:
-    DINOHook = object
-    MoCoHook = object
     NormalizePrototypesHook = object
     SwAVUpdateQueueScoresHook = object
 
     BarlowTwinsLoss = object
-    DINOLoss = object
-    MoCoLoss = object
     SwAVLoss = object
 
     SwAVPrototypesHead = object
@@ -50,7 +42,6 @@ else:
     "training_strategy, head_name, loss_fn_class, head_class, hooks_list",
     [
         ("barlow_twins", "barlow_twins_head", BarlowTwinsLoss, SimCLRHead, [TrainingSetupHook]),
-        ("moco", "moco_head", MoCoLoss, SimCLRHead, [MoCoHook, TrainingSetupHook]),
         (
             "swav",
             "swav_head",
@@ -58,7 +49,6 @@ else:
             SwAVPrototypesHead,
             [SwAVUpdateQueueScoresHook, NormalizePrototypesHook, TrainingSetupHook],
         ),
-        ("dino", "dino_head", DINOLoss, SwAVPrototypesHead, [DINOHook, TrainingSetupHook]),
     ],
 )
 def test_vissl_strategies(tmpdir, training_strategy, head_name, loss_fn_class, head_class, hooks_list):

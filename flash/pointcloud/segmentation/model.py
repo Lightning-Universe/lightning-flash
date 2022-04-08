@@ -23,6 +23,7 @@ from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE, _TM_GREATER_EQUAL_0_7_0
+from flash.core.utilities.stability import beta
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.pointcloud.segmentation.backbones import POINTCLOUD_SEGMENTATION_BACKBONES
 
@@ -36,6 +37,7 @@ else:
     from torchmetrics import IoU as JaccardIndex
 
 
+@beta("Point cloud segmentation is currently in Beta.")
 class PointCloudSegmentation(ClassificationTask):
     """The ``PointCloudClassifier`` is a :class:`~flash.core.classification.ClassificationTask` that classifies
     pointcloud data.

@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Added `available_outputs` method to the `Task` ([#1206](https://github.com/PyTorchLightning/lightning-flash/pull/1206))
 
+- Added support for using the `ImageEmbedder` SSL training for all image classifier backbones ([#1264](https://github.com/PyTorchLightning/lightning-flash/pull/1264))
+
+- Added support for audio file formats to `AudioClassificationData` ([#1085](https://github.com/PyTorchLightning/lightning-flash/pull/1085))
+
 ### Changed
 
 ### Deprecated
@@ -51,6 +55,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Fixed a bug where using `ReduceLROnPlateau` would raise an error ([#1251](https://github.com/PyTorchLightning/lightning-flash/pull/1251))
 
 - Fixed a bug where some backbones were incorrectly listed as available for the `ObjectDetector`, `InstanceSegmentation`, and `KeypointDetector` ([#1267](https://github.com/PyTorchLightning/lightning-flash/pull/1267))
+
+- Fixed a bug where the backbone would not be frozen when finetuning the `SpeechRecognition` task ([#1275](https://github.com/PyTorchLightning/lightning-flash/pull/1275))
+
+- Fixed a bug where the backbone would not be frozen when finetuning the `QuestionAnswering` task with certain model types ([#1275](https://github.com/PyTorchLightning/lightning-flash/pull/1275))
 
 ## [0.7.0] - 2022-02-15
 

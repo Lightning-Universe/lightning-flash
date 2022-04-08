@@ -17,6 +17,7 @@ from torch.utils.data import Dataset
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input
+from flash.core.utilities.stability import beta
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 from flash.image.classification.data import ImageClassificationFilesInput, ImageClassificationFolderInput
@@ -24,6 +25,7 @@ from flash.image.face_detection.input import FaceDetectionInput
 from flash.image.face_detection.input_transform import FaceDetectionInputTransform
 
 
+@beta("Face detection is currently in Beta.")
 class FaceDetectionData(DataModule):
     input_transform_cls = FaceDetectionInputTransform
 
