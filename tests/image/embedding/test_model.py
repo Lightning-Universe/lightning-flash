@@ -133,18 +133,6 @@ def test_only_embedding(backbone, embedding_size):
             assert prediction.size(0) == embedding_size
 
 
-@pytest.mark.skipif(not (_IMAGE_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
-def test_vissl_with_wrong_head():
-    embedder = ImageEmbedder(backbone="resnet18")
-
-    with pytest.raises(NotImplementedError):
-        embedder.training_step([], 0)
-    with pytest.raises(NotImplementedError):
-        embedder.validation_step([], 0)
-    with pytest.raises(NotImplementedError):
-        embedder.test_step([], 0)
-
-
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="torch vision not installed.")
 def test_not_implemented_steps():
     embedder = ImageEmbedder(backbone="resnet18")
