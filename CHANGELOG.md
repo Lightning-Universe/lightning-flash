@@ -24,6 +24,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Fixed plain `LightningModule` support for Flash data modules. ([#1281](https://github.com/PyTorchLightning/lightning-flash/pull/1281))
+
 - Fixed GPU support for self-supervised training with the `ImageEmbedder` ([#1256](https://github.com/PyTorchLightning/lightning-flash/pull/1256))
 
 - Fixed a bug where collate functions were never called in the `ImageEmbedder` class. ([#1217](https://github.com/PyTorchLightning/lightning-flash/pull/1217))
