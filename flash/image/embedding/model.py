@@ -72,13 +72,13 @@ class ImageEmbedder(AdapterTask):
     backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES
     transforms: FlashRegistry = IMAGE_EMBEDDER_TRANSFORMS
 
-    required_extras: List[str] = ["image", "vissl", "fairscale"]
+    required_extras: str = "image"
 
     def __init__(
         self,
-        training_strategy: str,
-        head: str,
-        pretraining_transform: str,
+        training_strategy: str = "default",
+        head: Optional[str] = None,
+        pretraining_transform: Optional[str] = None,
         backbone: str = "resnet18",
         pretrained: bool = False,
         optimizer: OPTIMIZER_TYPE = "Adam",
@@ -113,7 +113,7 @@ class ImageEmbedder(AdapterTask):
         loss_fn, head, hooks = metadata["fn"](head=head, num_features=num_features, **training_strategy_kwargs)
 
         adapter = metadata["metadata"]["adapter"].from_task(
-            self,
+            task=self,
             loss_fn=loss_fn,
             backbone=model,
             head=head,
@@ -128,12 +128,16 @@ class ImageEmbedder(AdapterTask):
             learning_rate=learning_rate,
         )
 
-        self.input_transform = self.transforms.get(pretraining_transform)(**pretraining_transform_kwargs)
+        if pretraining_transform is not None:
+            warnings.warn(
+                "Overriding any transforms from the `DataModule` with the pretraining transform: "
+                f"{pretraining_transform}."
+            )
+            self.input_transform = self.transforms.get(pretraining_transform)(**pretraining_transform_kwargs)
 
-        warnings.warn(
-            "Warning: VISSL ImageEmbedder overrides any user provided transforms"
-            " with pre-defined transforms for the training strategy."
-        )
+        if "providers" in metadata["metadata"] and metadata["metadata"]["providers"].name == "Facebook Research/vissl":
+            if pretraining_transform is None:
+                raise ValueError("Correct pretraining_transform must be set to use VISSL")
 
     def forward(self, x: torch.Tensor) -> Any:
         return self.model(x)

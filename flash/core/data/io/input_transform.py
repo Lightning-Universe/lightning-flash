@@ -16,9 +16,9 @@ from dataclasses import dataclass
 from functools import partial
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
+from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from pytorch_lightning.utilities.warnings import rank_zero_warn
 from torch.utils.data._utils.collate import default_collate
 
 from flash.core.data.callback import ControlFlow, FlashCallback
@@ -1055,8 +1055,9 @@ def create_or_configure_input_transform(
         # Deprecation Warning
         rank_zero_warn(
             "Please pass an instantiated object of the `InputTransform` class. Passing the Class and keyword arguments"
-            " separartely will be deprecated in v0.9.0.",
-            FutureWarning,
+            " separately has been deprecated since v0.8.0 and will be removed in v0.9.0.",
+            stacklevel=8,
+            category=FutureWarning,
         )
         return transform(**transform_kwargs)
 
