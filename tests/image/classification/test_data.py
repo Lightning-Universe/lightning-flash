@@ -284,8 +284,7 @@ def test_from_filepaths_splits(tmpdir):
         dm = ImageClassificationData.from_files(
             train_files=train_filepaths,
             train_targets=train_labels,
-            train_transform=transform,
-            val_transform=transform,
+            transform=transform,
             batch_size=B,
             num_workers=0,
             val_split=val_split,
@@ -311,7 +310,7 @@ def test_from_folders_only_train(tmpdir):
     _rand_image().save(train_dir / "b" / "1.png")
     _rand_image().save(train_dir / "b" / "2.png")
 
-    img_data = ImageClassificationData.from_folders(train_dir, train_transform=None, batch_size=1)
+    img_data = ImageClassificationData.from_folders(train_dir, batch_size=1)
 
     data = img_data.train_dataset[0]
     imgs, labels = data["input"], data["target"]
@@ -646,7 +645,7 @@ def test_mixup(single_target_csv):
         train_file=single_target_csv,
         batch_size=2,
         num_workers=0,
-        train_transform=MyTransform,
+        transform=MyTransform,
     )
 
     batch = next(iter(img_data.train_dataloader()))

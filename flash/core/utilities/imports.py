@@ -124,6 +124,7 @@ if Version:
     _PL_GREATER_EQUAL_1_4_3 = _compare_version("pytorch_lightning", operator.ge, "1.4.3")
     _PL_GREATER_EQUAL_1_4_0 = _compare_version("pytorch_lightning", operator.ge, "1.4.0")
     _PL_GREATER_EQUAL_1_5_0 = _compare_version("pytorch_lightning", operator.ge, "1.5.0")
+    _PL_GREATER_EQUAL_1_6_0 = _compare_version("pytorch_lightning", operator.ge, "1.6.0rc0")
     _PANDAS_GREATER_EQUAL_1_3_0 = _compare_version("pandas", operator.ge, "1.3.0")
     _ICEVISION_GREATER_EQUAL_0_11_0 = _compare_version("icevision", operator.ge, "0.11.0")
     _TM_GREATER_EQUAL_0_7_0 = _compare_version("torchmetrics", operator.ge, "0.7.0")
@@ -193,7 +194,9 @@ def requires(module_paths: Union[str, Tuple[bool, str], List[Union[str, Tuple[bo
 
         if not available:
             modules = [f"'{module}'" for module in modules]
-            modules.append(f"'lightning-flash[{','.join(extras)}]'")
+
+            if extras:
+                modules.append(f"'lightning-flash[{','.join(extras)}]'")
 
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
@@ -290,7 +293,7 @@ _AUDIO_TESTING = _AUDIO_AVAILABLE
 if "FLASH_TEST_TOPIC" in os.environ:
     topic = os.environ["FLASH_TEST_TOPIC"]
     _IMAGE_TESTING = topic == "image"
-    _IMAGE_EXTRAS_TESTING = topic == "image,image_extras"
+    _IMAGE_EXTRAS_TESTING = topic == "image,image_extras" or topic == "icevision" or topic == "vissl"
     _VIDEO_TESTING = topic == "video"
     _VIDEO_EXTRAS_TESTING = topic == "video,video_extras"
     _TABULAR_TESTING = topic == "tabular"

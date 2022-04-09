@@ -19,6 +19,7 @@ import torch
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input
 from flash.core.utilities.imports import _IMAGE_TESTING
+from flash.core.utilities.stability import beta
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 from flash.image.classification.input import ImageClassificationFilesInput, ImageClassificationFolderInput
@@ -30,6 +31,7 @@ if not _IMAGE_TESTING:
     __doctest_skip__ = ["StyleTransferData", "StyleTransferData.*"]
 
 
+@beta("Style transfer is currently in Beta.")
 class StyleTransferData(DataModule):
     """The ``StyleTransferData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
     classmethods for loading data for image style transfer."""
@@ -41,9 +43,8 @@ class StyleTransferData(DataModule):
         cls,
         train_files: Optional[Sequence[str]] = None,
         predict_files: Optional[Sequence[str]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
         input_cls: Type[Input] = ImageClassificationFilesInput,
+        transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any
     ) -> "StyleTransferData":
@@ -57,10 +58,9 @@ class StyleTransferData(DataModule):
         Args:
             train_files: The list of image files to use when training.
             predict_files: The list of image files to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -102,14 +102,11 @@ class StyleTransferData(DataModule):
             >>> _ = [os.remove(f"predict_image_{i}.png") for i in range(1, 4)]
         """
 
-        ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
-        )
-
         return cls(
-            input_cls(RunningStage.TRAINING, train_files, transform=train_transform, **ds_kw),
-            predict_input=input_cls(RunningStage.PREDICTING, predict_files, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_files),
+            predict_input=input_cls(RunningStage.PREDICTING, predict_files),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -118,9 +115,8 @@ class StyleTransferData(DataModule):
         cls,
         train_folder: Optional[str] = None,
         predict_folder: Optional[str] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
         input_cls: Type[Input] = ImageClassificationFolderInput,
+        transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any
     ) -> "StyleTransferData":
@@ -144,10 +140,9 @@ class StyleTransferData(DataModule):
         Args:
             train_folder: The folder containing images to use when training.
             predict_folder: The folder containing images to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -192,14 +187,11 @@ class StyleTransferData(DataModule):
             >>> shutil.rmtree("predict_folder")
         """
 
-        ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
-        )
-
         return cls(
-            input_cls(RunningStage.TRAINING, train_folder, transform=train_transform, **ds_kw),
-            predict_input=input_cls(RunningStage.PREDICTING, predict_folder, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_folder),
+            predict_input=input_cls(RunningStage.PREDICTING, predict_folder),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -208,9 +200,8 @@ class StyleTransferData(DataModule):
         cls,
         train_data: Optional[Collection[np.ndarray]] = None,
         predict_data: Optional[Collection[np.ndarray]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
         input_cls: Type[Input] = ImageNumpyInput,
+        transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any
     ) -> "StyleTransferData":
@@ -223,10 +214,9 @@ class StyleTransferData(DataModule):
         Args:
             train_data: The numpy array or list of arrays to use when training.
             predict_data: The numpy array or list of arrays to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -256,14 +246,11 @@ class StyleTransferData(DataModule):
             Predicting...
         """
 
-        ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
-        )
-
         return cls(
-            input_cls(RunningStage.TRAINING, train_data, transform=train_transform, **ds_kw),
-            predict_input=input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_data),
+            predict_input=input_cls(RunningStage.PREDICTING, predict_data),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -272,9 +259,8 @@ class StyleTransferData(DataModule):
         cls,
         train_data: Optional[Collection[torch.Tensor]] = None,
         predict_data: Optional[Collection[torch.Tensor]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
         input_cls: Type[Input] = ImageTensorInput,
+        transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any
     ) -> "StyleTransferData":
@@ -287,10 +273,9 @@ class StyleTransferData(DataModule):
         Args:
             train_data: The torch tensor or list of tensors to use when training.
             predict_data: The torch tensor or list of tensors to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -320,13 +305,10 @@ class StyleTransferData(DataModule):
             Predicting...
         """
 
-        ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
-        )
-
         return cls(
-            input_cls(RunningStage.TRAINING, train_data, transform=train_transform, **ds_kw),
-            predict_input=input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_data),
+            predict_input=input_cls(RunningStage.PREDICTING, predict_data),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )

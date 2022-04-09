@@ -25,7 +25,6 @@ from flash.audio.speech_recognition.output_transform import SpeechRecognitionOut
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
-from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _AUDIO_TESTING
 from flash.core.utilities.stages import RunningStage
 
@@ -40,7 +39,6 @@ class SpeechRecognitionData(DataModule):
 
     input_transform_cls = InputTransform
     output_transform_cls = SpeechRecognitionOutputTransform
-    input_transforms_registry = FlashRegistry("input_transforms")
 
     @classmethod
     def from_files(
@@ -53,18 +51,15 @@ class SpeechRecognitionData(DataModule):
         test_targets: Optional[Sequence[str]] = None,
         predict_files: Optional[Sequence[str]] = None,
         sampling_rate: int = 16000,
-        train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         input_cls: Type[Input] = SpeechRecognitionPathsInput,
+        transform: INPUT_TRANSFORM_TYPE = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "SpeechRecognitionData":
         """Load the :class:`~flash.audio.speech_recognition.data.SpeechRecognitionData` from lists of audio files
         and corresponding lists of targets.
 
-        The supported file extensions are: ``wav``, ``ogg``, ``flac``, ``mat``, and ``mp3``.
+        The supported file extensions are: ``.wav``, ``.ogg``, ``.flac``, ``.mat``, and ``.mp3``.
         To learn how to customize the transforms applied for each stage, read our
         :ref:`customizing transforms guide <customizing_transforms>`.
 
@@ -77,12 +72,8 @@ class SpeechRecognitionData(DataModule):
             test_targets: The list of targets (ground truth speech transcripts) to use when testing.
             predict_files: The list of audio files to use when predicting.
             sampling_rate: Sampling rate to use when loading the audio files.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -127,16 +118,16 @@ class SpeechRecognitionData(DataModule):
         """
 
         ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
             sampling_rate=sampling_rate,
         )
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_files, train_targets, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_files, val_targets, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_files, test_targets, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_files, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_files, train_targets, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_files, val_targets, **ds_kw),
+            input_cls(RunningStage.TESTING, test_files, test_targets, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_files, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -150,11 +141,8 @@ class SpeechRecognitionData(DataModule):
         test_file: Optional[str] = None,
         predict_file: Optional[str] = None,
         sampling_rate: int = 16000,
-        train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         input_cls: Type[Input] = SpeechRecognitionCSVInput,
+        transform: INPUT_TRANSFORM_TYPE = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "SpeechRecognitionData":
@@ -162,7 +150,7 @@ class SpeechRecognitionData(DataModule):
         audio file paths and their corresponding targets.
 
         Input audio file paths will be extracted from the ``input_field`` column in the CSV files.
-        The supported file extensions are: ``wav``, ``ogg``, ``flac``, ``mat``, and ``mp3``.
+        The supported file extensions are: ``.wav``, ``.ogg``, ``.flac``, ``.mat``, and ``.mp3``.
         The targets will be extracted from the ``target_field`` in the CSV files.
         To learn how to customize the transforms applied for each stage, read our
         :ref:`customizing transforms guide <customizing_transforms>`.
@@ -175,12 +163,8 @@ class SpeechRecognitionData(DataModule):
             test_file: The CSV file to use when testing.
             predict_file: The CSV file to use when predicting.
             sampling_rate: Sampling rate to use when loading the audio files.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -255,17 +239,17 @@ class SpeechRecognitionData(DataModule):
         """
 
         ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
             input_key=input_field,
             sampling_rate=sampling_rate,
         )
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_file, transform=train_transform, target_key=target_field, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_file, transform=val_transform, target_key=target_field, **ds_kw),
-            input_cls(RunningStage.TESTING, test_file, transform=test_transform, target_key=target_field, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_file, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_file, target_key=target_field, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_file, target_key=target_field, **ds_kw),
+            input_cls(RunningStage.TESTING, test_file, target_key=target_field, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_file, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -280,11 +264,8 @@ class SpeechRecognitionData(DataModule):
         predict_file: Optional[str] = None,
         sampling_rate: int = 16000,
         field: Optional[str] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         input_cls: Type[Input] = SpeechRecognitionJSONInput,
+        transform: INPUT_TRANSFORM_TYPE = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "SpeechRecognitionData":
@@ -292,7 +273,7 @@ class SpeechRecognitionData(DataModule):
         audio file paths and their corresponding targets.
 
         Input audio file paths will be extracted from the ``input_field`` field in the JSON files.
-        The supported file extensions are: ``wav``, ``ogg``, ``flac``, ``mat``, and ``mp3``.
+        The supported file extensions are: ``.wav``, ``.ogg``, ``.flac``, ``.mat``, and ``.mp3``.
         The targets will be extracted from the ``target_field`` field in the JSON files.
         To learn how to customize the transforms applied for each stage, read our
         :ref:`customizing transforms guide <customizing_transforms>`.
@@ -306,12 +287,8 @@ class SpeechRecognitionData(DataModule):
             predict_file: The JSON file to use when predicting.
             sampling_rate: Sampling rate to use when loading the audio files.
             field: The field that holds the data in the JSON file.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -384,18 +361,18 @@ class SpeechRecognitionData(DataModule):
         """
 
         ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
             input_key=input_field,
             sampling_rate=sampling_rate,
             field=field,
         )
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_file, transform=train_transform, target_key=target_field, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_file, transform=val_transform, target_key=target_field, **ds_kw),
-            input_cls(RunningStage.TESTING, test_file, transform=test_transform, target_key=target_field, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_file, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_file, target_key=target_field, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_file, target_key=target_field, **ds_kw),
+            input_cls(RunningStage.TESTING, test_file, target_key=target_field, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_file, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -406,12 +383,9 @@ class SpeechRecognitionData(DataModule):
         val_dataset: Optional[Dataset] = None,
         test_dataset: Optional[Dataset] = None,
         predict_dataset: Optional[Dataset] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         sampling_rate: int = 16000,
         input_cls: Type[Input] = SpeechRecognitionDatasetInput,
+        transform: INPUT_TRANSFORM_TYPE = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "SpeechRecognitionData":
@@ -423,7 +397,7 @@ class SpeechRecognitionData(DataModule):
         * A PyTorch Dataset where the ``__getitem__`` returns a tuple: ``(file_path or , target)``
         * A PyTorch Dataset where the ``__getitem__`` returns a dict: ``{"input": file_path, "target": target}``
 
-        The supported file extensions are: ``wav``, ``ogg``, ``flac``, ``mat``, and ``mp3``.
+        The supported file extensions are: ``.wav``, ``.ogg``, ``.flac``, ``.mat``, and ``.mp3``.
         To learn how to customize the transforms applied for each stage, read our
         :ref:`customizing transforms guide <customizing_transforms>`.
 
@@ -433,12 +407,8 @@ class SpeechRecognitionData(DataModule):
             test_dataset: The Dataset to use when testing.
             predict_dataset: The Dataset to use when predicting.
             sampling_rate: Sampling rate to use when loading the audio files.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-              predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -540,15 +510,15 @@ class SpeechRecognitionData(DataModule):
         """
 
         ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
             sampling_rate=sampling_rate,
         )
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_dataset, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_dataset, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_dataset, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_dataset, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_dataset, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_dataset, **ds_kw),
+            input_cls(RunningStage.TESTING, test_dataset, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_dataset, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )

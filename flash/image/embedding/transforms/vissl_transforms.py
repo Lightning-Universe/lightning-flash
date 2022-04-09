@@ -17,11 +17,8 @@ from typing import Callable, Optional, Sequence
 import torch.nn as nn
 
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _VISSL_AVAILABLE
-from flash.image.embedding.vissl.transforms import moco_collate_fn, multicrop_collate_fn, simclr_collate_fn
-
-if _VISSL_AVAILABLE:
-    from classy_vision.dataset.transforms import TRANSFORM_REGISTRY
+from flash.image.embedding.vissl.transforms import multicrop_collate_fn, simclr_collate_fn
+from flash.image.embedding.vissl.transforms.multicrop import StandardMultiCropSSLTransform
 
 
 def simclr_transform(
@@ -33,9 +30,10 @@ def simclr_transform(
     jitter_strength: float = 1.0,
     normalize: Optional[nn.Module] = None,
     collate_fn: Callable = simclr_collate_fn,
-) -> nn.Module:
-    """For simclr, barlow twins and moco."""
-    transform = TRANSFORM_REGISTRY["multicrop_ssl_transform"](
+) -> partial:
+    """For simclr and barlow twins."""
+    transform = partial(
+        StandardMultiCropSSLTransform,
         total_num_crops=total_num_crops,
         num_crops=num_crops,
         size_crops=size_crops,
@@ -43,9 +41,10 @@ def simclr_transform(
         gaussian_blur=gaussian_blur,
         jitter_strength=jitter_strength,
         normalize=normalize,
+        collate_fn=collate_fn,
     )
 
-    return transform, collate_fn
+    return transform
 
 
 def swav_transform(
@@ -57,9 +56,10 @@ def swav_transform(
     jitter_strength: float = 1.0,
     normalize: Optional[nn.Module] = None,
     collate_fn: Callable = multicrop_collate_fn,
-) -> nn.Module:
-    """For swav and dino."""
-    transform = TRANSFORM_REGISTRY["multicrop_ssl_transform"](
+) -> partial:
+    """For swav."""
+    transform = partial(
+        StandardMultiCropSSLTransform,
         total_num_crops=total_num_crops,
         num_crops=num_crops,
         size_crops=size_crops,
@@ -67,22 +67,19 @@ def swav_transform(
         gaussian_blur=gaussian_blur,
         jitter_strength=jitter_strength,
         normalize=normalize,
+        collate_fn=collate_fn,
     )
 
-    return transform, collate_fn
+    return transform
 
 
 barlow_twins_transform = partial(simclr_transform, collate_fn=simclr_collate_fn)
-moco_transform = partial(simclr_transform, collate_fn=moco_collate_fn)
-dino_transform = partial(swav_transform, total_num_crops=10, num_crops=[2, 8], collate_fn=multicrop_collate_fn)
 
 
 transforms = [
     "simclr_transform",
     "swav_transform",
     "barlow_twins_transform",
-    "moco_transform",
-    "dino_transform",
 ]
 
 
@@ -92,8 +89,6 @@ def register_vissl_transforms(register: FlashRegistry):
             simclr_transform,
             swav_transform,
             barlow_twins_transform,
-            moco_transform,
-            dino_transform,
         )
     ):
         register(transform, name=transforms[idx])

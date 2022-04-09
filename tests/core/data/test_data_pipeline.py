@@ -16,7 +16,6 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.data_pipeline import DataPipeline
 from flash.core.data.io.input_transform import InputTransform
-from flash.core.utilities.stages import RunningStage
 
 
 def test_is_overridden_recursive(tmpdir):
@@ -31,7 +30,7 @@ def test_is_overridden_recursive(tmpdir):
         def val_collate(self):
             return self.custom_transform
 
-    input_transform = TestInputTransform(RunningStage.TRAINING)
+    input_transform = TestInputTransform()
     assert DataPipeline._is_overridden_recursive("collate", input_transform, InputTransform, prefix="val")
     assert DataPipeline._is_overridden_recursive("collate", input_transform, InputTransform, prefix="train")
     assert not DataPipeline._is_overridden_recursive(

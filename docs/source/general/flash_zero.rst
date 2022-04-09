@@ -1,3 +1,5 @@
+.. beta:: Flash Zero is currently in Beta.
+
 .. _flash_zero:
 
 **********

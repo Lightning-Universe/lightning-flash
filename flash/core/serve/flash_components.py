@@ -53,9 +53,14 @@ class FlashOutputs(BaseType):
         return None
 
 
-def build_flash_serve_model_component(model, serve_input, output):
+def build_flash_serve_model_component(model, serve_input, output, transform, transform_kwargs):
     # TODO: Resolve this hack
-    data_module = DataModule(predict_input=serve_input, batch_size=1)
+    data_module = DataModule(
+        predict_input=serve_input,
+        batch_size=1,
+        transform=transform,
+        transform_kwargs=transform_kwargs,
+    )
 
     class MockTrainer(Trainer):
         def __init__(self):

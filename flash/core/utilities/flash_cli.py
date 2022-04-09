@@ -33,6 +33,7 @@ from flash.core.utilities.lightning_cli import (
     LightningCLI,
     SaveConfigCallback,
 )
+from flash.core.utilities.stability import beta
 
 
 class ModelExcludeSaveConfigCallback(SaveConfigCallback):
@@ -112,6 +113,7 @@ def get_overlapping_args(func_a, func_b) -> Set[str]:
     return set(inspect.signature(func_a).parameters.keys() & inspect.signature(func_b).parameters.keys())
 
 
+@beta("Flash Zero is currently in Beta.")
 class FlashCLI(LightningCLI):
 
     datamodule: DataModule

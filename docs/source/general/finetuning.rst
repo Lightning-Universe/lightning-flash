@@ -165,7 +165,8 @@ Under the hood, the pseudocode looks like:
 
 unfreeze_milestones
 -------------------
-This strategy allows you to unfreeze part of the backbone at predetermined intervals
+
+This strategy allows you to unfreeze part of the backbone at predetermined intervals.
 
 Here's an example where:
 

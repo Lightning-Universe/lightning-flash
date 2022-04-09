@@ -14,9 +14,12 @@
 import fiftyone as fo
 import fiftyone.brain as fob
 import numpy as np
+import torch
 
+import flash
 from flash.core.data.utils import download_data
 from flash.image import ImageEmbedder
+from flash.image.classification.data import ImageClassificationData
 
 # 1 Download data
 download_data("https://pl-flash-data.s3.amazonaws.com/hymenoptera_data.zip")
@@ -26,13 +29,18 @@ dataset = fo.Dataset.from_dir(
     "data/hymenoptera_data/test/",
     fo.types.ImageClassificationDirectoryTree,
 )
+datamodule = ImageClassificationData.from_files(
+    predict_files=dataset.values("filepath"),
+    batch_size=16,
+)
 
 # 3 Load model
-embedder = ImageEmbedder(backbone="resnet101")
+embedder = ImageEmbedder(backbone="resnet18")
 
 # 4 Generate embeddings
-filepaths = dataset.values("filepath")
-embeddings = np.stack(embedder.predict(filepaths))
+trainer = flash.Trainer(gpus=torch.cuda.device_count())
+embedding_batches = trainer.predict(embedder, datamodule=datamodule)
+embeddings = np.stack(sum(embedding_batches, []))
 
 # 5 Visualize in FiftyOne App
 results = fob.compute_visualization(dataset, embeddings=embeddings)

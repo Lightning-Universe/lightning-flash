@@ -40,7 +40,8 @@ def test_train(tmpdir):
     tudataset = datasets.TUDataset(root=tmpdir, name="KKI")
     model = GraphClassifier(num_features=tudataset.num_features, num_classes=tudataset.num_classes)
     datamodule = DataModule(
-        GraphClassificationDatasetInput(RunningStage.TRAINING, tudataset, transform=GraphClassificationInputTransform),
+        GraphClassificationDatasetInput(RunningStage.TRAINING, tudataset),
+        transform=GraphClassificationInputTransform,
         batch_size=4,
     )
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
@@ -53,9 +54,8 @@ def test_val(tmpdir):
     tudataset = datasets.TUDataset(root=tmpdir, name="KKI")
     model = GraphClassifier(num_features=tudataset.num_features, num_classes=tudataset.num_classes)
     datamodule = DataModule(
-        val_input=GraphClassificationDatasetInput(
-            RunningStage.VALIDATING, tudataset, transform=GraphClassificationInputTransform
-        ),
+        val_input=GraphClassificationDatasetInput(RunningStage.VALIDATING, tudataset),
+        transform=GraphClassificationInputTransform,
         batch_size=4,
     )
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
@@ -68,9 +68,8 @@ def test_test(tmpdir):
     tudataset = datasets.TUDataset(root=tmpdir, name="KKI")
     model = GraphClassifier(num_features=tudataset.num_features, num_classes=tudataset.num_classes)
     datamodule = DataModule(
-        test_input=GraphClassificationDatasetInput(
-            RunningStage.TESTING, tudataset, transform=GraphClassificationInputTransform
-        ),
+        test_input=GraphClassificationDatasetInput(RunningStage.TESTING, tudataset),
+        transform=GraphClassificationInputTransform,
         batch_size=4,
     )
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
@@ -83,9 +82,8 @@ def test_predict_dataset(tmpdir):
     tudataset = datasets.TUDataset(root=tmpdir, name="KKI")
     model = GraphClassifier(num_features=tudataset.num_features, num_classes=tudataset.num_classes)
     datamodule = DataModule(
-        predict_input=GraphClassificationDatasetInput(
-            RunningStage.TESTING, tudataset, transform=GraphClassificationInputTransform
-        ),
+        predict_input=GraphClassificationDatasetInput(RunningStage.TESTING, tudataset),
+        transform=GraphClassificationInputTransform,
         batch_size=4,
     )
     trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)

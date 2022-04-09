@@ -134,11 +134,8 @@ class TemplateData(DataModule):
         test_data: Optional[Collection[np.ndarray]] = None,
         test_targets: Optional[Sequence[Any]] = None,
         predict_data: Optional[Collection[np.ndarray]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = TemplateInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = TemplateInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = TemplateInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = TemplateInputTransform,
         input_cls: Type[Input] = TemplateNumpyClassificationInput,
+        transform: INPUT_TRANSFORM_TYPE = TemplateInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TemplateData":
@@ -153,46 +150,28 @@ class TemplateData(DataModule):
             test_data: The numpy ``Array`` containing the test data.
             test_targets: The sequence of test targets.
             predict_data: The numpy ``Array`` containing the predict data.
-            train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+              :class:`~flash.core.data.data_module.DataModule` constructor.
 
         Returns:
             The constructed data module.
         """
 
-        ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
-        )
+        ds_kw = dict()
 
-        train_input = input_cls(RunningStage.TRAINING, train_data, train_targets, transform=train_transform, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, train_data, train_targets, **ds_kw)
         target_formatter = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,
-            input_cls(
-                RunningStage.VALIDATING,
-                val_data,
-                val_targets,
-                transform=val_transform,
-                target_formatter=target_formatter,
-                **ds_kw,
-            ),
-            input_cls(
-                RunningStage.TESTING,
-                test_data,
-                test_targets,
-                transform=test_transform,
-                target_formatter=target_formatter,
-                **ds_kw,
-            ),
-            input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_data, val_targets, target_formatter=target_formatter, **ds_kw),
+            input_cls(RunningStage.TESTING, test_data, test_targets, target_formatter=target_formatter, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_data, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -203,11 +182,8 @@ class TemplateData(DataModule):
         val_bunch: Optional[Bunch] = None,
         test_bunch: Optional[Bunch] = None,
         predict_bunch: Optional[Bunch] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = TemplateInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = TemplateInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = TemplateInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = TemplateInputTransform,
         input_cls: Type[Input] = TemplateSKLearnClassificationInput,
+        transform: INPUT_TRANSFORM_TYPE = TemplateInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TemplateData":
@@ -219,43 +195,27 @@ class TemplateData(DataModule):
             val_bunch: The scikit-learn ``Bunch`` containing the validation data.
             test_bunch: The scikit-learn ``Bunch`` containing the test data.
             predict_bunch: The scikit-learn ``Bunch`` containing the predict data.
-            train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+              :class:`~flash.core.data.data_module.DataModule` constructor.
 
         Returns:
             The constructed data module.
         """
-        ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
-        )
+        ds_kw = dict()
 
-        train_input = input_cls(RunningStage.TRAINING, train_bunch, transform=train_transform, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, train_bunch, **ds_kw)
         target_formatter = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,
-            input_cls(
-                RunningStage.VALIDATING,
-                val_bunch,
-                transform=val_transform,
-                target_formatter=target_formatter,
-                **ds_kw,
-            ),
-            input_cls(
-                RunningStage.TESTING,
-                test_bunch,
-                transform=test_transform,
-                target_formatter=target_formatter,
-                **ds_kw,
-            ),
-            input_cls(RunningStage.PREDICTING, predict_bunch, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_bunch, target_formatter=target_formatter, **ds_kw),
+            input_cls(RunningStage.TESTING, test_bunch, target_formatter=target_formatter, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_bunch, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 

@@ -45,11 +45,8 @@ class QuestionAnsweringData(DataModule):
         val_file: Optional[PATH_TYPE] = None,
         test_file: Optional[PATH_TYPE] = None,
         predict_file: Optional[PATH_TYPE] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         input_cls: Type[Input] = QuestionAnsweringCSVInput,
+        transform: INPUT_TRANSFORM_TYPE = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         question_column_name: str = "question",
         context_column_name: str = "context",
@@ -70,12 +67,8 @@ class QuestionAnsweringData(DataModule):
             val_file: The CSV file containing the validation data.
             test_file: The CSV file containing the testing data.
             predict_file: The CSV file containing the data to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             question_column_name: The key in the JSON file to recognize the question field.
             context_column_name: The key in the JSON file to recognize the context field.
@@ -171,15 +164,15 @@ class QuestionAnsweringData(DataModule):
             question_column_name=question_column_name,
             context_column_name=context_column_name,
             answer_column_name=answer_column_name,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_file, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_file, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_file, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_file, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_file, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_file, **ds_kw),
+            input_cls(RunningStage.TESTING, test_file, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_file, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -190,11 +183,8 @@ class QuestionAnsweringData(DataModule):
         val_file: Optional[PATH_TYPE] = None,
         test_file: Optional[PATH_TYPE] = None,
         predict_file: Optional[PATH_TYPE] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         input_cls: Type[Input] = QuestionAnsweringJSONInput,
+        transform: INPUT_TRANSFORM_TYPE = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         field: Optional[str] = None,
         question_column_name: str = "question",
@@ -216,12 +206,8 @@ class QuestionAnsweringData(DataModule):
             val_file: The JSON file containing the validation data.
             test_file: The JSON file containing the testing data.
             predict_file: The JSON file containing the data to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             field: The field that holds the data in the JSON file.
             question_column_name: The key in the JSON file to recognize the question field.
@@ -323,15 +309,15 @@ class QuestionAnsweringData(DataModule):
             question_column_name=question_column_name,
             context_column_name=context_column_name,
             answer_column_name=answer_column_name,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_file, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_file, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_file, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_file, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_file, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_file, **ds_kw),
+            input_cls(RunningStage.TESTING, test_file, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_file, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -342,11 +328,8 @@ class QuestionAnsweringData(DataModule):
         val_file: Optional[str] = None,
         test_file: Optional[str] = None,
         predict_file: Optional[str] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         input_cls: Type[Input] = QuestionAnsweringSQuADInput,
+        transform: INPUT_TRANSFORM_TYPE = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         question_column_name: str = "question",
         context_column_name: str = "context",
@@ -367,12 +350,8 @@ class QuestionAnsweringData(DataModule):
             val_file: The JSON file containing the validation data.
             test_file: The JSON file containing the testing data.
             predict_file: The JSON file containing the predict data.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             question_column_name: The key in the JSON file to recognize the question field.
             context_column_name: The key in the JSON file to recognize the context field.
@@ -611,15 +590,15 @@ class QuestionAnsweringData(DataModule):
             question_column_name=question_column_name,
             context_column_name=context_column_name,
             answer_column_name=answer_column_name,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_file, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_file, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_file, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_file, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_file, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_file, **ds_kw),
+            input_cls(RunningStage.TESTING, test_file, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_file, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -630,11 +609,8 @@ class QuestionAnsweringData(DataModule):
         val_data: Optional[Dict[str, Any]] = None,
         test_data: Optional[Dict[str, Any]] = None,
         predict_data: Optional[Dict[str, Any]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         input_cls: Type[Input] = QuestionAnsweringDictionaryInput,
+        transform: INPUT_TRANSFORM_TYPE = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         question_column_name: str = "question",
         context_column_name: str = "context",
@@ -655,12 +631,8 @@ class QuestionAnsweringData(DataModule):
             val_data: The dictionary containing the validation data.
             test_data: The dictionary containing the testing data.
             predict_data: The dictionary containing the data to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             question_column_name: The key in the JSON file to recognize the question field.
             context_column_name: The key in the JSON file to recognize the context field.
@@ -731,14 +703,14 @@ class QuestionAnsweringData(DataModule):
             question_column_name=question_column_name,
             context_column_name=context_column_name,
             answer_column_name=answer_column_name,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
         )
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_data, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_data, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_data, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_data, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_data, **ds_kw),
+            input_cls(RunningStage.TESTING, test_data, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_data, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
