@@ -234,7 +234,7 @@ class LabelsOutput(ClassesOutput):
             if self.multi_label:
                 return [self._labels[cls] for cls in classes]
             return self._labels[classes]
-        rank_zero_warn("No labels were provided, this output will act as a Classes output.", UserWarning)
+        rank_zero_warn("No labels were provided, this output will act as a Classes output.", category=UserWarning)
         return classes
 
 
@@ -321,7 +321,7 @@ class FiftyOneLabelsOutput(ClassificationOutput):
                         logits=logits,
                     )
         else:
-            rank_zero_warn("No labels were provided, int targets will be used as label strings", UserWarning)
+            rank_zero_warn("No labels were provided, int targets will be used as label strings.", category=UserWarning)
 
             if self.multi_label:
                 classifications = []
