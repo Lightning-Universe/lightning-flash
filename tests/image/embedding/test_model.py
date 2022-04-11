@@ -31,16 +31,12 @@ class TestImageEmbedder(TaskTester):
 
     task = ImageEmbedder
     task_kwargs = dict(
-        backbone="vision_transformer",
-        training_strategy="simclr",
-        head="simclr_head",
-        pretraining_transform="simclr_transform",
+        backbone="resnet18",
     )
-    is_testing = _IMAGE_AVAILABLE and _VISSL_AVAILABLE
-    is_available = _IMAGE_AVAILABLE and _VISSL_AVAILABLE
+    is_testing = _IMAGE_AVAILABLE
+    is_available = _IMAGE_AVAILABLE
 
-    # TODO: Figure out why VISSL can't be jitted
-    traceable = False
+    # TODO: Resolve JIT script issues
     scriptable = False
 
     @property
@@ -49,7 +45,7 @@ class TestImageEmbedder(TaskTester):
 
     def check_forward_output(self, output: Any):
         assert isinstance(output, torch.Tensor)
-        assert output.shape == torch.Size([1, 384])
+        assert output.shape == torch.Size([1, 512])
 
 
 @pytest.mark.skipif(torch.cuda.device_count() > 1, reason="VISSL integration doesn't support multi-GPU")
