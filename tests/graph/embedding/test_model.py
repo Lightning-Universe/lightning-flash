@@ -28,12 +28,15 @@ from tests.helpers.task_tester import TaskTester
 if _GRAPH_AVAILABLE:
     from torch_geometric import datasets
     from torch_geometric.data import Batch, Data
+    from torch_geometric.nn.models import GCN
+else:
+    GCN = dict
 
 
 class TestGraphEmbedder(TaskTester):
 
     task = GraphEmbedder
-    task_args = (GraphClassifier(num_features=1, num_classes=1).backbone,)
+    task_args = (GCN(in_channels=1, hidden_channels=512, num_layers=4),)
     is_testing = _GRAPH_TESTING
     is_available = _GRAPH_AVAILABLE
 
