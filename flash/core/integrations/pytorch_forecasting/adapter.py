@@ -106,8 +106,11 @@ class PyTorchForecastingAdapter(Adapter):
             "Backbones provided by PyTorch Forecasting don't support testing. Use validation instead."
         )
 
+    def forward(self, x: Any) -> Any:
+        return dict(self.backbone(x))
+
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        result = dict(self.backbone(batch[DataKeys.INPUT]))
+        result = self(batch[DataKeys.INPUT])
         result[DataKeys.INPUT] = default_uncollate(batch[DataKeys.INPUT])
         return default_uncollate(result)
 
