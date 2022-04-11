@@ -26,6 +26,7 @@ if _TABULAR_AVAILABLE:
     from pytorch_forecasting.data.examples import generate_ar_data
 else:
     EncoderNormalizer = object
+    NaNLabelEncoder = object
 
 if _PANDAS_AVAILABLE:
     import pandas as pd
