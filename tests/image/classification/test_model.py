@@ -62,6 +62,8 @@ class TestImageClassifier(TaskTester):
     is_testing = _IMAGE_TESTING
     is_available = _IMAGE_AVAILABLE
 
+    marks = {"test_cli": [pytest.mark.parametrize("extra_args", ([], ["from_movie_posters"]))]}
+
     @property
     def example_forward_input(self):
         return torch.rand(1, 3, 32, 32)

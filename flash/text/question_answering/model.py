@@ -267,7 +267,7 @@ class QuestionAnsweringTask(Task):
         return all_predictions
 
     def forward(self, batch: Any) -> Any:
-        metadata = batch.pop(DataKeys.METADATA)
+        metadata = batch.pop(DataKeys.METADATA, {})
         outputs = self.model(**batch)
         loss = outputs.loss
         start_logits = outputs.start_logits

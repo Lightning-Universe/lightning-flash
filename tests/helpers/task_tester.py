@@ -16,7 +16,7 @@ import inspect
 import os
 import types
 from abc import ABCMeta, abstractmethod
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from unittest import mock
 
 import pytest
@@ -72,9 +72,9 @@ def _test_jit_script(self, tmpdir):
     self.check_forward_output(model(self.example_forward_input))
 
 
-def _test_cli(self):
+def _test_cli(self, extra_args: List):
     """Tests that the default Flash zero configuration runs for the task."""
-    cli_args = ["flash", self.cli_command, "--trainer.fast_dev_run", "True"]
+    cli_args = ["flash", self.cli_command, "--trainer.fast_dev_run", "True"] + extra_args
     with mock.patch("sys.argv", cli_args):
         try:
             main()
@@ -97,6 +97,22 @@ class TaskTesterMeta(ABCMeta):
     available.
     """
 
+    @staticmethod
+    def attach_test(task_tester, test_name, test):
+        test = _copy_func(test)
+
+        # Resolve marks
+        marks = task_tester.marks.get(test_name, None)
+        if marks is not None:
+            if not isinstance(marks, List):
+                marks = [marks]
+
+            for mark in marks:
+                test = mark(test)
+
+        # Attach test
+        setattr(task_tester, test_name, test)
+
     def __new__(mcs, *args, **kwargs):
         result = ABCMeta.__new__(mcs, *args, **kwargs)
 
@@ -105,18 +121,18 @@ class TaskTesterMeta(ABCMeta):
             return result
 
         # Attach forward test
-        result.test_forward = _test_forward
+        mcs.attach_test(result, "test_forward", _test_forward)
 
         # Attach JIT tests
         if result.traceable:
-            result.test_jit_trace = _test_jit_trace
+            mcs.attach_test(result, "test_jit_trace", _test_jit_trace)
 
         if result.scriptable:
-            result.test_jit_script = _test_jit_script
+            mcs.attach_test(result, "test_jit_script", _test_jit_script)
 
         # Attach CLI test
         if result.cli_command is not None:
-            result.test_cli = _test_cli
+            mcs.attach_test(result, "test_cli", _test_cli)
 
         # Skip tests if dependencies not available
         for attribute_name, attribute_value in filter(lambda x: x[0].startswith("test"), inspect.getmembers(result)):
@@ -129,9 +145,12 @@ class TaskTesterMeta(ABCMeta):
             )
 
         # Attach error check test
+        mcs.attach_test(
+            result, "test_load_from_checkpoint_dependency_error", _test_load_from_checkpoint_dependency_error
+        )
         result.test_load_from_checkpoint_dependency_error = pytest.mark.skipif(
             result.is_available, reason="Dependencies available."
-        )(_copy_func(_test_load_from_checkpoint_dependency_error))
+        )(_copy_func(result.test_load_from_checkpoint_dependency_error))
 
         return result
 
@@ -151,6 +170,8 @@ class TaskTester(metaclass=TaskTesterMeta):
     scriptable: bool = True
     is_available: bool = True
     is_testing: bool = True
+
+    marks: Dict[str, Any] = {"test_cli": [pytest.mark.parametrize("extra_args", [[]])]}
 
     @property
     def instantiated_task(self):
