@@ -86,7 +86,7 @@ class SpeechRecognition(Task):
         return self.model.base_model
 
     def forward(self, batch: Dict[str, torch.Tensor]):
-        return self.model(batch["input_values"])
+        return self.model(batch["input_values"]).logits
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         return self(batch)

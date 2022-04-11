@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-import re
+from typing import Any
 from unittest import mock
 
 import numpy as np
@@ -20,12 +20,12 @@ import pytest
 import torch
 
 from flash import Trainer
-from flash.__main__ import main
 from flash.audio import SpeechRecognition
 from flash.audio.speech_recognition.data import InputTransform, SpeechRecognitionData
 from flash.core.data.io.input import DataKeys, Input
 from flash.core.utilities.imports import _AUDIO_AVAILABLE, _AUDIO_TESTING, _SERVE_TESTING
 from flash.core.utilities.stages import RunningStage
+from tests.helpers.task_tester import TaskTester
 
 # ======== Mock functions ========
 
@@ -47,6 +47,25 @@ class DummyDataset(torch.utils.data.Dataset):
 TEST_BACKBONE = "patrickvonplaten/wav2vec2_tiny_random_robust"  # tiny model for testing
 
 
+class TestImageClassifier(TaskTester):
+
+    task = SpeechRecognition
+    task_kwargs = dict(backbone=TEST_BACKBONE)
+    cli_command = "speech_recognition"
+    is_testing = _AUDIO_TESTING
+    is_available = _AUDIO_AVAILABLE
+
+    scriptable = False
+
+    @property
+    def example_forward_input(self):
+        return {"input_values": torch.randn(size=torch.Size([1, 86631])).float()}
+
+    def check_forward_output(self, output: Any):
+        assert isinstance(output, torch.Tensor)
+        assert output.shape == torch.Size([1, 95, 12])
+
+
 @pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 def test_modules_to_freeze():
     model = SpeechRecognition(backbone=TEST_BACKBONE)
@@ -64,44 +83,9 @@ def test_init_train(tmpdir):
     trainer.fit(model, datamodule=datamodule)
 
 
-@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
-def test_jit(tmpdir):
-    sample_input = {"input_values": torch.randn(size=torch.Size([1, 86631])).float()}
-    path = os.path.join(tmpdir, "test.pt")
-
-    model = SpeechRecognition(backbone=TEST_BACKBONE)
-    model.eval()
-
-    # Huggingface model only supports `torch.jit.trace` with `strict=False`
-    model = torch.jit.trace(model, sample_input, strict=False)
-
-    torch.jit.save(model, path)
-    model = torch.jit.load(path)
-
-    out = model(sample_input)["logits"]
-    assert isinstance(out, torch.Tensor)
-    assert out.shape == torch.Size([1, 95, 12])
-
-
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = SpeechRecognition(backbone=TEST_BACKBONE)
     model.eval()
     model.serve()
-
-
-@pytest.mark.skipif(_AUDIO_AVAILABLE, reason="audio libraries are installed.")
-def test_load_from_checkpoint_dependency_error():
-    with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[audio]'")):
-        SpeechRecognition.load_from_checkpoint("not_a_real_checkpoint.pt")
-
-
-@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
-def test_cli():
-    cli_args = ["flash", "speech_recognition", "--trainer.fast_dev_run", "True"]
-    with mock.patch("sys.argv", cli_args):
-        try:
-            main()
-        except SystemExit:
-            pass
