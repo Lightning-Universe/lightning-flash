@@ -47,7 +47,7 @@ class DummyDataset(torch.utils.data.Dataset):
 TEST_BACKBONE = "patrickvonplaten/wav2vec2_tiny_random_robust"  # tiny model for testing
 
 
-class TestImageClassifier(TaskTester):
+class TestSpeechRecognition(TaskTester):
 
     task = SpeechRecognition
     task_kwargs = dict(backbone=TEST_BACKBONE)
