@@ -48,7 +48,7 @@ class DummyDataset(torch.utils.data.Dataset):
 class TestSemanticSegmentation(TaskTester):
 
     task = SemanticSegmentation
-    task_args = (2,)
+    task_kwargs = {"num_classes": 2}
     cli_command = "semantic_segmentation"
     is_testing = _IMAGE_TESTING
     is_available = _IMAGE_AVAILABLE

@@ -57,7 +57,7 @@ class DummyMultiLabelDataset(torch.utils.data.Dataset):
 class TestImageClassifier(TaskTester):
 
     task = ImageClassifier
-    task_args = (2,)
+    task_kwargs = {"num_classes": 2}
     cli_command = "image_classification"
     is_testing = _IMAGE_TESTING
     is_available = _IMAGE_AVAILABLE
