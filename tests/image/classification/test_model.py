@@ -11,18 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
-import re
+from typing import Any
 from unittest import mock
 
 import pytest
 import torch
 
 from flash import Trainer
-from flash.__main__ import main
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _IMAGE_AVAILABLE, _IMAGE_TESTING, _SERVE_TESTING
 from flash.image import ImageClassifier
+from tests.helpers.task_tester import TaskTester
 
 # ======== Mock functions ========
 
@@ -53,6 +52,23 @@ class DummyMultiLabelDataset(torch.utils.data.Dataset):
 
 
 # ==============================
+
+
+class TestImageClassifier(TaskTester):
+
+    task = ImageClassifier
+    task_args = (2,)
+    cli_command = "image_classification"
+    is_testing = _IMAGE_TESTING
+    is_available = _IMAGE_AVAILABLE
+
+    @property
+    def example_forward_input(self):
+        return torch.rand(1, 3, 32, 32)
+
+    def check_forward_output(self, output: Any):
+        assert isinstance(output, torch.Tensor)
+        assert output.shape == torch.Size([1, 2])
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
@@ -120,43 +136,9 @@ def test_multilabel(tmpdir):
     assert len(predictions[0]) == num_classes
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
-@pytest.mark.parametrize("jitter, args", [(torch.jit.script, ()), (torch.jit.trace, (torch.rand(1, 3, 32, 32),))])
-def test_jit(tmpdir, jitter, args):
-    path = os.path.join(tmpdir, "test.pt")
-
-    model = ImageClassifier(2)
-    model.eval()
-
-    model = jitter(model, *args)
-
-    torch.jit.save(model, path)
-    model = torch.jit.load(path)
-
-    out = model(torch.rand(1, 3, 32, 32))
-    assert isinstance(out, torch.Tensor)
-    assert out.shape == torch.Size([1, 2])
-
-
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = ImageClassifier(2)
     model.eval()
     model.serve()
-
-
-@pytest.mark.skipif(_IMAGE_AVAILABLE, reason="image libraries are installed.")
-def test_load_from_checkpoint_dependency_error():
-    with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[image]'")):
-        ImageClassifier.load_from_checkpoint("not_a_real_checkpoint.pt")
-
-
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
-def test_cli():
-    cli_args = ["flash", "image_classification", "--trainer.fast_dev_run", "True"]
-    with mock.patch("sys.argv", cli_args):
-        try:
-            main()
-        except SystemExit:
-            pass
