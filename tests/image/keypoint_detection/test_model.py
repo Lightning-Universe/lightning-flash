@@ -14,15 +14,16 @@
 import collections
 import json
 import os
-from unittest import mock
+from typing import Any
 
 import numpy as np
 import pytest
+import torch
 
 from flash import Trainer
-from flash.__main__ import main
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE
 from flash.image import KeypointDetectionData, KeypointDetector
+from tests.helpers.task_tester import TaskTester
 
 if _IMAGE_AVAILABLE:
     from PIL import Image
@@ -91,6 +92,27 @@ def coco_keypoints(tmpdir):
     return COCODataConfig(train_folder, train_ann_file, predict_folder)
 
 
+class TestKeypointDetector(TaskTester):
+
+    task = KeypointDetector
+    task_args = (2,)
+    task_kwargs = {"num_classes": 2}
+    cli_command = "keypoint_detection"
+    is_testing = _IMAGE_AVAILABLE and _ICEVISION_AVAILABLE
+    is_available = _IMAGE_AVAILABLE and _ICEVISION_AVAILABLE
+
+    # TODO: Resolve JIT support
+    traceable = False
+    scriptable = False
+
+    @property
+    def example_forward_input(self):
+        return torch.rand(1, 3, 32, 32)
+
+    def check_forward_output(self, output: Any):
+        assert {"keypoints", "labels", "scores"} <= output[0].keys()
+
+
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _ICEVISION_AVAILABLE, reason="IceVision is not installed for testing")
 @pytest.mark.parametrize("backbone, head", [("resnet18_fpn", "keypoint_rcnn")])
@@ -110,14 +132,3 @@ def test_model(coco_keypoints, backbone, head):
     trainer = Trainer(fast_dev_run=True)
     trainer.fit(model, datamodule=datamodule)
     trainer.predict(model, datamodule=datamodule)
-
-
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
-@pytest.mark.skipif(not _ICEVISION_AVAILABLE, reason="IceVision is not installed for testing")
-def test_cli():
-    cli_args = ["flash", "keypoint_detection", "--trainer.fast_dev_run", "True"]
-    with mock.patch("sys.argv", cli_args):
-        try:
-            main()
-        except SystemExit:
-            pass

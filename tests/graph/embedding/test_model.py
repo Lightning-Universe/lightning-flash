@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import Any
+
 import pytest
 import torch
 
@@ -21,9 +23,36 @@ from flash.graph.classification.input import GraphClassificationDatasetInput
 from flash.graph.classification.input_transform import GraphClassificationInputTransform
 from flash.graph.classification.model import GraphClassifier
 from flash.graph.embedding.model import GraphEmbedder
+from tests.helpers.task_tester import TaskTester
 
 if _GRAPH_AVAILABLE:
     from torch_geometric import datasets
+    from torch_geometric.data import Batch, Data
+    from torch_geometric.nn.models import GCN
+else:
+    GCN = dict
+
+
+class TestGraphEmbedder(TaskTester):
+
+    task = GraphEmbedder
+    task_args = (GCN(in_channels=1, hidden_channels=512, num_layers=4),)
+    is_testing = _GRAPH_TESTING
+    is_available = _GRAPH_AVAILABLE
+
+    # TODO: Resolve JIT issues
+    scriptable = False
+    traceable = False
+
+    @property
+    def example_forward_input(self):
+        edge_index = torch.tensor([[0, 1, 1, 2], [1, 0, 2, 1]], dtype=torch.long)
+        x = torch.tensor([[-1], [0], [1]], dtype=torch.float)
+        return Batch.from_data_list([Data(x=x, edge_index=edge_index)])
+
+    def check_forward_output(self, output: Any):
+        assert isinstance(output, torch.Tensor)
+        assert output.shape == torch.Size([1, 512])
 
 
 @pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")
