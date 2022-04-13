@@ -60,6 +60,8 @@ def vision_transformer(
                     "QKV_BIAS": qkv_bias,
                     "QK_SCALE": qk_scale,
                     "CLASSIFIER": classifier,
+                    "CHECKPOINT_MLP": False,
+                    "CHECKPOINT_BLOCK": False,
                 }
             ),
         }
