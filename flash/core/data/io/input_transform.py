@@ -21,7 +21,7 @@ from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data._utils.collate import default_collate
 
-from flash.core.data.callback import ControlFlow, FlashCallback
+from flash.core.data.callback import ControlFlow
 from flash.core.data.io.input import DataKeys
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import _INPUT_TRANSFORM_FUNCS, _STAGES_PREFIX
@@ -82,6 +82,7 @@ class _InputTransformPerStage:
 @dataclass
 class InputTransform:
     def __post_init__(self):
+        self.callbacks: Optional[List] = None
 
         # used to keep track of provided transforms
         self._transform: Dict[RunningStage, _InputTransformPerStage] = {}
@@ -1104,11 +1105,10 @@ class _InputTransformProcessor:
         stage: RunningStage,
         apply_per_sample_transform: bool = True,
         on_device: bool = False,
-        callbacks: Optional[List[FlashCallback]] = None,
     ):
         super().__init__()
         self.input_transform = input_transform
-        self.callback = ControlFlow(callbacks or [])
+        self.callback = ControlFlow(self.input_transform.callbacks or [])
         self.collate_fn = collate_fn
         self.per_sample_transform = per_sample_transform
         self.per_batch_transform = per_batch_transform
@@ -1222,7 +1222,7 @@ def __configure_worker_and_device_collate_fn(
 
 
 def create_worker_input_transform_processor(
-    running_stage: RunningStage, input_transform: InputTransform, callbacks: List[FlashCallback]
+    running_stage: RunningStage, input_transform: InputTransform
 ) -> _InputTransformProcessor:
     """This utility is used to create the 2 `_InputTransformProcessor` objects which contain the transforms used as
     the DataLoader `collate_fn`."""
@@ -1235,13 +1235,12 @@ def create_worker_input_transform_processor(
         input_transform._per_sample_transform,
         input_transform._per_batch_transform,
         running_stage,
-        callbacks=callbacks,
     )
     return worker_input_transform_processor
 
 
 def create_device_input_transform_processor(
-    running_stage: RunningStage, input_transform: InputTransform, callbacks: List[FlashCallback]
+    running_stage: RunningStage, input_transform: InputTransform
 ) -> _InputTransformProcessor:
     """This utility is used to create a `_InputTransformProcessor` object which contain the transforms used as the
     DataModule `on_after_batch_transfer` hook."""
@@ -1256,6 +1255,5 @@ def create_device_input_transform_processor(
         running_stage,
         apply_per_sample_transform=device_collate_fn != input_transform._identity,
         on_device=True,
-        callbacks=callbacks,
     )
     return device_input_transform_processor
