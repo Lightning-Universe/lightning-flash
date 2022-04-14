@@ -209,7 +209,7 @@ class DatasetProcessor:
             if self.collate_fn is not None and input_transform is not None:
                 input_transform.inject_collate_fn(self.collate_fn)
 
-            collate_fn = create_worker_input_transform_processor(RunningStage.TRAINING, input_transform)
+            collate_fn = create_worker_input_transform_processor(RunningStage.TESTING, input_transform)
 
         return DataLoader(
             dataset,
