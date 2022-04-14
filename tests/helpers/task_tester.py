@@ -21,7 +21,9 @@ from unittest import mock
 
 import pytest
 import torch
+from torch.utils.data import Dataset
 
+import flash
 from flash.__main__ import main
 from flash.core.model import Task
 
@@ -34,12 +36,39 @@ def _copy_func(f):
     return g
 
 
+class _StaticDataset(Dataset):
+    def __init__(self, sample, length):
+        super().__init__()
+
+        self.sample = sample
+        self.length = length
+
+    def __getitem__(self, _):
+        return self.sample
+
+    def __len__(self):
+        return self.length
+
+
 def _test_forward(self):
     """Tests that ``Task.forward`` applied to the example input gives the expected output."""
     model = self.instantiated_task
     model.eval()
     output = model(self.example_forward_input)
     self.check_forward_output(output)
+
+
+def _test_fit(self, tmpdir, task_kwargs):
+    """Tests that a single batch fit pass completes."""
+    dataset = _StaticDataset(self.example_train_sample, 4)
+
+    args = self.task_args
+    kwargs = dict(**self.task_kwargs)
+    kwargs.update(task_kwargs)
+    model = self.task(*args, **kwargs)
+
+    trainer = flash.Trainer(default_root_dir=tmpdir, fast_dev_run=True)
+    trainer.fit(model, model.process_train_dataset(dataset, batch_size=4))
 
 
 def _test_jit_trace(self, tmpdir):
@@ -120,15 +149,19 @@ class TaskTesterMeta(ABCMeta):
         # Attach test
         setattr(task_tester, test_name, test)
 
-    def __new__(mcs, *args, **kwargs):
-        result = ABCMeta.__new__(mcs, *args, **kwargs)
+    def __new__(mcs, name: str, bases: Tuple, class_dict: Dict[str, Any]):
+        result = ABCMeta.__new__(mcs, name, bases, class_dict)
 
         # Skip attaching for the base class
-        if args[0] == "TaskTester":
+        if name == "TaskTester":
             return result
 
         # Attach forward test
         mcs.attach_test(result, "test_forward", _test_forward)
+
+        # Attach fit test
+        if "example_train_sample" in class_dict:
+            mcs.attach_test(result, "test_fit", _test_fit)
 
         # Attach JIT tests
         if result.traceable:
@@ -186,7 +219,10 @@ class TaskTester(metaclass=TaskTesterMeta):
     is_available: bool = True
     is_testing: bool = True
 
-    marks: Dict[str, Any] = {"test_cli": [pytest.mark.parametrize("extra_args", [[]])]}
+    marks: Dict[str, Any] = {
+        "test_fit": [pytest.mark.parametrize("task_kwargs", [{}])],
+        "test_cli": [pytest.mark.parametrize("extra_args", [[]])],
+    }
 
     @property
     def instantiated_task(self):
@@ -200,4 +236,8 @@ class TaskTester(metaclass=TaskTesterMeta):
     @abstractmethod
     def check_forward_output(self, output: Any):
         """Override this hook to check the output of ``Task.forward`` with random data of the required shape."""
+        pass
+
+    @property
+    def example_train_sample(self):
         pass

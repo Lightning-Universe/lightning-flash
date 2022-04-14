@@ -11,15 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Iterable, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, Optional, Tuple, Union
 
 import torch
 from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, Sampler
 
+import flash
 from flash.core.classification import ClassificationTask
-from flash.core.data.io.input import DataKeys, Input
+from flash.core.data.io.input import DataKeys, InputBase
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE, _TM_GREATER_EQUAL_0_7_0
@@ -143,21 +144,8 @@ class PointCloudSegmentation(ClassificationTask):
             x = self.head(x)
         return x
 
-    def _process_dataset(
-        self,
-        dataset: Input,
-        input_transform: InputTransform,
-        batch_size: int,
-        num_workers: int,
-        pin_memory: bool,
-        collate_fn: Callable,
-        shuffle: bool = False,
-        drop_last: bool = True,
-        sampler: Optional[Sampler] = None,
-        **kwargs
-    ) -> DataLoader:
-        if not isinstance(dataset.data, TorchDataloader):
-
+    def _patch_dataset(self, dataset: InputBase):
+        if not isinstance(dataset.dataset, TorchDataloader):
             dataset.dataset = TorchDataloader(
                 dataset.dataset,
                 preprocess=self.backbone.preprocess,
@@ -165,20 +153,112 @@ class PointCloudSegmentation(ClassificationTask):
                 use_cache=False,
             )
 
-        if self.input_transform is None:
-            self.input_transform = input_transform
-        if self.collate_fn is not None:
-            self.input_transform.inject_collate_fn(self.collate_fn)
-
-        return DataLoader(
+    def process_train_dataset(
+        self,
+        dataset: InputBase,
+        batch_size: int,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        shuffle: bool = True,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
+        input_transform: Optional[InputTransform] = None,
+        trainer: Optional["flash.Trainer"] = None,
+    ) -> DataLoader:
+        self._patch_dataset(dataset)
+        return super().process_train_dataset(
             dataset,
-            batch_size=batch_size,
+            batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
-            collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            persistent_workers=persistent_workers,
+            input_transform=input_transform,
+            trainer=trainer,
+        )
+
+    def process_val_dataset(
+        self,
+        dataset: InputBase,
+        batch_size: int,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        shuffle: bool = False,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
+        input_transform: Optional[InputTransform] = None,
+        trainer: Optional["flash.Trainer"] = None,
+    ) -> DataLoader:
+        self._patch_dataset(dataset)
+        return super().process_val_dataset(
+            dataset,
+            batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
+            persistent_workers=persistent_workers,
+            input_transform=input_transform,
+            trainer=trainer,
+        )
+
+    def process_test_dataset(
+        self,
+        dataset: InputBase,
+        batch_size: int,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        shuffle: bool = False,
+        drop_last: bool = False,
+        sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
+        input_transform: Optional[InputTransform] = None,
+        trainer: Optional["flash.Trainer"] = None,
+    ) -> DataLoader:
+        self._patch_dataset(dataset)
+        return super().process_test_dataset(
+            dataset,
+            batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
+            persistent_workers=persistent_workers,
+            input_transform=input_transform,
+            trainer=trainer,
+        )
+
+    def process_predict_dataset(
+        self,
+        dataset: InputBase,
+        batch_size: int,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        shuffle: bool = False,
+        drop_last: bool = False,
+        sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
+        input_transform: Optional[InputTransform] = None,
+        trainer: Optional["flash.Trainer"] = None,
+    ) -> DataLoader:
+        self._patch_dataset(dataset)
+        return super().process_predict_dataset(
+            dataset,
+            batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
+            persistent_workers=persistent_workers,
+            input_transform=input_transform,
+            trainer=trainer,
         )
 
     def modules_to_freeze(self) -> Union[nn.Module, Iterable[Union[nn.Module, Iterable]]]:

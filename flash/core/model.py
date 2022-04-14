@@ -33,7 +33,11 @@ from torch.utils.data import DataLoader, Sampler
 
 import flash
 from flash.core.data.io.input import InputBase, ServeInput
-from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.io.input_transform import (
+    create_or_configure_input_transform,
+    create_worker_input_transform_processor,
+    InputTransform,
+)
 from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.output import BASE_OUTPUTS
@@ -46,6 +50,7 @@ from flash.core.serve.composition import Composition
 from flash.core.utilities.apply_func import get_callable_dict
 from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_5_0, requires
 from flash.core.utilities.providers import _HUGGINGFACE
+from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import (
     INPUT_TRANSFORM_TYPE,
     LOSS_FN_TYPE,
@@ -105,34 +110,32 @@ class DatasetProcessor:
     @torch.jit.unused
     @property
     def input_transform(self) -> Optional[InputTransform]:
-        return self._input_transform
+        if self._input_transform is not None:
+            return create_or_configure_input_transform(self._input_transform)
+        return None
 
     @input_transform.setter
     def input_transform(self, input_transform: InputTransform) -> None:
         self._input_transform = input_transform
 
-    def _process_dataset(
+    def process_train_dataset(
         self,
         dataset: InputBase,
-        input_transform: InputTransform,
         batch_size: int,
-        num_workers: int,
-        pin_memory: bool,
-        collate_fn: Callable,
-        shuffle: bool = False,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        shuffle: bool = True,
         drop_last: bool = True,
         sampler: Optional[Sampler] = None,
         persistent_workers: bool = False,
+        input_transform: Optional[InputTransform] = None,
+        trainer: Optional["flash.Trainer"] = None,
     ) -> DataLoader:
+        input_transform = input_transform or self.input_transform
 
-        # Assign the InputTransform
-        if self.input_transform is None:
-            self.input_transform = input_transform
-
-        # Now inject the `self.collate_fn` so that it doesn't override `InputTransform._collate` but is called through
-        # the `InputTransform._collate` method.
-        if self.collate_fn is not None:
-            self.input_transform.inject_collate_fn(self.collate_fn)
+        # Inject the `self.collate_fn`
+        if self.collate_fn is not None and input_transform is not None:
+            input_transform.inject_collate_fn(self.collate_fn)
 
         return DataLoader(
             dataset,
@@ -142,114 +145,100 @@ class DatasetProcessor:
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
-            collate_fn=collate_fn,
-            persistent_workers=persistent_workers,
-        )
-
-    def process_train_dataset(
-        self,
-        dataset: InputBase,
-        trainer: "flash.Trainer",
-        input_transform: InputTransform,
-        batch_size: int,
-        num_workers: int,
-        pin_memory: bool,
-        collate_fn: Callable,
-        shuffle: bool = False,
-        drop_last: bool = True,
-        sampler: Optional[Sampler] = None,
-        persistent_workers: bool = False,
-    ) -> DataLoader:
-        return self._process_dataset(
-            dataset,
-            input_transform=input_transform,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            pin_memory=pin_memory,
-            collate_fn=collate_fn,
-            shuffle=shuffle,
-            drop_last=drop_last,
-            sampler=sampler,
+            collate_fn=create_worker_input_transform_processor(RunningStage.TRAINING, input_transform),
             persistent_workers=persistent_workers,
         )
 
     def process_val_dataset(
         self,
         dataset: InputBase,
-        trainer: "flash.Trainer",
-        input_transform: InputTransform,
         batch_size: int,
-        num_workers: int,
-        pin_memory: bool,
-        collate_fn: Callable,
+        num_workers: int = 0,
+        pin_memory: bool = False,
         shuffle: bool = False,
-        drop_last: bool = False,
+        drop_last: bool = True,
         sampler: Optional[Sampler] = None,
         persistent_workers: bool = False,
+        input_transform: Optional[InputTransform] = None,
+        trainer: Optional["flash.Trainer"] = None,
     ) -> DataLoader:
-        return self._process_dataset(
+        input_transform = input_transform or self.input_transform
+
+        # Inject the `self.collate_fn`
+        if self.collate_fn is not None and input_transform is not None:
+            input_transform.inject_collate_fn(self.collate_fn)
+
+        return DataLoader(
             dataset,
-            input_transform=input_transform,
             batch_size=batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
-            collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            collate_fn=create_worker_input_transform_processor(RunningStage.VALIDATING, input_transform),
             persistent_workers=persistent_workers,
         )
 
     def process_test_dataset(
         self,
         dataset: InputBase,
-        trainer: "flash.Trainer",
-        input_transform: InputTransform,
         batch_size: int,
-        num_workers: int,
-        pin_memory: bool,
-        collate_fn: Callable,
+        num_workers: int = 0,
+        pin_memory: bool = False,
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
         persistent_workers: bool = False,
+        input_transform: Optional[InputTransform] = None,
+        trainer: Optional["flash.Trainer"] = None,
     ) -> DataLoader:
-        return self._process_dataset(
+        input_transform = input_transform or self.input_transform
+
+        # Inject the `self.collate_fn`
+        if self.collate_fn is not None and input_transform is not None:
+            input_transform.inject_collate_fn(self.collate_fn)
+
+        return DataLoader(
             dataset,
-            input_transform=input_transform,
             batch_size=batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
-            collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            collate_fn=create_worker_input_transform_processor(RunningStage.TESTING, input_transform),
             persistent_workers=persistent_workers,
         )
 
     def process_predict_dataset(
         self,
         dataset: InputBase,
-        input_transform: InputTransform,
-        batch_size: int = 1,
+        batch_size: int,
         num_workers: int = 0,
         pin_memory: bool = False,
-        collate_fn: Callable = None,
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
         persistent_workers: bool = False,
+        input_transform: Optional[InputTransform] = None,
+        trainer: Optional["flash.Trainer"] = None,
     ) -> DataLoader:
-        return self._process_dataset(
+        input_transform = input_transform or self.input_transform
+
+        # Inject the `self.collate_fn`
+        if self.collate_fn is not None and input_transform is not None:
+            input_transform.inject_collate_fn(self.collate_fn)
+
+        return DataLoader(
             dataset,
-            input_transform=input_transform,
             batch_size=batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
-            collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            collate_fn=create_worker_input_transform_processor(RunningStage.PREDICTING, input_transform),
             persistent_workers=persistent_workers,
         )
 
