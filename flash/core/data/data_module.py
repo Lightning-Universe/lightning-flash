@@ -231,7 +231,9 @@ class DataModule(pl.LightningDataModule):
         else:
             sampler = self.sampler
 
-        if isinstance(getattr(self, "trainer", None), pl.Trainer):
+        if isinstance(getattr(self, "trainer", None), pl.Trainer) and hasattr(
+            self.trainer.lightning_module, "process_train_dataset"
+        ):
             dataloader = self.trainer.lightning_module.process_train_dataset(
                 train_ds,
                 self.batch_size,
@@ -265,7 +267,9 @@ class DataModule(pl.LightningDataModule):
 
         input_transform = self._resolve_input_transform()
 
-        if isinstance(getattr(self, "trainer", None), pl.Trainer):
+        if isinstance(getattr(self, "trainer", None), pl.Trainer) and hasattr(
+            self.trainer.lightning_module, "process_val_dataset"
+        ):
             dataloader = self.trainer.lightning_module.process_val_dataset(
                 val_ds,
                 self.batch_size,
@@ -293,7 +297,9 @@ class DataModule(pl.LightningDataModule):
 
         input_transform = self._resolve_input_transform()
 
-        if isinstance(getattr(self, "trainer", None), pl.Trainer):
+        if isinstance(getattr(self, "trainer", None), pl.Trainer) and hasattr(
+            self.trainer.lightning_module, "process_test_dataset"
+        ):
             dataloader = self.trainer.lightning_module.process_test_dataset(
                 test_ds,
                 self.batch_size,
@@ -326,7 +332,9 @@ class DataModule(pl.LightningDataModule):
         else:
             batch_size = min(self.batch_size, len(predict_ds) if len(predict_ds) > 0 else 1)
 
-        if isinstance(getattr(self, "trainer", None), pl.Trainer):
+        if isinstance(getattr(self, "trainer", None), pl.Trainer) and hasattr(
+            self.trainer.lightning_module, "process_predict_dataset"
+        ):
             dataloader = self.trainer.lightning_module.process_predict_dataset(
                 predict_ds,
                 self.batch_size,
