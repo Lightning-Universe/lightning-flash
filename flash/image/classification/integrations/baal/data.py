@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import warnings
-from typing import Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 import torch
@@ -21,6 +21,7 @@ from torch.utils.data import DataLoader, Dataset, random_split
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import InputBase
+from flash.core.data.io.input_transform import create_worker_input_transform_processor
 from flash.core.utilities.imports import _BAAL_AVAILABLE, requires
 from flash.core.utilities.stages import RunningStage
 
@@ -148,22 +149,30 @@ class ActiveLearningDataModule(DataModule):
 
     def _val_dataloader(self) -> "DataLoader":
         self.labelled._val_input = train_val_split(self._dataset, self.val_split)[1]
-        self.labelled._val_dataloader_collate_fn = self.labelled._train_dataloader_collate_fn
-        self.labelled._on_after_batch_transfer_fns[
-            RunningStage.VALIDATING
-        ] = self.labelled._on_after_batch_transfer_fns[RunningStage.TRAINING]
-        return self.labelled._val_dataloader()
+        dataloader = self.labelled._val_dataloader()
+        dataloader.collate_fn = create_worker_input_transform_processor(
+            RunningStage.TRAINING, self.labelled.input_transform
+        )
+        return dataloader
 
     def _test_dataloader(self) -> "DataLoader":
         return self.labelled.test_dataloader()
 
     def predict_dataloader(self) -> "DataLoader":
         self.labelled._predict_input = self.filter_unlabelled_data(self._dataset.pool)
-        self.labelled._predict_dataloader_collate_fn = self.labelled._train_dataloader_collate_fn
-        self.labelled._on_after_batch_transfer_fns[
-            RunningStage.PREDICTING
-        ] = self.labelled._on_after_batch_transfer_fns[RunningStage.TRAINING]
-        return self.labelled._predict_dataloader()
+        dataloader = self.labelled._predict_dataloader()
+        dataloader.collate_fn = create_worker_input_transform_processor(
+            RunningStage.TRAINING, self.labelled.input_transform
+        )
+        return dataloader
+
+    def on_after_batch_transfer(self, batch: Any, dataloader_idx: int) -> Any:
+        current_stage = self.trainer.state.stage
+        if current_stage == RunningStage.VALIDATING or current_stage == RunningStage.PREDICTING:
+            self.trainer.state.stage = RunningStage.TRAINING
+        batch = super().on_after_batch_transfer(batch, dataloader_idx)
+        self.trainer.state.stage = current_stage
+        return batch
 
     def label(self, probabilities: List[torch.Tensor] = None, indices=None):
         if probabilities is not None and indices:
