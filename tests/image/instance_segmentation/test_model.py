@@ -14,15 +14,16 @@
 import collections
 import json
 import os
-from unittest import mock
+from typing import Any
 
 import numpy as np
 import pytest
+import torch
 
 from flash import Trainer
-from flash.__main__ import main
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE
 from flash.image import InstanceSegmentation, InstanceSegmentationData
+from tests.helpers.task_tester import TaskTester
 
 if _IMAGE_AVAILABLE:
     from PIL import Image
@@ -88,6 +89,26 @@ def coco_instances(tmpdir):
     return COCODataConfig(train_folder, train_ann_file, predict_folder)
 
 
+class TestInstanceSegmentation(TaskTester):
+
+    task = InstanceSegmentation
+    task_kwargs = {"num_classes": 2}
+    cli_command = "instance_segmentation"
+    is_testing = _IMAGE_AVAILABLE and _ICEVISION_AVAILABLE
+    is_available = _IMAGE_AVAILABLE and _ICEVISION_AVAILABLE
+
+    # TODO: Resolve JIT support
+    traceable = False
+    scriptable = False
+
+    @property
+    def example_forward_input(self):
+        return torch.rand(1, 3, 32, 32)
+
+    def check_forward_output(self, output: Any):
+        assert {"masks", "labels", "scores"} <= output[0].keys()
+
+
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _ICEVISION_AVAILABLE, reason="IceVision is not installed for testing")
 @pytest.mark.parametrize("backbone, head", [("resnet18_fpn", "mask_rcnn")])
@@ -107,14 +128,3 @@ def test_model(coco_instances, backbone, head):
     trainer = Trainer(fast_dev_run=True)
     trainer.fit(model, datamodule=datamodule)
     trainer.predict(model, datamodule=datamodule)
-
-
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
-@pytest.mark.skipif(not _ICEVISION_AVAILABLE, reason="IceVision is not installed for testing")
-def test_cli():
-    cli_args = ["flash", "instance_segmentation", "--trainer.fast_dev_run", "True"]
-    with mock.patch("sys.argv", cli_args):
-        try:
-            main()
-        except SystemExit:
-            pass

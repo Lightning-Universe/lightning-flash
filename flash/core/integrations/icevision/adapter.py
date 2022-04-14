@@ -15,6 +15,7 @@ import functools
 from importlib import import_module
 from typing import Any, Callable, Dict, List, Optional
 
+import torch
 from torch.utils.data import DataLoader, Sampler
 
 import flash
@@ -244,6 +245,8 @@ class IceVisionAdapter(Adapter):
         }
 
     def forward(self, batch: Any) -> Any:
+        if isinstance(batch, torch.Tensor):
+            batch = ((batch,), [to_icevision_record({DataKeys.INPUT: batch[0].cpu().numpy()})] * len(batch))
         return from_icevision_predictions(
             import_module(self.model_type).predict_from_dl(self.model, [batch], show_pbar=False, **self.predict_kwargs)
         )

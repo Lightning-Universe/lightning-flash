@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _VISSL_AVAILABLE
+from flash.core.utilities.imports import _VISSL_AVAILABLE, requires
 from flash.core.utilities.providers import _VISSL
 from flash.image.embedding.heads import IMAGE_EMBEDDER_HEADS
 from flash.image.embedding.losses import IMAGE_EMBEDDER_LOSS_FUNCTIONS
@@ -23,6 +23,7 @@ if _VISSL_AVAILABLE:
     from vissl.hooks.swav_hooks import NormalizePrototypesHook, SwAVUpdateQueueScoresHook
 
 
+@requires(["vissl", "classy_vision"])
 def swav(head: str = "swav_head", **kwargs):
     loss_fn = IMAGE_EMBEDDER_LOSS_FUNCTIONS.get("swav_loss")(**kwargs)
     head = IMAGE_EMBEDDER_HEADS.get(head)(**kwargs)
@@ -30,6 +31,7 @@ def swav(head: str = "swav_head", **kwargs):
     return loss_fn, head, [SwAVUpdateQueueScoresHook(), NormalizePrototypesHook(), TrainingSetupHook()]
 
 
+@requires(["vissl", "classy_vision"])
 def simclr(head: str = "simclr_head", **kwargs):
     loss_fn = IMAGE_EMBEDDER_LOSS_FUNCTIONS.get("simclr_loss")(**kwargs)
     head = IMAGE_EMBEDDER_HEADS.get(head)(**kwargs)
@@ -37,6 +39,7 @@ def simclr(head: str = "simclr_head", **kwargs):
     return loss_fn, head, [SimCLRTrainingSetupHook()]
 
 
+@requires(["vissl", "classy_vision"])
 def barlow_twins(head: str = "barlow_twins_head", **kwargs):
     loss_fn = IMAGE_EMBEDDER_LOSS_FUNCTIONS.get("barlow_twins_loss")(**kwargs)
     head = IMAGE_EMBEDDER_HEADS.get(head)(**kwargs)
@@ -45,6 +48,5 @@ def barlow_twins(head: str = "barlow_twins_head", **kwargs):
 
 
 def register_vissl_strategies(register: FlashRegistry):
-    if _VISSL_AVAILABLE:
-        for training_strategy in (swav, simclr, barlow_twins):
-            register(training_strategy, name=training_strategy.__name__, adapter=VISSLAdapter, providers=_VISSL)
+    for training_strategy in (swav, simclr, barlow_twins):
+        register(training_strategy, name=training_strategy.__name__, adapter=VISSLAdapter, providers=_VISSL)

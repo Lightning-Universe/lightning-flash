@@ -19,6 +19,7 @@ from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Set
 
 import requests
 import torch
+import urllib3
 from pytorch_lightning.utilities.apply_func import apply_to_collection
 from tqdm.auto import tqdm as tq
 
@@ -65,13 +66,24 @@ _OUTPUT_TRANSFORM_FUNCS: Set[str] = {
 def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:
     """Download file with progressbar.
 
-    # Code taken from: https://gist.github.com/ruxi/5d6803c116ec1130d484a4ab8c00c603
+    # Code adapted from: https://gist.github.com/ruxi/5d6803c116ec1130d484a4ab8c00c603
     # __author__  = "github.com/ruxi"
     # __license__ = "MIT"
 
-    Usage:
-        download_file('http://web4host.net/5MB.zip')
+    Examples
+    ________
+
+    .. doctest::
+
+        >>> import os
+        >>> from flash.core.data.utils import download_data
+        >>> download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "./data")
+        >>> os.listdir("./data")  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+        [...]
     """
+    # Disable warning about making an insecure request
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
     if not os.path.exists(path):
         os.makedirs(path)
     local_filename = os.path.join(path, url.split("/")[-1])

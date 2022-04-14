@@ -55,8 +55,17 @@ def test_flash_callback(_, __, tmpdir):
         def __init__(self):
             super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
 
-        def step(self, batch, batch_idx, metrics):
-            return super().step((batch[DataKeys.INPUT], batch[DataKeys.TARGET]), batch_idx, metrics)
+        def training_step(self, batch, batch_idx):
+            batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
+            return super().training_step(batch, batch_idx)
+
+        def validation_step(self, batch, batch_idx):
+            batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
+            return super().validation_step(batch, batch_idx)
+
+        def test_step(self, batch, batch_idx):
+            batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
+            return super().test_step(batch, batch_idx)
 
     trainer = Trainer(
         default_root_dir=tmpdir,

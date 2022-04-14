@@ -12,17 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-import re
+from typing import Any
 from unittest import mock
 
 import pytest
 import torch
 
 from flash import Trainer
-from flash.__main__ import main
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _SERVE_TESTING, _TEXT_AVAILABLE, _TEXT_TESTING
 from flash.text import TextClassifier
+from tests.helpers.task_tester import TaskTester
 
 # ======== Mock functions ========
 
@@ -43,6 +43,28 @@ class DummyDataset(torch.utils.data.Dataset):
 TEST_BACKBONE = "prajjwal1/bert-tiny"  # tiny model for testing
 
 
+class TestTextClassifier(TaskTester):
+
+    task = TextClassifier
+    task_args = (2,)
+    task_kwargs = {"backbone": TEST_BACKBONE}
+    cli_command = "text_classification"
+    is_testing = _TEXT_TESTING
+    is_available = _TEXT_AVAILABLE
+
+    scriptable = False
+
+    marks = {"test_cli": [pytest.mark.parametrize("extra_args", ([], ["from_toxic"]))]}
+
+    @property
+    def example_forward_input(self):
+        return {"input_ids": torch.randint(1000, size=(1, 100))}
+
+    def check_forward_output(self, output: Any):
+        assert isinstance(output, torch.Tensor)
+        assert output.shape == torch.Size([1, 2])
+
+
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_init_train(tmpdir):
@@ -52,50 +74,9 @@ def test_init_train(tmpdir):
     trainer.fit(model, train_dl)
 
 
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_jit(tmpdir):
-    sample_input = {"input_ids": torch.randint(1000, size=(1, 100))}
-    path = os.path.join(tmpdir, "test.pt")
-
-    model = TextClassifier(2, backbone=TEST_BACKBONE)
-    model.eval()
-
-    # Huggingface bert model only supports `torch.jit.trace` with `strict=False`
-    model = torch.jit.trace(model, sample_input, strict=False)
-
-    torch.jit.save(model, path)
-    model = torch.jit.load(path)
-
-    out = model(sample_input)
-    assert isinstance(out, torch.Tensor)
-    assert out.shape == torch.Size([1, 2])
-
-
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = TextClassifier(2, backbone=TEST_BACKBONE)
     model.eval()
     model.serve()
-
-
-@pytest.mark.skipif(_TEXT_AVAILABLE, reason="text libraries are installed.")
-def test_load_from_checkpoint_dependency_error():
-    with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[text]'")):
-        TextClassifier.load_from_checkpoint("not_a_real_checkpoint.pt")
-
-
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-@pytest.mark.parametrize(
-    "cli_args",
-    (
-        ["flash", "text_classification", "--trainer.fast_dev_run", "True"],
-        ["flash", "text_classification", "--trainer.fast_dev_run", "True", "from_toxic"],
-    ),
-)
-def test_cli(cli_args):
-    with mock.patch("sys.argv", cli_args):
-        try:
-            main()
-        except SystemExit:
-            pass
