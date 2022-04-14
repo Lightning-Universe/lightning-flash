@@ -27,7 +27,7 @@ from torch.utils.data.sampler import Sampler
 import flash
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
-from flash.core.data.io.input import DataKeys, Input, InputBase, IterableInput
+from flash.core.data.io.input import DataKeys, Input, IterableInput
 from flash.core.data.io.input_transform import (
     create_device_input_transform_processor,
     create_or_configure_input_transform,
@@ -540,12 +540,6 @@ class DataModule(pl.LightningDataModule):
         """Property that returns ``True`` if this ``DataModule`` contains multi-label data."""
         return self._get_property("multi_label")
 
-    @property
-    def inputs(self) -> Optional[Union[Input, List[InputBase]]]:
-        """Property that returns the inputs associated with this ``DataModule``."""
-        inputs = [self.train_dataset, self.val_dataset, self.test_dataset, self.predict_dataset]
-        return [input for input in inputs if input]
-
     @staticmethod
     def _split_train_val(
         train_dataset: Dataset,
@@ -577,6 +571,10 @@ class DataModule(pl.LightningDataModule):
         val_indices = indices[:val_num_samples]
         train_indices = indices[val_num_samples:]
         return (
-            SplitDataset(train_dataset, train_indices, use_duplicated_indices=True),
-            SplitDataset(train_dataset, val_indices, use_duplicated_indices=True),
+            SplitDataset(
+                train_dataset, train_indices, running_stage=RunningStage.TRAINING, use_duplicated_indices=True
+            ),
+            SplitDataset(
+                train_dataset, val_indices, running_stage=RunningStage.VALIDATING, use_duplicated_indices=True
+            ),
         )

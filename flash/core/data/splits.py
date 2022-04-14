@@ -1,10 +1,11 @@
-from typing import Any, List
+from typing import Any, List, Optional
 
 import numpy as np
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Dataset
 
 from flash.core.data.properties import Properties
+from flash.core.utilities.stages import RunningStage
 
 
 class SplitDataset(Properties, Dataset):
@@ -23,12 +24,18 @@ class SplitDataset(Properties, Dataset):
         split_ds = SplitDataset(dataset, indices=[10, 10, 10, 14, 25], use_duplicated_indices=True)
     """
 
-    def __init__(self, dataset: Any, indices: List[int] = None, use_duplicated_indices: bool = False) -> None:
+    def __init__(
+        self,
+        dataset: Any,
+        indices: List[int] = None,
+        running_stage: Optional[RunningStage] = None,
+        use_duplicated_indices: bool = False,
+    ) -> None:
         kwargs = {}
-        if isinstance(dataset, Properties):
-            kwargs = dict(
-                running_stage=dataset._running_stage,
-            )
+        if running_stage is not None:
+            kwargs = dict(running_stage=running_stage)
+        elif isinstance(dataset, Properties):
+            kwargs = dict(running_stage=dataset._running_stage)
         super().__init__(**kwargs)
 
         if indices is None:
