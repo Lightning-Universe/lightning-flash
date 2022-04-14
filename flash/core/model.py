@@ -133,9 +133,13 @@ class DatasetProcessor:
     ) -> DataLoader:
         input_transform = input_transform or self.input_transform
 
-        # Inject the `self.collate_fn`
-        if self.collate_fn is not None and input_transform is not None:
-            input_transform.inject_collate_fn(self.collate_fn)
+        collate_fn = None
+        if input_transform is not None:
+            # Inject the `self.collate_fn`
+            if self.collate_fn is not None and input_transform is not None:
+                input_transform.inject_collate_fn(self.collate_fn)
+
+            collate_fn = create_worker_input_transform_processor(RunningStage.TRAINING, input_transform)
 
         return DataLoader(
             dataset,
@@ -145,7 +149,7 @@ class DatasetProcessor:
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
-            collate_fn=create_worker_input_transform_processor(RunningStage.TRAINING, input_transform),
+            collate_fn=collate_fn,
             persistent_workers=persistent_workers,
         )
 
@@ -164,9 +168,13 @@ class DatasetProcessor:
     ) -> DataLoader:
         input_transform = input_transform or self.input_transform
 
-        # Inject the `self.collate_fn`
-        if self.collate_fn is not None and input_transform is not None:
-            input_transform.inject_collate_fn(self.collate_fn)
+        collate_fn = None
+        if input_transform is not None:
+            # Inject the `self.collate_fn`
+            if self.collate_fn is not None and input_transform is not None:
+                input_transform.inject_collate_fn(self.collate_fn)
+
+            collate_fn = create_worker_input_transform_processor(RunningStage.VALIDATING, input_transform)
 
         return DataLoader(
             dataset,
@@ -176,7 +184,7 @@ class DatasetProcessor:
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
-            collate_fn=create_worker_input_transform_processor(RunningStage.VALIDATING, input_transform),
+            collate_fn=collate_fn,
             persistent_workers=persistent_workers,
         )
 
@@ -195,9 +203,13 @@ class DatasetProcessor:
     ) -> DataLoader:
         input_transform = input_transform or self.input_transform
 
-        # Inject the `self.collate_fn`
-        if self.collate_fn is not None and input_transform is not None:
-            input_transform.inject_collate_fn(self.collate_fn)
+        collate_fn = None
+        if input_transform is not None:
+            # Inject the `self.collate_fn`
+            if self.collate_fn is not None and input_transform is not None:
+                input_transform.inject_collate_fn(self.collate_fn)
+
+            collate_fn = create_worker_input_transform_processor(RunningStage.TRAINING, input_transform)
 
         return DataLoader(
             dataset,
@@ -207,7 +219,7 @@ class DatasetProcessor:
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
-            collate_fn=create_worker_input_transform_processor(RunningStage.TESTING, input_transform),
+            collate_fn=collate_fn,
             persistent_workers=persistent_workers,
         )
 
@@ -226,9 +238,13 @@ class DatasetProcessor:
     ) -> DataLoader:
         input_transform = input_transform or self.input_transform
 
-        # Inject the `self.collate_fn`
-        if self.collate_fn is not None and input_transform is not None:
-            input_transform.inject_collate_fn(self.collate_fn)
+        collate_fn = None
+        if input_transform is not None:
+            # Inject the `self.collate_fn`
+            if self.collate_fn is not None and input_transform is not None:
+                input_transform.inject_collate_fn(self.collate_fn)
+
+            collate_fn = create_worker_input_transform_processor(RunningStage.PREDICTING, input_transform)
 
         return DataLoader(
             dataset,
@@ -238,7 +254,7 @@ class DatasetProcessor:
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
-            collate_fn=create_worker_input_transform_processor(RunningStage.PREDICTING, input_transform),
+            collate_fn=collate_fn,
             persistent_workers=persistent_workers,
         )
 
