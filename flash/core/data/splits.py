@@ -27,7 +27,7 @@ class SplitDataset(Properties, Dataset):
     def __init__(
         self,
         dataset: Any,
-        indices: List[int] = None,
+        indices: List[int],
         running_stage: Optional[RunningStage] = None,
         use_duplicated_indices: bool = False,
     ) -> None:
@@ -38,8 +38,6 @@ class SplitDataset(Properties, Dataset):
             kwargs = dict(running_stage=dataset._running_stage)
         super().__init__(**kwargs)
 
-        if indices is None:
-            indices = []
         if not isinstance(indices, list):
             raise MisconfigurationException("indices should be a list")
 

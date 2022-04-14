@@ -139,7 +139,7 @@ class IceVisionAdapter(Adapter):
         num_workers: int = 0,
         pin_memory: bool = False,
         shuffle: bool = False,
-        drop_last: bool = True,
+        drop_last: bool = False,
         sampler: Optional[Sampler] = None,
         persistent_workers: bool = False,
         input_transform: Optional[InputTransform] = None,
