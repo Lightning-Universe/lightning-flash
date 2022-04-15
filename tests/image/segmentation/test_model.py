@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Tuple
+from typing import Any
 from unittest import mock
 
 import numpy as np
@@ -24,25 +24,6 @@ from flash.core.utilities.imports import _IMAGE_AVAILABLE, _IMAGE_TESTING, _SERV
 from flash.image import SemanticSegmentation
 from flash.image.segmentation.data import SemanticSegmentationData
 from tests.helpers.task_tester import TaskTester
-
-# ======== Mock functions ========
-
-
-class DummyDataset(torch.utils.data.Dataset):
-    size: Tuple[int, int] = (224, 224)
-    num_classes: int = 8
-
-    def __getitem__(self, index):
-        return {
-            DataKeys.INPUT: torch.rand(3, *self.size),
-            DataKeys.TARGET: torch.randint(self.num_classes - 1, self.size),
-        }
-
-    def __len__(self) -> int:
-        return 10
-
-
-# ==============================
 
 
 class TestSemanticSegmentation(TaskTester):
@@ -62,13 +43,12 @@ class TestSemanticSegmentation(TaskTester):
         assert isinstance(output, torch.Tensor)
         assert output.shape == torch.Size([1, 2, 32, 32])
 
-
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
-def test_init_train(tmpdir):
-    model = SemanticSegmentation(num_classes=10)
-    train_dl = torch.utils.data.DataLoader(DummyDataset())
-    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    trainer.finetune(model, train_dl, strategy="freeze")
+    @property
+    def example_train_sample(self):
+        return {
+            DataKeys.INPUT: torch.rand(3, 224, 224),
+            DataKeys.TARGET: torch.randint(2, (224, 224)),
+        }
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
