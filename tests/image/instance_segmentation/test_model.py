@@ -21,6 +21,7 @@ import pytest
 import torch
 
 from flash import Trainer
+from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE
 from flash.image import InstanceSegmentation, InstanceSegmentationData
 from tests.helpers.task_tester import TaskTester
@@ -107,6 +108,20 @@ class TestInstanceSegmentation(TaskTester):
 
     def check_forward_output(self, output: Any):
         assert {"masks", "labels", "scores"} <= output[0].keys()
+
+    @property
+    def example_train_sample(self):
+        return {
+            DataKeys.INPUT: torch.rand(3, 224, 224),
+            DataKeys.TARGET: {
+                "bboxes": [
+                    {"xmin": 10, "ymin": 10, "width": 20, "height": 20},
+                    {"xmin": 30, "ymin": 30, "width": 40, "height": 40},
+                ],
+                "labels": [0, 1],
+                "masks": [torch.randint(1, (224, 224)), torch.randint(1, (224, 224))],
+            },
+        }
 
 
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")

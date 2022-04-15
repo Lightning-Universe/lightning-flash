@@ -129,9 +129,11 @@ def to_icevision_record(sample: Dict[str, Any]):
         if "keypoints" in sample[DataKeys.TARGET]:
             keypoints = []
 
-            for keypoints_list, keypoints_metadata in zip(
-                sample[DataKeys.TARGET]["keypoints"], sample[DataKeys.TARGET]["keypoints_metadata"]
-            ):
+            keypoints_metadata = sample[DataKeys.TARGET].get(
+                "keypoints_metadata", [None] * len(sample[DataKeys.TARGET]["keypoints"])
+            )
+
+            for keypoints_list, keypoints_metadata in zip(sample[DataKeys.TARGET]["keypoints"], keypoints_metadata):
                 xyv = []
                 for keypoint in keypoints_list:
                     xyv.extend((keypoint["x"], keypoint["y"], keypoint["visible"]))

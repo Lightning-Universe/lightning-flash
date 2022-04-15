@@ -16,6 +16,7 @@ from typing import Any
 import pytest
 import torch
 
+from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _IMAGE_AVAILABLE, _IMAGE_TESTING
 from flash.image.style_transfer import StyleTransfer
 from tests.helpers.task_tester import TaskTester
@@ -39,6 +40,10 @@ class TestStyleTransfer(TaskTester):
     def check_forward_output(self, output: Any):
         assert isinstance(output, torch.Tensor)
         assert output.shape == torch.Size([1, 3, 32, 32])
+
+    @property
+    def example_train_sample(self):
+        return {DataKeys.INPUT: torch.rand(3, 224, 224)}
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
