@@ -15,8 +15,8 @@ from typing import Any, Dict, Mapping, Sequence, Union
 
 import torch
 from torch import nn
-from torch.utils.data._utils.collate import default_collate
 
+from flash.core.data.utilities.collate import default_collate
 from flash.core.data.utils import convert_to_modules
 
 

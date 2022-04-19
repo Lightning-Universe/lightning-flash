@@ -14,16 +14,15 @@
 import inspect
 from dataclasses import dataclass
 from functools import partial
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torch.utils.data._utils.collate import default_collate
 
 from flash.core.data.callback import ControlFlow
-from flash.core.data.io.input import DataKeys
 from flash.core.data.transforms import ApplyToKeys
+from flash.core.data.utilities.collate import default_collate
 from flash.core.data.utils import _INPUT_TRANSFORM_FUNCS, _STAGES_PREFIX
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.stages import RunningStage
@@ -844,13 +843,9 @@ class InputTransform:
         """
         return self.current_transform(stage=stage, current_fn="per_batch_transform")(batch)
 
-    def _collate(self, samples: Sequence, stage: RunningStage, metadata=None) -> Any:
+    def _collate(self, samples: Sequence, stage: RunningStage) -> Any:
         """Transform to convert a sequence of samples to a collated batch."""
-        collate_fn = self.current_transform(stage=stage, current_fn="collate")
-        parameters = inspect.signature(collate_fn).parameters
-        if len(parameters) > 1 and DataKeys.METADATA in parameters:
-            return collate_fn(samples, metadata)
-        return collate_fn(samples)
+        return self.current_transform(stage=stage, current_fn="collate")(samples)
 
     def _per_sample_transform_on_device(self, sample: Any, stage: RunningStage) -> Any:
         """Transforms to apply to the data before the collation (per-sample basis).
@@ -879,9 +874,10 @@ class InputTransform:
 
     def inject_collate_fn(self, collate_fn: Callable):
         # For all the stages possible, set collate function
-        for stage in RunningStage:
-            if stage not in [RunningStage.SANITY_CHECKING, RunningStage.TUNING]:
-                self._transform[stage].transforms[InputTransformPlacement.COLLATE.value] = collate_fn
+        if collate_fn is not default_collate:
+            for stage in RunningStage:
+                if stage not in [RunningStage.SANITY_CHECKING, RunningStage.TUNING]:
+                    self._transform[stage].transforms[InputTransformPlacement.COLLATE.value] = collate_fn
 
     def _populate_transforms_for_stage(self, running_stage: RunningStage):
         transform, collate_in_worker = self.__check_transforms(
@@ -1116,13 +1112,6 @@ class _InputTransformProcessor:
         self.stage = stage
         self.on_device = on_device
 
-    @staticmethod
-    def _extract_metadata(
-        samples: List[Dict[str, Any]],
-    ) -> Tuple[List[Dict[str, Any]], Optional[List[Dict[str, Any]]]]:
-        metadata = [s.pop(DataKeys.METADATA, None) if isinstance(s, Mapping) else None for s in samples]
-        return samples, metadata if any(m is not None for m in metadata) else None
-
     def __call__(self, samples: Sequence[Any]) -> Any:
         if not self.on_device:
             for sample in samples:
@@ -1142,13 +1131,7 @@ class _InputTransformProcessor:
                 else:
                     self.callback.on_per_sample_transform(sample, self.stage)
 
-            extracted_samples, metadata = self._extract_metadata(transformed_samples)
-            try:
-                collated_samples = self.collate_fn(extracted_samples, self.stage, metadata)
-            except TypeError:
-                collated_samples = self.collate_fn(extracted_samples, self.stage)
-            if metadata and isinstance(collated_samples, dict):
-                collated_samples[DataKeys.METADATA] = metadata
+            collated_samples = self.collate_fn(transformed_samples, self.stage)
             self.callback.on_collate(collated_samples, self.stage)
         else:
             collated_samples = samples
