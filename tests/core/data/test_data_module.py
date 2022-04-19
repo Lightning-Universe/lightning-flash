@@ -18,7 +18,7 @@ from unittest import mock
 import numpy as np
 import pytest
 import torch
-from pytorch_lightning import seed_everything
+from pytorch_lightning import LightningModule, seed_everything
 from torch.utils.data import Dataset
 
 from flash import Task, Trainer
@@ -239,6 +239,7 @@ class TestInputTransform(InputTransform):
         return self._train_per_sample_transform
 
     def _train_collate(self, samples):
+        print(samples)
         self.train_collate_called = True
         return torch.tensor([list(s) for s in samples])
 
@@ -246,6 +247,7 @@ class TestInputTransform(InputTransform):
         return self._train_collate
 
     def _train_per_batch_transform_on_device(self, batch):
+        print(batch)
         self.train_per_batch_transform_on_device_called = True
         assert torch.equal(batch, torch.tensor([[0, 1, 2, 3, 5], [0, 1, 2, 3, 5]]))
 
@@ -293,9 +295,11 @@ class TestInputTransform2(TestInputTransform):
         return {"a": torch.tensor(sample["a"]), "b": torch.tensor(sample["b"])}
 
 
-class CustomModel(Task):
+class CustomModel(LightningModule):
     def __init__(self):
-        super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
+        super().__init__()
+
+        self.model = torch.nn.Linear(1, 1)
 
     def training_step(self, batch, batch_idx):
         assert batch is None
@@ -308,6 +312,11 @@ class CustomModel(Task):
     def test_step(self, batch, batch_idx):
         assert len(batch) == 2
         assert batch[0].shape == torch.Size([2, 1])
+
+    def configure_optimizers(self):
+        optimizer = torch.optim.SGD(self.parameters(), lr=0.1)
+        lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1)
+        return [optimizer], [lr_scheduler]
 
 
 def test_transformations(tmpdir):

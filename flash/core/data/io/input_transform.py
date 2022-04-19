@@ -22,7 +22,6 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data._utils.collate import default_collate
 
 from flash.core.data.callback import ControlFlow
-from flash.core.data.io.input import DataKeys
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utils import _INPUT_TRANSFORM_FUNCS, _STAGES_PREFIX
 from flash.core.registry import FlashRegistry
@@ -844,13 +843,9 @@ class InputTransform:
         """
         return self.current_transform(stage=stage, current_fn="per_batch_transform")(batch)
 
-    def _collate(self, samples: Sequence, stage: RunningStage, metadata=None) -> Any:
+    def _collate(self, samples: Sequence, stage: RunningStage) -> Any:
         """Transform to convert a sequence of samples to a collated batch."""
-        collate_fn = self.current_transform(stage=stage, current_fn="collate")
-        parameters = inspect.signature(collate_fn).parameters
-        if len(parameters) > 1 and DataKeys.METADATA in parameters:
-            return collate_fn(samples, metadata)
-        return collate_fn(samples)
+        return self.current_transform(stage=stage, current_fn="collate")(samples)
 
     def _per_sample_transform_on_device(self, sample: Any, stage: RunningStage) -> Any:
         """Transforms to apply to the data before the collation (per-sample basis).
