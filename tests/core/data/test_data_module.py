@@ -239,7 +239,6 @@ class TestInputTransform(InputTransform):
         return self._train_per_sample_transform
 
     def _train_collate(self, samples):
-        print(samples)
         self.train_collate_called = True
         return torch.tensor([list(s) for s in samples])
 
@@ -247,7 +246,6 @@ class TestInputTransform(InputTransform):
         return self._train_collate
 
     def _train_per_batch_transform_on_device(self, batch):
-        print(batch)
         self.train_per_batch_transform_on_device_called = True
         assert torch.equal(batch, torch.tensor([[0, 1, 2, 3, 5], [0, 1, 2, 3, 5]]))
 
