@@ -83,7 +83,7 @@ def build_flash_serve_model_component(model, serve_input, output, transform, tra
             self.serve_input = serve_input
             self.on_after_batch_transfer = data_module.on_after_batch_transfer
             self.output_transform = getattr(model, "_output_transform", None) or OutputTransform()
-            # todo (tchaton) Remove this hack
+            # TODO (@tchaton) Remove this hack
             self.extra_arguments = len(inspect.signature(self.model.transfer_batch_to_device).parameters) == 3
             self.device = self.model.device
 

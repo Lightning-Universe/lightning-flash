@@ -405,7 +405,7 @@ class literal:
         return "literal<type=%s>" % type(self.data).__name__
 
     def __reduce__(self):
-        return (literal, (self.data,))
+        return literal, (self.data,)
 
     def __call__(self):
         return self.data

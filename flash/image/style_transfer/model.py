@@ -125,9 +125,9 @@ class StyleTransfer(Task):
         # do the same here.
         class GramOperator(loss.GramLoss):
             def enc_to_repr(self, enc: torch.Tensor) -> torch.Tensor:
-                repr = super().enc_to_repr(enc)
-                num_channels = repr.size()[1]
-                return repr / num_channels
+                rr = super().enc_to_repr(enc)
+                num_channels = rr.size()[1]
+                return rr / num_channels
 
         return GramOperator(encoder, score_weight=score_weight)
 

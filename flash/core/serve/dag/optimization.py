@@ -893,7 +893,7 @@ class SubgraphCallable:
         return get(self.dsk, self.outkey, dict(zip(self.inkeys, args)))
 
     def __reduce__(self):
-        return (SubgraphCallable, (self.dsk, self.outkey, self.inkeys, self.name))
+        return SubgraphCallable, (self.dsk, self.outkey, self.inkeys, self.name)
 
     def __hash__(self):
         return hash(tuple((self.outkey, tuple(self.inkeys), self.name)))
