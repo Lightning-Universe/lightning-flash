@@ -19,10 +19,10 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torch.utils.data._utils.collate import default_collate
 
 from flash.core.data.callback import ControlFlow
 from flash.core.data.transforms import ApplyToKeys
+from flash.core.data.utilities.collate import default_collate
 from flash.core.data.utils import _INPUT_TRANSFORM_FUNCS, _STAGES_PREFIX
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.stages import RunningStage
@@ -874,9 +874,10 @@ class InputTransform:
 
     def inject_collate_fn(self, collate_fn: Callable):
         # For all the stages possible, set collate function
-        for stage in RunningStage:
-            if stage not in [RunningStage.SANITY_CHECKING, RunningStage.TUNING]:
-                self._transform[stage].transforms[InputTransformPlacement.COLLATE.value] = collate_fn
+        if collate_fn is not default_collate:
+            for stage in RunningStage:
+                if stage not in [RunningStage.SANITY_CHECKING, RunningStage.TUNING]:
+                    self._transform[stage].transforms[InputTransformPlacement.COLLATE.value] = collate_fn
 
     def _populate_transforms_for_stage(self, running_stage: RunningStage):
         transform, collate_in_worker = self.__check_transforms(

@@ -18,7 +18,7 @@ from unittest import mock
 import numpy as np
 import pytest
 import torch
-from pytorch_lightning import LightningModule, seed_everything
+from pytorch_lightning import seed_everything
 from torch.utils.data import Dataset
 
 from flash import Task, Trainer
@@ -295,11 +295,9 @@ class TestInputTransform2(TestInputTransform):
         return {"a": torch.tensor(sample["a"]), "b": torch.tensor(sample["b"])}
 
 
-class CustomModel(LightningModule):
+class CustomModel(Task):
     def __init__(self):
-        super().__init__()
-
-        self.model = torch.nn.Linear(1, 1)
+        super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
 
     def training_step(self, batch, batch_idx):
         assert batch is None
@@ -312,11 +310,6 @@ class CustomModel(LightningModule):
     def test_step(self, batch, batch_idx):
         assert len(batch) == 2
         assert batch[0].shape == torch.Size([2, 1])
-
-    def configure_optimizers(self):
-        optimizer = torch.optim.SGD(self.parameters(), lr=0.1)
-        lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1)
-        return [optimizer], [lr_scheduler]
 
 
 def test_transformations(tmpdir):
