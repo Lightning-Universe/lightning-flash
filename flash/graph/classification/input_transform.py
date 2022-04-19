@@ -18,6 +18,7 @@ from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.utilities.samples import to_sample
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
+from flash.graph.collate import _pyg_collate
 
 if _GRAPH_AVAILABLE:
     from torch_geometric.data import Data
@@ -44,5 +45,8 @@ class PyGTransformAdapter:
 
 
 class GraphClassificationInputTransform(InputTransform):
+    def collate(self) -> Callable:
+        return _pyg_collate
+
     def per_sample_transform(self) -> Callable:
         return PyGTransformAdapter(NormalizeFeatures())
