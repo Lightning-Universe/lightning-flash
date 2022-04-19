@@ -74,6 +74,7 @@ _________________________________
     :toctree: generated/
     :nosignatures:
 
+    ~flash.core.data.utilities.collate.wrap_collate
     ~flash.core.data.utilities.collate.default_collate
 
 flash.core.data.properties
