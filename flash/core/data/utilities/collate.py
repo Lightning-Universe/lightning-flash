@@ -11,11 +11,40 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, List, Mapping
+import functools
+from typing import Any, Callable, List, Mapping
 
 from torch.utils.data._utils.collate import default_collate as torch_default_collate
 
 from flash.core.data.io.input import DataKeys
+
+
+def _wrap_collate(collate: Callable, batch: List[Any]) -> Any:
+    metadata = [sample.pop(DataKeys.METADATA, None) if isinstance(sample, Mapping) else None for sample in batch]
+    metadata = metadata if any(m is not None for m in metadata) else None
+
+    collated_batch = collate(batch)
+
+    if metadata and isinstance(collated_batch, dict):
+        collated_batch[DataKeys.METADATA] = metadata
+    return collated_batch
+
+
+def wrap_collate(collate):
+    """:func:`flash.data.utilities.collate.wrap_collate` is a utility that can be used to wrap an existing collate
+    function to handle the metadata separately from the rest of the batch (giving a list of the metadata from the
+    samples in the output).
+
+    Args:
+        collate: The collate function to wrap.
+
+    Returns:
+        The wrapped collate function.
+    """
+    return functools.partial(_wrap_collate, collate)
+
+
+_default_collate = wrap_collate(torch_default_collate)
 
 
 def default_collate(batch: List[Any]) -> Any:
@@ -29,10 +58,4 @@ def default_collate(batch: List[Any]) -> Any:
     Returns:
         The collated batch.
     """
-    metadata = [sample.pop(DataKeys.METADATA, None) if isinstance(sample, Mapping) else None for sample in batch]
-    metadata = metadata if any(m is not None for m in metadata) else None
-
-    collated_batch = torch_default_collate(batch)
-    if metadata and isinstance(collated_batch, dict):
-        collated_batch[DataKeys.METADATA] = metadata
-    return collated_batch
+    return _default_collate(batch)

@@ -22,6 +22,7 @@ import flash
 from flash.core.classification import ClassificationTask
 from flash.core.data.io.input import DataKeys, InputBase
 from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.utilities.collate import wrap_collate
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE, _TM_GREATER_EQUAL_0_7_0
 from flash.core.utilities.stability import beta
@@ -99,7 +100,8 @@ class PointCloudSegmentation(ClassificationTask):
         if isinstance(backbone, tuple):
             self.backbone, out_features = backbone
         else:
-            self.backbone, out_features, self.collate_fn = self.backbones.get(backbone)(**backbone_kwargs)
+            self.backbone, out_features, collate_fn = self.backbones.get(backbone)(**backbone_kwargs)
+            self.collate_fn = wrap_collate(collate_fn)
             # replace latest layer
             if not flash._IS_TESTING:
                 self.backbone.fc = nn.Identity()
