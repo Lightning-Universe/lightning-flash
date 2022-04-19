@@ -26,17 +26,6 @@ from tests.helpers.task_tester import TaskTester
 # ======== Mock functions ========
 
 
-class DummyDataset(torch.utils.data.Dataset):
-    def __getitem__(self, index):
-        return {
-            DataKeys.INPUT: torch.rand(3, 224, 224),
-            DataKeys.TARGET: torch.randint(10, size=(1,)).item(),
-        }
-
-    def __len__(self) -> int:
-        return 100
-
-
 class DummyMultiLabelDataset(torch.utils.data.Dataset):
     def __init__(self, num_classes: int):
         self.num_classes = num_classes
@@ -62,7 +51,20 @@ class TestImageClassifier(TaskTester):
     is_testing = _IMAGE_TESTING
     is_available = _IMAGE_AVAILABLE
 
-    marks = {"test_cli": [pytest.mark.parametrize("extra_args", ([], ["from_movie_posters"]))]}
+    marks = {
+        "test_fit": [
+            pytest.mark.parametrize(
+                "task_kwargs",
+                [
+                    {"backbone": "resnet18"},
+                    {"backbone": "vit_small_patch16_224"},
+                    {"backbone": "resnet18", "head": "linear"},
+                    {"backbone": "resnet18", "head": torch.nn.Linear(512, 2)},
+                ],
+            )
+        ],
+        "test_cli": [pytest.mark.parametrize("extra_args", ([], ["from_movie_posters"]))],
+    }
 
     @property
     def example_forward_input(self):
@@ -72,33 +74,9 @@ class TestImageClassifier(TaskTester):
         assert isinstance(output, torch.Tensor)
         assert output.shape == torch.Size([1, 2])
 
-
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
-@pytest.mark.parametrize(
-    "backbone,metrics",
-    [
-        ("resnet18", None),
-        ("resnet18", []),
-        # "resnet34",
-        # "resnet50",
-        # "resnet101",
-        # "resnet152",
-    ],
-)
-def test_init_train(tmpdir, backbone, metrics):
-    model = ImageClassifier(10, backbone=backbone, metrics=metrics)
-    train_dl = torch.utils.data.DataLoader(DummyDataset())
-    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    trainer.finetune(model, train_dl, strategy="freeze")
-
-
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
-@pytest.mark.parametrize("head", ["linear", torch.nn.Linear(512, 10)])
-def test_init_train_head(tmpdir, head):
-    model = ImageClassifier(10, backbone="resnet18", head=head, metrics=None)
-    train_dl = torch.utils.data.DataLoader(DummyDataset())
-    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    trainer.finetune(model, train_dl, strategy="freeze")
+    @property
+    def example_train_sample(self):
+        return {DataKeys.INPUT: torch.rand(3, 224, 224), DataKeys.TARGET: 1}
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")

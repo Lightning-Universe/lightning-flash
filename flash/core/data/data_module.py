@@ -27,9 +27,8 @@ from torch.utils.data.sampler import Sampler
 import flash
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
-from flash.core.data.io.input import DataKeys, Input, InputBase, IterableInput
+from flash.core.data.io.input import DataKeys, Input, IterableInput
 from flash.core.data.io.input_transform import (
-    _InputTransformProcessor,
     create_device_input_transform_processor,
     create_or_configure_input_transform,
     create_worker_input_transform_processor,
@@ -153,19 +152,7 @@ class DataModule(pl.LightningDataModule):
 
         self._data_fetcher: Optional[BaseDataFetcher] = data_fetcher or self.configure_data_fetcher()
 
-        self._train_dataloader_collate_fn = self._resolve_dataloader_collate_fn(RunningStage.TRAINING)
-        self._val_dataloader_collate_fn = self._resolve_dataloader_collate_fn(RunningStage.VALIDATING)
-        self._test_dataloader_collate_fn = self._resolve_dataloader_collate_fn(RunningStage.TESTING)
-        self._predict_dataloader_collate_fn = self._resolve_dataloader_collate_fn(RunningStage.PREDICTING)
-
-        self._on_after_batch_transfer_fns = {
-            RunningStage.TRAINING: self._resolve_on_after_batch_transfer_fn(RunningStage.TRAINING),
-            RunningStage.VALIDATING: self._resolve_on_after_batch_transfer_fn(RunningStage.VALIDATING),
-            RunningStage.SANITY_CHECKING: self._resolve_on_after_batch_transfer_fn(RunningStage.VALIDATING),
-            RunningStage.TESTING: self._resolve_on_after_batch_transfer_fn(RunningStage.TESTING),
-            RunningStage.PREDICTING: self._resolve_on_after_batch_transfer_fn(RunningStage.PREDICTING),
-        }
-        self._model_on_after_batch_transfer_fns = None
+        self._on_after_batch_transfer_fns = None
 
         if self._train_input:
             self.train_dataloader = self._train_dataloader
@@ -213,24 +200,22 @@ class DataModule(pl.LightningDataModule):
     # METHODS PERTAINING TO DATALOADERS #
     #####################################
 
-    def _resolve_dataloader_collate_fn(self, stage: RunningStage) -> _InputTransformProcessor:
-        return create_worker_input_transform_processor(stage, self.input_transform, [self.data_fetcher])
+    def _resolve_input_transform(self) -> Optional[InputTransform]:
+        input_transform = self.input_transform
+        if (
+            isinstance(getattr(self, "trainer", None), pl.Trainer)
+            and getattr(self.trainer.lightning_module, "input_transform", None) is not None
+        ):
+            input_transform = create_or_configure_input_transform(self.trainer.lightning_module.input_transform)
 
-    def _resolve_on_after_batch_transfer_fn(self, stage: RunningStage) -> _InputTransformProcessor:
-        return create_device_input_transform_processor(stage, self.input_transform, [self.data_fetcher])
+        if input_transform is not None:
+            input_transform.callbacks = [self.data_fetcher]
+        return input_transform
 
     def _train_dataloader(self) -> DataLoader:
         train_ds: Input = self._train_input
 
-        transform_processor = self._train_dataloader_collate_fn
-        if isinstance(getattr(self, "trainer", None), pl.Trainer):
-            input_transform = getattr(self.trainer.lightning_module, "input_transform", None)
-            if input_transform is not None:
-                input_transform = create_or_configure_input_transform(input_transform, RunningStage.TRAINING)
-                transform_processor = create_worker_input_transform_processor(
-                    RunningStage.TRAINING, input_transform, [self.data_fetcher]
-                )
-                self.input_transform = input_transform
+        input_transform = self._resolve_input_transform()
 
         shuffle: bool = False
         if isinstance(train_ds, IterableDataset):
@@ -246,26 +231,20 @@ class DataModule(pl.LightningDataModule):
         else:
             sampler = self.sampler
 
-        # `transform_processor` is an _InputTransformProcessor object
-        # Use the `transform_processor` object directly as the collate_fn for the DataLoader.
-
-        # `self.input_transform` is an InputTransform object
-        # Inject the `self.collate_fn` returned by the model into the `transforms` dict of the `input_transform` object
-        # through the process_train_dataset method of the model.
-
-        if isinstance(getattr(self, "trainer", None), pl.Trainer):
+        if isinstance(getattr(self, "trainer", None), pl.Trainer) and hasattr(
+            self.trainer.lightning_module, "process_train_dataset"
+        ):
             dataloader = self.trainer.lightning_module.process_train_dataset(
                 train_ds,
-                trainer=self.trainer,
-                input_transform=self.input_transform,
-                batch_size=self.batch_size,
+                self.batch_size,
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
                 shuffle=shuffle,
                 drop_last=drop_last,
-                collate_fn=transform_processor,
                 sampler=sampler,
                 persistent_workers=self.persistent_workers,
+                input_transform=input_transform,
+                trainer=self.trainer,
             )
         else:
             dataloader = DataLoader(
@@ -276,43 +255,29 @@ class DataModule(pl.LightningDataModule):
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
                 drop_last=drop_last,
-                collate_fn=transform_processor,
+                collate_fn=create_worker_input_transform_processor(RunningStage.TRAINING, input_transform),
                 persistent_workers=self.persistent_workers,
             )
 
-        self._model_on_after_batch_transfer_fns = None
+        self._on_after_batch_transfer_fns = None
         return dataloader
 
     def _val_dataloader(self) -> DataLoader:
         val_ds: Input = self._val_input
 
-        transform_processor = self._val_dataloader_collate_fn
-        if isinstance(getattr(self, "trainer", None), pl.Trainer):
-            input_transform = getattr(self.trainer.lightning_module, "input_transform", None)
-            if input_transform is not None:
-                input_transform = create_or_configure_input_transform(input_transform, RunningStage.VALIDATING)
-                transform_processor = create_worker_input_transform_processor(
-                    RunningStage.VALIDATING, input_transform, [self.data_fetcher]
-                )
-                self.input_transform = input_transform
+        input_transform = self._resolve_input_transform()
 
-        # `transform_processor` is an _InputTransformProcessor object
-        # Use the `transform_processor` object directly as the collate_fn for the DataLoader.
-
-        # `self.input_transform` is an InputTransform object
-        # Inject the `self.collate_fn` returned by the model into the `transforms` dict of the `input_transform` object
-        # through the process_train_dataset method of the model.
-
-        if isinstance(getattr(self, "trainer", None), pl.Trainer):
+        if isinstance(getattr(self, "trainer", None), pl.Trainer) and hasattr(
+            self.trainer.lightning_module, "process_val_dataset"
+        ):
             dataloader = self.trainer.lightning_module.process_val_dataset(
                 val_ds,
-                trainer=self.trainer,
-                input_transform=self.input_transform,
-                batch_size=self.batch_size,
+                self.batch_size,
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
-                collate_fn=transform_processor,
                 persistent_workers=self.persistent_workers,
+                input_transform=input_transform,
+                trainer=self.trainer,
             )
         else:
             dataloader = DataLoader(
@@ -320,43 +285,29 @@ class DataModule(pl.LightningDataModule):
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
-                collate_fn=transform_processor,
+                collate_fn=create_worker_input_transform_processor(RunningStage.VALIDATING, input_transform),
                 persistent_workers=self.persistent_workers,
             )
 
-        self._model_on_after_batch_transfer_fns = None
+        self._on_after_batch_transfer_fns = None
         return dataloader
 
     def _test_dataloader(self) -> DataLoader:
         test_ds: Input = self._test_input
 
-        transform_processor = self._test_dataloader_collate_fn
-        if isinstance(getattr(self, "trainer", None), pl.Trainer):
-            input_transform = getattr(self.trainer.lightning_module, "input_transform", None)
-            if input_transform is not None:
-                input_transform = create_or_configure_input_transform(input_transform, RunningStage.TESTING)
-                transform_processor = create_worker_input_transform_processor(
-                    RunningStage.TESTING, input_transform, [self.data_fetcher]
-                )
-                self.input_transform = input_transform
+        input_transform = self._resolve_input_transform()
 
-        # `transform_processor` is an _InputTransformProcessor object
-        # Use the `transform_processor` object directly as the collate_fn for the DataLoader.
-
-        # `self.input_transform` is an InputTransform object
-        # Inject the `self.collate_fn` returned by the model into the `transforms` dict of the `input_transform` object
-        # through the process_train_dataset method of the model.
-
-        if isinstance(getattr(self, "trainer", None), pl.Trainer):
+        if isinstance(getattr(self, "trainer", None), pl.Trainer) and hasattr(
+            self.trainer.lightning_module, "process_test_dataset"
+        ):
             dataloader = self.trainer.lightning_module.process_test_dataset(
                 test_ds,
-                trainer=self.trainer,
-                input_transform=self.input_transform,
-                batch_size=self.batch_size,
+                self.batch_size,
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
-                collate_fn=transform_processor,
                 persistent_workers=self.persistent_workers,
+                input_transform=input_transform,
+                trainer=self.trainer,
             )
         else:
             dataloader = DataLoader(
@@ -364,47 +315,34 @@ class DataModule(pl.LightningDataModule):
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
-                collate_fn=transform_processor,
+                collate_fn=create_worker_input_transform_processor(RunningStage.TESTING, input_transform),
                 persistent_workers=self.persistent_workers,
             )
 
-        self._model_on_after_batch_transfer_fns = None
+        self._on_after_batch_transfer_fns = None
         return dataloader
 
     def _predict_dataloader(self) -> DataLoader:
         predict_ds: Input = self._predict_input
 
-        transform_processor = self._predict_dataloader_collate_fn
-        if isinstance(getattr(self, "trainer", None), pl.Trainer):
-            input_transform = getattr(self.trainer.lightning_module, "input_transform", None)
-            if input_transform is not None:
-                input_transform = create_or_configure_input_transform(input_transform, RunningStage.PREDICTING)
-                transform_processor = create_worker_input_transform_processor(
-                    RunningStage.PREDICTING, input_transform, [self.data_fetcher]
-                )
-                self.input_transform = input_transform
+        input_transform = self._resolve_input_transform()
 
         if isinstance(predict_ds, IterableDataset):
             batch_size = self.batch_size
         else:
             batch_size = min(self.batch_size, len(predict_ds) if len(predict_ds) > 0 else 1)
 
-        # `transform_processor` is an _InputTransformProcessor object
-        # Use the `transform_processor` object directly as the collate_fn for the DataLoader.
-
-        # `self.input_transform` is an InputTransform object
-        # Inject the `self.collate_fn` returned by the model into the `transforms` dict of the `input_transform` object
-        # through the process_train_dataset method of the model.
-
-        if isinstance(getattr(self, "trainer", None), pl.Trainer):
+        if isinstance(getattr(self, "trainer", None), pl.Trainer) and hasattr(
+            self.trainer.lightning_module, "process_predict_dataset"
+        ):
             dataloader = self.trainer.lightning_module.process_predict_dataset(
                 predict_ds,
-                input_transform=self.input_transform,
-                batch_size=batch_size,
+                self.batch_size,
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
-                collate_fn=transform_processor,
                 persistent_workers=self.persistent_workers,
+                input_transform=input_transform,
+                trainer=self.trainer,
             )
         else:
             dataloader = DataLoader(
@@ -412,19 +350,19 @@ class DataModule(pl.LightningDataModule):
                 batch_size=batch_size,
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
-                collate_fn=transform_processor,
+                collate_fn=create_worker_input_transform_processor(RunningStage.PREDICTING, input_transform),
                 persistent_workers=self.persistent_workers,
             )
 
-        self._model_on_after_batch_transfer_fns = None
+        self._on_after_batch_transfer_fns = None
         return dataloader
 
     ############################################################
     # METHODS RELATED TO on_after_batch_transfer FUNCTIONALITY #
     ############################################################
 
-    def _load_model_on_after_batch_transfer_fns(self) -> None:
-        self._model_on_after_batch_transfer_fns = {}
+    def _load_on_after_batch_transfer_fns(self) -> None:
+        self._on_after_batch_transfer_fns = {}
 
         for stage in [
             RunningStage.TRAINING,
@@ -433,32 +371,27 @@ class DataModule(pl.LightningDataModule):
             RunningStage.TESTING,
             RunningStage.PREDICTING,
         ]:
-            transform = None
-            if isinstance(getattr(self, "trainer", None), pl.Trainer):
-                input_transform = getattr(self.trainer.lightning_module, "input_transform", None)
-                if input_transform is not None:
-                    input_transform = create_or_configure_input_transform(
-                        input_transform, stage if stage != RunningStage.SANITY_CHECKING else RunningStage.VALIDATING
-                    )
-                    transform = create_device_input_transform_processor(
-                        stage if stage != RunningStage.SANITY_CHECKING else RunningStage.VALIDATING,
-                        input_transform,
-                        [self.data_fetcher],
-                    )
-            self._model_on_after_batch_transfer_fns[stage] = transform
+            input_transform = self._resolve_input_transform()
+
+            if input_transform is not None:
+                transform = create_device_input_transform_processor(
+                    stage if stage != RunningStage.SANITY_CHECKING else RunningStage.VALIDATING,
+                    input_transform,
+                )
+                self._on_after_batch_transfer_fns[stage] = transform
+            else:
+                self._on_after_batch_transfer_fns[stage] = None
 
     def on_after_batch_transfer(self, batch: Any, dataloader_idx: int) -> Any:
         if getattr(self, "trainer", None) is None:
             return batch
 
-        if self._model_on_after_batch_transfer_fns is None:
-            self._load_model_on_after_batch_transfer_fns()
+        if self._on_after_batch_transfer_fns is None:
+            self._load_on_after_batch_transfer_fns()
 
         stage = self.trainer.state.stage
 
-        transform = self._model_on_after_batch_transfer_fns[stage]
-        if transform is None:
-            transform = self._on_after_batch_transfer_fns[stage]
+        transform = self._on_after_batch_transfer_fns[stage]
 
         if transform:
             batch = transform(batch)
@@ -615,12 +548,6 @@ class DataModule(pl.LightningDataModule):
         """Property that returns ``True`` if this ``DataModule`` contains multi-label data."""
         return self._get_property("multi_label")
 
-    @property
-    def inputs(self) -> Optional[Union[Input, List[InputBase]]]:
-        """Property that returns the inputs associated with this ``DataModule``."""
-        inputs = [self.train_dataset, self.val_dataset, self.test_dataset, self.predict_dataset]
-        return [input for input in inputs if input]
-
     @staticmethod
     def _split_train_val(
         train_dataset: Dataset,
@@ -652,6 +579,10 @@ class DataModule(pl.LightningDataModule):
         val_indices = indices[:val_num_samples]
         train_indices = indices[val_num_samples:]
         return (
-            SplitDataset(train_dataset, train_indices, use_duplicated_indices=True),
-            SplitDataset(train_dataset, val_indices, use_duplicated_indices=True),
+            SplitDataset(
+                train_dataset, train_indices, running_stage=RunningStage.TRAINING, use_duplicated_indices=True
+            ),
+            SplitDataset(
+                train_dataset, val_indices, running_stage=RunningStage.VALIDATING, use_duplicated_indices=True
+            ),
         )

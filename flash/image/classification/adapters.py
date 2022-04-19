@@ -206,6 +206,11 @@ class Learn2LearnAdapter(Adapter):
         num_task: int,
         epoch_length: int,
     ):
+        if trainer is None:
+            raise MisconfigurationException(
+                "The Learn2Learn integration requires the `Trainer` to be passed to the `process_*_dataset` method."
+            )
+
         if isinstance(dataset, InputBase):
 
             metadata = getattr(dataset, "data", None)
@@ -327,16 +332,15 @@ class Learn2LearnAdapter(Adapter):
     def process_train_dataset(
         self,
         dataset: InputBase,
-        trainer: "flash.Trainer",
-        input_transform: InputTransform,
         batch_size: int,
-        num_workers: int,
-        pin_memory: bool,
-        collate_fn: Callable,
-        shuffle: bool = False,
-        drop_last: bool = False,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        shuffle: bool = True,
+        drop_last: bool = True,
         sampler: Optional[Sampler] = None,
         persistent_workers: bool = False,
+        input_transform: Optional[InputTransform] = None,
+        trainer: Optional["flash.Trainer"] = None,
     ) -> DataLoader:
         dataset = self._convert_dataset(
             trainer=trainer,
@@ -353,31 +357,29 @@ class Learn2LearnAdapter(Adapter):
             sampler = None
         return super().process_train_dataset(
             dataset,
-            trainer,
-            input_transform=input_transform,
-            batch_size=self._sanetize_batch_size(batch_size),
+            self._sanetize_batch_size(batch_size),
             num_workers=num_workers,
             pin_memory=False,
-            collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
             persistent_workers=persistent_workers,
+            input_transform=input_transform,
+            trainer=trainer,
         )
 
     def process_val_dataset(
         self,
         dataset: InputBase,
-        trainer: "flash.Trainer",
-        input_transform: InputTransform,
         batch_size: int,
-        num_workers: int,
-        pin_memory: bool,
-        collate_fn: Callable,
+        num_workers: int = 0,
+        pin_memory: bool = False,
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
         persistent_workers: bool = False,
+        input_transform: Optional[InputTransform] = None,
+        trainer: Optional["flash.Trainer"] = None,
     ) -> DataLoader:
         dataset = self._convert_dataset(
             trainer=trainer,
@@ -392,33 +394,31 @@ class Learn2LearnAdapter(Adapter):
         if isinstance(dataset, IterableDataset):
             shuffle = False
             sampler = None
-        return super().process_train_dataset(
-            dataset=dataset,
-            trainer=trainer,
-            input_transform=input_transform,
-            batch_size=self._sanetize_batch_size(batch_size),
+        return super().process_val_dataset(
+            dataset,
+            self._sanetize_batch_size(batch_size),
             num_workers=num_workers,
             pin_memory=False,
-            collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
             persistent_workers=persistent_workers,
+            input_transform=input_transform,
+            trainer=trainer,
         )
 
     def process_test_dataset(
         self,
         dataset: InputBase,
-        trainer: "flash.Trainer",
-        input_transform: InputTransform,
         batch_size: int,
-        num_workers: int,
-        pin_memory: bool,
-        collate_fn: Callable,
+        num_workers: int = 0,
+        pin_memory: bool = False,
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
         persistent_workers: bool = False,
+        input_transform: Optional[InputTransform] = None,
+        trainer: Optional["flash.Trainer"] = None,
     ) -> DataLoader:
         dataset = self._convert_dataset(
             trainer=trainer,
@@ -433,32 +433,31 @@ class Learn2LearnAdapter(Adapter):
         if isinstance(dataset, IterableDataset):
             shuffle = False
             sampler = None
-        return super().process_train_dataset(
-            dataset=dataset,
-            trainer=trainer,
-            input_transform=input_transform,
-            batch_size=self._sanetize_batch_size(batch_size),
+        return super().process_test_dataset(
+            dataset,
+            self._sanetize_batch_size(batch_size),
             num_workers=num_workers,
             pin_memory=False,
-            collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
             persistent_workers=persistent_workers,
+            input_transform=input_transform,
+            trainer=trainer,
         )
 
     def process_predict_dataset(
         self,
         dataset: InputBase,
-        input_transform: InputTransform,
-        batch_size: int = 1,
+        batch_size: int,
         num_workers: int = 0,
         pin_memory: bool = False,
-        collate_fn: Callable = lambda x: x,
         shuffle: bool = False,
-        drop_last: bool = True,
+        drop_last: bool = False,
         sampler: Optional[Sampler] = None,
         persistent_workers: bool = False,
+        input_transform: Optional[InputTransform] = None,
+        trainer: Optional["flash.Trainer"] = None,
     ) -> DataLoader:
 
         if not self._algorithm_has_validated:
@@ -467,16 +466,15 @@ class Learn2LearnAdapter(Adapter):
             )
 
         return super().process_predict_dataset(
-            dataset=dataset,
-            input_transform=input_transform,
-            batch_size=batch_size,
+            dataset,
+            batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
-            collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
             persistent_workers=persistent_workers,
+            input_transform=input_transform,
         )
 
 

@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, List
 
 import numpy as np
+import torch
 from torch import nn
 
 from flash.core.data.io.input import DataKeys
@@ -75,7 +76,9 @@ def to_icevision_record(sample: Dict[str, Any]):
         else:
             input_component = ImageRecordComponent()
         input_component.composite = record
-        input_component.set_img(sample[DataKeys.INPUT])
+        image = sample[DataKeys.INPUT]
+        image = image.permute(1, 2, 0).numpy() if isinstance(image, torch.Tensor) else image
+        input_component.set_img(image)
     record.add_component(input_component)
 
     if DataKeys.TARGET in sample:
@@ -126,9 +129,11 @@ def to_icevision_record(sample: Dict[str, Any]):
         if "keypoints" in sample[DataKeys.TARGET]:
             keypoints = []
 
-            for keypoints_list, keypoints_metadata in zip(
-                sample[DataKeys.TARGET]["keypoints"], sample[DataKeys.TARGET]["keypoints_metadata"]
-            ):
+            keypoints_metadata = sample[DataKeys.TARGET].get(
+                "keypoints_metadata", [None] * len(sample[DataKeys.TARGET]["keypoints"])
+            )
+
+            for keypoints_list, keypoints_metadata in zip(sample[DataKeys.TARGET]["keypoints"], keypoints_metadata):
                 xyv = []
                 for keypoint in keypoints_list:
                     xyv.extend((keypoint["x"], keypoint["y"], keypoint["visible"]))
