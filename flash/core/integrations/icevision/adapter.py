@@ -13,7 +13,7 @@
 # limitations under the License.
 import functools
 from importlib import import_module
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import torch
 from torch.utils.data import DataLoader, Sampler
@@ -91,12 +91,10 @@ class IceVisionAdapter(Adapter):
         return cls(model_type, model, icevision_adapter, backbone, predict_kwargs)
 
     @staticmethod
-    def _wrap_collate_fn(collate_fn, samples, metadata: Optional[List[Dict[str, Any]]] = None):
-        metadata = metadata or [None] * len(samples)
+    def _wrap_collate_fn(collate_fn, samples):
+        metadata = [sample.get(DataKeys.METADATA, None) for sample in samples]
         return {
-            DataKeys.INPUT: collate_fn(
-                [to_icevision_record({**sample, DataKeys.METADATA: m}) for sample, m in zip(samples, metadata)]
-            ),
+            DataKeys.INPUT: collate_fn([to_icevision_record(sample) for sample in samples]),
             DataKeys.METADATA: metadata,
         }
 
@@ -124,7 +122,7 @@ class IceVisionAdapter(Adapter):
             persistent_workers=persistent_workers,
         )
 
-        data_loader.collate_fn = functools.partial(self._wrap_collate_fn, self.collate_fn or data_loader.collate_fn)
+        data_loader.collate_fn = functools.partial(self._wrap_collate_fn, data_loader.collate_fn)
 
         input_transform = input_transform or self.input_transform
         if input_transform is not None:
@@ -156,7 +154,7 @@ class IceVisionAdapter(Adapter):
             persistent_workers=persistent_workers,
         )
 
-        data_loader.collate_fn = functools.partial(self._wrap_collate_fn, self.collate_fn or data_loader.collate_fn)
+        data_loader.collate_fn = functools.partial(self._wrap_collate_fn, data_loader.collate_fn)
 
         input_transform = input_transform or self.input_transform
         if input_transform is not None:
@@ -188,7 +186,7 @@ class IceVisionAdapter(Adapter):
             persistent_workers=persistent_workers,
         )
 
-        data_loader.collate_fn = functools.partial(self._wrap_collate_fn, self.collate_fn or data_loader.collate_fn)
+        data_loader.collate_fn = functools.partial(self._wrap_collate_fn, data_loader.collate_fn)
 
         input_transform = input_transform or self.input_transform
         if input_transform is not None:
@@ -220,7 +218,7 @@ class IceVisionAdapter(Adapter):
             persistent_workers=persistent_workers,
         )
 
-        data_loader.collate_fn = functools.partial(self._wrap_collate_fn, self.collate_fn or data_loader.collate_fn)
+        data_loader.collate_fn = functools.partial(self._wrap_collate_fn, data_loader.collate_fn)
 
         input_transform = input_transform or self.input_transform
         if input_transform is not None:

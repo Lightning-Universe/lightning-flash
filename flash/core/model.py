@@ -137,8 +137,7 @@ class DatasetProcessor:
         collate_fn = self.collate_fn
         if input_transform is not None:
             # Inject the `self.collate_fn`
-            if self.collate_fn is not None:
-                input_transform.inject_collate_fn(self.collate_fn)
+            input_transform.inject_collate_fn(self.collate_fn)
 
             collate_fn = create_worker_input_transform_processor(RunningStage.TRAINING, input_transform)
 
@@ -172,8 +171,7 @@ class DatasetProcessor:
         collate_fn = self.collate_fn
         if input_transform is not None:
             # Inject the `self.collate_fn`
-            if self.collate_fn is not None:
-                input_transform.inject_collate_fn(self.collate_fn)
+            input_transform.inject_collate_fn(self.collate_fn)
 
             collate_fn = create_worker_input_transform_processor(RunningStage.VALIDATING, input_transform)
 
@@ -207,8 +205,7 @@ class DatasetProcessor:
         collate_fn = self.collate_fn
         if input_transform is not None:
             # Inject the `self.collate_fn`
-            if self.collate_fn is not None:
-                input_transform.inject_collate_fn(self.collate_fn)
+            input_transform.inject_collate_fn(self.collate_fn)
 
             collate_fn = create_worker_input_transform_processor(RunningStage.TESTING, input_transform)
 
@@ -242,8 +239,7 @@ class DatasetProcessor:
         collate_fn = self.collate_fn
         if input_transform is not None:
             # Inject the `self.collate_fn`
-            if self.collate_fn is not None:
-                input_transform.inject_collate_fn(self.collate_fn)
+            input_transform.inject_collate_fn(self.collate_fn)
 
             collate_fn = create_worker_input_transform_processor(RunningStage.PREDICTING, input_transform)
 
