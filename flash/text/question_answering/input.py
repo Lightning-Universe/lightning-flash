@@ -158,9 +158,7 @@ class QuestionAnsweringSQuADInput(QuestionAnsweringDictionaryInput):
                 context = comprehension["context"]
                 for qa in comprehension["qas"]:
                     question = qa["question"]
-                    id = qa["id"]
-
-                    ids.append(id)
+                    ids.append(qa["id"])
                     titles.append(title)
                     contexts.append(context)
                     questions.append(question)

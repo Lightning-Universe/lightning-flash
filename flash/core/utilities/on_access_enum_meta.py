@@ -20,8 +20,8 @@ class OnAccessEnumMeta(EnumMeta):
             member._on_access()
         return member
 
-    def __call__(cls, value, names=None, *, module=None, qualname=None, type=None, start=1):
-        obj = super().__call__(value, names, module=module, qualname=qualname, type=type, start=start)
+    def __call__(cls, value, names=None, *, module=None, qualname=None, dtype=None, start=1):
+        obj = super().__call__(value, names, module=module, qualname=qualname, type=dtype, start=start)
         if isinstance(obj, Enum) and obj._on_access:
             obj._on_access()
         return obj

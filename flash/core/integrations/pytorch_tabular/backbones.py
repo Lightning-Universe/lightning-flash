@@ -51,7 +51,7 @@ if _PYTORCHTABULAR_AVAILABLE:
                     **{
                         k: v
                         for k, v in _config.items()
-                        if (k in cls.__dataclass_fields__.keys()) and (cls.__dataclass_fields__[k].init)
+                        if (k in cls.__dataclass_fields__.keys()) and cls.__dataclass_fields__[k].init
                     }
                 )
             else:
