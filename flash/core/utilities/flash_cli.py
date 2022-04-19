@@ -94,10 +94,7 @@ def make_args_optional(cls, args: Set[str]):
     filtered_parameters = [p for p in sig.parameters.values() if p.name in args and p.default == p.empty]
 
     index = [i for i, p in enumerate(parameters) if p.kind == p.VAR_KEYWORD]
-    if index == []:
-        index = len(parameters)
-    else:
-        index = index[0]
+    index = len(parameters) if not index else index[0]
 
     for p in filtered_parameters:
         new_parameter = Parameter(p.name, p.POSITIONAL_OR_KEYWORD, default=None, annotation=Optional[p.annotation])

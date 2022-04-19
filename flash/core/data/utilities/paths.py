@@ -98,16 +98,16 @@ def isdir(path: Any) -> bool:
         return False
 
 
-def list_subdirs(dir: PATH_TYPE) -> List[str]:
+def list_subdirs(folder: PATH_TYPE) -> List[str]:
     """List the subdirectories of a given directory.
 
     Args:
-        dir: The directory to scan.
+        folder: The directory to scan.
 
     Returns:
         The list of subdirectories.
     """
-    return list(sorted_alphanumeric(d.name for d in os.scandir(str(dir)) if d.is_dir()))
+    return list(sorted_alphanumeric(d.name for d in os.scandir(str(folder)) if d.is_dir()))
 
 
 def list_valid_files(
