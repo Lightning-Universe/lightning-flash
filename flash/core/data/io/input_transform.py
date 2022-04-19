@@ -14,7 +14,7 @@
 import inspect
 from dataclasses import dataclass
 from functools import partial
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.enums import LightningEnum
@@ -1116,13 +1116,6 @@ class _InputTransformProcessor:
         self.stage = stage
         self.on_device = on_device
 
-    @staticmethod
-    def _extract_metadata(
-        samples: List[Dict[str, Any]],
-    ) -> Tuple[List[Dict[str, Any]], Optional[List[Dict[str, Any]]]]:
-        metadata = [s.pop(DataKeys.METADATA, None) if isinstance(s, Mapping) else None for s in samples]
-        return samples, metadata if any(m is not None for m in metadata) else None
-
     def __call__(self, samples: Sequence[Any]) -> Any:
         if not self.on_device:
             for sample in samples:
@@ -1142,13 +1135,7 @@ class _InputTransformProcessor:
                 else:
                     self.callback.on_per_sample_transform(sample, self.stage)
 
-            extracted_samples, metadata = self._extract_metadata(transformed_samples)
-            try:
-                collated_samples = self.collate_fn(extracted_samples, self.stage, metadata)
-            except TypeError:
-                collated_samples = self.collate_fn(extracted_samples, self.stage)
-            if metadata and isinstance(collated_samples, dict):
-                collated_samples[DataKeys.METADATA] = metadata
+            collated_samples = self.collate_fn(transformed_samples, self.stage)
             self.callback.on_collate(collated_samples, self.stage)
         else:
             collated_samples = samples

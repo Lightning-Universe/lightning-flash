@@ -10,8 +10,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.
-import os
+# limitations under the License.import os
 from typing import Any
 from unittest import mock
 
@@ -19,30 +18,10 @@ import numpy as np
 import pytest
 import torch
 
-from flash import Trainer
 from flash.audio import SpeechRecognition
-from flash.audio.speech_recognition.data import InputTransform, SpeechRecognitionData
-from flash.core.data.io.input import DataKeys, Input
+from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _AUDIO_AVAILABLE, _AUDIO_TESTING, _SERVE_TESTING
-from flash.core.utilities.stages import RunningStage
 from tests.helpers.task_tester import TaskTester
-
-# ======== Mock functions ========
-
-
-class DummyDataset(torch.utils.data.Dataset):
-    def __getitem__(self, index):
-        return {
-            DataKeys.INPUT: np.random.randn(86631),
-            DataKeys.TARGET: "some target text",
-            DataKeys.METADATA: {"sampling_rate": 16000},
-        }
-
-    def __len__(self) -> int:
-        return 100
-
-
-# ==============================
 
 TEST_BACKBONE = "patrickvonplaten/wav2vec2_tiny_random_robust"  # tiny model for testing
 
@@ -65,22 +44,19 @@ class TestSpeechRecognition(TaskTester):
         assert isinstance(output, torch.Tensor)
         assert output.shape == torch.Size([1, 95, 12])
 
+    @property
+    def example_train_sample(self):
+        return {
+            DataKeys.INPUT: np.random.randn(86631),
+            DataKeys.TARGET: "some target text",
+            DataKeys.METADATA: {"sampling_rate": 16000},
+        }
+
 
 @pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 def test_modules_to_freeze():
     model = SpeechRecognition(backbone=TEST_BACKBONE)
     assert model.modules_to_freeze() is model.model.wav2vec2
-
-
-@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
-def test_init_train(tmpdir):
-    model = SpeechRecognition(backbone=TEST_BACKBONE)
-    datamodule = SpeechRecognitionData(
-        Input(RunningStage.TRAINING, DummyDataset(), transform=InputTransform), batch_size=2
-    )
-    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    trainer.fit(model, datamodule=datamodule)
 
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")

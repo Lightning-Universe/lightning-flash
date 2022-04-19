@@ -41,6 +41,7 @@ from flash.core.data.io.input_transform import (
 from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.output import BASE_OUTPUTS
+from flash.core.data.utilities.collate import default_collate
 from flash.core.finetuning import _FINETUNING_STRATEGIES_REGISTRY
 from flash.core.hooks import FineTuningHooks
 from flash.core.optimizers.optimizers import _OPTIMIZERS_REGISTRY
@@ -95,12 +96,12 @@ class DatasetProcessor:
     def __init__(self):
         super().__init__()
 
-        self._collate_fn = None
+        self._collate_fn = default_collate
         self._input_transform = None
 
     @torch.jit.unused
     @property
-    def collate_fn(self) -> Optional[Callable]:
+    def collate_fn(self) -> Callable:
         return self._collate_fn
 
     @collate_fn.setter
@@ -133,10 +134,10 @@ class DatasetProcessor:
     ) -> DataLoader:
         input_transform = input_transform or self.input_transform
 
-        collate_fn = None
+        collate_fn = self.collate_fn
         if input_transform is not None:
             # Inject the `self.collate_fn`
-            if self.collate_fn is not None and input_transform is not None:
+            if self.collate_fn is not None:
                 input_transform.inject_collate_fn(self.collate_fn)
 
             collate_fn = create_worker_input_transform_processor(RunningStage.TRAINING, input_transform)
@@ -168,10 +169,10 @@ class DatasetProcessor:
     ) -> DataLoader:
         input_transform = input_transform or self.input_transform
 
-        collate_fn = None
+        collate_fn = self.collate_fn
         if input_transform is not None:
             # Inject the `self.collate_fn`
-            if self.collate_fn is not None and input_transform is not None:
+            if self.collate_fn is not None:
                 input_transform.inject_collate_fn(self.collate_fn)
 
             collate_fn = create_worker_input_transform_processor(RunningStage.VALIDATING, input_transform)
@@ -203,10 +204,10 @@ class DatasetProcessor:
     ) -> DataLoader:
         input_transform = input_transform or self.input_transform
 
-        collate_fn = None
+        collate_fn = self.collate_fn
         if input_transform is not None:
             # Inject the `self.collate_fn`
-            if self.collate_fn is not None and input_transform is not None:
+            if self.collate_fn is not None:
                 input_transform.inject_collate_fn(self.collate_fn)
 
             collate_fn = create_worker_input_transform_processor(RunningStage.TESTING, input_transform)
@@ -238,10 +239,10 @@ class DatasetProcessor:
     ) -> DataLoader:
         input_transform = input_transform or self.input_transform
 
-        collate_fn = None
+        collate_fn = self.collate_fn
         if input_transform is not None:
             # Inject the `self.collate_fn`
-            if self.collate_fn is not None and input_transform is not None:
+            if self.collate_fn is not None:
                 input_transform.inject_collate_fn(self.collate_fn)
 
             collate_fn = create_worker_input_transform_processor(RunningStage.PREDICTING, input_transform)

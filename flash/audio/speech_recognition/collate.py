@@ -27,8 +27,8 @@ else:
 
 @dataclass
 class DataCollatorCTCWithPadding:
-    """
-    Data collator that will dynamically pad the inputs received.
+    """Data collator that will dynamically pad the inputs received.
+
     Args:
         processor (:class:`~transformers.Wav2Vec2Processor`)
             The processor used for proccessing the data.
@@ -59,9 +59,9 @@ class DataCollatorCTCWithPadding:
     pad_to_multiple_of: Optional[int] = None
     pad_to_multiple_of_labels: Optional[int] = None
 
-    def __call__(self, samples: List[Dict[str, Any]], metadata: List[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
+    def __call__(self, samples: List[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
         inputs = [sample[DataKeys.INPUT] for sample in samples]
-        sampling_rates = [sample["sampling_rate"] for sample in metadata]
+        sampling_rates = [sample[DataKeys.METADATA]["sampling_rate"] for sample in samples]
 
         assert (
             len(set(sampling_rates)) == 1
