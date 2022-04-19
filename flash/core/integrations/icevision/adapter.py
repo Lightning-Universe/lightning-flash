@@ -22,7 +22,6 @@ import flash
 from flash.core.adapter import Adapter
 from flash.core.data.io.input import DataKeys, InputBase
 from flash.core.data.io.input_transform import create_worker_input_transform_processor, InputTransform
-from flash.core.data.utilities.collate import wrap_collate
 from flash.core.integrations.icevision.transforms import (
     from_icevision_predictions,
     from_icevision_record,
@@ -93,8 +92,10 @@ class IceVisionAdapter(Adapter):
 
     @staticmethod
     def _wrap_collate_fn(collate_fn, samples):
+        metadata = [sample.get(DataKeys.METADATA, None) for sample in samples]
         return {
             DataKeys.INPUT: collate_fn([to_icevision_record(sample) for sample in samples]),
+            DataKeys.METADATA: metadata,
         }
 
     def process_train_dataset(
@@ -121,7 +122,7 @@ class IceVisionAdapter(Adapter):
             persistent_workers=persistent_workers,
         )
 
-        data_loader.collate_fn = wrap_collate(functools.partial(self._wrap_collate_fn, data_loader.collate_fn))
+        data_loader.collate_fn = functools.partial(self._wrap_collate_fn, data_loader.collate_fn)
 
         input_transform = input_transform or self.input_transform
         if input_transform is not None:
@@ -153,7 +154,7 @@ class IceVisionAdapter(Adapter):
             persistent_workers=persistent_workers,
         )
 
-        data_loader.collate_fn = wrap_collate(functools.partial(self._wrap_collate_fn, data_loader.collate_fn))
+        data_loader.collate_fn = functools.partial(self._wrap_collate_fn, data_loader.collate_fn)
 
         input_transform = input_transform or self.input_transform
         if input_transform is not None:
@@ -185,7 +186,7 @@ class IceVisionAdapter(Adapter):
             persistent_workers=persistent_workers,
         )
 
-        data_loader.collate_fn = wrap_collate(functools.partial(self._wrap_collate_fn, data_loader.collate_fn))
+        data_loader.collate_fn = functools.partial(self._wrap_collate_fn, data_loader.collate_fn)
 
         input_transform = input_transform or self.input_transform
         if input_transform is not None:
@@ -217,7 +218,7 @@ class IceVisionAdapter(Adapter):
             persistent_workers=persistent_workers,
         )
 
-        data_loader.collate_fn = wrap_collate(functools.partial(self._wrap_collate_fn, data_loader.collate_fn))
+        data_loader.collate_fn = functools.partial(self._wrap_collate_fn, data_loader.collate_fn)
 
         input_transform = input_transform or self.input_transform
         if input_transform is not None:
