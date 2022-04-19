@@ -24,6 +24,7 @@ from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.graph.backbones import GRAPH_BACKBONES
+from flash.graph.collate import _pyg_collate
 
 if _GRAPH_AVAILABLE:
     from torch_geometric.nn import global_add_pool, global_max_pool, global_mean_pool
@@ -100,6 +101,8 @@ class GraphClassifier(ClassificationTask):
             self.head = head
         else:
             self.head = DefaultGraphHead(num_out_features, num_classes)
+
+        self.collate_fn = _pyg_collate
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
