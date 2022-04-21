@@ -23,6 +23,7 @@ from pandas import DataFrame
 from torch.utils.data import SequentialSampler
 
 import flash
+from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _VIDEO_AVAILABLE, _VIDEO_TESTING
 from flash.video import VideoClassificationData, VideoClassifier
 from tests.helpers.task_tester import TaskTester
@@ -53,6 +54,10 @@ class TestVideoClassifier(TaskTester):
     def check_forward_output(self, output: Any):
         assert isinstance(output, torch.Tensor)
         assert output.shape == torch.Size([1, 2])
+
+    @property
+    def example_train_sample(self):
+        return {DataKeys.INPUT: torch.rand(3, 32, 256, 256), DataKeys.TARGET: 1}
 
 
 def create_dummy_video_frames(num_frames: int, height: int, width: int):
