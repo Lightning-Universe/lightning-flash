@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import partial
-from typing import Callable, Optional, Tuple
+from typing import Any, Callable, Dict, Optional
 
 from flash.core.utilities.flash_cli import FlashCLI
 from flash.core.utilities.imports import _ICEDATA_AVAILABLE, requires
@@ -34,8 +34,8 @@ def from_pets(
     test_ann_file: Optional[str] = None,
     predict_folder: Optional[str] = None,
     val_split: float = 0.1,
-    image_size: Tuple[int, int] = (128, 128),
     parser: Optional[Callable] = None,
+    transform_kwargs: Optional[Dict[str, Any]] = None,
     batch_size: int = 1,
     **data_module_kwargs,
 ) -> InstanceSegmentationData:
@@ -53,7 +53,7 @@ def from_pets(
         test_folder=test_folder,
         test_ann_file=test_ann_file,
         predict_folder=predict_folder,
-        transform_kwargs=dict(image_size=image_size),
+        transform_kwargs=dict(image_size=(128, 128)) if transform_kwargs is None else transform_kwargs,
         parser=parser,
         val_split=val_split,
         batch_size=batch_size,
