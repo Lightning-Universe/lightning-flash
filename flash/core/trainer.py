@@ -33,7 +33,7 @@ from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.io.transform_predictions import TransformPredictions
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_5_0
+from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_4_0, _PL_GREATER_EQUAL_1_5_0
 
 
 def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs):
@@ -286,7 +286,11 @@ class Trainer(PlTrainer):
         if total_batches == float("inf"):
             return self.max_steps
 
-        self.accumulate_grad_batches = accumulation_scheduler.get_accumulate_grad_batches(self.current_epoch)
+        if _PL_GREATER_EQUAL_1_4_0:
+            self.accumulate_grad_batches = accumulation_scheduler.get_accumulate_grad_batches(self.current_epoch)
+        else:
+            # Call the callback hook manually to guarantee that `self.accumulate_grad_batches` has been set
+            accumulation_scheduler.on_train_epoch_start(self, self.lightning_module)
         effective_batch_size = self.accumulate_grad_batches
         max_estimated_steps = math.ceil(total_batches / effective_batch_size) * max(self.max_epochs, 1)
 
