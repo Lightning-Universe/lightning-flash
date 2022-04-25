@@ -69,6 +69,7 @@ extras_req.update(
 )
 # some extra combinations
 extras_req["vision"] = _expand_reqs(extras_req, ["image", "video"])
+extras_req["core"] = _expand_reqs(extras_req, ["image", "tabular", "text"])
 extras_req["all"] = _expand_reqs(extras_req, ["vision", "tabular", "text", "audio"])
 extras_req["dev"] = _expand_reqs(extras_req, ["all", "test", "docs"])
 # filter the uniques
