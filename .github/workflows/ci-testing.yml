@@ -69,7 +69,7 @@ jobs:
       run: |
         fname = 'requirements.txt'
         ignore = ['pandas']
-        lines = [line.replace('>', '=') if any([line.startswith(package) for package in ignore]) else line for line in open(fname).readlines()]
+        lines = [line if any([line.startswith(package) for package in ignore]) else line.replace('>', '=') for line in open(fname).readlines()]
         open(fname, 'w').writelines(lines)
       shell: python
 
