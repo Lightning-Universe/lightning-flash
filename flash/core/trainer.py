@@ -33,6 +33,7 @@ from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.io.transform_predictions import TransformPredictions
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
+from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_5_0
 
 
 def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs):
@@ -270,7 +271,10 @@ class Trainer(PlTrainer):
 
         if self.train_dataloader is None:
             rank_zero_info("Loading `train_dataloader` to estimate number of stepping batches.")
-            self.reset_train_dataloader()
+            if _PL_GREATER_EQUAL_1_5_0:
+                self.reset_train_dataloader()
+            else:
+                self.reset_train_dataloader(self.lightning_module)
 
         total_batches = self.num_training_batches
 
