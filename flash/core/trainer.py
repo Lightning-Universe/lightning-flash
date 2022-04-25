@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import inspect
+import math
 import warnings
 from argparse import ArgumentParser, Namespace
 from functools import wraps
@@ -21,6 +22,7 @@ import torch
 from pytorch_lightning import LightningDataModule, LightningModule
 from pytorch_lightning import Trainer as PlTrainer
 from pytorch_lightning.callbacks import BaseFinetuning
+from pytorch_lightning.utilities import rank_zero_info
 from pytorch_lightning.utilities.argparse import add_argparse_args, get_init_arguments_and_types, parse_env_variables
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader
@@ -239,3 +241,46 @@ class Trainer(PlTrainer):
         # the lightning trainer implementation does not support subclasses.
         # context: https://github.com/PyTorchLightning/lightning-flash/issues/342#issuecomment-848892447
         return from_argparse_args(Trainer, args, **kwargs)
+
+    @property
+    def estimated_stepping_batches(self) -> Union[int, float]:
+        r"""
+        Estimated stepping batches for the complete training inferred from DataLoaders, gradient
+        accumulation factor and distributed setup.
+        Examples::
+            def configure_optimizers(self):
+                optimizer = ...
+                scheduler = torch.optim.lr_scheduler.OneCycleLR(
+                    optimizer, max_lr=1e-3, total_steps=self.trainer.estimated_stepping_batches
+                )
+                return [optimizer], [scheduler]
+        """
+        # Copied from PL 1.6
+        accumulation_scheduler = self.accumulation_scheduler
+
+        if accumulation_scheduler.epochs != [0]:
+            raise MisconfigurationException(
+                "Estimated stepping batches cannot be computed with different"
+                " `accumulate_grad_batches` at different epochs."
+            )
+
+        # infinite training
+        if self.max_epochs == -1 and self.max_steps == -1:
+            return float("inf")
+
+        if self.train_dataloader is None:
+            rank_zero_info("Loading `train_dataloader` to estimate number of stepping batches.")
+            self.reset_train_dataloader()
+
+        total_batches = self.num_training_batches
+
+        # iterable dataset
+        if total_batches == float("inf"):
+            return self.max_steps
+
+        self.accumulate_grad_batches = accumulation_scheduler.get_accumulate_grad_batches(self.current_epoch)
+        effective_batch_size = self.accumulate_grad_batches
+        max_estimated_steps = math.ceil(total_batches / effective_batch_size) * max(self.max_epochs, 1)
+
+        max_estimated_steps = min(max_estimated_steps, self.max_steps) if self.max_steps != -1 else max_estimated_steps
+        return max_estimated_steps

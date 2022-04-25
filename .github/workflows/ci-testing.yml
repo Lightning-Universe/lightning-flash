@@ -23,14 +23,14 @@ jobs:
         os: [ubuntu-20.04, macOS-10.15, windows-2019]
         python-version: [3.6, 3.8]
         requires: ['oldest', 'latest']
-        topic: [['devel']]
+        topic: [['all']]
         release: [ 'stable' ]
         exclude:
           - os: ubuntu-20.04
             python-version: 3.8
             requires: 'latest'
         include:
-          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'pre', topic: [ 'devel' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'pre', topic: [ 'all' ] }
           - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'image' ] }
           - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'image','image_extras' ] }
           - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'video' ] }

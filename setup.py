@@ -53,10 +53,8 @@ def _expand_reqs(extras: dict, keys: list) -> list:
 base_req = setup_tools._load_requirements(path_dir=_PATH_ROOT, file_name="requirements.txt")
 # find all extra requirements
 _load_req = partial(setup_tools._load_requirements, path_dir=_PATH_REQUIRE)
-SKIP_REQ_FILES = "devel.txt"
 found_req_files = sorted(os.path.basename(p) for p in glob.glob(os.path.join(_PATH_REQUIRE, "*.txt")))
-# filter unwanted files
-found_req_files = [n for n in found_req_files if n not in SKIP_REQ_FILES]
+# remove datatype prefix
 found_req_names = [os.path.splitext(req)[0].replace("datatype_", "") for req in found_req_files]
 # define basic and extra extras
 extras_req = {
