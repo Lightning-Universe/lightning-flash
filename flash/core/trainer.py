@@ -294,5 +294,7 @@ class Trainer(PlTrainer):
         effective_batch_size = self.accumulate_grad_batches
         max_estimated_steps = math.ceil(total_batches / effective_batch_size) * max(self.max_epochs, 1)
 
-        max_estimated_steps = min(max_estimated_steps, self.max_steps) if self.max_steps != -1 else max_estimated_steps
+        max_estimated_steps = (
+            min(max_estimated_steps, self.max_steps) if self.max_steps not in [None, -1] else max_estimated_steps
+        )
         return max_estimated_steps
