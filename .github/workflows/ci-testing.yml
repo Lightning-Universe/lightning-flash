@@ -68,7 +68,7 @@ jobs:
       if: matrix.requires == 'oldest'
       run: |
         fname = 'requirements.txt'
-        ignore = ['pandas']
+        ignore = ['pandas', 'torchmetrics']
         lines = [line if any([line.startswith(package) for package in ignore]) else line.replace('>', '=') for line in open(fname).readlines()]
         open(fname, 'w').writelines(lines)
       shell: python
