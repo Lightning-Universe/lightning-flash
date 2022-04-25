@@ -245,10 +245,14 @@ class Trainer(PlTrainer):
 
     @property
     def estimated_stepping_batches(self) -> Union[int, float]:
-        r"""
-        Estimated stepping batches for the complete training inferred from DataLoaders, gradient
-        accumulation factor and distributed setup.
-        Examples::
+        """Estimated stepping batches for the complete training inferred from DataLoaders, gradient accumulation
+        factor and distributed setup.
+
+        Examples
+        ________
+
+        .. code-block:: python
+
             def configure_optimizers(self):
                 optimizer = ...
                 scheduler = torch.optim.lr_scheduler.OneCycleLR(
