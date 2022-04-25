@@ -67,15 +67,10 @@ jobs:
     - name: Set min. dependencies
       if: matrix.requires == 'oldest'
       run: |
-        python -c "req = open('requirements.txt').read().replace('>', '=') ; open('requirements.txt', 'w').write(req)"
-
-    - name: Filter requirements
-      run: |
-        import sys
-        if sys.version_info.minor < 7:
-          fname = 'requirements.txt'
-          lines = [line for line in open(fname).readlines() if not line.startswith('pytorchvideo')]
-          open(fname, 'w').writelines(lines)
+        fname = 'requirements.txt'
+        ingore = ['pandas']
+        lines = [line.replace('>', '=') if any([line.startswith(package) for package in ignore]) else line for line in open(fname).readlines()]
+        open(fname, 'w').writelines(lines)
       shell: python
 
     - run: echo "::set-output name=period::$(python -c 'import time ; days = time.time() / 60 / 60 / 24 ; print(int(days / 7))' 2>&1)"
