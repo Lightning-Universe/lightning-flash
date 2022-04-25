@@ -49,7 +49,7 @@ class TestVideoClassifier(TaskTester):
 
     @property
     def example_forward_input(self):
-        return torch.rand(1, 3, 32, 256, 256)
+        return torch.rand(1, 3, 10, 244, 244)
 
     def check_forward_output(self, output: Any):
         assert isinstance(output, torch.Tensor)
@@ -57,7 +57,7 @@ class TestVideoClassifier(TaskTester):
 
     @property
     def example_train_sample(self):
-        return {DataKeys.INPUT: torch.rand(3, 32, 256, 256), DataKeys.TARGET: 1}
+        return {DataKeys.INPUT: torch.rand(3, 10, 244, 244), DataKeys.TARGET: 1}
 
 
 def create_dummy_video_frames(num_frames: int, height: int, width: int):
