@@ -26,9 +26,9 @@ jobs:
         topic: [['core']]
         release: [ 'stable' ]
         exclude:
-          - os: ubuntu-20.04
-            python-version: 3.9
-            requires: 'latest'
+          # Skip if torch<1.8 and py3.9 on Linux: https://github.com/pytorch/pytorch/issues/50014
+          - { os: ubuntu-20.04, python-version: 3.9, requires: 'oldest' }
+          - { os: ubuntu-20.04, python-version: 3.9, requires: 'latest' }
         include:
           - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'pre', topic: [ 'core' ] }
           - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'image' ] }
