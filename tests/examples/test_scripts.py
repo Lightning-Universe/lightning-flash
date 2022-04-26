@@ -115,7 +115,13 @@ root = Path(__file__).parent.parent.parent
             "tabular_forecasting.py",
             marks=pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed"),
         ),
-        pytest.param("template.py", marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")),
+        pytest.param(
+            "template.py",
+            marks=[
+                pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed"),
+                pytest.mark.skipif(sys.version_info >= (3, 9), reason="Undiagnosed segmentation fault in 3.9"),
+            ],
+        ),
         pytest.param(
             "text_classification.py",
             marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed"),
@@ -133,7 +139,6 @@ root = Path(__file__).parent.parent.parent
             marks=[
                 pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed"),
                 pytest.mark.skipif(os.name == "nt", reason="Encoding issues on Windows"),
-                pytest.mark.skipif(sys.version_info >= (3, 9), reason="Undiagnosed segmentation fault in 3.9"),
             ],
         ),
         pytest.param(
