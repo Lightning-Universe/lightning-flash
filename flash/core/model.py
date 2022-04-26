@@ -651,7 +651,12 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         if not getattr(self, "trainer", None):
             raise MisconfigurationException("The LightningModule isn't attached to the trainer yet.")
 
-        return self.trainer.estimated_stepping_batches
+        if hasattr(self.trainer, "estimated_stepping_batches"):
+            return self.trainer.estimated_stepping_batches
+
+        from flash.core.trainer import Trainer
+
+        return Trainer.estimated_stepping_batches.fget(self.trainer)
 
     @staticmethod
     def _compute_warmup(num_training_steps: int, num_warmup_steps: Union[int, float]) -> int:

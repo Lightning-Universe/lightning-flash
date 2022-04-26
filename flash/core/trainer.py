@@ -33,7 +33,7 @@ from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.io.transform_predictions import TransformPredictions
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_4_0, _PL_GREATER_EQUAL_1_5_0
+from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_4_0, _PL_GREATER_EQUAL_1_5_0, _PL_GREATER_EQUAL_1_6_0
 
 
 def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs):
@@ -260,6 +260,8 @@ class Trainer(PlTrainer):
                 )
                 return [optimizer], [scheduler]
         """
+        if _PL_GREATER_EQUAL_1_6_0:
+            return super().estimated_stepping_batches
         # Copied from PL 1.6
         accumulation_scheduler = self.accumulation_scheduler
 

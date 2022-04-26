@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import sys
 from pathlib import Path
 from unittest import mock
 
@@ -132,6 +133,7 @@ root = Path(__file__).parent.parent.parent
             marks=[
                 pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed"),
                 pytest.mark.skipif(os.name == "nt", reason="Encoding issues on Windows"),
+                pytest.mark.skipif(sys.version_info >= (3, 9), reason="Undiagnosed segmentation fault in 3.9"),
             ],
         ),
         pytest.param(
