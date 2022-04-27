@@ -66,6 +66,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Fixed a bug where the default Flash zero configurations for `ObjectDetector`, `InstanceSegmentation`, and `KeypointDetector` would error with the latest version of some requirements ([#1306](https://github.com/PyTorchLightning/lightning-flash/pull/1306))
 
+- Fixed a bug where LR schedulers from HuggingFace could not be used with newer versions of PyTorch Lightning ([#1307](https://github.com/PyTorchLightning/lightning-flash/pull/1307))
+
 ## [0.7.0] - 2022-02-15
 
 ### Added
