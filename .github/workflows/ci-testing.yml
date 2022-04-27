@@ -21,26 +21,26 @@ jobs:
       matrix:
         # PyTorch 1.5 is failing on Win and bolts requires torchvision>=0.5
         os: [ubuntu-20.04, macOS-10.15, windows-2019]
-        python-version: [3.6, 3.8]
+        python-version: [3.7, 3.9]
         requires: ['oldest', 'latest']
-        topic: [['devel']]
+        topic: [['core']]
         release: [ 'stable' ]
         exclude:
-          - os: ubuntu-20.04
-            python-version: 3.8
-            requires: 'latest'
+          # Skip if torch<1.8 and py3.9 on Linux: https://github.com/pytorch/pytorch/issues/50014
+          - { os: ubuntu-20.04, python-version: 3.9, requires: 'oldest' }
+          - { os: ubuntu-20.04, python-version: 3.9, requires: 'latest' }
         include:
-          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'pre', topic: [ 'devel' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'image' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'image','image_extras' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'video' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'video','video_extras' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'tabular' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'text' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'pre', topic: [ 'core' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'image' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'image','image_extras' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'video' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'video','video_extras' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'tabular' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'text' ] }
           - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'pointcloud' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'serve' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'graph' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'audio' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'serve' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'graph' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'audio' ] }
 
     # Timeout: https://stackoverflow.com/a/59076067/4521646
     timeout-minutes: 35
@@ -67,15 +67,10 @@ jobs:
     - name: Set min. dependencies
       if: matrix.requires == 'oldest'
       run: |
-        python -c "req = open('requirements.txt').read().replace('>', '=') ; open('requirements.txt', 'w').write(req)"
-
-    - name: Filter requirements
-      run: |
-        import sys
-        if sys.version_info.minor < 7:
-          fname = 'requirements.txt'
-          lines = [line for line in open(fname).readlines() if not line.startswith('pytorchvideo')]
-          open(fname, 'w').writelines(lines)
+        fname = 'requirements.txt'
+        ignore = ['pandas', 'torchmetrics']
+        lines = [line if any([line.startswith(package) for package in ignore]) else line.replace('>', '=') for line in open(fname).readlines()]
+        open(fname, 'w').writelines(lines)
       shell: python
 
     - run: echo "::set-output name=period::$(python -c 'import time ; days = time.time() / 60 / 60 / 24 ; print(int(days / 7))' 2>&1)"
