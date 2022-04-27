@@ -242,13 +242,6 @@ class DataModule(pl.LightningDataModule):
         else:
             sampler = self.sampler
 
-        # `transform_processor` is an _InputTransformProcessor object
-        # Use the `transform_processor` object directly as the collate_fn for the DataLoader.
-
-        # `self.input_transform` is an InputTransform object
-        # Inject the `self.collate_fn` returned by the model into the `transforms` dict of the `input_transform` object
-        # through the process_train_dataset method of the model.
-
         if isinstance(getattr(self, "trainer", None), pl.Trainer) and hasattr(
             self.trainer.lightning_module, "process_train_dataset"
         ):
@@ -391,13 +384,6 @@ class DataModule(pl.LightningDataModule):
             batch_size = self.batch_size
         else:
             batch_size = min(self.batch_size, len(predict_ds) if len(predict_ds) > 0 else 1)
-
-        # `transform_processor` is an _InputTransformProcessor object
-        # Use the `transform_processor` object directly as the collate_fn for the DataLoader.
-
-        # `self.input_transform` is an InputTransform object
-        # Inject the `self.collate_fn` returned by the model into the `transforms` dict of the `input_transform` object
-        # through the process_train_dataset method of the model.
 
         if isinstance(getattr(self, "trainer", None), pl.Trainer) and hasattr(
             self.trainer.lightning_module, "process_predict_dataset"

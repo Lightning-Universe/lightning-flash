@@ -66,28 +66,23 @@ def test_data_module():
             elif self.predicting:
                 return predict_fn
 
-        def val_per_batch_transform_on_device(self) -> Callable:
-            return val_fn
-
-        def test_per_batch_transform_on_device(self) -> Callable:
-            return test_fn
-
-        def predict_per_batch_transform_on_device(self) -> Callable:
-            return predict_fn
-
-    transform = TestTransform()
-    assert transform._transform is not None
-
-    train_dataset = Input(RunningStage.TRAINING, np.arange(10, dtype=np.float32))
+    train_dataset = Input(RunningStage.TRAINING, np.arange(10, dtype=np.float32), transform=TestTransform)
+    assert train_dataset.transform._running_stage == RunningStage.TRAINING
     assert train_dataset.running_stage == RunningStage.TRAINING
 
-    val_dataset = Input(RunningStage.VALIDATING, np.arange(10, dtype=np.float32))
+    transform = TestTransform(RunningStage.VALIDATING)
+    assert transform._running_stage == RunningStage.VALIDATING
+    val_dataset = Input(RunningStage.VALIDATING, np.arange(10, dtype=np.float32), transform=transform)
     assert val_dataset.running_stage == RunningStage.VALIDATING
 
-    test_dataset = Input(RunningStage.TESTING, np.arange(10, dtype=np.float32))
+    transform = TestTransform(RunningStage.TESTING)
+    assert transform._running_stage == RunningStage.TESTING
+    test_dataset = Input(RunningStage.TESTING, np.arange(10, dtype=np.float32), transform=transform)
     assert test_dataset.running_stage == RunningStage.TESTING
 
-    predict_dataset = Input(RunningStage.PREDICTING, np.arange(10, dtype=np.float32))
+    transform = TestTransform(RunningStage.PREDICTING)
+    assert transform._running_stage == RunningStage.PREDICTING
+    predict_dataset = Input(RunningStage.PREDICTING, np.arange(10, dtype=np.float32), transform=transform)
     assert predict_dataset.running_stage == RunningStage.PREDICTING
 
     dm = DataModule(
@@ -159,10 +154,9 @@ def test_data_module():
     trainer.test(model, datamodule=dm)
     trainer.predict(model, datamodule=dm)
 
-    transform = TestTransform()
-    input = Input(RunningStage.TRAINING)
-    dm = DataModule(train_input=input, batch_size=1, transform=transform)
-    assert isinstance(dm.input_transform, TestTransform)
+    input = Input(RunningStage.TRAINING, transform=TestTransform)
+    dm = DataModule(train_input=input, batch_size=1)
+    assert isinstance(dm._train_input.transform, TestTransform)
 
     class RandomDataset(Dataset):
         def __init__(self, size: int, length: int):
