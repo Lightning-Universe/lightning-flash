@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Fixed a bug where LR schedulers from HuggingFace could not be used with newer versions of PyTorch Lightning ([#1307](https://github.com/PyTorchLightning/lightning-flash/pull/1307))
 - Fixed a bug where the default Flash zero configurations for `ObjectDetector`, `InstanceSegmentation`, and `KeypointDetector` would error with the latest version of some requirements ([#1306](https://github.com/PyTorchLightning/lightning-flash/pull/1306))
 - Fixed plain `LightningModule` support for Flash data modules. ([#1281](https://github.com/PyTorchLightning/lightning-flash/pull/1281))
 

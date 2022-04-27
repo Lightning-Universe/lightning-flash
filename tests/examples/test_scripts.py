@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import sys
 from pathlib import Path
 from unittest import mock
 
@@ -114,7 +115,13 @@ root = Path(__file__).parent.parent.parent
             "tabular_forecasting.py",
             marks=pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed"),
         ),
-        pytest.param("template.py", marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")),
+        pytest.param(
+            "template.py",
+            marks=[
+                pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed"),
+                pytest.mark.skipif(sys.version_info >= (3, 9), reason="Undiagnosed segmentation fault in 3.9"),
+            ],
+        ),
         pytest.param(
             "text_classification.py",
             marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed"),
