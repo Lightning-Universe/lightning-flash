@@ -260,11 +260,11 @@ class IceVisionInputTransform(InputTransform):
 
     image_size: int = 128
 
-    @requires(["image", "icevision"])
+    @requires("image", "icevision")
     def per_sample_transform(self):
         return IceVisionTransformAdapter([*A.resize_and_pad(self.image_size), A.Normalize()])
 
-    @requires(["image", "icevision"])
+    @requires("image", "icevision")
     def train_per_sample_transform(self):
         return IceVisionTransformAdapter([*A.aug_tfms(size=self.image_size), A.Normalize()])
 

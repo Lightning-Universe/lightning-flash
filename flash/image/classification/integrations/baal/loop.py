@@ -47,7 +47,7 @@ class ActiveLearningLoop(Loop):
     max_epochs: int
     inference_model: InferenceMCDropoutTask
 
-    @requires(["baal", (_PL_GREATER_EQUAL_1_4_0, "pytorch-lightning>=1.4.0")])
+    @requires("baal", (_PL_GREATER_EQUAL_1_4_0, "pytorch-lightning>=1.4.0"))
     def __init__(self, label_epoch_frequency: int, inference_iteration: int = 2, should_reset_weights: bool = True):
         """The `ActiveLearning Loop` describes the following training procedure. This loop is connected with the
         `ActiveLearningTrainer`

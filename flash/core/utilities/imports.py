@@ -169,10 +169,7 @@ _EXTRAS_AVAILABLE = {
 }
 
 
-def requires(module_paths: Union[str, Tuple[bool, str], List[Union[str, Tuple[bool, str]]]]):
-
-    if not isinstance(module_paths, list):
-        module_paths = [module_paths]
+def requires(*module_paths: Union[str, Tuple[bool, str]]):
 
     def decorator(func):
         available = True
