@@ -16,8 +16,46 @@ from typing import Any, Dict, Mapping, Sequence, Union
 import torch
 from torch import nn
 
+from flash.core.data.io.input import DataKeys
 from flash.core.data.utilities.collate import default_collate
 from flash.core.data.utils import convert_to_modules
+from flash.core.utilities.imports import requires
+
+
+class AlbumentationsAdapter(torch.nn.Module):
+    # mapping from albumentations to Flash
+    SAMPLE_MAPPING = {DataKeys.INPUT: "image", DataKeys.TARGET: "mask"}
+
+    @requires("albumentations")
+    def __init__(self, transform, mapping: dict = None):
+        assert callable(transform)
+        # assert isinstance(transform, albumentations.Compose)
+        super().__init__()
+        self.transform = transform
+        if not mapping:
+            mapping = self.SAMPLE_MAPPING
+        self._mapping = mapping
+        self._mapping_rev = {v: k for k, v in mapping.items()}
+
+    def forward_sample(self, x: Any) -> Any:
+        if isinstance(x, dict):
+            x_ = {self._mapping.get(k, k): x[k] for k in x}
+        else:
+            x_ = {"image": x}
+        x_ = self.transform(**x_)
+        if isinstance(x, dict):
+            x = {self._mapping_rev.get(k, k): x_[k] for k in x_}
+        else:
+            x = x_["image"]
+        return x
+
+    def forward(self, x: Any) -> Any:
+        if isinstance(x, list):
+            for i, _ in enumerate(x):
+                x[i] = self.forward_sample(x[i])
+        else:
+            x = self.forward_sample(x)
+        return x
 
 
 class ApplyToKeys(nn.Sequential):

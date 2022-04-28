@@ -18,13 +18,12 @@ import torch
 
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform
-from flash.core.utilities.imports import _KORNIA_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.data.transforms import AlbumentationsAdapter
+from flash.core.utilities.imports import _ALBUMENTATIONS_AVAILABLE
 
-if _KORNIA_AVAILABLE:
-    import kornia as K
-
-if _TORCHVISION_AVAILABLE:
-    from flash.core.data.transforms import ApplyToKeys, kornia_collate, KorniaParallelTransforms
+if _ALBUMENTATIONS_AVAILABLE:
+    import albumentations as alb
+    from albumentations.pytorch import ToTensorV2
 
 
 def prepare_target(tensor: torch.Tensor) -> torch.Tensor:
@@ -41,28 +40,47 @@ def remove_extra_dimensions(batch: Dict[str, Any]):
 
 @dataclass
 class SemanticSegmentationInputTransform(InputTransform):
+    # https://albumentations.ai/docs/examples/pytorch_semantic_segmentation
 
     image_size: Tuple[int, int] = (128, 128)
+    image_color_mean: Tuple[float, float, float] = (0.485, 0.456, 0.406)
+    image_color_std: Tuple[float, float, float] = (0.229, 0.224, 0.225)
 
     def train_per_sample_transform(self) -> Callable:
-        return ApplyToKeys(
-            [DataKeys.INPUT, DataKeys.TARGET],
-            KorniaParallelTransforms(
-                K.geometry.Resize(self.image_size, interpolation="nearest"), K.augmentation.RandomHorizontalFlip(p=0.5)
-            ),
+        return AlbumentationsAdapter(
+            alb.Compose(
+                [
+                    alb.Resize(*self.image_size),
+                    alb.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2, rotate_limit=30, p=0.5),
+                    alb.RGBShift(r_shift_limit=25, g_shift_limit=25, b_shift_limit=25, p=0.5),
+                    alb.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=0.5),
+                    alb.Normalize(mean=self.image_color_mean, std=self.image_color_std),
+                    ToTensorV2(),
+                ]
+            )
         )
 
     def per_sample_transform(self) -> Callable:
-        return ApplyToKeys(
-            [DataKeys.INPUT, DataKeys.TARGET],
-            KorniaParallelTransforms(K.geometry.Resize(self.image_size, interpolation="nearest")),
+        return AlbumentationsAdapter(
+            alb.Compose(
+                [
+                    alb.Resize(*self.image_size),
+                    alb.Normalize(mean=self.image_color_mean, std=self.image_color_std),
+                    ToTensorV2(),
+                ]
+            )
         )
 
     def predict_input_per_sample_transform(self) -> Callable:
-        return K.geometry.Resize(self.image_size, interpolation="nearest")
-
-    def collate(self) -> Callable:
-        return kornia_collate
+        return AlbumentationsAdapter(
+            alb.Compose(
+                [
+                    alb.Resize(*self.image_size),
+                    alb.Normalize(mean=self.image_color_mean, std=self.image_color_std),
+                    ToTensorV2(),
+                ]
+            )
+        )
 
     def target_per_batch_transform(self) -> Callable:
         return prepare_target

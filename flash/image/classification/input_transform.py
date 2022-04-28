@@ -18,25 +18,10 @@ import torch
 
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.transforms import kornia_collate
-from flash.core.utilities.imports import _ALBUMENTATIONS_AVAILABLE, _TORCHVISION_AVAILABLE, requires
+from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 
 if _TORCHVISION_AVAILABLE:
     from torchvision import transforms as T
-
-if _ALBUMENTATIONS_AVAILABLE:
-    import albumentations
-
-
-class AlbumentationsAdapter(torch.nn.Module):
-    @requires("albumentations")
-    def __init__(self, transform):
-        super().__init__()
-        if not isinstance(transform, list):
-            transform = [transform]
-        self.transform = albumentations.Compose(transform)
-
-    def forward(self, x):
-        return torch.from_numpy(self.transform(image=x.numpy())["image"])
 
 
 @dataclass
