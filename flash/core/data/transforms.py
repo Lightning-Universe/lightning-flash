@@ -25,6 +25,8 @@ from flash.core.utilities.imports import _ALBUMENTATIONS_AVAILABLE, requires
 if _ALBUMENTATIONS_AVAILABLE:
     from albumentations import BasicTransform, Compose
     from albumentations.pytorch import ToTensorV2
+else:
+    BasicTransform, Compose, ToTensorV2 = object, object, object
 
 
 class AlbumentationsAdapter(nn.Module):
