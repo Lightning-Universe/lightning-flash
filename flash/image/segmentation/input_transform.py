@@ -23,7 +23,6 @@ from flash.core.utilities.imports import _ALBUMENTATIONS_AVAILABLE
 
 if _ALBUMENTATIONS_AVAILABLE:
     import albumentations as alb
-    from albumentations.pytorch import ToTensorV2
 
 
 def prepare_target(tensor: torch.Tensor) -> torch.Tensor:
@@ -48,38 +47,29 @@ class SemanticSegmentationInputTransform(InputTransform):
 
     def train_per_sample_transform(self) -> Callable:
         return AlbumentationsAdapter(
-            alb.Compose(
-                [
-                    alb.Resize(*self.image_size),
-                    alb.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2, rotate_limit=30, p=0.5),
-                    alb.RGBShift(r_shift_limit=25, g_shift_limit=25, b_shift_limit=25, p=0.5),
-                    alb.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=0.5),
-                    alb.Normalize(mean=self.image_color_mean, std=self.image_color_std),
-                    ToTensorV2(),
-                ]
-            )
+            [
+                alb.Resize(*self.image_size),
+                alb.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2, rotate_limit=30, p=0.5),
+                alb.RGBShift(r_shift_limit=25, g_shift_limit=25, b_shift_limit=25, p=0.5),
+                alb.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=0.5),
+                alb.Normalize(mean=self.image_color_mean, std=self.image_color_std),
+            ]
         )
 
     def per_sample_transform(self) -> Callable:
         return AlbumentationsAdapter(
-            alb.Compose(
-                [
-                    alb.Resize(*self.image_size),
-                    alb.Normalize(mean=self.image_color_mean, std=self.image_color_std),
-                    ToTensorV2(),
-                ]
-            )
+            [
+                alb.Resize(*self.image_size),
+                alb.Normalize(mean=self.image_color_mean, std=self.image_color_std),
+            ]
         )
 
     def predict_input_per_sample_transform(self) -> Callable:
         return AlbumentationsAdapter(
-            alb.Compose(
-                [
-                    alb.Resize(*self.image_size),
-                    alb.Normalize(mean=self.image_color_mean, std=self.image_color_std),
-                    ToTensorV2(),
-                ]
-            )
+            [
+                alb.Resize(*self.image_size),
+                alb.Normalize(mean=self.image_color_mean, std=self.image_color_std),
+            ]
         )
 
     def target_per_batch_transform(self) -> Callable:

@@ -13,48 +13,58 @@
 # limitations under the License.
 from typing import Any, Dict, Mapping, Sequence, Union
 
+import numpy as np
 import torch
-from torch import nn
+from torch import nn, Tensor
 
 from flash.core.data.io.input import DataKeys
 from flash.core.data.utilities.collate import default_collate
 from flash.core.data.utils import convert_to_modules
-from flash.core.utilities.imports import requires
+from flash.core.utilities.imports import _ALBUMENTATIONS_AVAILABLE, requires
+
+if _ALBUMENTATIONS_AVAILABLE:
+    from albumentations import BasicTransform, Compose
+    from albumentations.pytorch import ToTensorV2
 
 
-class AlbumentationsAdapter(torch.nn.Module):
+class AlbumentationsAdapter(nn.Module):
     # mapping from albumentations to Flash
-    SAMPLE_MAPPING = {DataKeys.INPUT: "image", DataKeys.TARGET: "mask"}
+    TRANSFORM_INPUT_MAPPING = {"image": DataKeys.INPUT, "mask": DataKeys.TARGET}
 
     @requires("albumentations")
-    def __init__(self, transform, mapping: dict = None):
-        assert callable(transform)
-        # assert isinstance(transform, albumentations.Compose)
+    def __init__(
+        self,
+        transform: Union[BasicTransform, Sequence[BasicTransform]],
+        mapping: dict = None,
+        image_key: str = DataKeys.INPUT,
+    ):
         super().__init__()
-        self.transform = transform
+        if not isinstance(transform, (list, tuple)):
+            transform = [transform]
+        self.transform = Compose(list(transform) + [ToTensorV2()])
+        self._img_key = image_key
         if not mapping:
-            mapping = self.SAMPLE_MAPPING
-        self._mapping = mapping
-        self._mapping_rev = {v: k for k, v in mapping.items()}
+            mapping = self.TRANSFORM_INPUT_MAPPING
+        self._mapping_rev = mapping
+        self._mapping = {v: k for k, v in mapping.items()}
 
-    def forward_sample(self, x: Any) -> Any:
-        if isinstance(x, dict):
-            x_ = {self._mapping.get(k, k): x[k] for k in x}
-        else:
-            x_ = {"image": x}
-        x_ = self.transform(**x_)
-        if isinstance(x, dict):
-            x = {self._mapping_rev.get(k, k): x_[k] for k in x_}
-        else:
-            x = x_["image"]
-        return x
+    def _image_transform(self, x: Tensor) -> np.ndarray:
+        if x.ndim == 3 and x.shape[0] < 4:
+            return x.permute(1, 2, 0).numpy()
+        return x.numpy()
 
     def forward(self, x: Any) -> Any:
-        if isinstance(x, list):
-            for i, _ in enumerate(x):
-                x[i] = self.forward_sample(x[i])
+        if isinstance(x, dict):
+            x_ = {self._mapping.get(k, k): x[k].numpy() for k in self._mapping if k != self._img_key}
+            if self._img_key in self._mapping:
+                x_.update({self._mapping[self._img_key]: self._image_transform(x[self._img_key])})
         else:
-            x = self.forward_sample(x)
+            x_ = {"image": self._image_transform(x)}
+        x_ = self.transform(**x_)
+        if isinstance(x, dict):
+            x.update({self._mapping_rev.get(k, k): x_[k] for k in self._mapping_rev})
+        else:
+            x = x_["image"]
         return x
 
 
