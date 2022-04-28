@@ -23,8 +23,8 @@ from flash.core.data.io.output import Output
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,
-    _KORNIA_AVAILABLE,
     _MATPLOTLIB_AVAILABLE,
+    _TORCHVISION_AVAILABLE,
     lazy_import,
     requires,
 )
@@ -42,10 +42,10 @@ if _MATPLOTLIB_AVAILABLE:
 else:
     plt = None
 
-if _KORNIA_AVAILABLE:
-    import kornia as K
+if _TORCHVISION_AVAILABLE:
+    from torchvision import transforms as T
 else:
-    K = None
+    T = None
 
 
 SEMANTIC_SEGMENTATION_OUTPUTS = FlashRegistry("outputs")
@@ -90,7 +90,7 @@ class SegmentationLabelsOutput(Output):
     @requires("matplotlib")
     def _visualize(self, labels):
         labels_vis = self.labels_to_image(labels, self.labels_map)
-        labels_vis = K.utils.tensor_to_image(labels_vis)
+        labels_vis = T.ToPILImage(labels_vis)
         plt.imshow(labels_vis)
         plt.show()
 

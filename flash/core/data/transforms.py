@@ -57,14 +57,14 @@ class AlbumentationsAdapter(nn.Module):
 
     def forward(self, x: Any) -> Any:
         if isinstance(x, dict):
-            x_ = {self._mapping.get(k, k): x[k].numpy() for k in self._mapping if k != self._img_key}
-            if self._img_key in self._mapping:
+            x_ = {self._mapping.get(k, k): x[k].numpy() for k in self._mapping if k in x and k != self._img_key}
+            if self._img_key in self._mapping and self._img_key in x:
                 x_.update({self._mapping[self._img_key]: self._image_transform(x[self._img_key])})
         else:
             x_ = {"image": self._image_transform(x)}
         x_ = self.transform(**x_)
         if isinstance(x, dict):
-            x.update({self._mapping_rev.get(k, k): x_[k] for k in self._mapping_rev})
+            x.update({self._mapping_rev.get(k, k): x_[k] for k in self._mapping_rev if k in x_})
         else:
             x = x_["image"]
         return x

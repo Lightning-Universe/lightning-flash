@@ -17,7 +17,6 @@ from typing import Callable, Tuple, Union
 import torch
 
 from flash.core.data.io.input_transform import InputTransform
-from flash.core.data.transforms import kornia_collate
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 
 if _TORCHVISION_AVAILABLE:
@@ -41,7 +40,3 @@ class ImageClassificationInputTransform(InputTransform):
 
     def target_per_sample_transform(self) -> Callable:
         return torch.as_tensor
-
-    def collate(self) -> Callable:
-        # TODO: Remove kornia collate for default_collate
-        return kornia_collate
