@@ -23,6 +23,8 @@ from flash.core.utilities.imports import _ALBUMENTATIONS_AVAILABLE
 
 if _ALBUMENTATIONS_AVAILABLE:
     import albumentations as alb
+else:
+    alb = None
 
 
 def prepare_target(tensor: torch.Tensor) -> torch.Tensor:
