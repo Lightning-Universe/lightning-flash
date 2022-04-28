@@ -50,10 +50,11 @@ class SemanticSegmentationInput(Input):
             self.labels_map = labels_map
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        sample[DataKeys.INPUT] = sample[DataKeys.INPUT].float()
-        if DataKeys.TARGET in sample:
-            sample[DataKeys.TARGET] = sample[DataKeys.TARGET].float()
-        sample[DataKeys.METADATA] = {"size": sample[DataKeys.INPUT].shape[-2:]}
+        sample[DataKeys.METADATA] = {
+            "size": sample[DataKeys.INPUT].size,
+            "height": sample[DataKeys.INPUT].height,
+            "width": sample[DataKeys.INPUT].width,
+        }
         return sample
 
 
@@ -104,9 +105,11 @@ class SemanticSegmentationFilesInput(SemanticSegmentationInput):
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         filepath = sample[DataKeys.INPUT]
-        sample[DataKeys.INPUT] = to_tensor(image_loader(filepath))
+        sample[DataKeys.INPUT] = image_loader(filepath)
         if DataKeys.TARGET in sample:
-            sample[DataKeys.TARGET] = (to_tensor(image_loader(sample[DataKeys.TARGET])) * 255).long()[0]
+            im_segm = image_loader(sample[DataKeys.TARGET])
+            sample[DataKeys.TARGET] = (to_tensor(im_segm) * 255).long()[0]
+        assert sample[DataKeys.INPUT].size[::-1] == sample[DataKeys.TARGET].size()
         sample = super().load_sample(sample)
         sample[DataKeys.METADATA]["filepath"] = filepath
         return sample

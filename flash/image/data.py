@@ -72,11 +72,13 @@ class ImageInput(Input):
         w, h = sample[DataKeys.INPUT].size  # W x H
         if DataKeys.METADATA not in sample:
             sample[DataKeys.METADATA] = {}
-        sample[DataKeys.METADATA].update({
-            "size": (h, w),
-            "height": h,
-            "width": w,
-        })
+        sample[DataKeys.METADATA].update(
+            {
+                "size": (h, w),
+                "height": h,
+                "width": w,
+            }
+        )
         return sample
 
 

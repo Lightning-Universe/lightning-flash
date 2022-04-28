@@ -206,6 +206,8 @@ def from_icevision_record(record: "BaseRecord"):
     sample = {
         DataKeys.METADATA: {
             "size": (record.height, record.width),
+            "height": record.height,
+            "width": record.width,
         }
     }
 
