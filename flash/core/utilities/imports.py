@@ -170,7 +170,6 @@ _EXTRAS_AVAILABLE = {
 
 
 def requires(*module_paths: Union[str, Tuple[bool, str]]):
-
     def decorator(func):
         available = True
         extras = []
