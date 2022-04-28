@@ -283,7 +283,7 @@ class CheckDependenciesMeta(ABCMeta):
             patterns = ["load_from_checkpoint", "available_*"]  # must match classmethods only
             regex = "(" + ")|(".join(patterns) + ")"
             for attribute_name, attribute_value in filter(lambda x: re.match(regex, x[0]), inspect.getmembers(result)):
-                setattr(result, attribute_name, classmethod(requires(result.required_extras)(attribute_value.__func__)))
+                setattr(result, attribute_name, classmethod(requires(*result.required_extras)(attribute_value.__func__)))
         return result
 
 
