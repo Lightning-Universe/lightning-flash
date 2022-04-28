@@ -18,6 +18,7 @@ from packaging import version
 from pytorch_lightning import Callback, LightningDataModule, LightningModule, Trainer
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.plugins.environments import SLURMEnvironment
+from torch.nn import Module
 
 from flash.core.utilities.compatibility import accelerator_connector
 from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_4_0, _PL_GREATER_EQUAL_1_6_0, _TORCHVISION_AVAILABLE
@@ -453,8 +454,8 @@ def test_lightning_cli_torch_modules(tmpdir):
     class TestModule(BoringModel):
         def __init__(
             self,
-            activation: torch.nn.Module = None,
-            transform: Optional[List[torch.nn.Module]] = None,
+            activation: Module = None,
+            transform: Optional[List[Module]] = None,
         ):
             super().__init__()
             self.activation = activation
@@ -489,7 +490,7 @@ def test_lightning_cli_torch_modules(tmpdir):
     assert isinstance(cli.model.activation, torch.nn.LeakyReLU)
     assert cli.model.activation.negative_slope == 0.2
     assert len(cli.model.transform) == 2
-    assert all(isinstance(v, torch.nn.Module) for v in cli.model.transform)
+    assert all(isinstance(v, Module) for v in cli.model.transform)
 
 
 class BoringModelRequiredClasses(BoringModel):

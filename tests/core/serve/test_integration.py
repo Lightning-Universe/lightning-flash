@@ -412,7 +412,7 @@ def test_composition_from_url_torchscript_servable(tmp_path):
 
     """
     # Tensor x Tensor
-    class MyModule(torch.nn.Module):
+    class MyModule(Module):
         def __init__(self):
             super(MyModule, self).__init__()
 

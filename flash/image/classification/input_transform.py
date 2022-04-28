@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from typing import Callable, Tuple, Union
 
 import torch
+from torch.nn import Module
 
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.transforms import kornia_collate
@@ -27,7 +28,7 @@ if _ALBUMENTATIONS_AVAILABLE:
     import albumentations
 
 
-class AlbumentationsAdapter(torch.nn.Module):
+class AlbumentationsAdapter(Module):
     @requires("albumentations")
     def __init__(self, transform):
         super().__init__()
