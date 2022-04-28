@@ -121,7 +121,7 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_paramlinks",
     "sphinx_togglebutton",
-    "pt_lightning_sphinx_theme.extensions.lightning_tutorials",
+    "pt_lightning_sphinx_theme.extensions.lightning",
 ]
 
 # autodoc: Default to members and undoc-members
