@@ -1,0 +1,2 @@
+# This is a separate file, as baal integration is affected by vissl installation (conflicts)
+baal>=1.5.2
