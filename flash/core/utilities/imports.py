@@ -60,6 +60,11 @@ def _compare_version(package: str, op, version) -> bool:
         return False
     try:
         pkg_version = Version(pkg.__version__)
+    except AttributeError:
+        # In case the module doesn't have __version__ attribute (example: baal)
+        import pkg_resources
+
+        pkg_version = Version(pkg_resources.get_distribution("baal").version)
     except TypeError:
         # this is mock by sphinx, so it shall return True to generate all summaries
         return True
@@ -128,6 +133,7 @@ if Version:
     _PANDAS_GREATER_EQUAL_1_3_0 = _compare_version("pandas", operator.ge, "1.3.0")
     _ICEVISION_GREATER_EQUAL_0_11_0 = _compare_version("icevision", operator.ge, "0.11.0")
     _TM_GREATER_EQUAL_0_7_0 = _compare_version("torchmetrics", operator.ge, "0.7.0")
+    _BAAL_GREATER_EQUAL_1_5_2 = _compare_version("baal", operator.ge, "1.5.2")
 
 _TEXT_AVAILABLE = all(
     [
