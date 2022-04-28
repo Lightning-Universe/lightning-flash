@@ -15,8 +15,8 @@ import os
 import warnings
 from typing import Any, Dict, Optional, Type, Union
 
-import torch
 import torch.nn as nn
+from torch import Tensor
 
 from flash.audio.speech_recognition.backbone import SPEECH_RECOGNITION_BACKBONES
 from flash.audio.speech_recognition.collate import DataCollatorCTCWithPadding
@@ -85,7 +85,7 @@ class SpeechRecognition(Task):
     def modules_to_freeze(self) -> Optional[nn.Module]:
         return self.model.base_model
 
-    def forward(self, batch: Dict[str, torch.Tensor]):
+    def forward(self, batch: Dict[str, Tensor]):
         return self.model(batch["input_values"]).logits
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:

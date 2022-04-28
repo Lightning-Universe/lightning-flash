@@ -15,6 +15,7 @@ from typing import Any
 
 import pytest
 import torch
+from torch import Tensor
 
 from flash import RunningStage, Trainer
 from flash.core.data.data_module import DataModule
@@ -49,7 +50,7 @@ class TestGraphClassifier(TaskTester):
         return Batch.from_data_list([Data(x=x, edge_index=edge_index)])
 
     def check_forward_output(self, output: Any):
-        assert isinstance(output, torch.Tensor)
+        assert isinstance(output, Tensor)
         assert output.shape == torch.Size([1, 2])
 
     @property

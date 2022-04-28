@@ -16,6 +16,7 @@ from unittest import mock
 
 import pytest
 import torch
+from torch import Tensor
 
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
@@ -71,7 +72,7 @@ class TestImageClassifier(TaskTester):
         return torch.rand(1, 3, 32, 32)
 
     def check_forward_output(self, output: Any):
-        assert isinstance(output, torch.Tensor)
+        assert isinstance(output, Tensor)
         assert output.shape == torch.Size([1, 2])
 
     @property

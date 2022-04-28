@@ -17,6 +17,7 @@ from typing import Any
 
 import pytest
 import torch
+from torch import Tensor
 
 from flash import Trainer
 from flash.core.utilities.imports import _TEXT_AVAILABLE, _TEXT_TESTING
@@ -67,7 +68,7 @@ class TestQuestionAnsweringTask(TaskTester):
         }
 
     def check_forward_output(self, output: Any):
-        assert isinstance(output[0], torch.Tensor)
+        assert isinstance(output[0], Tensor)
         assert isinstance(output[1], collections.OrderedDict)
 
 

@@ -14,7 +14,7 @@
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import torch
-from torch import nn
+from torch import nn, Tensor
 from torch.nn import functional as F
 from torch.nn import Linear
 
@@ -119,7 +119,7 @@ class GraphClassifier(ClassificationTask):
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         return super().predict_step(batch[DataKeys.INPUT], batch_idx, dataloader_idx=dataloader_idx)
 
-    def forward(self, data) -> torch.Tensor:
+    def forward(self, data) -> Tensor:
         x = self.backbone(data.x, data.edge_index)
         x = self.pooling_fn(x, data.batch)
         return self.head(x)

@@ -18,6 +18,7 @@ import pandas as pd
 import pytest
 import torch
 from pytorch_lightning import Trainer
+from torch import Tensor
 
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _SERVE_TESTING, _TABULAR_AVAILABLE, _TABULAR_TESTING
@@ -74,7 +75,7 @@ class TestTabularClassifier(TaskTester):
         }
 
     def check_forward_output(self, output: Any):
-        assert isinstance(output, torch.Tensor)
+        assert isinstance(output, Tensor)
         assert output.shape == torch.Size([1, 10])
 
 

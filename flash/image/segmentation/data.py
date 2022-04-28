@@ -14,7 +14,7 @@
 from typing import Any, Collection, Dict, Optional, Sequence, Tuple, Type
 
 import numpy as np
-import torch
+from torch import Tensor
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
@@ -396,13 +396,13 @@ class SemanticSegmentationData(DataModule):
     @classmethod
     def from_tensors(
         cls,
-        train_data: Optional[Collection[torch.Tensor]] = None,
-        train_targets: Optional[Collection[torch.Tensor]] = None,
-        val_data: Optional[Collection[torch.Tensor]] = None,
-        val_targets: Optional[Collection[torch.Tensor]] = None,
-        test_data: Optional[Collection[torch.Tensor]] = None,
-        test_targets: Optional[Collection[torch.Tensor]] = None,
-        predict_data: Optional[Collection[torch.Tensor]] = None,
+        train_data: Optional[Collection[Tensor]] = None,
+        train_targets: Optional[Collection[Tensor]] = None,
+        val_data: Optional[Collection[Tensor]] = None,
+        val_targets: Optional[Collection[Tensor]] = None,
+        test_data: Optional[Collection[Tensor]] = None,
+        test_targets: Optional[Collection[Tensor]] = None,
+        predict_data: Optional[Collection[Tensor]] = None,
         input_cls: Type[Input] = SemanticSegmentationTensorInput,
         num_classes: Optional[int] = None,
         labels_map: Dict[int, Tuple[int, int, int]] = None,

@@ -24,6 +24,7 @@ from pytorch_lightning.plugins import DataParallelPlugin, DDPPlugin, DDPSpawnPlu
 from pytorch_lightning.trainer.states import TrainerFn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from pytorch_lightning.utilities.warnings import WarningCache
+from torch import Tensor
 from torch.utils.data import DataLoader, IterableDataset, Sampler
 
 import flash
@@ -521,7 +522,7 @@ class DefaultAdapter(Adapter):
         )
         return batch
 
-    def forward(self, x) -> torch.Tensor:
+    def forward(self, x) -> Tensor:
         # TODO: Resolve this hack
         if x.dim() == 3:
             x = x.unsqueeze(0)

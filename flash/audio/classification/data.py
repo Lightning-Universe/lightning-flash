@@ -15,7 +15,7 @@ from typing import Any, Callable, Collection, Dict, List, Optional, Sequence, Ty
 
 import numpy as np
 import pandas as pd
-import torch
+from torch import Tensor
 
 from flash.audio.classification.input import (
     AudioClassificationCSVInput,
@@ -385,13 +385,13 @@ class AudioClassificationData(DataModule):
     @classmethod
     def from_tensors(
         cls,
-        train_data: Optional[Collection[torch.Tensor]] = None,
+        train_data: Optional[Collection[Tensor]] = None,
         train_targets: Optional[Collection[Any]] = None,
-        val_data: Optional[Collection[torch.Tensor]] = None,
+        val_data: Optional[Collection[Tensor]] = None,
         val_targets: Optional[Sequence[Any]] = None,
-        test_data: Optional[Collection[torch.Tensor]] = None,
+        test_data: Optional[Collection[Tensor]] = None,
         test_targets: Optional[Sequence[Any]] = None,
-        predict_data: Optional[Collection[torch.Tensor]] = None,
+        predict_data: Optional[Collection[Tensor]] = None,
         input_cls: Type[Input] = AudioClassificationTensorInput,
         transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,

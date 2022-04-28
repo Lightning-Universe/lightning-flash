@@ -16,6 +16,7 @@ import os
 import numpy as np
 import pytest
 import torch
+from torch import Tensor
 
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
@@ -135,5 +136,5 @@ def test_jit(tmpdir, jitter, args):
     model = torch.jit.load(path)
 
     out = model(torch.rand(1, 16))
-    assert isinstance(out, torch.Tensor)
+    assert isinstance(out, Tensor)
     assert out.shape == torch.Size([1, 10])

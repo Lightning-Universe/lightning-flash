@@ -73,5 +73,5 @@ def default_uncollate(batch: Any) -> List[Any]:
         return list(batch)
     raise ValueError(
         "The batch of outputs to be uncollated is expected to be a `dict` or list-like "
-        "(e.g. `torch.Tensor`, `list`, `tuple`, etc.)."
+        "(e.g. `Tensor`, `list`, `tuple`, etc.)."
     )

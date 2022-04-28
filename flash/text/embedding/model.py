@@ -18,6 +18,7 @@ from typing import Any, Dict, List, Optional
 
 import torch
 from pytorch_lightning import Callback
+from torch import Tensor
 
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry, print_provider_info
@@ -86,7 +87,7 @@ class TextEmbedder(Task):
     def test_step(self, batch: Any, batch_idx: int) -> Any:
         raise NotImplementedError("Testing a `TextEmbedder` is not supported. Use a different text task instead.")
 
-    def forward(self, batch: Dict[str, torch.Tensor]) -> torch.Tensor:
+    def forward(self, batch: Dict[str, Tensor]) -> Tensor:
         """Adapted from sentence-transformers:
 
         https://github.com/UKPLab/sentence-transformers/blob/master/sentence_transformers/models/Transformer.py#L45

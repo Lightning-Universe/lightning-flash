@@ -14,7 +14,7 @@
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Tuple
 
-import torch
+from torch import Tensor
 
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform
@@ -27,7 +27,7 @@ if _TORCHVISION_AVAILABLE:
     from flash.core.data.transforms import ApplyToKeys, kornia_collate, KorniaParallelTransforms
 
 
-def prepare_target(tensor: torch.Tensor) -> torch.Tensor:
+def prepare_target(tensor: Tensor) -> Tensor:
     """Convert the target mask to long and remove the channel dimension."""
     return tensor.long().squeeze(1)
 

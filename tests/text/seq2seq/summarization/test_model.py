@@ -17,6 +17,7 @@ from unittest import mock
 
 import pytest
 import torch
+from torch import Tensor
 
 from flash import DataKeys, Trainer
 from flash.core.utilities.imports import _SERVE_TESTING, _TEXT_AVAILABLE, _TEXT_TESTING
@@ -59,7 +60,7 @@ class TestSummarizationTask(TaskTester):
         }
 
     def check_forward_output(self, output: Any):
-        assert isinstance(output, torch.Tensor)
+        assert isinstance(output, Tensor)
         assert output.shape == torch.Size([1, 128])
 
 

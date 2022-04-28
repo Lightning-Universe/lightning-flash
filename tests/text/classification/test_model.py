@@ -17,6 +17,7 @@ from unittest import mock
 
 import pytest
 import torch
+from torch import Tensor
 
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
@@ -61,7 +62,7 @@ class TestTextClassifier(TaskTester):
         return {"input_ids": torch.randint(1000, size=(1, 100))}
 
     def check_forward_output(self, output: Any):
-        assert isinstance(output, torch.Tensor)
+        assert isinstance(output, Tensor)
         assert output.shape == torch.Size([1, 2])
 
 

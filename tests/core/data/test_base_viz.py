@@ -19,6 +19,7 @@ import pytest
 import torch
 from pytorch_lightning import seed_everything
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from torch import Tensor
 
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.io.input import DataKeys
@@ -119,11 +120,11 @@ class TestBaseViz:
 
             res = _get_result("per_sample_transform")
             assert len(res) == B
-            assert isinstance(_extract_data(res), torch.Tensor)
+            assert isinstance(_extract_data(res), Tensor)
 
             if not is_predict:
                 res = _get_result("per_sample_transform")
-                assert isinstance(res[0][DataKeys.TARGET], torch.Tensor)
+                assert isinstance(res[0][DataKeys.TARGET], Tensor)
 
             res = _get_result("collate")
             assert _extract_data(res).shape == (B, 3, 196, 196)
