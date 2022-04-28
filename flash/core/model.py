@@ -276,7 +276,9 @@ class CheckDependenciesMeta(ABCMeta):
     def __new__(mcs, *args, **kwargs):
         result = ABCMeta.__new__(mcs, *args, **kwargs)
         if result.required_extras is not None:
-            result.__init__ = requires(result.required_extras)(result.__init__)
+            if isinstance(result.required_extras, str):
+                result.required_extras = [result.required_extras]
+            result.__init__ = requires(*result.required_extras)(result.__init__)
 
             patterns = ["load_from_checkpoint", "available_*"]  # must match classmethods only
             regex = "(" + ")|(".join(patterns) + ")"
