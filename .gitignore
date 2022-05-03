@@ -171,6 +171,7 @@ __MACOSX
 cifar-10*
 mini-imagenet*
 squad_tiny*
+SeoulBikeData.csv
 
 docs/source/_static/images/course_UvA-DL
 docs/source/_static/images/lightning_examples
