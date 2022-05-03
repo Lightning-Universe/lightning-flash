@@ -734,14 +734,12 @@ class TextClassificationData(DataModule):
 
         Args:
             export_json: path to label studio export file
-            train_export_json: path to label studio export file for train set,
-            overrides export_json if specified
+            train_export_json: path to label studio export file for train set, overrides export_json if specified
             val_export_json: path to label studio export file for validation
             test_export_json: path to label studio export file for test
             predict_export_json: path to label studio export file for predict
             data_folder: path to label studio data folder
-            train_data_folder: path to label studio data folder for train data set,
-            overrides data_folder if specified
+            train_data_folder: path to label studio data folder for train data set, overrides data_folder if specified
             val_data_folder: path to label studio data folder for validation data
             test_data_folder: path to label studio data folder for test data
             predict_data_folder: path to label studio data folder for predict data
