@@ -68,6 +68,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Fixed a bug where LR schedulers from HuggingFace could not be used with newer versions of PyTorch Lightning ([#1307](https://github.com/PyTorchLightning/lightning-flash/pull/1307))
 
+- Fixed a bug where a loaded `TabularClassifier` or `TabularRegressor` checkpoint could not be served ([#1324](https://github.com/PyTorchLightning/lightning-flash/pull/1324))
+
 ## [0.7.0] - 2022-02-15
 
 ### Added
