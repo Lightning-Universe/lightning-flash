@@ -81,6 +81,8 @@ class VideoClassificationInput(IterableInput, ClassificationInputMixin):
 
     def load_sample(self, sample):
         sample["label"] = self.format_target(sample["label"])
+        sample[DataKeys.INPUT] = sample.pop("video")
+        sample[DataKeys.TARGET] = sample.pop("label")
         return sample
 
 
@@ -280,7 +282,7 @@ class VideoClassificationPathsPredictInput(Input):
         frames = loaded_clip["video"]
         audio_samples = loaded_clip["audio"]
         return {
-            "video": frames,
+            DataKeys.INPUT: frames,
             "video_name": video.name,
             "video_index": 0,
             "clip_index": clip_index,
