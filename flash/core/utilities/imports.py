@@ -121,7 +121,7 @@ else:
 
 if Version:
     _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
-    _TORCHVISION_GREATER_EQUAL_0_11 = _compare_version("torchvision", operator.ge, "0.9.0")
+    _TORCHVISION_GREATER_EQUAL_0_11 = _compare_version("torchvision", operator.ge, "0.11.0")
     _PL_GREATER_EQUAL_1_4_3 = _compare_version("pytorch_lightning", operator.ge, "1.4.3")
     _PL_GREATER_EQUAL_1_4_0 = _compare_version("pytorch_lightning", operator.ge, "1.4.0")
     _PL_GREATER_EQUAL_1_5_0 = _compare_version("pytorch_lightning", operator.ge, "1.5.0")
