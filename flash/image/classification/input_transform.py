@@ -18,7 +18,12 @@ import torch
 
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.transforms import kornia_collate
-from flash.core.utilities.imports import _ALBUMENTATIONS_AVAILABLE, _TORCHVISION_AVAILABLE, requires
+from flash.core.utilities.imports import (
+    _ALBUMENTATIONS_AVAILABLE,
+    _TORCHVISION_AVAILABLE,
+    _TORCHVISION_GREATER_EQUAL_0_11,
+    requires,
+)
 
 if _TORCHVISION_AVAILABLE:
     from torchvision import transforms as T
@@ -50,15 +55,14 @@ class ImageClassificationInputTransform(InputTransform):
         return T.Compose([T.ToTensor(), T.Resize(self.image_size), T.Normalize(self.mean, self.std)])
 
     def train_input_per_sample_transform(self):
-        return T.Compose(
-            [
-                T.ToTensor(),
-                T.Resize(self.image_size),
-                T.Normalize(self.mean, self.std),
-                T.RandomHorizontalFlip(),
-                T.TrivialAugmentWide(),
-            ]
-        )
+        transforms = [T.TrivialAugmentWide()] if _TORCHVISION_GREATER_EQUAL_0_11 else []
+        transforms += [
+            T.ToTensor(),
+            T.Resize(self.image_size),
+            T.RandomHorizontalFlip(),
+            T.Normalize(self.mean, self.std),
+        ]
+        return T.Compose(transforms)
 
     def target_per_sample_transform(self) -> Callable:
         return torch.as_tensor
