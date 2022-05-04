@@ -51,7 +51,13 @@ class ImageClassificationInputTransform(InputTransform):
 
     def train_input_per_sample_transform(self):
         return T.Compose(
-            [T.ToTensor(), T.Resize(self.image_size), T.Normalize(self.mean, self.std), T.RandomHorizontalFlip()]
+            [
+                T.ToTensor(),
+                T.Resize(self.image_size),
+                T.Normalize(self.mean, self.std),
+                T.RandomHorizontalFlip(),
+                T.TrivialAugmentWide(),
+            ]
         )
 
     def target_per_sample_transform(self) -> Callable:
