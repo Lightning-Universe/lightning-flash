@@ -24,7 +24,7 @@ if _ICEDATA_AVAILABLE:
 __all__ = ["instance_segmentation"]
 
 
-@requires(["image", "icedata"])
+@requires("image", "icedata")
 def from_pets(
     train_folder: Optional[str] = None,
     train_ann_file: Optional[str] = None,
