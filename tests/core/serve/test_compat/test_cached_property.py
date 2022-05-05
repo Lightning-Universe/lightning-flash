@@ -14,6 +14,7 @@ import pytest
 
 # Package Implementation
 from flash.core.serve._compat.cached_property import cached_property
+from flash.core.utilities.imports import _SERVE_TESTING
 
 
 class CachedCostItem:
@@ -77,6 +78,7 @@ class CachedCostItemWithSlots:
 
 
 # noinspection PyStatementEffect
+@pytest.mark.skipif(not _SERVE_TESTING)
 @pytest.mark.skipif(sys.version_info >= (3, 8), reason="Python 3.8+ uses standard library implementation.")
 class TestCachedProperty:
     @staticmethod
@@ -210,6 +212,7 @@ class TestCachedProperty:
         assert CachedCostItem.cost.__doc__ == "The cost of the item."
 
 
+@pytest.mark.skipif(not _SERVE_TESTING)
 @pytest.mark.skipif(sys.version_info < (3, 8), reason="Validate, that python 3.8 uses standard implementation")
 class TestPy38Plus:
     @staticmethod

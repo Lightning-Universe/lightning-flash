@@ -13,9 +13,13 @@
 # limitations under the License.
 from unittest.mock import Mock
 
+import pytest
+
 from flash.core.data.io.output import Output
+from flash.core.utilities.imports import _CORE_TESTING
 
 
+@pytest.mark.skipif(not _CORE_TESTING)
 def test_output():
     """Tests basic ``Output`` methods."""
     my_output = Output()

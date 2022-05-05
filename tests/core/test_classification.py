@@ -22,9 +22,10 @@ from flash.core.classification import (
     ProbabilitiesOutput,
 )
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _CORE_TESTING, _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE
 
 
+@pytest.mark.skipif(not _CORE_TESTING)
 def test_classification_outputs():
     example_output = torch.tensor([-0.1, 0.2, 0.3])  # 3 classes
     labels = ["class_1", "class_2", "class_3"]
@@ -37,6 +38,7 @@ def test_classification_outputs():
     assert LabelsOutput(labels).transform(example_output) == "class_3"
 
 
+@pytest.mark.skipif(not _CORE_TESTING)
 def test_classification_outputs_multi_label():
     example_output = torch.tensor([-0.1, 0.2, 0.3])  # 3 classes
     labels = ["class_1", "class_2", "class_3"]

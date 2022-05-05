@@ -2,6 +2,7 @@ import pytest
 import torch
 
 from flash.core.serve.types import Table
+from flash.core.utilities.imports import _SERVE_TESTING
 
 data = torch.tensor([[0.00632, 18.0, 2.31, 0.0, 0.538, 6.575, 65.2, 4.09, 1.0, 296.0, 15.3, 396.9, 4.98]])
 feature_names = [
@@ -21,6 +22,7 @@ feature_names = [
 ]
 
 
+@pytest.mark.skipif(not _SERVE_TESTING)
 def test_serialize_success():
     table = Table(column_names=feature_names)
     sample = data
@@ -29,6 +31,7 @@ def test_serialize_success():
         assert d2 == {0: d1.item()}
 
 
+@pytest.mark.skipif(not _SERVE_TESTING)
 def test_serialize_wrong_shape():
     table = Table(column_names=feature_names)
     sample = data.squeeze()
@@ -47,6 +50,7 @@ def test_serialize_wrong_shape():
         table.serialize(sample)
 
 
+@pytest.mark.skipif(not _SERVE_TESTING)
 def test_serialize_without_column_names():
     with pytest.raises(TypeError):
         Table()
@@ -56,6 +60,7 @@ def test_serialize_without_column_names():
     assert list(dict_data.keys()) == feature_names
 
 
+@pytest.mark.skipif(not _SERVE_TESTING)
 def test_deserialize():
     arr = torch.tensor([100, 200]).view(1, 2)
     table = Table(column_names=["t1", "t2"])
@@ -71,6 +76,7 @@ def test_deserialize():
     )
 
 
+@pytest.mark.skipif(not _SERVE_TESTING)
 def test_deserialize_column_names_failures():
     table = Table(["t1", "t2"])
     with pytest.raises(RuntimeError):

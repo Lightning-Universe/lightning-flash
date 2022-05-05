@@ -27,6 +27,7 @@ from torch.utils.data import DataLoader
 
 import flash
 from flash.core.model import Task
+from flash.core.utilities.imports import _CORE_TESTING
 from tests.helpers.boring_model import BoringModel
 
 
@@ -135,6 +136,7 @@ class CustomStrategyChecking(ModelCheckpoint):
             assert pl_module.model.layer.weight.requires_grad
 
 
+@pytest.mark.skipif(not _CORE_TESTING)
 @pytest.mark.parametrize(
     "strategy",
     [
@@ -151,6 +153,7 @@ def test_finetuning_with_none_return_type(strategy):
     trainer.finetune(task, train_dataloader=DataLoader(ds), strategy=strategy)
 
 
+@pytest.mark.skipif(not _CORE_TESTING)
 @pytest.mark.parametrize(
     ("strategy", "checker_class", "checker_class_data"),
     [
@@ -172,6 +175,7 @@ def test_finetuning(tmpdir, strategy, checker_class, checker_class_data):
     trainer.finetune(task, train_dataloader=DataLoader(ds), strategy=strategy)
 
 
+@pytest.mark.skipif(not _CORE_TESTING)
 @pytest.mark.parametrize(
     "strategy",
     [

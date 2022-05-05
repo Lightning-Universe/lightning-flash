@@ -16,8 +16,10 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.data_pipeline import DataPipeline
 from flash.core.data.io.input_transform import InputTransform
+from flash.core.utilities.imports import _CORE_TESTING
 
 
+@pytest.mark.skipif(not _CORE_TESTING)
 def test_is_overridden_recursive(tmpdir):
     class TestInputTransform(InputTransform):
         @staticmethod

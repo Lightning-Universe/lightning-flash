@@ -15,14 +15,14 @@ import numpy as np
 import pytest
 
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _SKLEARN_AVAILABLE
+from flash.core.utilities.imports import _CORE_TESTING, _SKLEARN_AVAILABLE
 from flash.template.classification.data import TemplateData
 
 if _SKLEARN_AVAILABLE:
     from sklearn import datasets
 
 
-@pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")
+@pytest.mark.skipif(not _CORE_TESTING)
 class TestTemplateData:
     """Tests ``TemplateData``."""
 
