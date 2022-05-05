@@ -53,6 +53,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Set Swap Space
+      if: runner.os == 'ubuntu'
       uses: pierotofy/set-swap-space@master
       with:
         swap-size-gb: 10
