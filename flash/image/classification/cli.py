@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 
 from flash.core.data.utils import download_data
 from flash.core.utilities.flash_cli import FlashCLI
@@ -42,11 +43,17 @@ def from_movie_posters(
 ) -> ImageClassificationData:
     """Downloads and loads the movie posters genre classification data set."""
     download_data("https://pl-flash-data.s3.amazonaws.com/movie_posters.zip", "./data")
+
+    def resolver(root, file_id):
+        return os.path.join(root, f"{file_id}.jpg")
+
     return ImageClassificationData.from_csv(
         "Id",
         ["Action", "Romance", "Crime", "Thriller", "Adventure"],
         train_file="data/movie_posters/train/metadata.csv",
+        train_resolver=resolver,
         val_file="data/movie_posters/val/metadata.csv",
+        val_resolver=resolver,
         batch_size=batch_size,
         num_workers=num_workers,
         **data_module_kwargs,

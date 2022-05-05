@@ -42,10 +42,11 @@ def test_base_data_fetcher(tmpdir):
         @classmethod
         def from_inputs(cls, train_data: Any, val_data: Any, test_data: Any, predict_data: Any) -> "CustomDataModule":
             return cls(
-                Input(RunningStage.TRAINING, train_data, transform=InputTransform),
-                Input(RunningStage.VALIDATING, val_data, transform=InputTransform),
-                Input(RunningStage.TESTING, test_data, transform=InputTransform),
-                Input(RunningStage.PREDICTING, predict_data, transform=InputTransform),
+                Input(RunningStage.TRAINING, train_data),
+                Input(RunningStage.VALIDATING, val_data),
+                Input(RunningStage.TESTING, test_data),
+                Input(RunningStage.PREDICTING, predict_data),
+                transform=InputTransform(),
                 batch_size=5,
             )
 

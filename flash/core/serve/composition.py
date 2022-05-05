@@ -31,7 +31,7 @@ def _parse_composition_kwargs(
         raise ValueError(
             "Must explicitly define atelast one Endpoint when " "two or more components are included in a composition."
         )
-    return (components, endpoints)
+    return components, endpoints
 
 
 class Composition(ServerMixin):

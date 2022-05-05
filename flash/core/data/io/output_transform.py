@@ -14,10 +14,9 @@
 from typing import Any, Sequence
 
 from flash.core.data.batch import default_uncollate
-from flash.core.data.properties import Properties
 
 
-class OutputTransform(Properties):
+class OutputTransform:
     """The :class:`~flash.core.data.io.output_transform.OutputTransform` encapsulates all the data processing logic
     that should run after the model."""
 

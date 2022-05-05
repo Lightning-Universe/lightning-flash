@@ -45,11 +45,8 @@ class TabularRegressionData(TabularData):
         val_data_frame: Optional[DataFrame] = None,
         test_data_frame: Optional[DataFrame] = None,
         predict_data_frame: Optional[DataFrame] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         input_cls: Type[Input] = TabularRegressionDataFrameInput,
+        transform: INPUT_TRANSFORM_TYPE = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TabularRegressionData":
@@ -77,12 +74,8 @@ class TabularRegressionData(TabularData):
             val_data_frame: The DataFrame to use when validating.
             test_data_frame: The DataFrame to use when testing.
             predict_data_frame: The DataFrame to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -151,22 +144,22 @@ class TabularRegressionData(TabularData):
             >>> del predict_data
         """
         ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
             categorical_fields=categorical_fields,
             numerical_fields=numerical_fields,
             target_field=target_field,
             parameters=parameters,
         )
 
-        train_input = input_cls(RunningStage.TRAINING, train_data_frame, transform=train_transform, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, train_data_frame, **ds_kw)
         ds_kw["parameters"] = train_input.parameters if train_input else parameters
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, val_data_frame, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_data_frame, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_data_frame, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_data_frame, **ds_kw),
+            input_cls(RunningStage.TESTING, test_data_frame, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_data_frame, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -181,11 +174,8 @@ class TabularRegressionData(TabularData):
         val_file: Optional[str] = None,
         test_file: Optional[str] = None,
         predict_file: Optional[str] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = InputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = InputTransform,
         input_cls: Type[Input] = TabularRegressionCSVInput,
+        transform: INPUT_TRANSFORM_TYPE = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TabularRegressionData":
@@ -212,12 +202,8 @@ class TabularRegressionData(TabularData):
             val_file: The path to the CSV file to use when validating.
             test_file: The path to the CSV file to use when testing.
             predict_file: The path to the CSV file to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
               :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -285,21 +271,21 @@ class TabularRegressionData(TabularData):
             >>> os.remove("predict_data.csv")
         """
         ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
             categorical_fields=categorical_fields,
             numerical_fields=numerical_fields,
             target_field=target_field,
             parameters=parameters,
         )
 
-        train_input = input_cls(RunningStage.TRAINING, train_file, transform=train_transform, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, train_file, **ds_kw)
         ds_kw["parameters"] = train_input.parameters if train_input else parameters
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, val_file, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_file, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_file, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_file, **ds_kw),
+            input_cls(RunningStage.TESTING, test_file, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_file, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )

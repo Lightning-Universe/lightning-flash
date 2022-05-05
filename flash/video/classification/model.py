@@ -131,7 +131,7 @@ class VideoClassifier(ClassificationTask):
         super().on_train_epoch_start()
 
     def step(self, batch: Any, batch_idx: int, metrics) -> Any:
-        return super().step((batch["video"], batch["label"]), batch_idx, metrics)
+        return super().step((batch[DataKeys.INPUT], batch[DataKeys.TARGET]), batch_idx, metrics)
 
     def forward(self, x: Any) -> Any:
         x = self.backbone(x)
@@ -140,7 +140,7 @@ class VideoClassifier(ClassificationTask):
         return x
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        predictions = self(batch["video"])
+        predictions = self(batch[DataKeys.INPUT])
         batch[DataKeys.PREDS] = predictions
         return batch
 

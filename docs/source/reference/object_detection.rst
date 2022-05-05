@@ -112,6 +112,6 @@ creating a subclass of :class:`~flash.core.data.io.input_transform.InputTransfor
         train_folder="data/coco128/images/train2017/",
         train_ann_file="data/coco128/annotations/instances_train2017.json",
         val_split=0.1,
-        train_transform=BrightnessContrastTransform,
+        transform=BrightnessContrastTransform,
         batch_size=4,
     )

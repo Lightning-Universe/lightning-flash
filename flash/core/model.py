@@ -33,11 +33,16 @@ from torch.utils.data import DataLoader, Sampler
 
 import flash
 from flash.core.data.io.input import InputBase, ServeInput
-from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.io.input_transform import (
+    create_or_configure_input_transform,
+    create_worker_input_transform_processor,
+    InputTransform,
+)
 from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.output import BASE_OUTPUTS
-from flash.core.finetuning import _DEFAULTS_FINETUNE_STRATEGIES, _FINETUNING_STRATEGIES_REGISTRY
+from flash.core.data.utilities.collate import default_collate
+from flash.core.finetuning import _FINETUNING_STRATEGIES_REGISTRY
 from flash.core.hooks import FineTuningHooks
 from flash.core.optimizers.optimizers import _OPTIMIZERS_REGISTRY
 from flash.core.optimizers.schedulers import _SCHEDULERS_REGISTRY
@@ -46,6 +51,7 @@ from flash.core.serve.composition import Composition
 from flash.core.utilities.apply_func import get_callable_dict
 from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_5_0, requires
 from flash.core.utilities.providers import _HUGGINGFACE
+from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import (
     INPUT_TRANSFORM_TYPE,
     LOSS_FN_TYPE,
@@ -90,12 +96,12 @@ class DatasetProcessor:
     def __init__(self):
         super().__init__()
 
-        self._collate_fn = None
+        self._collate_fn = default_collate
         self._input_transform = None
 
     @torch.jit.unused
     @property
-    def collate_fn(self) -> Optional[Callable]:
+    def collate_fn(self) -> Callable:
         return self._collate_fn
 
     @collate_fn.setter
@@ -104,25 +110,37 @@ class DatasetProcessor:
 
     @torch.jit.unused
     @property
-    def input_transform(self) -> Optional[INPUT_TRANSFORM_TYPE]:
-        return self._input_transform
+    def input_transform(self) -> Optional[InputTransform]:
+        if self._input_transform is not None:
+            return create_or_configure_input_transform(self._input_transform)
+        return None
 
     @input_transform.setter
-    def input_transform(self, input_transform: INPUT_TRANSFORM_TYPE) -> None:
+    def input_transform(self, input_transform: InputTransform) -> None:
         self._input_transform = input_transform
 
-    def _process_dataset(
+    def process_train_dataset(
         self,
         dataset: InputBase,
         batch_size: int,
-        num_workers: int,
-        pin_memory: bool,
-        collate_fn: Callable,
-        shuffle: bool = False,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        shuffle: bool = True,
         drop_last: bool = True,
         sampler: Optional[Sampler] = None,
         persistent_workers: bool = False,
+        input_transform: Optional[InputTransform] = None,
+        trainer: Optional["flash.Trainer"] = None,
     ) -> DataLoader:
+        input_transform = input_transform or self.input_transform
+
+        collate_fn = self.collate_fn
+        if input_transform is not None:
+            # Inject the `self.collate_fn`
+            input_transform.inject_collate_fn(self.collate_fn)
+
+            collate_fn = create_worker_input_transform_processor(RunningStage.TRAINING, input_transform)
+
         return DataLoader(
             dataset,
             batch_size=batch_size,
@@ -131,106 +149,109 @@ class DatasetProcessor:
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
-            collate_fn=self.collate_fn if self.collate_fn is not None else collate_fn,
-            persistent_workers=persistent_workers,
-        )
-
-    def process_train_dataset(
-        self,
-        dataset: InputBase,
-        trainer: "flash.Trainer",
-        batch_size: int,
-        num_workers: int,
-        pin_memory: bool,
-        collate_fn: Callable,
-        shuffle: bool = False,
-        drop_last: bool = True,
-        sampler: Optional[Sampler] = None,
-        persistent_workers: bool = False,
-    ) -> DataLoader:
-        return self._process_dataset(
-            dataset,
-            batch_size=batch_size,
-            num_workers=num_workers,
-            pin_memory=pin_memory,
-            collate_fn=self.collate_fn if self.collate_fn is not None else collate_fn,
-            shuffle=shuffle,
-            drop_last=drop_last,
-            sampler=sampler,
+            collate_fn=collate_fn,
             persistent_workers=persistent_workers,
         )
 
     def process_val_dataset(
         self,
         dataset: InputBase,
-        trainer: "flash.Trainer",
         batch_size: int,
-        num_workers: int,
-        pin_memory: bool,
-        collate_fn: Callable,
+        num_workers: int = 0,
+        pin_memory: bool = False,
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
         persistent_workers: bool = False,
+        input_transform: Optional[InputTransform] = None,
+        trainer: Optional["flash.Trainer"] = None,
     ) -> DataLoader:
-        return self._process_dataset(
+        input_transform = input_transform or self.input_transform
+
+        collate_fn = self.collate_fn
+        if input_transform is not None:
+            # Inject the `self.collate_fn`
+            input_transform.inject_collate_fn(self.collate_fn)
+
+            collate_fn = create_worker_input_transform_processor(RunningStage.VALIDATING, input_transform)
+
+        return DataLoader(
             dataset,
             batch_size=batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
-            collate_fn=self.collate_fn if self.collate_fn is not None else collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            collate_fn=collate_fn,
             persistent_workers=persistent_workers,
         )
 
     def process_test_dataset(
         self,
         dataset: InputBase,
-        trainer: "flash.Trainer",
         batch_size: int,
-        num_workers: int,
-        pin_memory: bool,
-        collate_fn: Callable,
+        num_workers: int = 0,
+        pin_memory: bool = False,
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
         persistent_workers: bool = False,
+        input_transform: Optional[InputTransform] = None,
+        trainer: Optional["flash.Trainer"] = None,
     ) -> DataLoader:
-        return self._process_dataset(
+        input_transform = input_transform or self.input_transform
+
+        collate_fn = self.collate_fn
+        if input_transform is not None:
+            # Inject the `self.collate_fn`
+            input_transform.inject_collate_fn(self.collate_fn)
+
+            collate_fn = create_worker_input_transform_processor(RunningStage.TESTING, input_transform)
+
+        return DataLoader(
             dataset,
             batch_size=batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
-            collate_fn=self.collate_fn if self.collate_fn is not None else collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            collate_fn=collate_fn,
             persistent_workers=persistent_workers,
         )
 
     def process_predict_dataset(
         self,
         dataset: InputBase,
-        batch_size: int = 1,
+        batch_size: int,
         num_workers: int = 0,
         pin_memory: bool = False,
-        collate_fn: Callable = None,
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
         persistent_workers: bool = False,
+        input_transform: Optional[InputTransform] = None,
+        trainer: Optional["flash.Trainer"] = None,
     ) -> DataLoader:
-        return self._process_dataset(
+        input_transform = input_transform or self.input_transform
+
+        collate_fn = self.collate_fn
+        if input_transform is not None:
+            # Inject the `self.collate_fn`
+            input_transform.inject_collate_fn(self.collate_fn)
+
+            collate_fn = create_worker_input_transform_processor(RunningStage.PREDICTING, input_transform)
+
+        return DataLoader(
             dataset,
             batch_size=batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
-            collate_fn=self.collate_fn if self.collate_fn is not None else collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            collate_fn=collate_fn,
             persistent_workers=persistent_workers,
         )
 
@@ -255,12 +276,16 @@ class CheckDependenciesMeta(ABCMeta):
     def __new__(mcs, *args, **kwargs):
         result = ABCMeta.__new__(mcs, *args, **kwargs)
         if result.required_extras is not None:
-            result.__init__ = requires(result.required_extras)(result.__init__)
+            if isinstance(result.required_extras, str):
+                result.required_extras = [result.required_extras]
+            result.__init__ = requires(*result.required_extras)(result.__init__)
 
             patterns = ["load_from_checkpoint", "available_*"]  # must match classmethods only
             regex = "(" + ")|(".join(patterns) + ")"
             for attribute_name, attribute_value in filter(lambda x: re.match(regex, x[0]), inspect.getmembers(result)):
-                setattr(result, attribute_name, classmethod(requires(result.required_extras)(attribute_value.__func__)))
+                setattr(
+                    result, attribute_name, classmethod(requires(*result.required_extras)(attribute_value.__func__))
+                )
         return result
 
 
@@ -271,6 +296,7 @@ class OutputKeys(LightningEnum):
     TARGET = "y"
     LOGS = "logs"
     LOSS = "loss"
+    BATCH_SIZE = "batch_size"
 
     # TODO: Create a FlashEnum class???
     def __hash__(self) -> int:
@@ -324,7 +350,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         self.test_metrics = nn.ModuleDict({} if metrics is None else get_callable_dict(deepcopy(metrics)))
         self.learning_rate = learning_rate
         # TODO: should we save more? Bug on some regarding yaml if we save metrics
-        self.save_hyperparameters("learning_rate", "optimizer")
+        self.save_hyperparameters("learning_rate", "optimizer", ignore=["model", "backbone", "head", "adapter"])
 
         self._output_transform: Optional[OutputTransform] = output_transform
 
@@ -374,6 +400,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         output[OutputKeys.LOSS] = self.compute_loss(losses)
         output[OutputKeys.LOGS] = self.compute_logs(logs, losses)
         output[OutputKeys.TARGET] = y
+        output[OutputKeys.BATCH_SIZE] = y.shape[0] if isinstance(y, torch.Tensor) else None
         return output
 
     def compute_loss(self, losses: Dict[str, torch.Tensor]) -> torch.Tensor:
@@ -401,30 +428,36 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         output = self.step(batch, batch_idx, self.train_metrics)
+        log_kwargs = {"batch_size": output.get(OutputKeys.BATCH_SIZE, None)} if _PL_GREATER_EQUAL_1_5_0 else {}
         self.log_dict(
             {f"train_{k}": v for k, v in output[OutputKeys.LOGS].items()},
             on_step=True,
             on_epoch=True,
             prog_bar=True,
+            **log_kwargs,
         )
         return output[OutputKeys.LOSS]
 
     def validation_step(self, batch: Any, batch_idx: int) -> None:
         output = self.step(batch, batch_idx, self.val_metrics)
+        log_kwargs = {"batch_size": output.get(OutputKeys.BATCH_SIZE, None)} if _PL_GREATER_EQUAL_1_5_0 else {}
         self.log_dict(
             {f"val_{k}": v for k, v in output[OutputKeys.LOGS].items()},
             on_step=False,
             on_epoch=True,
             prog_bar=True,
+            **log_kwargs,
         )
 
     def test_step(self, batch: Any, batch_idx: int) -> None:
         output = self.step(batch, batch_idx, self.test_metrics)
+        log_kwargs = {"batch_size": output.get(OutputKeys.BATCH_SIZE, None)} if _PL_GREATER_EQUAL_1_5_0 else {}
         self.log_dict(
             {f"test_{k}": v for k, v in output[OutputKeys.LOGS].items()},
             on_step=False,
             on_epoch=True,
             prog_bar=True,
+            **log_kwargs,
         )
 
     def predict(self, *args, **kwargs):
@@ -438,7 +471,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             batch = torch.stack(batch)
         return self(batch)
 
-    def modules_to_freeze(self) -> Optional[Union[nn.Module]]:
+    def modules_to_freeze(self) -> Optional[nn.Module]:
         """By default, we try to get the ``backbone`` attribute from the task and return it or ``None`` if not
         present.
 
@@ -512,7 +545,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         if isinstance(strategy, str):
             if strategy not in self.available_finetuning_strategies():
                 raise MisconfigurationException(
-                    f"Please provide a valid strategy from {_DEFAULTS_FINETUNE_STRATEGIES[:2]}."
+                    f"The `strategy` should be one of: {', '.join(self.available_finetuning_strategies())}."
                     " For more details and advanced finetuning options see our docs:"
                     " https://lightning-flash.readthedocs.io/en/stable/general/finetuning.html"
                 )
@@ -521,16 +554,15 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         elif isinstance(strategy, Tuple):
             if not isinstance(strategy[0], str) or strategy[0] not in self.available_finetuning_strategies():
                 raise MisconfigurationException(
-                    f"First input of `strategy` in a tuple configuration should be a string within"
-                    f" {_DEFAULTS_FINETUNE_STRATEGIES[3:]}"
+                    f"The first input of `strategy` in a tuple configuration should be one of:"
+                    f" {', '.join(self.available_finetuning_strategies())}."
                 )
             finetuning_strategy_fn: Callable = self.finetuning_strategies.get(key=strategy[0])
             finetuning_strategy_metadata = {"strategy_metadata": strategy[1], "train_bn": train_bn}
         else:
             raise MisconfigurationException(
-                "`strategy` should be a ``pytorch_lightning.callbacks.BaseFinetuning``"
-                f"callback or a str within {list(_DEFAULTS_FINETUNE_STRATEGIES[:3])}"
-                f"or a tuple configuration with {list(_DEFAULTS_FINETUNE_STRATEGIES[3:])}"
+                "The `strategy` should be a ``pytorch_lightning.callbacks.BaseFinetuning`` callback or one of: "
+                f"{', '.join(self.available_finetuning_strategies())}."
             )
 
         return [finetuning_strategy_fn(**finetuning_strategy_metadata)]
@@ -622,25 +654,13 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         """Total training steps inferred from datamodule and devices."""
         if not getattr(self, "trainer", None):
             raise MisconfigurationException("The LightningModule isn't attached to the trainer yet.")
-        if isinstance(self.trainer.limit_train_batches, int) and self.trainer.limit_train_batches != 0:
-            dataset_size = self.trainer.limit_train_batches
-        elif isinstance(self.trainer.limit_train_batches, float):
-            # limit_train_batches is a percentage of batches
-            dataset_size = len(self.train_dataloader())
-            dataset_size = int(dataset_size * self.trainer.limit_train_batches)
-        else:
-            dataset_size = len(self.train_dataloader())
 
-        num_devices = max(1, self.trainer.num_gpus, self.trainer.num_processes)
-        if self.trainer.tpu_cores:
-            num_devices = max(num_devices, self.trainer.tpu_cores)
+        if hasattr(self.trainer, "estimated_stepping_batches"):
+            return self.trainer.estimated_stepping_batches
 
-        effective_batch_size = self.trainer.accumulate_grad_batches * num_devices
-        max_estimated_steps = (dataset_size // effective_batch_size) * self.trainer.max_epochs
+        from flash.core.trainer import Trainer
 
-        if self.trainer.max_steps and self.trainer.max_steps < max_estimated_steps:
-            return self.trainer.max_steps
-        return max_estimated_steps
+        return Trainer.estimated_stepping_batches.fget(self.trainer)
 
     @staticmethod
     def _compute_warmup(num_training_steps: int, num_warmup_steps: Union[int, float]) -> int:
@@ -755,12 +775,6 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         # 2) If return value is a dictionary, check for the lr_scheduler_config `only keys` and return the config.
         lr_scheduler: Union[_LRScheduler, Dict[str, Any]] = lr_scheduler_fn(optimizer, **lr_scheduler_kwargs)
 
-        if not isinstance(lr_scheduler, (_LRScheduler, Dict)):
-            raise MisconfigurationException(
-                f"Please make sure that your custom configuration outputs either an LR Scheduler or a scheduler"
-                f" configuration with keys belonging to {list(default_scheduler_config.keys())}."
-            )
-
         if isinstance(lr_scheduler, Dict):
             dummy_config = default_scheduler_config
             if not all(config_key in dummy_config.keys() for config_key in lr_scheduler.keys()):
@@ -807,13 +821,15 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             return [BenchmarkConvergenceCI()]
 
     @requires("serve")
-    def run_serve_sanity_check(self, serve_input: ServeInput, output: Output):
+    def run_serve_sanity_check(
+        self, serve_input: ServeInput, transform: INPUT_TRANSFORM_TYPE, transform_kwargs: Optional[Dict], output: Output
+    ):
         from fastapi.testclient import TestClient
 
         from flash.core.serve.flash_components import build_flash_serve_model_component
 
         print("Running serve sanity check")
-        comp = build_flash_serve_model_component(self, serve_input, output)
+        comp = build_flash_serve_model_component(self, serve_input, output, transform, transform_kwargs)
         composition = Composition(predict=comp, TESTING=True, DEBUG=True)
         app = composition.serve(host="0.0.0.0", port=8000)
 
@@ -850,16 +866,16 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         if input_cls is None:
             raise NotImplementedError("The `input_cls` must be provided to enable serving.")
 
-        serve_input = input_cls(transform=transform, transform_kwargs=transform_kwargs)
+        serve_input = input_cls()
 
         output = output or Output()
         if isinstance(output, str):
             output = self.outputs.get(output).from_task(self)
 
         if sanity_check:
-            self.run_serve_sanity_check(serve_input, output)
+            self.run_serve_sanity_check(serve_input, transform, transform_kwargs, output)
 
-        comp = build_flash_serve_model_component(self, serve_input, output)
+        comp = build_flash_serve_model_component(self, serve_input, output, transform, transform_kwargs)
         composition = Composition(predict=comp, TESTING=flash._IS_TESTING)
         composition.serve(host=host, port=port)
         return composition

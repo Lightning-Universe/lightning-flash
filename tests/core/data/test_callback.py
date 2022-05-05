@@ -31,10 +31,12 @@ def test_flash_callback(_, __, tmpdir):
     callback_mock = mock.MagicMock()
 
     inputs = [(torch.rand(1), torch.rand(1))]
+    transform = InputTransform()
     dm = DataModule(
-        DatasetInput(RunningStage.TRAINING, inputs, transform=InputTransform),
-        DatasetInput(RunningStage.VALIDATING, inputs, transform=InputTransform),
-        DatasetInput(RunningStage.TESTING, inputs, transform=InputTransform),
+        DatasetInput(RunningStage.TRAINING, inputs),
+        DatasetInput(RunningStage.VALIDATING, inputs),
+        DatasetInput(RunningStage.TESTING, inputs),
+        transform=transform,
         batch_size=1,
         num_workers=0,
         data_fetcher=callback_mock,
@@ -53,8 +55,17 @@ def test_flash_callback(_, __, tmpdir):
         def __init__(self):
             super().__init__(model=torch.nn.Linear(1, 1), loss_fn=torch.nn.MSELoss())
 
-        def step(self, batch, batch_idx, metrics):
-            return super().step((batch[DataKeys.INPUT], batch[DataKeys.TARGET]), batch_idx, metrics)
+        def training_step(self, batch, batch_idx):
+            batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
+            return super().training_step(batch, batch_idx)
+
+        def validation_step(self, batch, batch_idx):
+            batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
+            return super().validation_step(batch, batch_idx)
+
+        def test_step(self, batch, batch_idx):
+            batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
+            return super().test_step(batch, batch_idx)
 
     trainer = Trainer(
         default_root_dir=tmpdir,
@@ -63,10 +74,12 @@ def test_flash_callback(_, __, tmpdir):
         limit_train_batches=1,
         progress_bar_refresh_rate=0,
     )
+    transform = InputTransform()
     dm = DataModule(
-        DatasetInput(RunningStage.TRAINING, inputs, transform=InputTransform),
-        DatasetInput(RunningStage.VALIDATING, inputs, transform=InputTransform),
-        DatasetInput(RunningStage.TESTING, inputs, transform=InputTransform),
+        DatasetInput(RunningStage.TRAINING, inputs),
+        DatasetInput(RunningStage.VALIDATING, inputs),
+        DatasetInput(RunningStage.TESTING, inputs),
+        transform=transform,
         batch_size=1,
         num_workers=0,
         data_fetcher=callback_mock,

@@ -1,3 +1,7 @@
 .longtable col {
     width: 50% !important;
 }
+
+article.pytorch-article .beta .admonition-title {
+    background: #792ee5 !important;
+}

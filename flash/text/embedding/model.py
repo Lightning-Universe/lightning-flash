@@ -91,15 +91,18 @@ class TextEmbedder(Task):
 
         https://github.com/UKPLab/sentence-transformers/blob/master/sentence_transformers/models/Transformer.py#L45
         """
+        attention_mask = batch.get("attention_mask", None)
+        if attention_mask is None:
+            attention_mask = torch.ones_like(batch["input_ids"])
 
-        trans_features = {"input_ids": batch["input_ids"], "attention_mask": batch["attention_mask"]}
+        trans_features = {"input_ids": batch["input_ids"], "attention_mask": attention_mask}
         if "token_type_ids" in batch:
             trans_features["token_type_ids"] = batch["token_type_ids"]
 
         output_states = self.model(**trans_features, return_dict=False)
         output_tokens = output_states[0]
 
-        batch.update({"token_embeddings": output_tokens, "attention_mask": batch["attention_mask"]})
+        batch.update({"token_embeddings": output_tokens, "attention_mask": attention_mask})
 
         return self.pooling(batch)["sentence_embedding"]
 

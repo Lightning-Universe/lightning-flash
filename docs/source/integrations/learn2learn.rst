@@ -1,3 +1,5 @@
+.. beta:: The Learn2Learn integration is currently in Beta.
+
 .. _learn2learn:
 
 ###########

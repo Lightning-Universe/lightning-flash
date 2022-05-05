@@ -53,9 +53,14 @@ class FlashOutputs(BaseType):
         return None
 
 
-def build_flash_serve_model_component(model, serve_input, output):
+def build_flash_serve_model_component(model, serve_input, output, transform, transform_kwargs):
     # TODO: Resolve this hack
-    data_module = DataModule(predict_input=serve_input, batch_size=1)
+    data_module = DataModule(
+        predict_input=serve_input,
+        batch_size=1,
+        transform=transform,
+        transform_kwargs=transform_kwargs,
+    )
 
     class MockTrainer(Trainer):
         def __init__(self):
@@ -78,7 +83,7 @@ def build_flash_serve_model_component(model, serve_input, output):
             self.serve_input = serve_input
             self.on_after_batch_transfer = data_module.on_after_batch_transfer
             self.output_transform = getattr(model, "_output_transform", None) or OutputTransform()
-            # todo (tchaton) Remove this hack
+            # TODO (@tchaton) Remove this hack
             self.extra_arguments = len(inspect.signature(self.model.transfer_batch_to_device).parameters) == 3
             self.device = self.model.device
 

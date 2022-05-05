@@ -22,17 +22,7 @@ if _ICEVISION_AVAILABLE:
     from icevision.backbones import BackboneConfig
 
 
-def icevision_model_adapter(model_type):
-    class IceVisionModelAdapter(model_type.lightning.ModelAdapter):
-        def log(self, name, value, **kwargs):
-            if "prog_bar" not in kwargs:
-                kwargs["prog_bar"] = True
-            return super().log(name.split("/")[-1], value, **kwargs)
-
-    return IceVisionModelAdapter
-
-
-def load_icevision(adapter, model_type, backbone, num_classes, **kwargs):
+def load_icevision(model_type, backbone, num_classes, **kwargs):
     model = model_type.model(backbone=backbone, num_classes=num_classes, **kwargs)
 
     backbone = nn.Module()
@@ -40,22 +30,31 @@ def load_icevision(adapter, model_type, backbone, num_classes, **kwargs):
     for i, param in enumerate(params):
         backbone.register_parameter(f"backbone_{i}", param)
 
-    return model_type, model, adapter(model_type), backbone
+    # Param groups cause a pickle error so we remove them
+    del model.param_groups
+    if hasattr(model, "backbone") and hasattr(model.backbone, "param_groups"):
+        del model.backbone.param_groups
+
+    return model_type, model, model_type.lightning.ModelAdapter, backbone
 
 
-def load_icevision_ignore_image_size(adapter, model_type, backbone, num_classes, image_size=None, **kwargs):
-    return load_icevision(adapter, model_type, backbone, num_classes, **kwargs)
+def load_icevision_ignore_image_size(model_type, backbone, num_classes, image_size=None, **kwargs):
+    return load_icevision(model_type, backbone, num_classes, **kwargs)
 
 
-def load_icevision_with_image_size(adapter, model_type, backbone, num_classes, image_size=None, **kwargs):
+def load_icevision_with_image_size(model_type, backbone, num_classes, image_size=None, **kwargs):
     kwargs["img_size"] = image_size
-    return load_icevision(adapter, model_type, backbone, num_classes, **kwargs)
+    return load_icevision(model_type, backbone, num_classes, **kwargs)
 
 
 def get_backbones(model_type):
     _BACKBONES = FlashRegistry("backbones")
 
     for backbone_name, backbone_config in getmembers(model_type.backbones, lambda x: isinstance(x, BackboneConfig)):
+        # Only torchvision backbones with an FPN are supported
+        if "torchvision" in model_type.__name__ and "fpn" not in backbone_name:
+            continue
+
         _BACKBONES(
             backbone_config,
             name=backbone_name,

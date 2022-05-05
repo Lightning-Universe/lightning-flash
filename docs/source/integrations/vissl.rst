@@ -1,3 +1,5 @@
+.. beta:: The VISSL integration is currently in Beta.
+
 .. _vissl:
 
 #####

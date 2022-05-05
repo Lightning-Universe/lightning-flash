@@ -13,10 +13,9 @@
 # limitations under the License.
 import contextlib
 import os
-import re
 import tempfile
 from pathlib import Path
-from unittest import mock
+from typing import Any
 
 import pytest
 import torch
@@ -24,9 +23,10 @@ from pandas import DataFrame
 from torch.utils.data import SequentialSampler
 
 import flash
-from flash.__main__ import main
+from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _VIDEO_AVAILABLE, _VIDEO_TESTING
 from flash.video import VideoClassificationData, VideoClassifier
+from tests.helpers.task_tester import TaskTester
 
 if _FIFTYONE_AVAILABLE:
     import fiftyone as fo
@@ -34,6 +34,30 @@ if _FIFTYONE_AVAILABLE:
 if _VIDEO_AVAILABLE:
     import torchvision.io as io
     from pytorchvideo.data.utils import thwc_to_cthw
+
+
+class TestVideoClassifier(TaskTester):
+
+    task = VideoClassifier
+    task_args = (2,)
+    task_kwargs = {"pretrained": False, "backbone": "slow_r50"}
+    cli_command = "video_classification"
+    is_testing = _VIDEO_TESTING
+    is_available = _VIDEO_AVAILABLE
+
+    scriptable = False
+
+    @property
+    def example_forward_input(self):
+        return torch.rand(1, 3, 10, 244, 244)
+
+    def check_forward_output(self, output: Any):
+        assert isinstance(output, torch.Tensor)
+        assert output.shape == torch.Size([1, 2])
+
+    @property
+    def example_train_sample(self):
+        return {DataKeys.INPUT: torch.rand(3, 10, 244, 244), DataKeys.TARGET: 1}
 
 
 def create_dummy_video_frames(num_frames: int, height: int, width: int):
@@ -252,38 +276,3 @@ def test_video_classifier_finetune_fiftyone(tmpdir):
         model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50")
         trainer = flash.Trainer(fast_dev_run=True, gpus=torch.cuda.device_count())
         trainer.finetune(model, datamodule=datamodule)
-
-
-@pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
-def test_jit(tmpdir):
-    sample_input = torch.rand(1, 3, 32, 256, 256)
-    path = os.path.join(tmpdir, "test.pt")
-
-    model = VideoClassifier(2, pretrained=False, backbone="slow_r50")
-    model.eval()
-
-    # pytorchvideo only works with `torch.jit.trace`
-    model = torch.jit.trace(model, sample_input)
-
-    torch.jit.save(model, path)
-    model = torch.jit.load(path)
-
-    out = model(sample_input)
-    assert isinstance(out, torch.Tensor)
-    assert out.shape == torch.Size([1, 2])
-
-
-@pytest.mark.skipif(_VIDEO_AVAILABLE, reason="video libraries are installed.")
-def test_load_from_checkpoint_dependency_error():
-    with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[video]'")):
-        VideoClassifier.load_from_checkpoint("not_a_real_checkpoint.pt")
-
-
-@pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
-def test_cli():
-    cli_args = ["flash", "video_classification", "--trainer.fast_dev_run", "True", "num_workers", "0"]
-    with mock.patch("sys.argv", cli_args):
-        try:
-            main()
-        except SystemExit:
-            pass

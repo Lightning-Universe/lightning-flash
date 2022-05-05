@@ -84,10 +84,6 @@ class VideoClassificationData(DataModule):
         test_files: Optional[Sequence[str]] = None,
         test_targets: Optional[Sequence[Any]] = None,
         predict_files: Optional[Sequence[str]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
         target_formatter: Optional[TargetFormatter] = None,
         clip_sampler: Union[str, "ClipSampler"] = "random",
         clip_duration: float = 2,
@@ -97,6 +93,7 @@ class VideoClassificationData(DataModule):
         decoder: str = "pyav",
         input_cls: Type[Input] = VideoClassificationFilesInput,
         predict_input_cls: Type[Input] = VideoClassificationPathsPredictInput,
+        transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
     ) -> "VideoClassificationData":
@@ -117,11 +114,6 @@ class VideoClassificationData(DataModule):
             test_files: The list of video files to use when testing.
             test_targets: The list of targets to use when testing.
             predict_files: The list of video files to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             clip_sampler: The clip sampler to use. One of: ``"uniform"``, ``"random"``, ``"constant_clips_per_video"``.
@@ -134,6 +126,7 @@ class VideoClassificationData(DataModule):
                 videos.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             predict_input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the prediction data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -181,8 +174,6 @@ class VideoClassificationData(DataModule):
             >>> _ = [os.remove(f"predict_video_{i}.mp4") for i in range(1, 4)]
         """
         ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
             clip_sampler=clip_sampler,
             clip_duration=clip_duration,
             clip_sampler_kwargs=clip_sampler_kwargs,
@@ -194,7 +185,6 @@ class VideoClassificationData(DataModule):
             RunningStage.TRAINING,
             train_files,
             train_targets,
-            transform=train_transform,
             video_sampler=video_sampler,
             target_formatter=target_formatter,
             **ds_kw,
@@ -207,7 +197,6 @@ class VideoClassificationData(DataModule):
                 RunningStage.VALIDATING,
                 val_files,
                 val_targets,
-                transform=val_transform,
                 video_sampler=video_sampler,
                 target_formatter=target_formatter,
                 **ds_kw,
@@ -216,12 +205,13 @@ class VideoClassificationData(DataModule):
                 RunningStage.TESTING,
                 test_files,
                 test_targets,
-                transform=test_transform,
                 video_sampler=video_sampler,
                 target_formatter=target_formatter,
                 **ds_kw,
             ),
-            predict_input_cls(RunningStage.PREDICTING, predict_files, transform=predict_transform, **ds_kw),
+            predict_input_cls(RunningStage.PREDICTING, predict_files, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -232,10 +222,6 @@ class VideoClassificationData(DataModule):
         val_folder: Optional[str] = None,
         test_folder: Optional[str] = None,
         predict_folder: Optional[str] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
         target_formatter: Optional[TargetFormatter] = None,
         clip_sampler: Union[str, "ClipSampler"] = "random",
         clip_duration: float = 2,
@@ -245,6 +231,7 @@ class VideoClassificationData(DataModule):
         decoder: str = "pyav",
         input_cls: Type[Input] = VideoClassificationFoldersInput,
         predict_input_cls: Type[Input] = VideoClassificationPathsPredictInput,
+        transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
     ) -> "VideoClassificationData":
@@ -284,11 +271,6 @@ class VideoClassificationData(DataModule):
             val_folder: The folder containing videos to use when validating.
             test_folder: The folder containing videos to use when testing.
             predict_folder: The folder containing videos to use when predicting.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             clip_sampler: The clip sampler to use. One of: ``"uniform"``, ``"random"``, ``"constant_clips_per_video"``.
@@ -301,6 +283,7 @@ class VideoClassificationData(DataModule):
                 videos.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             predict_input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the prediction data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -357,8 +340,6 @@ class VideoClassificationData(DataModule):
             >>> shutil.rmtree("predict_folder")
         """
         ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
             clip_sampler=clip_sampler,
             clip_duration=clip_duration,
             clip_sampler_kwargs=clip_sampler_kwargs,
@@ -369,7 +350,6 @@ class VideoClassificationData(DataModule):
         train_input = input_cls(
             RunningStage.TRAINING,
             train_folder,
-            transform=train_transform,
             video_sampler=video_sampler,
             target_formatter=target_formatter,
             **ds_kw,
@@ -381,7 +361,6 @@ class VideoClassificationData(DataModule):
             input_cls(
                 RunningStage.VALIDATING,
                 val_folder,
-                transform=val_transform,
                 video_sampler=video_sampler,
                 target_formatter=target_formatter,
                 **ds_kw,
@@ -389,12 +368,13 @@ class VideoClassificationData(DataModule):
             input_cls(
                 RunningStage.TESTING,
                 test_folder,
-                transform=test_transform,
                 video_sampler=video_sampler,
                 target_formatter=target_formatter,
                 **ds_kw,
             ),
-            predict_input_cls(RunningStage.PREDICTING, predict_folder, transform=predict_transform, **ds_kw),
+            predict_input_cls(RunningStage.PREDICTING, predict_folder, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -415,10 +395,6 @@ class VideoClassificationData(DataModule):
         predict_data_frame: Optional[pd.DataFrame] = None,
         predict_videos_root: Optional[str] = None,
         predict_resolver: Optional[Callable[[str, str], str]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
         target_formatter: Optional[TargetFormatter] = None,
         clip_sampler: Union[str, "ClipSampler"] = "random",
         clip_duration: float = 2,
@@ -428,6 +404,7 @@ class VideoClassificationData(DataModule):
         decoder: str = "pyav",
         input_cls: Type[Input] = VideoClassificationDataFrameInput,
         predict_input_cls: Type[Input] = VideoClassificationDataFramePredictInput,
+        transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "VideoClassificationData":
@@ -460,11 +437,6 @@ class VideoClassificationData(DataModule):
             predict_videos_root: The root directory containing predict videos.
             predict_resolver: Optionally provide a function which converts an entry from the ``input_field`` into a
                 video file path.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             clip_sampler: The clip sampler to use. One of: ``"uniform"``, ``"random"``, ``"constant_clips_per_video"``.
@@ -477,6 +449,7 @@ class VideoClassificationData(DataModule):
                 videos.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             predict_input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the prediction data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -550,8 +523,6 @@ class VideoClassificationData(DataModule):
             >>> del predict_data_frame
         """
         ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
             clip_sampler=clip_sampler,
             clip_duration=clip_duration,
             clip_sampler_kwargs=clip_sampler_kwargs,
@@ -567,7 +538,6 @@ class VideoClassificationData(DataModule):
         train_input = input_cls(
             RunningStage.TRAINING,
             *train_data,
-            transform=train_transform,
             video_sampler=video_sampler,
             target_formatter=target_formatter,
             **ds_kw,
@@ -579,7 +549,6 @@ class VideoClassificationData(DataModule):
             input_cls(
                 RunningStage.VALIDATING,
                 *val_data,
-                transform=val_transform,
                 video_sampler=video_sampler,
                 target_formatter=target_formatter,
                 **ds_kw,
@@ -587,12 +556,13 @@ class VideoClassificationData(DataModule):
             input_cls(
                 RunningStage.TESTING,
                 *test_data,
-                transform=test_transform,
                 video_sampler=video_sampler,
                 target_formatter=target_formatter,
                 **ds_kw,
             ),
-            predict_input_cls(RunningStage.PREDICTING, *predict_data, transform=predict_transform, **ds_kw),
+            predict_input_cls(RunningStage.PREDICTING, *predict_data, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -613,10 +583,6 @@ class VideoClassificationData(DataModule):
         predict_file: Optional[str] = None,
         predict_videos_root: Optional[str] = None,
         predict_resolver: Optional[Callable[[PATH_TYPE, Any], PATH_TYPE]] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
         target_formatter: Optional[TargetFormatter] = None,
         clip_sampler: Union[str, "ClipSampler"] = "random",
         clip_duration: float = 2,
@@ -626,6 +592,7 @@ class VideoClassificationData(DataModule):
         decoder: str = "pyav",
         input_cls: Type[Input] = VideoClassificationCSVInput,
         predict_input_cls: Type[Input] = VideoClassificationCSVPredictInput,
+        transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "VideoClassificationData":
@@ -658,11 +625,6 @@ class VideoClassificationData(DataModule):
             predict_videos_root: The root directory containing predict videos.
             predict_resolver: Optionally provide a function which converts an entry from the ``input_field`` into a
                 video file path.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             clip_sampler: The clip sampler to use. One of: ``"uniform"``, ``"random"``, ``"constant_clips_per_video"``.
@@ -675,6 +637,7 @@ class VideoClassificationData(DataModule):
                 videos.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             predict_input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the prediction data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -762,8 +725,6 @@ class VideoClassificationData(DataModule):
             >>> os.remove("predict_data.csv")
         """
         ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
             clip_sampler=clip_sampler,
             clip_duration=clip_duration,
             clip_sampler_kwargs=clip_sampler_kwargs,
@@ -779,7 +740,6 @@ class VideoClassificationData(DataModule):
         train_input = input_cls(
             RunningStage.TRAINING,
             *train_data,
-            transform=train_transform,
             video_sampler=video_sampler,
             target_formatter=target_formatter,
             **ds_kw,
@@ -791,7 +751,6 @@ class VideoClassificationData(DataModule):
             input_cls(
                 RunningStage.VALIDATING,
                 *val_data,
-                transform=val_transform,
                 video_sampler=video_sampler,
                 target_formatter=target_formatter,
                 **ds_kw,
@@ -799,12 +758,13 @@ class VideoClassificationData(DataModule):
             input_cls(
                 RunningStage.TESTING,
                 *test_data,
-                transform=test_transform,
                 video_sampler=video_sampler,
                 target_formatter=target_formatter,
                 **ds_kw,
             ),
-            predict_input_cls(RunningStage.PREDICTING, *predict_data, transform=predict_transform, **ds_kw),
+            predict_input_cls(RunningStage.PREDICTING, *predict_data, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -816,10 +776,6 @@ class VideoClassificationData(DataModule):
         val_dataset: Optional[SampleCollection] = None,
         test_dataset: Optional[SampleCollection] = None,
         predict_dataset: Optional[SampleCollection] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
         target_formatter: Optional[TargetFormatter] = None,
         clip_sampler: Union[str, "ClipSampler"] = "random",
         clip_duration: float = 2,
@@ -830,6 +786,7 @@ class VideoClassificationData(DataModule):
         label_field: str = "ground_truth",
         input_cls: Type[Input] = VideoClassificationFiftyOneInput,
         predict_input_cls: Type[Input] = VideoClassificationFiftyOnePredictInput,
+        transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
     ) -> "VideoClassificationData":
@@ -848,11 +805,6 @@ class VideoClassificationData(DataModule):
             test_dataset: The ``SampleCollection`` to use when testing.
             predict_dataset: The ``SampleCollection`` to use when predicting.
             label_field: The field in the ``SampleCollection`` objects containing the targets.
-            train_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when training.
-            val_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when validating.
-            test_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when testing.
-            predict_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use when
-                predicting.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             clip_sampler: The clip sampler to use. One of: ``"uniform"``, ``"random"``, ``"constant_clips_per_video"``.
@@ -865,6 +817,7 @@ class VideoClassificationData(DataModule):
                 videos.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
             predict_input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the prediction data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
@@ -929,8 +882,6 @@ class VideoClassificationData(DataModule):
             >>> del predict_dataset
         """
         ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
             clip_sampler=clip_sampler,
             clip_duration=clip_duration,
             clip_sampler_kwargs=clip_sampler_kwargs,
@@ -941,7 +892,6 @@ class VideoClassificationData(DataModule):
         train_input = input_cls(
             RunningStage.TRAINING,
             train_dataset,
-            transform=train_transform,
             video_sampler=video_sampler,
             label_field=label_field,
             target_formatter=target_formatter,
@@ -954,7 +904,6 @@ class VideoClassificationData(DataModule):
             input_cls(
                 RunningStage.VALIDATING,
                 val_dataset,
-                transform=val_transform,
                 video_sampler=video_sampler,
                 label_field=label_field,
                 target_formatter=target_formatter,
@@ -963,13 +912,14 @@ class VideoClassificationData(DataModule):
             input_cls(
                 RunningStage.TESTING,
                 test_dataset,
-                transform=test_transform,
                 video_sampler=video_sampler,
                 label_field=label_field,
                 target_formatter=target_formatter,
                 **ds_kw,
             ),
-            predict_input_cls(RunningStage.PREDICTING, predict_dataset, transform=predict_transform, **ds_kw),
+            predict_input_cls(RunningStage.PREDICTING, predict_dataset, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -986,10 +936,6 @@ class VideoClassificationData(DataModule):
         val_data_folder: str = None,
         test_data_folder: str = None,
         predict_data_folder: str = None,
-        train_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
         val_split: Optional[float] = None,
         multi_label: Optional[bool] = False,
         clip_sampler: Union[str, "ClipSampler"] = "random",
@@ -999,6 +945,7 @@ class VideoClassificationData(DataModule):
         decode_audio: bool = False,
         decoder: str = "pyav",
         input_cls: Type[Input] = LabelStudioVideoClassificationInput,
+        transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
     ) -> "VideoClassificationData":
@@ -1010,30 +957,15 @@ class VideoClassificationData(DataModule):
 
         Args:
             export_json: path to label studio export file
-            train_export_json: path to label studio export file for train set,
-            overrides export_json if specified
+            train_export_json: path to label studio export file for train set. (overrides export_json if specified)
             val_export_json: path to label studio export file for validation
             test_export_json: path to label studio export file for test
             predict_export_json: path to label studio export file for predict
             data_folder: path to label studio data folder
-            train_data_folder: path to label studio data folder for train data set,
-            overrides data_folder if specified
+            train_data_folder: path to label studio data folder for train data set. (overrides data_folder if specified)
             val_data_folder: path to label studio data folder for validation data
             test_data_folder: path to label studio data folder for test data
             predict_data_folder: path to label studio data folder for predict data
-            train_transform: The dictionary of transforms to use during training which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            val_transform: The dictionary of transforms to use during validation which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            test_transform: The dictionary of transforms to use during testing which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            predict_transform: The dictionary of transforms to use during predicting which maps
-                :class:`~flash.core.data.io.input_transform.InputTransform` hook names to callable transforms.
-            data_fetcher: The :class:`~flash.core.data.callback.BaseDataFetcher` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`.
-            input_transform: The :class:`~flash.core.data.io.input_transform.InputTransform` to pass to the
-                :class:`~flash.core.data.data_module.DataModule`. If ``None``, ``cls.input_transform_cls``
-                will be constructed and used.
             val_split: The ``val_split`` argument to pass to the :class:`~flash.core.data.data_module.DataModule`.
             multi_label: Whether the label are multi encoded.
             clip_sampler: Defines how clips should be sampled from each video.
@@ -1043,6 +975,9 @@ class VideoClassificationData(DataModule):
                     if necessary, the distributed split.
             decode_audio: If True, also decode audio from video.
             decoder: Defines what type of decoder used to decode a video.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to use when constructing the datamodule.
 
         Returns:
@@ -1073,8 +1008,6 @@ class VideoClassificationData(DataModule):
         )
 
         ds_kw = dict(
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=cls.input_transforms_registry,
             clip_sampler=clip_sampler,
             clip_duration=clip_duration,
             clip_sampler_kwargs=clip_sampler_kwargs,
@@ -1083,13 +1016,15 @@ class VideoClassificationData(DataModule):
             decoder=decoder,
         )
 
-        train_input = input_cls(RunningStage.TRAINING, train_data, transform=train_transform, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, train_data, **ds_kw)
         ds_kw["parameters"] = getattr(train_input, "parameters", None)
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, val_data, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_data, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_data, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_data, **ds_kw),
+            input_cls(RunningStage.TESTING, test_data, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_data, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )

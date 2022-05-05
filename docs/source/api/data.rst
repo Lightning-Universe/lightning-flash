@@ -68,6 +68,16 @@ ________________________________________
     ~flash.core.data.utilities.classification.MultiSoftTargetFormatter
     ~flash.core.data.utilities.classification.get_target_formatter
 
+flash.core.data.utilities.collate
+_________________________________
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    ~flash.core.data.utilities.collate.wrap_collate
+    ~flash.core.data.utilities.collate.default_collate
+
 flash.core.data.properties
 __________________________
 

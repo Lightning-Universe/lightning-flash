@@ -65,6 +65,4 @@ class ClassificationInputMixin(Properties):
         Returns:
             The formatted target.
         """
-        if getattr(self, "target_formatter", None) is not None:
-            return self.target_formatter(target)
-        return target
+        return getattr(self, "target_formatter", lambda x: x)(target)

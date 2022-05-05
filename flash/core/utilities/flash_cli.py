@@ -33,6 +33,7 @@ from flash.core.utilities.lightning_cli import (
     LightningCLI,
     SaveConfigCallback,
 )
+from flash.core.utilities.stability import beta
 
 
 class ModelExcludeSaveConfigCallback(SaveConfigCallback):
@@ -94,10 +95,7 @@ def make_args_optional(cls, args: Set[str]):
     filtered_parameters = [p for p in sig.parameters.values() if p.name in args and p.default == p.empty]
 
     index = [i for i, p in enumerate(parameters) if p.kind == p.VAR_KEYWORD]
-    if index == []:
-        index = len(parameters)
-    else:
-        index = index[0]
+    index = len(parameters) if not index else index[0]
 
     for p in filtered_parameters:
         new_parameter = Parameter(p.name, p.POSITIONAL_OR_KEYWORD, default=None, annotation=Optional[p.annotation])
@@ -115,6 +113,7 @@ def get_overlapping_args(func_a, func_b) -> Set[str]:
     return set(inspect.signature(func_a).parameters.keys() & inspect.signature(func_b).parameters.keys())
 
 
+@beta("Flash Zero is currently in Beta.")
 class FlashCLI(LightningCLI):
 
     datamodule: DataModule

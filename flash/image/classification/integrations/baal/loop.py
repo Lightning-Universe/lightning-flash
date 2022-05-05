@@ -23,6 +23,7 @@ from pytorch_lightning.utilities.model_helpers import is_overridden
 import flash
 from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_4_0, _PL_GREATER_EQUAL_1_5_0, requires
+from flash.core.utilities.stability import beta
 from flash.core.utilities.stages import RunningStage
 from flash.image.classification.integrations.baal.data import ActiveLearningDataModule
 from flash.image.classification.integrations.baal.dropout import InferenceMCDropoutTask
@@ -41,11 +42,12 @@ else:
     from pytorch_lightning.trainer.connectors.data_connector import _DataLoaderSource
 
 
+@beta("The BaaL integration is currently in Beta.")
 class ActiveLearningLoop(Loop):
     max_epochs: int
     inference_model: InferenceMCDropoutTask
 
-    @requires(["baal", (_PL_GREATER_EQUAL_1_4_0, "pytorch-lightning>=1.4.0")])
+    @requires("baal", (_PL_GREATER_EQUAL_1_4_0, "pytorch-lightning>=1.4.0"))
     def __init__(self, label_epoch_frequency: int, inference_iteration: int = 2, should_reset_weights: bool = True):
         """The `ActiveLearning Loop` describes the following training procedure. This loop is connected with the
         `ActiveLearningTrainer`

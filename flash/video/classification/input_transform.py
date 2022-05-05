@@ -16,6 +16,7 @@ from typing import Callable
 
 import torch
 
+from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, requires
@@ -46,19 +47,24 @@ class VideoClassificationInputTransform(InputTransform):
     same_on_frame: bool = False
 
     def per_sample_transform(self) -> Callable:
-        if self.training:
-            per_sample_transform = [RandomCrop(self.image_size, pad_if_needed=True)]
-        else:
-            per_sample_transform = [CenterCrop(self.image_size)]
+        per_sample_transform = [CenterCrop(self.image_size)]
 
         return ApplyToKeys(
-            "video",
+            DataKeys.INPUT,
+            Compose([UniformTemporalSubsample(self.temporal_sub_sample), normalize] + per_sample_transform),
+        )
+
+    def train_per_sample_transform(self) -> Callable:
+        per_sample_transform = [RandomCrop(self.image_size, pad_if_needed=True)]
+
+        return ApplyToKeys(
+            DataKeys.INPUT,
             Compose([UniformTemporalSubsample(self.temporal_sub_sample), normalize] + per_sample_transform),
         )
 
     def per_batch_transform_on_device(self) -> Callable:
         return ApplyToKeys(
-            "video",
+            DataKeys.INPUT,
             K.VideoSequential(
                 K.Normalize(self.mean, self.std),
                 data_format=self.data_format,

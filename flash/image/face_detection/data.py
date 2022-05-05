@@ -17,6 +17,7 @@ from torch.utils.data import Dataset
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input
+from flash.core.utilities.stability import beta
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 from flash.image.classification.data import ImageClassificationFilesInput, ImageClassificationFolderInput
@@ -24,6 +25,7 @@ from flash.image.face_detection.input import FaceDetectionInput
 from flash.image.face_detection.input_transform import FaceDetectionInputTransform
 
 
+@beta("Face detection is currently in Beta.")
 class FaceDetectionData(DataModule):
     input_transform_cls = FaceDetectionInputTransform
 
@@ -34,22 +36,21 @@ class FaceDetectionData(DataModule):
         val_dataset: Optional[Dataset] = None,
         test_dataset: Optional[Dataset] = None,
         predict_dataset: Optional[Dataset] = None,
-        train_transform: INPUT_TRANSFORM_TYPE = FaceDetectionInputTransform,
-        val_transform: INPUT_TRANSFORM_TYPE = FaceDetectionInputTransform,
-        test_transform: INPUT_TRANSFORM_TYPE = FaceDetectionInputTransform,
-        predict_transform: INPUT_TRANSFORM_TYPE = FaceDetectionInputTransform,
         input_cls: Type[Input] = FaceDetectionInput,
+        transform: INPUT_TRANSFORM_TYPE = FaceDetectionInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
     ) -> "FaceDetectionData":
 
-        ds_kw = dict(transform_kwargs=transform_kwargs)
+        ds_kw = dict()
 
         return cls(
-            input_cls(RunningStage.TRAINING, train_dataset, transform=train_transform, **ds_kw),
-            input_cls(RunningStage.VALIDATING, val_dataset, transform=val_transform, **ds_kw),
-            input_cls(RunningStage.TESTING, test_dataset, transform=test_transform, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_dataset, transform=predict_transform, **ds_kw),
+            input_cls(RunningStage.TRAINING, train_dataset, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_dataset, **ds_kw),
+            input_cls(RunningStage.TESTING, test_dataset, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_dataset, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -63,10 +64,10 @@ class FaceDetectionData(DataModule):
         **data_module_kwargs: Any,
     ) -> "FaceDetectionData":
 
-        ds_kw = dict(transform=predict_transform, transform_kwargs=transform_kwargs)
-
         return cls(
-            predict_input=input_cls(RunningStage.PREDICTING, predict_files, **ds_kw),
+            predict_input=input_cls(RunningStage.PREDICTING, predict_files),
+            transform=predict_transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )
 
@@ -80,9 +81,9 @@ class FaceDetectionData(DataModule):
         **data_module_kwargs: Any,
     ) -> "FaceDetectionData":
 
-        ds_kw = dict(transform=predict_transform, transform_kwargs=transform_kwargs)
-
         return cls(
-            predict_input=input_cls(RunningStage.PREDICTING, predict_folder, **ds_kw),
+            predict_input=input_cls(RunningStage.PREDICTING, predict_folder),
+            transform=predict_transform,
+            transform_kwargs=transform_kwargs,
             **data_module_kwargs,
         )

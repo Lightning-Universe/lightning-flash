@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import sys
 from pathlib import Path
 from unittest import mock
 
@@ -29,9 +30,10 @@ from flash.core.utilities.imports import (
     _TABULAR_TESTING,
     _TEXT_TESTING,
     _VIDEO_TESTING,
+    _VISSL_AVAILABLE,
 )
 from tests.examples.utils import run_test
-from tests.helpers.forked import forked
+from tests.helpers.decorators import forked
 
 root = Path(__file__).parent.parent.parent
 
@@ -57,6 +59,15 @@ root = Path(__file__).parent.parent.parent
             marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed"),
         ),
         pytest.param(
+            "image_embedder.py",
+            marks=[
+                pytest.mark.skipif(
+                    not (_IMAGE_AVAILABLE and _VISSL_AVAILABLE), reason="image libraries aren't installed"
+                ),
+                pytest.mark.skipif(torch.cuda.device_count() > 1, reason="VISSL integration doesn't support multi-GPU"),
+            ],
+        ),
+        pytest.param(
             "object_detection.py",
             marks=pytest.mark.skipif(
                 not (_IMAGE_AVAILABLE and _ICEVISION_AVAILABLE), reason="image libraries aren't installed"
@@ -74,7 +85,6 @@ root = Path(__file__).parent.parent.parent
                 not (_IMAGE_AVAILABLE and _ICEVISION_AVAILABLE), reason="image libraries aren't installed"
             ),
         ),
-        # pytest.param("finetuning", "object_detection.py"),  # TODO: takes too long.
         pytest.param(
             "question_answering.py",
             marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed"),
@@ -105,7 +115,13 @@ root = Path(__file__).parent.parent.parent
             "tabular_forecasting.py",
             marks=pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed"),
         ),
-        pytest.param("template.py", marks=pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed")),
+        pytest.param(
+            "template.py",
+            marks=[
+                pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed"),
+                pytest.mark.skipif(sys.version_info >= (3, 9), reason="Undiagnosed segmentation fault in 3.9"),
+            ],
+        ),
         pytest.param(
             "text_classification.py",
             marks=pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed"),

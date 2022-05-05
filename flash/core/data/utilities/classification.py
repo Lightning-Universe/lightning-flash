@@ -26,7 +26,7 @@ def _is_list_like(x: Any) -> bool:
         _ = x[0]
         _ = len(x)
         return True
-    except (TypeError, IndexError):  # Single element tensors raise an `IndexError`
+    except (TypeError, IndexError, KeyError):
         return False
 
 

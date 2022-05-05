@@ -13,6 +13,8 @@
 # limitations under the License.
 from typing import List, Union
 
+import torch.cuda
+
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _VISSL_AVAILABLE
 
@@ -26,44 +28,24 @@ else:
     ClassyLoss = object
 
 
+def _recursive_register(module):
+    named_tensors = [(key, value) for key, value in module.__dict__.items() if isinstance(value, torch.Tensor)]
+    for name, tensor in named_tensors:
+        delattr(module, name)
+        module.register_buffer(name, tensor)
+
+    for child_module in module.modules():
+        if child_module is not module:
+            _recursive_register(child_module)
+
+
 def get_loss_fn(loss_name: str, cfg: AttrDict):
     set_cpu_device()
     loss_fn = LOSS_REGISTRY[loss_name](cfg)
     loss_fn.__dict__["loss_name"] = loss_name
 
+    _recursive_register(loss_fn)
     return loss_fn
-
-
-def dino_loss(
-    num_crops: int = 10,
-    momentum: float = 0.996,
-    student_temp: float = 0.1,
-    teacher_temp_min: float = 0.04,
-    teacher_temp_max: float = 0.07,
-    teacher_temp_warmup_iters: int = 37530,  # convert this to 30 epochs
-    crops_for_teacher: List[int] = [0, 1],
-    ema_center: float = 0.9,
-    normalize_last_layer: bool = False,
-    output_dim: int = 65536,
-    **kwargs,
-) -> ClassyLoss:
-    loss_name = "dino_loss"
-    cfg = AttrDict(
-        {
-            "num_crops": num_crops,
-            "momentum": momentum,
-            "student_temp": student_temp,
-            "teacher_temp_min": teacher_temp_min,
-            "teacher_temp_max": teacher_temp_max,
-            "teacher_temp_warmup_iters": teacher_temp_warmup_iters,
-            "crops_for_teacher": crops_for_teacher,
-            "ema_center": ema_center,
-            "normalize_last_layer": normalize_last_layer,
-            "output_dim": output_dim,
-        }
-    )
-
-    return get_loss_fn(loss_name, cfg)
 
 
 def swav_loss(
@@ -152,28 +134,6 @@ def simclr_loss(
     return get_loss_fn(loss_name, cfg)
 
 
-def moco_loss(
-    embedding_dim: int = 128,
-    queue_size: int = 65536,
-    momentum: float = 0.999,
-    temperature: int = 0.2,
-    shuffle_batch: bool = True,
-    **kwargs,
-) -> ClassyLoss:
-    loss_name = "moco_loss"
-    cfg = AttrDict(
-        {
-            "embedding_dim": embedding_dim,
-            "queue_size": queue_size,
-            "momentum": momentum,
-            "temperature": temperature,
-            "shuffle_batch": shuffle_batch,
-        }
-    )
-
-    return get_loss_fn(loss_name, cfg)
-
-
 def register_vissl_losses(register: FlashRegistry):
-    for loss_fn in (dino_loss, swav_loss, barlow_twins_loss, simclr_loss, moco_loss):
+    for loss_fn in (swav_loss, barlow_twins_loss, simclr_loss):
         register(loss_fn)

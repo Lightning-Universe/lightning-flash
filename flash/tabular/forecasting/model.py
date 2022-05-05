@@ -24,7 +24,9 @@ from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE
 
 
 class TabularForecaster(AdapterTask):
+
     backbones: FlashRegistry = FlashRegistry("backbones") + PYTORCH_FORECASTING_BACKBONES
+    required_extras: str = "tabular"
 
     def __init__(
         self,

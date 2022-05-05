@@ -27,6 +27,7 @@ from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.utilities.imports import _IMAGE_TESTING, _TORCHVISION_AVAILABLE
 from flash.core.utilities.stages import RunningStage
+from tests.helpers.boring_model import BoringModel
 
 if _TORCHVISION_AVAILABLE:
     import torchvision.transforms as T
@@ -55,33 +56,31 @@ def test_data_module():
 
             return fn
 
-        def per_batch_transform_on_device(self) -> Callable:
-            if self.training:
-                return train_fn
-            elif self.validating:
-                return val_fn
-            elif self.testing:
-                return test_fn
-            elif self.predicting:
-                return predict_fn
+        def train_per_batch_transform_on_device(self) -> Callable:
+            return train_fn
 
-    train_dataset = Input(RunningStage.TRAINING, range(10), transform=TestTransform)
-    assert train_dataset.transform._running_stage == RunningStage.TRAINING
+        def val_per_batch_transform_on_device(self) -> Callable:
+            return val_fn
+
+        def test_per_batch_transform_on_device(self) -> Callable:
+            return test_fn
+
+        def predict_per_batch_transform_on_device(self) -> Callable:
+            return predict_fn
+
+    transform = TestTransform()
+    assert transform._transform is not None
+
+    train_dataset = Input(RunningStage.TRAINING, np.arange(10, dtype=np.float32))
     assert train_dataset.running_stage == RunningStage.TRAINING
 
-    transform = TestTransform(RunningStage.VALIDATING)
-    assert transform._running_stage == RunningStage.VALIDATING
-    val_dataset = Input(RunningStage.VALIDATING, range(10), transform=transform)
+    val_dataset = Input(RunningStage.VALIDATING, np.arange(10, dtype=np.float32))
     assert val_dataset.running_stage == RunningStage.VALIDATING
 
-    transform = TestTransform(RunningStage.TESTING)
-    assert transform._running_stage == RunningStage.TESTING
-    test_dataset = Input(RunningStage.TESTING, range(10), transform=transform)
+    test_dataset = Input(RunningStage.TESTING, np.arange(10, dtype=np.float32))
     assert test_dataset.running_stage == RunningStage.TESTING
 
-    transform = TestTransform(RunningStage.PREDICTING)
-    assert transform._running_stage == RunningStage.PREDICTING
-    predict_dataset = Input(RunningStage.PREDICTING, range(10), transform=transform)
+    predict_dataset = Input(RunningStage.PREDICTING, np.arange(10, dtype=np.float32))
     assert predict_dataset.running_stage == RunningStage.PREDICTING
 
     dm = DataModule(
@@ -89,6 +88,7 @@ def test_data_module():
         val_input=val_dataset,
         test_input=test_dataset,
         predict_input=predict_dataset,
+        transform=transform,
         batch_size=2,
     )
     assert len(dm.train_dataloader()) == 5
@@ -113,7 +113,7 @@ def test_data_module():
 
         def predict_step(self, batch, *args, **kwargs):
             assert sum(batch > 500) == 2
-            assert torch.equal(batch, torch.tensor([1000, 1001]))
+            assert torch.equal(batch, torch.tensor([1000.0, 1001.0]))
 
         def on_train_dataloader(self) -> None:
             pass
@@ -140,9 +140,23 @@ def test_data_module():
     trainer.test(model, datamodule=dm)
     trainer.predict(model, datamodule=dm)
 
-    input = Input(RunningStage.TRAINING, transform=TestTransform)
-    dm = DataModule(train_input=input, batch_size=1)
-    assert isinstance(dm._train_input.transform, TestTransform)
+    # Test that plain lightning module works with FlashDataModule
+    class SampleBoringModel(BoringModel):
+        def __init__(self):
+            super().__init__()
+            self.layer = torch.nn.Linear(2, 1)
+
+    model = SampleBoringModel()
+    trainer = Trainer(fast_dev_run=True)
+    trainer.fit(model, datamodule=dm)
+    trainer.validate(model, datamodule=dm)
+    trainer.test(model, datamodule=dm)
+    trainer.predict(model, datamodule=dm)
+
+    transform = TestTransform()
+    input = Input(RunningStage.TRAINING)
+    dm = DataModule(train_input=input, batch_size=1, transform=transform)
+    assert isinstance(dm.input_transform, TestTransform)
 
     class RandomDataset(Dataset):
         def __init__(self, size: int, length: int):
@@ -155,6 +169,13 @@ def test_data_module():
         def __len__(self):
             return self.len
 
+    def _add_hundred(x):
+        if isinstance(x, Dict):
+            x["input"] += 100
+        else:
+            x += 100
+        return x
+
     class TrainInputTransform(InputTransform):
         def _add_one(self, x):
             if isinstance(x, Dict):
@@ -166,44 +187,37 @@ def test_data_module():
         def per_sample_transform(self) -> Callable:
             return self._add_one
 
-    def _add_hundred(x):
-        if isinstance(x, Dict):
-            x["input"] += 100
-        else:
-            x += 100
-        return x
+        def val_per_sample_transform(self) -> Callable:
+            return _add_hundred
 
     dm = DataModule(
-        train_input=DatasetInput(RunningStage.TRAINING, RandomDataset(64, 32), transform=TrainInputTransform),
-        val_input=DatasetInput(RunningStage.TRAINING, RandomDataset(64, 32), transform=_add_hundred),
-        test_input=DatasetInput(RunningStage.TRAINING, RandomDataset(64, 32)),
+        train_input=DatasetInput(RunningStage.TRAINING, RandomDataset(64, 32)),
+        val_input=DatasetInput(RunningStage.VALIDATING, RandomDataset(64, 32)),
+        test_input=DatasetInput(RunningStage.TESTING, RandomDataset(64, 32)),
         batch_size=3,
+        transform=TrainInputTransform(),
     )
     batch = next(iter(dm.train_dataloader()))
     assert batch["input"][0][0] == 2
     batch = next(iter(dm.val_dataloader()))
     assert batch["input"][0][0] == 101
     batch = next(iter(dm.test_dataloader()))
-    assert batch["input"][0][0] == 1
+    assert batch["input"][0][0] == 2
 
 
 class TestInput(Input):
     def train_load_data(self, _):
-        assert self.training
         return [(0, 1, 2, 3), (0, 1, 2, 3)]
 
     def val_load_data(self, _):
-        assert self.validating
         self.val_load_sample_called = False
         return list(range(5))
 
     def val_load_sample(self, sample):
-        assert self.validating
         self.val_load_sample_called = True
         return {"a": sample, "b": sample + 1}
 
     def test_load_data(self, _):
-        assert self.testing
         return [[torch.rand(1), torch.rand(1)], [torch.rand(1), torch.rand(1)]]
 
 
@@ -218,8 +232,6 @@ class TestInputTransform(InputTransform):
     test_per_sample_transform_called = False
 
     def _train_per_sample_transform(self, sample):
-        assert self.training
-        assert self.current_fn == "per_sample_transform"
         self.train_per_sample_transform_called = True
         return sample + (5,)
 
@@ -227,8 +239,6 @@ class TestInputTransform(InputTransform):
         return self._train_per_sample_transform
 
     def _train_collate(self, samples):
-        assert self.training
-        assert self.current_fn == "collate"
         self.train_collate_called = True
         return torch.tensor([list(s) for s in samples])
 
@@ -236,8 +246,6 @@ class TestInputTransform(InputTransform):
         return self._train_collate
 
     def _train_per_batch_transform_on_device(self, batch):
-        assert self.training
-        assert self.current_fn == "per_batch_transform_on_device"
         self.train_per_batch_transform_on_device_called = True
         assert torch.equal(batch, torch.tensor([[0, 1, 2, 3, 5], [0, 1, 2, 3, 5]]))
 
@@ -245,8 +253,6 @@ class TestInputTransform(InputTransform):
         return self._train_per_batch_transform_on_device
 
     def _val_per_sample_transform(self, sample):
-        assert self.validating
-        assert self.current_fn == "per_sample_transform"
         self.val_per_sample_transform_called = True
         return sample
 
@@ -254,8 +260,6 @@ class TestInputTransform(InputTransform):
         return self._val_per_sample_transform
 
     def _val_collate(self, samples):
-        assert self.validating
-        assert self.current_fn == "collate"
         self.val_collate_called = True
         _count = samples[0]["a"]
         assert samples == [{"a": _count, "b": _count + 1}, {"a": _count + 1, "b": _count + 2}]
@@ -265,8 +269,6 @@ class TestInputTransform(InputTransform):
         return self._val_collate
 
     def _val_per_batch_transform_on_device(self, batch):
-        assert self.validating
-        assert self.current_fn == "per_batch_transform_on_device"
         self.val_per_batch_transform_on_device_called = True
         if isinstance(batch, list):
             batch = batch[0]
@@ -278,8 +280,6 @@ class TestInputTransform(InputTransform):
         return self._val_per_batch_transform_on_device
 
     def _test_per_sample_transform(self, sample):
-        assert self.testing
-        assert self.current_fn == "per_sample_transform"
         self.test_per_sample_transform_called = True
         return sample
 
@@ -312,10 +312,12 @@ class CustomModel(Task):
 
 def test_transformations(tmpdir):
 
+    transform = TestInputTransform()
     datamodule = DataModule(
-        TestInput(RunningStage.TRAINING, [1], transform=TestInputTransform),
-        TestInput(RunningStage.VALIDATING, [1], transform=TestInputTransform),
-        TestInput(RunningStage.TESTING, [1], transform=TestInputTransform),
+        TestInput(RunningStage.TRAINING, [1]),
+        TestInput(RunningStage.VALIDATING, [1]),
+        TestInput(RunningStage.TESTING, [1]),
+        transform=transform,
         batch_size=2,
         num_workers=0,
     )
@@ -329,9 +331,10 @@ def test_transformations(tmpdir):
     batch = next(iter(datamodule.val_dataloader()))
 
     datamodule = DataModule(
-        TestInput(RunningStage.TRAINING, [1], transform=TestInputTransform2),
-        TestInput(RunningStage.VALIDATING, [1], transform=TestInputTransform2),
-        TestInput(RunningStage.TESTING, [1], transform=TestInputTransform2),
+        TestInput(RunningStage.TRAINING, [1]),
+        TestInput(RunningStage.VALIDATING, [1]),
+        TestInput(RunningStage.TESTING, [1]),
+        transform=TestInputTransform2,
         batch_size=2,
         num_workers=0,
     )
@@ -351,13 +354,13 @@ def test_transformations(tmpdir):
     trainer.fit(model, datamodule=datamodule)
     trainer.test(model, datamodule=datamodule)
 
-    assert datamodule.train_dataset.transform.train_per_sample_transform_called
-    assert datamodule.train_dataset.transform.train_collate_called
-    assert datamodule.train_dataset.transform.train_per_batch_transform_on_device_called
-    assert datamodule.train_dataset.transform.train_per_sample_transform_called
-    assert datamodule.val_dataset.transform.val_collate_called
-    assert datamodule.val_dataset.transform.val_per_batch_transform_on_device_called
-    assert datamodule.test_dataset.transform.test_per_sample_transform_called
+    assert datamodule.input_transform.train_per_sample_transform_called
+    assert datamodule.input_transform.train_collate_called
+    assert datamodule.input_transform.train_per_batch_transform_on_device_called
+    assert datamodule.input_transform.train_per_sample_transform_called
+    assert datamodule.input_transform.val_collate_called
+    assert datamodule.input_transform.val_per_batch_transform_on_device_called
+    assert datamodule.input_transform.test_per_sample_transform_called
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
@@ -401,9 +404,11 @@ def test_datapipeline_transformations_overridden_by_task():
             assert torch.max(batch) <= 1.0
             assert torch.min(batch) >= 0.0
 
+    transform = ImageClassificationInputTransform()
     datamodule = DataModule(
-        ImageInput(RunningStage.TRAINING, [1], transform=ImageClassificationInputTransform),
-        ImageInput(RunningStage.VALIDATING, [1], transform=ImageClassificationInputTransform),
+        ImageInput(RunningStage.TRAINING, [1]),
+        ImageInput(RunningStage.VALIDATING, [1]),
+        transform=transform,
         batch_size=2,
         num_workers=0,
     )

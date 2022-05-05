@@ -11,16 +11,39 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
-import re
-from unittest import mock
+from typing import Any
 
 import pytest
 import torch
 
-from flash.__main__ import main
+from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _IMAGE_AVAILABLE, _IMAGE_TESTING
 from flash.image.style_transfer import StyleTransfer
+from tests.helpers.task_tester import TaskTester
+
+
+class TestStyleTransfer(TaskTester):
+
+    task = StyleTransfer
+    cli_command = "style_transfer"
+    is_testing = _IMAGE_TESTING
+    is_available = _IMAGE_AVAILABLE
+
+    # TODO: loss_fn and perceptual_loss can't be jitted
+    scriptable = False
+    traceable = False
+
+    @property
+    def example_forward_input(self):
+        return torch.rand(1, 3, 32, 32)
+
+    def check_forward_output(self, output: Any):
+        assert isinstance(output, torch.Tensor)
+        assert output.shape == torch.Size([1, 3, 32, 32])
+
+    @property
+    def example_train_sample(self):
+        return {DataKeys.INPUT: torch.rand(3, 224, 224)}
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
@@ -33,45 +56,3 @@ def test_style_transfer_task():
     assert model.perceptual_loss.content_loss.score_weight == 10
     assert "relu1_2" in [n for n, m in model.perceptual_loss.style_loss.named_modules()]
     assert model.perceptual_loss.style_loss.score_weight == 11
-
-
-@pytest.mark.skipif(_IMAGE_AVAILABLE, reason="image libraries are installed.")
-def test_style_transfer_task_import():
-    with pytest.raises(ModuleNotFoundError, match="[image]"):
-        StyleTransfer()
-
-
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
-def test_jit(tmpdir):
-    path = os.path.join(tmpdir, "test.pt")
-
-    model = StyleTransfer()
-    model.eval()
-
-    model.loss_fn = None
-    model.perceptual_loss = None  # TODO: Document this
-
-    model = torch.jit.trace(model, torch.rand(1, 3, 32, 32))  # torch.jit.script doesn't work with pystiche
-
-    torch.jit.save(model, path)
-    model = torch.jit.load(path)
-
-    out = model(torch.rand(1, 3, 32, 32))
-    assert isinstance(out, torch.Tensor)
-    assert out.shape == torch.Size([1, 3, 32, 32])
-
-
-@pytest.mark.skipif(_IMAGE_AVAILABLE, reason="image libraries are installed.")
-def test_load_from_checkpoint_dependency_error():
-    with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[image]'")):
-        StyleTransfer.load_from_checkpoint("not_a_real_checkpoint.pt")
-
-
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
-def test_cli():
-    cli_args = ["flash", "style_transfer", "--trainer.fast_dev_run", "True"]
-    with mock.patch("sys.argv", cli_args):
-        try:
-            main()
-        except SystemExit:
-            pass

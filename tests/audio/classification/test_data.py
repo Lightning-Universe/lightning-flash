@@ -20,6 +20,7 @@ import torch
 import torch.nn as nn
 from pytorch_lightning import seed_everything
 
+import flash
 from flash.audio import AudioClassificationData
 from flash.core.data.io.input import DataKeys
 from flash.core.data.transforms import ApplyToKeys
@@ -39,18 +40,26 @@ def _rand_image(size: Tuple[int, int] = None):
     return Image.fromarray(np.random.randint(0, 255, (*size, 3), dtype="uint8"))
 
 
-@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
-def test_from_filepaths_smoke(tmpdir):
-
+def _image_files(tmpdir):
     tmpdir = Path(tmpdir)
 
     _rand_image().save(tmpdir / "a_1.png")
     _rand_image().save(tmpdir / "b_1.png")
 
-    train_images = [
-        str(tmpdir / "a_1.png"),
-        str(tmpdir / "b_1.png"),
-    ]
+    return [str(tmpdir / "a_1.png"), str(tmpdir / "b_1.png")], 3
+
+
+def _audio_files(_):
+    raw_audio_path = str(Path(flash.ASSETS_ROOT) / "example.wav")
+
+    return [raw_audio_path, raw_audio_path], 1
+
+
+@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
+@pytest.mark.parametrize("file_generator", [_image_files, _audio_files])
+def test_from_filepaths(tmpdir, file_generator):
+
+    train_images, channels = file_generator(tmpdir)
 
     spectrograms_data = AudioClassificationData.from_files(
         train_files=train_images,
@@ -62,7 +71,7 @@ def test_from_filepaths_smoke(tmpdir):
 
     data = next(iter(spectrograms_data.train_dataloader()))
     imgs, labels = data["input"], data["target"]
-    assert imgs.shape == (2, 3, 128, 128)
+    assert imgs.shape == (2, channels, 128, 128)
     assert labels.shape == (2,)
     assert sorted(list(labels.numpy())) == [1, 2]
 
@@ -281,8 +290,7 @@ def test_from_filepaths_splits(tmpdir):
         dm = AudioClassificationData.from_files(
             train_files=train_filepaths,
             train_targets=train_labels,
-            train_transform=transform,
-            val_transform=transform,
+            transform=transform,
             batch_size=B,
             num_workers=0,
             val_split=val_split,
@@ -311,11 +319,11 @@ def test_from_folders_only_train(tmpdir):
     _rand_image().save(train_dir / "b" / "1.png")
     _rand_image().save(train_dir / "b" / "2.png")
 
-    spectrograms_data = AudioClassificationData.from_folders(train_dir, train_transform=None, batch_size=1)
+    spectrograms_data = AudioClassificationData.from_folders(train_dir, batch_size=1)
 
     data = next(iter(spectrograms_data.train_dataloader()))
     imgs, labels = data["input"], data["target"]
-    assert imgs.shape == (1, 196, 196, 3)
+    assert imgs.shape == (1, 3, 128, 128)
     assert labels.shape == (1,)
 
 

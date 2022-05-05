@@ -23,8 +23,8 @@ from unittest.mock import MagicMock
 import pytest
 import pytorch_lightning as pl
 import torch
+from pytorch_lightning import LightningDataModule
 from pytorch_lightning.callbacks import Callback
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn, Tensor
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
@@ -35,6 +35,7 @@ from flash import Task
 from flash.audio import SpeechRecognition
 from flash.core.adapter import Adapter
 from flash.core.classification import ClassificationTask
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.utilities.imports import (
     _AUDIO_TESTING,
@@ -194,7 +195,7 @@ def test_classification_task_trainer_predict(tmpdir):
     task = ClassificationTask(model)
     ds = PredictDummyDataset(10)
     batch_size = 6
-    predict_dl = task.process_predict_dataset(ds, batch_size=batch_size)
+    predict_dl = task.process_predict_dataset(ds, input_transform=InputTransform(), batch_size=batch_size)
     trainer = pl.Trainer(default_root_dir=tmpdir)
     predictions = trainer.predict(task, predict_dl)
     assert len(list(chain.from_iterable(predictions))) == 10
@@ -406,13 +407,32 @@ def test_external_optimizers_torch_optimizer(tmpdir, optim):
         ("cosine_with_hard_restarts_schedule_with_warmup", {"num_warmup_steps": 0.1, "num_cycles": 3}),
     ],
 )
-def test_external_schedulers_provider_hf_transformers(tmpdir, optim, sched):
+@pytest.mark.parametrize("use_datamodule", [False, True])
+@pytest.mark.parametrize("limit", [None, 5, 0.1])
+def test_external_schedulers_provider_hf_transformers(tmpdir, optim, sched, use_datamodule, limit):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
     task = ClassificationTask(model, optimizer=deepcopy(optim), lr_scheduler=deepcopy(sched), loss_fn=F.nll_loss)
-    trainer = flash.Trainer(max_epochs=1, limit_train_batches=10, gpus=torch.cuda.device_count())
-    ds = DummyDataset()
-    trainer.fit(task, train_dataloader=DataLoader(ds))
 
+    if limit is not None:
+        batch_count = limit if isinstance(limit, int) else int(limit * 10)
+        trainer = flash.Trainer(max_epochs=1, limit_train_batches=limit)
+    else:
+        batch_count = 10
+        trainer = flash.Trainer(max_epochs=1)
+
+    ds = DummyDataset(num_samples=10)
+
+    if use_datamodule:
+
+        class TestDataModule(LightningDataModule):
+            def train_dataloader(self):
+                return DataLoader(ds)
+
+        trainer.fit(task, datamodule=TestDataModule())
+    else:
+        trainer.fit(task, train_dataloader=DataLoader(ds))
+
+    assert task.get_num_training_steps() == batch_count
     assert isinstance(trainer.optimizers[0], torch.optim.Adadelta)
     assert isinstance(trainer.lr_schedulers[0]["scheduler"], torch.optim.lr_scheduler.LambdaLR)
 
@@ -442,18 +462,6 @@ def test_errors_and_exceptions_optimizers_and_schedulers():
         task = ClassificationTask(model, optimizer="Adam", lr_scheduler="not_a_valid_key")
         task.configure_optimizers()
 
-    @ClassificationTask.lr_schedulers
-    def i_will_create_a_misconfiguration_exception(optimizer):
-        return "Done. Created."
-
-    with pytest.raises(MisconfigurationException):
-        task = ClassificationTask(model, optimizer="Adam", lr_scheduler="i_will_create_a_misconfiguration_exception")
-        task.configure_optimizers()
-
-    with pytest.raises(MisconfigurationException):
-        task = ClassificationTask(model, optimizer="Adam", lr_scheduler=i_will_create_a_misconfiguration_exception)
-        task.configure_optimizers()
-
     with pytest.raises(TypeError):
         task = ClassificationTask(model, optimizer="Adam", lr_scheduler=["not", "a", "valid", "type"])
         task.configure_optimizers()
@@ -463,8 +471,6 @@ def test_errors_and_exceptions_optimizers_and_schedulers():
             model, optimizer="Adam", lr_scheduler=(["not", "a", "valid", "type"], {"random_kwarg": 10})
         )
         task.configure_optimizers()
-
-    pass
 
 
 def test_classification_task_metrics():

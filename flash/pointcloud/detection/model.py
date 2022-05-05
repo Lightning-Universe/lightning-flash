@@ -12,22 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import sys
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 import torch
 from torch import nn
 from torch.utils.data import DataLoader, Sampler
 
-from flash.core.data.io.input import DataKeys, Input
+import flash
+from flash.core.data.io.input import DataKeys, InputBase
+from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.utilities.collate import wrap_collate
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.apply_func import get_callable_dict
+from flash.core.utilities.stability import beta
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.pointcloud.detection.backbones import POINTCLOUD_OBJECT_DETECTION_BACKBONES
 
 __FILE_EXAMPLE__ = "pointcloud_detection"
 
 
+@beta("Point cloud object detection is currently in Beta.")
 class PointCloudObjectDetector(Task):
     """The ``PointCloudObjectDetector`` is a :class:`~flash.core.classification.ClassificationTask` that classifies
     pointcloud data.
@@ -83,7 +88,8 @@ class PointCloudObjectDetector(Task):
         if isinstance(backbone, tuple):
             self.backbone, out_features = backbone
         else:
-            self.model, out_features, self.collate_fn = self.backbones.get(backbone)(**backbone_kwargs)
+            self.model, out_features, collate_fn = self.backbones.get(backbone)(**backbone_kwargs)
+            self.collate_fn = wrap_collate(collate_fn)
             self.backbone = self.model.backbone
             self.neck = self.model.neck
             self.loss_fn = get_callable_dict(self.model.loss)
@@ -129,28 +135,114 @@ class PointCloudObjectDetector(Task):
         self.model.device = self.device
         return self.model(x)
 
-    def _process_dataset(
-        self,
-        dataset: Input,
-        batch_size: int,
-        num_workers: int,
-        pin_memory: bool,
-        collate_fn: Callable,
-        shuffle: bool = False,
-        drop_last: bool = True,
-        sampler: Optional[Sampler] = None,
-        **kwargs
-    ) -> DataLoader:
+    def _patch_dataset(self, dataset: InputBase):
         dataset.input_transform_fn = self.model.preprocess
         dataset.transform_fn = self.model.transform
 
-        return DataLoader(
+    def process_train_dataset(
+        self,
+        dataset: InputBase,
+        batch_size: int,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        shuffle: bool = True,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
+        input_transform: Optional[InputTransform] = None,
+        trainer: Optional["flash.Trainer"] = None,
+    ) -> DataLoader:
+        self._patch_dataset(dataset)
+        return super().process_train_dataset(
             dataset,
-            batch_size=batch_size,
+            batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
-            collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            persistent_workers=persistent_workers,
+            input_transform=input_transform,
+            trainer=trainer,
+        )
+
+    def process_val_dataset(
+        self,
+        dataset: InputBase,
+        batch_size: int,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        shuffle: bool = False,
+        drop_last: bool = False,
+        sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
+        input_transform: Optional[InputTransform] = None,
+        trainer: Optional["flash.Trainer"] = None,
+    ) -> DataLoader:
+        self._patch_dataset(dataset)
+        return super().process_val_dataset(
+            dataset,
+            batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
+            persistent_workers=persistent_workers,
+            input_transform=input_transform,
+            trainer=trainer,
+        )
+
+    def process_test_dataset(
+        self,
+        dataset: InputBase,
+        batch_size: int,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        shuffle: bool = False,
+        drop_last: bool = False,
+        sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
+        input_transform: Optional[InputTransform] = None,
+        trainer: Optional["flash.Trainer"] = None,
+    ) -> DataLoader:
+        self._patch_dataset(dataset)
+        return super().process_test_dataset(
+            dataset,
+            batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
+            persistent_workers=persistent_workers,
+            input_transform=input_transform,
+            trainer=trainer,
+        )
+
+    def process_predict_dataset(
+        self,
+        dataset: InputBase,
+        batch_size: int,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        shuffle: bool = False,
+        drop_last: bool = False,
+        sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
+        input_transform: Optional[InputTransform] = None,
+        trainer: Optional["flash.Trainer"] = None,
+    ) -> DataLoader:
+        self._patch_dataset(dataset)
+        return super().process_predict_dataset(
+            dataset,
+            batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
+            persistent_workers=persistent_workers,
+            input_transform=input_transform,
+            trainer=trainer,
         )

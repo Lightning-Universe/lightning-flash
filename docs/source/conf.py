@@ -23,6 +23,7 @@ _PATH_HERE = os.path.abspath(os.path.dirname(__file__))
 _PATH_ROOT = os.path.join(_PATH_HERE, "..", "..")
 _PATH_RAW_NB = os.path.join(_PATH_ROOT, "_notebooks")
 sys.path.insert(0, os.path.abspath(_PATH_ROOT))
+sys.path.insert(0, os.path.abspath(os.path.join(_PATH_HERE, "..", "extensions")))
 sys.path.append(os.path.join(_PATH_RAW_NB, ".actions"))
 
 _SHOULD_COPY_NOTEBOOKS = True
@@ -121,7 +122,8 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_paramlinks",
     "sphinx_togglebutton",
-    "pt_lightning_sphinx_theme.extensions.lightning_tutorials",
+    "pt_lightning_sphinx_theme.extensions.lightning",
+    "stability",
 ]
 
 # autodoc: Default to members and undoc-members

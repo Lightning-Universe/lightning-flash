@@ -1,3 +1,5 @@
+.. beta:: The BaaL integration is currently in Beta.
+
 .. _baal:
 
 ####
