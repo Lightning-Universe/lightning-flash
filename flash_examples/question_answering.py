@@ -28,7 +28,7 @@ download_data("https://pl-flash-data.s3.amazonaws.com/squad_tiny.zip", "./data/"
 datamodule = QuestionAnsweringData.from_squad_v2(
     train_file="./data/squad_tiny/train.json",
     val_file="./data/squad_tiny/val.json",
-    batch_size=4,
+    batch_size=1,
 )
 
 # 2. Build the task
