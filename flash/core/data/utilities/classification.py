@@ -19,6 +19,11 @@ import numpy as np
 import torch
 
 from flash.core.data.utilities.sort import sorted_alphanumeric
+from flash.core.utilities.imports import _CORE_TESTING
+
+# Skip doctests if requirements aren't available
+if not _CORE_TESTING:
+    __doctest_skip__ = ["*"]
 
 
 def _is_list_like(x: Any) -> bool:
