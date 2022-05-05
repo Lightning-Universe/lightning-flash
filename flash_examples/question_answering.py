@@ -13,14 +13,7 @@
 # limitations under the License.
 from flash import Trainer
 from flash.core.data.utils import download_data
-from flash.core.utilities.imports import example_requires
 from flash.text import QuestionAnsweringData, QuestionAnsweringTask
-
-example_requires("text")
-
-import nltk  # noqa: E402
-
-nltk.download("punkt")
 
 # 1. Create the DataModule
 download_data("https://pl-flash-data.s3.amazonaws.com/squad_tiny.zip", "./data/")
