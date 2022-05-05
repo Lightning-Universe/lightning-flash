@@ -19,7 +19,7 @@ from flash.core.data.io.input_transform import InputTransform
 from flash.core.utilities.imports import _CORE_TESTING
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_is_overridden_recursive(tmpdir):
     class TestInputTransform(InputTransform):
         @staticmethod

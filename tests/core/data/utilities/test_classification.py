@@ -116,7 +116,7 @@ cases = [
 ]
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize("case", cases)
 def test_case(case):
     formatter = get_target_formatter(case.target)
@@ -127,7 +127,7 @@ def test_case(case):
     assert [formatter(t) for t in case.target] == case.formatted_target
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize("case", cases)
 def test_speed(case):
     repeats = int(1e5 / len(case.target))  # Approx. a hundred thousand targets

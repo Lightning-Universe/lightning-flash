@@ -37,7 +37,7 @@ def _beta_func_custom_message():
     pass
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize(
     "callable, match",
     [

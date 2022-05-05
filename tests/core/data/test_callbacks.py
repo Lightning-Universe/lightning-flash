@@ -25,7 +25,7 @@ from flash.core.utilities.imports import _CORE_TESTING
 from flash.core.utilities.stages import RunningStage
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_base_data_fetcher(tmpdir):
     class CheckData(BaseDataFetcher):
         def check(self):

@@ -118,7 +118,7 @@ root = Path(__file__).parent.parent.parent
         pytest.param(
             "template.py",
             marks=[
-                pytest.mark.skipif(not _CORE_TESTING),
+                pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core."),
                 pytest.mark.skipif(sys.version_info >= (3, 9), reason="Undiagnosed segmentation fault in 3.9"),
             ],
         ),

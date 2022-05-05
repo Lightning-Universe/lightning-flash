@@ -21,7 +21,7 @@ from flash.core.registry import ConcatRegistry, ExternalRegistry, FlashRegistry
 from flash.core.utilities.imports import _CORE_TESTING
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_registry_raises():
     backbones = FlashRegistry("backbones")
 
@@ -48,7 +48,7 @@ def test_registry_raises():
         backbones(name=float)  # noqa
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_registry():
     backbones = FlashRegistry("backbones")
 
@@ -113,7 +113,7 @@ def test_registry_multiple_decorators(caplog):
     assert "bar" in backbones
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_external_registry():
     def getter(key: str):
         return key
@@ -131,7 +131,7 @@ def test_external_registry():
     assert len(registry.available_keys()) == 0
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_concat_registry():
     registry_1 = FlashRegistry("backbones")
     registry_2 = FlashRegistry("backbones")

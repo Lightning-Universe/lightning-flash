@@ -19,7 +19,7 @@ def f(*args):
     pass
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_ordering_keeps_groups_together(abcde):
     a, b, c, d, e = abcde
     d = {(a, i): (f,) for i in range(4)}
@@ -37,7 +37,7 @@ def test_ordering_keeps_groups_together(abcde):
     assert abs(o[(a, 1)] - o[(a, 3)]) == 1
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_avoid_broker_nodes(abcde):
     r"""
 
@@ -81,7 +81,7 @@ def test_avoid_broker_nodes(abcde):
     assert o[(a, 0)] < o[(a, 1)]
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_base_of_reduce_preferred(abcde):
     r"""
                a3
@@ -110,7 +110,7 @@ def test_base_of_reduce_preferred(abcde):
     assert o[(b, 1)] <= 6
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 @pytest.mark.xfail(reason="Can't please 'em all", strict=True)
 def test_avoid_upwards_branching(abcde):
     r"""
@@ -143,7 +143,7 @@ def test_avoid_upwards_branching(abcde):
     assert o[(b, 1)] < o[(c, 1)]
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_avoid_upwards_branching_complex(abcde):
     r"""
          a1
@@ -183,7 +183,7 @@ def test_avoid_upwards_branching_complex(abcde):
     assert abs(o[(d, 2)] - o[(d, 3)]) == 1
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_deep_bases_win_over_dependents(abcde):
     r"""
     It's not clear who should run first, e or d
@@ -208,7 +208,7 @@ def test_deep_bases_win_over_dependents(abcde):
     assert o[b] < o[c]
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_prefer_deep(abcde):
     """
         c
@@ -227,14 +227,14 @@ def test_prefer_deep(abcde):
     assert o[b] < o[d]
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_stacklimit(abcde):
     dsk = {"x%s" % (i + 1): (inc, "x%s" % i) for i in range(10000)}
     dependencies, dependents = get_deps(dsk)
     ndependencies(dependencies, dependents)
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_break_ties_by_str(abcde):
     a, b, c, d, e = abcde
     dsk = {("x", i): (inc, i) for i in range(10)}
@@ -248,19 +248,19 @@ def test_break_ties_by_str(abcde):
     assert o == expected
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_order_doesnt_fail_on_mixed_type_keys(abcde):
     order({"x": (inc, 1), ("y", 0): (inc, 2), "z": (add, "x", ("y", 0))})
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_type_comparisions_ok(abcde):
     a, b, c, d, e = abcde
     dsk = {a: 1, (a, 1): 2, (a, b, 1): 3}
     order(dsk)  # this doesn't err
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_prefer_short_dependents(abcde):
     r"""
 
@@ -281,7 +281,7 @@ def test_prefer_short_dependents(abcde):
     assert o[e] < o[b]
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 @pytest.mark.xfail(reason="This is challenging to do precisely")
 def test_run_smaller_sections(abcde):
     r"""
@@ -323,7 +323,7 @@ def test_run_smaller_sections(abcde):
     assert log == expected
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_local_parents_of_reduction(abcde):
     """
 
@@ -372,7 +372,7 @@ def test_local_parents_of_reduction(abcde):
     assert log == expected
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_nearest_neighbor(abcde):
     r"""
 
@@ -410,7 +410,7 @@ def test_nearest_neighbor(abcde):
     assert o[min([b1, b2, b3, b4])] == 0
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_string_ordering():
     """Prefer ordering tasks by name first."""
     dsk = {("a", 1): (f,), ("a", 2): (f,), ("a", 3): (f,)}
@@ -418,7 +418,7 @@ def test_string_ordering():
     assert o == {("a", 1): 0, ("a", 2): 1, ("a", 3): 2}
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_string_ordering_dependents():
     """Prefer ordering tasks by name first even when in dependencies."""
     dsk = {("a", 1): (f, "b"), ("a", 2): (f, "b"), ("a", 3): (f, "b"), "b": (f,)}
@@ -426,7 +426,7 @@ def test_string_ordering_dependents():
     assert o == {"b": 0, ("a", 1): 1, ("a", 2): 2, ("a", 3): 3}
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_prefer_short_narrow(abcde):
     # See test_prefer_short_ancestor for a fail case.
     a, b, c, _, _ = abcde
@@ -445,7 +445,7 @@ def test_prefer_short_narrow(abcde):
     assert o[(c, 1)] < o[(c, 2)]
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_prefer_short_ancestor(abcde):
     r"""
     From https://github.com/dask/dask-ml/issues/206#issuecomment-395869929
@@ -506,7 +506,7 @@ def test_prefer_short_ancestor(abcde):
     assert o[(c, 1)] < o[(a, 1)]
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_map_overlap(abcde):
     r"""
       b1      b3      b5
@@ -544,7 +544,7 @@ def test_map_overlap(abcde):
     assert o[(b, 1)] < o[(e, 5)] or o[(b, 5)] < o[(e, 1)]
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_use_structure_not_keys(abcde):
     """See https://github.com/dask/dask/issues/5584#issuecomment-554963958.
 
@@ -585,7 +585,7 @@ def test_use_structure_not_keys(abcde):
         assert Bs == [1, 3, 5, 7, 9, 11, 13, 15, 17, 19]
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_dont_run_all_dependents_too_early(abcde):
     """From https://github.com/dask/dask-ml/issues/206#issuecomment-395873372."""
     a, b, c, d, e = abcde
@@ -601,7 +601,7 @@ def test_dont_run_all_dependents_too_early(abcde):
     assert expected == actual
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_many_branches_use_ndependencies(abcde):
     """From https://github.com/dask/dask/pull/5646#issuecomment-562700533.
 
@@ -638,7 +638,7 @@ def test_many_branches_use_ndependencies(abcde):
     assert o[(c, 1)] == o[(a, 3)] - 1
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_order_cycle():
     with pytest.raises(RuntimeError, match="Cycle detected"):
         get({"a": (f, "a")}, "a")  # we encounter this in `get`
@@ -654,12 +654,12 @@ def test_order_cycle():
         order({"a": (f, "b"), "b": (f, "c"), "c": (f, "a", "d"), "d": (f, "b")})
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_order_empty():
     assert order({}) == {}
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_switching_dependents(abcde):
     r"""
 
@@ -715,7 +715,7 @@ def test_switching_dependents(abcde):
     assert o[(a, 5)] > o[(e, 6)]
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_order_with_equal_dependents(abcde):
     """From https://github.com/dask/dask/issues/5859#issuecomment-608422198.
 

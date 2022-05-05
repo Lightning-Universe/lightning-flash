@@ -18,7 +18,7 @@ from flash.core.utilities.imports import _CORE_TESTING
 from flash.core.utilities.stages import RunningStage
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize(
     "running_stage", [RunningStage.TRAINING, RunningStage.VALIDATING, RunningStage.TESTING, RunningStage.PREDICTING]
 )

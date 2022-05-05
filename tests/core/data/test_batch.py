@@ -47,7 +47,7 @@ cases = [
 ]
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize("case", cases)
 def test_default_uncollate(case):
     assert default_uncollate(case.collated_batch) == case.uncollated_batch
@@ -62,7 +62,7 @@ error_cases = [
 ]
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize("error_case", error_cases)
 def test_default_uncollate_raises(error_case):
     with pytest.raises(ValueError, match=error_case.match):

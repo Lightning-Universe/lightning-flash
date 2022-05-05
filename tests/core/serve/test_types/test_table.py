@@ -22,7 +22,7 @@ feature_names = [
 ]
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_serialize_success():
     table = Table(column_names=feature_names)
     sample = data
@@ -31,7 +31,7 @@ def test_serialize_success():
         assert d2 == {0: d1.item()}
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_serialize_wrong_shape():
     table = Table(column_names=feature_names)
     sample = data.squeeze()
@@ -50,7 +50,7 @@ def test_serialize_wrong_shape():
         table.serialize(sample)
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_serialize_without_column_names():
     with pytest.raises(TypeError):
         Table()
@@ -60,7 +60,7 @@ def test_serialize_without_column_names():
     assert list(dict_data.keys()) == feature_names
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_deserialize():
     arr = torch.tensor([100, 200]).view(1, 2)
     table = Table(column_names=["t1", "t2"])
@@ -76,7 +76,7 @@ def test_deserialize():
     )
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_deserialize_column_names_failures():
     table = Table(["t1", "t2"])
     with pytest.raises(RuntimeError):

@@ -11,7 +11,7 @@ if _CYTOOLZ_AVAILABLE:
     from cytoolz import curry
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_funcname_long():
     def a_long_function_name_11111111111111111111111111111111111111111111111():
         pass
@@ -21,7 +21,7 @@ def test_funcname_long():
     assert len(result) < 60
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_funcname_cytoolz():
     @curry
     def foo(a, b, c):
@@ -37,12 +37,12 @@ def test_funcname_cytoolz():
     assert funcname(c_bar) == "bar"
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_partial_by_order():
     assert partial_by_order(5, function=operator.add, other=[(1, 20)]) == 25
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_funcname():
     assert funcname(np.floor_divide) == "floor_divide"
     assert funcname(partial(bool)) == "bool"
@@ -50,7 +50,7 @@ def test_funcname():
     assert funcname(lambda x: x) == "lambda"
 
 
-@pytest.mark.skipif(not _SERVE_TESTING)
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_numpy_vectorize_funcname():
     def myfunc(a, b):
         """Return a-b if a>b, otherwise return a+b."""

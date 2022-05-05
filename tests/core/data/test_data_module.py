@@ -33,7 +33,7 @@ if _TORCHVISION_AVAILABLE:
     import torchvision.transforms as T
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_data_module():
     seed_everything(42)
 
@@ -311,7 +311,7 @@ class CustomModel(Task):
         assert batch[0].shape == torch.Size([2, 1])
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_transformations(tmpdir):
 
     transform = TestInputTransform()
@@ -426,7 +426,7 @@ def test_datapipeline_transformations_overridden_by_task():
     trainer.fit(model, datamodule=datamodule)
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize("sampler, callable", [(mock.MagicMock(), True), (mock.NonCallableMock(), False)])
 @mock.patch("flash.core.data.data_module.DataLoader")
 def test_dataloaders_with_sampler(mock_dataloader, sampler, callable):
@@ -454,7 +454,7 @@ def test_dataloaders_with_sampler(mock_dataloader, sampler, callable):
         assert "sampler" not in kwargs
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_val_split():
     datamodule = DataModule(
         Input(RunningStage.TRAINING, [1] * 100),

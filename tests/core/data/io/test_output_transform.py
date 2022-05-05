@@ -18,7 +18,7 @@ from flash.core.data.io.output_transform import OutputTransform
 from flash.core.utilities.imports import _CORE_TESTING
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_output_transform():
     class CustomOutputTransform(OutputTransform):
         @staticmethod

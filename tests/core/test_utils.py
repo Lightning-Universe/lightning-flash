@@ -34,14 +34,14 @@ def b():
 # ==============================
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_get_callable_name():
     assert get_callable_name(A()) == "a"
     assert get_callable_name(b) == "b"
     assert get_callable_name(lambda: True) == "<lambda>"
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_get_callable_dict():
     d = get_callable_dict(A())
     assert type(d["a"]) is A
@@ -55,7 +55,7 @@ def test_get_callable_dict():
     assert d["two"] == b
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize("file", ["titanic.zip", "titanic.tar.gz", "titanic.tar.bz2"])
 def test_download_data(tmpdir, file):
     download_path = "https://pl-flash-data.s3.amazonaws.com/"

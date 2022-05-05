@@ -22,7 +22,7 @@ if _SKLEARN_AVAILABLE:
     from sklearn import datasets
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 class TestTemplateData:
     """Tests ``TemplateData``."""
 

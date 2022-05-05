@@ -19,7 +19,7 @@ from flash.core.utilities.imports import _CORE_TESTING
 from flash.core.utilities.stages import RunningStage
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_input_validation():
     with pytest.raises(RuntimeError, match="Use `IterableInput` instead."):
 
@@ -40,7 +40,7 @@ def test_input_validation():
     ValidInput(RunningStage.TRAINING)
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_iterable_input_validation():
     with pytest.raises(RuntimeError, match="Use `Input` instead."):
 
@@ -61,7 +61,7 @@ def test_iterable_input_validation():
     ValidIterableInput(RunningStage.TRAINING)
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_serve_input():
 
     server_input = ServeInput()

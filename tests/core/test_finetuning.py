@@ -136,7 +136,7 @@ class CustomStrategyChecking(ModelCheckpoint):
             assert pl_module.model.layer.weight.requires_grad
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize(
     "strategy",
     [
@@ -153,7 +153,7 @@ def test_finetuning_with_none_return_type(strategy):
     trainer.finetune(task, train_dataloader=DataLoader(ds), strategy=strategy)
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize(
     ("strategy", "checker_class", "checker_class_data"),
     [
@@ -175,7 +175,7 @@ def test_finetuning(tmpdir, strategy, checker_class, checker_class_data):
     trainer.finetune(task, train_dataloader=DataLoader(ds), strategy=strategy)
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize(
     "strategy",
     [

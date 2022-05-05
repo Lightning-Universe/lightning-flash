@@ -48,14 +48,14 @@ class DummyDataset(torch.utils.data.Dataset):
 # ==============================
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_smoke():
     """A simple test that the class can be instantiated."""
     model = TemplateSKLearnClassifier(num_features=1, num_classes=1)
     assert model is not None
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize("num_classes", [4, 256])
 @pytest.mark.parametrize("shape", [(1, 3), (2, 128)])
 def test_forward(num_classes, shape):
@@ -72,7 +72,7 @@ def test_forward(num_classes, shape):
     assert out.shape == (shape[0], num_classes)
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_train(tmpdir):
     """Tests that the model can be trained on our ``DummyDataset``."""
     model = TemplateSKLearnClassifier(num_features=DummyDataset.num_features, num_classes=DummyDataset.num_classes)
@@ -81,7 +81,7 @@ def test_train(tmpdir):
     trainer.fit(model, train_dl)
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_val(tmpdir):
     """Tests that the model can be validated on our ``DummyDataset``."""
     model = TemplateSKLearnClassifier(num_features=DummyDataset.num_features, num_classes=DummyDataset.num_classes)
@@ -90,7 +90,7 @@ def test_val(tmpdir):
     trainer.validate(model, val_dl)
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_test(tmpdir):
     """Tests that the model can be tested on our ``DummyDataset``."""
     model = TemplateSKLearnClassifier(num_features=DummyDataset.num_features, num_classes=DummyDataset.num_classes)
@@ -99,7 +99,7 @@ def test_test(tmpdir):
     trainer.test(model, test_dl)
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_predict_numpy():
     """Tests that we can generate predictions from a numpy array."""
     row = np.random.rand(1, DummyDataset.num_features)
@@ -110,7 +110,7 @@ def test_predict_numpy():
     assert isinstance(out[0][0], int)
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_predict_sklearn():
     """Tests that we can generate predictions from a scikit-learn ``Bunch``."""
     bunch = datasets.load_iris()
@@ -121,7 +121,7 @@ def test_predict_sklearn():
     assert isinstance(out[0][0], int)
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize("jitter, args", [(torch.jit.script, ()), (torch.jit.trace, (torch.rand(1, 16),))])
 def test_jit(tmpdir, jitter, args):
     path = os.path.join(tmpdir, "test.pt")

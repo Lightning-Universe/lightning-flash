@@ -23,7 +23,7 @@ from flash.core.utilities.imports import _CORE_TESTING
 from flash.core.utilities.stages import RunningStage
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_input_transform():
     def fn(x):
         return x + 1
@@ -212,7 +212,7 @@ class CustomInputTransform(InputTransform):
         return self.custom_transform
 
 
-@pytest.mark.skipif(not _CORE_TESTING)
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_check_transforms():
 
     input_transform = CustomInputTransform
