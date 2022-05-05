@@ -8,10 +8,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Added the normalization parameters of ```torchvision.transforms.Normalize``` as ```transform_kwargs``` in the ```ImageClassificationInputTransform``` ([#1178](https://github.com/PyTorchLightning/lightning-flash/pull/1178))
-
-- Added `available_outputs` method to the `Task` ([#1206](https://github.com/PyTorchLightning/lightning-flash/pull/1206))
-
 - Added support for using the `ImageEmbedder` SSL training for all image classifier backbones ([#1264](https://github.com/PyTorchLightning/lightning-flash/pull/1264))
 
 - Added support for audio file formats to `AudioClassificationData` ([#1085](https://github.com/PyTorchLightning/lightning-flash/pull/1085))
@@ -26,47 +22,53 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Fixed plain `LightningModule` support for Flash data modules. ([#1281](https://github.com/PyTorchLightning/lightning-flash/pull/1281))
+- Fixed a bug where a loaded `TabularClassifier` or `TabularRegressor` checkpoint could not be served ([#1324](https://github.com/PyTorchLightning/lightning-flash/pull/1324))
 
-- Fixed GPU support for self-supervised training with the `ImageEmbedder` ([#1256](https://github.com/PyTorchLightning/lightning-flash/pull/1256))
+## [0.7.4] - 2022-04-27
 
-- Fixed a bug where collate functions were never called in the `ImageEmbedder` class. ([#1217](https://github.com/PyTorchLightning/lightning-flash/pull/1217))
-
-- Fixed a bug where `pretraining_transforms` in the `ImageEmbedder` was never called. ([#1196](https://github.com/PyTorchLightning/lightning-flash/pull/1196))
-
-- Fixed a bug where `BASE_MODEL_NAME` was not in the dict for dino and moco strategies. ([#1196](https://github.com/PyTorchLightning/lightning-flash/pull/1196))
-
-- Fixed normalizing inputs to video classification ([#1213](https://github.com/PyTorchLightning/lightning-flash/pull/1213))
-
-- Fixed examples (question answering), where NLTK's `punkt` module needs to be downloaded first. ([#1215](https://github.com/PyTorchLightning/lightning-flash/pull/1215/files))
-
-- Fixed a bug where DDP would not work with Flash tasks ([#1182](https://github.com/PyTorchLightning/lightning-flash/pull/1182))
-
-- Fixed DDP support for `VideoClassifier` ([#1189](https://github.com/PyTorchLightning/lightning-flash/pull/1189))
-
-- Fixed a bug where buffers in loss functions were not correctly registered in the `Task` ([#1203](https://github.com/PyTorchLightning/lightning-flash/pull/1203))
-
-- Fixed support for passing a sampler instance to `from_*` methods / the `DataModule` ([#1204](https://github.com/PyTorchLightning/lightning-flash/pull/1204))
-
-- Fixed support for `torch==1.11.0` ([#1234](https://github.com/PyTorchLightning/lightning-flash/pull/1234))
-
-- Fixed DDP spawn support for `ObjectDetector`, `InstanceSegmentation`, and `KeypointDetector` ([#1222](https://github.com/PyTorchLightning/lightning-flash/pull/1222))
-
-- Fixed a bug where `InstanceSegmentation` would fail if samples had an inconsistent number of bboxes, labels, and masks (these will now be treated as negative samples) ([#1222](https://github.com/PyTorchLightning/lightning-flash/pull/1222))
-
-- Fixed a bug where `ObjectDetector`, `InstanceSegmentation`, and `KeypointDetector` would log train and validation metrics with the same name ([#1252](https://github.com/PyTorchLightning/lightning-flash/pull/1252))
-
-- Fixed a bug where using `ReduceLROnPlateau` would raise an error ([#1251](https://github.com/PyTorchLightning/lightning-flash/pull/1251))
-
-- Fixed a bug where some backbones were incorrectly listed as available for the `ObjectDetector`, `InstanceSegmentation`, and `KeypointDetector` ([#1267](https://github.com/PyTorchLightning/lightning-flash/pull/1267))
-
-- Fixed a bug where the backbone would not be frozen when finetuning the `SpeechRecognition` task ([#1275](https://github.com/PyTorchLightning/lightning-flash/pull/1275))
-
-- Fixed a bug where the backbone would not be frozen when finetuning the `QuestionAnswering` task with certain model types ([#1275](https://github.com/PyTorchLightning/lightning-flash/pull/1275))
-
-- Fixed a bug where the default Flash zero configurations for `ObjectDetector`, `InstanceSegmentation`, and `KeypointDetector` would error with the latest version of some requirements ([#1306](https://github.com/PyTorchLightning/lightning-flash/pull/1306))
+### Fixed
 
 - Fixed a bug where LR schedulers from HuggingFace could not be used with newer versions of PyTorch Lightning ([#1307](https://github.com/PyTorchLightning/lightning-flash/pull/1307))
+- Fixed a bug where the default Flash zero configurations for `ObjectDetector`, `InstanceSegmentation`, and `KeypointDetector` would error with the latest version of some requirements ([#1306](https://github.com/PyTorchLightning/lightning-flash/pull/1306))
+- Fixed plain `LightningModule` support for Flash data modules. ([#1281](https://github.com/PyTorchLightning/lightning-flash/pull/1281))
+
+## [0.7.3] - 2022-04-13
+
+### Fixed
+
+- Fixed a bug where some backbones were incorrectly listed as available for the `ObjectDetector`, `InstanceSegmentation`, and `KeypointDetector` ([#1267](https://github.com/PyTorchLightning/lightning-flash/pull/1267))
+- Fixed a bug where the backbone would not be frozen when finetuning the `SpeechRecognition` task ([#1275](https://github.com/PyTorchLightning/lightning-flash/pull/1275))
+- Fixed a bug where the backbone would not be frozen when finetuning the `QuestionAnswering` task with certain model types ([#1275](https://github.com/PyTorchLightning/lightning-flash/pull/1275))
+
+## [0.7.2] - 2022-03-30
+
+### Fixed
+
+- Fixed examples (question answering), where NLTK's `punkt` module needs to be downloaded first. ([#1215](https://github.com/PyTorchLightning/lightning-flash/pull/1215/files))
+- Fixed normalizing inputs to video classification ([#1213](https://github.com/PyTorchLightning/lightning-flash/pull/1213))
+- Fixed a bug where `pretraining_transforms` in the `ImageEmbedder` was never called. ([1196](https://github.com/PyTorchLightning/lightning-flash/pull/1196))
+- Fixed a bug where `BASE_MODEL_NAME` was not in the dict for dino and moco strategies. ([1196](https://github.com/PyTorchLightning/lightning-flash/pull/1196))
+- Fixed support for `torch==1.11.0` ([#1234](https://github.com/PyTorchLightning/lightning-flash/pull/1234))
+- Fixed DDP spawn support for `ObjectDetector`, `InstanceSegmentation`, and `KeypointDetector` ([#1222](https://github.com/PyTorchLightning/lightning-flash/pull/1222))
+- Fixed a bug where `InstanceSegmentation` would fail if samples had an inconsistent number of bboxes, labels, and masks (these will now be treated as negative samples) ([#1222](https://github.com/PyTorchLightning/lightning-flash/pull/1222))
+- Fixed a bug where collate functions were never called in the `ImageEmbedder` class. ([#1217](https://github.com/PyTorchLightning/lightning-flash/pull/1217))
+- Fixed a bug where `ObjectDetector`, `InstanceSegmentation`, and `KeypointDetector` would log train and validation metrics with the same name ([#1252](https://github.com/PyTorchLightning/lightning-flash/pull/1252))
+- Fixed a bug where using `ReduceLROnPlateau` would raise an error ([#1251](https://github.com/PyTorchLightning/lightning-flash/pull/1251))
+- Fixed GPU support for self-supervised training with the `ImageEmbedder` ([#1256](https://github.com/PyTorchLightning/lightning-flash/pull/1256))
+
+## [0.7.1] - 2022-03-01
+
+### Added
+
+- Added the normalization parameters of ```torchvision.transforms.Normalize``` as ```transform_kwargs``` in the ```ImageClassificationInputTransform``` ([#1178](https://github.com/PyTorchLightning/lightning-flash/pull/1178))
+- Added `available_outputs` method to the `Task` ([#1206](https://github.com/PyTorchLightning/lightning-flash/pull/1206))
+
+### Fixed
+
+- Fixed a bug where DDP would not work with Flash tasks ([#1182](https://github.com/PyTorchLightning/lightning-flash/pull/1182))
+- Fixed DDP support for `VideoClassifier` ([#1189](https://github.com/PyTorchLightning/lightning-flash/pull/1189))
+- Fixed a bug where buffers in loss functions were not correctly registered in the `Task` ([#1203](https://github.com/PyTorchLightning/lightning-flash/pull/1203))
+- Fixed support for passing a sampler instance to `from_*` methods / the `DataModule` ([#1204](https://github.com/PyTorchLightning/lightning-flash/pull/1204))
 
 ## [0.7.0] - 2022-02-15
 
