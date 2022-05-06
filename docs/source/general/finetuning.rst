@@ -228,7 +228,7 @@ For even more customization, create your own finetuning callback. Learn more abo
 
             # When ``current_epoch`` is 5, backbone will start to be trained.
             if current_epoch == self._unfreeze_epoch:
-                self.unfreeze_and_add_param_group(
+                self.unfreeze_and_extend_param_group(
                     pl_module.backbone,
                     optimizer,
                 )
