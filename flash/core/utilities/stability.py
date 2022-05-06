@@ -17,6 +17,12 @@ from typing import Callable, Type, Union
 
 from pytorch_lightning.utilities import rank_zero_warn
 
+from flash.core.utilities.imports import _CORE_TESTING
+
+# Skip doctests if requirements aren't available
+if not _CORE_TESTING:
+    __doctest_skip__ = ["beta"]
+
 
 @functools.lru_cache()  # Trick to only warn once for each message
 def _raise_beta_warning(message: str, stacklevel: int = 6):

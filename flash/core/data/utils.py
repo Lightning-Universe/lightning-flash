@@ -23,8 +23,12 @@ import urllib3
 from pytorch_lightning.utilities.apply_func import apply_to_collection
 from tqdm.auto import tqdm as tq
 
-from flash.core.utilities.imports import _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _CORE_TESTING, _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.core.utilities.stages import RunningStage
+
+# Skip doctests if requirements aren't available
+if not _CORE_TESTING:
+    __doctest_skip__ = ["download_data"]
 
 if _PIL_AVAILABLE:
     from PIL.Image import Image

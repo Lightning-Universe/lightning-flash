@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import pytest
 import torch
 
-from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
+from flash.core.utilities.imports import _SERVE_TESTING
 
 
 @dataclass
@@ -17,7 +17,7 @@ class CustomTokenizer:
         return f"decoding from {self.name}"
 
 
-@pytest.mark.skipif(not _TRANSFORMERS_AVAILABLE, reason="the library transformers is not installed.")
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_custom_tokenizer():
     from flash.core.serve.types import Text
 
@@ -27,10 +27,9 @@ def test_custom_tokenizer():
     assert "decoding from test" == text.serialize(torch.tensor([[1, 2]]))
 
 
-@pytest.mark.skipif(not _TRANSFORMERS_AVAILABLE, reason="the library transformers is not installed.")
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_tokenizer_string():
     from flash.core.serve.types import Text
 
-    text = Text(tokenizer="google/pegasus-xsum")
-    assert torch.allclose(torch.tensor([[181, 4211, 1]], dtype=torch.long), text.deserialize("some string"))
-    assert "</s><mask_1>" == text.serialize(torch.tensor([[1, 2]]))
+    text = Text(tokenizer="prajjwal1/bert-tiny")
+    assert "some string" in text.serialize(text.deserialize("some string"))

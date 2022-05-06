@@ -49,7 +49,7 @@ from flash.core.optimizers.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.registry import FlashRegistry
 from flash.core.serve.composition import Composition
 from flash.core.utilities.apply_func import get_callable_dict
-from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_5_0, requires
+from flash.core.utilities.imports import _CORE_TESTING, _PL_GREATER_EQUAL_1_5_0, requires
 from flash.core.utilities.providers import _HUGGINGFACE
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import (
@@ -61,6 +61,10 @@ from flash.core.utilities.types import (
     OPTIMIZER_TYPE,
     OUTPUT_TRANSFORM_TYPE,
 )
+
+# Skip doctests if requirements aren't available
+if not _CORE_TESTING:
+    __doctest_skip__ = ["Task", "Task.*"]
 
 
 class ModuleWrapperBase:
@@ -276,12 +280,16 @@ class CheckDependenciesMeta(ABCMeta):
     def __new__(mcs, *args, **kwargs):
         result = ABCMeta.__new__(mcs, *args, **kwargs)
         if result.required_extras is not None:
-            result.__init__ = requires(result.required_extras)(result.__init__)
+            if isinstance(result.required_extras, str):
+                result.required_extras = [result.required_extras]
+            result.__init__ = requires(*result.required_extras)(result.__init__)
 
             patterns = ["load_from_checkpoint", "available_*"]  # must match classmethods only
             regex = "(" + ")|(".join(patterns) + ")"
             for attribute_name, attribute_value in filter(lambda x: re.match(regex, x[0]), inspect.getmembers(result)):
-                setattr(result, attribute_name, classmethod(requires(result.required_extras)(attribute_value.__func__)))
+                setattr(
+                    result, attribute_name, classmethod(requires(*result.required_extras)(attribute_value.__func__))
+                )
         return result
 
 
