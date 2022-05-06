@@ -93,4 +93,3 @@ class TabularClassificationListInput(TabularDataFrameInput, ClassificationInputM
         if DataKeys.TARGET in sample:
             sample[DataKeys.TARGET] = self.format_target(sample[DataKeys.TARGET])
         return sample
-
