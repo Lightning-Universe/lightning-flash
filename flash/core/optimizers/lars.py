@@ -22,6 +22,12 @@ import torch
 from torch import nn
 from torch.optim.optimizer import Optimizer, required
 
+from flash.core.utilities.imports import _CORE_TESTING
+
+# Skip doctests if requirements aren't available
+if not _CORE_TESTING:
+    __doctest_skip__ = ["LARS"]
+
 
 class LARS(Optimizer):
     r"""Extends SGD in PyTorch with LARS scaling from the paper
