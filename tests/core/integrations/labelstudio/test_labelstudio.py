@@ -8,13 +8,14 @@ from flash.core.integrations.labelstudio.input import (
     LabelStudioTextClassificationInput,
 )
 from flash.core.integrations.labelstudio.visualizer import launch_app
-from flash.core.utilities.imports import _IMAGE_TESTING, _TEXT_TESTING, _VIDEO_TESTING
+from flash.core.utilities.imports import _CORE_TESTING, _IMAGE_TESTING, _TEXT_TESTING, _VIDEO_TESTING
 from flash.core.utilities.stages import RunningStage
 from flash.image.classification.data import ImageClassificationData
 from flash.text.classification.data import TextClassificationData
 from flash.video.classification.data import LabelStudioVideoClassificationInput, VideoClassificationData
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_utility_load():
     """Test for label studio json loader."""
     data = [
@@ -138,6 +139,7 @@ def test_utility_load():
     assert len(ds_multi[0]) == 5
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_input_labelstudio():
     """Test creation of LabelStudioInput."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/data.zip")

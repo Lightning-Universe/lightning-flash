@@ -39,6 +39,7 @@ from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.utilities.imports import (
     _AUDIO_TESTING,
+    _CORE_TESTING,
     _GRAPH_TESTING,
     _IMAGE_AVAILABLE,
     _IMAGE_TESTING,
@@ -156,6 +157,7 @@ class AdapterParent(Parent):
 # ================================
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize("metrics", [None, Accuracy(), {"accuracy": Accuracy()}])
 def test_classificationtask_train(tmpdir: str, metrics: Any):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
@@ -168,6 +170,7 @@ def test_classificationtask_train(tmpdir: str, metrics: Any):
     assert "test_nll_loss" in result[0]
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_task_predict_raises():
     with pytest.raises(AttributeError, match="`flash.Task.predict` has been removed."):
         model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
@@ -175,6 +178,7 @@ def test_task_predict_raises():
         task.predict("args", kwarg="test")
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize("task", [Parent, GrandParent, AdapterParent])
 def test_nested_tasks(tmpdir, task):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
@@ -190,6 +194,7 @@ def test_nested_tasks(tmpdir, task):
     assert "test_nll_loss" in result[0]
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_classification_task_trainer_predict(tmpdir):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10))
     task = ClassificationTask(model)
@@ -321,6 +326,7 @@ def custom_steplr_configuration_return_as_dict(optimizer):
     }
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize(
     "optim", ["Adadelta", functools.partial(torch.optim.Adadelta, eps=0.5), ("Adadelta", {"eps": 0.5})]
 )
@@ -361,6 +367,7 @@ def test_optimizers_and_schedulers(tmpdir, optim, sched, interval):
     trainer.fit(task, train_dl)
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_optimizer_learning_rate():
     mock_optimizer = MagicMock()
     Task.optimizers(mock_optimizer, "test")
@@ -437,6 +444,7 @@ def test_external_schedulers_provider_hf_transformers(tmpdir, optim, sched, use_
     assert isinstance(trainer.lr_schedulers[0]["scheduler"], torch.optim.lr_scheduler.LambdaLR)
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_errors_and_exceptions_optimizers_and_schedulers():
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
 
@@ -473,6 +481,7 @@ def test_errors_and_exceptions_optimizers_and_schedulers():
         task.configure_optimizers()
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_classification_task_metrics():
     train_dataset = FixedDataset([0, 1])
     val_dataset = FixedDataset([1, 1])
@@ -496,6 +505,7 @@ def test_classification_task_metrics():
     trainer.test(task, DataLoader(test_dataset))
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_loss_fn_buffer():
     weight = torch.rand(10)
     model = Task(loss_fn=nn.CrossEntropyLoss(weight=weight))

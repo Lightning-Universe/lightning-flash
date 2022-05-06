@@ -275,6 +275,7 @@ class LazyModule(types.ModuleType):
 
 
 # Global variables used for testing purposes (e.g. to only run doctests in the correct CI job)
+_CORE_TESTING = True
 _IMAGE_TESTING = _IMAGE_AVAILABLE
 _IMAGE_EXTRAS_TESTING = False  # Not for normal use
 _VIDEO_TESTING = _VIDEO_AVAILABLE
@@ -288,6 +289,7 @@ _AUDIO_TESTING = _AUDIO_AVAILABLE
 
 if "FLASH_TEST_TOPIC" in os.environ:
     topic = os.environ["FLASH_TEST_TOPIC"]
+    _CORE_TESTING = topic == "core"
     _IMAGE_TESTING = topic == "image"
     _IMAGE_EXTRAS_TESTING = topic == "image,image_extras" or topic == "icevision" or topic == "vissl"
     _VIDEO_TESTING = topic == "video"

@@ -13,14 +13,7 @@
 # limitations under the License.
 from flash import Trainer
 from flash.core.data.utils import download_data
-from flash.core.utilities.imports import example_requires
 from flash.text import QuestionAnsweringData, QuestionAnsweringTask
-
-example_requires("text")
-
-import nltk  # noqa: E402
-
-nltk.download("punkt")
 
 # 1. Create the DataModule
 download_data("https://pl-flash-data.s3.amazonaws.com/squad_tiny.zip", "./data/")
@@ -28,7 +21,7 @@ download_data("https://pl-flash-data.s3.amazonaws.com/squad_tiny.zip", "./data/"
 datamodule = QuestionAnsweringData.from_squad_v2(
     train_file="./data/squad_tiny/train.json",
     val_file="./data/squad_tiny/val.json",
-    batch_size=4,
+    batch_size=1,
 )
 
 # 2. Build the task
