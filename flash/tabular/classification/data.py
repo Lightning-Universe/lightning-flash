@@ -362,6 +362,7 @@ class TabularClassificationData(TabularData):
         Examples
         ________
         .. testsetup::
+
             >>> train_data = {
             ...     "animal": ["cat", "dog", "cat"],
             ...     "friendly": ["yes", "yes", "no"],
@@ -371,16 +372,19 @@ class TabularClassificationData(TabularData):
             ...     "friendly": ["yes", "no", "yes"],
             ...     "weight": [7, 12, 5],
             ... }
+
         We have dictionaries ``train_data`` and ``predict_data``.
+
         .. doctest::
+
             >>> from flash import Trainer
             >>> from flash.tabular import TabularClassifier, TabularClassificationData
             >>> datamodule = TabularClassificationData.from_dict(
             ...     "friendly",
             ...     "weight",
             ...     "animal",
-            ...     train_data_frame=train_data,
-            ...     predict_data_frame=predict_data,
+            ...     train_data=train_data,
+            ...     predict_data=predict_data,
             ...     batch_size=4,
             ... )
             >>> datamodule.num_classes
@@ -393,7 +397,9 @@ class TabularClassificationData(TabularData):
             Training...
             >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Predicting...
+
         .. testcleanup::
+
             >>> del train_data
             >>> del predict_data
         """
