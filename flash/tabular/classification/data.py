@@ -18,7 +18,11 @@ from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE, InputTransf
 from flash.core.data.utilities.classification import TargetFormatter
 from flash.core.utilities.imports import _PANDAS_AVAILABLE, _TABULAR_TESTING
 from flash.core.utilities.stages import RunningStage
-from flash.tabular.classification.input import TabularClassificationCSVInput, TabularClassificationDataFrameInput, TabularClassificationListInput
+from flash.tabular.classification.input import (
+    TabularClassificationCSVInput,
+    TabularClassificationDataFrameInput,
+    TabularClassificationListInput,
+)
 from flash.tabular.data import TabularData
 
 if _PANDAS_AVAILABLE:
@@ -331,6 +335,7 @@ class TabularClassificationData(TabularData):
     ) -> "TabularClassificationData":
         """Creates a :class:`~flash.tabular.classification.data.TabularClassificationData` object from the given
         lists.
+
         .. note::
             The ``categorical_fields``, ``numerical_fields``, and ``target_fields`` do not need to be provided if
             ``parameters`` are passed instead. These can be obtained from the
