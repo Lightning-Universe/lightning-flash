@@ -37,7 +37,12 @@ from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.registry import FlashRegistry
+from flash.core.utilities.imports import _CORE_TESTING
 from flash.core.utilities.stages import RunningStage
+
+# Skip doctests if requirements aren't available
+if not _CORE_TESTING:
+    __doctest_skip__ = ["DataModule"]
 
 
 class DatasetInput(Input):

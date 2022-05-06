@@ -44,7 +44,7 @@ from flash.core.optimizers.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.registry import FlashRegistry
 from flash.core.serve.composition import Composition
 from flash.core.utilities.apply_func import get_callable_dict
-from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_5_0, requires
+from flash.core.utilities.imports import _CORE_TESTING, _PL_GREATER_EQUAL_1_5_0, requires
 from flash.core.utilities.providers import _HUGGINGFACE
 from flash.core.utilities.types import (
     INPUT_TRANSFORM_TYPE,
@@ -55,6 +55,10 @@ from flash.core.utilities.types import (
     OPTIMIZER_TYPE,
     OUTPUT_TRANSFORM_TYPE,
 )
+
+# Skip doctests if requirements aren't available
+if not _CORE_TESTING:
+    __doctest_skip__ = ["Task", "Task.*"]
 
 
 class ModuleWrapperBase:

@@ -1,4 +1,7 @@
+import pytest
+
 from flash.core.serve.dag.rewrite import args, head, RewriteRule, RuleSet, Traverser, VAR
+from flash.core.utilities.imports import _SERVE_TESTING
 
 
 def inc(x):
@@ -13,6 +16,7 @@ def double(x):
     return x * 2
 
 
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_head():
     assert head((inc, 1)) == inc
     assert head((add, 1, 2)) == add
@@ -20,6 +24,7 @@ def test_head():
     assert head([1, 2, 3]) == list
 
 
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_args():
     assert args((inc, 1)) == (1,)
     assert args((add, 1, 2)) == (1, 2)
@@ -27,6 +32,7 @@ def test_args():
     assert args([1, 2, 3]) == [1, 2, 3]
 
 
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_traverser():
     term = (add, (inc, 1), (double, (inc, 1), 2))
     t = Traverser(term)
@@ -68,6 +74,7 @@ def repl_list(sd):
 rule6 = RewriteRule((list, "x"), repl_list, ("x",))
 
 
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_RewriteRule():
     # Test extraneous vars are removed, varlist is correct
     assert rule1.vars == ("a",)
@@ -82,6 +89,7 @@ def test_RewriteRule():
     assert rule5._varlist == ["c", "b", "a"]
 
 
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_RewriteRuleSubs():
     # Test both rhs substitution and callable rhs
     assert rule1.subs({"a": 1}) == (inc, 1)
@@ -92,6 +100,7 @@ rules = [rule1, rule2, rule3, rule4, rule5, rule6]
 rs = RuleSet(*rules)
 
 
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_RuleSet():
     net = (
         {
@@ -111,6 +120,7 @@ def test_RuleSet():
     assert rs.rules == rules
 
 
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_matches():
     term = (add, 2, 1)
     matches = list(rs.iter_matches(term))
@@ -141,6 +151,7 @@ def test_matches():
     assert len(matches) == 0
 
 
+@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_rewrite():
     # Rewrite inside list
     term = (sum, [(add, 1, 1), (add, 1, 1), (add, 1, 1)])

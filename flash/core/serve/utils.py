@@ -1,4 +1,3 @@
-from importlib.util import find_spec
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -46,21 +45,3 @@ def download_file(url: str, *, download_path: Optional[Path] = None) -> str:
                 f.write(chunk)
 
     return fpath
-
-
-def _module_available(module_path: str) -> bool:
-    """Check if a path is available in your environment.
-
-    >>> _module_available('os')
-    True
-    >>> _module_available('bla.bla')
-    False
-    """
-    try:
-        return find_spec(module_path) is not None
-    except AttributeError:
-        # Python 3.6
-        return False
-    except ModuleNotFoundError:
-        # Python 3.7+
-        return False
