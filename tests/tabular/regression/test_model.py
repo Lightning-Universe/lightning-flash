@@ -17,33 +17,12 @@ from unittest import mock
 import pandas as pd
 import pytest
 import torch
-from pytorch_lightning import Trainer
 
+import flash
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _SERVE_TESTING, _TABULAR_AVAILABLE, _TABULAR_TESTING
 from flash.tabular import TabularRegressionData, TabularRegressor
-from tests.helpers.task_tester import TaskTester
-
-# ======== Mock functions ========
-
-
-class DummyDataset(torch.utils.data.Dataset):
-    def __init__(self, num_num=16, num_cat=16):
-        super().__init__()
-        self.num_num = num_num
-        self.num_cat = num_cat
-
-    def __getitem__(self, index):
-        target = torch.rand(1)
-        cat_vars = torch.randint(0, 10, size=(self.num_cat,))
-        num_vars = torch.rand(self.num_num)
-        return {DataKeys.INPUT: (cat_vars, num_vars), DataKeys.TARGET: target}
-
-    def __len__(self) -> int:
-        return 100
-
-
-# ==============================
+from tests.helpers.task_tester import StaticDataset, TaskTester
 
 
 class TestTabularRegressor(TaskTester):
@@ -64,6 +43,23 @@ class TestTabularRegressor(TaskTester):
     scriptable = False
     traceable = False
 
+    marks = {
+        "test_fit": [
+            pytest.mark.parametrize(
+                "task_kwargs",
+                [
+                    {"backbone": "tabnet"},
+                    {"backbone": "tabtransformer"},
+                    {"backbone": "fttransformer"},
+                    {"backbone": "autoint"},
+                    {"backbone": "node"},
+                    {"backbone": "category_embedding"},
+                ],
+            )
+        ],
+        "test_cli": [pytest.mark.parametrize("extra_args", ([],))],
+    }
+
     @property
     def example_forward_input(self):
         return {
@@ -75,61 +71,37 @@ class TestTabularRegressor(TaskTester):
         assert isinstance(output, torch.Tensor)
         assert output.shape == torch.Size([1, 1])
 
+    @property
+    def example_train_sample(self):
+        return {DataKeys.INPUT: (torch.randint(0, 10, size=(4,)), torch.rand(4)), DataKeys.TARGET: 0.1}
 
-@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
-@pytest.mark.parametrize(
-    "backbone", ["tabnet", "tabtransformer", "fttransformer", "autoint", "node", "category_embedding"]
-)
-def test_init_train(backbone, tmpdir):
-    train_dl = torch.utils.data.DataLoader(DummyDataset(), batch_size=16)
+    @pytest.mark.parametrize(
+        "backbone", ["tabnet", "tabtransformer", "fttransformer", "autoint", "node", "category_embedding"]
+    )
+    def test_init_train_no_num(self, backbone, tmpdir):
+        no_num_sample = {DataKeys.INPUT: (torch.randint(0, 10, size=(4,)), torch.empty(0)), DataKeys.TARGET: 0.1}
+        dataset = StaticDataset(no_num_sample, 4)
 
-    data_properties = {
-        "parameters": {"categorical_fields": list(range(16))},
-        "embedding_sizes": [(10, 32) for _ in range(16)],
-        "cat_dims": [10 for _ in range(16)],
-        "num_features": 32,
-        "backbone": backbone,
-    }
+        args = self.task_args
+        kwargs = dict(**self.task_kwargs)
+        kwargs.update(num_features=4)
+        model = self.task(*args, **kwargs)
 
-    model = TabularRegressor(**data_properties)
-    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    trainer.fit(model, train_dl)
+        trainer = flash.Trainer(default_root_dir=tmpdir, fast_dev_run=True)
+        trainer.fit(model, model.process_train_dataset(dataset, batch_size=4))
 
+    @pytest.mark.parametrize("backbone", ["tabnet", "tabtransformer", "autoint", "node", "category_embedding"])
+    def test_init_train_no_cat(self, backbone, tmpdir):
+        no_cat_sample = {DataKeys.INPUT: (torch.empty(0), torch.rand(4)), DataKeys.TARGET: 0.1}
+        dataset = StaticDataset(no_cat_sample, 4)
 
-@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
-@pytest.mark.parametrize(
-    "backbone", ["tabnet", "tabtransformer", "fttransformer", "autoint", "node", "category_embedding"]
-)
-def test_init_train_no_num(backbone, tmpdir):
-    train_dl = torch.utils.data.DataLoader(DummyDataset(num_num=0), batch_size=16)
-    data_properties = {
-        "parameters": {"categorical_fields": list(range(16))},
-        "embedding_sizes": [(10, 32) for _ in range(16)],
-        "cat_dims": [10 for _ in range(16)],
-        "num_features": 16,
-        "backbone": backbone,
-    }
+        args = self.task_args
+        kwargs = dict(**self.task_kwargs)
+        kwargs.update(parameters={"categorical_fields": []}, embedding_sizes=[], cat_dims=[], num_features=4)
+        model = self.task(*args, **kwargs)
 
-    model = TabularRegressor(**data_properties)
-    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    trainer.fit(model, train_dl)
-
-
-@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
-@pytest.mark.parametrize("backbone", ["tabnet", "tabtransformer", "autoint", "node", "category_embedding"])
-def test_init_train_no_cat(backbone, tmpdir):
-    train_dl = torch.utils.data.DataLoader(DummyDataset(num_cat=0), batch_size=16)
-    data_properties = {
-        "parameters": {"categorical_fields": []},
-        "embedding_sizes": [],
-        "cat_dims": [],
-        "num_features": 16,
-        "backbone": backbone,
-    }
-
-    model = TabularRegressor(**data_properties)
-    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    trainer.fit(model, train_dl)
+        trainer = flash.Trainer(default_root_dir=tmpdir, fast_dev_run=True)
+        trainer.fit(model, model.process_train_dataset(dataset, batch_size=4))
 
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")

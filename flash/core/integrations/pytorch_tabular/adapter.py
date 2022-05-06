@@ -21,9 +21,10 @@ from flash.core.model import Task
 
 
 class PytorchTabularAdapter(Adapter):
-    def __init__(self, backbone):
+    def __init__(self, task_type, backbone):
         super().__init__()
 
+        self.task_type = task_type
         self.backbone = backbone
 
     @classmethod
@@ -52,21 +53,23 @@ class PytorchTabularAdapter(Adapter):
             "output_dim": output_dim,
         }
         adapter = cls(
+            task_type,
             task.backbones.get(backbone)(
                 task_type=task_type, parameters=parameters, loss_fn=loss_fn, metrics=metrics, **backbone_kwargs
-            )
+            ),
         )
 
         return adapter
 
-    @staticmethod
-    def convert_batch(batch):
+    def convert_batch(self, batch):
         new_batch = {
             "continuous": batch[DataKeys.INPUT][1],
             "categorical": batch[DataKeys.INPUT][0],
         }
         if DataKeys.TARGET in batch:
             new_batch["target"] = batch[DataKeys.TARGET].reshape(-1, 1)
+            if self.task_type == "regression":
+                new_batch["target"] = new_batch["target"].float()
         return new_batch
 
     def training_step(self, batch, batch_idx) -> Any:
