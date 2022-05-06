@@ -36,7 +36,7 @@ def _copy_func(f):
     return g
 
 
-class _StaticDataset(Dataset):
+class StaticDataset(Dataset):
     def __init__(self, sample, length):
         super().__init__()
 
@@ -60,7 +60,7 @@ def _test_forward(self):
 
 def _test_fit(self, tmpdir, task_kwargs):
     """Tests that a single batch fit pass completes."""
-    dataset = _StaticDataset(self.example_train_sample, 4)
+    dataset = StaticDataset(self.example_train_sample, 4)
 
     args = self.task_args
     kwargs = dict(**self.task_kwargs)
