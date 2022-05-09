@@ -15,10 +15,20 @@ import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 import flash
-from flash.core.utilities.imports import _BAAL_AVAILABLE
+from flash.core.utilities.imports import _BAAL_AVAILABLE, _BAAL_GREATER_EQUAL_1_5_2
 
 if _BAAL_AVAILABLE:
-    from baal.bayesian.dropout import _patch_dropout_layers
+    # _patch_dropout_layers function was replaced with replace_layers_in_module helper
+    # function in v1.5.2 (https://github.com/ElementAI/baal/pull/194 for more details)
+    if _BAAL_GREATER_EQUAL_1_5_2:
+        from baal.bayesian.common import replace_layers_in_module
+        from baal.bayesian.consistent_dropout import _consistent_dropout_mapping_fn
+
+        def _patch_dropout_layers(module: torch.nn.Module):
+            return replace_layers_in_module(module, _consistent_dropout_mapping_fn)
+
+    else:
+        from baal.bayesian.consistent_dropout import _patch_dropout_layers
 
 
 class InferenceMCDropoutTask(flash.Task):
