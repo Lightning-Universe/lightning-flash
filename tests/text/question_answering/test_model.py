@@ -56,6 +56,14 @@ class TestQuestionAnsweringTask(TaskTester):
             "context": "The paragraph of text which contains the answer to the question",
         }
 
+    @property
+    def example_val_sample(self):
+        return self.example_train_sample
+
+    @property
+    def example_test_sample(self):
+        return self.example_train_sample
+
 
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_modules_to_freeze():

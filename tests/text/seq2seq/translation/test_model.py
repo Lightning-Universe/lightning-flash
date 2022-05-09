@@ -52,6 +52,14 @@ class TestTranslationTask(TaskTester):
     def example_train_sample(self):
         return {DataKeys.INPUT: "Some text", DataKeys.TARGET: "Some translated text"}
 
+    @property
+    def example_val_sample(self):
+        return self.example_train_sample
+
+    @property
+    def example_test_sample(self):
+        return self.example_train_sample
+
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
 @mock.patch("flash._IS_TESTING", True)

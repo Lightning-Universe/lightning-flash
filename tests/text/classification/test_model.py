@@ -68,6 +68,14 @@ class TestTextClassifier(TaskTester):
     def example_train_sample(self):
         return {DataKeys.INPUT: "some text", DataKeys.TARGET: 1}
 
+    @property
+    def example_val_sample(self):
+        return self.example_train_sample
+
+    @property
+    def example_test_sample(self):
+        return self.example_train_sample
+
     @pytest.mark.skipif(not _TORCH_ORT_AVAILABLE, reason="ORT Module aren't installed.")
     def test_ort_callback_fails_no_model(self, tmpdir):
         dataset = StaticDataset(self.example_train_sample, 4)
