@@ -101,4 +101,3 @@ class TabularClassificationListInput(TabularClassificationDataFrameInput):
         return super().load_data(
             data_frame, categorical_fields, numerical_fields, target_fields, parameters, target_formatter
         )
-

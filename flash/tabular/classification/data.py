@@ -446,7 +446,7 @@ class TabularClassificationData(TabularData):
         train_list: Optional[List[Union[tuple, dict]]] = None,
         val_list: Optional[List[Union[tuple, dict]]] = None,
         test_list: Optional[List[Union[tuple, dict]]] = None,
-        predict_list: Optional[List[Union[tuple, dict]]] = None, 
+        predict_list: Optional[List[Union[tuple, dict]]] = None,
         target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = TabularClassificationListInput,
         transform: INPUT_TRANSFORM_TYPE = InputTransform,
