@@ -40,6 +40,21 @@ if _TABULAR_TESTING:
         "label": [0, 1, 0],
     }
 
+    TEST_LIST_1 = [
+        {"category": "a", "scalar_a": 0.0, "scalar_b": 5.0, "label": 0},
+        {"category": "b", "scalar_a": 1.0, "scalar_b": 4.0, "label": 1},
+        {"category": "c", "scalar_a": 2.0, "scalar_b": 3.0, "label": 0},
+        {"category": "a", "scalar_a": 3.0, "scalar_b": 2.0, "label": 1},
+        {"category": None, "scalar_a": None, "scalar_b": None, "label": 0},
+        {"category": "c", "scalar_a": 5.0, "scalar_b": 1.0, "label": 1},
+    ]
+
+    TEST_LIST_2 = [
+        {"category": "d", "scalar_a": 0.0, "scalar_b": 0.0, "label": 0},
+        {"category": "e", "scalar_a": 1.0, "scalar_b": 4.0, "label": 1},
+        {"category": "f", "scalar_a": 2.0, "scalar_b": 2.0, "label": 0},
+    ]
+
     TEST_DF_1 = pd.DataFrame(data=TEST_DICT_1)
     TEST_DF_2 = pd.DataFrame(data=TEST_DICT_2)
 
@@ -172,6 +187,27 @@ def test_from_dicts():
         train_dict=TEST_DICT_1,
         val_dict=TEST_DICT_2,
         test_dict=TEST_DICT_2,
+        num_workers=0,
+        batch_size=1,
+    )
+    for dl in [dm.train_dataloader(), dm.val_dataloader(), dm.test_dataloader()]:
+        data = next(iter(dl))
+        (cat, num) = data[DataKeys.INPUT]
+        target = data[DataKeys.TARGET]
+        assert cat.shape == (1, 1)
+        assert num.shape == (1, 2)
+        assert target.shape == (1,)
+
+
+@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular dependencies are required")
+def test_from_lists():
+    dm = TabularClassificationData.from_lists(
+        categorical_fields=["category"],
+        numerical_fields=["scalar_a", "scalar_b"],
+        target_fields="label",
+        train_list=TEST_LIST_1,
+        val_list=TEST_LIST_2,
+        test_list=TEST_LIST_2,
         num_workers=0,
         batch_size=1,
     )
