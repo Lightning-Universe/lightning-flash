@@ -67,7 +67,7 @@ class PointCloudSegmentation(ClassificationTask):
     def __init__(
         self,
         num_classes: int,
-        backbone: Union[str, Tuple[nn.Module, int]] = "RandLANet",
+        backbone: Union[str, Tuple[nn.Module, int]] = "randlanet",
         backbone_kwargs: Optional[Dict] = None,
         head: Optional[nn.Module] = None,
         loss_fn: LOSS_FN_TYPE = torch.nn.functional.cross_entropy,
