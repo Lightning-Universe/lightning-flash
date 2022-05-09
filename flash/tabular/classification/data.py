@@ -334,7 +334,7 @@ class TabularClassificationData(TabularData):
         **data_module_kwargs: Any,
     ) -> "TabularClassificationData":
         """Creates a :class:`~flash.tabular.classification.data.TabularClassificationData` object from the given
-        lists.
+        dictionary.
 
         .. note::
             The ``categorical_fields``, ``numerical_fields``, and ``target_fields`` do not need to be provided if
