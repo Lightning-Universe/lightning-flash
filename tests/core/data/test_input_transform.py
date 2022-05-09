@@ -43,14 +43,6 @@ def test_input_transform():
         transform._populate_transforms_for_stage(RunningStage.TRAINING)
 
     class MyTransform(InputTransform):
-        def input_per_batch_transform(self) -> Callable:
-            return None
-
-    with pytest.raises(MisconfigurationException, match="The hook input_per_batch_transform should return a function."):
-        transform = MyTransform()
-        transform._populate_transforms_for_stage(RunningStage.TRAINING)
-
-    class MyTransform(InputTransform):
         def target_per_batch_transform(self) -> Callable:
             return super().target_per_batch_transform()
 

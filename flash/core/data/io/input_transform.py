@@ -133,17 +133,17 @@ class InputTransform:
 
                     return ApplyToKeys("input", my_func)
         """
-        return self._identity
+        pass
 
     def input_per_sample_transform(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "input" key of each sample on
         device for all stages stage."""
-        return self._identity
+        pass
 
     def target_per_sample_transform(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "target" key of each sample on
         device for all stages stage."""
-        return self._identity
+        pass
 
     def train_per_sample_transform(self) -> Callable:
         """Defines the transform to be applied on a single sample on cpu for the training stage.
@@ -156,17 +156,17 @@ class InputTransform:
                 DataKeys.METADATA: ...,
             }
         """
-        return self._identity
+        pass
 
     def train_input_per_sample_transform(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "input" key of each single sample
         on cpu for the training stage."""
-        return self._identity
+        pass
 
     def train_target_per_sample_transform(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "target" key of each single sample
         on cpu for the training stage."""
-        return self._identity
+        pass
 
     def val_per_sample_transform(self) -> Callable:
         """Defines the transform to be applied on a single sample on cpu for the validating stage.
@@ -191,17 +191,17 @@ class InputTransform:
 
                     return ApplyToKeys("input", my_func)
         """
-        return self._identity
+        pass
 
     def val_input_per_sample_transform(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "input" key of each single sample
         on cpu for the validating stage."""
-        return self._identity
+        pass
 
     def val_target_per_sample_transform(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "target" key of each single sample
         on cpu for the validating stage."""
-        return self._identity
+        pass
 
     def test_per_sample_transform(self) -> Callable:
         """Defines the transform to be applied on a single sample on cpu for the testing stage.
@@ -214,17 +214,17 @@ class InputTransform:
                 DataKeys.METADATA: ...,
             }
         """
-        return self._identity
+        pass
 
     def test_input_per_sample_transform(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "input" key of each single sample
         on cpu for the testing stage."""
-        return self._identity
+        pass
 
     def test_target_per_sample_transform(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "target" key of each single sample
         on cpu for the testing stage."""
-        return self._identity
+        pass
 
     def predict_per_sample_transform(self) -> Callable:
         """Defines the transform to be applied on a single sample on cpu for the predicting stage.
@@ -249,17 +249,17 @@ class InputTransform:
 
                     return ApplyToKeys("input", my_func)
         """
-        return self._identity
+        pass
 
     def predict_input_per_sample_transform(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "input" key of each single sample
         on cpu for the predicting stage."""
-        return self._identity
+        pass
 
     def predict_target_per_sample_transform(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "target" key of each single sample
         on cpu for the predicting stage."""
-        return self._identity
+        pass
 
     def serve_per_sample_transform(self) -> Callable:
         """Defines the transform to be applied on a single sample on cpu for the serving stage.
@@ -284,17 +284,17 @@ class InputTransform:
 
                     return ApplyToKeys("input", my_func)
         """
-        return self._identity
+        pass
 
     def serve_input_per_sample_transform(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "input" key of each single sample
         on cpu for the serving stage."""
-        return self._identity
+        pass
 
     def serve_target_per_sample_transform(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "target" key of each single sample
         on cpu for the serving stage."""
-        return self._identity
+        pass
 
     ##################################
     # PER SAMPLE TRANSFORM ON DEVICE #
@@ -323,17 +323,17 @@ class InputTransform:
 
                     return ApplyToKeys("input", my_func)
         """
-        return self._identity
+        pass
 
     def input_per_sample_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "input" key of each sample on
         device for all stages stage."""
-        return self._identity
+        pass
 
     def target_per_sample_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "target" key of each sample on
         device for all stages stage."""
-        return self._identity
+        pass
 
     def train_per_sample_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on a single sample on device for the training stage.
@@ -346,17 +346,17 @@ class InputTransform:
                 DataKeys.METADATA: ...,
             }
         """
-        return self._identity
+        pass
 
     def train_input_per_sample_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "input" key of each single sample
         on device for the training stage."""
-        return self._identity
+        pass
 
     def train_target_per_sample_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "target" key of each single sample
         on device for the training stage."""
-        return self._identity
+        pass
 
     def val_per_sample_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on a single sample on device for the validating stage.
@@ -381,17 +381,17 @@ class InputTransform:
 
                     return ApplyToKeys("input", my_func)
         """
-        return self._identity
+        pass
 
     def val_input_per_sample_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "input" key of each single sample
         on device for the validating stage."""
-        return self._identity
+        pass
 
     def val_target_per_sample_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "target" key of each single sample
         on device for the validating stage."""
-        return self._identity
+        pass
 
     def test_per_sample_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on a single sample on device for the testing stage.
@@ -404,17 +404,17 @@ class InputTransform:
                 DataKeys.METADATA: ...,
             }
         """
-        return self._identity
+        pass
 
     def test_input_per_sample_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "input" key of each single sample
         on device for the testing stage."""
-        return self._identity
+        pass
 
     def test_target_per_sample_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "target" key of each single sample
         on device for the testing stage."""
-        return self._identity
+        pass
 
     def predict_per_sample_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on a single sample on device for the predicting stage.
@@ -439,17 +439,17 @@ class InputTransform:
 
                     return ApplyToKeys("input", my_func)
         """
-        return self._identity
+        pass
 
     def predict_input_per_sample_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "input" key of each single sample
         on device for the predicting stage."""
-        return self._identity
+        pass
 
     def predict_target_per_sample_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "target" key of each single sample
         on device for the predicting stage."""
-        return self._identity
+        pass
 
     #######################
     # PER BATCH TRANSFORM #
@@ -478,17 +478,17 @@ class InputTransform:
 
                     return ApplyToKeys("input", my_func)
         """
-        return self._identity
+        pass
 
     def input_per_batch_transform(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "input" key of batch on cpu for all
         stages stage."""
-        return self._identity
+        pass
 
     def target_per_batch_transform(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "target" key of batch on cpu for
         all stages stage."""
-        return self._identity
+        pass
 
     def train_per_batch_transform(self) -> Callable:
         """Defines the transform to be applied on a batch of data on cpu for the training stage.
@@ -501,17 +501,17 @@ class InputTransform:
                 DataKeys.METADATA: ...,
             }
         """
-        return self._identity
+        pass
 
     def train_input_per_batch_transform(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "input" key of each single sample
         on cpu for the training stage."""
-        return self._identity
+        pass
 
     def train_target_per_batch_transform(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "target" key of each single sample
         on cpu for the training stage."""
-        return self._identity
+        pass
 
     def val_per_batch_transform(self) -> Callable:
         """Defines the transform to be applied on a batch of data on cpu for the validating stage.
@@ -536,17 +536,17 @@ class InputTransform:
 
                     return ApplyToKeys("input", my_func)
         """
-        return self._identity
+        pass
 
     def val_input_per_batch_transform(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "input" key of each single sample
         on cpu for the validating stage."""
-        return self._identity
+        pass
 
     def val_target_per_batch_transform(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "target" key of each single sample
         on cpu for the validating stage."""
-        return self._identity
+        pass
 
     def test_per_batch_transform(self) -> Callable:
         """Defines the transform to be applied on a batch of data on cpu for the testing stage.
@@ -559,17 +559,17 @@ class InputTransform:
                 DataKeys.METADATA: ...,
             }
         """
-        return self._identity
+        pass
 
     def test_input_per_batch_transform(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "input" key of each single sample
         on cpu for the testing stage."""
-        return self._identity
+        pass
 
     def test_target_per_batch_transform(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "target" key of each single sample
         on cpu for the testing stage."""
-        return self._identity
+        pass
 
     def predict_per_batch_transform(self) -> Callable:
         """Defines the transform to be applied on a batch of data on cpu for the predicting stage.
@@ -594,17 +594,17 @@ class InputTransform:
 
                     return ApplyToKeys("input", my_func)
         """
-        return self._identity
+        pass
 
     def predict_input_per_batch_transform(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "input" key of each single sample
         on cpu for the predicting stage."""
-        return self._identity
+        pass
 
     def predict_target_per_batch_transform(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "target" key of each single sample
         on cpu for the predicting stage."""
-        return self._identity
+        pass
 
     def serve_per_batch_transform(self) -> Callable:
         """Defines the transform to be applied on a batch of data on cpu for the serving stage.
@@ -629,17 +629,17 @@ class InputTransform:
 
                     return ApplyToKeys("input", my_func)
         """
-        return self._identity
+        pass
 
     def serve_input_per_batch_transform(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "input" key of each single sample
         on cpu for the serving stage."""
-        return self._identity
+        pass
 
     def serve_target_per_batch_transform(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "target" key of each single sample
         on cpu for the serving stage."""
-        return self._identity
+        pass
 
     #################################
     # PER BATCH TRANSFORM ON DEVICE #
@@ -668,17 +668,17 @@ class InputTransform:
 
                     return ApplyToKeys("input", my_func)
         """
-        return self._identity
+        pass
 
     def input_per_batch_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "input" key of batch on device for
         all stages stage."""
-        return self._identity
+        pass
 
     def target_per_batch_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "target" key of batch on device for
         all stages stage."""
-        return self._identity
+        pass
 
     def train_per_batch_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on a batch of data on device for the training stage.
@@ -691,17 +691,17 @@ class InputTransform:
                 DataKeys.METADATA: ...,
             }
         """
-        return self._identity
+        pass
 
     def train_input_per_batch_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "input" key of each single sample
         on device for the training stage."""
-        return self._identity
+        pass
 
     def train_target_per_batch_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "target" key of each single sample
         on device for the training stage."""
-        return self._identity
+        pass
 
     def val_per_batch_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on a batch of data on device for the validating stage.
@@ -726,17 +726,17 @@ class InputTransform:
 
                     return ApplyToKeys("input", my_func)
         """
-        return self._identity
+        pass
 
     def val_input_per_batch_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "input" key of each single sample
         on device for the validating stage."""
-        return self._identity
+        pass
 
     def val_target_per_batch_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "target" key of each single sample
         on device for the validating stage."""
-        return self._identity
+        pass
 
     def test_per_batch_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on a batch of data on device for the testing stage.
@@ -749,17 +749,17 @@ class InputTransform:
                 DataKeys.METADATA: ...,
             }
         """
-        return self._identity
+        pass
 
     def test_input_per_batch_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "input" key of each single sample
         on device for the testing stage."""
-        return self._identity
+        pass
 
     def test_target_per_batch_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "target" key of each single sample
         on device for the testing stage."""
-        return self._identity
+        pass
 
     def predict_per_batch_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on a batch of data on device for the predicting stage.
@@ -784,17 +784,17 @@ class InputTransform:
 
                     return ApplyToKeys("input", my_func)
         """
-        return self._identity
+        pass
 
     def predict_input_per_batch_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "input" key of each single sample
         on device for the predicting stage."""
-        return self._identity
+        pass
 
     def predict_target_per_batch_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on the value associated with the "target" key of each single sample
         on device for the predicting stage."""
-        return self._identity
+        pass
 
     ###########
     # COLLATE #
@@ -942,12 +942,11 @@ class InputTransform:
                 except AttributeError as e:
                     raise AttributeError(str(e) + ". Hint: Call super().__init__(...) after setting all attributes.")
 
+                if fn is None:
+                    continue
+
                 if not callable(fn):
                     raise MisconfigurationException(f"The hook {method_name} should return a function.")
-
-                # if the default hook is used, it should return identity, skip it.
-                if fn is self._identity:
-                    continue
 
                 # wrap apply to key hook into `ApplyToKeys` with the associated key.
                 if method_name == resolved_apply_to_key_name:
