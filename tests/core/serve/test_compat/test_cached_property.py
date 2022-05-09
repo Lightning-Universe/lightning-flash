@@ -79,7 +79,6 @@ class CachedCostItemWithSlots:
 
 # noinspection PyStatementEffect
 @pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
-@pytest.mark.skipif(sys.version_info >= (3, 8), reason="Python 3.8+ uses standard library implementation.")
 class TestCachedProperty:
     @staticmethod
     def test_cached():

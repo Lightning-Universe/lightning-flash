@@ -11,8 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Optional
-
 from pytorch_lightning.utilities.enums import LightningEnum
 
 
@@ -37,15 +35,3 @@ class RunningStage(LightningEnum):
     PREDICTING = "predict"
     SERVING = "serve"
     TUNING = "tune"
-
-    @property
-    def evaluating(self) -> bool:
-        return self in (self.VALIDATING, self.TESTING)
-
-    @property
-    def dataloader_prefix(self) -> Optional[str]:
-        if self in (self.SANITY_CHECKING, self.TUNING):
-            return None
-        if self == self.VALIDATING:
-            return "val"
-        return self.value

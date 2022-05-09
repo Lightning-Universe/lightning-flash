@@ -15,7 +15,6 @@ import inspect
 import re
 from abc import ABCMeta
 from copy import deepcopy
-from importlib import import_module
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import pytorch_lightning as pl
@@ -792,32 +791,6 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         # If `lr_scheduler` is not a Dict, then add it to the current config and return the config.
         lr_scheduler_config["scheduler"] = lr_scheduler
         return lr_scheduler_config
-
-    def _load_from_state_dict(
-        self, state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs
-    ):
-        if "input_transform.state_dict" in state_dict:
-            try:
-                input_transform_state_dict = state_dict["input_transform.state_dict"]
-                meta = input_transform_state_dict["_meta"]
-                cls = getattr(import_module(meta["module"]), meta["class_name"])
-                self._input_transform = cls.load_state_dict(
-                    {k: v for k, v in input_transform_state_dict.items() if k != "_meta"},
-                    strict=strict,
-                )
-                self._input_transform._state = meta["_state"]
-                del state_dict["input_transform.state_dict"]
-                del input_transform_state_dict["_meta"]
-            except (ModuleNotFoundError, KeyError):
-                meta = state_dict["input_transform.state_dict"]["_meta"]
-                raise MisconfigurationException(
-                    f"The `InputTransform` {meta['module']}.{meta['class_name']}"
-                    "has been moved and couldn't be imported."
-                )
-
-        super()._load_from_state_dict(
-            state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs
-        )
 
     def configure_callbacks(self):
         # used only for CI
