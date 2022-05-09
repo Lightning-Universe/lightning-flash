@@ -384,7 +384,26 @@ class TabularClassificationData(TabularData):
             ...     "weight": [7, 12, 5],
             ... }
 
-        We have dictionaries ``train_data`` and ``predict_data``.
+        We have a dictionary ``train_data`` with the following contents:
+
+        .. doctest::
+
+            >>> train_data
+            {
+                "age": [2, 4, 1],
+                "animal": ["cat", "dog", "cat"],
+                "weight": [6, 10, 5]
+            }
+
+        and a dictionary ``predict_data`` with the following contents:
+
+        .. doctest::
+
+            >>> predict_data
+            {
+                "animal": ["dog", "dog", "cat"],
+                "weight": [7, 12, 5]
+            }
 
         .. doctest::
 
@@ -504,7 +523,27 @@ class TabularClassificationData(TabularData):
             ...     {"friendly": "yes", "weight": 5},
             ... ]
 
-        We have lists of dictionaries ``train_data`` and ``predict_data`` as shown above.
+        We have a list of dictionaries ``train_data`` with the following contents:
+
+        .. doctest::
+
+            >>> train_data
+            [
+                {"animal": "cat", "friendly": "yes", "weight": 6},
+                {"animal": "dog", "friendly": "yes", "weight": 10},
+                {"animal": "cat", "friendly": "no", "weight": 5},
+            ]
+
+        and a list of dictionaries ``predict_data`` with the following contents:
+
+        .. doctest::
+
+            >>> predict_data
+            [
+                {"friendly": "yes", "weight": 7},
+                {"friendly": "no", "weight": 12},
+                {"friendly": "yes", "weight": 5},
+            ]
 
         .. doctest::
 
