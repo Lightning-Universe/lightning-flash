@@ -65,3 +65,21 @@ class TabularClassificationCSVInput(TabularClassificationDataFrameInput):
             return super().load_data(
                 read_csv(file), categorical_fields, numerical_fields, target_fields, parameters, target_formatter
             )
+
+
+class TabularClassificationDictInput(TabularClassificationDataFrameInput):
+    def load_data(
+        self,
+        data: Dict[str, Union[Any, List[Any]]],
+        categorical_fields: Optional[Union[str, List[str]]] = None,
+        numerical_fields: Optional[Union[str, List[str]]] = None,
+        target_fields: Optional[Union[str, List[str]]] = None,
+        parameters: Dict[str, Any] = None,
+        target_formatter: Optional[TargetFormatter] = None,
+    ):
+        # Convert the data (dict) to a Pandas DataFrame
+        data_frame = DataFrame.from_dict(data)
+
+        return super().load_data(
+            data_frame, categorical_fields, numerical_fields, target_fields, parameters, target_formatter
+        )
