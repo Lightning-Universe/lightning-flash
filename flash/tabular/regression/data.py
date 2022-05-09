@@ -343,8 +343,7 @@ class TabularRegressionData(TabularData):
         Returns:
             The constructed :class:`~flash.tabular.regression.data.TabularRegressionData`.
 
-        Examples
-        ________
+        Examples:
 
         .. testsetup::
 

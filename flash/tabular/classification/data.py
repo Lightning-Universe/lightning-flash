@@ -368,8 +368,7 @@ class TabularClassificationData(TabularData):
         Returns:
             The constructed :class:`~flash.tabular.classification.data.TabularClassificationData`.
 
-        Examples
-        ________
+        Examples:
 
         .. testsetup::
 
