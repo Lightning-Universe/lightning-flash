@@ -71,6 +71,32 @@ def _test_fit(self, tmpdir, task_kwargs):
     trainer.fit(model, model.process_train_dataset(dataset, batch_size=4))
 
 
+def _test_val(self, tmpdir, task_kwargs):
+    """Tests that a single batch validation pass completes."""
+    dataset = StaticDataset(self.example_train_sample, 4)
+
+    args = self.task_args
+    kwargs = dict(**self.task_kwargs)
+    kwargs.update(task_kwargs)
+    model = self.task(*args, **kwargs)
+
+    trainer = flash.Trainer(default_root_dir=tmpdir, fast_dev_run=True)
+    trainer.validate(model, model.process_val_dataset(dataset, batch_size=4))
+
+
+def _test_test(self, tmpdir, task_kwargs):
+    """Tests that a single batch test pass completes."""
+    dataset = StaticDataset(self.example_train_sample, 4)
+
+    args = self.task_args
+    kwargs = dict(**self.task_kwargs)
+    kwargs.update(task_kwargs)
+    model = self.task(*args, **kwargs)
+
+    trainer = flash.Trainer(default_root_dir=tmpdir, fast_dev_run=True)
+    trainer.test(model, model.process_test_dataset(dataset, batch_size=4))
+
+
 def _test_jit_trace(self, tmpdir):
     """Tests that the task can be traced and saved with JIT then reloaded and used."""
     path = os.path.join(tmpdir, "test.pt")
@@ -162,6 +188,8 @@ class TaskTesterMeta(ABCMeta):
         # Attach fit test
         if "example_train_sample" in class_dict:
             mcs.attach_test(result, "test_fit", _test_fit)
+            mcs.attach_test(result, "test_val", _test_val)
+            mcs.attach_test(result, "test_test", _test_test)
 
         # Attach JIT tests
         if result.traceable:
