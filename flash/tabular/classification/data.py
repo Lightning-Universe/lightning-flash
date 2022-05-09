@@ -386,9 +386,8 @@ class TabularClassificationData(TabularData):
 
         We have a dictionary ``train_data`` with the following contents:
 
-        .. doctest::
+        .. code-block::
 
-            >>> train_data
             {
                 "age": [2, 4, 1],
                 "animal": ["cat", "dog", "cat"],
@@ -397,9 +396,8 @@ class TabularClassificationData(TabularData):
 
         and a dictionary ``predict_data`` with the following contents:
 
-        .. doctest::
+        .. code-block::
 
-            >>> predict_data
             {
                 "animal": ["dog", "dog", "cat"],
                 "weight": [7, 12, 5]
@@ -525,9 +523,8 @@ class TabularClassificationData(TabularData):
 
         We have a list of dictionaries ``train_data`` with the following contents:
 
-        .. doctest::
+        .. code-block::
 
-            >>> train_data
             [
                 {"animal": "cat", "friendly": "yes", "weight": 6},
                 {"animal": "dog", "friendly": "yes", "weight": 10},
@@ -536,9 +533,8 @@ class TabularClassificationData(TabularData):
 
         and a list of dictionaries ``predict_data`` with the following contents:
 
-        .. doctest::
+        .. code-block::
 
-            >>> predict_data
             [
                 {"friendly": "yes", "weight": 7},
                 {"friendly": "no", "weight": 12},
