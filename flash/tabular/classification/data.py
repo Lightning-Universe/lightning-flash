@@ -341,10 +341,12 @@ class TabularClassificationData(TabularData):
             ``parameters`` are passed instead. These can be obtained from the
             :attr:`~flash.tabular.data.TabularData.parameters` attribute of the
             :class:`~flash.tabular.data.TabularData` object that contains your training data.
+
         The targets will be extracted from the ``target_fields`` in the dict and can be in any of our
         :ref:`supported classification target formats <formatting_classification_targets>`.
         To learn how to customize the transforms applied for each stage, read our
         :ref:`customizing transforms guide <customizing_transforms>`.
+
         Args:
             categorical_fields: The fields (column names) in the dictionary containing categorical data.
             numerical_fields: The fields (column names) in the dictionary containing numerical data.
@@ -362,10 +364,13 @@ class TabularClassificationData(TabularData):
             transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
             data_module_kwargs: Additional keyword arguments to provide to the
                 :class:`~flash.core.data.data_module.DataModule` constructor.
+
         Returns:
             The constructed :class:`~flash.tabular.classification.data.TabularClassificationData`.
+
         Examples
         ________
+
         .. testsetup::
 
             >>> train_data = {
