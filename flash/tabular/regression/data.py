@@ -477,9 +477,9 @@ class TabularRegressionData(TabularData):
         .. testsetup::
 
             >>> train_data = [
-            ...     {"animal": "cat", "friendly": "yes", "weight": 6},
-            ...     {"animal": "dog", "friendly": "yes", "weight": 10},
-            ...     {"animal": "cat", "friendly": "no", "weight": 5},
+            ...     {"age": 2, "animal": "cat", "weight": 6},
+            ...     {"age": 4, "animal": "dog", "weight": 10},
+            ...     {"age": 1, "animal": "cat", "weight": 5},
             ... ]
             >>> predict_data = [
             ...     {"friendly": "yes", "weight": 7},
@@ -492,9 +492,9 @@ class TabularRegressionData(TabularData):
         .. code-block::
 
             [
-                {"animal": "cat", "friendly": "yes", "weight": 6},
-                {"animal": "dog", "friendly": "yes", "weight": 10},
-                {"animal": "cat", "friendly": "no", "weight": 5},
+                {"age": 2, animal": "cat", "weight": 6},
+                {"age": 4, animal": "dog", "weight": 10},
+                {"age": 1, animal": "cat", "weight": 5},
             ]
 
         and a list of dictionaries ``predict_data`` with the following contents:
