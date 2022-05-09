@@ -78,8 +78,8 @@ def test_regression_data_frame(backbone, fields, tmpdir):
         ("tabnet", {"numerical_fields": ["scalar_a", "scalar_b"]}),
     ],
 )
-def test_regression_dict(backbone, fields, tmpdir):
-    data = TabularRegressionData.from_dict(
+def test_regression_dicts(backbone, fields, tmpdir):
+    data = TabularRegressionData.from_dicts(
         **fields,
         target_field="label",
         train_dict=TEST_DICT,

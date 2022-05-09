@@ -164,8 +164,8 @@ def test_from_csv(tmpdir):
 
 
 @pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular dependencies are required")
-def test_from_dict():
-    dm = TabularClassificationData.from_dict(
+def test_from_dicts():
+    dm = TabularClassificationData.from_dicts(
         categorical_fields=["category"],
         numerical_fields=["scalar_a", "scalar_b"],
         target_fields="label",

@@ -295,7 +295,7 @@ class TabularRegressionData(TabularData):
         )
 
     @classmethod
-    def from_dict(
+    def from_dicts(
         cls,
         categorical_fields: Optional[Union[str, List[str]]] = None,
         numerical_fields: Optional[Union[str, List[str]]] = None,
@@ -343,7 +343,8 @@ class TabularRegressionData(TabularData):
         Returns:
             The constructed :class:`~flash.tabular.regression.data.TabularRegressionData`.
 
-        Examples:
+        Examples
+        ________
 
         .. testsetup::
 
@@ -363,7 +364,7 @@ class TabularRegressionData(TabularData):
 
             >>> from flash import Trainer
             >>> from flash.tabular import TabularRegressor, TabularRegressionData
-            >>> datamodule = TabularRegressionData.from_dict(
+            >>> datamodule = TabularRegressionData.from_dicts(
             ...     "animal",
             ...     "weight",
             ...     "age",
