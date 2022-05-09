@@ -54,7 +54,16 @@ class TestQuestionAnsweringTask(TaskTester):
             "question": "A question",
             "answer": {"text": ["The answer"], "answer_start": [0]},
             "context": "The paragraph of text which contains the answer to the question",
+            "id": 0,
         }
+
+    @property
+    def example_val_sample(self):
+        return self.example_train_sample
+
+    @property
+    def example_test_sample(self):
+        return self.example_train_sample
 
 
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")

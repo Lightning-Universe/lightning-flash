@@ -30,6 +30,11 @@ if _ICEVISION_AVAILABLE:
     from icevision import models as icevision_models
     from icevision.metrics import COCOMetricType
     from icevision.metrics import Metric as IceVisionMetric
+else:
+
+    class COCOMetricType:
+        bbox = None
+
 
 OBJECT_DETECTION_HEADS = FlashRegistry("heads")
 
@@ -43,7 +48,7 @@ class IceVisionObjectDetectionAdapter(IceVisionAdapter):
         backbone: str = "resnet18_fpn",
         head: str = "retinanet",
         pretrained: bool = True,
-        metrics: Optional["IceVisionMetric"] = None,
+        metrics: Optional["IceVisionMetric"] = SimpleCOCOMetric(COCOMetricType.bbox),
         image_size: Optional = None,
         **kwargs,
     ) -> Adapter:
@@ -53,7 +58,7 @@ class IceVisionObjectDetectionAdapter(IceVisionAdapter):
             backbone=backbone,
             head=head,
             pretrained=pretrained,
-            metrics=metrics or [SimpleCOCOMetric(COCOMetricType.bbox)],
+            metrics=metrics,
             image_size=image_size,
             **kwargs,
         )

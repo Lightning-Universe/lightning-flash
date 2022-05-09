@@ -99,6 +99,14 @@ class TestObjectDetector(TaskTester):
             },
         }
 
+    @property
+    def example_val_sample(self):
+        return self.example_train_sample
+
+    @property
+    def example_test_sample(self):
+        return self.example_train_sample
+
 
 @pytest.mark.parametrize("head", ["retinanet"])
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")

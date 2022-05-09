@@ -115,6 +115,10 @@ class TestTabularForecaster(TaskTester):
             DataKeys.TARGET: (torch.rand(20), None),
         }
 
+    @property
+    def example_val_sample(self):
+        return self.example_train_sample
+
     def test_testing_raises(self, tmpdir):
         """Tests that ``NotImplementedError`` is raised when attempting to perform a test pass."""
         dataset = StaticDataset(self.example_train_sample, 4)
