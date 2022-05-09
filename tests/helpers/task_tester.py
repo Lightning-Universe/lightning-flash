@@ -73,7 +73,7 @@ def _test_fit(self, tmpdir, task_kwargs):
 
 def _test_val(self, tmpdir, task_kwargs):
     """Tests that a single batch validation pass completes."""
-    dataset = StaticDataset(self.example_train_sample, 4)
+    dataset = StaticDataset(self.example_val_sample, 4)
 
     args = self.task_args
     kwargs = dict(**self.task_kwargs)
@@ -86,7 +86,7 @@ def _test_val(self, tmpdir, task_kwargs):
 
 def _test_test(self, tmpdir, task_kwargs):
     """Tests that a single batch test pass completes."""
-    dataset = StaticDataset(self.example_train_sample, 4)
+    dataset = StaticDataset(self.example_test_sample, 4)
 
     args = self.task_args
     kwargs = dict(**self.task_kwargs)
@@ -188,7 +188,13 @@ class TaskTesterMeta(ABCMeta):
         # Attach fit test
         if "example_train_sample" in class_dict:
             mcs.attach_test(result, "test_fit", _test_fit)
+
+        # Attach val test
+        if "example_val_sample" in class_dict:
             mcs.attach_test(result, "test_val", _test_val)
+
+        # Attach test test
+        if "example_test_sample" in class_dict:
             mcs.attach_test(result, "test_test", _test_test)
 
         # Attach JIT tests
@@ -268,4 +274,12 @@ class TaskTester(metaclass=TaskTesterMeta):
 
     @property
     def example_train_sample(self):
+        pass
+
+    @property
+    def example_val_sample(self):
+        pass
+
+    @property
+    def example_test_sample(self):
         pass

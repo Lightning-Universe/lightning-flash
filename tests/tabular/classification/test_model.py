@@ -59,6 +59,32 @@ class TestTabularClassifier(TaskTester):
                 ],
             )
         ],
+        "test_val": [
+            pytest.mark.parametrize(
+                "task_kwargs",
+                [
+                    {"backbone": "tabnet"},
+                    {"backbone": "tabtransformer"},
+                    {"backbone": "fttransformer"},
+                    {"backbone": "autoint"},
+                    {"backbone": "node"},
+                    {"backbone": "category_embedding"},
+                ],
+            )
+        ],
+        "test_test": [
+            pytest.mark.parametrize(
+                "task_kwargs",
+                [
+                    {"backbone": "tabnet"},
+                    {"backbone": "tabtransformer"},
+                    {"backbone": "fttransformer"},
+                    {"backbone": "autoint"},
+                    {"backbone": "node"},
+                    {"backbone": "category_embedding"},
+                ],
+            )
+        ],
         "test_cli": [pytest.mark.parametrize("extra_args", ([],))],
     }
 
@@ -76,6 +102,14 @@ class TestTabularClassifier(TaskTester):
     @property
     def example_train_sample(self):
         return {DataKeys.INPUT: (torch.randint(0, 10, size=(4,)), torch.rand(4)), DataKeys.TARGET: 1}
+
+    @property
+    def example_val_sample(self):
+        return self.example_train_sample
+
+    @property
+    def example_test_sample(self):
+        return self.example_train_sample
 
     @pytest.mark.parametrize(
         "backbone", ["tabnet", "tabtransformer", "fttransformer", "autoint", "node", "category_embedding"]
