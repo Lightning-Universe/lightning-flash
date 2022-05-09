@@ -24,23 +24,10 @@ class Properties:
         super().__init__()
 
         self._running_stage = running_stage
-        self._current_fn: Optional[str] = None
-
-    @property
-    def current_fn(self) -> Optional[str]:
-        return self._current_fn
-
-    @current_fn.setter
-    def current_fn(self, current_fn: str):
-        self._current_fn = current_fn
 
     @property
     def running_stage(self) -> Optional[RunningStage]:
         return self._running_stage
-
-    @running_stage.setter
-    def running_stage(self, running_stage: RunningStage):
-        self._running_stage = running_stage
 
     @property
     def training(self) -> bool:
