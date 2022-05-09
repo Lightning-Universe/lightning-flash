@@ -942,12 +942,11 @@ class InputTransform:
                 except AttributeError as e:
                     raise AttributeError(str(e) + ". Hint: Call super().__init__(...) after setting all attributes.")
 
+                if fn is None:
+                    continue
+
                 if not callable(fn):
                     raise MisconfigurationException(f"The hook {method_name} should return a function.")
-
-                # if the default hook is used, it should return identity, skip it.
-                if fn is self._identity:
-                    continue
 
                 # wrap apply to key hook into `ApplyToKeys` with the associated key.
                 if method_name == resolved_apply_to_key_name:
