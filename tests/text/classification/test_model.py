@@ -53,6 +53,8 @@ class TestTextClassifier(TaskTester):
                 ],
             )
         ],
+        "test_val": [pytest.mark.parametrize("task_kwargs", [{}])],
+        "test_test": [pytest.mark.parametrize("task_kwargs", [{}])],
         "test_cli": [pytest.mark.parametrize("extra_args", ([], ["from_toxic"]))],
     }
 
