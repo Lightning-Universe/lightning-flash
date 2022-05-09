@@ -14,7 +14,7 @@
 import inspect
 from dataclasses import dataclass
 from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.enums import LightningEnum
@@ -24,7 +24,6 @@ from flash.core.data.callback import ControlFlow
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utilities.collate import default_collate
 from flash.core.data.utils import _INPUT_TRANSFORM_FUNCS, _STAGES_PREFIX
-from flash.core.registry import FlashRegistry
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 
@@ -1015,30 +1014,8 @@ class LambdaInputTransform(InputTransform):
         return self.transform
 
 
-def _sanitize_registry_transform(
-    transform: Tuple[Union[LightningEnum, str], Any], input_transforms_registry: Optional[FlashRegistry]
-) -> Tuple[Union[LightningEnum, str], Dict]:
-    msg = "The transform should be provided as a tuple with the following types (LightningEnum, Dict[str, Any]) "
-    msg += "when requesting transform from the registry."
-    if not input_transforms_registry:
-        raise MisconfigurationException("You requested a transform from the registry, but it is empty.")
-    if isinstance(transform, tuple) and len(transform) > 2:
-        raise MisconfigurationException(msg)
-    if isinstance(transform, (LightningEnum, str)):
-        enum = transform
-        transform_kwargs = {}
-    else:
-        enum, transform_kwargs = transform
-    if not isinstance(enum, (LightningEnum, str)):
-        raise MisconfigurationException(msg)
-    if not isinstance(transform_kwargs, Dict):
-        raise MisconfigurationException(msg)
-    return enum, transform_kwargs
-
-
 def create_or_configure_input_transform(
     transform: INPUT_TRANSFORM_TYPE,
-    input_transforms_registry: Optional[FlashRegistry] = None,
     transform_kwargs: Optional[Dict] = None,
 ) -> Optional[InputTransform]:
 
@@ -1066,11 +1043,6 @@ def create_or_configure_input_transform(
             transform=transform,
             **transform_kwargs,
         )
-
-    if isinstance(transform, tuple) or isinstance(transform, (LightningEnum, str)):
-        enum, transform_kwargs = _sanitize_registry_transform(transform, input_transforms_registry)
-        transform_cls = input_transforms_registry.get(enum)
-        return transform_cls(**transform_kwargs)
 
     if not transform:
         return None
