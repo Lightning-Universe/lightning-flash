@@ -482,9 +482,9 @@ class TabularRegressionData(TabularData):
             ...     {"age": 1, "animal": "cat", "weight": 5},
             ... ]
             >>> predict_data = [
-            ...     {"friendly": "yes", "weight": 7},
-            ...     {"friendly": "no", "weight": 12},
-            ...     {"friendly": "yes", "weight": 5},
+            ...     {"animal": "dog", "weight": 7},
+            ...     {"animal": "dog", "weight": 12},
+            ...     {"animal": "cat", "weight": 5},
             ... ]
 
         We have a list of dictionaries ``train_data`` with the following contents:
@@ -502,9 +502,9 @@ class TabularRegressionData(TabularData):
         .. code-block::
 
             [
-                {"friendly": "yes", "weight": 7},
-                {"friendly": "no", "weight": 12},
-                {"friendly": "yes", "weight": 5},
+                {"animal": "dog", "weight": 7},
+                {"animal": "dog", "weight": 12},
+                {"animal": "cat", "weight": 5},
             ]
 
         .. doctest::
