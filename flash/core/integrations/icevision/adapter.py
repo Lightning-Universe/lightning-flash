@@ -37,7 +37,10 @@ if _ICEVISION_AVAILABLE:
     from icevision.metrics import COCOMetric
     from icevision.metrics import Metric as IceVisionMetric
 else:
-    COCOMetric = object
+
+    class COCOMetric:
+        def __init__(self, metric_type):
+            self.metric_type = metric_type
 
 
 class SimpleCOCOMetric(COCOMetric):
