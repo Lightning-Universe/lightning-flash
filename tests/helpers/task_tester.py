@@ -15,7 +15,7 @@ import functools
 import inspect
 import os
 import types
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 from typing import Any, Dict, List, Optional, Tuple
 from unittest import mock
 
@@ -183,7 +183,8 @@ class TaskTesterMeta(ABCMeta):
             return result
 
         # Attach forward test
-        mcs.attach_test(result, "test_forward", _test_forward)
+        if "example_forward_input" in class_dict:
+            mcs.attach_test(result, "test_forward", _test_forward)
 
         # Attach fit test
         if "example_train_sample" in class_dict:
@@ -198,10 +199,10 @@ class TaskTesterMeta(ABCMeta):
             mcs.attach_test(result, "test_test", _test_test)
 
         # Attach JIT tests
-        if result.traceable:
+        if result.traceable and "example_forward_input" in class_dict:
             mcs.attach_test(result, "test_jit_trace", _test_jit_trace)
 
-        if result.scriptable:
+        if result.scriptable and "example_forward_input" in class_dict:
             mcs.attach_test(result, "test_jit_script", _test_jit_script)
 
         # Attach CLI test
@@ -265,11 +266,9 @@ class TaskTester(metaclass=TaskTesterMeta):
         return self.task(*self.task_args, **self.task_kwargs)
 
     @property
-    @abstractmethod
     def example_forward_input(self):
         pass
 
-    @abstractmethod
     def check_forward_output(self, output: Any):
         """Override this hook to check the output of ``Task.forward`` with random data of the required shape."""
         pass
