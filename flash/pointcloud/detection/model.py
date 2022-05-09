@@ -66,6 +66,9 @@ class PointCloudObjectDetector(Task):
         lr_scheduler: LR_SCHEDULER_TYPE = None,
         metrics: METRICS_TYPE = None,
         learning_rate: Optional[float] = None,
+        lambda_loss_cls: float = 1.0,
+        lambda_loss_bbox: float = 1.0,
+        lambda_loss_dir: float = 1.0,
     ):
 
         super().__init__(

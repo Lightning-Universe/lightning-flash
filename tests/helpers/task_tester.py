@@ -165,10 +165,10 @@ class TaskTesterMeta(ABCMeta):
             mcs.attach_test(result, "test_fit", _test_fit)
 
         # Attach JIT tests
-        if result.traceable:
+        if result.traceable and "example_forward_input" in class_dict:
             mcs.attach_test(result, "test_jit_trace", _test_jit_trace)
 
-        if result.scriptable:
+        if result.scriptable and "example_forward_input" in class_dict:
             mcs.attach_test(result, "test_jit_script", _test_jit_script)
 
         # Attach CLI test
