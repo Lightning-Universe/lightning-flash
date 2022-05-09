@@ -21,7 +21,7 @@ from flash.core.utilities.stages import RunningStage
 from flash.tabular.classification.input import (
     TabularClassificationCSVInput,
     TabularClassificationDataFrameInput,
-    TabularClassificationListInput,
+    TabularClassificationDictInput,
 )
 from flash.tabular.data import TabularData
 
@@ -328,7 +328,7 @@ class TabularClassificationData(TabularData):
         test_data: Optional[DataFrame] = None,
         predict_data: Optional[DataFrame] = None,
         target_formatter: Optional[TargetFormatter] = None,
-        input_cls: Type[Input] = TabularClassificationListInput,
+        input_cls: Type[Input] = TabularClassificationDictInput,
         transform: INPUT_TRANSFORM_TYPE = InputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -341,14 +341,14 @@ class TabularClassificationData(TabularData):
             ``parameters`` are passed instead. These can be obtained from the
             :attr:`~flash.tabular.data.TabularData.parameters` attribute of the
             :class:`~flash.tabular.data.TabularData` object that contains your training data.
-        The targets will be extracted from the ``target_fields`` in the data frames and can be in any of our
+        The targets will be extracted from the ``target_fields`` in the dict and can be in any of our
         :ref:`supported classification target formats <formatting_classification_targets>`.
         To learn how to customize the transforms applied for each stage, read our
         :ref:`customizing transforms guide <customizing_transforms>`.
         Args:
-            categorical_fields: The fields (column names) in the data frames containing categorical data.
-            numerical_fields: The fields (column names) in the data frames containing numerical data.
-            target_fields: The field (column name) or list of fields in the data frames containing the targets.
+            categorical_fields: The fields (column names) in the dictionary containing categorical data.
+            numerical_fields: The fields (column names) in the dictionary containing numerical data.
+            target_fields: The field (column name) or list of fields in the dictionary containing the targets.
             parameters: Parameters to use if ``categorical_fields``, ``numerical_fields``, and ``target_fields`` are not
                 provided (e.g. when loading data for inference or validation).
             train_data: The data to use when training.
