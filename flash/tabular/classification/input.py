@@ -81,10 +81,5 @@ class TabularClassificationDictInput(TabularClassificationDataFrameInput):
         data_frame = DataFrame.from_dict(data)
 
         return super().load_data(
-            data=data_frame,
-            categorical_fields=categorical_fields,
-            numerical_fields=numerical_fields,
-            target_fields=target_fields,
-            parameters=parameters,
-            target_formatter=target_formatter,
+            data_frame, categorical_fields, numerical_fields, target_fields, parameters, target_formatter
         )

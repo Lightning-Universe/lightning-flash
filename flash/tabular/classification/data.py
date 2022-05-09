@@ -323,10 +323,10 @@ class TabularClassificationData(TabularData):
         numerical_fields: Optional[Union[str, List[str]]] = None,
         target_fields: Optional[Union[str, List[str]]] = None,
         parameters: Optional[Dict[str, Any]] = None,
-        train_data: Optional[DataFrame] = None,
-        val_data: Optional[DataFrame] = None,
-        test_data: Optional[DataFrame] = None,
-        predict_data: Optional[DataFrame] = None,
+        train_dict: Optional[Dict[str, List[Any]]] = None,
+        val_dict: Optional[Dict[str, List[Any]]] = None,
+        test_dict: Optional[Dict[str, List[Any]]] = None,
+        predict_dict: Optional[Dict[str, List[Any]]] = None,
         target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = TabularClassificationDictInput,
         transform: INPUT_TRANSFORM_TYPE = InputTransform,
@@ -353,10 +353,10 @@ class TabularClassificationData(TabularData):
             target_fields: The field (column name) or list of fields in the dictionary containing the targets.
             parameters: Parameters to use if ``categorical_fields``, ``numerical_fields``, and ``target_fields`` are not
                 provided (e.g. when loading data for inference or validation).
-            train_data: The data to use when training.
-            val_data: The data to use when validating.
-            test_data: The data to use when testing.
-            predict_data: The data to use when predicting.
+            train_dict: The data to use when training.
+            val_dict: The data to use when validating.
+            test_dict: The data to use when testing.
+            predict_dict: The data to use when predicting.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
@@ -393,8 +393,8 @@ class TabularClassificationData(TabularData):
             ...     "friendly",
             ...     "weight",
             ...     "animal",
-            ...     train_data=train_data,
-            ...     predict_data=predict_data,
+            ...     train_dict=train_data,
+            ...     predict_dict=predict_data,
             ...     batch_size=4,
             ... )
             >>> datamodule.num_classes
@@ -421,15 +421,15 @@ class TabularClassificationData(TabularData):
             parameters=parameters,
         )
 
-        train_input = input_cls(RunningStage.TRAINING, train_data, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, train_dict, **ds_kw)
         ds_kw["parameters"] = train_input.parameters if train_input else parameters
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, val_data, **ds_kw),
-            input_cls(RunningStage.TESTING, test_data, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_data, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_dict, **ds_kw),
+            input_cls(RunningStage.TESTING, test_dict, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_dict, **ds_kw),
             transform=transform,
             transform_kwargs=transform_kwargs,
             **data_module_kwargs,

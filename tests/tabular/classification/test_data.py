@@ -169,9 +169,9 @@ def test_from_dict():
         categorical_fields=["category"],
         numerical_fields=["scalar_a", "scalar_b"],
         target_fields="label",
-        train_data=TEST_DICT_1,
-        val_data=TEST_DICT_2,
-        test_data=TEST_DICT_2,
+        train_dict=TEST_DICT_1,
+        val_dict=TEST_DICT_2,
+        test_dict=TEST_DICT_2,
         num_workers=0,
         batch_size=1,
     )
