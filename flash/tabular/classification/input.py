@@ -67,7 +67,7 @@ class TabularClassificationCSVInput(TabularClassificationDataFrameInput):
             )
 
 
-class TabularClassificationDictInput(TabularDataFrameInput):
+class TabularClassificationDictInput(TabularClassificationDataFrameInput):
     def load_data(
         self,
         data: Dict[str, Union[Any, List[Any]]],
