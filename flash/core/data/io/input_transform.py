@@ -41,7 +41,7 @@ INVALID_STAGES_FOR_INPUT_TRANSFORMS = [RunningStage.SANITY_CHECKING, RunningStag
 
 @dataclass
 class _InputTransformPerStage:
-    collate_in_worker_from_transform: bool
+    collate_in_worker: bool
     transforms: Optional[Dict[str, Callable]] = None
 
 
@@ -658,9 +658,10 @@ class InputTransform:
 
     def inject_collate_fn(self, collate_fn: Callable):
         # For all the stages possible, set collate function
-        for stage in RunningStage:
-            if stage not in [RunningStage.SANITY_CHECKING, RunningStage.TUNING]:
-                self._transform[stage].transforms[InputTransformPlacement.COLLATE.value] = collate_fn
+        if collate_fn is not default_collate:
+            for stage in RunningStage:
+                if stage not in [RunningStage.SANITY_CHECKING, RunningStage.TUNING]:
+                    self._transform[stage].transforms[InputTransformPlacement.COLLATE.value] = collate_fn
 
     def _populate_transforms_for_stage(self, running_stage: RunningStage):
         transform, collate_in_worker = self.__check_transforms(
@@ -668,7 +669,7 @@ class InputTransform:
         )
 
         self._transform[running_stage] = _InputTransformPerStage(
-            collate_in_worker_from_transform=collate_in_worker,
+            collate_in_worker=collate_in_worker,
             transforms=transform,
         )
 
@@ -679,11 +680,13 @@ class InputTransform:
         # iterate over all transforms hook name
         for transform_name in InputTransformPlacement:
 
-            metthod_name = f"{stage}_{transform_name.value}"
+            transform_name = transform_name.value
+
+            method_name = f"{stage}_{transform_name}"
 
             # get associated transform
             try:
-                fn = getattr(self, metthod_name)()
+                fn = getattr(self, method_name)()
             except AttributeError as e:
                 raise AttributeError(
                     str(e) + ". Make sure you include a call to super().__init__(...) in your __init__ after setting "
@@ -694,7 +697,7 @@ class InputTransform:
                 continue
 
             if not callable(fn):
-                raise MisconfigurationException(f"The hook {metthod_name} should return a callable.")
+                raise MisconfigurationException(f"The hook {method_name} should return a callable.")
 
             transforms[transform_name] = fn
 
@@ -844,11 +847,7 @@ def __configure_worker_and_device_collate_fn(
     transform_for_stage: _InputTransformPerStage = input_transform._transform[running_stage]
 
     worker_collate_fn, device_collate_fn = __make_collates(
-        input_transform, not transform_for_stage.collate_in_worker_from_transform, input_transform._collate
-    )
-
-    worker_collate_fn = (
-        worker_collate_fn.collate_fn if isinstance(worker_collate_fn, _InputTransformProcessor) else worker_collate_fn
+        input_transform, not transform_for_stage.collate_in_worker, input_transform._collate
     )
 
     return worker_collate_fn, device_collate_fn
