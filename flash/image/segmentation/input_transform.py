@@ -58,8 +58,8 @@ class SemanticSegmentationInputTransform(InputTransform):
             KorniaParallelTransforms(K.geometry.Resize(self.image_size, interpolation="nearest")),
         )
 
-    def predict_input_per_sample_transform(self) -> Callable:
-        return K.geometry.Resize(self.image_size, interpolation="nearest")
+    def predict_per_sample_transform(self) -> Callable:
+        return ApplyToKeys(DataKeys.INPUT, K.geometry.Resize(self.image_size, interpolation="nearest"))
 
     def collate(self) -> Callable:
         return kornia_collate

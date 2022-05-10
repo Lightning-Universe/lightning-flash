@@ -58,11 +58,13 @@ def fastface_collate_fn(samples: Sequence[Dict[str, Any]]) -> Dict[str, Sequence
 
 @dataclass
 class FaceDetectionInputTransform(InputTransform):
-    def input_per_sample_transform(self) -> Callable:
-        return T.ToTensor()
-
-    def target_per_sample_transform(self) -> Callable:
-        return ApplyToKeys("target_boxes", torch.as_tensor)
+    def per_sample_transform(self) -> Callable:
+        return T.Compose(
+            [
+                ApplyToKeys(DataKeys.INPUT, T.ToTensor()),
+                ApplyToKeys(DataKeys.TARGET, ApplyToKeys("target_boxes", torch.as_tensor)),
+            ]
+        )
 
     def collate(self) -> Callable:
         return fastface_collate_fn

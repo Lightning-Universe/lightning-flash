@@ -21,9 +21,8 @@ from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.callback import ControlFlow
-from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utilities.collate import default_collate
-from flash.core.data.utils import _INPUT_TRANSFORM_FUNCS, _STAGES_PREFIX
+from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 
@@ -35,12 +34,6 @@ class InputTransformPlacement(LightningEnum):
     COLLATE = "collate"
     PER_SAMPLE_TRANSFORM_ON_DEVICE = "per_sample_transform_on_device"
     PER_BATCH_TRANSFORM_ON_DEVICE = "per_batch_transform_on_device"
-
-
-class ApplyToKeyPrefix(LightningEnum):
-
-    INPUT = "input"
-    TARGET = "target"
 
 
 INVALID_STAGES_FOR_INPUT_TRANSFORMS = [RunningStage.SANITY_CHECKING, RunningStage.TUNING]
@@ -73,7 +66,7 @@ class Compose:
 
 @dataclass
 class _InputTransformPerStage:
-    collate_in_worker_from_transform: Optional[bool] = None
+    collate_in_worker_from_transform: bool
     transforms: Optional[Dict[str, Callable]] = None
 
 
@@ -91,19 +84,6 @@ class InputTransform:
                 self._populate_transforms_for_stage(stage)
 
     def current_transform(self, stage: RunningStage, current_fn: str) -> Callable:
-        if stage in [RunningStage.SANITY_CHECKING, RunningStage.TUNING]:
-            raise KeyError(
-                f"Transforms are only defined for stages:"
-                f"\t{[stage for stage in RunningStage if stage not in INVALID_STAGES_FOR_INPUT_TRANSFORMS]}"
-                f"But received {stage} instead."
-            )
-
-        # Check is transforms are present and the key is from the Enum defined above.
-        if InputTransformPlacement.from_str(current_fn) is None:
-            raise KeyError(
-                f"{[fn for fn in InputTransformPlacement]} are the only allowed keys to retreive the transform."
-                f"But received {current_fn} instead."
-            )
         return self._transform[stage].transforms.get(current_fn, self._identity)
 
     ########################
@@ -135,16 +115,6 @@ class InputTransform:
         """
         pass
 
-    def input_per_sample_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each sample on
-        device for all stages stage."""
-        pass
-
-    def target_per_sample_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each sample on
-        device for all stages stage."""
-        pass
-
     def train_per_sample_transform(self) -> Callable:
         """Defines the transform to be applied on a single sample on cpu for the training stage.
 
@@ -156,17 +126,7 @@ class InputTransform:
                 DataKeys.METADATA: ...,
             }
         """
-        pass
-
-    def train_input_per_sample_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on cpu for the training stage."""
-        pass
-
-    def train_target_per_sample_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on cpu for the training stage."""
-        pass
+        return self.per_sample_transform()
 
     def val_per_sample_transform(self) -> Callable:
         """Defines the transform to be applied on a single sample on cpu for the validating stage.
@@ -191,17 +151,7 @@ class InputTransform:
 
                     return ApplyToKeys("input", my_func)
         """
-        pass
-
-    def val_input_per_sample_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on cpu for the validating stage."""
-        pass
-
-    def val_target_per_sample_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on cpu for the validating stage."""
-        pass
+        return self.per_sample_transform()
 
     def test_per_sample_transform(self) -> Callable:
         """Defines the transform to be applied on a single sample on cpu for the testing stage.
@@ -214,17 +164,7 @@ class InputTransform:
                 DataKeys.METADATA: ...,
             }
         """
-        pass
-
-    def test_input_per_sample_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on cpu for the testing stage."""
-        pass
-
-    def test_target_per_sample_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on cpu for the testing stage."""
-        pass
+        return self.per_sample_transform()
 
     def predict_per_sample_transform(self) -> Callable:
         """Defines the transform to be applied on a single sample on cpu for the predicting stage.
@@ -249,17 +189,7 @@ class InputTransform:
 
                     return ApplyToKeys("input", my_func)
         """
-        pass
-
-    def predict_input_per_sample_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on cpu for the predicting stage."""
-        pass
-
-    def predict_target_per_sample_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on cpu for the predicting stage."""
-        pass
+        return self.per_sample_transform()
 
     def serve_per_sample_transform(self) -> Callable:
         """Defines the transform to be applied on a single sample on cpu for the serving stage.
@@ -284,17 +214,7 @@ class InputTransform:
 
                     return ApplyToKeys("input", my_func)
         """
-        pass
-
-    def serve_input_per_sample_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on cpu for the serving stage."""
-        pass
-
-    def serve_target_per_sample_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on cpu for the serving stage."""
-        pass
+        return self.per_sample_transform()
 
     ##################################
     # PER SAMPLE TRANSFORM ON DEVICE #
@@ -325,16 +245,6 @@ class InputTransform:
         """
         pass
 
-    def input_per_sample_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each sample on
-        device for all stages stage."""
-        pass
-
-    def target_per_sample_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each sample on
-        device for all stages stage."""
-        pass
-
     def train_per_sample_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on a single sample on device for the training stage.
 
@@ -346,17 +256,7 @@ class InputTransform:
                 DataKeys.METADATA: ...,
             }
         """
-        pass
-
-    def train_input_per_sample_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on device for the training stage."""
-        pass
-
-    def train_target_per_sample_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on device for the training stage."""
-        pass
+        return self.per_sample_transform_on_device()
 
     def val_per_sample_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on a single sample on device for the validating stage.
@@ -381,17 +281,7 @@ class InputTransform:
 
                     return ApplyToKeys("input", my_func)
         """
-        pass
-
-    def val_input_per_sample_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on device for the validating stage."""
-        pass
-
-    def val_target_per_sample_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on device for the validating stage."""
-        pass
+        return self.per_sample_transform_on_device()
 
     def test_per_sample_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on a single sample on device for the testing stage.
@@ -404,17 +294,7 @@ class InputTransform:
                 DataKeys.METADATA: ...,
             }
         """
-        pass
-
-    def test_input_per_sample_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on device for the testing stage."""
-        pass
-
-    def test_target_per_sample_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on device for the testing stage."""
-        pass
+        return self.per_sample_transform_on_device()
 
     def predict_per_sample_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on a single sample on device for the predicting stage.
@@ -439,17 +319,32 @@ class InputTransform:
 
                     return ApplyToKeys("input", my_func)
         """
-        pass
+        return self.per_sample_transform_on_device()
 
-    def predict_input_per_sample_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on device for the predicting stage."""
-        pass
+    def serve_per_sample_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on a single sample on device for the serving stage.
 
-    def predict_target_per_sample_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on device for the predicting stage."""
-        pass
+        The input data of the transform would have the following form::
+
+            {
+                DataKeys.INPUT: ...,
+                DataKeys.TARGET: ...,
+                DataKeys.METADATA: ...,
+            }
+
+        You would need to use :class:`flash.core.data.transforms.ApplyToKeys` as follows:
+
+        .. code-block:: python
+
+            from flash.core.data.transforms import ApplyToKeys
+
+
+            class MyInputTransform(InputTransform):
+                def serve_per_sample_transform_on_device(self) -> Callable:
+
+                    return ApplyToKeys("input", my_func)
+        """
+        return self.per_sample_transform_on_device()
 
     #######################
     # PER BATCH TRANSFORM #
@@ -480,16 +375,6 @@ class InputTransform:
         """
         pass
 
-    def input_per_batch_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of batch on cpu for all
-        stages stage."""
-        pass
-
-    def target_per_batch_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of batch on cpu for
-        all stages stage."""
-        pass
-
     def train_per_batch_transform(self) -> Callable:
         """Defines the transform to be applied on a batch of data on cpu for the training stage.
 
@@ -501,17 +386,7 @@ class InputTransform:
                 DataKeys.METADATA: ...,
             }
         """
-        pass
-
-    def train_input_per_batch_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on cpu for the training stage."""
-        pass
-
-    def train_target_per_batch_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on cpu for the training stage."""
-        pass
+        return self.per_batch_transform()
 
     def val_per_batch_transform(self) -> Callable:
         """Defines the transform to be applied on a batch of data on cpu for the validating stage.
@@ -536,17 +411,7 @@ class InputTransform:
 
                     return ApplyToKeys("input", my_func)
         """
-        pass
-
-    def val_input_per_batch_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on cpu for the validating stage."""
-        pass
-
-    def val_target_per_batch_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on cpu for the validating stage."""
-        pass
+        return self.per_batch_transform()
 
     def test_per_batch_transform(self) -> Callable:
         """Defines the transform to be applied on a batch of data on cpu for the testing stage.
@@ -559,17 +424,7 @@ class InputTransform:
                 DataKeys.METADATA: ...,
             }
         """
-        pass
-
-    def test_input_per_batch_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on cpu for the testing stage."""
-        pass
-
-    def test_target_per_batch_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on cpu for the testing stage."""
-        pass
+        return self.per_batch_transform()
 
     def predict_per_batch_transform(self) -> Callable:
         """Defines the transform to be applied on a batch of data on cpu for the predicting stage.
@@ -594,17 +449,7 @@ class InputTransform:
 
                     return ApplyToKeys("input", my_func)
         """
-        pass
-
-    def predict_input_per_batch_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on cpu for the predicting stage."""
-        pass
-
-    def predict_target_per_batch_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on cpu for the predicting stage."""
-        pass
+        return self.per_batch_transform()
 
     def serve_per_batch_transform(self) -> Callable:
         """Defines the transform to be applied on a batch of data on cpu for the serving stage.
@@ -629,17 +474,7 @@ class InputTransform:
 
                     return ApplyToKeys("input", my_func)
         """
-        pass
-
-    def serve_input_per_batch_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on cpu for the serving stage."""
-        pass
-
-    def serve_target_per_batch_transform(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on cpu for the serving stage."""
-        pass
+        return self.per_batch_transform()
 
     #################################
     # PER BATCH TRANSFORM ON DEVICE #
@@ -670,16 +505,6 @@ class InputTransform:
         """
         pass
 
-    def input_per_batch_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of batch on device for
-        all stages stage."""
-        pass
-
-    def target_per_batch_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of batch on device for
-        all stages stage."""
-        pass
-
     def train_per_batch_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on a batch of data on device for the training stage.
 
@@ -691,17 +516,7 @@ class InputTransform:
                 DataKeys.METADATA: ...,
             }
         """
-        pass
-
-    def train_input_per_batch_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on device for the training stage."""
-        pass
-
-    def train_target_per_batch_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on device for the training stage."""
-        pass
+        return self.per_batch_transform_on_device()
 
     def val_per_batch_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on a batch of data on device for the validating stage.
@@ -726,17 +541,7 @@ class InputTransform:
 
                     return ApplyToKeys("input", my_func)
         """
-        pass
-
-    def val_input_per_batch_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on device for the validating stage."""
-        pass
-
-    def val_target_per_batch_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on device for the validating stage."""
-        pass
+        return self.per_batch_transform_on_device()
 
     def test_per_batch_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on a batch of data on device for the testing stage.
@@ -749,17 +554,7 @@ class InputTransform:
                 DataKeys.METADATA: ...,
             }
         """
-        pass
-
-    def test_input_per_batch_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on device for the testing stage."""
-        pass
-
-    def test_target_per_batch_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on device for the testing stage."""
-        pass
+        return self.per_batch_transform_on_device()
 
     def predict_per_batch_transform_on_device(self) -> Callable:
         """Defines the transform to be applied on a batch of data on device for the predicting stage.
@@ -784,45 +579,60 @@ class InputTransform:
 
                     return ApplyToKeys("input", my_func)
         """
-        pass
+        return self.per_batch_transform_on_device()
 
-    def predict_input_per_batch_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "input" key of each single sample
-        on device for the predicting stage."""
-        pass
+    def serve_per_batch_transform_on_device(self) -> Callable:
+        """Defines the transform to be applied on a batch of data on device for the serving stage.
 
-    def predict_target_per_batch_transform_on_device(self) -> Callable:
-        """Defines the transform to be applied on the value associated with the "target" key of each single sample
-        on device for the predicting stage."""
-        pass
+        The input data of the transform would have the following form::
+
+            {
+                DataKeys.INPUT: ...,
+                DataKeys.TARGET: ...,
+                DataKeys.METADATA: ...,
+            }
+
+        You would need to use :class:`flash.core.data.transforms.ApplyToKeys` as follows:
+
+        .. code-block:: python
+
+            from flash.core.data.transforms import ApplyToKeys
+
+
+            class MyInputTransform(InputTransform):
+                def serve_per_batch_transform_on_device(self) -> Callable:
+
+                    return ApplyToKeys("input", my_func)
+        """
+        return self.per_batch_transform_on_device()
 
     ###########
     # COLLATE #
     ###########
 
-    def train_collate(self) -> Callable:
-        """Defines the transform to be applied on a list of training sample to create a training batch."""
-        return default_collate
-
-    def val_collate(self) -> Callable:
-        """Defines the transform to be applied on a list of validating sample to create a validating batch."""
-        return default_collate
-
-    def test_collate(self) -> Callable:
-        """Defines the transform to be applied on a list of testing sample to create a testing batch."""
-        return default_collate
-
-    def predict_collate(self) -> Callable:
-        """Defines the transform to be applied on a list of predicting sample to create a predicting batch."""
-        return default_collate
-
-    def serve_collate(self) -> Callable:
-        """Defines the transform to be applied on a list of serving sample to create a serving batch."""
-        return default_collate
-
     def collate(self) -> Callable:
         """Defines the transform to be applied on a list of sample to create a batch for all stages."""
         return default_collate
+
+    def train_collate(self) -> Callable:
+        """Defines the transform to be applied on a list of training sample to create a training batch."""
+        return self.collate()
+
+    def val_collate(self) -> Callable:
+        """Defines the transform to be applied on a list of validating sample to create a validating batch."""
+        return self.collate()
+
+    def test_collate(self) -> Callable:
+        """Defines the transform to be applied on a list of testing sample to create a testing batch."""
+        return self.collate()
+
+    def predict_collate(self) -> Callable:
+        """Defines the transform to be applied on a list of predicting sample to create a predicting batch."""
+        return self.collate()
+
+    def serve_collate(self) -> Callable:
+        """Defines the transform to be applied on a list of serving sample to create a serving batch."""
+        return self.collate()
 
     ########################################
     # HOOKS CALLED INTERNALLY WITHIN FLASH #
@@ -880,101 +690,43 @@ class InputTransform:
 
     def _populate_transforms_for_stage(self, running_stage: RunningStage):
         transform, collate_in_worker = self.__check_transforms(
-            transform=self.__resolve_transforms(running_stage), stage=running_stage
+            transform=self.__resolve_transforms(running_stage),
         )
-        if self._transform is None:
-            self._transform = {}
+
         self._transform[running_stage] = _InputTransformPerStage(
             collate_in_worker_from_transform=collate_in_worker,
             transforms=transform,
         )
 
     def __resolve_transforms(self, running_stage: RunningStage) -> Optional[Dict[str, Callable]]:
-        from flash.core.data.data_pipeline import DataPipeline
-
-        transforms_out = {}
+        transforms = {}
         stage = _STAGES_PREFIX[running_stage]
 
         # iterate over all transforms hook name
         for transform_name in InputTransformPlacement:
 
-            transforms = {}
-            transform_name = transform_name.value
+            metthod_name = f"{stage}_{transform_name.value}"
 
-            # iterate over all prefixes
-            for key in ApplyToKeyPrefix:
-
-                # get the resolved hook name based on the current stage
-                resolved_name = DataPipeline._resolve_function_hierarchy(
-                    transform_name, self, running_stage, InputTransform
-                )
-                # check if the hook name is specialized
-                is_specialized_name = resolved_name.startswith(stage)
-
-                # get the resolved hook name for apply to key on the current stage
-                resolved_apply_to_key_name = DataPipeline._resolve_function_hierarchy(
-                    f"{key}_{transform_name}", self, running_stage, InputTransform
-                )
-                # check if resolved hook name for apply to key is specialized
-                is_specialized_apply_to_key_name = resolved_apply_to_key_name.startswith(stage)
-
-                # check if they are overridden by the user
-                resolve_name_overridden = DataPipeline._is_overridden(resolved_name, self, InputTransform)
-                resolved_apply_to_key_name_overridden = DataPipeline._is_overridden(
-                    resolved_apply_to_key_name, self, InputTransform
+            # get associated transform
+            try:
+                fn = getattr(self, metthod_name)()
+            except AttributeError as e:
+                raise AttributeError(
+                    str(e) + ". Make sure you include a call to super().__init__(...) in your __init__ after setting "
+                    "all attributes."
                 )
 
-                if resolve_name_overridden and resolved_apply_to_key_name_overridden:
-                    # if both are specialized or both aren't specialized, raise a exception
-                    # It means there is priority to specialize hooks name.
-                    if not (is_specialized_name ^ is_specialized_apply_to_key_name):
-                        raise MisconfigurationException(
-                            f"Only one of {resolved_name} or {resolved_apply_to_key_name} can be overridden."
-                        )
+            if fn is None:
+                continue
 
-                    method_name = resolved_name if is_specialized_name else resolved_apply_to_key_name
-                else:
-                    method_name = resolved_apply_to_key_name if resolved_apply_to_key_name_overridden else resolved_name
+            if not callable(fn):
+                raise MisconfigurationException(f"The hook {metthod_name} should return a callable.")
 
-                # get associated transform
-                try:
-                    fn = getattr(self, method_name)()
-                except AttributeError as e:
-                    raise AttributeError(str(e) + ". Hint: Call super().__init__(...) after setting all attributes.")
+            transforms[transform_name] = fn
 
-                if fn is None:
-                    continue
+        return transforms
 
-                if not callable(fn):
-                    raise MisconfigurationException(f"The hook {method_name} should return a function.")
-
-                # wrap apply to key hook into `ApplyToKeys` with the associated key.
-                if method_name == resolved_apply_to_key_name:
-                    fn = ApplyToKeys(key.value, fn)
-
-                if method_name not in transforms:
-                    transforms[method_name] = fn
-
-            # store the transforms.
-            if transforms:
-                transforms = list(transforms.values())
-                transforms_out[transform_name] = Compose(transforms) if len(transforms) > 1 else transforms[0]
-
-        return transforms_out
-
-    def __check_transforms(
-        self, transform: Optional[Dict[str, Callable]], stage: RunningStage
-    ) -> Tuple[Optional[Dict[str, Callable]], Optional[bool]]:
-        if transform is None:
-            return transform
-
-        keys_diff = set(transform.keys()).difference([v.value for v in InputTransformPlacement])
-
-        if len(keys_diff) > 0:
-            raise MisconfigurationException(
-                f"{stage}_transform contains {keys_diff}. Only {_INPUT_TRANSFORM_FUNCS} keys are supported."
-            )
-
+    def __check_transforms(self, transform: Dict[str, Callable]) -> Tuple[Dict[str, Callable], Optional[bool]]:
         is_per_batch_transform_in = "per_batch_transform" in transform
         is_per_sample_transform_on_device_in = "per_sample_transform_on_device" in transform
 
@@ -983,13 +735,7 @@ class InputTransform:
                 f"{transform}: `per_batch_transform` and `per_sample_transform_on_device` are mutually exclusive."
             )
 
-        collate_in_worker: Optional[bool] = None
-
-        if is_per_batch_transform_in or (not is_per_batch_transform_in and not is_per_sample_transform_on_device_in):
-            collate_in_worker = True
-
-        elif is_per_sample_transform_on_device_in:
-            collate_in_worker = False
+        collate_in_worker: Optional[bool] = not is_per_sample_transform_on_device_in
 
         return transform, collate_in_worker
 
@@ -998,19 +744,7 @@ class InputTransform:
         return x
 
     def __str__(self) -> str:
-        return f"{self.__class__.__name__}(" + f"running_stage={self.running_stage}, transform={self._transform})"
-
-    def __getitem__(self, placement: InputTransformPlacement) -> Callable:
-        return self._transform[placement]
-
-
-@dataclass
-class LambdaInputTransform(InputTransform):
-
-    transform: Callable = InputTransform._identity
-
-    def per_sample_transform(self) -> Callable:
-        return self.transform
+        return f"{self.__class__.__name__}(" + f"transform={self._transform})"
 
 
 def create_or_configure_input_transform(
@@ -1036,12 +770,6 @@ def create_or_configure_input_transform(
 
     if isinstance(transform, partial):
         return transform(**transform_kwargs)
-
-    if isinstance(transform, Callable):
-        return LambdaInputTransform(
-            transform=transform,
-            **transform_kwargs,
-        )
 
     if not transform:
         return None
@@ -1139,34 +867,11 @@ def __configure_worker_and_device_collate_fn(
     running_stage: RunningStage, input_transform: InputTransform
 ) -> Tuple[Callable, Callable]:
 
-    from flash.core.data.data_pipeline import DataPipeline
-
-    prefix: str = _STAGES_PREFIX[running_stage]
     transform_for_stage: _InputTransformPerStage = input_transform._transform[running_stage]
 
-    per_batch_transform_overridden: bool = DataPipeline._is_overridden_recursive(
-        "per_batch_transform", input_transform, InputTransform, prefix=prefix
+    worker_collate_fn, device_collate_fn = __make_collates(
+        input_transform, not transform_for_stage.collate_in_worker_from_transform, input_transform._collate
     )
-
-    per_sample_transform_on_device_overridden: bool = DataPipeline._is_overridden_recursive(
-        "per_sample_transform_on_device", input_transform, InputTransform, prefix=prefix
-    )
-
-    is_per_overridden = per_batch_transform_overridden and per_sample_transform_on_device_overridden
-    if transform_for_stage.collate_in_worker_from_transform is None and is_per_overridden:
-        raise MisconfigurationException(
-            f"{input_transform.__class__.__name__}: `per_batch_transform` and `per_sample_transform_on_device` "
-            f"are mutually exclusive for stage {running_stage}"
-        )
-
-    if isinstance(transform_for_stage.collate_in_worker_from_transform, bool):
-        worker_collate_fn, device_collate_fn = __make_collates(
-            input_transform, not transform_for_stage.collate_in_worker_from_transform, input_transform._collate
-        )
-    else:
-        worker_collate_fn, device_collate_fn = __make_collates(
-            input_transform, per_sample_transform_on_device_overridden, input_transform._collate
-        )
 
     worker_collate_fn = (
         worker_collate_fn.collate_fn if isinstance(worker_collate_fn, _InputTransformProcessor) else worker_collate_fn
