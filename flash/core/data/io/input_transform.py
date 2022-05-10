@@ -39,31 +39,6 @@ class InputTransformPlacement(LightningEnum):
 INVALID_STAGES_FOR_INPUT_TRANSFORMS = [RunningStage.SANITY_CHECKING, RunningStage.TUNING]
 
 
-# Credit to Torchvision Team:
-# https://pytorch.org/vision/stable/_modules/torchvision/transforms/transforms.html#Compose
-class Compose:
-    """Composes several transforms together.
-
-    This transform does not support torchscript.
-    """
-
-    def __init__(self, transforms):
-        self.transforms = transforms
-
-    def __call__(self, x):
-        for t in self.transforms:
-            x = t(x)
-        return x
-
-    def __repr__(self):
-        format_string = self.__class__.__name__ + "("
-        for t in self.transforms:
-            format_string += "\n"
-            format_string += f"{t}"
-        format_string += "\n)"
-        return format_string
-
-
 @dataclass
 class _InputTransformPerStage:
     collate_in_worker_from_transform: bool
@@ -683,10 +658,9 @@ class InputTransform:
 
     def inject_collate_fn(self, collate_fn: Callable):
         # For all the stages possible, set collate function
-        if collate_fn is not default_collate:
-            for stage in RunningStage:
-                if stage not in [RunningStage.SANITY_CHECKING, RunningStage.TUNING]:
-                    self._transform[stage].transforms[InputTransformPlacement.COLLATE.value] = collate_fn
+        for stage in RunningStage:
+            if stage not in [RunningStage.SANITY_CHECKING, RunningStage.TUNING]:
+                self._transform[stage].transforms[InputTransformPlacement.COLLATE.value] = collate_fn
 
     def _populate_transforms_for_stage(self, running_stage: RunningStage):
         transform, collate_in_worker = self.__check_transforms(
