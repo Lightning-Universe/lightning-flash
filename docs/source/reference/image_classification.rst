@@ -108,6 +108,7 @@ Here's an example:
     from typing import Callable, Tuple, Union
     import flash
     from flash.image import ImageClassificationData, ImageClassifier
+    from flash.core.data.transforms import ApplyToKeys
     from flash.core.data.io.input_transform import InputTransform
     from dataclasses import dataclass
 
