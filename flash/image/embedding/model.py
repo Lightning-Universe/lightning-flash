@@ -158,7 +158,7 @@ class ImageEmbedder(AdapterTask):
         self.adapter.on_train_batch_end(outputs, batch, batch_idx, dataloader_idx)
 
     @classmethod
-    @requires(["image", "vissl", "fairscale"])
+    @requires("image", "vissl", "fairscale")
     def available_training_strategies(cls) -> List[str]:
         """Get the list of available training strategies (passed to the ``training_strategy`` argument) for this
         task.

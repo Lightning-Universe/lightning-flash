@@ -11,35 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
 from typing import Any
 from unittest import mock
 
 import pytest
 import torch
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 
-from flash import Trainer
+import flash
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _SERVE_TESTING, _TEXT_AVAILABLE, _TEXT_TESTING
+from flash.core.utilities.imports import _SERVE_TESTING, _TEXT_AVAILABLE, _TEXT_TESTING, _TORCH_ORT_AVAILABLE
 from flash.text import TextClassifier
-from tests.helpers.task_tester import TaskTester
-
-# ======== Mock functions ========
-
-
-class DummyDataset(torch.utils.data.Dataset):
-    def __getitem__(self, index):
-        return {
-            "input_ids": torch.randint(1000, size=(100,)),
-            DataKeys.TARGET: torch.randint(2, size=(1,)).item(),
-        }
-
-    def __len__(self) -> int:
-        return 100
-
-
-# ==============================
+from flash.text.ort_callback import ORTCallback
+from tests.helpers.boring_model import BoringModel
+from tests.helpers.task_tester import StaticDataset, TaskTester
 
 TEST_BACKBONE = "prajjwal1/bert-tiny"  # tiny model for testing
 
@@ -55,7 +41,23 @@ class TestTextClassifier(TaskTester):
 
     scriptable = False
 
-    marks = {"test_cli": [pytest.mark.parametrize("extra_args", ([], ["from_toxic"]))]}
+    marks = {
+        "test_fit": [
+            pytest.mark.parametrize(
+                "task_kwargs",
+                [
+                    {},
+                    pytest.param(
+                        {"enable_ort": True},
+                        marks=pytest.mark.skipif(not _TORCH_ORT_AVAILABLE, reason="ORT Module aren't installed."),
+                    ),
+                ],
+            )
+        ],
+        "test_val": [pytest.mark.parametrize("task_kwargs", [{}])],
+        "test_test": [pytest.mark.parametrize("task_kwargs", [{}])],
+        "test_cli": [pytest.mark.parametrize("extra_args", ([], ["from_toxic"]))],
+    }
 
     @property
     def example_forward_input(self):
@@ -65,14 +67,28 @@ class TestTextClassifier(TaskTester):
         assert isinstance(output, Tensor)
         assert output.shape == torch.Size([1, 2])
 
+    @property
+    def example_train_sample(self):
+        return {DataKeys.INPUT: "some text", DataKeys.TARGET: 1}
 
-@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_init_train(tmpdir):
-    model = TextClassifier(2, backbone=TEST_BACKBONE)
-    train_dl = torch.utils.data.DataLoader(DummyDataset())
-    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    trainer.fit(model, train_dl)
+    @property
+    def example_val_sample(self):
+        return self.example_train_sample
+
+    @property
+    def example_test_sample(self):
+        return self.example_train_sample
+
+    @pytest.mark.skipif(not _TORCH_ORT_AVAILABLE, reason="ORT Module aren't installed.")
+    def test_ort_callback_fails_no_model(self, tmpdir):
+        dataset = StaticDataset(self.example_train_sample, 4)
+
+        model = BoringModel()
+
+        trainer = flash.Trainer(default_root_dir=tmpdir, fast_dev_run=True, callbacks=ORTCallback())
+
+        with pytest.raises(MisconfigurationException, match="Torch ORT requires to wrap a single model"):
+            trainer.fit(model, model.process_train_dataset(dataset, batch_size=4))
 
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")

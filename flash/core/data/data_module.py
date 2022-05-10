@@ -12,13 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from functools import partial
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import pytorch_lightning as pl
 import torch
-from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import IterableDataset
@@ -36,9 +34,13 @@ from flash.core.data.io.input_transform import (
 )
 from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX
-from flash.core.registry import FlashRegistry
+from flash.core.utilities.imports import _CORE_TESTING
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
+
+# Skip doctests if requirements aren't available
+if not _CORE_TESTING:
+    __doctest_skip__ = ["DataModule"]
 
 
 class DatasetInput(Input):
@@ -106,7 +108,6 @@ class DataModule(pl.LightningDataModule):
     """
 
     input_transform_cls = InputTransform
-    input_transforms_registry = FlashRegistry("input_transforms")
 
     def __init__(
         self,
@@ -131,7 +132,7 @@ class DataModule(pl.LightningDataModule):
         if flash._IS_TESTING and torch.cuda.is_available():
             batch_size = 16
 
-        self.input_transform = DataModule.configure_input_transform(
+        self.input_transform = create_or_configure_input_transform(
             transform=transform, transform_kwargs=transform_kwargs
         )
 
@@ -430,30 +431,6 @@ class DataModule(pl.LightningDataModule):
     @input_transform.setter
     def input_transform(self, input_transform: InputTransform) -> None:
         self._input_transform = input_transform
-
-    @staticmethod
-    def configure_input_transform(
-        transform: INPUT_TRANSFORM_TYPE, transform_kwargs: Optional[Dict] = None
-    ) -> InputTransform:
-        """This function is used to configure a :class:`~flash.core.data.io.input_transform.InputTransform`.
-
-        Override with your custom one.
-        """
-        return create_or_configure_input_transform(
-            transform=transform,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=DataModule.input_transforms_registry,
-        )
-
-    @classmethod
-    def register_input_transform(
-        cls, enum: Union[LightningEnum, str], fn: Union[Type["flash.InputTransform"], partial]
-    ) -> None:
-        if cls.input_transforms_registry is None:
-            raise MisconfigurationException(
-                "The class attribute `input_transforms_registry` should be set as a class attribute. "
-            )
-        cls.input_transforms_registry(fn=fn, name=enum)
 
     ####################################
     # METHODS RELATED TO VISUALIZATION #

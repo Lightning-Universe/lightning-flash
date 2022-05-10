@@ -23,7 +23,7 @@ if _VISSL_AVAILABLE:
     from vissl.hooks.swav_hooks import NormalizePrototypesHook, SwAVUpdateQueueScoresHook
 
 
-@requires(["vissl", "classy_vision"])
+@requires("vissl", "classy_vision")
 def swav(head: str = "swav_head", **kwargs):
     loss_fn = IMAGE_EMBEDDER_LOSS_FUNCTIONS.get("swav_loss")(**kwargs)
     head = IMAGE_EMBEDDER_HEADS.get(head)(**kwargs)
@@ -31,7 +31,7 @@ def swav(head: str = "swav_head", **kwargs):
     return loss_fn, head, [SwAVUpdateQueueScoresHook(), NormalizePrototypesHook(), TrainingSetupHook()]
 
 
-@requires(["vissl", "classy_vision"])
+@requires("vissl", "classy_vision")
 def simclr(head: str = "simclr_head", **kwargs):
     loss_fn = IMAGE_EMBEDDER_LOSS_FUNCTIONS.get("simclr_loss")(**kwargs)
     head = IMAGE_EMBEDDER_HEADS.get(head)(**kwargs)
@@ -39,7 +39,7 @@ def simclr(head: str = "simclr_head", **kwargs):
     return loss_fn, head, [SimCLRTrainingSetupHook()]
 
 
-@requires(["vissl", "classy_vision"])
+@requires("vissl", "classy_vision")
 def barlow_twins(head: str = "barlow_twins_head", **kwargs):
     loss_fn = IMAGE_EMBEDDER_LOSS_FUNCTIONS.get("barlow_twins_loss")(**kwargs)
     head = IMAGE_EMBEDDER_HEADS.get(head)(**kwargs)

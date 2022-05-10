@@ -21,7 +21,12 @@ from pytorch_lightning.plugins.environments import SLURMEnvironment
 from torch.nn import Module
 
 from flash.core.utilities.compatibility import accelerator_connector
-from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_4_0, _PL_GREATER_EQUAL_1_6_0, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import (
+    _CORE_TESTING,
+    _PL_GREATER_EQUAL_1_4_0,
+    _PL_GREATER_EQUAL_1_6_0,
+    _TORCHVISION_AVAILABLE,
+)
 from flash.core.utilities.lightning_cli import (
     instantiate_class,
     LightningArgumentParser,
@@ -35,6 +40,7 @@ if _TORCHVISION_AVAILABLE:
     torchvision_version = version.parse(__import__("torchvision").__version__)
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @mock.patch("argparse.ArgumentParser.parse_args")
 def test_default_args(mock_argparse, tmpdir):
     """Tests default argument parser for Trainer."""
@@ -50,6 +56,7 @@ def test_default_args(mock_argparse, tmpdir):
     assert trainer.max_epochs == 5
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize("cli_args", [["--accumulate_grad_batches=22"], ["--weights_save_path=./"], []])
 def test_add_argparse_args_redefined(cli_args):
     """Redefines some default Trainer arguments via the cli and tests the Trainer initialization correctness."""
@@ -71,6 +78,7 @@ def test_add_argparse_args_redefined(cli_args):
     assert isinstance(trainer, Trainer)
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize(
     ["cli_args", "expected"],
     [
@@ -100,6 +108,7 @@ def test_parse_args_parsing(cli_args, expected):
     assert Trainer.from_argparse_args(args)
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize(
     ["cli_args", "expected", "instantiate"],
     [
@@ -121,6 +130,7 @@ def test_parse_args_parsing_complex_types(cli_args, expected, instantiate):
         assert Trainer.from_argparse_args(args)
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize(
     ["cli_args", "expected_gpu"],
     [
@@ -142,6 +152,7 @@ def test_parse_args_parsing_gpus(monkeypatch, cli_args, expected_gpu):
     assert trainer.data_parallel_device_ids == expected_gpu
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.skipif(
     sys.version_info < (3, 7),
     reason="signature inspection while mocking is not working in Python < 3.7 despite autospec",
@@ -186,6 +197,7 @@ def trainer_builder(
     return Trainer(limit_train_batches=limit_train_batches, fast_dev_run=fast_dev_run, callbacks=callbacks)
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize(["trainer_class", "model_class"], [(Trainer, Model), (trainer_builder, model_builder)])
 def test_lightning_cli(trainer_class, model_class, monkeypatch):
     """Test that LightningCLI correctly instantiates model, trainer and calls fit."""
@@ -218,6 +230,7 @@ def test_lightning_cli(trainer_class, model_class, monkeypatch):
         assert hasattr(cli.trainer, "ran_asserts") and cli.trainer.ran_asserts
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_lightning_cli_args_callbacks(tmpdir):
 
     callbacks = [
@@ -245,6 +258,7 @@ def test_lightning_cli_args_callbacks(tmpdir):
     assert cli.trainer.ran_asserts
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_lightning_cli_configurable_callbacks(tmpdir):
     class MyLightningCLI(LightningCLI):
         def add_arguments_to_parser(self, parser):
@@ -264,6 +278,7 @@ def test_lightning_cli_configurable_callbacks(tmpdir):
     assert callback[0].logging_interval == "epoch"
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.skipif(_PL_GREATER_EQUAL_1_6_0, reason="Bugs in PL >= 1.6.0")
 def test_lightning_cli_args_cluster_environments(tmpdir):
     plugins = [dict(class_path="pytorch_lightning.plugins.environments.SLURMEnvironment")]
@@ -280,6 +295,7 @@ def test_lightning_cli_args_cluster_environments(tmpdir):
     assert cli.trainer.ran_asserts
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_lightning_cli_args(tmpdir):
 
     cli_args = [
@@ -303,6 +319,7 @@ def test_lightning_cli_args(tmpdir):
     assert config["trainer"] == cli.config["trainer"]
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_lightning_cli_save_config_cases(tmpdir):
 
     config_path = tmpdir / "config.yaml"
@@ -328,6 +345,7 @@ def test_lightning_cli_save_config_cases(tmpdir):
         LightningCLI(BoringModel)
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_lightning_cli_config_and_subclass_mode(tmpdir):
 
     config = dict(
@@ -366,6 +384,7 @@ def any_model_any_data_cli():
     )
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_lightning_cli_help():
 
     cli_args = ["any.py", "--help"]
@@ -392,6 +411,7 @@ def test_lightning_cli_help():
     assert "--data.init_args.data_dir" in out.getvalue()
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_lightning_cli_print_config():
 
     cli_args = [
@@ -412,6 +432,7 @@ def test_lightning_cli_print_config():
     assert outval["data"]["class_path"] == "tests.helpers.boring_model.BoringDataModule"
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_lightning_cli_submodules(tmpdir):
     class MainModule(BoringModel):
         def __init__(
@@ -449,6 +470,7 @@ def test_lightning_cli_submodules(tmpdir):
     assert isinstance(cli.model.submodule2, BoringModel)
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.skipif(torchvision_version < version.parse("0.8.0"), reason="torchvision>=0.8.0 is required")
 def test_lightning_cli_torch_modules(tmpdir):
     class TestModule(BoringModel):
@@ -514,6 +536,7 @@ class BoringDataModuleBatchSizeAndClasses(BoringDataModule):
         self.num_classes = 5  # only available after instantiation
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_lightning_cli_link_arguments(tmpdir):
     class MyLightningCLI(LightningCLI):
         def add_arguments_to_parser(self, parser):
@@ -562,6 +585,7 @@ class EarlyExitTestModel(BoringModel):
         raise execption
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize("logger", (False, True))
 @pytest.mark.parametrize(
     "trainer_kwargs",
@@ -594,6 +618,7 @@ def test_cli_ddp_spawn_save_config_callback(tmpdir, logger, trainer_kwargs):
     assert os.path.isfile(config_path)
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_cli_config_overwrite(tmpdir):
     trainer_defaults = {"default_root_dir": str(tmpdir), "logger": False, "max_steps": 1, "max_epochs": 1}
 
@@ -605,6 +630,7 @@ def test_cli_config_overwrite(tmpdir):
         LightningCLI(BoringModel, save_config_overwrite=True, trainer_defaults=trainer_defaults)
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_lightning_cli_optimizer(tmpdir):
     class MyLightningCLI(LightningCLI):
         def add_arguments_to_parser(self, parser):
@@ -628,6 +654,7 @@ def test_lightning_cli_optimizer(tmpdir):
     assert len(cli.trainer.lr_schedulers) == 0
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_lightning_cli_optimizer_and_lr_scheduler(tmpdir):
     class MyLightningCLI(LightningCLI):
         def add_arguments_to_parser(self, parser):
@@ -651,6 +678,7 @@ def test_lightning_cli_optimizer_and_lr_scheduler(tmpdir):
     assert cli.trainer.lr_schedulers[0]["scheduler"].gamma == 0.8
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_lightning_cli_optimizer_and_lr_scheduler_subclasses(tmpdir):
     class MyLightningCLI(LightningCLI):
         def add_arguments_to_parser(self, parser):
@@ -682,6 +710,7 @@ def test_lightning_cli_optimizer_and_lr_scheduler_subclasses(tmpdir):
     assert cli.trainer.lr_schedulers[0]["scheduler"].step_size == 50
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_lightning_cli_optimizers_and_lr_scheduler_with_link_to(tmpdir):
     class MyLightningCLI(LightningCLI):
         def add_arguments_to_parser(self, parser):

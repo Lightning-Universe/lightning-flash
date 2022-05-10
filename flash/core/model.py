@@ -15,7 +15,6 @@ import inspect
 import re
 from abc import ABCMeta
 from copy import deepcopy
-from importlib import import_module
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import pytorch_lightning as pl
@@ -49,7 +48,7 @@ from flash.core.optimizers.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.registry import FlashRegistry
 from flash.core.serve.composition import Composition
 from flash.core.utilities.apply_func import get_callable_dict
-from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_5_0, requires
+from flash.core.utilities.imports import _CORE_TESTING, _PL_GREATER_EQUAL_1_5_0, requires
 from flash.core.utilities.providers import _HUGGINGFACE
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import (
@@ -61,6 +60,10 @@ from flash.core.utilities.types import (
     OPTIMIZER_TYPE,
     OUTPUT_TRANSFORM_TYPE,
 )
+
+# Skip doctests if requirements aren't available
+if not _CORE_TESTING:
+    __doctest_skip__ = ["Task", "Task.*"]
 
 
 class ModuleWrapperBase:
@@ -276,12 +279,16 @@ class CheckDependenciesMeta(ABCMeta):
     def __new__(mcs, *args, **kwargs):
         result = ABCMeta.__new__(mcs, *args, **kwargs)
         if result.required_extras is not None:
-            result.__init__ = requires(result.required_extras)(result.__init__)
+            if isinstance(result.required_extras, str):
+                result.required_extras = [result.required_extras]
+            result.__init__ = requires(*result.required_extras)(result.__init__)
 
             patterns = ["load_from_checkpoint", "available_*"]  # must match classmethods only
             regex = "(" + ")|(".join(patterns) + ")"
             for attribute_name, attribute_value in filter(lambda x: re.match(regex, x[0]), inspect.getmembers(result)):
-                setattr(result, attribute_name, classmethod(requires(result.required_extras)(attribute_value.__func__)))
+                setattr(
+                    result, attribute_name, classmethod(requires(*result.required_extras)(attribute_value.__func__))
+                )
         return result
 
 
@@ -784,32 +791,6 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         # If `lr_scheduler` is not a Dict, then add it to the current config and return the config.
         lr_scheduler_config["scheduler"] = lr_scheduler
         return lr_scheduler_config
-
-    def _load_from_state_dict(
-        self, state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs
-    ):
-        if "input_transform.state_dict" in state_dict:
-            try:
-                input_transform_state_dict = state_dict["input_transform.state_dict"]
-                meta = input_transform_state_dict["_meta"]
-                cls = getattr(import_module(meta["module"]), meta["class_name"])
-                self._input_transform = cls.load_state_dict(
-                    {k: v for k, v in input_transform_state_dict.items() if k != "_meta"},
-                    strict=strict,
-                )
-                self._input_transform._state = meta["_state"]
-                del state_dict["input_transform.state_dict"]
-                del input_transform_state_dict["_meta"]
-            except (ModuleNotFoundError, KeyError):
-                meta = state_dict["input_transform.state_dict"]["_meta"]
-                raise MisconfigurationException(
-                    f"The `InputTransform` {meta['module']}.{meta['class_name']}"
-                    "has been moved and couldn't be imported."
-                )
-
-        super()._load_from_state_dict(
-            state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs
-        )
 
     def configure_callbacks(self):
         # used only for CI

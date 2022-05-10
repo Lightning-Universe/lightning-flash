@@ -37,10 +37,19 @@ if _ICEVISION_AVAILABLE:
     from icevision.metrics import COCOMetric
     from icevision.metrics import Metric as IceVisionMetric
 else:
-    COCOMetric = object
+
+    class COCOMetric:
+        def __init__(self, metric_type):
+            self.metric_type = metric_type
 
 
 class SimpleCOCOMetric(COCOMetric):
+    def accumulate(self, preds):
+        for pred in preds:
+            if getattr(pred.ground_truth, "filepath", None) is None:
+                pred.ground_truth.filepath = "mock.png"
+        return super().accumulate(preds)
+
     def finalize(self) -> Dict[str, float]:
         logs = super().finalize()
         return {
@@ -87,6 +96,9 @@ class IceVisionAdapter(Adapter):
             image_size=image_size,
             **kwargs,
         )
+
+        if metrics is not None and not isinstance(metrics, list):
+            metrics = [metrics]
         icevision_adapter = icevision_adapter(model=model, metrics=metrics)
         return cls(model_type, model, icevision_adapter, backbone, predict_kwargs)
 

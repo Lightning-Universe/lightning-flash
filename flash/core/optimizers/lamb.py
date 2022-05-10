@@ -25,6 +25,12 @@ import torch
 from torch import nn
 from torch.optim.optimizer import Optimizer
 
+from flash.core.utilities.imports import _CORE_TESTING
+
+# Skip doctests if requirements aren't available
+if not _CORE_TESTING:
+    __doctest_skip__ = ["LAMB"]
+
 
 class LAMB(Optimizer):
     r"""Extends ADAM in pytorch to incorporate LAMB algorithm from the paper:

@@ -22,7 +22,7 @@ from torch import nn
 from torch.utils.data import SequentialSampler
 
 import flash
-from flash.core.utilities.imports import _BAAL_AVAILABLE, _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _BAAL_AVAILABLE, _BAAL_GREATER_EQUAL_1_5_2, _IMAGE_AVAILABLE
 from flash.image import ImageClassificationData, ImageClassifier
 from flash.image.classification.integrations.baal import ActiveLearningDataModule, ActiveLearningLoop
 from tests.image.classification.test_data import _rand_image
@@ -110,6 +110,8 @@ def test_active_learning_training(simple_datamodule, initial_num_labels, query_s
         assert len(active_learning_dm._dataset) == 20
     assert active_learning_loop.progress.total.completed == 3
     labelled = active_learning_loop.state_dict()["state_dict"]["datamodule_state_dict"]["labelled"]
+    if _BAAL_GREATER_EQUAL_1_5_2:
+        labelled = labelled > 0
     assert isinstance(labelled, np.ndarray)
 
     # Check that we iterate over the actual pool and that shuffle is disabled.

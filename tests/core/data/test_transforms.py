@@ -19,9 +19,11 @@ from torch.nn import Module
 
 from flash.core.data.io.input import DataKeys
 from flash.core.data.transforms import ApplyToKeys, kornia_collate, KorniaParallelTransforms
+from flash.core.utilities.imports import _CORE_TESTING
 
 
 class TestApplyToKeys:
+    @pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
     @pytest.mark.parametrize(
         "sample, keys, expected",
         [
@@ -46,6 +48,7 @@ class TestApplyToKeys:
         else:
             transform.assert_not_called()
 
+    @pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
     @pytest.mark.parametrize(
         "transform, expected",
         [
@@ -68,6 +71,7 @@ class TestApplyToKeys:
         assert repr(transform) == expected
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize("with_params", [True, False])
 def test_kornia_parallel_transforms(with_params):
     samples = [torch.rand(1, 3, 10, 10), torch.rand(1, 3, 10, 10)]
@@ -96,6 +100,7 @@ def test_kornia_parallel_transforms(with_params):
     assert torch.allclose(transform_b.call_args_list[1][0][0], transformed_sample)
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_kornia_collate():
     samples = [
         {DataKeys.INPUT: torch.zeros(1, 3, 10, 10), DataKeys.TARGET: 1},

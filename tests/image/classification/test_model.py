@@ -64,6 +64,28 @@ class TestImageClassifier(TaskTester):
                 ],
             )
         ],
+        "test_val": [
+            pytest.mark.parametrize(
+                "task_kwargs",
+                [
+                    {"backbone": "resnet18"},
+                    {"backbone": "vit_small_patch16_224"},
+                    {"backbone": "resnet18", "head": "linear"},
+                    {"backbone": "resnet18", "head": torch.nn.Linear(512, 2)},
+                ],
+            )
+        ],
+        "test_test": [
+            pytest.mark.parametrize(
+                "task_kwargs",
+                [
+                    {"backbone": "resnet18"},
+                    {"backbone": "vit_small_patch16_224"},
+                    {"backbone": "resnet18", "head": "linear"},
+                    {"backbone": "resnet18", "head": torch.nn.Linear(512, 2)},
+                ],
+            )
+        ],
         "test_cli": [pytest.mark.parametrize("extra_args", ([], ["from_movie_posters"]))],
     }
 
@@ -78,6 +100,14 @@ class TestImageClassifier(TaskTester):
     @property
     def example_train_sample(self):
         return {DataKeys.INPUT: torch.rand(3, 224, 224), DataKeys.TARGET: 1}
+
+    @property
+    def example_val_sample(self):
+        return self.example_train_sample
+
+    @property
+    def example_test_sample(self):
+        return self.example_train_sample
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")

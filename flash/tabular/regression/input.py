@@ -55,3 +55,31 @@ class TabularRegressionCSVInput(TabularRegressionDataFrameInput):
     ):
         if file is not None:
             return super().load_data(read_csv(file), categorical_fields, numerical_fields, target_field, parameters)
+
+
+class TabularRegressionDictInput(TabularRegressionDataFrameInput):
+    def load_data(
+        self,
+        data: Dict[str, List[Any]],
+        categorical_fields: Optional[Union[str, List[str]]] = None,
+        numerical_fields: Optional[Union[str, List[str]]] = None,
+        target_field: Optional[str] = None,
+        parameters: Dict[str, Any] = None,
+    ):
+        data_frame = DataFrame.from_dict(data)
+
+        return super().load_data(data_frame, categorical_fields, numerical_fields, target_field, parameters)
+
+
+class TabularRegressionListInput(TabularRegressionDataFrameInput):
+    def load_data(
+        self,
+        data: List[Union[tuple, dict]],
+        categorical_fields: Optional[Union[str, List[str]]] = None,
+        numerical_fields: Optional[Union[str, List[str]]] = None,
+        target_field: Optional[str] = None,
+        parameters: Dict[str, Any] = None,
+    ):
+        data_frame = DataFrame.from_records(data)
+
+        return super().load_data(data_frame, categorical_fields, numerical_fields, target_field, parameters)

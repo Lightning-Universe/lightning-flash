@@ -51,6 +51,14 @@ class TestSemanticSegmentation(TaskTester):
             DataKeys.TARGET: torch.randint(2, (224, 224)),
         }
 
+    @property
+    def example_val_sample(self):
+        return self.example_train_sample
+
+    @property
+    def example_test_sample(self):
+        return self.example_train_sample
+
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_non_existent_backbone():
