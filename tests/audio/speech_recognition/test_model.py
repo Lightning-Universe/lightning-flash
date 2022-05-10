@@ -52,6 +52,14 @@ class TestSpeechRecognition(TaskTester):
             DataKeys.METADATA: {"sampling_rate": 16000},
         }
 
+    @property
+    def example_val_sample(self):
+        return self.example_train_sample
+
+    @property
+    def example_test_sample(self):
+        return self.example_train_sample
+
 
 @pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 def test_modules_to_freeze():

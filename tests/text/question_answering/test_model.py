@@ -12,36 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import collections
-import os
 from typing import Any
 
 import pytest
 import torch
 
-from flash import Trainer
 from flash.core.utilities.imports import _TEXT_AVAILABLE, _TEXT_TESTING
 from flash.text import QuestionAnsweringTask
 from tests.helpers.task_tester import TaskTester
-
-# ======== Mock functions ========
-
-SEQUENCE_LENGTH = 384
-
-
-class DummyDataset(torch.utils.data.Dataset):
-    def __getitem__(self, index):
-        return {
-            "input_ids": torch.randint(1000, size=(SEQUENCE_LENGTH,)),
-            "attention_mask": torch.randint(1, size=(SEQUENCE_LENGTH,)),
-            "start_positions": torch.randint(1000, size=(1,)),
-            "end_positions": torch.randint(1000, size=(1,)),
-        }
-
-    def __len__(self) -> int:
-        return 100
-
-
-# ==============================
 
 TEST_BACKBONE = "distilbert-base-uncased"
 
@@ -70,17 +48,25 @@ class TestQuestionAnsweringTask(TaskTester):
         assert isinstance(output[0], torch.Tensor)
         assert isinstance(output[1], collections.OrderedDict)
 
+    @property
+    def example_train_sample(self):
+        return {
+            "question": "A question",
+            "answer": {"text": ["The answer"], "answer_start": [0]},
+            "context": "The paragraph of text which contains the answer to the question",
+            "id": 0,
+        }
+
+    @property
+    def example_val_sample(self):
+        return self.example_train_sample
+
+    @property
+    def example_test_sample(self):
+        return self.example_train_sample
+
 
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_modules_to_freeze():
     model = QuestionAnsweringTask(backbone=TEST_BACKBONE)
     assert model.modules_to_freeze() is model.model.distilbert
-
-
-@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_init_train(tmpdir):
-    model = QuestionAnsweringTask(TEST_BACKBONE)
-    train_dl = torch.utils.data.DataLoader(DummyDataset())
-    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    trainer.fit(model, train_dl)

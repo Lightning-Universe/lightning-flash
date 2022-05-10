@@ -27,6 +27,7 @@ from torch.utils.data import DataLoader
 
 import flash
 from flash.core.model import Task
+from flash.core.utilities.imports import _CORE_TESTING
 from tests.helpers.boring_model import BoringModel
 
 
@@ -135,6 +136,7 @@ class CustomStrategyChecking(ModelCheckpoint):
             assert pl_module.model.layer.weight.requires_grad
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize(
     "strategy",
     [
@@ -151,27 +153,54 @@ def test_finetuning_with_none_return_type(strategy):
     trainer.finetune(task, train_dataloader=DataLoader(ds), strategy=strategy)
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize(
-    ("strategy", "checker_class", "checker_class_data"),
+    ("strategy", "lr_scheduler", "checker_class", "checker_class_data"),
     [
-        ("no_freeze", None, {}),
-        ("freeze", FreezeStrategyChecking, {}),
-        (("freeze_unfreeze", 2), FreezeUnfreezeStrategyChecking, {"check_epoch": 2}),
+        ("no_freeze", None, None, {}),
+        ("freeze", None, FreezeStrategyChecking, {}),
+        (("freeze_unfreeze", 2), None, FreezeUnfreezeStrategyChecking, {"check_epoch": 2}),
         (
             ("unfreeze_milestones", ((1, 3), 1)),
+            None,
+            UnfreezeMilestonesStrategyChecking,
+            {"check_epochs": [1, 3], "num_layers": 1},
+        ),
+        (
+            "no_freeze",
+            ("onecyclelr", {"max_lr": 1e-3, "epochs": 50, "steps_per_epoch": 10}, {"interval": "step"}),
+            None,
+            {},
+        ),
+        (
+            "freeze",
+            ("onecyclelr", {"max_lr": 1e-3, "epochs": 50, "steps_per_epoch": 10}, {"interval": "step"}),
+            FreezeStrategyChecking,
+            {},
+        ),
+        (
+            ("freeze_unfreeze", 2),
+            ("onecyclelr", {"max_lr": 1e-3, "epochs": 50, "steps_per_epoch": 10}, {"interval": "step"}),
+            FreezeUnfreezeStrategyChecking,
+            {"check_epoch": 2},
+        ),
+        (
+            ("unfreeze_milestones", ((1, 3), 1)),
+            ("onecyclelr", {"max_lr": 1e-3, "epochs": 50, "steps_per_epoch": 10}, {"interval": "step"}),
             UnfreezeMilestonesStrategyChecking,
             {"check_epochs": [1, 3], "num_layers": 1},
         ),
     ],
 )
-def test_finetuning(tmpdir, strategy, checker_class, checker_class_data):
-    task = TestTaskWithFinetuning(loss_fn=F.nll_loss)
+def test_finetuning(tmpdir, strategy, lr_scheduler, checker_class, checker_class_data):
+    task = TestTaskWithFinetuning(loss_fn=F.nll_loss, lr_scheduler=lr_scheduler, optimizer="sgd", learning_rate=0.1)
     callbacks = [] if checker_class is None else checker_class(dirpath=tmpdir, **checker_class_data)
     trainer = flash.Trainer(max_epochs=5, limit_train_batches=10, callbacks=callbacks)
     ds = DummyDataset()
     trainer.finetune(task, train_dataloader=DataLoader(ds), strategy=strategy)
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize(
     "strategy",
     [

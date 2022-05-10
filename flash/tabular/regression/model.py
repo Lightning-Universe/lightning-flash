@@ -23,9 +23,13 @@ from flash.core.integrations.pytorch_tabular.backbones import PYTORCH_TABULAR_BA
 from flash.core.registry import FlashRegistry
 from flash.core.regression import RegressionAdapterTask
 from flash.core.serve import Composition
-from flash.core.utilities.imports import requires
+from flash.core.utilities.imports import _TABULAR_TESTING, requires
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.tabular.input import TabularDeserializer
+
+# Skip doctests if requirements aren't available
+if not _TABULAR_TESTING:
+    __doctest_skip__ = ["TabularRegressor", "TabularRegressor.*"]
 
 
 class TabularRegressor(RegressionAdapterTask):
@@ -69,7 +73,7 @@ class TabularRegressor(RegressionAdapterTask):
     ):
         self.save_hyperparameters()
 
-        self._parameters = parameters
+        self._data_parameters = parameters
 
         metadata = self.backbones.get(backbone, with_metadata=True)
         adapter = metadata["metadata"]["adapter"].from_task(
@@ -91,6 +95,38 @@ class TabularRegressor(RegressionAdapterTask):
             lr_scheduler=lr_scheduler,
             learning_rate=learning_rate,
         )
+
+    @property
+    def data_parameters(self) -> Dict[str, Any]:
+        """Get the parameters computed from the training data used to create this
+        :class:`~flash.tabular.regression.TabularRegressor`. Use these parameters to load data for
+        evaluation / prediction.
+
+        Examples
+        ________
+
+        .. doctest::
+
+            >>> import flash
+            >>> from flash.core.data.utils import download_data
+            >>> from flash.tabular import TabularRegressionData, TabularRegressor
+            >>> download_data("https://pl-flash-data.s3.amazonaws.com/SeoulBikeData.csv", "./data")
+            >>> model = TabularRegressor.load_from_checkpoint(
+            ...     "https://flash-weights.s3.amazonaws.com/0.7.0/tabular_regression_model.pt"
+            ... )
+            >>> datamodule = TabularRegressionData.from_csv(
+            ...     predict_file="data/SeoulBikeData.csv",
+            ...     parameters=model.data_parameters,
+            ...     batch_size=8,
+            ... )
+            >>> trainer = flash.Trainer()
+            >>> trainer.predict(
+            ...     model,
+            ...     datamodule=datamodule,
+            ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+        """
+        return self._data_parameters
 
     @classmethod
     def from_data(cls, datamodule, **kwargs) -> "TabularRegressor":
@@ -115,7 +151,7 @@ class TabularRegressor(RegressionAdapterTask):
         output: Optional[Union[str, Output]] = None,
         parameters: Optional[Dict[str, Any]] = None,
     ) -> Composition:
-        parameters = parameters or self._parameters
+        parameters = parameters or self._data_parameters
         return super().serve(
             host, port, sanity_check, partial(input_cls, parameters=parameters), transform, transform_kwargs, output
         )

@@ -6,6 +6,12 @@ import functools
 import re
 from operator import methodcaller
 
+from flash.core.utilities.imports import _SERVE_TESTING
+
+# Skip doctests if requirements aren't available
+if not _SERVE_TESTING:
+    __doctest_skip__ = ["*"]
+
 
 def funcname(func):
     """Get the name of a function."""

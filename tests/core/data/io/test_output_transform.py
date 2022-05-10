@@ -11,11 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import pytest
 import torch
 
 from flash.core.data.io.output_transform import OutputTransform
+from flash.core.utilities.imports import _CORE_TESTING
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_output_transform():
     class CustomOutputTransform(OutputTransform):
         @staticmethod

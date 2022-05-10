@@ -81,6 +81,11 @@ from math import log
 
 from flash.core.serve.dag.task import get_dependencies, get_deps, getcycle, reverse_dict
 from flash.core.serve.dag.utils_test import add, inc
+from flash.core.utilities.imports import _SERVE_TESTING
+
+# Skip doctests if requirements aren't available
+if not _SERVE_TESTING:
+    __doctest_skip__ = ["*"]
 
 
 def order(dsk, dependencies=None):

@@ -19,9 +19,11 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from flash.core.data.io.input_transform import Compose, InputTransform, LambdaInputTransform
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.data.utilities.collate import default_collate
+from flash.core.utilities.imports import _CORE_TESTING
 from flash.core.utilities.stages import RunningStage
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_input_transform():
     def fn(x):
         return x + 1
@@ -37,14 +39,6 @@ def test_input_transform():
         MisconfigurationException,
         match="Only one of per_batch_transform or input_per_batch_transform can be overridden",
     ):
-        transform = MyTransform()
-        transform._populate_transforms_for_stage(RunningStage.TRAINING)
-
-    class MyTransform(InputTransform):
-        def input_per_batch_transform(self) -> Callable:
-            return None
-
-    with pytest.raises(MisconfigurationException, match="The hook input_per_batch_transform should return a function."):
         transform = MyTransform()
         transform._populate_transforms_for_stage(RunningStage.TRAINING)
 
@@ -210,13 +204,10 @@ class CustomInputTransform(InputTransform):
         return self.custom_transform
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_check_transforms():
 
     input_transform = CustomInputTransform
 
-    # input_transform._populate_transforms_for_stage(RunningStage.TRAINING)
     with pytest.raises(MisconfigurationException, match="are mutually exclusive"):
         input_transform()
-    # with pytest.raises(MisconfigurationException, match="are mutually exclusive"):
-    #     input_transform._populate_transforms_for_stage(RunningStage.TESTING)
-    # input_transform._populate_transforms_for_stage(RunningStage.PREDICTING)
