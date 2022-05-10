@@ -257,6 +257,40 @@ def test_from_filepaths_visualise_subplots_exceding_max_cols(tmpdir):
 
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _MATPLOTLIB_AVAILABLE, reason="matplotlib isn't installed.")
+def test_from_filepaths_visualise_subplots_single_image(tmpdir):
+    tmpdir = Path(tmpdir)
+
+    (tmpdir / "e").mkdir()
+    _rand_image().save(tmpdir / "e_1.png")
+
+    train_images = [
+        str(tmpdir / "e_1.png"),
+    ]
+
+    dm = ImageClassificationData.from_files(
+        train_files=train_images,
+        train_targets=[0],
+        val_files=train_images,
+        val_targets=[1],
+        test_files=train_images,
+        test_targets=[2],
+        batch_size=1,
+        num_workers=0,
+    )
+
+    # disable visualisation for testing
+    assert dm.data_fetcher.block_viz_window is True
+    dm.set_block_viz_window(False)
+    assert dm.data_fetcher.block_viz_window is False
+
+    # call show functions
+    # dm.show_train_batch()
+    dm.show_train_batch("per_sample_transform")
+    dm.show_train_batch(["per_sample_transform", "per_batch_transform"])
+
+
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _MATPLOTLIB_AVAILABLE, reason="matplotlib isn't installed.")
 def test_from_filepaths_visualise_multilabel(tmpdir):
     tmpdir = Path(tmpdir)
 
