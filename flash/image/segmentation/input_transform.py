@@ -14,22 +14,23 @@
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Tuple
 
-import torch
-
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.transforms import ApplyToKeys, kornia_collate, KorniaParallelTransforms
 from flash.core.utilities.imports import _KORNIA_AVAILABLE, _TORCHVISION_AVAILABLE
 
 if _KORNIA_AVAILABLE:
     import kornia as K
 
 if _TORCHVISION_AVAILABLE:
-    from flash.core.data.transforms import ApplyToKeys, kornia_collate, KorniaParallelTransforms
+    from torchvision import transforms as T
 
 
-def prepare_target(tensor: torch.Tensor) -> torch.Tensor:
+def prepare_target(batch: Dict[str, Any]) -> Dict[str, Any]:
     """Convert the target mask to long and remove the channel dimension."""
-    return tensor.long().squeeze(1)
+    if DataKeys.TARGET in batch:
+        batch[DataKeys.TARGET] = batch[DataKeys.TARGET].long().squeeze(1)
+    return batch
 
 
 def remove_extra_dimensions(batch: Dict[str, Any]):
@@ -64,11 +65,5 @@ class SemanticSegmentationInputTransform(InputTransform):
     def collate(self) -> Callable:
         return kornia_collate
 
-    def target_per_batch_transform(self) -> Callable:
-        return prepare_target
-
-    def predict_per_batch_transform(self) -> Callable:
-        return remove_extra_dimensions
-
-    def serve_per_batch_transform(self) -> Callable:
-        return remove_extra_dimensions
+    def per_batch_transform(self) -> Callable:
+        return T.Compose([prepare_target, remove_extra_dimensions])
