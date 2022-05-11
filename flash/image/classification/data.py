@@ -1061,7 +1061,8 @@ class MatplotlibVisualization(BaseVisualization):
         fig.suptitle(title)
 
         if not isinstance(axs, np.ndarray):
-            axs = [axs]
+            axs = np.array(axs)
+        axs = axs.flatten()
 
         for i, ax in enumerate(axs):
             # unpack images and labels
