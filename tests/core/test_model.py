@@ -40,29 +40,18 @@ from flash.core.data.io.output_transform import OutputTransform
 from flash.core.utilities.imports import (
     _AUDIO_TESTING,
     _CORE_TESTING,
-    _GRAPH_AVAILABLE,
     _GRAPH_TESTING,
     _IMAGE_AVAILABLE,
     _IMAGE_TESTING,
-    _TABULAR_AVAILABLE,
     _TABULAR_TESTING,
-    _TEXT_AVAILABLE,
     _TEXT_TESTING,
     _TORCH_OPTIMIZER_AVAILABLE,
     _TRANSFORMERS_AVAILABLE,
 )
-
-if _GRAPH_AVAILABLE:
-    from flash.graph import GraphClassifier, GraphEmbedder
-
-if _IMAGE_AVAILABLE:
-    from flash.image import ImageClassifier, SemanticSegmentation
-
-if _TABULAR_AVAILABLE:
-    from flash.tabular import TabularClassifier
-
-if _TEXT_AVAILABLE:
-    from flash.text import SummarizationTask, TextClassifier, TranslationTask
+from flash.graph import GraphClassifier, GraphEmbedder
+from flash.image import ImageClassifier, SemanticSegmentation
+from flash.tabular import TabularClassifier
+from flash.text import SummarizationTask, TextClassifier, TranslationTask
 
 # ======== Mock functions ========
 
