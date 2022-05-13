@@ -324,8 +324,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             task.
     """
 
-    optimizers: FlashRegistry = _OPTIMIZERS_REGISTRY
-    lr_schedulers: FlashRegistry = _SCHEDULERS_REGISTRY
+    optimizers_registry: FlashRegistry = _OPTIMIZERS_REGISTRY
+    lr_schedulers_registry: FlashRegistry = _SCHEDULERS_REGISTRY
     finetuning_strategies: FlashRegistry = _FINETUNING_STRATEGIES_REGISTRY
     outputs: FlashRegistry = BASE_OUTPUTS
 
@@ -490,7 +490,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
                 f"\nUse `{self.__class__.__name__}.available_optimizers()` to list the available optimizers."
                 f"\nList of available Optimizers: {self.available_optimizers()}."
             )
-        optimizer_fn = self.optimizers.get(optimizer_key.lower())
+        optimizer_fn = self.optimizers_registry.get(optimizer_key.lower())
         return optimizer_fn
 
     def configure_optimizers(self) -> Union[Optimizer, Tuple[List[Optimizer], List[_LRScheduler]]]:
@@ -614,7 +614,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
     @classmethod
     def available_optimizers(cls) -> List[str]:
         """Returns a list containing the keys of the available Optimizers."""
-        registry: Optional[FlashRegistry] = getattr(cls, "optimizers", None)
+        registry: Optional[FlashRegistry] = getattr(cls, "optimizers_registry", None)
         if registry is None:
             return []
         return registry.available_keys()
@@ -622,7 +622,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
     @classmethod
     def available_lr_schedulers(cls) -> List[str]:
         """Returns a list containing the keys of the available LR schedulers."""
-        registry: Optional[FlashRegistry] = getattr(cls, "lr_schedulers", None)
+        registry: Optional[FlashRegistry] = getattr(cls, "lr_schedulers_registry", None)
         if registry is None:
             return []
         return registry.available_keys()
@@ -683,7 +683,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
                 f"\nUse `{self.__class__.__name__}.available_lr_schedulers()` to list the available schedulers."
                 f"\n>>> List of available LR Schedulers: {self.available_lr_schedulers()}."
             )
-        lr_scheduler_fn: Dict[str, Any] = self.lr_schedulers.get(lr_scheduler_key.lower(), with_metadata=True)
+        lr_scheduler_fn: Dict[str, Any] = self.lr_schedulers_registry.get(lr_scheduler_key.lower(), with_metadata=True)
         return deepcopy(lr_scheduler_fn)
 
     def _instantiate_lr_scheduler(self, optimizer: Optimizer) -> Dict[str, Any]:

@@ -40,18 +40,29 @@ from flash.core.data.io.output_transform import OutputTransform
 from flash.core.utilities.imports import (
     _AUDIO_TESTING,
     _CORE_TESTING,
+    _GRAPH_AVAILABLE,
     _GRAPH_TESTING,
     _IMAGE_AVAILABLE,
     _IMAGE_TESTING,
+    _TABULAR_AVAILABLE,
     _TABULAR_TESTING,
+    _TEXT_AVAILABLE,
     _TEXT_TESTING,
     _TORCH_OPTIMIZER_AVAILABLE,
     _TRANSFORMERS_AVAILABLE,
 )
-from flash.graph import GraphClassifier, GraphEmbedder
-from flash.image import ImageClassifier, SemanticSegmentation
-from flash.tabular import TabularClassifier
-from flash.text import SummarizationTask, TextClassifier, TranslationTask
+
+if _GRAPH_AVAILABLE:
+    from flash.graph import GraphClassifier, GraphEmbedder
+
+if _IMAGE_AVAILABLE:
+    from flash.image import ImageClassifier, SemanticSegmentation
+
+if _TABULAR_AVAILABLE:
+    from flash.tabular import TabularClassifier
+
+if _TEXT_AVAILABLE:
+    from flash.text import SummarizationTask, TextClassifier, TranslationTask
 
 # ======== Mock functions ========
 
@@ -307,12 +318,12 @@ def test_available_backbones_raises():
         _ = ImageClassifier.available_backbones()
 
 
-@ClassificationTask.lr_schedulers
+@ClassificationTask.lr_schedulers_registry
 def custom_steplr_configuration_return_as_instance(optimizer):
     return torch.optim.lr_scheduler.StepLR(optimizer, step_size=10)
 
 
-@ClassificationTask.lr_schedulers
+@ClassificationTask.lr_schedulers_registry
 def custom_steplr_configuration_return_as_dict(optimizer):
     return {
         "scheduler": torch.optim.lr_scheduler.StepLR(optimizer, step_size=10),
@@ -370,7 +381,7 @@ def test_optimizers_and_schedulers(tmpdir, optim, sched, interval):
 @pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_optimizer_learning_rate():
     mock_optimizer = MagicMock()
-    Task.optimizers(mock_optimizer, "test")
+    Task.optimizers_registry(mock_optimizer, "test")
 
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
 
@@ -442,6 +453,36 @@ def test_external_schedulers_provider_hf_transformers(tmpdir, optim, sched, use_
     assert task.get_num_training_steps() == batch_count
     assert isinstance(trainer.optimizers[0], torch.optim.Adadelta)
     assert isinstance(trainer.lr_schedulers[0]["scheduler"], torch.optim.lr_scheduler.LambdaLR)
+
+
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+def test_manual_optimization(tmpdir):
+    class ManualOptimizationTask(Task):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.automatic_optimization = False
+
+        def training_step(self, batch: Any, batch_idx: int) -> Any:
+            optimizers = self.optimizers()
+            assert isinstance(optimizers, torch.optim.Optimizer)
+            optimizers.zero_grad()
+
+            output = self.step(batch, batch_idx, self.train_metrics)
+            self.manual_backward(output["loss"])
+
+            optimizers.step()
+
+            lr_schedulers = self.lr_schedulers()
+            assert isinstance(lr_schedulers, torch.optim.lr_scheduler._LRScheduler)
+            lr_schedulers.step()
+
+    model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
+    train_dl = DataLoader(DummyDataset())
+    val_dl = DataLoader(DummyDataset())
+    task = ManualOptimizationTask(model, loss_fn=F.nll_loss, lr_scheduler=("steplr", {"step_size": 1}))
+
+    trainer = pl.Trainer(fast_dev_run=True, default_root_dir=tmpdir)
+    trainer.fit(task, train_dl, val_dl)
 
 
 @pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")

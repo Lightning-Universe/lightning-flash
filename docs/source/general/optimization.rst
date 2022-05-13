@@ -176,7 +176,7 @@ Using the ``optimizers`` and ``lr_schedulers`` decorator pertaining to each :cla
 
     >>> import torch
     >>> from flash.image import ImageClassifier
-    >>> @ImageClassifier.lr_schedulers
+    >>> @ImageClassifier.lr_schedulers_registry
     ... def my_flash_steplr_recipe(optimizer):
     ...     return torch.optim.lr_scheduler.StepLR(optimizer, step_size=10)
     ...

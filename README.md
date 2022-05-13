@@ -209,7 +209,7 @@ model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer="Adam", lr
 You can also register you own custom scheduler recipes beforeahand and use them shown as above:
 
 ```py
-@ImageClassifier.lr_schedulers
+@ImageClassifier.lr_schedulers_registry
 def my_steplr_recipe(optimizer):
     return torch.optim.lr_scheduler.StepLR(optimizer, step_size=10)
 
