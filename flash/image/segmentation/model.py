@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import warnings
 from typing import Any, Dict, List, Optional, Type, Union
 
 import torch
@@ -114,7 +115,7 @@ class SemanticSegmentation(ClassificationTask):
 
         # TODO: need to check for multi_label
         if multi_label:
-            raise RuntimeWarning("Multi-label not supported yet.")
+            warnings.warn("Multi-label not supported yet.")
 
         super().__init__(
             model=None,
