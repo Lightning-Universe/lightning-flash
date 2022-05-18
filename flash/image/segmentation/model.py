@@ -114,7 +114,7 @@ class SemanticSegmentation(ClassificationTask):
 
         # TODO: need to check for multi_label
         if multi_label:
-            raise NotImplementedError("Multi-label not supported yet.")
+            raise RuntimeWarning("Multi-label not supported yet.")
 
         super().__init__(
             model=None,
@@ -123,6 +123,7 @@ class SemanticSegmentation(ClassificationTask):
             lr_scheduler=lr_scheduler,
             metrics=metrics,
             learning_rate=learning_rate,
+            multi_label=multi_label,
             output_transform=output_transform or self.output_transform_cls(),
         )
 
