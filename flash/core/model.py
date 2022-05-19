@@ -15,7 +15,7 @@ import inspect
 import re
 from abc import ABCMeta
 from copy import deepcopy
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union, Set
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Type, Union
 
 import pytorch_lightning as pl
 import torch

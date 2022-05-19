@@ -14,7 +14,7 @@
 import functools
 import inspect
 import itertools
-from typing import Any, Callable, Dict, List, Optional, Union, Set
+from typing import Any, Callable, Dict, List, Optional, Set, Union
 
 from pytorch_lightning.utilities import rank_zero_info
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
