@@ -15,6 +15,7 @@ from typing import Any, Dict, Mapping, Sequence, Union
 
 import numpy as np
 import torch
+from PIL.Image import Image
 from torch import nn, Tensor
 
 from flash.core.data.io.input import DataKeys
@@ -50,18 +51,23 @@ class AlbumentationsAdapter(nn.Module):
         self._mapping_rev = mapping
         self._mapping = {v: k for k, v in mapping.items()}
 
-    def _image_transform(self, x: Tensor) -> np.ndarray:
+    def _image_to_numpy(self, x: Union[Image, Tensor, np.ndarray]) -> np.ndarray:
+        """Convert to Height x Width x Channel."""
+        if isinstance(x, Image):
+            return np.array(x)
+        if isinstance(x, Tensor):
+            x = x.cpu().numpy()
         if x.ndim == 3 and x.shape[0] < 4:
-            return x.permute(1, 2, 0).numpy()
-        return x.numpy()
+            x = np.rollaxis(x, 0, 3)
+        return x
 
     def forward(self, x: Any) -> Any:
         if isinstance(x, dict):
             x_ = {self._mapping.get(k, k): x[k].numpy() for k in self._mapping if k in x and k != self._img_key}
             if self._img_key in self._mapping and self._img_key in x:
-                x_.update({self._mapping[self._img_key]: self._image_transform(x[self._img_key])})
+                x_.update({self._mapping[self._img_key]: self._image_to_numpy(x[self._img_key])})
         else:
-            x_ = {"image": self._image_transform(x)}
+            x_ = {"image": self._image_to_numpy(x)}
         x_ = self.transform(**x_)
         if isinstance(x, dict):
             x.update({self._mapping_rev.get(k, k): x_[k] for k in self._mapping_rev if k in x_})
