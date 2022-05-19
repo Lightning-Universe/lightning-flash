@@ -9,4 +9,3 @@ pandas>=1.1.0
 jsonargparse[signatures]>=3.17.0
 click>=7.1.2
 protobuf==3.20.1
-omegaconf==2.1.1
