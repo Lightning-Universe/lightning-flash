@@ -233,7 +233,7 @@ class ExternalRegistry(FlashRegistry):
     def available_keys(self) -> List[str]:
         """Since we don't know the available keys, just give a generic message."""
         if self.providers is not None:
-            return [f"Anything available from: {', '.join(str(provider) for provider in {self.providers})"]
+            return [f"Anything available from: {', '.join(str(provider) for provider in set(self.providers))}"]
         return []
 
 
