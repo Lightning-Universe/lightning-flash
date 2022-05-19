@@ -159,7 +159,7 @@ class ImageEmbedder(AdapterTask):
 
     @classmethod
     @requires("image", "vissl", "fairscale")
-    def available_training_strategies(cls) -> List[str]:
+    def available_training_strategies(cls) -> Set[str]:
         """Get the list of available training strategies (passed to the ``training_strategy`` argument) for this
         task.
 

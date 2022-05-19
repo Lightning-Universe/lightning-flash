@@ -14,7 +14,7 @@
 import functools
 import inspect
 import itertools
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union, Set
 
 from pytorch_lightning.utilities import rank_zero_info
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -183,7 +183,7 @@ class FlashRegistry:
         return _register
 
     def available_keys(self) -> List[str]:
-        return sorted(v["name"] for v in self.functions)
+        return sorted({v["name"] for v in self.functions})
 
 
 class ExternalRegistry(FlashRegistry):
@@ -233,7 +233,7 @@ class ExternalRegistry(FlashRegistry):
     def available_keys(self) -> List[str]:
         """Since we don't know the available keys, just give a generic message."""
         if self.providers is not None:
-            return [f"Anything available from: {', '.join(str(provider) for provider in self.providers)}"]
+            return [f"Anything available from: {', '.join(str(provider) for provider in {self.providers})"]
         return []
 
 
@@ -309,4 +309,4 @@ class ConcatRegistry(FlashRegistry):
                 return registry._register_function(fn, name=name, override=override, metadata=metadata)
 
     def available_keys(self) -> List[str]:
-        return list(itertools.chain.from_iterable(registry.available_keys() for registry in self.registries))
+        return list(itertools.chain.from_iterable(registry.available_keys() for registry in {self.registries}))

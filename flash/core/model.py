@@ -15,7 +15,7 @@ import inspect
 import re
 from abc import ABCMeta
 from copy import deepcopy
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union, Set
 
 import pytorch_lightning as pl
 import torch
@@ -573,7 +573,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
     @classmethod
     def available_backbones(
         cls, head: Optional[str] = None
-    ) -> Optional[Union[Dict[str, Optional[List[str]]], List[str]]]:
+    ) -> Optional[Union[Dict[str, Optional[Set[str]]], Set[str]]]:
         if head is None:
             registry: Optional[FlashRegistry] = getattr(cls, "backbones", None)
             if registry is not None and getattr(cls, "heads", None) is None:
@@ -598,11 +598,11 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         return result
 
     @classmethod
-    def available_heads(cls) -> List[str]:
+    def available_heads(cls) -> Set[str]:
         registry: Optional[FlashRegistry] = getattr(cls, "heads", None)
         if registry is None:
-            return []
-        return registry.available_keys()
+            return {}
+        return set(registry.available_keys())
 
     @classmethod
     def get_backbone_details(cls, key) -> List[str]:
@@ -612,31 +612,31 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         return list(inspect.signature(registry.get(key)).parameters.items())
 
     @classmethod
-    def available_optimizers(cls) -> List[str]:
+    def available_optimizers(cls) -> Set[str]:
         """Returns a list containing the keys of the available Optimizers."""
         registry: Optional[FlashRegistry] = getattr(cls, "optimizers", None)
         if registry is None:
-            return []
-        return registry.available_keys()
+            return {}
+        return set(registry.available_keys())
 
     @classmethod
-    def available_lr_schedulers(cls) -> List[str]:
+    def available_lr_schedulers(cls) -> Set[str]:
         """Returns a list containing the keys of the available LR schedulers."""
         registry: Optional[FlashRegistry] = getattr(cls, "lr_schedulers", None)
         if registry is None:
-            return []
-        return registry.available_keys()
+            return {}
+        return set(registry.available_keys())
 
     @classmethod
-    def available_finetuning_strategies(cls) -> List[str]:
+    def available_finetuning_strategies(cls) -> Set[str]:
         """Returns a list containing the keys of the available Finetuning Strategies."""
         registry: Optional[FlashRegistry] = getattr(cls, "finetuning_strategies", None)
         if registry is None:
-            return []
-        return registry.available_keys()
+            return {}
+        return set(registry.available_keys())
 
     @classmethod
-    def available_outputs(cls) -> List[str]:
+    def available_outputs(cls) -> Set[str]:
         """Returns the list of available outputs (that can be used during prediction or serving) for this ``Task``.
 
         Examples
@@ -651,7 +651,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             >>> print(Task.available_outputs())
             ['preds', 'raw']
         """
-        return cls.outputs.available_keys()
+        return set(cls.outputs.available_keys())
 
     def get_num_training_steps(self) -> int:
         """Total training steps inferred from datamodule and devices."""

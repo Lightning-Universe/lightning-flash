@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Dict, List, Optional, Type, Union, Set
 
 import torch
 from torch import nn
@@ -173,7 +173,7 @@ class SemanticSegmentation(ClassificationTask):
         return res
 
     @classmethod
-    def available_pretrained_weights(cls, backbone: str):
+    def available_pretrained_weights(cls, backbone: str) -> List[str]:
         result = cls.backbones.get(backbone, with_metadata=True)
         pretrained_weights = None
 
