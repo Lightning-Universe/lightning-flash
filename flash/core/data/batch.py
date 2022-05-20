@@ -14,6 +14,7 @@
 from typing import Any, Callable, List, TYPE_CHECKING
 
 import torch
+from torch import Tensor
 
 from flash.core.data.utilities.classification import _is_list_like
 
@@ -60,16 +61,12 @@ def default_uncollate(batch: Any) -> List[Any]:
         ValueError: If the input is a ``dict`` whose values are not all the same length.
         ValueError: If the input is not a ``dict`` or list-like.
     """
-
     if isinstance(batch, dict):
-        if any(not _is_list_like_excluding_str(sub_batch) for sub_batch in batch.values()):
-            raise ValueError("When uncollating a dict, all sub-batches (values) are expected to be list-like.")
-        if len({len(sub_batch) for sub_batch in batch.values()}) > 1:
-            raise ValueError("When uncollating a dict, all sub-batches (values) are expected to have the same length.")
-        elements = list(default_uncollate(element) for element in zip(*batch.values()))
-        return [dict(zip(batch.keys(), element)) for element in elements]
-
-    if _is_list_like_excluding_str(batch):
+        elements = [default_uncollate(element) for element in batch.values()]
+        return [dict(zip(batch.keys(), element)) for element in zip(*elements)]
+    if isinstance(batch, (list, tuple)):
+        return list(zip(*batch))
+    if isinstance(batch, Tensor):
         return list(batch)
     raise ValueError(
         "The batch of outputs to be uncollated is expected to be a `dict` or list-like "
