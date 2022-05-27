@@ -48,6 +48,8 @@ def test_image_detector_data_from_folders(tmpdir):
     assert sample[DataKeys.INPUT].shape == (128, 128, 3)
 
 
+@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _COCO_AVAILABLE, reason="pycocotools is not installed for testing")
 def test_instance_segmentation_output_transform():
 
     sample = {
