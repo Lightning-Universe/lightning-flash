@@ -11,9 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import pytest
 import numpy as np
-
+import pytest
 import torch
 
 from flash.core.data.io.input import DataKeys
@@ -61,13 +60,11 @@ def test_instance_segmentation_output_transform():
             "labels": [0, 1],
             "masks": [
                 np.random.randint(2, size=(128, 128), dtype=np.uint8),
-                np.random.randint(2, size=(128, 128), dtype=np.uint8)
+                np.random.randint(2, size=(128, 128), dtype=np.uint8),
             ],
-            "scores": [0.5, 0.5]
+            "scores": [0.5, 0.5],
         },
-        DataKeys.METADATA: {
-            "size": (224, 224)
-        }
+        DataKeys.METADATA: {"size": (224, 224)},
     }
 
     output_transform_cls = InstanceSegmentationOutputTransform()
