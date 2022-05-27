@@ -54,7 +54,7 @@ def test_instance_segmentation_output_transform():
         DataKeys.INPUT: torch.rand(3, 224, 224),
         DataKeys.PREDS: {
             "bboxes": [
-                {"xmin": 10, "ymin": 10, "width": 20, "height": 20},
+                {"xmin": 10, "ymin": 10, "width": 15, "height": 15},
                 {"xmin": 30, "ymin": 30, "width": 40, "height": 40},
             ],
             "labels": [0, 1],
