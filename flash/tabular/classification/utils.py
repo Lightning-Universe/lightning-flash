@@ -32,7 +32,9 @@ def _impute(df: DataFrame, num_cols: List) -> DataFrame:
 
 
 def _compute_normalization(df: DataFrame, num_cols: List) -> Tuple:
-    return df[num_cols].mean().to_dict(), df[num_cols].std().to_dict()
+    df_mean = {np.nanmean(df[c], dtype=float) for c in num_cols}
+    df_std = {np.nanstd(df[c], dtype=float) for c in num_cols}
+    return df_mean, df_std
 
 
 def _normalize(df: DataFrame, num_cols: List, mean: Dict, std: Dict) -> DataFrame:
