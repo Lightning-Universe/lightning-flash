@@ -71,7 +71,9 @@ class SpeechRecognition(Task):
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
             learning_rate=learning_rate,
-            output_transform=SpeechRecognitionOutputTransform(backbone) if processor_backbone is None else SpeechRecognitionOutputTransform(processor_backbone),
+            output_transform=SpeechRecognitionOutputTransform(backbone)
+            if processor_backbone is None
+            else SpeechRecognitionOutputTransform(processor_backbone),
         )
 
         self.save_hyperparameters()
