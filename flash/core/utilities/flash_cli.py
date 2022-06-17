@@ -21,7 +21,6 @@ from typing import Any, Callable, Dict, List, Optional, Set, Type, Union
 
 import pytorch_lightning as pl
 from jsonargparse import ArgumentParser
-from jsonargparse.signatures import get_class_signature_functions
 from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.utilities.model_helpers import is_overridden
 
@@ -34,6 +33,19 @@ from flash.core.utilities.lightning_cli import (
     SaveConfigCallback,
 )
 from flash.core.utilities.stability import beta
+
+
+def get_class_signature_functions(classes):
+    """
+    Copied from jsonargparse==4.9.0 - https://github.com/omni-us/jsonargparse/blob/v4.9.0/jsonargparse/signatures.py
+    """
+    signatures = []
+    for num, cls in enumerate(classes):
+        if cls.__new__ is not object.__new__ and not any(cls.__new__ is c.__new__ for c in classes[num + 1 :]):
+            signatures.append((cls, cls.__new__))
+        if not any(cls.__init__ is c.__init__ for c in classes[num + 1 :]):
+            signatures.append((cls, cls.__init__))
+    return signatures
 
 
 class ModelExcludeSaveConfigCallback(SaveConfigCallback):
