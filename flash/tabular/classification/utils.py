@@ -33,8 +33,8 @@ def _impute(df: DataFrame, num_cols: List) -> DataFrame:
 
 
 def _compute_normalization(df: DataFrame, num_cols: List) -> Tuple:
-    df_mean = {c: np.nanmean(df[c], dtype=float).astype(df[c].dtype) for c in num_cols}
-    df_std = {c: np.nanstd(df[c], dtype=float).astype(df[c].dtype) for c in num_cols}
+    df_mean = {c: np.nanmean(df[c], dtype=float) for c in num_cols}
+    df_std = {c: np.nanstd(df[c], dtype=float) for c in num_cols}
     zero_std = [c for c in num_cols if df_std[c] == 0]
     if zero_std:
         logging.warning(
