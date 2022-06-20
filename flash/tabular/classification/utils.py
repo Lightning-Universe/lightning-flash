@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import logging
 from typing import Dict, List, Tuple
 
 import numpy as np
@@ -34,6 +35,11 @@ def _impute(df: DataFrame, num_cols: List) -> DataFrame:
 def _compute_normalization(df: DataFrame, num_cols: List) -> Tuple:
     df_mean = {c: np.nanmean(df[c], dtype=float).astype(df[c].dtype) for c in num_cols}
     df_std = {c: np.nanstd(df[c], dtype=float).astype(df[c].dtype) for c in num_cols}
+    zero_std = [c for c in num_cols if df_std[c] == 0]
+    if zero_std:
+        logging.warning(
+            f"Following numerical columns {zero_std} have zero STD which may lead to NaN in normalized dataset."
+        )
     return df_mean, df_std
 
 
