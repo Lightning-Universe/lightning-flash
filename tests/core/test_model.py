@@ -219,7 +219,7 @@ def test_classification_task_trainer_predict(tmpdir):
         ),
         pytest.param(
             SemanticSegmentation,
-            "0.7.0/semantic_segmentation_model.pt",
+            "0.8.0/semantic_segmentation_model.pt",
             marks=pytest.mark.skipif(
                 not _IMAGE_TESTING,
                 reason="image packages aren't installed",
