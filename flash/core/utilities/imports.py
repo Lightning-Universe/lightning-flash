@@ -138,7 +138,6 @@ if Version:
     _ICEVISION_GREATER_EQUAL_0_11_0 = _compare_version("icevision", operator.ge, "0.11.0")
     _TM_GREATER_EQUAL_0_7_0 = _compare_version("torchmetrics", operator.ge, "0.7.0")
     _BAAL_GREATER_EQUAL_1_5_2 = _compare_version("baal", operator.ge, "1.5.2")
-    _JSONARGPARSE_LESS_EQUAL_4_9_0 = _compare_version("jsonargparse", operator.le, "4.9.0")
 
 _TEXT_AVAILABLE = all(
     [
