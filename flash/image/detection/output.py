@@ -63,7 +63,7 @@ class FiftyOneDetectionLabelsOutput(Output):
         if DataKeys.METADATA not in sample:
             raise ValueError("sample requires DataKeys.METADATA to use a FiftyOneDetectionLabelsOutput output.")
 
-        height, width = sample[DataKeys.INPUT].shape[:-2]
+        height, width = sample[DataKeys.METADATA]["output_size"]
 
         detections = []
 

@@ -221,6 +221,7 @@ def from_icevision_record(record: "BaseRecord"):
     sample = {
         DataKeys.METADATA: {
             "size": getattr(record, "original_size", (record.height, record.width)),
+            "output_size": (record.height, record.width),
         }
     }
 
