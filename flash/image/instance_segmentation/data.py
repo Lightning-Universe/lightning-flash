@@ -14,13 +14,15 @@
 from functools import partial
 from typing import Any, Callable, Dict, List, Optional, Type, Union
 
+from torch import tensor
+
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.utilities.sort import sorted_alphanumeric
 from flash.core.integrations.icevision.data import IceVisionInput
 from flash.core.integrations.icevision.transforms import IceVisionInputTransform
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE
+from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _KORNIA_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 
@@ -32,6 +34,9 @@ else:
     VOCMaskParser = object
     Parser = object
 
+if _KORNIA_AVAILABLE:
+    import kornia as K
+
 
 # Skip doctests if requirements aren't available
 if not _ICEVISION_AVAILABLE:
@@ -39,9 +44,10 @@ if not _ICEVISION_AVAILABLE:
 
 
 class InstanceSegmentationOutputTransform(OutputTransform):
-    @staticmethod
-    def uncollate(batch: Any) -> Any:
-        return batch[DataKeys.PREDS]
+    def per_sample_transform(self, sample: Any) -> Any:
+        resize = K.geometry.Resize(sample[DataKeys.METADATA]["size"], interpolation="nearest")
+        sample[DataKeys.PREDS]["masks"] = [resize(tensor(mask)) for mask in sample[DataKeys.PREDS]["masks"]]
+        return sample[DataKeys.PREDS]
 
 
 class InstanceSegmentationData(DataModule):
