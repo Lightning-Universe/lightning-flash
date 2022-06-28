@@ -5,7 +5,6 @@ import os
 import warnings
 from argparse import Namespace
 from functools import wraps
-from inspect import Parameter, signature
 from types import MethodType
 from typing import Any, Callable, cast, Dict, List, Optional, Tuple, Type, Union
 
@@ -51,15 +50,6 @@ def class_from_function(
     @wraps(func)
     def __new__(cls, *args, **kwargs):
         return func(*args, **kwargs)
-
-    sig = signature(func)
-    parameters = list(sig.parameters.values())
-
-    if not _JSONARGPARSE_LESS_EQUAL_4_9_0:
-        parameters = [Parameter("self", Parameter.POSITIONAL_ONLY)] + parameters
-
-    sig = sig.replace(parameters=parameters)
-    __new__.__signature__ = sig
 
     if return_type is None:
         return_type = inspect.signature(func).return_annotation
