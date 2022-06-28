@@ -10,6 +10,7 @@ from typing import Any, Callable, cast, Dict, List, Optional, Tuple, Type, Union
 
 import torch
 from jsonargparse import ActionConfigFile, ArgumentParser, set_config_read_mode
+from jsonargparse.signatures import ClassFromFunctionBase
 from jsonargparse.typehints import ClassType
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.core.datamodule import LightningDataModule
@@ -20,16 +21,6 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from pytorch_lightning.utilities.model_helpers import is_overridden
 from pytorch_lightning.utilities.seed import seed_everything
 from torch.optim import Optimizer
-
-from flash.core.utilities.imports import _JSONARGPARSE_LESS_EQUAL_4_9_0
-
-if _JSONARGPARSE_LESS_EQUAL_4_9_0:
-    from jsonargparse.signatures import ClassFromFunctionBase
-else:
-
-    class ClassFromFunctionBase:
-        pass
-
 
 set_config_read_mode(fsspec_enabled=True)
 
