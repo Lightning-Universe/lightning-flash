@@ -93,7 +93,7 @@ def to_icevision_record(sample: Dict[str, Any]):
         image = image.permute(1, 2, 0).numpy() if isinstance(image, torch.Tensor) else image
         input_component.set_img(image)
 
-        record.add_component(OriginalSizeRecordComponent(metadata["size"]))
+        record.add_component(OriginalSizeRecordComponent(metadata.get("size", image.shape[:2])))
     record.add_component(input_component)
 
     if DataKeys.TARGET in sample:
