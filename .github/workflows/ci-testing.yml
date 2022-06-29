@@ -135,7 +135,7 @@ jobs:
       run: |
         sudo apt-get install libsndfile1
         pip install matplotlib
-        pip install '.[audio,image]' torch==0.11.0 --upgrade
+        pip install '.[audio,image]' torch==1.11.0 --upgrade
 
     - name: Cache datasets
       uses: actions/cache@v2
