@@ -40,6 +40,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Fixed naming of optimizer and scheduler registries which did not allow manual optimization. ([#1342](https://github.com/PyTorchLightning/lightning-flash/pull/1342))
 
+- Fixed a bug where the `processor_backbone` argument to `SpeechRecognition` was not used for decoding outputs ([#1362](https://github.com/PyTorchLightning/lightning-flash/pull/1362))
+
 ## [0.7.4] - 2022-04-27
 
 ### Fixed
