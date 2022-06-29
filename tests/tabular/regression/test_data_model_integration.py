@@ -27,6 +27,15 @@ if _TABULAR_AVAILABLE:
         "label": [0.0, 1.0, 2.0, 1.0, 0.0, 1.0],
     }
 
+    TEST_LIST = [
+        {"category": "a", "scalar_a": 0.0, "scalar_b": 5.0, "label": 0},
+        {"category": "b", "scalar_a": 1.0, "scalar_b": 4.0, "label": 1},
+        {"category": "c", "scalar_a": 2.0, "scalar_b": 3.0, "label": 0},
+        {"category": "a", "scalar_a": 3.0, "scalar_b": 2.0, "label": 1},
+        {"category": None, "scalar_a": None, "scalar_b": None, "label": 0},
+        {"category": "c", "scalar_a": 5.0, "scalar_b": 1.0, "label": 1},
+    ]
+
     TEST_DF = pd.DataFrame(data=TEST_DICT)
 
 
@@ -85,6 +94,36 @@ def test_regression_dicts(backbone, fields, tmpdir):
         train_dict=TEST_DICT,
         val_dict=TEST_DICT,
         test_dict=TEST_DICT,
+        num_workers=0,
+        batch_size=2,
+    )
+    model = TabularRegressor.from_data(datamodule=data, backbone=backbone)
+    trainer = pl.Trainer(fast_dev_run=True, default_root_dir=tmpdir)
+    trainer.fit(model, data)
+
+
+@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
+@pytest.mark.parametrize(
+    "backbone,fields",
+    [
+        ("tabnet", {"categorical_fields": ["category"], "numerical_fields": ["scalar_a", "scalar_b"]}),
+        ("tabtransformer", {"categorical_fields": ["category"], "numerical_fields": ["scalar_a", "scalar_b"]}),
+        ("fttransformer", {"categorical_fields": ["category"], "numerical_fields": ["scalar_a", "scalar_b"]}),
+        ("autoint", {"categorical_fields": ["category"], "numerical_fields": ["scalar_a", "scalar_b"]}),
+        ("node", {"categorical_fields": ["category"], "numerical_fields": ["scalar_a", "scalar_b"]}),
+        ("category_embedding", {"categorical_fields": ["category"], "numerical_fields": ["scalar_a", "scalar_b"]}),
+        # No categorical / numerical fields
+        ("tabnet", {"categorical_fields": ["category"]}),
+        ("tabnet", {"numerical_fields": ["scalar_a", "scalar_b"]}),
+    ],
+)
+def test_regression_lists(backbone, fields, tmpdir):
+    data = TabularRegressionData.from_lists(
+        **fields,
+        target_field="label",
+        train_list=TEST_LIST,
+        val_list=TEST_LIST,
+        test_list=TEST_LIST,
         num_workers=0,
         batch_size=2,
     )

@@ -83,3 +83,21 @@ class TabularClassificationDictInput(TabularClassificationDataFrameInput):
         return super().load_data(
             data_frame, categorical_fields, numerical_fields, target_fields, parameters, target_formatter
         )
+
+
+class TabularClassificationListInput(TabularClassificationDataFrameInput):
+    def load_data(
+        self,
+        data: List[Union[tuple, dict]],
+        categorical_fields: Optional[Union[str, List[str]]] = None,
+        numerical_fields: Optional[Union[str, List[str]]] = None,
+        target_fields: Optional[Union[str, List[str]]] = None,
+        parameters: Dict[str, Any] = None,
+        target_formatter: Optional[TargetFormatter] = None,
+    ):
+        # Convert the data (list of dictionary / tuple) into Pandas DataFrame
+        data_frame = DataFrame.from_records(data)
+
+        return super().load_data(
+            data_frame, categorical_fields, numerical_fields, target_fields, parameters, target_formatter
+        )

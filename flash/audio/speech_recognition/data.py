@@ -88,8 +88,8 @@ class SpeechRecognitionData(DataModule):
 
             >>> import numpy as np
             >>> import soundfile as sf
-            >>> samplerate = 44100
-            >>> data = np.random.uniform(-1, 1, size=(samplerate * 3, 2))
+            >>> samplerate = 1000
+            >>> data = np.random.uniform(-1, 1, size=(samplerate, 2))
             >>> _ = [sf.write(f"speech_{i}.wav", data, samplerate, subtype='PCM_24') for i in range(1, 4)]
             >>> _ = [sf.write(f"predict_speech_{i}.wav", data, samplerate, subtype='PCM_24') for i in range(1, 4)]
 
@@ -180,8 +180,8 @@ class SpeechRecognitionData(DataModule):
             >>> import numpy as np
             >>> from pandas import DataFrame
             >>> import soundfile as sf
-            >>> samplerate = 44100
-            >>> data = np.random.uniform(-1, 1, size=(samplerate * 3, 2))
+            >>> samplerate = 1000
+            >>> data = np.random.uniform(-1, 1, size=(samplerate, 2))
             >>> _ = [sf.write(f"speech_{i}.wav", data, samplerate, subtype='PCM_24') for i in range(1, 4)]
             >>> _ = [sf.write(f"predict_speech_{i}.wav", data, samplerate, subtype='PCM_24') for i in range(1, 4)]
             >>> DataFrame.from_dict({
@@ -304,8 +304,8 @@ class SpeechRecognitionData(DataModule):
             >>> import numpy as np
             >>> from pandas import DataFrame
             >>> import soundfile as sf
-            >>> samplerate = 44100
-            >>> data = np.random.uniform(-1, 1, size=(samplerate * 3, 2))
+            >>> samplerate = 1000
+            >>> data = np.random.uniform(-1, 1, size=(samplerate, 2))
             >>> _ = [sf.write(f"speech_{i}.wav", data, samplerate, subtype='PCM_24') for i in range(1, 4)]
             >>> _ = [sf.write(f"predict_speech_{i}.wav", data, samplerate, subtype='PCM_24') for i in range(1, 4)]
             >>> DataFrame.from_dict({
@@ -423,8 +423,8 @@ class SpeechRecognitionData(DataModule):
 
             >>> import numpy as np
             >>> import soundfile as sf
-            >>> samplerate = 44100
-            >>> data = np.random.uniform(-1, 1, size=(samplerate * 3, 2))
+            >>> samplerate = 1000
+            >>> data = np.random.uniform(-1, 1, size=(samplerate, 2))
             >>> _ = [sf.write(f"speech_{i}.wav", data, samplerate, subtype='PCM_24') for i in range(1, 4)]
             >>> _ = [sf.write(f"predict_speech_{i}.wav", data, samplerate, subtype='PCM_24') for i in range(1, 4)]
 
