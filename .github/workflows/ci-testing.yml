@@ -107,11 +107,6 @@ jobs:
         pip install torch-sparse -f https://data.pyg.org/whl/torch-1.11.0+cpu.html
         pip install torch-cluster -f https://data.pyg.org/whl/torch-1.11.0+cpu.html
 
-    - name: Install audio torch test
-      if: contains( matrix.topic , 'audio' )
-      run: |
-        pip install 'torch==1.12.0+cpu'
-
     - name: Install dependencies
       run: |
         python --version
@@ -140,7 +135,7 @@ jobs:
       run: |
         sudo apt-get install libsndfile1
         pip install matplotlib
-        pip install '.[audio,image]' --upgrade
+        pip install '.[audio,image]' torch==0.11.0 --upgrade
 
     - name: Cache datasets
       uses: actions/cache@v2
