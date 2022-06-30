@@ -13,6 +13,7 @@
 # limitations under the License.
 import random
 from typing import Any
+from unittest import mock
 
 import numpy as np
 import pytest
@@ -22,7 +23,7 @@ from torch.utils.data import Dataset
 from flash.core.data.io.input import DataKeys
 from flash.core.integrations.icevision.transforms import IceVisionInputTransform
 from flash.core.trainer import Trainer
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE, _SERVE_TESTING
 from flash.image import ObjectDetector
 from tests.helpers.task_tester import TaskTester
 
@@ -137,3 +138,11 @@ def test_predict(tmpdir, head):
     model.predict_kwargs = {"detection_threshold": 2}
     predictions = trainer.predict(model, dl, output="preds")
     assert len(predictions[0][0]["bboxes"]) == 0
+
+
+@pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
+@mock.patch("flash._IS_TESTING", True)
+def test_serve():
+    model = ObjectDetector(2)
+    model.eval()
+    model.serve()
