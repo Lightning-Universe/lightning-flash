@@ -18,7 +18,7 @@ from pathlib import Path
 import pytest
 
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _COCO_AVAILABLE, _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _PIL_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_EXTRAS_TESTING, _PIL_AVAILABLE
 from flash.image.detection.data import ObjectDetectionData
 
 if _PIL_AVAILABLE:
@@ -163,8 +163,7 @@ def _create_synth_fiftyone_dataset(tmpdir):
     return dataset
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
-@pytest.mark.skipif(not _COCO_AVAILABLE, reason="pycocotools is not installed for testing")
+@pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image libraries aren't installed.")
 def test_image_detector_data_from_coco(tmpdir):
 
     train_folder, coco_ann_path = _create_synth_coco_dataset(tmpdir)
@@ -198,7 +197,7 @@ def test_image_detector_data_from_coco(tmpdir):
     assert sample[DataKeys.INPUT].shape == (128, 128, 3)
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
 def test_image_detector_data_from_fiftyone(tmpdir):
 
@@ -230,8 +229,7 @@ def test_image_detector_data_from_fiftyone(tmpdir):
     assert sample[DataKeys.INPUT].shape == (128, 128, 3)
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
-@pytest.mark.skipif(not _COCO_AVAILABLE, reason="pycocotools is not installed for testing")
+@pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image libraries aren't installed.")
 def test_image_detector_data_from_files(tmpdir):
 
     predict_files = _create_synth_files_dataset(tmpdir)
@@ -243,8 +241,7 @@ def test_image_detector_data_from_files(tmpdir):
     assert sample[DataKeys.INPUT].shape == (128, 128, 3)
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
-@pytest.mark.skipif(not _COCO_AVAILABLE, reason="pycocotools is not installed for testing")
+@pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image libraries aren't installed.")
 def test_image_detector_data_from_folders(tmpdir):
 
     predict_folder = _create_synth_folders_dataset(tmpdir)

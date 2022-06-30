@@ -16,7 +16,7 @@ from flash.core.utilities.imports import (
     _MATPLOTLIB_AVAILABLE,
     _PIL_AVAILABLE,
 )
-from flash.image import SemanticSegmentation, SemanticSegmentationData, SemanticSegmentationInputTransform
+from flash.image import SemanticSegmentation, SemanticSegmentationData
 
 if _PIL_AVAILABLE:
     from PIL import Image
@@ -50,14 +50,6 @@ def create_random_data(image_files: List[str], label_files: List[str], size: Tup
 
     for label_file in label_files:
         _rand_labels(size, num_classes).save(label_file)
-
-
-class TestSemanticSegmentationInputTransform:
-    @staticmethod
-    @pytest.mark.xfail(reaspn="parameters are marked as optional but it returns Misconficg error.")
-    def test_smoke():
-        prep = SemanticSegmentationInputTransform(num_classes=1)
-        assert prep is not None
 
 
 class TestSemanticSegmentationData:

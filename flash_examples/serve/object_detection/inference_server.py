@@ -11,11 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from flash.image import SemanticSegmentation
-from flash.image.segmentation.output import SegmentationLabelsOutput
+from flash.image import ObjectDetector
 
-model = SemanticSegmentation.load_from_checkpoint(
-    "https://flash-weights.s3.amazonaws.com/0.8.0/semantic_segmentation_model.pt"
-)
-model.output = SegmentationLabelsOutput(visualize=False)
+model = ObjectDetector.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/0.8.0/object_detection_model.pt")
 model.serve()

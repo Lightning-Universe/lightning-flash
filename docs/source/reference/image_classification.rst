@@ -108,6 +108,7 @@ Here's an example:
     from typing import Callable, Tuple, Union
     import flash
     from flash.image import ImageClassificationData, ImageClassifier
+    from flash.core.data.transforms import ApplyToKeys
     from flash.core.data.io.input_transform import InputTransform
     from dataclasses import dataclass
 
@@ -119,24 +120,37 @@ Here's an example:
         mean: Union[float, Tuple[float, float, float]] = (0.485, 0.456, 0.406)
         std: Union[float, Tuple[float, float, float]] = (0.229, 0.224, 0.225)
 
-        def input_per_sample_transform(self):
-            return T.Compose([T.ToTensor(), T.Resize(self.image_size), T.Normalize(self.mean, self.std)])
-
-        def train_input_per_sample_transform(self):
+        def per_sample_transform(self):
             return T.Compose(
                 [
-                    T.ToTensor(),
-                    T.Resize(self.image_size),
-                    T.Normalize(self.mean, self.std),
-                    T.RandomHorizontalFlip(),
-                    T.ColorJitter(),
-                    T.RandomAutocontrast(),
-                    T.RandomPerspective(),
+                    ApplyToKeys(
+                        "input",
+                        T.Compose([T.ToTensor(), T.Resize(self.image_size), T.Normalize(self.mean, self.std)]),
+                    ),
+                    ApplyToKeys("target", torch.as_tensor),
                 ]
             )
 
-        def target_per_sample_transform(self) -> Callable:
-            return torch.as_tensor
+        def train_per_sample_transform(self):
+            return T.Compose(
+                [
+                    ApplyToKeys(
+                        "input",
+                        T.Compose(
+                            [
+                                T.ToTensor(),
+                                T.Resize(self.image_size),
+                                T.Normalize(self.mean, self.std),
+                                T.RandomHorizontalFlip(),
+                                T.ColorJitter(),
+                                T.RandomAutocontrast(),
+                                T.RandomPerspective(),
+                            ]
+                        ),
+                    ),
+                    ApplyToKeys("target", torch.as_tensor),
+                ]
+            )
 
 
     datamodule = ImageClassificationData.from_folders(
