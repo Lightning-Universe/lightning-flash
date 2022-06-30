@@ -16,14 +16,13 @@ import pytest
 import torch
 
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _COCO_AVAILABLE, _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _IMAGE_EXTRAS_TESTING
 from flash.image.instance_segmentation import InstanceSegmentationData
 from flash.image.instance_segmentation.data import InstanceSegmentationOutputTransform
 from tests.image.detection.test_data import _create_synth_files_dataset, _create_synth_folders_dataset
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
-@pytest.mark.skipif(not _COCO_AVAILABLE, reason="pycocotools is not installed for testing")
+@pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image libraries aren't installed.")
 def test_image_detector_data_from_files(tmpdir):
 
     predict_files = _create_synth_files_dataset(tmpdir)
@@ -35,8 +34,7 @@ def test_image_detector_data_from_files(tmpdir):
     assert sample[DataKeys.INPUT].shape == (128, 128, 3)
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
-@pytest.mark.skipif(not _COCO_AVAILABLE, reason="pycocotools is not installed for testing")
+@pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image libraries aren't installed.")
 def test_image_detector_data_from_folders(tmpdir):
 
     predict_folder = _create_synth_folders_dataset(tmpdir)
@@ -48,8 +46,7 @@ def test_image_detector_data_from_folders(tmpdir):
     assert sample[DataKeys.INPUT].shape == (128, 128, 3)
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
-@pytest.mark.skipif(not _COCO_AVAILABLE, reason="pycocotools is not installed for testing")
+@pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image libraries aren't installed.")
 def test_instance_segmentation_output_transform():
 
     sample = {

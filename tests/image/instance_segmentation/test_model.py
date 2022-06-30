@@ -22,7 +22,7 @@ import torch
 
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE, _IMAGE_EXTRAS_TESTING
 from flash.image import InstanceSegmentation, InstanceSegmentationData
 from tests.helpers.task_tester import TaskTester
 
@@ -95,7 +95,7 @@ class TestInstanceSegmentation(TaskTester):
     task = InstanceSegmentation
     task_kwargs = {"num_classes": 2}
     cli_command = "instance_segmentation"
-    is_testing = _IMAGE_AVAILABLE and _ICEVISION_AVAILABLE
+    is_testing = _IMAGE_EXTRAS_TESTING
     is_available = _IMAGE_AVAILABLE and _ICEVISION_AVAILABLE
 
     # TODO: Resolve JIT support
@@ -132,8 +132,7 @@ class TestInstanceSegmentation(TaskTester):
         return self.example_train_sample
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
-@pytest.mark.skipif(not _ICEVISION_AVAILABLE, reason="IceVision is not installed for testing")
+@pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image libraries aren't installed.")
 @pytest.mark.parametrize("backbone, head", [("resnet18_fpn", "mask_rcnn")])
 def test_model(coco_instances, backbone, head):
     datamodule = InstanceSegmentationData.from_coco(

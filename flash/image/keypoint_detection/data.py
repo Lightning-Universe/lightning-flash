@@ -17,7 +17,7 @@ from typing import Any, Callable, Dict, List, Optional, Type, Union
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input
 from flash.core.integrations.icevision.data import IceVisionInput
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE
+from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_EXTRAS_TESTING
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 from flash.image.keypoint_detection.input_transform import KeypointDetectionInputTransform
@@ -32,7 +32,7 @@ else:
 
 
 # Skip doctests if requirements aren't available
-if not _ICEVISION_AVAILABLE:
+if not _IMAGE_EXTRAS_TESTING:
     __doctest_skip__ = ["KeypointDetectionData", "KeypointDetectionData.*"]
 
 

@@ -128,7 +128,7 @@ jobs:
       if: contains( matrix.topic , 'serve' )
       run: |
         sudo apt-get install libsndfile1
-        pip install '.[all,audio]' --upgrade
+        pip install '.[all,audio]' icevision effdet --upgrade
 
     - name: Install audio test dependencies
       if: contains( matrix.topic , 'audio' )
