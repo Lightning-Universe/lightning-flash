@@ -22,7 +22,7 @@ from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.utilities.sort import sorted_alphanumeric
 from flash.core.integrations.icevision.data import IceVisionInput
 from flash.core.integrations.icevision.transforms import IceVisionInputTransform
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _KORNIA_AVAILABLE
+from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_EXTRAS_TESTING, _KORNIA_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 
@@ -39,7 +39,7 @@ if _KORNIA_AVAILABLE:
 
 
 # Skip doctests if requirements aren't available
-if not _ICEVISION_AVAILABLE:
+if not _IMAGE_EXTRAS_TESTING:
     __doctest_skip__ = ["InstanceSegmentationData", "InstanceSegmentationData.*"]
 
 
