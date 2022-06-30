@@ -23,6 +23,7 @@ from flash.core.utilities.imports import (
     _AUDIO_TESTING,
     _CORE_TESTING,
     _GRAPH_TESTING,
+    _ICEVISION_AVAILABLE,
     _IMAGE_AVAILABLE,
     _IMAGE_EXTRAS_TESTING,
     _IMAGE_TESTING,
@@ -69,15 +70,21 @@ root = Path(__file__).parent.parent.parent
         ),
         pytest.param(
             "object_detection.py",
-            marks=pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image libraries aren't installed"),
+            marks=pytest.mark.skipif(
+                not (_IMAGE_EXTRAS_TESTING and _ICEVISION_AVAILABLE), reason="image libraries aren't installed"
+            ),
         ),
         pytest.param(
             "instance_segmentation.py",
-            marks=pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image libraries aren't installed"),
+            marks=pytest.mark.skipif(
+                not (_IMAGE_EXTRAS_TESTING and _ICEVISION_AVAILABLE), reason="image libraries aren't installed"
+            ),
         ),
         pytest.param(
             "keypoint_detection.py",
-            marks=pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image libraries aren't installed"),
+            marks=pytest.mark.skipif(
+                not (_IMAGE_EXTRAS_TESTING and _ICEVISION_AVAILABLE), reason="image libraries aren't installed"
+            ),
         ),
         pytest.param(
             "question_answering.py",
