@@ -23,7 +23,7 @@ from torch.utils.data import Dataset
 from flash.core.data.io.input import DataKeys
 from flash.core.integrations.icevision.transforms import IceVisionInputTransform
 from flash.core.trainer import Trainer
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE, _SERVE_TESTING
+from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE, _IMAGE_EXTRAS_TESTING, _SERVE_TESTING
 from flash.image import ObjectDetector
 from tests.helpers.task_tester import TaskTester
 
@@ -73,7 +73,7 @@ class TestObjectDetector(TaskTester):
     task = ObjectDetector
     task_kwargs = {"num_classes": 2}
     cli_command = "object_detection"
-    is_testing = _IMAGE_AVAILABLE and _ICEVISION_AVAILABLE
+    is_testing = _IMAGE_EXTRAS_TESTING
     is_available = _IMAGE_AVAILABLE and _ICEVISION_AVAILABLE
 
     # TODO: Resolve JIT support
@@ -110,8 +110,7 @@ class TestObjectDetector(TaskTester):
 
 
 @pytest.mark.parametrize("head", ["retinanet"])
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
-@pytest.mark.skipif(not _ICEVISION_AVAILABLE, reason="IceVision is not installed for testing")
+@pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image libraries aren't installed.")
 def test_predict(tmpdir, head):
     model = ObjectDetector(num_classes=2, head=head, pretrained=False)
     ds = DummyDetectionDataset((128, 128, 3), 1, 2, 10)
