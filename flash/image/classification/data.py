@@ -41,6 +41,7 @@ from flash.image.classification.input import (
     ImageClassificationFiftyOneInput,
     ImageClassificationFilesInput,
     ImageClassificationFolderInput,
+    ImageClassificationImageInput,
     ImageClassificationNumpyInput,
     ImageClassificationTensorInput,
 )
@@ -64,6 +65,7 @@ if not _IMAGE_TESTING:
         "ImageClassificationData.from_files",
         "ImageClassificationData.from_folders",
         "ImageClassificationData.from_numpy",
+        "ImageClassificationData.from_images",
         "ImageClassificationData.from_tensors",
         "ImageClassificationData.from_data_frame",
         "ImageClassificationData.from_csv",
@@ -354,6 +356,97 @@ class ImageClassificationData(DataModule):
             ...     train_data=[np.random.rand(3, 64, 64), np.random.rand(3, 64, 64), np.random.rand(3, 64, 64)],
             ...     train_targets=["cat", "dog", "cat"],
             ...     predict_data=[np.random.rand(3, 64, 64)],
+            ...     transform_kwargs=dict(image_size=(128, 128)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            2
+            >>> datamodule.labels
+            ['cat', 'dog']
+            >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+        """
+        ds_kw = dict(
+            target_formatter=target_formatter,
+        )
+
+        train_input = input_cls(RunningStage.TRAINING, train_data, train_targets, **ds_kw)
+        ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
+
+        return cls(
+            train_input,
+            input_cls(RunningStage.VALIDATING, val_data, val_targets, **ds_kw),
+            input_cls(RunningStage.TESTING, test_data, test_targets, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_data, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_images(
+        cls,
+        train_data: Optional[List[Image.Image]] = None,
+        train_targets: Optional[Sequence[Any]] = None,
+        val_data: Optional[List[Image.Image]] = None,
+        val_targets: Optional[Sequence[Any]] = None,
+        test_data: Optional[List[Image.Image]] = None,
+        test_targets: Optional[Sequence[Any]] = None,
+        predict_data: Optional[List[Image.Image]] = None,
+        target_formatter: Optional[TargetFormatter] = None,
+        input_cls: Type[Input] = ImageClassificationImageInput,
+        transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
+        transform_kwargs: Optional[Dict] = None,
+        **data_module_kwargs: Any,
+    ) -> "ImageClassificationData":
+        """Load the :class:`~flash.image.classification.data.ImageClassificationData` from lists of PIL images and
+        corresponding lists of targets.
+
+        The targets can be in any of our
+        :ref:`supported classification target formats <formatting_classification_targets>`.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
+        Args:
+            train_data: The list of PIL images to use when training.
+            train_targets: The list of targets to use when training.
+            val_data: The list of PIL images to use when validating.
+            val_targets: The list of targets to use when validating.
+            test_data: The list of PIL images to use when testing.
+            test_targets: The list of targets to use when testing.
+            predict_data: The list of PIL images to use when predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+                :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.image.classification.data.ImageClassificationData`.
+
+        Examples
+        ________
+
+        .. doctest::
+
+            >>> from PIL import Image
+            >>> import numpy as np
+            >>> from flash import Trainer
+            >>> from flash.image import ImageClassifier, ImageClassificationData
+            >>> datamodule = ImageClassificationData.from_images(
+            ...     train_data=[
+            ...         Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8")),
+            ...         Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8")),
+            ...         Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8")),
+            ...     ],
+            ...     train_targets=["cat", "dog", "cat"],
+            ...     predict_data=[Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))],
             ...     transform_kwargs=dict(image_size=(128, 128)),
             ...     batch_size=2,
             ... )
