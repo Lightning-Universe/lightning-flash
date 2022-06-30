@@ -390,13 +390,13 @@ class ImageClassificationData(DataModule):
     @classmethod
     def from_images(
         cls,
-        train_data: Optional[List[Image.Image]] = None,
+        train_images: Optional[List[Image.Image]] = None,
         train_targets: Optional[Sequence[Any]] = None,
-        val_data: Optional[List[Image.Image]] = None,
+        val_images: Optional[List[Image.Image]] = None,
         val_targets: Optional[Sequence[Any]] = None,
-        test_data: Optional[List[Image.Image]] = None,
+        test_images: Optional[List[Image.Image]] = None,
         test_targets: Optional[Sequence[Any]] = None,
-        predict_data: Optional[List[Image.Image]] = None,
+        predict_images: Optional[List[Image.Image]] = None,
         target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = ImageClassificationImageInput,
         transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
@@ -412,13 +412,13 @@ class ImageClassificationData(DataModule):
         :ref:`customizing transforms guide <customizing_transforms>`.
 
         Args:
-            train_data: The list of PIL images to use when training.
+            train_images: The list of PIL images to use when training.
             train_targets: The list of targets to use when training.
-            val_data: The list of PIL images to use when validating.
+            val_images: The list of PIL images to use when validating.
             val_targets: The list of targets to use when validating.
-            test_data: The list of PIL images to use when testing.
+            test_images: The list of PIL images to use when testing.
             test_targets: The list of targets to use when testing.
-            predict_data: The list of PIL images to use when predicting.
+            predict_images: The list of PIL images to use when predicting.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
@@ -440,13 +440,13 @@ class ImageClassificationData(DataModule):
             >>> from flash import Trainer
             >>> from flash.image import ImageClassifier, ImageClassificationData
             >>> datamodule = ImageClassificationData.from_images(
-            ...     train_data=[
+            ...     train_images=[
             ...         Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8")),
             ...         Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8")),
             ...         Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8")),
             ...     ],
             ...     train_targets=["cat", "dog", "cat"],
-            ...     predict_data=[Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))],
+            ...     predict_images=[Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))],
             ...     transform_kwargs=dict(image_size=(128, 128)),
             ...     batch_size=2,
             ... )
@@ -465,14 +465,14 @@ class ImageClassificationData(DataModule):
             target_formatter=target_formatter,
         )
 
-        train_input = input_cls(RunningStage.TRAINING, train_data, train_targets, **ds_kw)
+        train_input = input_cls(RunningStage.TRAINING, train_images, train_targets, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
 
         return cls(
             train_input,
-            input_cls(RunningStage.VALIDATING, val_data, val_targets, **ds_kw),
-            input_cls(RunningStage.TESTING, test_data, test_targets, **ds_kw),
-            input_cls(RunningStage.PREDICTING, predict_data, **ds_kw),
+            input_cls(RunningStage.VALIDATING, val_images, val_targets, **ds_kw),
+            input_cls(RunningStage.TESTING, test_images, test_targets, **ds_kw),
+            input_cls(RunningStage.PREDICTING, predict_images, **ds_kw),
             transform=transform,
             transform_kwargs=transform_kwargs,
             **data_module_kwargs,
