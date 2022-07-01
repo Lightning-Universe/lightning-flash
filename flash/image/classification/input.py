@@ -24,7 +24,14 @@ from flash.core.data.utilities.paths import filter_valid_files, make_dataset, PA
 from flash.core.data.utilities.samples import to_samples
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
-from flash.image.data import ImageFilesInput, ImageNumpyInput, ImageTensorInput, IMG_EXTENSIONS, NP_EXTENSIONS
+from flash.image.data import (
+    ImageFilesInput,
+    ImageInput,
+    ImageNumpyInput,
+    ImageTensorInput,
+    IMG_EXTENSIONS,
+    NP_EXTENSIONS,
+)
 
 if _FIFTYONE_AVAILABLE:
     fol = lazy_import("fiftyone.core.labels")
@@ -107,6 +114,21 @@ class ImageClassificationNumpyInput(ClassificationInputMixin, ImageNumpyInput):
         if targets is not None:
             self.load_target_metadata(targets, target_formatter=target_formatter)
         return to_samples(array, targets)
+
+    def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+        sample = super().load_sample(sample)
+        if DataKeys.TARGET in sample:
+            sample[DataKeys.TARGET] = self.format_target(sample[DataKeys.TARGET])
+        return sample
+
+
+class ImageClassificationImageInput(ClassificationInputMixin, ImageInput):
+    def load_data(
+        self, images: Any, targets: Optional[List[Any]] = None, target_formatter: Optional[TargetFormatter] = None
+    ) -> List[Dict[str, Any]]:
+        if targets is not None:
+            self.load_target_metadata(targets, target_formatter=target_formatter)
+        return to_samples(images, targets)
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         sample = super().load_sample(sample)
