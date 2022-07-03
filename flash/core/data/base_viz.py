@@ -99,10 +99,23 @@ class BaseVisualization(BaseDataFetcher):
         the data won't be accessible when using ``num_workers > 0``.
     """
 
-    def _show(self, running_stage: RunningStage, func_names_list: List[str], limit_nb_samples: int = None, figsize: Tuple[int, int] = (6.4, 4.8)) -> None:
+    def _show(
+        self,
+        running_stage: RunningStage,
+        func_names_list: List[str],
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ) -> None:
         self.show(self.batches[running_stage], running_stage, func_names_list)
 
-    def show(self, batch: Dict[str, Any], running_stage: RunningStage, func_names_list: List[str], limit_nb_samples: int = None, figsize: Tuple[int, int] = (6.4, 4.8)) -> None:
+    def show(
+        self,
+        batch: Dict[str, Any],
+        running_stage: RunningStage,
+        func_names_list: List[str],
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ) -> None:
         """Override this function when you want to visualize a composition."""
         # filter out the functions to visualise
         func_names_set: Set[str] = set(func_names_list) & set(_CALLBACK_FUNCS)
@@ -114,20 +127,56 @@ class BaseVisualization(BaseDataFetcher):
             if _is_overridden(hook_name, self, BaseVisualization):
                 getattr(self, hook_name)(batch[func_name], running_stage)
 
-    def show_load_sample(self, samples: List[Any], running_stage: RunningStage, limit_nb_samples: int = None, figsize: Tuple[int, int] = (6.4, 4.8)):
+    def show_load_sample(
+        self,
+        samples: List[Any],
+        running_stage: RunningStage,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ):
         """Override to visualize  ``load_sample`` output data."""
 
-    def show_per_sample_transform(self, samples: List[Any], running_stage: RunningStage, limit_nb_samples: int = None, figsize: Tuple[int, int] = (6.4, 4.8)):
+    def show_per_sample_transform(
+        self,
+        samples: List[Any],
+        running_stage: RunningStage,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ):
         """Override to visualize ``per_sample_transform`` output data."""
 
-    def show_collate(self, batch: List[Any], running_stage: RunningStage, limit_nb_samples: int = None, figsize: Tuple[int, int] = (6.4, 4.8)) -> None:
+    def show_collate(
+        self,
+        batch: List[Any],
+        running_stage: RunningStage,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ) -> None:
         """Override to visualize  ``collate`` output data."""
 
-    def show_per_batch_transform(self, batch: List[Any], running_stage: RunningStage, limit_nb_samples: int = None, figsize: Tuple[int, int] = (6.4, 4.8)) -> None:
+    def show_per_batch_transform(
+        self,
+        batch: List[Any],
+        running_stage: RunningStage,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ) -> None:
         """Override to visualize  ``per_batch_transform`` output data."""
 
-    def show_per_sample_transform_on_device(self, samples: List[Any], running_stage: RunningStage, limit_nb_samples: int = None, figsize: Tuple[int, int] = (6.4, 4.8)) -> None:
+    def show_per_sample_transform_on_device(
+        self,
+        samples: List[Any],
+        running_stage: RunningStage,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ) -> None:
         """Override to visualize  ``per_sample_transform_on_device`` output data."""
 
-    def show_per_batch_transform_on_device(self, batch: List[Any], running_stage: RunningStage, limit_nb_samples: int = None, figsize: Tuple[int, int] = (6.4, 4.8)) -> None:
+    def show_per_batch_transform_on_device(
+        self,
+        batch: List[Any],
+        running_stage: RunningStage,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ) -> None:
         """Override to visualize  ``per_batch_transform_on_device`` output data."""
