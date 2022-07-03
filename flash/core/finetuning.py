@@ -227,7 +227,7 @@ class FlashDeepSpeedFinetuning(FlashBaseFinetuning):
 
     def _store(
         self,
-        pl_module: "pl.LightningModule",
+        pl_module: LightningModule,
         opt_idx: int,
         num_param_groups: int,
         current_param_groups: List[Dict[str, Any]],
