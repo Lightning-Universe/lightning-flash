@@ -26,8 +26,8 @@ from torch.nn import Linear, LogSoftmax, Module
 from torch.utils.data import DataLoader
 
 import flash
-from flash.core.model import Task
 from flash.core.finetuning import _FINETUNING_STRATEGIES_REGISTRY
+from flash.core.model import Task
 from flash.core.utilities.imports import _CORE_TESTING, _DEEPSPEED_AVAILABLE
 from tests.helpers.boring_model import BoringModel
 

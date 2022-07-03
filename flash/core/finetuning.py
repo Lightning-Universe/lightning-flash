@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 from functools import partial
-from typing import Iterable, Optional, Tuple, Union, List, Dict, Any
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from pytorch_lightning import LightningModule
 from pytorch_lightning.callbacks import BaseFinetuning
@@ -218,9 +218,12 @@ class UnfreezeMilestones(FlashBaseFinetuning):
 
 
 class FlashDeepSpeedFinetuning(FlashBaseFinetuning):
-    """FlashDeepSpeedFinetuning can be used to create a custom Flash Finetuning Callback which works with DeepSpeed.
-    DeepSpeed cannot store and load its parameters when working with pytorch-lightning.
-    So FlashDeepSpeedFinetuning override `_store` not to store its parameters."""
+    """FlashDeepSpeedFinetuning can be used to create a custom Flash Finetuning Callback which works with
+    DeepSpeed.
+
+    DeepSpeed cannot store and load its parameters when working with pytorch-lightning. So FlashDeepSpeedFinetuning
+    override `_store` not to store its parameters.
+    """
 
     def _store(
         self,
