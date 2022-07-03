@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 from functools import partial
-from typing import Iterable, Optional, Tuple, Union
+from typing import Iterable, Optional, Tuple, Union, List, Dict, Any
 
 from pytorch_lightning import LightningModule
 from pytorch_lightning.callbacks import BaseFinetuning
@@ -215,3 +215,53 @@ class UnfreezeMilestones(FlashBaseFinetuning):
         train_bn: bool = True,
     ):
         super().__init__(FinetuningStrategies.UNFREEZE_MILESTONES, strategy_metadata, train_bn)
+
+
+class FlashDeepSpeedFinetuning(FlashBaseFinetuning):
+    """FlashDeepSpeedFinetuning can be used to create a custom Flash Finetuning Callback which works with DeepSpeed.
+    DeepSpeed cannot store and load its parameters when working with pytorch-lightning.
+    So FlashDeepSpeedFinetuning override `_store` not to store its parameters."""
+
+    def _store(
+        self,
+        pl_module: "pl.LightningModule",
+        opt_idx: int,
+        num_param_groups: int,
+        current_param_groups: List[Dict[str, Any]],
+    ) -> None:
+        pass
+
+
+class NoFreezeDeepSpeed(FlashDeepSpeedFinetuning):
+    def __init__(self, train_bn: bool = True):
+        super().__init__(FinetuningStrategies.NO_FREEZE, train_bn)
+
+
+class FreezeDeepSpeed(FlashDeepSpeedFinetuning):
+    def __init__(self, train_bn: bool = True):
+        super().__init__(FinetuningStrategies.FREEZE, train_bn)
+
+
+class FreezeUnfreezeDeepSpeed(FlashDeepSpeedFinetuning):
+    def __init__(
+        self,
+        strategy_metadata: int,
+        train_bn: bool = True,
+    ):
+        super().__init__(FinetuningStrategies.FREEZE_UNFREEZE, strategy_metadata, train_bn)
+
+
+class UnfreezeMilestonesDeepSpeed(FlashDeepSpeedFinetuning):
+    def __init__(
+        self,
+        strategy_metadata: Tuple[Tuple[int, int], int],
+        train_bn: bool = True,
+    ):
+        super().__init__(FinetuningStrategies.UNFREEZE_MILESTONES, strategy_metadata, train_bn)
+
+
+for strategy in FinetuningStrategies:
+    _FINETUNING_STRATEGIES_REGISTRY(
+        name=f"{strategy.value}_deepspeed",
+        fn=partial(FlashDeepSpeedFinetuning, strategy_key=strategy),
+    )

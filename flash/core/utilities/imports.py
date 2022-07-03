@@ -118,6 +118,7 @@ _ALBUMENTATIONS_AVAILABLE = _module_available("albumentations")
 _BAAL_AVAILABLE = _module_available("baal")
 _TORCH_OPTIMIZER_AVAILABLE = _module_available("torch_optimizer")
 _SENTENCE_TRANSFORMERS_AVAILABLE = _module_available("sentence_transformers")
+_DEEPSPEED_AVAILABLE = _module_available("deepspeed")
 
 
 if _PIL_AVAILABLE:
