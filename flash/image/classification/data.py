@@ -1144,7 +1144,9 @@ class MatplotlibVisualization(BaseVisualization):
         return out
 
     @requires("matplotlib")
-    def _show_images_and_labels(self, data: List[Any], num_samples: int, title: str, limit_nb_samples: int = None, figsize: Tuple[int, int] = (6.4, 4.8)):
+    def _show_images_and_labels(self, data: List[Any],
+                                num_samples: int, title: str, limit_nb_samples: int = None,
+                                figsize: Tuple[int, int] = (6.4, 4.8)):
         num_samples = max(1, min(num_samples, limit_nb_samples))
 
         # define the image grid
@@ -1152,7 +1154,7 @@ class MatplotlibVisualization(BaseVisualization):
         rows: int = num_samples // cols
 
         # create figure and set title
-        fig, axs = plt.subplots(rows, cols)
+        fig, axs = plt.subplots(rows, cols, figsize=figsize)
         fig.suptitle(title)
 
         if not isinstance(axs, np.ndarray):
@@ -1177,14 +1179,20 @@ class MatplotlibVisualization(BaseVisualization):
             ax.axis("off")
         plt.show(block=self.block_viz_window)
 
-    def show_load_sample(self, samples: List[Any], running_stage: RunningStage, limit_nb_samples: int = None, figsize: Tuple[int, int] = (6.4, 4.8)):
+    def show_load_sample(
+            self, samples: List[Any],
+            running_stage: RunningStage, limit_nb_samples: int = None, figsize: Tuple[int, int] = (6.4, 4.8)):
         win_title: str = f"{running_stage} - show_load_sample"
         self._show_images_and_labels(samples, len(samples), win_title, limit_nb_samples, figsize)
 
-    def show_per_sample_transform(self, samples: List[Any], running_stage: RunningStage, limit_nb_samples: int = None, figsize: Tuple[int, int] = (6.4, 4.8)):
+    def show_per_sample_transform(self, samples: List[Any],
+                                  running_stage: RunningStage, limit_nb_samples: int = None,
+                                  figsize: Tuple[int, int] = (6.4, 4.8)):
         win_title: str = f"{running_stage} - show_per_sample_transform"
         self._show_images_and_labels(samples, len(samples), win_title, limit_nb_samples, figsize)
 
-    def show_per_batch_transform(self, batch: List[Any], running_stage, limit_nb_samples: int = None, figsize: Tuple[int, int] = (6.4, 4.8)):
+    def show_per_batch_transform(
+            self, batch: List[Any],
+            running_stage, limit_nb_samples: int = None, figsize: Tuple[int, int] = (6.4, 4.8)):
         win_title: str = f"{running_stage} - show_per_batch_transform"
         self._show_images_and_labels(batch[0], batch[0][DataKeys.INPUT].shape[0], win_title, limit_nb_samples, figsize)

@@ -51,7 +51,11 @@ class SegmentationMatplotlibVisualization(BaseVisualization):
         return out
 
     @requires("matplotlib")
-    def _show_images_and_labels(self, data: List[Any], num_samples: int, title: str):
+    def _show_images_and_labels(self, data: List[Any],
+                                num_samples: int, title: str, limit_nb_samples: int = None,
+                                figsize: Tuple[int, int] = (6.4, 4.8)):
+        num_samples = max(1, min(num_samples, limit_nb_samples))
+
         # define the image grid
         cols: int = min(num_samples, self.max_cols)
         rows: int = num_samples // cols
@@ -59,6 +63,10 @@ class SegmentationMatplotlibVisualization(BaseVisualization):
         # create figure and set title
         fig, axs = plt.subplots(rows, cols)
         fig.suptitle(title)
+
+        if not isinstance(axs, np.ndarray):
+            axs = np.array(axs)
+        axs = axs.flatten()
 
         for i, ax in enumerate(axs.ravel()):
             # unpack images and labels
@@ -81,10 +89,14 @@ class SegmentationMatplotlibVisualization(BaseVisualization):
             ax.axis("off")
         plt.show(block=self.block_viz_window)
 
-    def show_load_sample(self, samples: List[Any], running_stage: RunningStage, limit_nb_samples: int, figsize: Tuple[int, int] = (6.4, 4.8)):
+    def show_load_sample(
+            self, samples: List[Any],
+            running_stage: RunningStage, limit_nb_samples: int, figsize: Tuple[int, int] = (6.4, 4.8)):
         win_title: str = f"{running_stage} - show_load_sample"
-        self._show_images_and_labels(samples, len(samples), win_title, figsize, limit_nb_samples)
+        self._show_images_and_labels(samples, len(samples), win_title, limit_nb_samples, figsize)
 
-    def show_per_sample_transform(self, samples: List[Any], running_stage: RunningStage, limit_nb_samples: int, figsize: Tuple[int, int] = (6.4, 4.8)):
+    def show_per_sample_transform(
+            self, samples: List[Any],
+            running_stage: RunningStage, limit_nb_samples: int, figsize: Tuple[int, int] = (6.4, 4.8)):
         win_title: str = f"{running_stage} - show_per_sample_transform"
-        self._show_images_and_labels(samples, len(samples), win_title, figsize, limit_nb_samples)
+        self._show_images_and_labels(samples, len(samples), win_title, limit_nb_samples, figsize)
