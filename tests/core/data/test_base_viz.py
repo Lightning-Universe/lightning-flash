@@ -41,22 +41,39 @@ class CustomBaseVisualization(BaseVisualization):
         self.check_reset()
 
     def show_load_sample(
-            self, samples: List[Any],
-            running_stage: RunningStage, limit_nb_samples: int = None, figsize: Tuple[int, int] = (6.4, 4.8)):
+        self,
+        samples: List[Any],
+        running_stage: RunningStage,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ):
         self.show_load_sample_called = True
 
-    def show_per_sample_transform(self, samples: List[Any],
-                                  running_stage: RunningStage, limit_nb_samples: int = None,
-                                  figsize: Tuple[int, int] = (6.4, 4.8)):
+    def show_per_sample_transform(
+        self,
+        samples: List[Any],
+        running_stage: RunningStage,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ):
         self.show_per_sample_transform_called = True
 
-    def show_collate(self, batch: Sequence, running_stage: RunningStage, limit_nb_samples: int = None,
-                     figsize: Tuple[int, int] = (6.4, 4.8)) -> None:
+    def show_collate(
+        self,
+        batch: Sequence,
+        running_stage: RunningStage,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ) -> None:
         self.show_collate_called = True
 
     def show_per_batch_transform(
-            self, batch: Sequence, running_stage: RunningStage, limit_nb_samples: int = None,
-            figsize: Tuple[int, int] = (6.4, 4.8)) -> None:
+        self,
+        batch: Sequence,
+        running_stage: RunningStage,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ) -> None:
         self.per_batch_transform_called = True
 
     def check_reset(self):
