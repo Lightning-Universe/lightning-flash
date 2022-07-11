@@ -1,5 +1,5 @@
 # Adapted from:
-# https://github.com/PyTorchLightning/pytorch-lightning/blob/master/tests/helpers/boring_model.py
+# https://github.com/Lightning-AI/pytorch-lightning/blob/master/tests/helpers/boring_model.py
 from typing import Optional
 
 import torch
