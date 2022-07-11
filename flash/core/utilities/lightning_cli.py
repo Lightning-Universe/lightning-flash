@@ -1,5 +1,5 @@
 # Adapted from the Lightning CLI:
-# https://github.com/Lightning-AI/pytorch-lightning/blob/master/pytorch_lightning/utilities/cli.py
+# https://github.com/Lightning-AI/lightning/blob/master/src/pytorch_lightning/utilities/cli.py
 import inspect
 import os
 import warnings
