@@ -38,7 +38,7 @@ def test_filter_valid_files() -> None:
     file_exts = valid_ext + random_ext
     for idx, f_ext in enumerate(file_exts):
         idxs = random.randint(0, len(ascii_lowercase), size=3)
-        fake_name = "".join([ascii_lowercase[idx] for idx in idxs])
+        fake_name = "".join([ascii_lowercase[ix] for ix in idxs])
         file_exts[idx] = "".join([fake_name, f_ext])
     tmppath = os.path.join(PARENTDIR, "tmp")
     if not os.path.isdir(tmppath):
