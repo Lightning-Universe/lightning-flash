@@ -15,6 +15,9 @@ import os
 from typing import Any, Callable, cast, List, Optional, Tuple, TypeVar, Union
 
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from rich import print as rprint
+from rich.console import Console
+from rich.table import Table
 
 from flash.core.data.utilities.sort import sorted_alphanumeric
 
@@ -133,6 +136,31 @@ def list_valid_files(
     return [path for path in paths if has_file_allowed_extension(path, valid_extensions)]
 
 
+def _show_filter_valid_files_message(invalid_extensions: Optional[Tuple[str, ...]] = None) -> None:
+    def show_invalid_table(invalid_extensions) -> None:
+        # TITLE
+        table = Table()
+        # COLUMNS
+        table.add_column("Invalid extensions", style="magenta")
+        # ROWS
+        table.add_row(", ".join(invalid_extensions))
+        # SHOW
+        console = Console()
+        console.print(table)
+
+    def show_invalid_files_error_message() -> None:
+        """uses rich console markup.
+
+        notes: https://rich.readthedocs.io/en/stable/markup.html
+        """
+        print()
+        rprint("[bold red]Found invalid files[/bold red]")
+        print()
+
+    show_invalid_files_error_message()
+    show_invalid_table(invalid_extensions)
+
+
 def filter_valid_files(
     files: Union[PATH_TYPE, List[PATH_TYPE]],
     *additional_lists: List[Any],
@@ -152,6 +180,12 @@ def filter_valid_files(
     if not isinstance(files, List):
         files = [files]
 
+    if valid_extensions is None:
+        return (files,) + additional_lists
+
+    if not isinstance(valid_extensions, tuple):
+        valid_extensions = tuple(valid_extensions)
+
     additional_lists = tuple([a] if not isinstance(a, List) else a for a in additional_lists)
 
     if not all(len(a) == len(files) for a in additional_lists):
@@ -159,11 +193,19 @@ def filter_valid_files(
             f"The number of files ({len(files)}) and the number of items in any additional lists must be the same."
         )
 
-    if valid_extensions is None:
-        return (files,) + additional_lists
     filtered = list(
         filter(lambda sample: has_file_allowed_extension(sample[0], valid_extensions), zip(files, *additional_lists))
     )
+
     if len(additional_lists) > 0:
         return tuple(zip(*filtered))
-    return [f[0] for f in filtered]
+
+    filtered = [f[0] for f in filtered]
+
+    invalid = [f for f in files if f not in filtered]
+
+    if invalid:
+        invalid_ext = list({f.split(".")[-1] for f in invalid})
+        _show_filter_valid_files_message(invalid_extensions=invalid_ext)
+
+    return filtered
