@@ -20,8 +20,8 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Union
 from torch.utils.data import Dataset
 
 import flash
-from flash.audio.data import AUDIO_EXTENSIONS
 from flash.core.data.io.input import DataKeys, Input, ServeInput
+from flash.core.data.utilities.loading import AUDIO_EXTENSIONS, load_audio
 from flash.core.data.utilities.paths import filter_valid_files, list_valid_files
 from flash.core.data.utilities.samples import to_sample, to_samples
 from flash.core.utilities.imports import _AUDIO_AVAILABLE, requires
@@ -59,7 +59,7 @@ class BaseSpeechRecognition(Input):
         path = sample[DataKeys.INPUT]
         if not os.path.isabs(path) and DataKeys.METADATA in sample and "root" in sample[DataKeys.METADATA]:
             path = os.path.join(sample[DataKeys.METADATA]["root"], path)
-        speech_array, sampling_rate = librosa.load(path, sr=sampling_rate)
+        speech_array = load_audio(path, sampling_rate=sampling_rate)
         sample[DataKeys.INPUT] = speech_array
         sample[DataKeys.METADATA] = {"sampling_rate": sampling_rate}
         return sample

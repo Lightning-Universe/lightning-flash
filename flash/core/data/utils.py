@@ -31,12 +31,12 @@ if not _CORE_TESTING:
     __doctest_skip__ = ["download_data"]
 
 if _PIL_AVAILABLE:
-    from PIL.Image import Image
+    pass
 else:
     Image = object
 
 if _TORCHVISION_AVAILABLE:
-    from torchvision.datasets.folder import default_loader
+    pass
 
 _STAGES_PREFIX = {
     RunningStage.TRAINING: "train",
@@ -157,16 +157,3 @@ def convert_to_modules(transforms: Optional[Dict[str, Callable]]):
         transforms, Iterable, torch.nn.ModuleList, wrong_dtype=(torch.nn.ModuleList, torch.nn.ModuleDict)
     )
     return transforms
-
-
-def image_default_loader(file_path: str, drop_alpha: bool = True) -> Image:
-    """Default loader for images.
-
-    Args:
-        file_path: The image file to load.
-        drop_alpha: If ``True`` (default) then any alpha channels will be silently removed.
-    """
-    img = default_loader(file_path)
-    if img.mode == "RGBA" and drop_alpha:
-        img = img.convert("RGB")
-    return img

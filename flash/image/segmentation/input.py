@@ -17,11 +17,12 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import torch
 
 from flash.core.data.io.input import DataKeys, Input
+from flash.core.data.utilities.loading import IMG_EXTENSIONS, load_image
 from flash.core.data.utilities.paths import filter_valid_files, PATH_TYPE
 from flash.core.data.utilities.samples import to_samples
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _TORCHVISION_AVAILABLE, lazy_import
-from flash.image.data import image_loader, ImageDeserializer, IMG_EXTENSIONS
+from flash.image.data import ImageDeserializer
 from flash.image.segmentation.output import SegmentationLabelsOutput
 
 if _FIFTYONE_AVAILABLE:
@@ -104,9 +105,9 @@ class SemanticSegmentationFilesInput(SemanticSegmentationInput):
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         filepath = sample[DataKeys.INPUT]
-        sample[DataKeys.INPUT] = to_tensor(image_loader(filepath))
+        sample[DataKeys.INPUT] = to_tensor(load_image(filepath))
         if DataKeys.TARGET in sample:
-            sample[DataKeys.TARGET] = (to_tensor(image_loader(sample[DataKeys.TARGET])) * 255).long()[0]
+            sample[DataKeys.TARGET] = (to_tensor(load_image(sample[DataKeys.TARGET])) * 255).long()[0]
         sample = super().load_sample(sample)
         sample[DataKeys.METADATA]["filepath"] = filepath
         return sample
