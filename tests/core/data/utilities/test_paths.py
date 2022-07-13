@@ -58,5 +58,3 @@ def test_filter_valid_files() -> None:
     assert all(i not in fake_extensions for i in filtered)
 
 
-if __name__ == "__main__":
-    test_filter_valid_files()
