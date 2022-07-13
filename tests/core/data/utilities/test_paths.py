@@ -25,7 +25,7 @@ def _make_mock_dir(mock_files: List) -> List[PATH_TYPE]:
     return mock_dir
 
 
-def _make_mock_names(mock_extensions):
+def _make_mock_names(mock_extensions) -> List[str]:
     mock_files = mock_extensions[:]
     for idx, f_ext in enumerate(mock_files):
         idxs = random.randint(0, len(ascii_lowercase), size=3)
@@ -34,7 +34,7 @@ def _make_mock_names(mock_extensions):
     return mock_files
 
 
-def _make_fake_extensions() -> List:
+def _make_fake_extensions() -> List[str]:
     fake_extensions = []
     for i in range(5):
         idxs = random.randint(0, len(ascii_lowercase), size=3)
