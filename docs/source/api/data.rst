@@ -86,6 +86,7 @@ _________________________________
 
     ~flash.core.data.utilities.loading.load_image
     ~flash.core.data.utilities.loading.load_spectrogram
+    ~flash.core.data.utilities.loading.load_audio
     ~flash.core.data.utilities.loading.load_data_frame
 
 flash.core.data.properties
