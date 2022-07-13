@@ -3,6 +3,7 @@ from pathlib import Path
 from string import ascii_lowercase
 from typing import List, Union
 
+import pytest
 from numpy import random
 
 from flash.audio.data import AUDIO_EXTENSIONS
@@ -65,3 +66,17 @@ def test_filter_valid_files_no_invalid():
     mockdir = _make_mock_dir(mock_files)
     filtered = filter_valid_files(files=mockdir, valid_extensions=valid_extensions)
     assert len(filtered) == len(mockdir)
+
+
+@pytest.mark.parametrize("should_warn", [False, True])
+def test_filter_valid_warning(should_warn):
+    if should_warn:
+        message = "Found invalid file extensions"
+        with pytest.warns(UserWarning, match=message):
+            test_filter_valid_files()
+    else:
+        test_filter_valid_files_no_invalid()
+
+
+if __name__ == "__main__":
+    test_filter_valid_files()
