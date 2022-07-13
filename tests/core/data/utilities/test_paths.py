@@ -17,34 +17,45 @@ PARENTDIR = FILEPATH.parent
 PATH_TYPE = Union[str, bytes, os.PathLike]
 
 
-def _make_tmp_dir(
-    temp_path: PATH_TYPE,
-    file_extensions: Union[PATH_TYPE, List[PATH_TYPE]],
-) -> None:
-    os.mkdir(temp_path)
-    for f_ext in file_extensions:
-        with open(os.path.join(temp_path, f_ext), "w"):
-            pass
+def _make_mock_dir(mock_files: List) -> List[PATH_TYPE]:
+    temp_path = os.path.join(PARENTDIR, "tmp")
+    mock_dir = []
+    for idx, f_ext in enumerate(mock_files):
+        mock_dir.append(os.path.join(temp_path, mock_files[idx]))
+    return mock_dir
+
+
+def _make_mock_names(mock_extensions):
+    mock_files = mock_extensions[:]
+    for idx, f_ext in enumerate(mock_files):
+        idxs = random.randint(0, len(ascii_lowercase), size=3)
+        fake_name = "".join([ascii_lowercase[ix] for ix in idxs])
+        mock_files[idx] = "".join([fake_name, f_ext])
+    return mock_files
+
+
+def _make_fake_extensions() -> List:
+    fake_extensions = []
+    for i in range(5):
+        idxs = random.randint(0, len(ascii_lowercase), size=3)
+        fake_extensions.append("".join(["."] + [ascii_lowercase[idx] for idx in idxs]))
+    return fake_extensions
+
+
+def _make_valid_extensions() -> tuple:
+    return AUDIO_EXTENSIONS + IMG_EXTENSIONS + NP_EXTENSIONS
 
 
 def test_filter_valid_files() -> None:
     random.seed(42)
-    valid_ext = AUDIO_EXTENSIONS + IMG_EXTENSIONS + NP_EXTENSIONS
-    random_ext = []
-    for i in range(5):
-        idxs = random.randint(0, len(ascii_lowercase), size=3)
-        random_ext.append("".join(["."] + [ascii_lowercase[idx] for idx in idxs]))
-    valid_ext = list(valid_ext)
-    file_exts = valid_ext + random_ext
-    for idx, f_ext in enumerate(file_exts):
-        idxs = random.randint(0, len(ascii_lowercase), size=3)
-        fake_name = "".join([ascii_lowercase[ix] for ix in idxs])
-        file_exts[idx] = "".join([fake_name, f_ext])
-    tmppath = os.path.join(PARENTDIR, "tmp")
-    if not os.path.isdir(tmppath):
-        _make_tmp_dir(tmppath, file_exts)
-    filtered = filter_valid_files(files=os.listdir(tmppath), valid_extensions=valid_ext)
-    assert all(i not in random_ext for i in filtered)
+    valid_extensions = _make_valid_extensions()
+    valid_extensions = list(valid_extensions)
+    fake_extensions = _make_fake_extensions()
+    mock_files = valid_extensions + fake_extensions
+    mock_files = _make_mock_names(mock_files)
+    mockdir = _make_mock_dir(mock_files)
+    filtered = filter_valid_files(files=mockdir, valid_extensions=valid_extensions)
+    assert all(i not in fake_extensions for i in filtered)
 
 
 if __name__ == "__main__":
