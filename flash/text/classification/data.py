@@ -133,8 +133,7 @@ class TextClassificationData(DataModule):
             ...     train_file="train_data.csv",
             ...     predict_file="predict_data.csv",
             ...     batch_size=2,
-            ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            Downloading...
+            ... )
             >>> datamodule.num_classes
             3
             >>> datamodule.labels
