@@ -76,7 +76,3 @@ def test_filter_valid_warning(should_warn):
             test_filter_valid_files()
     else:
         test_filter_valid_files_no_invalid()
-
-
-if __name__ == "__main__":
-    test_filter_valid_files()
