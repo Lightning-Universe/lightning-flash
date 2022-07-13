@@ -15,9 +15,6 @@ import os
 from typing import Any, Callable, cast, List, Optional, Tuple, TypeVar, Union
 
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from rich import print as rprint
-from rich.console import Console
-from rich.table import Table
 
 from flash.core.data.utilities.sort import sorted_alphanumeric
 
@@ -136,29 +133,16 @@ def list_valid_files(
     return [path for path in paths if has_file_allowed_extension(path, valid_extensions)]
 
 
-def _show_filter_valid_files_message(invalid_extensions: Optional[Tuple[str, ...]] = None) -> None:
-    def show_invalid_table(invalid_extensions) -> None:
-        # TITLE
-        table = Table()
-        # COLUMNS
-        table.add_column("Invalid extensions", style="magenta")
-        # ROWS
-        table.add_row(", ".join(invalid_extensions))
-        # SHOW
-        console = Console()
-        console.print(table)
-
-    def show_invalid_files_error_message() -> None:
-        """uses rich console markup.
-
-        notes: https://rich.readthedocs.io/en/stable/markup.html
-        """
-        print()
-        rprint("[bold red]Found invalid files[/bold red]")
-        print()
-
-    show_invalid_files_error_message()
-    show_invalid_table(invalid_extensions)
+def _show_filter_valid_files_message(
+    invalid_extensions: Optional[Tuple[str, ...]] = None, valid_extensions: Optional[Tuple[str, ...]] = None
+) -> None:
+    invalid_extensions_message = ", ".join(invalid_extensions)
+    valid_extensions_message = ", ".join(valid_extensions)
+    message = (
+        f"Found invalid file extensions: {invalid_extensions_message}\n"
+        + f"The supported file extensions are: {valid_extensions_message}"
+    )
+    print(message)
 
 
 def filter_valid_files(
@@ -205,7 +189,7 @@ def filter_valid_files(
     invalid = [f for f in files if f not in filtered]
 
     if invalid:
-        invalid_ext = list({f.split(".")[-1] for f in invalid})
-        _show_filter_valid_files_message(invalid_extensions=invalid_ext)
+        invalid_extensions = list({"." + f.split(".")[-1] for f in invalid})
+        _show_filter_valid_files_message(invalid_extensions=invalid_extensions, valid_extensions=valid_extensions)
 
     return filtered
