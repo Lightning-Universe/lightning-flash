@@ -56,5 +56,3 @@ def test_filter_valid_files() -> None:
     mockdir = _make_mock_dir(mock_files)
     filtered = filter_valid_files(files=mockdir, valid_extensions=valid_extensions)
     assert all(i not in fake_extensions for i in filtered)
-
-
