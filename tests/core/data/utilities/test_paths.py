@@ -54,3 +54,14 @@ def test_filter_valid_files() -> None:
     mockdir = _make_mock_dir(mock_files)
     filtered = filter_valid_files(files=mockdir, valid_extensions=valid_extensions)
     assert all(i not in fake_extensions for i in filtered)
+
+
+def test_filter_valid_files_no_invalid():
+    random.seed(42)
+    valid_extensions = _make_valid_extensions()
+    valid_extensions = list(valid_extensions)
+    mock_files = valid_extensions
+    mock_files = _make_fake_files(mock_files)
+    mockdir = _make_mock_dir(mock_files)
+    filtered = filter_valid_files(files=mockdir, valid_extensions=valid_extensions)
+    assert len(filtered) == len(mockdir)
