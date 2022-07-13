@@ -34,7 +34,28 @@ else:
 
 NP_EXTENSIONS = (".npy",)
 
-AUDIO_EXTENSIONS = (".wav", ".ogg", ".flac", ".mat", ".mp3")
+AUDIO_EXTENSIONS = (
+    ".aiff",
+    ".au",
+    ".avr",
+    ".caf",
+    ".flac",
+    ".mat",
+    ".mat4",
+    ".mat5",
+    ".mpc2k",
+    ".ogg",
+    ".paf",
+    ".pvf",
+    ".rf64",
+    ".sd2",
+    ".ircam",
+    ".voc",
+    ".w64",
+    ".wav",
+    ".nist",
+    ".wavex",
+)
 
 CSV_EXTENSIONS = (".csv", ".txt")
 
@@ -55,12 +76,12 @@ def _load_image_from_numpy(file):
 
 
 def _load_spectrogram_from_image(file):
-    img = _load_image_from_image(file)
-    return np.array(img)
+    img = _load_image_from_image(file, drop_alpha=False)
+    return np.array(img).astype("float32")
 
 
 def _load_spectrogram_from_numpy(file):
-    return np.load(file)
+    return np.load(file).astype("float32")
 
 
 def _load_spectrogram_from_audio(file, sampling_rate: int = 16000, n_fft: int = 400):
