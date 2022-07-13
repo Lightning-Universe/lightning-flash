@@ -15,6 +15,7 @@ import os
 from typing import Any, Callable, cast, List, Optional, Tuple, TypeVar, Union
 
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from pytorch_lightning.utilities.rank_zero import rank_zero_warn
 
 from flash.core.data.utilities.sort import sorted_alphanumeric
 
@@ -133,18 +134,6 @@ def list_valid_files(
     return [path for path in paths if has_file_allowed_extension(path, valid_extensions)]
 
 
-def _show_filter_valid_files_message(
-    invalid_extensions: Optional[Tuple[str, ...]] = None, valid_extensions: Optional[Tuple[str, ...]] = None
-) -> None:
-    invalid_extensions_message = ", ".join(invalid_extensions)
-    valid_extensions_message = ", ".join(valid_extensions)
-    message = (
-        f"Found invalid file extensions: {invalid_extensions_message}\n"
-        + f"The supported file extensions are: {valid_extensions_message}"
-    )
-    print(message)
-
-
 def filter_valid_files(
     files: Union[PATH_TYPE, List[PATH_TYPE]],
     *additional_lists: List[Any],
@@ -190,6 +179,11 @@ def filter_valid_files(
 
     if invalid:
         invalid_extensions = list({"." + f.split(".")[-1] for f in invalid})
-        _show_filter_valid_files_message(invalid_extensions=invalid_extensions, valid_extensions=valid_extensions)
+        invalid_extensions_message = ", ".join(invalid_extensions)
+        valid_extensions_message = ", ".join(valid_extensions)
+        rank_zero_warn(
+            f"Found invalid file extensions: {invalid_extensions_message}"
+            f"The supported file extensions are: {valid_extensions_message}"
+        )
 
     return filtered
