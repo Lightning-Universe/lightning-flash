@@ -39,116 +39,12 @@ if _PYTORCHVIDEO_AVAILABLE:
     from pytorchvideo.data.encoded_video import EncodedVideo
     from pytorchvideo.data.labeled_video_dataset import LabeledVideoDataset
     from pytorchvideo.data.labeled_video_paths import LabeledVideoPaths
-    from pytorchvideo.data.utils import MultiProcessSampler
+
+    from flash.video.classification.utils import LabeledVideoTensorDataset
+
 else:
     ClipSampler, LabeledVideoDataset, EncodedVideo, ApplyTransformToKey = None, None, None, None
-    MultiProcessSampler = None
-
-
-# TODO: @krshrimali: move it to a utils
-class LabeledVideoTensorDataset(torch.utils.data.IterableDataset):
-    """
-    LabeledVideoTensorDataset handles a direct tensor input data
-    """
-
-    def __init__(
-        self,
-        labeled_video_tensors: List[Tuple[str, Optional[dict]]],
-        video_sampler: Type[torch.utils.data.Sampler] = torch.utils.data.RandomSampler,
-        transform: Optional[Callable[[dict], Any]] = None,
-    ) -> None:
-        self._transform = transform
-        self._labeled_videos = labeled_video_tensors
-
-        # If a RandomSampler is used we need to pass in a custom random generator that
-        # ensures all PyTorch multiprocess workers have the same random seed.
-        self._video_random_generator = None
-        if video_sampler == torch.utils.data.RandomSampler:
-            self._video_random_generator = torch.Generator()
-            self._video_sampler = video_sampler(self._labeled_videos, generator=self._video_random_generator)
-        else:
-            self._video_sampler = video_sampler(self._labeled_videos)
-
-        self._video_sampler_iter = None  # Initialized on first call to self.__next__()
-
-        # Depending on the clip sampler type, we may want to sample multiple clips
-        # from one video. In that case, we keep the store video, label and previous sampled
-        # clip time in these variables.
-        self._loaded_video_label = None
-
-    @property
-    def video_sampler(self):
-        """
-        Returns:
-            The video sampler that defines video sample order. Note that you'll need to
-            use this property to set the epoch for a torch.utils.data.DistributedSampler.
-        """
-        return self._video_sampler
-
-    @property
-    def num_videos(self):
-        """
-        Returns:
-            Number of videos in dataset.
-        """
-        return len(self.video_sampler)
-
-    def __next__(self) -> dict:
-        """
-        Retrieves the next clip based on the clip sampling strategy and video sampler.
-
-        Returns:
-            A dictionary with the following format.
-
-            .. code-block:: text
-
-                {
-                    'video': <video_tensor>,
-                    'label': <index_label>,
-                    'video_label': <index_label>
-                    'video_index': <video_index>,
-                }
-        """
-        if not self._video_sampler_iter:
-            # Setup MultiProcessSampler here - after PyTorch DataLoader workers are spawned.
-            self._video_sampler_iter = iter(MultiProcessSampler(self._video_sampler))
-
-        # for i_try in range(self._MAX_CONSECUTIVE_FAILURES):
-        # Reuse previously stored video if there are still clips to be sampled from
-        # the last loaded video.
-        video_index = next(self._video_sampler_iter)
-        video_tensor, info_dict = self._labeled_videos[video_index]
-        self._loaded_video_label = (video_tensor, info_dict, video_index)
-
-        sample_dict = {
-            "video": self._loaded_video_label[0],
-            "video_name": f"video{video_index}",
-            "video_index": video_index,
-        }
-        if self._transform is not None:
-            sample_dict = self._transform(sample_dict)
-
-            # # User can force dataset to continue by returning None in transform.
-            # TODO: @krshrimali
-            # if sample_dict is None:
-            #     continue
-
-        breakpoint()
-        return sample_dict
-
-    def __iter__(self):
-        self._video_sampler_iter = None  # Reset video sampler
-
-        # If we're in a PyTorch DataLoader multiprocessing context, we need to use the
-        # same seed for each worker's RandomSampler generator. The workers at each
-        # __iter__ call are created from the unique value: worker_info.seed - worker_info.id,
-        # which we can use for this seed.
-        worker_info = torch.utils.data.get_worker_info()
-        if self._video_random_generator is not None and worker_info is not None:
-            base_seed = worker_info.seed - worker_info.id
-            self._video_random_generator.manual_seed(base_seed)
-
-        return self
+    LabeledVideoTensorDataset = None
 
 
 def _make_clip_sampler(
@@ -194,7 +90,7 @@ class VideoClassificationInput(IterableInput, ClassificationInputMixin):
         return sample
 
 
-class VideoClassificationTensorsInput(IterableInput, ClassificationInputMixin):
+class VideoClassificationTensorsBaseInput(IterableInput, ClassificationInputMixin):
     def load_data(
         self,
         inputs: torch.Tensor,
@@ -205,7 +101,7 @@ class VideoClassificationTensorsInput(IterableInput, ClassificationInputMixin):
         dataset = LabeledVideoTensorDataset(list(zip(inputs, targets)), video_sampler=video_sampler)
         if not self.predicting:
             self.load_target_metadata(
-                [sample[1] for sample in dataset._labeled_videos._tensors_and_labels], target_formatter=target_formatter
+                [sample[1] for sample in dataset._labeled_videos], target_formatter=target_formatter
             )
         return dataset
 
@@ -307,7 +203,7 @@ class VideoClassificationDataFrameInput(VideoClassificationInput):
         return result
 
 
-class VideoClassificationTensorsInput(VideoClassificationInput):
+class VideoClassificationTensorsInput(VideoClassificationTensorsBaseInput):
     labels: list
 
     def load_data(

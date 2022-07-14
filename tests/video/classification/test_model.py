@@ -244,17 +244,16 @@ def test_video_classifier_finetune_from_data_frame(tmpdir):
 def test_video_classifier_finetune_from_tensors(tmpdir):
     with mock_video_tensors() as (mock_tensors):
         # print("mock tensors: ", mock_tensors)
-        breakpoint()
         datamodule = VideoClassificationData.from_tensors(
             "data",  # TODO: this was file before
             "target",
-            train_data={"data": torch.stack((mock_tensors,)), "target": [1]},
+            train_data={"data": torch.stack((mock_tensors, mock_tensors)), "target": [1, 2]},
             video_sampler=SequentialSampler,  # TODO: do you need it?
             batch_size=1,
         )
 
         for sample in datamodule.train_dataset.data:
-            expected_t_shape = 5
+            expected_t_shape = 10
             assert sample["video"].shape[1] == expected_t_shape
 
         model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50")
