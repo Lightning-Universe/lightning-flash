@@ -23,7 +23,6 @@ from flash.core.data.utilities.paths import has_file_allowed_extension
 from flash.core.utilities.imports import _AUDIO_AVAILABLE, _TORCHVISION_AVAILABLE, Image
 
 if _AUDIO_AVAILABLE:
-    import librosa
     from torchaudio.transforms import Spectrogram
 
 if _TORCHVISION_AVAILABLE:
@@ -85,6 +84,7 @@ def _load_spectrogram_from_numpy(file):
 
 def _load_spectrogram_from_audio(file, sampling_rate: int = 16000, n_fft: int = 400):
     # Import locally to prevent import errors if system dependencies are not available.
+    import librosa
     from soundfile import SoundFile
 
     sound_file = SoundFile(file)
@@ -93,6 +93,9 @@ def _load_spectrogram_from_audio(file, sampling_rate: int = 16000, n_fft: int = 
 
 
 def _load_audio_from_audio(file, sampling_rate: int = 16000):
+    # Import locally to prevent import errors if system dependencies are not available.
+    import librosa
+
     waveform, _ = librosa.load(file, sr=sampling_rate)
     return waveform
 

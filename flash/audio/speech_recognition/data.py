@@ -226,8 +226,7 @@ class SpeechRecognitionData(DataModule):
             ...     train_file="train_data.csv",
             ...     predict_file="predict_data.csv",
             ...     batch_size=2,
-            ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            Downloading...
+            ... )
             >>> model = SpeechRecognition(backbone="patrickvonplaten/wav2vec2_tiny_random_robust")
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
@@ -290,8 +289,7 @@ class SpeechRecognitionData(DataModule):
             ...     train_file="train_data.tsv",
             ...     predict_file="predict_data.tsv",
             ...     batch_size=2,
-            ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            Downloading...
+            ... )
             >>> model = SpeechRecognition(backbone="patrickvonplaten/wav2vec2_tiny_random_robust")
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
