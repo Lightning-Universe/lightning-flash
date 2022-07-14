@@ -149,7 +149,7 @@ class SpeechRecognitionDatasetInput(SpeechRecognitionInputBase):
     def load_sample(self, sample: Any) -> Any:
         sample = to_sample(sample)
         if isinstance(sample[DataKeys.INPUT], (str, Path)):
-            sample = super().load_sample(sample, self.sampling_rate)
+            sample = super().load_sample(sample)
         return sample
 
 
