@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Any, Callable, Dict, List, Optional, Type, Union, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import pandas as pd
 import torch
@@ -47,9 +47,7 @@ else:
 
 # TODO: @krshrimali: move it to a utils
 class LabeledVideoTensorDataset(torch.utils.data.IterableDataset):
-    """
-    LabeledVideoTensorDataset handles a direct tensor input data
-    """
+    """LabeledVideoTensorDataset handles a direct tensor input data."""
 
     def __init__(
         self,
@@ -94,8 +92,7 @@ class LabeledVideoTensorDataset(torch.utils.data.IterableDataset):
         return len(self.video_sampler)
 
     def __next__(self) -> dict:
-        """
-        Retrieves the next clip based on the clip sampling strategy and video sampler.
+        """Retrieves the next clip based on the clip sampling strategy and video sampler.
 
         Returns:
             A dictionary with the following format.

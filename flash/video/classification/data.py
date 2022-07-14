@@ -35,13 +35,13 @@ from flash.video.classification.input import (
     VideoClassificationCSVInput,
     VideoClassificationCSVPredictInput,
     VideoClassificationDataFrameInput,
-    VideoClassificationTensorsInput,
     VideoClassificationDataFramePredictInput,
     VideoClassificationFiftyOneInput,
     VideoClassificationFiftyOnePredictInput,
     VideoClassificationFilesInput,
     VideoClassificationFoldersInput,
     VideoClassificationPathsPredictInput,
+    VideoClassificationTensorsInput,
 )
 from flash.video.classification.input_transform import VideoClassificationInputTransform
 
