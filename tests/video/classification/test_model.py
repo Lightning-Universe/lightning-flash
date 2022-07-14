@@ -98,6 +98,19 @@ def temp_encoded_video(num_frames: int, fps: int, height=10, width=10, prefix=No
 
 
 @contextlib.contextmanager
+def temp_encoded_tensors(num_frames: int, height=10, width=10):
+    data = create_dummy_video_frames(num_frames, height, width)
+    yield thwc_to_cthw(data).to(torch.float32)
+
+
+@contextlib.contextmanager
+def mock_video_tensors():
+    num_frames = 10
+    with temp_encoded_tensors(num_frames=num_frames) as tens:
+        yield tens
+
+
+@contextlib.contextmanager
 def mock_video_data_frame():
     """Creates a temporary mock encoded video dataset with 4 videos labeled from 0 to 4.
 
@@ -150,6 +163,11 @@ def mock_encoded_video_dataset_folder(tmpdir):
         with temp_encoded_video(num_frames=num_frames, fps=fps, directory=str(tmp_dir / "c2")):
             video_duration = num_frames / fps
             yield str(tmp_dir), video_duration
+
+
+@contextlib.contextmanager
+def mock_encoded_video_dataset_tensors():
+    """Yields tensors used for testing VideoClassificationData.from_tensors"""
 
 
 @pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
@@ -215,6 +233,28 @@ def test_video_classifier_finetune_from_data_frame(tmpdir):
             clip_duration=half_duration,
             video_sampler=SequentialSampler,
             decode_audio=False,
+            batch_size=1,
+        )
+
+        for sample in datamodule.train_dataset.data:
+            expected_t_shape = 5
+            assert sample["video"].shape[1] == expected_t_shape
+
+        model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50")
+        trainer = flash.Trainer(default_root_dir=tmpdir, fast_dev_run=True, gpus=torch.cuda.device_count())
+        trainer.finetune(model, datamodule=datamodule)
+
+
+@pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
+def test_video_classifier_finetune_from_tensors(tmpdir):
+    with mock_video_tensors() as (mock_tensors):
+        # print("mock tensors: ", mock_tensors)
+        breakpoint()
+        datamodule = VideoClassificationData.from_tensors(
+            "data",  # TODO: this was file before
+            "target",
+            train_data={"data": torch.stack((mock_tensors,)), "target": [1]},
+            video_sampler=SequentialSampler,  # TODO: do you need it?
             batch_size=1,
         )
 

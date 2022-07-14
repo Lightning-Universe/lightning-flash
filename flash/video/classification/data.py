@@ -35,6 +35,7 @@ from flash.video.classification.input import (
     VideoClassificationCSVInput,
     VideoClassificationCSVPredictInput,
     VideoClassificationDataFrameInput,
+    VideoClassificationTensorsInput,
     VideoClassificationDataFramePredictInput,
     VideoClassificationFiftyOneInput,
     VideoClassificationFiftyOnePredictInput,
@@ -395,7 +396,6 @@ class VideoClassificationData(DataModule):
         predict_data_frame: Optional[pd.DataFrame] = None,
         predict_videos_root: Optional[str] = None,
         predict_resolver: Optional[Callable[[str, str], str]] = None,
-        target_formatter: Optional[TargetFormatter] = None,
         clip_sampler: Union[str, "ClipSampler"] = "random",
         clip_duration: float = 2,
         clip_sampler_kwargs: Dict[str, Any] = None,
@@ -561,6 +561,167 @@ class VideoClassificationData(DataModule):
                 **ds_kw,
             ),
             predict_input_cls(RunningStage.PREDICTING, *predict_data, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_tensors(
+        cls,
+        input_field: str,
+        target_fields: Optional[Union[str, Sequence[str]]] = None,
+        train_data: Optional[Dict[str, Union[torch.Tensor, Any, List[Any]]]] = None,
+        val_data: Optional[Dict[str, Union[torch.Tensor, Any, List[Any]]]] = None,
+        test_data: Optional[Dict[str, Union[torch.Tensor, Any, List[Any]]]] = None,
+        predict_data: Optional[Dict[str, Union[torch.Tensor, Any, List[Any]]]] = None,
+        video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
+        input_cls: Type[Input] = VideoClassificationTensorsInput,
+        # predict_input_cls: Type[Input] = VideoClassificationTensorsPredictInput,
+        target_formatter: Optional[TargetFormatter] = None,
+        transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
+        transform_kwargs: Optional[Dict] = None,
+        **data_module_kwargs: Any,
+    ) -> "VideoClassificationData":
+        """Load the :class:`~flash.video.classification.data.VideoClassificationData` from pandas DataFrame objects
+        containing video file paths and their corresponding targets.
+
+        Input video file paths will be extracted from the ``input_field`` in the DataFrame.
+        The supported file extensions are: ``.mp4``, and ``.avi``.
+        The targets will be extracted from the ``target_fields`` in the DataFrame and can be in any of our
+        :ref:`supported classification target formats <formatting_classification_targets>`.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
+        Args:
+            input_field: The field (column name) in the DataFrames containing the video file paths.
+            target_fields: The field (column name) or list of fields in the DataFrames containing the targets.
+            train_data_frame: The DataFrame to use when training.
+            train_videos_root: The root directory containing train videos.
+            train_resolver: Optionally provide a function which converts an entry from the ``input_field`` into a video
+                file path.
+            val_data_frame: The DataFrame to use when validating.
+            val_videos_root: The root directory containing validation videos.
+            val_resolver: Optionally provide a function which converts an entry from the ``input_field`` into a video
+                file path.
+            test_data_frame: The DataFrame to use when testing.
+            test_videos_root: The root directory containing test videos.
+            test_resolver: Optionally provide a function which converts an entry from the ``input_field`` into a video
+                file path.
+            predict_data_frame: The DataFrame to use when predicting.
+            predict_videos_root: The root directory containing predict videos.
+            predict_resolver: Optionally provide a function which converts an entry from the ``input_field`` into a
+                video file path.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
+            clip_sampler: The clip sampler to use. One of: ``"uniform"``, ``"random"``, ``"constant_clips_per_video"``.
+            clip_duration: The duration of clips to sample.
+            clip_sampler_kwargs: Additional keyword arguments to use when constructing the clip sampler.
+            video_sampler: Sampler for the internal video container. This defines the order videos are decoded and,
+                if necessary, the distributed split.
+            decode_audio: If True, also decode audio from video.
+            decoder: The decoder to use to decode videos. One of: ``"pyav"``, ``"torchvision"``. Not used for frame
+                videos.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            predict_input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the prediction data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+                :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.video.classification.data.VideoClassificationData`.
+
+        Examples
+        ________
+
+        .. testsetup::
+
+            >>> import os
+            >>> import torch
+            >>> from torchvision import io
+            >>> data = torch.randint(255, (10, 64, 64, 3))
+            >>> os.makedirs("train_folder", exist_ok=True)
+            >>> os.makedirs("predict_folder", exist_ok=True)
+            >>> _ = [io.write_video(
+            ...     os.path.join("train_folder", f"video_{i}.mp4"), data, 5, "libx264rgb", {"crf": "0"}
+            ... ) for i in range(1, 4)]
+            >>> _ = [
+            ...     io.write_video(
+            ...         os.path.join("predict_folder", f"predict_video_{i}.mp4"), data, 5, "libx264rgb", {"crf": "0"}
+            ...     ) for i in range(1, 4)
+            ... ]
+
+        .. doctest::
+
+            >>> from pandas import DataFrame
+            >>> from flash import Trainer
+            >>> from flash.video import VideoClassifier, VideoClassificationData
+            >>> train_data_frame = DataFrame.from_dict(
+            ...     {
+            ...         "videos": ["video_1.mp4", "video_2.mp4", "video_3.mp4"],
+            ...         "targets": ["cat", "dog", "cat"],
+            ...     }
+            ... )
+            >>> predict_data_frame = DataFrame.from_dict(
+            ...     {
+            ...         "videos": ["predict_video_1.mp4", "predict_video_2.mp4", "predict_video_3.mp4"],
+            ...     }
+            ... )
+            >>> datamodule = VideoClassificationData.from_data_frame(
+            ...     "videos",
+            ...     "targets",
+            ...     train_data_frame=train_data_frame,
+            ...     train_videos_root="train_folder",
+            ...     predict_data_frame=predict_data_frame,
+            ...     predict_videos_root="predict_folder",
+            ...     transform_kwargs=dict(image_size=(244, 244)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            2
+            >>> datamodule.labels
+            ['cat', 'dog']
+            >>> model = VideoClassifier(backbone="x3d_xs", num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> import shutil
+            >>> shutil.rmtree("train_folder")
+            >>> shutil.rmtree("predict_folder")
+            >>> del train_data_frame
+            >>> del predict_data_frame
+        """
+        train_tuple = (train_data, input_field, target_fields)
+        val_tuple = (val_data, input_field, target_fields)
+        test_tuple = (test_data, input_field, target_fields)
+        predict_tuple = (predict_data, input_field)
+
+        train_input = input_cls(
+            RunningStage.TRAINING, *train_tuple, video_sampler=video_sampler, target_formatter=target_formatter
+        )
+        target_formatter = getattr(train_input, "target_formatter", None)
+
+        return cls(
+            train_input,
+            input_cls(
+                RunningStage.VALIDATING,
+                *val_tuple,
+                video_sampler=video_sampler,
+                target_formatter=target_formatter,
+            ),
+            input_cls(
+                RunningStage.TESTING,
+                *test_tuple,
+                video_sampler=video_sampler,
+                target_formatter=target_formatter,
+            ),
+            # predict_input_cls(RunningStage.PREDICTING, *predict_tuple, **ds_kw),
             transform=transform,
             transform_kwargs=transform_kwargs,
             **data_module_kwargs,
