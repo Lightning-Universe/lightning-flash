@@ -1,4 +1,5 @@
 import os
+import warnings
 from pathlib import Path
 from string import ascii_lowercase
 from typing import List, Union
@@ -53,7 +54,9 @@ def test_filter_valid_files() -> None:
     mock_files = valid_extensions + fake_extensions
     mock_files = _make_fake_files(mock_files)
     mockdir = _make_mock_dir(mock_files)
-    filtered = filter_valid_files(files=mockdir, valid_extensions=valid_extensions)
+    message = "Found invalid file extensions"
+    with pytest.warns(UserWarning, match=message):
+        filtered = filter_valid_files(files=mockdir, valid_extensions=valid_extensions)
     assert all(i not in fake_extensions for i in filtered)
 
 
@@ -64,15 +67,7 @@ def test_filter_valid_files_no_invalid():
     mock_files = valid_extensions
     mock_files = _make_fake_files(mock_files)
     mockdir = _make_mock_dir(mock_files)
-    filtered = filter_valid_files(files=mockdir, valid_extensions=valid_extensions)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        filtered = filter_valid_files(files=mockdir, valid_extensions=valid_extensions)
     assert len(filtered) == len(mockdir)
-
-
-@pytest.mark.parametrize("should_warn", [False, True])
-def test_filter_valid_warning(should_warn):
-    if should_warn:
-        message = "Found invalid file extensions"
-        with pytest.warns(UserWarning, match=message):
-            test_filter_valid_files()
-    else:
-        test_filter_valid_files_no_invalid()
