@@ -54,6 +54,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Fixed a bug where the `processor_backbone` argument to `SpeechRecognition` was not used for decoding outputs ([#1362](https://github.com/PyTorchLightning/lightning-flash/pull/1362))
 
+- Fixed a bug where `.npy` files could not be used with `SemanticSegmentationData` ([#1369](https://github.com/PyTorchLightning/lightning-flash/pull/1369))
+
 ## [0.7.4] - 2022-04-27
 
 ### Fixed
