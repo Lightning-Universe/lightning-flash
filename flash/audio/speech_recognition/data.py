@@ -59,7 +59,9 @@ class SpeechRecognitionData(DataModule):
         """Load the :class:`~flash.audio.speech_recognition.data.SpeechRecognitionData` from lists of audio files
         and corresponding lists of targets.
 
-        The supported file extensions are: ``.wav``, ``.ogg``, ``.flac``, ``.mat``, and ``.mp3``.
+        The supported file extensions are: ``.aiff``, ``.au``, ``.avr``, ``.caf``, ``.flac``, ``.mat``, ``.mat4``,
+        ``.mat5``, ``.mpc2k``, ``.ogg``, ``.paf``, ``.pvf``, ``.rf64``, ``.sd2``, ``.ircam``, ``.voc``, ``.w64``,
+        ``.wav``, ``.nist``, and ``.wavex``.
         To learn how to customize the transforms applied for each stage, read our
         :ref:`customizing transforms guide <customizing_transforms>`.
 
@@ -150,7 +152,9 @@ class SpeechRecognitionData(DataModule):
         audio file paths and their corresponding targets.
 
         Input audio file paths will be extracted from the ``input_field`` column in the CSV files.
-        The supported file extensions are: ``.wav``, ``.ogg``, ``.flac``, ``.mat``, and ``.mp3``.
+        The supported file extensions are: ``.aiff``, ``.au``, ``.avr``, ``.caf``, ``.flac``, ``.mat``, ``.mat4``,
+        ``.mat5``, ``.mpc2k``, ``.ogg``, ``.paf``, ``.pvf``, ``.rf64``, ``.sd2``, ``.ircam``, ``.voc``, ``.w64``,
+        ``.wav``, ``.nist``, and ``.wavex``.
         The targets will be extracted from the ``target_field`` in the CSV files.
         To learn how to customize the transforms applied for each stage, read our
         :ref:`customizing transforms guide <customizing_transforms>`.
@@ -273,7 +277,9 @@ class SpeechRecognitionData(DataModule):
         audio file paths and their corresponding targets.
 
         Input audio file paths will be extracted from the ``input_field`` field in the JSON files.
-        The supported file extensions are: ``.wav``, ``.ogg``, ``.flac``, ``.mat``, and ``.mp3``.
+        The supported file extensions are: ``.aiff``, ``.au``, ``.avr``, ``.caf``, ``.flac``, ``.mat``, ``.mat4``,
+        ``.mat5``, ``.mpc2k``, ``.ogg``, ``.paf``, ``.pvf``, ``.rf64``, ``.sd2``, ``.ircam``, ``.voc``, ``.w64``,
+        ``.wav``, ``.nist``, and ``.wavex``.
         The targets will be extracted from the ``target_field`` field in the JSON files.
         To learn how to customize the transforms applied for each stage, read our
         :ref:`customizing transforms guide <customizing_transforms>`.
@@ -397,7 +403,9 @@ class SpeechRecognitionData(DataModule):
         * A PyTorch Dataset where the ``__getitem__`` returns a tuple: ``(file_path or , target)``
         * A PyTorch Dataset where the ``__getitem__`` returns a dict: ``{"input": file_path, "target": target}``
 
-        The supported file extensions are: ``.wav``, ``.ogg``, ``.flac``, ``.mat``, and ``.mp3``.
+        The supported file extensions are: ``.aiff``, ``.au``, ``.avr``, ``.caf``, ``.flac``, ``.mat``, ``.mat4``,
+        ``.mat5``, ``.mpc2k``, ``.ogg``, ``.paf``, ``.pvf``, ``.rf64``, ``.sd2``, ``.ircam``, ``.voc``, ``.w64``,
+        ``.wav``, ``.nist``, and ``.wavex``.
         To learn how to customize the transforms applied for each stage, read our
         :ref:`customizing transforms guide <customizing_transforms>`.
 

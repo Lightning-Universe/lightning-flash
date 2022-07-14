@@ -70,8 +70,9 @@ class AudioClassificationData(DataModule):
 
         The supported file extensions for precomputed spectrograms are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``,
         ``.bmp``, ``.pgm``, ``.tif``, ``.tiff``, ``.webp``, and ``.npy``.
-        The supported file extensions for raw audio (where spectrograms will be computed automatically) are: ``.wav``,
-        ``.ogg``, ``.flac``, ``.mat``, and ``.mp3``.
+        The supported file extensions for raw audio (where spectrograms will be computed automatically) are: ``.aiff``,
+        ``.au``, ``.avr``, ``.caf``, ``.flac``, ``.mat``, ``.mat4``, ``.mat5``, ``.mpc2k``, ``.ogg``, ``.paf``,
+        ``.pvf``, ``.rf64``, ``.sd2``, ``.ircam``, ``.voc``, ``.w64``, ``.wav``, ``.nist``, and ``.wavex``.
         The targets can be in any of our
         :ref:`supported classification target formats <formatting_classification_targets>`.
         To learn how to customize the transforms applied for each stage, read our
@@ -181,8 +182,9 @@ class AudioClassificationData(DataModule):
 
         The supported file extensions for precomputed spectrograms are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``,
         ``.bmp``, ``.pgm``, ``.tif``, ``.tiff``, ``.webp``, and ``.npy``.
-        The supported file extensions for raw audio (where spectrograms will be computed automatically) are: ``.wav``,
-        ``.ogg``, ``.flac``, ``.mat``, and ``.mp3``.
+        The supported file extensions for raw audio (where spectrograms will be computed automatically) are: ``.aiff``,
+        ``.au``, ``.avr``, ``.caf``, ``.flac``, ``.mat``, ``.mat4``, ``.mat5``, ``.mpc2k``, ``.ogg``, ``.paf``,
+        ``.pvf``, ``.rf64``, ``.sd2``, ``.ircam``, ``.voc``, ``.w64``, ``.wav``, ``.nist``, and ``.wavex``.
         For train, test, and validation data, the folders are expected to contain a sub-folder for each class.
         Here's the required structure:
 
@@ -501,8 +503,9 @@ class AudioClassificationData(DataModule):
         Input spectrogram image paths will be extracted from the ``input_field`` in the DataFrame.
         The supported file extensions for precomputed spectrograms are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``,
         ``.bmp``, ``.pgm``, ``.tif``, ``.tiff``, ``.webp``, and ``.npy``.
-        The supported file extensions for raw audio (where spectrograms will be computed automatically) are: ``.wav``,
-        ``.ogg``, ``.flac``, ``.mat``, and ``.mp3``.
+        The supported file extensions for raw audio (where spectrograms will be computed automatically) are: ``.aiff``,
+        ``.au``, ``.avr``, ``.caf``, ``.flac``, ``.mat``, ``.mat4``, ``.mat5``, ``.mpc2k``, ``.ogg``, ``.paf``,
+        ``.pvf``, ``.rf64``, ``.sd2``, ``.ircam``, ``.voc``, ``.w64``, ``.wav``, ``.nist``, and ``.wavex``.
         The targets will be extracted from the ``target_fields`` in the DataFrame and can be in any of our
         :ref:`supported classification target formats <formatting_classification_targets>`.
         To learn how to customize the transforms applied for each stage, read our
@@ -661,8 +664,9 @@ class AudioClassificationData(DataModule):
         Input spectrogram images will be extracted from the ``input_field`` column in the CSV files.
         The supported file extensions for precomputed spectrograms are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``,
         ``.bmp``, ``.pgm``, ``.tif``, ``.tiff``, ``.webp``, and ``.npy``.
-        The supported file extensions for raw audio (where spectrograms will be computed automatically) are: ``.wav``,
-        ``.ogg``, ``.flac``, ``.mat``, and ``.mp3``.
+        The supported file extensions for raw audio (where spectrograms will be computed automatically) are: ``.aiff``,
+        ``.au``, ``.avr``, ``.caf``, ``.flac``, ``.mat``, ``.mat4``, ``.mat5``, ``.mpc2k``, ``.ogg``, ``.paf``,
+        ``.pvf``, ``.rf64``, ``.sd2``, ``.ircam``, ``.voc``, ``.w64``, ``.wav``, ``.nist``, and ``.wavex``.
         The targets will be extracted from the ``target_fields`` in the CSV files and can be in any of our
         :ref:`supported classification target formats <formatting_classification_targets>`.
         To learn how to customize the transforms applied for each stage, read our
