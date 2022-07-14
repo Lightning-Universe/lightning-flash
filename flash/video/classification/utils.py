@@ -1,6 +1,7 @@
-from typing import List, Optional, Type, Any, Tuple, Callable
+from typing import Any, Callable, List, Optional, Tuple, Type
 
 import torch
+
 from flash.core.utilities.imports import _VIDEO_AVAILABLE
 
 if _VIDEO_AVAILABLE:
@@ -10,9 +11,7 @@ else:
 
 
 class LabeledVideoTensorDataset(torch.utils.data.IterableDataset):
-    """
-    LabeledVideoTensorDataset handles a direct tensor input data
-    """
+    """LabeledVideoTensorDataset handles a direct tensor input data."""
 
     def __init__(
         self,
@@ -57,8 +56,7 @@ class LabeledVideoTensorDataset(torch.utils.data.IterableDataset):
         return len(self.video_sampler)
 
     def __next__(self) -> dict:
-        """
-        Retrieves the next clip based on the clip sampling strategy and video sampler.
+        """Retrieves the next clip based on the clip sampling strategy and video sampler.
 
         Returns:
             A dictionary with the following format.
