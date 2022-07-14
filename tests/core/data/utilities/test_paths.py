@@ -87,3 +87,15 @@ def test_filter_valid_files_with_additional_list() -> None:
             valid_extensions=valid_extensions,
         )
     assert all(i not in fake_extensions for i in filtered)
+
+
+def test_filter_valid_files_no_invalid_with_additional_list():
+    valid_extensions = _make_valid_extensions()
+    valid_extensions = list(valid_extensions)
+    mock_files = _make_fake_files(valid_extensions, seed=42)
+    mockdir = _make_mock_dir(mock_files)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        filtered_files, filtered_additional = filter_valid_files(mockdir, mockdir, valid_extensions=valid_extensions)
+    assert len(filtered_files) == len(mockdir)
+    assert len(filtered_additional) == len(mockdir)
