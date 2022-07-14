@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import warnings
 from pathlib import Path
 from string import ascii_lowercase
 from typing import List, Union
@@ -78,7 +79,9 @@ def test_filter_valid_files_no_invalid():
     valid_extensions = list(valid_extensions)
     mock_files = _make_fake_files(valid_extensions, seed=42)
     mockdir = _make_mock_dir(mock_files)
-    filtered = filter_valid_files(mockdir, valid_extensions=valid_extensions)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        filtered = filter_valid_files(mockdir, valid_extensions=valid_extensions)
     assert len(filtered) == len(mockdir)
 
 
@@ -104,6 +107,8 @@ def test_filter_valid_files_no_invalid_with_additional_list():
     valid_extensions = list(valid_extensions)
     mock_files = _make_fake_files(valid_extensions, seed=42)
     mockdir = _make_mock_dir(mock_files)
-    filtered_files, filtered_additional = filter_valid_files(mockdir, mockdir, valid_extensions=valid_extensions)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        filtered_files, filtered_additional = filter_valid_files(mockdir, mockdir, valid_extensions=valid_extensions)
     assert len(filtered_files) == len(mockdir)
     assert len(filtered_additional) == len(mockdir)
