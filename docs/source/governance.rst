@@ -24,5 +24,4 @@ Core Maintainers
 Alumni
 ------
 
-- Carlos Mocholí (`carmocca <https://github.com/carmocca>`_)
 - Sean Narenthiran (`SeanNaren <https://github.com/SeanNaren>`_)
