@@ -1,5 +1,17 @@
+# Copyright The PyTorch Lightning team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 import os
-import warnings
 from pathlib import Path
 from string import ascii_lowercase
 from typing import List, Union
@@ -66,9 +78,7 @@ def test_filter_valid_files_no_invalid():
     valid_extensions = list(valid_extensions)
     mock_files = _make_fake_files(valid_extensions, seed=42)
     mockdir = _make_mock_dir(mock_files)
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        filtered = filter_valid_files(mockdir, valid_extensions=valid_extensions)
+    filtered = filter_valid_files(mockdir, valid_extensions=valid_extensions)
     assert len(filtered) == len(mockdir)
 
 
@@ -94,8 +104,6 @@ def test_filter_valid_files_no_invalid_with_additional_list():
     valid_extensions = list(valid_extensions)
     mock_files = _make_fake_files(valid_extensions, seed=42)
     mockdir = _make_mock_dir(mock_files)
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        filtered_files, filtered_additional = filter_valid_files(mockdir, mockdir, valid_extensions=valid_extensions)
+    filtered_files, filtered_additional = filter_valid_files(mockdir, mockdir, valid_extensions=valid_extensions)
     assert len(filtered_files) == len(mockdir)
     assert len(filtered_additional) == len(mockdir)
