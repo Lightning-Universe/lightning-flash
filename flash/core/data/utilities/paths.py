@@ -184,4 +184,4 @@ def filter_valid_files(
     if additional_lists:
         return tuple(zip(*filtered))
 
-    return filtered
+    return [f[0] for f in filtered]
