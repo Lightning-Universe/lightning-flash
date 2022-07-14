@@ -5,7 +5,7 @@
 # the repo. Unless a later match takes precedence,
 # @global-owner1 and @global-owner2 will be requested for
 # review when someone opens a pull request.
-* @ethanwharris @borda @tchaton @ananyahjha93 @justusschock @carmocca @kaushikb11
+* @ethanwharris @borda @tchaton @justusschock @kaushikb11
 
 # owners
 /.github/CODEOWNERS   @williamfalcon
@@ -17,13 +17,13 @@
 /__init__.py              @borda @ethanwharris
 
 # CI/CD
-/.github/workflows/   @borda @ethanwharris @ananyahjha93
+/.github/workflows/   @borda @ethanwharris
 # configs in root
-/*.yml                @borda @ethanwharris @ananyahjha93
+/*.yml                @borda @ethanwharris
 
 # Docs
-/docs/                          @edenlightning @ethanwharris @ananyahjha93
-/.github/*.md                   @edenlightning @ethanwharris @ananyahjha93
-/.github/ISSUE_TEMPLATE/*.md    @edenlightning @ethanwharris @ananyahjha93
-/docs/source/conf.py            @borda @ethanwharris @ananyahjha93
+/docs/                          @edenlightning @ethanwharris
+/.github/*.md                   @edenlightning @ethanwharris
+/.github/ISSUE_TEMPLATE/*.md    @edenlightning @ethanwharris
+/docs/source/conf.py            @borda @ethanwharris
 /flash/core/integrations/labelstudio	@KonstantinKorotaev @niklub
