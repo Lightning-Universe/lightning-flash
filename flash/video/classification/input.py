@@ -371,13 +371,16 @@ class VideoClassificationDataFramePredictInput(VideoClassificationPathsPredictIn
 
 
 class VideoClassificationTensorsPredictInput(Input):
-    def predict_load_sample(
+    def predict_load_data(
         self,
         data: Dict[str, Union[torch.Tensor, List[Any], Any]],
         data_key: str,
     ):
+        return list(data[data_key])
+
+    def predict_load_sample(self, sample: torch.Tensor) -> Dict[str, Any]:
         return {
-            DataKeys.INPUT: data[data_key],
+            DataKeys.INPUT: sample,
             "video_index": 0,
         }
 
