@@ -165,11 +165,6 @@ def mock_encoded_video_dataset_folder(tmpdir):
             yield str(tmp_dir), video_duration
 
 
-@contextlib.contextmanager
-def mock_encoded_video_dataset_tensors():
-    """Yields tensors used for testing VideoClassificationData.from_tensors"""
-
-
 @pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
 def test_video_classifier_finetune_from_folder(tmpdir):
     with mock_encoded_video_dataset_folder(tmpdir) as (mock_folder, total_duration):
