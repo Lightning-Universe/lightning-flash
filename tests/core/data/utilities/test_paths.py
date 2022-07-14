@@ -19,9 +19,8 @@ from typing import List
 import pytest
 from numpy import random
 
-from flash.audio.data import AUDIO_EXTENSIONS
+from flash.core.data.utilities.loading import AUDIO_EXTENSIONS, IMG_EXTENSIONS, NP_EXTENSIONS
 from flash.core.data.utilities.paths import filter_valid_files, PATH_TYPE
-from flash.image.data import IMG_EXTENSIONS, NP_EXTENSIONS
 
 
 def _make_mock_dir(root, mock_files: List) -> List[PATH_TYPE]:
