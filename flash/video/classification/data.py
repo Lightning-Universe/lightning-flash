@@ -42,6 +42,7 @@ from flash.video.classification.input import (
     VideoClassificationFoldersInput,
     VideoClassificationPathsPredictInput,
     VideoClassificationTensorsInput,
+    VideoClassificationTensorsPredictInput,
 )
 from flash.video.classification.input_transform import VideoClassificationInputTransform
 
@@ -578,7 +579,7 @@ class VideoClassificationData(DataModule):
         predict_data: Optional[Dict[str, Union[torch.Tensor, Any, List[Any]]]] = None,
         video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
         input_cls: Type[Input] = VideoClassificationTensorsInput,
-        # predict_input_cls: Type[Input] = VideoClassificationTensorsPredictInput,
+        predict_input_cls: Type[Input] = VideoClassificationTensorsPredictInput,
         target_formatter: Optional[TargetFormatter] = None,
         transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
@@ -587,7 +588,7 @@ class VideoClassificationData(DataModule):
         train_tuple = (train_data, input_field, target_fields)
         val_tuple = (val_data, input_field, target_fields)
         test_tuple = (test_data, input_field, target_fields)
-        # predict_tuple = (predict_data, input_field)
+        predict_tuple = (predict_data, input_field)
 
         train_input = input_cls(
             RunningStage.TRAINING, *train_tuple, video_sampler=video_sampler, target_formatter=target_formatter
@@ -608,7 +609,7 @@ class VideoClassificationData(DataModule):
                 video_sampler=video_sampler,
                 target_formatter=target_formatter,
             ),
-            # predict_input_cls(RunningStage.PREDICTING, *predict_tuple, **ds_kw),
+            predict_input_cls(RunningStage.PREDICTING, *predict_tuple),
             transform=transform,
             transform_kwargs=transform_kwargs,
             **data_module_kwargs,

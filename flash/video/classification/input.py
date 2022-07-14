@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 import pandas as pd
 import torch
@@ -368,6 +368,18 @@ class VideoClassificationDataFramePredictInput(VideoClassificationPathsPredictIn
             decode_audio=decode_audio,
             decoder=decoder,
         )
+
+
+class VideoClassificationTensorsPredictInput(Input):
+    def predict_load_sample(
+        self,
+        data: Dict[str, Union[torch.Tensor, List[Any], Any]],
+        data_key: str,
+    ):
+        return {
+            DataKeys.INPUT: data[data_key],
+            "video_index": 0,
+        }
 
 
 class VideoClassificationCSVPredictInput(VideoClassificationDataFramePredictInput):

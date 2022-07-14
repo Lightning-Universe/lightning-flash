@@ -21,7 +21,7 @@ from flash.core.data.utilities.paths import filter_valid_files, PATH_TYPE
 from flash.core.data.utilities.samples import to_samples
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _TORCHVISION_AVAILABLE, lazy_import
-from flash.image.data import image_loader, ImageDeserializer, IMG_EXTENSIONS
+from flash.image.data import image_loader, ImageDeserializer, IMG_EXTENSIONS, NP_EXTENSIONS
 from flash.image.segmentation.output import SegmentationLabelsOutput
 
 if _FIFTYONE_AVAILABLE:
@@ -97,9 +97,9 @@ class SemanticSegmentationFilesInput(SemanticSegmentationInput):
     ) -> List[Dict[str, Any]]:
         self.load_labels_map(num_classes, labels_map)
         if mask_files is None:
-            files = filter_valid_files(files, valid_extensions=IMG_EXTENSIONS)
+            files = filter_valid_files(files, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
         else:
-            files, mask_files = filter_valid_files(files, mask_files, valid_extensions=IMG_EXTENSIONS)
+            files, mask_files = filter_valid_files(files, mask_files, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
         return to_samples(files, mask_files)
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
