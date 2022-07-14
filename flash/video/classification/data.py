@@ -649,7 +649,7 @@ class VideoClassificationData(DataModule):
             >>> datamodule.num_classes
             2
             >>> datamodule.labels
-            ["fruit", "vegetable"]
+            ['fruit', 'vegetable']
             >>> model = VideoClassifier(backbone="x3d_xs", num_classes=datamodule.num_classes)
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
