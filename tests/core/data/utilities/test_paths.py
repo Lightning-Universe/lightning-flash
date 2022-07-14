@@ -105,3 +105,6 @@ def test_filter_valid_files_no_invalid_with_additional_list(tmpdir):
         filtered_files, filtered_additional = filter_valid_files(mockdir, mockdir, valid_extensions=valid_extensions)
     assert len(filtered_files) == len(mockdir)
     assert len(filtered_additional) == len(mockdir)
+
+
+# TODO add tests
