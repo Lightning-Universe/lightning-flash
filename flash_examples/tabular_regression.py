@@ -14,12 +14,9 @@
 import torch
 
 import flash
-from flash.core.data.utils import download_data
 from flash.tabular import TabularRegressionData, TabularRegressor
 
 # 1. Create the DataModule
-download_data("https://pl-flash-data.s3.amazonaws.com/SeoulBikeData.csv", "./data")
-
 datamodule = TabularRegressionData.from_csv(
     categorical_fields=["Seasons", "Holiday", "Functioning Day"],
     numerical_fields=[
@@ -34,7 +31,7 @@ datamodule = TabularRegressionData.from_csv(
         "Snowfall",
     ],
     target_field="Rented Bike Count",
-    train_file="data/SeoulBikeData.csv",
+    train_file="https://pl-flash-data.s3.amazonaws.com/SeoulBikeData.csv",
     val_split=0.1,
     batch_size=8,
 )
@@ -48,7 +45,7 @@ trainer.fit(model, datamodule=datamodule)
 
 # 4. Generate predictions from a CSV
 datamodule = TabularRegressionData.from_csv(
-    predict_file="data/SeoulBikeData.csv",
+    predict_file="https://pl-flash-data.s3.amazonaws.com/SeoulBikeData.csv",
     parameters=datamodule.parameters,
     batch_size=8,
 )
