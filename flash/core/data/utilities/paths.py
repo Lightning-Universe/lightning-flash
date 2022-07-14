@@ -170,12 +170,9 @@ def filter_valid_files(
         filter(lambda sample: has_file_allowed_extension(sample[0], valid_extensions), zip(files, *additional_lists))
     )
 
-    if len(additional_lists) > 0:
-        return tuple(zip(*filtered))
+    filtered_files = [f[0] for f in filtered]
 
-    filtered = [f[0] for f in filtered]
-
-    invalid = [f for f in files if f not in filtered]
+    invalid = [f for f in files if f not in filtered_files]
 
     if invalid:
         invalid_extensions = list({"." + f.split(".")[-1] for f in invalid})
@@ -183,5 +180,8 @@ def filter_valid_files(
             f"Found invalid file extensions: {', '.join(invalid_extensions)}"
             f"The supported file extensions are: {', '.join(valid_extensions)}"
         )
+
+    if additional_lists:
+        return tuple(zip(*filtered))
 
     return filtered
