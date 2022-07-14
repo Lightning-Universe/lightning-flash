@@ -13,28 +13,21 @@
 # limitations under the License.
 import os
 import warnings
-from pathlib import Path
 from string import ascii_lowercase
-from typing import List, Union
+from typing import List
 
 import pytest
 from numpy import random
 
 from flash.audio.data import AUDIO_EXTENSIONS
-from flash.core.data.utilities.paths import filter_valid_files
+from flash.core.data.utilities.paths import filter_valid_files, PATH_TYPE
 from flash.image.data import IMG_EXTENSIONS, NP_EXTENSIONS
 
-FILEPATH = Path(__file__)
-PARENTDIR = FILEPATH.parent
 
-PATH_TYPE = Union[str, bytes, os.PathLike]
-
-
-def _make_mock_dir(mock_files: List) -> List[PATH_TYPE]:
-    tmpdir = os.path.join(PARENTDIR, "tmp")
+def _make_mock_dir(root, mock_files: List) -> List[PATH_TYPE]:
     mockdir = []
     for idx, f_ext in enumerate(mock_files):
-        mockdir.append(os.path.join(tmpdir, mock_files[idx]))
+        mockdir.append(os.path.join(root, mock_files[idx]))
     return mockdir
 
 
@@ -61,37 +54,37 @@ def _make_valid_extensions() -> tuple:
     return AUDIO_EXTENSIONS + IMG_EXTENSIONS + NP_EXTENSIONS
 
 
-def test_filter_valid_files() -> None:
+def test_filter_valid_files(tmpdir) -> None:
     valid_extensions = _make_valid_extensions()
     valid_extensions = list(valid_extensions)
     fake_extensions = _make_fake_extensions(seed=42)
     mock_extensions = valid_extensions + fake_extensions
     mock_files = _make_fake_files(mock_extensions, seed=42)
-    mockdir = _make_mock_dir(mock_files)
+    mockdir = _make_mock_dir(tmpdir, mock_files)
     message = "Found invalid file extensions"
     with pytest.warns(UserWarning, match=message):
         filtered = filter_valid_files(mockdir, valid_extensions=valid_extensions)
     assert all(i not in fake_extensions for i in filtered)
 
 
-def test_filter_valid_files_no_invalid():
+def test_filter_valid_files_no_invalid(tmpdir):
     valid_extensions = _make_valid_extensions()
     valid_extensions = list(valid_extensions)
     mock_files = _make_fake_files(valid_extensions, seed=42)
-    mockdir = _make_mock_dir(mock_files)
+    mockdir = _make_mock_dir(tmpdir, mock_files)
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         filtered = filter_valid_files(mockdir, valid_extensions=valid_extensions)
     assert len(filtered) == len(mockdir)
 
 
-def test_filter_valid_files_with_additional_list() -> None:
+def test_filter_valid_files_with_additional_list(tmpdir) -> None:
     valid_extensions = _make_valid_extensions()
     valid_extensions = list(valid_extensions)
     fake_extensions = _make_fake_extensions(seed=42)
     mock_extensions = valid_extensions + fake_extensions
     mock_files = _make_fake_files(mock_extensions, seed=42)
-    mockdir = _make_mock_dir(mock_files)
+    mockdir = _make_mock_dir(tmpdir, mock_files)
     message = "Found invalid file extensions"
     with pytest.warns(UserWarning, match=message):
         filtered = filter_valid_files(
@@ -102,11 +95,11 @@ def test_filter_valid_files_with_additional_list() -> None:
     assert all(i not in fake_extensions for i in filtered)
 
 
-def test_filter_valid_files_no_invalid_with_additional_list():
+def test_filter_valid_files_no_invalid_with_additional_list(tmpdir):
     valid_extensions = _make_valid_extensions()
     valid_extensions = list(valid_extensions)
     mock_files = _make_fake_files(valid_extensions, seed=42)
-    mockdir = _make_mock_dir(mock_files)
+    mockdir = _make_mock_dir(tmpdir, mock_files)
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         filtered_files, filtered_additional = filter_valid_files(mockdir, mockdir, valid_extensions=valid_extensions)
