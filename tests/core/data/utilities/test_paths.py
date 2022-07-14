@@ -107,4 +107,29 @@ def test_filter_valid_files_no_invalid_with_additional_list(tmpdir):
     assert len(filtered_additional) == len(mockdir)
 
 
-# TODO add tests
+# TODO write test_has_file_allowed_extension
+# potentially not needed since this is used in
+# filter_valid_files
+# it may be app. to add (pragma no cover) at func def
+def test_has_file_allowed_extension():
+    pass
+
+
+# TODO write test_make_dataset
+def test_make_dataset():
+    pass
+
+
+# TODO write test_isdir
+def test_isdir():
+    pass
+
+
+# TODO write test_listsubdir
+def test_listsubdir():
+    pass
+
+
+# TODO write test_list_valid_files
+def test_list_valid_files():
+    pass
