@@ -70,7 +70,7 @@ def _load_image_from_image(file, drop_alpha: bool = True):
 
 
 def _load_image_from_numpy(file):
-    return Image.fromarray(np.load(file).astype("uint8"), "RGB")
+    return Image.fromarray(np.load(file).astype("uint8")).convert("RGB")
 
 
 def _load_spectrogram_from_image(file):

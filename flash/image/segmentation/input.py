@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import torch
 
 from flash.core.data.io.input import DataKeys, Input
-from flash.core.data.utilities.loading import IMG_EXTENSIONS, load_image
+from flash.core.data.utilities.loading import IMG_EXTENSIONS, load_image, NP_EXTENSIONS
 from flash.core.data.utilities.paths import filter_valid_files, PATH_TYPE
 from flash.core.data.utilities.samples import to_samples
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
@@ -98,9 +98,9 @@ class SemanticSegmentationFilesInput(SemanticSegmentationInput):
     ) -> List[Dict[str, Any]]:
         self.load_labels_map(num_classes, labels_map)
         if mask_files is None:
-            files = filter_valid_files(files, valid_extensions=IMG_EXTENSIONS)
+            files = filter_valid_files(files, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
         else:
-            files, mask_files = filter_valid_files(files, mask_files, valid_extensions=IMG_EXTENSIONS)
+            files, mask_files = filter_valid_files(files, mask_files, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
         return to_samples(files, mask_files)
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
