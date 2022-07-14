@@ -30,20 +30,19 @@ from flash.core.data.utilities.loading import (
 from flash.core.utilities.imports import (
     _AUDIO_AVAILABLE,
     _AUDIO_TESTING,
-    _IMAGE_AVAILABLE,
     _IMAGE_TESTING,
     _PANDAS_AVAILABLE,
     _TABULAR_TESTING,
+    Image,
 )
 
 if _AUDIO_AVAILABLE:
     import soundfile as sf
 
-if _IMAGE_AVAILABLE:
-    from PIL import Image
-
 if _PANDAS_AVAILABLE:
     from pandas import DataFrame
+else:
+    DataFrame = object
 
 
 def write_image(file_path):
@@ -139,3 +138,30 @@ def test_load_data_frame(tmpdir, extension, write):
     data_frame = load_data_frame(file_path)
 
     assert isinstance(data_frame, DataFrame)
+
+
+@pytest.mark.parametrize(
+    "path, loader, target_type",
+    [
+        pytest.param(
+            "https://pl-flash-data.s3.amazonaws.com/images/ant_bee.png",
+            load_image,
+            Image.Image,
+            marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed."),
+        ),
+        pytest.param(
+            "https://pl-flash-data.s3.amazonaws.com/images/ant_bee.png",
+            load_spectrogram,
+            np.ndarray,
+            marks=pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed."),
+        ),
+        pytest.param(
+            "https://pl-flash-data.s3.amazonaws.com/titanic.csv",
+            load_data_frame,
+            DataFrame,
+            marks=pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed."),
+        ),
+    ],
+)
+def test_load_remote(path, loader, target_type):
+    assert isinstance(loader(path), target_type)
