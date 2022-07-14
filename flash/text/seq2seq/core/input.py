@@ -15,6 +15,7 @@ from typing import List, Optional
 
 import flash
 from flash.core.data.io.input import DataKeys, Input
+from flash.core.data.utilities.loading import load_data_frame
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 
@@ -57,9 +58,8 @@ class Seq2SeqCSVInput(Seq2SeqInputBase):
         input_key: str,
         target_key: Optional[str] = None,
     ) -> Dataset:
-        dataset_dict = load_dataset("csv", data_files={"data": str(csv_file)})
         return super().load_data(
-            dataset_dict["data"],
+            Dataset.from_pandas(load_data_frame(csv_file)),
             input_key,
             target_key,
         )

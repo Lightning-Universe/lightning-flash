@@ -707,6 +707,8 @@ class AudioClassificationData(DataModule):
         Examples
         ________
 
+        The files can be in Comma Separated Values (CSV) format with either a ``.csv`` or ``.txt`` extension.
+
         .. testsetup::
 
             >>> import os
@@ -778,6 +780,80 @@ class AudioClassificationData(DataModule):
             >>> shutil.rmtree("predict_folder")
             >>> os.remove("train_data.csv")
             >>> os.remove("predict_data.csv")
+
+        Alternatively, the files can be in Tab Separated Values (TSV) format with a ``.tsv`` extension.
+
+        .. testsetup::
+
+            >>> import os
+            >>> from PIL import Image
+            >>> from pandas import DataFrame
+            >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
+            >>> os.makedirs("train_folder", exist_ok=True)
+            >>> os.makedirs("predict_folder", exist_ok=True)
+            >>> _ = [rand_image.save(os.path.join("train_folder", f"spectrogram_{i}.png")) for i in range(1, 4)]
+            >>> _ = [rand_image.save(
+            ...     os.path.join("predict_folder", f"predict_spectrogram_{i}.png")
+            ... ) for i in range(1, 4)]
+            >>> DataFrame.from_dict({
+            ...     "images": ["spectrogram_1.png", "spectrogram_2.png", "spectrogram_3.png"],
+            ...     "targets": ["meow", "bark", "meow"],
+            ... }).to_csv("train_data.tsv", sep="\\t", index=False)
+            >>> DataFrame.from_dict({
+            ...     "images": ["predict_spectrogram_1.png", "predict_spectrogram_2.png", "predict_spectrogram_3.png"],
+            ... }).to_csv("predict_data.tsv", sep="\\t", index=False)
+
+        The file ``train_data.tsv`` contains the following:
+
+        .. code-block::
+
+            images              targets
+            spectrogram_1.png   meow
+            spectrogram_2.png   bark
+            spectrogram_3.png   meow
+
+        The file ``predict_data.tsv`` contains the following:
+
+        .. code-block::
+
+            images
+            predict_spectrogram_1.png
+            predict_spectrogram_2.png
+            predict_spectrogram_3.png
+
+        .. doctest::
+
+            >>> from flash import Trainer
+            >>> from flash.audio import AudioClassificationData
+            >>> from flash.image import ImageClassifier
+            >>> datamodule = AudioClassificationData.from_csv(
+            ...     "images",
+            ...     "targets",
+            ...     train_file="train_data.tsv",
+            ...     train_images_root="train_folder",
+            ...     predict_file="predict_data.tsv",
+            ...     predict_images_root="predict_folder",
+            ...     transform_kwargs=dict(spectrogram_size=(128, 128)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            2
+            >>> datamodule.labels
+            ['bark', 'meow']
+            >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> import shutil
+            >>> shutil.rmtree("train_folder")
+            >>> shutil.rmtree("predict_folder")
+            >>> os.remove("train_data.tsv")
+            >>> os.remove("predict_data.tsv")
         """
 
         ds_kw = dict(
