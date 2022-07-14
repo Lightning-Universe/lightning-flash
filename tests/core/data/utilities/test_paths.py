@@ -111,25 +111,30 @@ def test_filter_valid_files_no_invalid_with_additional_list(tmpdir):
 # potentially not needed since this is used in
 # filter_valid_files
 # it may be app. to add (pragma no cover) at func def
-def test_has_file_allowed_extension():
+@pytest.mark.skip(reason="not implemented")
+def test_has_file_allowed_extension(tmpdir):
     pass
 
 
 # TODO write test_make_dataset
-def test_make_dataset():
+@pytest.mark.skip(reason="not implemented")
+def test_make_dataset(tmpdir):
     pass
 
 
 # TODO write test_isdir
-def test_isdir():
+@pytest.mark.skip(reason="not implemented")
+def test_isdir(tmpdir):
     pass
 
 
 # TODO write test_listsubdir
-def test_listsubdir():
+@pytest.mark.skip(reason="not implemented")
+def test_listsubdir(tmpdir):
     pass
 
 
 # TODO write test_list_valid_files
-def test_list_valid_files():
+@pytest.mark.skip(reason="not implemented")
+def test_list_valid_files(tmpdir):
     pass
