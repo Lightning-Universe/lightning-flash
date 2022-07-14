@@ -17,7 +17,6 @@ Core Maintainers
 - Justus Schock (`justusschock <https://github.com/justusschock>`_)
 - Akihiro Nitta (`akihironitta <https://github.com/akihironitta>`_)
 - Aniket Maurya (`aniketmaurya <https://github.com/aniketmaurya>`_)
-- Ananya Harsh Jha (`ananyahjha93 <https://github.com/ananyahjha93>`_)
 - Sivaraman Karthik Rangasai (`karthikrangasai <https://github.com/karthikrangasai>`_)
 - Pietro Lesci (`pietrolesci <https://github.com/pietrolesci>`_)
 
@@ -25,3 +24,4 @@ Alumni
 ------
 
 - Sean Narenthiran (`SeanNaren <https://github.com/SeanNaren>`_)
+- Ananya Harsh Jha (`ananyahjha93 <https://github.com/ananyahjha93>`_)
