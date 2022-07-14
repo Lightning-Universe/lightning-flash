@@ -24,7 +24,6 @@ from flash.core.utilities.imports import _AUDIO_AVAILABLE, _TORCHVISION_AVAILABL
 
 if _AUDIO_AVAILABLE:
     import librosa
-    from soundfile import SoundFile
     from torchaudio.transforms import Spectrogram
 
 if _TORCHVISION_AVAILABLE:
@@ -85,6 +84,9 @@ def _load_spectrogram_from_numpy(file):
 
 
 def _load_spectrogram_from_audio(file, sampling_rate: int = 16000, n_fft: int = 400):
+    # Import locally to prevent import errors if system dependencies are not available.
+    from soundfile import SoundFile
+
     sound_file = SoundFile(file)
     waveform, _ = librosa.load(sound_file, sr=sampling_rate)
     return Spectrogram(n_fft, normalized=True)(torch.from_numpy(waveform).unsqueeze(0)).permute(1, 2, 0).numpy()
