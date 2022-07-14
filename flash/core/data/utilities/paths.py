@@ -178,7 +178,7 @@ def filter_valid_files(
         invalid_extensions = list({"." + f.split(".")[-1] for f in invalid})
         rank_zero_warn(
             f"Found invalid file extensions: {', '.join(invalid_extensions)}. "
-            f"Files with these extensions will be ignored. "
+            "Files with these extensions will be ignored. "
             f"The supported file extensions are: {', '.join(valid_extensions)}."
         )
 
