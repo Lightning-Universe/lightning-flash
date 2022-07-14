@@ -179,11 +179,9 @@ def filter_valid_files(
 
     if invalid:
         invalid_extensions = list({"." + f.split(".")[-1] for f in invalid})
-        invalid_extensions = ", ".join(invalid_extensions)
-        valid_extensions = ", ".join(valid_extensions)
         rank_zero_warn(
-            f"Found invalid file extensions: {invalid_extensions}"
-            f"The supported file extensions are: {valid_extensions}"
+            f"Found invalid file extensions: {', '.join(invalid_extensions)}"
+            f"The supported file extensions are: {', '.join(valid_extensions)}"
         )
 
     return filtered
