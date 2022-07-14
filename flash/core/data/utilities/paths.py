@@ -15,7 +15,7 @@ import os
 from typing import Any, Callable, cast, List, Optional, Tuple, TypeVar, Union
 
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from pytorch_lightning.utilities.rank_zero import rank_zero_warn
+from pytorch_lightning.utilities import rank_zero_warn
 
 from flash.core.data.utilities.sort import sorted_alphanumeric
 
