@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Any, Callable, Dict, List, Optional, Type, Union, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import pandas as pd
 import torch
