@@ -144,13 +144,13 @@ def test_load_data_frame(tmpdir, extension, write):
     "path, loader, target_type",
     [
         pytest.param(
-            "https://pl-flash-data.s3.amazonaws.com/images/ant_bee.png",
+            "https://pl-flash-data.s3.amazonaws.com/images/ant_1.png",
             load_image,
             Image.Image,
             marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed."),
         ),
         pytest.param(
-            "https://pl-flash-data.s3.amazonaws.com/images/ant_bee.png",
+            "https://pl-flash-data.s3.amazonaws.com/images/ant_1.png",
             load_spectrogram,
             np.ndarray,
             marks=pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed."),
