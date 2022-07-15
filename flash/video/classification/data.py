@@ -65,6 +65,7 @@ if not _VIDEO_TESTING:
         "VideoClassificationData.from_folders",
         "VideoClassificationData.from_data_frame",
         "VideoClassificationData.from_csv",
+        "VideoClassificationData.from_tensors",
     ]
 if not _VIDEO_EXTRAS_TESTING:
     __doctest_skip__ += ["VideoClassificationData.from_fiftyone"]
