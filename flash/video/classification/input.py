@@ -43,8 +43,13 @@ if _PYTORCHVIDEO_AVAILABLE:
     from flash.video.classification.utils import LabeledVideoTensorDataset
 
 else:
-    ClipSampler, LabeledVideoDataset, EncodedVideo, ApplyTransformToKey = None, None, None, None
-    LabeledVideoTensorDataset = None
+    ClipSampler, LabeledVideoDataset, LabeledVideoTensorDataset, EncodedVideo, ApplyTransformToKey = (
+        None,
+        None,
+        None,
+        None,
+        None,
+    )
 
 
 def _make_clip_sampler(
@@ -98,6 +103,7 @@ class VideoClassificationTensorsBaseInput(IterableInput, ClassificationInputMixi
         video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
         target_formatter: Optional[TargetFormatter] = None,
     ) -> "LabeledVideoTensorDataset":
+        # Note: We take whatever is the shortest out of inputs and targets
         dataset = LabeledVideoTensorDataset(list(zip(inputs, targets)), video_sampler=video_sampler)
         if not self.predicting:
             self.load_target_metadata(

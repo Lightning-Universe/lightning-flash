@@ -28,6 +28,8 @@ from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _VIDEO_AVAILABLE, 
 from flash.video import VideoClassificationData, VideoClassifier
 from tests.helpers.task_tester import TaskTester
 
+from tests.video.classification.test_data import mock_video_tensors, create_dummy_video_frames
+
 if _FIFTYONE_AVAILABLE:
     import fiftyone as fo
 
@@ -68,17 +70,6 @@ class TestVideoClassifier(TaskTester):
         return self.example_train_sample
 
 
-def create_dummy_video_frames(num_frames: int, height: int, width: int):
-    y, x = torch.meshgrid(torch.linspace(-2, 2, height), torch.linspace(-2, 2, width))
-    data = []
-    for i in range(num_frames):
-        xc = float(i) / num_frames
-        yc = 1 - float(i) / (2 * num_frames)
-        d = torch.exp(-((x - xc) ** 2 + (y - yc) ** 2) / 2) * 255
-        data.append(d.unsqueeze(2).repeat(1, 1, 3).byte())
-    return torch.stack(data, 0)
-
-
 # https://github.com/facebookresearch/pytorchvideo/blob/4feccb607d7a16933d485495f91d067f177dd8db/tests/utils.py#L33
 @contextlib.contextmanager
 def temp_encoded_video(num_frames: int, fps: int, height=10, width=10, prefix=None, directory=None):
@@ -95,19 +86,6 @@ def temp_encoded_video(num_frames: int, fps: int, height=10, width=10, prefix=No
         io.write_video(f.name, data, fps=fps, video_codec=video_codec, options=options)
         yield f.name, thwc_to_cthw(data).to(torch.float32)
     os.unlink(f.name)
-
-
-@contextlib.contextmanager
-def temp_encoded_tensors(num_frames: int, height=10, width=10):
-    data = create_dummy_video_frames(num_frames, height, width)
-    yield thwc_to_cthw(data).to(torch.float32)
-
-
-@contextlib.contextmanager
-def mock_video_tensors():
-    num_frames = 10
-    with temp_encoded_tensors(num_frames=num_frames) as tens:
-        yield tens
 
 
 @contextlib.contextmanager
@@ -243,19 +221,19 @@ def test_video_classifier_finetune_from_data_frame(tmpdir):
 @pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
 def test_video_classifier_finetune_from_tensors(tmpdir):
     with mock_video_tensors() as (mock_tensors):
-        # print("mock tensors: ", mock_tensors)
         datamodule = VideoClassificationData.from_tensors(
-            "data",  # TODO: this was file before
+            "data",
             "target",
-            train_data={"data": torch.stack((mock_tensors, mock_tensors)), "target": [1, 2]},
-            video_sampler=SequentialSampler,  # TODO: do you need it?
+            train_data={"data": torch.stack((mock_tensors, mock_tensors)), "target": ["Patient", "Doctor"]},
+            video_sampler=SequentialSampler,
             batch_size=1,
         )
 
         for sample in datamodule.train_dataset.data:
-            expected_t_shape = 10
+            expected_t_shape = 5
             assert sample["video"].shape[1] == expected_t_shape
 
+        assert len(datamodule.labels) == 2, f"Expected number of labels to be 2 but found {len(datamodule.labels)}"
         model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50")
         trainer = flash.Trainer(default_root_dir=tmpdir, fast_dev_run=True, gpus=torch.cuda.device_count())
         trainer.finetune(model, datamodule=datamodule)
