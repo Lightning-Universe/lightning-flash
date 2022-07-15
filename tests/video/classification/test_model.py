@@ -27,8 +27,7 @@ from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _VIDEO_AVAILABLE, _VIDEO_TESTING
 from flash.video import VideoClassificationData, VideoClassifier
 from tests.helpers.task_tester import TaskTester
-
-from tests.video.classification.test_data import mock_video_tensors, create_dummy_video_frames
+from tests.video.classification.test_data import create_dummy_video_frames, mock_video_tensors
 
 if _FIFTYONE_AVAILABLE:
     import fiftyone as fo
