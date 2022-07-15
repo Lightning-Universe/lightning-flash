@@ -1,6 +1,7 @@
 import contextlib
 from typing import Union
 
+import pytest
 import torch
 
 from flash.core.utilities.imports import _VIDEO_AVAILABLE
@@ -57,6 +58,7 @@ def _check_frames(data, expected_frames_count: Union[list, int], expected_shapes
 
 
 # Same number of frames per video/sample
+@pytest.mark.skipif(not _VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
 def test_load_data_from_tensors_uniform_frames():
     data = []
     labels = []
@@ -74,6 +76,7 @@ def test_load_data_from_tensors_uniform_frames():
 
 
 # Different number of frames per video/sample
+@pytest.mark.skipif(not _VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
 def test_load_data_from_tensors_different_frames():
     num_frames = [5, 3]
     labels = ["label1", "label2"]
