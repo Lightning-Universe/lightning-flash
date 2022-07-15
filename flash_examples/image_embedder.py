@@ -35,7 +35,7 @@ embedder = ImageEmbedder(
 )
 
 # 3. Create the trainer and pre-train the encoder
-trainer = flash.Trainer(max_epochs=1, gpus=torch.cuda.device_count())
+trainer = flash.Trainer(max_epochs=1, gpus=1 if torch.cuda.device_count() > 1 else 0)
 trainer.fit(embedder, datamodule=datamodule)
 
 # 4. Save the model!
