@@ -93,6 +93,8 @@ class TextClassificationData(DataModule):
         Examples
         ________
 
+        The files can be in Comma Separated Values (CSV) format with either a ``.csv`` or ``.txt`` extension.
+
         .. testsetup::
 
             >>> import os
@@ -133,8 +135,7 @@ class TextClassificationData(DataModule):
             ...     train_file="train_data.csv",
             ...     predict_file="predict_data.csv",
             ...     batch_size=2,
-            ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            Downloading...
+            ... )
             >>> datamodule.num_classes
             3
             >>> datamodule.labels
@@ -150,6 +151,65 @@ class TextClassificationData(DataModule):
 
             >>> os.remove("train_data.csv")
             >>> os.remove("predict_data.csv")
+
+        Alternatively, the files can be in Tab Separated Values (TSV) format with a ``.tsv`` extension.
+
+        .. testsetup::
+
+            >>> import os
+            >>> from pandas import DataFrame
+            >>> DataFrame.from_dict({
+            ...     "reviews": ["Best movie ever!", "Not good", "Fine I guess"],
+            ...     "targets": ["positive", "negative", "neutral"],
+            ... }).to_csv("train_data.tsv", sep="\\t", index=False)
+            >>> DataFrame.from_dict({
+            ...     "reviews": ["Worst movie ever!", "I didn't enjoy it", "It was ok"],
+            ... }).to_csv("predict_data.tsv", sep="\\t", index=False)
+
+        The file ``train_data.tsv`` contains the following:
+
+        .. code-block::
+
+            reviews             targets
+            Best movie ever!    positive
+            Not good            negative
+            Fine I guess        neutral
+
+        The file ``predict_data.tsv`` contains the following:
+
+        .. code-block::
+
+            reviews
+            Worst movie ever!
+            I didn't enjoy it
+            It was ok
+
+        .. doctest::
+
+            >>> from flash import Trainer
+            >>> from flash.text import TextClassifier, TextClassificationData
+            >>> datamodule = TextClassificationData.from_csv(
+            ...     "reviews",
+            ...     "targets",
+            ...     train_file="train_data.tsv",
+            ...     predict_file="predict_data.tsv",
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            3
+            >>> datamodule.labels
+            ['negative', 'neutral', 'positive']
+            >>> model = TextClassifier(num_classes=datamodule.num_classes, backbone="prajjwal1/bert-tiny")
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> os.remove("train_data.tsv")
+            >>> os.remove("predict_data.tsv")
         """
         ds_kw = dict(
             target_formatter=target_formatter,
