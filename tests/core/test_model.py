@@ -37,6 +37,7 @@ from flash.core.adapter import Adapter
 from flash.core.classification import ClassificationTask
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
+from flash.core.utilities.embedder import Embedder
 from flash.core.utilities.imports import (
     _AUDIO_TESTING,
     _CORE_TESTING,
@@ -288,6 +289,32 @@ def test_model_download(tmpdir, cls, filename):
     with tmpdir.as_cwd():
         task = cls.load_from_checkpoint(url + filename)
         assert isinstance(task, cls)
+
+
+class DummyTask(Task):
+    def __init__(self):
+        super().__init__()
+
+        self.model = nn.Sequential(
+            nn.Linear(10, 20),
+            nn.Linear(20, 30),
+            nn.Linear(30, 40),
+        )
+
+    def predict_step(self, batch, batch_idx: int, dataloader_idx: int = 0):
+        return self.model(batch)
+
+
+def test_as_embedder():
+    embedder = DummyTask().as_embedder("model.1")
+
+    assert isinstance(embedder, Embedder)
+    assert embedder.predict_step(torch.rand(10, 10), 0, 0).size(1) == 30
+
+
+def test_available_layers():
+    task = DummyTask()
+    assert task.available_layers() == ["output", "", "model", "model.0", "model.1", "model.2"]
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
