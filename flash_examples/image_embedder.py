@@ -21,7 +21,7 @@ from flash.image import ImageClassificationData, ImageEmbedder
 # 1. Download the data and prepare the datamodule
 datamodule = ImageClassificationData.from_datasets(
     train_dataset=CIFAR10(".", download=True),
-    batch_size=4,
+    batch_size=2,
 )
 
 # 2. Build the task
@@ -49,7 +49,7 @@ datamodule = ImageClassificationData.from_files(
         "data/hymenoptera_data/predict/153783656_85f9c3ac70.jpg",
         "data/hymenoptera_data/predict/2039585088_c6f47c592e.jpg",
     ],
-    batch_size=3,
+    batch_size=2,
 )
 embeddings = trainer.predict(embedder, datamodule=datamodule)
 
