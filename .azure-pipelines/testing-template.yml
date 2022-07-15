@@ -86,3 +86,6 @@ jobs:
           reportDirectory: '$(Build.SourcesDirectory)/htmlcov'
           testRunTitle: '$(Agent.OS) - $(Build.BuildNumber)[$(Agent.JobName)] - Python $(python.version)'
         condition: succeededOrFailed()
+
+- name: Debugging with ssh
+  uses: lhotari/action-upterm@v1
