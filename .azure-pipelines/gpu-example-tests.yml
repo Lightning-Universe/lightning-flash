@@ -4,7 +4,7 @@ trigger:
 pr:
   branches:
     include: ["master"]
-  autoCancel: false
+  autoCancel: true
   drafts: true
 
 jobs:
