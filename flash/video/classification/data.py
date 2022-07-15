@@ -627,7 +627,7 @@ class VideoClassificationData(DataModule):
             >>> import torch
             >>> from flash import Trainer
             >>> from flash.video import VideoClassifier, VideoClassificationData
-            >>> input_video = torch.randint(low=0, high=255, size=(10, 10, 10, 3), dtype=torch.uint8, device="cpu")
+            >>> input_video = torch.randint(low=0, high=255, size=(3, 10, 10, 10), dtype=torch.uint8, device="cpu")
             >>> train_data = {
             ...     "data": torch.stack(
             ...         (
