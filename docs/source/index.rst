@@ -44,6 +44,7 @@ Lightning Flash
    general/optimization
    general/classification_targets
    general/customizing_transforms
+   general/remote_data_loading
 
 .. toctree::
    :maxdepth: 1

@@ -22,7 +22,8 @@ from torch.utils.data import Sampler
 from flash.core.data.io.classification_input import ClassificationInputMixin
 from flash.core.data.io.input import DataKeys, Input, IterableInput
 from flash.core.data.utilities.classification import MultiBinaryTargetFormatter, TargetFormatter
-from flash.core.data.utilities.data_frame import read_csv, resolve_files, resolve_targets
+from flash.core.data.utilities.data_frame import resolve_files, resolve_targets
+from flash.core.data.utilities.loading import load_data_frame
 from flash.core.data.utilities.paths import list_valid_files, make_dataset, PATH_TYPE
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, lazy_import, requires
@@ -254,7 +255,7 @@ class VideoClassificationCSVInput(VideoClassificationDataFrameInput):
         decoder: str = "pyav",
         target_formatter: Optional[TargetFormatter] = None,
     ) -> "LabeledVideoDataset":
-        data_frame = read_csv(csv_file)
+        data_frame = load_data_frame(csv_file)
         if root is None:
             root = os.path.dirname(csv_file)
         return super().load_data(
@@ -404,7 +405,7 @@ class VideoClassificationCSVPredictInput(VideoClassificationDataFramePredictInpu
         decode_audio: bool = False,
         decoder: str = "pyav",
     ) -> List[str]:
-        data_frame = read_csv(csv_file)
+        data_frame = load_data_frame(csv_file)
         if root is None:
             root = os.path.dirname(csv_file)
         return super().predict_load_data(

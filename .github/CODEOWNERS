@@ -5,7 +5,7 @@
 # the repo. Unless a later match takes precedence,
 # @global-owner1 and @global-owner2 will be requested for
 # review when someone opens a pull request.
-* @ethanwharris @borda @tchaton @justusschock @kaushikb11
+* @ethanwharris @borda @tchaton @justusschock @krshrimali @kaushikb11
 
 # owners
 /.github/CODEOWNERS   @williamfalcon
