@@ -30,12 +30,12 @@ embedder = ImageEmbedder(
     training_strategy="barlow_twins",
     head="barlow_twins_head",
     pretraining_transform="barlow_twins_transform",
-    training_strategy_kwargs={"latent_embedding_dim": 128},
-    pretraining_transform_kwargs={"size_crops": [32]},
+    training_strategy_kwargs={"latent_embedding_dim": 512},
+    # pretraining_transform_kwargs={"size_crops": [32]},
 )
 
 # 3. Create the trainer and pre-train the encoder
-trainer = flash.Trainer(max_epochs=1, gpus=1 if torch.cuda.device_count() > 1 else 0)
+trainer = flash.Trainer(max_epochs=1, gpus=torch.cuda.device_count())
 trainer.fit(embedder, datamodule=datamodule)
 
 # 4. Save the model!
