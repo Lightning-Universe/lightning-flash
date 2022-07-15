@@ -43,7 +43,9 @@ def _check_frames(data, expected_frames_count: Union[list, int], expected_shapes
         expected_frames_count = [expected_frames_count]
 
     # to be replaced
-    assert 2 == len(expected_frames_count), f"Expected: ?? but got len(expected_frame_count) samples in the dataset."
+    assert data.size() == len(
+        expected_frames_count
+    ), f"Expected: {data.size()} but got {len(expected_frames_count)} samples in the dataset."
     for idx, sample_dict in enumerate(data):
         sample = sample_dict["video"]
         assert (

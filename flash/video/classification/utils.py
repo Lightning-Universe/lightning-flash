@@ -111,3 +111,6 @@ class LabeledVideoTensorDataset(torch.utils.data.IterableDataset):
             self._video_random_generator.manual_seed(base_seed)
 
         return self
+
+    def size(self):
+        return len(self._labeled_videos)
