@@ -310,10 +310,7 @@ def test_as_embedder():
     embedder = DummyTask().as_embedder(f"model.{layer_number}")
 
     assert isinstance(embedder, Embedder)
-    assert (
-        embedder.predict_step(torch.rand(10, 10), 0, 0).size(1)
-        == embedder.model.model[layer_number].out_features
-    )
+    assert embedder.predict_step(torch.rand(10, 10), 0, 0).size(1) == embedder.model.model[layer_number].out_features
 
 
 def test_available_layers():
