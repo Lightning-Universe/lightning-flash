@@ -21,7 +21,7 @@ from flash.image import ImageClassificationData, ImageEmbedder
 # 1. Download the data and prepare the datamodule
 datamodule = ImageClassificationData.from_datasets(
     train_dataset=CIFAR10(".", download=True),
-    batch_size=16,
+    batch_size=32,
 )
 
 # 2. Build the task
@@ -30,8 +30,8 @@ embedder = ImageEmbedder(
     training_strategy="barlow_twins",
     head="barlow_twins_head",
     pretraining_transform="barlow_twins_transform",
-    training_strategy_kwargs={"latent_embedding_dim": 512},
-    # pretraining_transform_kwargs={"size_crops": [32]},
+    training_strategy_kwargs={"latent_embedding_dim": 128},
+    pretraining_transform_kwargs={"size_crops": [32]},
 )
 
 # 3. Create the trainer and pre-train the encoder
