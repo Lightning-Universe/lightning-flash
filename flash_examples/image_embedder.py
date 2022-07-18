@@ -21,7 +21,7 @@ from flash.image import ImageClassificationData, ImageEmbedder
 # 1. Download the data and prepare the datamodule
 datamodule = ImageClassificationData.from_datasets(
     train_dataset=CIFAR10(".", download=True),
-    batch_size=32,
+    batch_size=8,
 )
 
 # 2. Build the task

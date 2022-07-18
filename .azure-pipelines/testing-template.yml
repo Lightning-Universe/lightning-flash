@@ -4,7 +4,7 @@ jobs:
     - job:
       displayName: "domain ${{config}} with GPUs ${{gids}}"
       # how long to run the job before automatically cancelling
-      timeoutInMinutes: 75
+      timeoutInMinutes: 45
       # how much time to give 'run always even if cancelled tasks' before stopping them
       cancelTimeoutInMinutes: 2
 
