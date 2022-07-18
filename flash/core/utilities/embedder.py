@@ -71,12 +71,15 @@ class Embedder(Task):
     def test_step(self, batch: Any, batch_idx: int) -> Any:
         raise NotImplementedError("Testing an `Embedder` is not supported.")
 
-    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+    def forward(self, batch: Any) -> Any:
         try:
             self._register_hook()
-            return self.model.predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
+            return self.model.predict_step(batch, 0, dataloader_idx=0)
         except StopForward:
             return self._out
         finally:
             self._remove_hook()
             self._out = None
+
+    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
+        return self(batch)

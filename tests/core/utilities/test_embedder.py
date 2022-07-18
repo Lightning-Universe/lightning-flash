@@ -52,6 +52,7 @@ def test_embedder(layer, size):
     embedder = Embedder(model, layer)
 
     assert embedder.predict_step(torch.rand(10, 10), 0, 0).size(1) == size
+    assert embedder(torch.rand(10, 10)).size(1) == size
 
 
 @pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
