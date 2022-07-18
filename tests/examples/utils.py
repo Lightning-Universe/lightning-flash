@@ -19,7 +19,7 @@ from typing import List, Optional, Tuple
 def call_script(
     filepath: str,
     args: Optional[List[str]] = None,
-    timeout: Optional[int] = 60 * 10,
+    timeout: Optional[int] = 60 * 20,
 ) -> Tuple[int, str, str]:
     with open(filepath) as original:
         data = original.readlines()
