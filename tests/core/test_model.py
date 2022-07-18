@@ -295,7 +295,7 @@ class DummyTask(Task):
     def __init__(self):
         super().__init__()
 
-        self.model = nn.Sequential(
+        self.backbone = nn.Sequential(
             nn.Linear(10, 20),
             nn.Linear(20, 30),
             nn.Linear(30, 40),
@@ -308,16 +308,16 @@ class DummyTask(Task):
 @pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_as_embedder():
     layer_number = 1
-    embedder = DummyTask().as_embedder(f"model.{layer_number}")
+    embedder = DummyTask().as_embedder(f"backbone.{layer_number}")
 
     assert isinstance(embedder, Embedder)
-    assert embedder.predict_step(torch.rand(10, 10), 0, 0).size(1) == embedder.model.model[layer_number].out_features
+    assert embedder.predict_step(torch.rand(10, 10), 0, 0).size(1) == embedder.model.backbone[layer_number].out_features
 
 
 @pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_available_layers():
     task = DummyTask()
-    assert task.available_layers() == ["output", "", "model", "model.0", "model.1", "model.2"]
+    assert task.available_layers() == ["output", "", "backbone", "backbone.0", "backbone.1", "backbone.2"]
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")

@@ -23,13 +23,13 @@ from flash.core.utilities.imports import _CORE_TESTING
 
 
 class EmbedderTestModel(LightningModule):
-    def __init__(self, model):
+    def __init__(self, backbone):
         super().__init__()
 
-        self.model = model
+        self.backbone = backbone
 
     def predict_step(self, batch, batch_idx: int, dataloader_idx: int = 0):
-        return self.model(batch)
+        return self.backbone(batch)
 
 
 class NLayerModel(EmbedderTestModel):
@@ -38,7 +38,7 @@ class NLayerModel(EmbedderTestModel):
 
 
 @pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
-@pytest.mark.parametrize("layer, size", [("model.1", 30), ("output", 40), ("", 40)])
+@pytest.mark.parametrize("layer, size", [("backbone.1", 30), ("output", 40), ("", 40)])
 def test_embedder(layer, size):
     """Tests that the embedder ``predict_step`` correctly returns the output from the requested layer."""
     model = EmbedderTestModel(
@@ -63,7 +63,7 @@ def test_embedder_scaling_overhead():
 
     Note that this bound is intentionally high in an effort to reduce the flakiness of the test.
     """
-    shallow_embedder = Embedder(NLayerModel(3), "model.2")
+    shallow_embedder = Embedder(NLayerModel(3), "backbone.2")
 
     start = time.perf_counter()
     shallow_embedder.predict_step(torch.rand(10, 1000), 0, 0)
@@ -71,7 +71,7 @@ def test_embedder_scaling_overhead():
 
     shallow_time = end - start
 
-    deep_embedder = Embedder(NLayerModel(200), "model.2")
+    deep_embedder = Embedder(NLayerModel(200), "backbone.2")
 
     start = time.perf_counter()
     deep_embedder.predict_step(torch.rand(10, 1000), 0, 0)
