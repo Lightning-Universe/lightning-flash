@@ -1,7 +1,7 @@
 matplotlib
 fiftyone
+classy_vision
 vissl>=0.1.5
-classy-vision @ https://github.com/facebookresearch/ClassyVision/tarball/4785d5ee19d3bcedd5b28c1eb51ea1f59188b54d
 icevision>=0.8
 icedata
 effdet
