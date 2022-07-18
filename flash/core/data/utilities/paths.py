@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Any, Callable, cast, List, Optional, Tuple, TypeVar, Union
+from typing import Any, Callable, cast, List, Optional, Tuple, Union
 
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -20,8 +20,6 @@ from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from flash.core.data.utilities.sort import sorted_alphanumeric
 
 PATH_TYPE = Union[str, bytes, os.PathLike]
-
-T = TypeVar("T")
 
 
 # adapted from torchvision:

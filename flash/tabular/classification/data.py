@@ -235,6 +235,8 @@ class TabularClassificationData(TabularData):
         Examples
         ________
 
+        The files can be in Comma Separated Values (CSV) format with either a ``.csv`` or ``.txt`` extension.
+
         .. testsetup::
 
             >>> from pandas import DataFrame
@@ -294,6 +296,68 @@ class TabularClassificationData(TabularData):
             >>> import os
             >>> os.remove("train_data.csv")
             >>> os.remove("predict_data.csv")
+
+        Alternatively, the files can be in Tab Separated Values (TSV) format with a ``.tsv`` extension.
+
+        .. testsetup::
+
+            >>> from pandas import DataFrame
+            >>> DataFrame.from_dict({
+            ...     "animal": ["cat", "dog", "cat"],
+            ...     "friendly": ["yes", "yes", "no"],
+            ...     "weight": [6, 10, 5],
+            ... }).to_csv("train_data.tsv", sep="\\t")
+            >>> predict_data = DataFrame.from_dict({
+            ...     "friendly": ["yes", "no", "yes"],
+            ...     "weight": [7, 12, 5],
+            ... }).to_csv("predict_data.tsv", sep="\\t")
+
+        We have a ``train_data.tsv`` with the following contents:
+
+        .. code-block::
+
+            animal  friendly    weight
+            cat     yes         6
+            dog     yes         10
+            cat     no          5
+
+        and a ``predict_data.tsv`` with the following contents:
+
+        .. code-block::
+
+            friendly    weight
+            yes         7
+            no          12
+            yes         5
+
+        .. doctest::
+
+            >>> from flash import Trainer
+            >>> from flash.tabular import TabularClassifier, TabularClassificationData
+            >>> datamodule = TabularClassificationData.from_csv(
+            ...     "friendly",
+            ...     "weight",
+            ...     "animal",
+            ...     train_file="train_data.tsv",
+            ...     predict_file="predict_data.tsv",
+            ...     batch_size=4,
+            ... )
+            >>> datamodule.num_classes
+            2
+            >>> datamodule.labels
+            ['cat', 'dog']
+            >>> model = TabularClassifier.from_data(datamodule, backbone="tabnet")
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> import os
+            >>> os.remove("train_data.tsv")
+            >>> os.remove("predict_data.tsv")
         """
         ds_kw = dict(
             target_formatter=target_formatter,
