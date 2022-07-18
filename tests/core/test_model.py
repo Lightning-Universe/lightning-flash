@@ -305,17 +305,16 @@ class DummyTask(Task):
         return self.model(batch)
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_as_embedder():
-    layer_number = "1"
+    layer_number = 1
     embedder = DummyTask().as_embedder(f"model.{layer_number}")
 
     assert isinstance(embedder, Embedder)
-    assert (
-        embedder.predict_step(torch.rand(10, 10), 0, 0).size(1)
-        == embedder.model.model[layer_number].out_features
-    )
+    assert embedder.predict_step(torch.rand(10, 10), 0, 0).size(1) == embedder.model.model[layer_number].out_features
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_available_layers():
     task = DummyTask()
     assert task.available_layers() == ["output", "", "model", "model.0", "model.1", "model.2"]

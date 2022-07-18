@@ -19,6 +19,7 @@ from pytorch_lightning import LightningModule
 from torch import nn
 
 from flash.core.utilities.embedder import Embedder
+from flash.core.utilities.imports import _CORE_TESTING
 
 
 class EmbedderTestModel(LightningModule):
@@ -36,6 +37,7 @@ class NLayerModel(EmbedderTestModel):
         super().__init__(nn.Sequential(*[nn.Linear(1000, 1000) for _ in range(n_layers)]))
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize("layer, size", [("model.1", 30), ("output", 40), ("", 40)])
 def test_embedder(layer, size):
     """Tests that the embedder ``predict_step`` correctly returns the output from the requested layer."""
@@ -52,10 +54,12 @@ def test_embedder(layer, size):
     assert embedder.predict_step(torch.rand(10, 10), 0, 0).size(1) == size
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_embedder_scaling_overhead():
-    """Tests that embedding to the 3rd layer of a 1000 layer model takes less than double the time of embedding to
-    the same layer of a 3 layer model and therefore in the order of 100s of times faster than executing the full
-    1000 layer model.
+    """Tests that embedding to the 3rd layer of a 200 layer model takes less than double the time of embedding to.
+
+    the same layer of a 3 layer model and therefore in the order of 10s - 100s of times faster than executing the full
+    200 layer model.
 
     Note that this bound is intentionally high in an effort to reduce the flakiness of the test.
     """
@@ -67,7 +71,7 @@ def test_embedder_scaling_overhead():
 
     shallow_time = end - start
 
-    deep_embedder = Embedder(NLayerModel(1000), "model.2")
+    deep_embedder = Embedder(NLayerModel(200), "model.2")
 
     start = time.perf_counter()
     deep_embedder.predict_step(torch.rand(10, 1000), 0, 0)
@@ -78,8 +82,9 @@ def test_embedder_scaling_overhead():
     assert (abs(deep_time - shallow_time) / shallow_time) < 1
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_embedder_raising_overhead():
-    """Tests that embedding to the output layer of a 3 layer model takes less than 5ms more than the time taken to
+    """Tests that embedding to the output layer of a 3 layer model takes less than 10ms more than the time taken to
     execute the model without the embedder.
 
     Note that this bound is intentionally high in an effort to reduce the flakiness of the test.
@@ -99,4 +104,4 @@ def test_embedder_raising_overhead():
 
     embedder_time = end - start
 
-    assert abs(embedder_time - model_time) < 0.005
+    assert abs(embedder_time - model_time) < 0.01
