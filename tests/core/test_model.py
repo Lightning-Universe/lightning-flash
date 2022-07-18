@@ -302,7 +302,7 @@ class DummyTask(Task):
         )
 
     def predict_step(self, batch, batch_idx: int, dataloader_idx: int = 0):
-        return self.model(batch)
+        return self.backbone(batch)
 
 
 @pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
