@@ -31,7 +31,7 @@ embedder = ImageEmbedder(
     head="barlow_twins_head",
     pretraining_transform="barlow_twins_transform",
     training_strategy_kwargs={"latent_embedding_dim": 512},
-    pretraining_transform_kwargs={"size_crops": [32]},
+    # pretraining_transform_kwargs={"size_crops": [32]},
 )
 
 # 3. Create the trainer and pre-train the encoder
