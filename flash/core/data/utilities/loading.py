@@ -64,7 +64,7 @@ def _load_image_from_image(file, drop_alpha: bool = True):
     img = Image.open(file)
     img.load()
 
-    if img.mode == "RGBA" and drop_alpha:
+    if img.mode != "RGB":
         img = img.convert("RGB")
     return img
 
