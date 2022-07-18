@@ -28,7 +28,7 @@ datamodule = StyleTransferData.from_folders(train_folder="data/coco128/images/tr
 model = StyleTransfer(os.path.join(flash.ASSETS_ROOT, "starry_night.jpg"))
 
 # 3. Create the trainer and train the model
-trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
+trainer = flash.Trainer(max_epochs=1, gpus=torch.cuda.device_count())
 trainer.fit(model, datamodule=datamodule)
 
 # 4. Apply style transfer to a few images!
