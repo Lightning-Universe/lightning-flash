@@ -73,7 +73,7 @@ class SegmentationMatplotlibVisualization(BaseVisualization):
             axs = np.array(axs)
         axs = axs.flatten()
 
-        for i, ax in enumerate(axs.ravel()):
+        for i, ax in enumerate(axs):
             # unpack images and labels
             sample = data[i]
             if isinstance(sample, dict):
