@@ -54,13 +54,10 @@ class SemanticSegmentationInputTransform(InputTransform):
                     [DataKeys.INPUT, DataKeys.TARGET],
                     KorniaParallelTransforms(
                         K.geometry.Resize(self.image_size, interpolation="nearest"),
-                        K.augmentation.RandomHorizontalFlip(p=0.5)
+                        K.augmentation.RandomHorizontalFlip(p=0.5),
                     ),
                 ),
-                ApplyToKeys(
-                    [DataKeys.INPUT],
-                    K.augmentation.Normalize(mean=self.mean, std=self.std)
-                )
+                ApplyToKeys([DataKeys.INPUT], K.augmentation.Normalize(mean=self.mean, std=self.std)),
             ]
         )
 
@@ -71,18 +68,18 @@ class SemanticSegmentationInputTransform(InputTransform):
                     [DataKeys.INPUT, DataKeys.TARGET],
                     KorniaParallelTransforms(K.geometry.Resize(self.image_size, interpolation="nearest")),
                 ),
-                ApplyToKeys(
-                    [DataKeys.INPUT],
-                    K.augmentation.Normalize(mean=self.mean, std=self.std)
-                )
+                ApplyToKeys([DataKeys.INPUT], K.augmentation.Normalize(mean=self.mean, std=self.std)),
             ]
         )
 
     def predict_per_sample_transform(self) -> Callable:
         return ApplyToKeys(
             DataKeys.INPUT,
-            K.geometry.Resize(self.image_size, interpolation="nearest",),
-            K.augmentation.Normalize(mean=self.mean, std=self.std)
+            K.geometry.Resize(
+                self.image_size,
+                interpolation="nearest",
+            ),
+            K.augmentation.Normalize(mean=self.mean, std=self.std),
         )
 
     def collate(self) -> Callable:
