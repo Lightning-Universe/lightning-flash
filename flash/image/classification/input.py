@@ -19,7 +19,8 @@ import pandas as pd
 from flash.core.data.io.classification_input import ClassificationInputMixin
 from flash.core.data.io.input import DataKeys
 from flash.core.data.utilities.classification import MultiBinaryTargetFormatter, TargetFormatter
-from flash.core.data.utilities.data_frame import read_csv, resolve_files, resolve_targets
+from flash.core.data.utilities.data_frame import resolve_files, resolve_targets
+from flash.core.data.utilities.loading import load_data_frame
 from flash.core.data.utilities.paths import filter_valid_files, make_dataset, PATH_TYPE
 from flash.core.data.utilities.samples import to_samples
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
@@ -177,7 +178,7 @@ class ImageClassificationCSVInput(ImageClassificationDataFrameInput):
         resolver: Optional[Callable[[Optional[PATH_TYPE], Any], PATH_TYPE]] = None,
         target_formatter: Optional[TargetFormatter] = None,
     ) -> List[Dict[str, Any]]:
-        data_frame = read_csv(csv_file)
+        data_frame = load_data_frame(csv_file)
         if root is None:
             root = os.path.dirname(csv_file)
         return super().load_data(data_frame, input_key, target_keys, root, resolver, target_formatter=target_formatter)

@@ -59,7 +59,9 @@ class SpeechRecognitionData(DataModule):
         """Load the :class:`~flash.audio.speech_recognition.data.SpeechRecognitionData` from lists of audio files
         and corresponding lists of targets.
 
-        The supported file extensions are: ``.wav``, ``.ogg``, ``.flac``, ``.mat``, and ``.mp3``.
+        The supported file extensions are: ``.aiff``, ``.au``, ``.avr``, ``.caf``, ``.flac``, ``.mat``, ``.mat4``,
+        ``.mat5``, ``.mpc2k``, ``.ogg``, ``.paf``, ``.pvf``, ``.rf64``, ``.sd2``, ``.ircam``, ``.voc``, ``.w64``,
+        ``.wav``, ``.nist``, and ``.wavex``.
         To learn how to customize the transforms applied for each stage, read our
         :ref:`customizing transforms guide <customizing_transforms>`.
 
@@ -150,7 +152,9 @@ class SpeechRecognitionData(DataModule):
         audio file paths and their corresponding targets.
 
         Input audio file paths will be extracted from the ``input_field`` column in the CSV files.
-        The supported file extensions are: ``.wav``, ``.ogg``, ``.flac``, ``.mat``, and ``.mp3``.
+        The supported file extensions are: ``.aiff``, ``.au``, ``.avr``, ``.caf``, ``.flac``, ``.mat``, ``.mat4``,
+        ``.mat5``, ``.mpc2k``, ``.ogg``, ``.paf``, ``.pvf``, ``.rf64``, ``.sd2``, ``.ircam``, ``.voc``, ``.w64``,
+        ``.wav``, ``.nist``, and ``.wavex``.
         The targets will be extracted from the ``target_field`` in the CSV files.
         To learn how to customize the transforms applied for each stage, read our
         :ref:`customizing transforms guide <customizing_transforms>`.
@@ -174,6 +178,8 @@ class SpeechRecognitionData(DataModule):
 
         Examples
         ________
+
+        The files can be in Comma Separated Values (CSV) format with either a ``.csv`` or ``.txt`` extension.
 
         .. testsetup::
 
@@ -220,8 +226,7 @@ class SpeechRecognitionData(DataModule):
             ...     train_file="train_data.csv",
             ...     predict_file="predict_data.csv",
             ...     batch_size=2,
-            ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            Downloading...
+            ... )
             >>> model = SpeechRecognition(backbone="patrickvonplaten/wav2vec2_tiny_random_robust")
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
@@ -236,6 +241,69 @@ class SpeechRecognitionData(DataModule):
             >>> _ = [os.remove(f"predict_speech_{i}.wav") for i in range(1, 4)]
             >>> os.remove("train_data.csv")
             >>> os.remove("predict_data.csv")
+
+        Alternatively, the files can be in Tab Separated Values (TSV) format with either a ``.tsv``.
+
+        .. testsetup::
+
+            >>> import numpy as np
+            >>> from pandas import DataFrame
+            >>> import soundfile as sf
+            >>> samplerate = 1000
+            >>> data = np.random.uniform(-1, 1, size=(samplerate, 2))
+            >>> _ = [sf.write(f"speech_{i}.wav", data, samplerate, subtype='PCM_24') for i in range(1, 4)]
+            >>> _ = [sf.write(f"predict_speech_{i}.wav", data, samplerate, subtype='PCM_24') for i in range(1, 4)]
+            >>> DataFrame.from_dict({
+            ...     "speech_files": ["speech_1.wav", "speech_2.wav", "speech_3.wav"],
+            ...     "targets": ["some speech", "some other speech", "some more speech"],
+            ... }).to_csv("train_data.tsv", sep="\\t", index=False)
+            >>> DataFrame.from_dict({
+            ...     "speech_files": ["predict_speech_1.wav", "predict_speech_2.wav", "predict_speech_3.wav"],
+            ... }).to_csv("predict_data.tsv", sep="\\t", index=False)
+
+        The file ``train_data.tsv`` contains the following:
+
+        .. code-block::
+
+            speech_files    targets
+            speech_1.wav    some speech
+            speech_2.wav    some other speech
+            speech_3.wav    some more speech
+
+        The file ``predict_data.tsv`` contains the following:
+
+        .. code-block::
+
+            speech_files
+            predict_speech_1.wav
+            predict_speech_2.wav
+            predict_speech_3.wav
+
+        .. doctest::
+
+            >>> from flash import Trainer
+            >>> from flash.audio import SpeechRecognitionData, SpeechRecognition
+            >>> datamodule = SpeechRecognitionData.from_csv(
+            ...     "speech_files",
+            ...     "targets",
+            ...     train_file="train_data.tsv",
+            ...     predict_file="predict_data.tsv",
+            ...     batch_size=2,
+            ... )
+            >>> model = SpeechRecognition(backbone="patrickvonplaten/wav2vec2_tiny_random_robust")
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> import os
+            >>> _ = [os.remove(f"speech_{i}.wav") for i in range(1, 4)]
+            >>> _ = [os.remove(f"predict_speech_{i}.wav") for i in range(1, 4)]
+            >>> os.remove("train_data.tsv")
+            >>> os.remove("predict_data.tsv")
         """
 
         ds_kw = dict(
@@ -273,7 +341,9 @@ class SpeechRecognitionData(DataModule):
         audio file paths and their corresponding targets.
 
         Input audio file paths will be extracted from the ``input_field`` field in the JSON files.
-        The supported file extensions are: ``.wav``, ``.ogg``, ``.flac``, ``.mat``, and ``.mp3``.
+        The supported file extensions are: ``.aiff``, ``.au``, ``.avr``, ``.caf``, ``.flac``, ``.mat``, ``.mat4``,
+        ``.mat5``, ``.mpc2k``, ``.ogg``, ``.paf``, ``.pvf``, ``.rf64``, ``.sd2``, ``.ircam``, ``.voc``, ``.w64``,
+        ``.wav``, ``.nist``, and ``.wavex``.
         The targets will be extracted from the ``target_field`` field in the JSON files.
         To learn how to customize the transforms applied for each stage, read our
         :ref:`customizing transforms guide <customizing_transforms>`.
@@ -397,7 +467,9 @@ class SpeechRecognitionData(DataModule):
         * A PyTorch Dataset where the ``__getitem__`` returns a tuple: ``(file_path or , target)``
         * A PyTorch Dataset where the ``__getitem__`` returns a dict: ``{"input": file_path, "target": target}``
 
-        The supported file extensions are: ``.wav``, ``.ogg``, ``.flac``, ``.mat``, and ``.mp3``.
+        The supported file extensions are: ``.aiff``, ``.au``, ``.avr``, ``.caf``, ``.flac``, ``.mat``, ``.mat4``,
+        ``.mat5``, ``.mpc2k``, ``.ogg``, ``.paf``, ``.pvf``, ``.rf64``, ``.sd2``, ``.ircam``, ``.voc``, ``.w64``,
+        ``.wav``, ``.nist``, and ``.wavex``.
         To learn how to customize the transforms applied for each stage, read our
         :ref:`customizing transforms guide <customizing_transforms>`.
 
