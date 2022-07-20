@@ -61,14 +61,14 @@ class SegmentationMatplotlibVisualization(BaseVisualization):
         rows: int = num_samples // cols
 
         # create figure and set title
-        fig, axs = plt.subplots(rows, cols)
+        fig, axs = plt.subplots(rows, cols, figsize=figsize)
         fig.suptitle(title)
 
         if not isinstance(axs, np.ndarray):
             axs = np.array(axs)
         axs = axs.flatten()
 
-        for i, ax in enumerate(axs.ravel()):
+        for i, ax in enumerate(axs):
             # unpack images and labels
             sample = data[i]
             if isinstance(sample, dict):
