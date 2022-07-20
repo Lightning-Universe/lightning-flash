@@ -241,11 +241,19 @@ class TemplateVisualization(BaseVisualization):
     """
 
     def show_load_sample(
-            self, samples: List[Any],
-            running_stage: RunningStage, limit_nb_samples: int = None, figsize: Tuple[int, int] = (6.4, 4.8)):
+        self,
+        samples: List[Any],
+        running_stage: RunningStage,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ):
         print(samples)
 
-    def show_per_sample_transform(self, samples: List[Any],
-                                  running_stage: RunningStage, limit_nb_samples: int = None,
-                                  figsize: Tuple[int, int] = (6.4, 4.8)):
+    def show_per_sample_transform(
+        self,
+        samples: List[Any],
+        running_stage: RunningStage,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ):
         print(samples)

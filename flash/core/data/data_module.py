@@ -204,8 +204,8 @@ class DataModule(pl.LightningDataModule):
     def _resolve_input_transform(self) -> Optional[InputTransform]:
         input_transform = self.input_transform
         if (
-            isinstance(getattr(self, "trainer", None), pl.Trainer) and
-            getattr(self.trainer.lightning_module, "input_transform", None) is not None
+            isinstance(getattr(self, "trainer", None), pl.Trainer)
+            and getattr(self.trainer.lightning_module, "input_transform", None) is not None
         ):
             input_transform = create_or_configure_input_transform(self.trainer.lightning_module.input_transform)
 
@@ -456,9 +456,13 @@ class DataModule(pl.LightningDataModule):
         return iterator
 
     def _show_batch(
-            self, stage: str, func_names: Union[str, List[str]],
-            limit_nb_samples: int = None, figsize: Tuple[int, int] = (6.4, 4.8),
-            reset: bool = True) -> None:
+        self,
+        stage: str,
+        func_names: Union[str, List[str]],
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+        reset: bool = True,
+    ) -> None:
         """This function is used to handle transforms profiling for batch visualization."""
         # don't show in CI
         if os.getenv("FLASH_TESTING", "0") == "1":
@@ -490,29 +494,45 @@ class DataModule(pl.LightningDataModule):
                 self.data_fetcher.batches[stage] = {}
 
     def show_train_batch(
-            self, hooks_names: Union[str, List[str]] = "load_sample", reset: bool = True, limit_nb_samples: int = None,
-            figsize: Tuple[int, int] = (6.4, 4.8)) -> None:
+        self,
+        hooks_names: Union[str, List[str]] = "load_sample",
+        reset: bool = True,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ) -> None:
         """This function is used to visualize a batch from the train dataloader."""
         stage_name: str = _STAGES_PREFIX[RunningStage.TRAINING]
         self._show_batch(stage_name, hooks_names, limit_nb_samples, figsize, reset=reset)
 
     def show_val_batch(
-            self, hooks_names: Union[str, List[str]] = "load_sample", reset: bool = True, limit_nb_samples: int = None,
-            figsize: Tuple[int, int] = (6.4, 4.8)) -> None:
+        self,
+        hooks_names: Union[str, List[str]] = "load_sample",
+        reset: bool = True,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ) -> None:
         """This function is used to visualize a batch from the validation dataloader."""
         stage_name: str = _STAGES_PREFIX[RunningStage.VALIDATING]
         self._show_batch(stage_name, hooks_names, limit_nb_samples, figsize, reset=reset)
 
     def show_test_batch(
-            self, hooks_names: Union[str, List[str]] = "load_sample", reset: bool = True, limit_nb_samples: int = None,
-            figsize: Tuple[int, int] = (6.4, 4.8)) -> None:
+        self,
+        hooks_names: Union[str, List[str]] = "load_sample",
+        reset: bool = True,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ) -> None:
         """This function is used to visualize a batch from the test dataloader."""
         stage_name: str = _STAGES_PREFIX[RunningStage.TESTING]
         self._show_batch(stage_name, hooks_names, limit_nb_samples, figsize, reset=reset)
 
     def show_predict_batch(
-            self, hooks_names: Union[str, List[str]] = "load_sample", reset: bool = True, limit_nb_samples: int = None,
-            figsize: Tuple[int, int] = (6.4, 4.8)) -> None:
+        self,
+        hooks_names: Union[str, List[str]] = "load_sample",
+        reset: bool = True,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ) -> None:
         """This function is used to visualize a batch from the prediction dataloader."""
         stage_name: str = _STAGES_PREFIX[RunningStage.PREDICTING]
         self._show_batch(stage_name, hooks_names, limit_nb_samples, figsize, reset=reset)
