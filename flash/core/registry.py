@@ -14,7 +14,7 @@
 import functools
 import inspect
 import itertools
-from typing import Any, Callable, Dict, List, Optional, Set, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from pytorch_lightning.utilities import rank_zero_info
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -309,4 +309,4 @@ class ConcatRegistry(FlashRegistry):
                 return registry._register_function(fn, name=name, override=override, metadata=metadata)
 
     def available_keys(self) -> List[str]:
-        return list(itertools.chain.from_iterable(registry.available_keys() for registry in {self.registries}))
+        return list(itertools.chain.from_iterable(registry.available_keys() for registry in set(self.registries)))
