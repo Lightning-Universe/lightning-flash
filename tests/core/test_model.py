@@ -37,6 +37,7 @@ from flash.core.adapter import Adapter
 from flash.core.classification import ClassificationTask
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
+from flash.core.utilities.embedder import Embedder
 from flash.core.utilities.imports import (
     _AUDIO_TESTING,
     _CORE_TESTING,
@@ -219,7 +220,7 @@ def test_classification_task_trainer_predict(tmpdir):
         ),
         pytest.param(
             SemanticSegmentation,
-            "0.7.0/semantic_segmentation_model.pt",
+            "0.8.0/semantic_segmentation_model.pt",
             marks=pytest.mark.skipif(
                 not _IMAGE_TESTING,
                 reason="image packages aren't installed",
@@ -288,6 +289,35 @@ def test_model_download(tmpdir, cls, filename):
     with tmpdir.as_cwd():
         task = cls.load_from_checkpoint(url + filename)
         assert isinstance(task, cls)
+
+
+class DummyTask(Task):
+    def __init__(self):
+        super().__init__()
+
+        self.backbone = nn.Sequential(
+            nn.Linear(10, 20),
+            nn.Linear(20, 30),
+            nn.Linear(30, 40),
+        )
+
+    def predict_step(self, batch, batch_idx: int, dataloader_idx: int = 0):
+        return self.backbone(batch)
+
+
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+def test_as_embedder():
+    layer_number = 1
+    embedder = DummyTask().as_embedder(f"backbone.{layer_number}")
+
+    assert isinstance(embedder, Embedder)
+    assert embedder.predict_step(torch.rand(10, 10), 0, 0).size(1) == embedder.model.backbone[layer_number].out_features
+
+
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+def test_available_layers():
+    task = DummyTask()
+    assert task.available_layers() == ["output", "", "backbone", "backbone.0", "backbone.1", "backbone.2"]
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")

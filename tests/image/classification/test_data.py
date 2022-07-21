@@ -15,16 +15,14 @@ import csv
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, List, Tuple
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
 import pytest
 import torch
-import torch.nn as nn
 
 from flash.core.data.io.input import DataKeys
-from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,
     _IMAGE_AVAILABLE,
@@ -36,7 +34,6 @@ from flash.core.utilities.imports import (
 from flash.image import ImageClassificationData, ImageClassificationInputTransform
 
 if _TORCHVISION_AVAILABLE:
-    import torchvision.transforms as T
     from torchvision.datasets import FakeData
 
 if _PIL_AVAILABLE:
@@ -44,10 +41,6 @@ if _PIL_AVAILABLE:
 
 if _FIFTYONE_AVAILABLE:
     import fiftyone as fo
-
-
-def _dummy_image_loader(_):
-    return torch.rand(3, 196, 196)
 
 
 def _rand_image(size: Tuple[int, int] = None):
@@ -322,47 +315,6 @@ def test_from_filepaths_visualise_multilabel(tmpdir):
     dm.show_train_batch()
     dm.show_train_batch("per_sample_transform")
     dm.show_val_batch("per_batch_transform")
-
-
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
-def test_from_filepaths_splits(tmpdir):
-    tmpdir = Path(tmpdir)
-
-    B, _, H, W = 2, 3, 224, 224
-    img_size: Tuple[int, int] = (H, W)
-
-    (tmpdir / "splits").mkdir()
-    _rand_image(img_size).save(tmpdir / "s.png")
-
-    num_samples: int = 10
-    val_split: float = 0.3
-
-    train_filepaths: List[str] = [str(tmpdir / "s.png") for _ in range(num_samples)]
-
-    train_labels: List[int] = list(range(num_samples))
-
-    assert len(train_filepaths) == len(train_labels)
-
-    _to_tensor = nn.Sequential(
-        ApplyToKeys(DataKeys.INPUT, T.Compose([T.ToTensor(), T.Resize(img_size)])),
-        ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
-    )
-
-    def run(transform: Any = None):
-        dm = ImageClassificationData.from_files(
-            train_files=train_filepaths,
-            train_targets=train_labels,
-            transform=transform,
-            batch_size=B,
-            num_workers=0,
-            val_split=val_split,
-        )
-        data = next(iter(dm.train_dataloader()))
-        imgs, labels = data["input"], data["target"]
-        assert imgs.shape == (B, 3, H, W)
-        assert labels.shape == (B,)
-
-    run(_to_tensor)
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")

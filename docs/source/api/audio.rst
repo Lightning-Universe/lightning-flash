@@ -31,10 +31,9 @@ __________________
     ~speech_recognition.data.SpeechRecognitionData
     ~speech_recognition.model.SpeechRecognition
 
+    speech_recognition.input.SpeechRecognitionInputBase
     speech_recognition.input.SpeechRecognitionCSVInput
     speech_recognition.input.SpeechRecognitionJSONInput
-    speech_recognition.input.BaseSpeechRecognition
-    speech_recognition.input.SpeechRecognitionFileInput
     speech_recognition.input.SpeechRecognitionPathsInput
     speech_recognition.input.SpeechRecognitionDatasetInput
     speech_recognition.input.SpeechRecognitionDeserializer

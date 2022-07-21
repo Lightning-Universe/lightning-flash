@@ -115,3 +115,23 @@ creating a subclass of :class:`~flash.core.data.io.input_transform.InputTransfor
         transform=BrightnessContrastTransform,
         batch_size=4,
     )
+
+------
+
+*******
+Serving
+*******
+
+The :class:`~flash.image.detection.model.ObjectDetector` is servable.
+This means you can call ``.serve`` to serve your :class:`~flash.core.model.Task`.
+Here's an example:
+
+.. literalinclude:: ../../../flash_examples/serve/object_detection/inference_server.py
+    :language: python
+    :lines: 14-
+
+You can now perform inference from your client like this:
+
+.. literalinclude:: ../../../flash_examples/serve/object_detection/client.py
+    :language: python
+    :lines: 14-
