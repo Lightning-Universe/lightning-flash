@@ -16,36 +16,17 @@ from io import BytesIO
 from pathlib import Path
 from typing import Any, Dict, List
 
-import numpy as np
 import torch
 
 import flash
 from flash.core.data.io.input import DataKeys, Input, ServeInput
-from flash.core.data.utilities.paths import filter_valid_files, has_file_allowed_extension, PATH_TYPE
+from flash.core.data.utilities.loading import IMG_EXTENSIONS, load_image, NP_EXTENSIONS
+from flash.core.data.utilities.paths import filter_valid_files, PATH_TYPE
 from flash.core.data.utilities.samples import to_samples
-from flash.core.data.utils import image_default_loader
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, Image, requires
 
 if _TORCHVISION_AVAILABLE:
-    from torchvision.datasets.folder import IMG_EXTENSIONS
     from torchvision.transforms.functional import to_pil_image
-else:
-    IMG_EXTENSIONS = (".jpg", ".jpeg", ".png", ".ppm", ".bmp", ".pgm", ".tif", ".tiff", ".webp")
-
-NP_EXTENSIONS = (".npy",)
-
-
-def image_loader(filepath: str):
-    if has_file_allowed_extension(filepath, IMG_EXTENSIONS):
-        img = image_default_loader(filepath)
-    elif has_file_allowed_extension(filepath, NP_EXTENSIONS):
-        img = Image.fromarray(np.load(filepath).astype("uint8"), "RGB")
-    else:
-        raise ValueError(
-            f"File: {filepath} has an unsupported extension. Supported extensions: "
-            f"{list(IMG_EXTENSIONS + NP_EXTENSIONS)}."
-        )
-    return img
 
 
 class ImageDeserializer(ServeInput):
@@ -82,7 +63,7 @@ class ImageFilesInput(ImageInput):
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         filepath = sample[DataKeys.INPUT]
-        sample[DataKeys.INPUT] = image_loader(filepath)
+        sample[DataKeys.INPUT] = load_image(filepath)
         sample = super().load_sample(sample)
         sample[DataKeys.METADATA]["filepath"] = filepath
         return sample

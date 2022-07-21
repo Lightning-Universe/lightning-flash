@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Collection, Dict, List, Optional, Sequence, Type, Union
+from typing import Any, Callable, Collection, Dict, List, Optional, Sequence, Type
 
 import numpy as np
 import torch
@@ -98,20 +98,17 @@ class TemplateInputTransform(InputTransform):
     """An example :class:`~flash.core.data.io.input_transform.InputTransform`."""
 
     @staticmethod
-    def input_to_tensor(input: np.ndarray):
-        """Transform which creates a tensor from the given numpy ``ndarray`` and converts it to ``float``"""
-        return torch.from_numpy(input).float()
+    def to_tensor(sample: Dict[str, Any]):
+        """Transform which converts the sample to a tensor."""
+        sample[DataKeys.INPUT] = torch.from_numpy(sample[DataKeys.INPUT]).float()
 
-    @staticmethod
-    def target_to_tensor(target: Union[int, List[int]]):
-        """Transform which creates a tensor from the given target and casts it to ``long``"""
-        return torch.as_tensor(target).long()
+        if DataKeys.TARGET in sample:
+            sample[DataKeys.TARGET] = torch.as_tensor(sample[DataKeys.TARGET]).long()
 
-    def input_per_sample_transform(self) -> Callable:
-        return self.input_to_tensor
+        return sample
 
-    def target_per_sample_transform(self) -> Callable:
-        return self.target_to_tensor
+    def per_sample_transform(self) -> Callable:
+        return self.to_tensor
 
 
 class TemplateData(DataModule):

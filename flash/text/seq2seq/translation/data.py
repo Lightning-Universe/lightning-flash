@@ -79,6 +79,8 @@ class TranslationData(DataModule):
         Examples
         ________
 
+        The files can be in Comma Separated Values (CSV) format with either a ``.csv`` or ``.txt`` extension.
+
         .. testsetup::
 
             >>> import os
@@ -116,8 +118,7 @@ class TranslationData(DataModule):
             ...     train_file="train_data.csv",
             ...     predict_file="predict_data.csv",
             ...     batch_size=2,
-            ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            Downloading...
+            ... )
             >>> model = TranslationTask()
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
@@ -129,6 +130,58 @@ class TranslationData(DataModule):
 
             >>> os.remove("train_data.csv")
             >>> os.remove("predict_data.csv")
+
+        Alternatively, the files can be in Tab Separated Values (TSV) format with a ``.tsv`` extension.
+
+        .. testsetup::
+
+            >>> import os
+            >>> from pandas import DataFrame
+            >>> DataFrame.from_dict({
+            ...     "pig latin": ["ayay entencesay inyay igpay atinlay", "ellohay orldway"],
+            ...     "english": ["a sentence in pig latin", "hello world"],
+            ... }).to_csv("train_data.tsv", sep="\\t", index=False)
+            >>> DataFrame.from_dict({
+            ...     "pig latin": ["ayay entencesay orfay edictionpray"],
+            ... }).to_csv("predict_data.tsv", sep="\\t", index=False)
+
+        The file ``train_data.tsv`` contains the following:
+
+        .. code-block::
+
+            pig latin                               english
+            ayay entencesay inyay igpay atinlay     a sentence in pig latin
+            ellohay orldway                         hello world
+
+        The file ``predict_data.tsv`` contains the following:
+
+        .. code-block::
+
+            pig latin
+            ayay entencesay orfay edictionpray
+
+        .. doctest::
+
+            >>> from flash import Trainer
+            >>> from flash.text import TranslationTask, TranslationData
+            >>> datamodule = TranslationData.from_csv(
+            ...     "pig latin",
+            ...     "english",
+            ...     train_file="train_data.tsv",
+            ...     predict_file="predict_data.tsv",
+            ...     batch_size=2,
+            ... )
+            >>> model = TranslationTask()
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> os.remove("train_data.tsv")
+            >>> os.remove("predict_data.tsv")
         """
 
         ds_kw = dict(

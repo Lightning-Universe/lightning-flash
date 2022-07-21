@@ -39,6 +39,7 @@ class TestFiftyOneDetectionLabelsOutput:
             DataKeys.METADATA: {
                 "filepath": "something",
                 "size": (100, 100),
+                "output_size": (100, 100),
             },
         }
 

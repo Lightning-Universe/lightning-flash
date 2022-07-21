@@ -128,14 +128,14 @@ jobs:
       if: contains( matrix.topic , 'serve' )
       run: |
         sudo apt-get install libsndfile1
-        pip install '.[all,audio]' --upgrade
+        pip install '.[all,audio]' icevision effdet --upgrade
 
     - name: Install audio test dependencies
       if: contains( matrix.topic , 'audio' )
       run: |
         sudo apt-get install libsndfile1
         pip install matplotlib
-        pip install '.[audio,image]' --upgrade
+        pip install '.[audio,image]' torch==1.11.0 --upgrade
 
     - name: Cache datasets
       uses: actions/cache@v2

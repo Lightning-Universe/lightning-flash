@@ -79,6 +79,8 @@ class SummarizationData(DataModule):
         Examples
         ________
 
+        The files can be in Comma Separated Values (CSV) format with either a ``.csv`` or ``.txt`` extension.
+
         .. testsetup::
 
             >>> import os
@@ -117,8 +119,7 @@ class SummarizationData(DataModule):
             ...     train_file="train_data.csv",
             ...     predict_file="predict_data.csv",
             ...     batch_size=2,
-            ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            Downloading...
+            ... )
             >>> model = SummarizationTask()
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
@@ -130,6 +131,59 @@ class SummarizationData(DataModule):
 
             >>> os.remove("train_data.csv")
             >>> os.remove("predict_data.csv")
+
+        Alternatively, the files can be in Tab Separated Values (TSV) format with a ``.tsv`` extension.
+
+        .. testsetup::
+
+            >>> import os
+            >>> from pandas import DataFrame
+            >>> DataFrame.from_dict({
+            ...     "texts": ["A long paragraph", "A news article"],
+            ...     "summaries": ["A short paragraph", "A news headline"],
+            ... }).to_csv("train_data.tsv", sep="\\t", index=False)
+            >>> DataFrame.from_dict({
+            ...     "texts": ["A movie review", "A book chapter"],
+            ... }).to_csv("predict_data.tsv", sep="\\t", index=False)
+
+        The file ``train_data.tsv`` contains the following:
+
+        .. code-block::
+
+            texts               summaries
+            A long paragraph    A short paragraph
+            A news article      A news headline
+
+        The file ``predict_data.tsv`` contains the following:
+
+        .. code-block::
+
+            texts
+            A movie review
+            A book chapter
+
+        .. doctest::
+
+            >>> from flash import Trainer
+            >>> from flash.text import SummarizationTask, SummarizationData
+            >>> datamodule = SummarizationData.from_csv(
+            ...     "texts",
+            ...     "summaries",
+            ...     train_file="train_data.tsv",
+            ...     predict_file="predict_data.tsv",
+            ...     batch_size=2,
+            ... )
+            >>> model = SummarizationTask()
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> os.remove("train_data.tsv")
+            >>> os.remove("predict_data.tsv")
         """
 
         ds_kw = dict(
