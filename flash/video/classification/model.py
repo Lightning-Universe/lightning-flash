@@ -47,7 +47,7 @@ class VideoClassifier(ClassificationTask):
 
     Args:
         num_classes: Number of classes to classify.
-        backbone: A string mapped to ``pytorch_video`` backbones or ``nn.Module``, defaults to ``"slowfast_r50"``.
+        backbone: A string mapped to ``pytorch_video`` backbones or ``nn.Module``, defaults to ``"x3d_xs"``.
         backbone_kwargs: Arguments to customize the backbone from PyTorchVideo.
         pretrained: Use a pretrained backbone, defaults to ``True``.
         loss_fn: Loss function for training, defaults to :func:`torch.nn.functional.cross_entropy`.

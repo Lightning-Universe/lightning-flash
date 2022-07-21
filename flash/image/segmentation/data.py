@@ -115,9 +115,9 @@ class SemanticSegmentationData(DataModule):
 
             >>> from PIL import Image
             >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
-            >>> rand_mask= Image.fromarray(np.random.randint(0, 10, (64, 64), dtype="uint8"))
+            >>> rand_mask= np.random.randint(0, 10, (64, 64), dtype="uint8")
             >>> _ = [rand_image.save(f"image_{i}.png") for i in range(1, 4)]
-            >>> _ = [rand_mask.save(f"mask_{i}.png") for i in range(1, 4)]
+            >>> _ = [np.save(f"mask_{i}.npy", rand_mask) for i in range(1, 4)]
             >>> _ = [rand_image.save(f"predict_image_{i}.png") for i in range(1, 4)]
 
         .. doctest::
@@ -126,7 +126,7 @@ class SemanticSegmentationData(DataModule):
             >>> from flash.image import SemanticSegmentation, SemanticSegmentationData
             >>> datamodule = SemanticSegmentationData.from_files(
             ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
-            ...     train_targets=["mask_1.png", "mask_2.png", "mask_3.png"],
+            ...     train_targets=["mask_1.npy", "mask_2.npy", "mask_3.npy"],
             ...     predict_files=["predict_image_1.png", "predict_image_2.png", "predict_image_3.png"],
             ...     transform_kwargs=dict(image_size=(128, 128)),
             ...     num_classes=10,
@@ -145,7 +145,7 @@ class SemanticSegmentationData(DataModule):
 
             >>> import os
             >>> _ = [os.remove(f"image_{i}.png") for i in range(1, 4)]
-            >>> _ = [os.remove(f"mask_{i}.png") for i in range(1, 4)]
+            >>> _ = [os.remove(f"mask_{i}.npy") for i in range(1, 4)]
             >>> _ = [os.remove(f"predict_image_{i}.png") for i in range(1, 4)]
         """
 

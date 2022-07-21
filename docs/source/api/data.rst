@@ -78,6 +78,18 @@ _________________________________
     ~flash.core.data.utilities.collate.wrap_collate
     ~flash.core.data.utilities.collate.default_collate
 
+flash.core.data.utilities.loading
+_________________________________
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    ~flash.core.data.utilities.loading.load_image
+    ~flash.core.data.utilities.loading.load_spectrogram
+    ~flash.core.data.utilities.loading.load_audio
+    ~flash.core.data.utilities.loading.load_data_frame
+
 flash.core.data.properties
 __________________________
 
@@ -133,7 +145,7 @@ _____________________
     ~flash.core.data.utils.download_data
 
 flash.core.data.io.input
-___________________________
+________________________
 
 .. autosummary::
     :toctree: generated/

@@ -80,41 +80,30 @@ class QuestionAnsweringData(DataModule):
         Examples
         ________
 
+        The files can be in Comma Separated Values (CSV) format with either a ``.csv`` or ``.txt`` extension.
+
         .. testsetup::
 
             >>> import os
             >>> from pandas import DataFrame
             >>> DataFrame.from_dict({
-            ...     "id": ["12345", "12346", "12347", "12348"],
+            ...     "id": ["1", "2", "3"],
             ...     "context": [
-            ...         "this is an answer one. this is a context one",
-            ...         "this is an answer two. this is a context two",
-            ...         "this is an answer three. this is a context three",
-            ...         "this is an answer four. this is a context four",
+            ...         "I am three years old",
+            ...         "I am six feet tall",
+            ...         "I am eight years old",
             ...     ],
-            ...     "question": [
-            ...         "this is a question one",
-            ...         "this is a question two",
-            ...         "this is a question three",
-            ...         "this is a question four",
-            ...     ],
-            ...     "answer_text": [
-            ...         "this is an answer one",
-            ...         "this is an answer two",
-            ...         "this is an answer three",
-            ...         "this is an answer four",
-            ...     ],
-            ...     "answer_start": [0, 0, 0, 0],
+            ...     "question": ["How old are you?", "How tall are you?", "How old are you?"],
+            ...     "answer_text": ["three", "six", "eight"],
+            ...     "answer_start": [0, 0, 0],
             ... }).to_csv("train_data.csv", index=False)
             >>> DataFrame.from_dict({
-            ...     "id": ["12349", "12350"],
+            ...     "id": ["4"],
             ...     "context": [
-            ...         "this is an answer five. this is a context five",
-            ...         "this is an answer six. this is a context six",
+            ...         "I am five feet tall",
             ...     ],
             ...     "question": [
-            ...         "this is a question five",
-            ...         "this is a question six",
+            ...         "How tall are you?",
             ...     ],
             ... }).to_csv("predict_data.csv", index=False)
 
@@ -123,19 +112,16 @@ class QuestionAnsweringData(DataModule):
         .. code-block::
 
             id,context,question,answer_text,answer_start
-            12345,this is an answer one. this is a context one,this is a question one,this is an answer one,0
-            12346,this is an answer two. this is a context two,this is a question two,this is an answer two,0
-            12347,this is an answer three. this is a context three,this is a question three,this is an answer three,0
-            12348,this is an answer four. this is a context four,this is a question four,this is an answer four,0
-
+            1,I am three years old,How old are you?,three,0
+            2,I am six feet tall,How tall are you?,six,0
+            3,I am eight years old,How old are you?,eight,0
 
         The file ``predict_data.csv`` contains the following:
 
         .. code-block::
 
             id,context,question
-            12349,this is an answer five. this is a context five,this is a question five
-            12350,this is an answer six. this is a context six,this is a question six
+            4,I am five feet tall,How tall are you?
 
         .. doctest::
 
@@ -145,8 +131,7 @@ class QuestionAnsweringData(DataModule):
             ...     train_file="train_data.csv",
             ...     predict_file="predict_data.csv",
             ...     batch_size=2,
-            ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            Downloading...
+            ... )
             >>> model = QuestionAnsweringTask(max_source_length=32, max_target_length=32)
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
@@ -158,6 +143,70 @@ class QuestionAnsweringData(DataModule):
 
             >>> os.remove("train_data.csv")
             >>> os.remove("predict_data.csv")
+
+        Alternatively, the files can be in Tab Separated Values (TSV) format with a ``.tsv`` extension.
+
+        .. testsetup::
+
+            >>> import os
+            >>> from pandas import DataFrame
+            >>> DataFrame.from_dict({
+            ...     "id": ["1", "2", "3"],
+            ...     "context": [
+            ...         "I am three years old",
+            ...         "I am six feet tall",
+            ...         "I am eight years old",
+            ...     ],
+            ...     "question": ["How old are you?", "How tall are you?", "How old are you?"],
+            ...     "answer_text": ["three", "six", "eight"],
+            ...     "answer_start": [0, 0, 0],
+            ... }).to_csv("train_data.tsv", sep="\\t", index=False)
+            >>> DataFrame.from_dict({
+            ...     "id": ["4"],
+            ...     "context": [
+            ...         "I am five feet tall",
+            ...     ],
+            ...     "question": [
+            ...         "How tall are you?",
+            ...     ],
+            ... }).to_csv("predict_data.tsv", sep="\\t", index=False)
+
+        The file ``train_data.tsv`` contains the following:
+
+        .. code-block::
+
+            id  context                 question            answer_text answer_start
+            1   I am three years old    How old are you?    three       0
+            2   I am six feet tall	    How tall are you?   six	        0
+            3   I am eight years old    How old are you?    eight       0
+
+        The file ``predict_data.tsv`` contains the following:
+
+        .. code-block::
+
+            id  context             question
+            4   I am five feet tall How tall are you?
+
+        .. doctest::
+
+            >>> from flash import Trainer
+            >>> from flash.text import QuestionAnsweringData, QuestionAnsweringTask
+            >>> datamodule = QuestionAnsweringData.from_csv(
+            ...     train_file="train_data.tsv",
+            ...     predict_file="predict_data.tsv",
+            ...     batch_size=2,
+            ... )
+            >>> model = QuestionAnsweringTask(max_source_length=32, max_target_length=32)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> os.remove("train_data.tsv")
+            >>> os.remove("predict_data.tsv")
         """
 
         ds_kw = dict(

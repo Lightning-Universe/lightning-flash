@@ -17,10 +17,18 @@ from flash.core.data.io.classification_input import ClassificationInputMixin
 from flash.core.data.io.input import DataKeys
 from flash.core.data.utilities.classification import TargetFormatter
 from flash.core.data.utilities.paths import filter_valid_files, PATH_TYPE
+from flash.core.data.utilities.samples import to_samples
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
 from flash.core.integrations.icevision.data import IceVisionInput
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _ICEVISION_AVAILABLE, lazy_import, requires
-from flash.image.data import ImageFilesInput, IMG_EXTENSIONS, NP_EXTENSIONS
+from flash.image.data import (
+    ImageFilesInput,
+    ImageInput,
+    ImageNumpyInput,
+    ImageTensorInput,
+    IMG_EXTENSIONS,
+    NP_EXTENSIONS,
+)
 
 if _FIFTYONE_AVAILABLE:
     fol = lazy_import("fiftyone.core.labels")
@@ -58,6 +66,90 @@ class ObjectDetectionFilesInput(ClassificationInputMixin, ImageFilesInput):
         return [
             {DataKeys.INPUT: file, DataKeys.TARGET: {"bboxes": bbox, "labels": label}}
             for file, label, bbox in zip(files, targets, bboxes)
+        ]
+
+    def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+        sample = super().load_sample(sample)
+        if DataKeys.TARGET in sample:
+            sample[DataKeys.TARGET]["labels"] = [
+                self.format_target(label) for label in sample[DataKeys.TARGET]["labels"]
+            ]
+        return sample
+
+
+class ObjectDetectionNumpyInput(ClassificationInputMixin, ImageNumpyInput):
+    def load_data(
+        self,
+        array: Any,
+        targets: Optional[List[List[Any]]] = None,
+        bboxes: Optional[List[List[Dict[str, int]]]] = None,
+        target_formatter: Optional[TargetFormatter] = None,
+    ) -> List[Dict[str, Any]]:
+        if targets is None:
+            return to_samples(array)
+        self.load_target_metadata(
+            [t for target in targets for t in target], add_background=True, target_formatter=target_formatter
+        )
+
+        return [
+            {DataKeys.INPUT: image, DataKeys.TARGET: {"bboxes": bbox, "labels": label}}
+            for image, label, bbox in zip(array, targets, bboxes)
+        ]
+
+    def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+        sample = super().load_sample(sample)
+        if DataKeys.TARGET in sample:
+            sample[DataKeys.TARGET]["labels"] = [
+                self.format_target(label) for label in sample[DataKeys.TARGET]["labels"]
+            ]
+        return sample
+
+
+class ObjectDetectionImageInput(ClassificationInputMixin, ImageInput):
+    def load_data(
+        self,
+        images: Any,
+        targets: Optional[List[List[Any]]] = None,
+        bboxes: Optional[List[List[Dict[str, int]]]] = None,
+        target_formatter: Optional[TargetFormatter] = None,
+    ) -> List[Dict[str, Any]]:
+        if targets is None:
+            return to_samples(images)
+        self.load_target_metadata(
+            [t for target in targets for t in target], add_background=True, target_formatter=target_formatter
+        )
+
+        return [
+            {DataKeys.INPUT: image, DataKeys.TARGET: {"bboxes": bbox, "labels": label}}
+            for image, label, bbox in zip(images, targets, bboxes)
+        ]
+
+    def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
+        sample = super().load_sample(sample)
+        if DataKeys.TARGET in sample:
+            sample[DataKeys.TARGET]["labels"] = [
+                self.format_target(label) for label in sample[DataKeys.TARGET]["labels"]
+            ]
+        return sample
+
+
+class ObjectDetectionTensorInput(ClassificationInputMixin, ImageTensorInput):
+    def load_data(
+        self,
+        tensor: Any,
+        targets: Optional[List[List[Any]]] = None,
+        bboxes: Optional[List[List[Dict[str, int]]]] = None,
+        target_formatter: Optional[TargetFormatter] = None,
+    ) -> List[Dict[str, Any]]:
+        if targets is None:
+            return to_samples(tensor)
+        self.load_target_metadata(
+            [t for target in targets for t in target], add_background=True, target_formatter=target_formatter
+        )
+
+        return [
+            {DataKeys.INPUT: image, DataKeys.TARGET: {"bboxes": bbox, "labels": label}}
+            for image, label, bbox in zip(tensor, targets, bboxes)
         ]
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:

@@ -32,8 +32,8 @@ def get_callable_dict(fn: Union[nn.Module, Callable, Mapping, Sequence]) -> Unio
 
 
 def _is_overridden(method_name: str, instance: object, parent: Type[object]) -> bool:
-    """Cropped Version of https://github.com/PyTorchLightning/pytorch-
-    lightning/blob/master/pytorch_lightning/utilities/model_helpers.py."""
+    """Cropped Version of https://github.com/Lightning-
+    AI/lightning/blob/master/src/pytorch_lightning/utilities/model_helpers.py."""
 
     if not hasattr(instance, method_name):
         return False

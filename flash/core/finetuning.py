@@ -103,6 +103,19 @@ class FlashBaseFinetuning(BaseFinetuning):
                     modules = [modules]
                 self.freeze(modules=modules, train_bn=self.train_bn)
 
+    def unfreeze_and_extend_param_group(
+        self,
+        modules: Union[Module, Iterable[Union[Module, Iterable]]],
+        optimizer: Optimizer,
+        train_bn: bool = True,
+    ) -> None:
+        self.make_trainable(modules)
+
+        params = self.filter_params(modules, train_bn=train_bn, requires_grad=True)
+        params = self.filter_on_optimizer(optimizer, params)
+        if params:
+            optimizer.param_groups[0]["params"].extend(params)
+
     def _freeze_unfreeze_function(
         self,
         pl_module: Union[Module, Iterable[Union[Module, Iterable]]],
@@ -117,7 +130,7 @@ class FlashBaseFinetuning(BaseFinetuning):
 
         modules = self._get_modules_to_freeze(pl_module=pl_module)
         if modules is not None:
-            self.unfreeze_and_add_param_group(
+            self.unfreeze_and_extend_param_group(
                 modules=modules,
                 optimizer=optimizer,
                 train_bn=self.train_bn,
@@ -140,7 +153,7 @@ class FlashBaseFinetuning(BaseFinetuning):
                 # unfreeze num_layers last layers
 
                 backbone_modules = BaseFinetuning.flatten_modules(modules=modules)[-num_layers:]
-                self.unfreeze_and_add_param_group(
+                self.unfreeze_and_extend_param_group(
                     modules=backbone_modules,
                     optimizer=optimizer,
                     train_bn=self.train_bn,
@@ -148,7 +161,7 @@ class FlashBaseFinetuning(BaseFinetuning):
             elif epoch == unfreeze_milestones[1]:
                 # unfreeze remaining layers
                 backbone_modules = BaseFinetuning.flatten_modules(modules=modules)[:-num_layers]
-                self.unfreeze_and_add_param_group(
+                self.unfreeze_and_extend_param_group(
                     modules=backbone_modules,
                     optimizer=optimizer,
                     train_bn=self.train_bn,

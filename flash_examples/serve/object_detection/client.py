@@ -11,28 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
+import base64
 from pathlib import Path
-from unittest import mock
 
-import pytest
+import requests
 
-from flash.core.utilities.imports import _IMAGE_TESTING
-from tests.examples.utils import run_test
+import flash
 
-root = Path(__file__).parent.parent.parent
+with (Path(flash.ASSETS_ROOT) / "fish.jpg").open("rb") as f:
+    imgstr = base64.b64encode(f.read()).decode("UTF-8")
 
-
-@mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
-@pytest.mark.parametrize(
-    "folder, file",
-    [
-        pytest.param(
-            "flash_components",
-            "custom_data_loading.py",
-            marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed"),
-        ),
-    ],
-)
-def test_components(folder, file):
-    run_test(str(root / "flash_examples" / folder / file))
+body = {"session": "UUID", "payload": {"inputs": {"data": imgstr}}}
+resp = requests.post("http://127.0.0.1:8000/predict", json=body)
+print(resp.json())

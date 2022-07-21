@@ -59,6 +59,14 @@ class TestVideoClassifier(TaskTester):
     def example_train_sample(self):
         return {DataKeys.INPUT: torch.rand(3, 10, 244, 244), DataKeys.TARGET: 1}
 
+    @property
+    def example_val_sample(self):
+        return self.example_train_sample
+
+    @property
+    def example_test_sample(self):
+        return self.example_train_sample
+
 
 def create_dummy_video_frames(num_frames: int, height: int, width: int):
     y, x = torch.meshgrid(torch.linspace(-2, 2, height), torch.linspace(-2, 2, width))

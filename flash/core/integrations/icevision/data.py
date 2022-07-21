@@ -17,6 +17,7 @@ from typing import Any, Callable, Dict, List, Optional, Type, Union
 import numpy as np
 
 from flash.core.data.io.input import DataKeys, Input
+from flash.core.data.utilities.loading import IMG_EXTENSIONS, load_image, NP_EXTENSIONS
 from flash.core.data.utilities.paths import list_valid_files
 from flash.core.integrations.icevision.transforms import from_icevision_record
 from flash.core.utilities.imports import _ICEVISION_AVAILABLE
@@ -57,8 +58,6 @@ class IceVisionInput(Input):
     def predict_load_data(
         self, paths: Union[str, List[str]], parser: Optional[Type["Parser"]] = None
     ) -> List[Dict[str, Any]]:
-        from flash.image.data import IMG_EXTENSIONS, NP_EXTENSIONS  # Import locally to prevent circular import
-
         paths = list_valid_files(paths, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
         return [{DataKeys.INPUT: path} for path in paths]
 
@@ -67,12 +66,10 @@ class IceVisionInput(Input):
         return from_icevision_record(record)
 
     def predict_load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        from flash.image.data import image_loader  # Import locally to prevent circular import
-
         if isinstance(sample[DataKeys.INPUT], BaseRecord):
             return self.load_sample(sample)
         filepath = sample[DataKeys.INPUT]
-        image = np.array(image_loader(filepath))
+        image = np.array(load_image(filepath))
 
         record = BaseRecord([FilepathRecordComponent()])
         record.filepath = filepath

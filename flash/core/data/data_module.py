@@ -12,13 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from functools import partial
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import pytorch_lightning as pl
 import torch
-from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import IterableDataset
@@ -36,9 +34,13 @@ from flash.core.data.io.input_transform import (
 )
 from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX
-from flash.core.registry import FlashRegistry
+from flash.core.utilities.imports import _CORE_TESTING
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
+
+# Skip doctests if requirements aren't available
+if not _CORE_TESTING:
+    __doctest_skip__ = ["DataModule"]
 
 
 class DatasetInput(Input):
@@ -106,7 +108,6 @@ class DataModule(pl.LightningDataModule):
     """
 
     input_transform_cls = InputTransform
-    input_transforms_registry = FlashRegistry("input_transforms")
 
     def __init__(
         self,
@@ -131,7 +132,7 @@ class DataModule(pl.LightningDataModule):
         if flash._IS_TESTING and torch.cuda.is_available():
             batch_size = 16
 
-        self.input_transform = DataModule.configure_input_transform(
+        self.input_transform = create_or_configure_input_transform(
             transform=transform, transform_kwargs=transform_kwargs
         )
 
@@ -431,30 +432,6 @@ class DataModule(pl.LightningDataModule):
     def input_transform(self, input_transform: InputTransform) -> None:
         self._input_transform = input_transform
 
-    @staticmethod
-    def configure_input_transform(
-        transform: INPUT_TRANSFORM_TYPE, transform_kwargs: Optional[Dict] = None
-    ) -> InputTransform:
-        """This function is used to configure a :class:`~flash.core.data.io.input_transform.InputTransform`.
-
-        Override with your custom one.
-        """
-        return create_or_configure_input_transform(
-            transform=transform,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=DataModule.input_transforms_registry,
-        )
-
-    @classmethod
-    def register_input_transform(
-        cls, enum: Union[LightningEnum, str], fn: Union[Type["flash.InputTransform"], partial]
-    ) -> None:
-        if cls.input_transforms_registry is None:
-            raise MisconfigurationException(
-                "The class attribute `input_transforms_registry` should be set as a class attribute. "
-            )
-        cls.input_transforms_registry(fn=fn, name=enum)
-
     ####################################
     # METHODS RELATED TO VISUALIZATION #
     ####################################
@@ -478,7 +455,14 @@ class DataModule(pl.LightningDataModule):
         setattr(self, iter_name, iterator)
         return iterator
 
-    def _show_batch(self, stage: str, func_names: Union[str, List[str]], reset: bool = True) -> None:
+    def _show_batch(
+        self,
+        stage: str,
+        func_names: Union[str, List[str]],
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+        reset: bool = True,
+    ) -> None:
         """This function is used to handle transforms profiling for batch visualization."""
         # don't show in CI
         if os.getenv("FLASH_TESTING", "0") == "1":
@@ -492,6 +476,9 @@ class DataModule(pl.LightningDataModule):
         if isinstance(func_names, str):
             func_names = [func_names]
 
+        if not limit_nb_samples:
+            limit_nb_samples = self.batch_size
+
         iter_dataloader = getattr(self, iter_name)
         with self.data_fetcher.enable():
             if reset:
@@ -502,29 +489,53 @@ class DataModule(pl.LightningDataModule):
                 iter_dataloader = self._reset_iterator(stage)
                 _ = next(iter_dataloader)
             data_fetcher: BaseVisualization = self.data_fetcher
-            data_fetcher._show(stage, func_names)
+            data_fetcher._show(stage, func_names, limit_nb_samples, figsize)
             if reset:
                 self.data_fetcher.batches[stage] = {}
 
-    def show_train_batch(self, hooks_names: Union[str, List[str]] = "load_sample", reset: bool = True) -> None:
+    def show_train_batch(
+        self,
+        hooks_names: Union[str, List[str]] = "load_sample",
+        reset: bool = True,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ) -> None:
         """This function is used to visualize a batch from the train dataloader."""
         stage_name: str = _STAGES_PREFIX[RunningStage.TRAINING]
-        self._show_batch(stage_name, hooks_names, reset=reset)
+        self._show_batch(stage_name, hooks_names, limit_nb_samples, figsize, reset=reset)
 
-    def show_val_batch(self, hooks_names: Union[str, List[str]] = "load_sample", reset: bool = True) -> None:
+    def show_val_batch(
+        self,
+        hooks_names: Union[str, List[str]] = "load_sample",
+        reset: bool = True,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ) -> None:
         """This function is used to visualize a batch from the validation dataloader."""
         stage_name: str = _STAGES_PREFIX[RunningStage.VALIDATING]
-        self._show_batch(stage_name, hooks_names, reset=reset)
+        self._show_batch(stage_name, hooks_names, limit_nb_samples, figsize, reset=reset)
 
-    def show_test_batch(self, hooks_names: Union[str, List[str]] = "load_sample", reset: bool = True) -> None:
+    def show_test_batch(
+        self,
+        hooks_names: Union[str, List[str]] = "load_sample",
+        reset: bool = True,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ) -> None:
         """This function is used to visualize a batch from the test dataloader."""
         stage_name: str = _STAGES_PREFIX[RunningStage.TESTING]
-        self._show_batch(stage_name, hooks_names, reset=reset)
+        self._show_batch(stage_name, hooks_names, limit_nb_samples, figsize, reset=reset)
 
-    def show_predict_batch(self, hooks_names: Union[str, List[str]] = "load_sample", reset: bool = True) -> None:
+    def show_predict_batch(
+        self,
+        hooks_names: Union[str, List[str]] = "load_sample",
+        reset: bool = True,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ) -> None:
         """This function is used to visualize a batch from the prediction dataloader."""
         stage_name: str = _STAGES_PREFIX[RunningStage.PREDICTING]
-        self._show_batch(stage_name, hooks_names, reset=reset)
+        self._show_batch(stage_name, hooks_names, limit_nb_samples, figsize, reset=reset)
 
     def _get_property(self, property_name: str) -> Optional[Any]:
         train = getattr(self.train_dataset, property_name, None)
