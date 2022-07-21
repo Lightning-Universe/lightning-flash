@@ -16,34 +16,21 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
-import torch
 
-from flash.audio.data import AUDIO_EXTENSIONS
 from flash.core.data.io.classification_input import ClassificationInputMixin
 from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.utilities.classification import MultiBinaryTargetFormatter, TargetFormatter
-from flash.core.data.utilities.data_frame import read_csv, resolve_files, resolve_targets
-from flash.core.data.utilities.paths import filter_valid_files, has_file_allowed_extension, make_dataset, PATH_TYPE
+from flash.core.data.utilities.data_frame import resolve_files, resolve_targets
+from flash.core.data.utilities.loading import (
+    AUDIO_EXTENSIONS,
+    IMG_EXTENSIONS,
+    load_data_frame,
+    load_spectrogram,
+    NP_EXTENSIONS,
+)
+from flash.core.data.utilities.paths import filter_valid_files, make_dataset, PATH_TYPE
 from flash.core.data.utilities.samples import to_samples
-from flash.core.data.utils import image_default_loader
-from flash.core.utilities.imports import _AUDIO_AVAILABLE, requires
-from flash.image.data import IMG_EXTENSIONS, NP_EXTENSIONS
-
-if _AUDIO_AVAILABLE:
-    import librosa
-    from torchaudio.transforms import Spectrogram
-
-
-def spectrogram_loader(filepath: str, sampling_rate: int = 16000, n_fft: int = 400):
-    if has_file_allowed_extension(filepath, IMG_EXTENSIONS):
-        img = image_default_loader(filepath)
-        data = np.array(img)
-    elif has_file_allowed_extension(filepath, AUDIO_EXTENSIONS):
-        waveform, _ = librosa.load(filepath, sr=sampling_rate)
-        data = Spectrogram(n_fft, normalized=True)(torch.from_numpy(waveform).unsqueeze(0)).permute(1, 2, 0).numpy()
-    else:
-        data = np.load(filepath)
-    return data
+from flash.core.utilities.imports import requires
 
 
 class AudioClassificationInput(Input, ClassificationInputMixin):
@@ -84,7 +71,7 @@ class AudioClassificationFilesInput(AudioClassificationInput):
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         filepath = sample[DataKeys.INPUT]
-        sample[DataKeys.INPUT] = spectrogram_loader(filepath, sampling_rate=self.sampling_rate, n_fft=self.n_fft)
+        sample[DataKeys.INPUT] = load_spectrogram(filepath, sampling_rate=self.sampling_rate, n_fft=self.n_fft)
         sample = super().load_sample(sample)
         sample[DataKeys.METADATA]["filepath"] = filepath
         return sample
@@ -174,7 +161,7 @@ class AudioClassificationCSVInput(AudioClassificationDataFrameInput):
         n_fft: int = 400,
         target_formatter: Optional[TargetFormatter] = None,
     ) -> List[Dict[str, Any]]:
-        data_frame = read_csv(csv_file)
+        data_frame = load_data_frame(csv_file)
         if root is None:
             root = os.path.dirname(csv_file)
         return super().load_data(

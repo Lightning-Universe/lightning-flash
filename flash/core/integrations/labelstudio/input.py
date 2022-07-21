@@ -13,7 +13,7 @@ from torch.utils.data import Sampler
 
 from flash.core.data.io.input import DataKeys, Input, IterableInput
 from flash.core.data.properties import Properties
-from flash.core.data.utils import image_default_loader
+from flash.core.data.utilities.loading import load_image
 from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 
@@ -241,7 +241,7 @@ class LabelStudioImageClassificationInput(LabelStudioInput):
         """Load 1 sample from dataset."""
         p = sample["file_upload"]
         # loading image
-        image = image_default_loader(p)
+        image = load_image(p)
         result = {
             DataKeys.INPUT: image,
             DataKeys.TARGET: _get_labels_from_sample(sample["label"], self.parameters.classes),

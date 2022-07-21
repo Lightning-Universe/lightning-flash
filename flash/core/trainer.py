@@ -232,7 +232,7 @@ class Trainer(PlTrainer):
     def add_argparse_args(cls, *args, **kwargs) -> ArgumentParser:
         """See :func:`pytorch_lightning.utilities.argparse.add_argparse_args`."""
         # the lightning trainer implementation does not support subclasses.
-        # context: https://github.com/PyTorchLightning/lightning-flash/issues/342#issuecomment-848892447
+        # context: https://github.com/Lightning-AI/lightning-flash/issues/342#issuecomment-848892447
         return add_argparse_args(PlTrainer, *args, **kwargs)
 
     @classmethod
@@ -240,7 +240,7 @@ class Trainer(PlTrainer):
         """Modified version of :func:`pytorch_lightning.utilities.argparse.from_argparse_args` which populates
         ``valid_kwargs`` from :class:`pytorch_lightning.Trainer`."""
         # the lightning trainer implementation does not support subclasses.
-        # context: https://github.com/PyTorchLightning/lightning-flash/issues/342#issuecomment-848892447
+        # context: https://github.com/Lightning-AI/lightning-flash/issues/342#issuecomment-848892447
         return from_argparse_args(Trainer, args, **kwargs)
 
     @property

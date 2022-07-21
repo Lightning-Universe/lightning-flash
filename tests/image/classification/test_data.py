@@ -43,10 +43,6 @@ if _FIFTYONE_AVAILABLE:
     import fiftyone as fo
 
 
-def _dummy_image_loader(_):
-    return torch.rand(3, 196, 196)
-
-
 def _rand_image(size: Tuple[int, int] = None):
     if size is None:
         _size = np.random.choice([196, 244])
