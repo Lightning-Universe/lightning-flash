@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Collection, Dict, List, Optional, Sequence, Type
+from typing import Any, Callable, Collection, Dict, List, Optional, Sequence, Tuple, Type
 
 import numpy as np
 import torch
@@ -240,8 +240,20 @@ class TemplateVisualization(BaseVisualization):
     If you want to provide a visualization with your task, you can override these hooks.
     """
 
-    def show_load_sample(self, samples: List[Any], running_stage: RunningStage):
+    def show_load_sample(
+        self,
+        samples: List[Any],
+        running_stage: RunningStage,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ):
         print(samples)
 
-    def show_per_sample_transform(self, samples: List[Any], running_stage: RunningStage):
+    def show_per_sample_transform(
+        self,
+        samples: List[Any],
+        running_stage: RunningStage,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ):
         print(samples)

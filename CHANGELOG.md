@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added `figsize` and `limit_nb_samples` for showing batch images ([#1381](https://github.com/Lightning-AI/lightning-flash/pull/1381))
+
 - Added support for `from_lists` for Tabular Classification and Regression ([#1337](https://github.com/PyTorchLightning/lightning-flash/pull/1337))
 
 - Added support for `from_dicts` for Tabular Classification and Regression ([#1331](https://github.com/PyTorchLightning/lightning-flash/pull/1331))
@@ -28,6 +30,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Added support for more formats when loading audio files ([#1387](https://github.com/PyTorchLightning/lightning-flash/pull/1387))
 
+- Added support to use any task as an embedder by calling `as_embedder` ([#1396](https://github.com/PyTorchLightning/lightning-flash/pull/1396))
+
+- Added support for normalization of images in `SemanticSegmentationData` ([#1399](https://github.com/PyTorchLightning/lightning-flash/pull/1399))
+
 ### Changed
 
 - Changed the `ImageEmbedder` dependency on VISSL to optional ([#1276](https://github.com/PyTorchLightning/lightning-flash/pull/1276))
@@ -37,6 +43,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 ### Fixed
+
+- Fixed a bug where grayscale images were not properly converted to RGB when loaded. ([#1394](https://github.com/PyTorchLightning/lightning-flash/pull/1394))
 
 - Fixed a bug where size of mask for instance segmentation doesn't match to size of original image. ([#1353](https://github.com/PyTorchLightning/lightning-flash/pull/1353))
 
