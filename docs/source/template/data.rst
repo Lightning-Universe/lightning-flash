@@ -80,28 +80,20 @@ Internally we inject the :class:`~flash.core.data.io.input_transform.InputTransf
 
 Defining the standard transforms (typically at least a ``per_sample_transform`` should be defined) for your :class:`~flash.core.data.io.input_transform.InputTransform` involves simply overriding the required hook to return a callable transform.
 
-For our ``TemplateInputTransform``, we'll just configure an ``input_per_sample_transform`` and a ``target_per_sample_transform``.
+For our ``TemplateInputTransform``, we'll just configure a ``per_sample_transform``.
 Let's first define a to_tensor transform as a ``staticmethod``:
 
 .. literalinclude:: ../../../flash/template/classification/data.py
     :language: python
     :dedent: 4
-    :pyobject: TemplateInputTransform.input_to_tensor
+    :pyobject: TemplateInputTransform.to_tensor
 
-Now in our ``input_per_sample_transform`` hook, we return the transform:
-
-.. literalinclude:: ../../../flash/template/classification/data.py
-    :language: python
-    :dedent: 4
-    :pyobject: TemplateInputTransform.input_per_sample_transform
-
-To convert the targets to a tensor we can simply use ``torch.as_tensor``.
-Here's our ``target_per_sample_transform``:
+Now in our ``per_sample_transform`` hook, we return the transform:
 
 .. literalinclude:: ../../../flash/template/classification/data.py
     :language: python
     :dedent: 4
-    :pyobject: TemplateInputTransform.target_per_sample_transform
+    :pyobject: TemplateInputTransform.per_sample_transform
 
 .. _contributing_data_module:
 

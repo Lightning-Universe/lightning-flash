@@ -14,7 +14,7 @@
 #
 #
 # Implemented by @ananyahjha93
-# also found at: https://github.com/PyTorchLightning/lightning-bolts/blob/master/pl_bolts/optimizers/lr_scheduler.py
+# also found at: https://github.com/Lightning-AI/lightning-bolts/blob/master/pl_bolts/optimizers/lr_scheduler.py
 import math
 import warnings
 from typing import List

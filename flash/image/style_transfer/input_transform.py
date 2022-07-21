@@ -14,7 +14,9 @@
 from dataclasses import dataclass
 from typing import Callable
 
+from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 
 if _TORCHVISION_AVAILABLE:
@@ -26,5 +28,7 @@ class StyleTransferInputTransform(InputTransform):
 
     image_size: int = 256
 
-    def input_per_sample_transform(self) -> Callable:
-        return T.Compose([T.ToTensor(), T.Resize(self.image_size), T.CenterCrop(self.image_size)])
+    def per_sample_transform(self) -> Callable:
+        return ApplyToKeys(
+            DataKeys.INPUT, T.Compose([T.ToTensor(), T.Resize(self.image_size), T.CenterCrop(self.image_size)])
+        )

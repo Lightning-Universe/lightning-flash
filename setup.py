@@ -87,7 +87,7 @@ setup(
     author=about.__author__,
     author_email=about.__author_email__,
     url=about.__homepage__,
-    download_url="https://github.com/PyTorchLightning/lightning-flash",
+    download_url="https://github.com/Lightning-AI/lightning-flash",
     license=about.__license__,
     packages=find_packages(exclude=["tests", "tests.*"]),
     long_description=long_description,
@@ -99,12 +99,12 @@ setup(
     },
     zip_safe=False,
     keywords=["deep learning", "pytorch", "AI"],
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     install_requires=base_req,
     project_urls={
-        "Bug Tracker": "https://github.com/PyTorchLightning/lightning-flash/issues",
+        "Bug Tracker": "https://github.com/Lightning-AI/lightning-flash/issues",
         "Documentation": "https://lightning-flash.rtfd.io/en/latest/",
-        "Source Code": "https://github.com/PyTorchLightning/lightning-flash",
+        "Source Code": "https://github.com/Lightning-AI/lightning-flash",
     },
     classifiers=[
         "Environment :: Console",
@@ -123,10 +123,8 @@ setup(
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
     ],
 )

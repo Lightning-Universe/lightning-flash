@@ -11,11 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from flash.image import SemanticSegmentation
-from flash.image.segmentation.output import SegmentationLabelsOutput
+import base64
+from pathlib import Path
 
-model = SemanticSegmentation.load_from_checkpoint(
-    "https://flash-weights.s3.amazonaws.com/0.8.0/semantic_segmentation_model.pt"
-)
-model.output = SegmentationLabelsOutput(visualize=False)
-model.serve()
+import requests
+
+import flash
+
+with (Path(flash.ASSETS_ROOT) / "fish.jpg").open("rb") as f:
+    imgstr = base64.b64encode(f.read()).decode("UTF-8")
+
+body = {"session": "UUID", "payload": {"inputs": {"data": imgstr}}}
+resp = requests.post("http://127.0.0.1:8000/predict", json=body)
+print(resp.json())

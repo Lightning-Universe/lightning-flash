@@ -16,7 +16,9 @@ from typing import Callable, Optional, Tuple
 
 import torch
 
+from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _TORCHAUDIO_AVAILABLE, _TORCHVISION_AVAILABLE
 
 if _TORCHVISION_AVAILABLE:
@@ -33,7 +35,7 @@ class AudioClassificationInputTransform(InputTransform):
     time_mask_param: Optional[int] = None
     freq_mask_param: Optional[int] = None
 
-    def train_input_per_sample_transform(self) -> Callable:
+    def train_per_sample_transform(self) -> Callable:
         transforms = []
         if self.time_mask_param is not None:
             transforms.append(TAudio.TimeMasking(time_mask_param=self.time_mask_param))
@@ -42,10 +44,17 @@ class AudioClassificationInputTransform(InputTransform):
             transforms.append(TAudio.FrequencyMasking(freq_mask_param=self.freq_mask_param))
 
         transforms += [T.ToTensor(), T.Resize(self.spectrogram_size)]
-        return T.Compose(transforms)
+        return T.Compose(
+            [
+                ApplyToKeys(DataKeys.INPUT, T.Compose(transforms)),
+                ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
+            ]
+        )
 
-    def input_per_sample_transform(self) -> Callable:
-        return T.Compose([T.ToTensor(), T.Resize(self.spectrogram_size)])
-
-    def target_per_sample_transform(self) -> Callable:
-        return torch.as_tensor
+    def per_sample_transform(self) -> Callable:
+        return T.Compose(
+            [
+                ApplyToKeys(DataKeys.INPUT, T.Compose([T.ToTensor(), T.Resize(self.spectrogram_size)])),
+                ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
+            ]
+        )

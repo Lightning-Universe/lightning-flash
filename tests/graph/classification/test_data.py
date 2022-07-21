@@ -14,14 +14,16 @@
 import pytest
 
 from flash import DataKeys
-from flash.core.data.io.input_transform import Compose
-from flash.core.utilities.imports import _GRAPH_AVAILABLE, _GRAPH_TESTING
+from flash.core.utilities.imports import _GRAPH_AVAILABLE, _GRAPH_TESTING, _TORCHVISION_AVAILABLE
 from flash.graph.classification.data import GraphClassificationData
 from flash.graph.classification.input_transform import GraphClassificationInputTransform, PyGTransformAdapter
 
 if _GRAPH_AVAILABLE:
     from torch_geometric.datasets import TUDataset
     from torch_geometric.transforms import OneHotDegree
+
+if _TORCHVISION_AVAILABLE:
+    from torchvision import transforms as T
 
 
 @pytest.mark.skipif(not _GRAPH_TESTING, reason="graph libraries aren't installed.")
@@ -76,7 +78,7 @@ class TestGraphClassificationData:
 
         class TestInputTransform(GraphClassificationInputTransform):
             def per_sample_transform(self):
-                return Compose(
+                return T.Compose(
                     [super().per_sample_transform(), PyGTransformAdapter(OneHotDegree(tudataset.num_features - 1))]
                 )
 
