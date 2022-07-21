@@ -60,12 +60,11 @@ CSV_EXTENSIONS = (".csv", ".txt")
 TSV_EXTENSIONS = (".tsv",)
 
 
-def _load_image_from_image(file, drop_alpha: bool = True):
+def _load_image_from_image(file):
     img = Image.open(file)
     img.load()
 
-    if img.mode == "RGBA" and drop_alpha:
-        img = img.convert("RGB")
+    img = img.convert("RGB")
     return img
 
 
@@ -74,7 +73,7 @@ def _load_image_from_numpy(file):
 
 
 def _load_spectrogram_from_image(file):
-    img = _load_image_from_image(file, drop_alpha=False)
+    img = _load_image_from_image(file)
     return np.array(img).astype("float32")
 
 
