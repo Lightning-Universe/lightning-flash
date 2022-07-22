@@ -245,9 +245,9 @@ For even more customization, create your own finetuning callback. Learn more abo
 Working with DeepSpeed
 ======================
 
-If you are using DeepSpeed, you can use the following strategies. The usage of the followings are the same as the above. But finetuning with DeepSpeed doesn't support load and store its parameters.
+If you are using DeepSpeed, you can use the following strategies. The usage of the following strategies is the same as listed above, but finetuning with DeepSpeed doesn't yet support the loading and storing of its parameters.
 
-* freeze_deepspeed
-* no_freeze_deepspeed
-* freeze_unfreeze_deepspeed
-* unfreeze_milestones_deepspeed
+* ``freeze_deepspeed``
+* ``no_freeze_deepspeed``
+* ``freeze_unfreeze_deepspeed``
+* ``unfreeze_milestones_deepspeed``
