@@ -16,7 +16,8 @@ from typing import Any, Dict, List, Optional, Union
 from flash.core.data.io.classification_input import ClassificationInputMixin
 from flash.core.data.io.input import DataKeys
 from flash.core.data.utilities.classification import TargetFormatter
-from flash.core.data.utilities.data_frame import read_csv, resolve_targets
+from flash.core.data.utilities.data_frame import resolve_targets
+from flash.core.data.utilities.loading import load_data_frame
 from flash.core.utilities.imports import _PANDAS_AVAILABLE
 from flash.tabular.input import TabularDataFrameInput
 
@@ -63,7 +64,7 @@ class TabularClassificationCSVInput(TabularClassificationDataFrameInput):
     ):
         if file is not None:
             return super().load_data(
-                read_csv(file), categorical_fields, numerical_fields, target_fields, parameters, target_formatter
+                load_data_frame(file), categorical_fields, numerical_fields, target_fields, parameters, target_formatter
             )
 
 

@@ -87,7 +87,7 @@ setup(
     author=about.__author__,
     author_email=about.__author_email__,
     url=about.__homepage__,
-    download_url="https://github.com/PyTorchLightning/lightning-flash",
+    download_url="https://github.com/Lightning-AI/lightning-flash",
     license=about.__license__,
     packages=find_packages(exclude=["tests", "tests.*"]),
     long_description=long_description,
@@ -102,9 +102,9 @@ setup(
     python_requires=">=3.7",
     install_requires=base_req,
     project_urls={
-        "Bug Tracker": "https://github.com/PyTorchLightning/lightning-flash/issues",
+        "Bug Tracker": "https://github.com/Lightning-AI/lightning-flash/issues",
         "Documentation": "https://lightning-flash.rtfd.io/en/latest/",
-        "Source Code": "https://github.com/PyTorchLightning/lightning-flash",
+        "Source Code": "https://github.com/Lightning-AI/lightning-flash",
     },
     classifiers=[
         "Environment :: Console",

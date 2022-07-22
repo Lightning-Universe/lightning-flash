@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional, Union
 import numpy as np
 
 from flash.core.data.io.input import DataKeys
-from flash.core.data.utilities.data_frame import read_csv
+from flash.core.data.utilities.loading import load_data_frame
 from flash.core.utilities.imports import _PANDAS_AVAILABLE
 from flash.tabular.input import TabularDataFrameInput
 
@@ -54,7 +54,9 @@ class TabularRegressionCSVInput(TabularRegressionDataFrameInput):
         parameters: Dict[str, Any] = None,
     ):
         if file is not None:
-            return super().load_data(read_csv(file), categorical_fields, numerical_fields, target_field, parameters)
+            return super().load_data(
+                load_data_frame(file), categorical_fields, numerical_fields, target_field, parameters
+            )
 
 
 class TabularRegressionDictInput(TabularRegressionDataFrameInput):
