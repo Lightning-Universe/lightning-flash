@@ -286,6 +286,9 @@ class CheckDependenciesMeta(ABCMeta):
             patterns = ["load_from_checkpoint", "available_*"]  # must match classmethods only
             regex = "(" + ")|(".join(patterns) + ")"
             for attribute_name, attribute_value in filter(lambda x: re.match(regex, x[0]), inspect.getmembers(result)):
+                # TODO: Find a better way to do this
+                if attribute_name in ["available_layers"]:
+                    continue
                 setattr(
                     result, attribute_name, classmethod(requires(*result.required_extras)(attribute_value.__func__))
                 )
@@ -569,6 +572,25 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             )
 
         return [finetuning_strategy_fn(**finetuning_strategy_metadata)]
+
+    def as_embedder(self, layer: str):
+        """Convert this task to an embedder. Note that the parameters are not copied so that any optimization of
+        the embedder will also apply to the converted ``Task``.
+
+        Args:
+            layer: The layer to embed to. This should be one of the :meth:`~flash.core.model.Task.available_layers`.
+        """
+        from flash.core.utilities.embedder import Embedder  # Avoid circular import
+
+        return Embedder(self, layer)
+
+    def available_layers(self):
+        """Get the list of available layers for use with the :meth:`~flash.core.model.Task.as_embedder` method."""
+        available_layers = []
+        for name, _ in self.named_modules():
+            if name not in ["train_metrics", "val_metrics", "test_metrics"]:
+                available_layers.append(name)
+        return ["output"] + available_layers
 
     @classmethod
     def available_backbones(
