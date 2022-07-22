@@ -80,6 +80,17 @@ def test_normalize():
 
 
 @pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular dependencies are required")
+def test_normalize_large_array_dtype_fp16():
+    # See: https://github.com/Lightning-AI/lightning-flash/pull/1359 for the motivation behind this test
+    arr = np.linspace(0, 100000, 1000000, dtype=np.float16)
+    col_name = "data"
+    test_df_type_fp16 = pd.DataFrame({"data": arr})
+    mean, std = _compute_normalization(test_df_type_fp16, col_name)
+    df = _normalize(test_df_type_fp16, col_name, mean, std)
+    assert np.allclose(df[col_name].mean(), 49999.9)
+
+
+@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular dependencies are required")
 def test_embedding_sizes():
     self = Mock()
 
