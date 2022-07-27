@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
-
 from typing import Any, Callable, Dict, Tuple, Union
 
 from torch import Tensor
@@ -27,7 +26,6 @@ if _KORNIA_AVAILABLE:
 
 if _TORCHVISION_AVAILABLE:
     from torchvision import transforms as T
-
 
 
 def prepare_target(batch: Dict[str, Any]) -> Dict[str, Any]:
