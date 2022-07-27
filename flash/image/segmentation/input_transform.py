@@ -14,8 +14,6 @@
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Tuple, Union
 
-from torch import Tensor
-
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.transforms import ApplyToKeys, kornia_collate, KorniaParallelTransforms
