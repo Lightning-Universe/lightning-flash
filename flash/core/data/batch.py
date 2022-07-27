@@ -62,13 +62,15 @@ def default_uncollate(batch: Any) -> List[Any]:
         ValueError: If the input is not a ``dict`` or list-like.
     """
     if isinstance(batch, dict):
-        elements = [default_uncollate(element) for element in batch.values()]
+        if any(not _is_list_like_excluding_str(sub_batch) for sub_batch in batch.values()):
+            raise ValueError("When uncollating a dict, all sub-batches (values) are expected to be list-like.")
+        if len({len(sub_batch) for sub_batch in batch.values()}) > 1:
+            raise ValueError("When uncollating a dict, all sub-batches (values) are expected to have the same length.")
+        elements = [default_uncollate(element) for element in zip(*batch.values())]
         return [dict(zip(batch.keys(), element)) for element in elements]
-    if isinstance(batch, (list, tuple)):
-        return list(*batch)
-    if isinstance(batch, Tensor):
+    if isinstance(batch, (list, tuple, Tensor)):
         return list(batch)
     raise ValueError(
         "The batch of outputs to be uncollated is expected to be a `dict` or list-like "
-        "(e.g. `torch.Tensor`, `list`, `tuple`, etc.)."
+        f"(e.g. `torch.Tensor`, `list`, `tuple`, etc.), but got input of type: {type(batch)}"
     )
