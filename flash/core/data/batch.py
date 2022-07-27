@@ -63,9 +63,9 @@ def default_uncollate(batch: Any) -> List[Any]:
     """
     if isinstance(batch, dict):
         elements = [default_uncollate(element) for element in batch.values()]
-        return [dict(zip(batch.keys(), element)) for element in zip(*elements)]
+        return [dict(zip(batch.keys(), element)) for element in elements]
     if isinstance(batch, (list, tuple)):
-        return list(zip(*batch))
+        return list(*batch)
     if isinstance(batch, Tensor):
         return list(batch)
     raise ValueError(
