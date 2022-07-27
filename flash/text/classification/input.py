@@ -19,6 +19,7 @@ import pandas as pd
 from flash.core.data.io.classification_input import ClassificationInputMixin
 from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.utilities.classification import MultiBinaryTargetFormatter, TargetFormatter
+from flash.core.data.utilities.loading import load_data_frame
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 
@@ -79,8 +80,9 @@ class TextClassificationCSVInput(TextClassificationInput):
         target_keys: Optional[Union[str, List[str]]] = None,
         target_formatter: Optional[TargetFormatter] = None,
     ) -> Dataset:
-        dataset_dict = load_dataset("csv", data_files={"data": str(csv_file)})
-        return super().load_data(dataset_dict["data"], input_key, target_keys, target_formatter=target_formatter)
+        return super().load_data(
+            Dataset.from_pandas(load_data_frame(csv_file)), input_key, target_keys, target_formatter=target_formatter
+        )
 
 
 class TextClassificationJSONInput(TextClassificationInput):

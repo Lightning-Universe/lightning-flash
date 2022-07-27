@@ -23,20 +23,12 @@ from pytorch_lightning.utilities.apply_func import apply_to_collection
 from torch.nn import Module, ModuleDict, ModuleList
 from tqdm.auto import tqdm as tq
 
-from flash.core.utilities.imports import _CORE_TESTING, _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _CORE_TESTING
 from flash.core.utilities.stages import RunningStage
 
 # Skip doctests if requirements aren't available
 if not _CORE_TESTING:
     __doctest_skip__ = ["download_data"]
-
-if _PIL_AVAILABLE:
-    from PIL.Image import Image
-else:
-    Image = object
-
-if _TORCHVISION_AVAILABLE:
-    from torchvision.datasets.folder import default_loader
 
 _STAGES_PREFIX = {
     RunningStage.TRAINING: "train",
@@ -155,16 +147,3 @@ def convert_to_modules(transforms: Optional[Dict[str, Callable]]):
     transforms = apply_to_collection(transforms, Mapping, ModuleDict, wrong_dtype=ModuleDict)
     transforms = apply_to_collection(transforms, Iterable, ModuleList, wrong_dtype=(ModuleList, ModuleDict))
     return transforms
-
-
-def image_default_loader(file_path: str, drop_alpha: bool = True) -> Image:
-    """Default loader for images.
-
-    Args:
-        file_path: The image file to load.
-        drop_alpha: If ``True`` (default) then any alpha channels will be silently removed.
-    """
-    img = default_loader(file_path)
-    if img.mode == "RGBA" and drop_alpha:
-        img = img.convert("RGB")
-    return img

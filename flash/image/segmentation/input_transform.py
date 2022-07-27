@@ -12,24 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Tuple
+
+from typing import Any, Callable, Dict, Tuple, Union
 
 from torch import Tensor
 
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.transforms import ApplyToKeys, kornia_collate, KorniaParallelTransforms
 from flash.core.utilities.imports import _KORNIA_AVAILABLE, _TORCHVISION_AVAILABLE
 
 if _KORNIA_AVAILABLE:
     import kornia as K
 
 if _TORCHVISION_AVAILABLE:
-    from flash.core.data.transforms import ApplyToKeys, kornia_collate, KorniaParallelTransforms
+    from torchvision import transforms as T
 
 
-def prepare_target(tensor: Tensor) -> Tensor:
+
+def prepare_target(batch: Dict[str, Any]) -> Dict[str, Any]:
     """Convert the target mask to long and remove the channel dimension."""
-    return tensor.long().squeeze(1)
+    if DataKeys.TARGET in batch:
+        batch[DataKeys.TARGET] = batch[DataKeys.TARGET].long().squeeze(1)
+    return batch
 
 
 def remove_extra_dimensions(batch: Dict[str, Any]):
@@ -43,32 +48,46 @@ def remove_extra_dimensions(batch: Dict[str, Any]):
 class SemanticSegmentationInputTransform(InputTransform):
 
     image_size: Tuple[int, int] = (128, 128)
+    mean: Union[float, Tuple[float, float, float]] = (0.485, 0.456, 0.406)
+    std: Union[float, Tuple[float, float, float]] = (0.229, 0.224, 0.225)
 
     def train_per_sample_transform(self) -> Callable:
-        return ApplyToKeys(
-            [DataKeys.INPUT, DataKeys.TARGET],
-            KorniaParallelTransforms(
-                K.geometry.Resize(self.image_size, interpolation="nearest"), K.augmentation.RandomHorizontalFlip(p=0.5)
-            ),
+        return T.Compose(
+            [
+                ApplyToKeys(
+                    [DataKeys.INPUT, DataKeys.TARGET],
+                    KorniaParallelTransforms(
+                        K.geometry.Resize(self.image_size, interpolation="nearest"),
+                        K.augmentation.RandomHorizontalFlip(p=0.5),
+                    ),
+                ),
+                ApplyToKeys([DataKeys.INPUT], K.augmentation.Normalize(mean=self.mean, std=self.std)),
+            ]
         )
 
     def per_sample_transform(self) -> Callable:
-        return ApplyToKeys(
-            [DataKeys.INPUT, DataKeys.TARGET],
-            KorniaParallelTransforms(K.geometry.Resize(self.image_size, interpolation="nearest")),
+        return T.Compose(
+            [
+                ApplyToKeys(
+                    [DataKeys.INPUT, DataKeys.TARGET],
+                    KorniaParallelTransforms(K.geometry.Resize(self.image_size, interpolation="nearest")),
+                ),
+                ApplyToKeys([DataKeys.INPUT], K.augmentation.Normalize(mean=self.mean, std=self.std)),
+            ]
         )
 
-    def predict_input_per_sample_transform(self) -> Callable:
-        return K.geometry.Resize(self.image_size, interpolation="nearest")
+    def predict_per_sample_transform(self) -> Callable:
+        return ApplyToKeys(
+            DataKeys.INPUT,
+            K.geometry.Resize(
+                self.image_size,
+                interpolation="nearest",
+            ),
+            K.augmentation.Normalize(mean=self.mean, std=self.std),
+        )
 
     def collate(self) -> Callable:
         return kornia_collate
 
-    def target_per_batch_transform(self) -> Callable:
-        return prepare_target
-
-    def predict_per_batch_transform(self) -> Callable:
-        return remove_extra_dimensions
-
-    def serve_per_batch_transform(self) -> Callable:
-        return remove_extra_dimensions
+    def per_batch_transform(self) -> Callable:
+        return T.Compose([prepare_target, remove_extra_dimensions])

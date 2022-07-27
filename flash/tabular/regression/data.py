@@ -219,6 +219,8 @@ class TabularRegressionData(TabularData):
         Examples
         ________
 
+        The files can be in Comma Separated Values (CSV) format with either a ``.csv`` or ``.txt`` extension.
+
         .. testsetup::
 
             >>> from pandas import DataFrame
@@ -274,6 +276,64 @@ class TabularRegressionData(TabularData):
             >>> import os
             >>> os.remove("train_data.csv")
             >>> os.remove("predict_data.csv")
+
+        Alternatively, the files can be in Tab Separated Values (TSV) format with a ``.tsv`` extension.
+
+        .. testsetup::
+
+            >>> from pandas import DataFrame
+            >>> DataFrame.from_dict({
+            ...     "age": [2, 4, 1],
+            ...     "animal": ["cat", "dog", "cat"],
+            ...     "weight": [6, 10, 5],
+            ... }).to_csv("train_data.tsv", sep="\\t")
+            >>> DataFrame.from_dict({
+            ...     "animal": ["dog", "dog", "cat"],
+            ...     "weight": [7, 12, 5],
+            ... }).to_csv("predict_data.tsv", sep="\\t")
+
+        We have a ``train_data.tsv`` with the following contents:
+
+        .. code-block::
+
+            age animal  weight
+            2   cat     6
+            4   dog     10
+            1   cat     5
+
+        and a ``predict_data.tsv`` with the following contents:
+
+        .. code-block::
+
+            animal  weight
+            dog     7
+            dog     12
+            cat     5
+
+        .. doctest::
+
+            >>> from flash import Trainer
+            >>> from flash.tabular import TabularRegressor, TabularRegressionData
+            >>> datamodule = TabularRegressionData.from_csv(
+            ...     "animal",
+            ...     "weight",
+            ...     "age",
+            ...     train_file="train_data.tsv",
+            ...     predict_file="predict_data.tsv",
+            ...     batch_size=4,
+            ... )
+            >>> model = TabularRegressor.from_data(datamodule, backbone="tabnet")
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> import os
+            >>> os.remove("train_data.tsv")
+            >>> os.remove("predict_data.tsv")
         """
         ds_kw = dict(
             categorical_fields=categorical_fields,

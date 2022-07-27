@@ -1,5 +1,5 @@
 # Adapted from the Lightning CLI:
-# https://github.com/PyTorchLightning/pytorch-lightning/blob/master/tests/utilities/test_cli.py
+# https://github.com/Lightning-AI/lightning/blob/master/tests/tests_pytorch/utilities/test_cli.py
 import inspect
 import json
 import os

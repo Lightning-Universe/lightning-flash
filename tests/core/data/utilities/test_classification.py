@@ -143,10 +143,10 @@ def test_speed(case):
     formatter = get_target_formatter(targets)
     end = time.perf_counter()
 
-    assert (end - start) / len(targets) < 1e-5  # 0.01ms per target
+    assert (end - start) / len(targets) < 1e-4  # 0.1ms per target
 
     start = time.perf_counter()
     _ = [formatter(t) for t in targets]
     end = time.perf_counter()
 
-    assert (end - start) / len(targets) < 1e-5  # 0.01ms per target
+    assert (end - start) / len(targets) < 1e-4  # 0.1ms per target

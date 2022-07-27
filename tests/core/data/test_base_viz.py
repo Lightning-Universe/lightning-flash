@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from pathlib import Path
-from typing import Any, List, Sequence
+from typing import Any, List, Sequence, Tuple
 
 import numpy as np
 import pytest
@@ -41,16 +41,40 @@ class CustomBaseVisualization(BaseVisualization):
         super().__init__()
         self.check_reset()
 
-    def show_load_sample(self, samples: List[Any], running_stage: RunningStage):
+    def show_load_sample(
+        self,
+        samples: List[Any],
+        running_stage: RunningStage,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ):
         self.show_load_sample_called = True
 
-    def show_per_sample_transform(self, samples: List[Any], running_stage: RunningStage):
+    def show_per_sample_transform(
+        self,
+        samples: List[Any],
+        running_stage: RunningStage,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ):
         self.show_per_sample_transform_called = True
 
-    def show_collate(self, batch: Sequence, running_stage: RunningStage) -> None:
+    def show_collate(
+        self,
+        batch: Sequence,
+        running_stage: RunningStage,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ) -> None:
         self.show_collate_called = True
 
-    def show_per_batch_transform(self, batch: Sequence, running_stage: RunningStage) -> None:
+    def show_per_batch_transform(
+        self,
+        batch: Sequence,
+        running_stage: RunningStage,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ) -> None:
         self.per_batch_transform_called = True
 
     def check_reset(self):

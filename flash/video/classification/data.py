@@ -648,6 +648,8 @@ class VideoClassificationData(DataModule):
         Examples
         ________
 
+        The files can be in Comma Separated Values (CSV) format with either a ``.csv`` or ``.txt`` extension.
+
         .. testsetup::
 
             >>> import os
@@ -723,6 +725,84 @@ class VideoClassificationData(DataModule):
             >>> shutil.rmtree("predict_folder")
             >>> os.remove("train_data.csv")
             >>> os.remove("predict_data.csv")
+
+        Alternatively, the files can be in Tab Separated Values (TSV) format with a ``.tsv`` extension.
+
+        .. testsetup::
+
+            >>> import os
+            >>> import torch
+            >>> from torchvision import io
+            >>> from pandas import DataFrame
+            >>> data = torch.randint(255, (10, 64, 64, 3))
+            >>> os.makedirs("train_folder", exist_ok=True)
+            >>> os.makedirs("predict_folder", exist_ok=True)
+            >>> _ = [io.write_video(
+            ...     os.path.join("train_folder", f"video_{i}.mp4"), data, 5, "libx264rgb", {"crf": "0"}
+            ... ) for i in range(1, 4)]
+            >>> _ = [
+            ...     io.write_video(
+            ...         os.path.join("predict_folder", f"predict_video_{i}.mp4"), data, 5, "libx264rgb", {"crf": "0"}
+            ...     ) for i in range(1, 4)
+            ... ]
+            >>> DataFrame.from_dict({
+            ...         "videos": ["video_1.mp4", "video_2.mp4", "video_3.mp4"],
+            ...         "targets": ["cat", "dog", "cat"],
+            ... }).to_csv("train_data.tsv", sep="\\t", index=False)
+            >>> DataFrame.from_dict({
+            ...         "videos": ["predict_video_1.mp4", "predict_video_2.mp4", "predict_video_3.mp4"],
+            ... }).to_csv("predict_data.tsv", sep="\\t", index=False)
+
+        The file ``train_data.tsv`` contains the following:
+
+        .. code-block::
+
+            videos      targets
+            video_1.mp4 cat
+            video_2.mp4 dog
+            video_3.mp4 cat
+
+        The file ``predict_data.tsv`` contains the following:
+
+        .. code-block::
+
+            videos
+            predict_video_1.mp4
+            predict_video_2.mp4
+            predict_video_3.mp4
+
+        .. doctest::
+
+            >>> from flash import Trainer
+            >>> from flash.video import VideoClassifier, VideoClassificationData
+            >>> datamodule = VideoClassificationData.from_csv(
+            ...     "videos",
+            ...     "targets",
+            ...     train_file="train_data.tsv",
+            ...     train_videos_root="train_folder",
+            ...     predict_file="predict_data.tsv",
+            ...     predict_videos_root="predict_folder",
+            ...     transform_kwargs=dict(image_size=(244, 244)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            2
+            >>> datamodule.labels
+            ['cat', 'dog']
+            >>> model = VideoClassifier(backbone="x3d_xs", num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> import shutil
+            >>> shutil.rmtree("train_folder")
+            >>> shutil.rmtree("predict_folder")
+            >>> os.remove("train_data.tsv")
+            >>> os.remove("predict_data.tsv")
         """
         ds_kw = dict(
             clip_sampler=clip_sampler,
