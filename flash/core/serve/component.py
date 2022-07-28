@@ -3,7 +3,7 @@ from dataclasses import replace
 from functools import wraps
 from typing import Dict, List, Optional, Tuple, Type, Union
 
-from torch.nn import Module
+from torch import nn
 
 from flash.core.serve.core import ParameterContainer, Servable
 from flash.core.serve.decorators import BoundMeta, UnboundMeta
@@ -69,8 +69,8 @@ def _validate_subclass_init_signature(cls: Type["ModelComponent"]):
             raise SyntaxError(f"__init__ can only set 'config' as second param, not `{param}`")
 
 
-_ServableType = Union[Servable, Module]
-_Servable_t = (Servable, Module)
+_ServableType = Union[Servable, nn.Module]
+_Servable_t = (Servable, nn.Module)
 
 
 def _validate_model_args(

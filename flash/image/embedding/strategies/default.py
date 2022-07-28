@@ -14,7 +14,7 @@
 import warnings
 from typing import Any, Optional
 
-from torch.nn import Module
+from torch import nn
 
 from flash.core.adapter import Adapter, AdapterTask
 from flash.core.data.io.input import DataKeys
@@ -28,7 +28,7 @@ class DefaultAdapter(Adapter):
 
     required_extras: str = "image"
 
-    def __init__(self, backbone: Module):
+    def __init__(self, backbone: nn.Module):
         super().__init__()
 
         self.backbone = backbone
@@ -38,7 +38,7 @@ class DefaultAdapter(Adapter):
     def from_task(
         cls,
         task: AdapterTask,
-        backbone: Module,
+        backbone: nn.Module,
         **kwargs,
     ) -> Adapter:
         adapter = cls(backbone)

@@ -25,7 +25,7 @@ from pytorch_lightning.trainer.states import TrainerFn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from pytorch_lightning.utilities.warnings import WarningCache
 from torch import Tensor
-from torch.nn import Module
+from torch import nn
 from torch.utils.data import DataLoader, IterableDataset, Sampler
 
 import flash
@@ -60,8 +60,8 @@ class RemapLabels(Learn2LearnRemapLabels):
         return data
 
 
-class Model(Module):
-    def __init__(self, backbone: Module, head: Optional[Module]):
+class Model(nn.Module):
+    def __init__(self, backbone: nn.Module, head: Optional[nn.Module]):
         super().__init__()
         self.backbone = backbone
         self.head = head
@@ -82,8 +82,8 @@ class Learn2LearnAdapter(Adapter):
 
     def __init__(
         self,
-        backbone: Module,
-        head: Module,
+        backbone: nn.Module,
+        head: nn.Module,
         algorithm_cls: Type[LightningModule],
         ways: int,
         shots: int,
@@ -282,8 +282,8 @@ class Learn2LearnAdapter(Adapter):
         cls,
         *args,
         task: AdapterTask,
-        backbone: Module,
-        head: Module,
+        backbone: nn.Module,
+        head: nn.Module,
         algorithm: Type[LightningModule],
         **kwargs,
     ) -> Adapter:
@@ -485,7 +485,7 @@ class DefaultAdapter(Adapter):
 
     required_extras: str = "image"
 
-    def __init__(self, backbone: Module, head: Module):
+    def __init__(self, backbone: nn.Module, head: nn.Module):
         super().__init__()
 
         self.backbone = backbone
@@ -497,8 +497,8 @@ class DefaultAdapter(Adapter):
         cls,
         *args,
         task: AdapterTask,
-        backbone: Module,
-        head: Module,
+        backbone: nn.Module,
+        head: nn.Module,
         **kwargs,
     ) -> Adapter:
         adapter = cls(backbone, head)

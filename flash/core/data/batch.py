@@ -13,7 +13,7 @@
 # limitations under the License.
 from typing import Any, Callable, List, TYPE_CHECKING
 
-from torch.nn import Module
+import torch.nn
 
 from flash.core.data.utilities.classification import _is_list_like
 
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from flash.core.data.io.input import ServeInput
 
 
-class _ServeInputProcessor(Module):
+class _ServeInputProcessor(nn.Module):
     def __init__(
         self,
         serve_input: "ServeInput",
