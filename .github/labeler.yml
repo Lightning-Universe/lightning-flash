@@ -4,7 +4,6 @@ documentation:
 
 examples:
   - flash_examples/**/*
-  - flash_notebooks/**/*
 
 data:
   - flash/core/data/**/*

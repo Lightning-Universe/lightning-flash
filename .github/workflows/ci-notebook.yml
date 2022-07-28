@@ -54,16 +54,3 @@ jobs:
         path: flash_examples/predict # This path is specific to Ubuntu
         # Look to see if there is a cache hit for the corresponding requirements file
         key: flash-datasets_predict
-
-    - name: Run Notebooks
-      env:
-          FIFTYONE_DO_NOT_TRACK: true
-          FLASH_TESTING: 1
-      run: |
-        jupyter nbconvert --to script flash_notebooks/image_classification.ipynb
-        jupyter nbconvert --to script flash_notebooks/tabular_classification.ipynb
-        jupyter nbconvert --to script flash_notebooks/text_classification.ipynb
-
-        ipython flash_notebooks/image_classification.py
-        ipython flash_notebooks/tabular_classification.py
-        ipython flash_notebooks/text_classification.py
