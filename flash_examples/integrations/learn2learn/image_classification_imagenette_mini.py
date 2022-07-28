@@ -14,16 +14,16 @@
 
 # adapted from https://github.com/learnables/learn2learn/blob/master/examples/vision/protonet_miniimagenet.py#L154
 
-'''
+"""
 Requirements:
 
 pip install learn2learn
 pip install kornia
 pip install lightning-flash
 pip install 'lightning-flash[image]'
-'''
+"""
 
-'''
+"""
 ## Train file
 https://www.dropbox.com/s/9g8c6w345s2ek03/mini-imagenet-cache-train.pkl?dl=1
 
@@ -34,37 +34,34 @@ Followed by renaming the pickle files
 cp './mini-imagenet-cache-train.pkl?dl=1' './mini-imagenet-cache-train.pkl'
 cp './mini-imagenet-cache-validation.pkl?dl=1' './mini-imagenet-cache-validation.pkl'
 
-'''
+"""
 
 import warnings
-
-from typing import Callable, Tuple, Union
 from dataclasses import dataclass
-import warnings
+from typing import Callable, Tuple, Union
 
 import kornia.augmentation as Ka
 import kornia.geometry as Kg
 import learn2learn as l2l
-
+import numpy as np
 import torch
 import torchvision
-from torch import nn
 import torchvision.transforms as T
+from PIL import Image
+from torch import nn
 
-from flash.core.data.io.input_transform import InputTransform
 import flash
 from flash.core.data.io.input import DataKeys
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.transforms import ApplyToKeys, kornia_collate
 from flash.image import ImageClassificationData, ImageClassifier
-
-from PIL import Image
-import numpy as np
 
 warnings.simplefilter("ignore")
 
 # download MiniImagenet
 train_dataset = l2l.vision.datasets.MiniImagenet(root="./", mode="train", download=False)
 val_dataset = l2l.vision.datasets.MiniImagenet(root="./", mode="validation", download=False)
+
 
 @dataclass
 class ImageClassificationInputTransform(InputTransform):
@@ -74,29 +71,32 @@ class ImageClassificationInputTransform(InputTransform):
     std: Union[float, Tuple[float, float, float]] = (0.229, 0.224, 0.225)
 
     def per_sample_transform(self):
-        return T.Compose([
-        ApplyToKeys(
-            DataKeys.INPUT,
-            T.Compose([
-                T.ToTensor(),
-                Kg.Resize((196, 196)),
-                # SPATIAL
-                Ka.RandomHorizontalFlip(p=0.25),
-                Ka.RandomRotation(degrees=90.0, p=0.25),
-                Ka.RandomAffine(degrees=1 * 5.0, shear=1 / 5, translate=1 / 20, p=0.25),
-                Ka.RandomPerspective(distortion_scale=1 / 25, p=0.25),
-                
-                # PIXEL-LEVEL
-                Ka.ColorJitter(brightness=1 / 30, p=0.25),  # brightness
-                Ka.ColorJitter(saturation=1 / 30, p=0.25),  # saturation
-                Ka.ColorJitter(contrast=1 / 30, p=0.25),  # contrast
-                Ka.ColorJitter(hue=1 / 30, p=0.25),  # hue
-                Ka.RandomMotionBlur(kernel_size=2 * (4 // 3) + 1, angle=1, direction=1.0, p=0.25),
-                Ka.RandomErasing(scale=(1 / 100, 1 / 50), ratio=(1 / 20, 1), p=0.25),
-            ]),
-        ),
-        ApplyToKeys(DataKeys.TARGET, torch.as_tensor)]
-    )
+        return T.Compose(
+            [
+                ApplyToKeys(
+                    DataKeys.INPUT,
+                    T.Compose(
+                        [
+                            T.ToTensor(),
+                            Kg.Resize((196, 196)),
+                            # SPATIAL
+                            Ka.RandomHorizontalFlip(p=0.25),
+                            Ka.RandomRotation(degrees=90.0, p=0.25),
+                            Ka.RandomAffine(degrees=1 * 5.0, shear=1 / 5, translate=1 / 20, p=0.25),
+                            Ka.RandomPerspective(distortion_scale=1 / 25, p=0.25),
+                            # PIXEL-LEVEL
+                            Ka.ColorJitter(brightness=1 / 30, p=0.25),  # brightness
+                            Ka.ColorJitter(saturation=1 / 30, p=0.25),  # saturation
+                            Ka.ColorJitter(contrast=1 / 30, p=0.25),  # contrast
+                            Ka.ColorJitter(hue=1 / 30, p=0.25),  # hue
+                            Ka.RandomMotionBlur(kernel_size=2 * (4 // 3) + 1, angle=1, direction=1.0, p=0.25),
+                            Ka.RandomErasing(scale=(1 / 100, 1 / 50), ratio=(1 / 20, 1), p=0.25),
+                        ]
+                    ),
+                ),
+                ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
+            ]
+        )
 
     def train_per_sample_transform(self):
         return T.Compose(
@@ -118,15 +118,15 @@ class ImageClassificationInputTransform(InputTransform):
                 ApplyToKeys("target", torch.as_tensor),
             ]
         )
+
     def per_batch_transform_on_device(self):
-      return ApplyToKeys(
-        DataKeys.INPUT,
-        Ka.RandomHorizontalFlip(p=0.25),
-    )
-      
+        return ApplyToKeys(
+            DataKeys.INPUT,
+            Ka.RandomHorizontalFlip(p=0.25),
+        )
 
     def collate(self):
-      return kornia_collate
+        return kornia_collate
 
 
 # construct datamodule
@@ -138,7 +138,7 @@ datamodule = ImageClassificationData.from_tensors(
     val_targets=torch.from_numpy(val_dataset.y.astype(int)),
     train_transform=ImageClassificationInputTransform,
     val_transform=ImageClassificationInputTransform,
-    batch_size= 1
+    batch_size=1,
 )
 
 model = ImageClassifier(
