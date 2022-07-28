@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Collection, Dict, List, Optional, Sequence, Type, Union
+from typing import Any, Callable, Collection, Dict, List, Optional, Sequence, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -775,6 +775,8 @@ class ImageClassificationData(DataModule):
         Examples
         ________
 
+        The files can be in Comma Separated Values (CSV) format with either a ``.csv`` or ``.txt`` extension.
+
         .. testsetup::
 
             >>> import os
@@ -843,6 +845,77 @@ class ImageClassificationData(DataModule):
             >>> shutil.rmtree("predict_folder")
             >>> os.remove("train_data.csv")
             >>> os.remove("predict_data.csv")
+
+        Alternatively, the files can be in Tab Separated Values (TSV) format with a ``.tsv`` extension.
+
+        .. testsetup::
+
+            >>> import os
+            >>> from PIL import Image
+            >>> from pandas import DataFrame
+            >>> rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
+            >>> os.makedirs("train_folder", exist_ok=True)
+            >>> os.makedirs("predict_folder", exist_ok=True)
+            >>> _ = [rand_image.save(os.path.join("train_folder", f"image_{i}.png")) for i in range(1, 4)]
+            >>> _ = [rand_image.save(os.path.join("predict_folder", f"predict_image_{i}.png")) for i in range(1, 4)]
+            >>> DataFrame.from_dict({
+            ...     "images": ["image_1.png", "image_2.png", "image_3.png"],
+            ...     "targets": ["cat", "dog", "cat"],
+            ... }).to_csv("train_data.tsv", sep="\\t", index=False)
+            >>> DataFrame.from_dict({
+            ...     "images": ["predict_image_1.png", "predict_image_2.png", "predict_image_3.png"],
+            ... }).to_csv("predict_data.tsv", sep="\\t", index=False)
+
+        The file ``train_data.tsv`` contains the following:
+
+        .. code-block::
+
+            images      targets
+            image_1.png cat
+            image_2.png dog
+            image_3.png cat
+
+        The file ``predict_data.tsv`` contains the following:
+
+        .. code-block::
+
+            images
+            predict_image_1.png
+            predict_image_2.png
+            predict_image_3.png
+
+        .. doctest::
+
+            >>> from flash import Trainer
+            >>> from flash.image import ImageClassifier, ImageClassificationData
+            >>> datamodule = ImageClassificationData.from_csv(
+            ...     "images",
+            ...     "targets",
+            ...     train_file="train_data.tsv",
+            ...     train_images_root="train_folder",
+            ...     predict_file="predict_data.tsv",
+            ...     predict_images_root="predict_folder",
+            ...     transform_kwargs=dict(image_size=(128, 128)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            2
+            >>> datamodule.labels
+            ['cat', 'dog']
+            >>> model = ImageClassifier(backbone="resnet18", num_classes=datamodule.num_classes)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+
+        .. testcleanup::
+
+            >>> import shutil
+            >>> shutil.rmtree("train_folder")
+            >>> shutil.rmtree("predict_folder")
+            >>> os.remove("train_data.tsv")
+            >>> os.remove("predict_data.tsv")
         """
         ds_kw = dict(
             target_formatter=target_formatter,
@@ -1144,13 +1217,22 @@ class MatplotlibVisualization(BaseVisualization):
         return out
 
     @requires("matplotlib")
-    def _show_images_and_labels(self, data: List[Any], num_samples: int, title: str):
+    def _show_images_and_labels(
+        self,
+        data: List[Any],
+        num_samples: int,
+        title: str,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ):
+        num_samples = max(1, min(num_samples, limit_nb_samples))
+
         # define the image grid
         cols: int = min(num_samples, self.max_cols)
         rows: int = num_samples // cols
 
         # create figure and set title
-        fig, axs = plt.subplots(rows, cols)
+        fig, axs = plt.subplots(rows, cols, figsize=figsize)
         fig.suptitle(title)
 
         if not isinstance(axs, np.ndarray):
@@ -1175,14 +1257,28 @@ class MatplotlibVisualization(BaseVisualization):
             ax.axis("off")
         plt.show(block=self.block_viz_window)
 
-    def show_load_sample(self, samples: List[Any], running_stage: RunningStage):
+    def show_load_sample(
+        self,
+        samples: List[Any],
+        running_stage: RunningStage,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ):
         win_title: str = f"{running_stage} - show_load_sample"
-        self._show_images_and_labels(samples, len(samples), win_title)
+        self._show_images_and_labels(samples, len(samples), win_title, limit_nb_samples, figsize)
 
-    def show_per_sample_transform(self, samples: List[Any], running_stage: RunningStage):
+    def show_per_sample_transform(
+        self,
+        samples: List[Any],
+        running_stage: RunningStage,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ):
         win_title: str = f"{running_stage} - show_per_sample_transform"
-        self._show_images_and_labels(samples, len(samples), win_title)
+        self._show_images_and_labels(samples, len(samples), win_title, limit_nb_samples, figsize)
 
-    def show_per_batch_transform(self, batch: List[Any], running_stage):
+    def show_per_batch_transform(
+        self, batch: List[Any], running_stage, limit_nb_samples: int = None, figsize: Tuple[int, int] = (6.4, 4.8)
+    ):
         win_title: str = f"{running_stage} - show_per_batch_transform"
-        self._show_images_and_labels(batch[0], batch[0][DataKeys.INPUT].shape[0], win_title)
+        self._show_images_and_labels(batch[0], batch[0][DataKeys.INPUT].shape[0], win_title, limit_nb_samples, figsize)
