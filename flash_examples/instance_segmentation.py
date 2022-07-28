@@ -22,12 +22,12 @@ example_requires("image")
 import icedata  # noqa: E402
 
 # 1. Create the DataModule
-data_dir = icedata.pets.load_data()
+data_dir = icedata.pennfudan.load_data()
 
 datamodule = InstanceSegmentationData.from_icedata(
     train_folder=data_dir,
     val_split=0.1,
-    parser=partial(icedata.pets.parser, mask=True),
+    parser=partial(icedata.pennfudan.parser, mask=True),
     batch_size=4,
 )
 
