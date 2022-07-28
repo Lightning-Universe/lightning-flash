@@ -14,9 +14,7 @@
 
 # adapted from https://github.com/learnables/learn2learn/blob/master/examples/vision/protonet_miniimagenet.py#L154
 
-"""
-## Train file
-https://www.dropbox.com/s/9g8c6w345s2ek03/mini-imagenet-cache-train.pkl?dl=1
+"""## Train file https://www.dropbox.com/s/9g8c6w345s2ek03/mini-imagenet-cache-train.pkl?dl=1
 
 ## Validation File
 https://www.dropbox.com/s/ip1b7se3gij3r1b/mini-imagenet-cache-validation.pkl?dl=1
@@ -24,7 +22,6 @@ https://www.dropbox.com/s/ip1b7se3gij3r1b/mini-imagenet-cache-validation.pkl?dl=
 Followed by renaming the pickle files
 cp './mini-imagenet-cache-train.pkl?dl=1' './mini-imagenet-cache-train.pkl'
 cp './mini-imagenet-cache-validation.pkl?dl=1' './mini-imagenet-cache-validation.pkl'
-
 """
 
 import warnings
