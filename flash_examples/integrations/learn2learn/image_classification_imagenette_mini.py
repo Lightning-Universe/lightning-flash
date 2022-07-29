@@ -26,17 +26,13 @@ cp './mini-imagenet-cache-validation.pkl?dl=1' './mini-imagenet-cache-validation
 
 import warnings
 from dataclasses import dataclass
-from typing import Callable, Tuple, Union
+from typing import Tuple, Union
 
 import kornia.augmentation as Ka
 import kornia.geometry as Kg
 import learn2learn as l2l
-import numpy as np
 import torch
-import torchvision
 import torchvision.transforms as T
-from PIL import Image
-from torch import nn
 
 import flash
 from flash.core.data.io.input import DataKeys
