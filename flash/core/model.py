@@ -25,7 +25,7 @@ from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.callbacks.finetuning import BaseFinetuning
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torch import nn
+from torch import nn, Tensor
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader, Sampler
@@ -406,27 +406,27 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         output[OutputKeys.LOSS] = self.compute_loss(losses)
         output[OutputKeys.LOGS] = self.compute_logs(logs, losses)
         output[OutputKeys.TARGET] = y
-        output[OutputKeys.BATCH_SIZE] = y.shape[0] if isinstance(y, torch.Tensor) else None
+        output[OutputKeys.BATCH_SIZE] = y.shape[0] if isinstance(y, Tensor) else None
         return output
 
-    def compute_loss(self, losses: Dict[str, torch.Tensor]) -> torch.Tensor:
+    def compute_loss(self, losses: Dict[str, Tensor]) -> Tensor:
         return list(losses.values())[0]
 
-    def compute_logs(self, logs: Dict[str, Any], losses: Dict[str, torch.Tensor]):
+    def compute_logs(self, logs: Dict[str, Any], losses: Dict[str, Tensor]):
         logs.update(losses)
         return logs
 
     @staticmethod
-    def apply_filtering(y: torch.Tensor, y_hat: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def apply_filtering(y: Tensor, y_hat: Tensor) -> Tuple[Tensor, Tensor]:
         """This function is used to filter some labels or predictions which aren't conform."""
         return y, y_hat
 
     @staticmethod
-    def to_loss_format(x: torch.Tensor) -> torch.Tensor:
+    def to_loss_format(x: Tensor) -> Tensor:
         return x
 
     @staticmethod
-    def to_metrics_format(x: torch.Tensor) -> torch.Tensor:
+    def to_metrics_format(x: Tensor) -> Tensor:
         return x
 
     def forward(self, x: Any) -> Any:

@@ -15,8 +15,8 @@ import os
 import warnings
 from typing import Any, Dict, List, Optional, Type, Union
 
-import torch
 from pytorch_lightning import Callback
+from torch import Tensor
 
 from flash.core.classification import ClassificationTask
 from flash.core.data.io.input import DataKeys, ServeInput
@@ -110,7 +110,7 @@ class TextClassifier(ClassificationTask):
     def backbone(self):
         return self.model.base_model
 
-    def forward(self, batch: Dict[str, torch.Tensor]):
+    def forward(self, batch: Dict[str, Tensor]):
         result = self.model(input_ids=batch.get("input_ids", None), attention_mask=batch.get("attention_mask", None))
         if isinstance(result, (SequenceClassifierOutput, Seq2SeqSequenceClassifierOutput)):
             result = result.logits
