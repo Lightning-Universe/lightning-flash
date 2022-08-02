@@ -13,7 +13,7 @@
 # limitations under the License.
 from typing import List, Union
 
-import torch.cuda
+from torch import Tensor
 
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _VISSL_AVAILABLE
@@ -29,7 +29,7 @@ else:
 
 
 def _recursive_register(module):
-    named_tensors = [(key, value) for key, value in module.__dict__.items() if isinstance(value, torch.Tensor)]
+    named_tensors = [(key, value) for key, value in module.__dict__.items() if isinstance(value, Tensor)]
     for name, tensor in named_tensors:
         delattr(module, name)
         module.register_buffer(name, tensor)
