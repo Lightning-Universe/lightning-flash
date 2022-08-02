@@ -165,7 +165,10 @@ def load_spectrogram(file_path: str, sampling_rate: int = 16000, n_fft: int = 40
     """
     loaders = copy.copy(_spectrogram_loaders)
     loaders[AUDIO_EXTENSIONS] = partial(loaders[AUDIO_EXTENSIONS], sampling_rate=sampling_rate, n_fft=n_fft)
-    return load(file_path, loaders)
+    loader = _get_loader(file_path, loaders)
+    # FIXME: Following error is raised while trying to read fsspec object from SoundFile:
+    # RuntimeError: Error opening <fsspec.implementations.local.LocalFileOpener object at 0x100f4ac50>: Format not recognised.
+    return loader(file_path)
 
 
 def load_audio(file_path: str, sampling_rate: int = 16000):
