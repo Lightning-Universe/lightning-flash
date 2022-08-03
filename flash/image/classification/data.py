@@ -15,7 +15,7 @@ from typing import Any, Callable, Collection, Dict, List, Optional, Sequence, Tu
 
 import numpy as np
 import pandas as pd
-import torch
+from torch import Tensor
 from torch.utils.data import Dataset
 
 from flash.core.data.base_viz import BaseVisualization
@@ -481,13 +481,13 @@ class ImageClassificationData(DataModule):
     @classmethod
     def from_tensors(
         cls,
-        train_data: Optional[Collection[torch.Tensor]] = None,
+        train_data: Optional[Collection[Tensor]] = None,
         train_targets: Optional[Collection[Any]] = None,
-        val_data: Optional[Collection[torch.Tensor]] = None,
+        val_data: Optional[Collection[Tensor]] = None,
         val_targets: Optional[Sequence[Any]] = None,
-        test_data: Optional[Collection[torch.Tensor]] = None,
+        test_data: Optional[Collection[Tensor]] = None,
         test_targets: Optional[Sequence[Any]] = None,
-        predict_data: Optional[Collection[torch.Tensor]] = None,
+        predict_data: Optional[Collection[Tensor]] = None,
         target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = ImageClassificationTensorInput,
         transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
@@ -1204,13 +1204,13 @@ class MatplotlibVisualization(BaseVisualization):
 
     @staticmethod
     @requires("image")
-    def _to_numpy(img: Union[np.ndarray, torch.Tensor, Image.Image]) -> np.ndarray:
+    def _to_numpy(img: Union[np.ndarray, Tensor, Image.Image]) -> np.ndarray:
         out: np.ndarray
         if isinstance(img, np.ndarray):
             out = img
         elif isinstance(img, Image.Image):
             out = np.array(img)
-        elif isinstance(img, torch.Tensor):
+        elif isinstance(img, Tensor):
             out = img.squeeze(0).permute(1, 2, 0).cpu().numpy()
         else:
             raise TypeError(f"Unknown image type. Got: {type(img)}.")
@@ -1249,7 +1249,7 @@ class MatplotlibVisualization(BaseVisualization):
                 raise TypeError(f"Unknown data type. Got: {type(data)}.")
             # convert images to numpy
             _img: np.ndarray = self._to_numpy(_img)
-            if isinstance(_label, torch.Tensor):
+            if isinstance(_label, Tensor):
                 _label = _label.squeeze().tolist()
             # show image and set label as subplot title
             ax.imshow(_img)

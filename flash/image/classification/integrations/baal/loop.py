@@ -14,11 +14,11 @@
 from copy import deepcopy
 from typing import Any, Dict, Optional
 
-import torch
 from pytorch_lightning import LightningModule
 from pytorch_lightning.trainer.states import TrainerFn, TrainerStatus
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from pytorch_lightning.utilities.model_helpers import is_overridden
+from torch import Tensor
 
 import flash
 from flash.core.data.utils import _STAGES_PREFIX
@@ -74,7 +74,7 @@ class ActiveLearningLoop(Loop):
         self.should_reset_weights = should_reset_weights
         self.fit_loop: Optional[FitLoop] = None
         self.progress = Progress()
-        self._model_state_dict: Optional[Dict[str, torch.Tensor]] = None
+        self._model_state_dict: Optional[Dict[str, Tensor]] = None
         self._datamodule_state_dict: Optional[Dict[str, Any]] = None
         self._lightning_module: Optional[flash.Task] = None
 
