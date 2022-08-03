@@ -22,6 +22,8 @@ from numpy import random
 from flash.core.data.utilities.loading import AUDIO_EXTENSIONS, IMG_EXTENSIONS, NP_EXTENSIONS
 from flash.core.data.utilities.paths import filter_valid_files, PATH_TYPE
 
+_VALID_EXTENSIONS = AUDIO_EXTENSIONS + IMG_EXTENSIONS + NP_EXTENSIONS
+
 
 def _make_mock_dir(root, mock_files: List) -> List[PATH_TYPE]:
     mockdir = []
@@ -54,7 +56,7 @@ def _make_valid_extensions() -> tuple:
 
 
 def test_filter_valid_files(tmpdir) -> None:
-    valid_extensions = _make_valid_extensions()
+    valid_extensions = _VALID_EXTENSIONS
     valid_extensions = list(valid_extensions)
     fake_extensions = _make_fake_extensions(seed=42)
     mock_extensions = valid_extensions + fake_extensions
@@ -67,7 +69,7 @@ def test_filter_valid_files(tmpdir) -> None:
 
 
 def test_filter_valid_files_no_invalid(tmpdir):
-    valid_extensions = _make_valid_extensions()
+    valid_extensions = _VALID_EXTENSIONS
     valid_extensions = list(valid_extensions)
     mock_files = _make_fake_files(valid_extensions, seed=42)
     mockdir = _make_mock_dir(tmpdir, mock_files)
@@ -78,7 +80,7 @@ def test_filter_valid_files_no_invalid(tmpdir):
 
 
 def test_filter_valid_files_with_additional_list(tmpdir) -> None:
-    valid_extensions = _make_valid_extensions()
+    valid_extensions = _VALID_EXTENSIONS
     valid_extensions = list(valid_extensions)
     fake_extensions = _make_fake_extensions(seed=42)
     mock_extensions = valid_extensions + fake_extensions
@@ -106,34 +108,30 @@ def test_filter_valid_files_no_invalid_with_additional_list(tmpdir):
     assert len(filtered_additional) == len(mockdir)
 
 
-# TODO write test_has_file_allowed_extension
-# potentially not needed since this is used in
-# filter_valid_files
-# it may be app. to add (pragma no cover) at func def
-@pytest.mark.skip(reason="not implemented")
-def test_has_file_allowed_extension(tmpdir):
+# per coverage, write tests for lines: 152, 155, 163
+def test_filter_valid_files_remaining_tests_placeholder(tmpdir):
     pass
 
 
-# TODO write test_make_dataset
-@pytest.mark.skip(reason="not implemented")
+# test for if len(subdirs) < 0 returns tuple(files, targets)
+# test if len(subdirs) > 0 returns list[path_type]
+# test if extensions is not None returns bool
+# test if ValueError is raised both_none or both_something
 def test_make_dataset(tmpdir):
     pass
 
 
-# TODO write test_isdir
-@pytest.mark.skip(reason="not implemented")
+# test returns bool provided a dirpath
 def test_isdir(tmpdir):
     pass
 
 
-# TODO write test_listsubdir
-@pytest.mark.skip(reason="not implemented")
+# test returns a list of subdirs from a rootdir
 def test_listsubdir(tmpdir):
     pass
 
 
-# TODO write test_list_valid_files
-@pytest.mark.skip(reason="not implemented")
+# test returns list of files with valid extensions
+# parameterize arg "valid_extensions"
 def test_list_valid_files(tmpdir):
     pass
