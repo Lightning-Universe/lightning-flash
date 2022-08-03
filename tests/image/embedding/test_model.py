@@ -15,6 +15,7 @@ from typing import Any
 
 import pytest
 import torch
+from torch import Tensor
 
 import flash
 from flash.core.utilities.imports import _IMAGE_AVAILABLE, _IMAGE_TESTING, _TORCHVISION_AVAILABLE, _VISSL_AVAILABLE
@@ -44,7 +45,7 @@ class TestImageEmbedder(TaskTester):
         return torch.rand(1, 3, 64, 64)
 
     def check_forward_output(self, output: Any):
-        assert isinstance(output, torch.Tensor)
+        assert isinstance(output, Tensor)
         assert output.shape == torch.Size([1, 512])
 
 

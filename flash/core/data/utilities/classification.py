@@ -17,6 +17,7 @@ from typing import Any, cast, ClassVar, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import torch
+from torch import Tensor
 
 from flash.core.data.utilities.sort import sorted_alphanumeric
 from flash.core.utilities.imports import _CORE_TESTING
@@ -35,7 +36,7 @@ def _is_list_like(x: Any) -> bool:
         return False
 
 
-def _as_list(x: Union[List, torch.Tensor, np.ndarray]) -> List:
+def _as_list(x: Union[List, Tensor, np.ndarray]) -> List:
     if torch.is_tensor(x) or isinstance(x, np.ndarray):
         return cast(List, x.tolist())
     return x

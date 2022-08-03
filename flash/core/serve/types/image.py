@@ -5,6 +5,7 @@ from typing import Optional
 
 import numpy as np
 import torch
+from torch import Tensor
 
 from flash.core.utilities.imports import _PIL_AVAILABLE
 
@@ -47,7 +48,7 @@ class Image(BaseType):
     mode: str = "RGB"
     channel_first: bool = False
 
-    def deserialize(self, data: str) -> torch.Tensor:
+    def deserialize(self, data: str) -> Tensor:
         encoded_with_padding = (data + "===").encode("ascii")
         img = base64.b64decode(encoded_with_padding)
         buffer = BytesIO(img)
@@ -58,7 +59,7 @@ class Image(BaseType):
         # TODO: add batch dimension based on the argument
         return torch.from_numpy(arr).unsqueeze(0)
 
-    def serialize(self, tensor: torch.Tensor) -> str:
+    def serialize(self, tensor: Tensor) -> str:
         tensor = tensor.squeeze(0).numpy()
         image = PILImage.fromarray(tensor)
         if image.mode != self.mode:

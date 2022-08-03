@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytorch_lightning as pl
 import torch
+from torch import Tensor
 
 from flash.core.serve import expose, ModelComponent
 from flash.core.serve.types import Image, Label, Number, Repeated
@@ -87,7 +88,7 @@ try:
             img = (img - mean) / std
             img = img.permute(0, 3, 2, 1)
             out = self.model(img)
-            return ([out.argmax(), out.argmax()], torch.Tensor([21]))
+            return ([out.argmax(), out.argmax()], Tensor([21]))
 
 except TypeError:
     ClassificationInferenceRepeated = None
@@ -192,7 +193,7 @@ try:
         def predict(self, section, isle, row, stadium):
             seat_num = section.item() * isle.item() * row.item() * stadium * len(self.sport)
             stadium_idx = torch.tensor(1000)
-            return torch.Tensor([seat_num]), stadium_idx
+            return Tensor([seat_num]), stadium_idx
 
 except TypeError:
     SeatClassifier = None

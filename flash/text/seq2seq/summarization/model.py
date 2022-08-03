@@ -13,7 +13,7 @@
 # limitations under the License.
 from typing import Any, Dict, List, Optional, Union
 
-import torch
+from torch import Tensor
 from torchmetrics.text.rouge import ROUGEScore
 
 from flash.core.utilities.imports import _TM_GREATER_EQUAL_0_7_0
@@ -90,7 +90,7 @@ class SummarizationTask(Seq2SeqTask):
     def task(self) -> str:
         return "summarization"
 
-    def compute_metrics(self, generated_tokens: torch.Tensor, batch: Dict, prefix: str) -> None:
+    def compute_metrics(self, generated_tokens: Tensor, batch: Dict, prefix: str) -> None:
         tgt_lns = self.decode(batch["labels"])
         result = self.rouge(self.decode(generated_tokens), tgt_lns)
         self.log_dict(result, on_step=False, on_epoch=True, prog_bar=True)
