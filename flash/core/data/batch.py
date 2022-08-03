@@ -13,8 +13,7 @@
 # limitations under the License.
 from typing import Any, Callable, List, TYPE_CHECKING
 
-from torch import Tensor
-from torch import nn
+from torch import nn, Tensor
 
 from flash.core.data.utilities.classification import _is_list_like
 
