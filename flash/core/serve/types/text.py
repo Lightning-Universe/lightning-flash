@@ -2,7 +2,7 @@ import warnings
 from dataclasses import dataclass
 from typing import Any, Union
 
-import torch
+from torch import Tensor
 
 from flash.core.serve.types.base import BaseType
 
@@ -36,8 +36,8 @@ class Text(BaseType):
                 raise e
             self.tokenizer = AutoTokenizer.from_pretrained(self.tokenizer)
 
-    def deserialize(self, text: str) -> torch.Tensor:
+    def deserialize(self, text: str) -> Tensor:
         return self.tokenizer.encode(text, return_tensors="pt")
 
-    def serialize(self, tensor: torch.Tensor) -> str:
+    def serialize(self, tensor: Tensor) -> str:
         return self.tokenizer.decode(tensor.squeeze())

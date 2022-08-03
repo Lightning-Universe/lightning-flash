@@ -15,7 +15,7 @@ from abc import abstractmethod
 from typing import Any, Callable, Optional
 
 import torch.jit
-from torch import nn
+from torch import nn, Tensor
 from torch.utils.data import DataLoader, Sampler
 
 import flash
@@ -103,7 +103,7 @@ class AdapterTask(Task):
     def backbone(self) -> nn.Module:
         return self.adapter.backbone
 
-    def forward(self, x: torch.Tensor) -> Any:
+    def forward(self, x: Tensor) -> Any:
         return self.adapter.forward(x)
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:

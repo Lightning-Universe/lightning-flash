@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from typing import Callable, Tuple, Union
 
 import torch
+from torch import nn
 
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform
@@ -28,7 +29,7 @@ if _ALBUMENTATIONS_AVAILABLE:
     import albumentations
 
 
-class AlbumentationsAdapter(torch.nn.Module):
+class AlbumentationsAdapter(nn.Module):
     @requires("albumentations")
     def __init__(self, transform):
         super().__init__()

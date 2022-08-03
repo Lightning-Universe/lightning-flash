@@ -13,8 +13,7 @@
 # limitations under the License.
 from typing import Any, cast, List, NoReturn, Optional, Sequence, Tuple, Union
 
-import torch
-from torch import nn
+from torch import nn, Tensor
 
 from flash.core.data.io.input import DataKeys
 from flash.core.model import Task
@@ -71,7 +70,7 @@ class StyleTransfer(Task):
 
     def __init__(
         self,
-        style_image: Optional[Union[str, torch.Tensor]] = None,
+        style_image: Optional[Union[str, Tensor]] = None,
         model: Optional[nn.Module] = None,
         backbone: str = "vgg16",
         content_layer: str = "relu2_2",
@@ -115,7 +114,7 @@ class StyleTransfer(Task):
         self.perceptual_loss = perceptual_loss
 
     @staticmethod
-    def default_style_image() -> torch.Tensor:
+    def default_style_image() -> Tensor:
         return pystiche.demo.images()["paint"].read(size=256)
 
     @staticmethod
@@ -124,7 +123,7 @@ class StyleTransfer(Task):
         # oversight: they normalize the representation twice by the number of channels. To be compatible with them, we
         # do the same here.
         class GramOperator(loss.GramLoss):
-            def enc_to_repr(self, enc: torch.Tensor) -> torch.Tensor:
+            def enc_to_repr(self, enc: Tensor) -> Tensor:
                 rr = super().enc_to_repr(enc)
                 num_channels = rr.size()[1]
                 return rr / num_channels

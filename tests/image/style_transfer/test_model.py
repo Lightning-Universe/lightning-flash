@@ -15,6 +15,7 @@ from typing import Any
 
 import pytest
 import torch
+from torch import Tensor
 
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _IMAGE_AVAILABLE, _IMAGE_TESTING
@@ -38,7 +39,7 @@ class TestStyleTransfer(TaskTester):
         return torch.rand(1, 3, 32, 32)
 
     def check_forward_output(self, output: Any):
-        assert isinstance(output, torch.Tensor)
+        assert isinstance(output, Tensor)
         assert output.shape == torch.Size([1, 3, 32, 32])
 
     @property

@@ -15,6 +15,7 @@ from unittest.mock import Mock
 
 import pytest
 import torch
+from torch import nn
 
 from flash.core.data.io.input import DataKeys
 from flash.core.data.transforms import ApplyToKeys, kornia_collate, KorniaParallelTransforms
@@ -76,8 +77,8 @@ def test_kornia_parallel_transforms(with_params):
     samples = [torch.rand(1, 3, 10, 10), torch.rand(1, 3, 10, 10)]
     transformed_sample = torch.rand(1, 3, 10, 10)
 
-    transform_a = Mock(spec=torch.nn.Module, return_value=transformed_sample)
-    transform_b = Mock(spec=torch.nn.Module)
+    transform_a = Mock(spec=nn.Module, return_value=transformed_sample)
+    transform_b = Mock(spec=nn.Module)
 
     if with_params:
         transform_a._params = "test"  # initialize params with some value

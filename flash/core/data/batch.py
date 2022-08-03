@@ -13,7 +13,7 @@
 # limitations under the License.
 from typing import Any, Callable, List, TYPE_CHECKING
 
-import torch
+from torch import nn
 
 from flash.core.data.utilities.classification import _is_list_like
 
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from flash.core.data.io.input import ServeInput
 
 
-class _ServeInputProcessor(torch.nn.Module):
+class _ServeInputProcessor(nn.Module):
     def __init__(
         self,
         serve_input: "ServeInput",
@@ -73,5 +73,5 @@ def default_uncollate(batch: Any) -> List[Any]:
         return list(batch)
     raise ValueError(
         "The batch of outputs to be uncollated is expected to be a `dict` or list-like "
-        "(e.g. `torch.Tensor`, `list`, `tuple`, etc.)."
+        "(e.g. `Tensor`, `list`, `tuple`, etc.)."
     )

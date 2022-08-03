@@ -39,7 +39,6 @@ class ObjectDetector(AdapterTask):
         optimizer: Optimizer to use for training.
         lr_scheduler: The LR scheduler to use during training.
         learning_rate: The learning rate to use for training.
-        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
         predict_kwargs: dictionary containing parameters that will be used during the prediction phase.
         kwargs: additional kwargs nessesary for initializing the backbone task
     """
