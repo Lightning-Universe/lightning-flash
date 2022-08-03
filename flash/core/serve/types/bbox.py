@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Tuple
 
 import torch
+from torch import Tensor
 
 from flash.core.serve.types.base import BaseType
 
@@ -27,12 +28,12 @@ class BBox(BaseType):
         if elem.dtype == torch.bool or torch.is_complex(elem):
             raise TypeError(f"Found unsupported datatype for " f"bounding boxes: {elem.dtype}")
 
-    def deserialize(self, box: Tuple[float, ...]) -> torch.Tensor:
+    def deserialize(self, box: Tuple[float, ...]) -> Tensor:
         tensor = torch.FloatTensor(box)
         self._validate(tensor)
         return tensor
 
-    def serialize(self, box: torch.Tensor) -> Tuple[float, ...]:
+    def serialize(self, box: Tensor) -> Tuple[float, ...]:
         box = box.squeeze()
         self._validate(box)
         return box.tolist()

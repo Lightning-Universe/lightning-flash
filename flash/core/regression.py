@@ -13,9 +13,9 @@
 # limitations under the License.
 from typing import Callable, Mapping, Optional, Sequence, Union
 
-import torch
 import torch.nn.functional as F
 import torchmetrics
+from torch import Tensor
 
 from flash.core.adapter import AdapterTask
 from flash.core.model import Task
@@ -32,7 +32,7 @@ class RegressionMixin:
 
         return metrics, loss_fn
 
-    def to_metrics_format(self, x: torch.Tensor) -> torch.Tensor:
+    def to_metrics_format(self, x: Tensor) -> Tensor:
         return x
 
 

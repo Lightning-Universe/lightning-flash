@@ -13,8 +13,7 @@
 # limitations under the License.
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-import torch
-from torch import nn
+from torch import nn, Tensor
 
 from flash.core.classification import ClassificationTask
 from flash.core.data.io.input import DataKeys
@@ -112,7 +111,7 @@ class TemplateSKLearnClassifier(ClassificationTask):
         batch = batch[DataKeys.INPUT]
         return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
 
-    def forward(self, x) -> torch.Tensor:
+    def forward(self, x) -> Tensor:
         """First call the backbone, then the model head."""
         x = self.backbone(x)
         return self.head(x)
