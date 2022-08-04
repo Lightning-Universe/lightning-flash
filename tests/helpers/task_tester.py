@@ -119,8 +119,10 @@ def _test_jit_script(self, tmpdir):
     path = os.path.join(tmpdir, "test.pt")
 
     model = self.instantiated_task
+    trainer = self.instantiated_trainer
     model.eval()
 
+    model.trainer = trainer
     model = torch.jit.script(model)
 
     torch.jit.save(model, path)
