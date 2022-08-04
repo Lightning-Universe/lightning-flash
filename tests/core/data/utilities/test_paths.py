@@ -70,11 +70,13 @@ def test_filter_valid_files_no_valid_extensions(tmpdir):
         return additional
 
     valid_extensions = list(VALID_EXTENSIONS)
-    mock_files = _make_fake_files(valid_extensions)
-    mockdir = _make_mock_dir_list(tmpdir, mock_files)
-    additional_lists = _make_mock_dir_list(tmpdir, mock_files)
-    expected = (mockdir,) + unpack_additional(additional_lists)
-    got = filter_valid_files(mockdir, additional_lists, valid_extensions=None)
+    files = _make_fake_files(valid_extensions)
+    additional_lists = _make_mock_dir_list(tmpdir, files)
+    tmpdir = pathlib.Path(tmpdir)
+    for f in files:
+        (tmpdir / f).touch()
+    expected = ([tmpdir],) + unpack_additional(additional_lists)
+    got = filter_valid_files(tmpdir, additional_lists, valid_extensions=None)
     assert got == expected
 
 
