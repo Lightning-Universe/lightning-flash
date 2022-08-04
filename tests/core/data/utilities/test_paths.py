@@ -138,42 +138,36 @@ def test_listsubdir(tmpdir):
     pass
 
 
-@pytest.mark.parametrize("use_valid_extensions", [True, False])
-def test_list_valid_files_paths_single_file(tmpdir, use_valid_extensions):
-    valid_extensions = list(VALID_EXTENSIONS)
-    files = _make_fake_files(valid_extensions, seed=42)
-    valid_exts = tuple(valid_extensions) if use_valid_extensions else None
-    filtered = list_valid_files(files[0], valid_extensions=valid_exts)
-    if use_valid_extensions:
-        assert filtered[0].endswith(valid_exts)
-    if not use_valid_extensions:
+@pytest.mark.parametrize("valid_extensions", [VALID_EXTENSIONS, None])
+def test_list_valid_files_paths_single_file(tmpdir, valid_extensions):
+    files = _make_fake_files(list(VALID_EXTENSIONS), seed=42)
+    filtered = list_valid_files(files[0], valid_extensions=valid_extensions)
+    if valid_extensions:
+        assert filtered[0].endswith(VALID_EXTENSIONS)
+    if not valid_extensions:
         assert files[0] == filtered[0]
 
 
-@pytest.mark.parametrize("use_valid_extensions", [True, False])
-def test_list_valid_files_paths_list(tmpdir, use_valid_extensions):
-    valid_extensions = list(VALID_EXTENSIONS)
+@pytest.mark.parametrize("valid_extensions", [VALID_EXTENSIONS, None])
+def test_list_valid_files_paths_list(tmpdir, valid_extensions):
     fake_extensions = _make_fake_extensions(seed=42)
     fake_files = _make_fake_files(fake_extensions, seed=42)
-    valid_files = _make_fake_files(valid_extensions, seed=42)
-    valid_exts = tuple(valid_extensions) if use_valid_extensions else None
-    filtered = list_valid_files(fake_files + valid_files, valid_extensions=valid_exts)
-    if use_valid_extensions:
+    valid_files = _make_fake_files(list(VALID_EXTENSIONS), seed=42)
+    filtered = list_valid_files(fake_files + valid_files, valid_extensions=valid_extensions)
+    if valid_extensions:
         assert all(i not in fake_files for i in filtered)
-    if not use_valid_extensions:
+    if not valid_extensions:
         assert fake_files + valid_files == filtered
 
 
-@pytest.mark.parametrize("use_valid_extensions", [True, False])
-def test_list_valid_files_paths_dir(tmpdir, use_valid_extensions):
-    valid_extensions = list(VALID_EXTENSIONS)
+@pytest.mark.parametrize("valid_extensions", [VALID_EXTENSIONS, None])
+def test_list_valid_files_paths_dir(tmpdir, valid_extensions):
     fake_extensions = _make_fake_extensions(seed=42)
     fake_files = _make_fake_files(fake_extensions, seed=42)
-    valid_files = _make_fake_files(valid_extensions, seed=42)
+    valid_files = _make_fake_files(list(VALID_EXTENSIONS), seed=42)
     mockdir = _make_mock_dir(tmpdir, fake_files + valid_files)
-    valid_exts = tuple(valid_extensions) if use_valid_extensions else None
-    filtered = list_valid_files(mockdir, valid_extensions=valid_exts)
-    if use_valid_extensions:
+    filtered = list_valid_files(mockdir, valid_extensions=valid_extensions)
+    if valid_extensions:
         assert all(i not in fake_files for i in filtered)
-    if not use_valid_extensions:
+    if not valid_extensions:
         assert mockdir == filtered
