@@ -21,27 +21,20 @@ import pytest
 from numpy import random
 
 from flash.core.data.utilities.loading import AUDIO_EXTENSIONS, IMG_EXTENSIONS, NP_EXTENSIONS
-from flash.core.data.utilities.paths import (
-    filter_valid_files,
-    isdir,
-    list_subdirs,
-    list_valid_files,
-    make_dataset,
-    PATH_TYPE,
-)
+from flash.core.data.utilities.paths import filter_valid_files, isdir, list_subdirs, list_valid_files, make_dataset
 
 VALID_EXTENSIONS = AUDIO_EXTENSIONS + IMG_EXTENSIONS + NP_EXTENSIONS
 SEED = 42
 
 
-def _make_mock_dir_list(root, mock_files: List) -> List[PATH_TYPE]:
+def _make_mock_dir_list(root, mock_files: List):
     mockdir = []
     for idx, f_ext in enumerate(mock_files):
         mockdir.append(os.path.join(root, mock_files[idx]))
     return mockdir
 
 
-def _make_fake_files(mock_extensions) -> List[str]:
+def _make_fake_files(mock_extensions):
     random.seed(SEED)
     fake_files = mock_extensions[:]
     for idx, f_ext in enumerate(fake_files):
@@ -51,7 +44,7 @@ def _make_fake_files(mock_extensions) -> List[str]:
     return fake_files
 
 
-def _make_fake_extensions() -> List[str]:
+def _make_fake_extensions():
     random.seed(SEED)
     fake_extensions = []
     for i in range(5):
@@ -60,7 +53,7 @@ def _make_fake_extensions() -> List[str]:
     return fake_extensions
 
 
-def test_filter_valid_files(tmpdir) -> None:
+def test_filter_valid_files(tmpdir):
     valid_extensions = list(VALID_EXTENSIONS)
     fake_extensions = _make_fake_extensions()
     mock_extensions = valid_extensions + fake_extensions
@@ -70,6 +63,19 @@ def test_filter_valid_files(tmpdir) -> None:
     with pytest.warns(UserWarning, match=message):
         filtered = filter_valid_files(mockdir, valid_extensions=valid_extensions)
     assert all(i not in fake_extensions for i in filtered)
+
+
+def test_filter_valid_files_no_valid_extensions(tmpdir):
+    def unpack_additional(*additional):
+        return additional
+
+    valid_extensions = list(VALID_EXTENSIONS)
+    mock_files = _make_fake_files(valid_extensions)
+    mockdir = _make_mock_dir_list(tmpdir, mock_files)
+    additional_lists = _make_mock_dir_list(tmpdir, mock_files)
+    expected = (mockdir,) + unpack_additional(additional_lists)
+    got = filter_valid_files(mockdir, additional_lists, valid_extensions=None)
+    assert got == expected
 
 
 def test_filter_valid_files_no_invalid(tmpdir):
@@ -82,7 +88,7 @@ def test_filter_valid_files_no_invalid(tmpdir):
     assert len(filtered) == len(mockdir)
 
 
-def test_filter_valid_files_with_additional_list(tmpdir) -> None:
+def test_filter_valid_files_with_additional_list(tmpdir):
     valid_extensions = list(VALID_EXTENSIONS)
     fake_extensions = _make_fake_extensions()
     mock_extensions = valid_extensions + fake_extensions
