@@ -193,9 +193,12 @@ def test_list_valid_files_paths_dir(tmpdir, valid_extensions):
     fake_extensions = _make_fake_extensions()
     fake_files = _make_fake_files(fake_extensions)
     valid_files = _make_fake_files(list(VALID_EXTENSIONS))
-    mockdir = _make_mock_dir_list(tmpdir, fake_files + valid_files)
-    filtered = list_valid_files(mockdir, valid_extensions=valid_extensions)
+    files = fake_files + valid_files
+    tmpdir = pathlib.Path(tmpdir)
+    for f in files:
+        (tmpdir / f).touch()
+    filtered = list_valid_files(tmpdir, valid_extensions=valid_extensions)
     if valid_extensions:
         assert all(i not in fake_files for i in filtered)
     if not valid_extensions:
-        assert mockdir == filtered
+        assert [os.path.join(tmpdir, file) for file in os.listdir(tmpdir)] == filtered
