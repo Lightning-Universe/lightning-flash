@@ -97,7 +97,7 @@ class LightningArgumentParser(ArgumentParser):
             lightning_class = class_from_function(lightning_class)
 
         if inspect.isclass(lightning_class) and issubclass(
-            cast(type, lightning_class), (Trainer, LightningModule, LightningDataModule, Callback)
+            cast(type, lightning_class), (Trainer, LightningModule, LightningDataModule, Callback, ClassFromFunctionBase)
         ):
             if issubclass(cast(type, lightning_class), Callback):
                 self.callback_keys.append(nested_key)
