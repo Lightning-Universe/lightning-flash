@@ -102,8 +102,10 @@ def _test_jit_trace(self, tmpdir):
     path = os.path.join(tmpdir, "test.pt")
 
     model = self.instantiated_task
+    trainer = self.instantiated_trainer
     model.eval()
 
+    model.trainer = trainer
     model = torch.jit.trace(model, self.example_forward_input)
 
     torch.jit.save(model, path)
@@ -261,9 +263,16 @@ class TaskTester(metaclass=TaskTesterMeta):
         "test_cli": [pytest.mark.parametrize("extra_args", [[]])],
     }
 
+    trainer_args: Tuple = ()
+    trainer_kwargs: Dict = {}
+
     @property
     def instantiated_task(self):
         return self.task(*self.task_args, **self.task_kwargs)
+
+    @property
+    def instantiated_trainer(self):
+        return flash.Trainer(*self.trainer_args, **self.trainer_kwargs)
 
     @property
     def example_forward_input(self):
