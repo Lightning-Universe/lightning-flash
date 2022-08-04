@@ -138,8 +138,6 @@ def test_listsubdir(tmpdir):
     pass
 
 
-# test returns list of files with valid extensions
-# parameterize arg "valid_extensions"
 @pytest.mark.parametrize("_valid_extensions", [True, False])
 def test_list_valid_files_paths_single_file(tmpdir, _valid_extensions):
     valid_extensions = list(_VALID_EXTENSIONS)
