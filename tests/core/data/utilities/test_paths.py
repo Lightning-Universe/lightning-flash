@@ -181,16 +181,18 @@ def test_make_dataset_with_extensions_with_subdir(tmpdir):
     assert expected == got
 
 
-def test_make_dataset_with_extensions_no_subdir(tmpdir):
+@pytest.mark.parametrize("valid_extensions", [VALID_EXTENSIONS, None])
+def test_make_dataset_with_extensions_no_subdir(tmpdir, valid_extensions):
     tmpdir = pathlib.Path(tmpdir)
-
     (tmpdir / "a.png").touch()
     (tmpdir / "b.jpeg").touch()
     (tmpdir / "c.unknown").touch()
-
-    directory = os.path.expanduser(str(tmpdir))
-    expected = list_valid_files(directory), None
-    got = make_dataset(directory, VALID_EXTENSIONS)
+    if valid_extensions:
+        expected = ([str(tmpdir / "b.jpeg"), str(tmpdir / "a.png")], None)
+        got = make_dataset(tmpdir, VALID_EXTENSIONS)
+    if not valid_extensions:
+        expected = ([str(tmpdir / "c.unknown"), str(tmpdir / "b.jpeg"), str(tmpdir / "a.png")], None)
+        got = make_dataset(tmpdir, is_valid_file=True)
     assert expected == got
 
 

@@ -86,6 +86,10 @@ def make_dataset(
                         files.append(path)
                         targets.append(target_class)
         return files, targets
+
+    if extensions is not None:
+        return list_valid_files(directory, valid_extensions=extensions), None
+
     return list_valid_files(directory), None
 
 
