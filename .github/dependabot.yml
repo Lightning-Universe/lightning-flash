@@ -6,7 +6,7 @@ updates:
     schedule:
       interval: "weekly"
     labels:
-      - "ci/cd"
+      - "tests / CI"
     pull-request-branch-name:
       separator: "-"
     open-pull-requests-limit: 5
