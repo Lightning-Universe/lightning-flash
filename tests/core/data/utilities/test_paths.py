@@ -178,7 +178,7 @@ def test_make_dataset_with_extensions_with_subdir(tmpdir):
     expected_targets = ["a", "b"]
     expected = (expected_files, expected_targets)  # no c because of unk file ext
     got = make_dataset(directory, VALID_EXTENSIONS)
-    assert expected == got, expected[0]
+    assert expected == got
 
 
 def test_make_dataset_with_extensions_no_subdir(tmpdir):
