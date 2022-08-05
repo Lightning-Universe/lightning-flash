@@ -28,38 +28,38 @@ VALID_EXTENSIONS = AUDIO_EXTENSIONS + IMG_EXTENSIONS + NP_EXTENSIONS
 SEED = 42
 
 
-def _make_mock_dir_list(root, mock_files: List):
+def _make_dir_list(root, mock_files: List):
     mockdir = []
-    for idx, f_ext in enumerate(mock_files):
-        mockdir.append(os.path.join(root, mock_files[idx]))
+    for f in mock_files:
+        mockdir.append(os.path.join(root, f))
     return mockdir
 
 
-def _make_fake_files(mock_extensions):
+def _make_files(extensions):
     random.seed(SEED)
-    fake_files = mock_extensions[:]
-    for idx, f_ext in enumerate(fake_files):
+    files = extensions[:]
+    for idx, f_ext in enumerate(files):
         idxs = random.randint(0, len(ascii_lowercase), size=3)
-        fake_name = "".join([ascii_lowercase[ix] for ix in idxs])
-        fake_files[idx] = "".join([fake_name, f_ext])
-    return fake_files
+        name = "".join([ascii_lowercase[ix] for ix in idxs])
+        files[idx] = "".join([name, f_ext])
+    return files
 
 
-def _make_fake_extensions():
+def _make_extensions():
     random.seed(SEED)
-    fake_extensions = []
+    extensions = []
     for i in range(5):
         idxs = random.randint(0, len(ascii_lowercase), size=3)
-        fake_extensions.append("".join(["."] + [ascii_lowercase[idx] for idx in idxs]))
-    return fake_extensions
+        extensions.append("".join(["."] + [ascii_lowercase[idx] for idx in idxs]))
+    return extensions
 
 
 def test_filter_valid_files(tmpdir):
     valid_extensions = list(VALID_EXTENSIONS)
-    fake_extensions = _make_fake_extensions()
-    mock_extensions = valid_extensions + fake_extensions
-    mock_files = _make_fake_files(mock_extensions)
-    mockdir = _make_mock_dir_list(tmpdir, mock_files)
+    fake_extensions = _make_extensions()
+    extensions = valid_extensions + fake_extensions
+    files = _make_files(extensions)
+    mockdir = _make_dir_list(tmpdir, files)
     message = "Found invalid file extensions"
     with pytest.warns(UserWarning, match=message):
         filtered = filter_valid_files(mockdir, valid_extensions=valid_extensions)
@@ -71,20 +71,20 @@ def test_filter_valid_files_path_no_valid_extensions(tmpdir):
         return additional
 
     valid_extensions = list(VALID_EXTENSIONS)
-    files = _make_fake_files(valid_extensions)
-    additional_lists = _make_mock_dir_list(tmpdir, files)
+    files = _make_files(valid_extensions)
+    additional_lists = _make_dir_list(tmpdir, files)
     tmpdir = pathlib.Path(tmpdir)
     for f in files:
         (tmpdir / f).touch()
     expected = ([tmpdir],) + unpack_additional(additional_lists)
     got = filter_valid_files(tmpdir, additional_lists, valid_extensions=None)
-    assert got == expected
+    assert expected == got
 
 
 def test_filter_valid_files_no_invalid(tmpdir):
     valid_extensions = list(VALID_EXTENSIONS)
-    mock_files = _make_fake_files(valid_extensions)
-    mockdir = _make_mock_dir_list(tmpdir, mock_files)
+    files = _make_files(valid_extensions)
+    mockdir = _make_dir_list(tmpdir, files)
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         filtered = filter_valid_files(mockdir, valid_extensions=valid_extensions)
@@ -93,10 +93,10 @@ def test_filter_valid_files_no_invalid(tmpdir):
 
 def test_filter_valid_files_with_additional_list(tmpdir):
     valid_extensions = list(VALID_EXTENSIONS)
-    fake_extensions = _make_fake_extensions()
-    mock_extensions = valid_extensions + fake_extensions
-    mock_files = _make_fake_files(mock_extensions)
-    mockdir = _make_mock_dir_list(tmpdir, mock_files)
+    fake_extensions = _make_extensions()
+    extensions = valid_extensions + fake_extensions
+    files = _make_files(extensions)
+    mockdir = _make_dir_list(tmpdir, files)
     message = "Found invalid file extensions"
     with pytest.warns(UserWarning, match=message):
         filtered = filter_valid_files(
@@ -109,8 +109,8 @@ def test_filter_valid_files_with_additional_list(tmpdir):
 
 def test_filter_valid_files_no_invalid_with_additional_list(tmpdir):
     valid_extensions = list(VALID_EXTENSIONS)
-    mock_files = _make_fake_files(valid_extensions)
-    mockdir = _make_mock_dir_list(tmpdir, mock_files)
+    files = _make_files(valid_extensions)
+    mockdir = _make_dir_list(tmpdir, files)
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         filtered_files, filtered_additional = filter_valid_files(mockdir, mockdir, valid_extensions=valid_extensions)
@@ -120,10 +120,10 @@ def test_filter_valid_files_no_invalid_with_additional_list(tmpdir):
 
 def test_filter_valid_files_incorrect_additional_list_size(tmpdir):
     valid_extensions = list(VALID_EXTENSIONS)
-    fake_extensions = _make_fake_extensions()
-    mock_extensions = valid_extensions + fake_extensions
-    mock_files = _make_fake_files(mock_extensions)
-    mockdir = _make_mock_dir_list(tmpdir, mock_files)
+    fake_extensions = _make_extensions()
+    extensions = valid_extensions + fake_extensions
+    files = _make_files(extensions)
+    mockdir = _make_dir_list(tmpdir, files)
     message = "The number of files"
     with pytest.raises(MisconfigurationException, match=message):
         filter_valid_files(
@@ -214,7 +214,7 @@ def test_listsubdir(tmpdir):
 
 @pytest.mark.parametrize("valid_extensions", [VALID_EXTENSIONS, None])
 def test_list_valid_files_paths_single_file(tmpdir, valid_extensions):
-    files = _make_fake_files(list(VALID_EXTENSIONS))
+    files = _make_files(list(VALID_EXTENSIONS))
     filtered = list_valid_files(files[0], valid_extensions=valid_extensions)
     if valid_extensions:
         assert filtered[0].endswith(VALID_EXTENSIONS)
@@ -224,9 +224,9 @@ def test_list_valid_files_paths_single_file(tmpdir, valid_extensions):
 
 @pytest.mark.parametrize("valid_extensions", [VALID_EXTENSIONS, None])
 def test_list_valid_files_paths_list(tmpdir, valid_extensions):
-    fake_extensions = _make_fake_extensions()
-    fake_files = _make_fake_files(fake_extensions)
-    valid_files = _make_fake_files(list(VALID_EXTENSIONS))
+    fake_extensions = _make_extensions()
+    fake_files = _make_files(fake_extensions)
+    valid_files = _make_files(list(VALID_EXTENSIONS))
     filtered = list_valid_files(fake_files + valid_files, valid_extensions=valid_extensions)
     if valid_extensions:
         assert all(i not in fake_files for i in filtered)
@@ -236,9 +236,9 @@ def test_list_valid_files_paths_list(tmpdir, valid_extensions):
 
 @pytest.mark.parametrize("valid_extensions", [VALID_EXTENSIONS, None])
 def test_list_valid_files_paths_dir(tmpdir, valid_extensions):
-    fake_extensions = _make_fake_extensions()
-    fake_files = _make_fake_files(fake_extensions)
-    valid_files = _make_fake_files(list(VALID_EXTENSIONS))
+    fake_extensions = _make_extensions()
+    fake_files = _make_files(fake_extensions)
+    valid_files = _make_files(list(VALID_EXTENSIONS))
     files = fake_files + valid_files
     tmpdir = pathlib.Path(tmpdir)
     for f in files:
