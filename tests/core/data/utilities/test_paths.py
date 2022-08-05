@@ -173,11 +173,10 @@ def test_make_dataset_with_extensions_with_subdir(tmpdir):
     # make a file at tmpdir root for line 80, 81 test
     (tmpdir / "tmp.png").touch()
 
-    directory = os.path.expanduser(str(tmpdir))
     expected_files = [str(tmpdir / "a" / "a.png"), str(tmpdir / "b" / "b.jpeg")]
     expected_targets = ["a", "b"]
     expected = (expected_files, expected_targets)  # no c because of unk file ext
-    got = make_dataset(directory, VALID_EXTENSIONS)
+    got = make_dataset(tmpdir, extensions=VALID_EXTENSIONS)
     assert expected == got
 
 
@@ -189,7 +188,7 @@ def test_make_dataset_with_extensions_no_subdir(tmpdir, valid_extensions):
     (tmpdir / "c.unknown").touch()
     if valid_extensions:
         expected = ([str(tmpdir / "b.jpeg"), str(tmpdir / "a.png")], None)
-        got = make_dataset(tmpdir, VALID_EXTENSIONS)
+        got = make_dataset(tmpdir, extensions=VALID_EXTENSIONS)
     if not valid_extensions:
         expected = ([str(tmpdir / "c.unknown"), str(tmpdir / "b.jpeg"), str(tmpdir / "a.png")], None)
         got = make_dataset(tmpdir, is_valid_file=True)
