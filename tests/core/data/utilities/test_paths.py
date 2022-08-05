@@ -15,7 +15,6 @@ import os
 import pathlib
 import warnings
 from string import ascii_lowercase
-from typing import List
 
 import pytest
 from numpy import random
@@ -28,11 +27,11 @@ VALID_EXTENSIONS = AUDIO_EXTENSIONS + IMG_EXTENSIONS + NP_EXTENSIONS
 SEED = 42
 
 
-def _make_dir_list(root, mock_files: List):
-    mockdir = []
-    for f in mock_files:
-        mockdir.append(os.path.join(root, f))
-    return mockdir
+def _make_dir_list(rootpath, files):
+    directory = []
+    for fname in files:
+        directory.append(os.path.join(rootpath, fname))
+    return directory
 
 
 def _make_files(extensions):
