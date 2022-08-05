@@ -19,6 +19,7 @@ from typing import List
 
 import pytest
 from numpy import random
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.utilities.loading import AUDIO_EXTENSIONS, IMG_EXTENSIONS, NP_EXTENSIONS
 from flash.core.data.utilities.paths import filter_valid_files, isdir, list_subdirs, list_valid_files, make_dataset
@@ -65,7 +66,7 @@ def test_filter_valid_files(tmpdir):
     assert all(i not in fake_extensions for i in filtered)
 
 
-def test_filter_valid_files_no_valid_extensions(tmpdir):
+def test_filter_valid_files_path_no_valid_extensions(tmpdir):
     def unpack_additional(*additional):
         return additional
 
@@ -117,10 +118,19 @@ def test_filter_valid_files_no_invalid_with_additional_list(tmpdir):
     assert len(filtered_additional) == len(mockdir)
 
 
-# per coverage report, write tests for lines: 152, 155, 163
-@pytest.mark.skip(reason="not implemented")
-def test_filter_valid_files_remaining_tests_placeholder(tmpdir):
-    pass
+def test_filter_valid_files_incorrect_additional_list_size(tmpdir):
+    valid_extensions = list(VALID_EXTENSIONS)
+    fake_extensions = _make_fake_extensions()
+    mock_extensions = valid_extensions + fake_extensions
+    mock_files = _make_fake_files(mock_extensions)
+    mockdir = _make_mock_dir_list(tmpdir, mock_files)
+    message = "The number of files"
+    with pytest.raises(MisconfigurationException, match=message):
+        filter_valid_files(
+            mockdir,
+            mockdir[:-1],
+            valid_extensions=valid_extensions,
+        )
 
 
 # adapted from torchvision
@@ -132,7 +142,7 @@ def test_filter_valid_files_remaining_tests_placeholder(tmpdir):
         (dict(extensions=(".png", ".jpeg"), is_valid_file=True), "Both extensions"),
     ],
 )
-def test_make_dataset_no_valid_files(tmpdir, kwargs, expected_error_msg):
+def test_make_dataset_error_messages(tmpdir, kwargs, expected_error_msg):
     tmpdir = pathlib.Path(tmpdir)
 
     (tmpdir / "a").mkdir()
@@ -148,12 +158,40 @@ def test_make_dataset_no_valid_files(tmpdir, kwargs, expected_error_msg):
         make_dataset(str(tmpdir), **kwargs)
 
 
-# test for if len(subdirs) < 0 returns tuple(files, targets)
-# test if len(subdirs) > 0 returns list[path_type]
-# test if extensions is not None returns bool
-@pytest.mark.skip(reason="not implemented")
-def test_make_dataset_valid_files(tmpdir):
-    pass
+def test_make_dataset_with_extensions_with_subdir(tmpdir):
+    tmpdir = pathlib.Path(tmpdir)
+
+    (tmpdir / "a").mkdir()
+    (tmpdir / "a" / "a.png").touch()
+
+    (tmpdir / "b").mkdir()
+    (tmpdir / "b" / "b.jpeg").touch()
+
+    (tmpdir / "c").mkdir()
+    (tmpdir / "c" / "c.unknown").touch()
+
+    # make a file at tmpdir root for line 80, 81 test
+    (tmpdir / "tmp.png").touch()
+
+    directory = os.path.expanduser(str(tmpdir))
+    expected_files = [str(tmpdir / "a" / "a.png"), str(tmpdir / "b" / "b.jpeg")]
+    expected_targets = ["a", "b"]
+    expected = (expected_files, expected_targets)  # no c because of unk file ext
+    got = make_dataset(directory, VALID_EXTENSIONS)
+    assert expected == got, expected[0]
+
+
+def test_make_dataset_with_extensions_no_subdir(tmpdir):
+    tmpdir = pathlib.Path(tmpdir)
+
+    (tmpdir / "a.png").touch()
+    (tmpdir / "b.jpeg").touch()
+    (tmpdir / "c.unknown").touch()
+
+    directory = os.path.expanduser(str(tmpdir))
+    expected = list_valid_files(directory), None
+    got = make_dataset(directory, VALID_EXTENSIONS)
+    assert expected == got
 
 
 def test_isdir_true(tmpdir):
