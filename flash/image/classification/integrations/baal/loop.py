@@ -91,7 +91,7 @@ class ActiveLearningLoop(Loop):
         assert isinstance(self.trainer.datamodule, ActiveLearningDataModule)
         if self._datamodule_state_dict is not None:
             self.trainer.datamodule.load_state_dict(self._datamodule_state_dict)
-        self.trainer.predict_loop._return_predictions = True
+        self.trainer.predict_loop.return_predictions = True
         self._lightning_module = self.trainer.lightning_module
         self._model_state_dict = deepcopy(self._lightning_module.state_dict())
         self.inference_model = InferenceMCDropoutTask(self._lightning_module, self.inference_iteration)
