@@ -247,7 +247,7 @@ class IceVisionAdapter(Adapter):
         if input_transform is not None:
             input_transform.inject_collate_fn(data_loader.collate_fn)
             data_loader.collate_fn = create_worker_input_transform_processor(RunningStage.PREDICTING, input_transform)
-        return data_loader 
+        return data_loader
 
     def training_step(self, batch, batch_idx) -> Any:
         return self.icevision_adapter.training_step(batch[DataKeys.INPUT], batch_idx)
