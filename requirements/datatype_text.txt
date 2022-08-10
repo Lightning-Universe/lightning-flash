@@ -4,3 +4,4 @@ transformers>=4.5
 torchmetrics[text]>=0.5.1
 datasets>=1.8
 sentence-transformers
+torchtext==0.13.1
