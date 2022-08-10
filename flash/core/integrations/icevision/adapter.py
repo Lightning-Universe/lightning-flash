@@ -110,6 +110,17 @@ class IceVisionAdapter(Adapter):
             DataKeys.METADATA: metadata,
         }
 
+    def change_collate_fn_dataloader(self, data_loader):
+        # Starting PL 1.7.0 - changing attributes after the DataLoader is initialized - will not work
+        # So we manually set the collate_fn to the wrapped version, for now.
+        new_kwargs = getattr(data_loader, "__pl_saved_kwargs", None)
+        new_collate_fn = functools.partial(self._wrap_collate_fn, data_loader.collate_fn)
+        if new_kwargs:
+            new_kwargs["collate_fn"] = new_collate_fn
+            setattr(data_loader, "__pl_saved_kwargs", new_kwargs)
+        data_loader.collate_fn = new_collate_fn
+        return data_loader
+
     def process_train_dataset(
         self,
         dataset: InputBase,
@@ -134,7 +145,7 @@ class IceVisionAdapter(Adapter):
             persistent_workers=persistent_workers,
         )
 
-        data_loader.collate_fn = functools.partial(self._wrap_collate_fn, data_loader.collate_fn)
+        data_loader = self.change_collate_fn_dataloader(data_loader)
 
         input_transform = input_transform or self.input_transform
         if input_transform is not None:
@@ -166,7 +177,7 @@ class IceVisionAdapter(Adapter):
             persistent_workers=persistent_workers,
         )
 
-        data_loader.collate_fn = functools.partial(self._wrap_collate_fn, data_loader.collate_fn)
+        data_loader = self.change_collate_fn_dataloader(data_loader)
 
         input_transform = input_transform or self.input_transform
         if input_transform is not None:
@@ -198,7 +209,7 @@ class IceVisionAdapter(Adapter):
             persistent_workers=persistent_workers,
         )
 
-        data_loader.collate_fn = functools.partial(self._wrap_collate_fn, data_loader.collate_fn)
+        data_loader = self.change_collate_fn_dataloader(data_loader)
 
         input_transform = input_transform or self.input_transform
         if input_transform is not None:
@@ -230,13 +241,13 @@ class IceVisionAdapter(Adapter):
             persistent_workers=persistent_workers,
         )
 
-        data_loader.collate_fn = functools.partial(self._wrap_collate_fn, data_loader.collate_fn)
+        data_loader = self.change_collate_fn_dataloader(data_loader)
 
         input_transform = input_transform or self.input_transform
         if input_transform is not None:
             input_transform.inject_collate_fn(data_loader.collate_fn)
             data_loader.collate_fn = create_worker_input_transform_processor(RunningStage.PREDICTING, input_transform)
-        return data_loader
+        return data_loader 
 
     def training_step(self, batch, batch_idx) -> Any:
         return self.icevision_adapter.training_step(batch[DataKeys.INPUT], batch_idx)
