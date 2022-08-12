@@ -131,7 +131,6 @@ class IceVisionAdapter(Adapter):
         data_loader.collate_fn = new_collate_fn
         return data_loader
 
-
     def process_train_dataset(
         self,
         dataset: InputBase,
