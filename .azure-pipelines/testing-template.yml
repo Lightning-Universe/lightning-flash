@@ -36,7 +36,8 @@ jobs:
 
       - bash: |
           # python -m pip install "pip==20.1"
-          if [ "${{config}}" == "icevision" ]; then pip install '.[image]' icevision effdet icedata; elif [ "${{config}}" == "vissl" ]; then pip install '.[image]'; else pip install '.[${{config}}]'; fi
+          if [ "${{config}}" == "icevision" ]; then pip install '.[image]' icevision icedata; elif [ "${{config}}" == "vissl" ]; then pip install '.[image]'; else pip install '.[${{config}}]'; fi
+          if [ "${{config}}" == "icevision" ]; then pip install git+https://github.com/rwightman/efficientdet-pytorch.git@79d26d8982b9f8e1f27d9f896e38012ac250fd26; fi
           pip install '.[test]' --upgrade-strategy only-if-needed
           pip list
         displayName: 'Install dependencies'
