@@ -4,7 +4,6 @@ classy_vision
 vissl>=0.1.5
 icevision>=0.8
 icedata
-effdet
 albumentations
 learn2learn
 fastface
