@@ -151,9 +151,9 @@ class IceVisionAdapter(Adapter):
         input_transform = input_transform or self.input_transform
         if input_transform is not None:
             input_transform.inject_collate_fn(data_loader.collate_fn)
-        data_loader = self._update_collate_fn_dataloader(
-            create_worker_input_transform_processor(RunningStage.TRAINING, input_transform), data_loader
-        )
+            data_loader = self._update_collate_fn_dataloader(
+                create_worker_input_transform_processor(RunningStage.TRAINING, input_transform), data_loader
+            )
         return data_loader
 
     def process_val_dataset(
@@ -187,9 +187,9 @@ class IceVisionAdapter(Adapter):
         input_transform = input_transform or self.input_transform
         if input_transform is not None:
             input_transform.inject_collate_fn(data_loader.collate_fn)
-        data_loader = self._update_collate_fn_dataloader(
-            create_worker_input_transform_processor(RunningStage.VALIDATING, input_transform), data_loader
-        )
+            data_loader = self._update_collate_fn_dataloader(
+                create_worker_input_transform_processor(RunningStage.VALIDATING, input_transform), data_loader
+            )
         return data_loader
 
     def process_test_dataset(
