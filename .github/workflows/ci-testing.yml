@@ -33,7 +33,6 @@ jobs:
           - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'pre', topic: [ 'core' ] }
           - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'image' ] }
           - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'image','image_extras' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'image','image_extras_effdet' ] }
           - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'image','image_extras_baal' ] }
           - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'video' ] }
           - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'video','video_extras' ] }
@@ -129,8 +128,7 @@ jobs:
       if: contains( matrix.topic , 'serve' )
       run: |
         sudo apt-get install libsndfile1
-        pip install '.[all,audio]' icevision --upgrade
-        pip install -e git+https://github.com/rwightman/efficientdet-pytorch.git@79d26d8982b9f8e1f27d9f896e38012ac250fd26#egg=effdet
+        pip install '.[all,audio]' effdet icevision --upgrade
 
     - name: Install audio test dependencies
       if: contains( matrix.topic , 'audio' )

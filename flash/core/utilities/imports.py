@@ -302,7 +302,7 @@ if "FLASH_TEST_TOPIC" in os.environ:
     _CORE_TESTING = topic == "core"
     _IMAGE_TESTING = topic == "image"
     _IMAGE_EXTRAS_TESTING = (
-        topic == "image,image_extras,image_extras_effdet" or topic == "icevision" or topic == "vissl"
+        topic == "image,image_extras" or topic == "icevision" or topic == "vissl"
     )
     _VIDEO_TESTING = topic == "video"
     _VIDEO_EXTRAS_TESTING = topic == "video,video_extras"
