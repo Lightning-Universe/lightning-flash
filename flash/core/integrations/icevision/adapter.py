@@ -121,6 +121,17 @@ class IceVisionAdapter(Adapter):
         data_loader.collate_fn = new_collate_fn
         return data_loader
 
+    def update_collate_fn_dataloader(self, new_collate_fn, data_loader):
+        # Starting PL 1.7.0 - changing attributes after the DataLoader is initialized - will not work
+        # So we manually update the collate_fn for the dataloader, for now.
+        new_kwargs = getattr(data_loader, "__pl_saved_kwargs", None)
+        if new_kwargs:
+            new_kwargs["collate_fn"] = new_collate_fn
+            setattr(data_loader, "__pl_saved_kwargs", new_kwargs)
+        data_loader.collate_fn = new_collate_fn
+        return data_loader
+
+
     def process_train_dataset(
         self,
         dataset: InputBase,
@@ -150,7 +161,8 @@ class IceVisionAdapter(Adapter):
         input_transform = input_transform or self.input_transform
         if input_transform is not None:
             input_transform.inject_collate_fn(data_loader.collate_fn)
-            data_loader.collate_fn = create_worker_input_transform_processor(RunningStage.TRAINING, input_transform)
+            new_collate_fn = create_worker_input_transform_processor(RunningStage.TRAINING, input_transform)
+            data_loader = self.update_collate_fn_dataloader(new_collate_fn, data_loader)
         return data_loader
 
     def process_val_dataset(
@@ -182,7 +194,8 @@ class IceVisionAdapter(Adapter):
         input_transform = input_transform or self.input_transform
         if input_transform is not None:
             input_transform.inject_collate_fn(data_loader.collate_fn)
-            data_loader.collate_fn = create_worker_input_transform_processor(RunningStage.VALIDATING, input_transform)
+            new_collate_fn = create_worker_input_transform_processor(RunningStage.VALIDATING, input_transform)
+            data_loader = self.update_collate_fn_dataloader(new_collate_fn, data_loader)
         return data_loader
 
     def process_test_dataset(
@@ -214,7 +227,8 @@ class IceVisionAdapter(Adapter):
         input_transform = input_transform or self.input_transform
         if input_transform is not None:
             input_transform.inject_collate_fn(data_loader.collate_fn)
-            data_loader.collate_fn = create_worker_input_transform_processor(RunningStage.TESTING, input_transform)
+            new_collate_fn = create_worker_input_transform_processor(RunningStage.TESTING, input_transform)
+            data_loader = self.update_collate_fn_dataloader(new_collate_fn, data_loader)
         return data_loader
 
     def process_predict_dataset(
@@ -246,7 +260,8 @@ class IceVisionAdapter(Adapter):
         input_transform = input_transform or self.input_transform
         if input_transform is not None:
             input_transform.inject_collate_fn(data_loader.collate_fn)
-            data_loader.collate_fn = create_worker_input_transform_processor(RunningStage.PREDICTING, input_transform)
+            new_collate_fn = create_worker_input_transform_processor(RunningStage.PREDICTING, input_transform)
+            data_loader = self.update_collate_fn_dataloader(new_collate_fn, data_loader)
         return data_loader
 
     def training_step(self, batch, batch_idx) -> Any:
