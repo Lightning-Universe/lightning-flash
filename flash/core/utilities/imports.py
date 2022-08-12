@@ -301,7 +301,7 @@ if "FLASH_TEST_TOPIC" in os.environ:
     topic = os.environ["FLASH_TEST_TOPIC"]
     _CORE_TESTING = topic == "core"
     _IMAGE_TESTING = topic == "image"
-    _IMAGE_EXTRAS_TESTING = topic == "image,image_extras,effdet" or topic == "icevision" or topic == "vissl"
+    _IMAGE_EXTRAS_TESTING = topic == "image,image_extras,image_extras_effdet" or topic == "icevision" or topic == "vissl"
     _VIDEO_TESTING = topic == "video"
     _VIDEO_EXTRAS_TESTING = topic == "video,video_extras"
     _TABULAR_TESTING = topic == "tabular"

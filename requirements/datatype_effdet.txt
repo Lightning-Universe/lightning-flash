@@ -1,1 +1,0 @@
-git+https://github.com/rwightman/efficientdet-pytorch.git@79d26d8982b9f8e1f27d9f896e38012ac250fd26
