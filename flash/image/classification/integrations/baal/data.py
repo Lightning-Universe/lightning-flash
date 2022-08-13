@@ -180,7 +180,7 @@ class ActiveLearningDataModule(DataModule):
             raise MisconfigurationException(
                 "The `probabilities` and `indices` are mutually exclusive, pass only of one them."
             )
-        if probabilities is not None:
+        if probabilities is not None and len(probabilities) != 0:
             probabilities = torch.cat([p[0].unsqueeze(0) for p in probabilities], dim=0)
             uncertainties = self.heuristic.get_uncertainties(probabilities)
             indices = np.argsort(uncertainties)
