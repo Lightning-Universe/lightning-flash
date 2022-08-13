@@ -42,6 +42,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
+- Removed support for audio files with `sd2` extension, because SoundFile (for sd2 extension) doesn't accept fsspec objects. ([#1409](https://github.com/Lightning-AI/lightning-flash/pull/1409))
+
 ### Fixed
 
 - Fixed a bug where grayscale images were not properly converted to RGB when loaded. ([#1394](https://github.com/PyTorchLightning/lightning-flash/pull/1394))
