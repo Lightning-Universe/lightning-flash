@@ -152,7 +152,7 @@ jobs:
         coverage run --source flash -m pytest flash tests --reruns 3 --reruns-delay 2 -v --junitxml=junit/test-results-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.requires }}.xml
 
     - name: Upload pytest test results
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: pytest-results-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.requires }}
         path: junit/test-results-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.requires }}.xml
