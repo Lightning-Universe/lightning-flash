@@ -22,11 +22,8 @@ jobs:
 
     pool: azure-gpus-spot
 
-    # ToDo: this need to have installed docker in the base image...
-    #container: "pytorchlightning/pytorch_lightning:base-cuda-py$[ variables['python.version'] ]-torch1.6"
     container:
-      image: "pytorchlightning/pytorch_lightning:base-cuda-py3.8-torch1.8"
-      #endpoint: azureContainerRegistryConnection
+      image: "pytorchlightning/pytorch_lightning:base-cuda-py3.8-torch1.9-cuda11.1.1"
       options: "--ipc=host --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all"
 
     workspace:
