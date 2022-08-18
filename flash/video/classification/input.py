@@ -82,8 +82,8 @@ class VideoClassificationInput(IterableInput, ClassificationInputMixin):
 
     def load_sample(self, sample):
         sample["label"] = self.format_target(sample["label"])
-        sample[DataKeys.INPUT] = sample.pop("video")
-        sample[DataKeys.TARGET] = sample.pop("label")
+        sample[DataKeys.INPUT.value] = sample.pop("video")
+        sample[DataKeys.TARGET.value] = sample.pop("label")
         return sample
 
 

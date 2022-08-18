@@ -229,7 +229,7 @@ def from_icevision_detection(record: "BaseRecord"):
 
 def from_icevision_record(record: "BaseRecord"):
     sample = {
-        DataKeys.METADATA: {
+        DataKeys.METADATA.value: {
             "size": getattr(record, "original_size", (record.height, record.width)),
             "output_size": (record.height, record.width),
         }

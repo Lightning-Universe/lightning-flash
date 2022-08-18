@@ -143,8 +143,8 @@ class BaseLabelStudioInput(Properties):
         # delete label from input data
         del sample["label"]
         result = {
-            DataKeys.INPUT: sample,
-            DataKeys.TARGET: label,
+            DataKeys.INPUT.value: sample,
+            DataKeys.TARGET.value: label,
         }
         return result
 
@@ -243,8 +243,8 @@ class LabelStudioImageClassificationInput(LabelStudioInput):
         # loading image
         image = load_image(p)
         result = {
-            DataKeys.INPUT: image,
-            DataKeys.TARGET: _get_labels_from_sample(sample["label"], self.parameters.classes),
+            DataKeys.INPUT.value: image,
+            DataKeys.TARGET.value: _get_labels_from_sample(sample["label"], self.parameters.classes),
         }
         return result
 
@@ -261,8 +261,8 @@ class LabelStudioTextClassificationInput(LabelStudioInput):
         for key in sample.get("data"):
             data += sample.get("data").get(key)
         return {
-            DataKeys.INPUT: data,
-            DataKeys.TARGET: _get_labels_from_sample(sample["label"], self.parameters.classes),
+            DataKeys.INPUT.value: data,
+            DataKeys.TARGET.value: _get_labels_from_sample(sample["label"], self.parameters.classes),
         }
 
 

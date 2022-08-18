@@ -94,8 +94,8 @@ class SpeechRecognitionInputBase(Input):
         if not os.path.isabs(path) and DataKeys.METADATA in sample and "root" in sample[DataKeys.METADATA]:
             path = os.path.join(sample[DataKeys.METADATA]["root"], path)
         speech_array = load_audio(path, sampling_rate=self.sampling_rate)
-        sample[DataKeys.INPUT] = speech_array
-        sample[DataKeys.METADATA] = {"sampling_rate": self.sampling_rate}
+        sample[DataKeys.INPUT.value] = speech_array
+        sample[DataKeys.METADATA.value] = {"sampling_rate": self.sampling_rate}
         return sample
 
 

@@ -38,10 +38,10 @@ class AudioClassificationInput(Input, ClassificationInputMixin):
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         h, w = sample[DataKeys.INPUT].shape[-2:]  # H x W
         if DataKeys.METADATA not in sample:
-            sample[DataKeys.METADATA] = {}
+            sample[DataKeys.METADATA.value] = {}
         sample[DataKeys.METADATA]["size"] = (h, w)
         if DataKeys.TARGET in sample:
-            sample[DataKeys.TARGET] = self.format_target(sample[DataKeys.TARGET])
+            sample[DataKeys.TARGET.value] = self.format_target(sample[DataKeys.TARGET])
         return sample
 
 
@@ -71,7 +71,7 @@ class AudioClassificationFilesInput(AudioClassificationInput):
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         filepath = sample[DataKeys.INPUT]
-        sample[DataKeys.INPUT] = load_spectrogram(filepath, sampling_rate=self.sampling_rate, n_fft=self.n_fft)
+        sample[DataKeys.INPUT.value] = load_spectrogram(filepath, sampling_rate=self.sampling_rate, n_fft=self.n_fft)
         sample = super().load_sample(sample)
         sample[DataKeys.METADATA]["filepath"] = filepath
         return sample
@@ -100,7 +100,7 @@ class AudioClassificationNumpyInput(AudioClassificationInput):
         return to_samples(array, targets)
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        sample[DataKeys.INPUT] = np.float32(np.transpose(sample[DataKeys.INPUT], (1, 2, 0)))
+        sample[DataKeys.INPUT.value] = np.float32(np.transpose(sample[DataKeys.INPUT], (1, 2, 0)))
         return super().load_sample(sample)
 
 
@@ -113,7 +113,7 @@ class AudioClassificationTensorInput(AudioClassificationNumpyInput):
         return to_samples(tensor, targets)
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        sample[DataKeys.INPUT] = sample[DataKeys.INPUT].numpy()
+        sample[DataKeys.INPUT.value] = sample[DataKeys.INPUT].numpy()
         return super().load_sample(sample)
 
 

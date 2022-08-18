@@ -66,4 +66,4 @@ class TabularForecastingDataFrameInput(Input):
         return time_series_dataset
 
     def load_sample(self, sample: Tuple) -> Any:
-        return {DataKeys.INPUT: sample[0], DataKeys.TARGET: sample[1]}
+        return {DataKeys.INPUT.value: sample[0], DataKeys.TARGET.value: sample[1]}

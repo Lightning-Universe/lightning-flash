@@ -51,10 +51,10 @@ class SemanticSegmentationInput(Input):
             self.labels_map = labels_map
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        sample[DataKeys.INPUT] = sample[DataKeys.INPUT].float()
+        sample[DataKeys.INPUT.value] = sample[DataKeys.INPUT].float()
         if DataKeys.TARGET in sample:
-            sample[DataKeys.TARGET] = sample[DataKeys.TARGET].float()
-        sample[DataKeys.METADATA] = {"size": sample[DataKeys.INPUT].shape[-2:]}
+            sample[DataKeys.TARGET.value] = sample[DataKeys.TARGET].float()
+        sample[DataKeys.METADATA.value] = {"size": sample[DataKeys.INPUT].shape[-2:]}
         return sample
 
 
@@ -82,9 +82,9 @@ class SemanticSegmentationNumpyInput(SemanticSegmentationInput):
         return to_samples(array, masks)
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
-        sample[DataKeys.INPUT] = torch.from_numpy(sample[DataKeys.INPUT])
+        sample[DataKeys.INPUT.value] = torch.from_numpy(sample[DataKeys.INPUT])
         if DataKeys.TARGET in sample:
-            sample[DataKeys.TARGET] = torch.from_numpy(sample[DataKeys.TARGET])
+            sample[DataKeys.TARGET.value] = torch.from_numpy(sample[DataKeys.TARGET])
         return super().load_sample(sample)
 
 
@@ -105,11 +105,11 @@ class SemanticSegmentationFilesInput(SemanticSegmentationInput):
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         filepath = sample[DataKeys.INPUT]
-        sample[DataKeys.INPUT] = to_tensor(load_image(filepath))
+        sample[DataKeys.INPUT.value] = to_tensor(load_image(filepath))
         if DataKeys.TARGET in sample:
-            sample[DataKeys.TARGET] = (to_tensor(load_image(sample[DataKeys.TARGET])) * 255).long()[0]
+            sample[DataKeys.TARGET.value] = (to_tensor(load_image(sample[DataKeys.TARGET])) * 255).long()[0]
         sample = super().load_sample(sample)
-        sample[DataKeys.METADATA]["filepath"] = filepath
+        sample[DataKeys.METADATA.value]["filepath"] = filepath
         return sample
 
 
@@ -171,13 +171,13 @@ class SemanticSegmentationFiftyOneInput(SemanticSegmentationFilesInput):
         if not self.predicting:
             fo_dataset = fo.load_dataset(self._fo_dataset_name)
             fo_sample = fo_dataset[filepath]
-            sample[DataKeys.TARGET] = torch.from_numpy(fo_sample[self.label_field].mask).float()
+            sample[DataKeys.TARGET.value] = torch.from_numpy(fo_sample[self.label_field].mask).float()
         return sample
 
 
 class SemanticSegmentationDeserializer(ImageDeserializer):
     def serve_load_sample(self, data: str) -> Dict[str, Any]:
         result = super().serve_load_sample(data)
-        result[DataKeys.INPUT] = to_tensor(result[DataKeys.INPUT])
-        result[DataKeys.METADATA] = {"size": result[DataKeys.INPUT].shape[-2:]}
+        result[DataKeys.INPUT.value] = to_tensor(result[DataKeys.INPUT])
+        result[DataKeys.METADATA.value] = {"size": result[DataKeys.INPUT].shape[-2:]}
         return result

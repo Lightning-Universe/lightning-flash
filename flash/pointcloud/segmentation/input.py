@@ -34,8 +34,8 @@ class PointCloudSegmentationDatasetInput(Input):
     def load_sample(self, index: int) -> Any:
         sample = self.dataset[index]
         return {
-            DataKeys.INPUT: sample["data"],
-            DataKeys.METADATA: sample["attr"],
+            DataKeys.INPUT.value: sample["data"],
+            DataKeys.METADATA.value: sample["attr"],
         }
 
 

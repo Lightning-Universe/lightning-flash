@@ -55,5 +55,5 @@ class GraphClassificationDatasetInput(Input, ClassificationInputMixin):
             sample = (sample, sample.y)
         sample = to_sample(sample)
         if DataKeys.TARGET in sample:
-            sample[DataKeys.TARGET] = self.format_target(sample[DataKeys.TARGET])
+            sample[DataKeys.TARGET.value] = self.format_target(sample[DataKeys.TARGET])
         return sample

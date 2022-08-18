@@ -50,8 +50,8 @@ class DatasetInput(Input):
 
     def load_sample(self, sample: Any) -> Dict[str, Any]:
         if isinstance(sample, tuple) and len(sample) == 2:
-            return {DataKeys.INPUT: sample[0], DataKeys.TARGET: sample[1]}
-        return {DataKeys.INPUT: sample}
+            return {DataKeys.INPUT.value: sample[0], DataKeys.TARGET.value: sample[1]}
+        return {DataKeys.INPUT.value: sample}
 
 
 class DataModule(pl.LightningDataModule):
