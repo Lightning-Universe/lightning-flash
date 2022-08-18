@@ -58,7 +58,7 @@ class ImageClassificationFilesInput(ClassificationInputMixin, ImageFilesInput):
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         sample = super().load_sample(sample)
         if DataKeys.TARGET in sample:
-            sample[DataKeys.TARGET] = self.format_target(sample[DataKeys.TARGET])
+            sample[DataKeys.TARGET.value] = self.format_target(sample[DataKeys.TARGET])
         return sample
 
 

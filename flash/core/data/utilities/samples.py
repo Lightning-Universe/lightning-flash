@@ -37,9 +37,9 @@ def to_sample(input: Any) -> Dict[str, Any]:
         return input
     if _is_list_like(input) and len(input) == 2:
         if input[1] is not None:
-            return {DataKeys.INPUT: input[0], DataKeys.TARGET: input[1]}
+            return {DataKeys.INPUT.value: input[0], DataKeys.TARGET.value: input[1]}
         input = input[0]
-    return {DataKeys.INPUT: input}
+    return {DataKeys.INPUT.value: input}
 
 
 def to_samples(inputs: List[Any], targets: Optional[List[Any]] = None) -> List[Dict[str, Any]]:

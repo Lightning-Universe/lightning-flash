@@ -51,7 +51,7 @@ class ImageInput(Input):
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         w, h = sample[DataKeys.INPUT].size  # W x H
         if DataKeys.METADATA not in sample:
-            sample[DataKeys.METADATA] = {}
+            sample[DataKeys.METADATA.value] = {}
         sample[DataKeys.METADATA]["size"] = (h, w)
         return sample
 
