@@ -28,21 +28,19 @@ def _wrap_collate(collate: Callable, batch: List[Any]) -> Any:
     if metadata and isinstance(collated_batch, dict):
         collated_batch[DataKeys.METADATA] = metadata
 
-    new_batch = {}
+    updated_batch = {}
     for old_key, val in collated_batch.items():
-        # old_data = collated_batch[old_key]
-        # del collated_batch[old_key]
         if old_key == DataKeys.INPUT:
-            new_batch["input"] = val
+            updated_batch["input"] = val
         elif old_key == DataKeys.PREDS:
-            new_batch["preds"] = val
+            updated_batch["preds"] = val
         elif old_key == DataKeys.TARGET:
-            new_batch["target"] = val
+            updated_batch["target"] = val
         elif old_key == DataKeys.METADATA:
-            new_batch["metadata"] = val
+            updated_batch["metadata"] = val
         else:
-            new_batch[old_key] = val
-    return new_batch
+            updated_batch[old_key] = val
+    return updated_batch
 
 
 def wrap_collate(collate):
