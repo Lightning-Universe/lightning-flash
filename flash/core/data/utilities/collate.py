@@ -26,7 +26,8 @@ def _wrap_collate(collate: Callable, batch: List[Any]) -> Any:
     collated_batch = collate(batch)
 
     if metadata and isinstance(collated_batch, dict):
-        collated_batch[DataKeys.METADATA] = metadata
+        collated_batch["metadata"] = metadata
+
     return collated_batch
 
 

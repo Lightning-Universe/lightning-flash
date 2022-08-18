@@ -171,6 +171,13 @@ class InputBase(Properties, metaclass=_InputMeta):
 
     def _call_load_sample(self, sample: Any) -> Any:
         # Deepcopy the sample to avoid leaks with complex data structures
+
+        # Change DataKeys Enum to strings
+        for key, val in sample.items():
+            if hasattr(key, "value"):
+                sample[key.value] = val
+            else:
+                sample[key] = val
         return getattr(self, f"{_STAGES_PREFIX[self.running_stage]}_load_sample")(deepcopy(sample))
 
     @staticmethod
