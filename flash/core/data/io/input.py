@@ -16,6 +16,7 @@ import os
 import sys
 from copy import deepcopy
 from typing import Any, cast, Dict, Iterable, List, Sequence, Tuple, Union
+from enum import Enum
 
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
@@ -171,14 +172,17 @@ class InputBase(Properties, metaclass=_InputMeta):
 
     def _call_load_sample(self, sample: Any) -> Any:
         # Deepcopy the sample to avoid leaks with complex data structures
+        sample_output = getattr(self, f"{_STAGES_PREFIX[self.running_stage]}_load_sample")(deepcopy(sample))
 
         # Change DataKeys Enum to strings
-        for key, val in sample.items():
-            if hasattr(key, "value"):
-                sample[key.value] = val
-            else:
-                sample[key] = val
-        return getattr(self, f"{_STAGES_PREFIX[self.running_stage]}_load_sample")(deepcopy(sample))
+        output_dict = {}
+        if isinstance(sample_output, dict):
+            for key, val in sample_output.items():
+                if isinstance(key, Enum) and hasattr(key, "value"):
+                    output_dict[key.value] = val
+                else:
+                    output_dict[key] = val
+        return output_dict
 
     @staticmethod
     def load_data(*args: Any, **kwargs: Any) -> Union[Sequence, Iterable]:
