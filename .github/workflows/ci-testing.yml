@@ -20,7 +20,7 @@ jobs:
       # max-parallel: 6
       matrix:
         # PyTorch 1.5 is failing on Win and bolts requires torchvision>=0.5
-        os: [ubuntu-20.04, macOS-10.15, windows-2019]
+        os: [ubuntu-20.04, macOS-10.15, windows-2022]
         python-version: [3.7, 3.9]
         requires: ['oldest', 'latest']
         topic: [['core']]
@@ -165,7 +165,7 @@ jobs:
         coverage xml
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v3
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         file: ./coverage.xml
