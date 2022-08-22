@@ -87,7 +87,7 @@ def _test_learn2learning_training_strategies(gpus, accelerator, training_strateg
         training_strategy_kwargs={"ways": dm.num_classes, "shots": 4, "meta_batch_size": 4},
     )
 
-trainer = Trainer(fast_dev_run=2, gpus=gpus, accelerator=accelerator)
+    trainer = Trainer(fast_dev_run=2, gpus=gpus, accelerator=accelerator)
     trainer.fit(model, datamodule=dm)
 
 
@@ -95,7 +95,7 @@ trainer = Trainer(fast_dev_run=2, gpus=gpus, accelerator=accelerator)
 @pytest.mark.parametrize("training_strategy", ["anil", "maml", "prototypicalnetworks"])
 @pytest.mark.skipif(not _LEARN2LEARN_AVAILABLE, reason="image and learn2learn libraries aren't installed.")
 def test_learn2learn_training_strategies(training_strategy, tmpdir):
-_test_learn2learning_training_strategies(0, None, training_strategy, tmpdir)
+    _test_learn2learning_training_strategies(0, None, training_strategy, tmpdir)
 
 
 @pytest.mark.skipif(not _LEARN2LEARN_AVAILABLE, reason="image and learn2learn libraries aren't installed.")
@@ -111,4 +111,4 @@ def test_wrongly_specified_training_strategies():
 @pytest.mark.skipif(not os.getenv("FLASH_RUNNING_SPECIAL_TESTS", "0") == "1", reason="Should run with special test")
 @pytest.mark.skipif(not _LEARN2LEARN_AVAILABLE, reason="image and learn2learn libraries aren't installed.")
 def test_learn2learn_training_strategies_ddp(tmpdir):
-_test_learn2learning_training_strategies(2, "ddp", "prototypicalnetworks", tmpdir)
+    _test_learn2learning_training_strategies(2, "ddp", "prototypicalnetworks", tmpdir)
