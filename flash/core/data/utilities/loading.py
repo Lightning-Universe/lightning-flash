@@ -46,7 +46,6 @@ AUDIO_EXTENSIONS = (
     ".paf",
     ".pvf",
     ".rf64",
-    ".sd2",
     ".ircam",
     ".voc",
     ".w64",

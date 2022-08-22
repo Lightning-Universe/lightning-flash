@@ -14,8 +14,7 @@
 import sys
 from typing import Any, Dict, Optional, Tuple, Union
 
-import torch
-from torch import nn
+from torch import nn, Tensor
 from torch.utils.data import DataLoader, Sampler
 
 import flash
@@ -99,7 +98,7 @@ class PointCloudObjectDetector(Task):
                 out_features, num_classes, kernel_size=(1, 1), stride=(1, 1)
             )
 
-    def compute_loss(self, losses: Dict[str, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
+    def compute_loss(self, losses: Dict[str, Tensor]) -> Tuple[Tensor, Tensor]:
         losses = losses["loss"]
         return (
             self.hparams.lambda_loss_cls * losses["loss_cls"]
@@ -107,7 +106,7 @@ class PointCloudObjectDetector(Task):
             + self.hparams.lambda_loss_dir * losses["loss_dir"]
         )
 
-    def compute_logs(self, logs: Dict[str, Any], losses: Dict[str, torch.Tensor]):
+    def compute_logs(self, logs: Dict[str, Any], losses: Dict[str, Tensor]):
         logs.update({"loss": self.compute_loss(losses)})
         return logs
 
@@ -129,7 +128,7 @@ class PointCloudObjectDetector(Task):
             DataKeys.METADATA: [a["name"] for a in batch.attr],
         }
 
-    def forward(self, x) -> torch.Tensor:
+    def forward(self, x) -> Tensor:
         """First call the backbone, then the model head."""
         # hack to enable backbone to work properly.
         self.model.device = self.device
