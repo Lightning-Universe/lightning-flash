@@ -96,7 +96,7 @@ class AdaptVISSLHooks(ModelHooks):
         for hook in self.hooks:
             hook.on_start(self.task)
 
-    def on_train_batch_end(self, outputs: Any, batch: Any, batch_idx: int, dataloader_idx: int) -> None:
+    def on_train_batch_end(self, outputs: Any, batch: Any, batch_idx: int, *args) -> None:
         self.task.iteration += 1
 
     def on_train_epoch_end(self) -> None:
