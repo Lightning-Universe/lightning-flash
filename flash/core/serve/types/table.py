@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Union
 import numpy as np
 import pandas as pd
 import torch
+from torch import Tensor
 
 from flash.core.serve.types.base import BaseType
 
@@ -56,7 +57,7 @@ class Table(BaseType):
 
     column_names: List[str]
 
-    def serialize(self, tensor: torch.Tensor) -> Dict:
+    def serialize(self, tensor: Tensor) -> Dict:
         tensor = tensor.numpy()
         df = pd.DataFrame(tensor, columns=self.column_names)
         return df.to_dict()

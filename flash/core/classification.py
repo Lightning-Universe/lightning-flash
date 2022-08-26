@@ -16,6 +16,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union
 import torch
 import torch.nn.functional as F
 from pytorch_lightning.utilities import rank_zero_warn
+from torch import Tensor
 from torchmetrics import Accuracy, Metric
 
 from flash.core.adapter import AdapterTask
@@ -44,7 +45,7 @@ else:
 CLASSIFICATION_OUTPUTS = FlashRegistry("outputs")
 
 
-def binary_cross_entropy_with_logits(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+def binary_cross_entropy_with_logits(x: Tensor, y: Tensor) -> Tensor:
     """Calls BCE with logits and cast the target one_hot (y) encoding to floating point precision."""
     return F.binary_cross_entropy_with_logits(x, y.float())
 
@@ -70,7 +71,7 @@ class ClassificationMixin:
 
         return metrics, loss_fn
 
-    def to_metrics_format(self, x: torch.Tensor) -> torch.Tensor:
+    def to_metrics_format(self, x: Tensor) -> Tensor:
         if getattr(self, "multi_label", False):
             return torch.sigmoid(x)
         return torch.softmax(x, dim=1)
@@ -156,7 +157,7 @@ class PredsClassificationOutput(ClassificationOutput):
     def transform(self, sample: Any) -> Any:
         if isinstance(sample, Mapping) and DataKeys.PREDS in sample:
             sample = sample[DataKeys.PREDS]
-        if not isinstance(sample, torch.Tensor):
+        if not isinstance(sample, Tensor):
             sample = torch.tensor(sample)
         return sample
 

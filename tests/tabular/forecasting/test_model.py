@@ -15,6 +15,7 @@ from typing import Any
 
 import pytest
 import torch
+from torch import Tensor
 
 import flash
 from flash import DataKeys
@@ -96,7 +97,7 @@ class TestTabularForecaster(TaskTester):
         }
 
     def check_forward_output(self, output: Any):
-        assert isinstance(output["prediction"], torch.Tensor)
+        assert isinstance(output["prediction"], Tensor)
         assert output["prediction"].shape == torch.Size([2, 20])
 
     @property

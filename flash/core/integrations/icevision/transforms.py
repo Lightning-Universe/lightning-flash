@@ -15,8 +15,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
-import torch
-from torch import nn
+from torch import nn, Tensor
 
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform
@@ -98,7 +97,7 @@ def to_icevision_record(sample: Dict[str, Any]):
             input_component = ImageRecordComponent()
         input_component.composite = record
         image = sample[DataKeys.INPUT]
-        if isinstance(image, torch.Tensor):
+        if isinstance(image, Tensor):
             image = image.permute(1, 2, 0).numpy()
         elif isinstance(image, Image.Image):
             image = np.array(image)

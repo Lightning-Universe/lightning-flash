@@ -18,9 +18,9 @@ import zipfile
 from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Set
 
 import requests
-import torch
 import urllib3
 from pytorch_lightning.utilities.apply_func import apply_to_collection
+from torch import nn
 from tqdm.auto import tqdm as tq
 
 from flash.core.utilities.imports import _CORE_TESTING
@@ -121,7 +121,7 @@ def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:
         extract_tarfile(local_filename, path, "r:bz2")
 
 
-class FuncModule(torch.nn.Module):
+class FuncModule(nn.Module):
     """This class is used to wrap a callable within a nn.Module and apply the wrapped function in `__call__`"""
 
     def __init__(self, func: Callable) -> None:
@@ -140,12 +140,10 @@ class FuncModule(torch.nn.Module):
 
 def convert_to_modules(transforms: Optional[Dict[str, Callable]]):
 
-    if transforms is None or isinstance(transforms, torch.nn.Module):
+    if transforms is None or isinstance(transforms, nn.Module):
         return transforms
 
-    transforms = apply_to_collection(transforms, Callable, FuncModule, wrong_dtype=torch.nn.Module)
-    transforms = apply_to_collection(transforms, Mapping, torch.nn.ModuleDict, wrong_dtype=torch.nn.ModuleDict)
-    transforms = apply_to_collection(
-        transforms, Iterable, torch.nn.ModuleList, wrong_dtype=(torch.nn.ModuleList, torch.nn.ModuleDict)
-    )
+    transforms = apply_to_collection(transforms, Callable, FuncModule, wrong_dtype=nn.Module)
+    transforms = apply_to_collection(transforms, Mapping, nn.ModuleDict, wrong_dtype=nn.ModuleDict)
+    transforms = apply_to_collection(transforms, Iterable, nn.ModuleList, wrong_dtype=(nn.ModuleList, nn.ModuleDict))
     return transforms
