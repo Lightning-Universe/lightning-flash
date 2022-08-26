@@ -183,6 +183,8 @@ class InputBase(Properties, metaclass=_InputMeta):
                     output_dict[key.value] = val
                 else:
                     output_dict[key] = val
+        else:
+            return sample_output
         return output_dict
 
     @staticmethod
