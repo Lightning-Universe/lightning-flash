@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 import torch
+from torch import Tensor
 
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform
@@ -31,7 +32,7 @@ else:
     ClipSampler, LabeledVideoDataset, EncodedVideo, ApplyTransformToKey = None, None, None, None
 
 
-def normalize(x: torch.Tensor) -> torch.Tensor:
+def normalize(x: Tensor) -> Tensor:
     return x / 255.0
 
 
@@ -41,8 +42,8 @@ class VideoClassificationInputTransform(InputTransform):
 
     image_size: int = 244
     temporal_sub_sample: int = 8
-    mean: torch.Tensor = torch.tensor([0.45, 0.45, 0.45])
-    std: torch.Tensor = torch.tensor([0.225, 0.225, 0.225])
+    mean: Tensor = torch.tensor([0.45, 0.45, 0.45])
+    std: Tensor = torch.tensor([0.225, 0.225, 0.225])
     data_format: str = "BCTHW"
     same_on_frame: bool = False
 

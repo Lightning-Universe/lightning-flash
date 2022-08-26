@@ -455,7 +455,14 @@ class DataModule(pl.LightningDataModule):
         setattr(self, iter_name, iterator)
         return iterator
 
-    def _show_batch(self, stage: str, func_names: Union[str, List[str]], reset: bool = True) -> None:
+    def _show_batch(
+        self,
+        stage: str,
+        func_names: Union[str, List[str]],
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+        reset: bool = True,
+    ) -> None:
         """This function is used to handle transforms profiling for batch visualization."""
         # don't show in CI
         if os.getenv("FLASH_TESTING", "0") == "1":
@@ -469,6 +476,9 @@ class DataModule(pl.LightningDataModule):
         if isinstance(func_names, str):
             func_names = [func_names]
 
+        if not limit_nb_samples:
+            limit_nb_samples = self.batch_size
+
         iter_dataloader = getattr(self, iter_name)
         with self.data_fetcher.enable():
             if reset:
@@ -479,29 +489,53 @@ class DataModule(pl.LightningDataModule):
                 iter_dataloader = self._reset_iterator(stage)
                 _ = next(iter_dataloader)
             data_fetcher: BaseVisualization = self.data_fetcher
-            data_fetcher._show(stage, func_names)
+            data_fetcher._show(stage, func_names, limit_nb_samples, figsize)
             if reset:
                 self.data_fetcher.batches[stage] = {}
 
-    def show_train_batch(self, hooks_names: Union[str, List[str]] = "load_sample", reset: bool = True) -> None:
+    def show_train_batch(
+        self,
+        hooks_names: Union[str, List[str]] = "load_sample",
+        reset: bool = True,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ) -> None:
         """This function is used to visualize a batch from the train dataloader."""
         stage_name: str = _STAGES_PREFIX[RunningStage.TRAINING]
-        self._show_batch(stage_name, hooks_names, reset=reset)
+        self._show_batch(stage_name, hooks_names, limit_nb_samples, figsize, reset=reset)
 
-    def show_val_batch(self, hooks_names: Union[str, List[str]] = "load_sample", reset: bool = True) -> None:
+    def show_val_batch(
+        self,
+        hooks_names: Union[str, List[str]] = "load_sample",
+        reset: bool = True,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ) -> None:
         """This function is used to visualize a batch from the validation dataloader."""
         stage_name: str = _STAGES_PREFIX[RunningStage.VALIDATING]
-        self._show_batch(stage_name, hooks_names, reset=reset)
+        self._show_batch(stage_name, hooks_names, limit_nb_samples, figsize, reset=reset)
 
-    def show_test_batch(self, hooks_names: Union[str, List[str]] = "load_sample", reset: bool = True) -> None:
+    def show_test_batch(
+        self,
+        hooks_names: Union[str, List[str]] = "load_sample",
+        reset: bool = True,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ) -> None:
         """This function is used to visualize a batch from the test dataloader."""
         stage_name: str = _STAGES_PREFIX[RunningStage.TESTING]
-        self._show_batch(stage_name, hooks_names, reset=reset)
+        self._show_batch(stage_name, hooks_names, limit_nb_samples, figsize, reset=reset)
 
-    def show_predict_batch(self, hooks_names: Union[str, List[str]] = "load_sample", reset: bool = True) -> None:
+    def show_predict_batch(
+        self,
+        hooks_names: Union[str, List[str]] = "load_sample",
+        reset: bool = True,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ) -> None:
         """This function is used to visualize a batch from the prediction dataloader."""
         stage_name: str = _STAGES_PREFIX[RunningStage.PREDICTING]
-        self._show_batch(stage_name, hooks_names, reset=reset)
+        self._show_batch(stage_name, hooks_names, limit_nb_samples, figsize, reset=reset)
 
     def _get_property(self, property_name: str) -> Optional[Any]:
         train = getattr(self.train_dataset, property_name, None)

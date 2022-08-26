@@ -11,12 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Type, Union
 
 from flash.core.adapter import AdapterTask
+from flash.core.data.io.input import ServeInput
+from flash.core.data.io.output import Output
+from flash.core.integrations.icevision.transforms import IceVisionInputTransform
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE
+from flash.core.serve import Composition
+from flash.core.utilities.imports import requires
+from flash.core.utilities.types import INPUT_TRANSFORM_TYPE, LR_SCHEDULER_TYPE, OPTIMIZER_TYPE
+from flash.image.data import ImageDeserializer
 from flash.image.detection.backbones import OBJECT_DETECTION_HEADS
 from flash.image.detection.output import OBJECT_DETECTION_OUTPUTS
 
@@ -33,7 +39,6 @@ class ObjectDetector(AdapterTask):
         optimizer: Optimizer to use for training.
         lr_scheduler: The LR scheduler to use during training.
         learning_rate: The learning rate to use for training.
-        output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
         predict_kwargs: dictionary containing parameters that will be used during the prediction phase.
         kwargs: additional kwargs nessesary for initializing the backbone task
     """
@@ -95,3 +100,16 @@ class ObjectDetector(AdapterTask):
     @predict_kwargs.setter
     def predict_kwargs(self, predict_kwargs: Dict[str, Any]):
         self.adapter.predict_kwargs = predict_kwargs
+
+    @requires("serve")
+    def serve(
+        self,
+        host: str = "127.0.0.1",
+        port: int = 8000,
+        sanity_check: bool = True,
+        input_cls: Optional[Type[ServeInput]] = ImageDeserializer,
+        transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        transform_kwargs: Optional[Dict] = None,
+        output: Optional[Union[str, Output]] = None,
+    ) -> Composition:
+        return super().serve(host, port, sanity_check, input_cls, transform, transform_kwargs, output)

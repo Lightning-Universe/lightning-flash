@@ -156,7 +156,7 @@ class Seq2SeqTask(Task):
         self.log("train_loss", loss)
         return loss
 
-    def common_step(self, prefix: str, batch: Any) -> torch.Tensor:
+    def common_step(self, prefix: str, batch: Any) -> Tensor:
         batch["labels"] = batch.pop(DataKeys.TARGET)
         generated_tokens = self(batch)
         self.compute_metrics(generated_tokens, batch, prefix)
