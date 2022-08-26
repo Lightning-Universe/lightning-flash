@@ -19,7 +19,6 @@ from torch import nn
 
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform
-
 from flash.core.data.transforms import ApplyToKeys, kornia_collate
 from flash.core.utilities.imports import _ALBUMENTATIONS_AVAILABLE, _TORCHVISION_AVAILABLE, requires
 
@@ -41,6 +40,7 @@ class AlbumentationsAdapter(nn.Module):
     def forward(self, x):
         return torch.from_numpy(self.transform(image=x.numpy())["image"])
 
+
 @dataclass
 class ImageClassificationInputTransform(InputTransform):
 
@@ -58,7 +58,6 @@ class ImageClassificationInputTransform(InputTransform):
                 ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
             ]
         )
-
 
     def train_per_sample_transform(self):
         return T.Compose(
