@@ -17,7 +17,6 @@ import sys
 from copy import deepcopy
 from enum import Enum
 from typing import Any, cast, Dict, Iterable, List, Sequence, Tuple, Union
-from enum import Enum
 
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
