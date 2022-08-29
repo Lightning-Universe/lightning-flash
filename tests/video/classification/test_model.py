@@ -233,9 +233,37 @@ def test_video_classifier_finetune_from_tensors(tmpdir):
             assert sample["video"].shape[1] == expected_t_shape
 
         assert len(datamodule.labels) == 2, f"Expected number of labels to be 2 but found {len(datamodule.labels)}"
-        model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50")
+
+        model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50", labels=datamodule.labels)
         trainer = flash.Trainer(default_root_dir=tmpdir, fast_dev_run=True, gpus=torch.cuda.device_count())
         trainer.finetune(model, datamodule=datamodule)
+
+
+@pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
+def test_video_classifier_predict_from_tensors(tmpdir):
+    with mock_video_tensors() as (mock_tensors):
+        datamodule = VideoClassificationData.from_tensors(
+            "data",
+            "target",
+            train_data={"data": torch.stack((mock_tensors, mock_tensors)), "target": ["Patient", "Doctor"]},
+            predict_data={"data": torch.stack((mock_tensors, mock_tensors))},
+            video_sampler=SequentialSampler,
+            batch_size=1,
+        )
+
+        for sample in datamodule.train_dataset.data:
+            expected_t_shape = 5
+            assert sample["video"].shape[1] == expected_t_shape
+
+        assert len(datamodule.labels) == 2, f"Expected number of labels to be 2 but found {len(datamodule.labels)}"
+
+        model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50", labels=datamodule.labels)
+        trainer = flash.Trainer(default_root_dir=tmpdir, fast_dev_run=True, gpus=torch.cuda.device_count())
+        trainer.finetune(model, datamodule=datamodule)
+        predictions = trainer.predict(model, datamodule=datamodule, output="labels")
+
+        assert predictions is not None
+        assert predictions[0][0] in datamodule.labels
 
 
 @pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
