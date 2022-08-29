@@ -234,7 +234,9 @@ def test_video_classifier_finetune_from_tensors(tmpdir):
 
         assert len(datamodule.labels) == 2, f"Expected number of labels to be 2 but found {len(datamodule.labels)}"
 
-        model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50", labels=datamodule.labels)
+        model = VideoClassifier(
+            num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50", labels=datamodule.labels
+        )
         trainer = flash.Trainer(default_root_dir=tmpdir, fast_dev_run=True, gpus=torch.cuda.device_count())
         trainer.finetune(model, datamodule=datamodule)
 
@@ -257,7 +259,9 @@ def test_video_classifier_predict_from_tensors(tmpdir):
 
         assert len(datamodule.labels) == 2, f"Expected number of labels to be 2 but found {len(datamodule.labels)}"
 
-        model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50", labels=datamodule.labels)
+        model = VideoClassifier(
+            num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50", labels=datamodule.labels
+        )
         trainer = flash.Trainer(default_root_dir=tmpdir, fast_dev_run=True, gpus=torch.cuda.device_count())
         trainer.finetune(model, datamodule=datamodule)
         predictions = trainer.predict(model, datamodule=datamodule, output="labels")
