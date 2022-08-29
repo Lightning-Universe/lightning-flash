@@ -597,7 +597,7 @@ class VideoClassificationData(DataModule):
         :ref:`customizing transforms guide <customizing_transforms>`.
 
         Args:
-            input_field: The field (key name) in ``dict`` containing the video file paths.
+            input_field: The field (key name) in ``dict`` containing the video tensors.
             target_field: The field (key name) in the ``dict`` containing the targets.
             train_data: The ``dict`` containing tensors in ``input_field`` key and targets in
                 ``target_fields`` key to use when training.
