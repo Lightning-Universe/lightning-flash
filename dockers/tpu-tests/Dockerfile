@@ -19,16 +19,12 @@ FROM pytorchlightning/pytorch_lightning:base-xla-py${PYTHON_VERSION}-torch${PYTO
 
 LABEL maintainer="Lightning-AI <https://github.com/Lightning-AI>"
 
-COPY ./ ./pytorch-lightning/
-
-# Pull the legacy checkpoints
-RUN cd pytorch-lightning && \
-    bash .actions/pull_legacy_checkpoints.sh
+COPY ./ ./lightning-flash/
 
 RUN \
     pip install -q fire && \
     # drop unnecessary packages
-    pip install -r pytorch-lightning/requirements/pytorch/devel.txt --no-cache-dir
+    pip install -r lightning-flash/requirements.txt --no-cache-dir
 
 COPY ./dockers/tpu-tests/docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
