@@ -17,9 +17,7 @@ class LabeledVideoTensorDataset(torch.utils.data.IterableDataset):
         self,
         labeled_video_tensors: List[Tuple[str, Optional[dict]]],
         video_sampler: Type[torch.utils.data.Sampler] = torch.utils.data.RandomSampler,
-        transform: Optional[Callable[[dict], Any]] = None,
     ) -> None:
-        self._transform = transform
         self._labeled_videos = labeled_video_tensors
 
         # If a RandomSampler is used we need to pass in a custom random generator that
@@ -88,13 +86,6 @@ class LabeledVideoTensorDataset(torch.utils.data.IterableDataset):
             "label": info_dict,
             "video_label": info_dict,
         }
-        if self._transform is not None:
-            sample_dict = self._transform(sample_dict)
-
-            # # User can force dataset to continue by returning None in transform.
-            # TODO: @krshrimali
-            # if sample_dict is None:
-            #     continue
 
         return sample_dict
 
