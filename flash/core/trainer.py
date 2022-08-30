@@ -26,6 +26,7 @@ from pytorch_lightning.callbacks import BaseFinetuning
 from pytorch_lightning.utilities import rank_zero_info
 from pytorch_lightning.utilities.argparse import add_argparse_args, get_init_arguments_and_types, parse_env_variables
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from pytorch_lightning.accelerators.tpu import TPUAccelerator
 from torch.utils.data import DataLoader
 
 import flash
@@ -188,7 +189,7 @@ class Trainer(PlTrainer):
             Returns a list of dictionaries, one for each provided dataloader containing their respective predictions.
         """
         # Note: Prediction on TPU device with multi cores is not supported yet
-        if self.use_tpu and self.tpu_cores > 1:
+        if isinstance(self.accelerator, TPUAccelerator) and self.tpu_cores > 1:
             raise NotImplementedError(
                 f"Prediction on TPU device with multi-cores (requested: {self.tpu_cores} TPU cores) is not yet supported."
             )
