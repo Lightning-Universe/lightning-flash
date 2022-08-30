@@ -72,7 +72,6 @@ class LabeledVideoTensorDataset(torch.utils.data.IterableDataset):
             # Setup MultiProcessSampler here - after PyTorch DataLoader workers are spawned.
             self._video_sampler_iter = iter(MultiProcessSampler(self._video_sampler))
 
-        # for i_try in range(self._MAX_CONSECUTIVE_FAILURES):
         # Reuse previously stored video if there are still clips to be sampled from
         # the last loaded video.
         video_index = next(self._video_sampler_iter)
