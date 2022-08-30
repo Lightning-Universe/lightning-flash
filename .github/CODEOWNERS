@@ -10,7 +10,7 @@
 # owners
 /.github/CODEOWNERS   @williamfalcon
 # main
-/README.md            @edenlightning @ethanwharris
+/README.md            @ethanwharris
 # installation
 /setup.py                 @borda @ethanwharris
 /__about__.py             @borda @ethanwharris
@@ -22,8 +22,8 @@
 /*.yml                @borda @ethanwharris
 
 # Docs
-/docs/                          @edenlightning @ethanwharris
-/.github/*.md                   @edenlightning @ethanwharris
-/.github/ISSUE_TEMPLATE/*.md    @edenlightning @ethanwharris
+/docs/                          @ethanwharris
+/.github/*.md                   @ethanwharris
+/.github/ISSUE_TEMPLATE/*.md    @ethanwharris
 /docs/source/conf.py            @borda @ethanwharris
 /flash/core/integrations/labelstudio	@KonstantinKorotaev @niklub
