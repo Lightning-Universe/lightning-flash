@@ -20,7 +20,7 @@ export FLASH_RUN_TPU_TESTS=1
 defaults='-m coverage run --source flash --append -m pytest --durations=0 --capture=no --disable-warnings'
 
 # TODO: In future, we can use RunIf from PL upstream
-grep_output=$(grep --recursive --line-number --word-regexp 'tests' --regexp 'os.getenv("FLASH_RUN_TPU_TESTS",')
+grep_output=$(grep --recursive --line-number --word-regexp 'tpu' --regexp 'os.getenv("FLASH_RUN_TPU_TESTS",')
 # file paths
 files=$(echo "$grep_output" | cut -f1 -d:)
 files_arr=($files)
