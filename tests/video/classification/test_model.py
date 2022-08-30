@@ -313,7 +313,6 @@ def test_video_classifier_finetune_fiftyone(tmpdir):
         )
         datamodule = VideoClassificationData.from_fiftyone(
             train_dataset=train_dataset,
-            predict_dataset=train_dataset,
             clip_sampler="uniform",
             clip_duration=half_duration,
             video_sampler=SequentialSampler,
