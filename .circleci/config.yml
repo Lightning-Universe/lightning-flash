@@ -3,6 +3,7 @@ version: 2.1
 
 orbs:
   gcp-gke: circleci/gcp-gke@1.4.0
+  go: circleci/go@1.7.1
   codecov: codecov/codecov@1.1.0
 
 trigger:
@@ -146,9 +147,7 @@ jobs:
 
 workflows:
   version: 2
-  test-on-tpus:
-    jobs:
-      - TPU-tests
   ci-runs:
     jobs:
       - build-Docs
+      - TPU-tests
