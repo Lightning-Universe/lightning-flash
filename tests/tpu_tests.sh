@@ -14,12 +14,12 @@
 # limitations under the License.
 set -e
 
-# this environment variable allows special tests to run
+# this environment variable allows TPU tests to run
 export FLASH_RUN_TPU_TESTS=1
 # python arguments
 defaults='-m coverage run --source flash --append -m pytest --durations=0 --capture=no --disable-warnings'
 
-# find tests marked as `@RunIf(special=True)`
+# TODO: In future, we can use RunIf from PL upstream
 grep_output=$(grep --recursive --line-number --word-regexp 'tests' --regexp 'os.getenv("FLASH_RUN_TPU_TESTS",')
 # file paths
 files=$(echo "$grep_output" | cut -f1 -d:)

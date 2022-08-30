@@ -33,7 +33,7 @@ local tputests = base.BaseTest {
       pip install -e .[test]
       echo $KUBE_GOOGLE_CLOUD_TPU_ENDPOINTS
       export XRT_TPU_CONFIG="tpu_worker;0;${KUBE_GOOGLE_CLOUD_TPU_ENDPOINTS:7}"
-      cd tests
+      cd tests/tpu/
       coverage run --source=lightning_flash -m pytest -vv --durations=0 ./
       echo "\n||| Running TPU Tests |||\n"
       bash tpu_tests.sh
