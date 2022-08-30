@@ -175,16 +175,15 @@ class InputBase(Properties, metaclass=_InputMeta):
         sample_output = getattr(self, f"{_STAGES_PREFIX[self.running_stage]}_load_sample")(deepcopy(sample))
 
         # Change DataKeys Enum to strings
-        output_dict = {}
         if isinstance(sample_output, dict):
+            output_dict = {}
             for key, val in sample_output.items():
                 if isinstance(key, Enum) and hasattr(key, "value"):
                     output_dict[key.value] = val
                 else:
                     output_dict[key] = val
-        else:
-            return sample_output
-        return output_dict
+            return output_dict
+        return sample_output
 
     @staticmethod
     def load_data(*args: Any, **kwargs: Any) -> Union[Sequence, Iterable]:
