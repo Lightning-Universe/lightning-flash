@@ -36,22 +36,6 @@ class LabeledVideoTensorDataset(torch.utils.data.IterableDataset):
         # clip time in these variables.
         self._loaded_video_label = None
 
-    @property
-    def video_sampler(self):
-        """
-        Returns:
-            The video sampler that defines video sample order. Note that you'll need to
-            use this property to set the epoch for a torch.utils.data.DistributedSampler.
-        """
-        return self._video_sampler
-
-    @property
-    def num_videos(self):
-        """
-        Returns:
-            Number of videos in dataset.
-        """
-        return len(self.video_sampler)
 
     def __next__(self) -> dict:
         """Retrieves the next clip based on the clip sampling strategy and video sampler.
