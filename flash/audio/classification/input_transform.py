@@ -51,7 +51,7 @@ class AudioClassificationInputTransform(InputTransform):
             ]
         )
 
-    @requires("torchvision")
+    @requires("audio")
     def per_sample_transform(self) -> Callable:
         return T.Compose(
             [

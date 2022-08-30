@@ -47,7 +47,7 @@ class SemanticSegmentationInputTransform(InputTransform):
     mean: Union[float, Tuple[float, float, float]] = (0.485, 0.456, 0.406)
     std: Union[float, Tuple[float, float, float]] = (0.229, 0.224, 0.225)
 
-    @requires("kornia")
+    @requires("image")
     def train_per_sample_transform(self) -> Callable:
         return T.Compose(
             [
@@ -62,7 +62,7 @@ class SemanticSegmentationInputTransform(InputTransform):
             ]
         )
 
-    @requires("kornia")
+    @requires("image")
     def per_sample_transform(self) -> Callable:
         return T.Compose(
             [
@@ -74,7 +74,7 @@ class SemanticSegmentationInputTransform(InputTransform):
             ]
         )
 
-    @requires("kornia")
+    @requires("image")
     def predict_per_sample_transform(self) -> Callable:
         return ApplyToKeys(
             DataKeys.INPUT,
