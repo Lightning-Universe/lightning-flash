@@ -1,6 +1,24 @@
 # Python CircleCI 2.1 configuration file.
 version: 2.1
 
+orbs:
+  gcp-gke: circleci/gcp-gke@1.4.0
+  codecov: codecov/codecov@1.1.0
+
+trigger:
+  tags:
+    include:
+      - '*'
+  branches:
+    include:
+      - "master"
+      - "release/*"
+      - "refs/tags/*"
+
+pr:
+  - "master"
+  - "release/*"
+
 references:
 
   make_docs: &make_docs
@@ -128,6 +146,9 @@ jobs:
 
 workflows:
   version: 2
+  test-on-tpus:
+    jobs:
+      - TPU-tests
   ci-runs:
     jobs:
       - build-Docs
