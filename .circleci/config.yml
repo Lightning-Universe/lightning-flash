@@ -22,23 +22,6 @@ pr:
 
 references:
 
-  make_docs: &make_docs
-    run:
-      name: Make Documentation
-      command: |
-        # First run the same pipeline as Read-The-Docs
-        # apt-get update && apt-get install -y cmake
-        # using: https://hub.docker.com/r/readthedocs/build
-        # we need to use py3.7 ot higher becase of an issue with metaclass inheritence
-        pyenv global 3.7.3
-        python --version
-        pip install . --progress-bar off
-        pip install --requirement requirements/docs.txt --progress-bar off
-        pip list
-        cd docs
-        make clean
-        make html --debug --jobs 2 SPHINXOPTS="-W"
-
   checkout_ml_testing: &checkout_ml_testing
    run:
      name: Checkout ml-testing-accelerators
@@ -129,25 +112,9 @@ jobs:
       - store_artifacts:
           path: coverage.xml
 
-  build-Docs:
-    docker:
-      - image: readthedocs/build:latest
-    steps:
-      - checkout
-      - run:
-          command: |
-            git submodule update --init --recursive
-          name: Init git submodule
-      - *make_docs
-      - store_artifacts:
-          # allows us to preview the generated html pages
-          path: docs/build/html/
-          destination: html
-
 
 workflows:
   version: 2
   ci-runs:
     jobs:
-      - build-Docs
       - TPU-tests
