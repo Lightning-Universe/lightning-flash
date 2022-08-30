@@ -590,8 +590,8 @@ class EarlyExitTestModel(BoringModel):
 @pytest.mark.parametrize(
     "trainer_kwargs",
     (
-        dict(accelerator="ddp_cpu"),
-        dict(accelerator="ddp_cpu", plugins="ddp_find_unused_parameters_false"),
+        dict(accelerator="cpu", strategy="ddp"),
+        dict(accelerator="cpu", strategy="ddp", plugins="ddp_find_unused_parameters_false"),
     ),
 )
 @pytest.mark.skipif(not _PL_GREATER_EQUAL_1_4_0, reason="Bugs in PL < 1.4.0")
