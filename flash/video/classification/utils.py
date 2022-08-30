@@ -36,7 +36,6 @@ class LabeledVideoTensorDataset(torch.utils.data.IterableDataset):
         # clip time in these variables.
         self._loaded_video_label = None
 
-
     def __next__(self) -> dict:
         """Retrieves the next clip based on the clip sampling strategy and video sampler.
 
