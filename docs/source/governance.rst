@@ -12,7 +12,7 @@ Leads
 Core Maintainers
 ----------------
 - Jirka Borovec (`Borda <https://github.com/Borda>`_)
-- Kushashwa Ravi Shrimali (`krshrimali` <https://github.com/krshrimali>`_)
+- Kushashwa Ravi Shrimali (`krshrimali <https://github.com/krshrimali>`_)
 - Kaushik Bokka (`kaushikb11 <https://github.com/kaushikb11>`_)
 - Justus Schock (`justusschock <https://github.com/justusschock>`_)
 - Akihiro Nitta (`akihironitta <https://github.com/akihironitta>`_)
