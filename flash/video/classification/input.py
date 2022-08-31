@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from typing import Any, Callable, Collection, Dict, List, Optional, Type, Union
 
 import pandas as pd
 import torch
@@ -99,11 +99,24 @@ class VideoClassificationInput(IterableInput, ClassificationInputMixin):
 class VideoClassificationTensorsBaseInput(IterableInput, ClassificationInputMixin):
     def load_data(
         self,
-        inputs: torch.Tensor,
+        inputs: Optional[Union[Collection[torch.Tensor], torch.Tensor]],
         targets: Union[List[Any], Any],
         video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
         target_formatter: Optional[TargetFormatter] = None,
     ) -> "LabeledVideoTensorDataset":
+        if isinstance(inputs, torch.Tensor):
+            # In case of (number of videos x CTHW) format
+            if inputs.ndim == 5:
+                inputs = list(inputs)
+            elif inputs.ndim == 4:
+                inputs = [inputs]
+            else:
+                raise ValueError(
+                    f"Got dimension of the input tensor: {inputs.ndim}, for stack of tensors - dimension should be 5 or for a single tensor, dimension should be 4."
+                )
+        elif not isinstance(inputs, (tuple, list)):
+            raise TypeError(f"Expected either a list/tuple of torch.Tensor or torch.Tensor, but got: type(data).")
+
         # Note: We take whatever is the shortest out of inputs and targets
         dataset = LabeledVideoTensorDataset(list(zip(inputs, targets)), video_sampler=video_sampler)
         if not self.predicting:
@@ -215,26 +228,26 @@ class VideoClassificationTensorsInput(VideoClassificationTensorsBaseInput):
 
     def load_data(
         self,
-        input_data: Dict[str, Union[torch.Tensor, Any, List[Any]]],
-        input_key: str,
-        target_keys: Union[str, List[str]],
+        tensors: Any,
+        targets: Optional[List[Any]] = None,
         video_sampler: Type[Sampler] = torch.utils.data.RandomSampler,
         target_formatter: Optional[TargetFormatter] = None,
     ) -> "LabeledVideoTensorDataset":
         result = super().load_data(
-            input_data[input_key],
-            input_data[target_keys],  # TODO: @krshrimali: this does not support list of str as of now
+            tensors,
+            targets,
             video_sampler=video_sampler,
             target_formatter=target_formatter,
         )
 
+        breakpoint()
         # If we had binary multi-class targets then we also know the labels (column names)
         if (
             self.training
             and isinstance(self.target_formatter, MultiBinaryTargetFormatter)
-            and isinstance(target_keys, List)
+            and isinstance(targets, List)
         ):
-            self.labels = target_keys
+            self.labels = targets
 
         return result
 
@@ -378,12 +391,20 @@ class VideoClassificationDataFramePredictInput(VideoClassificationPathsPredictIn
 
 
 class VideoClassificationTensorsPredictInput(Input):
-    def predict_load_data(
-        self,
-        data: Dict[str, Union[torch.Tensor, List[Any], Any]],
-        data_key: str,
-    ):
-        return list(data[data_key])
+    def predict_load_data(self, data: Union[torch.Tensor, List[Any], Any]):
+        if isinstance(data, (list, tuple)):
+            return data
+        else:
+            if not isinstance(data, torch.Tensor):
+                raise TypeError(f"Expected either a list/tuple of torch.Tensor or torch.Tensor, but got: type(data).")
+            if data.ndim == 5:
+                return list(data)
+            elif data.ndim == 4:
+                return [data]
+            else:
+                raise ValueError(
+                    f"Got dimension of the input tensor: {data.ndim}, for stack of tensors - dimension should be 5 or for a single tensor, dimension should be 4."
+                )
 
     def predict_load_sample(self, sample: torch.Tensor) -> Dict[str, Any]:
         return {

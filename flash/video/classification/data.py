@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, List, Optional, Sequence, Type, Union
+from typing import Any, Callable, Collection, Dict, List, Optional, Sequence, Type, Union
 
 import pandas as pd
 import torch
@@ -572,16 +572,17 @@ class VideoClassificationData(DataModule):
     @classmethod
     def from_tensors(
         cls,
-        input_field: str,
-        target_field: Optional[Union[str, Sequence[str]]] = None,
-        train_data: Optional[Dict[str, Union[torch.Tensor, Any, List[Any]]]] = None,
-        val_data: Optional[Dict[str, Union[torch.Tensor, Any, List[Any]]]] = None,
-        test_data: Optional[Dict[str, Union[torch.Tensor, Any, List[Any]]]] = None,
-        predict_data: Optional[Dict[str, Union[torch.Tensor, Any, List[Any]]]] = None,
+        train_data: Optional[Union[Collection[torch.Tensor], torch.Tensor]] = None,
+        train_targets: Optional[Collection[Any]] = None,
+        val_data: Optional[Union[Collection[torch.Tensor], torch.Tensor]] = None,
+        val_targets: Optional[Sequence[Any]] = None,
+        test_data: Optional[Collection[torch.Tensor]] = None,
+        test_targets: Optional[Sequence[Any]] = None,
+        predict_data: Optional[Union[Collection[torch.Tensor], torch.Tensor]] = None,
+        target_formatter: Optional[TargetFormatter] = None,
         video_sampler: Type[Sampler] = torch.utils.data.SequentialSampler,
         input_cls: Type[Input] = VideoClassificationTensorsInput,
         predict_input_cls: Type[Input] = VideoClassificationTensorsPredictInput,
-        target_formatter: Optional[TargetFormatter] = None,
         transform: INPUT_TRANSFORM_TYPE = VideoClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
@@ -597,14 +598,15 @@ class VideoClassificationData(DataModule):
         :ref:`customizing transforms guide <customizing_transforms>`.
 
         Args:
-            input_field: The field (key name) in ``dict`` containing the video tensors.
-            target_field: The field (key name) in the ``dict`` containing the targets.
-            train_data: The ``dict`` containing tensors in ``input_field`` key and targets in
-                ``target_fields`` key to use when training.
-            val_data: The ``dict`` containing tensors in ``input_field`` key and targets in
-                ``target_fields`` key to use when validating.
-            test_data: The ``dict`` containing tensors in ``input_field`` key and targets in
-                ``target_fields`` key to use when testing.
+            train_data: The torch tensor or list of tensors to use when training.
+            train_targets: The list of targets to use when training.
+            val_data: The torch tensor or list of tensors to use when validating.
+            val_targets: The list of targets to use when validating.
+            test_data: The torch tensor or list of tensors to use when testing.
+            test_targets: The list of targets to use when testing.
+            predict_data: The torch tensor or list of tensors to use when predicting.
+            train_data: A torch tensor or list of tensors to use when training.
+            train_targets: The list of targets to use when training.
             target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
                 control how targets are handled. See :ref:`formatting_classification_targets` for more details.
             video_sampler: Sampler for the internal video container. This defines the order tensors are used and,
@@ -627,22 +629,13 @@ class VideoClassificationData(DataModule):
             >>> import torch
             >>> from flash import Trainer
             >>> from flash.video import VideoClassifier, VideoClassificationData
-            >>> input_video = torch.randint(low=0, high=255, size=(3, 10, 10, 10), dtype=torch.uint8, device="cpu")
-            >>> train_data = {
-            ...     "data": torch.stack(
-            ...         (
-            ...             input_video,
-            ...             input_video,
-            ...         )
-            ...     ),  # 2 videos (each video: 10 frames)
-            ...     "targets": ["fruit", "vegetable"],  # Labels corresponding to each video
-            ... }
-            >>> predict_data = {
-            ...     "data": torch.stack((input_video,)),
-            ... }
+            >>> input_video = torch.randint(low=0, high=255, size=(3, 5, 10, 10), dtype=torch.uint8, device="cpu")
             >>> datamodule = VideoClassificationData.from_tensors(
-            ...     input_field="data",
-            ...     target_field="targets",
+            ...     train_data=[frame, frame, frame],
+            ...     train_targets=["fruit", "vegetable", "fruit"],
+            ...     val_data=[frame, frame],
+            ...     val_targets=["vegetable", "fruit"],
+            ...     predict_data=[frame],
             ...     train_data=train_data,
             ...     predict_data=predict_data,
             ...     batch_size=1,
@@ -650,7 +643,7 @@ class VideoClassificationData(DataModule):
             >>> datamodule.num_classes
             2
             >>> datamodule.labels
-            ['fruit', 'vegetable']
+            ['fruit', 'vegetable', "fruit"]
             >>> model = VideoClassifier(backbone="x3d_xs", num_classes=datamodule.num_classes)
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
@@ -664,13 +657,13 @@ class VideoClassificationData(DataModule):
             >>> del train_data
             >>> del predict_data
         """
-        train_tuple = (train_data, input_field, target_field)
-        val_tuple = (val_data, input_field, target_field)
-        test_tuple = (test_data, input_field, target_field)
-        predict_tuple = (predict_data, input_field)
 
         train_input = input_cls(
-            RunningStage.TRAINING, *train_tuple, video_sampler=video_sampler, target_formatter=target_formatter
+            RunningStage.TRAINING,
+            train_data,
+            train_targets,
+            video_sampler=video_sampler,
+            target_formatter=target_formatter,
         )
         target_formatter = getattr(train_input, "target_formatter", None)
 
@@ -678,17 +671,19 @@ class VideoClassificationData(DataModule):
             train_input,
             input_cls(
                 RunningStage.VALIDATING,
-                *val_tuple,
+                val_data,
+                val_targets,
                 video_sampler=video_sampler,
                 target_formatter=target_formatter,
             ),
             input_cls(
                 RunningStage.TESTING,
-                *test_tuple,
+                test_data,
+                test_targets,
                 video_sampler=video_sampler,
                 target_formatter=target_formatter,
             ),
-            predict_input_cls(RunningStage.PREDICTING, *predict_tuple),
+            predict_input_cls(RunningStage.PREDICTING, predict_data),
             transform=transform,
             transform_kwargs=transform_kwargs,
             **data_module_kwargs,

@@ -44,9 +44,12 @@ def _check_frames(data, expected_frames_count: Union[list, int], expected_shapes
         expected_frames_count = [expected_frames_count]
 
     # to be replaced
-    assert data.size() == len(
-        expected_frames_count
-    ), f"Expected: {data.size()} but got {len(expected_frames_count)} samples in the dataset."
+    try:
+        assert data.size() == len(
+            expected_frames_count
+        ), f"Expected: {data.size()} but got {len(expected_frames_count)} samples in the dataset."
+    except AttributeError:
+        breakpoint()
     for idx, sample_dict in enumerate(data):
         sample = sample_dict["video"]
         assert (
@@ -67,9 +70,7 @@ def test_load_data_from_tensors_uniform_frames():
         data.extend([tens, tens])
         expected_shapes.extend([tens.shape, tens.shape])
         labels.extend(["label1", "label2"])
-        datamodule = VideoClassificationData.from_tensors(
-            input_field="data", target_field="target", train_data={"data": data, "target": labels}, batch_size=1
-        )
+        datamodule = VideoClassificationData.from_tensors(train_data=data, train_targets=labels, batch_size=1)
 
     _check_len_and_values(got=datamodule.labels, expected=labels)
     _check_frames(data=datamodule.train_dataset.data, expected_frames_count=[5, 5], expected_shapes=expected_shapes)
@@ -88,9 +89,29 @@ def test_load_data_from_tensors_different_frames():
             data.append(tens)
             expected_shapes.append(tens.shape)
 
-    datamodule = VideoClassificationData.from_tensors(
-        input_field="data", target_field="target", train_data={"data": data, "target": labels}, batch_size=1
-    )
+    datamodule = VideoClassificationData.from_tensors(train_data=data, train_targets=labels, batch_size=1)
 
     _check_len_and_values(got=datamodule.labels, expected=labels)
     _check_frames(data=datamodule.train_dataset.data, expected_frames_count=[5, 3], expected_shapes=expected_shapes)
+
+
+# Test stacked video frames as input
+@pytest.mark.skipif(not _VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
+def test_load_data_from_tensors_stacked_frames():
+    labels = []
+    expected_shapes = []
+    with mock_video_tensors(num_frames=5) as tens:
+        expected_shapes.extend([tens.shape, tens.shape])
+        labels.extend(["label1", "label2"])
+        datamodule = VideoClassificationData.from_tensors(
+            train_data=torch.stack((tens, tens)),
+            train_targets=labels,
+            batch_size=1,
+            test_data=torch.stack((tens, tens)),
+            test_targets=labels,
+            predict_data=torch.stack((tens, tens)),
+        )
+
+    _check_len_and_values(got=datamodule.labels, expected=labels)
+    for data in [datamodule.train_dataset.data, datamodule.test_dataset.data]:
+        _check_frames(data=data, expected_frames_count=[5, 5], expected_shapes=expected_shapes)

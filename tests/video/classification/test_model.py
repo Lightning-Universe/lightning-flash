@@ -221,9 +221,8 @@ def test_video_classifier_finetune_from_data_frame(tmpdir):
 def test_video_classifier_finetune_from_tensors(tmpdir):
     with mock_video_tensors() as (mock_tensors):
         datamodule = VideoClassificationData.from_tensors(
-            "data",
-            "target",
-            train_data={"data": torch.stack((mock_tensors, mock_tensors)), "target": ["Patient", "Doctor"]},
+            train_data=[mock_tensors, mock_tensors],
+            train_targets=["Patient", "Doctor"],
             video_sampler=SequentialSampler,
             batch_size=1,
         )
@@ -245,10 +244,9 @@ def test_video_classifier_finetune_from_tensors(tmpdir):
 def test_video_classifier_predict_from_tensors(tmpdir):
     with mock_video_tensors() as (mock_tensors):
         datamodule = VideoClassificationData.from_tensors(
-            "data",
-            "target",
-            train_data={"data": torch.stack((mock_tensors, mock_tensors)), "target": ["Patient", "Doctor"]},
-            predict_data={"data": torch.stack((mock_tensors, mock_tensors))},
+            train_data=[mock_tensors, mock_tensors],
+            train_targets=["Patient", "Doctor"],
+            predict_data=[mock_tensors, mock_tensors],
             video_sampler=SequentialSampler,
             batch_size=1,
         )
