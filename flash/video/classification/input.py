@@ -240,7 +240,6 @@ class VideoClassificationTensorsInput(VideoClassificationTensorsBaseInput):
             target_formatter=target_formatter,
         )
 
-        breakpoint()
         # If we had binary multi-class targets then we also know the labels (column names)
         if (
             self.training
