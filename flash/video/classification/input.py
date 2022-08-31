@@ -112,10 +112,11 @@ class VideoClassificationTensorsBaseInput(IterableInput, ClassificationInputMixi
                 inputs = [inputs]
             else:
                 raise ValueError(
-                    f"Got dimension of the input tensor: {inputs.ndim}, for stack of tensors - dimension should be 5 or for a single tensor, dimension should be 4."
+                    f"Got dimension of the input tensor: {inputs.ndim}"
+                    " for stack of tensors - dimension should be 5 or for a single tensor, dimension should be 4.",
                 )
         elif not isinstance(inputs, (tuple, list)):
-            raise TypeError(f"Expected either a list/tuple of torch.Tensor or torch.Tensor, but got: type(data).")
+            raise TypeError(f"Expected either a list/tuple of torch.Tensor or torch.Tensor, but got: {type(inputs)}.")
 
         # Note: We take whatever is the shortest out of inputs and targets
         dataset = LabeledVideoTensorDataset(list(zip(inputs, targets)), video_sampler=video_sampler)
@@ -395,14 +396,15 @@ class VideoClassificationTensorsPredictInput(Input):
             return data
         else:
             if not isinstance(data, torch.Tensor):
-                raise TypeError(f"Expected either a list/tuple of torch.Tensor or torch.Tensor, but got: type(data).")
+                raise TypeError(f"Expected either a list/tuple of torch.Tensor or torch.Tensor, but got: {type(data)}.")
             if data.ndim == 5:
                 return list(data)
             elif data.ndim == 4:
                 return [data]
             else:
                 raise ValueError(
-                    f"Got dimension of the input tensor: {data.ndim}, for stack of tensors - dimension should be 5 or for a single tensor, dimension should be 4."
+                    f"Got dimension of the input tensor: {data.ndim},"
+                    " for stack of tensors - dimension should be 5 or for a single tensor, dimension should be 4."
                 )
 
     def predict_load_sample(self, sample: torch.Tensor) -> Dict[str, Any]:

@@ -629,15 +629,13 @@ class VideoClassificationData(DataModule):
             >>> import torch
             >>> from flash import Trainer
             >>> from flash.video import VideoClassifier, VideoClassificationData
-            >>> input_video = torch.randint(low=0, high=255, size=(3, 5, 10, 10), dtype=torch.uint8, device="cpu")
+            >>> frame = torch.randint(low=0, high=255, size=(3, 5, 10, 10), dtype=torch.uint8, device="cpu")
             >>> datamodule = VideoClassificationData.from_tensors(
             ...     train_data=[frame, frame, frame],
             ...     train_targets=["fruit", "vegetable", "fruit"],
             ...     val_data=[frame, frame],
             ...     val_targets=["vegetable", "fruit"],
             ...     predict_data=[frame],
-            ...     train_data=train_data,
-            ...     predict_data=predict_data,
             ...     batch_size=1,
             ... )
             >>> datamodule.num_classes
@@ -653,9 +651,7 @@ class VideoClassificationData(DataModule):
 
         .. testcleanup::
 
-            >>> del input_video
-            >>> del train_data
-            >>> del predict_data
+            >>> del frame
         """
 
         train_input = input_cls(
