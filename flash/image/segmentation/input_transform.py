@@ -17,7 +17,7 @@ from typing import Any, Callable, Dict, Tuple, Union
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.transforms import ApplyToKeys, kornia_collate, KorniaParallelTransforms
-from flash.core.utilities.imports import _KORNIA_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _KORNIA_AVAILABLE, _TORCHVISION_AVAILABLE, requires
 
 if _KORNIA_AVAILABLE:
     import kornia as K
@@ -47,6 +47,7 @@ class SemanticSegmentationInputTransform(InputTransform):
     mean: Union[float, Tuple[float, float, float]] = (0.485, 0.456, 0.406)
     std: Union[float, Tuple[float, float, float]] = (0.229, 0.224, 0.225)
 
+    @requires("image")
     def train_per_sample_transform(self) -> Callable:
         return T.Compose(
             [
@@ -61,6 +62,7 @@ class SemanticSegmentationInputTransform(InputTransform):
             ]
         )
 
+    @requires("image")
     def per_sample_transform(self) -> Callable:
         return T.Compose(
             [
@@ -72,6 +74,7 @@ class SemanticSegmentationInputTransform(InputTransform):
             ]
         )
 
+    @requires("image")
     def predict_per_sample_transform(self) -> Callable:
         return ApplyToKeys(
             DataKeys.INPUT,
