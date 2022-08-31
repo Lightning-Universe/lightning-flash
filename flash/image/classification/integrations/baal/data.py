@@ -17,6 +17,7 @@ from typing import Any, Callable, Dict, List, Optional
 import numpy as np
 import torch
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from torch import Tensor
 from torch.utils.data import DataLoader, Dataset, random_split
 
 from flash.core.data.data_module import DataModule
@@ -174,19 +175,19 @@ class ActiveLearningDataModule(DataModule):
         self.trainer.state.stage = current_stage
         return batch
 
-    def label(self, probabilities: List[torch.Tensor] = None, indices=None):
+    def label(self, probabilities: List[Tensor] = None, indices=None):
         if probabilities is not None and indices:
             raise MisconfigurationException(
                 "The `probabilities` and `indices` are mutually exclusive, pass only of one them."
             )
-        if probabilities is not None:
+        if probabilities is not None and len(probabilities) != 0:
             probabilities = torch.cat([p[0].unsqueeze(0) for p in probabilities], dim=0)
             uncertainties = self.heuristic.get_uncertainties(probabilities)
             indices = np.argsort(uncertainties)
             if self._dataset is not None:
                 self._dataset.label(indices[-self.query_size :])
 
-    def state_dict(self) -> Dict[str, torch.Tensor]:
+    def state_dict(self) -> Dict[str, Tensor]:
         return self._dataset.state_dict()
 
     def load_state_dict(self, state_dict) -> None:

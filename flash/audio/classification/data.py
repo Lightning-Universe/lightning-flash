@@ -15,7 +15,7 @@ from typing import Any, Callable, Collection, Dict, List, Optional, Sequence, Ty
 
 import numpy as np
 import pandas as pd
-import torch
+from torch import Tensor
 
 from flash.audio.classification.input import (
     AudioClassificationCSVInput,
@@ -72,7 +72,7 @@ class AudioClassificationData(DataModule):
         ``.bmp``, ``.pgm``, ``.tif``, ``.tiff``, ``.webp``, and ``.npy``.
         The supported file extensions for raw audio (where spectrograms will be computed automatically) are: ``.aiff``,
         ``.au``, ``.avr``, ``.caf``, ``.flac``, ``.mat``, ``.mat4``, ``.mat5``, ``.mpc2k``, ``.ogg``, ``.paf``,
-        ``.pvf``, ``.rf64``, ``.sd2``, ``.ircam``, ``.voc``, ``.w64``, ``.wav``, ``.nist``, and ``.wavex``.
+        ``.pvf``, ``.rf64``, ``.ircam``, ``.voc``, ``.w64``, ``.wav``, ``.nist``, and ``.wavex``.
         The targets can be in any of our
         :ref:`supported classification target formats <formatting_classification_targets>`.
         To learn how to customize the transforms applied for each stage, read our
@@ -184,7 +184,7 @@ class AudioClassificationData(DataModule):
         ``.bmp``, ``.pgm``, ``.tif``, ``.tiff``, ``.webp``, and ``.npy``.
         The supported file extensions for raw audio (where spectrograms will be computed automatically) are: ``.aiff``,
         ``.au``, ``.avr``, ``.caf``, ``.flac``, ``.mat``, ``.mat4``, ``.mat5``, ``.mpc2k``, ``.ogg``, ``.paf``,
-        ``.pvf``, ``.rf64``, ``.sd2``, ``.ircam``, ``.voc``, ``.w64``, ``.wav``, ``.nist``, and ``.wavex``.
+        ``.pvf``, ``.rf64``, ``.ircam``, ``.voc``, ``.w64``, ``.wav``, ``.nist``, and ``.wavex``.
         For train, test, and validation data, the folders are expected to contain a sub-folder for each class.
         Here's the required structure:
 
@@ -387,13 +387,13 @@ class AudioClassificationData(DataModule):
     @classmethod
     def from_tensors(
         cls,
-        train_data: Optional[Collection[torch.Tensor]] = None,
+        train_data: Optional[Collection[Tensor]] = None,
         train_targets: Optional[Collection[Any]] = None,
-        val_data: Optional[Collection[torch.Tensor]] = None,
+        val_data: Optional[Collection[Tensor]] = None,
         val_targets: Optional[Sequence[Any]] = None,
-        test_data: Optional[Collection[torch.Tensor]] = None,
+        test_data: Optional[Collection[Tensor]] = None,
         test_targets: Optional[Sequence[Any]] = None,
-        predict_data: Optional[Collection[torch.Tensor]] = None,
+        predict_data: Optional[Collection[Tensor]] = None,
         input_cls: Type[Input] = AudioClassificationTensorInput,
         transform: INPUT_TRANSFORM_TYPE = AudioClassificationInputTransform,
         transform_kwargs: Optional[Dict] = None,
@@ -505,7 +505,7 @@ class AudioClassificationData(DataModule):
         ``.bmp``, ``.pgm``, ``.tif``, ``.tiff``, ``.webp``, and ``.npy``.
         The supported file extensions for raw audio (where spectrograms will be computed automatically) are: ``.aiff``,
         ``.au``, ``.avr``, ``.caf``, ``.flac``, ``.mat``, ``.mat4``, ``.mat5``, ``.mpc2k``, ``.ogg``, ``.paf``,
-        ``.pvf``, ``.rf64``, ``.sd2``, ``.ircam``, ``.voc``, ``.w64``, ``.wav``, ``.nist``, and ``.wavex``.
+        ``.pvf``, ``.rf64``, ``.ircam``, ``.voc``, ``.w64``, ``.wav``, ``.nist``, and ``.wavex``.
         The targets will be extracted from the ``target_fields`` in the DataFrame and can be in any of our
         :ref:`supported classification target formats <formatting_classification_targets>`.
         To learn how to customize the transforms applied for each stage, read our
@@ -666,7 +666,7 @@ class AudioClassificationData(DataModule):
         ``.bmp``, ``.pgm``, ``.tif``, ``.tiff``, ``.webp``, and ``.npy``.
         The supported file extensions for raw audio (where spectrograms will be computed automatically) are: ``.aiff``,
         ``.au``, ``.avr``, ``.caf``, ``.flac``, ``.mat``, ``.mat4``, ``.mat5``, ``.mpc2k``, ``.ogg``, ``.paf``,
-        ``.pvf``, ``.rf64``, ``.sd2``, ``.ircam``, ``.voc``, ``.w64``, ``.wav``, ``.nist``, and ``.wavex``.
+        ``.pvf``, ``.rf64``, ``.ircam``, ``.voc``, ``.w64``, ``.wav``, ``.nist``, and ``.wavex``.
         The targets will be extracted from the ``target_fields`` in the CSV files and can be in any of our
         :ref:`supported classification target formats <formatting_classification_targets>`.
         To learn how to customize the transforms applied for each stage, read our

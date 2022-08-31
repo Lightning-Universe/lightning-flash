@@ -13,8 +13,7 @@
 # limitations under the License.
 from typing import Any, Dict, List, Optional, Type, Union
 
-import torch
-from torch import nn
+from torch import nn, Tensor
 from torch.nn import functional as F
 
 from flash.core.classification import ClassificationTask
@@ -161,13 +160,13 @@ class SemanticSegmentation(ClassificationTask):
         batch[DataKeys.PREDS] = super().predict_step(batch_input, batch_idx, dataloader_idx=dataloader_idx)
         return batch
 
-    def forward(self, x) -> torch.Tensor:
+    def forward(self, x) -> Tensor:
         res = self.head(x)
 
         # some frameworks like torchvision return a dict.
         # In particular, torchvision segmentation models return the output logits
         # in the key `out`.
-        if _isinstance(res, Dict[str, torch.Tensor]):
+        if _isinstance(res, Dict[str, Tensor]):
             res = res["out"]
 
         return res

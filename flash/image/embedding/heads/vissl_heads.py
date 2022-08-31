@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import List, Union
 
-import torch
 import torch.nn as nn
+from torch import Tensor
 
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _VISSL_AVAILABLE
@@ -80,7 +80,7 @@ class SimCLRHead(nn.Module):
         layers.append(nn.Linear(last_dim, self.dims[-1]))
         return nn.Sequential(*layers)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         return self.clf(x)
 
 

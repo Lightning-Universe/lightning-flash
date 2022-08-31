@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Union
 
 import torch
+from torch import Tensor
 
 from flash.core.serve.types.base import BaseType
 
@@ -44,9 +45,9 @@ class Label(BaseType):
         else:
             raise TypeError("`classes` must be a list, tuple or a dict")
 
-    def deserialize(self, label: str) -> torch.Tensor:
+    def deserialize(self, label: str) -> Tensor:
         index = self._reverse_map[label]
         return torch.as_tensor(index)
 
-    def serialize(self, key: torch.Tensor) -> str:
+    def serialize(self, key: Tensor) -> str:
         return self.classes[key.item()]

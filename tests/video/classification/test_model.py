@@ -20,6 +20,7 @@ from typing import Any
 import pytest
 import torch
 from pandas import DataFrame
+from torch import Tensor
 from torch.utils.data import SequentialSampler
 
 import flash
@@ -53,7 +54,7 @@ class TestVideoClassifier(TaskTester):
         return torch.rand(1, 3, 10, 244, 244)
 
     def check_forward_output(self, output: Any):
-        assert isinstance(output, torch.Tensor)
+        assert isinstance(output, Tensor)
         assert output.shape == torch.Size([1, 2])
 
     @property

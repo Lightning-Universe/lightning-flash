@@ -19,7 +19,7 @@ import torch
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.transforms import ApplyToKeys
-from flash.core.utilities.imports import _TORCHAUDIO_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _TORCHAUDIO_AVAILABLE, _TORCHVISION_AVAILABLE, requires
 
 if _TORCHVISION_AVAILABLE:
     from torchvision import transforms as T
@@ -51,6 +51,7 @@ class AudioClassificationInputTransform(InputTransform):
             ]
         )
 
+    @requires("audio")
     def per_sample_transform(self) -> Callable:
         return T.Compose(
             [

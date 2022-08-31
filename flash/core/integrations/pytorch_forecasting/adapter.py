@@ -15,8 +15,8 @@ from copy import copy
 from functools import partial
 from typing import Any, Callable, Dict, List, Optional, Union
 
-import torch
 import torchmetrics
+from torch import Tensor
 
 from flash.core.adapter import Adapter
 from flash.core.data.batch import default_uncollate
@@ -44,7 +44,7 @@ class PatchTimeSeriesDataSet(TimeSeriesDataSet):
     def _construct_index(self, data: DataFrame, predict_mode: bool) -> DataFrame:
         return DataFrame()
 
-    def _data_to_tensors(self, data: DataFrame) -> Dict[str, torch.Tensor]:
+    def _data_to_tensors(self, data: DataFrame) -> Dict[str, Tensor]:
         return {}
 
 

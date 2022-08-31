@@ -14,7 +14,7 @@
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union
 
-import torch
+from torch import Tensor
 
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _AUDIO_AVAILABLE
@@ -59,7 +59,7 @@ class DataCollatorCTCWithPadding:
     pad_to_multiple_of: Optional[int] = None
     pad_to_multiple_of_labels: Optional[int] = None
 
-    def __call__(self, samples: List[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
+    def __call__(self, samples: List[Dict[str, Any]]) -> Dict[str, Tensor]:
         inputs = [sample[DataKeys.INPUT] for sample in samples]
         sampling_rates = [sample[DataKeys.METADATA]["sampling_rate"] for sample in samples]
 
