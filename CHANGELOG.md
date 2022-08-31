@@ -8,7 +8,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Added `torchvision` as a requirement to `datatype_audio.txt` as it's used for Audio Classification ([#1425](https://github.com/Lightning-AI/lightning-flash/pull/1425)).
+- Added fine tuning strategies for DeepSpeed (with parameter loading and storing omitted) ([#1377](https://github.com/Lightning-AI/lightning-flash/pull/1377))
+
+- Added `torchvision` as a requirement to `datatype_audio.txt` as it's used for Audio Classification ([#1425](https://github.com/Lightning-AI/lightning-flash/pull/1425))
 
 - Added `figsize` and `limit_nb_samples` for showing batch images ([#1381](https://github.com/Lightning-AI/lightning-flash/pull/1381))
 
