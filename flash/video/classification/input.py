@@ -21,7 +21,7 @@ from torch.utils.data import Sampler
 
 from flash.core.data.io.classification_input import ClassificationInputMixin
 from flash.core.data.io.input import DataKeys, Input, IterableInput
-from flash.core.data.utilities.classification import MultiBinaryTargetFormatter, TargetFormatter
+from flash.core.data.utilities.classification import _is_list_like, MultiBinaryTargetFormatter, TargetFormatter
 from flash.core.data.utilities.data_frame import resolve_files, resolve_targets
 from flash.core.data.utilities.loading import load_data_frame
 from flash.core.data.utilities.paths import list_valid_files, make_dataset, PATH_TYPE
@@ -115,7 +115,7 @@ class VideoClassificationTensorsBaseInput(IterableInput, ClassificationInputMixi
                     f"Got dimension of the input tensor: {inputs.ndim}"
                     " for stack of tensors - dimension should be 5 or for a single tensor, dimension should be 4.",
                 )
-        elif not isinstance(inputs, (tuple, list)):
+        elif not _is_list_like(inputs):
             raise TypeError(f"Expected either a list/tuple of torch.Tensor or torch.Tensor, but got: {type(inputs)}.")
 
         # Note: We take whatever is the shortest out of inputs and targets
@@ -392,7 +392,7 @@ class VideoClassificationDataFramePredictInput(VideoClassificationPathsPredictIn
 
 class VideoClassificationTensorsPredictInput(Input):
     def predict_load_data(self, data: Union[torch.Tensor, List[Any], Any]):
-        if isinstance(data, (list, tuple)):
+        if _is_list_like(data):
             return data
         else:
             if not isinstance(data, torch.Tensor):
