@@ -146,6 +146,7 @@ model = ImageClassifier(
 trainer = flash.Trainer(
     max_epochs=1,
     gpus=1,
+    accelerator="gpu",
     precision=16,
 )
 

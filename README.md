@@ -129,7 +129,7 @@ model.serve()
 or make predictions from raw data directly.
 
 ```py
-trainer = Trainer(accelerator='ddp', gpus=2)
+trainer = Trainer(strategy='ddp', accelerator="gpu", gpus=2)
 dm = SemanticSegmentationData.from_folders(predict_folder="data/CameraRGB")
 predictions = trainer.predict(model, dm)
 ```
