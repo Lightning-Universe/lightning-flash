@@ -14,7 +14,7 @@
 from typing import Any, Collection, Dict, Optional, Sequence, Type
 
 import numpy as np
-import torch
+from torch import Tensor
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input
@@ -257,8 +257,8 @@ class StyleTransferData(DataModule):
     @classmethod
     def from_tensors(
         cls,
-        train_data: Optional[Collection[torch.Tensor]] = None,
-        predict_data: Optional[Collection[torch.Tensor]] = None,
+        train_data: Optional[Collection[Tensor]] = None,
+        predict_data: Optional[Collection[Tensor]] = None,
         input_cls: Type[Input] = ImageTensorInput,
         transform: INPUT_TRANSFORM_TYPE = StyleTransferInputTransform,
         transform_kwargs: Optional[Dict] = None,

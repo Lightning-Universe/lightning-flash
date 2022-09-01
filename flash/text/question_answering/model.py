@@ -283,7 +283,7 @@ class QuestionAnsweringTask(Task):
         self.log("train_loss", loss)
         return loss
 
-    def common_step(self, prefix: str, batch: Any) -> torch.Tensor:
+    def common_step(self, prefix: str, batch: Any) -> Tensor:
         loss, generated_answers = self(batch)
         result = self.compute_metrics(generated_answers, batch[DataKeys.METADATA])
         self.log(f"{prefix}_loss", loss, on_step=False, on_epoch=True, prog_bar=True)

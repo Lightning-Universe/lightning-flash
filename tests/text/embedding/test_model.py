@@ -16,6 +16,7 @@ from typing import Any
 
 import pytest
 import torch
+from torch import Tensor
 
 import flash
 from flash.core.utilities.imports import _TEXT_AVAILABLE, _TEXT_TESTING
@@ -49,7 +50,7 @@ class TestTextEmbedder(TaskTester):
         return {"input_ids": torch.randint(1000, size=(1, 100))}
 
     def check_forward_output(self, output: Any):
-        assert isinstance(output, torch.Tensor)
+        assert isinstance(output, Tensor)
         assert output.shape == torch.Size([1, 384])
 
 

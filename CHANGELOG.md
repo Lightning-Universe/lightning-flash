@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added `torchvision` as a requirement to `datatype_audio.txt` as it's used for Audio Classification ([#1425](https://github.com/Lightning-AI/lightning-flash/pull/1425)).
+
+- Added `figsize` and `limit_nb_samples` for showing batch images ([#1381](https://github.com/Lightning-AI/lightning-flash/pull/1381))
+
 - Added support for `from_lists` for Tabular Classification and Regression ([#1337](https://github.com/PyTorchLightning/lightning-flash/pull/1337))
 
 - Added support for `from_dicts` for Tabular Classification and Regression ([#1331](https://github.com/PyTorchLightning/lightning-flash/pull/1331))
@@ -40,7 +44,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
+- Removed support for audio files with `sd2` extension, because SoundFile (for sd2 extension) doesn't accept fsspec objects. ([#1409](https://github.com/Lightning-AI/lightning-flash/pull/1409))
+
 ### Fixed
+
+- Fixed when suitable error not being raised for image segmentation (kornia) ([#1425](https://github.com/Lightning-AI/lightning-flash/pull/1425)).
+
+- Fixed the script of integrating `lightning-flash` with `learn2learn` ([#1376](https://github.com/Lightning-AI/lightning-flash/pull/1383))
+
+- Fixed JIT tracing tests where the model class was not attached to the `Trainer` class ([#1410](https://github.com/Lightning-AI/lightning-flash/pull/1410))
+
+- Fixed examples for BaaL integration by removing usage of `on_<stage>_dataloader` hooks (removed in PL 1.7.0) ([#1410](https://github.com/Lightning-AI/lightning-flash/pull/1410))
+
+- Fixed examples for BaaL integration for the case when `probabilities` list is empty ([#1410](https://github.com/Lightning-AI/lightning-flash/pull/1410))
+
+- Fixed a bug where collate functions were not being attached successfully after the `DataLoader` is initialized (in PL 1.7.0 changing attributes after initialization doesn't do anything) ([#1410](https://github.com/Lightning-AI/lightning-flash/pull/1410))
 
 - Fixed a bug where grayscale images were not properly converted to RGB when loaded. ([#1394](https://github.com/PyTorchLightning/lightning-flash/pull/1394))
 

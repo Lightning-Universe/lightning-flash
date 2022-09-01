@@ -11,11 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Collection, Dict, List, Optional, Sequence, Type, Union
+from typing import Any, Callable, Collection, Dict, List, Optional, Sequence, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
-import torch
+from torch import Tensor
 from torch.utils.data import Dataset
 
 from flash.core.data.base_viz import BaseVisualization
@@ -481,13 +481,13 @@ class ImageClassificationData(DataModule):
     @classmethod
     def from_tensors(
         cls,
-        train_data: Optional[Collection[torch.Tensor]] = None,
+        train_data: Optional[Collection[Tensor]] = None,
         train_targets: Optional[Collection[Any]] = None,
-        val_data: Optional[Collection[torch.Tensor]] = None,
+        val_data: Optional[Collection[Tensor]] = None,
         val_targets: Optional[Sequence[Any]] = None,
-        test_data: Optional[Collection[torch.Tensor]] = None,
+        test_data: Optional[Collection[Tensor]] = None,
         test_targets: Optional[Sequence[Any]] = None,
-        predict_data: Optional[Collection[torch.Tensor]] = None,
+        predict_data: Optional[Collection[Tensor]] = None,
         target_formatter: Optional[TargetFormatter] = None,
         input_cls: Type[Input] = ImageClassificationTensorInput,
         transform: INPUT_TRANSFORM_TYPE = ImageClassificationInputTransform,
@@ -1204,26 +1204,35 @@ class MatplotlibVisualization(BaseVisualization):
 
     @staticmethod
     @requires("image")
-    def _to_numpy(img: Union[np.ndarray, torch.Tensor, Image.Image]) -> np.ndarray:
+    def _to_numpy(img: Union[np.ndarray, Tensor, Image.Image]) -> np.ndarray:
         out: np.ndarray
         if isinstance(img, np.ndarray):
             out = img
         elif isinstance(img, Image.Image):
             out = np.array(img)
-        elif isinstance(img, torch.Tensor):
+        elif isinstance(img, Tensor):
             out = img.squeeze(0).permute(1, 2, 0).cpu().numpy()
         else:
             raise TypeError(f"Unknown image type. Got: {type(img)}.")
         return out
 
     @requires("matplotlib")
-    def _show_images_and_labels(self, data: List[Any], num_samples: int, title: str):
+    def _show_images_and_labels(
+        self,
+        data: List[Any],
+        num_samples: int,
+        title: str,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ):
+        num_samples = max(1, min(num_samples, limit_nb_samples))
+
         # define the image grid
         cols: int = min(num_samples, self.max_cols)
         rows: int = num_samples // cols
 
         # create figure and set title
-        fig, axs = plt.subplots(rows, cols)
+        fig, axs = plt.subplots(rows, cols, figsize=figsize)
         fig.suptitle(title)
 
         if not isinstance(axs, np.ndarray):
@@ -1240,7 +1249,7 @@ class MatplotlibVisualization(BaseVisualization):
                 raise TypeError(f"Unknown data type. Got: {type(data)}.")
             # convert images to numpy
             _img: np.ndarray = self._to_numpy(_img)
-            if isinstance(_label, torch.Tensor):
+            if isinstance(_label, Tensor):
                 _label = _label.squeeze().tolist()
             # show image and set label as subplot title
             ax.imshow(_img)
@@ -1248,14 +1257,28 @@ class MatplotlibVisualization(BaseVisualization):
             ax.axis("off")
         plt.show(block=self.block_viz_window)
 
-    def show_load_sample(self, samples: List[Any], running_stage: RunningStage):
+    def show_load_sample(
+        self,
+        samples: List[Any],
+        running_stage: RunningStage,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ):
         win_title: str = f"{running_stage} - show_load_sample"
-        self._show_images_and_labels(samples, len(samples), win_title)
+        self._show_images_and_labels(samples, len(samples), win_title, limit_nb_samples, figsize)
 
-    def show_per_sample_transform(self, samples: List[Any], running_stage: RunningStage):
+    def show_per_sample_transform(
+        self,
+        samples: List[Any],
+        running_stage: RunningStage,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ):
         win_title: str = f"{running_stage} - show_per_sample_transform"
-        self._show_images_and_labels(samples, len(samples), win_title)
+        self._show_images_and_labels(samples, len(samples), win_title, limit_nb_samples, figsize)
 
-    def show_per_batch_transform(self, batch: List[Any], running_stage):
+    def show_per_batch_transform(
+        self, batch: List[Any], running_stage, limit_nb_samples: int = None, figsize: Tuple[int, int] = (6.4, 4.8)
+    ):
         win_title: str = f"{running_stage} - show_per_batch_transform"
-        self._show_images_and_labels(batch[0], batch[0][DataKeys.INPUT].shape[0], win_title)
+        self._show_images_and_labels(batch[0], batch[0][DataKeys.INPUT].shape[0], win_title, limit_nb_samples, figsize)

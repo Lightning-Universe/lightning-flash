@@ -10,20 +10,18 @@
 # owners
 /.github/CODEOWNERS   @williamfalcon
 # main
-/README.md            @edenlightning @ethanwharris
+/README.md            @ethanwharris @krshrimali
 # installation
-/setup.py                 @borda @ethanwharris
-/__about__.py             @borda @ethanwharris
-/__init__.py              @borda @ethanwharris
+/setup.py                 @borda @ethanwharris @krshrimali
+/__about__.py             @borda @ethanwharris @krshrimali
+/__init__.py              @borda @ethanwharris @krshrimali
 
 # CI/CD
-/.github/workflows/   @borda @ethanwharris
+/.github/workflows/   @borda @ethanwharris @krshrimali
 # configs in root
-/*.yml                @borda @ethanwharris
+/*.yml                @borda @ethanwharris @krshrimali
 
 # Docs
-/docs/                          @edenlightning @ethanwharris
-/.github/*.md                   @edenlightning @ethanwharris
-/.github/ISSUE_TEMPLATE/*.md    @edenlightning @ethanwharris
+/.github/ISSUE_TEMPLATE/*.md    @borda @ethanwharris @krshrimali
 /docs/source/conf.py            @borda @ethanwharris
 /flash/core/integrations/labelstudio	@KonstantinKorotaev @niklub

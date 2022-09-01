@@ -18,6 +18,7 @@ from packaging import version
 from pytorch_lightning import Callback, LightningDataModule, LightningModule, Trainer
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.plugins.environments import SLURMEnvironment
+from torch import nn
 
 from flash.core.utilities.compatibility import accelerator_connector
 from flash.core.utilities.imports import (
@@ -475,8 +476,8 @@ def test_lightning_cli_torch_modules(tmpdir):
     class TestModule(BoringModel):
         def __init__(
             self,
-            activation: torch.nn.Module = None,
-            transform: Optional[List[torch.nn.Module]] = None,
+            activation: nn.Module = None,
+            transform: Optional[List[nn.Module]] = None,
         ):
             super().__init__()
             self.activation = activation
@@ -511,7 +512,7 @@ def test_lightning_cli_torch_modules(tmpdir):
     assert isinstance(cli.model.activation, torch.nn.LeakyReLU)
     assert cli.model.activation.negative_slope == 0.2
     assert len(cli.model.transform) == 2
-    assert all(isinstance(v, torch.nn.Module) for v in cli.model.transform)
+    assert all(isinstance(v, nn.Module) for v in cli.model.transform)
 
 
 class BoringModelRequiredClasses(BoringModel):
@@ -589,8 +590,8 @@ class EarlyExitTestModel(BoringModel):
 @pytest.mark.parametrize(
     "trainer_kwargs",
     (
-        dict(accelerator="ddp_cpu"),
-        dict(accelerator="ddp_cpu", plugins="ddp_find_unused_parameters_false"),
+        dict(accelerator="cpu", strategy="ddp"),
+        dict(accelerator="cpu", strategy="ddp", plugins="ddp_find_unused_parameters_false"),
     ),
 )
 @pytest.mark.skipif(not _PL_GREATER_EQUAL_1_4_0, reason="Bugs in PL < 1.4.0")
