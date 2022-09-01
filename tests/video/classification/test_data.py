@@ -60,19 +60,15 @@ def _check_frames(data, expected_frames_count: Union[list, int]):
         ), f"Expected video sample {idx} to have {expected_frames_count[idx]} frames but got {sample.shape[1]} frames"
 
 
-mock_tensors_5 = temp_encoded_tensors(5)
-mock_tensors_10 = temp_encoded_tensors(10)
-
-
 @pytest.mark.skipif(not _VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
 @pytest.mark.parametrize(
     "input_data, input_targets, expected_frames_count",
     [
-        ([mock_tensors_5, mock_tensors_5], ["label1", "label2"], [5, 5]),
-        ([mock_tensors_5, mock_tensors_10], ["label1", "label2"], [5, 10]),
-        (torch.stack((mock_tensors_5, mock_tensors_5)), ["label1", "label2"], [5, 5]),
-        (torch.stack((mock_tensors_5,)), ["label1"], [5]),
-        (mock_tensors_5, ["label1"], [5]),
+        ([temp_encoded_tensors(5), temp_encoded_tensors(5)], ["label1", "label2"], [5, 5]),
+        ([temp_encoded_tensors(5), temp_encoded_tensors(10)], ["label1", "label2"], [5, 10]),
+        (torch.stack((temp_encoded_tensors(5), temp_encoded_tensors(5))), ["label1", "label2"], [5, 5]),
+        (torch.stack((temp_encoded_tensors(5),)), ["label1"], [5]),
+        (temp_encoded_tensors(5), ["label1"], [5]),
     ],
 )
 def test_load_data_from_tensors(input_data, input_targets, expected_frames_count):
