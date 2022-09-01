@@ -34,8 +34,9 @@ def create_dummy_video_frames(num_frames: int, height: int, width: int):
     return torch.stack(data, 0)
 
 
-@pytest.mark.skipif(not _VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
 def temp_encoded_tensors(num_frames: int, height=10, width=10):
+    if not _VIDEO_AVAILABLE:
+        return torch.randint(size=(3, num_frames, height, width), low=0, high=255)
     data = create_dummy_video_frames(num_frames, height, width)
     return thwc_to_cthw(data).to(torch.float32)
 
