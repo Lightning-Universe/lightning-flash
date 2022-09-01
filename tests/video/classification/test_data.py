@@ -1,3 +1,16 @@
+# Copyright The PyTorch Lightning team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 import contextlib
 from typing import Union
 
@@ -22,93 +35,47 @@ def create_dummy_video_frames(num_frames: int, height: int, width: int):
     return torch.stack(data, 0)
 
 
-@contextlib.contextmanager
 def temp_encoded_tensors(num_frames: int, height=10, width=10):
     data = create_dummy_video_frames(num_frames, height, width)
-    yield thwc_to_cthw(data).to(torch.float32)
-
-
-@contextlib.contextmanager
-def mock_video_tensors(num_frames: int = 5):
-    with temp_encoded_tensors(num_frames=num_frames) as tens:
-        yield tens
+    return thwc_to_cthw(data).to(torch.float32)
 
 
 def _check_len_and_values(got: list, expected: list):
-    assert len(got) == len(expected), f"Expected number of labels: {len(got)}, but got: {len(expected)}"
+    assert len(got) == len(expected), f"Expected number of labels: {len(expected)}, but got: {len(got)}"
     assert got == expected
 
 
-def _check_frames(data, expected_frames_count: Union[list, int], expected_shapes: list):
+def _check_frames(data, expected_frames_count: Union[list, int]):
     if not isinstance(expected_frames_count, list):
         expected_frames_count = [expected_frames_count]
 
     # to be replaced
     assert data.size() == len(
         expected_frames_count
-    ), f"Expected: {data.size()} but got {len(expected_frames_count)} samples in the dataset."
+    ), f"Expected: {len(expected_frames_count)} but got {data.size()} samples in the dataset."
     for idx, sample_dict in enumerate(data):
         sample = sample_dict["video"]
         assert (
             sample.shape[1] == expected_frames_count[idx]
-        ), "Expected video sample {idx} to have {expected_frames_count[idx]} frames but got {sample.shape[1]} frames"
-        assert (
-            sample.shape == expected_shapes[idx]
-        ), f"Expected video shape {expected_shapes[idx]}, but got {sample.shape}"
+        ), f"Expected video sample {idx} to have {expected_frames_count[idx]} frames but got {sample.shape[1]} frames"
 
 
-# Same number of frames per video/sample
+mock_tensors_5 = temp_encoded_tensors(5)
+mock_tensors_10 = temp_encoded_tensors(10)
+
+
 @pytest.mark.skipif(not _VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
-def test_load_data_from_tensors_uniform_frames():
-    data = []
-    labels = []
-    expected_shapes = []
-    with mock_video_tensors(num_frames=5) as tens:
-        data.extend([tens, tens])
-        expected_shapes.extend([tens.shape, tens.shape])
-        labels.extend(["label1", "label2"])
-        datamodule = VideoClassificationData.from_tensors(train_data=data, train_targets=labels, batch_size=1)
-
-    _check_len_and_values(got=datamodule.labels, expected=labels)
-    _check_frames(data=datamodule.train_dataset.data, expected_frames_count=[5, 5], expected_shapes=expected_shapes)
-
-
-# Different number of frames per video/sample
-@pytest.mark.skipif(not _VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
-def test_load_data_from_tensors_different_frames():
-    num_frames = [5, 3]
-    labels = ["label1", "label2"]
-
-    data = []
-    expected_shapes = []
-    for num_frame in num_frames:
-        with mock_video_tensors(num_frame) as tens:
-            data.append(tens)
-            expected_shapes.append(tens.shape)
-
-    datamodule = VideoClassificationData.from_tensors(train_data=data, train_targets=labels, batch_size=1)
-
-    _check_len_and_values(got=datamodule.labels, expected=labels)
-    _check_frames(data=datamodule.train_dataset.data, expected_frames_count=[5, 3], expected_shapes=expected_shapes)
-
-
-# Test stacked video frames as input
-@pytest.mark.skipif(not _VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
-def test_load_data_from_tensors_stacked_frames():
-    labels = []
-    expected_shapes = []
-    with mock_video_tensors(num_frames=5) as tens:
-        expected_shapes.extend([tens.shape, tens.shape])
-        labels.extend(["label1", "label2"])
-        datamodule = VideoClassificationData.from_tensors(
-            train_data=torch.stack((tens, tens)),
-            train_targets=labels,
-            batch_size=1,
-            test_data=torch.stack((tens, tens)),
-            test_targets=labels,
-            predict_data=torch.stack((tens, tens)),
-        )
-
-    _check_len_and_values(got=datamodule.labels, expected=labels)
-    for data in [datamodule.train_dataset.data, datamodule.test_dataset.data]:
-        _check_frames(data=data, expected_frames_count=[5, 5], expected_shapes=expected_shapes)
+@pytest.mark.parametrize(
+    "input_data, input_targets, expected_frames_count",
+    [
+        ([mock_tensors_5, mock_tensors_5], ["label1", "label2"], [5, 5]),
+        ([mock_tensors_5, mock_tensors_10], ["label1", "label2"], [5, 10]),
+        (torch.stack((mock_tensors_5, mock_tensors_5)), ["label1", "label2"], [5, 5]),
+        (torch.stack((mock_tensors_5,)), ["label1"], [5]),
+        (mock_tensors_5, ["label1"], [5]),
+    ],
+)
+def test_load_data_from_tensors(input_data, input_targets, expected_frames_count):
+    datamodule = VideoClassificationData.from_tensors(train_data=input_data, train_targets=input_targets, batch_size=1)
+    _check_len_and_values(got=datamodule.labels, expected=input_targets)
+    _check_frames(data=datamodule.train_dataset.data, expected_frames_count=expected_frames_count)
