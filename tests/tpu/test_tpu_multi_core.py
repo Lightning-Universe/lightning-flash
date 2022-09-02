@@ -1,4 +1,3 @@
-
 # Copyright The PyTorch Lightning team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,6 +26,7 @@ from tests.tpu.test_tpu import _assert_state_finished
 # Current state of TPU with Flash (as of v0.8 release)
 # Multi Core:
 # TPU Training, Validation are supported, but prediction is not.
+
 
 @pytest.mark.skipif(not os.getenv("FLASH_RUN_TPU_TESTS", "0") == "1", reason="Should run with TPU test")
 def test_tpu_finetuning():
