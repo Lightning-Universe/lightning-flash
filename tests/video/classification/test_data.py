@@ -67,6 +67,7 @@ def _check_frames(data, expected_frames_count: Union[list, int]):
     [
         ([temp_encoded_tensors(5), temp_encoded_tensors(5)], ["label1", "label2"], [5, 5]),
         ([temp_encoded_tensors(5), temp_encoded_tensors(10)], ["label1", "label2"], [5, 10]),
+        (torch.randint(size=(3, 4, 10, 10), low=0, high=255), ["label1"], [4]),
         (torch.stack((temp_encoded_tensors(5), temp_encoded_tensors(5))), ["label1", "label2"], [5, 5]),
         (torch.stack((temp_encoded_tensors(5),)), ["label1"], [5]),
         (temp_encoded_tensors(5), ["label1"], [5]),
@@ -76,3 +77,17 @@ def test_load_data_from_tensors(input_data, input_targets, expected_frames_count
     datamodule = VideoClassificationData.from_tensors(train_data=input_data, train_targets=input_targets, batch_size=1)
     _check_len_and_values(got=datamodule.labels, expected=input_targets)
     _check_frames(data=datamodule.train_dataset.data, expected_frames_count=expected_frames_count)
+
+
+@pytest.mark.skipif(not _VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
+@pytest.mark.parametrize(
+    "input_data, input_targets",
+    [
+        (torch.tensor(1), ["label1"]),
+        (torch.randint(size=(2, 3), low=0, high=255), ["label"]),
+        (torch.randint(size=(2, 3), low=0, high=255), []),
+    ],
+)
+def test_load_incorrect_data_from_tensors(input_data, input_targets):
+    with pytest.raises(ValueError):
+        VideoClassificationData.from_tensors(train_data=input_data, train_targets=input_targets, batch_size=1)
