@@ -1,3 +1,4 @@
+
 # Copyright The PyTorch Lightning team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,24 +22,17 @@ from torch.utils.data import DataLoader
 import flash
 from tests.core.test_finetuning import DummyDataset, TestTaskWithFinetuning
 from tests.helpers.boring_model import BoringDataModule, BoringModel
+from tests.tpu.test_tpu import _assert_state_finished
 
 # Current state of TPU with Flash (as of v0.8 release)
-# Single Core:
-# TPU Training, Validation, and Prediction are supported.
 # Multi Core:
 # TPU Training, Validation are supported, but prediction is not.
-
-
-# Helper function
-def _assert_state_finished(trainer, fn_name):
-    assert trainer.state.finished and trainer.state.fn == fn_name
-
 
 @pytest.mark.skipif(not os.getenv("FLASH_RUN_TPU_TESTS", "0") == "1", reason="Should run with TPU test")
 def test_tpu_finetuning():
     task = TestTaskWithFinetuning(loss_fn=F.nll_loss)
 
-    trainer = flash.Trainer(max_epochs=1, devices=1, accelerator="tpu")
+    trainer = flash.Trainer(max_epochs=1, devices=8, accelerator="tpu")
     assert isinstance(trainer.accelerator, TPUAccelerator)
 
     ds = DummyDataset()
@@ -47,12 +41,11 @@ def test_tpu_finetuning():
 
 
 @pytest.mark.skipif(not os.getenv("FLASH_RUN_TPU_TESTS", "0") == "1", reason="Should run with TPU test")
-@pytest.mark.parametrize("devices", (1, 8))
 def test_tpu_prediction():
     boring_model = BoringModel()
     boring_dm = BoringDataModule()
 
-    trainer = flash.Trainer(fast_dev_run=True, devices=1, accelerator="tpu")
+    trainer = flash.Trainer(fast_dev_run=True, devices=8, accelerator="tpu")
     assert isinstance(trainer.accelerator, TPUAccelerator)
 
     trainer.fit(model=boring_model, datamodule=boring_dm)
@@ -62,6 +55,6 @@ def test_tpu_prediction():
     trainer.test(model=boring_model, datamodule=boring_dm)
     _assert_state_finished(trainer, "test")
 
-    predictions = trainer.predict(model=boring_model, datamodule=boring_dm)
-    assert predictions is not None and len(predictions) != 0, "Prediction not successful"
-    _assert_state_finished(trainer, "predict")
+    with pytest.raises(NotImplementedError, match="not supported"):
+        trainer.predict(model=boring_model, datamodule=boring_dm)
+    return
