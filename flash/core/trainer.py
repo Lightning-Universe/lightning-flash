@@ -190,7 +190,7 @@ class Trainer(PlTrainer):
         # Note: Prediction on TPU device with multi cores is not supported yet
         if isinstance(self.accelerator, TPUAccelerator) and self.tpu_cores > 1:
             raise NotImplementedError(
-                f"Prediction on TPU device with multi-cores (requested cores: {self.tpu_cores}) is not yet supported."
+                f"Prediction on TPU device with multi-cores (requested cores: {self.tpu_cores}) is not supported yet."
             )
         model = model or self.lightning_module
         output_transform = getattr(model, "_output_transform", None) or OutputTransform()
