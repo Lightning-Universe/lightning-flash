@@ -28,6 +28,7 @@ from tests.tpu.test_tpu import _assert_state_finished
 # Multi Core:
 # TPU Training, Validation are supported, but prediction is not.
 
+
 @pytest.mark.skipif(not os.getenv("FLASH_RUN_TPU_TESTS", "0") == "1", reason="Should run with TPU test")
 def test_tpu_finetuning():
     task = TestTaskWithFinetuning(loss_fn=F.nll_loss)
