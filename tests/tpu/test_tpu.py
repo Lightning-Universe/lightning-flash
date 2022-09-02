@@ -47,7 +47,6 @@ def test_tpu_finetuning():
 
 
 @pytest.mark.skipif(not os.getenv("FLASH_RUN_TPU_TESTS", "0") == "1", reason="Should run with TPU test")
-@pytest.mark.parametrize("devices", (1, 8))
 def test_tpu_prediction():
     boring_model = BoringModel()
     boring_dm = BoringDataModule()
