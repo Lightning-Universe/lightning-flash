@@ -81,13 +81,14 @@ def test_load_data_from_tensors(input_data, input_targets, expected_frames_count
 
 @pytest.mark.skipif(not _VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
 @pytest.mark.parametrize(
-    "input_data, input_targets",
+    "input_data, input_targets, error_type, match",
     [
-        (torch.tensor(1), ["label1"]),
-        (torch.randint(size=(2, 3), low=0, high=255), ["label"]),
-        (torch.randint(size=(2, 3), low=0, high=255), []),
+        (torch.tensor(1), ["label1"], ValueError, "dimension should be"),
+        (torch.randint(size=(2, 3), low=0, high=255), ["label"], ValueError, "dimension should be"),
+        (torch.randint(size=(2, 3), low=0, high=255), [], ValueError, "dimension should be"),
+        (5, [], TypeError, "Expected either a list/tuple"),
     ],
 )
-def test_load_incorrect_data_from_tensors(input_data, input_targets):
-    with pytest.raises(ValueError):
+def test_load_incorrect_data_from_tensors(input_data, input_targets, error_type, match):
+    with pytest.raises(error_type, match=match):
         VideoClassificationData.from_tensors(train_data=input_data, train_targets=input_targets, batch_size=1)
