@@ -154,8 +154,8 @@ class ImageEmbedder(AdapterTask):
     def on_train_epoch_end(self) -> None:
         self.adapter.on_train_epoch_end()
 
-    def on_train_batch_end(self, outputs: Any, batch: Any, batch_idx: int, dataloader_idx: int) -> None:
-        self.adapter.on_train_batch_end(outputs, batch, batch_idx, dataloader_idx)
+    def on_train_batch_end(self, outputs: Any, batch: Any, batch_idx: int, *args) -> None:
+        self.adapter.on_train_batch_end(outputs, batch, batch_idx, *args)
 
     @classmethod
     @requires("image", "vissl", "fairscale")
