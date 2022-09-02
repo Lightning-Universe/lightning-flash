@@ -30,6 +30,7 @@ import torch.nn.functional as F
 # Multi Core:
 # TPU Training, Validation are supported, but prediction is not.
 
+
 # Helper function
 def _assert_state_finished(trainer, fn_name):
     assert trainer.state.finished and trainer.state.fn == fn_name
