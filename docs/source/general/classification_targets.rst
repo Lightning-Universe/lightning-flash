@@ -31,8 +31,7 @@ Here's an example:
 
 .. doctest:: targets
 
-    >>> from flash import Trainer
-    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> from flash.image import ImageClassificationData
     >>> datamodule = ImageClassificationData.from_files(
     ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
     ...     train_targets=[0, 1, 0],
@@ -51,8 +50,7 @@ Here's an example:
 
 .. doctest:: targets
 
-    >>> from flash import Trainer
-    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> from flash.image import ImageClassificationData
     >>> from flash.core.data.utilities.classification import SingleNumericTargetFormatter
     >>> datamodule = ImageClassificationData.from_files(
     ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
@@ -78,8 +76,7 @@ Here's an example:
 
 .. doctest:: targets
 
-    >>> from flash import Trainer
-    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> from flash.image import ImageClassificationData
     >>> datamodule = ImageClassificationData.from_files(
     ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
     ...     train_targets=["cat", "dog", "cat"],
@@ -98,8 +95,7 @@ Here's an example:
 
 .. doctest:: targets
 
-    >>> from flash import Trainer
-    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> from flash.image import ImageClassificationData
     >>> from flash.core.data.utilities.classification import SingleLabelTargetFormatter
     >>> datamodule = ImageClassificationData.from_files(
     ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
@@ -125,8 +121,7 @@ Here's an example:
 
 .. doctest:: targets
 
-    >>> from flash import Trainer
-    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> from flash.image import ImageClassificationData
     >>> datamodule = ImageClassificationData.from_files(
     ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
     ...     train_targets=[[1, 0], [0, 1], [1, 0]],
@@ -145,8 +140,7 @@ Here's an example:
 
 .. doctest:: targets
 
-    >>> from flash import Trainer
-    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> from flash.image import ImageClassificationData
     >>> from flash.core.data.utilities.classification import SingleBinaryTargetFormatter
     >>> datamodule = ImageClassificationData.from_files(
     ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
@@ -177,8 +171,7 @@ Here's an example:
 
 .. doctest:: targets
 
-    >>> from flash import Trainer
-    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> from flash.image import ImageClassificationData
     >>> datamodule = ImageClassificationData.from_files(
     ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
     ...     train_targets=[[0], [0, 1], [1, 2]],
@@ -197,8 +190,7 @@ Here's an example:
 
 .. doctest:: targets
 
-    >>> from flash import Trainer
-    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> from flash.image import ImageClassificationData
     >>> from flash.core.data.utilities.classification import MultiNumericTargetFormatter
     >>> datamodule = ImageClassificationData.from_files(
     ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
@@ -224,8 +216,7 @@ Here's an example:
 
 .. doctest:: targets
 
-    >>> from flash import Trainer
-    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> from flash.image import ImageClassificationData
     >>> datamodule = ImageClassificationData.from_files(
     ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
     ...     train_targets=[["cat"], ["cat", "dog"], ["dog", "rabbit"]],
@@ -244,8 +235,7 @@ Here's an example:
 
 .. doctest:: targets
 
-    >>> from flash import Trainer
-    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> from flash.image import ImageClassificationData
     >>> from flash.core.data.utilities.classification import MultiLabelTargetFormatter
     >>> datamodule = ImageClassificationData.from_files(
     ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
@@ -271,8 +261,7 @@ Here's an example:
 
 .. doctest:: targets
 
-    >>> from flash import Trainer
-    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> from flash.image import ImageClassificationData
     >>> datamodule = ImageClassificationData.from_files(
     ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
     ...     train_targets=["cat", "cat,dog", "dog,rabbit"],
@@ -291,8 +280,7 @@ Here's an example:
 
 .. doctest:: targets
 
-    >>> from flash import Trainer
-    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> from flash.image import ImageClassificationData
     >>> from flash.core.data.utilities.classification import CommaDelimitedMultiLabelTargetFormatter
     >>> datamodule = ImageClassificationData.from_files(
     ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
@@ -318,8 +306,7 @@ Here's an example:
 
 .. doctest:: targets
 
-    >>> from flash import Trainer
-    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> from flash.image import ImageClassificationData
     >>> datamodule = ImageClassificationData.from_files(
     ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
     ...     train_targets=["cat", "cat dog", "dog rabbit"],
@@ -338,8 +325,7 @@ Here's an example:
 
 .. doctest:: targets
 
-    >>> from flash import Trainer
-    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> from flash.image import ImageClassificationData
     >>> from flash.core.data.utilities.classification import SpaceDelimitedTargetFormatter
     >>> datamodule = ImageClassificationData.from_files(
     ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
@@ -365,8 +351,7 @@ Here's an example:
 
 .. doctest:: targets
 
-    >>> from flash import Trainer
-    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> from flash.image import ImageClassificationData
     >>> datamodule = ImageClassificationData.from_files(
     ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
     ...     train_targets=[[1, 0, 0], [1, 1, 0], [0, 1, 1]],
@@ -385,8 +370,7 @@ Here's an example:
 
 .. doctest:: targets
 
-    >>> from flash import Trainer
-    >>> from flash.image import ImageClassifier, ImageClassificationData
+    >>> from flash.image import ImageClassificationData
     >>> from flash.core.data.utilities.classification import MultiBinaryTargetFormatter
     >>> datamodule = ImageClassificationData.from_files(
     ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
@@ -412,7 +396,6 @@ Here's an example:
 
 .. doctest:: targets
 
-    >>> from flash import Trainer
     >>> from flash.image import ImageClassificationData
     >>> datamodule = ImageClassificationData.from_files(
     ...     train_files=["image_1.png", "image_2.png", "image_3.png"],
@@ -432,7 +415,6 @@ Here's an example:
 
 .. doctest:: targets
 
-    >>> from flash import Trainer
     >>> from flash.image import ImageClassificationData
     >>> from flash.core.data.utilities.classification import MultiSoftTargetFormatter
     >>> datamodule = ImageClassificationData.from_files(
