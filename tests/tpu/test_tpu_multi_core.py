@@ -34,8 +34,8 @@ def test_tpu_finetuning():
     trainer = flash.Trainer(max_epochs=1, devices=8, accelerator="tpu")
     assert isinstance(trainer.accelerator, TPUAccelerator)
 
-    ds = DummyDataset()
-    trainer.finetune(model=task, train_dataloader=DataLoader(ds))
+    dataloader = DataLoader(DummyDataset())
+    trainer.finetune(model=task, train_dataloader=dataloader)
     _assert_state_finished(trainer, "fit")
 
 
@@ -44,10 +44,10 @@ def test_tpu_prediction():
     task = TestTaskWithFinetuning(loss_fn=F.nll_loss)
     dataloader = DataLoader(DummyDataset())
 
-    trainer = flash.Trainer(fast_dev_run=True, devices=8, accelerator="tpu")
+    trainer = flash.Trainer(max_epochs=1, devices=8, accelerator="tpu")
     assert isinstance(trainer.accelerator, TPUAccelerator)
 
-    trainer.fit(model=task, train_dataloader=dataloader)
+    trainer.fit(model=task, train_dataloader=dataloader, val_dataloaders=dataloader)
     _assert_state_finished(trainer, "fit")
 
     with pytest.raises(NotImplementedError, match="not supported"):
