@@ -24,6 +24,7 @@ from flash.core.data.utilities.classification import (
     MultiBinaryTargetFormatter,
     MultiLabelTargetFormatter,
     MultiNumericTargetFormatter,
+    MultiSoftTargetFormatter,
     SingleBinaryTargetFormatter,
     SingleLabelTargetFormatter,
     SingleNumericTargetFormatter,
@@ -37,10 +38,18 @@ cases = [
     # Single
     Case([0, 1, 2], [0, 1, 2], SingleNumericTargetFormatter, None, 3),
     Case([[1, 0, 0], [0, 1, 0], [0, 0, 1]], [0, 1, 2], SingleBinaryTargetFormatter, None, 3),
+    Case([[1, 0, 0], [0, 1, 0], [0, 0, 1]], [0, 1, 2], SingleBinaryTargetFormatter, None, 3),
     Case(["blue", "green", "red"], [0, 1, 2], SingleLabelTargetFormatter, ["blue", "green", "red"], 3),
     # Multi
     Case([[0, 1], [1, 2], [2, 0]], [[1, 1, 0], [0, 1, 1], [1, 0, 1]], MultiNumericTargetFormatter, None, 3),
     Case([[1, 1, 0], [0, 1, 1], [1, 0, 1]], [[1, 1, 0], [0, 1, 1], [1, 0, 1]], MultiBinaryTargetFormatter, None, 3),
+    Case(
+        [[0.1, 0.9, 0], [0, 0.7, 0.6], [0.5, 0, 0.4]],
+        [[0.1, 0.9, 0], [0, 0.7, 0.6], [0.5, 0, 0.4]],
+        MultiSoftTargetFormatter,
+        None,
+        3,
+    ),
     Case(
         [["blue", "green"], ["green", "red"], ["red", "blue"]],
         [[1, 1, 0], [0, 1, 1], [1, 0, 1]],
@@ -65,6 +74,20 @@ cases = [
     # Ambiguous
     Case([[0], [0, 1], [1, 2]], [[1, 0, 0], [1, 1, 0], [0, 1, 1]], MultiNumericTargetFormatter, None, 3),
     Case([[1, 0, 0], [0, 1, 1], [1, 0, 1]], [[1, 0, 0], [0, 1, 1], [1, 0, 1]], MultiBinaryTargetFormatter, None, 3),
+    Case(
+        [[1, 0, 0], [0, 0.9, 0.7], [0.6, 0, 0.5]],
+        [[1, 0, 0], [0, 0.9, 0.7], [0.6, 0, 0.5]],
+        MultiSoftTargetFormatter,
+        None,
+        3,
+    ),
+    Case(
+        [[1, 0, 1], [0, 0.9, 0.7], [0.6, 0, 0.5]],
+        [[1, 0, 1], [0, 0.9, 0.7], [0.6, 0, 0.5]],
+        MultiSoftTargetFormatter,
+        None,
+        3,
+    ),
     Case(
         [["blue"], ["green", "red"], ["red", "blue"]],
         [[1, 0, 0], [0, 1, 1], [1, 0, 1]],

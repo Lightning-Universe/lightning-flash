@@ -311,6 +311,27 @@ class MultiBinaryTargetFormatter(TargetFormatter):
         return _as_list(target)
 
 
+@dataclass
+class MultiSoftTargetFormatter(MultiBinaryTargetFormatter):
+    """A ``TargetFormatter`` for mutli-label soft targets.
+
+    Examples
+    ________
+
+    .. doctest::
+
+        >>> import torch
+        >>> from flash.core.data.utilities.classification import MultiSoftTargetFormatter
+        >>> formatter = MultiSoftTargetFormatter(num_classes=3)
+        >>> formatter([0.1, 0.9, 0.6])
+        [0.1, 0.9, 0.6]
+        >>> formatter(torch.tensor([0.9, 0.6, 0.7]))  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+        [0..., 0..., 0...]
+    """
+
+    binary: ClassVar[Optional[bool]] = False
+
+
 def _get_target_formatter_type(target: Any) -> Type[TargetFormatter]:
     """Determine the ``TargetFormatter`` type for a given target.
 
@@ -320,6 +341,7 @@ def _get_target_formatter_type(target: Any) -> Type[TargetFormatter]:
         * List of strings - ``MultiLabelTargetFormatter`` (e.g. [["blue", "green"], ["red"]])
         * List of numbers - ``MultiNumericTargetFormatter`` (e.g. [[0, 1], [2]])
         * Binary list - ``MultiBinaryTargetFormatter`` (e.g. [[1, 1, 0], [0, 0, 1]])
+        * Soft target - ``MultiSoftTargetFormatter`` (e.g. [[0.1, 0, 0], [0.9, 0.7, 0]])
 
     Single-label targets can be:
         * Single string - ``SingleLabelTargetFormatter`` (e.g. ["blue", "green", "red"])
@@ -341,18 +363,21 @@ def _get_target_formatter_type(target: Any) -> Type[TargetFormatter]:
     elif _is_list_like(target):
         if isinstance(target[0], str):
             return MultiLabelTargetFormatter
-        elif len(target) > 1:
+        target = _as_list(target)
+        if len(target) > 1:
             if all(t == 0 or t == 1 for t in target):
                 if sum(target) == 1:
                     return SingleBinaryTargetFormatter
                 return MultiBinaryTargetFormatter
+            elif any(isinstance(t, float) for t in target):
+                return MultiSoftTargetFormatter
             return MultiNumericTargetFormatter
     return SingleNumericTargetFormatter
 
 
 _RESOLUTION_MAPPING: Dict[Type[TargetFormatter], List[Type[TargetFormatter]]] = {
-    MultiBinaryTargetFormatter: [MultiNumericTargetFormatter],
-    SingleBinaryTargetFormatter: [MultiBinaryTargetFormatter, MultiNumericTargetFormatter],
+    MultiBinaryTargetFormatter: [MultiNumericTargetFormatter, MultiSoftTargetFormatter],
+    SingleBinaryTargetFormatter: [MultiBinaryTargetFormatter, MultiNumericTargetFormatter, MultiSoftTargetFormatter],
     SingleLabelTargetFormatter: [CommaDelimitedMultiLabelTargetFormatter, SpaceDelimitedTargetFormatter],
     SingleNumericTargetFormatter: [SingleBinaryTargetFormatter, MultiNumericTargetFormatter],
 }
@@ -411,7 +436,7 @@ def _get_target_details(
             num_classes = num_classes[0]
         num_classes = num_classes + 1
         labels = None
-    elif target_formatter_type.binary:
+    elif target_formatter_type.binary or (target_formatter_type is MultiSoftTargetFormatter):
         # Take a length
         # TODO: Add a check here and error if target lengths are not all equal
         num_classes = len(targets[0])
