@@ -21,7 +21,7 @@ from torch.utils.data import DataLoader
 import flash
 from tests.core.test_finetuning import DummyDataset, TestTaskWithFinetuning
 from tests.helpers.boring_model import BoringDataModule, BoringModel
-from tests.tpu.test_tpu import _assert_state_finished
+from tests.tpu.test_tpu_single_core import _assert_state_finished
 
 # Current state of TPU with Flash (as of v0.8 release)
 # Multi Core:
