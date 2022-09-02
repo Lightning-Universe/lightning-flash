@@ -12,17 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+
 import pytest
+import torch.nn.functional as F
+from pytorch_lightning.accelerators.tpu import TPUAccelerator
+from torch.utils.data import DataLoader
 
 import flash
-from pytorch_lightning.accelerators.tpu import TPUAccelerator
-
-from tests.helpers.boring_model import BoringDataModule, BoringModel
 from tests.core.test_finetuning import DummyDataset, TestTaskWithFinetuning
-
-from torch.utils.data import DataLoader
-import torch.nn.functional as F
-
+from tests.helpers.boring_model import BoringDataModule, BoringModel
 
 # Current state of TPU with Flash (as of v0.8 release)
 # Single Core:
