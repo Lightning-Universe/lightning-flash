@@ -7,11 +7,11 @@ icedata
 effdet
 albumentations
 learn2learn
-structlog==21.1.0   # remove when baal resolved its dependency.
-baal
 fastface
 fairscale
 
 # pin PL for testing, remove when fastface is updated
 pytorch-lightning<1.5.0
 torchmetrics<0.8.0  # pinned PL so we force a compatible TM version
+# effdet had an issue with PL 1.12, and icevision doesn't support effdet's latest version yet (0.3.0)
+torch<1.12

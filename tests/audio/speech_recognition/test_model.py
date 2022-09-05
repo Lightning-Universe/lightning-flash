@@ -17,6 +17,7 @@ from unittest import mock
 import numpy as np
 import pytest
 import torch
+from torch import Tensor
 
 from flash.audio import SpeechRecognition
 from flash.core.data.io.input import DataKeys
@@ -41,7 +42,7 @@ class TestSpeechRecognition(TaskTester):
         return {"input_values": torch.randn(size=torch.Size([1, 86631])).float()}
 
     def check_forward_output(self, output: Any):
-        assert isinstance(output, torch.Tensor)
+        assert isinstance(output, Tensor)
         assert output.shape == torch.Size([1, 95, 12])
 
     @property
@@ -51,6 +52,14 @@ class TestSpeechRecognition(TaskTester):
             DataKeys.TARGET: "some target text",
             DataKeys.METADATA: {"sampling_rate": 16000},
         }
+
+    @property
+    def example_val_sample(self):
+        return self.example_train_sample
+
+    @property
+    def example_test_sample(self):
+        return self.example_train_sample
 
 
 @pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")

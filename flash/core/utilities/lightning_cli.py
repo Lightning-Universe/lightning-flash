@@ -1,5 +1,5 @@
 # Adapted from the Lightning CLI:
-# https://github.com/PyTorchLightning/pytorch-lightning/blob/master/pytorch_lightning/utilities/cli.py
+# https://github.com/Lightning-AI/lightning/blob/master/src/pytorch_lightning/utilities/cli.py
 import inspect
 import os
 import warnings
@@ -97,7 +97,8 @@ class LightningArgumentParser(ArgumentParser):
             lightning_class = class_from_function(lightning_class)
 
         if inspect.isclass(lightning_class) and issubclass(
-            cast(type, lightning_class), (Trainer, LightningModule, LightningDataModule, Callback)
+            cast(type, lightning_class),
+            (Trainer, LightningModule, LightningDataModule, Callback, ClassFromFunctionBase),
         ):
             if issubclass(cast(type, lightning_class), Callback):
                 self.callback_keys.append(nested_key)

@@ -13,7 +13,7 @@
 # limitations under the License.
 import os
 from functools import partial
-from typing import Iterable, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from pytorch_lightning import LightningModule
 from pytorch_lightning.callbacks import BaseFinetuning
@@ -103,6 +103,19 @@ class FlashBaseFinetuning(BaseFinetuning):
                     modules = [modules]
                 self.freeze(modules=modules, train_bn=self.train_bn)
 
+    def unfreeze_and_extend_param_group(
+        self,
+        modules: Union[Module, Iterable[Union[Module, Iterable]]],
+        optimizer: Optimizer,
+        train_bn: bool = True,
+    ) -> None:
+        self.make_trainable(modules)
+
+        params = self.filter_params(modules, train_bn=train_bn, requires_grad=True)
+        params = self.filter_on_optimizer(optimizer, params)
+        if params:
+            optimizer.param_groups[0]["params"].extend(params)
+
     def _freeze_unfreeze_function(
         self,
         pl_module: Union[Module, Iterable[Union[Module, Iterable]]],
@@ -117,7 +130,7 @@ class FlashBaseFinetuning(BaseFinetuning):
 
         modules = self._get_modules_to_freeze(pl_module=pl_module)
         if modules is not None:
-            self.unfreeze_and_add_param_group(
+            self.unfreeze_and_extend_param_group(
                 modules=modules,
                 optimizer=optimizer,
                 train_bn=self.train_bn,
@@ -140,7 +153,7 @@ class FlashBaseFinetuning(BaseFinetuning):
                 # unfreeze num_layers last layers
 
                 backbone_modules = BaseFinetuning.flatten_modules(modules=modules)[-num_layers:]
-                self.unfreeze_and_add_param_group(
+                self.unfreeze_and_extend_param_group(
                     modules=backbone_modules,
                     optimizer=optimizer,
                     train_bn=self.train_bn,
@@ -148,7 +161,7 @@ class FlashBaseFinetuning(BaseFinetuning):
             elif epoch == unfreeze_milestones[1]:
                 # unfreeze remaining layers
                 backbone_modules = BaseFinetuning.flatten_modules(modules=modules)[:-num_layers]
-                self.unfreeze_and_add_param_group(
+                self.unfreeze_and_extend_param_group(
                     modules=backbone_modules,
                     optimizer=optimizer,
                     train_bn=self.train_bn,
@@ -202,3 +215,56 @@ class UnfreezeMilestones(FlashBaseFinetuning):
         train_bn: bool = True,
     ):
         super().__init__(FinetuningStrategies.UNFREEZE_MILESTONES, strategy_metadata, train_bn)
+
+
+class FlashDeepSpeedFinetuning(FlashBaseFinetuning):
+    """FlashDeepSpeedFinetuning can be used to create a custom Flash Finetuning Callback which works with
+    DeepSpeed.
+
+    DeepSpeed cannot store and load its parameters when working with Lightning. So FlashDeepSpeedFinetuning overrides
+    `_store` to not store its parameters.
+    """
+
+    def _store(
+        self,
+        pl_module: LightningModule,
+        opt_idx: int,
+        num_param_groups: int,
+        current_param_groups: List[Dict[str, Any]],
+    ) -> None:
+        pass
+
+
+class NoFreezeDeepSpeed(FlashDeepSpeedFinetuning):
+    def __init__(self, train_bn: bool = True):
+        super().__init__(FinetuningStrategies.NO_FREEZE, train_bn)
+
+
+class FreezeDeepSpeed(FlashDeepSpeedFinetuning):
+    def __init__(self, train_bn: bool = True):
+        super().__init__(FinetuningStrategies.FREEZE, train_bn)
+
+
+class FreezeUnfreezeDeepSpeed(FlashDeepSpeedFinetuning):
+    def __init__(
+        self,
+        strategy_metadata: int,
+        train_bn: bool = True,
+    ):
+        super().__init__(FinetuningStrategies.FREEZE_UNFREEZE, strategy_metadata, train_bn)
+
+
+class UnfreezeMilestonesDeepSpeed(FlashDeepSpeedFinetuning):
+    def __init__(
+        self,
+        strategy_metadata: Tuple[Tuple[int, int], int],
+        train_bn: bool = True,
+    ):
+        super().__init__(FinetuningStrategies.UNFREEZE_MILESTONES, strategy_metadata, train_bn)
+
+
+for strategy in FinetuningStrategies:
+    _FINETUNING_STRATEGIES_REGISTRY(
+        name=f"{strategy.value}_deepspeed",
+        fn=partial(FlashDeepSpeedFinetuning, strategy_key=strategy),
+    )

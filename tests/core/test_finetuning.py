@@ -26,7 +26,9 @@ from torch.nn import Linear, LogSoftmax, Module
 from torch.utils.data import DataLoader
 
 import flash
+from flash.core.finetuning import _FINETUNING_STRATEGIES_REGISTRY
 from flash.core.model import Task
+from flash.core.utilities.imports import _CORE_TESTING, _DEEPSPEED_AVAILABLE
 from tests.helpers.boring_model import BoringModel
 
 
@@ -135,43 +137,92 @@ class CustomStrategyChecking(ModelCheckpoint):
             assert pl_module.model.layer.weight.requires_grad
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize(
-    "strategy",
+    "strategy, plugins",
     [
-        "no_freeze",
-        "freeze",
-        ("freeze_unfreeze", 1),
-        ("unfreeze_milestones", ((5, 10), 5)),
+        ("no_freeze", None),
+        ("freeze", None),
+        (("freeze_unfreeze", 1), None),
+        (("unfreeze_milestones", ((5, 10), 5)), None),
+        pytest.param(
+            "no_freeze_deepspeed",
+            "deepspeed",
+            marks=pytest.mark.skipif(not _DEEPSPEED_AVAILABLE, reason="DeepSpeed not installed"),
+        ),
+        pytest.param(
+            "freeze_deepspeed",
+            "deepspeed",
+            marks=pytest.mark.skipif(not _DEEPSPEED_AVAILABLE, reason="DeepSpeed not installed"),
+        ),
+        pytest.param(
+            ("freeze_unfreeze_deepspeed", 1),
+            "deepspeed",
+            marks=pytest.mark.skipif(not _DEEPSPEED_AVAILABLE, reason="DeepSpeed not installed"),
+        ),
+        pytest.param(
+            ("unfreeze_milestones_deepspeed", ((5, 10), 5)),
+            "deepspeed",
+            marks=pytest.mark.skipif(not _DEEPSPEED_AVAILABLE, reason="DeepSpeed not installed"),
+        ),
     ],
 )
-def test_finetuning_with_none_return_type(strategy):
+def test_finetuning_with_none_return_type(strategy, plugins):
+    gpus = 0 if plugins is None else 1
     task = TestTaskWithoutFinetuning(loss_fn=F.nll_loss)
-    trainer = flash.Trainer(max_epochs=1, limit_train_batches=10)
+    trainer = flash.Trainer(max_epochs=1, limit_train_batches=10, gpus=gpus, plugins=plugins)
     ds = DummyDataset()
     trainer.finetune(task, train_dataloader=DataLoader(ds), strategy=strategy)
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize(
-    ("strategy", "checker_class", "checker_class_data"),
+    ("strategy", "lr_scheduler", "checker_class", "checker_class_data"),
     [
-        ("no_freeze", None, {}),
-        ("freeze", FreezeStrategyChecking, {}),
-        (("freeze_unfreeze", 2), FreezeUnfreezeStrategyChecking, {"check_epoch": 2}),
+        ("no_freeze", None, None, {}),
+        ("freeze", None, FreezeStrategyChecking, {}),
+        (("freeze_unfreeze", 2), None, FreezeUnfreezeStrategyChecking, {"check_epoch": 2}),
         (
             ("unfreeze_milestones", ((1, 3), 1)),
+            None,
+            UnfreezeMilestonesStrategyChecking,
+            {"check_epochs": [1, 3], "num_layers": 1},
+        ),
+        (
+            "no_freeze",
+            ("onecyclelr", {"max_lr": 1e-3, "epochs": 50, "steps_per_epoch": 10}, {"interval": "step"}),
+            None,
+            {},
+        ),
+        (
+            "freeze",
+            ("onecyclelr", {"max_lr": 1e-3, "epochs": 50, "steps_per_epoch": 10}, {"interval": "step"}),
+            FreezeStrategyChecking,
+            {},
+        ),
+        (
+            ("freeze_unfreeze", 2),
+            ("onecyclelr", {"max_lr": 1e-3, "epochs": 50, "steps_per_epoch": 10}, {"interval": "step"}),
+            FreezeUnfreezeStrategyChecking,
+            {"check_epoch": 2},
+        ),
+        (
+            ("unfreeze_milestones", ((1, 3), 1)),
+            ("onecyclelr", {"max_lr": 1e-3, "epochs": 50, "steps_per_epoch": 10}, {"interval": "step"}),
             UnfreezeMilestonesStrategyChecking,
             {"check_epochs": [1, 3], "num_layers": 1},
         ),
     ],
 )
-def test_finetuning(tmpdir, strategy, checker_class, checker_class_data):
-    task = TestTaskWithFinetuning(loss_fn=F.nll_loss)
+def test_finetuning(tmpdir, strategy, lr_scheduler, checker_class, checker_class_data):
+    task = TestTaskWithFinetuning(loss_fn=F.nll_loss, lr_scheduler=lr_scheduler, optimizer="sgd", learning_rate=0.1)
     callbacks = [] if checker_class is None else checker_class(dirpath=tmpdir, **checker_class_data)
     trainer = flash.Trainer(max_epochs=5, limit_train_batches=10, callbacks=callbacks)
     ds = DummyDataset()
     trainer.finetune(task, train_dataloader=DataLoader(ds), strategy=strategy)
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize(
     "strategy",
     [
@@ -194,3 +245,22 @@ def test_finetuning_errors_and_exceptions(strategy):
     ds = DummyDataset()
     with pytest.raises(MisconfigurationException):
         trainer.finetune(task, train_dataloader=DataLoader(ds), strategy=strategy)
+
+
+@pytest.mark.parametrize(
+    "strategy_key, strategy_metadata",
+    [
+        ("no_freeze", None),
+        ("freeze", None),
+        ("freeze_unfreeze", 2),
+        ("unfreeze_milestones", ((5, 10), 15)),
+    ],
+)
+def test_deepspeed_finetuning_strategy_key(strategy_key, strategy_metadata):
+    deepspeed_strategy_key = f"{strategy_key}_deepspeed"
+
+    strategy = _FINETUNING_STRATEGIES_REGISTRY.get(key=strategy_key)(strategy_metadata=strategy_metadata).strategy
+    deepspeed_strategy = _FINETUNING_STRATEGIES_REGISTRY.get(key=deepspeed_strategy_key)(
+        strategy_metadata=strategy_metadata
+    ).strategy
+    assert strategy == deepspeed_strategy

@@ -15,6 +15,7 @@ from typing import Any
 
 import pytest
 import torch
+from torch import Tensor
 
 from flash import RunningStage, Trainer
 from flash.core.data.data_module import DataModule
@@ -49,7 +50,7 @@ class TestGraphClassifier(TaskTester):
         return Batch.from_data_list([Data(x=x, edge_index=edge_index)])
 
     def check_forward_output(self, output: Any):
-        assert isinstance(output, torch.Tensor)
+        assert isinstance(output, Tensor)
         assert output.shape == torch.Size([1, 2])
 
     @property
@@ -58,33 +59,13 @@ class TestGraphClassifier(TaskTester):
         x = torch.tensor([[-1], [0], [1]], dtype=torch.float)
         return {DataKeys.INPUT: Data(x=x, edge_index=edge_index), DataKeys.TARGET: 1}
 
+    @property
+    def example_val_sample(self):
+        return self.example_train_sample
 
-@pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")
-def test_val(tmpdir):
-    """Tests that the model can be validated on a pytorch geometric dataset."""
-    tudataset = datasets.TUDataset(root=tmpdir, name="KKI")
-    model = GraphClassifier(num_features=tudataset.num_features, num_classes=tudataset.num_classes)
-    datamodule = DataModule(
-        val_input=GraphClassificationDatasetInput(RunningStage.VALIDATING, tudataset),
-        transform=GraphClassificationInputTransform,
-        batch_size=4,
-    )
-    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    trainer.validate(model, datamodule=datamodule)
-
-
-@pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")
-def test_test(tmpdir):
-    """Tests that the model can be tested on a pytorch geometric dataset."""
-    tudataset = datasets.TUDataset(root=tmpdir, name="KKI")
-    model = GraphClassifier(num_features=tudataset.num_features, num_classes=tudataset.num_classes)
-    datamodule = DataModule(
-        test_input=GraphClassificationDatasetInput(RunningStage.TESTING, tudataset),
-        transform=GraphClassificationInputTransform,
-        batch_size=4,
-    )
-    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    trainer.test(model, datamodule=datamodule)
+    @property
+    def example_test_sample(self):
+        return self.example_train_sample
 
 
 @pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")

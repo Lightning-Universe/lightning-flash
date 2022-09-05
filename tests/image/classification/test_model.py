@@ -16,6 +16,7 @@ from unittest import mock
 
 import pytest
 import torch
+from torch import Tensor
 
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
@@ -63,6 +64,28 @@ class TestImageClassifier(TaskTester):
                 ],
             )
         ],
+        "test_val": [
+            pytest.mark.parametrize(
+                "task_kwargs",
+                [
+                    {"backbone": "resnet18"},
+                    {"backbone": "vit_small_patch16_224"},
+                    {"backbone": "resnet18", "head": "linear"},
+                    {"backbone": "resnet18", "head": torch.nn.Linear(512, 2)},
+                ],
+            )
+        ],
+        "test_test": [
+            pytest.mark.parametrize(
+                "task_kwargs",
+                [
+                    {"backbone": "resnet18"},
+                    {"backbone": "vit_small_patch16_224"},
+                    {"backbone": "resnet18", "head": "linear"},
+                    {"backbone": "resnet18", "head": torch.nn.Linear(512, 2)},
+                ],
+            )
+        ],
         "test_cli": [pytest.mark.parametrize("extra_args", ([], ["from_movie_posters"]))],
     }
 
@@ -71,12 +94,20 @@ class TestImageClassifier(TaskTester):
         return torch.rand(1, 3, 32, 32)
 
     def check_forward_output(self, output: Any):
-        assert isinstance(output, torch.Tensor)
+        assert isinstance(output, Tensor)
         assert output.shape == torch.Size([1, 2])
 
     @property
     def example_train_sample(self):
         return {DataKeys.INPUT: torch.rand(3, 224, 224), DataKeys.TARGET: 1}
+
+    @property
+    def example_val_sample(self):
+        return self.example_train_sample
+
+    @property
+    def example_test_sample(self):
+        return self.example_train_sample
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")

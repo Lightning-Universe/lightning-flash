@@ -24,11 +24,13 @@ from flash.core.data.utilities.classification import (
     MultiBinaryTargetFormatter,
     MultiLabelTargetFormatter,
     MultiNumericTargetFormatter,
+    MultiSoftTargetFormatter,
     SingleBinaryTargetFormatter,
     SingleLabelTargetFormatter,
     SingleNumericTargetFormatter,
     SpaceDelimitedTargetFormatter,
 )
+from flash.core.utilities.imports import _CORE_TESTING
 
 Case = namedtuple("Case", ["target", "formatted_target", "target_formatter_type", "labels", "num_classes"])
 
@@ -36,10 +38,18 @@ cases = [
     # Single
     Case([0, 1, 2], [0, 1, 2], SingleNumericTargetFormatter, None, 3),
     Case([[1, 0, 0], [0, 1, 0], [0, 0, 1]], [0, 1, 2], SingleBinaryTargetFormatter, None, 3),
+    Case([[1, 0, 0], [0, 1, 0], [0, 0, 1]], [0, 1, 2], SingleBinaryTargetFormatter, None, 3),
     Case(["blue", "green", "red"], [0, 1, 2], SingleLabelTargetFormatter, ["blue", "green", "red"], 3),
     # Multi
     Case([[0, 1], [1, 2], [2, 0]], [[1, 1, 0], [0, 1, 1], [1, 0, 1]], MultiNumericTargetFormatter, None, 3),
     Case([[1, 1, 0], [0, 1, 1], [1, 0, 1]], [[1, 1, 0], [0, 1, 1], [1, 0, 1]], MultiBinaryTargetFormatter, None, 3),
+    Case(
+        [[0.1, 0.9, 0], [0, 0.7, 0.6], [0.5, 0, 0.4]],
+        [[0.1, 0.9, 0], [0, 0.7, 0.6], [0.5, 0, 0.4]],
+        MultiSoftTargetFormatter,
+        None,
+        3,
+    ),
     Case(
         [["blue", "green"], ["green", "red"], ["red", "blue"]],
         [[1, 1, 0], [0, 1, 1], [1, 0, 1]],
@@ -64,6 +74,20 @@ cases = [
     # Ambiguous
     Case([[0], [0, 1], [1, 2]], [[1, 0, 0], [1, 1, 0], [0, 1, 1]], MultiNumericTargetFormatter, None, 3),
     Case([[1, 0, 0], [0, 1, 1], [1, 0, 1]], [[1, 0, 0], [0, 1, 1], [1, 0, 1]], MultiBinaryTargetFormatter, None, 3),
+    Case(
+        [[1, 0, 0], [0, 0.9, 0.7], [0.6, 0, 0.5]],
+        [[1, 0, 0], [0, 0.9, 0.7], [0.6, 0, 0.5]],
+        MultiSoftTargetFormatter,
+        None,
+        3,
+    ),
+    Case(
+        [[1, 0, 1], [0, 0.9, 0.7], [0.6, 0, 0.5]],
+        [[1, 0, 1], [0, 0.9, 0.7], [0.6, 0, 0.5]],
+        MultiSoftTargetFormatter,
+        None,
+        3,
+    ),
     Case(
         [["blue"], ["green", "red"], ["red", "blue"]],
         [[1, 0, 0], [0, 1, 1], [1, 0, 1]],
@@ -115,6 +139,7 @@ cases = [
 ]
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize("case", cases)
 def test_case(case):
     formatter = get_target_formatter(case.target)
@@ -125,6 +150,7 @@ def test_case(case):
     assert [formatter(t) for t in case.target] == case.formatted_target
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize("case", cases)
 def test_speed(case):
     repeats = int(1e5 / len(case.target))  # Approx. a hundred thousand targets
@@ -140,10 +166,10 @@ def test_speed(case):
     formatter = get_target_formatter(targets)
     end = time.perf_counter()
 
-    assert (end - start) / len(targets) < 1e-5  # 0.01ms per target
+    assert (end - start) / len(targets) < 1e-4  # 0.1ms per target
 
     start = time.perf_counter()
     _ = [formatter(t) for t in targets]
     end = time.perf_counter()
 
-    assert (end - start) / len(targets) < 1e-5  # 0.01ms per target
+    assert (end - start) / len(targets) < 1e-4  # 0.1ms per target

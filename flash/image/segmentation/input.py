@@ -17,11 +17,12 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import torch
 
 from flash.core.data.io.input import DataKeys, Input
+from flash.core.data.utilities.loading import IMG_EXTENSIONS, load_image, NP_EXTENSIONS
 from flash.core.data.utilities.paths import filter_valid_files, PATH_TYPE
 from flash.core.data.utilities.samples import to_samples
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _TORCHVISION_AVAILABLE, lazy_import
-from flash.image.data import image_loader, ImageDeserializer, IMG_EXTENSIONS
+from flash.image.data import ImageDeserializer
 from flash.image.segmentation.output import SegmentationLabelsOutput
 
 if _FIFTYONE_AVAILABLE:
@@ -98,18 +99,21 @@ class SemanticSegmentationFilesInput(SemanticSegmentationInput):
     ) -> List[Dict[str, Any]]:
         self.load_labels_map(num_classes, labels_map)
         if mask_files is None:
-            files = filter_valid_files(files, valid_extensions=IMG_EXTENSIONS)
+            files = filter_valid_files(files, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
         else:
-            files, mask_files = filter_valid_files(files, mask_files, valid_extensions=IMG_EXTENSIONS)
+            files, mask_files = filter_valid_files(files, mask_files, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
         return to_samples(files, mask_files)
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         filepath = sample[DataKeys.INPUT]
-        sample[DataKeys.INPUT] = image_loader(filepath)
+        # sample[DataKeys.INPUT] = image_loader(filepath)
+        # if DataKeys.TARGET in sample:
+        #     im_segm = image_loader(sample[DataKeys.TARGET])
+        #     sample[DataKeys.TARGET] = (to_tensor(im_segm) * 255).long()[0]
+        # assert sample[DataKeys.INPUT].size[::-1] == sample[DataKeys.TARGET].size()
+        sample[DataKeys.INPUT] = to_tensor(load_image(filepath))
         if DataKeys.TARGET in sample:
-            im_segm = image_loader(sample[DataKeys.TARGET])
-            sample[DataKeys.TARGET] = (to_tensor(im_segm) * 255).long()[0]
-        assert sample[DataKeys.INPUT].size[::-1] == sample[DataKeys.TARGET].size()
+            sample[DataKeys.TARGET] = (to_tensor(load_image(sample[DataKeys.TARGET])) * 255).long()[0]
         sample = super().load_sample(sample)
         sample[DataKeys.METADATA]["filepath"] = filepath
         return sample

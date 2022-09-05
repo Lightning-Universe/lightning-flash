@@ -21,12 +21,13 @@ import torch
 
 from flash.core.utilities.imports import (
     _AUDIO_TESTING,
+    _CORE_TESTING,
     _GRAPH_TESTING,
     _ICEVISION_AVAILABLE,
     _IMAGE_AVAILABLE,
+    _IMAGE_EXTRAS_TESTING,
     _IMAGE_TESTING,
     _POINTCLOUD_TESTING,
-    _SKLEARN_AVAILABLE,
     _TABULAR_TESTING,
     _TEXT_TESTING,
     _VIDEO_TESTING,
@@ -70,19 +71,19 @@ root = Path(__file__).parent.parent.parent
         pytest.param(
             "object_detection.py",
             marks=pytest.mark.skipif(
-                not (_IMAGE_AVAILABLE and _ICEVISION_AVAILABLE), reason="image libraries aren't installed"
+                not (_IMAGE_EXTRAS_TESTING and _ICEVISION_AVAILABLE), reason="image libraries aren't installed"
             ),
         ),
         pytest.param(
             "instance_segmentation.py",
             marks=pytest.mark.skipif(
-                not (_IMAGE_AVAILABLE and _ICEVISION_AVAILABLE), reason="image libraries aren't installed"
+                not (_IMAGE_EXTRAS_TESTING and _ICEVISION_AVAILABLE), reason="image libraries aren't installed"
             ),
         ),
         pytest.param(
             "keypoint_detection.py",
             marks=pytest.mark.skipif(
-                not (_IMAGE_AVAILABLE and _ICEVISION_AVAILABLE), reason="image libraries aren't installed"
+                not (_IMAGE_EXTRAS_TESTING and _ICEVISION_AVAILABLE), reason="image libraries aren't installed"
             ),
         ),
         pytest.param(
@@ -118,7 +119,7 @@ root = Path(__file__).parent.parent.parent
         pytest.param(
             "template.py",
             marks=[
-                pytest.mark.skipif(not _SKLEARN_AVAILABLE, reason="sklearn isn't installed"),
+                pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core."),
                 pytest.mark.skipif(sys.version_info >= (3, 9), reason="Undiagnosed segmentation fault in 3.9"),
             ],
         ),

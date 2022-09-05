@@ -17,6 +17,7 @@ from unittest import mock
 import numpy as np
 import pytest
 import torch
+from torch import Tensor
 
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
@@ -40,7 +41,7 @@ class TestSemanticSegmentation(TaskTester):
         return torch.rand(1, 3, 32, 32)
 
     def check_forward_output(self, output: Any):
-        assert isinstance(output, torch.Tensor)
+        assert isinstance(output, Tensor)
         assert output.shape == torch.Size([1, 2, 32, 32])
 
     @property
@@ -49,6 +50,14 @@ class TestSemanticSegmentation(TaskTester):
             DataKeys.INPUT: torch.rand(3, 224, 224),
             DataKeys.TARGET: torch.randint(2, (224, 224)),
         }
+
+    @property
+    def example_val_sample(self):
+        return self.example_train_sample
+
+    @property
+    def example_test_sample(self):
+        return self.example_train_sample
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")

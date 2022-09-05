@@ -17,8 +17,9 @@ import operator
 import os
 import types
 from importlib.util import find_spec
-from typing import List, Tuple, Union
+from typing import Callable, List, Tuple, Union
 
+import pkg_resources
 from pkg_resources import DistributionNotFound
 
 try:
@@ -48,21 +49,29 @@ def _module_available(module_path: str) -> bool:
         return True
 
 
-def _compare_version(package: str, op, version) -> bool:
+def _compare_version(package: str, op: Callable, version: str, use_base_version: bool = False) -> bool:
     """Compare package version with some requirements.
 
     >>> _compare_version("torch", operator.ge, "0.1")
     True
+    >>> _compare_version("does_not_exist", operator.ge, "0.0")
+    False
     """
     try:
         pkg = importlib.import_module(package)
-    except (ModuleNotFoundError, DistributionNotFound, ValueError):
+    except (ImportError, DistributionNotFound):
         return False
     try:
-        pkg_version = Version(pkg.__version__)
+        if hasattr(pkg, "__version__"):
+            pkg_version = Version(pkg.__version__)
+        else:
+            # try pkg_resources to infer version
+            pkg_version = Version(pkg_resources.get_distribution(package).version)
     except TypeError:
-        # this is mock by sphinx, so it shall return True to generate all summaries
+        # this is mocked by Sphinx, so it should return True to generate all summaries
         return True
+    if use_base_version:
+        pkg_version = Version(pkg_version.base_version)
     return op(pkg_version, Version(version))
 
 
@@ -109,6 +118,7 @@ _ALBUMENTATIONS_AVAILABLE = _module_available("albumentations")
 _BAAL_AVAILABLE = _module_available("baal")
 _TORCH_OPTIMIZER_AVAILABLE = _module_available("torch_optimizer")
 _SENTENCE_TRANSFORMERS_AVAILABLE = _module_available("sentence_transformers")
+_DEEPSPEED_AVAILABLE = _module_available("deepspeed")
 
 
 if _PIL_AVAILABLE:
@@ -128,6 +138,7 @@ if Version:
     _PANDAS_GREATER_EQUAL_1_3_0 = _compare_version("pandas", operator.ge, "1.3.0")
     _ICEVISION_GREATER_EQUAL_0_11_0 = _compare_version("icevision", operator.ge, "0.11.0")
     _TM_GREATER_EQUAL_0_7_0 = _compare_version("torchmetrics", operator.ge, "0.7.0")
+    _BAAL_GREATER_EQUAL_1_5_2 = _compare_version("baal", operator.ge, "1.5.2")
 
 _TEXT_AVAILABLE = all(
     [
@@ -152,7 +163,7 @@ _IMAGE_AVAILABLE = all(
 )
 _SERVE_AVAILABLE = _FASTAPI_AVAILABLE and _PYDANTIC_AVAILABLE and _CYTOOLZ_AVAILABLE and _UVICORN_AVAILABLE
 _POINTCLOUD_AVAILABLE = _OPEN3D_AVAILABLE and _TORCHVISION_AVAILABLE
-_AUDIO_AVAILABLE = all([_TORCHAUDIO_AVAILABLE, _LIBROSA_AVAILABLE, _TRANSFORMERS_AVAILABLE])
+_AUDIO_AVAILABLE = all([_TORCHAUDIO_AVAILABLE, _TORCHVISION_AVAILABLE, _LIBROSA_AVAILABLE, _TRANSFORMERS_AVAILABLE])
 _GRAPH_AVAILABLE = (
     _TORCH_SCATTER_AVAILABLE and _TORCH_SPARSE_AVAILABLE and _TORCH_GEOMETRIC_AVAILABLE and _NETWORKX_AVAILABLE
 )
@@ -169,11 +180,7 @@ _EXTRAS_AVAILABLE = {
 }
 
 
-def requires(module_paths: Union[str, Tuple[bool, str], List[Union[str, Tuple[bool, str]]]]):
-
-    if not isinstance(module_paths, list):
-        module_paths = [module_paths]
-
+def requires(*module_paths: Union[str, Tuple[bool, str]]):
     def decorator(func):
         available = True
         extras = []
@@ -279,10 +286,11 @@ class LazyModule(types.ModuleType):
 
 
 # Global variables used for testing purposes (e.g. to only run doctests in the correct CI job)
+_CORE_TESTING = True
 _IMAGE_TESTING = _IMAGE_AVAILABLE
-_IMAGE_EXTRAS_TESTING = False  # Not for normal use
+_IMAGE_EXTRAS_TESTING = True  # Not for normal use
 _VIDEO_TESTING = _VIDEO_AVAILABLE
-_VIDEO_EXTRAS_TESTING = False  # Not for normal use
+_VIDEO_EXTRAS_TESTING = True  # Not for normal use
 _TABULAR_TESTING = _TABULAR_AVAILABLE
 _TEXT_TESTING = _TEXT_AVAILABLE
 _SERVE_TESTING = _SERVE_AVAILABLE
@@ -292,6 +300,7 @@ _AUDIO_TESTING = _AUDIO_AVAILABLE
 
 if "FLASH_TEST_TOPIC" in os.environ:
     topic = os.environ["FLASH_TEST_TOPIC"]
+    _CORE_TESTING = topic == "core"
     _IMAGE_TESTING = topic == "image"
     _IMAGE_EXTRAS_TESTING = topic == "image,image_extras" or topic == "icevision" or topic == "vissl"
     _VIDEO_TESTING = topic == "video"

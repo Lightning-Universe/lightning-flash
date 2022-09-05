@@ -26,6 +26,11 @@ if _ICEVISION_AVAILABLE:
     from icevision import models as icevision_models
     from icevision.metrics import COCOMetricType
     from icevision.metrics import Metric as IceVisionMetric
+else:
+
+    class COCOMetricType:
+        mask = None
+
 
 INSTANCE_SEGMENTATION_HEADS = FlashRegistry("heads")
 
@@ -39,7 +44,7 @@ class IceVisionInstanceSegmentationAdapter(IceVisionAdapter):
         backbone: str = "resnet18_fpn",
         head: str = "mask_rcnn",
         pretrained: bool = True,
-        metrics: Optional["IceVisionMetric"] = None,
+        metrics: Optional["IceVisionMetric"] = SimpleCOCOMetric(COCOMetricType.mask),
         image_size: Optional = None,
         **kwargs,
     ) -> Adapter:
@@ -49,7 +54,7 @@ class IceVisionInstanceSegmentationAdapter(IceVisionAdapter):
             backbone=backbone,
             head=head,
             pretrained=pretrained,
-            metrics=metrics or [SimpleCOCOMetric(COCOMetricType.mask)],
+            metrics=metrics,
             image_size=image_size,
             **kwargs,
         )

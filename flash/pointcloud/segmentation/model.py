@@ -14,7 +14,7 @@
 from typing import Any, Dict, Iterable, Optional, Tuple, Union
 
 import torch
-from torch import nn
+from torch import nn, Tensor
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, Sampler
 
@@ -67,7 +67,7 @@ class PointCloudSegmentation(ClassificationTask):
     def __init__(
         self,
         num_classes: int,
-        backbone: Union[str, Tuple[nn.Module, int]] = "RandLANet",
+        backbone: Union[str, Tuple[nn.Module, int]] = "randlanet",
         backbone_kwargs: Optional[Dict] = None,
         head: Optional[nn.Module] = None,
         loss_fn: LOSS_FN_TYPE = torch.nn.functional.cross_entropy,
@@ -112,10 +112,10 @@ class PointCloudSegmentation(ClassificationTask):
         scores, labels = filter_valid_label(scores, labels, self.hparams.num_classes, [0], self.device)
         return labels, scores
 
-    def to_metrics_format(self, x: torch.Tensor) -> torch.Tensor:
+    def to_metrics_format(self, x: Tensor) -> Tensor:
         return F.softmax(self.to_loss_format(x), dim=-1)
 
-    def to_loss_format(self, x: torch.Tensor) -> torch.Tensor:
+    def to_loss_format(self, x: Tensor) -> Tensor:
         return x.reshape(-1, x.shape[-1])
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
@@ -137,7 +137,7 @@ class PointCloudSegmentation(ClassificationTask):
         batch[DataKeys.INPUT] = batch[DataKeys.INPUT]["xyz"][0]
         return batch
 
-    def forward(self, x) -> torch.Tensor:
+    def forward(self, x) -> Tensor:
         """First call the backbone, then the model head."""
         # hack to enable backbone to work properly.
         self.backbone.device = self.device

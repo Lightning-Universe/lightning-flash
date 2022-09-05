@@ -37,7 +37,7 @@ class FlashOutputs(BaseType):
 
     def serialize(self, outputs) -> Any:  # pragma: no cover
         results = []
-        if isinstance(outputs, (list, torch.Tensor)):
+        if isinstance(outputs, (list, Tensor)):
             for output in outputs:
                 result = self._output(output)
                 if isinstance(result, Mapping):

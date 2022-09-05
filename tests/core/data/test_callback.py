@@ -13,6 +13,7 @@
 # limitations under the License.
 from unittest import mock
 
+import pytest
 import torch
 
 from flash import DataKeys
@@ -20,9 +21,11 @@ from flash.core.data.data_module import DataModule, DatasetInput
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.model import Task
 from flash.core.trainer import Trainer
+from flash.core.utilities.imports import _CORE_TESTING
 from flash.core.utilities.stages import RunningStage
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @mock.patch("pickle.dumps")  # need to mock pickle or we get pickle error
 @mock.patch("torch.save")  # need to mock torch.save, or we get pickle error
 def test_flash_callback(_, __, tmpdir):

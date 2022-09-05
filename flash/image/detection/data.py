@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from functools import partial
-from typing import Any, Callable, Dict, List, Optional, Sequence, Type, Union
+from typing import Any, Callable, Collection, Dict, List, Optional, Sequence, Type, Union
+
+import numpy as np
+import torch
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input
@@ -20,10 +23,22 @@ from flash.core.data.utilities.classification import TargetFormatter
 from flash.core.data.utilities.sort import sorted_alphanumeric
 from flash.core.integrations.icevision.data import IceVisionInput
 from flash.core.integrations.icevision.transforms import IceVisionInputTransform
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _ICEVISION_AVAILABLE, _IMAGE_EXTRAS_TESTING, requires
+from flash.core.utilities.imports import (
+    _FIFTYONE_AVAILABLE,
+    _ICEVISION_AVAILABLE,
+    _IMAGE_EXTRAS_TESTING,
+    Image,
+    requires,
+)
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
-from flash.image.detection.input import ObjectDetectionFiftyOneInput, ObjectDetectionFilesInput
+from flash.image.detection.input import (
+    ObjectDetectionFiftyOneInput,
+    ObjectDetectionFilesInput,
+    ObjectDetectionImageInput,
+    ObjectDetectionNumpyInput,
+    ObjectDetectionTensorInput,
+)
 
 if _FIFTYONE_AVAILABLE:
     SampleCollection = "fiftyone.core.collections.SampleCollection"
@@ -178,6 +193,365 @@ class ObjectDetectionData(DataModule):
                 **ds_kw,
             ),
             input_cls(RunningStage.PREDICTING, predict_files, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_numpy(
+        cls,
+        train_data: Optional[Collection[np.ndarray]] = None,
+        train_targets: Optional[Sequence[Sequence[Any]]] = None,
+        train_bboxes: Optional[Sequence[Sequence[Dict[str, int]]]] = None,
+        val_data: Optional[Collection[np.ndarray]] = None,
+        val_targets: Optional[Sequence[Sequence[Any]]] = None,
+        val_bboxes: Optional[Sequence[Sequence[Dict[str, int]]]] = None,
+        test_data: Optional[Collection[np.ndarray]] = None,
+        test_targets: Optional[Sequence[Sequence[Any]]] = None,
+        test_bboxes: Optional[Sequence[Sequence[Dict[str, int]]]] = None,
+        predict_data: Optional[Collection[np.ndarray]] = None,
+        target_formatter: Optional[TargetFormatter] = None,
+        input_cls: Type[Input] = ObjectDetectionNumpyInput,
+        transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        transform_kwargs: Optional[Dict] = None,
+        **data_module_kwargs: Any,
+    ) -> "ObjectDetectionData":
+        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given from numpy
+        arrays (or lists of arrays) and corresponding lists of bounding boxes and targets.
+
+        The targets can be in any of our
+        :ref:`supported classification target formats <formatting_classification_targets>`.
+        The bounding boxes are expected to be dictionaries with integer values (representing pixels) and the following
+        keys: ``xmin``, ``ymin``, ``width``, ``height``.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
+        Args:
+            train_data: The numpy array or list of arrays to use when training.
+            train_targets: The list of lists of targets to use when training.
+            train_bboxes: The list of lists of bounding boxes to use when training.
+            val_data: The numpy array or list of arrays to use when validating.
+            val_targets: The list of lists of targets to use when validating.
+            val_bboxes: The list of lists of bounding boxes to use when validating.
+            test_data: The numpy array or list of arrays to use when testing.
+            test_targets: The list of lists of targets to use when testing.
+            test_bboxes: The list of lists of bounding boxes to use when testing.
+            predict_data: The numpy array or list of arrays to use when predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+                :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.image.detection.data.ObjectDetectionData`.
+
+        Examples
+        ________
+
+        .. doctest::
+
+            >>> import numpy as np
+            >>> from flash import Trainer
+            >>> from flash.image import ObjectDetector, ObjectDetectionData
+            >>> datamodule = ObjectDetectionData.from_numpy(
+            ...     train_data=[np.random.rand(3, 64, 64), np.random.rand(3, 64, 64), np.random.rand(3, 64, 64)],
+            ...     train_targets=[["cat"], ["dog"], ["cat"]],
+            ...     train_bboxes=[
+            ...         [{"xmin": 10, "ymin": 20, "width": 5, "height": 10}],
+            ...         [{"xmin": 20, "ymin": 30, "width": 10, "height": 10}],
+            ...         [{"xmin": 10, "ymin": 20, "width": 5, "height": 25}],
+            ...     ],
+            ...     predict_data=[np.random.rand(3, 64, 64)],
+            ...     transform_kwargs=dict(image_size=(128, 128)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            3
+            >>> datamodule.labels
+            ['background', 'cat', 'dog']
+            >>> model = ObjectDetector(labels=datamodule.labels)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+        """
+
+        ds_kw = dict(
+            target_formatter=target_formatter,
+        )
+
+        train_input = input_cls(
+            RunningStage.TRAINING,
+            train_data,
+            train_targets,
+            train_bboxes,
+            **ds_kw,
+        )
+        ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
+
+        return cls(
+            train_input,
+            input_cls(
+                RunningStage.VALIDATING,
+                val_data,
+                val_targets,
+                val_bboxes,
+                **ds_kw,
+            ),
+            input_cls(
+                RunningStage.TESTING,
+                test_data,
+                test_targets,
+                test_bboxes,
+                **ds_kw,
+            ),
+            input_cls(RunningStage.PREDICTING, predict_data, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_images(
+        cls,
+        train_images: Optional[List[Image.Image]] = None,
+        train_targets: Optional[Sequence[Sequence[Any]]] = None,
+        train_bboxes: Optional[Sequence[Sequence[Dict[str, int]]]] = None,
+        val_images: Optional[List[Image.Image]] = None,
+        val_targets: Optional[Sequence[Sequence[Any]]] = None,
+        val_bboxes: Optional[Sequence[Sequence[Dict[str, int]]]] = None,
+        test_images: Optional[List[Image.Image]] = None,
+        test_targets: Optional[Sequence[Sequence[Any]]] = None,
+        test_bboxes: Optional[Sequence[Sequence[Dict[str, int]]]] = None,
+        predict_images: Optional[List[Image.Image]] = None,
+        target_formatter: Optional[TargetFormatter] = None,
+        input_cls: Type[Input] = ObjectDetectionImageInput,
+        transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        transform_kwargs: Optional[Dict] = None,
+        **data_module_kwargs: Any,
+    ) -> "ObjectDetectionData":
+        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given lists of PIL
+        images and corresponding lists of bounding boxes and targets.
+
+        The targets can be in any of our
+        :ref:`supported classification target formats <formatting_classification_targets>`.
+        The bounding boxes are expected to be dictionaries with integer values (representing pixels) and the following
+        keys: ``xmin``, ``ymin``, ``width``, ``height``.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
+        Args:
+            train_images: The list of PIL images to use when training.
+            train_targets: The list of lists of targets to use when training.
+            train_bboxes: The list of lists of bounding boxes to use when training.
+            val_images: The list of PIL images to use when validating.
+            val_targets: The list of lists of targets to use when validating.
+            val_bboxes: The list of lists of bounding boxes to use when validating.
+            test_images: The list of PIL images to use when testing.
+            test_targets: The list of lists of targets to use when testing.
+            test_bboxes: The list of lists of bounding boxes to use when testing.
+            predict_images: The list of PIL images to use when predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+                :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.image.detection.data.ObjectDetectionData`.
+
+        Examples
+        ________
+
+        .. doctest::
+
+            >>> from PIL import Image
+            >>> import numpy as np
+            >>> from flash import Trainer
+            >>> from flash.image import ObjectDetector, ObjectDetectionData
+            >>> datamodule = ObjectDetectionData.from_images(
+            ...     train_images=[
+            ...         Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8")),
+            ...         Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8")),
+            ...         Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8")),
+            ...     ],
+            ...     train_targets=[["cat"], ["dog"], ["cat"]],
+            ...     train_bboxes=[
+            ...         [{"xmin": 10, "ymin": 20, "width": 5, "height": 10}],
+            ...         [{"xmin": 20, "ymin": 30, "width": 10, "height": 10}],
+            ...         [{"xmin": 10, "ymin": 20, "width": 5, "height": 25}],
+            ...     ],
+            ...     predict_images=[Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))],
+            ...     transform_kwargs=dict(image_size=(128, 128)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            3
+            >>> datamodule.labels
+            ['background', 'cat', 'dog']
+            >>> model = ObjectDetector(labels=datamodule.labels)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+        """
+
+        ds_kw = dict(
+            target_formatter=target_formatter,
+        )
+
+        train_input = input_cls(
+            RunningStage.TRAINING,
+            train_images,
+            train_targets,
+            train_bboxes,
+            **ds_kw,
+        )
+        ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
+
+        return cls(
+            train_input,
+            input_cls(
+                RunningStage.VALIDATING,
+                val_images,
+                val_targets,
+                val_bboxes,
+                **ds_kw,
+            ),
+            input_cls(
+                RunningStage.TESTING,
+                test_images,
+                test_targets,
+                test_bboxes,
+                **ds_kw,
+            ),
+            input_cls(RunningStage.PREDICTING, predict_images, **ds_kw),
+            transform=transform,
+            transform_kwargs=transform_kwargs,
+            **data_module_kwargs,
+        )
+
+    @classmethod
+    def from_tensors(
+        cls,
+        train_data: Optional[Collection[torch.Tensor]] = None,
+        train_targets: Optional[Sequence[Sequence[Any]]] = None,
+        train_bboxes: Optional[Sequence[Sequence[Dict[str, int]]]] = None,
+        val_data: Optional[Collection[torch.Tensor]] = None,
+        val_targets: Optional[Sequence[Sequence[Any]]] = None,
+        val_bboxes: Optional[Sequence[Sequence[Dict[str, int]]]] = None,
+        test_data: Optional[Collection[torch.Tensor]] = None,
+        test_targets: Optional[Sequence[Sequence[Any]]] = None,
+        test_bboxes: Optional[Sequence[Sequence[Dict[str, int]]]] = None,
+        predict_data: Optional[Collection[torch.Tensor]] = None,
+        target_formatter: Optional[TargetFormatter] = None,
+        input_cls: Type[Input] = ObjectDetectionTensorInput,
+        transform: INPUT_TRANSFORM_TYPE = IceVisionInputTransform,
+        transform_kwargs: Optional[Dict] = None,
+        **data_module_kwargs: Any,
+    ) -> "ObjectDetectionData":
+        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given from torch
+        tensors (or lists of tensors) and corresponding lists of bounding boxes and targets.
+
+        The targets can be in any of our
+        :ref:`supported classification target formats <formatting_classification_targets>`.
+        The bounding boxes are expected to be dictionaries with integer values (representing pixels) and the following
+        keys: ``xmin``, ``ymin``, ``width``, ``height``.
+        To learn how to customize the transforms applied for each stage, read our
+        :ref:`customizing transforms guide <customizing_transforms>`.
+
+        Args:
+            train_data: The torch tensor or list of tensors to use when training.
+            train_targets: The list of lists of targets to use when training.
+            train_bboxes: The list of lists of bounding boxes to use when training.
+            val_data: The torch tensor or list of tensors to use when validating.
+            val_targets: The list of lists of targets to use when validating.
+            val_bboxes: The list of lists of bounding boxes to use when validating.
+            test_data: The torch tensor or list of tensors to use when testing.
+            test_targets: The list of lists of targets to use when testing.
+            test_bboxes: The list of lists of bounding boxes to use when testing.
+            predict_data: The torch tensor or list of tensors to use when predicting.
+            target_formatter: Optionally provide a :class:`~flash.core.data.utilities.classification.TargetFormatter` to
+                control how targets are handled. See :ref:`formatting_classification_targets` for more details.
+            input_cls: The :class:`~flash.core.data.io.input.Input` type to use for loading the data.
+            transform: The :class:`~flash.core.data.io.input_transform.InputTransform` type to use.
+            transform_kwargs: Dict of keyword arguments to be provided when instantiating the transforms.
+            data_module_kwargs: Additional keyword arguments to provide to the
+                :class:`~flash.core.data.data_module.DataModule` constructor.
+
+        Returns:
+            The constructed :class:`~flash.image.detection.data.ObjectDetectionData`.
+
+        Examples
+        ________
+
+        .. doctest::
+
+            >>> import torch
+            >>> from flash import Trainer
+            >>> from flash.image import ObjectDetector, ObjectDetectionData
+            >>> datamodule = ObjectDetectionData.from_tensors(
+            ...     train_data=[torch.rand(3, 64, 64), torch.rand(3, 64, 64), torch.rand(3, 64, 64)],
+            ...     train_targets=[["cat"], ["dog"], ["cat"]],
+            ...     train_bboxes=[
+            ...         [{"xmin": 10, "ymin": 20, "width": 5, "height": 10}],
+            ...         [{"xmin": 20, "ymin": 30, "width": 10, "height": 10}],
+            ...         [{"xmin": 10, "ymin": 20, "width": 5, "height": 25}],
+            ...     ],
+            ...     predict_data=[torch.rand(3, 64, 64)],
+            ...     transform_kwargs=dict(image_size=(128, 128)),
+            ...     batch_size=2,
+            ... )
+            >>> datamodule.num_classes
+            3
+            >>> datamodule.labels
+            ['background', 'cat', 'dog']
+            >>> model = ObjectDetector(labels=datamodule.labels)
+            >>> trainer = Trainer(fast_dev_run=True)
+            >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Training...
+            >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            Predicting...
+        """
+
+        ds_kw = dict(
+            target_formatter=target_formatter,
+        )
+
+        train_input = input_cls(
+            RunningStage.TRAINING,
+            train_data,
+            train_targets,
+            train_bboxes,
+            **ds_kw,
+        )
+        ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
+
+        return cls(
+            train_input,
+            input_cls(
+                RunningStage.VALIDATING,
+                val_data,
+                val_targets,
+                val_bboxes,
+                **ds_kw,
+            ),
+            input_cls(
+                RunningStage.TESTING,
+                test_data,
+                test_targets,
+                test_bboxes,
+                **ds_kw,
+            ),
+            input_cls(RunningStage.PREDICTING, predict_data, **ds_kw),
             transform=transform,
             transform_kwargs=transform_kwargs,
             **data_module_kwargs,

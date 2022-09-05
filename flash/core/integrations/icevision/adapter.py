@@ -15,7 +15,7 @@ import functools
 from importlib import import_module
 from typing import Any, Dict, Optional
 
-import torch
+from torch import Tensor
 from torch.utils.data import DataLoader, Sampler
 
 import flash
@@ -37,10 +37,19 @@ if _ICEVISION_AVAILABLE:
     from icevision.metrics import COCOMetric
     from icevision.metrics import Metric as IceVisionMetric
 else:
-    COCOMetric = object
+
+    class COCOMetric:
+        def __init__(self, metric_type):
+            self.metric_type = metric_type
 
 
 class SimpleCOCOMetric(COCOMetric):
+    def accumulate(self, preds):
+        for pred in preds:
+            if getattr(pred.ground_truth, "filepath", None) is None:
+                pred.ground_truth.filepath = "mock.png"
+        return super().accumulate(preds)
+
     def finalize(self) -> Dict[str, float]:
         logs = super().finalize()
         return {
@@ -87,6 +96,9 @@ class IceVisionAdapter(Adapter):
             image_size=image_size,
             **kwargs,
         )
+
+        if metrics is not None and not isinstance(metrics, list):
+            metrics = [metrics]
         icevision_adapter = icevision_adapter(model=model, metrics=metrics)
         return cls(model_type, model, icevision_adapter, backbone, predict_kwargs)
 
@@ -97,6 +109,16 @@ class IceVisionAdapter(Adapter):
             DataKeys.INPUT: collate_fn([to_icevision_record(sample) for sample in samples]),
             DataKeys.METADATA: metadata,
         }
+
+    def _update_collate_fn_dataloader(self, new_collate_fn, data_loader):
+        # Starting PL 1.7.0 - changing attributes after the DataLoader is initialized - will not work
+        # So we manually update the collate_fn for the dataloader, for now.
+        new_kwargs = getattr(data_loader, "__pl_saved_kwargs", None)
+        if new_kwargs:
+            new_kwargs["collate_fn"] = new_collate_fn
+            setattr(data_loader, "__pl_saved_kwargs", new_kwargs)
+        data_loader.collate_fn = new_collate_fn
+        return data_loader
 
     def process_train_dataset(
         self,
@@ -122,12 +144,16 @@ class IceVisionAdapter(Adapter):
             persistent_workers=persistent_workers,
         )
 
-        data_loader.collate_fn = functools.partial(self._wrap_collate_fn, data_loader.collate_fn)
+        data_loader = self._update_collate_fn_dataloader(
+            functools.partial(self._wrap_collate_fn, data_loader.collate_fn), data_loader
+        )
 
         input_transform = input_transform or self.input_transform
         if input_transform is not None:
             input_transform.inject_collate_fn(data_loader.collate_fn)
-            data_loader.collate_fn = create_worker_input_transform_processor(RunningStage.TRAINING, input_transform)
+            data_loader = self._update_collate_fn_dataloader(
+                create_worker_input_transform_processor(RunningStage.TRAINING, input_transform), data_loader
+            )
         return data_loader
 
     def process_val_dataset(
@@ -154,12 +180,16 @@ class IceVisionAdapter(Adapter):
             persistent_workers=persistent_workers,
         )
 
-        data_loader.collate_fn = functools.partial(self._wrap_collate_fn, data_loader.collate_fn)
+        data_loader = self._update_collate_fn_dataloader(
+            functools.partial(self._wrap_collate_fn, data_loader.collate_fn), data_loader
+        )
 
         input_transform = input_transform or self.input_transform
         if input_transform is not None:
             input_transform.inject_collate_fn(data_loader.collate_fn)
-            data_loader.collate_fn = create_worker_input_transform_processor(RunningStage.VALIDATING, input_transform)
+            data_loader = self._update_collate_fn_dataloader(
+                create_worker_input_transform_processor(RunningStage.VALIDATING, input_transform), data_loader
+            )
         return data_loader
 
     def process_test_dataset(
@@ -186,12 +216,16 @@ class IceVisionAdapter(Adapter):
             persistent_workers=persistent_workers,
         )
 
-        data_loader.collate_fn = functools.partial(self._wrap_collate_fn, data_loader.collate_fn)
+        data_loader = self._update_collate_fn_dataloader(
+            functools.partial(self._wrap_collate_fn, data_loader.collate_fn), data_loader
+        )
 
         input_transform = input_transform or self.input_transform
         if input_transform is not None:
             input_transform.inject_collate_fn(data_loader.collate_fn)
-            data_loader.collate_fn = create_worker_input_transform_processor(RunningStage.TESTING, input_transform)
+            data_loader = self._update_collate_fn_dataloader(
+                create_worker_input_transform_processor(RunningStage.TESTING, input_transform), data_loader
+            )
         return data_loader
 
     def process_predict_dataset(
@@ -218,12 +252,16 @@ class IceVisionAdapter(Adapter):
             persistent_workers=persistent_workers,
         )
 
-        data_loader.collate_fn = functools.partial(self._wrap_collate_fn, data_loader.collate_fn)
+        data_loader = self._update_collate_fn_dataloader(
+            functools.partial(self._wrap_collate_fn, data_loader.collate_fn), data_loader
+        )
 
         input_transform = input_transform or self.input_transform
         if input_transform is not None:
             input_transform.inject_collate_fn(data_loader.collate_fn)
-            data_loader.collate_fn = create_worker_input_transform_processor(RunningStage.PREDICTING, input_transform)
+            data_loader = self._update_collate_fn_dataloader(
+                create_worker_input_transform_processor(RunningStage.PREDICTING, input_transform), data_loader
+            )
         return data_loader
 
     def training_step(self, batch, batch_idx) -> Any:
@@ -244,7 +282,7 @@ class IceVisionAdapter(Adapter):
         }
 
     def forward(self, batch: Any) -> Any:
-        if isinstance(batch, torch.Tensor):
+        if isinstance(batch, Tensor):
             batch = ((batch,), [to_icevision_record({DataKeys.INPUT: batch[0].cpu().numpy()})] * len(batch))
         return from_icevision_predictions(
             import_module(self.model_type).predict_from_dl(self.model, [batch], show_pbar=False, **self.predict_kwargs)

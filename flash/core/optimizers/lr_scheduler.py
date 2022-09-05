@@ -14,7 +14,7 @@
 #
 #
 # Implemented by @ananyahjha93
-# also found at: https://github.com/PyTorchLightning/lightning-bolts/blob/master/pl_bolts/optimizers/lr_scheduler.py
+# also found at: https://github.com/Lightning-AI/lightning-bolts/blob/master/pl_bolts/optimizers/lr_scheduler.py
 import math
 import warnings
 from typing import List
@@ -22,6 +22,12 @@ from typing import List
 from torch import nn
 from torch.optim import Adam, Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
+
+from flash.core.utilities.imports import _CORE_TESTING
+
+# Skip doctests if requirements aren't available
+if not _CORE_TESTING:
+    __doctest_skip__ = ["LinearWarmupCosineAnnealingLR"]
 
 
 class LinearWarmupCosineAnnealingLR(_LRScheduler):

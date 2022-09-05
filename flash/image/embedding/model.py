@@ -14,8 +14,8 @@
 import warnings
 from typing import Any, Dict, List, Optional
 
-import torch
 from pytorch_lightning.utilities import rank_zero_warn
+from torch import Tensor
 
 from flash.core.adapter import AdapterTask
 from flash.core.data.io.input import DataKeys
@@ -139,7 +139,7 @@ class ImageEmbedder(AdapterTask):
             if pretraining_transform is None:
                 raise ValueError("Correct pretraining_transform must be set to use VISSL")
 
-    def forward(self, x: torch.Tensor) -> Any:
+    def forward(self, x: Tensor) -> Any:
         return self.model(x)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
@@ -154,11 +154,11 @@ class ImageEmbedder(AdapterTask):
     def on_train_epoch_end(self) -> None:
         self.adapter.on_train_epoch_end()
 
-    def on_train_batch_end(self, outputs: Any, batch: Any, batch_idx: int, dataloader_idx: int) -> None:
-        self.adapter.on_train_batch_end(outputs, batch, batch_idx, dataloader_idx)
+    def on_train_batch_end(self, outputs: Any, batch: Any, batch_idx: int, *args) -> None:
+        self.adapter.on_train_batch_end(outputs, batch, batch_idx, *args)
 
     @classmethod
-    @requires(["image", "vissl", "fairscale"])
+    @requires("image", "vissl", "fairscale")
     def available_training_strategies(cls) -> List[str]:
         """Get the list of available training strategies (passed to the ``training_strategy`` argument) for this
         task.

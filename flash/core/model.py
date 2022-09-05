@@ -15,7 +15,6 @@ import inspect
 import re
 from abc import ABCMeta
 from copy import deepcopy
-from importlib import import_module
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 
 import pytorch_lightning as pl
@@ -26,7 +25,7 @@ from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.callbacks.finetuning import BaseFinetuning
 from pytorch_lightning.utilities.enums import LightningEnum
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from torch import nn
+from torch import nn, Tensor
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader, Sampler
@@ -49,7 +48,7 @@ from flash.core.optimizers.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.registry import FlashRegistry
 from flash.core.serve.composition import Composition
 from flash.core.utilities.apply_func import get_callable_dict
-from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_5_0, requires
+from flash.core.utilities.imports import _CORE_TESTING, _PL_GREATER_EQUAL_1_5_0, requires
 from flash.core.utilities.providers import _HUGGINGFACE
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import (
@@ -61,6 +60,10 @@ from flash.core.utilities.types import (
     OPTIMIZER_TYPE,
     OUTPUT_TRANSFORM_TYPE,
 )
+
+# Skip doctests if requirements aren't available
+if not _CORE_TESTING:
+    __doctest_skip__ = ["Task", "Task.*"]
 
 
 class ModuleWrapperBase:
@@ -276,12 +279,19 @@ class CheckDependenciesMeta(ABCMeta):
     def __new__(mcs, *args, **kwargs):
         result = ABCMeta.__new__(mcs, *args, **kwargs)
         if result.required_extras is not None:
-            result.__init__ = requires(result.required_extras)(result.__init__)
+            if isinstance(result.required_extras, str):
+                result.required_extras = [result.required_extras]
+            result.__init__ = requires(*result.required_extras)(result.__init__)
 
             patterns = ["load_from_checkpoint", "available_*"]  # must match classmethods only
             regex = "(" + ")|(".join(patterns) + ")"
             for attribute_name, attribute_value in filter(lambda x: re.match(regex, x[0]), inspect.getmembers(result)):
-                setattr(result, attribute_name, classmethod(requires(result.required_extras)(attribute_value.__func__)))
+                # TODO: Find a better way to do this
+                if attribute_name in ["available_layers"]:
+                    continue
+                setattr(
+                    result, attribute_name, classmethod(requires(*result.required_extras)(attribute_value.__func__))
+                )
         return result
 
 
@@ -317,8 +327,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             task.
     """
 
-    optimizers: FlashRegistry = _OPTIMIZERS_REGISTRY
-    lr_schedulers: FlashRegistry = _SCHEDULERS_REGISTRY
+    optimizers_registry: FlashRegistry = _OPTIMIZERS_REGISTRY
+    lr_schedulers_registry: FlashRegistry = _SCHEDULERS_REGISTRY
     finetuning_strategies: FlashRegistry = _FINETUNING_STRATEGIES_REGISTRY
     outputs: FlashRegistry = BASE_OUTPUTS
 
@@ -396,27 +406,27 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         output[OutputKeys.LOSS] = self.compute_loss(losses)
         output[OutputKeys.LOGS] = self.compute_logs(logs, losses)
         output[OutputKeys.TARGET] = y
-        output[OutputKeys.BATCH_SIZE] = y.shape[0] if isinstance(y, torch.Tensor) else None
+        output[OutputKeys.BATCH_SIZE] = y.shape[0] if isinstance(y, Tensor) else None
         return output
 
-    def compute_loss(self, losses: Dict[str, torch.Tensor]) -> torch.Tensor:
+    def compute_loss(self, losses: Dict[str, Tensor]) -> Tensor:
         return list(losses.values())[0]
 
-    def compute_logs(self, logs: Dict[str, Any], losses: Dict[str, torch.Tensor]):
+    def compute_logs(self, logs: Dict[str, Any], losses: Dict[str, Tensor]):
         logs.update(losses)
         return logs
 
     @staticmethod
-    def apply_filtering(y: torch.Tensor, y_hat: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def apply_filtering(y: Tensor, y_hat: Tensor) -> Tuple[Tensor, Tensor]:
         """This function is used to filter some labels or predictions which aren't conform."""
         return y, y_hat
 
     @staticmethod
-    def to_loss_format(x: torch.Tensor) -> torch.Tensor:
+    def to_loss_format(x: Tensor) -> Tensor:
         return x
 
     @staticmethod
-    def to_metrics_format(x: torch.Tensor) -> torch.Tensor:
+    def to_metrics_format(x: Tensor) -> Tensor:
         return x
 
     def forward(self, x: Any) -> Any:
@@ -483,7 +493,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
                 f"\nUse `{self.__class__.__name__}.available_optimizers()` to list the available optimizers."
                 f"\nList of available Optimizers: {self.available_optimizers()}."
             )
-        optimizer_fn = self.optimizers.get(optimizer_key.lower())
+        optimizer_fn = self.optimizers_registry.get(optimizer_key.lower())
         return optimizer_fn
 
     def configure_optimizers(self) -> Union[Optimizer, Tuple[List[Optimizer], List[_LRScheduler]]]:
@@ -563,6 +573,25 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
         return [finetuning_strategy_fn(**finetuning_strategy_metadata)]
 
+    def as_embedder(self, layer: str):
+        """Convert this task to an embedder. Note that the parameters are not copied so that any optimization of
+        the embedder will also apply to the converted ``Task``.
+
+        Args:
+            layer: The layer to embed to. This should be one of the :meth:`~flash.core.model.Task.available_layers`.
+        """
+        from flash.core.utilities.embedder import Embedder  # Avoid circular import
+
+        return Embedder(self, layer)
+
+    def available_layers(self):
+        """Get the list of available layers for use with the :meth:`~flash.core.model.Task.as_embedder` method."""
+        available_layers = []
+        for name, _ in self.named_modules():
+            if name not in ["train_metrics", "val_metrics", "test_metrics"]:
+                available_layers.append(name)
+        return ["output"] + available_layers
+
     @classmethod
     def available_backbones(
         cls, head: Optional[str] = None
@@ -607,7 +636,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
     @classmethod
     def available_optimizers(cls) -> List[str]:
         """Returns a list containing the keys of the available Optimizers."""
-        registry: Optional[FlashRegistry] = getattr(cls, "optimizers", None)
+        registry: Optional[FlashRegistry] = getattr(cls, "optimizers_registry", None)
         if registry is None:
             return []
         return registry.available_keys()
@@ -615,7 +644,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
     @classmethod
     def available_lr_schedulers(cls) -> List[str]:
         """Returns a list containing the keys of the available LR schedulers."""
-        registry: Optional[FlashRegistry] = getattr(cls, "lr_schedulers", None)
+        registry: Optional[FlashRegistry] = getattr(cls, "lr_schedulers_registry", None)
         if registry is None:
             return []
         return registry.available_keys()
@@ -676,7 +705,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
                 f"\nUse `{self.__class__.__name__}.available_lr_schedulers()` to list the available schedulers."
                 f"\n>>> List of available LR Schedulers: {self.available_lr_schedulers()}."
             )
-        lr_scheduler_fn: Dict[str, Any] = self.lr_schedulers.get(lr_scheduler_key.lower(), with_metadata=True)
+        lr_scheduler_fn: Dict[str, Any] = self.lr_schedulers_registry.get(lr_scheduler_key.lower(), with_metadata=True)
         return deepcopy(lr_scheduler_fn)
 
     def _instantiate_lr_scheduler(self, optimizer: Optimizer) -> Dict[str, Any]:
@@ -784,32 +813,6 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         # If `lr_scheduler` is not a Dict, then add it to the current config and return the config.
         lr_scheduler_config["scheduler"] = lr_scheduler
         return lr_scheduler_config
-
-    def _load_from_state_dict(
-        self, state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs
-    ):
-        if "input_transform.state_dict" in state_dict:
-            try:
-                input_transform_state_dict = state_dict["input_transform.state_dict"]
-                meta = input_transform_state_dict["_meta"]
-                cls = getattr(import_module(meta["module"]), meta["class_name"])
-                self._input_transform = cls.load_state_dict(
-                    {k: v for k, v in input_transform_state_dict.items() if k != "_meta"},
-                    strict=strict,
-                )
-                self._input_transform._state = meta["_state"]
-                del state_dict["input_transform.state_dict"]
-                del input_transform_state_dict["_meta"]
-            except (ModuleNotFoundError, KeyError):
-                meta = state_dict["input_transform.state_dict"]["_meta"]
-                raise MisconfigurationException(
-                    f"The `InputTransform` {meta['module']}.{meta['class_name']}"
-                    "has been moved and couldn't be imported."
-                )
-
-        super()._load_from_state_dict(
-            state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs
-        )
 
     def configure_callbacks(self):
         # used only for CI

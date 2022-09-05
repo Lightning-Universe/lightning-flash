@@ -3,7 +3,11 @@ from typing import Dict, Optional, Tuple
 from flash.core.serve.component import ModelComponent
 from flash.core.serve.core import Endpoint
 from flash.core.serve.types import Repeated
-from flash.core.utilities.imports import _PYDANTIC_AVAILABLE
+from flash.core.utilities.imports import _PYDANTIC_AVAILABLE, _SERVE_TESTING
+
+# Skip doctests if requirements aren't available
+if not _SERVE_TESTING:
+    __doctest_skip__ = ["EndpointProtocol.*"]
 
 if _PYDANTIC_AVAILABLE:
     from pydantic import BaseModel, create_model

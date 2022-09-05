@@ -15,6 +15,7 @@ import functools
 import os
 import sys
 from copy import deepcopy
+from enum import Enum
 from typing import Any, cast, Dict, Iterable, List, Sequence, Tuple, Union
 
 from pytorch_lightning.utilities.enums import LightningEnum
@@ -171,7 +172,18 @@ class InputBase(Properties, metaclass=_InputMeta):
 
     def _call_load_sample(self, sample: Any) -> Any:
         # Deepcopy the sample to avoid leaks with complex data structures
-        return getattr(self, f"{_STAGES_PREFIX[self.running_stage]}_load_sample")(deepcopy(sample))
+        sample_output = getattr(self, f"{_STAGES_PREFIX[self.running_stage]}_load_sample")(deepcopy(sample))
+
+        # Change DataKeys Enum to strings
+        if isinstance(sample_output, dict):
+            output_dict = {}
+            for key, val in sample_output.items():
+                if isinstance(key, Enum) and hasattr(key, "value"):
+                    output_dict[key.value] = val
+                else:
+                    output_dict[key] = val
+            return output_dict
+        return sample_output
 
     @staticmethod
     def load_data(*args: Any, **kwargs: Any) -> Union[Sequence, Iterable]:
@@ -298,9 +310,6 @@ class ServeInput(Input):
 
     def serve_load_sample(self, sample: Any) -> List[Any]:
         raise NotImplementedError
-
-    def __call__(self, sample: Any) -> Any:
-        return self._call_load_sample(sample)
 
     def example_input(self) -> str:
         raise NotImplementedError

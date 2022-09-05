@@ -24,6 +24,7 @@ from pytorch_lightning.plugins import DataParallelPlugin, DDPPlugin, DDPSpawnPlu
 from pytorch_lightning.trainer.states import TrainerFn
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from pytorch_lightning.utilities.warnings import WarningCache
+from torch import nn, Tensor
 from torch.utils.data import DataLoader, IterableDataset, Sampler
 
 import flash
@@ -58,8 +59,8 @@ class RemapLabels(Learn2LearnRemapLabels):
         return data
 
 
-class Model(torch.nn.Module):
-    def __init__(self, backbone: torch.nn.Module, head: Optional[torch.nn.Module]):
+class Model(nn.Module):
+    def __init__(self, backbone: nn.Module, head: Optional[nn.Module]):
         super().__init__()
         self.backbone = backbone
         self.head = head
@@ -80,8 +81,8 @@ class Learn2LearnAdapter(Adapter):
 
     def __init__(
         self,
-        backbone: torch.nn.Module,
-        head: torch.nn.Module,
+        backbone: nn.Module,
+        head: nn.Module,
         algorithm_cls: Type[LightningModule],
         ways: int,
         shots: int,
@@ -280,8 +281,8 @@ class Learn2LearnAdapter(Adapter):
         cls,
         *args,
         task: AdapterTask,
-        backbone: torch.nn.Module,
-        head: torch.nn.Module,
+        backbone: nn.Module,
+        head: nn.Module,
         algorithm: Type[LightningModule],
         **kwargs,
     ) -> Adapter:
@@ -483,7 +484,7 @@ class DefaultAdapter(Adapter):
 
     required_extras: str = "image"
 
-    def __init__(self, backbone: torch.nn.Module, head: torch.nn.Module):
+    def __init__(self, backbone: nn.Module, head: nn.Module):
         super().__init__()
 
         self.backbone = backbone
@@ -495,8 +496,8 @@ class DefaultAdapter(Adapter):
         cls,
         *args,
         task: AdapterTask,
-        backbone: torch.nn.Module,
-        head: torch.nn.Module,
+        backbone: nn.Module,
+        head: nn.Module,
         **kwargs,
     ) -> Adapter:
         adapter = cls(backbone, head)
@@ -521,7 +522,7 @@ class DefaultAdapter(Adapter):
         )
         return batch
 
-    def forward(self, x) -> torch.Tensor:
+    def forward(self, x) -> Tensor:
         # TODO: Resolve this hack
         if x.dim() == 3:
             x = x.unsqueeze(0)

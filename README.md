@@ -21,10 +21,10 @@
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/lightning-flash)](https://pypi.org/project/lightning-flash/)
 [![PyPI Status](https://badge.fury.io/py/lightning-flash.svg)](https://badge.fury.io/py/lightning-flash)
 [![Slack](https://img.shields.io/badge/slack-chat-green.svg?logo=slack)](https://www.pytorchlightning.ai/community)
-[![license](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/PytorchLightning/pytorch-lightning/blob/master/LICENSE)
+[![license](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/Lightning-AI/pytorch-lightning/blob/master/LICENSE)
 [![Documentation Status](https://readthedocs.org/projects/lightning-flash/badge/?version=latest)](https://lightning-flash.readthedocs.io/en/stable/?badge=stable)
-![CI testing](https://github.com/PyTorchLightning/lightning-flash/workflows/CI%20testing/badge.svg?branch=master&event=push)
-[![codecov](https://codecov.io/gh/PyTorchLightning/lightning-flash/branch/master/graph/badge.svg?token=oLuUr9q1vt)](https://codecov.io/gh/PyTorchLightning/lightning-flash)
+![CI testing](https://github.com/Lightning-AI/lightning-flash/workflows/CI%20testing/badge.svg?branch=master&event=push)
+[![codecov](https://codecov.io/gh/Lightning-AI/lightning-flash/branch/master/graph/badge.svg?token=oLuUr9q1vt)](https://codecov.io/gh/Lightning-AI/lightning-flash)
 
 </div>
 
@@ -129,7 +129,7 @@ model.serve()
 or make predictions from raw data directly.
 
 ```py
-trainer = Trainer(accelerator='ddp', gpus=2)
+trainer = Trainer(strategy='ddp', accelerator="gpu", gpus=2)
 dm = SemanticSegmentationData.from_folders(predict_folder="data/CameraRGB")
 predictions = trainer.predict(model, dm)
 ```
@@ -139,7 +139,7 @@ predictions = trainer.predict(model, dm)
 Training strategies are PyTorch SOTA Training Recipes which can be utilized with a given task.
 
 
-Check out this [example](https://github.com/PyTorchLightning/lightning-flash/blob/master/flash_examples/integrations/learn2learn/image_classification_imagenette_mini.py) where the `ImageClassifier` supports 4 [Meta Learning Algorithms](https://lilianweng.github.io/lil-log/2018/11/30/meta-learning.html) from [Learn2Learn](https://github.com/learnables/learn2learn).
+Check out this [example](https://github.com/Lightning-AI/lightning-flash/blob/master/flash_examples/integrations/learn2learn/image_classification_imagenette_mini.py) where the `ImageClassifier` supports 4 [Meta Learning Algorithms](https://lilianweng.github.io/lil-log/2018/11/30/meta-learning.html) from [Learn2Learn](https://github.com/learnables/learn2learn).
 This is particularly useful if you use this model in production and want to make sure the model adapts quickly to its new environment with minimal labelled data.
 
 ```py
@@ -209,7 +209,7 @@ model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer="Adam", lr
 You can also register you own custom scheduler recipes beforeahand and use them shown as above:
 
 ```py
-@ImageClassifier.lr_schedulers
+@ImageClassifier.lr_schedulers_registry
 def my_steplr_recipe(optimizer):
     return torch.optim.lr_scheduler.StepLR(optimizer, step_size=10)
 

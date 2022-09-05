@@ -228,7 +228,7 @@ For even more customization, create your own finetuning callback. Learn more abo
 
             # When ``current_epoch`` is 5, backbone will start to be trained.
             if current_epoch == self._unfreeze_epoch:
-                self.unfreeze_and_add_param_group(
+                self.unfreeze_and_extend_param_group(
                     pl_module.backbone,
                     optimizer,
                 )
@@ -241,3 +241,13 @@ For even more customization, create your own finetuning callback. Learn more abo
     :hide:
 
     ...
+
+Working with DeepSpeed
+======================
+
+If you are using DeepSpeed, you can use the following strategies. The usage of the following strategies is the same as listed above, but finetuning with DeepSpeed doesn't yet support the loading and storing of its parameters.
+
+* ``freeze_deepspeed``
+* ``no_freeze_deepspeed``
+* ``freeze_unfreeze_deepspeed``
+* ``unfreeze_milestones_deepspeed``
