@@ -23,7 +23,7 @@ from flash.core.utilities.imports import _ALBUMENTATIONS_AVAILABLE, requires
 if _ALBUMENTATIONS_AVAILABLE:
     from albumentations import BasicTransform, Compose
 else:
-    BasicTransform, Compose, ToTensorV2 = object, object, object
+    BasicTransform, Compose = object, object
 
 
 class AlbumentationsAdapter(nn.Module):
