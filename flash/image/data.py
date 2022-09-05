@@ -36,8 +36,12 @@ class ImageDeserializer(ServeInput):
         img = base64.b64decode(encoded_with_padding)
         buffer = BytesIO(img)
         img = Image.open(buffer, mode="r")
+        w, h = img.size
         return {
             DataKeys.INPUT: img,
+            DataKeys.METADATA: {
+                "size": (h, w),
+            },
         }
 
     @property

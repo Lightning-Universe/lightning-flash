@@ -14,6 +14,8 @@
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Tuple, Union
 
+import torch
+
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.transforms import ApplyToKeys, kornia_collate, KorniaParallelTransforms
@@ -31,6 +33,12 @@ def prepare_target(batch: Dict[str, Any]) -> Dict[str, Any]:
     if DataKeys.TARGET in batch:
         batch[DataKeys.TARGET] = batch[DataKeys.TARGET].long().squeeze(1)
     return batch
+
+
+def target_as_tensor(sample: Dict[str, Any]) -> Dict[str, Any]:
+    if DataKeys.TARGET in sample:
+        sample[DataKeys.TARGET] = torch.from_numpy(sample[DataKeys.TARGET]).float()
+    return sample
 
 
 def remove_extra_dimensions(batch: Dict[str, Any]):
@@ -52,6 +60,11 @@ class SemanticSegmentationInputTransform(InputTransform):
         return T.Compose(
             [
                 ApplyToKeys(
+                    DataKeys.INPUT,
+                    T.ToTensor(),
+                ),
+                target_as_tensor,
+                ApplyToKeys(
                     [DataKeys.INPUT, DataKeys.TARGET],
                     KorniaParallelTransforms(
                         K.geometry.Resize(self.image_size, interpolation="nearest"),
@@ -67,6 +80,11 @@ class SemanticSegmentationInputTransform(InputTransform):
         return T.Compose(
             [
                 ApplyToKeys(
+                    DataKeys.INPUT,
+                    T.ToTensor(),
+                ),
+                target_as_tensor,
+                ApplyToKeys(
                     [DataKeys.INPUT, DataKeys.TARGET],
                     KorniaParallelTransforms(K.geometry.Resize(self.image_size, interpolation="nearest")),
                 ),
@@ -78,6 +96,7 @@ class SemanticSegmentationInputTransform(InputTransform):
     def predict_per_sample_transform(self) -> Callable:
         return ApplyToKeys(
             DataKeys.INPUT,
+            T.ToTensor(),
             K.geometry.Resize(
                 self.image_size,
                 interpolation="nearest",
