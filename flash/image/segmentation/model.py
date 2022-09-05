@@ -33,9 +33,9 @@ from flash.core.utilities.types import (
     OPTIMIZER_TYPE,
     OUTPUT_TRANSFORM_TYPE,
 )
+from flash.image.data import ImageDeserializer
 from flash.image.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 from flash.image.segmentation.heads import SEMANTIC_SEGMENTATION_HEADS
-from flash.image.segmentation.input import SemanticSegmentationDeserializer
 from flash.image.segmentation.input_transform import SemanticSegmentationInputTransform
 from flash.image.segmentation.output import SEMANTIC_SEGMENTATION_OUTPUTS
 
@@ -187,7 +187,7 @@ class SemanticSegmentation(ClassificationTask):
         host: str = "127.0.0.1",
         port: int = 8000,
         sanity_check: bool = True,
-        input_cls: Optional[Type[ServeInput]] = SemanticSegmentationDeserializer,
+        input_cls: Optional[Type[ServeInput]] = ImageDeserializer,
         transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
         transform_kwargs: Optional[Dict] = None,
         output: Optional[Union[str, Output]] = None,

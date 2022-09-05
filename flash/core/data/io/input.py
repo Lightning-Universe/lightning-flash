@@ -14,7 +14,6 @@
 import functools
 import os
 import sys
-from copy import deepcopy
 from enum import Enum
 from typing import Any, cast, Dict, Iterable, List, Sequence, Tuple, Union
 
@@ -38,6 +37,13 @@ else:
     # ReadTheDocs mocks the `IterableDataset` import so it's type cannot be used as a base for a metaclass, so we
     # replace it here.
     IterableDataset = object
+
+
+def _deepcopy_dict(nested_dict: Any) -> Any:
+    """Utility to deepcopy a nested dict."""
+    if not isinstance(nested_dict, Dict):
+        return nested_dict
+    return {key: value for key, value in nested_dict.items()}
 
 
 class InputFormat(LightningEnum):
@@ -172,7 +178,7 @@ class InputBase(Properties, metaclass=_InputMeta):
 
     def _call_load_sample(self, sample: Any) -> Any:
         # Deepcopy the sample to avoid leaks with complex data structures
-        sample_output = getattr(self, f"{_STAGES_PREFIX[self.running_stage]}_load_sample")(deepcopy(sample))
+        sample_output = getattr(self, f"{_STAGES_PREFIX[self.running_stage]}_load_sample")(_deepcopy_dict(sample))
 
         # Change DataKeys Enum to strings
         if isinstance(sample_output, dict):
