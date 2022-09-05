@@ -40,7 +40,7 @@ from flash.core.utilities.url_error import catch_url_error
 from flash.image.classification.integrations.learn2learn import TaskDataParallel, TaskDistributedDataParallel
 
 if _PL_GREATER_EQUAL_1_6_0:
-    from pytorch_lightning.strategies import DataParallelStrategy, DDPStrategy, DDPSpawnStrategy
+    from pytorch_lightning.strategies import DataParallelStrategy, DDPSpawnStrategy, DDPStrategy
 else:
     from pytorch_lightning.plugins import DataParallelPlugin, DDPPlugin, DDPSpawnPlugin
 
@@ -252,7 +252,7 @@ class Learn2LearnAdapter(Adapter):
                 (
                     DDPStrategy,
                     DDPSpawnStrategy,
-                )
+                ),
             )
         else:
             is_ddp_or_ddp_spawn = isinstance(
@@ -260,7 +260,7 @@ class Learn2LearnAdapter(Adapter):
                 (
                     DDPPlugin,
                     DDPSpawnPlugin,
-                )
+                ),
             )
         if is_ddp_or_ddp_spawn:
             # when running in a distributed data parallel way,
