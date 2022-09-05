@@ -17,7 +17,7 @@ import pytest
 import torch
 
 from flash.core.data.io.input import DataKeys
-from flash.core.data.transforms import ApplyToKeys, kornia_collate
+from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _CORE_TESTING
 
 
@@ -68,17 +68,3 @@ class TestApplyToKeys:
     )
     def test_repr(self, transform, expected):
         assert repr(transform) == expected
-
-
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
-def test_kornia_collate():
-    samples = [
-        {DataKeys.INPUT: torch.zeros(1, 3, 10, 10), DataKeys.TARGET: 1},
-        {DataKeys.INPUT: torch.zeros(1, 3, 10, 10), DataKeys.TARGET: 2},
-        {DataKeys.INPUT: torch.zeros(1, 3, 10, 10), DataKeys.TARGET: 3},
-    ]
-
-    result = kornia_collate(samples)
-    assert torch.all(result[DataKeys.TARGET] == torch.tensor([1, 2, 3]))
-    assert list(result[DataKeys.INPUT].shape) == [3, 3, 10, 10]
-    assert torch.allclose(result[DataKeys.INPUT], torch.zeros(1))

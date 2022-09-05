@@ -11,14 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Dict, Mapping, Sequence, Union
+from typing import Any, Mapping, Sequence, Union
 
 import numpy as np
-import torch
 from torch import nn
 
 from flash.core.data.io.input import DataKeys
-from flash.core.data.utilities.collate import default_collate
 from flash.core.data.utils import convert_to_modules
 from flash.core.utilities.imports import _ALBUMENTATIONS_AVAILABLE, requires
 
@@ -106,18 +104,3 @@ class ApplyToKeys(nn.Sequential):
         transform = transform[0] if len(transform) == 1 else transform
 
         return f"{self.__class__.__name__}(keys={repr(keys)}, transform={repr(transform)})"
-
-
-def kornia_collate(samples: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
-    """Kornia transforms add batch dimension which need to be removed.
-
-    This function removes that dimension and then
-    applies ``torch.utils.data._utils.collate.default_collate``.
-    """
-    if len(samples) == 1 and isinstance(samples[0], list):
-        samples = samples[0]
-    for sample in samples:
-        for key in sample.keys():
-            if torch.is_tensor(sample[key]) and sample[key].ndim == 4:
-                sample[key] = sample[key].squeeze(0)
-    return default_collate(samples)
