@@ -14,15 +14,10 @@
 from typing import Any, Dict, Mapping, Sequence, Union
 
 import torch
-from torch import nn, Tensor
+from torch import nn
 
-from flash.core.data.io.input import DataKeys
 from flash.core.data.utilities.collate import default_collate
 from flash.core.data.utils import convert_to_modules
-from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
-
-if _TORCHVISION_AVAILABLE:
-    from torchvision.transforms.functional import to_tensor
 
 
 class ApplyToKeys(nn.Sequential):
@@ -42,10 +37,8 @@ class ApplyToKeys(nn.Sequential):
         self.keys = keys
 
     def forward(self, x: Mapping[str, Any]) -> Mapping[str, Any]:
-        if not isinstance(x[DataKeys.INPUT], Tensor):
-            x[DataKeys.INPUT] = to_tensor(x[DataKeys.INPUT])
         keys = list(filter(lambda key: key in x, self.keys))
-        inputs = [x[key].float() for key in keys]
+        inputs = [x[key] for key in keys]
 
         result = {}
         result.update(x)
@@ -55,10 +48,10 @@ class ApplyToKeys(nn.Sequential):
         elif len(inputs) > 1:
             try:
                 outputs = super().forward(inputs)
-            except TypeError as ex:
+            except TypeError as e:
                 raise Exception(
                     "Failed to apply transforms to multiple keys at the same time, try using KorniaParallelTransforms."
-                ) from ex
+                ) from e
 
             for i, key in enumerate(keys):
                 result[key] = outputs[i]

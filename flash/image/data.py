@@ -39,7 +39,6 @@ def image_loader(filepath: str):
     if has_file_allowed_extension(filepath, IMG_EXTENSIONS):
         img = image_default_loader(filepath)
     elif has_file_allowed_extension(filepath, NP_EXTENSIONS):
-        # Todo: reconsider if we may allow also image as float
         img = Image.fromarray(np.load(filepath).astype("uint8"), "RGB")
     else:
         raise ValueError(

@@ -27,15 +27,12 @@ from flash.core.utilities.imports import _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 
 if _PIL_AVAILABLE:
-    from PIL import Image as PILImage
     from PIL.Image import Image
 else:
-    PILImage, Image = None, object
+    Image = object
 
 if _TORCHVISION_AVAILABLE:
     from torchvision.datasets.folder import default_loader
-else:
-    default_loader = None
 
 _STAGES_PREFIX = {
     RunningStage.TRAINING: "train",
@@ -73,7 +70,8 @@ def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:
     # __author__  = "github.com/ruxi"
     # __license__ = "MIT"
 
-    Examples:
+    Examples
+    ________
 
     .. doctest::
 
@@ -164,7 +162,7 @@ def image_default_loader(file_path: str, drop_alpha: bool = True) -> Image:
         file_path: The image file to load.
         drop_alpha: If ``True`` (default) then any alpha channels will be silently removed.
     """
-    img = default_loader(file_path) if _TORCHVISION_AVAILABLE else PILImage.open(file_path)
+    img = default_loader(file_path)
     if img.mode == "RGBA" and drop_alpha:
         img = img.convert("RGB")
     return img
