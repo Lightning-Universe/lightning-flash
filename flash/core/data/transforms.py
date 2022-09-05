@@ -108,42 +108,6 @@ class ApplyToKeys(nn.Sequential):
         return f"{self.__class__.__name__}(keys={repr(keys)}, transform={repr(transform)})"
 
 
-class KorniaParallelTransforms(nn.Sequential):
-    """The ``KorniaParallelTransforms`` class is an ``nn.Sequential`` which will apply the given transforms to each
-    input (to ``.forward``) in parallel, whilst sharing the random state (``._params``). This should be used when
-    multiple elements need to be augmented in the same way (e.g. an image and corresponding segmentation mask).
-
-    Args:
-        args: The transforms, passed to the ``nn.Sequential`` super constructor.
-    """
-
-    def __init__(self, *args):
-        super().__init__(*(convert_to_modules(arg) for arg in args))
-
-    def forward(self, inputs: Any):
-        result = list(inputs) if isinstance(inputs, Sequence) else [inputs]
-        for transform in self.children():
-            inputs = result
-
-            # we enforce the first time to sample random params
-            result[0] = transform(inputs[0])
-
-            if hasattr(transform, "_params") and bool(transform._params):
-                params = transform._params
-            else:
-                params = None
-
-            # apply transforms from (1, n)
-            for i, input in enumerate(inputs[1:]):
-                if params is not None:
-                    result[i + 1] = transform(input, params)
-                else:  # case for non-random transforms
-                    result[i + 1] = transform(input)
-            if hasattr(transform, "_params") and bool(transform._params):
-                transform._params = None
-        return result
-
-
 def kornia_collate(samples: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
     """Kornia transforms add batch dimension which need to be removed.
 

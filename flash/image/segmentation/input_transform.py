@@ -58,8 +58,8 @@ class SemanticSegmentationInputTransform(InputTransform):
     # https://albumentations.ai/docs/examples/pytorch_semantic_segmentation
 
     image_size: Tuple[int, int] = (128, 128)
-    image_color_mean: Tuple[float, float, float] = (0.485, 0.456, 0.406)
-    image_color_std: Tuple[float, float, float] = (0.229, 0.224, 0.225)
+    mean: Tuple[float, float, float] = (0.485, 0.456, 0.406)
+    std: Tuple[float, float, float] = (0.229, 0.224, 0.225)
 
     @requires("image")
     def train_per_sample_transform(self) -> Callable:
@@ -71,7 +71,7 @@ class SemanticSegmentationInputTransform(InputTransform):
                         alb.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2, rotate_limit=30, p=0.5),
                         alb.RGBShift(r_shift_limit=25, g_shift_limit=25, b_shift_limit=25, p=0.5),
                         alb.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=0.5),
-                        alb.Normalize(mean=self.image_color_mean, std=self.image_color_std),
+                        alb.Normalize(mean=self.mean, std=self.std),
                     ]
                 ),
                 ApplyToKeys(
@@ -89,7 +89,7 @@ class SemanticSegmentationInputTransform(InputTransform):
                 AlbumentationsAdapter(
                     [
                         alb.Resize(*self.image_size),
-                        alb.Normalize(mean=self.image_color_mean, std=self.image_color_std),
+                        alb.Normalize(mean=self.mean, std=self.std),
                     ]
                 ),
                 ApplyToKeys(
@@ -97,22 +97,6 @@ class SemanticSegmentationInputTransform(InputTransform):
                     T.ToTensor(),
                 ),
                 target_as_tensor,
-            ]
-        )
-
-    def predict_per_sample_transform(self) -> Callable:
-        return T.Compose(
-            [
-                AlbumentationsAdapter(
-                    [
-                        alb.Resize(*self.image_size),
-                        alb.Normalize(mean=self.image_color_mean, std=self.image_color_std),
-                    ]
-                ),
-                ApplyToKeys(
-                    DataKeys.INPUT,
-                    T.ToTensor(),
-                ),
             ]
         )
 
