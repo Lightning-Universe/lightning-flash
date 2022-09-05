@@ -40,7 +40,7 @@ def target_as_tensor(sample: Dict[str, Any]) -> Dict[str, Any]:
         target = sample[DataKeys.TARGET]
         if target.ndim == 2:
             target = target[:, :, None]
-        sample[DataKeys.TARGET] = torch.from_numpy(target.transpose((2, 0, 1))).contiguous()[0].float()
+        sample[DataKeys.TARGET] = torch.from_numpy(target.transpose((2, 0, 1))).contiguous().squeeze().float()
     return sample
 
 
