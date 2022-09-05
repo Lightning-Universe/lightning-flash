@@ -119,13 +119,6 @@ __________________________
     :template: classtemplate.rst
 
     ~flash.core.data.transforms.ApplyToKeys
-    ~flash.core.data.transforms.KorniaParallelTransforms
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-
-    ~flash.core.data.transforms.kornia_collate
 
 flash.core.data.utils
 _____________________

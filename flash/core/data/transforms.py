@@ -87,9 +87,7 @@ class ApplyToKeys(nn.Sequential):
             try:
                 outputs = super().forward(inputs)
             except TypeError as e:
-                raise Exception(
-                    "Failed to apply transforms to multiple keys at the same time, try using KorniaParallelTransforms."
-                ) from e
+                raise Exception("Failed to apply transforms to multiple keys at the same time.") from e
 
             for i, key in enumerate(keys):
                 result[key] = outputs[i]
