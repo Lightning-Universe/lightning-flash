@@ -52,7 +52,7 @@ if _TORCHVISION_AVAILABLE:
     else:
 
         class InterpolationMode:
-            BILINEAR = "bilinear"
+            NEAREST = "nearest"
 
 
 if _TM_GREATER_EQUAL_0_7_0:
@@ -63,7 +63,7 @@ else:
 
 class SemanticSegmentationOutputTransform(OutputTransform):
     def per_sample_transform(self, sample: Any) -> Any:
-        resize = T.Resize(sample[DataKeys.METADATA]["size"], interpolation=InterpolationMode.BILINEAR)
+        resize = T.Resize(sample[DataKeys.METADATA]["size"], interpolation=InterpolationMode.NEAREST)
         sample[DataKeys.PREDS] = resize(sample[DataKeys.PREDS])
         sample[DataKeys.INPUT] = resize(sample[DataKeys.INPUT])
         return super().per_sample_transform(sample)
