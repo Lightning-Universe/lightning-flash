@@ -68,8 +68,6 @@ class SemanticSegmentationInputTransform(InputTransform):
                     [
                         alb.Resize(*self.image_size),
                         alb.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2, rotate_limit=30, p=0.5),
-                        alb.RGBShift(r_shift_limit=25, g_shift_limit=25, b_shift_limit=25, p=0.5),
-                        alb.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=0.5),
                         alb.Normalize(mean=self.mean, std=self.std),
                     ]
                 ),
