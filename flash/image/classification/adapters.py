@@ -249,18 +249,12 @@ class Learn2LearnAdapter(Adapter):
         if _PL_GREATER_EQUAL_1_6_0:
             is_ddp_or_ddp_spawn = isinstance(
                 trainer.strategy,
-                (
-                    DDPStrategy,
-                    DDPSpawnStrategy
-                ),
+                (DDPStrategy, DDPSpawnStrategy),
             )
         else:
             is_ddp_or_ddp_spawn = isinstance(
                 trainer.training_type_plugin,
-                (
-                    DDPPlugin,
-                    DDPSpawnPlugin
-                ),
+                (DDPPlugin, DDPSpawnPlugin),
             )
         if is_ddp_or_ddp_spawn:
             # when running in a distributed data parallel way,
