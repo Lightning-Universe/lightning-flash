@@ -67,7 +67,7 @@ class SemanticSegmentationInputTransform(InputTransform):
                 AlbumentationsAdapter(
                     [
                         alb.Resize(*self.image_size),
-                        alb.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2, rotate_limit=30, p=0.5),
+                        alb.HorizontalFlip(p=0.5),
                         alb.Normalize(mean=self.mean, std=self.std),
                     ]
                 ),
