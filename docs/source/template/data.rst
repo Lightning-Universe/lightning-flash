@@ -174,12 +174,12 @@ In your :class:`~flash.core.data.io.input.Input` or :class:`~flash.core.data.io.
 Your :class:`~flash.core.data.io.output_transform.OutputTransform` can then use this metadata in its transforms.
 You should use this approach if your postprocessing depends on the state of the input before the :class:`~flash.core.data.io.input_transform.InputTransform` transforms.
 For example, if you want to resize the predictions to the original size of the inputs you should add the original image size in the :attr:`~flash.core.data.io.input.DataKeys.METADATA`.
-Here's an example from the :class:`~flash.image.segmentation.SemanticSegmentationNumpyInput`:
+Here's an example from the :class:`~flash.image.data.ImageInput`:
 
-.. literalinclude:: ../../../flash/image/segmentation/input.py
+.. literalinclude:: ../../../flash/image/data.py
     :language: python
     :dedent: 4
-    :pyobject: SemanticSegmentationNumpyInput.load_sample
+    :pyobject: ImageInput.load_sample
 
 The :attr:`~flash.core.data.io.input.DataKeys.METADATA` can now be referenced in your :class:`~flash.core.data.io.output_transform.OutputTransform`.
 For example, here's the code for the ``per_sample_transform`` method of the :class:`~flash.image.segmentation.model.SemanticSegmentationOutputTransform`:
