@@ -251,7 +251,7 @@ class Learn2LearnAdapter(Adapter):
                 trainer.strategy,
                 (
                     DDPStrategy,
-                    DDPSpawnStrategy,
+                    DDPSpawnStrategy
                 ),
             )
         else:
@@ -259,7 +259,7 @@ class Learn2LearnAdapter(Adapter):
                 trainer.training_type_plugin,
                 (
                     DDPPlugin,
-                    DDPSpawnPlugin,
+                    DDPSpawnPlugin
                 ),
             )
         if is_ddp_or_ddp_spawn:
