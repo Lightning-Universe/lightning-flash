@@ -37,7 +37,10 @@ def prepare_target(batch: Dict[str, Any]) -> Dict[str, Any]:
 
 def target_as_tensor(sample: Dict[str, Any]) -> Dict[str, Any]:
     if DataKeys.TARGET in sample:
-        sample[DataKeys.TARGET] = torch.from_numpy(sample[DataKeys.TARGET]).float()
+        target = sample[DataKeys.TARGET]
+        if target.ndim == 2:
+            target = target[:, :, None]
+        sample[DataKeys.TARGET] = torch.from_numpy(target.transpose((2, 0, 1))).contiguous()[0].float()
     return sample
 
 
