@@ -91,7 +91,6 @@ ____________
     segmentation.input.SemanticSegmentationNumpyInput
     segmentation.input.SemanticSegmentationTensorInput
     segmentation.input.SemanticSegmentationFiftyOneInput
-    segmentation.input.SemanticSegmentationDeserializer
     segmentation.model.SemanticSegmentationOutputTransform
     segmentation.output.FiftyOneSegmentationLabelsOutput
     segmentation.output.SegmentationLabelsOutput
