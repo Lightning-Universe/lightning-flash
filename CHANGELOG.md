@@ -45,6 +45,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Changed the `ImageEmbedder` dependency on VISSL to optional ([#1276](https://github.com/PyTorchLightning/lightning-flash/pull/1276))
+- Changed the transforms in `SemanticSegmentationData` to use albumentations instead of Kornia ([#1313](https://github.com/PyTorchLightning/lightning-flash/pull/1313))
 
 ### Removed
 

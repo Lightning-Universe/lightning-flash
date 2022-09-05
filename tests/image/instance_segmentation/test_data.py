@@ -58,8 +58,8 @@ def test_instance_segmentation_output_transform():
             ],
             "labels": [0, 1],
             "masks": [
-                np.random.randint(2, size=(128, 128), dtype=np.uint8),
-                np.random.randint(2, size=(128, 128), dtype=np.uint8),
+                np.random.randint(2, size=(1, 128, 128), dtype=np.uint8),
+                np.random.randint(2, size=(1, 128, 128), dtype=np.uint8),
             ],
             "scores": [0.5, 0.5],
         },
@@ -69,5 +69,5 @@ def test_instance_segmentation_output_transform():
     output_transform_cls = InstanceSegmentationOutputTransform()
     data = output_transform_cls.per_sample_transform(sample)
 
-    assert data["masks"][0].size() == (224, 224)
-    assert data["masks"][1].size() == (224, 224)
+    assert data["masks"][0].size() == (1, 224, 224)
+    assert data["masks"][1].size() == (1, 224, 224)

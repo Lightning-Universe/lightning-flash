@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
-from typing import Callable, Tuple, Union
+from typing import Tuple, Union
 
 import torch
 from torch import nn
 
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform
-from flash.core.data.transforms import ApplyToKeys, kornia_collate
+from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _ALBUMENTATIONS_AVAILABLE, _TORCHVISION_AVAILABLE, requires
 
 if _TORCHVISION_AVAILABLE:
@@ -76,7 +76,3 @@ class ImageClassificationInputTransform(InputTransform):
                 ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
             ]
         )
-
-    def collate(self) -> Callable:
-        # TODO: Remove kornia collate for default_collate
-        return kornia_collate

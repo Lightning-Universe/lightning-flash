@@ -23,7 +23,12 @@ from flash.core.data.io.output_transform import OutputTransform
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.serve import Composition
-from flash.core.utilities.imports import _KORNIA_AVAILABLE, _TM_GREATER_EQUAL_0_7_0, requires
+from flash.core.utilities.imports import (
+    _TM_GREATER_EQUAL_0_7_0,
+    _TORCHVISION_AVAILABLE,
+    _TORCHVISION_GREATER_EQUAL_0_9,
+    requires,
+)
 from flash.core.utilities.isinstance import _isinstance
 from flash.core.utilities.types import (
     INPUT_TRANSFORM_TYPE,
@@ -39,8 +44,16 @@ from flash.image.segmentation.heads import SEMANTIC_SEGMENTATION_HEADS
 from flash.image.segmentation.input_transform import SemanticSegmentationInputTransform
 from flash.image.segmentation.output import SEMANTIC_SEGMENTATION_OUTPUTS
 
-if _KORNIA_AVAILABLE:
-    import kornia as K
+if _TORCHVISION_AVAILABLE:
+    from torchvision import transforms as T
+
+    if _TORCHVISION_GREATER_EQUAL_0_9:
+        from torchvision.transforms import InterpolationMode
+    else:
+
+        class InterpolationMode:
+            NEAREST = "nearest"
+
 
 if _TM_GREATER_EQUAL_0_7_0:
     from torchmetrics import JaccardIndex
@@ -50,7 +63,7 @@ else:
 
 class SemanticSegmentationOutputTransform(OutputTransform):
     def per_sample_transform(self, sample: Any) -> Any:
-        resize = K.geometry.Resize(sample[DataKeys.METADATA]["size"], interpolation="bilinear")
+        resize = T.Resize(sample[DataKeys.METADATA]["size"], interpolation=InterpolationMode.NEAREST)
         sample[DataKeys.PREDS] = resize(sample[DataKeys.PREDS])
         sample[DataKeys.INPUT] = resize(sample[DataKeys.INPUT])
         return super().per_sample_transform(sample)
