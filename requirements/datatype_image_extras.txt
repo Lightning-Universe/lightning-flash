@@ -5,7 +5,7 @@ vissl>=0.1.5
 icevision>=0.8
 icedata
 effdet
-albumentations
+kornia>=0.5.1
 learn2learn
 fastface
 fairscale

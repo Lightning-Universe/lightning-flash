@@ -43,7 +43,9 @@ class SegmentationMatplotlibVisualization(BaseVisualization):
     @requires("image")
     def _to_numpy(img: Union[Tensor, Image.Image]) -> np.ndarray:
         out: np.ndarray
-        if isinstance(img, Image.Image):
+        if isinstance(img, np.ndarray):
+            out = img
+        elif isinstance(img, Image.Image):
             out = np.array(img)
         elif isinstance(img, Tensor):
             out = img.squeeze(0).permute(1, 2, 0).cpu().numpy()
