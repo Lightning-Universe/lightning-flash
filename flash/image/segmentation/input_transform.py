@@ -12,17 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Tuple, Union
+from typing import Any, Callable, Dict, Tuple
+
+import torch
 
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform
-from flash.core.data.transforms import AlbumentationsAdapter
-from flash.core.utilities.imports import _ALBUMENTATIONS_AVAILABLE
+from flash.core.data.transforms import AlbumentationsAdapter, ApplyToKeys
+from flash.core.utilities.imports import _ALBUMENTATIONS_AVAILABLE, _TORCHVISION_AVAILABLE, requires
 
 if _ALBUMENTATIONS_AVAILABLE:
     import albumentations as alb
 else:
     alb = None
+
+if _TORCHVISION_AVAILABLE:
+    from torchvision import transforms as T
 
 
 def prepare_target(batch: Dict[str, Any]) -> Dict[str, Any]:
@@ -30,6 +35,15 @@ def prepare_target(batch: Dict[str, Any]) -> Dict[str, Any]:
     if DataKeys.TARGET in batch:
         batch[DataKeys.TARGET] = batch[DataKeys.TARGET].long().squeeze(1)
     return batch
+
+
+def target_as_tensor(sample: Dict[str, Any]) -> Dict[str, Any]:
+    if DataKeys.TARGET in sample:
+        target = sample[DataKeys.TARGET]
+        if target.ndim == 2:
+            target = target[:, :, None]
+        sample[DataKeys.TARGET] = torch.from_numpy(target.transpose((2, 0, 1))).contiguous().squeeze().float()
+    return sample
 
 
 def remove_extra_dimensions(batch: Dict[str, Any]):
@@ -47,30 +61,58 @@ class SemanticSegmentationInputTransform(InputTransform):
     image_color_mean: Tuple[float, float, float] = (0.485, 0.456, 0.406)
     image_color_std: Tuple[float, float, float] = (0.229, 0.224, 0.225)
 
+    @requires("image")
     def train_per_sample_transform(self) -> Callable:
-        return AlbumentationsAdapter(
+        return T.Compose(
             [
-                alb.Resize(*self.image_size),
-                alb.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2, rotate_limit=30, p=0.5),
-                alb.RGBShift(r_shift_limit=25, g_shift_limit=25, b_shift_limit=25, p=0.5),
-                alb.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=0.5),
-                alb.Normalize(mean=self.image_color_mean, std=self.image_color_std),
+                AlbumentationsAdapter(
+                    [
+                        alb.Resize(*self.image_size),
+                        alb.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2, rotate_limit=30, p=0.5),
+                        alb.RGBShift(r_shift_limit=25, g_shift_limit=25, b_shift_limit=25, p=0.5),
+                        alb.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=0.5),
+                        alb.Normalize(mean=self.image_color_mean, std=self.image_color_std),
+                    ]
+                ),
+                ApplyToKeys(
+                    DataKeys.INPUT,
+                    T.ToTensor(),
+                ),
+                target_as_tensor,
             ]
         )
 
+    @requires("image")
     def per_sample_transform(self) -> Callable:
-        return AlbumentationsAdapter(
+        return T.Compose(
             [
-                alb.Resize(*self.image_size),
-                alb.Normalize(mean=self.image_color_mean, std=self.image_color_std),
+                AlbumentationsAdapter(
+                    [
+                        alb.Resize(*self.image_size),
+                        alb.Normalize(mean=self.image_color_mean, std=self.image_color_std),
+                    ]
+                ),
+                ApplyToKeys(
+                    DataKeys.INPUT,
+                    T.ToTensor(),
+                ),
+                target_as_tensor,
             ]
         )
 
-    def predict_input_per_sample_transform(self) -> Callable:
-        return AlbumentationsAdapter(
+    def predict_per_sample_transform(self) -> Callable:
+        return T.Compose(
             [
-                alb.Resize(*self.image_size),
-                alb.Normalize(mean=self.image_color_mean, std=self.image_color_std),
+                AlbumentationsAdapter(
+                    [
+                        alb.Resize(*self.image_size),
+                        alb.Normalize(mean=self.image_color_mean, std=self.image_color_std),
+                    ]
+                ),
+                ApplyToKeys(
+                    DataKeys.INPUT,
+                    T.ToTensor(),
+                ),
             ]
         )
 

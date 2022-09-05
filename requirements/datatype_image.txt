@@ -4,4 +4,4 @@ lightning-bolts>=0.3.3
 Pillow>=7.2
 albumentations>=1.0
 pystiche==1.*
-segmentation-models-pytorch
+segmentation-models-pytorch>=0.2.0

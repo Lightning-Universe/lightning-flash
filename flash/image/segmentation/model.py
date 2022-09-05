@@ -33,14 +33,15 @@ from flash.core.utilities.types import (
     OPTIMIZER_TYPE,
     OUTPUT_TRANSFORM_TYPE,
 )
+from flash.image.data import ImageDeserializer
 from flash.image.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 from flash.image.segmentation.heads import SEMANTIC_SEGMENTATION_HEADS
-from flash.image.segmentation.input import SemanticSegmentationDeserializer
 from flash.image.segmentation.input_transform import SemanticSegmentationInputTransform
 from flash.image.segmentation.output import SEMANTIC_SEGMENTATION_OUTPUTS
 
 if _TORCHVISION_AVAILABLE:
     from torchvision import transforms as T
+    from torchvision.transforms import InterpolationMode
 
 if _TM_GREATER_EQUAL_0_7_0:
     from torchmetrics import JaccardIndex
@@ -50,7 +51,7 @@ else:
 
 class SemanticSegmentationOutputTransform(OutputTransform):
     def per_sample_transform(self, sample: Any) -> Any:
-        resize = T.Resize(sample[DataKeys.METADATA]["size"], interpolation="bilinear")
+        resize = T.Resize(sample[DataKeys.METADATA]["size"], interpolation=InterpolationMode.BILINEAR)
         sample[DataKeys.PREDS] = resize(sample[DataKeys.PREDS])
         sample[DataKeys.INPUT] = resize(sample[DataKeys.INPUT])
         return super().per_sample_transform(sample)
@@ -187,7 +188,7 @@ class SemanticSegmentation(ClassificationTask):
         host: str = "127.0.0.1",
         port: int = 8000,
         sanity_check: bool = True,
-        input_cls: Optional[Type[ServeInput]] = SemanticSegmentationDeserializer,
+        input_cls: Optional[Type[ServeInput]] = ImageDeserializer,
         transform: INPUT_TRANSFORM_TYPE = SemanticSegmentationInputTransform,
         transform_kwargs: Optional[Dict] = None,
         output: Optional[Union[str, Output]] = None,

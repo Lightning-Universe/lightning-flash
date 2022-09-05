@@ -28,6 +28,7 @@ from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _VIDEO_AVAILABLE, _VIDEO_TESTING
 from flash.video import VideoClassificationData, VideoClassifier
 from tests.helpers.task_tester import TaskTester
+from tests.video.classification.test_data import create_dummy_video_frames, temp_encoded_tensors
 
 if _FIFTYONE_AVAILABLE:
     import fiftyone as fo
@@ -67,17 +68,6 @@ class TestVideoClassifier(TaskTester):
     @property
     def example_test_sample(self):
         return self.example_train_sample
-
-
-def create_dummy_video_frames(num_frames: int, height: int, width: int):
-    y, x = torch.meshgrid(torch.linspace(-2, 2, height), torch.linspace(-2, 2, width))
-    data = []
-    for i in range(num_frames):
-        xc = float(i) / num_frames
-        yc = 1 - float(i) / (2 * num_frames)
-        d = torch.exp(-((x - xc) ** 2 + (y - yc) ** 2) / 2) * 255
-        data.append(d.unsqueeze(2).repeat(1, 1, 3).byte())
-    return torch.stack(data, 0)
 
 
 # https://github.com/facebookresearch/pytorchvideo/blob/4feccb607d7a16933d485495f91d067f177dd8db/tests/utils.py#L33
@@ -226,6 +216,57 @@ def test_video_classifier_finetune_from_data_frame(tmpdir):
         model = VideoClassifier(num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50")
         trainer = flash.Trainer(default_root_dir=tmpdir, fast_dev_run=True, gpus=torch.cuda.device_count())
         trainer.finetune(model, datamodule=datamodule)
+
+
+@pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
+def test_video_classifier_finetune_from_tensors(tmpdir):
+    mock_tensors = temp_encoded_tensors(num_frames=5)
+    datamodule = VideoClassificationData.from_tensors(
+        train_data=[mock_tensors, mock_tensors],
+        train_targets=["Patient", "Doctor"],
+        video_sampler=SequentialSampler,
+        batch_size=1,
+    )
+
+    for sample in datamodule.train_dataset.data:
+        expected_t_shape = 5
+        assert sample["video"].shape[1] == expected_t_shape
+
+    assert len(datamodule.labels) == 2, f"Expected number of labels to be 2 but found {len(datamodule.labels)}"
+
+    model = VideoClassifier(
+        num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50", labels=datamodule.labels
+    )
+    trainer = flash.Trainer(default_root_dir=tmpdir, fast_dev_run=True, gpus=torch.cuda.device_count())
+    trainer.finetune(model, datamodule=datamodule)
+
+
+@pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
+def test_video_classifier_predict_from_tensors(tmpdir):
+    mock_tensors = temp_encoded_tensors(num_frames=5)
+    datamodule = VideoClassificationData.from_tensors(
+        train_data=[mock_tensors, mock_tensors],
+        train_targets=["Patient", "Doctor"],
+        predict_data=[mock_tensors, mock_tensors],
+        video_sampler=SequentialSampler,
+        batch_size=1,
+    )
+
+    for sample in datamodule.train_dataset.data:
+        expected_t_shape = 5
+        assert sample["video"].shape[1] == expected_t_shape
+
+    assert len(datamodule.labels) == 2, f"Expected number of labels to be 2 but found {len(datamodule.labels)}"
+
+    model = VideoClassifier(
+        num_classes=datamodule.num_classes, pretrained=False, backbone="slow_r50", labels=datamodule.labels
+    )
+    trainer = flash.Trainer(default_root_dir=tmpdir, fast_dev_run=True, gpus=torch.cuda.device_count())
+    trainer.finetune(model, datamodule=datamodule)
+    predictions = trainer.predict(model, datamodule=datamodule, output="labels")
+
+    assert predictions is not None
+    assert predictions[0][0] in datamodule.labels
 
 
 @pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")

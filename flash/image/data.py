@@ -36,8 +36,12 @@ class ImageDeserializer(ServeInput):
         img = base64.b64decode(encoded_with_padding)
         buffer = BytesIO(img)
         img = Image.open(buffer, mode="r")
+        w, h = img.size
         return {
             DataKeys.INPUT: img,
+            DataKeys.METADATA: {
+                "size": (h, w),
+            },
         }
 
     @property
@@ -52,7 +56,13 @@ class ImageInput(Input):
         w, h = sample[DataKeys.INPUT].size  # W x H
         if DataKeys.METADATA not in sample:
             sample[DataKeys.METADATA] = {}
-        sample[DataKeys.METADATA]["size"] = (h, w)
+        sample[DataKeys.METADATA].update(
+            {
+                "size": (h, w),
+                "height": h,
+                "width": w,
+            }
+        )
         return sample
 
 

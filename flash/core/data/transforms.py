@@ -15,8 +15,7 @@ from typing import Any, Dict, Mapping, Sequence, Union
 
 import numpy as np
 import torch
-from PIL.Image import Image
-from torch import nn, Tensor
+from torch import nn
 
 from flash.core.data.io.input import DataKeys
 from flash.core.data.utilities.collate import default_collate
@@ -25,7 +24,6 @@ from flash.core.utilities.imports import _ALBUMENTATIONS_AVAILABLE, requires
 
 if _ALBUMENTATIONS_AVAILABLE:
     from albumentations import BasicTransform, Compose
-    from albumentations.pytorch import ToTensorV2
 else:
     BasicTransform, Compose, ToTensorV2 = object, object, object
 
@@ -39,35 +37,21 @@ class AlbumentationsAdapter(nn.Module):
         self,
         transform: Union[BasicTransform, Sequence[BasicTransform]],
         mapping: dict = None,
-        image_key: str = DataKeys.INPUT,
     ):
         super().__init__()
         if not isinstance(transform, (list, tuple)):
             transform = [transform]
-        self.transform = Compose(list(transform) + [ToTensorV2()])
-        self._img_key = image_key
+        self.transform = Compose(list(transform))
         if not mapping:
             mapping = self.TRANSFORM_INPUT_MAPPING
         self._mapping_rev = mapping
         self._mapping = {v: k for k, v in mapping.items()}
 
-    def _image_to_numpy(self, x: Union[Image, Tensor, np.ndarray]) -> np.ndarray:
-        """Convert to Height x Width x Channel."""
-        if isinstance(x, Image):
-            return np.array(x)
-        if isinstance(x, Tensor):
-            x = x.cpu().numpy()
-        if x.ndim == 3 and x.shape[0] < 4:
-            x = np.rollaxis(x, 0, 3)
-        return x
-
     def forward(self, x: Any) -> Any:
         if isinstance(x, dict):
-            x_ = {self._mapping.get(k, k): x[k].numpy() for k in self._mapping if k in x and k != self._img_key}
-            if self._img_key in self._mapping and self._img_key in x:
-                x_.update({self._mapping[self._img_key]: self._image_to_numpy(x[self._img_key])})
+            x_ = {self._mapping.get(key, key): np.array(value) for key, value in x.items() if key in self._mapping}
         else:
-            x_ = {"image": self._image_to_numpy(x)}
+            x_ = {"image": x}
         x_ = self.transform(**x_)
         if isinstance(x, dict):
             x.update({self._mapping_rev.get(k, k): x_[k] for k in self._mapping_rev if k in x_})
@@ -106,8 +90,7 @@ class ApplyToKeys(nn.Sequential):
                 outputs = super().forward(inputs)
             except TypeError as e:
                 raise Exception(
-                    "Failed to apply transforms to multiple keys at the same time,"
-                    " try using KorniaParallelTransforms."
+                    "Failed to apply transforms to multiple keys at the same time, try using KorniaParallelTransforms."
                 ) from e
 
             for i, key in enumerate(keys):
