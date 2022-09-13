@@ -16,9 +16,9 @@ pr:
 jobs:
   - job: special
     # how long to run the job before automatically cancelling
-    timeoutInMinutes: 45
+    timeoutInMinutes: "45"
     # how much time to give 'run always even if cancelled tasks' before stopping them
-    cancelTimeoutInMinutes: 2
+    cancelTimeoutInMinutes: "2"
 
     pool: azure-gpus-spot
 
