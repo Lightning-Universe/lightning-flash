@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from typing import Callable, Dict, Mapping, Sequence, Type, Union
-
+from lightning_utilities.core.overrides import is_overridden
 from torch import nn
 
 
@@ -37,5 +37,5 @@ def _is_overridden(method_name: str, instance: object, parent: Type[object]) -> 
 
     if not hasattr(instance, method_name):
         return False
-
-    return getattr(instance, method_name).__code__ != getattr(parent, method_name).__code__
+    
+    return is_overridden(method_name, instance, parent)
