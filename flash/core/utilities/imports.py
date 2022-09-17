@@ -20,15 +20,15 @@ from importlib.util import find_spec
 from typing import Callable, List, Tuple, Union
 
 import pkg_resources
-from pkg_resources import DistributionNotFound
-from lightning_utilities.core.imports import module_available as _module_available
 from lightning_utilities.core.imports import compare_version as _compare_version
+from lightning_utilities.core.imports import module_available as _module_available
+from pkg_resources import DistributionNotFound
 
 try:
     from packaging.version import Version
 except (ModuleNotFoundError, DistributionNotFound):
     Version = None
-    
+
 
 _TORCH_AVAILABLE = _module_available("torch")
 _PL_AVAILABLE = _module_available("pytorch_lightning")
