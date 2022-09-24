@@ -13,11 +13,11 @@
 # limitations under the License.
 from typing import Any, Dict, List, Set, Tuple
 
+from lightning_utilities.core.overrides import is_overridden
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.utils import _CALLBACK_FUNCS
-from lightning_utilities.core.overrides import is_overridden
 from flash.core.utilities.stages import RunningStage
 
 
