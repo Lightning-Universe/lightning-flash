@@ -19,7 +19,7 @@ from flash.core.integrations.icevision.adapter import IceVisionAdapter, SimpleCO
 from flash.core.integrations.icevision.backbones import get_backbones, load_icevision_ignore_image_size
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE, module_available, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _TORCHVISION_AVAILABLE, module_available
 from flash.core.utilities.providers import _ICEVISION, _MMDET, _TORCHVISION
 
 if _ICEVISION_AVAILABLE:
