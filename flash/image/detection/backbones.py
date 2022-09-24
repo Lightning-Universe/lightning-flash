@@ -23,8 +23,9 @@ from flash.core.integrations.icevision.backbones import (
 )
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _TORCHVISION_AVAILABLE, module_available
+from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.core.utilities.providers import _EFFDET, _ICEVISION, _MMDET, _TORCHVISION, _ULTRALYTICS
+from lightning_utilities.core.imports import module_available
 
 if _ICEVISION_AVAILABLE:
     from icevision import models as icevision_models
