@@ -124,7 +124,7 @@ class BaseVisualization(BaseDataFetcher):
 
         for func_name in func_names_set:
             hook_name = f"show_{func_name}"
-            if is_overriden(hook_name, self, BaseVisualization):
+            if is_overridden(hook_name, self, BaseVisualization):
                 getattr(self, hook_name)(batch[func_name], running_stage, limit_nb_samples, figsize)
 
     def show_load_sample(
