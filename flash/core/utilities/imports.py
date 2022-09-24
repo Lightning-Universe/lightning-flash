@@ -18,9 +18,7 @@ import os
 import types
 from typing import List, Tuple, Union
 
-import pkg_resources
-from lightning_utilities.core.imports import compare_version
-from lightning_utilities.core.imports import module_available
+from lightning_utilities.core.imports import compare_version, module_available
 from pkg_resources import DistributionNotFound
 
 try:

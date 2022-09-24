@@ -14,6 +14,8 @@
 from functools import partial
 from typing import Optional
 
+from lightning_utilities.core.imports import module_available
+
 from flash.core.adapter import Adapter
 from flash.core.integrations.icevision.adapter import IceVisionAdapter, SimpleCOCOMetric
 from flash.core.integrations.icevision.backbones import (
@@ -23,7 +25,7 @@ from flash.core.integrations.icevision.backbones import (
 )
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE, module_available, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.core.utilities.providers import _EFFDET, _ICEVISION, _MMDET, _TORCHVISION, _ULTRALYTICS
 
 if _ICEVISION_AVAILABLE:

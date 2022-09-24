@@ -29,4 +29,12 @@ def get_callable_dict(fn: Union[nn.Module, Callable, Mapping, Sequence]) -> Unio
     if isinstance(fn, Sequence):
         return {get_callable_name(f): f for f in fn}
     if callable(fn):
+<<<<<<< HEAD
         return {get_callable_name(fn): fn}
+=======
+        return {get_callable_name(fn): fn}
+
+
+def _is_overridden(method_name: str, instance: object, parent: Type[object]) -> bool:
+    return is_overridden(method_name, instance, parent)
+>>>>>>> c25d3df0a5fd2895b73bfdd5fd7835e0ae5e6f8f
