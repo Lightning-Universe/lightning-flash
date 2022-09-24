@@ -23,7 +23,7 @@ from flash.core.integrations.icevision.backbones import (
 )
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _module_available, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _ICEVISION_AVAILABLE, module_available, _TORCHVISION_AVAILABLE
 from flash.core.utilities.providers import _EFFDET, _ICEVISION, _MMDET, _TORCHVISION, _ULTRALYTICS
 
 if _ICEVISION_AVAILABLE:
@@ -75,7 +75,7 @@ if _ICEVISION_AVAILABLE:
                 providers=[_ICEVISION, _TORCHVISION],
             )
 
-    if _module_available("yolov5"):
+    if module_available("yolov5"):
         model_type = icevision_models.ultralytics.yolov5
         OBJECT_DETECTION_HEADS(
             partial(load_icevision_with_image_size, model_type),
@@ -85,7 +85,7 @@ if _ICEVISION_AVAILABLE:
             providers=[_ICEVISION, _ULTRALYTICS],
         )
 
-    if _module_available("mmdet"):
+    if module_available("mmdet"):
         for model_type in [
             icevision_models.mmdet.faster_rcnn,
             icevision_models.mmdet.retinanet,
@@ -100,7 +100,7 @@ if _ICEVISION_AVAILABLE:
                 providers=[_ICEVISION, _MMDET],
             )
 
-    if _module_available("effdet"):
+    if module_available("effdet"):
 
         model_type = icevision_models.ross.efficientdet
         OBJECT_DETECTION_HEADS(
