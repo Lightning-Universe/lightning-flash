@@ -51,11 +51,28 @@ class TestTextClassifier(TaskTester):
                         {"enable_ort": True},
                         marks=pytest.mark.skipif(not _TORCH_ORT_AVAILABLE, reason="ORT Module aren't installed."),
                     ),
+                    {"backbone": "clip_resnet50"},
                 ],
             )
         ],
-        "test_val": [pytest.mark.parametrize("task_kwargs", [{}])],
-        "test_test": [pytest.mark.parametrize("task_kwargs", [{}])],
+        "test_val": [
+            pytest.mark.parametrize(
+                "task_kwargs",
+                [
+                    {},
+                    {"backbone": "clip_resnet50"},
+                ],
+            )
+        ],
+        "test_test": [
+            pytest.mark.parametrize(
+                "task_kwargs",
+                [
+                    {},
+                    {"backbone": "clip_resnet50"},
+                ],
+            )
+        ],
         "test_cli": [pytest.mark.parametrize("extra_args", ([], ["from_toxic"]))],
     }
 

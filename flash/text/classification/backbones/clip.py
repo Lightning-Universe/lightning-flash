@@ -19,6 +19,7 @@ from torch import nn
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.providers import _CLIP
 from flash.core.utilities.url_error import catch_url_error
+from flash.text.classification.adapters import GenericAdapter
 
 # Paper: Learning Transferable Visual Models From Natural Language Supervision
 # https://arxiv.org/abs/2103.00020 from Alec Radford et. al. (26 Feb 2021)
@@ -39,14 +40,20 @@ class _CLIPWrapper(nn.Module):
         self.clip_model = clip_model
 
     def forward(self, x):
-        return self.clip_model.encode_image(x)
+        return self.clip_model.encode_text(x)
 
 
-def _load_clip(model_name: str, **kwargs):
+def _load_clip(model_name: str):
     backbone, _ = torch.hub.load("openai/CLIP:main", model_name)
-    return _CLIPWrapper(backbone), backbone.visual.output_dim
+    return _CLIPWrapper(backbone), torch.hub.load("openai/CLIP:main", "tokenize"), backbone.visual.output_dim
 
 
-def register_clip_backbones(register: FlashRegistry):
-    for clip_model_name, flash_model_name in _CLIP_MODELS.items():
-        register(catch_url_error(partial(_load_clip, clip_model_name)), f"clip_{flash_model_name}", providers=_CLIP)
+CLIP_BACKBONES = FlashRegistry("backbones")
+
+for clip_model_name, flash_model_name in _CLIP_MODELS.items():
+    CLIP_BACKBONES(
+        catch_url_error(partial(_load_clip, clip_model_name)),
+        f"clip_{flash_model_name}",
+        providers=_CLIP,
+        adapter=GenericAdapter,
+    )
