@@ -6,3 +6,4 @@ torchmetrics[text]>=0.5.1
 datasets>=1.8
 sentence-transformers
 ftfy
+regex
