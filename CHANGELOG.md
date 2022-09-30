@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added support for CLIP backbones to the `TextClassifier` and `ImageClassifier` tasks ([#1458](https://github.com/Lightning-AI/lightning-flash/pull/1458))
+
 
 ### Changed
 
