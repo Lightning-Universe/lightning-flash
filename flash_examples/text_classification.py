@@ -29,10 +29,10 @@ datamodule = TextClassificationData.from_csv(
 )
 
 # 2. Build the task
-model = TextClassifier(backbone="prajjwal1/bert-medium", labels=datamodule.labels)
+model = TextClassifier(backbone="prajjwal1/bert-tiny", labels=datamodule.labels)
 
 # 3. Create the trainer and finetune the model
-trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count())
+trainer = flash.Trainer(max_epochs=3, gpus=torch.cuda.device_count(), limit_train_batches=10, limit_val_batches=1)
 trainer.finetune(model, datamodule=datamodule, strategy="freeze")
 
 # 4. Classify a few sentences! How was the movie?
