@@ -81,7 +81,7 @@ class TextClassifier(ClassificationAdapterTask):
         metadata = self.backbones.get(backbone, with_metadata=True)
         adapter = metadata["metadata"]["adapter"].from_task(
             self,
-            backbone=backbone,
+            backbone=metadata["fn"],
             num_classes=num_classes,
             max_length=max_length,
             **kwargs,
@@ -101,6 +101,8 @@ class TextClassifier(ClassificationAdapterTask):
 
         self.enable_ort = enable_ort
         self.max_length = max_length
+
+        print(list(self.parameters()))
 
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]):
         """This function is used only for debugging usage with CI."""

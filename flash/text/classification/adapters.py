@@ -25,7 +25,6 @@ from flash.core.data.io.input import DataKeys
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
-from flash.core.utilities.url_error import catch_url_error
 from flash.image.classification.heads import IMAGE_CLASSIFIER_HEADS
 from flash.text.classification.collate import TextClassificationCollate
 
@@ -43,14 +42,12 @@ class HuggingFaceAdapter(Adapter):
         # set os environ variable for multiprocesses
         os.environ["PYTHONWARNINGS"] = "ignore"
 
-        self.collate_fn = TextClassificationCollate(backbone=backbone, max_length=max_length)
-        self.model = self.backbones.get(backbone)(num_labels=num_classes)
+        self.model, tokenizer = backbone(num_classes)
+        self.collate_fn = TextClassificationCollate(tokenizer, max_length=max_length)
 
     @classmethod
-    @catch_url_error
     def from_task(
         cls,
-        *args,
         task: AdapterTask,
         backbone: str,
         num_classes: int,
@@ -70,18 +67,19 @@ class HuggingFaceAdapter(Adapter):
             result = result.logits
         return result
 
-    def step(self, batch, batch_idx, metrics) -> dict:
+    def training_step(self, batch: Any, batch_idx: int) -> Any:
         target = batch.pop(DataKeys.TARGET)
         batch = (batch, target)
-        return Task.step(self._task, batch, batch_idx, metrics)
-
-    def training_step(self, batch: Any, batch_idx: int) -> Any:
         return Task.training_step(self._task, batch, batch_idx)
 
     def validation_step(self, batch: Any, batch_idx: int) -> None:
+        target = batch.pop(DataKeys.TARGET)
+        batch = (batch, target)
         return Task.validation_step(self._task, batch, batch_idx)
 
     def test_step(self, batch: Any, batch_idx: int) -> None:
+        target = batch.pop(DataKeys.TARGET)
+        batch = (batch, target)
         return Task.test_step(self._task, batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
@@ -116,10 +114,10 @@ class GenericAdapter(Adapter):
     # TODO: Move IMAGE_CLASSIFIIER_HEADS out for general classification tasks
     heads: FlashRegistry = IMAGE_CLASSIFIER_HEADS
 
-    def __init__(self, backbone, num_classes: int, _: int = 128, head="linear"):
+    def __init__(self, backbone, num_classes: int, max_length: int = 128, head="linear"):
         super().__init__()
 
-        self.backbone, tokenizer, num_features = backbone
+        self.backbone, tokenizer, num_features = backbone()
 
         self.collate_fn = GenericCollate(tokenizer)
 
@@ -129,6 +127,18 @@ class GenericAdapter(Adapter):
             head = head(num_features, num_classes) if isinstance(head, FunctionType) else head
 
         self.head = head
+
+    @classmethod
+    def from_task(
+        cls,
+        task: AdapterTask,
+        backbone: str,
+        num_classes: int,
+        **kwargs,
+    ) -> Adapter:
+        adapter = cls(backbone, num_classes, **kwargs)
+        adapter.__dict__["_task"] = task
+        return adapter
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])

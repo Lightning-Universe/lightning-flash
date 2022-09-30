@@ -36,6 +36,8 @@ _CLIP_MODELS = {
 
 class _CLIPWrapper(nn.Module):
     def __init__(self, clip_model: nn.Module):
+        super().__init__()
+
         self.clip_model = clip_model
 
     def forward(self, x):

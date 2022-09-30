@@ -37,15 +37,19 @@ _CLIP_MODELS = {
 
 class _CLIPWrapper(nn.Module):
     def __init__(self, clip_model: nn.Module):
+        super().__init__()
+
         self.clip_model = clip_model
 
     def forward(self, x):
         return self.clip_model.encode_text(x)
 
 
-def _load_clip(model_name: str):
+def _load_clip(model_name: str, **kwargs):
     backbone, _ = torch.hub.load("openai/CLIP:main", model_name)
-    return _CLIPWrapper(backbone), torch.hub.load("openai/CLIP:main", "tokenize"), backbone.visual.output_dim
+    tokenizer = torch.hub.load("openai/CLIP:main", "tokenize")
+    tokenizer = partial(tokenizer, truncate=True)
+    return _CLIPWrapper(backbone), tokenizer, backbone.visual.output_dim
 
 
 CLIP_BACKBONES = FlashRegistry("backbones")

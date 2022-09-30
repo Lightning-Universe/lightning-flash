@@ -24,11 +24,18 @@ from flash.text.classification.adapters import HuggingFaceAdapter
 if _TRANSFORMERS_AVAILABLE:
     from transformers import AutoModelForSequenceClassification
 
+
+def load_hugingface(backbone: str, num_classes: int):
+    model = AutoModelForSequenceClassification.from_pretrained(backbone, num_labels=num_classes)
+    return model, backbone
+
+
 HUGGINGFACE_BACKBONES = FlashRegistry("backbones")
 
 if _TRANSFORMERS_AVAILABLE:
+
     HUGGINGFACE_BACKBONES = ExternalRegistry(
-        getter=AutoModelForSequenceClassification.from_pretrained,
+        getter=load_hugingface,
         name="backbones",
         providers=_HUGGINGFACE,
         adapter=HuggingFaceAdapter,

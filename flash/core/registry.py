@@ -205,11 +205,13 @@ class ExternalRegistry(FlashRegistry):
         name: str,
         providers: Optional[Union[Provider, List[Provider]]] = None,
         verbose: bool = False,
+        **metadata,
     ):
         super().__init__(name, verbose=verbose)
 
         self.getter = getter
         self.providers = providers if providers is None or isinstance(providers, list) else [providers]
+        self.metadata = metadata
 
     def __contains__(self, item):
         """Contains is always ``True`` for an ``ExternalRegistry`` as we can't know whether the getter will fail
@@ -228,7 +230,10 @@ class ExternalRegistry(FlashRegistry):
         fn = functools.partial(self.getter, key)
         if self.providers is not None:
             fn = print_provider_info(key, self.providers, fn)
-        return fn
+
+        if not with_metadata:
+            return fn
+        return {"fn": fn, "metadata": self.metadata}
 
     def available_keys(self) -> List[str]:
         """Since we don't know the available keys, just give a generic message."""
@@ -242,7 +247,12 @@ class ConcatRegistry(FlashRegistry):
 
     def __init__(self, *registries: FlashRegistry):
         super().__init__(
-            ",".join({registry.name for registry in registries}),
+            ",".join(
+                {
+                    registry.name
+                    for registry in sorted(registries, key=lambda r: 1 if isinstance(r, ExternalRegistry) else 0)
+                }
+            ),
             verbose=any(registry._verbose for registry in registries),
         )
 
