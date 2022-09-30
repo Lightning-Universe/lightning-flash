@@ -18,7 +18,6 @@ from types import FunctionType
 from typing import Any, Callable, Dict
 
 import torch
-from pytorch_lightning.utilities import rank_zero_warn
 from torch import Tensor
 
 from flash.core.adapter import Adapter, AdapterTask
@@ -122,15 +121,12 @@ class GenericAdapter(Adapter):
 
         self.collate_fn = GenericCollate(tokenizer)
 
-        if num_classes is not None:
-            if isinstance(head, str):
-                head = self.heads.get(head)(num_features=num_features, num_classes=num_classes)
-            else:
-                head = head(num_features, num_classes) if isinstance(head, FunctionType) else head
-
-            self.head = head
+        if isinstance(head, str):
+            head = self.heads.get(head)(num_features=num_features, num_classes=num_classes)
         else:
-            rank_zero_warn("No `num_classes` was provided. This model cannot be trained.")
+            head = head(num_features, num_classes) if isinstance(head, FunctionType) else head
+
+        self.head = head
 
     @classmethod
     def from_task(
