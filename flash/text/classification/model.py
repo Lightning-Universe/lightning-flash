@@ -102,8 +102,6 @@ class TextClassifier(ClassificationAdapterTask):
         self.enable_ort = enable_ort
         self.max_length = max_length
 
-        print(list(self.parameters()))
-
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]):
         """This function is used only for debugging usage with CI."""
         if self.hparams.multi_label:
