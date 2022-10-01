@@ -31,6 +31,7 @@ class Provider:
 
 _TIMM = Provider("rwightman/pytorch-image-models", "https://github.com/rwightman/pytorch-image-models")
 _DINO = Provider("Facebook Research/dino", "https://github.com/facebookresearch/dino")
+_CLIP = Provider("OpenAI/CLIP", "https://github.com/openai/CLIP")
 _ICEVISION = Provider("airctic/IceVision", "https://github.com/airctic/icevision")
 _TORCHVISION = Provider("PyTorch/torchvision", "https://github.com/pytorch/vision")
 _ULTRALYTICS = Provider("Ultralytics/YOLOV5", "https://github.com/ultralytics/yolov5")

@@ -244,7 +244,7 @@ def test_classification_task_trainer_predict(tmpdir):
         ),
         pytest.param(
             TextClassifier,
-            "0.7.0/text_classification_model.pt",
+            "0.9.0/text_classification_model.pt",
             marks=pytest.mark.skipif(
                 not _TEXT_TESTING,
                 reason="text packages aren't installed",
