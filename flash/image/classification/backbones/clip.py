@@ -34,7 +34,7 @@ _CLIP_MODELS = {
     "ViT_B_32": "vitb32",
     "ViT_B_16": "vitb16",
     "ViT_L_14": "vitl14",
-    "ViT_L_14@336px": "vitl14@336px",
+    "ViT_L_14_336px": "vitl14@336px",
 }
 
 
