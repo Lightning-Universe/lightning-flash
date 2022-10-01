@@ -1,6 +1,9 @@
+torchvision
 sentencepiece>=0.1.95
 filelock
 transformers>=4.5
 torchmetrics[text]>=0.5.1
 datasets>=1.8
 sentence-transformers
+ftfy
+regex

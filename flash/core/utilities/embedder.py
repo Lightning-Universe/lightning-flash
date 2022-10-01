@@ -11,10 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any
+from typing import Any, Optional
 
 from pytorch_lightning import LightningModule
+from torch.utils.data import DataLoader, Sampler
 
+import flash
+from flash.core.data.io.input import InputBase
+from flash.core.data.io.input_transform import InputTransform
 from flash.core.model import Task
 
 
@@ -32,6 +36,32 @@ class Embedder(Task):
         self._module, self._hook = self._make_hook()
         self._handle = None
         self._out = None
+
+    def process_predict_dataset(
+        self,
+        dataset: InputBase,
+        batch_size: int,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        shuffle: bool = False,
+        drop_last: bool = False,
+        sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
+        input_transform: Optional[InputTransform] = None,
+        trainer: Optional["flash.Trainer"] = None,
+    ) -> DataLoader:
+        return self.model.process_predict_dataset(
+            dataset,
+            batch_size,
+            num_workers,
+            pin_memory,
+            shuffle,
+            drop_last,
+            sampler,
+            persistent_workers,
+            input_transform,
+            trainer,
+        )
 
     def _make_hook(self):
         def hook(_, __, output):

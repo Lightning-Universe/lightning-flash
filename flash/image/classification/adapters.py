@@ -530,7 +530,7 @@ class DefaultAdapter(Adapter):
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         batch[DataKeys.PREDS] = Task.predict_step(
-            self._task, (batch[DataKeys.INPUT]), batch_idx, dataloader_idx=dataloader_idx
+            self._task, batch[DataKeys.INPUT], batch_idx, dataloader_idx=dataloader_idx
         )
         return batch
 
