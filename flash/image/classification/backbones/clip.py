@@ -28,9 +28,13 @@ from flash.core.utilities.url_error import catch_url_error
 _CLIP_MODELS = {
     "RN50": "resnet50",
     "RN101": "resnet101",
+    "RN50x4": "resrnet50x4",
+    "RN50x16": "resrnet50x16",
+    "RN50x64": "resrnet50x64",
     "ViT_B_32": "vitb32",
     "ViT_B_16": "vitb16",
     "ViT_L_14": "vitl14",
+    "ViT_L_14@336px": "vitl14@336px",
 }
 
 
