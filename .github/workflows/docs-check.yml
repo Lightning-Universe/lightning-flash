@@ -81,6 +81,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y cmake pandoc
+          sudo apt-get install -y libsndfile1
           pip install '.[all]' --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
           pip install '.[test]' --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
           pip install --requirement requirements/docs.txt
