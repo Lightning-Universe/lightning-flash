@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, Union
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 
-from flash.core.classification import ClassificationAdapterTask
+from flash.core.classification import ClassificationAdapterTask, CLASSIFIER_HEADS
 from flash.core.data.io.input import ServeInput
 from flash.core.data.io.output import Output
 from flash.core.registry import FlashRegistry
@@ -32,7 +32,6 @@ from flash.core.utilities.types import (
 )
 from flash.image.classification.adapters import TRAINING_STRATEGIES
 from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES
-from flash.image.classification.heads import IMAGE_CLASSIFIER_HEADS
 from flash.image.classification.input_transform import ImageClassificationInputTransform
 from flash.image.data import ImageDeserializer
 
@@ -81,7 +80,7 @@ class ImageClassifier(ClassificationAdapterTask):
     """
 
     backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES
-    heads: FlashRegistry = IMAGE_CLASSIFIER_HEADS
+    heads: FlashRegistry = CLASSIFIER_HEADS
     training_strategies: FlashRegistry = TRAINING_STRATEGIES
     required_extras: str = "image"
 
