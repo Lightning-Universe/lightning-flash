@@ -22,7 +22,6 @@ from flash.pointcloud.segmentation.datasets import LyftDataset, SemanticKITTIDat
 @pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed")
 @patch("flash.pointcloud.segmentation.datasets.os.system")
 def test_datasets(mock_system):
-
     LyftDataset("data")
     assert mock_system.call_count == 2
     assert "lyft" in mock_system.call_args_list[0][0][0]

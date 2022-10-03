@@ -1,4 +1,4 @@
-r""" Static order of nodes in task graph
+r"""Static order of nodes in task graph.
 
 This module makes decisions on what tasks to prioritize both
 

@@ -137,7 +137,6 @@ def test_unfreeze():
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_multilabel(tmpdir):
-
     num_classes = 4
     ds = DummyMultiLabelDataset(num_classes)
     model = ImageClassifier(num_classes, multi_label=True)

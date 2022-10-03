@@ -38,7 +38,6 @@ def csv_data(tmpdir):
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
 def test_classification(tmpdir):
-
     csv_path = csv_data(tmpdir)
 
     data = TextClassificationData.from_csv(

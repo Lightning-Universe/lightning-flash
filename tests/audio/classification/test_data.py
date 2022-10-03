@@ -52,7 +52,6 @@ def _audio_files(_):
 @pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 @pytest.mark.parametrize("file_generator", [_image_files, _audio_files])
 def test_from_filepaths(tmpdir, file_generator):
-
     train_images, channels = file_generator(tmpdir)
 
     spectrograms_data = AudioClassificationData.from_files(
@@ -258,7 +257,6 @@ def test_from_filepaths_visualise_multilabel(tmpdir):
 
 @pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
 def test_from_folders_only_train(tmpdir):
-
     seed_everything(42)
 
     train_dir = Path(tmpdir / "train")

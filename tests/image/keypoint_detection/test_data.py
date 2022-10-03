@@ -21,7 +21,6 @@ from tests.image.detection.test_data import _create_synth_files_dataset, _create
 
 @pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image libraries aren't installed.")
 def test_image_detector_data_from_files(tmpdir):
-
     predict_files = _create_synth_files_dataset(tmpdir)
     datamodule = KeypointDetectionData.from_files(
         predict_files=predict_files, batch_size=1, transform_kwargs=dict(image_size=(128, 128))
@@ -33,7 +32,6 @@ def test_image_detector_data_from_files(tmpdir):
 
 @pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image libraries aren't installed.")
 def test_image_detector_data_from_folders(tmpdir):
-
     predict_folder = _create_synth_folders_dataset(tmpdir)
     datamodule = KeypointDetectionData.from_folders(
         predict_folder=predict_folder, batch_size=1, transform_kwargs=dict(image_size=(128, 128))

@@ -50,7 +50,6 @@ class ObjectDetectBatchCollator(ObjectDetectBatch):
 
 
 def register_open_3d_ml(register: FlashRegistry):
-
     if _POINTCLOUD_AVAILABLE:
 
         CONFIG_PATH = os.path.join(os.path.dirname(open3d.__file__), "_ml3d/configs")

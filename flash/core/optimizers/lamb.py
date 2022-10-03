@@ -33,8 +33,8 @@ if not _CORE_TESTING:
 
 
 class LAMB(Optimizer):
-    r"""Extends ADAM in pytorch to incorporate LAMB algorithm from the paper:
-    `Large batch optimization for deep learning: Training BERT in 76 minutes <https://arxiv.org/pdf/1904.00962.pdf>`_.
+    r"""Extends ADAM in pytorch to incorporate LAMB algorithm from the paper: `Large batch optimization for deep
+    learning: Training BERT in 76 minutes <https://arxiv.org/pdf/1904.00962.pdf>`_.
 
     Args:
         params (iterable): iterable of parameters to optimize or dicts defining

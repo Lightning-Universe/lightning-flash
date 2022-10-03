@@ -55,7 +55,6 @@ def test_classification_outputs_multi_label():
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
 def test_classification_outputs_fiftyone():
-
     logits = torch.tensor([-0.1, 0.2, 0.3])
     example_output = {DataKeys.PREDS: logits, DataKeys.METADATA: {"filepath": "something"}}  # 3 classes
     labels = ["class_1", "class_2", "class_3"]

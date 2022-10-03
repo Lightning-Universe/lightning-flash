@@ -131,7 +131,6 @@ class CustomInputTransform(InputTransform):
 
 @pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_check_transforms():
-
     input_transform = CustomInputTransform
 
     with pytest.raises(MisconfigurationException, match="are mutually exclusive"):

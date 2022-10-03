@@ -29,7 +29,6 @@ if _FIFTYONE_AVAILABLE:
 
 
 def _create_dummy_coco_json(dummy_json_path):
-
     dummy_json = {
         "images": [
             {
@@ -103,7 +102,6 @@ def _create_synth_coco_dataset(tmpdir):
 
 
 def _create_synth_folders_dataset(tmpdir):
-
     predict = Path(tmpdir / "predict")
     predict.mkdir()
 
@@ -117,7 +115,6 @@ def _create_synth_folders_dataset(tmpdir):
 
 
 def _create_synth_files_dataset(tmpdir):
-
     predict_folder = _create_synth_folders_dataset(tmpdir)
 
     return [os.path.join(predict_folder, f) for f in os.listdir(predict_folder)]
@@ -165,7 +162,6 @@ def _create_synth_fiftyone_dataset(tmpdir):
 
 @pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image libraries aren't installed.")
 def test_image_detector_data_from_coco(tmpdir):
-
     train_folder, coco_ann_path = _create_synth_coco_dataset(tmpdir)
 
     datamodule = ObjectDetectionData.from_coco(
@@ -200,7 +196,6 @@ def test_image_detector_data_from_coco(tmpdir):
 @pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
 def test_image_detector_data_from_fiftyone(tmpdir):
-
     train_dataset = _create_synth_fiftyone_dataset(tmpdir)
 
     datamodule = ObjectDetectionData.from_fiftyone(
@@ -231,7 +226,6 @@ def test_image_detector_data_from_fiftyone(tmpdir):
 
 @pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image libraries aren't installed.")
 def test_image_detector_data_from_files(tmpdir):
-
     predict_files = _create_synth_files_dataset(tmpdir)
     datamodule = ObjectDetectionData.from_files(
         predict_files=predict_files, batch_size=1, transform_kwargs=dict(image_size=128)
@@ -243,7 +237,6 @@ def test_image_detector_data_from_files(tmpdir):
 
 @pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image libraries aren't installed.")
 def test_image_detector_data_from_folders(tmpdir):
-
     predict_folder = _create_synth_folders_dataset(tmpdir)
     datamodule = ObjectDetectionData.from_folders(
         predict_folder=predict_folder, batch_size=1, transform_kwargs=dict(image_size=128)

@@ -520,7 +520,6 @@ def test_from_fiftyone(tmpdir):
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_from_datasets():
-
     img_data = ImageClassificationData.from_datasets(
         train_dataset=FakeData(size=3, num_classes=2),
         val_dataset=FakeData(size=3, num_classes=2),
