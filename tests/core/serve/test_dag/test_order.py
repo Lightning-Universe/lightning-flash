@@ -39,7 +39,9 @@ def test_ordering_keeps_groups_together(abcde):
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_avoid_broker_nodes(abcde):
-    r"""b0    b1  b2.
+    r"""Testing structure.
+    
+    b0    b1  b2
 
     |      \  /
     a0      a1
@@ -82,7 +84,9 @@ def test_avoid_broker_nodes(abcde):
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_base_of_reduce_preferred(abcde):
-    r"""a3.
+    r"""Testing structure.
+    
+    a3
 
               /|
             a2 |
@@ -282,7 +286,9 @@ def test_prefer_short_dependents(abcde):
 @pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 @pytest.mark.xfail(reason="This is challenging to do precisely")
 def test_run_smaller_sections(abcde):
-    r"""aa.
+    r"""Testing structure.
+    
+    aa
 
            / |
       b   d  bb dd
@@ -372,7 +378,10 @@ def test_local_parents_of_reduction(abcde):
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_nearest_neighbor(abcde):
-    r"""a1  a2  a3  a4  a5  a6  a7 a8  a9.
+    r"""
+    Testing structure.
+    
+    a1  a2  a3  a4  a5  a6  a7 a8  a9
 
      \  |  /  \ |  /  \ |  / \ |  /
         b1      b2      b3     b4
@@ -504,7 +513,9 @@ def test_prefer_short_ancestor(abcde):
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_map_overlap(abcde):
-    r"""b1      b3      b5.
+    r"""Testing structure.
+    
+    b1      b3      b5
 
        |\    / | \  / |
       c1  c2  c3  c4  c5
@@ -657,7 +668,9 @@ def test_order_empty():
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_switching_dependents(abcde):
-    r"""a7 a8  <-- do these last.
+    r"""Testing structure.
+    
+    a7 a8  <-- do these last
 
     | /
     a6                e6
