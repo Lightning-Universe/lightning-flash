@@ -169,7 +169,7 @@ class Trainer(PlTrainer):
         **kwargs,
     ):
         r"""Run inference on your data.
-        
+
          This will call the model forward function to compute predictions. Useful to
         perform distributed and batched predictions. Logging is disabled in the prediction hooks.
 

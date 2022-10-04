@@ -30,7 +30,8 @@ if not _CORE_TESTING:
 
 
 class LARS(Optimizer):
-    r"""Extends SGD in PyTorch with LARS scaling from the paper `Large batch training of Convolutional Networks
+    r"""Extends SGD in PyTorch with LARS scaling from the paper `Large batch training of Convolutional Networks.
+
     <https://arxiv.org/pdf/1708.03888.pdf>`_.
 
     Args:
