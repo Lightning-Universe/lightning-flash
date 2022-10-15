@@ -18,8 +18,5 @@ from flash.core.registry import FlashRegistry  # noqa: F401
 # define ImageClassifier registry
 IMAGE_CLASSIFIER_HEADS = FlashRegistry("classifier_heads")
 
-
-IMAGE_CLASSIFIER_HEADS(
-    CLASSIFIER_HEADS,
-    name="linear",
-)
+# Add classifier heads to IMAGE_CLASSIFIER_HEADS using map
+any(map(lambda x: IMAGE_CLASSIFIER_HEADS(x["fn"], name=x["name"]), CLASSIFIER_HEADS.functions))
