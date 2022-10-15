@@ -32,7 +32,7 @@ from flash.core.utilities.types import (
 )
 from flash.image.classification.adapters import TRAINING_STRATEGIES
 from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES
-from flash.image.classification.head import IMAGE_CLASSIFIER_HEADS
+from flash.image.classification.heads import IMAGE_CLASSIFIER_HEADS
 from flash.image.classification.input_transform import ImageClassificationInputTransform
 from flash.image.data import ImageDeserializer
 
