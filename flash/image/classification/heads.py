@@ -19,4 +19,4 @@ from flash.core.registry import FlashRegistry  # noqa: F401
 IMAGE_CLASSIFIER_HEADS = FlashRegistry("classifier_heads")
 
 # Add classifier heads to IMAGE_CLASSIFIER_HEADS using map
-any(map(lambda x: IMAGE_CLASSIFIER_HEADS(x["fn"], name=x["name"]), CLASSIFIER_HEADS.functions))
+IMAGE_CLASSIFIER_HEADS = IMAGE_CLASSIFIER_HEADS + CLASSIFIER_HEADS
