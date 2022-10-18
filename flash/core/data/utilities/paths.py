@@ -15,7 +15,6 @@ import os
 from typing import Any, Callable, cast, List, Optional, Tuple, Union
 
 from pytorch_lightning.utilities import rank_zero_warn
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.utilities.sort import sorted_alphanumeric
 
@@ -160,7 +159,7 @@ def filter_valid_files(
     additional_lists = tuple([a] if not isinstance(a, List) else a for a in additional_lists)
 
     if not all(len(a) == len(files) for a in additional_lists):
-        raise MisconfigurationException(
+        raise ValueError(
             f"The number of files ({len(files)}) and the number of items in any additional lists must be the same."
         )
 

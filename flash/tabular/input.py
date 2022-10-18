@@ -15,7 +15,6 @@ from io import StringIO
 from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.io.input import DataKeys, Input, ServeInput
 from flash.core.utilities.imports import _PANDAS_AVAILABLE
@@ -85,7 +84,7 @@ class TabularDataFrameInput(Input):
             categorical_fields, numerical_fields = self._sanetize_fields(categorical_fields, numerical_fields)
             parameters = self.compute_parameters(df, numerical_fields, categorical_fields)
         elif parameters is None:
-            raise MisconfigurationException(
+            raise ValueError(
                 "Loading tabular data for evaluation or inference requires parameters from the train data. Either "
                 "construct the train data at the same time as evaluation and inference or provide the train "
                 "`datamodule.parameters` in the `parameters` argument."

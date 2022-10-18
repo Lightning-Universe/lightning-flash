@@ -16,7 +16,6 @@ from unittest import mock
 
 import pytest
 import torch
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 
 import flash
@@ -104,7 +103,7 @@ class TestTextClassifier(TaskTester):
 
         trainer = flash.Trainer(default_root_dir=tmpdir, fast_dev_run=True, callbacks=ORTCallback())
 
-        with pytest.raises(MisconfigurationException, match="Torch ORT requires to wrap a single model"):
+        with pytest.raises(ValueError, match="Torch ORT requires to wrap a single model"):
             trainer.fit(model, model.process_train_dataset(dataset, batch_size=4))
 
 

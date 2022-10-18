@@ -17,7 +17,6 @@ import itertools
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from pytorch_lightning.utilities import rank_zero_info
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.utilities.providers import Provider
 
@@ -120,7 +119,7 @@ class FlashRegistry:
         metadata: Optional[Dict[str, Any]] = None,
     ):
         if not callable(fn):
-            raise MisconfigurationException(f"You can only register a callable, found: {fn}")
+            raise TypeError(f"You can only register a callable, found: {fn}")
 
         if name is None:
             if hasattr(fn, "func"):
@@ -142,7 +141,7 @@ class FlashRegistry:
             self.functions[matching_index] = item
         else:
             if matching_index is not None:
-                raise MisconfigurationException(
+                raise ValueError(
                     f"Function with name: {name} and metadata: {metadata} is already present within {self}."
                     " HINT: Use `override=True`."
                 )

@@ -25,7 +25,6 @@ from pytorch_lightning.accelerators.tpu import TPUAccelerator
 from pytorch_lightning.callbacks import BaseFinetuning
 from pytorch_lightning.utilities import rank_zero_info
 from pytorch_lightning.utilities.argparse import add_argparse_args, get_init_arguments_and_types, parse_env_variables
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader
 
 import flash
@@ -219,7 +218,7 @@ class Trainer(PlTrainer):
             warnings.warn("The model contains a default finetune callback.", UserWarning)
         finetuning_callback = model.configure_finetune_callback(strategy=strategy, train_bn=train_bn)
         if len(finetuning_callback) > 1:
-            raise MisconfigurationException("Create a list with only 1 finetuning callback.")
+            raise ValueError("Create a list with only 1 finetuning callback.")
         self.callbacks = self._merge_callbacks(self.callbacks, finetuning_callback)
 
     @staticmethod
@@ -272,7 +271,7 @@ class Trainer(PlTrainer):
         accumulation_scheduler = self.accumulation_scheduler
 
         if accumulation_scheduler.epochs != [0]:
-            raise MisconfigurationException(
+            raise ValueError(
                 "Estimated stepping batches cannot be computed with different"
                 " `accumulate_grad_batches` at different epochs."
             )

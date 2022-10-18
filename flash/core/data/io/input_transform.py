@@ -18,7 +18,6 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from pytorch_lightning.utilities import rank_zero_warn
 from pytorch_lightning.utilities.enums import LightningEnum
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.callback import ControlFlow
 from flash.core.data.utilities.collate import default_collate
@@ -697,7 +696,7 @@ class InputTransform:
                 continue
 
             if not callable(fn):
-                raise MisconfigurationException(f"The hook {method_name} should return a callable.")
+                raise TypeError(f"The hook {method_name} should return a callable.")
 
             transforms[transform_name] = fn
 
@@ -708,7 +707,7 @@ class InputTransform:
         is_per_sample_transform_on_device_in = "per_sample_transform_on_device" in transform
 
         if is_per_batch_transform_in and is_per_sample_transform_on_device_in:
-            raise MisconfigurationException(
+            raise TypeError(
                 f"{transform}: `per_batch_transform` and `per_sample_transform_on_device` are mutually exclusive."
             )
 
@@ -751,7 +750,7 @@ def create_or_configure_input_transform(
     if not transform:
         return None
 
-    raise MisconfigurationException(f"The format for the transform isn't correct. Found {transform}")
+    raise ValueError(f"The format for the transform isn't correct. Found {transform}")
 
 
 class _InputTransformProcessor:
