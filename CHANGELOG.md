@@ -22,6 +22,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Fixed compatibility with `torchmetrics==1.10.0` ([#1469](https://github.com/Lightning-AI/lightning-flash/pull/1469))
+
 
 ## [0.8.0] - 2022-09-02
 
