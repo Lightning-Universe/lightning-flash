@@ -90,6 +90,7 @@ if Version:
     _PANDAS_GREATER_EQUAL_1_3_0 = compare_version("pandas", operator.ge, "1.3.0")
     _ICEVISION_GREATER_EQUAL_0_11_0 = compare_version("icevision", operator.ge, "0.11.0")
     _TM_GREATER_EQUAL_0_7_0 = compare_version("torchmetrics", operator.ge, "0.7.0")
+    _TM_GREATER_EQUAL_0_10_0 = compare_version("torchmetrics", operator.ge, "0.10.0")
     _BAAL_GREATER_EQUAL_1_5_2 = compare_version("baal", operator.ge, "1.5.2")
 
 _TEXT_AVAILABLE = all(
