@@ -14,8 +14,6 @@
 from copy import copy
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
-
 from flash.core.data.io.input import DataKeys, Input
 from flash.core.utilities.imports import _FORECASTING_AVAILABLE, _PANDAS_AVAILABLE, requires
 
@@ -51,7 +49,7 @@ class TabularForecastingDataFrameInput(Input):
             self.parameters = parameters
         else:
             if parameters is None:
-                raise MisconfigurationException(
+                raise ValueError(
                     "Loading data for evaluation or inference requires parameters from the train data. Either "
                     "construct the train data at the same time as evaluation and inference or provide the train "
                     "`datamodule.parameters` to `from_data_frame` in the `parameters` argument."

@@ -17,7 +17,6 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from pytorch_lightning import LightningModule
 from pytorch_lightning.callbacks import BaseFinetuning
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.nn import Module
 from torch.optim import Optimizer
 
@@ -70,7 +69,7 @@ class FlashBaseFinetuning(BaseFinetuning):
         self.train_bn: bool = train_bn
 
         if self.strategy == FinetuningStrategies.FREEZE_UNFREEZE and not isinstance(self.strategy_metadata, int):
-            raise MisconfigurationException(
+            raise TypeError(
                 "The `freeze_unfreeze` strategy requires an integer denoting the epoch number to unfreeze at. Example: "
                 "`strategy=('freeze_unfreeze', 7)`"
             )
@@ -81,7 +80,7 @@ class FlashBaseFinetuning(BaseFinetuning):
             and isinstance(self.strategy_metadata[0][0], int)
             and isinstance(self.strategy_metadata[0][1], int)
         ):
-            raise MisconfigurationException(
+            raise TypeError(
                 "The `unfreeze_milestones` strategy requires the format Tuple[Tuple[int, int], int]. Example: "
                 "`strategy=('unfreeze_milestones', ((5, 10), 15))`"
             )

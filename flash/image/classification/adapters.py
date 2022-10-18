@@ -22,7 +22,6 @@ import torch
 from lightning_utilities.core.rank_zero import WarningCache
 from pytorch_lightning import LightningModule
 from pytorch_lightning.trainer.states import TrainerFn
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn, Tensor
 from torch.utils.data import DataLoader, IterableDataset, Sampler
 
@@ -212,7 +211,7 @@ class Learn2LearnAdapter(Adapter):
         epoch_length: int,
     ):
         if trainer is None:
-            raise MisconfigurationException(
+            raise ValueError(
                 "The Learn2Learn integration requires the `Trainer` to be passed to the `process_*_dataset` method."
             )
 
@@ -220,17 +219,15 @@ class Learn2LearnAdapter(Adapter):
 
             metadata = getattr(dataset, "data", None)
             if metadata is None or (metadata is not None and not isinstance(dataset.data, list)):
-                raise MisconfigurationException("Only dataset built out of metadata is supported.")
+                raise TypeError("Only dataset built out of metadata is supported.")
 
             labels_to_indices = self._labels_to_indices(dataset.data)
 
             if len(labels_to_indices) < ways:
-                raise MisconfigurationException(
-                    "Provided `ways` should be lower or equal to number of classes within your dataset."
-                )
+                raise ValueError("Provided `ways` should be lower or equal to number of classes within your dataset.")
 
             if min(len(indice) for indice in labels_to_indices.values()) < (shots + queries):
-                raise MisconfigurationException(
+                raise ValueError(
                     "Provided `shots + queries` should be lower than the lowest number of sample per class."
                 )
 
@@ -299,12 +296,12 @@ class Learn2LearnAdapter(Adapter):
         **kwargs,
     ) -> Adapter:
         if "meta_batch_size" not in kwargs:
-            raise MisconfigurationException(
+            raise TypeError(
                 "The `meta_batch_size` should be provided as training_strategy_kwargs={'meta_batch_size'=...}. "
                 "This is equivalent to the epoch length."
             )
         if "shots" not in kwargs:
-            raise MisconfigurationException(
+            raise TypeError(
                 "The `shots` should be provided training_strategy_kwargs={'shots'=...}. "
                 "This is equivalent to the number of sample per label to select within a task."
             )
@@ -474,8 +471,9 @@ class Learn2LearnAdapter(Adapter):
     ) -> DataLoader:
 
         if not self._algorithm_has_validated:
-            raise MisconfigurationException(
-                "This training_strategies requires to be validated. Call trainer.validate(...)."
+            raise RuntimeError(
+                "This training strategy needs to be validated before it can be used for prediction."
+                " Call trainer.validate(...)."
             )
 
         return super().process_predict_dataset(

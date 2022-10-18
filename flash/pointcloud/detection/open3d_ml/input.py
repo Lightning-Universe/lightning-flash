@@ -16,7 +16,6 @@ from os.path import basename, dirname, exists, isdir, isfile, join
 from typing import Any, Dict, List, Optional, Type, Union
 
 import yaml
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.io.input import BaseDataFormat, Input
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
@@ -66,13 +65,13 @@ class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
     def load_meta(self, root_dir, dataset: Input):
         meta_file = join(root_dir, "meta.yaml")
         if not exists(meta_file):
-            raise MisconfigurationException(f"The {root_dir} should contain a `meta.yaml` file about the classes.")
+            raise ValueError(f"The {root_dir} should contain a `meta.yaml` file about the classes.")
 
         with open(meta_file) as f:
             self.meta = yaml.safe_load(f)
 
         if "label_to_names" not in self.meta:
-            raise MisconfigurationException(
+            raise ValueError(
                 f"The {root_dir} should contain a `meta.yaml` file about the classes with the field `label_to_names`."
             )
 
@@ -83,7 +82,7 @@ class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
     def load_data(self, folder: str, dataset: Input):
         sub_directories = os.listdir(folder)
         if len(sub_directories) != 3:
-            raise MisconfigurationException(
+            raise ValueError(
                 f"Using KITTI Format, the {folder} should contains 3 directories "
                 "for ``calibrations``, ``labels`` and ``scans``."
             )
@@ -178,10 +177,10 @@ class PointCloudObjectDetectorFoldersInput(Input):
     def _validate_data(self, folder: str) -> None:
         msg = f"The provided dataset for stage {self._running_stage} should be a folder. Found {folder}."
         if not isinstance(folder, str):
-            raise MisconfigurationException(msg)
+            raise ValueError(msg)
 
         if isinstance(folder, str) and not isdir(folder):
-            raise MisconfigurationException(msg)
+            raise ValueError(msg)
 
     def load_data(
         self,
@@ -210,13 +209,13 @@ class PointCloudObjectDetectorFoldersInput(Input):
     def _validate_predict_data(self, data: Union[str, List[str]]) -> None:
         msg = f"The provided predict data should be a either a folder or a single/list of scan path(s). Found {data}."
         if not isinstance(data, str) and not isinstance(data, list):
-            raise MisconfigurationException(msg)
+            raise ValueError(msg)
 
         if isinstance(data, str) and (not isfile(data) or not isdir(data)):
-            raise MisconfigurationException(msg)
+            raise ValueError(msg)
 
         if isinstance(data, list) and not all(isfile(p) for p in data):
-            raise MisconfigurationException(msg)
+            raise ValueError(msg)
 
     def predict_load_data(
         self,

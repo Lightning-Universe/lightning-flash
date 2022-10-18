@@ -18,7 +18,6 @@ import pytest
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 from torch.nn import Flatten
 from torch.nn import functional as F
@@ -243,7 +242,7 @@ def test_finetuning_errors_and_exceptions(strategy):
     task = TestTaskWithFinetuning(loss_fn=F.nll_loss)
     trainer = flash.Trainer(max_epochs=1, limit_train_batches=10)
     ds = DummyDataset()
-    with pytest.raises(MisconfigurationException):
+    with pytest.raises(ValueError):
         trainer.finetune(task, train_dataloader=DataLoader(ds), strategy=strategy)
 
 

@@ -16,7 +16,6 @@ from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 import torch
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 from torch.utils.data import DataLoader, Dataset, random_split
 
@@ -88,13 +87,13 @@ class ActiveLearningDataModule(DataModule):
         self._dataset: Optional[ActiveLearningDataset] = None
 
         if not self.labelled:
-            raise MisconfigurationException("The labelled `datamodule` should be provided.")
+            raise TypeError("The labelled `datamodule` should be provided.")
 
         if not self.labelled.num_classes:
-            raise MisconfigurationException("The labelled dataset should be labelled")
+            raise TypeError("The labelled dataset should be labelled")
 
         if self.labelled and (self.labelled._val_input or self.labelled._predict_input):
-            raise MisconfigurationException("The labelled `datamodule` should have only train data.")
+            raise TypeError("The labelled `datamodule` should have only train data.")
 
         self._dataset = ActiveLearningDataset(
             self.labelled._train_input, labelled=self.map_dataset_to_labelled(self.labelled._train_input)
@@ -103,7 +102,7 @@ class ActiveLearningDataModule(DataModule):
         if not self.val_split or not self.has_labelled_data:
             self.val_dataloader = None
         elif self.val_split < 0 or self.val_split > 1:
-            raise MisconfigurationException("The `val_split` should a float between 0 and 1.")
+            raise ValueError("The `val_split` should a float between 0 and 1.")
 
         if self.labelled._test_input:
             self.test_dataloader = self._test_dataloader
@@ -177,9 +176,7 @@ class ActiveLearningDataModule(DataModule):
 
     def label(self, probabilities: List[Tensor] = None, indices=None):
         if probabilities is not None and indices:
-            raise MisconfigurationException(
-                "The `probabilities` and `indices` are mutually exclusive, pass only of one them."
-            )
+            raise RuntimeError("The `probabilities` and `indices` are mutually exclusive, pass only of one them.")
         if probabilities is not None and len(probabilities) != 0:
             probabilities = torch.cat([p[0].unsqueeze(0) for p in probabilities], dim=0)
             uncertainties = self.heuristic.get_uncertainties(probabilities)
