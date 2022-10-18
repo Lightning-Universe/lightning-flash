@@ -18,5 +18,4 @@ from flash.core.registry import FlashRegistry  # noqa: F401
 # define ImageClassifier registry
 IMAGE_CLASSIFIER_HEADS = FlashRegistry("classifier_heads")
 
-# Add classifier heads to IMAGE_CLASSIFIER_HEADS using map
 IMAGE_CLASSIFIER_HEADS = IMAGE_CLASSIFIER_HEADS + CLASSIFIER_HEADS
