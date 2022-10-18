@@ -22,10 +22,10 @@ from torch import Tensor
 
 from flash.core.adapter import Adapter, AdapterTask
 from flash.core.data.io.input import DataKeys
+from flash.core.heads import CLASSIFIER_HEADS
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE
-from flash.image.classification.heads import IMAGE_CLASSIFIER_HEADS
 from flash.text.classification.collate import TextClassificationCollate
 
 if _TRANSFORMERS_AVAILABLE:
@@ -111,8 +111,7 @@ class GenericCollate:
 
 class GenericAdapter(Adapter):
 
-    # TODO: Move IMAGE_CLASSIFIIER_HEADS out for general classification tasks
-    heads: FlashRegistry = IMAGE_CLASSIFIER_HEADS
+    heads: FlashRegistry = CLASSIFIER_HEADS
 
     def __init__(self, backbone, num_classes: int, max_length: int = 128, head="linear"):
         super().__init__()
