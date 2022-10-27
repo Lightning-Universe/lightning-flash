@@ -45,7 +45,7 @@ jobs:
             pip install '.[image]' icevision effdet icedata;
           elif [ "${{dom}}" == "vissl" ]; then
             pip install '.[image]';
-          else 
+          else
             pip install '.[${{dom}}]';
           fi
           pip install '.[test]' --upgrade-strategy only-if-needed
