@@ -38,6 +38,7 @@ jobs:
       displayName: 'set visible devices'
 
     - bash: |
+        echo $CUDA_VISIBLE_DEVICES
         lspci | egrep 'VGA|3D'
         whereis nvidia
         nvidia-smi

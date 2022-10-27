@@ -10,7 +10,7 @@ pr:
 jobs:
 - template: testing-template.yml
   parameters:
-    configs:
+    domains:
     - "image"
     - "icevision"
     - "vissl"
