@@ -25,7 +25,7 @@ jobs:
       DEVICES: $( python -c 'print("$(Agent.Name)".split("_")[-1])' )
 
     container:
-      image: "pytorchlightning/pytorch_lightning:base-cuda-py3.8-torch1.9-cuda11.1.1"
+      image: "pytorchlightning/pytorch_lightning:base-cuda-py3.9-torch1.12-cuda11.6.1"
       options: "--ipc=host --gpus=all"
 
     workspace:
