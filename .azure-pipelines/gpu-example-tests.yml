@@ -17,6 +17,3 @@ jobs:
     - "text"
     - "tabular"
     - "video"
-    nb_gpus:
-    - "1"
-    - "2"
