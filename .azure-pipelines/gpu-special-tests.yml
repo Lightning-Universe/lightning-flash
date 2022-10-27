@@ -33,8 +33,7 @@ jobs:
 
     steps:
 
-    - bash: |
-        echo "##vso[task.setvariable variable=CUDA_VISIBLE_DEVICES]$(DEVICES)"
+    - bash: echo "##vso[task.setvariable variable=CUDA_VISIBLE_DEVICES]$(DEVICES)"
       displayName: 'set visible devices'
 
     - bash: |
