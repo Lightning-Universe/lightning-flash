@@ -24,7 +24,7 @@ jobs:
       steps:
 
       - bash: |
-          gpus=$( python -c 'print(",".join("$(DEVICES)".split(",")[:${{ngpus}}]))' )
+          gpus=$( python -c 'print(",".join("$(DEVICES)".split(",")[:int(${{ngpus}})]))' )
           echo "##vso[task.setvariable variable=CUDA_VISIBLE_DEVICES]$gpus"
         displayName: 'set visible devices'
 
