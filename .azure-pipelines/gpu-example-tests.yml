@@ -17,6 +17,6 @@ jobs:
     - "text"
     - "tabular"
     - "video"
-    gpu_inds:
-    - "0"
-    - "0,1"
+    nb_gpus:
+    - "1"
+    - "2"

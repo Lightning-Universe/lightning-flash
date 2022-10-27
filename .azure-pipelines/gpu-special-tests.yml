@@ -20,16 +20,22 @@ jobs:
     # how much time to give 'run always even if cancelled tasks' before stopping them
     cancelTimeoutInMinutes: 2
 
-    pool: azure-gpus-spot
+    pool: lit-rtx-3090
+    variables:
+      DEVICES: $( python -c 'print("$(Agent.Name)".split("_")[-1])' )
 
     container:
       image: "pytorchlightning/pytorch_lightning:base-cuda-py3.8-torch1.9-cuda11.1.1"
-      options: "--ipc=host --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all"
+      options: "--ipc=host --gpus=all"
 
     workspace:
       clean: all
 
     steps:
+
+    - bash: |
+        echo "##vso[task.setvariable variable=CUDA_VISIBLE_DEVICES]$(DEVICES)"
+      displayName: 'set visible devices'
 
     - bash: |
         lspci | egrep 'VGA|3D'

@@ -1,24 +1,32 @@
 jobs:
-- ${{ each gids in parameters.gpu_inds }}:
+- ${{ each ngpus in parameters.nb_gpus }}:
   - ${{ each config in parameters.configs }}:
     - job:
-      displayName: "domain ${{config}} with GPUs ${{gids}}"
+      displayName: "domain ${{config}} with GPUs ${{ngpus}}"
       # how long to run the job before automatically cancelling
       timeoutInMinutes: 45
       # how much time to give 'run always even if cancelled tasks' before stopping them
       cancelTimeoutInMinutes: 2
 
-      pool: azure-gpus-spot
+      pool: lit-rtx-3090
+      variables:
+        DEVICES: $( python -c 'print("$(Agent.Name)".split("_")[-1])' )
+
       # this need to have installed docker in the base image...
       container:
         # base ML image: mcr.microsoft.com/azureml/openmpi3.1.2-cuda10.2-cudnn8-ubuntu18.04
         image: "pytorchlightning/pytorch_lightning:base-cuda-py3.9-torch1.10"
         # image: "pytorch/pytorch:1.8.1-cuda11.0-cudnn8-runtime"
-        options: "-it --rm --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all --shm-size=32g"
+        options: "-it --rm --gpus=all --shm-size=16g"
 
       workspace:
         clean: all
       steps:
+
+      - bash: |
+          gpus=$( python -c 'print(",".join("$(DEVICES)".split(",")[:${{ngpus}}]))' )
+          echo "##vso[task.setvariable variable=CUDA_VISIBLE_DEVICES]$gpus"
+        displayName: 'set visible devices'
 
       - bash: |
           lspci | egrep 'VGA|3D'
@@ -59,7 +67,6 @@ jobs:
           python -c "import torch; print(f'found GPUs: {torch.cuda.device_count()}')"
           python -m coverage run --source flash -m pytest tests/examples/test_scripts.py tests/image/embedding/test_model.py -v --junitxml=$(Build.StagingDirectory)/test-results.xml --durations=30
         env:
-          CUDA_VISIBLE_DEVICES: ${{gids}}
           FLASH_TEST_TOPIC: ${{ config }}
         displayName: 'Testing'
 
