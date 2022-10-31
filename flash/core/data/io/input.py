@@ -18,7 +18,6 @@ from enum import Enum
 from typing import Any, cast, Dict, Iterable, List, Sequence, Tuple, Union
 
 from pytorch_lightning.utilities.enums import LightningEnum
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Dataset
 
 from flash.core.data.properties import Properties
@@ -310,7 +309,7 @@ class IterableInput(InputBase, IterableDataset, metaclass=_IterableInputMeta):
 class ServeInput(Input):
     def __init__(self) -> None:
         if hasattr(self, "serve_load_data"):
-            raise MisconfigurationException("`serve_load_data` shouldn't be implemented.")
+            raise TypeError("`serve_load_data` shouldn't be implemented.")
 
         super().__init__(RunningStage.SERVING)
 

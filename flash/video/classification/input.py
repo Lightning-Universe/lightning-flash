@@ -16,7 +16,6 @@ from typing import Any, Callable, Collection, Dict, List, Optional, Type, Union
 
 import pandas as pd
 import torch
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Sampler
 
 from flash.core.data.io.classification_input import ClassificationInputMixin
@@ -350,7 +349,7 @@ class VideoClassificationPathsPredictInput(Input):
         )
 
         if clip_is_null:
-            raise MisconfigurationException(
+            raise ValueError(
                 f"The provided video is too short {video.duration} to be clipped at {self._clip_sampler._clip_duration}"
             )
 

@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from pytorch_lightning import Callback, LightningModule, Trainer
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.utilities.imports import _TORCH_ORT_AVAILABLE
 
@@ -37,13 +36,13 @@ class ORTCallback(Callback):
 
     def __init__(self):
         if not _TORCH_ORT_AVAILABLE:
-            raise MisconfigurationException(
+            raise ModuleNotFoundError(
                 "Torch ORT is required to use ORT. See here for installation: https://github.com/pytorch/ort"
             )
 
     def on_before_accelerator_backend_setup(self, trainer: Trainer, pl_module: LightningModule) -> None:
         if not hasattr(pl_module, "model"):
-            raise MisconfigurationException(
+            raise ValueError(
                 "Torch ORT requires to wrap a single model that defines a forward function "
                 "assigned as `model` inside the `LightningModule`."
             )

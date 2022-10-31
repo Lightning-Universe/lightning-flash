@@ -61,6 +61,7 @@ class TestImageClassifier(TaskTester):
                     {"backbone": "vit_small_patch16_224"},
                     {"backbone": "resnet18", "head": "linear"},
                     {"backbone": "resnet18", "head": torch.nn.Linear(512, 2)},
+                    {"backbone": "clip_resnet50"},
                 ],
             )
         ],
@@ -72,6 +73,7 @@ class TestImageClassifier(TaskTester):
                     {"backbone": "vit_small_patch16_224"},
                     {"backbone": "resnet18", "head": "linear"},
                     {"backbone": "resnet18", "head": torch.nn.Linear(512, 2)},
+                    {"backbone": "clip_resnet50"},
                 ],
             )
         ],
@@ -83,6 +85,7 @@ class TestImageClassifier(TaskTester):
                     {"backbone": "vit_small_patch16_224"},
                     {"backbone": "resnet18", "head": "linear"},
                     {"backbone": "resnet18", "head": torch.nn.Linear(512, 2)},
+                    {"backbone": "clip_resnet50"},
                 ],
             )
         ],

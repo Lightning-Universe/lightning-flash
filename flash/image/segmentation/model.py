@@ -25,6 +25,7 @@ from flash.core.registry import FlashRegistry
 from flash.core.serve import Composition
 from flash.core.utilities.imports import (
     _TM_GREATER_EQUAL_0_7_0,
+    _TM_GREATER_EQUAL_0_10_0,
     _TORCHVISION_AVAILABLE,
     _TORCHVISION_GREATER_EQUAL_0_9,
     requires,
@@ -55,7 +56,9 @@ if _TORCHVISION_AVAILABLE:
             NEAREST = "nearest"
 
 
-if _TM_GREATER_EQUAL_0_7_0:
+if _TM_GREATER_EQUAL_0_10_0:
+    from torchmetrics.classification import MulticlassJaccardIndex as JaccardIndex
+elif _TM_GREATER_EQUAL_0_7_0:
     from torchmetrics import JaccardIndex
 else:
     from torchmetrics import IoU as JaccardIndex
@@ -210,4 +213,4 @@ class SemanticSegmentation(ClassificationTask):
     @staticmethod
     def _ci_benchmark_fn(history: List[Dict[str, Any]]):
         """This function is used only for debugging usage with CI."""
-        assert history[-1]["val_jaccardindex"] > 0.2
+        assert history[-1]["val_jaccardindex"] > 0.1

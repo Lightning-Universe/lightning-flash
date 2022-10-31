@@ -13,11 +13,10 @@
 # limitations under the License.
 from typing import Any, Dict, List, Set, Tuple
 
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from lightning_utilities.core.overrides import is_overridden
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.utils import _CALLBACK_FUNCS
-from flash.core.utilities.apply_func import _is_overridden
 from flash.core.utilities.stages import RunningStage
 
 
@@ -120,11 +119,11 @@ class BaseVisualization(BaseDataFetcher):
         # filter out the functions to visualise
         func_names_set: Set[str] = set(func_names_list) & set(_CALLBACK_FUNCS)
         if len(func_names_set) == 0:
-            raise MisconfigurationException(f"Invalid function names: {func_names_list}.")
+            raise ValueError(f"Invalid function names: {func_names_list}.")
 
         for func_name in func_names_set:
             hook_name = f"show_{func_name}"
-            if _is_overridden(hook_name, self, BaseVisualization):
+            if is_overridden(hook_name, self, BaseVisualization):
                 getattr(self, hook_name)(batch[func_name], running_stage, limit_nb_samples, figsize)
 
     def show_load_sample(

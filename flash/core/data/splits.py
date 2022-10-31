@@ -1,7 +1,6 @@
 from typing import Any, List, Optional
 
 import numpy as np
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Dataset
 
 from flash.core.data.properties import Properties
@@ -39,7 +38,7 @@ class SplitDataset(Properties, Dataset):
         super().__init__(**kwargs)
 
         if not isinstance(indices, list):
-            raise MisconfigurationException("indices should be a list")
+            raise TypeError("indices should be a list")
 
         if use_duplicated_indices:
             indices = list(indices)
@@ -47,7 +46,7 @@ class SplitDataset(Properties, Dataset):
             indices = list(np.unique(indices))
 
         if np.max(indices) >= len(dataset) or np.min(indices) < 0:
-            raise MisconfigurationException(f"`indices` should be within [0, {len(dataset) -1}].")
+            raise ValueError(f"`indices` should be within [0, {len(dataset) -1}].")
 
         self.dataset = dataset
         self.indices = indices

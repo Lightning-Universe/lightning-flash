@@ -17,7 +17,6 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Type, U
 import numpy as np
 import pytorch_lightning as pl
 import torch
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import IterableDataset
 from torch.utils.data.sampler import Sampler
@@ -127,7 +126,7 @@ class DataModule(pl.LightningDataModule):
     ) -> None:
 
         if not batch_size:
-            raise MisconfigurationException("The `batch_size` should be provided to the DataModule on instantiation.")
+            raise TypeError("The `batch_size` should be provided to the DataModule on instantiation.")
 
         if flash._IS_TESTING and torch.cuda.is_available():
             batch_size = 16
@@ -144,9 +143,7 @@ class DataModule(pl.LightningDataModule):
         self._predict_input = predict_input
 
         if self._train_input and self._val_input and isinstance(val_split, float) and val_split > 0:
-            raise MisconfigurationException(
-                "A `val_dataset` was provided with `val_split`. Please, choose one or the other."
-            )
+            raise TypeError("A `val_dataset` was provided with `val_split`. Please, choose one or the other.")
 
         if self._train_input and (val_split is not None and not self._val_input):
             self._train_input, self._val_input = self._split_train_val(self._train_input, val_split)
@@ -577,12 +574,10 @@ class DataModule(pl.LightningDataModule):
         """
 
         if not isinstance(val_split, float) or (isinstance(val_split, float) and val_split > 1 or val_split < 0):
-            raise MisconfigurationException(f"`val_split` should be a float between 0 and 1. Found {val_split}.")
+            raise ValueError(f"`val_split` should be a float between 0 and 1. Found {val_split}.")
 
         if isinstance(train_dataset, IterableInput):
-            raise MisconfigurationException(
-                "`val_split` should be `None` when the dataset is built with an IterableDataset."
-            )
+            raise ValueError("`val_split` should be `None` when the dataset is built with an IterableDataset.")
 
         val_num_samples = int(len(train_dataset) * val_split)
         indices = list(range(len(train_dataset)))

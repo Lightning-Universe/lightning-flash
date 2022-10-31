@@ -10,13 +10,10 @@ pr:
 jobs:
 - template: testing-template.yml
   parameters:
-    configs:
+    domains:
     - "image"
     - "icevision"
     - "vissl"
     - "text"
     - "tabular"
     - "video"
-    gpu_inds:
-    - "0"
-    - "0,1"

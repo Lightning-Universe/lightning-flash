@@ -5,3 +5,5 @@ Pillow>=7.2
 albumentations>=1.0
 pystiche==1.*
 segmentation-models-pytorch>=0.2.0
+ftfy
+regex
