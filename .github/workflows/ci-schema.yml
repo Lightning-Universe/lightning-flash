@@ -8,6 +8,6 @@ on:
 
 jobs:
   check-schema:
-    uses: Lightning-AI/utilities/.github/workflows/check-schema.yml@v0.3.0
+    uses: Lightning-AI/utilities/.github/workflows/check-schema.yml@v0.4.0
     with:
-      azure-dir: ".azure-pipelines"
+      azure-dir: ''
