@@ -20,7 +20,7 @@ from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.utilities.loading import IMG_EXTENSIONS, load_image, NP_EXTENSIONS
 from flash.core.data.utilities.paths import list_valid_files
 from flash.core.integrations.icevision.transforms import from_icevision_record
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE
+from flash.core.utilities.imports import _ICEVISION_AVAILABLE, requires
 
 if _ICEVISION_AVAILABLE:
     from icevision.core.record import BaseRecord
@@ -33,6 +33,7 @@ class IceVisionInput(Input):
     num_classes: int
     labels: list
 
+    @requires("icevision")
     def load_data(
         self,
         root: str,
