@@ -3,7 +3,7 @@ version: 2.1
 
 orbs:
   gcp-gke: circleci/gcp-gke@1.4.0
-  go: circleci/go@1.7.1
+  go: circleci/go@1.19
   codecov: codecov/codecov@1.1.0
 
 trigger:
