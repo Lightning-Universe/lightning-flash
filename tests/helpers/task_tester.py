@@ -106,7 +106,7 @@ def _test_jit_trace(self, tmpdir):
     model.eval()
 
     model.trainer = trainer
-    model = model.to_torchscript(method='trace', example_inputs=self.example_forward_input)
+    model = model.to_torchscript(method="trace", example_inputs=self.example_forward_input)
 
     torch.jit.save(model, path)
     model = torch.jit.load(path)
