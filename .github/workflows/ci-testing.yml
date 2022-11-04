@@ -115,7 +115,6 @@ jobs:
         pip install torch>=1.7.1
         pip install '.[${{ join(matrix.topic, ',') }}]' --upgrade $flag --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
         pip install '.[test]' --upgrade
-        pip list
       shell: bash
 
     - name: Install vissl
@@ -136,6 +135,11 @@ jobs:
         sudo apt-get install libsndfile1
         pip install matplotlib
         pip install '.[audio,image]' torch==1.11.0 --upgrade
+
+    - name: PIP List
+      run: |
+        pip list
+      shell: bash
 
     - name: Cache datasets
       uses: actions/cache@v3
