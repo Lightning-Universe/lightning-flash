@@ -36,7 +36,7 @@ references:
     run:
       name: Install jsonnet
       command: |
-        go install github.com/google/go-jsonnet/cmd/jsonnet@latest
+        go get github.com/google/go-jsonnet/cmd/jsonnet
 
   update_jsonnet: &update_jsonnet
     run:
