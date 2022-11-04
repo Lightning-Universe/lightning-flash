@@ -473,7 +473,7 @@ def test_external_schedulers_provider_hf_transformers(tmpdir, optim, sched, use_
     assert task.get_num_training_steps() == batch_count
     assert isinstance(trainer.optimizers[0], torch.optim.Adadelta)
     if _PL_GREATER_EQUAL_1_8_0:
-        assert isinstance(trainer.lr_scheduler_configs[0]["scheduler"], torch.optim.lr_scheduler.LambdaLR)
+        assert isinstance(trainer.lr_scheduler_configs[0].scheduler, torch.optim.lr_scheduler.LambdaLR)
     else:
         assert isinstance(trainer.lr_schedulers[0]["scheduler"], torch.optim.lr_scheduler.LambdaLR)
 
