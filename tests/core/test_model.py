@@ -471,7 +471,7 @@ def test_external_schedulers_provider_hf_transformers(tmpdir, optim, sched, use_
 
     assert task.get_num_training_steps() == batch_count
     assert isinstance(trainer.optimizers[0], torch.optim.Adadelta)
-    assert isinstance(trainer.lr_schedulers[0]["scheduler"], torch.optim.lr_scheduler.LambdaLR)
+    assert isinstance(trainer.lr_scheduler_configs[0]["scheduler"], torch.optim.lr_scheduler.LambdaLR)
 
 
 @pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
