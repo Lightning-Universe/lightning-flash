@@ -98,7 +98,7 @@ jobs:
     steps:
       - checkout
       - go/install:
-        version: 1.17
+            version: "1.17"
       - *checkout_ml_testing
       - gcp-gke/install
       - gcp-gke/update-kubeconfig-with-credentials:
