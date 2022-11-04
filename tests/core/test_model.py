@@ -44,11 +44,11 @@ from flash.core.utilities.imports import (
     _GRAPH_TESTING,
     _IMAGE_AVAILABLE,
     _IMAGE_TESTING,
+    _PL_GREATER_EQUAL_1_8_0,
     _TABULAR_TESTING,
     _TEXT_TESTING,
     _TORCH_OPTIMIZER_AVAILABLE,
     _TRANSFORMERS_AVAILABLE,
-    _PL_GREATER_EQUAL_1_8_0,
 )
 from flash.graph import GraphClassifier, GraphEmbedder
 from flash.image import ImageClassifier, SemanticSegmentation
