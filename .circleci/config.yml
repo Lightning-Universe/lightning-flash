@@ -97,9 +97,6 @@ jobs:
       - CHECK_SPEEP: 5
     steps:
       - checkout
-      - go/load-cache
-      - go/mod-download
-      - go/save-cache
       - go/install
       - *checkout_ml_testing
       - gcp-gke/install
