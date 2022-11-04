@@ -136,11 +136,6 @@ jobs:
         pip install matplotlib
         pip install '.[audio,image]' torch==1.11.0 --upgrade
 
-    - name: PIP List
-      run: |
-        pip list
-      shell: bash
-
     - name: Cache datasets
       uses: actions/cache@v3
       with:
