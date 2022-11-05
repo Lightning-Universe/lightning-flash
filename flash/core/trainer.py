@@ -187,9 +187,9 @@ class Trainer(PlTrainer):
             Returns a list of dictionaries, one for each provided dataloader containing their respective predictions.
         """
         # Note: Prediction on TPU device with multi cores is not supported yet
-        if isinstance(self.accelerator, TPUAccelerator) and self.tpu_cores > 1:
+        if isinstance(self.accelerator, TPUAccelerator) and self.num_devices > 1:
             raise NotImplementedError(
-                f"Prediction on TPU device with multi-cores (requested cores: {self.tpu_cores}) is not supported yet."
+                f"Prediction on TPU device with multi-cores (requested cores: {self.num_devices}) is not supported yet."
             )
         model = model or self.lightning_module
         output_transform = getattr(model, "_output_transform", None) or OutputTransform()
