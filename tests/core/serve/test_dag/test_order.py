@@ -510,7 +510,9 @@ def test_prefer_short_ancestor(abcde):
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_map_overlap(abcde):
-    r"""Testing structure. b1      b3      b5.
+    r"""Testing structure.
+
+      b1      b3      b5.
 
        |\    / | \  / |
       c1  c2  c3  c4  c5
