@@ -16,6 +16,7 @@ from typing import Any, Dict, Optional, Tuple, Union
 
 import numpy as np
 import torch
+from torch import Tensor
 
 import flash
 from flash.core.data.io.input import DataKeys
@@ -23,8 +24,8 @@ from flash.core.data.io.output import Output
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,
-    _KORNIA_AVAILABLE,
     _MATPLOTLIB_AVAILABLE,
+    _TORCHVISION_AVAILABLE,
     lazy_import,
     requires,
 )
@@ -42,10 +43,10 @@ if _MATPLOTLIB_AVAILABLE:
 else:
     plt = None
 
-if _KORNIA_AVAILABLE:
-    import kornia as K
+if _TORCHVISION_AVAILABLE:
+    from torchvision import transforms as T
 else:
-    K = None
+    T = None
 
 
 SEMANTIC_SEGMENTATION_OUTPUTS = FlashRegistry("outputs")
@@ -68,7 +69,7 @@ class SegmentationLabelsOutput(Output):
         self.visualize = visualize
 
     @staticmethod
-    def labels_to_image(img_labels: torch.Tensor, labels_map: Dict[int, Tuple[int, int, int]]) -> torch.Tensor:
+    def labels_to_image(img_labels: Tensor, labels_map: Dict[int, Tuple[int, int, int]]) -> Tensor:
         """Function that given an image with labels ids and their pixel intensity mapping, creates an RGB
         representation for visualisation purposes."""
         assert len(img_labels.shape) == 2, img_labels.shape
@@ -90,11 +91,11 @@ class SegmentationLabelsOutput(Output):
     @requires("matplotlib")
     def _visualize(self, labels):
         labels_vis = self.labels_to_image(labels, self.labels_map)
-        labels_vis = K.utils.tensor_to_image(labels_vis)
+        labels_vis = T.ToPILImage(labels_vis)
         plt.imshow(labels_vis)
         plt.show()
 
-    def transform(self, sample: Dict[str, torch.Tensor]) -> torch.Tensor:
+    def transform(self, sample: Dict[str, Tensor]) -> Tensor:
         preds = sample[DataKeys.PREDS]
         assert len(preds.shape) == 3, preds.shape
         labels = torch.argmax(preds, dim=-3)  # HxW
@@ -127,7 +128,7 @@ class FiftyOneSegmentationLabelsOutput(SegmentationLabelsOutput):
 
         self.return_filepath = return_filepath
 
-    def transform(self, sample: Dict[str, torch.Tensor]) -> Union[Segmentation, Dict[str, Any]]:
+    def transform(self, sample: Dict[str, Tensor]) -> Union[Segmentation, Dict[str, Any]]:
         labels = super().transform(sample)
         fo_predictions = fol.Segmentation(mask=np.array(labels))
         if self.return_filepath:

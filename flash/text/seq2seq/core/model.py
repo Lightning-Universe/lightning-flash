@@ -137,7 +137,10 @@ class Seq2SeqTask(Task):
         max_length = self.max_target_length
         num_beams = self.num_beams if self.num_beams else self.model.config.num_beams
         generated_tokens = self.model.generate(
-            input_ids=x["input_ids"], attention_mask=x["attention_mask"], max_length=max_length, num_beams=num_beams
+            input_ids=x["input_ids"],
+            attention_mask=x.get("attention_mask", None),
+            max_length=max_length,
+            num_beams=num_beams,
         )
         # in case the batch is shorter than max length, the output should be padded
         if generated_tokens.shape[-1] < max_length:
@@ -153,7 +156,7 @@ class Seq2SeqTask(Task):
         self.log("train_loss", loss)
         return loss
 
-    def common_step(self, prefix: str, batch: Any) -> torch.Tensor:
+    def common_step(self, prefix: str, batch: Any) -> Tensor:
         batch["labels"] = batch.pop(DataKeys.TARGET)
         generated_tokens = self(batch)
         self.compute_metrics(generated_tokens, batch, prefix)

@@ -15,12 +15,13 @@ from copy import deepcopy
 
 import numpy as np
 import pytest
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.splits import SplitDataset
+from flash.core.utilities.imports import _CORE_TESTING
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_split_dataset():
     train_ds, val_ds = DataModule._split_train_val(range(100), val_split=0.1)
     assert len(train_ds) == 90
@@ -46,23 +47,25 @@ def test_split_dataset():
     assert not split_dataset.dataset.is_passed_down
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_misconfiguration():
-    with pytest.raises(MisconfigurationException, match="[0, 99]"):
+    with pytest.raises(ValueError, match="[0, 99]"):
         SplitDataset(range(100), indices=[100])
 
-    with pytest.raises(MisconfigurationException, match="[0, 49]"):
+    with pytest.raises(ValueError, match="[0, 49]"):
         SplitDataset(range(50), indices=[-1])
 
-    with pytest.raises(MisconfigurationException, match="[0, 49]"):
+    with pytest.raises(ValueError, match="[0, 49]"):
         SplitDataset(list(range(50)) + list(range(50)), indices=[-1])
 
-    with pytest.raises(MisconfigurationException, match="[0, 99]"):
+    with pytest.raises(ValueError, match="[0, 99]"):
         SplitDataset(list(range(50)) + list(range(50)), indices=[-1], use_duplicated_indices=True)
 
-    with pytest.raises(MisconfigurationException, match="indices should be a list"):
+    with pytest.raises(TypeError, match="indices should be a list"):
         SplitDataset(list(range(100)), indices="not a list")
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_deepcopy():
     """Tests that deepcopy works with the ``SplitDataset``."""
     dataset = list(range(100))

@@ -11,64 +11,100 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
-import re
+from typing import Any
 from unittest import mock
 
 import pytest
 import torch
+from torch import Tensor
 
-from flash import Trainer
-from flash.__main__ import main
+import flash
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _SERVE_TESTING, _TEXT_AVAILABLE, _TEXT_TESTING
+from flash.core.utilities.imports import _SERVE_TESTING, _TEXT_AVAILABLE, _TEXT_TESTING, _TORCH_ORT_AVAILABLE
 from flash.text import TextClassifier
-
-# ======== Mock functions ========
-
-
-class DummyDataset(torch.utils.data.Dataset):
-    def __getitem__(self, index):
-        return {
-            "input_ids": torch.randint(1000, size=(100,)),
-            DataKeys.TARGET: torch.randint(2, size=(1,)).item(),
-        }
-
-    def __len__(self) -> int:
-        return 100
-
-
-# ==============================
+from flash.text.ort_callback import ORTCallback
+from tests.helpers.boring_model import BoringModel
+from tests.helpers.task_tester import StaticDataset, TaskTester
 
 TEST_BACKBONE = "prajjwal1/bert-tiny"  # tiny model for testing
 
 
-@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_init_train(tmpdir):
-    model = TextClassifier(2, backbone=TEST_BACKBONE)
-    train_dl = torch.utils.data.DataLoader(DummyDataset())
-    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    trainer.fit(model, train_dl)
+class TestTextClassifier(TaskTester):
 
+    task = TextClassifier
+    task_args = (2,)
+    task_kwargs = {"backbone": TEST_BACKBONE}
+    cli_command = "text_classification"
+    is_testing = _TEXT_TESTING
+    is_available = _TEXT_AVAILABLE
 
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_jit(tmpdir):
-    sample_input = {"input_ids": torch.randint(1000, size=(1, 100))}
-    path = os.path.join(tmpdir, "test.pt")
+    scriptable = False
 
-    model = TextClassifier(2, backbone=TEST_BACKBONE)
-    model.eval()
+    marks = {
+        "test_fit": [
+            pytest.mark.parametrize(
+                "task_kwargs",
+                [
+                    {},
+                    pytest.param(
+                        {"enable_ort": True},
+                        marks=pytest.mark.skipif(not _TORCH_ORT_AVAILABLE, reason="ORT Module aren't installed."),
+                    ),
+                    {"backbone": "clip_resnet50"},
+                ],
+            )
+        ],
+        "test_val": [
+            pytest.mark.parametrize(
+                "task_kwargs",
+                [
+                    {},
+                    {"backbone": "clip_resnet50"},
+                ],
+            )
+        ],
+        "test_test": [
+            pytest.mark.parametrize(
+                "task_kwargs",
+                [
+                    {},
+                    {"backbone": "clip_resnet50"},
+                ],
+            )
+        ],
+        "test_cli": [pytest.mark.parametrize("extra_args", ([], ["from_toxic"]))],
+    }
 
-    # Huggingface bert model only supports `torch.jit.trace` with `strict=False`
-    model = torch.jit.trace(model, sample_input, strict=False)
+    @property
+    def example_forward_input(self):
+        return {"input_ids": torch.randint(1000, size=(1, 100))}
 
-    torch.jit.save(model, path)
-    model = torch.jit.load(path)
+    def check_forward_output(self, output: Any):
+        assert isinstance(output, Tensor)
+        assert output.shape == torch.Size([1, 2])
 
-    out = model(sample_input)
-    assert isinstance(out, torch.Tensor)
-    assert out.shape == torch.Size([1, 2])
+    @property
+    def example_train_sample(self):
+        return {DataKeys.INPUT: "some text", DataKeys.TARGET: 1}
+
+    @property
+    def example_val_sample(self):
+        return self.example_train_sample
+
+    @property
+    def example_test_sample(self):
+        return self.example_train_sample
+
+    @pytest.mark.skipif(not _TORCH_ORT_AVAILABLE, reason="ORT Module aren't installed.")
+    def test_ort_callback_fails_no_model(self, tmpdir):
+        dataset = StaticDataset(self.example_train_sample, 4)
+
+        model = BoringModel()
+
+        trainer = flash.Trainer(default_root_dir=tmpdir, fast_dev_run=True, callbacks=ORTCallback())
+
+        with pytest.raises(ValueError, match="Torch ORT requires to wrap a single model"):
+            trainer.fit(model, model.process_train_dataset(dataset, batch_size=4))
 
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
@@ -77,25 +113,3 @@ def test_serve():
     model = TextClassifier(2, backbone=TEST_BACKBONE)
     model.eval()
     model.serve()
-
-
-@pytest.mark.skipif(_TEXT_AVAILABLE, reason="text libraries are installed.")
-def test_load_from_checkpoint_dependency_error():
-    with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[text]'")):
-        TextClassifier.load_from_checkpoint("not_a_real_checkpoint.pt")
-
-
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-@pytest.mark.parametrize(
-    "cli_args",
-    (
-        ["flash", "text_classification", "--trainer.fast_dev_run", "True"],
-        ["flash", "text_classification", "--trainer.fast_dev_run", "True", "from_toxic"],
-    ),
-)
-def test_cli(cli_args):
-    with mock.patch("sys.argv", cli_args):
-        try:
-            main()
-        except SystemExit:
-            pass

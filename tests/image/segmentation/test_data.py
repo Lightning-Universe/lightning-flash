@@ -5,7 +5,6 @@ from typing import Dict, List, Tuple
 import numpy as np
 import pytest
 import torch
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
@@ -16,7 +15,7 @@ from flash.core.utilities.imports import (
     _MATPLOTLIB_AVAILABLE,
     _PIL_AVAILABLE,
 )
-from flash.image import SemanticSegmentation, SemanticSegmentationData, SemanticSegmentationInputTransform
+from flash.image import SemanticSegmentation, SemanticSegmentationData
 
 if _PIL_AVAILABLE:
     from PIL import Image
@@ -50,14 +49,6 @@ def create_random_data(image_files: List[str], label_files: List[str], size: Tup
 
     for label_file in label_files:
         _rand_labels(size, num_classes).save(label_file)
-
-
-class TestSemanticSegmentationInputTransform:
-    @staticmethod
-    @pytest.mark.xfail(reaspn="parameters are marked as optional but it returns Misconficg error.")
-    def test_smoke():
-        prep = SemanticSegmentationInputTransform(num_classes=1)
-        assert prep is not None
 
 
 class TestSemanticSegmentationData:
@@ -310,7 +301,7 @@ class TestSemanticSegmentationData:
 
         # instantiate the data module
 
-        with pytest.raises(MisconfigurationException, match="The number of files"):
+        with pytest.raises(ValueError, match="The number of files"):
             SemanticSegmentationData.from_files(
                 train_files=images,
                 train_targets=targets + [str(tmp_dir / "labels_img4.png")],

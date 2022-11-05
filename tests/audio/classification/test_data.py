@@ -12,21 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from pathlib import Path
-from typing import Any, List, Tuple
+from typing import Tuple
 
 import numpy as np
 import pytest
 import torch
-import torch.nn as nn
 from pytorch_lightning import seed_everything
 
+import flash
 from flash.audio import AudioClassificationData
-from flash.core.data.io.input import DataKeys
-from flash.core.data.transforms import ApplyToKeys
-from flash.core.utilities.imports import _AUDIO_TESTING, _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
-
-if _TORCHVISION_AVAILABLE:
-    import torchvision.transforms as T
+from flash.core.utilities.imports import _AUDIO_TESTING, _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE
 
 if _PIL_AVAILABLE:
     from PIL import Image
@@ -39,18 +34,26 @@ def _rand_image(size: Tuple[int, int] = None):
     return Image.fromarray(np.random.randint(0, 255, (*size, 3), dtype="uint8"))
 
 
-@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
-def test_from_filepaths_smoke(tmpdir):
-
+def _image_files(tmpdir):
     tmpdir = Path(tmpdir)
 
     _rand_image().save(tmpdir / "a_1.png")
     _rand_image().save(tmpdir / "b_1.png")
 
-    train_images = [
-        str(tmpdir / "a_1.png"),
-        str(tmpdir / "b_1.png"),
-    ]
+    return [str(tmpdir / "a_1.png"), str(tmpdir / "b_1.png")], 3
+
+
+def _audio_files(_):
+    raw_audio_path = str(Path(flash.ASSETS_ROOT) / "example.wav")
+
+    return [raw_audio_path, raw_audio_path], 1
+
+
+@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
+@pytest.mark.parametrize("file_generator", [_image_files, _audio_files])
+def test_from_filepaths(tmpdir, file_generator):
+
+    train_images, channels = file_generator(tmpdir)
 
     spectrograms_data = AudioClassificationData.from_files(
         train_files=train_images,
@@ -62,7 +65,7 @@ def test_from_filepaths_smoke(tmpdir):
 
     data = next(iter(spectrograms_data.train_dataloader()))
     imgs, labels = data["input"], data["target"]
-    assert imgs.shape == (2, 3, 128, 128)
+    assert imgs.shape == (2, channels, 128, 128)
     assert labels.shape == (2,)
     assert sorted(list(labels.numpy())) == [1, 2]
 
@@ -251,47 +254,6 @@ def test_from_filepaths_visualise_multilabel(tmpdir):
     dm.show_train_batch()
     dm.show_train_batch("per_sample_transform")
     dm.show_val_batch("per_batch_transform")
-
-
-@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
-def test_from_filepaths_splits(tmpdir):
-    tmpdir = Path(tmpdir)
-
-    B, _, H, W = 2, 3, 224, 224
-    img_size: Tuple[int, int] = (H, W)
-
-    (tmpdir / "splits").mkdir()
-    _rand_image(img_size).save(tmpdir / "s.png")
-
-    num_samples: int = 10
-    val_split: float = 0.3
-
-    train_filepaths: List[str] = [str(tmpdir / "s.png") for _ in range(num_samples)]
-
-    train_labels: List[int] = list(range(num_samples))
-
-    assert len(train_filepaths) == len(train_labels)
-
-    _to_tensor = nn.Sequential(
-        ApplyToKeys(DataKeys.INPUT, T.Compose([T.ToTensor(), T.Resize(img_size)])),
-        ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
-    )
-
-    def run(transform: Any = None):
-        dm = AudioClassificationData.from_files(
-            train_files=train_filepaths,
-            train_targets=train_labels,
-            transform=transform,
-            batch_size=B,
-            num_workers=0,
-            val_split=val_split,
-        )
-        data = next(iter(dm.train_dataloader()))
-        imgs, labels = data["input"], data["target"]
-        assert imgs.shape == (B, 3, H, W)
-        assert labels.shape == (B,)
-
-    run(_to_tensor)
 
 
 @pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")

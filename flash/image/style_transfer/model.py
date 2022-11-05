@@ -13,13 +13,13 @@
 # limitations under the License.
 from typing import Any, cast, List, NoReturn, Optional, Sequence, Tuple, Union
 
-import torch
-from torch import nn
+from torch import nn, Tensor
 
 from flash.core.data.io.input import DataKeys
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.core.utilities.stability import beta
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE
 from flash.image.style_transfer import STYLE_TRANSFER_BACKBONES
 
@@ -46,6 +46,7 @@ from flash.image.style_transfer.utils import raise_not_supported
 __all__ = ["StyleTransfer"]
 
 
+@beta("Style transfer is currently in Beta.")
 class StyleTransfer(Task):
     """``StyleTransfer`` is a :class:`~flash.Task` for transferring the style from one image onto another. For more
     details, see :ref:`style_transfer`.
@@ -69,7 +70,7 @@ class StyleTransfer(Task):
 
     def __init__(
         self,
-        style_image: Optional[Union[str, torch.Tensor]] = None,
+        style_image: Optional[Union[str, Tensor]] = None,
         model: Optional[nn.Module] = None,
         backbone: str = "vgg16",
         content_layer: str = "relu2_2",
@@ -113,7 +114,7 @@ class StyleTransfer(Task):
         self.perceptual_loss = perceptual_loss
 
     @staticmethod
-    def default_style_image() -> torch.Tensor:
+    def default_style_image() -> Tensor:
         return pystiche.demo.images()["paint"].read(size=256)
 
     @staticmethod
@@ -122,10 +123,10 @@ class StyleTransfer(Task):
         # oversight: they normalize the representation twice by the number of channels. To be compatible with them, we
         # do the same here.
         class GramOperator(loss.GramLoss):
-            def enc_to_repr(self, enc: torch.Tensor) -> torch.Tensor:
-                repr = super().enc_to_repr(enc)
-                num_channels = repr.size()[1]
-                return repr / num_channels
+            def enc_to_repr(self, enc: Tensor) -> Tensor:
+                rr = super().enc_to_repr(enc)
+                num_channels = rr.size()[1]
+                return rr / num_channels
 
         return GramOperator(encoder, score_weight=score_weight)
 

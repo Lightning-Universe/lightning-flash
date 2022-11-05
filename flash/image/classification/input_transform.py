@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
-from typing import Callable, Tuple, Union
+from typing import Tuple, Union
 
 import torch
+from torch import nn
 
+from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform
-from flash.core.data.transforms import kornia_collate
+from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _ALBUMENTATIONS_AVAILABLE, _TORCHVISION_AVAILABLE, requires
 
 if _TORCHVISION_AVAILABLE:
@@ -27,7 +29,7 @@ if _ALBUMENTATIONS_AVAILABLE:
     import albumentations
 
 
-class AlbumentationsAdapter(torch.nn.Module):
+class AlbumentationsAdapter(nn.Module):
     @requires("albumentations")
     def __init__(self, transform):
         super().__init__()
@@ -46,17 +48,31 @@ class ImageClassificationInputTransform(InputTransform):
     mean: Union[float, Tuple[float, float, float]] = (0.485, 0.456, 0.406)
     std: Union[float, Tuple[float, float, float]] = (0.229, 0.224, 0.225)
 
-    def input_per_sample_transform(self):
-        return T.Compose([T.ToTensor(), T.Resize(self.image_size), T.Normalize(self.mean, self.std)])
-
-    def train_input_per_sample_transform(self):
+    def per_sample_transform(self):
         return T.Compose(
-            [T.ToTensor(), T.Resize(self.image_size), T.Normalize(self.mean, self.std), T.RandomHorizontalFlip()]
+            [
+                ApplyToKeys(
+                    DataKeys.INPUT,
+                    T.Compose([T.ToTensor(), T.Resize(self.image_size), T.Normalize(self.mean, self.std)]),
+                ),
+                ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
+            ]
         )
 
-    def target_per_sample_transform(self) -> Callable:
-        return torch.as_tensor
-
-    def collate(self) -> Callable:
-        # TODO: Remove kornia collate for default_collate
-        return kornia_collate
+    def train_per_sample_transform(self):
+        return T.Compose(
+            [
+                ApplyToKeys(
+                    DataKeys.INPUT,
+                    T.Compose(
+                        [
+                            T.ToTensor(),
+                            T.Resize(self.image_size),
+                            T.Normalize(self.mean, self.std),
+                            T.RandomHorizontalFlip(),
+                        ]
+                    ),
+                ),
+                ApplyToKeys(DataKeys.TARGET, torch.as_tensor),
+            ]
+        )

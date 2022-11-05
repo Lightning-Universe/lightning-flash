@@ -14,18 +14,25 @@
 from functools import partial
 from typing import Optional
 
+from lightning_utilities.core.imports import module_available
+
 from flash.core.adapter import Adapter
 from flash.core.integrations.icevision.adapter import IceVisionAdapter, SimpleCOCOMetric
 from flash.core.integrations.icevision.backbones import get_backbones, load_icevision_ignore_image_size
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _module_available, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.core.utilities.providers import _ICEVISION, _MMDET, _TORCHVISION
 
 if _ICEVISION_AVAILABLE:
     from icevision import models as icevision_models
     from icevision.metrics import COCOMetricType
     from icevision.metrics import Metric as IceVisionMetric
+else:
+
+    class COCOMetricType:
+        mask = None
+
 
 INSTANCE_SEGMENTATION_HEADS = FlashRegistry("heads")
 
@@ -39,7 +46,7 @@ class IceVisionInstanceSegmentationAdapter(IceVisionAdapter):
         backbone: str = "resnet18_fpn",
         head: str = "mask_rcnn",
         pretrained: bool = True,
-        metrics: Optional["IceVisionMetric"] = None,
+        metrics: Optional["IceVisionMetric"] = SimpleCOCOMetric(COCOMetricType.mask),
         image_size: Optional = None,
         **kwargs,
     ) -> Adapter:
@@ -49,7 +56,7 @@ class IceVisionInstanceSegmentationAdapter(IceVisionAdapter):
             backbone=backbone,
             head=head,
             pretrained=pretrained,
-            metrics=metrics or [SimpleCOCOMetric(COCOMetricType.mask)],
+            metrics=metrics,
             image_size=image_size,
             **kwargs,
         )
@@ -66,7 +73,7 @@ if _ICEVISION_AVAILABLE:
             providers=[_ICEVISION, _TORCHVISION],
         )
 
-    if _module_available("mmdet"):
+    if module_available("mmdet"):
         model_type = icevision_models.mmdet.mask_rcnn
         INSTANCE_SEGMENTATION_HEADS(
             partial(load_icevision_ignore_image_size, model_type),

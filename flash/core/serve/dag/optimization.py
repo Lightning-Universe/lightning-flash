@@ -5,6 +5,11 @@ from enum import Enum
 from flash.core.serve.dag.task import flatten, get, get_dependencies, ishashable, istask, reverse_dict, subs, toposort
 from flash.core.serve.dag.utils import key_split
 from flash.core.serve.dag.utils_test import add, inc, mul
+from flash.core.utilities.imports import _SERVE_TESTING
+
+# Skip doctests if requirements aren't available
+if not _SERVE_TESTING:
+    __doctest_skip__ = ["*"]
 
 
 def cull(dsk, keys):
@@ -893,7 +898,7 @@ class SubgraphCallable:
         return get(self.dsk, self.outkey, dict(zip(self.inkeys, args)))
 
     def __reduce__(self):
-        return (SubgraphCallable, (self.dsk, self.outkey, self.inkeys, self.name))
+        return SubgraphCallable, (self.dsk, self.outkey, self.inkeys, self.name)
 
     def __hash__(self):
         return hash(tuple((self.outkey, tuple(self.inkeys), self.name)))

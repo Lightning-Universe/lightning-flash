@@ -144,8 +144,6 @@ titanic.csv
 data_folder
 *.pt
 *.zip
-flash_notebooks/*.py
-flash_notebooks/data
 /data
 MNIST*
 titanic
@@ -171,8 +169,13 @@ __MACOSX
 cifar-10*
 mini-imagenet*
 squad_tiny*
+SeoulBikeData.csv
 
 docs/source/_static/images/course_UvA-DL
 docs/source/_static/images/lightning_examples
 docs/source/_static/images/flash_tutorials
 docs/source/notebooks
+
+# ctags
+tags
+.tags

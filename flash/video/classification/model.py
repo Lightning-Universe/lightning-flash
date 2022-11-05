@@ -15,7 +15,6 @@ from types import FunctionType
 from typing import Any, Dict, Iterable, List, Optional, Union
 
 import torch
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DistributedSampler
@@ -47,7 +46,7 @@ class VideoClassifier(ClassificationTask):
 
     Args:
         num_classes: Number of classes to classify.
-        backbone: A string mapped to ``pytorch_video`` backbones or ``nn.Module``, defaults to ``"slowfast_r50"``.
+        backbone: A string mapped to ``pytorch_video`` backbones or ``nn.Module``, defaults to ``"x3d_xs"``.
         backbone_kwargs: Arguments to customize the backbone from PyTorchVideo.
         pretrained: Use a pretrained backbone, defaults to ``True``.
         loss_fn: Loss function for training, defaults to :func:`torch.nn.functional.cross_entropy`.
@@ -111,7 +110,7 @@ class VideoClassifier(ClassificationTask):
             self.backbone = self.backbones.get(backbone)(**backbone_kwargs)
             num_features = self.backbone.blocks[-1].proj.out_features
         else:
-            raise MisconfigurationException(f"backbone should be either a string or a nn.Module. Found: {backbone}")
+            raise ValueError(f"backbone should be either a string or a nn.Module. Found: {backbone}")
 
         self.head = head or nn.Sequential(
             nn.Flatten(),
@@ -131,7 +130,7 @@ class VideoClassifier(ClassificationTask):
         super().on_train_epoch_start()
 
     def step(self, batch: Any, batch_idx: int, metrics) -> Any:
-        return super().step((batch["video"], batch["label"]), batch_idx, metrics)
+        return super().step((batch[DataKeys.INPUT], batch[DataKeys.TARGET]), batch_idx, metrics)
 
     def forward(self, x: Any) -> Any:
         x = self.backbone(x)
@@ -140,7 +139,7 @@ class VideoClassifier(ClassificationTask):
         return x
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        predictions = self(batch["video"])
+        predictions = self(batch[DataKeys.INPUT])
         batch[DataKeys.PREDS] = predictions
         return batch
 

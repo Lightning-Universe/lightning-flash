@@ -12,15 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import warnings
-from typing import Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 import torch
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from torch import Tensor
 from torch.utils.data import DataLoader, Dataset, random_split
 
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import InputBase
+from flash.core.data.io.input_transform import create_worker_input_transform_processor
 from flash.core.utilities.imports import _BAAL_AVAILABLE, requires
 from flash.core.utilities.stages import RunningStage
 
@@ -86,13 +87,13 @@ class ActiveLearningDataModule(DataModule):
         self._dataset: Optional[ActiveLearningDataset] = None
 
         if not self.labelled:
-            raise MisconfigurationException("The labelled `datamodule` should be provided.")
+            raise TypeError("The labelled `datamodule` should be provided.")
 
         if not self.labelled.num_classes:
-            raise MisconfigurationException("The labelled dataset should be labelled")
+            raise TypeError("The labelled dataset should be labelled")
 
         if self.labelled and (self.labelled._val_input or self.labelled._predict_input):
-            raise MisconfigurationException("The labelled `datamodule` should have only train data.")
+            raise TypeError("The labelled `datamodule` should have only train data.")
 
         self._dataset = ActiveLearningDataset(
             self.labelled._train_input, labelled=self.map_dataset_to_labelled(self.labelled._train_input)
@@ -101,7 +102,7 @@ class ActiveLearningDataModule(DataModule):
         if not self.val_split or not self.has_labelled_data:
             self.val_dataloader = None
         elif self.val_split < 0 or self.val_split > 1:
-            raise MisconfigurationException("The `val_split` should a float between 0 and 1.")
+            raise ValueError("The `val_split` should a float between 0 and 1.")
 
         if self.labelled._test_input:
             self.test_dataloader = self._test_dataloader
@@ -148,36 +149,42 @@ class ActiveLearningDataModule(DataModule):
 
     def _val_dataloader(self) -> "DataLoader":
         self.labelled._val_input = train_val_split(self._dataset, self.val_split)[1]
-        self.labelled._val_dataloader_collate_fn = self.labelled._train_dataloader_collate_fn
-        self.labelled._on_after_batch_transfer_fns[
-            RunningStage.VALIDATING
-        ] = self.labelled._on_after_batch_transfer_fns[RunningStage.TRAINING]
-        return self.labelled._val_dataloader()
+        dataloader = self.labelled._val_dataloader()
+        dataloader.collate_fn = create_worker_input_transform_processor(
+            RunningStage.TRAINING, self.labelled.input_transform
+        )
+        return dataloader
 
     def _test_dataloader(self) -> "DataLoader":
         return self.labelled.test_dataloader()
 
     def predict_dataloader(self) -> "DataLoader":
         self.labelled._predict_input = self.filter_unlabelled_data(self._dataset.pool)
-        self.labelled._predict_dataloader_collate_fn = self.labelled._train_dataloader_collate_fn
-        self.labelled._on_after_batch_transfer_fns[
-            RunningStage.PREDICTING
-        ] = self.labelled._on_after_batch_transfer_fns[RunningStage.TRAINING]
-        return self.labelled._predict_dataloader()
+        dataloader = self.labelled._predict_dataloader()
+        dataloader.collate_fn = create_worker_input_transform_processor(
+            RunningStage.TRAINING, self.labelled.input_transform
+        )
+        return dataloader
 
-    def label(self, probabilities: List[torch.Tensor] = None, indices=None):
+    def on_after_batch_transfer(self, batch: Any, dataloader_idx: int) -> Any:
+        current_stage = self.trainer.state.stage
+        if current_stage == RunningStage.VALIDATING or current_stage == RunningStage.PREDICTING:
+            self.trainer.state.stage = RunningStage.TRAINING
+        batch = super().on_after_batch_transfer(batch, dataloader_idx)
+        self.trainer.state.stage = current_stage
+        return batch
+
+    def label(self, probabilities: List[Tensor] = None, indices=None):
         if probabilities is not None and indices:
-            raise MisconfigurationException(
-                "The `probabilities` and `indices` are mutually exclusive, pass only of one them."
-            )
-        if probabilities is not None:
+            raise RuntimeError("The `probabilities` and `indices` are mutually exclusive, pass only of one them.")
+        if probabilities is not None and len(probabilities) != 0:
             probabilities = torch.cat([p[0].unsqueeze(0) for p in probabilities], dim=0)
             uncertainties = self.heuristic.get_uncertainties(probabilities)
             indices = np.argsort(uncertainties)
             if self._dataset is not None:
                 self._dataset.label(indices[-self.query_size :])
 
-    def state_dict(self) -> Dict[str, torch.Tensor]:
+    def state_dict(self) -> Dict[str, Tensor]:
         return self._dataset.state_dict()
 
     def load_state_dict(self, state_dict) -> None:

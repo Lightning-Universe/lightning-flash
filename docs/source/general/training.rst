@@ -56,6 +56,6 @@ Flash tasks supports many advanced training functionalities out-of-the-box, such
 .. code-block:: python
 
     # Train on TPUs
-    flash.Trainer(tpu_cores=8)
+    flash.Trainer(accelerator="tpu", num_devices=8)
 
 You can add to the flash Trainer any argument from the Lightning trainer! Learn more about the Lightning Trainer `here <https://pytorch-lightning.readthedocs.io/en/stable/common/trainer.html>`_.

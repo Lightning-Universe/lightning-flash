@@ -18,20 +18,17 @@ import zipfile
 from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Set
 
 import requests
-import torch
+import urllib3
 from pytorch_lightning.utilities.apply_func import apply_to_collection
+from torch import nn
 from tqdm.auto import tqdm as tq
 
-from flash.core.utilities.imports import _PIL_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _CORE_TESTING
 from flash.core.utilities.stages import RunningStage
 
-if _PIL_AVAILABLE:
-    from PIL.Image import Image
-else:
-    Image = object
-
-if _TORCHVISION_AVAILABLE:
-    from torchvision.datasets.folder import default_loader
+# Skip doctests if requirements aren't available
+if not _CORE_TESTING:
+    __doctest_skip__ = ["download_data"]
 
 _STAGES_PREFIX = {
     RunningStage.TRAINING: "train",
@@ -65,13 +62,24 @@ _OUTPUT_TRANSFORM_FUNCS: Set[str] = {
 def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:
     """Download file with progressbar.
 
-    # Code taken from: https://gist.github.com/ruxi/5d6803c116ec1130d484a4ab8c00c603
+    # Code adapted from: https://gist.github.com/ruxi/5d6803c116ec1130d484a4ab8c00c603
     # __author__  = "github.com/ruxi"
     # __license__ = "MIT"
 
-    Usage:
-        download_file('http://web4host.net/5MB.zip')
+    Examples
+    ________
+
+    .. doctest::
+
+        >>> import os
+        >>> from flash.core.data.utils import download_data
+        >>> download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "./data")
+        >>> os.listdir("./data")  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+        [...]
     """
+    # Disable warning about making an insecure request
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
     if not os.path.exists(path):
         os.makedirs(path)
     local_filename = os.path.join(path, url.split("/")[-1])
@@ -113,7 +121,7 @@ def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:
         extract_tarfile(local_filename, path, "r:bz2")
 
 
-class FuncModule(torch.nn.Module):
+class FuncModule(nn.Module):
     """This class is used to wrap a callable within a nn.Module and apply the wrapped function in `__call__`"""
 
     def __init__(self, func: Callable) -> None:
@@ -132,25 +140,10 @@ class FuncModule(torch.nn.Module):
 
 def convert_to_modules(transforms: Optional[Dict[str, Callable]]):
 
-    if transforms is None or isinstance(transforms, torch.nn.Module):
+    if transforms is None or isinstance(transforms, nn.Module):
         return transforms
 
-    transforms = apply_to_collection(transforms, Callable, FuncModule, wrong_dtype=torch.nn.Module)
-    transforms = apply_to_collection(transforms, Mapping, torch.nn.ModuleDict, wrong_dtype=torch.nn.ModuleDict)
-    transforms = apply_to_collection(
-        transforms, Iterable, torch.nn.ModuleList, wrong_dtype=(torch.nn.ModuleList, torch.nn.ModuleDict)
-    )
+    transforms = apply_to_collection(transforms, Callable, FuncModule, wrong_dtype=nn.Module)
+    transforms = apply_to_collection(transforms, Mapping, nn.ModuleDict, wrong_dtype=nn.ModuleDict)
+    transforms = apply_to_collection(transforms, Iterable, nn.ModuleList, wrong_dtype=(nn.ModuleList, nn.ModuleDict))
     return transforms
-
-
-def image_default_loader(file_path: str, drop_alpha: bool = True) -> Image:
-    """Default loader for images.
-
-    Args:
-        file_path: The image file to load.
-        drop_alpha: If ``True`` (default) then any alpha channels will be silently removed.
-    """
-    img = default_loader(file_path)
-    if img.mode == "RGBA" and drop_alpha:
-        img = img.convert("RGB")
-    return img

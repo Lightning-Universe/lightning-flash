@@ -5,7 +5,7 @@
    :tags: Point-Cloud,Segmentation
    :beta:
 
-.. beta:: task
+.. beta:: Point cloud segmentation is currently in Beta.
 
 .. _pointcloud_segmentation:
 

@@ -2,6 +2,11 @@ from collections import defaultdict
 from typing import List, Sequence
 
 from flash.core.serve.dag.utils_test import add, inc
+from flash.core.utilities.imports import _SERVE_TESTING
+
+# Skip doctests if requirements aren't available
+if not _SERVE_TESTING:
+    __doctest_skip__ = ["*"]
 
 no_default = "__no_default__"
 
@@ -405,7 +410,7 @@ class literal:
         return "literal<type=%s>" % type(self.data).__name__
 
     def __reduce__(self):
-        return (literal, (self.data,))
+        return literal, (self.data,)
 
     def __call__(self):
         return self.data

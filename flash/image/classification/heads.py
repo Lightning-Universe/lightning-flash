@@ -11,30 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from functools import partial
 
-from torch import nn
-
+from flash.core.heads import CLASSIFIER_HEADS
 from flash.core.registry import FlashRegistry  # noqa: F401
 
 # define ImageClassifier registry
 IMAGE_CLASSIFIER_HEADS = FlashRegistry("classifier_heads")
 
-
-def _load_linear_head(num_features: int, num_classes: int) -> nn.Module:
-    """Loads a linear head.
-
-    Args:
-        num_features: Number of input features.
-        num_classes: Number of output classes.
-
-    Returns:
-        nn.Module: Linear head.
-    """
-    return nn.Linear(num_features, num_classes)
-
-
-IMAGE_CLASSIFIER_HEADS(
-    partial(_load_linear_head),
-    name="linear",
-)
+IMAGE_CLASSIFIER_HEADS = IMAGE_CLASSIFIER_HEADS + CLASSIFIER_HEADS

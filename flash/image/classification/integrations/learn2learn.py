@@ -21,9 +21,9 @@ from typing import Any, Callable, Optional
 
 import pytorch_lightning as pl
 from torch.utils.data import IterableDataset
-from torch.utils.data._utils.collate import default_collate
 from torch.utils.data._utils.worker import get_worker_info
 
+from flash.core.data.utilities.collate import default_collate
 from flash.core.utilities.imports import requires
 
 
@@ -108,7 +108,6 @@ class TaskDistributedDataParallel(IterableDataset):
         self.worker_world_size = self.world_size * self.num_workers
         self.epoch_length = epoch_length
         self.seed = seed
-        self.iteration = 0
         self.iteration = 0
         self.requires_divisible = requires_divisible
         self.counter = 0

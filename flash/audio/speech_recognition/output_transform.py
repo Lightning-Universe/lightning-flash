@@ -32,7 +32,7 @@ class SpeechRecognitionOutputTransform(OutputTransform):
     @requires("audio")
     def per_batch_transform(self, batch: Any) -> Any:
         # converts logits into greedy transcription
-        pred_ids = torch.argmax(batch.logits, dim=-1)
+        pred_ids = torch.argmax(batch, dim=-1)
         transcriptions = self._tokenizer.batch_decode(pred_ids)
         return transcriptions
 

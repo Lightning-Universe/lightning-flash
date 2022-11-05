@@ -15,7 +15,7 @@ from abc import abstractmethod
 from typing import Any, Callable, Optional
 
 import torch.jit
-from torch import nn
+from torch import nn, Tensor
 from torch.utils.data import DataLoader, Sampler
 
 import flash
@@ -103,7 +103,7 @@ class AdapterTask(Task):
     def backbone(self) -> nn.Module:
         return self.adapter.backbone
 
-    def forward(self, x: torch.Tensor) -> Any:
+    def forward(self, x: Tensor) -> Any:
         return self.adapter.forward(x)
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
@@ -130,109 +130,103 @@ class AdapterTask(Task):
     def process_train_dataset(
         self,
         dataset: InputBase,
-        trainer: "flash.Trainer",
-        input_transform: InputTransform,
         batch_size: int,
-        num_workers: int,
-        pin_memory: bool,
-        collate_fn: Callable,
-        shuffle: bool = False,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        shuffle: bool = True,
         drop_last: bool = True,
         sampler: Optional[Sampler] = None,
         persistent_workers: bool = False,
+        input_transform: Optional[InputTransform] = None,
+        trainer: Optional["flash.Trainer"] = None,
     ) -> DataLoader:
         return self.adapter.process_train_dataset(
-            dataset=dataset,
-            trainer=trainer,
-            input_transform=input_transform,
-            batch_size=batch_size,
+            dataset,
+            batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
-            collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
             persistent_workers=persistent_workers,
+            input_transform=input_transform,
+            trainer=trainer,
         )
 
     def process_val_dataset(
         self,
         dataset: InputBase,
-        trainer: "flash.Trainer",
-        input_transform: InputTransform,
         batch_size: int,
-        num_workers: int,
-        pin_memory: bool,
-        collate_fn: Callable,
+        num_workers: int = 0,
+        pin_memory: bool = False,
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
         persistent_workers: bool = False,
+        input_transform: Optional[InputTransform] = None,
+        trainer: Optional["flash.Trainer"] = None,
     ) -> DataLoader:
         return self.adapter.process_val_dataset(
-            dataset=dataset,
-            trainer=trainer,
-            input_transform=input_transform,
-            batch_size=batch_size,
+            dataset,
+            batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
-            collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
             persistent_workers=persistent_workers,
+            input_transform=input_transform,
+            trainer=trainer,
         )
 
     def process_test_dataset(
         self,
         dataset: InputBase,
-        trainer: "flash.Trainer",
-        input_transform: InputTransform,
         batch_size: int,
-        num_workers: int,
-        pin_memory: bool,
-        collate_fn: Callable,
+        num_workers: int = 0,
+        pin_memory: bool = False,
         shuffle: bool = False,
         drop_last: bool = False,
         sampler: Optional[Sampler] = None,
         persistent_workers: bool = False,
+        input_transform: Optional[InputTransform] = None,
+        trainer: Optional["flash.Trainer"] = None,
     ) -> DataLoader:
         return self.adapter.process_test_dataset(
-            dataset=dataset,
-            trainer=trainer,
-            input_transform=input_transform,
-            batch_size=batch_size,
+            dataset,
+            batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
-            collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
             persistent_workers=persistent_workers,
+            input_transform=input_transform,
+            trainer=trainer,
         )
 
     def process_predict_dataset(
         self,
         dataset: InputBase,
-        input_transform: InputTransform,
-        batch_size: int = 1,
+        batch_size: int,
         num_workers: int = 0,
         pin_memory: bool = False,
-        collate_fn: Callable = identity_collate_fn,
         shuffle: bool = False,
-        drop_last: bool = True,
+        drop_last: bool = False,
         sampler: Optional[Sampler] = None,
         persistent_workers: bool = False,
+        input_transform: Optional[InputTransform] = None,
+        trainer: Optional["flash.Trainer"] = None,
     ) -> DataLoader:
         return self.adapter.process_predict_dataset(
-            dataset=dataset,
-            input_transform=input_transform,
-            batch_size=batch_size,
+            dataset,
+            batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
-            collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
             persistent_workers=persistent_workers,
+            input_transform=input_transform,
+            trainer=trainer,
         )

@@ -14,11 +14,12 @@
 from typing import Any, Callable, Dict, IO, Optional, Union
 
 import torch
-from torch import nn
+from torch import nn, Tensor
 
 from flash.core.data.io.input import DataKeys
 from flash.core.model import Task
 from flash.graph.classification.model import GraphClassifier, POOLING_FUNCTIONS
+from flash.graph.collate import _pyg_collate
 
 
 class GraphEmbedder(Task):
@@ -42,7 +43,9 @@ class GraphEmbedder(Task):
 
         self.pooling_fn = POOLING_FUNCTIONS[pooling_fn] if isinstance(pooling_fn, str) else pooling_fn
 
-    def forward(self, data) -> torch.Tensor:
+        self.collate_fn = _pyg_collate
+
+    def forward(self, data) -> Tensor:
         x = self.backbone(data.x, data.edge_index)
         x = self.pooling_fn(x, data.batch)
         return x

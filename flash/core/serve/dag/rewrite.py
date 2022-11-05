@@ -1,6 +1,11 @@
 from collections import deque
 
 from flash.core.serve.dag.task import istask, subs
+from flash.core.utilities.imports import _SERVE_TESTING
+
+# Skip doctests if requirements aren't available
+if not _SERVE_TESTING:
+    __doctest_skip__ = ["*"]
 
 
 def head(task):
@@ -165,7 +170,7 @@ class RewriteRule:
     ...     if isinstance(x, list):
     ...         return x
     ...     else:
-    ...         return (list, x)
+    ...         return list, x
     >>> rule = RewriteRule(lhs, repl_list, variables)
     """
 
@@ -254,13 +259,13 @@ class RuleSet:
 
         if not isinstance(rule, RewriteRule):
             raise TypeError("rule must be instance of RewriteRule")
-        vars = rule.vars
+        list_vars = rule.vars
         curr_node = self._net
         ind = len(self.rules)
         # List of variables, in order they appear in the POT of the term
         for t in Traverser(rule.lhs):
             prev_node = curr_node
-            if t in vars:
+            if t in list_vars:
                 t = VAR
             if t in curr_node.edges:
                 curr_node = curr_node.edges[t]

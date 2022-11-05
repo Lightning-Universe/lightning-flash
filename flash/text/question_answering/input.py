@@ -21,6 +21,7 @@ from typing import Any, Dict
 
 import flash
 from flash.core.data.io.input import Input
+from flash.core.data.utilities.loading import load_data_frame
 from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
 
@@ -91,9 +92,8 @@ class QuestionAnsweringCSVInput(QuestionAnsweringInputBase):
         context_column_name: str = "context",
         answer_column_name: str = "answer",
     ) -> Dataset:
-        dataset_dict = load_dataset("csv", data_files={"data": str(csv_file)})
         return super().load_data(
-            dataset_dict["data"],
+            Dataset.from_pandas(load_data_frame(csv_file)),
             question_column_name=question_column_name,
             context_column_name=context_column_name,
             answer_column_name=answer_column_name,
@@ -158,9 +158,7 @@ class QuestionAnsweringSQuADInput(QuestionAnsweringDictionaryInput):
                 context = comprehension["context"]
                 for qa in comprehension["qas"]:
                     question = qa["question"]
-                    id = qa["id"]
-
-                    ids.append(id)
+                    ids.append(qa["id"])
                     titles.append(title)
                     contexts.append(context)
                     questions.append(question)

@@ -11,18 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, Iterable, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, Optional, Tuple, Union
 
 import torch
-from torch import nn
+from torch import nn, Tensor
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, Sampler
 
+import flash
 from flash.core.classification import ClassificationTask
-from flash.core.data.io.input import DataKeys, Input
+from flash.core.data.io.input import DataKeys, InputBase
 from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.utilities.collate import wrap_collate
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE, _TM_GREATER_EQUAL_0_7_0
+from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE, _TM_GREATER_EQUAL_0_7_0, _TM_GREATER_EQUAL_0_10_0
+from flash.core.utilities.stability import beta
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.pointcloud.segmentation.backbones import POINTCLOUD_SEGMENTATION_BACKBONES
 
@@ -30,12 +33,15 @@ if _POINTCLOUD_AVAILABLE:
     from open3d._ml3d.torch.modules.losses.semseg_loss import filter_valid_label
     from open3d.ml.torch.dataloaders import TorchDataloader
 
-if _TM_GREATER_EQUAL_0_7_0:
+if _TM_GREATER_EQUAL_0_10_0:
+    from torchmetrics.classification import MulticlassJaccardIndex as JaccardIndex
+elif _TM_GREATER_EQUAL_0_7_0:
     from torchmetrics import JaccardIndex
 else:
     from torchmetrics import IoU as JaccardIndex
 
 
+@beta("Point cloud segmentation is currently in Beta.")
 class PointCloudSegmentation(ClassificationTask):
     """The ``PointCloudClassifier`` is a :class:`~flash.core.classification.ClassificationTask` that classifies
     pointcloud data.
@@ -63,7 +69,7 @@ class PointCloudSegmentation(ClassificationTask):
     def __init__(
         self,
         num_classes: int,
-        backbone: Union[str, Tuple[nn.Module, int]] = "RandLANet",
+        backbone: Union[str, Tuple[nn.Module, int]] = "randlanet",
         backbone_kwargs: Optional[Dict] = None,
         head: Optional[nn.Module] = None,
         loss_fn: LOSS_FN_TYPE = torch.nn.functional.cross_entropy,
@@ -96,7 +102,8 @@ class PointCloudSegmentation(ClassificationTask):
         if isinstance(backbone, tuple):
             self.backbone, out_features = backbone
         else:
-            self.backbone, out_features, self.collate_fn = self.backbones.get(backbone)(**backbone_kwargs)
+            self.backbone, out_features, collate_fn = self.backbones.get(backbone)(**backbone_kwargs)
+            self.collate_fn = wrap_collate(collate_fn)
             # replace latest layer
             if not flash._IS_TESTING:
                 self.backbone.fc = nn.Identity()
@@ -107,10 +114,10 @@ class PointCloudSegmentation(ClassificationTask):
         scores, labels = filter_valid_label(scores, labels, self.hparams.num_classes, [0], self.device)
         return labels, scores
 
-    def to_metrics_format(self, x: torch.Tensor) -> torch.Tensor:
+    def to_metrics_format(self, x: Tensor) -> Tensor:
         return F.softmax(self.to_loss_format(x), dim=-1)
 
-    def to_loss_format(self, x: torch.Tensor) -> torch.Tensor:
+    def to_loss_format(self, x: Tensor) -> Tensor:
         return x.reshape(-1, x.shape[-1])
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
@@ -132,7 +139,7 @@ class PointCloudSegmentation(ClassificationTask):
         batch[DataKeys.INPUT] = batch[DataKeys.INPUT]["xyz"][0]
         return batch
 
-    def forward(self, x) -> torch.Tensor:
+    def forward(self, x) -> Tensor:
         """First call the backbone, then the model head."""
         # hack to enable backbone to work properly.
         self.backbone.device = self.device
@@ -141,21 +148,8 @@ class PointCloudSegmentation(ClassificationTask):
             x = self.head(x)
         return x
 
-    def _process_dataset(
-        self,
-        dataset: Input,
-        input_transform: InputTransform,
-        batch_size: int,
-        num_workers: int,
-        pin_memory: bool,
-        collate_fn: Callable,
-        shuffle: bool = False,
-        drop_last: bool = True,
-        sampler: Optional[Sampler] = None,
-        **kwargs
-    ) -> DataLoader:
-        if not isinstance(dataset.data, TorchDataloader):
-
+    def _patch_dataset(self, dataset: InputBase):
+        if not isinstance(dataset.dataset, TorchDataloader):
             dataset.dataset = TorchDataloader(
                 dataset.dataset,
                 preprocess=self.backbone.preprocess,
@@ -163,20 +157,112 @@ class PointCloudSegmentation(ClassificationTask):
                 use_cache=False,
             )
 
-        if self.input_transform is None:
-            self.input_transform = input_transform
-        if self.collate_fn is not None:
-            self.input_transform.inject_collate_fn(self.collate_fn)
-
-        return DataLoader(
+    def process_train_dataset(
+        self,
+        dataset: InputBase,
+        batch_size: int,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        shuffle: bool = True,
+        drop_last: bool = True,
+        sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
+        input_transform: Optional[InputTransform] = None,
+        trainer: Optional["flash.Trainer"] = None,
+    ) -> DataLoader:
+        self._patch_dataset(dataset)
+        return super().process_train_dataset(
             dataset,
-            batch_size=batch_size,
+            batch_size,
             num_workers=num_workers,
             pin_memory=pin_memory,
-            collate_fn=collate_fn,
             shuffle=shuffle,
             drop_last=drop_last,
             sampler=sampler,
+            persistent_workers=persistent_workers,
+            input_transform=input_transform,
+            trainer=trainer,
+        )
+
+    def process_val_dataset(
+        self,
+        dataset: InputBase,
+        batch_size: int,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        shuffle: bool = False,
+        drop_last: bool = False,
+        sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
+        input_transform: Optional[InputTransform] = None,
+        trainer: Optional["flash.Trainer"] = None,
+    ) -> DataLoader:
+        self._patch_dataset(dataset)
+        return super().process_val_dataset(
+            dataset,
+            batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
+            persistent_workers=persistent_workers,
+            input_transform=input_transform,
+            trainer=trainer,
+        )
+
+    def process_test_dataset(
+        self,
+        dataset: InputBase,
+        batch_size: int,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        shuffle: bool = False,
+        drop_last: bool = False,
+        sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
+        input_transform: Optional[InputTransform] = None,
+        trainer: Optional["flash.Trainer"] = None,
+    ) -> DataLoader:
+        self._patch_dataset(dataset)
+        return super().process_test_dataset(
+            dataset,
+            batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
+            persistent_workers=persistent_workers,
+            input_transform=input_transform,
+            trainer=trainer,
+        )
+
+    def process_predict_dataset(
+        self,
+        dataset: InputBase,
+        batch_size: int,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        shuffle: bool = False,
+        drop_last: bool = False,
+        sampler: Optional[Sampler] = None,
+        persistent_workers: bool = False,
+        input_transform: Optional[InputTransform] = None,
+        trainer: Optional["flash.Trainer"] = None,
+    ) -> DataLoader:
+        self._patch_dataset(dataset)
+        return super().process_predict_dataset(
+            dataset,
+            batch_size,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            shuffle=shuffle,
+            drop_last=drop_last,
+            sampler=sampler,
+            persistent_workers=persistent_workers,
+            input_transform=input_transform,
+            trainer=trainer,
         )
 
     def modules_to_freeze(self) -> Union[nn.Module, Iterable[Union[nn.Module, Iterable]]]:

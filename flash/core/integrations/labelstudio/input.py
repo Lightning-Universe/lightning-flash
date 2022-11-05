@@ -8,12 +8,11 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Set, Type
 import numpy as np
 import torch
 from pytorch_lightning.utilities.cloud_io import get_filesystem
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Sampler
 
 from flash.core.data.io.input import DataKeys, Input, IterableInput
 from flash.core.data.properties import Properties
-from flash.core.data.utils import image_default_loader
+from flash.core.data.utilities.loading import load_image
 from flash.core.utilities.imports import _PYTORCHVIDEO_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 
@@ -60,9 +59,12 @@ def _load_json_data(data, data_folder, multi_label=False):
                     if isinstance(label, list) and not multi_label:
                         for sublabel in label:
                             classes.add(sublabel)
-                            temp = {}
-                            temp["file_upload"] = task.get("file_upload")
-                            temp["data"] = task.get("data")
+                            temp = {
+                                "file_upload": task.get("file_upload"),
+                                "data": task.get("data"),
+                                "label": sublabel,
+                                "result": res.get("value"),
+                            }
                             if temp["file_upload"]:
                                 temp["file_upload"] = os.path.join(data_folder, temp["file_upload"])
                             else:
@@ -71,8 +73,6 @@ def _load_json_data(data, data_folder, multi_label=False):
                                 path = Path(p)
                                 if path and data_folder:
                                     temp["file_upload"] = os.path.join(data_folder, path.name)
-                            temp["label"] = sublabel
-                            temp["result"] = res.get("value")
                             if annotation["ground_truth"]:
                                 test_results.append(temp)
                             elif not annotation["ground_truth"]:
@@ -83,9 +83,12 @@ def _load_json_data(data, data_folder, multi_label=False):
                                 classes.add(item)
                         else:
                             classes.add(label)
-                        temp = {}
-                        temp["file_upload"] = task.get("file_upload")
-                        temp["data"] = task.get("data")
+                        temp = {
+                            "file_upload": task.get("file_upload"),
+                            "data": task.get("data"),
+                            "label": label,
+                            "result": res.get("value"),
+                        }
                         if temp["file_upload"] and data_folder:
                             temp["file_upload"] = os.path.join(data_folder, temp["file_upload"])
                         else:
@@ -94,8 +97,6 @@ def _load_json_data(data, data_folder, multi_label=False):
                             path = Path(p)
                             if path and data_folder:
                                 temp["file_upload"] = os.path.join(data_folder, path.name)
-                        temp["label"] = label
-                        temp["result"] = res.get("value")
                         if annotation["ground_truth"]:
                             test_results.append(temp)
                         elif not annotation["ground_truth"]:
@@ -151,7 +152,7 @@ class BaseLabelStudioInput(Properties):
         file_path = data.get("export_json", None)
 
         if not file_path:
-            raise MisconfigurationException("The key `export_json` should be provided as a string.")
+            raise TypeError("The key `export_json` should be provided as a string.")
 
         fs = get_filesystem(file_path)
         with fs.open(file_path) as f:
@@ -195,7 +196,7 @@ class BaseLabelStudioInput(Properties):
         file_path = data.get("export_json", None)
 
         if not file_path:
-            raise MisconfigurationException("The key `export_json` should be provided as a string.")
+            raise TypeError("The key `export_json` should be provided as a string.")
 
         fs = get_filesystem(file_path)
         with fs.open(file_path) as f:
@@ -239,7 +240,7 @@ class LabelStudioImageClassificationInput(LabelStudioInput):
         """Load 1 sample from dataset."""
         p = sample["file_upload"]
         # loading image
-        image = image_default_loader(p)
+        image = load_image(p)
         result = {
             DataKeys.INPUT: image,
             DataKeys.TARGET: _get_labels_from_sample(sample["label"], self.parameters.classes),

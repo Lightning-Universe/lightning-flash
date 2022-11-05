@@ -15,10 +15,8 @@ from io import StringIO
 from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.io.input import DataKeys, Input, ServeInput
-from flash.core.data.utilities.data_frame import read_csv
 from flash.core.utilities.imports import _PANDAS_AVAILABLE
 from flash.tabular.classification.utils import (
     _compute_normalization,
@@ -29,6 +27,7 @@ from flash.tabular.classification.utils import (
 )
 
 if _PANDAS_AVAILABLE:
+    import pandas as pd
     from pandas.core.frame import DataFrame
 else:
     DataFrame = object
@@ -85,7 +84,7 @@ class TabularDataFrameInput(Input):
             categorical_fields, numerical_fields = self._sanetize_fields(categorical_fields, numerical_fields)
             parameters = self.compute_parameters(df, numerical_fields, categorical_fields)
         elif parameters is None:
-            raise MisconfigurationException(
+            raise ValueError(
                 "Loading tabular data for evaluation or inference requires parameters from the train data. Either "
                 "construct the train data at the same time as evaluation and inference or provide the train "
                 "`datamodule.parameters` in the `parameters` argument."
@@ -121,7 +120,7 @@ class TabularDeserializer(ServeInput):
     def serve_load_sample(self, data: str) -> Any:
         parameters = self._parameters
 
-        df = read_csv(StringIO(data))
+        df = pd.read_csv(StringIO(data))
         df = _pre_transform(
             df,
             parameters["numerical_fields"],

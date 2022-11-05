@@ -15,7 +15,6 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-import torch
 
 from flash import Trainer
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _IMAGE_TESTING, _PIL_AVAILABLE
@@ -26,10 +25,6 @@ if _PIL_AVAILABLE:
 
 if _FIFTYONE_AVAILABLE:
     import fiftyone as fo
-
-
-def _dummy_image_loader(_):
-    return torch.rand(3, 224, 224)
 
 
 def _rand_image():

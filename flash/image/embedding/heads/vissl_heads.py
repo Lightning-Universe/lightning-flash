@@ -13,8 +13,8 @@
 # limitations under the License.
 from typing import List, Union
 
-import torch
 import torch.nn as nn
+from torch import Tensor
 
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _VISSL_AVAILABLE
@@ -32,7 +32,7 @@ class SimCLRHead(nn.Module):
     """VISSL adpots a complicated config input to create an MLP.
 
     This class simplifies the standard SimCLR projection head.
-    Can be configured to be used with barlow twins and moco as well.
+    Can be configured to be used with barlow twins as well.
 
     Returns MLP according to dimensions provided as a list.
     linear-layer -> batch-norm (if flag) -> Relu -> ...
@@ -80,7 +80,7 @@ class SimCLRHead(nn.Module):
         layers.append(nn.Linear(last_dim, self.dims[-1]))
         return nn.Sequential(*layers)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         return self.clf(x)
 
 
@@ -151,21 +151,6 @@ def barlow_twins_head(
     return simclr_head(embedding_dim=latent_embedding_dim, **kwargs)
 
 
-def moco_head(**kwargs) -> nn.Module:
-    return simclr_head(**kwargs)
-
-
-def dino_head(**kwargs) -> nn.Module:
-    return swav_head(
-        use_bn=False,
-        return_embeddings=False,
-        activation_name="GELU",
-        num_clusters=[65536],
-        use_weight_norm_prototypes=True,
-        **kwargs,
-    )
-
-
 def register_vissl_heads(register: FlashRegistry):
-    for ssl_head in (swav_head, simclr_head, moco_head, dino_head, barlow_twins_head):
+    for ssl_head in (swav_head, simclr_head, barlow_twins_head):
         register(ssl_head)

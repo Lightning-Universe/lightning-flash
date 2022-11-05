@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from pathlib import Path
-from typing import Any, List, Sequence
+from typing import Any, List, Sequence, Tuple
 
 import numpy as np
 import pytest
 import torch
 from pytorch_lightning import seed_everything
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from torch import Tensor
 
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.io.input import DataKeys
@@ -40,16 +40,40 @@ class CustomBaseVisualization(BaseVisualization):
         super().__init__()
         self.check_reset()
 
-    def show_load_sample(self, samples: List[Any], running_stage: RunningStage):
+    def show_load_sample(
+        self,
+        samples: List[Any],
+        running_stage: RunningStage,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ):
         self.show_load_sample_called = True
 
-    def show_per_sample_transform(self, samples: List[Any], running_stage: RunningStage):
+    def show_per_sample_transform(
+        self,
+        samples: List[Any],
+        running_stage: RunningStage,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ):
         self.show_per_sample_transform_called = True
 
-    def show_collate(self, batch: Sequence, running_stage: RunningStage) -> None:
+    def show_collate(
+        self,
+        batch: Sequence,
+        running_stage: RunningStage,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ) -> None:
         self.show_collate_called = True
 
-    def show_per_batch_transform(self, batch: Sequence, running_stage: RunningStage) -> None:
+    def show_per_batch_transform(
+        self,
+        batch: Sequence,
+        running_stage: RunningStage,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ) -> None:
         self.per_batch_transform_called = True
 
     def check_reset(self):
@@ -119,11 +143,11 @@ class TestBaseViz:
 
             res = _get_result("per_sample_transform")
             assert len(res) == B
-            assert isinstance(_extract_data(res), torch.Tensor)
+            assert isinstance(_extract_data(res), Tensor)
 
             if not is_predict:
                 res = _get_result("per_sample_transform")
-                assert isinstance(res[0][DataKeys.TARGET], torch.Tensor)
+                assert isinstance(res[0][DataKeys.TARGET], Tensor)
 
             res = _get_result("collate")
             assert _extract_data(res).shape == (B, 3, 196, 196)
@@ -160,7 +184,7 @@ class TestBaseViz:
         batch = {func_name: "test" for func_name in func_names}
 
         if not valid:
-            with pytest.raises(MisconfigurationException, match="Invalid function names"):
+            with pytest.raises(ValueError, match="Invalid function names"):
                 base_viz.show(batch, RunningStage.TRAINING, func_names)
         else:
             base_viz.show(batch, RunningStage.TRAINING, func_names)

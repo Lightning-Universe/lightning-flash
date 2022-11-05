@@ -13,12 +13,13 @@
 # limitations under the License.
 from typing import Any, Iterable, List, Optional, Union
 
-import torch
+from torch import Tensor
 from torch.nn import Module
 
 from flash.core.data.io.input import DataKeys
 from flash.core.model import Task
 from flash.core.utilities.imports import _FASTFACE_AVAILABLE
+from flash.core.utilities.stability import beta
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.image.face_detection.backbones import FACE_DETECTION_BACKBONES
 from flash.image.face_detection.output_transform import FaceDetectionOutputTransform
@@ -27,6 +28,7 @@ if _FASTFACE_AVAILABLE:
     import fastface as ff
 
 
+@beta("Face detection is currently in Beta.")
 class FaceDetector(Task):
     """The ``FaceDetector`` is a :class:`~flash.Task` for detecting faces in images.
 
@@ -97,12 +99,12 @@ class FaceDetector(Task):
 
         return model
 
-    def forward(self, x: List[torch.Tensor]) -> Any:
+    def forward(self, x: List[Tensor]) -> Any:
         images = self._prepare_batch(x)
         logits = self.model(images)
 
-        # preds: torch.Tensor(B, N, 5)
-        # preds: torch.Tensor(N, 6) as x1,y1,x2,y2,score,batch_idx
+        # preds: Tensor(B, N, 5)
+        # preds: Tensor(N, 6) as x1,y1,x2,y2,score,batch_idx
         preds = self.model.logits_to_preds(logits)
         preds = self.model._postprocess(preds)
 
@@ -113,10 +115,10 @@ class FaceDetector(Task):
         return batch
 
     def _compute_metrics(self, logits, targets):
-        # preds: torch.Tensor(B, N, 5)
+        # preds: Tensor(B, N, 5)
         preds = self.model.logits_to_preds(logits)
 
-        # preds: torch.Tensor(N, 6) as x1,y1,x2,y2,score,batch_idx
+        # preds: Tensor(N, 6) as x1,y1,x2,y2,score,batch_idx
         preds = self.model._postprocess(preds)
 
         target_boxes = [target["target_boxes"] for target in targets]

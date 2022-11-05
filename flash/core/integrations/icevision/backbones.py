@@ -51,6 +51,10 @@ def get_backbones(model_type):
     _BACKBONES = FlashRegistry("backbones")
 
     for backbone_name, backbone_config in getmembers(model_type.backbones, lambda x: isinstance(x, BackboneConfig)):
+        # Only torchvision backbones with an FPN are supported
+        if "torchvision" in model_type.__name__ and "fpn" not in backbone_name:
+            continue
+
         _BACKBONES(
             backbone_config,
             name=backbone_name,

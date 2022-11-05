@@ -15,7 +15,9 @@ from dataclasses import dataclass
 from typing import Callable
 
 import torch
+from torch import Tensor
 
+from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _KORNIA_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, requires
@@ -30,7 +32,7 @@ else:
     ClipSampler, LabeledVideoDataset, EncodedVideo, ApplyTransformToKey = None, None, None, None
 
 
-def normalize(x: torch.Tensor) -> torch.Tensor:
+def normalize(x: Tensor) -> Tensor:
     return x / 255.0
 
 
@@ -40,8 +42,8 @@ class VideoClassificationInputTransform(InputTransform):
 
     image_size: int = 244
     temporal_sub_sample: int = 8
-    mean: torch.Tensor = torch.tensor([0.45, 0.45, 0.45])
-    std: torch.Tensor = torch.tensor([0.225, 0.225, 0.225])
+    mean: Tensor = torch.tensor([0.45, 0.45, 0.45])
+    std: Tensor = torch.tensor([0.225, 0.225, 0.225])
     data_format: str = "BCTHW"
     same_on_frame: bool = False
 
@@ -49,7 +51,7 @@ class VideoClassificationInputTransform(InputTransform):
         per_sample_transform = [CenterCrop(self.image_size)]
 
         return ApplyToKeys(
-            "video",
+            DataKeys.INPUT,
             Compose([UniformTemporalSubsample(self.temporal_sub_sample), normalize] + per_sample_transform),
         )
 
@@ -57,13 +59,13 @@ class VideoClassificationInputTransform(InputTransform):
         per_sample_transform = [RandomCrop(self.image_size, pad_if_needed=True)]
 
         return ApplyToKeys(
-            "video",
+            DataKeys.INPUT,
             Compose([UniformTemporalSubsample(self.temporal_sub_sample), normalize] + per_sample_transform),
         )
 
     def per_batch_transform_on_device(self) -> Callable:
         return ApplyToKeys(
-            "video",
+            DataKeys.INPUT,
             K.VideoSequential(
                 K.Normalize(self.mean, self.std),
                 data_format=self.data_format,

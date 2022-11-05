@@ -8,7 +8,11 @@ from uuid import uuid4
 from flash.core.serve.core import Connection, make_param_dict, make_parameter_container, ParameterContainer, Servable
 from flash.core.serve.types.base import BaseType
 from flash.core.serve.utils import fn_outputs_to_keyed_map
-from flash.core.utilities.imports import _CYTOOLZ_AVAILABLE
+from flash.core.utilities.imports import _CYTOOLZ_AVAILABLE, _SERVE_TESTING
+
+# Skip doctests if requirements aren't available
+if not _SERVE_TESTING:
+    __doctest_skip__ = ["*"]
 
 if _CYTOOLZ_AVAILABLE:
     from cytoolz import compose

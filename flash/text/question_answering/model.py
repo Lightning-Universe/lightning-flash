@@ -37,7 +37,6 @@ from flash.core.utilities.providers import _HUGGINGFACE
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.text.ort_callback import ORTCallback
 from flash.text.question_answering.collate import TextQuestionAnsweringCollate
-from flash.text.question_answering.finetuning import _get_question_answering_bacbones_for_freezing
 from flash.text.question_answering.output_transform import QuestionAnsweringOutputTransform
 
 if _TEXT_AVAILABLE:
@@ -268,7 +267,7 @@ class QuestionAnsweringTask(Task):
         return all_predictions
 
     def forward(self, batch: Any) -> Any:
-        metadata = batch.pop(DataKeys.METADATA)
+        metadata = batch.pop(DataKeys.METADATA, {})
         outputs = self.model(**batch)
         loss = outputs.loss
         start_logits = outputs.start_logits
@@ -284,7 +283,7 @@ class QuestionAnsweringTask(Task):
         self.log("train_loss", loss)
         return loss
 
-    def common_step(self, prefix: str, batch: Any) -> torch.Tensor:
+    def common_step(self, prefix: str, batch: Any) -> Tensor:
         loss, generated_answers = self(batch)
         result = self.compute_metrics(generated_answers, batch[DataKeys.METADATA])
         self.log(f"{prefix}_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
@@ -322,7 +321,7 @@ class QuestionAnsweringTask(Task):
 
     def modules_to_freeze(self) -> Union[Module, Iterable[Union[Module, Iterable]]]:
         """Return the module attributes of the model to be frozen."""
-        return _get_question_answering_bacbones_for_freezing(self.model)
+        return self.model.base_model
 
     def configure_callbacks(self) -> List[Callback]:
         callbacks = super().configure_callbacks() or []

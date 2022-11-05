@@ -11,61 +11,63 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
-import re
-from unittest import mock
+import collections
+from typing import Any
 
 import pytest
 import torch
+from torch import Tensor
 
-from flash import Trainer
-from flash.__main__ import main
 from flash.core.utilities.imports import _TEXT_AVAILABLE, _TEXT_TESTING
 from flash.text import QuestionAnsweringTask
-
-# ======== Mock functions ========
-
-SEQUENCE_LENGTH = 384
-
-
-class DummyDataset(torch.utils.data.Dataset):
-    def __getitem__(self, index):
-        return {
-            "input_ids": torch.randint(1000, size=(SEQUENCE_LENGTH,)),
-            "attention_mask": torch.randint(1, size=(SEQUENCE_LENGTH,)),
-            "start_positions": torch.randint(1000, size=(1,)),
-            "end_positions": torch.randint(1000, size=(1,)),
-        }
-
-    def __len__(self) -> int:
-        return 100
-
-
-# ==============================
+from tests.helpers.task_tester import TaskTester
 
 TEST_BACKBONE = "distilbert-base-uncased"
 
 
-@pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
+class TestQuestionAnsweringTask(TaskTester):
+
+    task = QuestionAnsweringTask
+    task_kwargs = {"backbone": TEST_BACKBONE}
+    cli_command = "question_answering"
+    is_testing = _TEXT_TESTING
+    is_available = _TEXT_AVAILABLE
+
+    scriptable = False
+    traceable = False
+
+    @property
+    def example_forward_input(self):
+        return {
+            "input_ids": torch.randint(1000, size=(1, 32)),
+            "attention_mask": torch.randint(1, size=(1, 32)),
+            "start_positions": torch.randint(1000, size=(1, 1)),
+            "end_positions": torch.randint(1000, size=(1, 1)),
+        }
+
+    def check_forward_output(self, output: Any):
+        assert isinstance(output[0], Tensor)
+        assert isinstance(output[1], collections.OrderedDict)
+
+    @property
+    def example_train_sample(self):
+        return {
+            "question": "A question",
+            "answer": {"text": ["The answer"], "answer_start": [0]},
+            "context": "The paragraph of text which contains the answer to the question",
+            "id": 0,
+        }
+
+    @property
+    def example_val_sample(self):
+        return self.example_train_sample
+
+    @property
+    def example_test_sample(self):
+        return self.example_train_sample
+
+
 @pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_init_train(tmpdir):
-    model = QuestionAnsweringTask(TEST_BACKBONE)
-    train_dl = torch.utils.data.DataLoader(DummyDataset())
-    trainer = Trainer(default_root_dir=tmpdir, fast_dev_run=True)
-    trainer.fit(model, train_dl)
-
-
-@pytest.mark.skipif(_TEXT_AVAILABLE, reason="text libraries are installed.")
-def test_load_from_checkpoint_dependency_error():
-    with pytest.raises(ModuleNotFoundError, match=re.escape("'lightning-flash[text]'")):
-        QuestionAnsweringTask.load_from_checkpoint("not_a_real_checkpoint.pt")
-
-
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
-def test_cli():
-    cli_args = ["flash", "question_answering", "--trainer.fast_dev_run", "True"]
-    with mock.patch("sys.argv", cli_args):
-        try:
-            main()
-        except SystemExit:
-            pass
+def test_modules_to_freeze():
+    model = QuestionAnsweringTask(backbone=TEST_BACKBONE)
+    assert model.modules_to_freeze() is model.model.distilbert

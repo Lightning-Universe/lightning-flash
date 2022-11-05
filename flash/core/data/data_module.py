@@ -12,14 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from functools import partial
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import pytorch_lightning as pl
 import torch
-from pytorch_lightning.utilities.enums import LightningEnum
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import IterableDataset
 from torch.utils.data.sampler import Sampler
@@ -27,9 +24,8 @@ from torch.utils.data.sampler import Sampler
 import flash
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
-from flash.core.data.io.input import DataKeys, Input, InputBase, IterableInput
+from flash.core.data.io.input import DataKeys, Input, IterableInput
 from flash.core.data.io.input_transform import (
-    _InputTransformProcessor,
     create_device_input_transform_processor,
     create_or_configure_input_transform,
     create_worker_input_transform_processor,
@@ -37,9 +33,13 @@ from flash.core.data.io.input_transform import (
 )
 from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX
-from flash.core.registry import FlashRegistry
+from flash.core.utilities.imports import _CORE_TESTING
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
+
+# Skip doctests if requirements aren't available
+if not _CORE_TESTING:
+    __doctest_skip__ = ["DataModule"]
 
 
 class DatasetInput(Input):
@@ -107,7 +107,6 @@ class DataModule(pl.LightningDataModule):
     """
 
     input_transform_cls = InputTransform
-    input_transforms_registry = FlashRegistry("input_transforms")
 
     def __init__(
         self,
@@ -127,12 +126,12 @@ class DataModule(pl.LightningDataModule):
     ) -> None:
 
         if not batch_size:
-            raise MisconfigurationException("The `batch_size` should be provided to the DataModule on instantiation.")
+            raise TypeError("The `batch_size` should be provided to the DataModule on instantiation.")
 
         if flash._IS_TESTING and torch.cuda.is_available():
             batch_size = 16
 
-        self.input_transform = DataModule.configure_input_transform(
+        self.input_transform = create_or_configure_input_transform(
             transform=transform, transform_kwargs=transform_kwargs
         )
 
@@ -144,28 +143,14 @@ class DataModule(pl.LightningDataModule):
         self._predict_input = predict_input
 
         if self._train_input and self._val_input and isinstance(val_split, float) and val_split > 0:
-            raise MisconfigurationException(
-                "A `val_dataset` was provided with `val_split`. Please, choose one or the other."
-            )
+            raise TypeError("A `val_dataset` was provided with `val_split`. Please, choose one or the other.")
 
         if self._train_input and (val_split is not None and not self._val_input):
             self._train_input, self._val_input = self._split_train_val(self._train_input, val_split)
 
         self._data_fetcher: Optional[BaseDataFetcher] = data_fetcher or self.configure_data_fetcher()
 
-        self._train_dataloader_collate_fn = self._resolve_dataloader_collate_fn(RunningStage.TRAINING)
-        self._val_dataloader_collate_fn = self._resolve_dataloader_collate_fn(RunningStage.VALIDATING)
-        self._test_dataloader_collate_fn = self._resolve_dataloader_collate_fn(RunningStage.TESTING)
-        self._predict_dataloader_collate_fn = self._resolve_dataloader_collate_fn(RunningStage.PREDICTING)
-
-        self._on_after_batch_transfer_fns = {
-            RunningStage.TRAINING: self._resolve_on_after_batch_transfer_fn(RunningStage.TRAINING),
-            RunningStage.VALIDATING: self._resolve_on_after_batch_transfer_fn(RunningStage.VALIDATING),
-            RunningStage.SANITY_CHECKING: self._resolve_on_after_batch_transfer_fn(RunningStage.VALIDATING),
-            RunningStage.TESTING: self._resolve_on_after_batch_transfer_fn(RunningStage.TESTING),
-            RunningStage.PREDICTING: self._resolve_on_after_batch_transfer_fn(RunningStage.PREDICTING),
-        }
-        self._model_on_after_batch_transfer_fns = None
+        self._on_after_batch_transfer_fns = None
 
         if self._train_input:
             self.train_dataloader = self._train_dataloader
@@ -213,24 +198,22 @@ class DataModule(pl.LightningDataModule):
     # METHODS PERTAINING TO DATALOADERS #
     #####################################
 
-    def _resolve_dataloader_collate_fn(self, stage: RunningStage) -> _InputTransformProcessor:
-        return create_worker_input_transform_processor(stage, self.input_transform, [self.data_fetcher])
+    def _resolve_input_transform(self) -> Optional[InputTransform]:
+        input_transform = self.input_transform
+        if (
+            isinstance(getattr(self, "trainer", None), pl.Trainer)
+            and getattr(self.trainer.lightning_module, "input_transform", None) is not None
+        ):
+            input_transform = create_or_configure_input_transform(self.trainer.lightning_module.input_transform)
 
-    def _resolve_on_after_batch_transfer_fn(self, stage: RunningStage) -> _InputTransformProcessor:
-        return create_device_input_transform_processor(stage, self.input_transform, [self.data_fetcher])
+        if input_transform is not None:
+            input_transform.callbacks = [self.data_fetcher]
+        return input_transform
 
     def _train_dataloader(self) -> DataLoader:
         train_ds: Input = self._train_input
 
-        transform_processor = self._train_dataloader_collate_fn
-        if isinstance(getattr(self, "trainer", None), pl.Trainer):
-            input_transform = getattr(self.trainer.lightning_module, "input_transform", None)
-            if input_transform is not None:
-                input_transform = create_or_configure_input_transform(input_transform, RunningStage.TRAINING)
-                transform_processor = create_worker_input_transform_processor(
-                    RunningStage.TRAINING, input_transform, [self.data_fetcher]
-                )
-                self.input_transform = input_transform
+        input_transform = self._resolve_input_transform()
 
         shuffle: bool = False
         if isinstance(train_ds, IterableDataset):
@@ -246,26 +229,20 @@ class DataModule(pl.LightningDataModule):
         else:
             sampler = self.sampler
 
-        # `transform_processor` is an _InputTransformProcessor object
-        # Use the `transform_processor` object directly as the collate_fn for the DataLoader.
-
-        # `self.input_transform` is an InputTransform object
-        # Inject the `self.collate_fn` returned by the model into the `transforms` dict of the `input_transform` object
-        # through the process_train_dataset method of the model.
-
-        if isinstance(getattr(self, "trainer", None), pl.Trainer):
+        if isinstance(getattr(self, "trainer", None), pl.Trainer) and hasattr(
+            self.trainer.lightning_module, "process_train_dataset"
+        ):
             dataloader = self.trainer.lightning_module.process_train_dataset(
                 train_ds,
-                trainer=self.trainer,
-                input_transform=self.input_transform,
-                batch_size=self.batch_size,
+                self.batch_size,
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
                 shuffle=shuffle,
                 drop_last=drop_last,
-                collate_fn=transform_processor,
                 sampler=sampler,
                 persistent_workers=self.persistent_workers,
+                input_transform=input_transform,
+                trainer=self.trainer,
             )
         else:
             dataloader = DataLoader(
@@ -276,43 +253,29 @@ class DataModule(pl.LightningDataModule):
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
                 drop_last=drop_last,
-                collate_fn=transform_processor,
+                collate_fn=create_worker_input_transform_processor(RunningStage.TRAINING, input_transform),
                 persistent_workers=self.persistent_workers,
             )
 
-        self._model_on_after_batch_transfer_fns = None
+        self._on_after_batch_transfer_fns = None
         return dataloader
 
     def _val_dataloader(self) -> DataLoader:
         val_ds: Input = self._val_input
 
-        transform_processor = self._val_dataloader_collate_fn
-        if isinstance(getattr(self, "trainer", None), pl.Trainer):
-            input_transform = getattr(self.trainer.lightning_module, "input_transform", None)
-            if input_transform is not None:
-                input_transform = create_or_configure_input_transform(input_transform, RunningStage.VALIDATING)
-                transform_processor = create_worker_input_transform_processor(
-                    RunningStage.VALIDATING, input_transform, [self.data_fetcher]
-                )
-                self.input_transform = input_transform
+        input_transform = self._resolve_input_transform()
 
-        # `transform_processor` is an _InputTransformProcessor object
-        # Use the `transform_processor` object directly as the collate_fn for the DataLoader.
-
-        # `self.input_transform` is an InputTransform object
-        # Inject the `self.collate_fn` returned by the model into the `transforms` dict of the `input_transform` object
-        # through the process_train_dataset method of the model.
-
-        if isinstance(getattr(self, "trainer", None), pl.Trainer):
+        if isinstance(getattr(self, "trainer", None), pl.Trainer) and hasattr(
+            self.trainer.lightning_module, "process_val_dataset"
+        ):
             dataloader = self.trainer.lightning_module.process_val_dataset(
                 val_ds,
-                trainer=self.trainer,
-                input_transform=self.input_transform,
-                batch_size=self.batch_size,
+                self.batch_size,
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
-                collate_fn=transform_processor,
                 persistent_workers=self.persistent_workers,
+                input_transform=input_transform,
+                trainer=self.trainer,
             )
         else:
             dataloader = DataLoader(
@@ -320,43 +283,29 @@ class DataModule(pl.LightningDataModule):
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
-                collate_fn=transform_processor,
+                collate_fn=create_worker_input_transform_processor(RunningStage.VALIDATING, input_transform),
                 persistent_workers=self.persistent_workers,
             )
 
-        self._model_on_after_batch_transfer_fns = None
+        self._on_after_batch_transfer_fns = None
         return dataloader
 
     def _test_dataloader(self) -> DataLoader:
         test_ds: Input = self._test_input
 
-        transform_processor = self._test_dataloader_collate_fn
-        if isinstance(getattr(self, "trainer", None), pl.Trainer):
-            input_transform = getattr(self.trainer.lightning_module, "input_transform", None)
-            if input_transform is not None:
-                input_transform = create_or_configure_input_transform(input_transform, RunningStage.TESTING)
-                transform_processor = create_worker_input_transform_processor(
-                    RunningStage.TESTING, input_transform, [self.data_fetcher]
-                )
-                self.input_transform = input_transform
+        input_transform = self._resolve_input_transform()
 
-        # `transform_processor` is an _InputTransformProcessor object
-        # Use the `transform_processor` object directly as the collate_fn for the DataLoader.
-
-        # `self.input_transform` is an InputTransform object
-        # Inject the `self.collate_fn` returned by the model into the `transforms` dict of the `input_transform` object
-        # through the process_train_dataset method of the model.
-
-        if isinstance(getattr(self, "trainer", None), pl.Trainer):
+        if isinstance(getattr(self, "trainer", None), pl.Trainer) and hasattr(
+            self.trainer.lightning_module, "process_test_dataset"
+        ):
             dataloader = self.trainer.lightning_module.process_test_dataset(
                 test_ds,
-                trainer=self.trainer,
-                input_transform=self.input_transform,
-                batch_size=self.batch_size,
+                self.batch_size,
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
-                collate_fn=transform_processor,
                 persistent_workers=self.persistent_workers,
+                input_transform=input_transform,
+                trainer=self.trainer,
             )
         else:
             dataloader = DataLoader(
@@ -364,47 +313,34 @@ class DataModule(pl.LightningDataModule):
                 batch_size=self.batch_size,
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
-                collate_fn=transform_processor,
+                collate_fn=create_worker_input_transform_processor(RunningStage.TESTING, input_transform),
                 persistent_workers=self.persistent_workers,
             )
 
-        self._model_on_after_batch_transfer_fns = None
+        self._on_after_batch_transfer_fns = None
         return dataloader
 
     def _predict_dataloader(self) -> DataLoader:
         predict_ds: Input = self._predict_input
 
-        transform_processor = self._predict_dataloader_collate_fn
-        if isinstance(getattr(self, "trainer", None), pl.Trainer):
-            input_transform = getattr(self.trainer.lightning_module, "input_transform", None)
-            if input_transform is not None:
-                input_transform = create_or_configure_input_transform(input_transform, RunningStage.PREDICTING)
-                transform_processor = create_worker_input_transform_processor(
-                    RunningStage.PREDICTING, input_transform, [self.data_fetcher]
-                )
-                self.input_transform = input_transform
+        input_transform = self._resolve_input_transform()
 
         if isinstance(predict_ds, IterableDataset):
             batch_size = self.batch_size
         else:
             batch_size = min(self.batch_size, len(predict_ds) if len(predict_ds) > 0 else 1)
 
-        # `transform_processor` is an _InputTransformProcessor object
-        # Use the `transform_processor` object directly as the collate_fn for the DataLoader.
-
-        # `self.input_transform` is an InputTransform object
-        # Inject the `self.collate_fn` returned by the model into the `transforms` dict of the `input_transform` object
-        # through the process_train_dataset method of the model.
-
-        if isinstance(getattr(self, "trainer", None), pl.Trainer):
+        if isinstance(getattr(self, "trainer", None), pl.Trainer) and hasattr(
+            self.trainer.lightning_module, "process_predict_dataset"
+        ):
             dataloader = self.trainer.lightning_module.process_predict_dataset(
                 predict_ds,
-                input_transform=self.input_transform,
-                batch_size=batch_size,
+                self.batch_size,
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
-                collate_fn=transform_processor,
                 persistent_workers=self.persistent_workers,
+                input_transform=input_transform,
+                trainer=self.trainer,
             )
         else:
             dataloader = DataLoader(
@@ -412,19 +348,19 @@ class DataModule(pl.LightningDataModule):
                 batch_size=batch_size,
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
-                collate_fn=transform_processor,
+                collate_fn=create_worker_input_transform_processor(RunningStage.PREDICTING, input_transform),
                 persistent_workers=self.persistent_workers,
             )
 
-        self._model_on_after_batch_transfer_fns = None
+        self._on_after_batch_transfer_fns = None
         return dataloader
 
     ############################################################
     # METHODS RELATED TO on_after_batch_transfer FUNCTIONALITY #
     ############################################################
 
-    def _load_model_on_after_batch_transfer_fns(self) -> None:
-        self._model_on_after_batch_transfer_fns = {}
+    def _load_on_after_batch_transfer_fns(self) -> None:
+        self._on_after_batch_transfer_fns = {}
 
         for stage in [
             RunningStage.TRAINING,
@@ -433,32 +369,27 @@ class DataModule(pl.LightningDataModule):
             RunningStage.TESTING,
             RunningStage.PREDICTING,
         ]:
-            transform = None
-            if isinstance(getattr(self, "trainer", None), pl.Trainer):
-                input_transform = getattr(self.trainer.lightning_module, "input_transform", None)
-                if input_transform is not None:
-                    input_transform = create_or_configure_input_transform(
-                        input_transform, stage if stage != RunningStage.SANITY_CHECKING else RunningStage.VALIDATING
-                    )
-                    transform = create_device_input_transform_processor(
-                        stage if stage != RunningStage.SANITY_CHECKING else RunningStage.VALIDATING,
-                        input_transform,
-                        [self.data_fetcher],
-                    )
-            self._model_on_after_batch_transfer_fns[stage] = transform
+            input_transform = self._resolve_input_transform()
+
+            if input_transform is not None:
+                transform = create_device_input_transform_processor(
+                    stage if stage != RunningStage.SANITY_CHECKING else RunningStage.VALIDATING,
+                    input_transform,
+                )
+                self._on_after_batch_transfer_fns[stage] = transform
+            else:
+                self._on_after_batch_transfer_fns[stage] = None
 
     def on_after_batch_transfer(self, batch: Any, dataloader_idx: int) -> Any:
         if getattr(self, "trainer", None) is None:
             return batch
 
-        if self._model_on_after_batch_transfer_fns is None:
-            self._load_model_on_after_batch_transfer_fns()
+        if self._on_after_batch_transfer_fns is None:
+            self._load_on_after_batch_transfer_fns()
 
         stage = self.trainer.state.stage
 
-        transform = self._model_on_after_batch_transfer_fns[stage]
-        if transform is None:
-            transform = self._on_after_batch_transfer_fns[stage]
+        transform = self._on_after_batch_transfer_fns[stage]
 
         if transform:
             batch = transform(batch)
@@ -498,30 +429,6 @@ class DataModule(pl.LightningDataModule):
     def input_transform(self, input_transform: InputTransform) -> None:
         self._input_transform = input_transform
 
-    @staticmethod
-    def configure_input_transform(
-        transform: INPUT_TRANSFORM_TYPE, transform_kwargs: Optional[Dict] = None
-    ) -> InputTransform:
-        """This function is used to configure a :class:`~flash.core.data.io.input_transform.InputTransform`.
-
-        Override with your custom one.
-        """
-        return create_or_configure_input_transform(
-            transform=transform,
-            transform_kwargs=transform_kwargs,
-            input_transforms_registry=DataModule.input_transforms_registry,
-        )
-
-    @classmethod
-    def register_input_transform(
-        cls, enum: Union[LightningEnum, str], fn: Union[Type["flash.InputTransform"], partial]
-    ) -> None:
-        if cls.input_transforms_registry is None:
-            raise MisconfigurationException(
-                "The class attribute `input_transforms_registry` should be set as a class attribute. "
-            )
-        cls.input_transforms_registry(fn=fn, name=enum)
-
     ####################################
     # METHODS RELATED TO VISUALIZATION #
     ####################################
@@ -545,7 +452,14 @@ class DataModule(pl.LightningDataModule):
         setattr(self, iter_name, iterator)
         return iterator
 
-    def _show_batch(self, stage: str, func_names: Union[str, List[str]], reset: bool = True) -> None:
+    def _show_batch(
+        self,
+        stage: str,
+        func_names: Union[str, List[str]],
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+        reset: bool = True,
+    ) -> None:
         """This function is used to handle transforms profiling for batch visualization."""
         # don't show in CI
         if os.getenv("FLASH_TESTING", "0") == "1":
@@ -559,6 +473,9 @@ class DataModule(pl.LightningDataModule):
         if isinstance(func_names, str):
             func_names = [func_names]
 
+        if not limit_nb_samples:
+            limit_nb_samples = self.batch_size
+
         iter_dataloader = getattr(self, iter_name)
         with self.data_fetcher.enable():
             if reset:
@@ -569,29 +486,53 @@ class DataModule(pl.LightningDataModule):
                 iter_dataloader = self._reset_iterator(stage)
                 _ = next(iter_dataloader)
             data_fetcher: BaseVisualization = self.data_fetcher
-            data_fetcher._show(stage, func_names)
+            data_fetcher._show(stage, func_names, limit_nb_samples, figsize)
             if reset:
                 self.data_fetcher.batches[stage] = {}
 
-    def show_train_batch(self, hooks_names: Union[str, List[str]] = "load_sample", reset: bool = True) -> None:
+    def show_train_batch(
+        self,
+        hooks_names: Union[str, List[str]] = "load_sample",
+        reset: bool = True,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ) -> None:
         """This function is used to visualize a batch from the train dataloader."""
         stage_name: str = _STAGES_PREFIX[RunningStage.TRAINING]
-        self._show_batch(stage_name, hooks_names, reset=reset)
+        self._show_batch(stage_name, hooks_names, limit_nb_samples, figsize, reset=reset)
 
-    def show_val_batch(self, hooks_names: Union[str, List[str]] = "load_sample", reset: bool = True) -> None:
+    def show_val_batch(
+        self,
+        hooks_names: Union[str, List[str]] = "load_sample",
+        reset: bool = True,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ) -> None:
         """This function is used to visualize a batch from the validation dataloader."""
         stage_name: str = _STAGES_PREFIX[RunningStage.VALIDATING]
-        self._show_batch(stage_name, hooks_names, reset=reset)
+        self._show_batch(stage_name, hooks_names, limit_nb_samples, figsize, reset=reset)
 
-    def show_test_batch(self, hooks_names: Union[str, List[str]] = "load_sample", reset: bool = True) -> None:
+    def show_test_batch(
+        self,
+        hooks_names: Union[str, List[str]] = "load_sample",
+        reset: bool = True,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ) -> None:
         """This function is used to visualize a batch from the test dataloader."""
         stage_name: str = _STAGES_PREFIX[RunningStage.TESTING]
-        self._show_batch(stage_name, hooks_names, reset=reset)
+        self._show_batch(stage_name, hooks_names, limit_nb_samples, figsize, reset=reset)
 
-    def show_predict_batch(self, hooks_names: Union[str, List[str]] = "load_sample", reset: bool = True) -> None:
+    def show_predict_batch(
+        self,
+        hooks_names: Union[str, List[str]] = "load_sample",
+        reset: bool = True,
+        limit_nb_samples: int = None,
+        figsize: Tuple[int, int] = (6.4, 4.8),
+    ) -> None:
         """This function is used to visualize a batch from the prediction dataloader."""
         stage_name: str = _STAGES_PREFIX[RunningStage.PREDICTING]
-        self._show_batch(stage_name, hooks_names, reset=reset)
+        self._show_batch(stage_name, hooks_names, limit_nb_samples, figsize, reset=reset)
 
     def _get_property(self, property_name: str) -> Optional[Any]:
         train = getattr(self.train_dataset, property_name, None)
@@ -615,12 +556,6 @@ class DataModule(pl.LightningDataModule):
         """Property that returns ``True`` if this ``DataModule`` contains multi-label data."""
         return self._get_property("multi_label")
 
-    @property
-    def inputs(self) -> Optional[Union[Input, List[InputBase]]]:
-        """Property that returns the inputs associated with this ``DataModule``."""
-        inputs = [self.train_dataset, self.val_dataset, self.test_dataset, self.predict_dataset]
-        return [input for input in inputs if input]
-
     @staticmethod
     def _split_train_val(
         train_dataset: Dataset,
@@ -639,12 +574,10 @@ class DataModule(pl.LightningDataModule):
         """
 
         if not isinstance(val_split, float) or (isinstance(val_split, float) and val_split > 1 or val_split < 0):
-            raise MisconfigurationException(f"`val_split` should be a float between 0 and 1. Found {val_split}.")
+            raise ValueError(f"`val_split` should be a float between 0 and 1. Found {val_split}.")
 
         if isinstance(train_dataset, IterableInput):
-            raise MisconfigurationException(
-                "`val_split` should be `None` when the dataset is built with an IterableDataset."
-            )
+            raise ValueError("`val_split` should be `None` when the dataset is built with an IterableDataset.")
 
         val_num_samples = int(len(train_dataset) * val_split)
         indices = list(range(len(train_dataset)))
@@ -652,6 +585,10 @@ class DataModule(pl.LightningDataModule):
         val_indices = indices[:val_num_samples]
         train_indices = indices[val_num_samples:]
         return (
-            SplitDataset(train_dataset, train_indices, use_duplicated_indices=True),
-            SplitDataset(train_dataset, val_indices, use_duplicated_indices=True),
+            SplitDataset(
+                train_dataset, train_indices, running_stage=RunningStage.TRAINING, use_duplicated_indices=True
+            ),
+            SplitDataset(
+                train_dataset, val_indices, running_stage=RunningStage.VALIDATING, use_duplicated_indices=True
+            ),
         )

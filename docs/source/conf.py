@@ -122,7 +122,7 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_paramlinks",
     "sphinx_togglebutton",
-    "pt_lightning_sphinx_theme.extensions.lightning_tutorials",
+    "pt_lightning_sphinx_theme.extensions.lightning",
     "stability",
 ]
 
@@ -235,6 +235,7 @@ PACKAGE_MAPPING = {
     "lightning-bolts": "pl_bolts",
     "pytorch-tabnet": "pytorch_tabnet",
     "pyDeprecate": "deprecate",
+    "lightning-utilities": "lightning_utilities",
 }
 MOCK_PACKAGES = ["numpy", "PyYAML", "tqdm"]
 if SPHINX_MOCK_REQUIREMENTS:

@@ -20,21 +20,17 @@ import pandas as pd
 from flash.core.data.io.classification_input import ClassificationInputMixin
 from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.utilities.classification import MultiBinaryTargetFormatter, TargetFormatter
-from flash.core.data.utilities.data_frame import read_csv, resolve_files, resolve_targets
-from flash.core.data.utilities.paths import filter_valid_files, has_file_allowed_extension, make_dataset, PATH_TYPE
+from flash.core.data.utilities.data_frame import resolve_files, resolve_targets
+from flash.core.data.utilities.loading import (
+    AUDIO_EXTENSIONS,
+    IMG_EXTENSIONS,
+    load_data_frame,
+    load_spectrogram,
+    NP_EXTENSIONS,
+)
+from flash.core.data.utilities.paths import filter_valid_files, make_dataset, PATH_TYPE
 from flash.core.data.utilities.samples import to_samples
-from flash.core.data.utils import image_default_loader
 from flash.core.utilities.imports import requires
-from flash.image.data import IMG_EXTENSIONS, NP_EXTENSIONS
-
-
-def spectrogram_loader(filepath: str):
-    if has_file_allowed_extension(filepath, IMG_EXTENSIONS):
-        img = image_default_loader(filepath)
-        data = np.array(img)
-    else:
-        data = np.load(filepath)
-    return data
 
 
 class AudioClassificationInput(Input, ClassificationInputMixin):
@@ -50,31 +46,49 @@ class AudioClassificationInput(Input, ClassificationInputMixin):
 
 
 class AudioClassificationFilesInput(AudioClassificationInput):
+    sampling_rate: int
+    n_fft: int
+
     def load_data(
         self,
         files: List[PATH_TYPE],
         targets: Optional[List[Any]] = None,
+        sampling_rate: int = 16000,
+        n_fft: int = 400,
         target_formatter: Optional[TargetFormatter] = None,
     ) -> List[Dict[str, Any]]:
+        self.sampling_rate = sampling_rate
+        self.n_fft = n_fft
+
         if targets is None:
-            files = filter_valid_files(files, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
+            files = filter_valid_files(files, valid_extensions=AUDIO_EXTENSIONS + IMG_EXTENSIONS + NP_EXTENSIONS)
             return to_samples(files)
-        files, targets = filter_valid_files(files, targets, valid_extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
+        files, targets = filter_valid_files(
+            files, targets, valid_extensions=AUDIO_EXTENSIONS + IMG_EXTENSIONS + NP_EXTENSIONS
+        )
         self.load_target_metadata(targets, target_formatter=target_formatter)
         return to_samples(files, targets)
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         filepath = sample[DataKeys.INPUT]
-        sample[DataKeys.INPUT] = spectrogram_loader(filepath)
+        sample[DataKeys.INPUT] = load_spectrogram(filepath, sampling_rate=self.sampling_rate, n_fft=self.n_fft)
         sample = super().load_sample(sample)
         sample[DataKeys.METADATA]["filepath"] = filepath
         return sample
 
 
 class AudioClassificationFolderInput(AudioClassificationFilesInput):
-    def load_data(self, folder: PATH_TYPE, target_formatter: Optional[TargetFormatter] = None) -> List[Dict[str, Any]]:
+    def load_data(
+        self,
+        folder: PATH_TYPE,
+        sampling_rate: int = 16000,
+        n_fft: int = 400,
+        target_formatter: Optional[TargetFormatter] = None,
+    ) -> List[Dict[str, Any]]:
         files, targets = make_dataset(folder, extensions=IMG_EXTENSIONS + NP_EXTENSIONS)
-        return super().load_data(files, targets, target_formatter=target_formatter)
+        return super().load_data(
+            files, targets, sampling_rate=sampling_rate, n_fft=n_fft, target_formatter=target_formatter
+        )
 
 
 class AudioClassificationNumpyInput(AudioClassificationInput):
@@ -111,6 +125,8 @@ class AudioClassificationDataFrameInput(AudioClassificationFilesInput):
         target_keys: Optional[Union[str, List[str]]] = None,
         root: Optional[PATH_TYPE] = None,
         resolver: Optional[Callable[[Optional[PATH_TYPE], Any], PATH_TYPE]] = None,
+        sampling_rate: int = 16000,
+        n_fft: int = 400,
         target_formatter: Optional[TargetFormatter] = None,
     ) -> List[Dict[str, Any]]:
         files = resolve_files(data_frame, input_key, root, resolver)
@@ -118,7 +134,9 @@ class AudioClassificationDataFrameInput(AudioClassificationFilesInput):
             targets = resolve_targets(data_frame, target_keys)
         else:
             targets = None
-        result = super().load_data(files, targets, target_formatter=target_formatter)
+        result = super().load_data(
+            files, targets, sampling_rate=sampling_rate, n_fft=n_fft, target_formatter=target_formatter
+        )
 
         # If we had binary multi-class targets then we also know the labels (column names)
         if (
@@ -139,9 +157,20 @@ class AudioClassificationCSVInput(AudioClassificationDataFrameInput):
         target_keys: Optional[Union[str, List[str]]] = None,
         root: Optional[PATH_TYPE] = None,
         resolver: Optional[Callable[[Optional[PATH_TYPE], Any], PATH_TYPE]] = None,
+        sampling_rate: int = 16000,
+        n_fft: int = 400,
         target_formatter: Optional[TargetFormatter] = None,
     ) -> List[Dict[str, Any]]:
-        data_frame = read_csv(csv_file)
+        data_frame = load_data_frame(csv_file)
         if root is None:
             root = os.path.dirname(csv_file)
-        return super().load_data(data_frame, input_key, target_keys, root, resolver, target_formatter=target_formatter)
+        return super().load_data(
+            data_frame,
+            input_key,
+            target_keys,
+            root,
+            resolver,
+            sampling_rate=sampling_rate,
+            n_fft=n_fft,
+            target_formatter=target_formatter,
+        )

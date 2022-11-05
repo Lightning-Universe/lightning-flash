@@ -25,13 +25,15 @@ from flash import Task, Trainer
 from flash.core.data.data_module import DataModule, DatasetInput
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import InputTransform
-from flash.core.utilities.imports import _IMAGE_TESTING, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _CORE_TESTING, _IMAGE_TESTING, _TORCHVISION_AVAILABLE
 from flash.core.utilities.stages import RunningStage
+from tests.helpers.boring_model import BoringModel
 
 if _TORCHVISION_AVAILABLE:
     import torchvision.transforms as T
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_data_module():
     seed_everything(42)
 
@@ -70,16 +72,16 @@ def test_data_module():
     transform = TestTransform()
     assert transform._transform is not None
 
-    train_dataset = Input(RunningStage.TRAINING, range(10))
+    train_dataset = Input(RunningStage.TRAINING, np.arange(10, dtype=np.float32))
     assert train_dataset.running_stage == RunningStage.TRAINING
 
-    val_dataset = Input(RunningStage.VALIDATING, range(10))
+    val_dataset = Input(RunningStage.VALIDATING, np.arange(10, dtype=np.float32))
     assert val_dataset.running_stage == RunningStage.VALIDATING
 
-    test_dataset = Input(RunningStage.TESTING, range(10))
+    test_dataset = Input(RunningStage.TESTING, np.arange(10, dtype=np.float32))
     assert test_dataset.running_stage == RunningStage.TESTING
 
-    predict_dataset = Input(RunningStage.PREDICTING, range(10))
+    predict_dataset = Input(RunningStage.PREDICTING, np.arange(10, dtype=np.float32))
     assert predict_dataset.running_stage == RunningStage.PREDICTING
 
     dm = DataModule(
@@ -112,7 +114,7 @@ def test_data_module():
 
         def predict_step(self, batch, *args, **kwargs):
             assert sum(batch > 500) == 2
-            assert torch.equal(batch, torch.tensor([1000, 1001]))
+            assert torch.equal(batch, torch.tensor([1000.0, 1001.0]))
 
         def on_train_dataloader(self) -> None:
             pass
@@ -133,6 +135,19 @@ def test_data_module():
             pass
 
     model = TestModel(torch.nn.Linear(1, 1))
+    trainer = Trainer(fast_dev_run=True)
+    trainer.fit(model, datamodule=dm)
+    trainer.validate(model, datamodule=dm)
+    trainer.test(model, datamodule=dm)
+    trainer.predict(model, datamodule=dm)
+
+    # Test that plain lightning module works with FlashDataModule
+    class SampleBoringModel(BoringModel):
+        def __init__(self):
+            super().__init__()
+            self.layer = torch.nn.Linear(2, 1)
+
+    model = SampleBoringModel()
     trainer = Trainer(fast_dev_run=True)
     trainer.fit(model, datamodule=dm)
     trainer.validate(model, datamodule=dm)
@@ -296,6 +311,7 @@ class CustomModel(Task):
         assert batch[0].shape == torch.Size([2, 1])
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_transformations(tmpdir):
 
     transform = TestInputTransform()
@@ -410,6 +426,7 @@ def test_datapipeline_transformations_overridden_by_task():
     trainer.fit(model, datamodule=datamodule)
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize("sampler, callable", [(mock.MagicMock(), True), (mock.NonCallableMock(), False)])
 @mock.patch("flash.core.data.data_module.DataLoader")
 def test_dataloaders_with_sampler(mock_dataloader, sampler, callable):
@@ -437,6 +454,7 @@ def test_dataloaders_with_sampler(mock_dataloader, sampler, callable):
         assert "sampler" not in kwargs
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_val_split():
     datamodule = DataModule(
         Input(RunningStage.TRAINING, [1] * 100),

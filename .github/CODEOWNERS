@@ -5,25 +5,23 @@
 # the repo. Unless a later match takes precedence,
 # @global-owner1 and @global-owner2 will be requested for
 # review when someone opens a pull request.
-* @ethanwharris @borda @tchaton @ananyahjha93 @justusschock @carmocca @kaushikb11
+* @ethanwharris @borda @tchaton @justusschock @krshrimali @kaushikb11
 
 # owners
 /.github/CODEOWNERS   @williamfalcon
 # main
-/README.md            @edenlightning @ethanwharris
+/README.md            @ethanwharris @krshrimali
 # installation
-/setup.py                 @borda @ethanwharris
-/__about__.py             @borda @ethanwharris
-/__init__.py              @borda @ethanwharris
+/setup.py                 @borda @ethanwharris @krshrimali
+/__about__.py             @borda @ethanwharris @krshrimali
+/__init__.py              @borda @ethanwharris @krshrimali
 
 # CI/CD
-/.github/workflows/   @borda @ethanwharris @ananyahjha93
+/.github/workflows/   @borda @ethanwharris @krshrimali
 # configs in root
-/*.yml                @borda @ethanwharris @ananyahjha93
+/*.yml                @borda @ethanwharris @krshrimali
 
 # Docs
-/docs/                          @edenlightning @ethanwharris @ananyahjha93
-/.github/*.md                   @edenlightning @ethanwharris @ananyahjha93
-/.github/ISSUE_TEMPLATE/*.md    @edenlightning @ethanwharris @ananyahjha93
-/docs/source/conf.py            @borda @ethanwharris @ananyahjha93
+/.github/ISSUE_TEMPLATE/*.md    @borda @ethanwharris @krshrimali
+/docs/source/conf.py            @borda @ethanwharris
 /flash/core/integrations/labelstudio	@KonstantinKorotaev @niklub

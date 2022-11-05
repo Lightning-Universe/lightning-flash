@@ -19,7 +19,6 @@ import torch
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.callbacks.finetuning import BaseFinetuning
 from pytorch_lightning.core.lightning import LightningModule
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.nn import functional as F
 from torch.optim.optimizer import Optimizer
@@ -27,6 +26,7 @@ from torch.utils.data import DataLoader
 
 from flash import Trainer
 from flash.core.classification import ClassificationTask
+from flash.core.utilities.imports import _CORE_TESTING
 
 
 class DummyDataset(torch.utils.data.Dataset):
@@ -67,6 +67,7 @@ class NoFreeze(BaseFinetuning):
         pass
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize("callbacks, should_warn", [([], False), ([NoFreeze()], True)])
 def test_trainer_fit(tmpdir, callbacks, should_warn):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
@@ -82,6 +83,7 @@ def test_trainer_fit(tmpdir, callbacks, should_warn):
         trainer.fit(task, train_dl, val_dl)
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_trainer_finetune(tmpdir):
     model = DummyClassifier()
     train_dl = DataLoader(DummyDataset())
@@ -91,11 +93,12 @@ def test_trainer_finetune(tmpdir):
     trainer.finetune(task, train_dl, val_dl, strategy=NoFreeze())
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_resolve_callbacks_invalid_strategy(tmpdir):
     model = DummyClassifier()
     trainer = Trainer(fast_dev_run=True, default_root_dir=tmpdir)
     task = ClassificationTask(model, loss_fn=F.nll_loss)
-    with pytest.raises(MisconfigurationException, match="should be a ``pytorch_lightning.callbacks.BaseFinetuning``"):
+    with pytest.raises(TypeError, match="should be a ``pytorch_lightning.callbacks.BaseFinetuning``"):
         trainer._resolve_callbacks(task, EarlyStopping("test"))
 
 
@@ -108,14 +111,16 @@ class MultiFinetuneClassificationTask(ClassificationTask):
         return [NoFreeze(), NoFreeze()]
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_resolve_callbacks_multi_error(tmpdir):
     model = DummyClassifier()
     trainer = Trainer(fast_dev_run=True, default_root_dir=tmpdir)
     task = MultiFinetuneClassificationTask(model, loss_fn=F.nll_loss)
-    with pytest.raises(MisconfigurationException):
+    with pytest.raises(ValueError):
         trainer._resolve_callbacks(task, None)
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_resolve_callbacks_override_warning(tmpdir):
     model = DummyClassifier()
     trainer = Trainer(fast_dev_run=True, default_root_dir=tmpdir)
@@ -124,6 +129,7 @@ def test_resolve_callbacks_override_warning(tmpdir):
         trainer._resolve_callbacks(task, strategy="no_freeze")
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_add_argparse_args():
     parser = ArgumentParser()
     parser = Trainer.add_argparse_args(parser)
@@ -131,6 +137,7 @@ def test_add_argparse_args():
     assert args.gpus == 1
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_from_argparse_args():
     parser = ArgumentParser()
     parser = Trainer.add_argparse_args(parser)

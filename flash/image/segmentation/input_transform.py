@@ -14,22 +14,34 @@
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Tuple
 
-import torch
-
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform
-from flash.core.utilities.imports import _KORNIA_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.data.transforms import AlbumentationsAdapter, ApplyToKeys
+from flash.core.utilities.imports import _ALBUMENTATIONS_AVAILABLE, _TORCHVISION_AVAILABLE, requires
 
-if _KORNIA_AVAILABLE:
-    import kornia as K
+if _ALBUMENTATIONS_AVAILABLE:
+    import albumentations as alb
+else:
+    alb = None
 
 if _TORCHVISION_AVAILABLE:
-    from flash.core.data.transforms import ApplyToKeys, kornia_collate, KorniaParallelTransforms
+    from torchvision import transforms as T
 
 
-def prepare_target(tensor: torch.Tensor) -> torch.Tensor:
+def prepare_target(batch: Dict[str, Any]) -> Dict[str, Any]:
     """Convert the target mask to long and remove the channel dimension."""
-    return tensor.long().squeeze(1)
+    if DataKeys.TARGET in batch:
+        batch[DataKeys.TARGET] = batch[DataKeys.TARGET].squeeze().long()
+    return batch
+
+
+def permute_target(sample: Dict[str, Any]) -> Dict[str, Any]:
+    if DataKeys.TARGET in sample:
+        target = sample[DataKeys.TARGET]
+        if target.ndim == 2:
+            target = target[None, :, :]
+        sample[DataKeys.TARGET] = target.transpose((1, 2, 0))
+    return sample
 
 
 def remove_extra_dimensions(batch: Dict[str, Any]):
@@ -41,34 +53,48 @@ def remove_extra_dimensions(batch: Dict[str, Any]):
 
 @dataclass
 class SemanticSegmentationInputTransform(InputTransform):
+    # https://albumentations.ai/docs/examples/pytorch_semantic_segmentation
 
     image_size: Tuple[int, int] = (128, 128)
+    mean: Tuple[float, float, float] = (0.485, 0.456, 0.406)
+    std: Tuple[float, float, float] = (0.229, 0.224, 0.225)
 
+    @requires("image")
     def train_per_sample_transform(self) -> Callable:
-        return ApplyToKeys(
-            [DataKeys.INPUT, DataKeys.TARGET],
-            KorniaParallelTransforms(
-                K.geometry.Resize(self.image_size, interpolation="nearest"), K.augmentation.RandomHorizontalFlip(p=0.5)
-            ),
+        return T.Compose(
+            [
+                permute_target,
+                AlbumentationsAdapter(
+                    [
+                        alb.Resize(*self.image_size),
+                        alb.HorizontalFlip(p=0.5),
+                        alb.Normalize(mean=self.mean, std=self.std),
+                    ]
+                ),
+                ApplyToKeys(
+                    DataKeys.INPUT,
+                    T.ToTensor(),
+                ),
+            ]
         )
 
+    @requires("image")
     def per_sample_transform(self) -> Callable:
-        return ApplyToKeys(
-            [DataKeys.INPUT, DataKeys.TARGET],
-            KorniaParallelTransforms(K.geometry.Resize(self.image_size, interpolation="nearest")),
+        return T.Compose(
+            [
+                permute_target,
+                AlbumentationsAdapter(
+                    [
+                        alb.Resize(*self.image_size),
+                        alb.Normalize(mean=self.mean, std=self.std),
+                    ]
+                ),
+                ApplyToKeys(
+                    DataKeys.INPUT,
+                    T.ToTensor(),
+                ),
+            ]
         )
 
-    def predict_input_per_sample_transform(self) -> Callable:
-        return K.geometry.Resize(self.image_size, interpolation="nearest")
-
-    def collate(self) -> Callable:
-        return kornia_collate
-
-    def target_per_batch_transform(self) -> Callable:
-        return prepare_target
-
-    def predict_per_batch_transform(self) -> Callable:
-        return remove_extra_dimensions
-
-    def serve_per_batch_transform(self) -> Callable:
-        return remove_extra_dimensions
+    def per_batch_transform(self) -> Callable:
+        return T.Compose([prepare_target, remove_extra_dimensions])

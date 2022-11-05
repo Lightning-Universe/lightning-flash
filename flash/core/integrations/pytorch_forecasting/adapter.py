@@ -15,8 +15,8 @@ from copy import copy
 from functools import partial
 from typing import Any, Callable, Dict, List, Optional, Union
 
-import torch
 import torchmetrics
+from torch import Tensor
 
 from flash.core.adapter import Adapter
 from flash.core.data.batch import default_uncollate
@@ -44,7 +44,7 @@ class PatchTimeSeriesDataSet(TimeSeriesDataSet):
     def _construct_index(self, data: DataFrame, predict_mode: bool) -> DataFrame:
         return DataFrame()
 
-    def _data_to_tensors(self, data: DataFrame) -> Dict[str, torch.Tensor]:
+    def _data_to_tensors(self, data: DataFrame) -> Dict[str, Tensor]:
         return {}
 
 
@@ -106,8 +106,11 @@ class PyTorchForecastingAdapter(Adapter):
             "Backbones provided by PyTorch Forecasting don't support testing. Use validation instead."
         )
 
+    def forward(self, x: Any) -> Any:
+        return dict(self.backbone(x))
+
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        result = dict(self.backbone(batch[DataKeys.INPUT]))
+        result = self(batch[DataKeys.INPUT])
         result[DataKeys.INPUT] = default_uncollate(batch[DataKeys.INPUT])
         return default_uncollate(result)
 

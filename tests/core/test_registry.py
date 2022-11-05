@@ -14,12 +14,13 @@
 import logging
 
 import pytest
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 
 from flash.core.registry import ConcatRegistry, ExternalRegistry, FlashRegistry
+from flash.core.utilities.imports import _CORE_TESTING
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_registry_raises():
     backbones = FlashRegistry("backbones")
 
@@ -27,12 +28,12 @@ def test_registry_raises():
     def my_model(nc_input=5, nc_output=6):
         return nn.Linear(nc_input, nc_output), nc_input, nc_output
 
-    with pytest.raises(MisconfigurationException, match="You can only register a callable, found: 3"):
+    with pytest.raises(TypeError, match="You can only register a callable, found: 3"):
         backbones(3, name="foo")
 
     backbones(my_model, name="foo", override=True)
 
-    with pytest.raises(MisconfigurationException, match="Function with name: foo and metadata: {}"):
+    with pytest.raises(ValueError, match="Function with name: foo and metadata: {}"):
         backbones(my_model, name="foo", override=False)
 
     with pytest.raises(KeyError, match="Found no matches"):
@@ -46,6 +47,7 @@ def test_registry_raises():
         backbones(name=float)  # noqa
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_registry():
     backbones = FlashRegistry("backbones")
 
@@ -110,6 +112,7 @@ def test_registry_multiple_decorators(caplog):
     assert "bar" in backbones
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_external_registry():
     def getter(key: str):
         return key
@@ -127,6 +130,7 @@ def test_external_registry():
     assert len(registry.available_keys()) == 0
 
 
+@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_concat_registry():
     registry_1 = FlashRegistry("backbones")
     registry_2 = FlashRegistry("backbones")

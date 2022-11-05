@@ -80,28 +80,20 @@ Internally we inject the :class:`~flash.core.data.io.input_transform.InputTransf
 
 Defining the standard transforms (typically at least a ``per_sample_transform`` should be defined) for your :class:`~flash.core.data.io.input_transform.InputTransform` involves simply overriding the required hook to return a callable transform.
 
-For our ``TemplateInputTransform``, we'll just configure an ``input_per_sample_transform`` and a ``target_per_sample_transform``.
+For our ``TemplateInputTransform``, we'll just configure a ``per_sample_transform``.
 Let's first define a to_tensor transform as a ``staticmethod``:
 
 .. literalinclude:: ../../../flash/template/classification/data.py
     :language: python
     :dedent: 4
-    :pyobject: TemplateInputTransform.input_to_tensor
+    :pyobject: TemplateInputTransform.to_tensor
 
-Now in our ``input_per_sample_transform`` hook, we return the transform:
-
-.. literalinclude:: ../../../flash/template/classification/data.py
-    :language: python
-    :dedent: 4
-    :pyobject: TemplateInputTransform.input_per_sample_transform
-
-To convert the targets to a tensor we can simply use ``torch.as_tensor``.
-Here's our ``target_per_sample_transform``:
+Now in our ``per_sample_transform`` hook, we return the transform:
 
 .. literalinclude:: ../../../flash/template/classification/data.py
     :language: python
     :dedent: 4
-    :pyobject: TemplateInputTransform.target_per_sample_transform
+    :pyobject: TemplateInputTransform.per_sample_transform
 
 .. _contributing_data_module:
 
@@ -182,12 +174,12 @@ In your :class:`~flash.core.data.io.input.Input` or :class:`~flash.core.data.io.
 Your :class:`~flash.core.data.io.output_transform.OutputTransform` can then use this metadata in its transforms.
 You should use this approach if your postprocessing depends on the state of the input before the :class:`~flash.core.data.io.input_transform.InputTransform` transforms.
 For example, if you want to resize the predictions to the original size of the inputs you should add the original image size in the :attr:`~flash.core.data.io.input.DataKeys.METADATA`.
-Here's an example from the :class:`~flash.image.segmentation.SemanticSegmentationNumpyInput`:
+Here's an example from the :class:`~flash.image.data.ImageInput`:
 
-.. literalinclude:: ../../../flash/image/segmentation/input.py
+.. literalinclude:: ../../../flash/image/data.py
     :language: python
     :dedent: 4
-    :pyobject: SemanticSegmentationNumpyInput.load_sample
+    :pyobject: ImageInput.load_sample
 
 The :attr:`~flash.core.data.io.input.DataKeys.METADATA` can now be referenced in your :class:`~flash.core.data.io.output_transform.OutputTransform`.
 For example, here's the code for the ``per_sample_transform`` method of the :class:`~flash.image.segmentation.model.SemanticSegmentationOutputTransform`:

@@ -65,7 +65,30 @@ ________________________________________
     ~flash.core.data.utilities.classification.CommaDelimitedMultiLabelTargetFormatter
     ~flash.core.data.utilities.classification.SpaceDelimitedTargetFormatter
     ~flash.core.data.utilities.classification.MultiBinaryTargetFormatter
+    ~flash.core.data.utilities.classification.MultiSoftTargetFormatter
     ~flash.core.data.utilities.classification.get_target_formatter
+
+flash.core.data.utilities.collate
+_________________________________
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    ~flash.core.data.utilities.collate.wrap_collate
+    ~flash.core.data.utilities.collate.default_collate
+
+flash.core.data.utilities.loading
+_________________________________
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    ~flash.core.data.utilities.loading.load_image
+    ~flash.core.data.utilities.loading.load_spectrogram
+    ~flash.core.data.utilities.loading.load_audio
+    ~flash.core.data.utilities.loading.load_data_frame
 
 flash.core.data.properties
 __________________________
@@ -96,13 +119,6 @@ __________________________
     :template: classtemplate.rst
 
     ~flash.core.data.transforms.ApplyToKeys
-    ~flash.core.data.transforms.KorniaParallelTransforms
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-
-    ~flash.core.data.transforms.kornia_collate
 
 flash.core.data.utils
 _____________________
@@ -122,7 +138,7 @@ _____________________
     ~flash.core.data.utils.download_data
 
 flash.core.data.io.input
-___________________________
+________________________
 
 .. autosummary::
     :toctree: generated/

@@ -12,13 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+from typing import Any
 
 import pytest
 import torch
+from torch import Tensor
 
 import flash
-from flash.core.utilities.imports import _TEXT_TESTING
+from flash.core.utilities.imports import _TEXT_AVAILABLE, _TEXT_TESTING
 from flash.text import TextClassificationData, TextEmbedder
+from tests.helpers.task_tester import TaskTester
 
 # ======== Mock data ========
 
@@ -27,9 +30,28 @@ predict_data = [
     "The worst movie in the history of cinema.",
     "I come from Bulgaria where it 's almost impossible to have a tornado.",
 ]
+
 # ==============================
 
 TEST_BACKBONE = "sentence-transformers/all-MiniLM-L6-v2"  # tiny model for testing
+
+
+class TestTextEmbedder(TaskTester):
+
+    task = TextEmbedder
+    task_kwargs = {"backbone": TEST_BACKBONE}
+    is_testing = _TEXT_TESTING
+    is_available = _TEXT_AVAILABLE
+
+    scriptable = False
+
+    @property
+    def example_forward_input(self):
+        return {"input_ids": torch.randint(1000, size=(1, 100))}
+
+    def check_forward_output(self, output: Any):
+        assert isinstance(output, Tensor)
+        assert output.shape == torch.Size([1, 384])
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")

@@ -92,7 +92,7 @@ Here's an example of inference:
     from flash.text import TextClassifier, TextClassificationData
 
     # 1. Init the finetuned task from URL
-    model = TextClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/0.7.0/text_classification_model.pt")
+    model = TextClassifier.load_from_checkpoint("https://flash-weights.s3.amazonaws.com/0.9.0/text_classification_model.pt")
 
     # 2. Perform inference from list of sequences
     trainer = Trainer()
@@ -166,4 +166,4 @@ Contribute a task
 The lightning + Flash team is hard at work building more tasks for common deep-learning use cases.
 But we're looking for incredible contributors like you to submit new tasks!
 
-Join our `Slack <https://join.slack.com/t/pytorch-lightning/shared_invite/zt-pw5v393p-qRaDgEk24~EjiZNBpSQFgQ>`_ to get help becoming a contributor!
+Join our `Slack <https://www.pytorchlightning.ai/community>`_ to get help becoming a contributor!

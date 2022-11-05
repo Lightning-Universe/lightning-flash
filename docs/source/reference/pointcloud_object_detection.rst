@@ -5,7 +5,7 @@
    :tags: Point-Cloud,Detection
    :beta:
 
-.. beta:: task
+.. beta:: Point cloud object detection is currently in Beta.
 
 .. _pointcloud_object_detection:
 

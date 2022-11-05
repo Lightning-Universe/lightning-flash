@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import inspect
+import math
 import warnings
 from argparse import ArgumentParser, Namespace
 from functools import wraps
@@ -20,9 +21,10 @@ from typing import Callable, List, Optional, Tuple, Union
 import torch
 from pytorch_lightning import LightningDataModule, LightningModule
 from pytorch_lightning import Trainer as PlTrainer
+from pytorch_lightning.accelerators.tpu import TPUAccelerator
 from pytorch_lightning.callbacks import BaseFinetuning
+from pytorch_lightning.utilities import rank_zero_info
 from pytorch_lightning.utilities.argparse import add_argparse_args, get_init_arguments_and_types, parse_env_variables
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import DataLoader
 
 import flash
@@ -31,6 +33,7 @@ from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.io.transform_predictions import TransformPredictions
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
+from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_4_0, _PL_GREATER_EQUAL_1_5_0, _PL_GREATER_EQUAL_1_6_0
 
 
 def from_argparse_args(cls, args: Union[Namespace, ArgumentParser], **kwargs):
@@ -183,6 +186,11 @@ class Trainer(PlTrainer):
         Returns:
             Returns a list of dictionaries, one for each provided dataloader containing their respective predictions.
         """
+        # Note: Prediction on TPU device with multi cores is not supported yet
+        if isinstance(self.accelerator, TPUAccelerator) and self.num_devices > 1:
+            raise NotImplementedError(
+                f"Prediction on TPU device with multi-cores (requested cores: {self.num_devices}) is not supported yet."
+            )
         model = model or self.lightning_module
         output_transform = getattr(model, "_output_transform", None) or OutputTransform()
         if output is None:
@@ -210,7 +218,7 @@ class Trainer(PlTrainer):
             warnings.warn("The model contains a default finetune callback.", UserWarning)
         finetuning_callback = model.configure_finetune_callback(strategy=strategy, train_bn=train_bn)
         if len(finetuning_callback) > 1:
-            raise MisconfigurationException("Create a list with only 1 finetuning callback.")
+            raise ValueError("Create a list with only 1 finetuning callback.")
         self.callbacks = self._merge_callbacks(self.callbacks, finetuning_callback)
 
     @staticmethod
@@ -229,7 +237,7 @@ class Trainer(PlTrainer):
     def add_argparse_args(cls, *args, **kwargs) -> ArgumentParser:
         """See :func:`pytorch_lightning.utilities.argparse.add_argparse_args`."""
         # the lightning trainer implementation does not support subclasses.
-        # context: https://github.com/PyTorchLightning/lightning-flash/issues/342#issuecomment-848892447
+        # context: https://github.com/Lightning-AI/lightning-flash/issues/342#issuecomment-848892447
         return add_argparse_args(PlTrainer, *args, **kwargs)
 
     @classmethod
@@ -237,5 +245,63 @@ class Trainer(PlTrainer):
         """Modified version of :func:`pytorch_lightning.utilities.argparse.from_argparse_args` which populates
         ``valid_kwargs`` from :class:`pytorch_lightning.Trainer`."""
         # the lightning trainer implementation does not support subclasses.
-        # context: https://github.com/PyTorchLightning/lightning-flash/issues/342#issuecomment-848892447
+        # context: https://github.com/Lightning-AI/lightning-flash/issues/342#issuecomment-848892447
         return from_argparse_args(Trainer, args, **kwargs)
+
+    @property
+    def estimated_stepping_batches(self) -> Union[int, float]:
+        """Estimated stepping batches for the complete training inferred from DataLoaders, gradient accumulation
+        factor and distributed setup.
+
+        Examples
+        ________
+
+        .. code-block:: python
+
+            def configure_optimizers(self):
+                optimizer = ...
+                scheduler = torch.optim.lr_scheduler.OneCycleLR(
+                    optimizer, max_lr=1e-3, total_steps=self.trainer.estimated_stepping_batches
+                )
+                return [optimizer], [scheduler]
+        """
+        if _PL_GREATER_EQUAL_1_6_0:
+            return super().estimated_stepping_batches
+        # Copied from PL 1.6
+        accumulation_scheduler = self.accumulation_scheduler
+
+        if accumulation_scheduler.epochs != [0]:
+            raise ValueError(
+                "Estimated stepping batches cannot be computed with different"
+                " `accumulate_grad_batches` at different epochs."
+            )
+
+        # infinite training
+        if self.max_epochs == -1 and self.max_steps == -1:
+            return float("inf")
+
+        if self.train_dataloader is None:
+            rank_zero_info("Loading `train_dataloader` to estimate number of stepping batches.")
+            if _PL_GREATER_EQUAL_1_5_0:
+                self.reset_train_dataloader()
+            else:
+                self.reset_train_dataloader(self.lightning_module)
+
+        total_batches = self.num_training_batches
+
+        # iterable dataset
+        if total_batches == float("inf"):
+            return self.max_steps
+
+        if _PL_GREATER_EQUAL_1_4_0:
+            self.accumulate_grad_batches = accumulation_scheduler.get_accumulate_grad_batches(self.current_epoch)
+        else:
+            # Call the callback hook manually to guarantee that `self.accumulate_grad_batches` has been set
+            accumulation_scheduler.on_train_epoch_start(self, self.lightning_module)
+        effective_batch_size = self.accumulate_grad_batches
+        max_estimated_steps = math.ceil(total_batches / effective_batch_size) * max(self.max_epochs, 1)
+
+        max_estimated_steps = (
+            min(max_estimated_steps, self.max_steps) if self.max_steps not in [None, -1] else max_estimated_steps
+        )
+        return max_estimated_steps

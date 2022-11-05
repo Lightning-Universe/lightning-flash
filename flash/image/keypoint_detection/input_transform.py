@@ -19,6 +19,6 @@ if _ICEVISION_AVAILABLE:
 
 
 class KeypointDetectionInputTransform(IceVisionInputTransform):
-    @requires(["image", "icevision"])
+    @requires("image", "icevision")
     def train_per_sample_transform(self):
         return IceVisionTransformAdapter([*A.aug_tfms(size=self.image_size, crop_fn=None), A.Normalize()])

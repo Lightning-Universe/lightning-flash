@@ -20,37 +20,44 @@ jobs:
       # max-parallel: 6
       matrix:
         # PyTorch 1.5 is failing on Win and bolts requires torchvision>=0.5
-        os: [ubuntu-20.04, macOS-10.15, windows-2019]
-        python-version: [3.6, 3.8]
+        os: [ubuntu-20.04, macOS-12, windows-2022]
+        python-version: [3.7, 3.9]
         requires: ['oldest', 'latest']
-        topic: [['devel']]
+        topic: [['core']]
         release: [ 'stable' ]
         exclude:
-          - os: ubuntu-20.04
-            python-version: 3.8
-            requires: 'latest'
+          # Skip if torch<1.8 and py3.9 on Linux: https://github.com/pytorch/pytorch/issues/50014
+          - { os: ubuntu-20.04, python-version: 3.9, requires: 'oldest' }
+          - { os: ubuntu-20.04, python-version: 3.9, requires: 'latest' }
         include:
-          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'pre', topic: [ 'devel' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'image' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'image','image_extras' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'video' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'video','video_extras' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'tabular' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'text' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'pre', topic: [ 'core' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'image' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'image','image_extras' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'image','image_extras_baal' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'video' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'video','video_extras' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'tabular' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'text' ] }
           - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'pointcloud' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'serve' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'graph' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'audio' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'serve' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'graph' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'audio' ] }
 
     # Timeout: https://stackoverflow.com/a/59076067/4521646
     timeout-minutes: 35
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+
+    - name: Set Swap Space
+      if: runner.os == 'Linux'
+      uses: pierotofy/set-swap-space@master
+      with:
+        swap-size-gb: 10
 
     # Github Actions: Run step on specific OS: https://stackoverflow.com/a/57948488/4521646
     - name: Setup macOS
@@ -67,15 +74,10 @@ jobs:
     - name: Set min. dependencies
       if: matrix.requires == 'oldest'
       run: |
-        python -c "req = open('requirements.txt').read().replace('>', '=') ; open('requirements.txt', 'w').write(req)"
-
-    - name: Filter requirements
-      run: |
-        import sys
-        if sys.version_info.minor < 7:
-          fname = 'requirements.txt'
-          lines = [line for line in open(fname).readlines() if not line.startswith('pytorchvideo')]
-          open(fname, 'w').writelines(lines)
+        fname = 'requirements.txt'
+        ignore = ['pandas', 'torchmetrics']
+        lines = [line if any([line.startswith(package) for package in ignore]) else line.replace('>', '=') for line in open(fname).readlines()]
+        open(fname, 'w').writelines(lines)
       shell: python
 
     - run: echo "::set-output name=period::$(python -c 'import time ; days = time.time() / 60 / 60 / 24 ; print(int(days / 7))' 2>&1)"
@@ -90,7 +92,7 @@ jobs:
         python -c "from pip._internal.locations import USER_CACHE_DIR; print('::set-output name=dir::' + USER_CACHE_DIR)"
 
     - name: Cache pip
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: ${{ steps.pip-cache.outputs.dir }}
         key: ${{ runner.os }}-${{ matrix.python-version }}-td${{ steps.times.outputs.period }}-${{ join(matrix.topic,'-') }}-${{ matrix.requires }}-pip-${{ hashFiles('requirements.txt') }}
@@ -113,7 +115,6 @@ jobs:
         pip install torch>=1.7.1
         pip install '.[${{ join(matrix.topic, ',') }}]' --upgrade $flag --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
         pip install '.[test]' --upgrade
-        pip list
       shell: bash
 
     - name: Install vissl
@@ -126,17 +127,17 @@ jobs:
       if: contains( matrix.topic , 'serve' )
       run: |
         sudo apt-get install libsndfile1
-        pip install '.[all,audio]' --upgrade
+        pip install '.[all,audio]' icevision sahi==0.8.19 effdet --upgrade
 
     - name: Install audio test dependencies
       if: contains( matrix.topic , 'audio' )
       run: |
         sudo apt-get install libsndfile1
         pip install matplotlib
-        pip install '.[audio,image]' --upgrade
+        pip install '.[audio,image]' torch==1.11.0 --upgrade
 
     - name: Cache datasets
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: data # This path is specific to Ubuntu
         key: flash-datasets-${{ hashFiles('tests/examples/test_scripts.py') }}
@@ -150,7 +151,7 @@ jobs:
         coverage run --source flash -m pytest flash tests --reruns 3 --reruns-delay 2 -v --junitxml=junit/test-results-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.requires }}.xml
 
     - name: Upload pytest test results
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: pytest-results-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.requires }}
         path: junit/test-results-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.requires }}.xml
@@ -163,7 +164,7 @@ jobs:
         coverage xml
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v3
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         file: ./coverage.xml

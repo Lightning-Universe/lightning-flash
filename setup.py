@@ -53,10 +53,8 @@ def _expand_reqs(extras: dict, keys: list) -> list:
 base_req = setup_tools._load_requirements(path_dir=_PATH_ROOT, file_name="requirements.txt")
 # find all extra requirements
 _load_req = partial(setup_tools._load_requirements, path_dir=_PATH_REQUIRE)
-SKIP_REQ_FILES = "devel.txt"
 found_req_files = sorted(os.path.basename(p) for p in glob.glob(os.path.join(_PATH_REQUIRE, "*.txt")))
-# filter unwanted files
-found_req_files = [n for n in found_req_files if n not in SKIP_REQ_FILES]
+# remove datatype prefix
 found_req_names = [os.path.splitext(req)[0].replace("datatype_", "") for req in found_req_files]
 # define basic and extra extras
 extras_req = {
@@ -71,6 +69,7 @@ extras_req.update(
 )
 # some extra combinations
 extras_req["vision"] = _expand_reqs(extras_req, ["image", "video"])
+extras_req["core"] = _expand_reqs(extras_req, ["image", "tabular", "text"])
 extras_req["all"] = _expand_reqs(extras_req, ["vision", "tabular", "text", "audio"])
 extras_req["dev"] = _expand_reqs(extras_req, ["all", "test", "docs"])
 # filter the uniques
@@ -88,7 +87,7 @@ setup(
     author=about.__author__,
     author_email=about.__author_email__,
     url=about.__homepage__,
-    download_url="https://github.com/PyTorchLightning/lightning-flash",
+    download_url="https://github.com/Lightning-AI/lightning-flash",
     license=about.__license__,
     packages=find_packages(exclude=["tests", "tests.*"]),
     long_description=long_description,
@@ -100,12 +99,12 @@ setup(
     },
     zip_safe=False,
     keywords=["deep learning", "pytorch", "AI"],
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     install_requires=base_req,
     project_urls={
-        "Bug Tracker": "https://github.com/PyTorchLightning/lightning-flash/issues",
+        "Bug Tracker": "https://github.com/Lightning-AI/lightning-flash/issues",
         "Documentation": "https://lightning-flash.rtfd.io/en/latest/",
-        "Source Code": "https://github.com/PyTorchLightning/lightning-flash",
+        "Source Code": "https://github.com/Lightning-AI/lightning-flash",
     },
     classifiers=[
         "Environment :: Console",
@@ -124,10 +123,8 @@ setup(
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
     ],
 )

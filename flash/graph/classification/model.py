@@ -13,8 +13,7 @@
 # limitations under the License.
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-import torch
-from torch import nn
+from torch import nn, Tensor
 from torch.nn import functional as F
 from torch.nn import Linear
 
@@ -24,6 +23,7 @@ from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _GRAPH_AVAILABLE
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.graph.backbones import GRAPH_BACKBONES
+from flash.graph.collate import _pyg_collate
 
 if _GRAPH_AVAILABLE:
     from torch_geometric.nn import global_add_pool, global_max_pool, global_mean_pool
@@ -101,6 +101,8 @@ class GraphClassifier(ClassificationTask):
         else:
             self.head = DefaultGraphHead(num_out_features, num_classes)
 
+        self.collate_fn = _pyg_collate
+
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         batch = (batch[DataKeys.INPUT], batch[DataKeys.TARGET])
         return super().training_step(batch, batch_idx)
@@ -116,13 +118,13 @@ class GraphClassifier(ClassificationTask):
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         return super().predict_step(batch[DataKeys.INPUT], batch_idx, dataloader_idx=dataloader_idx)
 
-    def forward(self, data) -> torch.Tensor:
+    def forward(self, data) -> Tensor:
         x = self.backbone(data.x, data.edge_index)
         x = self.pooling_fn(x, data.batch)
         return self.head(x)
 
 
-class DefaultGraphHead(torch.nn.Module):
+class DefaultGraphHead(nn.Module):
     def __init__(self, hidden_channels, num_classes, dropout=0.5):
         super().__init__()
         self.lin1 = Linear(hidden_channels, hidden_channels)

@@ -16,9 +16,9 @@ import importlib
 import operator
 import os
 import types
-from importlib.util import find_spec
 from typing import List, Tuple, Union
 
+from lightning_utilities.core.imports import compare_version, module_available
 from pkg_resources import DistributionNotFound
 
 try:
@@ -27,88 +27,50 @@ except (ModuleNotFoundError, DistributionNotFound):
     Version = None
 
 
-def _module_available(module_path: str) -> bool:
-    """Check if a path is available in your environment.
-
-    >>> _module_available('os')
-    True
-    >>> _module_available('bla.bla')
-    False
-    """
-    try:
-        return find_spec(module_path) is not None
-    except AttributeError:
-        # Python 3.6
-        return False
-    except ModuleNotFoundError:
-        # Python 3.7+
-        return False
-    except ValueError:
-        # Sometimes __spec__ can be None and gives a ValueError
-        return True
-
-
-def _compare_version(package: str, op, version) -> bool:
-    """Compare package version with some requirements.
-
-    >>> _compare_version("torch", operator.ge, "0.1")
-    True
-    """
-    try:
-        pkg = importlib.import_module(package)
-    except (ModuleNotFoundError, DistributionNotFound, ValueError):
-        return False
-    try:
-        pkg_version = Version(pkg.__version__)
-    except TypeError:
-        # this is mock by sphinx, so it shall return True to generate all summaries
-        return True
-    return op(pkg_version, Version(version))
-
-
-_TORCH_AVAILABLE = _module_available("torch")
-_PL_AVAILABLE = _module_available("pytorch_lightning")
-_BOLTS_AVAILABLE = _module_available("pl_bolts") and _compare_version("torch", operator.lt, "1.9.0")
-_PANDAS_AVAILABLE = _module_available("pandas")
-_SKLEARN_AVAILABLE = _module_available("sklearn")
-_PYTORCHTABULAR_AVAILABLE = _module_available("pytorch_tabular")
-_FORECASTING_AVAILABLE = _module_available("pytorch_forecasting")
-_KORNIA_AVAILABLE = _module_available("kornia")
-_COCO_AVAILABLE = _module_available("pycocotools")
-_TIMM_AVAILABLE = _module_available("timm")
-_TORCHVISION_AVAILABLE = _module_available("torchvision")
-_PYTORCHVIDEO_AVAILABLE = _module_available("pytorchvideo")
-_MATPLOTLIB_AVAILABLE = _module_available("matplotlib")
-_TRANSFORMERS_AVAILABLE = _module_available("transformers")
-_PYSTICHE_AVAILABLE = _module_available("pystiche")
-_FIFTYONE_AVAILABLE = _module_available("fiftyone")
-_FASTAPI_AVAILABLE = _module_available("fastapi")
-_PYDANTIC_AVAILABLE = _module_available("pydantic")
-_GRAPHVIZ_AVAILABLE = _module_available("graphviz")
-_CYTOOLZ_AVAILABLE = _module_available("cytoolz")
-_UVICORN_AVAILABLE = _module_available("uvicorn")
-_PIL_AVAILABLE = _module_available("PIL")
-_OPEN3D_AVAILABLE = _module_available("open3d")
-_SEGMENTATION_MODELS_AVAILABLE = _module_available("segmentation_models_pytorch")
-_FASTFACE_AVAILABLE = _module_available("fastface") and _compare_version("pytorch_lightning", operator.lt, "1.5.0")
-_LIBROSA_AVAILABLE = _module_available("librosa")
-_TORCH_SCATTER_AVAILABLE = _module_available("torch_scatter")
-_TORCH_SPARSE_AVAILABLE = _module_available("torch_sparse")
-_TORCH_GEOMETRIC_AVAILABLE = _module_available("torch_geometric")
-_NETWORKX_AVAILABLE = _module_available("networkx")
-_TORCHAUDIO_AVAILABLE = _module_available("torchaudio")
-_SENTENCEPIECE_AVAILABLE = _module_available("sentencepiece")
-_DATASETS_AVAILABLE = _module_available("datasets")
-_TM_TEXT_AVAILABLE: bool = _module_available("torchmetrics.text")
-_ICEVISION_AVAILABLE = _module_available("icevision")
-_ICEDATA_AVAILABLE = _module_available("icedata")
-_LEARN2LEARN_AVAILABLE = _module_available("learn2learn") and _compare_version("learn2learn", operator.ge, "0.1.6")
-_TORCH_ORT_AVAILABLE = _module_available("torch_ort")
-_VISSL_AVAILABLE = _module_available("vissl") and _module_available("classy_vision")
-_ALBUMENTATIONS_AVAILABLE = _module_available("albumentations")
-_BAAL_AVAILABLE = _module_available("baal")
-_TORCH_OPTIMIZER_AVAILABLE = _module_available("torch_optimizer")
-_SENTENCE_TRANSFORMERS_AVAILABLE = _module_available("sentence_transformers")
+_TORCH_AVAILABLE = module_available("torch")
+_PL_AVAILABLE = module_available("pytorch_lightning")
+_BOLTS_AVAILABLE = module_available("pl_bolts") and compare_version("torch", operator.lt, "1.9.0")
+_PANDAS_AVAILABLE = module_available("pandas")
+_SKLEARN_AVAILABLE = module_available("sklearn")
+_PYTORCHTABULAR_AVAILABLE = module_available("pytorch_tabular")
+_FORECASTING_AVAILABLE = module_available("pytorch_forecasting")
+_KORNIA_AVAILABLE = module_available("kornia")
+_COCO_AVAILABLE = module_available("pycocotools")
+_TIMM_AVAILABLE = module_available("timm")
+_TORCHVISION_AVAILABLE = module_available("torchvision")
+_PYTORCHVIDEO_AVAILABLE = module_available("pytorchvideo")
+_MATPLOTLIB_AVAILABLE = module_available("matplotlib")
+_TRANSFORMERS_AVAILABLE = module_available("transformers")
+_PYSTICHE_AVAILABLE = module_available("pystiche")
+_FIFTYONE_AVAILABLE = module_available("fiftyone")
+_FASTAPI_AVAILABLE = module_available("fastapi")
+_PYDANTIC_AVAILABLE = module_available("pydantic")
+_GRAPHVIZ_AVAILABLE = module_available("graphviz")
+_CYTOOLZ_AVAILABLE = module_available("cytoolz")
+_UVICORN_AVAILABLE = module_available("uvicorn")
+_PIL_AVAILABLE = module_available("PIL")
+_OPEN3D_AVAILABLE = module_available("open3d")
+_SEGMENTATION_MODELS_AVAILABLE = module_available("segmentation_models_pytorch")
+_FASTFACE_AVAILABLE = module_available("fastface") and compare_version("pytorch_lightning", operator.lt, "1.5.0")
+_LIBROSA_AVAILABLE = module_available("librosa")
+_TORCH_SCATTER_AVAILABLE = module_available("torch_scatter")
+_TORCH_SPARSE_AVAILABLE = module_available("torch_sparse")
+_TORCH_GEOMETRIC_AVAILABLE = module_available("torch_geometric")
+_NETWORKX_AVAILABLE = module_available("networkx")
+_TORCHAUDIO_AVAILABLE = module_available("torchaudio")
+_SENTENCEPIECE_AVAILABLE = module_available("sentencepiece")
+_DATASETS_AVAILABLE = module_available("datasets")
+_TM_TEXT_AVAILABLE: bool = module_available("torchmetrics.text")
+_ICEVISION_AVAILABLE = module_available("icevision")
+_ICEDATA_AVAILABLE = module_available("icedata")
+_LEARN2LEARN_AVAILABLE = module_available("learn2learn") and compare_version("learn2learn", operator.ge, "0.1.6")
+_TORCH_ORT_AVAILABLE = module_available("torch_ort")
+_VISSL_AVAILABLE = module_available("vissl") and module_available("classy_vision")
+_ALBUMENTATIONS_AVAILABLE = module_available("albumentations")
+_BAAL_AVAILABLE = module_available("baal")
+_TORCH_OPTIMIZER_AVAILABLE = module_available("torch_optimizer")
+_SENTENCE_TRANSFORMERS_AVAILABLE = module_available("sentence_transformers")
+_DEEPSPEED_AVAILABLE = module_available("deepspeed")
 
 
 if _PIL_AVAILABLE:
@@ -120,14 +82,17 @@ else:
 
 
 if Version:
-    _TORCHVISION_GREATER_EQUAL_0_9 = _compare_version("torchvision", operator.ge, "0.9.0")
-    _PL_GREATER_EQUAL_1_4_3 = _compare_version("pytorch_lightning", operator.ge, "1.4.3")
-    _PL_GREATER_EQUAL_1_4_0 = _compare_version("pytorch_lightning", operator.ge, "1.4.0")
-    _PL_GREATER_EQUAL_1_5_0 = _compare_version("pytorch_lightning", operator.ge, "1.5.0")
-    _PL_GREATER_EQUAL_1_6_0 = _compare_version("pytorch_lightning", operator.ge, "1.6.0rc0")
-    _PANDAS_GREATER_EQUAL_1_3_0 = _compare_version("pandas", operator.ge, "1.3.0")
-    _ICEVISION_GREATER_EQUAL_0_11_0 = _compare_version("icevision", operator.ge, "0.11.0")
-    _TM_GREATER_EQUAL_0_7_0 = _compare_version("torchmetrics", operator.ge, "0.7.0")
+    _TORCHVISION_GREATER_EQUAL_0_9 = compare_version("torchvision", operator.ge, "0.9.0")
+    _PL_GREATER_EQUAL_1_4_3 = compare_version("pytorch_lightning", operator.ge, "1.4.3")
+    _PL_GREATER_EQUAL_1_4_0 = compare_version("pytorch_lightning", operator.ge, "1.4.0")
+    _PL_GREATER_EQUAL_1_5_0 = compare_version("pytorch_lightning", operator.ge, "1.5.0")
+    _PL_GREATER_EQUAL_1_6_0 = compare_version("pytorch_lightning", operator.ge, "1.6.0rc0")
+    _PL_GREATER_EQUAL_1_8_0 = compare_version("pytorch_lightning", operator.ge, "1.8.0")
+    _PANDAS_GREATER_EQUAL_1_3_0 = compare_version("pandas", operator.ge, "1.3.0")
+    _ICEVISION_GREATER_EQUAL_0_11_0 = compare_version("icevision", operator.ge, "0.11.0")
+    _TM_GREATER_EQUAL_0_7_0 = compare_version("torchmetrics", operator.ge, "0.7.0")
+    _TM_GREATER_EQUAL_0_10_0 = compare_version("torchmetrics", operator.ge, "0.10.0")
+    _BAAL_GREATER_EQUAL_1_5_2 = compare_version("baal", operator.ge, "1.5.2")
 
 _TEXT_AVAILABLE = all(
     [
@@ -145,14 +110,14 @@ _IMAGE_AVAILABLE = all(
         _TORCHVISION_AVAILABLE,
         _TIMM_AVAILABLE,
         _PIL_AVAILABLE,
-        _KORNIA_AVAILABLE,
+        _ALBUMENTATIONS_AVAILABLE,
         _PYSTICHE_AVAILABLE,
         _SEGMENTATION_MODELS_AVAILABLE,
     ]
 )
 _SERVE_AVAILABLE = _FASTAPI_AVAILABLE and _PYDANTIC_AVAILABLE and _CYTOOLZ_AVAILABLE and _UVICORN_AVAILABLE
 _POINTCLOUD_AVAILABLE = _OPEN3D_AVAILABLE and _TORCHVISION_AVAILABLE
-_AUDIO_AVAILABLE = all([_TORCHAUDIO_AVAILABLE, _LIBROSA_AVAILABLE, _TRANSFORMERS_AVAILABLE])
+_AUDIO_AVAILABLE = all([_TORCHAUDIO_AVAILABLE, _TORCHVISION_AVAILABLE, _LIBROSA_AVAILABLE, _TRANSFORMERS_AVAILABLE])
 _GRAPH_AVAILABLE = (
     _TORCH_SCATTER_AVAILABLE and _TORCH_SPARSE_AVAILABLE and _TORCH_GEOMETRIC_AVAILABLE and _NETWORKX_AVAILABLE
 )
@@ -169,11 +134,7 @@ _EXTRAS_AVAILABLE = {
 }
 
 
-def requires(module_paths: Union[str, Tuple[bool, str], List[Union[str, Tuple[bool, str]]]]):
-
-    if not isinstance(module_paths, list):
-        module_paths = [module_paths]
-
+def requires(*module_paths: Union[str, Tuple[bool, str]]):
     def decorator(func):
         available = True
         extras = []
@@ -186,7 +147,7 @@ def requires(module_paths: Union[str, Tuple[bool, str], List[Union[str, Tuple[bo
                         available = False
                 else:
                     modules.append(module_path)
-                    if not _module_available(module_path):
+                    if not module_available(module_path):
                         available = False
             else:
                 available, module_path = module_path
@@ -194,7 +155,9 @@ def requires(module_paths: Union[str, Tuple[bool, str], List[Union[str, Tuple[bo
 
         if not available:
             modules = [f"'{module}'" for module in modules]
-            modules.append(f"'lightning-flash[{','.join(extras)}]'")
+
+            if extras:
+                modules.append(f"'lightning-flash[{','.join(extras)}]'")
 
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
@@ -277,10 +240,11 @@ class LazyModule(types.ModuleType):
 
 
 # Global variables used for testing purposes (e.g. to only run doctests in the correct CI job)
+_CORE_TESTING = True
 _IMAGE_TESTING = _IMAGE_AVAILABLE
-_IMAGE_EXTRAS_TESTING = False  # Not for normal use
+_IMAGE_EXTRAS_TESTING = True  # Not for normal use
 _VIDEO_TESTING = _VIDEO_AVAILABLE
-_VIDEO_EXTRAS_TESTING = False  # Not for normal use
+_VIDEO_EXTRAS_TESTING = True  # Not for normal use
 _TABULAR_TESTING = _TABULAR_AVAILABLE
 _TEXT_TESTING = _TEXT_AVAILABLE
 _SERVE_TESTING = _SERVE_AVAILABLE
@@ -290,6 +254,7 @@ _AUDIO_TESTING = _AUDIO_AVAILABLE
 
 if "FLASH_TEST_TOPIC" in os.environ:
     topic = os.environ["FLASH_TEST_TOPIC"]
+    _CORE_TESTING = topic == "core"
     _IMAGE_TESTING = topic == "image"
     _IMAGE_EXTRAS_TESTING = topic == "image,image_extras" or topic == "icevision" or topic == "vissl"
     _VIDEO_TESTING = topic == "video"

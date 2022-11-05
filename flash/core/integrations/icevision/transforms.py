@@ -12,14 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
-from torch import nn
+from torch import nn, Tensor
 
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _ICEVISION_GREATER_EQUAL_0_11_0, requires
+from flash.core.utilities.imports import (
+    _ICEVISION_AVAILABLE,
+    _ICEVISION_GREATER_EQUAL_0_11_0,
+    _IMAGE_AVAILABLE,
+    requires,
+)
+
+if _IMAGE_AVAILABLE:
+    from PIL import Image
 
 if _ICEVISION_AVAILABLE:
     from icevision.core import tasks
@@ -34,12 +42,18 @@ if _ICEVISION_AVAILABLE:
         ImageRecordComponent,
         InstancesLabelsRecordComponent,
         KeyPointsRecordComponent,
+        RecordComponent,
         RecordIDRecordComponent,
     )
     from icevision.data.prediction import Prediction
     from icevision.tfms import A
 else:
     MaskArray = object
+    RecordComponent = object
+
+    class tasks:
+        common = object
+
 
 if _ICEVISION_AVAILABLE and _ICEVISION_GREATER_EQUAL_0_11_0:
     from icevision.core.record_components import InstanceMasksRecordComponent
@@ -50,6 +64,13 @@ elif _ICEVISION_AVAILABLE:
 def _split_mask_array(mask_array: MaskArray) -> List[MaskArray]:
     """Utility to split a single ``MaskArray`` object into a list of ``MaskArray`` objects (one per mask)."""
     return [MaskArray(mask) for mask in mask_array.data]
+
+
+class OriginalSizeRecordComponent(RecordComponent):
+    def __init__(self, original_size: Optional[Tuple[int, int]], task=tasks.common):
+        super().__init__(task=task)
+        # original_size: (h, w)
+        self.original_size: Optional[Tuple[int, int]] = original_size
 
 
 def to_icevision_record(sample: Dict[str, Any]):
@@ -75,7 +96,14 @@ def to_icevision_record(sample: Dict[str, Any]):
         else:
             input_component = ImageRecordComponent()
         input_component.composite = record
-        input_component.set_img(sample[DataKeys.INPUT])
+        image = sample[DataKeys.INPUT]
+        if isinstance(image, Tensor):
+            image = image.permute(1, 2, 0).numpy()
+        elif isinstance(image, Image.Image):
+            image = np.array(image)
+        input_component.set_img(image)
+
+        record.add_component(OriginalSizeRecordComponent(metadata.get("size", image.shape[:2])))
     record.add_component(input_component)
 
     if DataKeys.TARGET in sample:
@@ -126,9 +154,11 @@ def to_icevision_record(sample: Dict[str, Any]):
         if "keypoints" in sample[DataKeys.TARGET]:
             keypoints = []
 
-            for keypoints_list, keypoints_metadata in zip(
-                sample[DataKeys.TARGET]["keypoints"], sample[DataKeys.TARGET]["keypoints_metadata"]
-            ):
+            keypoints_metadata = sample[DataKeys.TARGET].get(
+                "keypoints_metadata", [None] * len(sample[DataKeys.TARGET]["keypoints"])
+            )
+
+            for keypoints_list, keypoints_metadata in zip(sample[DataKeys.TARGET]["keypoints"], keypoints_metadata):
                 xyv = []
                 for keypoint in keypoints_list:
                     xyv.extend((keypoint["x"], keypoint["y"], keypoint["visible"]))
@@ -200,7 +230,8 @@ def from_icevision_detection(record: "BaseRecord"):
 def from_icevision_record(record: "BaseRecord"):
     sample = {
         DataKeys.METADATA: {
-            "size": (record.height, record.width),
+            "size": getattr(record, "original_size", (record.height, record.width)),
+            "output_size": (record.height, record.width),
         }
     }
 
@@ -255,11 +286,11 @@ class IceVisionInputTransform(InputTransform):
 
     image_size: int = 128
 
-    @requires(["image", "icevision"])
+    @requires("image", "icevision")
     def per_sample_transform(self):
         return IceVisionTransformAdapter([*A.resize_and_pad(self.image_size), A.Normalize()])
 
-    @requires(["image", "icevision"])
+    @requires("image", "icevision")
     def train_per_sample_transform(self):
         return IceVisionTransformAdapter([*A.aug_tfms(size=self.image_size), A.Normalize()])
 

@@ -12,15 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import Any, Callable, cast, List, Optional, Tuple, TypeVar, Union
+from typing import Any, Callable, cast, List, Optional, Tuple, Union
 
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from pytorch_lightning.utilities import rank_zero_warn
 
 from flash.core.data.utilities.sort import sorted_alphanumeric
 
 PATH_TYPE = Union[str, bytes, os.PathLike]
-
-T = TypeVar("T")
 
 
 # adapted from torchvision:
@@ -98,16 +96,16 @@ def isdir(path: Any) -> bool:
         return False
 
 
-def list_subdirs(dir: PATH_TYPE) -> List[str]:
+def list_subdirs(folder: PATH_TYPE) -> List[str]:
     """List the subdirectories of a given directory.
 
     Args:
-        dir: The directory to scan.
+        folder: The directory to scan.
 
     Returns:
         The list of subdirectories.
     """
-    return list(sorted_alphanumeric(d.name for d in os.scandir(str(dir)) if d.is_dir()))
+    return list(sorted_alphanumeric(d.name for d in os.scandir(str(folder)) if d.is_dir()))
 
 
 def list_valid_files(
@@ -152,18 +150,36 @@ def filter_valid_files(
     if not isinstance(files, List):
         files = [files]
 
+    if valid_extensions is None:
+        return (files,) + additional_lists
+
+    if not isinstance(valid_extensions, tuple):
+        valid_extensions = tuple(valid_extensions)
+
     additional_lists = tuple([a] if not isinstance(a, List) else a for a in additional_lists)
 
     if not all(len(a) == len(files) for a in additional_lists):
-        raise MisconfigurationException(
+        raise ValueError(
             f"The number of files ({len(files)}) and the number of items in any additional lists must be the same."
         )
 
-    if valid_extensions is None:
-        return (files,) + additional_lists
     filtered = list(
         filter(lambda sample: has_file_allowed_extension(sample[0], valid_extensions), zip(files, *additional_lists))
     )
-    if len(additional_lists) > 0:
+
+    filtered_files = [f[0] for f in filtered]
+
+    invalid = [f for f in files if f not in filtered_files]
+
+    if invalid:
+        invalid_extensions = list({"." + f.split(".")[-1] for f in invalid})
+        rank_zero_warn(
+            f"Found invalid file extensions: {', '.join(invalid_extensions)}. "
+            "Files with these extensions will be ignored. "
+            f"The supported file extensions are: {', '.join(valid_extensions)}."
+        )
+
+    if additional_lists:
         return tuple(zip(*filtered))
-    return [f[0] for f in filtered]
+
+    return filtered_files
