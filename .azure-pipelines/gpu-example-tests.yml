@@ -4,8 +4,8 @@ trigger:
 pr:
   branches:
     include: ["master"]
-  autoCancel: true
-  drafts: true
+  autoCancel: 'true'
+  drafts: 'true'
 
 jobs:
 - template: testing-template.yml
