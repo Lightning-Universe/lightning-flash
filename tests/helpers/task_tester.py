@@ -102,11 +102,9 @@ def _test_jit_trace(self, tmpdir):
     path = os.path.join(tmpdir, "test.pt")
 
     model = self.instantiated_task
-    trainer = self.instantiated_trainer
     model.eval()
 
-    model.trainer = trainer
-    model = torch.jit.trace(model, self.example_forward_input)
+    model = model.to_torchscript(method="trace", example_inputs=self.example_forward_input)
 
     torch.jit.save(model, path)
     model = torch.jit.load(path)
