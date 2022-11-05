@@ -19,7 +19,6 @@ import torch
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.callbacks.finetuning import BaseFinetuning
 from pytorch_lightning.core.lightning import LightningModule
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.nn import functional as F
 from torch.optim.optimizer import Optimizer
@@ -99,7 +98,7 @@ def test_resolve_callbacks_invalid_strategy(tmpdir):
     model = DummyClassifier()
     trainer = Trainer(fast_dev_run=True, default_root_dir=tmpdir)
     task = ClassificationTask(model, loss_fn=F.nll_loss)
-    with pytest.raises(MisconfigurationException, match="should be a ``pytorch_lightning.callbacks.BaseFinetuning``"):
+    with pytest.raises(TypeError, match="should be a ``pytorch_lightning.callbacks.BaseFinetuning``"):
         trainer._resolve_callbacks(task, EarlyStopping("test"))
 
 
@@ -117,7 +116,7 @@ def test_resolve_callbacks_multi_error(tmpdir):
     model = DummyClassifier()
     trainer = Trainer(fast_dev_run=True, default_root_dir=tmpdir)
     task = MultiFinetuneClassificationTask(model, loss_fn=F.nll_loss)
-    with pytest.raises(MisconfigurationException):
+    with pytest.raises(ValueError):
         trainer._resolve_callbacks(task, None)
 
 

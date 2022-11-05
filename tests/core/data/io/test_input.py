@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pytest
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.io.input import Input, IterableInput, ServeInput
 from flash.core.utilities.imports import _CORE_TESTING
@@ -75,7 +74,7 @@ def test_serve_input():
         def serve_load_sample(self, data):
             return data + 1
 
-    with pytest.raises(MisconfigurationException, match="serve_load_data"):
+    with pytest.raises(TypeError, match="serve_load_data"):
         serve_input = CustomServeInput()
 
     class CustomServeInput2(ServeInput):

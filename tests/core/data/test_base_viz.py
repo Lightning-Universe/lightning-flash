@@ -18,7 +18,6 @@ import numpy as np
 import pytest
 import torch
 from pytorch_lightning import seed_everything
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 
 from flash.core.data.base_viz import BaseVisualization
@@ -185,7 +184,7 @@ class TestBaseViz:
         batch = {func_name: "test" for func_name in func_names}
 
         if not valid:
-            with pytest.raises(MisconfigurationException, match="Invalid function names"):
+            with pytest.raises(ValueError, match="Invalid function names"):
                 base_viz.show(batch, RunningStage.TRAINING, func_names)
         else:
             base_viz.show(batch, RunningStage.TRAINING, func_names)

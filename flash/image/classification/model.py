@@ -14,7 +14,6 @@
 from types import FunctionType
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 
 from flash.core.classification import ClassificationAdapterTask
@@ -115,13 +114,11 @@ class ImageClassifier(ClassificationAdapterTask):
 
         if training_strategy == "default":
             if num_classes is None and labels is None:
-                raise MisconfigurationException("`num_classes` or `labels` should be provided.")
+                raise TypeError("`num_classes` or `labels` should be provided.")
         else:
             num_classes = training_strategy_kwargs.get("ways", None)
             if not num_classes:
-                raise MisconfigurationException(
-                    "`training_strategy_kwargs` should contain `ways`, `meta_batch_size` and `shots`."
-                )
+                raise TypeError("`training_strategy_kwargs` should contain `ways`, `meta_batch_size` and `shots`.")
 
         if isinstance(backbone, tuple):
             backbone, num_features = backbone

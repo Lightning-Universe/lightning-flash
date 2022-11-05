@@ -18,7 +18,6 @@ import pytest
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 from torch.nn import Flatten
 from torch.nn import functional as F
@@ -224,26 +223,26 @@ def test_finetuning(tmpdir, strategy, lr_scheduler, checker_class, checker_class
 
 @pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize(
-    "strategy",
+    "strategy,error",
     [
-        None,
-        "chocolate",
-        (12, 1),
-        ("chocolate", 1),
-        ("freeze_unfreeze", "True"),
-        ("unfreeze_milestones", "False"),
-        ("unfreeze_milestones", (10, 10)),
-        ("unfreeze_milestones", (10, (10, 10))),
-        ("unfreeze_milestones", ((10, 10), "True")),
-        ("unfreeze_milestones", ((3.14, 10), 10)),
-        ("unfreeze_milestones", ((10, 3.14), 10)),
+        (None, TypeError),
+        ("chocolate", ValueError),
+        ((12, 1), TypeError),
+        (("chocolate", 1), TypeError),
+        (("freeze_unfreeze", "True"), TypeError),
+        (("unfreeze_milestones", "False"), TypeError),
+        (("unfreeze_milestones", (10, 10)), TypeError),
+        (("unfreeze_milestones", (10, (10, 10))), TypeError),
+        (("unfreeze_milestones", ((10, 10), "True")), TypeError),
+        (("unfreeze_milestones", ((3.14, 10), 10)), TypeError),
+        (("unfreeze_milestones", ((10, 3.14), 10)), TypeError),
     ],
 )
-def test_finetuning_errors_and_exceptions(strategy):
+def test_finetuning_errors_and_exceptions(strategy, error):
     task = TestTaskWithFinetuning(loss_fn=F.nll_loss)
     trainer = flash.Trainer(max_epochs=1, limit_train_batches=10)
     ds = DummyDataset()
-    with pytest.raises(MisconfigurationException):
+    with pytest.raises(error):
         trainer.finetune(task, train_dataloader=DataLoader(ds), strategy=strategy)
 
 

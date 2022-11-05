@@ -16,7 +16,6 @@ from typing import Any, Dict, Optional
 
 from pytorch_lightning import LightningModule
 from pytorch_lightning.trainer.states import TrainerFn, TrainerStatus
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from pytorch_lightning.utilities.model_helpers import is_overridden
 from torch import Tensor
 
@@ -205,7 +204,7 @@ class ActiveLearningLoop(Loop):
             # TODO: Resolve this within PyTorch Lightning.
             try:
                 getattr(self.trainer, f"reset_{dataloader_name}")(self.trainer.lightning_module)
-            except MisconfigurationException:
+            except Exception:
                 pass
 
     def _teardown(self) -> None:

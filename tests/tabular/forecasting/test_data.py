@@ -14,7 +14,6 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.utilities.imports import _TABULAR_TESTING
 from flash.tabular.forecasting import TabularForecastingData
@@ -85,9 +84,8 @@ def test_from_data_frame_time_series_data_set_multi_call(patch_time_series_data_
 
 @pytest.mark.skipif(not _TABULAR_TESTING, reason="Tabular libraries aren't installed.")
 def test_from_data_frame_misconfiguration():
-    """Tests that a ``MisconfigurationException`` is raised when ``TabularForecastingData`` is constructed without
-    parameters."""
-    with pytest.raises(MisconfigurationException, match="evaluation or inference requires parameters"):
+    """Tests that a ``ValueError`` is raised when ``TabularForecastingData`` is constructed without parameters."""
+    with pytest.raises(ValueError, match="evaluation or inference requires parameters"):
         TabularForecastingData.from_data_frame(
             "time_idx",
             "target",

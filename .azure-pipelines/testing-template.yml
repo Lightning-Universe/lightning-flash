@@ -1,30 +1,35 @@
 jobs:
-- ${{ each gids in parameters.gpu_inds }}:
-  - ${{ each config in parameters.configs }}:
+  - ${{ each dom in parameters.domains }}:
     - job:
-      displayName: "domain ${{config}} with GPUs ${{gids}}"
+      displayName: "domain ${{dom}} with 2 GPU"
       # how long to run the job before automatically cancelling
       timeoutInMinutes: 45
       # how much time to give 'run always even if cancelled tasks' before stopping them
       cancelTimeoutInMinutes: 2
 
-      pool: azure-gpus-spot
+      pool: lit-rtx-3090
+      variables:
+        DEVICES: $( python -c 'print("$(Agent.Name)".split("_")[-1])' )
+
       # this need to have installed docker in the base image...
       container:
         # base ML image: mcr.microsoft.com/azureml/openmpi3.1.2-cuda10.2-cudnn8-ubuntu18.04
         image: "pytorchlightning/pytorch_lightning:base-cuda-py3.9-torch1.10"
         # image: "pytorch/pytorch:1.8.1-cuda11.0-cudnn8-runtime"
-        options: "-it --rm --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all --shm-size=32g"
+        options: "-it --rm --gpus=all --shm-size=16g"
 
       workspace:
         clean: all
       steps:
 
+      - bash: echo "##vso[task.setvariable variable=CUDA_VISIBLE_DEVICES]$(DEVICES)"
+        displayName: 'set visible devices'
+
       - bash: |
+          echo $CUDA_VISIBLE_DEVICES
           lspci | egrep 'VGA|3D'
           whereis nvidia
           nvidia-smi
-          python --version
           pip --version
           pip list
           df -kh /dev/shm
@@ -36,31 +41,38 @@ jobs:
 
       - bash: |
           # python -m pip install "pip==20.1"
-          if [ "${{config}}" == "icevision" ]; then pip install '.[image]' icevision effdet icedata; elif [ "${{config}}" == "vissl" ]; then pip install '.[image]'; else pip install '.[${{config}}]'; fi
+          if [ "${{dom}}" == "icevision" ]; then
+            pip install '.[image]' icevision effdet icedata;
+          elif [ "${{dom}}" == "vissl" ]; then
+            pip install '.[image]';
+          else
+            pip install '.[${{dom}}]';
+          fi
           pip install '.[test]' --upgrade-strategy only-if-needed
           pip list
         displayName: 'Install dependencies'
 
       - bash: |
-          pip uninstall -y opencv-python
-          pip uninstall -y opencv-python-headless
+          pip uninstall -y opencv-python opencv-python-headless
           pip install opencv-python-headless==4.5.5.64
         displayName: 'Install OpenCV dependencies'
-        condition: eq('${{ config }}', 'icevision')
+        condition: eq('${{ dom }}', 'icevision')
 
       - bash: |
           pip install fairscale
           pip install git+https://github.com/facebookresearch/ClassyVision.git
           pip install git+https://github.com/facebookresearch/vissl.git
         displayName: 'Install VISSL dependencies'
-        condition: eq('${{ config }}', 'vissl')
+        condition: eq('${{ dom }}', 'vissl')
 
       - bash: |
           python -c "import torch; print(f'found GPUs: {torch.cuda.device_count()}')"
-          python -m coverage run --source flash -m pytest tests/examples/test_scripts.py tests/image/embedding/test_model.py -v --junitxml=$(Build.StagingDirectory)/test-results.xml --durations=30
+          python -m coverage run --source flash -m pytest \
+            tests/examples/test_scripts.py \
+            tests/image/embedding/test_model.py \
+            -v --junitxml=$(Build.StagingDirectory)/test-results.xml --durations=30
         env:
-          CUDA_VISIBLE_DEVICES: ${{gids}}
-          FLASH_TEST_TOPIC: ${{ config }}
+          FLASH_TEST_TOPIC: ${{ dom }}
         displayName: 'Testing'
 
       - bash: |

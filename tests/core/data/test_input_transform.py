@@ -14,7 +14,6 @@
 from typing import Callable
 
 import pytest
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.utilities.imports import _CORE_TESTING
@@ -133,5 +132,5 @@ class CustomInputTransform(InputTransform):
 def test_check_transforms():
     input_transform = CustomInputTransform
 
-    with pytest.raises(MisconfigurationException, match="are mutually exclusive"):
+    with pytest.raises(TypeError, match="are mutually exclusive"):
         input_transform()

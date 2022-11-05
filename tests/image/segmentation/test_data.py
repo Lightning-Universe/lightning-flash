@@ -5,7 +5,6 @@ from typing import Dict, List, Tuple
 import numpy as np
 import pytest
 import torch
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
@@ -302,7 +301,7 @@ class TestSemanticSegmentationData:
 
         # instantiate the data module
 
-        with pytest.raises(MisconfigurationException, match="The number of files"):
+        with pytest.raises(ValueError, match="The number of files"):
             SemanticSegmentationData.from_files(
                 train_files=images,
                 train_targets=targets + [str(tmp_dir / "labels_img4.png")],

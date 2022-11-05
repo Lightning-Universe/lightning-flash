@@ -11,11 +11,30 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from flash.image import SemanticSegmentation
-from flash.image.segmentation.output import SegmentationLabelsOutput
+from functools import partial
 
-model = SemanticSegmentation.load_from_checkpoint(
-    "https://flash-weights.s3.amazonaws.com/0.9.0/semantic_segmentation_model.pt"
+from torch import nn
+
+from flash.core.registry import FlashRegistry  # noqa: F401
+
+# define ImageClassifier registry
+CLASSIFIER_HEADS = FlashRegistry("classifier_heads")
+
+
+def _load_linear_head(num_features: int, num_classes: int) -> nn.Module:
+    """Loads a linear head.
+
+    Args:
+        num_features: Number of input features.
+        num_classes: Number of output classes.
+
+    Returns:
+        nn.Module: Linear head.
+    """
+    return nn.Linear(num_features, num_classes)
+
+
+CLASSIFIER_HEADS(
+    partial(_load_linear_head),
+    name="linear",
 )
-model.output = SegmentationLabelsOutput(visualize=False)
-model.serve()

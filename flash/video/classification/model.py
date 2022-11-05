@@ -15,7 +15,6 @@ from types import FunctionType
 from typing import Any, Dict, Iterable, List, Optional, Union
 
 import torch
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DistributedSampler
@@ -111,7 +110,7 @@ class VideoClassifier(ClassificationTask):
             self.backbone = self.backbones.get(backbone)(**backbone_kwargs)
             num_features = self.backbone.blocks[-1].proj.out_features
         else:
-            raise MisconfigurationException(f"backbone should be either a string or a nn.Module. Found: {backbone}")
+            raise ValueError(f"backbone should be either a string or a nn.Module. Found: {backbone}")
 
         self.head = head or nn.Sequential(
             nn.Flatten(),
