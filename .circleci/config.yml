@@ -85,6 +85,9 @@ references:
 jobs:
 
   TPU-tests:
+    executor:
+      name: go/default
+      tag: '1.17'
     docker:
       - image: circleci/python:3.7
     environment:
@@ -94,7 +97,8 @@ jobs:
       - CHECK_SPEEP: 5
     steps:
       - checkout
-      - go/install
+      - go/install:
+            version: "1.17"
       - *checkout_ml_testing
       - gcp-gke/install
       - gcp-gke/update-kubeconfig-with-credentials:

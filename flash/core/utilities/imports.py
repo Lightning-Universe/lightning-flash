@@ -87,6 +87,7 @@ if Version:
     _PL_GREATER_EQUAL_1_4_0 = compare_version("pytorch_lightning", operator.ge, "1.4.0")
     _PL_GREATER_EQUAL_1_5_0 = compare_version("pytorch_lightning", operator.ge, "1.5.0")
     _PL_GREATER_EQUAL_1_6_0 = compare_version("pytorch_lightning", operator.ge, "1.6.0rc0")
+    _PL_GREATER_EQUAL_1_8_0 = compare_version("pytorch_lightning", operator.ge, "1.8.0")
     _PANDAS_GREATER_EQUAL_1_3_0 = compare_version("pandas", operator.ge, "1.3.0")
     _ICEVISION_GREATER_EQUAL_0_11_0 = compare_version("icevision", operator.ge, "0.11.0")
     _TM_GREATER_EQUAL_0_7_0 = compare_version("torchmetrics", operator.ge, "0.7.0")

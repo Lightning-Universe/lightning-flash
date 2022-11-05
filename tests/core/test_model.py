@@ -44,6 +44,7 @@ from flash.core.utilities.imports import (
     _GRAPH_TESTING,
     _IMAGE_AVAILABLE,
     _IMAGE_TESTING,
+    _PL_GREATER_EQUAL_1_8_0,
     _TABULAR_TESTING,
     _TEXT_TESTING,
     _TORCH_OPTIMIZER_AVAILABLE,
@@ -471,7 +472,10 @@ def test_external_schedulers_provider_hf_transformers(tmpdir, optim, sched, use_
 
     assert task.get_num_training_steps() == batch_count
     assert isinstance(trainer.optimizers[0], torch.optim.Adadelta)
-    assert isinstance(trainer.lr_schedulers[0]["scheduler"], torch.optim.lr_scheduler.LambdaLR)
+    if _PL_GREATER_EQUAL_1_8_0:
+        assert isinstance(trainer.lr_scheduler_configs[0].scheduler, torch.optim.lr_scheduler.LambdaLR)
+    else:
+        assert isinstance(trainer.lr_schedulers[0]["scheduler"], torch.optim.lr_scheduler.LambdaLR)
 
 
 @pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
