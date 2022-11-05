@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Fixed compatibility with `lightning==1.8.0` ([#1479](https://github.com/Lightning-AI/lightning-flash/pull/1479))
 - Fixed the error message to suggest installing `icevision`, if it's not found while loading data ([#1474](https://github.com/Lightning-AI/lightning-flash/pull/1474))
 - Fixed compatibility with `torchmetrics==1.10.0` ([#1469](https://github.com/Lightning-AI/lightning-flash/pull/1469))
 
