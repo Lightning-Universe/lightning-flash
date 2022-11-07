@@ -3,9 +3,10 @@ fiftyone
 classy_vision
 vissl>=0.1.5
 icevision>=0.8
+sahi >=0.8.19,<0.11.0
 icedata
 effdet
-albumentations
+kornia>=0.5.1
 learn2learn
 fastface
 fairscale

@@ -16,7 +16,6 @@ from os.path import basename, dirname, exists, isdir, isfile, join, split
 
 import numpy as np
 import yaml
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Dataset
 
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
@@ -80,9 +79,7 @@ class SequencesDataset(Dataset):
     def load_meta(self, root_dir):
         meta_file = join(root_dir, "meta.yaml")
         if not exists(meta_file):
-            raise MisconfigurationException(
-                f"The {root_dir} should contain a `meta.yaml` file about the pointcloud sequences."
-            )
+            raise ValueError(f"The {root_dir} should contain a `meta.yaml` file about the pointcloud sequences.")
 
         with open(meta_file) as f:
             self.meta = yaml.safe_load(f)
@@ -113,11 +110,11 @@ class SequencesDataset(Dataset):
     def on_predict(self, data):
         if isinstance(data, list):
             if not all(isfile(p) for p in data):
-                raise MisconfigurationException("The predict input data takes only a list of paths or a directory.")
+                raise ValueError("The predict input data takes only a list of paths or a directory.")
             root_dir = split(data[0])[0]
         elif isinstance(data, str):
             if not isdir(data) and not isfile(data):
-                raise MisconfigurationException("The predict input data takes only a list of paths or a directory.")
+                raise ValueError("The predict input data takes only a list of paths or a directory.")
             if isdir(data):
                 root_dir = data
                 data = [os.path.join(root_dir, f) for f in os.listdir(root_dir) if ".bin" in f]
@@ -125,9 +122,9 @@ class SequencesDataset(Dataset):
                 root_dir = dirname(data)
                 data = [data]
             else:
-                raise MisconfigurationException("The predict input data takes only a list of paths or a directory.")
+                raise ValueError("The predict input data takes only a list of paths or a directory.")
         else:
-            raise MisconfigurationException("The predict input data takes only a list of paths or a directory.")
+            raise ValueError("The predict input data takes only a list of paths or a directory.")
 
         self.path_list = data
         self.split = "predict"

@@ -11,20 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
-import warnings
 from typing import Any, Dict, List, Optional, Type, Union
 
 from pytorch_lightning import Callback
-from torch import Tensor
 
-from flash.core.classification import ClassificationTask
-from flash.core.data.io.input import DataKeys, ServeInput
+from flash.core.classification import ClassificationAdapterTask
+from flash.core.data.io.input import ServeInput
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output import Output
 from flash.core.registry import FlashRegistry
 from flash.core.serve import Composition
-from flash.core.utilities.imports import _TRANSFORMERS_AVAILABLE, requires
+from flash.core.utilities.imports import requires
 from flash.core.utilities.types import (
     INPUT_TRANSFORM_TYPE,
     LOSS_FN_TYPE,
@@ -33,15 +30,11 @@ from flash.core.utilities.types import (
     OPTIMIZER_TYPE,
 )
 from flash.text.classification.backbones import TEXT_CLASSIFIER_BACKBONES
-from flash.text.classification.collate import TextClassificationCollate
 from flash.text.input import TextDeserializer
 from flash.text.ort_callback import ORTCallback
 
-if _TRANSFORMERS_AVAILABLE:
-    from transformers.modeling_outputs import Seq2SeqSequenceClassifierOutput, SequenceClassifierOutput
 
-
-class TextClassifier(ClassificationTask):
+class TextClassifier(ClassificationAdapterTask):
     """The ``TextClassifier`` is a :class:`~flash.Task` for classifying text. For more details, see
     :ref:`text_classification`. The ``TextClassifier`` also supports multi-label classification with
     ``multi_label=True``. For more details, see :ref:`text_classification_multi_label`.
@@ -78,51 +71,36 @@ class TextClassifier(ClassificationTask):
         learning_rate: Optional[float] = None,
         multi_label: bool = False,
         enable_ort: bool = False,
+        **kwargs,
     ):
         self.save_hyperparameters()
 
         if labels is not None and num_classes is None:
             num_classes = len(labels)
 
-        os.environ["TOKENIZERS_PARALLELISM"] = "TRUE"
-        # disable HF thousand warnings
-        warnings.simplefilter("ignore")
-        # set os environ variable for multiprocesses
-        os.environ["PYTHONWARNINGS"] = "ignore"
+        metadata = self.backbones.get(backbone, with_metadata=True)
+        adapter = metadata["metadata"]["adapter"].from_task(
+            self,
+            backbone=metadata["fn"],
+            num_classes=num_classes,
+            max_length=max_length,
+            **kwargs,
+        )
 
         super().__init__(
-            num_classes=num_classes,
-            model=None,
+            adapter,
             loss_fn=loss_fn,
+            learning_rate=learning_rate,
             optimizer=optimizer,
             lr_scheduler=lr_scheduler,
             metrics=metrics,
-            learning_rate=learning_rate,
             multi_label=multi_label,
+            num_classes=num_classes,
             labels=labels,
         )
+
         self.enable_ort = enable_ort
         self.max_length = max_length
-        self.collate_fn = TextClassificationCollate(backbone=backbone, max_length=max_length)
-        self.model = self.backbones.get(backbone)(num_labels=num_classes)
-
-    @property
-    def backbone(self):
-        return self.model.base_model
-
-    def forward(self, batch: Dict[str, Tensor]):
-        result = self.model(input_ids=batch.get("input_ids", None), attention_mask=batch.get("attention_mask", None))
-        if isinstance(result, (SequenceClassifierOutput, Seq2SeqSequenceClassifierOutput)):
-            result = result.logits
-        return result
-
-    def step(self, batch, batch_idx, metrics) -> dict:
-        target = batch.pop(DataKeys.TARGET)
-        batch = (batch, target)
-        return super().step(batch, batch_idx, metrics)
-
-    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        return self(batch)
 
     def _ci_benchmark_fn(self, history: List[Dict[str, Any]]):
         """This function is used only for debugging usage with CI."""

@@ -14,6 +14,7 @@
 from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
+import torch
 from torch import Tensor
 
 from flash.core.data.base_viz import BaseVisualization
@@ -42,7 +43,9 @@ class SegmentationMatplotlibVisualization(BaseVisualization):
     @requires("image")
     def _to_numpy(img: Union[Tensor, Image.Image]) -> np.ndarray:
         out: np.ndarray
-        if isinstance(img, Image.Image):
+        if isinstance(img, np.ndarray):
+            out = img
+        elif isinstance(img, Image.Image):
             out = np.array(img)
         elif isinstance(img, Tensor):
             out = img.squeeze(0).permute(1, 2, 0).cpu().numpy()
@@ -85,8 +88,10 @@ class SegmentationMatplotlibVisualization(BaseVisualization):
             else:
                 raise TypeError(f"Unknown data type. Got: {type(data)}.")
             # convert images and labels to numpy and stack horizontally
-            image_vis: np.ndarray = self._to_numpy(image.byte())
-            label_tmp: Tensor = SegmentationLabelsOutput.labels_to_image(label.squeeze().byte(), self.labels_map)
+            image_vis: np.ndarray = self._to_numpy(image)
+            label_tmp: Tensor = SegmentationLabelsOutput.labels_to_image(
+                torch.as_tensor(label).squeeze(), self.labels_map
+            )
             label_vis: np.ndarray = self._to_numpy(label_tmp)
             img_vis = np.hstack((image_vis, label_vis))
             # send to visualiser

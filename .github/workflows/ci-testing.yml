@@ -11,6 +11,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.head_ref }}
   cancel-in-progress: ${{ ! (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/')) }}
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   pytest:
 
@@ -20,7 +24,7 @@ jobs:
       # max-parallel: 6
       matrix:
         # PyTorch 1.5 is failing on Win and bolts requires torchvision>=0.5
-        os: [ubuntu-20.04, macOS-10.15, windows-2022]
+        os: [ubuntu-20.04, macOS-12, windows-2022]
         python-version: [3.7, 3.9]
         requires: ['oldest', 'latest']
         topic: [['core']]
@@ -47,7 +51,7 @@ jobs:
     timeout-minutes: 35
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
@@ -68,8 +72,7 @@ jobs:
 
     - name: Install graphviz
       if: contains( matrix.topic , 'serve' )
-      run: |
-        sudo apt-get install graphviz
+      run: sudo apt-get install graphviz
 
     - name: Set min. dependencies
       if: matrix.requires == 'oldest'
@@ -80,16 +83,13 @@ jobs:
         open(fname, 'w').writelines(lines)
       shell: python
 
-    - run: echo "::set-output name=period::$(python -c 'import time ; days = time.time() / 60 / 60 / 24 ; print(int(days / 7))' 2>&1)"
+    - run: echo "period=$(python -c 'import time; days = time.time() / 60 / 60 / 24; print(int(days / 7))' 2>&1)" >> $GITHUB_OUTPUT
       if: matrix.requires == 'latest'
       id: times
 
-    # Note: This uses an internal pip API and may not always work
-    # https://github.com/actions/cache/blob/master/examples.md#multiple-oss-in-a-workflow
-    - name: Get pip cache
+    - name: Get pip cache dir
       id: pip-cache
-      run: |
-        python -c "from pip._internal.locations import USER_CACHE_DIR; print('::set-output name=dir::' + USER_CACHE_DIR)"
+      run: echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
 
     - name: Cache pip
       uses: actions/cache@v3
@@ -115,8 +115,6 @@ jobs:
         pip install torch>=1.7.1
         pip install '.[${{ join(matrix.topic, ',') }}]' --upgrade $flag --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
         pip install '.[test]' --upgrade
-        pip list
-      shell: bash
 
     - name: Install vissl
       if: contains( matrix.topic , 'image_extras' )
@@ -128,7 +126,7 @@ jobs:
       if: contains( matrix.topic , 'serve' )
       run: |
         sudo apt-get install libsndfile1
-        pip install '.[all,audio]' icevision effdet --upgrade
+        pip install '.[all,audio]' icevision sahi==0.8.19 effdet --upgrade
 
     - name: Install audio test dependencies
       if: contains( matrix.topic , 'audio' )
@@ -149,7 +147,8 @@ jobs:
         FLASH_TEST_TOPIC: ${{ join(matrix.topic,',') }}
         FIFTYONE_DO_NOT_TRACK: true
       run: |
-        coverage run --source flash -m pytest flash tests --reruns 3 --reruns-delay 2 -v --junitxml=junit/test-results-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.requires }}.xml
+        coverage run --source flash -m pytest flash tests --reruns 3 --reruns-delay 2 -v \
+          --junitxml=junit/test-results-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.requires }}.xml
 
     - name: Upload pytest test results
       uses: actions/upload-artifact@v3

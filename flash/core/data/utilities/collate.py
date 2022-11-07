@@ -20,6 +20,10 @@ from flash.core.data.io.input import DataKeys
 
 
 def _wrap_collate(collate: Callable, batch: List[Any]) -> Any:
+    # Needed for learn2learn integration
+    if len(batch) == 1 and isinstance(batch[0], list):
+        batch = batch[0]
+
     metadata = [sample.pop(DataKeys.METADATA, None) if isinstance(sample, Mapping) else None for sample in batch]
     metadata = metadata if any(m is not None for m in metadata) else None
 

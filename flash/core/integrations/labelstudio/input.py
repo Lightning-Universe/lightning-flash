@@ -8,7 +8,6 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Set, Type
 import numpy as np
 import torch
 from pytorch_lightning.utilities.cloud_io import get_filesystem
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch.utils.data import Sampler
 
 from flash.core.data.io.input import DataKeys, Input, IterableInput
@@ -153,7 +152,7 @@ class BaseLabelStudioInput(Properties):
         file_path = data.get("export_json", None)
 
         if not file_path:
-            raise MisconfigurationException("The key `export_json` should be provided as a string.")
+            raise TypeError("The key `export_json` should be provided as a string.")
 
         fs = get_filesystem(file_path)
         with fs.open(file_path) as f:
@@ -197,7 +196,7 @@ class BaseLabelStudioInput(Properties):
         file_path = data.get("export_json", None)
 
         if not file_path:
-            raise MisconfigurationException("The key `export_json` should be provided as a string.")
+            raise TypeError("The key `export_json` should be provided as a string.")
 
         fs = get_filesystem(file_path)
         with fs.open(file_path) as f:

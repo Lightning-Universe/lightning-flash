@@ -24,7 +24,6 @@ from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.callbacks.finetuning import BaseFinetuning
 from pytorch_lightning.utilities.enums import LightningEnum
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import nn, Tensor
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.optim.optimizer import Optimizer
@@ -505,7 +504,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             optimizer_fn = self.optimizer
         elif isinstance(self.optimizer, Tuple):
             if len(self.optimizer) != 2:
-                raise MisconfigurationException(
+                raise TypeError(
                     f"The tuple configuration of an optimizer input must be of length 2 with the first index"
                     f" containing a str from {self.available_optimizers()} and the second index containing the"
                     f" required keyword arguments to initialize the Optimizer."
@@ -550,7 +549,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
         if isinstance(strategy, str):
             if strategy not in self.available_finetuning_strategies():
-                raise MisconfigurationException(
+                raise ValueError(
                     f"The `strategy` should be one of: {', '.join(self.available_finetuning_strategies())}."
                     " For more details and advanced finetuning options see our docs:"
                     " https://lightning-flash.readthedocs.io/en/stable/general/finetuning.html"
@@ -559,14 +558,14 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             finetuning_strategy_metadata = {"strategy_metadata": None, "train_bn": train_bn}
         elif isinstance(strategy, Tuple):
             if not isinstance(strategy[0], str) or strategy[0] not in self.available_finetuning_strategies():
-                raise MisconfigurationException(
+                raise TypeError(
                     f"The first input of `strategy` in a tuple configuration should be one of:"
                     f" {', '.join(self.available_finetuning_strategies())}."
                 )
             finetuning_strategy_fn: Callable = self.finetuning_strategies.get(key=strategy[0])
             finetuning_strategy_metadata = {"strategy_metadata": strategy[1], "train_bn": train_bn}
         else:
-            raise MisconfigurationException(
+            raise TypeError(
                 "The `strategy` should be a ``pytorch_lightning.callbacks.BaseFinetuning`` callback or one of: "
                 f"{', '.join(self.available_finetuning_strategies())}."
             )
@@ -678,7 +677,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
     def get_num_training_steps(self) -> int:
         """Total training steps inferred from datamodule and devices."""
         if not getattr(self, "trainer", None):
-            raise MisconfigurationException("The LightningModule isn't attached to the trainer yet.")
+            raise RuntimeError("The LightningModule isn't attached to the trainer yet.")
 
         if hasattr(self.trainer, "estimated_stepping_batches"):
             return self.trainer.estimated_stepping_batches
@@ -690,9 +689,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
     @staticmethod
     def _compute_warmup(num_training_steps: int, num_warmup_steps: Union[int, float]) -> int:
         if not isinstance(num_warmup_steps, float) or (num_warmup_steps > 1 or num_warmup_steps < 0):
-            raise MisconfigurationException(
-                "`num_warmup_steps` should be provided as float between 0 and 1 in `scheduler_kwargs`"
-            )
+            raise TypeError("`num_warmup_steps` should be provided as float between 0 and 1 in `scheduler_kwargs`")
         if isinstance(num_warmup_steps, float):
             # Convert float values to percentage of training steps to use as warmup
             num_warmup_steps *= num_training_steps
@@ -737,7 +734,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
         elif isinstance(self.lr_scheduler, Tuple):
             if len(self.lr_scheduler) not in [2, 3]:
-                raise MisconfigurationException(
+                raise TypeError(
                     f"The tuple configuration of an scheduler input must be:\n"
                     f"1) Of length 2 with the first index containing a str from {self.available_lr_schedulers()} and"
                     f" the second index containing the required keyword arguments to initialize the LR Scheduler.\n"
@@ -803,7 +800,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         if isinstance(lr_scheduler, Dict):
             dummy_config = default_scheduler_config
             if not all(config_key in dummy_config.keys() for config_key in lr_scheduler.keys()):
-                raise MisconfigurationException(
+                raise ValueError(
                     f"Please make sure that your custom configuration outputs either an LR Scheduler or a scheduler"
                     f" configuration with keys belonging to {list(dummy_config.keys())}."
                 )

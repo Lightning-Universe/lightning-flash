@@ -19,11 +19,9 @@ from functools import partial
 from typing import Any, Callable, List, Optional, Type
 
 import torch
+from lightning_utilities.core.rank_zero import WarningCache
 from pytorch_lightning import LightningModule
-from pytorch_lightning.plugins import DataParallelPlugin, DDPPlugin, DDPSpawnPlugin
 from pytorch_lightning.trainer.states import TrainerFn
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from pytorch_lightning.utilities.warnings import WarningCache
 from torch import nn, Tensor
 from torch.utils.data import DataLoader, IterableDataset, Sampler
 
@@ -34,11 +32,16 @@ from flash.core.data.io.input_transform import InputTransform
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.compatibility import accelerator_connector
-from flash.core.utilities.imports import _LEARN2LEARN_AVAILABLE
+from flash.core.utilities.imports import _LEARN2LEARN_AVAILABLE, _PL_GREATER_EQUAL_1_6_0
 from flash.core.utilities.providers import _LEARN2LEARN
 from flash.core.utilities.stability import beta
 from flash.core.utilities.url_error import catch_url_error
 from flash.image.classification.integrations.learn2learn import TaskDataParallel, TaskDistributedDataParallel
+
+if _PL_GREATER_EQUAL_1_6_0:
+    from pytorch_lightning.strategies import DataParallelStrategy, DDPSpawnStrategy, DDPStrategy
+else:
+    from pytorch_lightning.plugins import DataParallelPlugin, DDPPlugin, DDPSpawnPlugin
 
 warning_cache = WarningCache()
 
@@ -208,7 +211,7 @@ class Learn2LearnAdapter(Adapter):
         epoch_length: int,
     ):
         if trainer is None:
-            raise MisconfigurationException(
+            raise ValueError(
                 "The Learn2Learn integration requires the `Trainer` to be passed to the `process_*_dataset` method."
             )
 
@@ -216,17 +219,15 @@ class Learn2LearnAdapter(Adapter):
 
             metadata = getattr(dataset, "data", None)
             if metadata is None or (metadata is not None and not isinstance(dataset.data, list)):
-                raise MisconfigurationException("Only dataset built out of metadata is supported.")
+                raise TypeError("Only dataset built out of metadata is supported.")
 
             labels_to_indices = self._labels_to_indices(dataset.data)
 
             if len(labels_to_indices) < ways:
-                raise MisconfigurationException(
-                    "Provided `ways` should be lower or equal to number of classes within your dataset."
-                )
+                raise ValueError("Provided `ways` should be lower or equal to number of classes within your dataset.")
 
             if min(len(indice) for indice in labels_to_indices.values()) < (shots + queries):
-                raise MisconfigurationException(
+                raise ValueError(
                     "Provided `shots + queries` should be lower than the lowest number of sample per class."
                 )
 
@@ -242,13 +243,17 @@ class Learn2LearnAdapter(Adapter):
                 task_collate=self._identity_task_collate_fn,
             )
 
-        if isinstance(
-            trainer.training_type_plugin,
-            (
-                DDPPlugin,
-                DDPSpawnPlugin,
-            ),
-        ):
+        if _PL_GREATER_EQUAL_1_6_0:
+            is_ddp_or_ddp_spawn = isinstance(
+                trainer.strategy,
+                (DDPStrategy, DDPSpawnStrategy),
+            )
+        else:
+            is_ddp_or_ddp_spawn = isinstance(
+                trainer.training_type_plugin,
+                (DDPPlugin, DDPSpawnPlugin),
+            )
+        if is_ddp_or_ddp_spawn:
             # when running in a distributed data parallel way,
             # we are actually sampling one task per device.
             dataset = TaskDistributedDataParallel(
@@ -263,7 +268,11 @@ class Learn2LearnAdapter(Adapter):
             self.trainer.accumulated_grad_batches = self.meta_batch_size / trainer.world_size
         else:
             devices = 1
-            if isinstance(trainer.training_type_plugin, DataParallelPlugin):
+            if _PL_GREATER_EQUAL_1_6_0:
+                is_data_parallel = isinstance(trainer.strategy, DataParallelStrategy)
+            else:
+                is_data_parallel = isinstance(trainer.training_type_plugin, DataParallelPlugin)
+            if is_data_parallel:
                 # when using DP, we need to sample n tasks, so it can split across multiple devices.
                 devices = accelerator_connector(trainer).devices
             dataset = TaskDataParallel(taskset, epoch_length=epoch_length, devices=devices, collate_fn=None)
@@ -287,12 +296,12 @@ class Learn2LearnAdapter(Adapter):
         **kwargs,
     ) -> Adapter:
         if "meta_batch_size" not in kwargs:
-            raise MisconfigurationException(
+            raise TypeError(
                 "The `meta_batch_size` should be provided as training_strategy_kwargs={'meta_batch_size'=...}. "
                 "This is equivalent to the epoch length."
             )
         if "shots" not in kwargs:
-            raise MisconfigurationException(
+            raise TypeError(
                 "The `shots` should be provided training_strategy_kwargs={'shots'=...}. "
                 "This is equivalent to the number of sample per label to select within a task."
             )
@@ -462,8 +471,9 @@ class Learn2LearnAdapter(Adapter):
     ) -> DataLoader:
 
         if not self._algorithm_has_validated:
-            raise MisconfigurationException(
-                "This training_strategies requires to be validated. Call trainer.validate(...)."
+            raise RuntimeError(
+                "This training strategy needs to be validated before it can be used for prediction."
+                " Call trainer.validate(...)."
             )
 
         return super().process_predict_dataset(
@@ -518,7 +528,7 @@ class DefaultAdapter(Adapter):
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         batch[DataKeys.PREDS] = Task.predict_step(
-            self._task, (batch[DataKeys.INPUT]), batch_idx, dataloader_idx=dataloader_idx
+            self._task, batch[DataKeys.INPUT], batch_idx, dataloader_idx=dataloader_idx
         )
         return batch
 

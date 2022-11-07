@@ -15,10 +15,9 @@ from unittest.mock import Mock
 
 import pytest
 import torch
-from torch import nn
 
 from flash.core.data.io.input import DataKeys
-from flash.core.data.transforms import ApplyToKeys, kornia_collate, KorniaParallelTransforms
+from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _CORE_TESTING
 
 
@@ -69,46 +68,3 @@ class TestApplyToKeys:
     )
     def test_repr(self, transform, expected):
         assert repr(transform) == expected
-
-
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
-@pytest.mark.parametrize("with_params", [True, False])
-def test_kornia_parallel_transforms(with_params):
-    samples = [torch.rand(1, 3, 10, 10), torch.rand(1, 3, 10, 10)]
-    transformed_sample = torch.rand(1, 3, 10, 10)
-
-    transform_a = Mock(spec=nn.Module, return_value=transformed_sample)
-    transform_b = Mock(spec=nn.Module)
-
-    if with_params:
-        transform_a._params = "test"  # initialize params with some value
-
-    parallel_transforms = KorniaParallelTransforms(transform_a, transform_b)
-    parallel_transforms(samples)
-
-    assert transform_a.call_count == 2
-    assert transform_b.call_count == 2
-
-    if with_params:
-        assert transform_a.call_args_list[1][0][1] == "test"
-        # check that after the forward `_params` is set to None
-        assert transform_a._params == transform_a._params is None
-
-    assert torch.allclose(transform_a.call_args_list[0][0][0], samples[0])
-    assert torch.allclose(transform_a.call_args_list[1][0][0], samples[1])
-    assert torch.allclose(transform_b.call_args_list[0][0][0], transformed_sample)
-    assert torch.allclose(transform_b.call_args_list[1][0][0], transformed_sample)
-
-
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
-def test_kornia_collate():
-    samples = [
-        {DataKeys.INPUT: torch.zeros(1, 3, 10, 10), DataKeys.TARGET: 1},
-        {DataKeys.INPUT: torch.zeros(1, 3, 10, 10), DataKeys.TARGET: 2},
-        {DataKeys.INPUT: torch.zeros(1, 3, 10, 10), DataKeys.TARGET: 3},
-    ]
-
-    result = kornia_collate(samples)
-    assert torch.all(result[DataKeys.TARGET] == torch.tensor([1, 2, 3]))
-    assert list(result[DataKeys.INPUT].shape) == [3, 3, 10, 10]
-    assert torch.allclose(result[DataKeys.INPUT], torch.zeros(1))

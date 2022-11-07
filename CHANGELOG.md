@@ -8,37 +8,50 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Added support for CLIP backbones to the `TextClassifier` and `ImageClassifier` tasks ([#1458](https://github.com/Lightning-AI/lightning-flash/pull/1458))
+
+
+### Changed
+
+
+### Deprecated
+
+
+### Removed
+
+
+### Fixed
+
+- Fixed compatibility with `lightning==1.8.0` ([#1479](https://github.com/Lightning-AI/lightning-flash/pull/1479))
+- Fixed the error message to suggest installing `icevision`, if it's not found while loading data ([#1474](https://github.com/Lightning-AI/lightning-flash/pull/1474))
+- Fixed compatibility with `torchmetrics==1.10.0` ([#1469](https://github.com/Lightning-AI/lightning-flash/pull/1469))
+
+
+## [0.8.0] - 2022-09-02
+
+### Added
+
+- Added support for `from_tensors` for `VideoClassification` ([#1389](https://github.com/Lightning-AI/lightning-flash/pull/1389))
+- Added fine tuning strategies for DeepSpeed (with parameter loading and storing omitted) ([#1377](https://github.com/Lightning-AI/lightning-flash/pull/1377))
+- Added `torchvision` as a requirement to `datatype_audio.txt` as it's used for Audio Classification ([#1425](https://github.com/Lightning-AI/lightning-flash/pull/1425))
 - Added `figsize` and `limit_nb_samples` for showing batch images ([#1381](https://github.com/Lightning-AI/lightning-flash/pull/1381))
-
 - Added support for `from_lists` for Tabular Classification and Regression ([#1337](https://github.com/PyTorchLightning/lightning-flash/pull/1337))
-
 - Added support for `from_dicts` for Tabular Classification and Regression ([#1331](https://github.com/PyTorchLightning/lightning-flash/pull/1331))
-
 - Added support for using the `ImageEmbedder` SSL training for all image classifier backbones ([#1264](https://github.com/PyTorchLightning/lightning-flash/pull/1264))
-
 - Added support for audio file formats to `AudioClassificationData` ([#1085](https://github.com/PyTorchLightning/lightning-flash/pull/1085))
-
 - Added support for Flash serve to the `ObjectDetector` ([#1370](https://github.com/PyTorchLightning/lightning-flash/pull/1370))
-
 - Added support for loading `ImageClassificationData` from PIL images with `from_images` ([#1372](https://github.com/PyTorchLightning/lightning-flash/pull/1372))
-
 - Added support for loading `ObjectDetectionData` with `from_numpy`, `from_images`, and `from_tensors` ([#1372](https://github.com/PyTorchLightning/lightning-flash/pull/1372))
-
 - Added support for remote data loading with fsspec ([#1387](https://github.com/PyTorchLightning/lightning-flash/pull/1387))
-
 - Added support for TSV files to `from_csv` methods ([#1387](https://github.com/PyTorchLightning/lightning-flash/pull/1387))
-
 - Added support for more formats when loading audio files ([#1387](https://github.com/PyTorchLightning/lightning-flash/pull/1387))
-
 - Added support to use any task as an embedder by calling `as_embedder` ([#1396](https://github.com/PyTorchLightning/lightning-flash/pull/1396))
-
 - Added support for normalization of images in `SemanticSegmentationData` ([#1399](https://github.com/PyTorchLightning/lightning-flash/pull/1399))
 
 ### Changed
 
 - Changed the `ImageEmbedder` dependency on VISSL to optional ([#1276](https://github.com/PyTorchLightning/lightning-flash/pull/1276))
-
-### Deprecated
+- Changed the transforms in `SemanticSegmentationData` to use albumentations instead of Kornia ([#1313](https://github.com/PyTorchLightning/lightning-flash/pull/1313))
 
 ### Removed
 
@@ -46,35 +59,23 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Fixed when suitable error not being raised for image segmentation (kornia) ([#1425](https://github.com/Lightning-AI/lightning-flash/pull/1425)).
 - Fixed the script of integrating `lightning-flash` with `learn2learn` ([#1376](https://github.com/Lightning-AI/lightning-flash/pull/1383))
-
 - Fixed JIT tracing tests where the model class was not attached to the `Trainer` class ([#1410](https://github.com/Lightning-AI/lightning-flash/pull/1410))
-
 - Fixed examples for BaaL integration by removing usage of `on_<stage>_dataloader` hooks (removed in PL 1.7.0) ([#1410](https://github.com/Lightning-AI/lightning-flash/pull/1410))
-
 - Fixed examples for BaaL integration for the case when `probabilities` list is empty ([#1410](https://github.com/Lightning-AI/lightning-flash/pull/1410))
-
 - Fixed a bug where collate functions were not being attached successfully after the `DataLoader` is initialized (in PL 1.7.0 changing attributes after initialization doesn't do anything) ([#1410](https://github.com/Lightning-AI/lightning-flash/pull/1410))
-
 - Fixed a bug where grayscale images were not properly converted to RGB when loaded. ([#1394](https://github.com/PyTorchLightning/lightning-flash/pull/1394))
-
 - Fixed a bug where size of mask for instance segmentation doesn't match to size of original image. ([#1353](https://github.com/PyTorchLightning/lightning-flash/pull/1353))
-
 - Fixed image classification data `show_train_batch` for subplots with rows > 1. ([#1339](https://github.com/PyTorchLightning/lightning-flash/pull/1315))
-
 - Fixed support for all the versions (including the latest and older) of `baal`. ([#1315](https://github.com/PyTorchLightning/lightning-flash/pull/1315))
-
 - Fixed a bug where a loaded `TabularClassifier` or `TabularRegressor` checkpoint could not be served ([#1324](https://github.com/PyTorchLightning/lightning-flash/pull/1324))
-
 - Fixed a bug where the `freeze_unfreeze` and `unfreeze_milestones` finetuning strategies could not be used in tandem with a `onecyclelr` LR scheduler ([#1329](https://github.com/PyTorchLightning/lightning-flash/pull/1329))
-
 - Fixed a bug where the backbone learning rate would be divided by 10 when unfrozen if using the `freeze_unfreeze` or `unfreeze_milestones` strategies ([#1329](https://github.com/PyTorchLightning/lightning-flash/pull/1329))
-
 - Fixed naming of optimizer and scheduler registries which did not allow manual optimization. ([#1342](https://github.com/PyTorchLightning/lightning-flash/pull/1342))
-
 - Fixed a bug where the `processor_backbone` argument to `SpeechRecognition` was not used for decoding outputs ([#1362](https://github.com/PyTorchLightning/lightning-flash/pull/1362))
-
 - Fixed a bug where `.npy` files could not be used with `SemanticSegmentationData` ([#1369](https://github.com/PyTorchLightning/lightning-flash/pull/1369))
+
 
 ## [0.7.4] - 2022-04-27
 
@@ -84,6 +85,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Fixed a bug where the default Flash zero configurations for `ObjectDetector`, `InstanceSegmentation`, and `KeypointDetector` would error with the latest version of some requirements ([#1306](https://github.com/PyTorchLightning/lightning-flash/pull/1306))
 - Fixed plain `LightningModule` support for Flash data modules. ([#1281](https://github.com/PyTorchLightning/lightning-flash/pull/1281))
 
+
 ## [0.7.3] - 2022-04-13
 
 ### Fixed
@@ -91,6 +93,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Fixed a bug where some backbones were incorrectly listed as available for the `ObjectDetector`, `InstanceSegmentation`, and `KeypointDetector` ([#1267](https://github.com/PyTorchLightning/lightning-flash/pull/1267))
 - Fixed a bug where the backbone would not be frozen when finetuning the `SpeechRecognition` task ([#1275](https://github.com/PyTorchLightning/lightning-flash/pull/1275))
 - Fixed a bug where the backbone would not be frozen when finetuning the `QuestionAnswering` task with certain model types ([#1275](https://github.com/PyTorchLightning/lightning-flash/pull/1275))
+
 
 ## [0.7.2] - 2022-03-30
 
@@ -108,6 +111,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Fixed a bug where using `ReduceLROnPlateau` would raise an error ([#1251](https://github.com/PyTorchLightning/lightning-flash/pull/1251))
 - Fixed GPU support for self-supervised training with the `ImageEmbedder` ([#1256](https://github.com/PyTorchLightning/lightning-flash/pull/1256))
 
+
 ## [0.7.1] - 2022-03-01
 
 ### Added
@@ -121,6 +125,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Fixed DDP support for `VideoClassifier` ([#1189](https://github.com/PyTorchLightning/lightning-flash/pull/1189))
 - Fixed a bug where buffers in loss functions were not correctly registered in the `Task` ([#1203](https://github.com/PyTorchLightning/lightning-flash/pull/1203))
 - Fixed support for passing a sampler instance to `from_*` methods / the `DataModule` ([#1204](https://github.com/PyTorchLightning/lightning-flash/pull/1204))
+
 
 ## [0.7.0] - 2022-02-15
 
@@ -175,6 +180,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Removed the `Seq2SeqData` base class (use `TranslationData` or `SummarizationData` directly) ([#1128](https://github.com/PyTorchLightning/lightning-flash/pull/1128))
 - Removed the ability to attach the `Output` object directly to the model ([#1157](https://github.com/PyTorchLightning/lightning-flash/pull/1157))
 
+
 ## [0.6.0] - 2021-12-13
 
 ### Added
@@ -226,6 +232,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Removed `Task.predict`, use `Trainer.predict` instead ([#1030](https://github.com/PyTorchLightning/lightning-flash/pull/1030))
 - Removed the `backbone` argument from `TextClassificationData`, it is now sufficient to only provide a `backbone` argument to the `TextClassifier` ([#1022](https://github.com/PyTorchLightning/lightning-flash/pull/1022))
 - Removed support for the `serve_sanity_check` argument in `flash.Trainer` ([#1062](https://github.com/PyTorchLightning/lightning-flash/pull/1062))
+
 
 ## [0.5.2] - 2021-11-05
 
@@ -314,6 +321,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Fixed a bug where `drop_last` would be set to True during prediction and testing ([#671](https://github.com/PyTorchLightning/lightning-flash/pull/671))
 - Fixed a bug where flash was not compatible with pytorch-lightning >= 1.4.3 ([#690](https://github.com/PyTorchLightning/lightning-flash/pull/690))
 
+
 ## [0.4.0] - 2021-06-22
 
 ### Added
@@ -335,11 +343,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Fixed a bug where the `SemanticSegmentation` task would not work as expected with finetuning callbacks ([#412](https://github.com/PyTorchLightning/lightning-flash/pull/412))
 - Fixed a bug where predict batches could not be visualized with `ImageClassificationData` ([#438](https://github.com/PyTorchLightning/lightning-flash/pull/438))
 
+
 ## [0.3.2] - 2021-06-08
 
 ### Fixed
 
 - Fixed a bug where `flash.Trainer.from_argparse_args` + `finetune` would not work ([#382](https://github.com/PyTorchLightning/lightning-flash/pull/382))
+
 
 ## [0.3.1] - 2021-06-08
 

@@ -16,7 +16,6 @@ from unittest import mock
 
 import pytest
 import torch
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from torch import Tensor
 
 import flash
@@ -51,11 +50,28 @@ class TestTextClassifier(TaskTester):
                         {"enable_ort": True},
                         marks=pytest.mark.skipif(not _TORCH_ORT_AVAILABLE, reason="ORT Module aren't installed."),
                     ),
+                    {"backbone": "clip_resnet50"},
                 ],
             )
         ],
-        "test_val": [pytest.mark.parametrize("task_kwargs", [{}])],
-        "test_test": [pytest.mark.parametrize("task_kwargs", [{}])],
+        "test_val": [
+            pytest.mark.parametrize(
+                "task_kwargs",
+                [
+                    {},
+                    {"backbone": "clip_resnet50"},
+                ],
+            )
+        ],
+        "test_test": [
+            pytest.mark.parametrize(
+                "task_kwargs",
+                [
+                    {},
+                    {"backbone": "clip_resnet50"},
+                ],
+            )
+        ],
         "test_cli": [pytest.mark.parametrize("extra_args", ([], ["from_toxic"]))],
     }
 
@@ -87,7 +103,7 @@ class TestTextClassifier(TaskTester):
 
         trainer = flash.Trainer(default_root_dir=tmpdir, fast_dev_run=True, callbacks=ORTCallback())
 
-        with pytest.raises(MisconfigurationException, match="Torch ORT requires to wrap a single model"):
+        with pytest.raises(ValueError, match="Torch ORT requires to wrap a single model"):
             trainer.fit(model, model.process_train_dataset(dataset, batch_size=4))
 
 

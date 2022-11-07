@@ -22,7 +22,12 @@ from flash.core.data.io.output_transform import OutputTransform
 from flash.core.data.utilities.sort import sorted_alphanumeric
 from flash.core.integrations.icevision.data import IceVisionInput
 from flash.core.integrations.icevision.transforms import IceVisionInputTransform
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_EXTRAS_TESTING, _KORNIA_AVAILABLE
+from flash.core.utilities.imports import (
+    _ICEVISION_AVAILABLE,
+    _IMAGE_EXTRAS_TESTING,
+    _TORCHVISION_AVAILABLE,
+    _TORCHVISION_GREATER_EQUAL_0_9,
+)
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 
@@ -34,8 +39,15 @@ else:
     VOCMaskParser = object
     Parser = object
 
-if _KORNIA_AVAILABLE:
-    import kornia as K
+if _TORCHVISION_AVAILABLE:
+    from torchvision import transforms as T
+
+    if _TORCHVISION_GREATER_EQUAL_0_9:
+        from torchvision.transforms import InterpolationMode
+    else:
+
+        class InterpolationMode:
+            NEAREST = "nearest"
 
 
 # Skip doctests if requirements aren't available
@@ -45,7 +57,7 @@ if not _IMAGE_EXTRAS_TESTING:
 
 class InstanceSegmentationOutputTransform(OutputTransform):
     def per_sample_transform(self, sample: Any) -> Any:
-        resize = K.geometry.Resize(sample[DataKeys.METADATA]["size"], interpolation="nearest")
+        resize = T.Resize(sample[DataKeys.METADATA]["size"], interpolation=InterpolationMode.NEAREST)
         sample[DataKeys.PREDS]["masks"] = [resize(tensor(mask)) for mask in sample[DataKeys.PREDS]["masks"]]
         return sample[DataKeys.PREDS]
 

@@ -4,19 +4,16 @@ trigger:
 pr:
   branches:
     include: ["master"]
-  autoCancel: true
-  drafts: true
+  autoCancel: 'true'
+  drafts: 'true'
 
 jobs:
 - template: testing-template.yml
   parameters:
-    configs:
+    domains:
     - "image"
     - "icevision"
     - "vissl"
     - "text"
     - "tabular"
     - "video"
-    gpu_inds:
-    - "0"
-    - "0,1"

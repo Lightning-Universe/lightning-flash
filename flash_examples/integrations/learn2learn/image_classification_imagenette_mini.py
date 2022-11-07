@@ -37,7 +37,7 @@ import torchvision.transforms as T
 import flash
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform
-from flash.core.data.transforms import ApplyToKeys, kornia_collate
+from flash.core.data.transforms import ApplyToKeys
 from flash.image import ImageClassificationData, ImageClassifier
 
 warnings.simplefilter("ignore")
@@ -109,9 +109,6 @@ class ImageClassificationInputTransform(InputTransform):
             Ka.RandomHorizontalFlip(p=0.25),
         )
 
-    def collate(self):
-        return kornia_collate
-
 
 # construct datamodule
 
@@ -146,6 +143,7 @@ model = ImageClassifier(
 trainer = flash.Trainer(
     max_epochs=1,
     gpus=1,
+    accelerator="gpu",
     precision=16,
 )
 

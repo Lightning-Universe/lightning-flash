@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import torch
-from pytorch_lightning.utilities.exceptions import MisconfigurationException
 
 import flash
 from flash.core.utilities.imports import _BAAL_AVAILABLE, _BAAL_GREATER_EQUAL_1_5_2
@@ -38,7 +37,7 @@ class InferenceMCDropoutTask(flash.Task):
         self.trainer = module.trainer
         changed = _patch_dropout_layers(self.parent_module)
         if not changed:
-            raise MisconfigurationException("The model should contain at least 1 dropout layer.")
+            raise TypeError("The model should contain at least 1 dropout layer.")
         self.inference_iteration = inference_iteration
 
     def predict_step(self, batch, batch_idx, dataloader_idx: int = 0):

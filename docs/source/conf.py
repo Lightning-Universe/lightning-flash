@@ -235,6 +235,7 @@ PACKAGE_MAPPING = {
     "lightning-bolts": "pl_bolts",
     "pytorch-tabnet": "pytorch_tabnet",
     "pyDeprecate": "deprecate",
+    "lightning-utilities": "lightning_utilities",
 }
 MOCK_PACKAGES = ["numpy", "PyYAML", "tqdm"]
 if SPHINX_MOCK_REQUIREMENTS:
