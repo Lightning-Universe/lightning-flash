@@ -25,3 +25,4 @@ Alumni
 
 - Sean Narenthiran (`SeanNaren <https://github.com/SeanNaren>`_)
 - Ananya Harsh Jha (`ananyahjha93 <https://github.com/ananyahjha93>`_)
+- Kushashwa Ravi Shrimali (`krshrimali <https://github.com/krshrimali>`_)
