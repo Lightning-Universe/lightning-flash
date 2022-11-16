@@ -58,7 +58,7 @@ class TranslationTask(Seq2SeqTask):
         metrics: METRICS_TYPE = None,
         learning_rate: Optional[float] = None,
         num_beams: Optional[int] = 4,
-        n_gram: bool = 4,
+        n_gram: int = 4,
         smooth: bool = True,
         enable_ort: bool = False,
     ):
