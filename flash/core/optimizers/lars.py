@@ -30,8 +30,9 @@ if not _CORE_TESTING:
 
 
 class LARS(Optimizer):
-    r"""Extends SGD in PyTorch with LARS scaling from the paper Large batch training of Convolutional Networks
-    LARS_.
+    r"""Extends SGD in PyTorch with LARS scaling.
+
+    See the paper `Large batch training of Convolutional Networks <https://arxiv.org/pdf/1708.03888.pdf>`_
 
     Args:
         params (iterable): iterable of parameters to optimize or dicts defining
@@ -72,8 +73,6 @@ class LARS(Optimizer):
         Parameters with weight decay set to 0 will automatically be excluded from
         layer-wise LR scaling. This is to ensure consistency with papers like SimCLR
         and BYOL.
-
-    .. _LARS: https://arxiv.org/pdf/1708.03888.pdf
     """
 
     def __init__(
