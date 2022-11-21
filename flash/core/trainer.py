@@ -169,16 +169,15 @@ class Trainer(PlTrainer):
     ):
         r"""Run inference on your data.
 
-         This will call the model forward function to compute predictions. Useful to
-        perform distributed and batched predictions. Logging is disabled in the prediction hooks.
+        This will call the model forward function to compute predictions.
+        Useful to perform distributed and batched predictions. Logging is disabled in the prediction hooks.
 
         Args:
             model: The model to predict with.
             dataloaders: A :class:`torch.utils.data.DataLoader` or a sequence of them,
                 or a :class:`~pytorch_lightning.core.datamodule.LightningDataModule` specifying prediction samples.
             output: The :class:`~flash.core.data.io.output.Output` to use to transform predict outputs.
-            kwargs: Additional keyword arguments to pass to ``pytorch_lightning.Trainer.predict``.
-
+            kwargs: Additional keyword arguments to pass to :meth:`~pytorch_lightning.Trainer.predict`.
 
         Returns:
             Returns a list of dictionaries, one for each provided dataloader containing their respective predictions.
