@@ -32,7 +32,7 @@ from torchmetrics.text.rouge import ROUGEScore
 from flash.core.data.io.input import DataKeys
 from flash.core.model import Task
 from flash.core.registry import ExternalRegistry, FlashRegistry
-from flash.core.utilities.imports import _TEXT_AVAILABLE, _TM_GREATER_EQUAL_0_7_0
+from flash.core.utilities.imports import _TEXT_AVAILABLE
 from flash.core.utilities.providers import _HUGGINGFACE
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.text.ort_callback import ORTCallback
@@ -144,14 +144,8 @@ class QuestionAnsweringTask(Task):
         self.null_score_diff_threshold = null_score_diff_threshold
         self._initialize_model_specific_parameters()
 
-        if _TM_GREATER_EQUAL_0_7_0:
-            self.rouge = ROUGEScore(
-                use_stemmer=use_stemmer,
-            )
-        else:
-            self.rouge = ROUGEScore(
-                True,
-                use_stemmer=use_stemmer,
+        self.rouge = ROUGEScore(
+                use_stemmer=use_stemmer
             )
 
     def _generate_answers(self, pred_start_logits, pred_end_logits, examples):

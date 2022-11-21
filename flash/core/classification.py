@@ -24,8 +24,9 @@ from flash.core.data.io.input import DataKeys
 from flash.core.data.io.output import Output
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _TM_GREATER_EQUAL_0_7_0, lazy_import, requires
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 from flash.core.utilities.providers import _FIFTYONE
+from torchmetrics import F1Score
 
 if _FIFTYONE_AVAILABLE:
     fol = lazy_import("fiftyone.core.labels")
@@ -36,10 +37,6 @@ else:
     Classification = None
     Classifications = None
 
-if _TM_GREATER_EQUAL_0_7_0:
-    from torchmetrics import F1Score
-else:
-    from torchmetrics import F1 as F1Score
 
 
 CLASSIFICATION_OUTPUTS = FlashRegistry("outputs")

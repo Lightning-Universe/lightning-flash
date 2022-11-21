@@ -16,7 +16,6 @@ from typing import Any, Dict, List, Optional, Union
 from torch import Tensor
 from torchmetrics.text.rouge import ROUGEScore
 
-from flash.core.utilities.imports import _TM_GREATER_EQUAL_0_7_0
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.text.seq2seq.core.model import Seq2SeqTask
 
@@ -76,14 +75,8 @@ class SummarizationTask(Seq2SeqTask):
             num_beams=num_beams,
             enable_ort=enable_ort,
         )
-        if _TM_GREATER_EQUAL_0_7_0:
-            self.rouge = ROUGEScore(
-                use_stemmer=use_stemmer,
-            )
-        else:
-            self.rouge = ROUGEScore(
-                True,
-                use_stemmer=use_stemmer,
+        self.rouge = ROUGEScore(
+                use_stemmer=use_stemmer
             )
 
     @property

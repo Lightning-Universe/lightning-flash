@@ -32,16 +32,13 @@ from flash.core.data.io.input_transform import InputTransform
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.compatibility import accelerator_connector
-from flash.core.utilities.imports import _LEARN2LEARN_AVAILABLE, _PL_GREATER_EQUAL_1_6_0
+from flash.core.utilities.imports import _LEARN2LEARN_AVAILABLE
 from flash.core.utilities.providers import _LEARN2LEARN
 from flash.core.utilities.stability import beta
 from flash.core.utilities.url_error import catch_url_error
 from flash.image.classification.integrations.learn2learn import TaskDataParallel, TaskDistributedDataParallel
 
-if _PL_GREATER_EQUAL_1_6_0:
-    from pytorch_lightning.strategies import DataParallelStrategy, DDPSpawnStrategy, DDPStrategy
-else:
-    from pytorch_lightning.plugins import DataParallelPlugin, DDPPlugin, DDPSpawnPlugin
+from pytorch_lightning.strategies import DataParallelStrategy, DDPSpawnStrategy, DDPStrategy
 
 warning_cache = WarningCache()
 
@@ -241,10 +238,10 @@ class Learn2LearnAdapter(Adapter):
                 task_collate=self._identity_task_collate_fn,
             )
 
-        if _PL_GREATER_EQUAL_1_6_0:
-            is_ddp_or_ddp_spawn = isinstance(trainer.strategy, (DDPStrategy, DDPSpawnStrategy))
-        else:
-            is_ddp_or_ddp_spawn = isinstance(trainer.training_type_plugin, (DDPPlugin, DDPSpawnPlugin))
+        is_ddp_or_ddp_spawn = isinstance(
+            trainer.strategy,
+            (DDPStrategy, DDPSpawnStrategy)
+        )
         if is_ddp_or_ddp_spawn:
             # when running in a distributed data parallel way,
             # we are actually sampling one task per device.
@@ -260,10 +257,7 @@ class Learn2LearnAdapter(Adapter):
             self.trainer.accumulated_grad_batches = self.meta_batch_size / trainer.world_size
         else:
             devices = 1
-            if _PL_GREATER_EQUAL_1_6_0:
-                is_data_parallel = isinstance(trainer.strategy, DataParallelStrategy)
-            else:
-                is_data_parallel = isinstance(trainer.training_type_plugin, DataParallelPlugin)
+            is_data_parallel = isinstance(trainer.strategy, DataParallelStrategy)
             if is_data_parallel:
                 # when using DP, we need to sample n tasks, so it can split across multiple devices.
                 devices = accelerator_connector(trainer).devices

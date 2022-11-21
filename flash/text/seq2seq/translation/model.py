@@ -15,7 +15,6 @@ from typing import Any, Dict, Optional, Union
 
 from torchmetrics import BLEUScore
 
-from flash.core.utilities.imports import _TM_GREATER_EQUAL_0_7_0
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.text.seq2seq.core.model import Seq2SeqTask
 
@@ -94,8 +93,5 @@ class TranslationTask(Seq2SeqTask):
         translate_corpus = self.decode(generated_tokens)
         translate_corpus = [line for line in translate_corpus]
 
-        if _TM_GREATER_EQUAL_0_7_0:
-            result = self.bleu(translate_corpus, reference_corpus)
-        else:
-            result = self.bleu(reference_corpus, translate_corpus)
+        result = self.bleu(translate_corpus, reference_corpus)
         self.log(f"{prefix}_bleu_score", result, on_step=False, on_epoch=True, prog_bar=True)

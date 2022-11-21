@@ -21,29 +21,18 @@ from torch import Tensor
 
 import flash
 from flash.core.data.utils import _STAGES_PREFIX
-from flash.core.utilities.imports import (
-    _PL_GREATER_EQUAL_1_4_0,
-    _PL_GREATER_EQUAL_1_5_0,
-    _PL_GREATER_EQUAL_1_6_0,
-    requires,
-)
+from flash.core.utilities.imports import requires
 from flash.core.utilities.stability import beta
 from flash.core.utilities.stages import RunningStage
 from flash.image.classification.integrations.baal.data import ActiveLearningDataModule
 from flash.image.classification.integrations.baal.dropout import InferenceMCDropoutTask
 
-if _PL_GREATER_EQUAL_1_4_0:
-    from pytorch_lightning.loops import Loop
-    from pytorch_lightning.loops.fit_loop import FitLoop
-    from pytorch_lightning.trainer.progress import Progress
-else:
-    Loop = object
-    FitLoop = object
+from pytorch_lightning.loops import Loop
+from pytorch_lightning.loops.fit_loop import FitLoop
+from pytorch_lightning.trainer.progress import Progress
 
-if not _PL_GREATER_EQUAL_1_5_0:
-    from pytorch_lightning.trainer.connectors.data_connector import _PatchDataLoader
-else:
-    from pytorch_lightning.trainer.connectors.data_connector import _DataLoaderSource
+from pytorch_lightning.trainer.connectors.data_connector import _DataLoaderSource
+
 
 
 @beta("The BaaL integration is currently in Beta.")
@@ -51,7 +40,7 @@ class ActiveLearningLoop(Loop):
     max_epochs: int
     inference_model: InferenceMCDropoutTask
 
-    @requires("baal", (_PL_GREATER_EQUAL_1_4_0, "pytorch-lightning>=1.4.0"))
+    @requires("baal")
     def __init__(self, label_epoch_frequency: int, inference_iteration: int = 2, should_reset_weights: bool = True):
         """The `ActiveLearning Loop` describes the following training procedure. This loop is connected with the
         `ActiveLearningTrainer`
@@ -160,12 +149,7 @@ class ActiveLearningLoop(Loop):
         return self.__dict__[key]
 
     def _connect(self, model: LightningModule):
-        if _PL_GREATER_EQUAL_1_6_0:
-            self.trainer.strategy.connect(model)
-        elif _PL_GREATER_EQUAL_1_5_0:
-            self.trainer.training_type_plugin.connect(model)
-        else:
-            self.trainer.accelerator.connect(model)
+        self.trainer.strategy.connect(model)
 
     def _reset_fitting(self):
         self.trainer.state.fn = TrainerFn.FITTING
@@ -194,18 +178,11 @@ class ActiveLearningLoop(Loop):
         )
 
         if dataloader:
-            if _PL_GREATER_EQUAL_1_5_0:
-                setattr(
-                    self.trainer._data_connector,
-                    f"_{dataloader_name}_source",
-                    _DataLoaderSource(self.trainer.datamodule, dataloader_name),
-                )
-            else:
-                setattr(
-                    self.trainer.lightning_module,
-                    dataloader_name,
-                    _PatchDataLoader(dataloader(), running_state),
-                )
+            setattr(
+                self.trainer._data_connector,
+                f"_{dataloader_name}_source",
+                _DataLoaderSource(self.trainer.datamodule, dataloader_name),
+            )
             setattr(self.trainer, dataloader_name, None)
             # TODO: Resolve this within PyTorch Lightning.
             try:
