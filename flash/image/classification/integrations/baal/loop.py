@@ -15,6 +15,10 @@ from copy import deepcopy
 from typing import Any, Dict, Optional
 
 from pytorch_lightning import LightningModule
+from pytorch_lightning.loops import Loop
+from pytorch_lightning.loops.fit_loop import FitLoop
+from pytorch_lightning.trainer.connectors.data_connector import _DataLoaderSource
+from pytorch_lightning.trainer.progress import Progress
 from pytorch_lightning.trainer.states import TrainerFn, TrainerStatus
 from pytorch_lightning.utilities.model_helpers import is_overridden
 from torch import Tensor
@@ -26,13 +30,6 @@ from flash.core.utilities.stability import beta
 from flash.core.utilities.stages import RunningStage
 from flash.image.classification.integrations.baal.data import ActiveLearningDataModule
 from flash.image.classification.integrations.baal.dropout import InferenceMCDropoutTask
-
-from pytorch_lightning.loops import Loop
-from pytorch_lightning.loops.fit_loop import FitLoop
-from pytorch_lightning.trainer.progress import Progress
-
-from pytorch_lightning.trainer.connectors.data_connector import _DataLoaderSource
-
 
 
 @beta("The BaaL integration is currently in Beta.")

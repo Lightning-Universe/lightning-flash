@@ -75,9 +75,7 @@ class SummarizationTask(Seq2SeqTask):
             num_beams=num_beams,
             enable_ort=enable_ort,
         )
-        self.rouge = ROUGEScore(
-                use_stemmer=use_stemmer
-            )
+        self.rouge = ROUGEScore(use_stemmer=use_stemmer)
 
     @property
     def task(self) -> str:

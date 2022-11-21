@@ -21,10 +21,7 @@ from pytorch_lightning.plugins.environments import SLURMEnvironment
 from torch import nn
 
 from flash.core.utilities.compatibility import accelerator_connector
-from flash.core.utilities.imports import (
-    _CORE_TESTING,
-    _TORCHVISION_AVAILABLE,
-)
+from flash.core.utilities.imports import _CORE_TESTING, _TORCHVISION_AVAILABLE
 from flash.core.utilities.lightning_cli import (
     instantiate_class,
     LightningArgumentParser,

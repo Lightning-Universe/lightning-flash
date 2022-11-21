@@ -17,7 +17,7 @@ import torch
 import torch.nn.functional as F
 from pytorch_lightning.utilities import rank_zero_warn
 from torch import Tensor
-from torchmetrics import Accuracy, Metric
+from torchmetrics import Accuracy, F1Score, Metric
 
 from flash.core.adapter import AdapterTask
 from flash.core.data.io.input import DataKeys
@@ -26,7 +26,6 @@ from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 from flash.core.utilities.providers import _FIFTYONE
-from torchmetrics import F1Score
 
 if _FIFTYONE_AVAILABLE:
     fol = lazy_import("fiftyone.core.labels")
@@ -36,7 +35,6 @@ else:
     fol = None
     Classification = None
     Classifications = None
-
 
 
 CLASSIFICATION_OUTPUTS = FlashRegistry("outputs")

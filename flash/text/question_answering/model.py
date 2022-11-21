@@ -144,9 +144,7 @@ class QuestionAnsweringTask(Task):
         self.null_score_diff_threshold = null_score_diff_threshold
         self._initialize_model_specific_parameters()
 
-        self.rouge = ROUGEScore(
-                use_stemmer=use_stemmer
-            )
+        self.rouge = ROUGEScore(use_stemmer=use_stemmer)
 
     def _generate_answers(self, pred_start_logits, pred_end_logits, examples):
         all_predictions = collections.OrderedDict()

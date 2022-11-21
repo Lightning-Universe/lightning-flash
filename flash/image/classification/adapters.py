@@ -21,6 +21,7 @@ from typing import Any, Callable, List, Optional, Type
 import torch
 from lightning_utilities.core.rank_zero import WarningCache
 from pytorch_lightning import LightningModule
+from pytorch_lightning.strategies import DataParallelStrategy, DDPSpawnStrategy, DDPStrategy
 from pytorch_lightning.trainer.states import TrainerFn
 from torch import nn, Tensor
 from torch.utils.data import DataLoader, IterableDataset, Sampler
@@ -37,8 +38,6 @@ from flash.core.utilities.providers import _LEARN2LEARN
 from flash.core.utilities.stability import beta
 from flash.core.utilities.url_error import catch_url_error
 from flash.image.classification.integrations.learn2learn import TaskDataParallel, TaskDistributedDataParallel
-
-from pytorch_lightning.strategies import DataParallelStrategy, DDPSpawnStrategy, DDPStrategy
 
 warning_cache = WarningCache()
 
@@ -238,10 +237,7 @@ class Learn2LearnAdapter(Adapter):
                 task_collate=self._identity_task_collate_fn,
             )
 
-        is_ddp_or_ddp_spawn = isinstance(
-            trainer.strategy,
-            (DDPStrategy, DDPSpawnStrategy)
-        )
+        is_ddp_or_ddp_spawn = isinstance(trainer.strategy, (DDPStrategy, DDPSpawnStrategy))
         if is_ddp_or_ddp_spawn:
             # when running in a distributed data parallel way,
             # we are actually sampling one task per device.
