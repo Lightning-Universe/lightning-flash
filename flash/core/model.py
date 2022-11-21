@@ -47,7 +47,7 @@ from flash.core.optimizers.schedulers import _SCHEDULERS_REGISTRY
 from flash.core.registry import FlashRegistry
 from flash.core.serve.composition import Composition
 from flash.core.utilities.apply_func import get_callable_dict
-from flash.core.utilities.imports import _CORE_TESTING, _PL_GREATER_EQUAL_1_5_0, requires
+from flash.core.utilities.imports import _CORE_TESTING, requires
 from flash.core.utilities.providers import _HUGGINGFACE
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import (
