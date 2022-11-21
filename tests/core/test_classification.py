@@ -67,7 +67,7 @@ def test_classification_outputs_fiftyone():
     assert predictions["filepath"] == "something"
 
     predictions = FiftyOneLabelsOutput(store_logits=True, return_filepath=False).transform(example_output)
-    assert torch.allclose(torch.tensor(predictions.logits), logits)
+    assert torch.allclose(torch.tensor(predictions.logits).to(logits.dtype), logits)
     assert torch.allclose(torch.tensor(predictions.confidence), torch.softmax(logits, -1)[-1])
     assert predictions.label == "2"
     predictions = FiftyOneLabelsOutput(labels, store_logits=True, return_filepath=False).transform(example_output)

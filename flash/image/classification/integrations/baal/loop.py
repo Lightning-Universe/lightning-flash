@@ -21,7 +21,12 @@ from torch import Tensor
 
 import flash
 from flash.core.data.utils import _STAGES_PREFIX
-from flash.core.utilities.imports import _PL_GREATER_EQUAL_1_4_0, _PL_GREATER_EQUAL_1_5_0, requires
+from flash.core.utilities.imports import (
+    _PL_GREATER_EQUAL_1_4_0,
+    _PL_GREATER_EQUAL_1_5_0,
+    _PL_GREATER_EQUAL_1_6_0,
+    requires,
+)
 from flash.core.utilities.stability import beta
 from flash.core.utilities.stages import RunningStage
 from flash.image.classification.integrations.baal.data import ActiveLearningDataModule
@@ -156,7 +161,9 @@ class ActiveLearningLoop(Loop):
         return self.__dict__[key]
 
     def _connect(self, model: LightningModule):
-        if _PL_GREATER_EQUAL_1_5_0:
+        if _PL_GREATER_EQUAL_1_6_0:
+            self.trainer.strategy.connect(model)
+        elif _PL_GREATER_EQUAL_1_5_0:
             self.trainer.training_type_plugin.connect(model)
         else:
             self.trainer.accelerator.connect(model)
