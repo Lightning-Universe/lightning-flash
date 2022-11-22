@@ -10,3 +10,25 @@ segmentation-models-pytorch>=0.2.0, <=0.3.1
 ftfy <=6.1.1
 regex <=2022.10.31
 sahi <0.11  # strict - Fixes compatibility with icevision
+
+matplotlib <=3.6.2
+fiftyone
+classy_vision
+vissl>=0.1.5
+icevision>=0.8
+sahi >=0.8.19,<0.11.0
+icedata
+effdet
+kornia>=0.5.1
+learn2learn
+fastface
+fairscale
+
+# pin PL for testing, remove when fastface is updated
+pytorch-lightning <1.5.0
+
+# pinned PL so we force a compatible TM version
+torchmetrics<0.8.0
+
+# effdet had an issue with PL 1.12, and icevision doesn't support effdet's latest version yet (0.3.0)
+torch <1.12

@@ -1,0 +1,4 @@
+torch==1.11.0
+torch-scatter==1.11.0
+torch-sparse==1.11.0
+torch-cluster==1.11.0

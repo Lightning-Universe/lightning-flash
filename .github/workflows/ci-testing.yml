@@ -36,10 +36,9 @@ jobs:
         include:
           - { os: 'ubuntu-20.04', python-version: 3.9, release: 'pre', topic: [ 'core' ] }
           - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'image' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'image','image_extras' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'image','image_extras_baal' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'image','image_vissl' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'image','image_baal' ] }
           - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'video' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'video','video_extras' ] }
           - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'tabular' ] }
           - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'text' ] }
           - { os: 'ubuntu-20.04', python-version: 3.8, release: 'stable', topic: [ 'pointcloud' ] }
@@ -81,7 +80,7 @@ jobs:
       run: |
         fname = 'requirements.txt'
         ignore = ['pandas', 'torchmetrics']
-        lines = [line if any([line.startswith(package) for package in ignore]) else line.replace('>', '=') for line in open(fname).readlines()]
+        lines = [line if any([line.startswith(package) for package in ignore]) else line.replace('>=', '==') for line in open(fname).readlines()]
         open(fname, 'w').writelines(lines)
       shell: python
 
@@ -100,41 +99,47 @@ jobs:
         key: ${{ runner.os }}-${{ matrix.python-version }}-td${{ steps.times.outputs.period }}-${{ join(matrix.topic,'-') }}-${{ matrix.requires }}-pip-${{ hashFiles('requirements.txt') }}
         restore-keys: ${{ runner.os }}-${{ matrix.python-version }}-td${{ steps.times.outputs.period }}-${{ join(matrix.topic,'-') }}-${{ matrix.requires }}-pip-
 
-    - name: Install graph test dependencies
-      if: contains( matrix.topic , 'graph' )
-      run: |
-        pip install torch==1.11.0+cpu torchvision==0.12.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
-        pip install torch-scatter -f https://data.pyg.org/whl/torch-1.11.0+cpu.html
-        pip install torch-sparse -f https://data.pyg.org/whl/torch-1.11.0+cpu.html
-        pip install torch-cluster -f https://data.pyg.org/whl/torch-1.11.0+cpu.html
+# TODO
+#    - name: Install graph test dependencies
+#      if: contains( matrix.topic , 'graph' )
+#      run: |
+#        pip install torch==1.11.0+cpu torchvision==0.12.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+#        pip install torch-scatter -f https://data.pyg.org/whl/torch-1.11.0+cpu.html
+#        pip install torch-sparse -f https://data.pyg.org/whl/torch-1.11.0+cpu.html
+#        pip install torch-cluster -f https://data.pyg.org/whl/torch-1.11.0+cpu.html
 
     - name: Install dependencies
       run: |
-        python --version
         pip --version
         flag=$(python -c "print('--pre' if '${{matrix.release}}' == 'pre' else '')" 2>&1)
-        pip install torch>=1.7.1
-        pip install '.[${{ join(matrix.topic, ',') }}]' --upgrade $flag --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
-        pip install '.[test]' --upgrade
+        pip install '.[${{ join(matrix.topic, ',') }},test]' \
+          -r requirements/testing_${{ matrix.topic[0] }}.txt \
+          --upgrade $flag \
+          --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
+        pip list
 
-    - name: Install vissl
-      if: contains( matrix.topic , 'image_extras' )
-      run: |
-        pip install git+https://github.com/facebookresearch/ClassyVision.git
-        pip install git+https://github.com/facebookresearch/vissl.git
+# TODO
+#    - name: Install vissl
+#      if: contains( matrix.topic , 'image_extras' )
+#      run: |
+#        pip install git+https://github.com/facebookresearch/ClassyVision.git
+#        pip install git+https://github.com/facebookresearch/vissl.git
 
-    - name: Install serve test dependencies
-      if: contains( matrix.topic , 'serve' )
-      run: |
-        sudo apt-get install libsndfile1
-        pip install '.[all,audio]' icevision sahi==0.8.19 effdet --upgrade
+# TODO
+#    - name: Install serve test dependencies
+#      if: contains( matrix.topic , 'serve' )
+#      run: |
+#        sudo apt-get install libsndfile1
+#        # TODO
+#        # pip install '.[all,audio]' icevision sahi==0.8.19 effdet --upgrade
 
-    - name: Install audio test dependencies
-      if: contains( matrix.topic , 'audio' )
-      run: |
-        sudo apt-get install libsndfile1
-        pip install matplotlib
-        pip install '.[audio,image]' torch==1.11.0 --upgrade
+# TODO
+#    - name: Install audio test dependencies
+#      if: contains( matrix.topic , 'audio' )
+#      run: |
+#        sudo apt-get install libsndfile1
+#        pip install matplotlib
+#        pip install '.[audio,image]' torch==1.11.0 --upgrade
 
     - name: Cache datasets
       uses: actions/cache@v3
@@ -148,7 +153,8 @@ jobs:
         FLASH_TEST_TOPIC: ${{ join(matrix.topic,',') }}
         FIFTYONE_DO_NOT_TRACK: true
       run: |
-        coverage run --source flash -m pytest flash tests --reruns 3 --reruns-delay 2 -v
+        coverage run --source flash -m pytest flash tests \
+          --reruns 3 --reruns-delay 2 -v
 
     - name: Statistics
       if: success()
