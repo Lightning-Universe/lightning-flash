@@ -100,8 +100,7 @@ class Trainer(PlTrainer):
         val_dataloaders: Optional[Union[DataLoader, List[DataLoader]]] = None,
         datamodule: Optional[LightningDataModule] = None,
     ):
-        r"""
-        Runs the full optimization routine. Same as :meth:`pytorch_lightning.Trainer.fit`
+        r"""Runs the full optimization routine. Same as :meth:`pytorch_lightning.Trainer.fit`
 
         Args:
             datamodule: A instance of :class:`LightningDataModule`.
@@ -128,9 +127,7 @@ class Trainer(PlTrainer):
         strategy: Union[str, BaseFinetuning, Tuple[str, int], Tuple[str, Tuple[int, int]]] = "no_freeze",
         train_bn: bool = True,
     ):
-        r"""
-
-        Runs the full optimization routine. Same as :meth:`pytorch_lightning.Trainer.fit`, but unfreezes layers
+        r"""Runs the full optimization routine. Same as :meth:`pytorch_lightning.Trainer.fit`, but unfreezes layers
         of the backbone throughout training layers of the backbone throughout training.
 
         Args:
@@ -170,18 +167,17 @@ class Trainer(PlTrainer):
         output: Union[Output, str] = None,
         **kwargs,
     ):
-        r"""
-        Run inference on your data.
-        This will call the model forward function to compute predictions. Useful to perform distributed
-        and batched predictions. Logging is disabled in the prediction hooks.
+        r"""Run inference on your data.
+
+        This will call the model forward function to compute predictions.
+        Useful to perform distributed and batched predictions. Logging is disabled in the prediction hooks.
 
         Args:
             model: The model to predict with.
             dataloaders: A :class:`torch.utils.data.DataLoader` or a sequence of them,
                 or a :class:`~pytorch_lightning.core.datamodule.LightningDataModule` specifying prediction samples.
             output: The :class:`~flash.core.data.io.output.Output` to use to transform predict outputs.
-            kwargs: Additional keyword arguments to pass to ``pytorch_lightning.Trainer.predict``.
-
+            kwargs: Additional keyword arguments to pass to :meth:`~pytorch_lightning.Trainer.predict`.
 
         Returns:
             Returns a list of dictionaries, one for each provided dataloader containing their respective predictions.

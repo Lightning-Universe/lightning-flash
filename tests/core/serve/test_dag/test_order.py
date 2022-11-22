@@ -39,9 +39,10 @@ def test_ordering_keeps_groups_together(abcde):
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_avoid_broker_nodes(abcde):
-    r"""
+    r"""Testing structure.
 
     b0    b1  b2
+
     |      \  /
     a0      a1
 
@@ -83,8 +84,10 @@ def test_avoid_broker_nodes(abcde):
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_base_of_reduce_preferred(abcde):
-    r"""
-               a3
+    r"""Testing structure.
+
+              a3
+
               /|
             a2 |
            /|  |
@@ -185,8 +188,7 @@ def test_avoid_upwards_branching_complex(abcde):
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_deep_bases_win_over_dependents(abcde):
-    r"""
-    It's not clear who should run first, e or d
+    r"""It's not clear who should run first, e or d.
 
     1.  d is nicer because it exposes parallelism
     2.  e is nicer (hypothetically) because it will be sooner released
@@ -284,8 +286,9 @@ def test_prefer_short_dependents(abcde):
 @pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 @pytest.mark.xfail(reason="This is challenging to do precisely")
 def test_run_smaller_sections(abcde):
-    r"""
-            aa
+    r"""Testing structure.
+
+           aa
            / |
       b   d  bb dd
      / \ /|  | /
@@ -374,7 +377,7 @@ def test_local_parents_of_reduction(abcde):
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_nearest_neighbor(abcde):
-    r"""
+    r"""Testing structure.
 
     a1  a2  a3  a4  a5  a6  a7 a8  a9
      \  |  /  \ |  /  \ |  / \ |  /
@@ -447,8 +450,7 @@ def test_prefer_short_narrow(abcde):
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_prefer_short_ancestor(abcde):
-    r"""
-    From https://github.com/dask/dask-ml/issues/206#issuecomment-395869929
+    r"""From https://github.com/dask/dask-ml/issues/206#issuecomment-395869929.
 
     Two cases, one where chunks of an array are independent, and one where the
     chunks of an array have a shared source. We handled the independent one
@@ -508,8 +510,10 @@ def test_prefer_short_ancestor(abcde):
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_map_overlap(abcde):
-    r"""
-      b1      b3      b5
+    r"""Testing structure.
+
+      b1      b3      b5.
+
        |\    / | \  / |
       c1  c2  c3  c4  c5
        |/  | \ | / | \|
@@ -661,7 +665,7 @@ def test_order_empty():
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 def test_switching_dependents(abcde):
-    r"""
+    r"""Testing structure.
 
     a7 a8  <-- do these last
     | /

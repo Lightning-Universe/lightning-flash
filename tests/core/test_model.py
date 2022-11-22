@@ -373,7 +373,6 @@ def custom_steplr_configuration_return_as_dict(optimizer):
     ],
 )
 def test_optimizers_and_schedulers(tmpdir, optim, sched, interval):
-
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
     task = ClassificationTask(model, optimizer=optim, lr_scheduler=sched)
     train_dl = torch.utils.data.DataLoader(DummyDataset())
@@ -422,7 +421,6 @@ def test_optimizer_learning_rate():
 @pytest.mark.skipif(not _TORCH_OPTIMIZER_AVAILABLE, reason="torch_optimizer isn't installed.")
 @pytest.mark.parametrize("optim", ["Yogi"])
 def test_external_optimizers_torch_optimizer(tmpdir, optim):
-
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
     task = ClassificationTask(model, optimizer=optim, lr_scheduler=None, loss_fn=F.nll_loss)
     trainer = flash.Trainer(max_epochs=1, limit_train_batches=2, gpus=torch.cuda.device_count())

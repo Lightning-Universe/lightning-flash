@@ -125,7 +125,7 @@ def test_predict_sklearn():
 @pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 @pytest.mark.parametrize("jitter, args", [(torch.jit.script, ()), (torch.jit.trace, (torch.rand(1, 16),))])
 def test_jit(tmpdir, jitter, args):
-    path = os.path.join(tmpdir, "test.pt")
+    path = os.path.join(tmpdir, "testing_model.pt")
 
     model = TemplateSKLearnClassifier(num_features=16, num_classes=10)
     model.eval()

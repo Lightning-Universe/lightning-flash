@@ -313,7 +313,6 @@ class CustomModel(Task):
 
 @pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_transformations(tmpdir):
-
     transform = TestInputTransform()
     datamodule = DataModule(
         TestInput(RunningStage.TRAINING, [1]),

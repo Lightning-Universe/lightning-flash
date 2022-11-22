@@ -29,6 +29,5 @@ class TestPointCloudObjectDetector(TaskTester):
 
 @pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed")
 def test_backbones():
-
     backbones = PointCloudObjectDetector.available_backbones()
     assert backbones == ["pointpillars", "pointpillars_kitti"]

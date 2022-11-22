@@ -298,7 +298,6 @@ def test_video_classifier_finetune_from_csv(tmpdir):
 @pytest.mark.skipif(not _VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone isn't installed.")
 def test_video_classifier_finetune_fiftyone(tmpdir):
-
     with mock_encoded_video_dataset_folder(tmpdir) as (
         dir_name,
         total_duration,

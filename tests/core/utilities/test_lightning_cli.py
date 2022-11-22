@@ -232,7 +232,6 @@ def test_lightning_cli(trainer_class, model_class, monkeypatch):
 
 @pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_lightning_cli_args_callbacks(tmpdir):
-
     callbacks = [
         dict(
             class_path="pytorch_lightning.callbacks.LearningRateMonitor",
@@ -297,7 +296,6 @@ def test_lightning_cli_args_cluster_environments(tmpdir):
 
 @pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_lightning_cli_args(tmpdir):
-
     cli_args = [
         f"--data.data_dir={tmpdir}",
         f"--trainer.default_root_dir={tmpdir}",
@@ -321,7 +319,6 @@ def test_lightning_cli_args(tmpdir):
 
 @pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_lightning_cli_save_config_cases(tmpdir):
-
     config_path = tmpdir / "config.yaml"
     cli_args = [
         f"--trainer.default_root_dir={tmpdir}",
@@ -347,7 +344,6 @@ def test_lightning_cli_save_config_cases(tmpdir):
 
 @pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_lightning_cli_config_and_subclass_mode(tmpdir):
-
     config = dict(
         model=dict(class_path="tests.helpers.boring_model.BoringModel"),
         data=dict(class_path="tests.helpers.boring_model.BoringDataModule", init_args=dict(data_dir=str(tmpdir))),
@@ -386,7 +382,6 @@ def any_model_any_data_cli():
 
 @pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_lightning_cli_help():
-
     cli_args = ["any.py", "--help"]
     out = StringIO()
     with mock.patch("sys.argv", cli_args), redirect_stdout(out), pytest.raises(SystemExit):
@@ -413,7 +408,6 @@ def test_lightning_cli_help():
 
 @pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_lightning_cli_print_config():
-
     cli_args = [
         "any.py",
         "--seed_everything=1234",

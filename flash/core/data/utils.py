@@ -139,7 +139,6 @@ class FuncModule(nn.Module):
 
 
 def convert_to_modules(transforms: Optional[Dict[str, Callable]]):
-
     if transforms is None or isinstance(transforms, nn.Module):
         return transforms
 

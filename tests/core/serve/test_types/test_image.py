@@ -11,7 +11,6 @@ from flash.core.utilities.imports import _PIL_AVAILABLE, _SERVE_TESTING
 @pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
 @pytest.mark.skipif(not _PIL_AVAILABLE, reason="library PIL is not installed.")
 def test_deserialize_serialize(session_global_datadir):
-
     with (session_global_datadir / "cat.jpg").open("rb") as f:
         imgstr = base64.b64encode(f.read()).decode("UTF-8")
 

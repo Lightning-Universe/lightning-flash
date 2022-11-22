@@ -145,7 +145,7 @@ class ImageEmbedder(AdapterTask):
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
         return self(batch[DataKeys.INPUT])
 
-    def on_epoch_start(self) -> None:
+    def on_train_epoch_start(self) -> None:
         self.adapter.on_epoch_start()
 
     def on_train_start(self) -> None:

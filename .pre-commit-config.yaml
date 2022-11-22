@@ -35,7 +35,7 @@ repos:
       - id: detect-private-key
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.34.0
+    rev: v2.38.2
     hooks:
       - id: pyupgrade
         args: [--py36-plus]
@@ -49,18 +49,18 @@ repos:
         require_serial: false
 
   - repo: https://github.com/kynan/nbstripout
-    rev: 0.5.0
+    rev: 0.6.1
     hooks:
       - id: nbstripout
 
-  - repo: https://github.com/myint/docformatter
-    rev: v1.4
+  - repo: https://github.com/PyCQA/docformatter
+    rev: v1.5.0
     hooks:
       - id: docformatter
         args: [--in-place, --wrap-summaries=115, --wrap-descriptions=120]
 
   - repo: https://github.com/psf/black
-    rev: 22.6.0
+    rev: 22.8.0
     hooks:
       - id: black
         name: Format code
@@ -73,7 +73,7 @@ repos:
         additional_dependencies: [ black==21.10b0 ]
 
   - repo: https://github.com/PyCQA/flake8
-    rev: 4.0.1
+    rev: 5.0.4
     hooks:
       - id: flake8
         name: PEP8

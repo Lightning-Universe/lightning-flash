@@ -99,7 +99,7 @@ def _test_test(self, tmpdir, task_kwargs):
 
 def _test_jit_trace(self, tmpdir):
     """Tests that the task can be traced and saved with JIT then reloaded and used."""
-    path = os.path.join(tmpdir, "test.pt")
+    path = os.path.join(tmpdir, "testing_model.pt")
 
     model = self.instantiated_task
     model.eval()
@@ -114,13 +114,11 @@ def _test_jit_trace(self, tmpdir):
 
 def _test_jit_script(self, tmpdir):
     """Tests that the task can be scripted and saved with JIT then reloaded and used."""
-    path = os.path.join(tmpdir, "test.pt")
+    path = os.path.join(tmpdir, "testing_model.pt")
 
     model = self.instantiated_task
-    trainer = self.instantiated_trainer
     model.eval()
 
-    model.trainer = trainer
     model = torch.jit.script(model)
 
     torch.jit.save(model, path)

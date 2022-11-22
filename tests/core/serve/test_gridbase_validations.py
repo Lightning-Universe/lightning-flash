@@ -7,7 +7,6 @@ from flash.core.utilities.imports import _CYTOOLZ_AVAILABLE, _SERVE_TESTING
 
 @pytest.mark.skipif(not _CYTOOLZ_AVAILABLE, reason="the library cytoolz is not installed.")
 def test_metaclass_raises_if_expose_decorator_not_applied_to_method():
-
     with pytest.raises(SyntaxError, match=r"expose.* decorator"):
 
         class FailedNoExposed(ModelComponent):
@@ -17,7 +16,6 @@ def test_metaclass_raises_if_expose_decorator_not_applied_to_method():
 
 @pytest.mark.skipif(not _CYTOOLZ_AVAILABLE, reason="the library cytoolz is not installed.")
 def test_metaclass_raises_if_more_than_one_expose_decorator_applied():
-
     with pytest.raises(SyntaxError, match=r"decorator must be applied to one"):
 
         class FailedTwoExposed(ModelComponent):
@@ -37,7 +35,6 @@ def test_metaclass_raises_if_more_than_one_expose_decorator_applied():
 
 @pytest.mark.skipif(not _CYTOOLZ_AVAILABLE, reason="the library cytoolz is not installed.")
 def test_metaclass_raises_if_first_arg_in_init_is_not_model():
-
     with pytest.raises(SyntaxError, match="__init__ must set 'model' as first"):
 
         class FailedModelArg(ModelComponent):
@@ -52,7 +49,6 @@ def test_metaclass_raises_if_first_arg_in_init_is_not_model():
 
 @pytest.mark.skipif(not _CYTOOLZ_AVAILABLE, reason="the library cytoolz is not installed.")
 def test_metaclass_raises_if_second_arg_is_not_config():
-
     with pytest.raises(SyntaxError, match="__init__ can only set 'config'"):
 
         class FailedConfig(ModelComponent):
@@ -67,7 +63,6 @@ def test_metaclass_raises_if_second_arg_is_not_config():
 
 @pytest.mark.skipif(not _CYTOOLZ_AVAILABLE, reason="the library cytoolz is not installed.")
 def test_metaclass_raises_if_random_parameters_in_init():
-
     with pytest.raises(SyntaxError, match="__init__ can only have 1 or 2 parameters"):
 
         class FailedInit(ModelComponent):
@@ -82,7 +77,6 @@ def test_metaclass_raises_if_random_parameters_in_init():
 
 @pytest.mark.skipif(not _CYTOOLZ_AVAILABLE, reason="the library cytoolz is not installed.")
 def test_metaclass_raises_uses_restricted_method_name():
-
     # Restricted Name: `inputs`
     with pytest.raises(TypeError, match="bound methods/attrs named"):
 

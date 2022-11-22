@@ -26,7 +26,6 @@ from flash.pointcloud.segmentation import PointCloudSegmentation, PointCloudSegm
 
 @pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed")
 def test_pointcloud_segmentation_data(tmpdir):
-
     seed_everything(52)
 
     download_data("https://pl-flash-data.s3.amazonaws.com/SemanticKittiMicro.zip", tmpdir)

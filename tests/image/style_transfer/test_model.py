@@ -49,7 +49,6 @@ class TestStyleTransfer(TaskTester):
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 def test_style_transfer_task():
-
     model = StyleTransfer(
         backbone="vgg11", content_layer="relu1_2", content_weight=10, style_layers="relu1_2", style_weight=11
     )

@@ -30,7 +30,6 @@ class TestPointCloudSegmentation(TaskTester):
 
 @pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed")
 def test_backbones():
-
     backbones = PointCloudSegmentation.available_backbones()
     assert backbones == ["randlanet", "randlanet_s3dis", "randlanet_semantic_kitti", "randlanet_toronto3d"]
 

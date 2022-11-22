@@ -55,7 +55,6 @@ def test_classification_outputs_multi_label():
 @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
 def test_classification_outputs_fiftyone():
-
     logits = torch.tensor([-0.1, 0.2, 0.3])
     example_output = {DataKeys.PREDS: logits, DataKeys.METADATA: {"filepath": "something"}}  # 3 classes
     labels = ["class_1", "class_2", "class_3"]
@@ -68,7 +67,7 @@ def test_classification_outputs_fiftyone():
     assert predictions["filepath"] == "something"
 
     predictions = FiftyOneLabelsOutput(store_logits=True, return_filepath=False).transform(example_output)
-    assert torch.allclose(torch.tensor(predictions.logits), logits)
+    assert torch.allclose(torch.tensor(predictions.logits).to(logits.dtype), logits)
     assert torch.allclose(torch.tensor(predictions.confidence), torch.softmax(logits, -1)[-1])
     assert predictions.label == "2"
     predictions = FiftyOneLabelsOutput(labels, store_logits=True, return_filepath=False).transform(example_output)
@@ -77,7 +76,7 @@ def test_classification_outputs_fiftyone():
     predictions = FiftyOneLabelsOutput(store_logits=True, multi_label=True, return_filepath=False).transform(
         example_output
     )
-    assert torch.allclose(torch.tensor(predictions.logits), logits)
+    assert torch.allclose(torch.tensor(predictions.logits).to(logits.dtype), logits)
     assert [c.label for c in predictions.classifications] == ["1", "2"]
     predictions = FiftyOneLabelsOutput(labels, multi_label=True, return_filepath=False).transform(example_output)
     assert [c.label for c in predictions.classifications] == ["class_2", "class_3"]

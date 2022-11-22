@@ -62,7 +62,6 @@ def test_iterable_input_validation():
 
 @pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
 def test_serve_input():
-
     server_input = ServeInput()
     assert server_input.serving
     with pytest.raises(NotImplementedError):
