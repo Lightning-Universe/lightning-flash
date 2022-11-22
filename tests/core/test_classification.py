@@ -76,7 +76,7 @@ def test_classification_outputs_fiftyone():
     predictions = FiftyOneLabelsOutput(store_logits=True, multi_label=True, return_filepath=False).transform(
         example_output
     )
-    assert torch.allclose(torch.tensor(predictions.logits), logits)
+    assert torch.allclose(torch.tensor(predictions.logits).to(logits.dtype), logits)
     assert [c.label for c in predictions.classifications] == ["1", "2"]
     predictions = FiftyOneLabelsOutput(labels, multi_label=True, return_filepath=False).transform(example_output)
     assert [c.label for c in predictions.classifications] == ["class_2", "class_3"]

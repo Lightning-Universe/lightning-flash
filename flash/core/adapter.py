@@ -77,7 +77,6 @@ class AdapterTask(Task):
 
     def __init__(self, adapter: Adapter, **kwargs):
         super().__init__(**kwargs)
-
         self.adapter = adapter
 
     @torch.jit.unused
