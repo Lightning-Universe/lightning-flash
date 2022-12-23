@@ -7,3 +7,4 @@ pystiche==1.*
 segmentation-models-pytorch>=0.2.0
 ftfy
 regex
+sahi<0.11  # Fixes compatibility with icevision
