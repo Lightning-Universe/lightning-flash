@@ -143,6 +143,7 @@ def _get_loader(file_path: str, loaders):
 def load(file_path: str, loaders):
     loader = _get_loader(file_path, loaders)
     # escaping file_path to avoid fsspec treating the path as a glob pattern
+    # fsspec==2022.11.0 ignores `expand=False` in read mode
     with fsspec.open(glob.escape(file_path)) as file:
         return loader(file)
 
