@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import copy
+import glob
 from functools import partial
 
 import fsspec
@@ -141,7 +142,8 @@ def _get_loader(file_path: str, loaders):
 
 def load(file_path: str, loaders):
     loader = _get_loader(file_path, loaders)
-    with fsspec.open(file_path) as file:
+    # escaping file_path to avoid fsspec treating the path as a glob pattern
+    with fsspec.open(glob.escape(file_path)) as file:
         return loader(file)
 
 

@@ -9,5 +9,5 @@ pandas>=1.1.0
 jsonargparse[signatures]>=3.17.0, <=4.9.0
 click>=7.1.2
 protobuf<=3.20.1
-fsspec
+fsspec==2022.11.0
 lightning-utilities>=0.3.0

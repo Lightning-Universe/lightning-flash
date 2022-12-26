@@ -85,7 +85,8 @@ def write_tsv(file_path):
 @pytest.mark.parametrize(
     "extension,write",
     [(extension, write_image) for extension in IMG_EXTENSIONS]
-    + [(extension, write_numpy) for extension in NP_EXTENSIONS],
+    + [(extension, write_numpy) for extension in NP_EXTENSIONS]
+    + [(filename, write_image) for filename in ("image [M].jpeg",)],
 )
 def test_load_image(tmpdir, extension, write):
     file_path = os.path.join(tmpdir, f"test{extension}")
