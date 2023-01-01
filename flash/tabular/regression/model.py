@@ -40,10 +40,10 @@ class TabularRegressor(RegressionAdapterTask):
         parameters: The parameters computed from the training data (can be obtained from the ``parameters`` attribute of
             the ``TabularRegressionData`` object containing your training data).
         embedding_sizes: List of (num_classes, emb_dim) to form categorical embeddings.
-        cat_dims: Number of distinct values for each categorical column
-        num_features: Number of columns in table
-        backbone: name of the model to use
-        loss_fn: Loss function for training, defaults to cross entropy.
+        cat_dims: Number of distinct values for each categorical column.
+        num_features: Number of columns in table.
+        backbone: name of the model to use.
+        loss_fn: Loss function for training, defaults to mean squared error.
         optimizer: Optimizer to use for training.
         lr_scheduler: The LR scheduler to use during training.
         metrics: Metrics to compute for training and evaluation. Can either be an metric from the `torchmetrics`
