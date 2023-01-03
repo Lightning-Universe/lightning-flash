@@ -115,7 +115,6 @@ def get_overlapping_args(func_a, func_b) -> Set[str]:
 
 @beta("Flash Zero is currently in Beta.")
 class FlashCLI(LightningCLI):
-
     datamodule: DataModule
     config_init: Namespace
     model: LightningModule

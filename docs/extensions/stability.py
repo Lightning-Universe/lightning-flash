@@ -39,7 +39,6 @@ class Beta(Directive):
     final_argument_whitespace = True
 
     def run(self):
-
         message = self.arguments[-1].strip()
 
         admonition_rst = ADMONITION_TEMPLATE.format(type="beta", title="Beta", message=message)

@@ -63,7 +63,6 @@ class InstanceSegmentationOutputTransform(OutputTransform):
 
 
 class InstanceSegmentationData(DataModule):
-
     input_transform_cls = IceVisionInputTransform
     output_transform_cls = InstanceSegmentationOutputTransform
 

@@ -27,7 +27,6 @@ from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 
 
 class InputTransformPlacement(LightningEnum):
-
     PER_SAMPLE_TRANSFORM = "per_sample_transform"
     PER_BATCH_TRANSFORM = "per_batch_transform"
     COLLATE = "collate"

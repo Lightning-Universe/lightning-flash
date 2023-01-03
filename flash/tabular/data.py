@@ -19,7 +19,6 @@ from flash.core.data.io.output_transform import OutputTransform
 
 
 class TabularData(DataModule):
-
     input_transform_cls = InputTransform
     output_transform_cls = OutputTransform
 

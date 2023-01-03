@@ -28,7 +28,6 @@ from tests.helpers.task_tester import TaskTester
 
 
 class TestSemanticSegmentation(TaskTester):
-
     task = SemanticSegmentation
     task_args = (2,)
     cli_command = "semantic_segmentation"

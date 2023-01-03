@@ -88,7 +88,6 @@ class HuggingFaceAdapter(Adapter):
 
 @dataclass
 class GenericCollate:
-
     tokenizer: Callable[[str], Any]
 
     @staticmethod
@@ -110,7 +109,6 @@ class GenericCollate:
 
 
 class GenericAdapter(Adapter):
-
     heads: FlashRegistry = CLASSIFIER_HEADS
 
     def __init__(self, backbone, num_classes: int, max_length: int = 128, head="linear"):

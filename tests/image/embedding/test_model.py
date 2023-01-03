@@ -29,7 +29,6 @@ else:
 
 
 class TestImageEmbedder(TaskTester):
-
     task = ImageEmbedder
     task_kwargs = dict(
         backbone="resnet18",

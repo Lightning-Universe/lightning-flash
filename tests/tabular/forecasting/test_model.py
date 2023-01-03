@@ -31,7 +31,6 @@ else:
 
 
 class TestTabularForecaster(TaskTester):
-
     task = TabularForecaster
     # TODO: Reduce number of required parameters
     task_kwargs = {

@@ -25,7 +25,6 @@ if _TORCHVISION_AVAILABLE:
 
 @dataclass
 class StyleTransferInputTransform(InputTransform):
-
     image_size: int = 256
 
     def per_sample_transform(self) -> Callable:

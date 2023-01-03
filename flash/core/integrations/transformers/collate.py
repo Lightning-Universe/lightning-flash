@@ -25,7 +25,6 @@ if _TRANSFORMERS_AVAILABLE:
 
 @dataclass(unsafe_hash=True)
 class TransformersCollate:
-
     backbone: str
     tokenizer_kwargs: Optional[Dict[str, Any]] = field(default_factory=dict, hash=False)
 

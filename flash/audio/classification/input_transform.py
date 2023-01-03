@@ -30,7 +30,6 @@ if _TORCHAUDIO_AVAILABLE:
 
 @dataclass
 class AudioClassificationInputTransform(InputTransform):
-
     spectrogram_size: Tuple[int, int] = (128, 128)
     time_mask_param: Optional[int] = None
     freq_mask_param: Optional[int] = None
