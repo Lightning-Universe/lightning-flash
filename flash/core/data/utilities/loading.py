@@ -68,12 +68,12 @@ def _load_image_from_image(file):
 
 
 def _load_image_from_numpy(file):
-try:
-    return Image.fromarray(arr.astype('uint8', casting='safe')).convert('RGB')
-except TypeError as e:
-    import warnings
-    warnings.warn(str(e) + '. Converting to float instead.', RuntimeWarning)
-    return Image.fromarray(arr.astype(float, casting='safe')).convert('RGB')
+    try:
+        return Image.fromarray(arr.astype('uint8', casting='safe')).convert('RGB')
+    except TypeError as e:
+        import warnings
+        warnings.warn(str(e) + '. Converting to float instead.', RuntimeWarning)
+        return Image.fromarray(arr.astype(float, casting='safe')).convert('RGB')
 
 
 def _load_spectrogram_from_image(file):
