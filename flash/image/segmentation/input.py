@@ -94,7 +94,7 @@ class SemanticSegmentationFilesInput(SemanticSegmentationInput, ImageFilesInput)
 
     def load_sample(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         if DataKeys.TARGET in sample:
-            sample[DataKeys.TARGET] = np.array(load_image(sample[DataKeys.TARGET])).transpose((2, 0, 1))[:, :, 0]
+            sample[DataKeys.TARGET] = np.array(load_image(sample[DataKeys.TARGET])).transpose((2, 0, 1))[0, :, :]
         return super().load_sample(sample)
 
 
