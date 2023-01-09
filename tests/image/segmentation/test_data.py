@@ -93,11 +93,11 @@ class TestSemanticSegmentationData:
         os.makedirs(str(tmp_dir / "targets"))
 
         images = [
-            str(tmp_dir / "images" / "img1.png"),
+            str(tmp_dir / "images" / "img1.png")
         ]
 
         targets = [
-            str(tmp_dir / "targets" / "img1.png"),
+            str(tmp_dir / "targets" / "img1.png")
         ]
 
         num_classes: int = 2
