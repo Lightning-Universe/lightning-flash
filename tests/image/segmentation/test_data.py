@@ -10,7 +10,6 @@ from flash import Trainer
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.transforms import ApplyToKeys
-from flash.core.data.utilities.loading import load_image
 from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,
     _IMAGE_AVAILABLE,
@@ -19,7 +18,6 @@ from flash.core.utilities.imports import (
     _PIL_AVAILABLE,
 )
 from flash.image import SemanticSegmentation, SemanticSegmentationData
-from flash.image.segmentation.input import SemanticSegmentationFilesInput
 
 if _PIL_AVAILABLE:
     from PIL import Image
