@@ -14,6 +14,7 @@
 import copy
 import glob
 from functools import partial
+from urllib.parse import urlparse, urlencode, quote, parse_qs
 
 import fsspec
 import numpy as np
@@ -140,11 +141,24 @@ def _get_loader(file_path: str, loaders):
     )
 
 
+def is_local_path(file_path: str) -> bool:
+    return urlparse(file_path).scheme in ['', 'file']
+
+
+def escape_url(url: str) -> str:
+    parsed = urlparse(url)
+    return f"{parsed.scheme}://{parsed.netloc}{quote(parsed.path)}?{urlencode(parse_qs(parsed.query), doseq=True)}"
+
+
+def escape_file_path(file_path: str) -> str:
+    return glob.escape(file_path) if is_local_path(file_path) else escape_url(file_path)
+
+
 def load(file_path: str, loaders):
     loader = _get_loader(file_path, loaders)
     # escaping file_path to avoid fsspec treating the path as a glob pattern
-    # fsspec==2022.11.0 ignores `expand=False` in read mode
-    with fsspec.open(glob.escape(file_path)) as file:
+    # fsspec ignores `expand=False` in read mode
+    with fsspec.open(escape_file_path(file_path)) as file:
         return loader(file)
 
 

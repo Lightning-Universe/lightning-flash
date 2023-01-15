@@ -86,7 +86,8 @@ def write_tsv(file_path):
     "extension,write",
     [(extension, write_image) for extension in IMG_EXTENSIONS]
     + [(extension, write_numpy) for extension in NP_EXTENSIONS]
-    + [(filename, write_image) for filename in ("image [M].jpeg",)],
+    # it shouldn't try to expand glob patterns in filenames
+    + [(filename, write_image) for filename in ("image [test].jpeg",)],
 )
 def test_load_image(tmpdir, extension, write):
     file_path = os.path.join(tmpdir, f"test{extension}")
@@ -146,6 +147,13 @@ def test_load_data_frame(tmpdir, extension, write):
     [
         pytest.param(
             "https://pl-flash-data.s3.amazonaws.com/images/ant_1.jpg",
+            load_image,
+            Image.Image,
+            marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed."),
+        ),
+        # it shouldn't try to expand glob patterns in URLs
+        pytest.param(
+            "https://39.yt/ant_1 [test].jpg",
             load_image,
             Image.Image,
             marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed."),
