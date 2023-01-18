@@ -153,7 +153,7 @@ def test_load_data_frame(tmpdir, extension, write):
         ),
         # it shouldn't try to expand glob patterns in URLs
         pytest.param(
-            "https://39.yt/ant_1 [test].jpg",
+            "https://pl-flash-data.s3.amazonaws.com/images/ant_1 [test].jpg",
             load_image,
             Image.Image,
             marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed."),
