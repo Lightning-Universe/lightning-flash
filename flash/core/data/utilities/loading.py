@@ -14,7 +14,7 @@
 import copy
 import glob
 from functools import partial
-from urllib.parse import urlparse, urlencode, quote, parse_qs
+from urllib.parse import parse_qs, quote, urlencode, urlparse
 
 import fsspec
 import numpy as np
@@ -142,7 +142,7 @@ def _get_loader(file_path: str, loaders):
 
 
 def is_local_path(file_path: str) -> bool:
-    return urlparse(file_path).scheme in ['', 'file']
+    return urlparse(file_path).scheme in ["", "file"]
 
 
 def escape_url(url: str) -> str:
