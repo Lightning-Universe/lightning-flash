@@ -14,8 +14,8 @@
 import copy
 import glob
 import re
-from os import PathLike
 from functools import partial
+from os import PathLike
 from typing import Union
 from urllib.parse import parse_qs, quote, urlencode, urlparse
 
