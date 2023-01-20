@@ -14,6 +14,7 @@
 import copy
 import glob
 from functools import partial
+import re
 from urllib.parse import parse_qs, quote, urlencode, urlparse
 
 import fsspec
@@ -141,7 +142,12 @@ def _get_loader(file_path: str, loaders):
     )
 
 
+WINDOWS_FILE_PATH_RE = re.compile("^[a-zA-Z]:(\\\\[^\\\\]|/[^/]).*")
+
+
 def is_local_path(file_path: str) -> bool:
+    if WINDOWS_FILE_PATH_RE.fullmatch(file_path):
+        return True
     return urlparse(file_path).scheme in ["", "file"]
 
 
