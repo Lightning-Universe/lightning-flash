@@ -14,7 +14,9 @@
 import copy
 import glob
 import re
+from os import PathLike
 from functools import partial
+from typing import Union
 from urllib.parse import parse_qs, quote, urlencode, urlparse
 
 import fsspec
@@ -156,8 +158,9 @@ def escape_url(url: str) -> str:
     return f"{parsed.scheme}://{parsed.netloc}{quote(parsed.path)}?{urlencode(parse_qs(parsed.query), doseq=True)}"
 
 
-def escape_file_path(file_path: str) -> str:
-    return glob.escape(file_path) if is_local_path(file_path) else escape_url(file_path)
+def escape_file_path(file_path: Union[str, PathLike]) -> str:
+    file_path_str = str(file_path)
+    return glob.escape(file_path_str) if is_local_path(file_path_str) else escape_url(file_path_str)
 
 
 def load(file_path: str, loaders):
