@@ -13,8 +13,8 @@
 # limitations under the License.
 import copy
 import glob
-from functools import partial
 import re
+from functools import partial
 from urllib.parse import parse_qs, quote, urlencode, urlparse
 
 import fsspec
