@@ -12,7 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import copy
+import glob
+import re
 from functools import partial
+from os import PathLike
+from typing import Union
+from urllib.parse import parse_qs, quote, urlencode, urlparse
 
 import fsspec
 import numpy as np
@@ -145,9 +150,30 @@ def _get_loader(file_path: str, loaders):
     )
 
 
+WINDOWS_FILE_PATH_RE = re.compile("^[a-zA-Z]:(\\\\[^\\\\]|/[^/]).*")
+
+
+def is_local_path(file_path: str) -> bool:
+    if WINDOWS_FILE_PATH_RE.fullmatch(file_path):
+        return True
+    return urlparse(file_path).scheme in ["", "file"]
+
+
+def escape_url(url: str) -> str:
+    parsed = urlparse(url)
+    return f"{parsed.scheme}://{parsed.netloc}{quote(parsed.path)}?{urlencode(parse_qs(parsed.query), doseq=True)}"
+
+
+def escape_file_path(file_path: Union[str, PathLike]) -> str:
+    file_path_str = str(file_path)
+    return glob.escape(file_path_str) if is_local_path(file_path_str) else escape_url(file_path_str)
+
+
 def load(file_path: str, loaders):
     loader = _get_loader(file_path, loaders)
-    with fsspec.open(file_path) as file:
+    # escaping file_path to avoid fsspec treating the path as a glob pattern
+    # fsspec ignores `expand=False` in read mode
+    with fsspec.open(escape_file_path(file_path)) as file:
         return loader(file)
 
 
