@@ -65,7 +65,7 @@ See [our installation guide](https://lightning-flash.readthedocs.io/en/latest/in
 ### Step 1. Load your data
 
 All data loading in Flash is performed via a `from_*` classmethod on a `DataModule`.
-Which `DataModule` to use and which `from_*` methods are available depends on the task you want to perform.
+To decide which `DataModule` to use and which `from_*` methods are available, it depends on the task you want to perform.
 For example, for image segmentation where your data is stored in folders, you would use the [`from_folders` method of the `SemanticSegmentationData` class](https://lightning-flash.readthedocs.io/en/latest/reference/semantic_segmentation.html#from-folders):
 
 ```py
@@ -85,7 +85,7 @@ dm = SemanticSegmentationData.from_folders(
 
 Our tasks come loaded with pre-trained backbones and (where applicable) heads.
 You can view the available backbones to use with your task using [`available_backbones`](https://lightning-flash.readthedocs.io/en/latest/general/backbones.html).
-Once you've chosen, create the model:
+Once you've chosen one, create the model:
 
 ```py
 from flash.image import SemanticSegmentation
@@ -119,7 +119,7 @@ trainer.save_checkpoint("semantic_segmentation_model.pt")
 
 ### Make predictions with Flash!
 
-Serve in just 2 lines.
+Serve in just 2 lines:
 
 ```py
 from flash.image import SemanticSegmentation
@@ -174,7 +174,7 @@ In detail, the following methods are currently implemented:
 
 ### Flash Optimizers / Schedulers
 
-With Flash, swapping among 40+ optimizers and 15 + schedulers recipes are simple. Find the list of available optimizers, schedulers as follows:
+With Flash, swapping among 40+ optimizers and 15+ schedulers recipes are simple. Find the list of available optimizers, schedulers as follows:
 
 ```py
 ImageClassifier.available_optimizers()
