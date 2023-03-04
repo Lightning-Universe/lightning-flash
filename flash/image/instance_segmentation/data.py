@@ -284,7 +284,8 @@ class InstanceSegmentationData(DataModule):
         **data_module_kwargs: Any,
     ):
         """Creates a :class:`~flash.image.instance_segmentation.data.InstanceSegmentationData` object from the given
-        data folders, mask folders, and annotation files in the `PASCAL VOC (Visual Object Challenge) XML format
+        data folders, mask folders, and annotation files in the `PASCAL VOC (Visual Object Challenge) XML format.
+
         <PASCAL>`_.
 
         .. note:: All three arguments `*_folder`, `*_target_folder`, and `*_ann_folder` are needed to load data for a

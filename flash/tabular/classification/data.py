@@ -57,8 +57,8 @@ class TabularClassificationData(TabularData):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TabularClassificationData":
-        """Creates a :class:`~flash.tabular.classification.data.TabularClassificationData` object from the given
-        data frames.
+        """Creates a :class:`~flash.tabular.classification.data.TabularClassificationData` object from the given data
+        frames.
 
         .. note::
 
@@ -196,8 +196,8 @@ class TabularClassificationData(TabularData):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TabularClassificationData":
-        """Creates a :class:`~flash.tabular.classification.data.TabularClassificationData` object from the given
-        CSV files.
+        """Creates a :class:`~flash.tabular.classification.data.TabularClassificationData` object from the given CSV
+        files.
 
         .. note::
 
@@ -534,8 +534,8 @@ class TabularClassificationData(TabularData):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TabularClassificationData":
-        """Creates a :class:`~flash.tabular.classification.data.TabularClassificationData` object from the given
-        data (in the form of list of a tuple or a dictionary).
+        """Creates a :class:`~flash.tabular.classification.data.TabularClassificationData` object from the given data
+        (in the form of list of a tuple or a dictionary).
 
         .. note::
             The ``categorical_fields``, ``numerical_fields``, and ``target_fields`` do not need to be provided if

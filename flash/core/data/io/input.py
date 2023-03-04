@@ -24,10 +24,7 @@ from flash.core.data.properties import Properties
 from flash.core.data.utils import _STAGES_PREFIX
 from flash.core.utilities.stages import RunningStage
 
-if sys.version_info < (3, 7):
-    from typing import GenericMeta
-else:
-    GenericMeta = type
+GenericMeta = type
 
 
 if not os.environ.get("READTHEDOCS", False):

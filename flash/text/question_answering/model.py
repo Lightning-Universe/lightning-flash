@@ -54,8 +54,8 @@ else:
 
 
 class QuestionAnsweringTask(Task):
-    """The ``QuestionAnsweringTask`` is a :class:`~flash.Task` for extractive question answering. For more details,
-    see `question_answering`.
+    """The ``QuestionAnsweringTask`` is a :class:`~flash.Task` for extractive question answering. For more details, see
+    `question_answering`.
 
     You can change the backbone to any question answering model from `HuggingFace/transformers
     <https://huggingface.co/transformers/model_doc/auto.html#automodelforquestionanswering>`_ using the ``backbone``

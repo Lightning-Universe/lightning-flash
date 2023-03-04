@@ -101,8 +101,8 @@ class Learn2LearnAdapter(Adapter):
         seed: int = 42,
         **algorithm_kwargs,
     ):
-        """The ``Learn2LearnAdapter`` is an :class:`~flash.core.adapter.Adapter` for integrating with `learn 2
-        learn` library (https://github.com/learnables/learn2learn).
+        """The ``Learn2LearnAdapter`` is an :class:`~flash.core.adapter.Adapter` for integrating with `learn 2 learn`
+        library (https://github.com/learnables/learn2learn).
 
         Args:
             task: Task to be used. This adapter should work with any Flash Classification task

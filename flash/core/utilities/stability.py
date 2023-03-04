@@ -35,9 +35,9 @@ def _raise_beta_warning(message: str, stacklevel: int = 6):
 
 
 def beta(message: str = "This feature is currently in Beta."):
-    """The beta decorator is used to indicate that a particular feature is in Beta. A callable or type that has
-    been marked as beta will give a ``UserWarning`` when it is called or instantiated. This designation should be
-    used following the description given in :ref:`stability`.
+    """The beta decorator is used to indicate that a particular feature is in Beta. A callable or type that has been
+    marked as beta will give a ``UserWarning`` when it is called or instantiated. This designation should be used
+    following the description given in :ref:`stability`.
 
     Args:
         message: The message to include in the warning.
