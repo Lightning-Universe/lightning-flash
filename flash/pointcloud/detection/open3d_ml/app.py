@@ -103,7 +103,6 @@ if _POINTCLOUD_AVAILABLE:
             gui.Application.instance.run()
 
     class VizDataset(Dataset):
-
         name = "VizDataset"
 
         def __init__(self, dataset):

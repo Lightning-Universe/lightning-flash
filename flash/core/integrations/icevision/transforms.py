@@ -283,7 +283,6 @@ class IceVisionTransformAdapter(nn.Module):
 
 @dataclass
 class IceVisionInputTransform(InputTransform):
-
     image_size: int = 128
 
     @requires("image", "icevision")

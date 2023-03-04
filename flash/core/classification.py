@@ -78,7 +78,6 @@ class ClassificationMixin:
 
 
 class ClassificationTask(ClassificationMixin, Task):
-
     outputs: FlashRegistry = Task.outputs + CLASSIFICATION_OUTPUTS
 
     def __init__(
@@ -103,7 +102,6 @@ class ClassificationTask(ClassificationMixin, Task):
 
 
 class ClassificationAdapterTask(ClassificationMixin, AdapterTask):
-
     outputs: FlashRegistry = Task.outputs + CLASSIFICATION_OUTPUTS
 
     def __init__(

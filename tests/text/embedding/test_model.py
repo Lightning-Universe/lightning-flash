@@ -37,7 +37,6 @@ TEST_BACKBONE = "sentence-transformers/all-MiniLM-L6-v2"  # tiny model for testi
 
 
 class TestTextEmbedder(TaskTester):
-
     task = TextEmbedder
     task_kwargs = {"backbone": TEST_BACKBONE}
     is_testing = _TEXT_TESTING

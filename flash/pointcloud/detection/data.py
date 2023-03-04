@@ -30,7 +30,6 @@ from flash.pointcloud.detection.open3d_ml.input import (
 
 @beta("Point cloud object detection is currently in Beta.")
 class PointCloudObjectDetectorData(DataModule):
-
     input_transform_cls = InputTransform
 
     @classmethod

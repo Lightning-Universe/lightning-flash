@@ -32,7 +32,6 @@ class UnboundMeta:
 
 @dataclass(unsafe_hash=True)
 class BoundMeta(UnboundMeta):
-
     models: Union[List["Servable"], Tuple["Servable", ...], Dict[str, "Servable"]]
     uid: str = field(default_factory=lambda: uuid4().hex, init=False)
     out_attr_dict: ParameterContainer = field(default=None, init=False)

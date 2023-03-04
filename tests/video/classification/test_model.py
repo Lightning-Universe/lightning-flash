@@ -39,7 +39,6 @@ if _VIDEO_AVAILABLE:
 
 
 class TestVideoClassifier(TaskTester):
-
     task = VideoClassifier
     task_args = (2,)
     task_kwargs = {"pretrained": False, "backbone": "slow_r50"}

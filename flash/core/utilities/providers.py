@@ -18,7 +18,6 @@ PROVIDERS = []  #: testing
 
 @dataclass
 class Provider:
-
     name: str
     url: str
 

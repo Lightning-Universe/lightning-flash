@@ -24,7 +24,6 @@ from tests.helpers.task_tester import TaskTester
 
 
 class TestStyleTransfer(TaskTester):
-
     task = StyleTransfer
     cli_command = "style_transfer"
     is_testing = _IMAGE_TESTING

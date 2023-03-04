@@ -94,7 +94,6 @@ def coco_keypoints(tmpdir):
 
 
 class TestKeypointDetector(TaskTester):
-
     task = KeypointDetector
     task_args = (2,)
     task_kwargs = {"num_classes": 2}

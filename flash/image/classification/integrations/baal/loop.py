@@ -114,7 +114,6 @@ class ActiveLearningLoop(Loop):
         self.progress.increment_ready()
 
     def advance(self, *args: Any, **kwargs: Any) -> None:
-
         self.progress.increment_started()
 
         if self.trainer.datamodule.has_labelled_data:

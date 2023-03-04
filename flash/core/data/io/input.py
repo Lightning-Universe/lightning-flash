@@ -168,7 +168,6 @@ class InputBase(Properties, metaclass=_InputMeta):
     """
 
     def __init__(self, running_stage: RunningStage, *args: Any, **kwargs: Any) -> None:
-
         super().__init__(running_stage=running_stage)
 
         self.data = None

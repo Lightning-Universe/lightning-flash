@@ -63,7 +63,6 @@ class Endpoint:
 
 
 class FlashServeScriptLoader:
-
     __slots__ = ("location", "instance")
 
     def __init__(self, location: FilePath):
