@@ -48,7 +48,6 @@ class PointCloudObjectDetectorData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "PointCloudObjectDetectorData":
-
         ds_kw = dict(
             scans_folder_name=scans_folder_name,
             labels_folder_name=labels_folder_name,
@@ -79,7 +78,6 @@ class PointCloudObjectDetectorData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "PointCloudObjectDetectorData":
-
         ds_kw = dict(
             scans_folder_name=scans_folder_name,
             labels_folder_name=labels_folder_name,
@@ -106,7 +104,6 @@ class PointCloudObjectDetectorData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "PointCloudObjectDetectorData":
-
         ds_kw = dict()
 
         return cls(

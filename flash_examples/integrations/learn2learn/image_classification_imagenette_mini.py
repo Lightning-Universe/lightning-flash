@@ -49,7 +49,6 @@ val_dataset = l2l.vision.datasets.MiniImagenet(root="./", mode="validation", dow
 
 @dataclass
 class ImageClassificationInputTransform(InputTransform):
-
     image_size: Tuple[int, int] = (196, 196)
     mean: Union[float, Tuple[float, float, float]] = (0.485, 0.456, 0.406)
     std: Union[float, Tuple[float, float, float]] = (0.229, 0.224, 0.225)

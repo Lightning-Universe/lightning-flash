@@ -193,8 +193,7 @@ class ImageClassificationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
-        """Load the :class:`~flash.image.classification.data.ImageClassificationData` from folders containing
-        images.
+        """Load the :class:`~flash.image.classification.data.ImageClassificationData` from folders containing images.
 
         The supported file extensions are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``, ``.bmp``, ``.pgm``, ``.tif``,
         ``.tiff``, ``.webp``, and ``.npy``.
@@ -317,8 +316,8 @@ class ImageClassificationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
-        """Load the :class:`~flash.image.classification.data.ImageClassificationData` from numpy arrays (or lists
-        of arrays) and corresponding lists of targets.
+        """Load the :class:`~flash.image.classification.data.ImageClassificationData` from numpy arrays (or lists of
+        arrays) and corresponding lists of targets.
 
         The targets can be in any of our
         :ref:`supported classification target formats <formatting_classification_targets>`.
@@ -494,8 +493,8 @@ class ImageClassificationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
-        """Load the :class:`~flash.image.classification.data.ImageClassificationData` from torch tensors (or lists
-        of tensors) and corresponding lists of targets.
+        """Load the :class:`~flash.image.classification.data.ImageClassificationData` from torch tensors (or lists of
+        tensors) and corresponding lists of targets.
 
         The targets can be in any of our
         :ref:`supported classification target formats <formatting_classification_targets>`.
@@ -731,8 +730,8 @@ class ImageClassificationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
-        """Load the :class:`~flash.image.classification.data.ImageClassificationData` from CSV files containing
-        image file paths and their corresponding targets.
+        """Load the :class:`~flash.image.classification.data.ImageClassificationData` from CSV files containing image
+        file paths and their corresponding targets.
 
         Input images will be extracted from the ``input_field`` column in the CSV files.
         The supported file extensions are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``, ``.bmp``, ``.pgm``, ``.tif``,
@@ -954,8 +953,8 @@ class ImageClassificationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
     ) -> "ImageClassificationData":
-        """Load the :class:`~flash.image.classification.data.ImageClassificationData` from FiftyOne
-        ``SampleCollection`` objects.
+        """Load the :class:`~flash.image.classification.data.ImageClassificationData` from FiftyOne ``SampleCollection``
+        objects.
 
         The supported file extensions are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``, ``.bmp``, ``.pgm``, ``.tif``,
         ``.tiff``, ``.webp``, and ``.npy``.

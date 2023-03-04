@@ -639,7 +639,6 @@ def test_from_bad_csv_no_image(bad_csv_no_image):
 def test_mixup(single_target_csv):
     @dataclass
     class MyTransform(ImageClassificationInputTransform):
-
         alpha: float = 1.0
 
         def mixup(self, batch):

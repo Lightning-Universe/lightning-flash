@@ -136,8 +136,8 @@ class TemplateData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TemplateData":
-        """This is our custom ``from_*`` method. It expects numpy ``Array`` objects and targets as input and
-        creates the ``TemplateData`` with them.
+        """This is our custom ``from_*`` method. It expects numpy ``Array`` objects and targets as input and creates the
+        ``TemplateData`` with them.
 
         Args:
             train_data: The numpy ``Array`` containing the train data.
@@ -228,14 +228,13 @@ class TemplateData(DataModule):
 
     @staticmethod
     def configure_data_fetcher(*args, **kwargs) -> BaseDataFetcher:
-        """We can, *optionally*, provide a data visualization callback using the ``configure_data_fetcher``
-        method."""
+        """We can, *optionally*, provide a data visualization callback using the ``configure_data_fetcher`` method."""
         return TemplateVisualization(*args, **kwargs)
 
 
 class TemplateVisualization(BaseVisualization):
-    """The ``TemplateVisualization`` class is a :class:`~flash.core.data.callbacks.BaseVisualization` that just
-    prints the data.
+    """The ``TemplateVisualization`` class is a :class:`~flash.core.data.callbacks.BaseVisualization` that just prints
+    the data.
 
     If you want to provide a visualization with your task, you can override these hooks.
     """

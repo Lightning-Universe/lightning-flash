@@ -27,7 +27,6 @@ TEST_BACKBONE = "sshleifer/tiny-mbart"  # tiny model for testing
 
 
 class TestSummarizationTask(TaskTester):
-
     task = SummarizationTask
     task_kwargs = {
         "backbone": TEST_BACKBONE,

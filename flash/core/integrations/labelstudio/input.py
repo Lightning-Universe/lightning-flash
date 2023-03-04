@@ -309,7 +309,6 @@ class LabelStudioVideoClassificationInput(LabelStudioIterableInput):
     def convert_to_encodedvideo(self, dataset):
         """Converting dataset to EncodedVideoDataset."""
         if len(dataset) > 0:
-
             from pytorchvideo.data import LabeledVideoDataset
 
             dataset = LabeledVideoDataset(
@@ -342,7 +341,6 @@ def _parse_labelstudio_arguments(
     val_split: Optional[float] = None,
     multi_label: Optional[bool] = False,
 ):
-
     train_data = None
     val_data = None
     test_data = None

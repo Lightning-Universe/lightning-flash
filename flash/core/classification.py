@@ -90,7 +90,6 @@ class ClassificationTask(ClassificationMixin, Task):
         labels: Optional[List[str]] = None,
         **kwargs,
     ) -> None:
-
         metrics, loss_fn = self._build(num_classes, labels, loss_fn, metrics, multi_label)
 
         super().__init__(
@@ -114,7 +113,6 @@ class ClassificationAdapterTask(ClassificationMixin, AdapterTask):
         labels: Optional[List[str]] = None,
         **kwargs,
     ) -> None:
-
         metrics, loss_fn = self._build(num_classes, labels, loss_fn, metrics, multi_label)
 
         super().__init__(
@@ -170,8 +168,7 @@ class LogitsOutput(PredsClassificationOutput):
 
 @CLASSIFICATION_OUTPUTS(name="probabilities")
 class ProbabilitiesOutput(PredsClassificationOutput):
-    """A :class:`.Output` which applies a softmax to the model outputs (assumed to be logits) and converts to a
-    list."""
+    """A :class:`.Output` which applies a softmax to the model outputs (assumed to be logits) and converts to a list."""
 
     def transform(self, sample: Any) -> Any:
         sample = super().transform(sample)
@@ -182,8 +179,8 @@ class ProbabilitiesOutput(PredsClassificationOutput):
 
 @CLASSIFICATION_OUTPUTS(name="classes")
 class ClassesOutput(PredsClassificationOutput):
-    """A :class:`.Output` which applies an argmax to the model outputs (either logits or probabilities) and
-    converts to a list.
+    """A :class:`.Output` which applies an argmax to the model outputs (either logits or probabilities) and converts to
+    a list.
 
     Args:
         multi_label: If true, treats outputs as multi label logits.
@@ -209,8 +206,8 @@ class ClassesOutput(PredsClassificationOutput):
 
 @CLASSIFICATION_OUTPUTS(name="labels")
 class LabelsOutput(ClassesOutput):
-    """A :class:`.Output` which converts the model outputs (either logits or probabilities) to the label of the
-    argmax classification.
+    """A :class:`.Output` which converts the model outputs (either logits or probabilities) to the label of the argmax
+    classification.
 
     Args:
         labels: A list of labels, assumed to map the class index to the label for that class.

@@ -33,8 +33,8 @@ if not _TEXT_TESTING:
 
 
 class TranslationData(DataModule):
-    """The ``TranslationData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
-    classmethods for loading data for text translation."""
+    """The ``TranslationData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of classmethods
+    for loading data for text translation."""
 
     input_transform_cls = InputTransform
 
@@ -52,8 +52,8 @@ class TranslationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TranslationData":
-        """Load the :class:`~flash.text.seq2seq.translation.data.TranslationData` from CSV files containing input
-        text snippets and their corresponding target text snippets.
+        """Load the :class:`~flash.text.seq2seq.translation.data.TranslationData` from CSV files containing input text
+        snippets and their corresponding target text snippets.
 
         Input text snippets will be extracted from the ``input_field`` column in the CSV files.
         Target text snippets will be extracted from the ``target_field`` column in the CSV files.
@@ -214,8 +214,8 @@ class TranslationData(DataModule):
         field: Optional[str] = None,
         **data_module_kwargs: Any,
     ) -> "TranslationData":
-        """Load the :class:`~flash.text.seq2seq.translation.data.TranslationData` from JSON files containing input
-        text snippets and their corresponding target text snippets.
+        """Load the :class:`~flash.text.seq2seq.translation.data.TranslationData` from JSON files containing input text
+        snippets and their corresponding target text snippets.
 
         Input text snippets will be extracted from the ``input_field`` column in the JSON files.
         Target text snippets will be extracted from the ``target_field`` column in the JSON files.
@@ -322,8 +322,8 @@ class TranslationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TranslationData":
-        """Load the :class:`~flash.text.seq2seq.translation.data.TranslationData` from Hugging Face ``Dataset``
-        objects containing input text snippets and their corresponding target text snippets.
+        """Load the :class:`~flash.text.seq2seq.translation.data.TranslationData` from Hugging Face ``Dataset`` objects
+        containing input text snippets and their corresponding target text snippets.
 
         Input text snippets will be extracted from the ``input_field`` column in the ``Dataset`` objects.
         Target text snippets will be extracted from the ``target_field`` column in the ``Dataset`` objects.
@@ -415,8 +415,8 @@ class TranslationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TranslationData":
-        """Load the :class:`~flash.text.seq2seq.translation.data.TranslationData` from lists of input text snippets
-        and corresponding lists of target text snippets.
+        """Load the :class:`~flash.text.seq2seq.translation.data.TranslationData` from lists of input text snippets and
+        corresponding lists of target text snippets.
 
         To learn how to customize the transforms applied for each stage, read our
         :ref:`customizing transforms guide <customizing_transforms>`.

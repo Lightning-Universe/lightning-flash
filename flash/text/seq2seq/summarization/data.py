@@ -33,8 +33,8 @@ if not _TEXT_TESTING:
 
 
 class SummarizationData(DataModule):
-    """The ``SummarizationData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
-    classmethods for loading data for text summarization."""
+    """The ``SummarizationData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of classmethods
+    for loading data for text summarization."""
 
     input_transform_cls = InputTransform
 
@@ -52,8 +52,8 @@ class SummarizationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "SummarizationData":
-        """Load the :class:`~flash.text.seq2seq.summarization.data.SummarizationData` from CSV files containing
-        input text snippets and their corresponding target text snippets.
+        """Load the :class:`~flash.text.seq2seq.summarization.data.SummarizationData` from CSV files containing input
+        text snippets and their corresponding target text snippets.
 
         Input text snippets will be extracted from the ``input_field`` column in the CSV files.
         Target text snippets will be extracted from the ``target_field`` column in the CSV files.
@@ -216,8 +216,8 @@ class SummarizationData(DataModule):
         field: Optional[str] = None,
         **data_module_kwargs: Any,
     ) -> "SummarizationData":
-        """Load the :class:`~flash.text.seq2seq.summarization.data.SummarizationData` from JSON files containing
-        input text snippets and their corresponding target text snippets.
+        """Load the :class:`~flash.text.seq2seq.summarization.data.SummarizationData` from JSON files containing input
+        text snippets and their corresponding target text snippets.
 
         Input text snippets will be extracted from the ``input_field`` column in the JSON files.
         Target text snippets will be extracted from the ``target_field`` column in the JSON files.
@@ -418,8 +418,8 @@ class SummarizationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "SummarizationData":
-        """Load the :class:`~flash.text.seq2seq.summarization.data.SummarizationData` from lists of input text
-        snippets and corresponding lists of target text snippets.
+        """Load the :class:`~flash.text.seq2seq.summarization.data.SummarizationData` from lists of input text snippets
+        and corresponding lists of target text snippets.
 
         To learn how to customize the transforms applied for each stage, read our
         :ref:`customizing transforms guide <customizing_transforms>`.

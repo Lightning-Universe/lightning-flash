@@ -30,7 +30,6 @@ TEST_BACKBONE = "prajjwal1/bert-tiny"  # tiny model for testing
 
 
 class TestTextClassifier(TaskTester):
-
     task = TextClassifier
     task_args = (2,)
     task_kwargs = {"backbone": TEST_BACKBONE}

@@ -52,9 +52,9 @@ _default_collate = wrap_collate(torch_default_collate)
 
 
 def default_collate(batch: List[Any]) -> Any:
-    """The :func:`flash.data.utilities.collate.default_collate` extends `torch.utils.data._utils.default_collate`
-    to first extract any metadata from the samples in the batch (in the ``"metadata"`` key). The list of metadata
-    entries will then be inserted into the collated result.
+    """The :func:`flash.data.utilities.collate.default_collate` extends `torch.utils.data._utils.default_collate` to
+    first extract any metadata from the samples in the batch (in the ``"metadata"`` key). The list of metadata entries
+    will then be inserted into the collated result.
 
     Args:
         batch: The list of samples to collate.

@@ -28,7 +28,6 @@ from tests.helpers.task_tester import StaticDataset, TaskTester
 
 
 class TestTabularClassifier(TaskTester):
-
     task = TabularClassifier
     task_kwargs = {
         "parameters": {"categorical_fields": list(range(4))},

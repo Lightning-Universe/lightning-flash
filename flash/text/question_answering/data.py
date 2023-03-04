@@ -666,8 +666,8 @@ class QuestionAnsweringData(DataModule):
         answer_column_name: str = "answer",
         **data_module_kwargs: Any,
     ) -> "QuestionAnsweringData":
-        """Load the :class:`~flash.text.question_answering.data.QuestionAnsweringData` from Python dictionary
-        objects containing questions, contexts and their corresponding answers.
+        """Load the :class:`~flash.text.question_answering.data.QuestionAnsweringData` from Python dictionary objects
+        containing questions, contexts and their corresponding answers.
 
         Question snippets will be extracted from the ``question_column_name`` field in the dictionaries.
         Context snippets will be extracted from the ``context_column_name`` field in the dictionaries.

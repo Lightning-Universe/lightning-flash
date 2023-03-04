@@ -103,7 +103,6 @@ if _ICEVISION_AVAILABLE:
             )
 
     if module_available("effdet"):
-
         model_type = icevision_models.ross.efficientdet
         OBJECT_DETECTION_HEADS(
             partial(load_icevision_with_image_size, model_type),

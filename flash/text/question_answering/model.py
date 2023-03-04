@@ -155,7 +155,6 @@ class QuestionAnsweringTask(Task):
             )
 
     def _generate_answers(self, pred_start_logits, pred_end_logits, examples):
-
         all_predictions = collections.OrderedDict()
         if self.version_2_with_negative:
             scores_diff_json = collections.OrderedDict()

@@ -146,7 +146,6 @@ class TestCachedProperty:
     def test_reuse_different_names():
         """Disallow this case because decorated function a would not be cached."""
         with pytest.raises(RuntimeError):
-
             # noinspection PyUnusedLocal
             class ReusedCachedProperty:  # NOSONAR
                 """Test class."""

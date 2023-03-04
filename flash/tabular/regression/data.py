@@ -55,8 +55,7 @@ class TabularRegressionData(TabularData):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TabularRegressionData":
-        """Creates a :class:`~flash.tabular.regression.data.TabularRegressionData` object from the given data
-        frames.
+        """Creates a :class:`~flash.tabular.regression.data.TabularRegressionData` object from the given data frames.
 
         .. note::
 
@@ -371,8 +370,7 @@ class TabularRegressionData(TabularData):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TabularRegressionData":
-        """Creates a :class:`~flash.tabular.regression.data.TabularRegressionData` object from the given
-        dictionary.
+        """Creates a :class:`~flash.tabular.regression.data.TabularRegressionData` object from the given dictionary.
 
         .. note::
 
@@ -498,8 +496,8 @@ class TabularRegressionData(TabularData):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TabularRegressionData":
-        """Creates a :class:`~flash.tabular.regression.data.TabularRegressionData` object from the given data (in
-        the form of list of a tuple or a dictionary).
+        """Creates a :class:`~flash.tabular.regression.data.TabularRegressionData` object from the given data (in the
+        form of list of a tuple or a dictionary).
 
         .. note::
 

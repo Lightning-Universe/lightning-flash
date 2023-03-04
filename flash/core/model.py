@@ -92,8 +92,8 @@ class ModuleWrapperBase:
 
 
 class DatasetProcessor:
-    """The ``DatasetProcessor`` mixin provides hooks for classes which need custom logic for producing the data
-    loaders for each running stage given the corresponding dataset."""
+    """The ``DatasetProcessor`` mixin provides hooks for classes which need custom logic for producing the data loaders
+    for each running stage given the corresponding dataset."""
 
     def __init__(self):
         super().__init__()
@@ -477,8 +477,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         return self(batch)
 
     def modules_to_freeze(self) -> Optional[nn.Module]:
-        """By default, we try to get the ``backbone`` attribute from the task and return it or ``None`` if not
-        present.
+        """By default, we try to get the ``backbone`` attribute from the task and return it or ``None`` if not present.
 
         Returns:
             The backbone ``Module`` to freeze or ``None`` if this task does not have a ``backbone`` attribute.
@@ -543,7 +542,6 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         strategy: Union[str, Tuple[str, int], Tuple[str, Tuple[Tuple[int, int], int]], BaseFinetuning] = "no_freeze",
         train_bn: bool = True,
     ) -> List[BaseFinetuning]:
-
         if isinstance(strategy, BaseFinetuning):
             return [strategy]
 
@@ -573,8 +571,8 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         return [finetuning_strategy_fn(**finetuning_strategy_metadata)]
 
     def as_embedder(self, layer: str):
-        """Convert this task to an embedder. Note that the parameters are not copied so that any optimization of
-        the embedder will also apply to the converted ``Task``.
+        """Convert this task to an embedder. Note that the parameters are not copied so that any optimization of the
+        embedder will also apply to the converted ``Task``.
 
         Args:
             layer: The layer to embed to. This should be one of the :meth:`~flash.core.model.Task.available_layers`.

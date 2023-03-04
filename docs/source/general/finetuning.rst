@@ -216,6 +216,7 @@ For even more customization, create your own finetuning callback. Learn more abo
 
     from flash.core.finetuning import FlashBaseFinetuning
 
+
     # Create a finetuning callback
     class FeatureExtractorFreezeUnfreeze(FlashBaseFinetuning):
         def __init__(self, unfreeze_epoch: int = 5, train_bn: bool = True):

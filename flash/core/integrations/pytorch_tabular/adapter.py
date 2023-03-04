@@ -42,7 +42,6 @@ class PytorchTabularAdapter(Adapter):
         metrics: Optional[Union[torchmetrics.Metric, List[torchmetrics.Metric]]],
         backbone_kwargs: Optional[Dict[str, Any]] = None,
     ) -> Adapter:
-
         backbone_kwargs = backbone_kwargs or {}
         parameters = {
             "embedding_dims": embedding_sizes,

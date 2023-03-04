@@ -312,8 +312,8 @@ class AudioClassificationData(DataModule):
         target_formatter: Optional[TargetFormatter] = None,
         **data_module_kwargs: Any,
     ) -> "AudioClassificationData":
-        """Load the :class:`~flash.audio.classification.data.AudioClassificationData` from numpy arrays (or lists
-        of arrays) and corresponding lists of targets.
+        """Load the :class:`~flash.audio.classification.data.AudioClassificationData` from numpy arrays (or lists of
+        arrays) and corresponding lists of targets.
 
         The targets can be in any of our
         :ref:`supported classification target formats <formatting_classification_targets>`.
@@ -400,8 +400,8 @@ class AudioClassificationData(DataModule):
         target_formatter: Optional[TargetFormatter] = None,
         **data_module_kwargs: Any,
     ) -> "AudioClassificationData":
-        """Load the :class:`~flash.audio.classification.data.AudioClassificationData` from torch tensors (or lists
-        of tensors) and corresponding lists of targets.
+        """Load the :class:`~flash.audio.classification.data.AudioClassificationData` from torch tensors (or lists of
+        tensors) and corresponding lists of targets.
 
         The targets can be in any of our
         :ref:`supported classification target formats <formatting_classification_targets>`.

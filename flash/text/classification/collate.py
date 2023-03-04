@@ -19,7 +19,6 @@ from flash.core.integrations.transformers.collate import TransformersCollate
 
 @dataclass(unsafe_hash=True)
 class TextClassificationCollate(TransformersCollate):
-
     max_length: int = 128
 
     def tokenize(self, sample):

@@ -69,8 +69,7 @@ class InputFormat(LightningEnum):
 
 
 class DataKeys(LightningEnum):
-    """The ``DataKeys`` enum contains the keys that are used by built-in data sources to refer to inputs and
-    targets."""
+    """The ``DataKeys`` enum contains the keys that are used by built-in data sources to refer to inputs and targets."""
 
     INPUT = "input"
     PREDS = "preds"
@@ -103,8 +102,8 @@ def _has_len(data: Union[Sequence, Iterable]) -> bool:
 
 
 def _validate_input(input: "InputBase") -> None:
-    """Helper function to validate that the type of an ``InputBase.data`` is appropriate for the type of
-    ``InputBase`` being used.
+    """Helper function to validate that the type of an ``InputBase.data`` is appropriate for the type of ``InputBase``
+    being used.
 
     Args:
         input: The ``InputBase`` instance to validate.
@@ -191,9 +190,9 @@ class InputBase(Properties, metaclass=_InputMeta):
 
     @staticmethod
     def load_data(*args: Any, **kwargs: Any) -> Union[Sequence, Iterable]:
-        """The ``load_data`` hook should return a collection of samples. To reduce the memory footprint, these
-        samples should typically not have been loaded. For example, an input which loads images from disk would
-        only return the list of filenames here rather than the loaded images.
+        """The ``load_data`` hook should return a collection of samples. To reduce the memory footprint, these samples
+        should typically not have been loaded. For example, an input which loads images from disk would only return the
+        list of filenames here rather than the loaded images.
 
         Args:
             *args: Any arguments that the input requires.
@@ -239,8 +238,8 @@ class InputBase(Properties, metaclass=_InputMeta):
 
     @staticmethod
     def load_sample(sample: Dict[str, Any]) -> Any:
-        """The ``load_sample`` hook is called for each ``__getitem__`` or ``__next__`` call to the dataset with a
-        single sample from the output of the ``load_data`` hook as input.
+        """The ``load_sample`` hook is called for each ``__getitem__`` or ``__next__`` call to the dataset with a single
+        sample from the output of the ``load_data`` hook as input.
 
         Args:
             sample: A single sample from the output of the ``load_data`` hook.
@@ -272,8 +271,7 @@ class InputBase(Properties, metaclass=_InputMeta):
         return self.load_sample(sample)
 
     def predict_load_sample(self, sample: Dict[str, Any]) -> Any:
-        """Override the ``predict_load_sample`` hook with data loading logic that is only required during
-        predicting.
+        """Override the ``predict_load_sample`` hook with data loading logic that is only required during predicting.
 
         Args:
             sample: A single sample from the output of the ``load_data`` hook.

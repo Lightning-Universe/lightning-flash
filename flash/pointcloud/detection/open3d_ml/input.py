@@ -162,7 +162,6 @@ class KITTIPointCloudObjectDetectorLoader(BasePointCloudObjectDetectorLoader):
 
 
 class PointCloudObjectDetectorFoldersInput(Input):
-
     loaders: Dict[PointCloudObjectDetectionDataFormat, Type[BasePointCloudObjectDetectorLoader]] = {
         PointCloudObjectDetectionDataFormat.KITTI: KITTIPointCloudObjectDetectorLoader
     }
@@ -229,7 +228,6 @@ class PointCloudObjectDetectorFoldersInput(Input):
         return self.loader.predict_load_data(data, self)
 
     def predict_load_sample(self, metadata: Dict[str, str]) -> Any:
-
         data, metadata = self.loader.predict_load_sample(metadata)
 
         input_transform_fn = getattr(self, "input_transform_fn", None)

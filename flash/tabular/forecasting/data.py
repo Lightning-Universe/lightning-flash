@@ -69,8 +69,7 @@ class TabularForecastingData(DataModule):
         persistent_workers: bool = True,
         **input_kwargs: Any,
     ) -> "TabularForecastingData":
-        """Creates a :class:`~flash.tabular.forecasting.data.TabularForecastingData` object from the given data
-        frames.
+        """Creates a :class:`~flash.tabular.forecasting.data.TabularForecastingData` object from the given data frames.
 
         .. note::
 

@@ -16,7 +16,6 @@ You should attach your backbones registry as a class attribute like this:
 .. code-block:: python
 
     class TemplateSKLearnClassifier(ClassificationTask):
-
         backbones: FlashRegistry = TEMPLATE_BACKBONES
 
 Model architecture and hyper-parameters

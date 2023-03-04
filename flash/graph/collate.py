@@ -23,8 +23,8 @@ if _GRAPH_AVAILABLE:
 
 
 def _pyg_collate(samples: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Helper to collate PyTorch Geometric ``Data`` objects into PyTorch Geometric ``Batch`` objects whilst
-    preserving our dictionary format."""
+    """Helper to collate PyTorch Geometric ``Data`` objects into PyTorch Geometric ``Batch`` objects whilst preserving
+    our dictionary format."""
     inputs = Batch.from_data_list([sample[DataKeys.INPUT] for sample in samples])
     if DataKeys.TARGET in samples[0]:
         targets = default_collate([sample[DataKeys.TARGET] for sample in samples])

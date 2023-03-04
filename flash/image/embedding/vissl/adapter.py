@@ -87,7 +87,6 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
         loss_fn: ClassyLoss,
         hooks: List[ClassyHook],
     ) -> None:
-
         Adapter.__init__(self)
 
         self.model_config = self.get_model_config_template()

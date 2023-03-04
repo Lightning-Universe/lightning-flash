@@ -37,8 +37,8 @@ logger = logging.getLogger(__name__)
 
 
 class TextEmbedder(Task):
-    """The ``TextEmbedder`` is a :class:`~flash.Task` for generating sentence embeddings, training and validation.
-    For more details, see `embeddings`.
+    """The ``TextEmbedder`` is a :class:`~flash.Task` for generating sentence embeddings, training and validation. For
+    more details, see `embeddings`.
 
     You can change the backbone to any question answering model from `UKPLab/sentence-transformers
     <https://github.com/UKPLab/sentence-transformers>`_ using the ``backbone``

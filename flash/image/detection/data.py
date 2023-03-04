@@ -576,7 +576,6 @@ class ObjectDetectionData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
     ) -> "ObjectDetectionData":
-
         ds_kw = dict(parser=parser)
 
         return cls(

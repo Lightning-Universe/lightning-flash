@@ -26,8 +26,8 @@ from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 
 
 class Adapter(DatasetProcessor, ModuleWrapperBase, nn.Module):
-    """The ``Adapter`` is a lightweight interface that can be used to encapsulate the logic from a particular
-    provider within a :class:`~flash.core.model.Task`."""
+    """The ``Adapter`` is a lightweight interface that can be used to encapsulate the logic from a particular provider
+    within a :class:`~flash.core.model.Task`."""
 
     @classmethod
     @abstractmethod
@@ -67,8 +67,8 @@ def identity_collate_fn(x):
 
 
 class AdapterTask(Task):
-    """The ``AdapterTask`` is a :class:`~flash.core.model.Task` which wraps an :class:`~flash.core.adapter.Adapter`
-    and forwards all of the hooks.
+    """The ``AdapterTask`` is a :class:`~flash.core.model.Task` which wraps an :class:`~flash.core.adapter.Adapter` and
+    forwards all of the hooks.
 
     Args:
         adapter: The :class:`~flash.core.adapter.Adapter` to wrap.

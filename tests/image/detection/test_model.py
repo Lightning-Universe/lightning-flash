@@ -69,7 +69,6 @@ class DummyDetectionDataset(Dataset):
 
 
 class TestObjectDetector(TaskTester):
-
     task = ObjectDetector
     task_kwargs = {"num_classes": 2}
     cli_command = "object_detection"

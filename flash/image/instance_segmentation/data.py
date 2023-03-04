@@ -85,7 +85,6 @@ class InstanceSegmentationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
     ) -> "InstanceSegmentationData":
-
         ds_kw = dict(parser=parser)
 
         return cls(
@@ -131,8 +130,8 @@ class InstanceSegmentationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ):
-        """Creates a :class:`~flash.image.instance_segmentation.data.InstanceSegmentationData` object from the
-        given data folders and annotation files in the `COCO JSON format <https://cocodataset.org/#format-data>`_.
+        """Creates a :class:`~flash.image.instance_segmentation.data.InstanceSegmentationData` object from the given
+        data folders and annotation files in the `COCO JSON format <https://cocodataset.org/#format-data>`_.
 
         For help understanding and using the COCO format, take a look at this tutorial: `Create COCO annotations from
         scratch <COCO>`__.
@@ -284,9 +283,9 @@ class InstanceSegmentationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ):
-        """Creates a :class:`~flash.image.instance_segmentation.data.InstanceSegmentationData` object from the
-        given data folders, mask folders, and annotation files in the `PASCAL VOC (Visual Object Challenge) XML
-        format <PASCAL>`_.
+        """Creates a :class:`~flash.image.instance_segmentation.data.InstanceSegmentationData` object from the given
+        data folders, mask folders, and annotation files in the `PASCAL VOC (Visual Object Challenge) XML format
+        <PASCAL>`_.
 
         .. note:: All three arguments `*_folder`, `*_target_folder`, and `*_ann_folder` are needed to load data for a
             particular stage.

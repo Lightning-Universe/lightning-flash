@@ -41,7 +41,6 @@ class FaceDetectionData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
     ) -> "FaceDetectionData":
-
         ds_kw = dict()
 
         return cls(
@@ -63,7 +62,6 @@ class FaceDetectionData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "FaceDetectionData":
-
         return cls(
             predict_input=input_cls(RunningStage.PREDICTING, predict_files),
             transform=predict_transform,
@@ -80,7 +78,6 @@ class FaceDetectionData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "FaceDetectionData":
-
         return cls(
             predict_input=input_cls(RunningStage.PREDICTING, predict_folder),
             transform=predict_transform,

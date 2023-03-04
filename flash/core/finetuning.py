@@ -32,8 +32,8 @@ else:
 
 
 class FinetuningStrategies(LightningEnum):
-    """The ``FinetuningStrategies`` enum contains the keys that are used internally by the ``FlashBaseFinetuning``
-    when choosing the strategy to perform."""
+    """The ``FinetuningStrategies`` enum contains the keys that are used internally by the ``FlashBaseFinetuning`` when
+    choosing the strategy to perform."""
 
     NO_FREEZE = "no_freeze"
     FREEZE = "freeze"
@@ -217,8 +217,7 @@ class UnfreezeMilestones(FlashBaseFinetuning):
 
 
 class FlashDeepSpeedFinetuning(FlashBaseFinetuning):
-    """FlashDeepSpeedFinetuning can be used to create a custom Flash Finetuning Callback which works with
-    DeepSpeed.
+    """FlashDeepSpeedFinetuning can be used to create a custom Flash Finetuning Callback which works with DeepSpeed.
 
     DeepSpeed cannot store and load its parameters when working with Lightning. So FlashDeepSpeedFinetuning overrides
     `_store` to not store its parameters.

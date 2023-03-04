@@ -39,7 +39,6 @@ def normalize(x: Tensor) -> Tensor:
 @requires("video")
 @dataclass
 class VideoClassificationInputTransform(InputTransform):
-
     image_size: int = 244
     temporal_sub_sample: int = 8
     mean: Tensor = torch.tensor([0.45, 0.45, 0.45])

@@ -35,7 +35,6 @@ else:
 
 
 class TestGraphEmbedder(TaskTester):
-
     task = GraphEmbedder
     task_args = (GCN(in_channels=1, hidden_channels=512, num_layers=4),)
     is_testing = _GRAPH_TESTING

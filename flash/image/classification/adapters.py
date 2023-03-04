@@ -79,7 +79,6 @@ class Model(nn.Module):
 
 @beta("The Learn2Learn integration is currently in Beta.")
 class Learn2LearnAdapter(Adapter):
-
     required_extras: str = "image"
 
     def __init__(
@@ -216,7 +215,6 @@ class Learn2LearnAdapter(Adapter):
             )
 
         if isinstance(dataset, InputBase):
-
             metadata = getattr(dataset, "data", None)
             if metadata is None or (metadata is not None and not isinstance(dataset.data, list)):
                 raise TypeError("Only dataset built out of metadata is supported.")
@@ -463,7 +461,6 @@ class Learn2LearnAdapter(Adapter):
         input_transform: Optional[InputTransform] = None,
         trainer: Optional["flash.Trainer"] = None,
     ) -> DataLoader:
-
         if not self._algorithm_has_validated:
             raise RuntimeError(
                 "This training strategy needs to be validated before it can be used for prediction."

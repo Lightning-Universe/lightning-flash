@@ -48,7 +48,6 @@ if _SEGMENTATION_MODELS_AVAILABLE:
         in_channels: int = 3,
         **kwargs,
     ) -> nn.Module:
-
         if head not in SMP_MODELS:
             raise NotImplementedError(f"{head} is not implemented! Supported heads -> {SMP_MODELS.keys()}")
 
