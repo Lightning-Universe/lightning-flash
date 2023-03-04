@@ -38,7 +38,7 @@ repos:
     rev: v3.3.1
     hooks:
       - id: pyupgrade
-        args: [--py36-plus]
+        args: [--py37-plus]
         name: Upgrade code
 
   - repo: https://github.com/PyCQA/isort
@@ -46,7 +46,6 @@ repos:
     hooks:
       - id: isort
         name: imports
-        require_serial: false
 
   - repo: https://github.com/kynan/nbstripout
     rev: 0.6.1
@@ -54,7 +53,7 @@ repos:
       - id: nbstripout
 
   - repo: https://github.com/PyCQA/docformatter
-    rev: v1.5.1
+    rev: v1.5.0
     hooks:
       - id: docformatter
         args: [--in-place, --wrap-summaries=120, --wrap-descriptions=120]
