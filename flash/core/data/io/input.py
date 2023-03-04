@@ -13,7 +13,6 @@
 # limitations under the License.
 import functools
 import os
-import sys
 from enum import Enum
 from typing import Any, cast, Dict, Iterable, List, Sequence, Tuple, Union
 
