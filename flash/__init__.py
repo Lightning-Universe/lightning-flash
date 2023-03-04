@@ -18,7 +18,6 @@ from flash.__about__ import *  # noqa: F401 F403
 from flash.core.utilities.imports import _TORCH_AVAILABLE
 
 if _TORCH_AVAILABLE:
-
     from flash.core.data.callback import FlashCallback
     from flash.core.data.data_module import DataModule
     from flash.core.data.io.input import DataKeys, Input

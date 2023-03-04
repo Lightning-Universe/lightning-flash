@@ -44,7 +44,6 @@ class RegressionTask(Task, RegressionMixin):
         metrics: Union[torchmetrics.Metric, Mapping, Sequence, None] = None,
         **kwargs,
     ) -> None:
-
         metrics, loss_fn = RegressionMixin._build(loss_fn, metrics)
 
         super().__init__(

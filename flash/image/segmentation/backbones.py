@@ -23,7 +23,6 @@ if _SEGMENTATION_MODELS_AVAILABLE:
 SEMANTIC_SEGMENTATION_BACKBONES = FlashRegistry("backbones")
 
 if _SEGMENTATION_MODELS_AVAILABLE:
-
     ENCODERS = smp.encoders.get_encoder_names()
 
     def _load_smp_backbone(backbone: str, **_) -> str:

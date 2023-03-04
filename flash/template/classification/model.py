@@ -23,8 +23,8 @@ from flash.template.classification.backbones import TEMPLATE_BACKBONES
 
 
 class TemplateSKLearnClassifier(ClassificationTask):
-    """The ``TemplateSKLearnClassifier`` is a :class:`~flash.core.classification.ClassificationTask` that
-    classifies tabular data from scikit-learn.
+    """The ``TemplateSKLearnClassifier`` is a :class:`~flash.core.classification.ClassificationTask` that classifies
+    tabular data from scikit-learn.
 
     Args:
         num_features: The number of features (elements) in the input data.
@@ -106,8 +106,8 @@ class TemplateSKLearnClassifier(ClassificationTask):
         return super().test_step(batch, batch_idx)
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        """For the predict step, we just extract the :attr:`~flash.core.data.io.input.DataKeys.INPUT` key from the
-        input and forward it to the :meth:`~flash.core.model.Task.predict_step`."""
+        """For the predict step, we just extract the :attr:`~flash.core.data.io.input.DataKeys.INPUT` key from the input
+        and forward it to the :meth:`~flash.core.model.Task.predict_step`."""
         batch = batch[DataKeys.INPUT]
         return super().predict_step(batch, batch_idx, dataloader_idx=dataloader_idx)
 

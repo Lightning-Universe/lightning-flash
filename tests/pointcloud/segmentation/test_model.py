@@ -20,7 +20,6 @@ from tests.helpers.task_tester import TaskTester
 
 
 class TestPointCloudSegmentation(TaskTester):
-
     task = PointCloudSegmentation
     task_args = (2,)
     cli_command = "pointcloud_segmentation"

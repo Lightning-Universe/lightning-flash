@@ -22,7 +22,6 @@ STYLE_TRANSFER_BACKBONES = FlashRegistry("backbones")
 __all__ = ["STYLE_TRANSFER_BACKBONES"]
 
 if _PYSTICHE_AVAILABLE:
-
     from pystiche import enc
 
     MLE_FN_PATTERN = re.compile(r"^(?P<name>\w+?)_multi_layer_encoder$")

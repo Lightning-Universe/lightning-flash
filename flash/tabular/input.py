@@ -60,7 +60,6 @@ class TabularDataFrameInput(Input):
         numerical_fields: List[str],
         categorical_fields: List[str],
     ) -> Dict[str, Any]:
-
         mean, std = _compute_normalization(train_data_frame, numerical_fields)
 
         codes = _generate_codes(train_data_frame, categorical_fields)

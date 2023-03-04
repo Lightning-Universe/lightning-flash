@@ -86,7 +86,6 @@ class CustomBaseVisualization(BaseVisualization):
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
 class TestBaseViz:
     def test_base_viz(self, tmpdir):
-
         seed_everything(42)
         tmpdir = Path(tmpdir)
 
@@ -117,7 +116,6 @@ class TestBaseViz:
         num_tests = 10
 
         for stage in ("train", "val", "test", "predict"):
-
             for _ in range(num_tests):
                 for fcn_name in _CALLBACK_FUNCS:
                     dm.data_fetcher.reset()

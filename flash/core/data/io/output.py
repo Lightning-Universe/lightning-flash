@@ -19,8 +19,8 @@ from flash.core.data.properties import Properties
 
 
 class Output(Properties):
-    """An :class:`.Output` encapsulates a single :meth:`~flash.core.data.io.output.Output.transform` method which
-    is used to convert the model output into the desired output format when predicting."""
+    """An :class:`.Output` encapsulates a single :meth:`~flash.core.data.io.output.Output.transform` method which is
+    used to convert the model output into the desired output format when predicting."""
 
     @classmethod
     @abstractmethod

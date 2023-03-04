@@ -124,7 +124,6 @@ class DataModule(pl.LightningDataModule):
         pin_memory: bool = True,
         persistent_workers: bool = False,
     ) -> None:
-
         if not batch_size:
             raise TypeError("The `batch_size` should be provided to the DataModule on instantiation.")
 
@@ -561,8 +560,8 @@ class DataModule(pl.LightningDataModule):
         train_dataset: Dataset,
         val_split: float,
     ) -> Tuple[Any, Any]:
-        """Utility function for splitting the training dataset into a disjoint subset of training samples and
-        validation samples.
+        """Utility function for splitting the training dataset into a disjoint subset of training samples and validation
+        samples.
 
         Args:
             train_dataset: A instance of a :class:`torch.utils.data.Dataset`.

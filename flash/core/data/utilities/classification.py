@@ -385,8 +385,8 @@ _RESOLUTION_MAPPING: Dict[Type[TargetFormatter], List[Type[TargetFormatter]]] = 
 
 def _resolve_target_formatter(a: Type[TargetFormatter], b: Type[TargetFormatter]) -> Type[TargetFormatter]:
     """The purpose of this resolution function is to enable reduction of the ``TargetFormatter`` type over multiple
-    targets. For example, if one target formatter type is ``CommaDelimitedMultiLabelTargetFormatter`` and the other
-    type is ``SingleLabelTargetFormatter``then their reduction will be ``CommaDelimitedMultiLabelTargetFormatter``.
+    targets. For example, if one target formatter type is ``CommaDelimitedMultiLabelTargetFormatter`` and the other type
+    is ``SingleLabelTargetFormatter``then their reduction will be ``CommaDelimitedMultiLabelTargetFormatter``.
 
     Raises:
         ValueError: If the two target formatters could not be resolved.

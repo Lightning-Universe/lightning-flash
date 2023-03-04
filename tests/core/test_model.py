@@ -78,7 +78,6 @@ class PredictDummyDataset(DummyDataset):
 
 
 class DummyOutputTransform(OutputTransform):
-
     pass
 
 

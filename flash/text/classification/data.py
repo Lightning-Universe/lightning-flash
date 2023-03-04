@@ -368,8 +368,8 @@ class TextClassificationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TextClassificationData":
-        """Load the :class:`~flash.text.classification.data.TextClassificationData` from PARQUET files containing
-        text snippets and their corresponding targets.
+        """Load the :class:`~flash.text.classification.data.TextClassificationData` from PARQUET files containing text
+        snippets and their corresponding targets.
 
         Input text snippets will be extracted from the ``input_field`` column in the PARQUET files.
         The targets will be extracted from the ``target_fields`` in the PARQUET files and can be in any of our
@@ -593,8 +593,8 @@ class TextClassificationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "TextClassificationData":
-        """Load the :class:`~flash.text.classification.data.TextClassificationData` from Pandas ``DataFrame``
-        objects containing text snippets and their corresponding targets.
+        """Load the :class:`~flash.text.classification.data.TextClassificationData` from Pandas ``DataFrame`` objects
+        containing text snippets and their corresponding targets.
 
         Input text snippets will be extracted from the ``input_field`` column in the ``DataFrame`` objects.
         The targets will be extracted from the ``target_fields`` in the ``DataFrame`` objects and can be in any of our

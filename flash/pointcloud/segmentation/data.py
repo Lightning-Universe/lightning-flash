@@ -26,7 +26,6 @@ from flash.pointcloud.segmentation.input import PointCloudSegmentationDatasetInp
 
 @beta("Point cloud segmentation is currently in Beta.")
 class PointCloudSegmentationData(DataModule):
-
     input_transform_cls = InputTransform
 
     @classmethod
@@ -41,7 +40,6 @@ class PointCloudSegmentationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "PointCloudSegmentationData":
-
         ds_kw = dict()
 
         return cls(
@@ -63,7 +61,6 @@ class PointCloudSegmentationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "PointCloudSegmentationData":
-
         ds_kw = dict()
 
         return cls(
@@ -85,7 +82,6 @@ class PointCloudSegmentationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "PointCloudSegmentationData":
-
         ds_kw = dict()
 
         return cls(

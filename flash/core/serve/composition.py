@@ -17,7 +17,6 @@ else:
 def _parse_composition_kwargs(
     **kwargs: Union[ModelComponent, Endpoint]
 ) -> Tuple[Dict[str, ModelComponent], Dict[str, Endpoint]]:
-
     components, endpoints = {}, {}
     for k, v in kwargs.items():
         if isinstance(v, ModelComponent):

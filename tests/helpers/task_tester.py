@@ -145,15 +145,15 @@ def _test_load_from_checkpoint_dependency_error(self):
 
 
 def _test_init_dependency_error(self):
-    """Tests that a ``ModuleNotFoundError`` is raised when the task is instantiated if the required dependencies
-    are not available."""
+    """Tests that a ``ModuleNotFoundError`` is raised when the task is instantiated if the required dependencies are not
+    available."""
     with pytest.raises(ModuleNotFoundError, match="Required dependencies not available."):
         _ = self.instantiated_task
 
 
 class TaskTesterMeta(ABCMeta):
-    """The ``TaskTesterMeta`` is a metaclass which attaches a suite of tests to classes that extend ``TaskTester``
-    based on the configuration variables they define.
+    """The ``TaskTesterMeta`` is a metaclass which attaches a suite of tests to classes that extend ``TaskTester`` based
+    on the configuration variables they define.
 
     These tests will also be wrapped with the appropriate marks to skip them if the required dependencies are not
     available.

@@ -33,8 +33,8 @@ if not _IMAGE_TESTING:
 
 @beta("Style transfer is currently in Beta.")
 class StyleTransferData(DataModule):
-    """The ``StyleTransferData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
-    classmethods for loading data for image style transfer."""
+    """The ``StyleTransferData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of classmethods
+    for loading data for image style transfer."""
 
     input_transform_cls = StyleTransferInputTransform
 
@@ -205,8 +205,7 @@ class StyleTransferData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any
     ) -> "StyleTransferData":
-        """Load the :class:`~flash.image.style_transfer.data.StyleTransferData` from numpy arrays (or lists of
-        arrays).
+        """Load the :class:`~flash.image.style_transfer.data.StyleTransferData` from numpy arrays (or lists of arrays).
 
         To learn how to customize the transforms applied for each stage, read our
         :ref:`customizing transforms guide <customizing_transforms>`.

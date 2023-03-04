@@ -247,11 +247,11 @@ class LightningCLI:
         subclass_mode_model: bool = False,
         subclass_mode_data: bool = False,
     ) -> None:
-        """Receives as input pytorch-lightning classes (or callables which return pytorch-lightning classes), which
-        are called / instantiated using a parsed configuration file and / or command line args and then runs
-        trainer.fit. Parsing of configuration from environment variables can be enabled by setting
-        ``env_parse=True``. A full configuration yaml would be parsed from ``PL_CONFIG`` if set. Individual
-        settings are so parsed from variables named for example ``PL_TRAINER__MAX_EPOCHS``.
+        """Receives as input pytorch-lightning classes (or callables which return pytorch-lightning classes), which are
+        called / instantiated using a parsed configuration file and / or command line args and then runs trainer.fit.
+        Parsing of configuration from environment variables can be enabled by setting ``env_parse=True``. A full
+        configuration yaml would be parsed from ``PL_CONFIG`` if set. Individual settings are so parsed from variables
+        named for example ``PL_TRAINER__MAX_EPOCHS``.
 
         Example, first implement the ``trainer.py`` tool as::
 

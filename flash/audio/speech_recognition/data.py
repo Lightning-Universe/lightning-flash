@@ -56,8 +56,8 @@ class SpeechRecognitionData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "SpeechRecognitionData":
-        """Load the :class:`~flash.audio.speech_recognition.data.SpeechRecognitionData` from lists of audio files
-        and corresponding lists of targets.
+        """Load the :class:`~flash.audio.speech_recognition.data.SpeechRecognitionData` from lists of audio files and
+        corresponding lists of targets.
 
         The supported file extensions are: ``.aiff``, ``.au``, ``.avr``, ``.caf``, ``.flac``, ``.mat``, ``.mat4``,
         ``.mat5``, ``.mpc2k``, ``.ogg``, ``.paf``, ``.pvf``, ``.rf64``, ``.ircam``, ``.voc``, ``.w64``,
@@ -148,8 +148,8 @@ class SpeechRecognitionData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "SpeechRecognitionData":
-        """Load the :class:`~flash.audio.speech_recognition.data.SpeechRecognitionData` from CSV files containing
-        audio file paths and their corresponding targets.
+        """Load the :class:`~flash.audio.speech_recognition.data.SpeechRecognitionData` from CSV files containing audio
+        file paths and their corresponding targets.
 
         Input audio file paths will be extracted from the ``input_field`` column in the CSV files.
         The supported file extensions are: ``.aiff``, ``.au``, ``.avr``, ``.caf``, ``.flac``, ``.mat``, ``.mat4``,
@@ -337,8 +337,8 @@ class SpeechRecognitionData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "SpeechRecognitionData":
-        """Load the :class:`~flash.audio.speech_recognition.data.SpeechRecognitionData` from JSON files containing
-        audio file paths and their corresponding targets.
+        """Load the :class:`~flash.audio.speech_recognition.data.SpeechRecognitionData` from JSON files containing audio
+        file paths and their corresponding targets.
 
         Input audio file paths will be extracted from the ``input_field`` field in the JSON files.
         The supported file extensions are: ``.aiff``, ``.au``, ``.avr``, ``.caf``, ``.flac``, ``.mat``, ``.mat4``,
@@ -459,8 +459,7 @@ class SpeechRecognitionData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "SpeechRecognitionData":
-        """Load the :class:`~flash.audio.speech_recognition.data.SpeechRecognitionData` from PyTorch Dataset
-        objects.
+        """Load the :class:`~flash.audio.speech_recognition.data.SpeechRecognitionData` from PyTorch Dataset objects.
 
         The Dataset objects should be one of the following:
 

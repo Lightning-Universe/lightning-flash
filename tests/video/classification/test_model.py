@@ -145,7 +145,6 @@ def mock_encoded_video_dataset_folder(tmpdir):
 @pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
 def test_video_classifier_finetune_from_folder(tmpdir):
     with mock_encoded_video_dataset_folder(tmpdir) as (mock_folder, total_duration):
-
         half_duration = total_duration / 2 - 1e-9
 
         datamodule = VideoClassificationData.from_folders(
@@ -169,7 +168,6 @@ def test_video_classifier_finetune_from_folder(tmpdir):
 @pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
 def test_video_classifier_finetune_from_files(tmpdir):
     with mock_video_data_frame() as (mock_data_frame, total_duration):
-
         half_duration = total_duration / 2 - 1e-9
 
         datamodule = VideoClassificationData.from_files(
@@ -194,7 +192,6 @@ def test_video_classifier_finetune_from_files(tmpdir):
 @pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
 def test_video_classifier_finetune_from_data_frame(tmpdir):
     with mock_video_data_frame() as (mock_data_frame, total_duration):
-
         half_duration = total_duration / 2 - 1e-9
 
         datamodule = VideoClassificationData.from_data_frame(
@@ -271,7 +268,6 @@ def test_video_classifier_predict_from_tensors(tmpdir):
 @pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
 def test_video_classifier_finetune_from_csv(tmpdir):
     with mock_video_csv_file(tmpdir) as (mock_csv, total_duration):
-
         half_duration = total_duration / 2 - 1e-9
 
         datamodule = VideoClassificationData.from_csv(
@@ -301,7 +297,6 @@ def test_video_classifier_finetune_fiftyone(tmpdir):
         dir_name,
         total_duration,
     ):
-
         half_duration = total_duration / 2 - 1e-9
 
         train_dataset = fo.Dataset.from_dir(

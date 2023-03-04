@@ -84,8 +84,8 @@ class ObjectDetectionData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ObjectDetectionData":
-        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data list of
-        image files, bounding boxes, and targets.
+        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data list of image
+        files, bounding boxes, and targets.
 
         The supported file extensions are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``, ``.bmp``, ``.pgm``, ``.tif``,
         ``.tiff``, ``.webp``, and ``.npy``.
@@ -217,8 +217,8 @@ class ObjectDetectionData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ObjectDetectionData":
-        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given from numpy
-        arrays (or lists of arrays) and corresponding lists of bounding boxes and targets.
+        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given from numpy arrays
+        (or lists of arrays) and corresponding lists of bounding boxes and targets.
 
         The targets can be in any of our
         :ref:`supported classification target formats <formatting_classification_targets>`.
@@ -335,8 +335,8 @@ class ObjectDetectionData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ObjectDetectionData":
-        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given lists of PIL
-        images and corresponding lists of bounding boxes and targets.
+        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given lists of PIL images
+        and corresponding lists of bounding boxes and targets.
 
         The targets can be in any of our
         :ref:`supported classification target formats <formatting_classification_targets>`.
@@ -458,8 +458,8 @@ class ObjectDetectionData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ObjectDetectionData":
-        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given from torch
-        tensors (or lists of tensors) and corresponding lists of bounding boxes and targets.
+        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given from torch tensors
+        (or lists of tensors) and corresponding lists of bounding boxes and targets.
 
         The targets can be in any of our
         :ref:`supported classification target formats <formatting_classification_targets>`.
@@ -576,7 +576,6 @@ class ObjectDetectionData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
     ) -> "ObjectDetectionData":
-
         ds_kw = dict(parser=parser)
 
         return cls(
@@ -925,10 +924,9 @@ class ObjectDetectionData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ObjectDetectionData":
-        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders
-        and annotation files in the VIA (`VGG Image Annotator <https://www.robots.ox.ac.uk/~vgg/software/via/>`_)
-        `JSON format <https://gitlab.com/vgg/via/-/blob/via-3.x.y/via-3.x.y/CodeDoc.md#structure-of-via-project-
-        json-file>`_.
+        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders and
+        annotation files in the VIA (`VGG Image Annotator <https://www.robots.ox.ac.uk/~vgg/software/via/>`_) `JSON
+        format <https://gitlab.com/vgg/via/-/blob/via-3.x.y/via-3.x.y/CodeDoc.md#structure-of-via-project- json-file>`_.
 
         To learn how to customize the transforms applied for each stage, read our
         :ref:`customizing transforms guide <customizing_transforms>`.
@@ -1078,8 +1076,7 @@ class ObjectDetectionData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ObjectDetectionData":
-        """Load the :class:`~flash.image.detection.data.ObjectDetectionData` from FiftyOne ``SampleCollection``
-        objects.
+        """Load the :class:`~flash.image.detection.data.ObjectDetectionData` from FiftyOne ``SampleCollection`` objects.
 
         Targets will be extracted from the ``label_field`` in the ``SampleCollection`` objects.
         To learn how to customize the transforms applied for each stage, read our
@@ -1186,8 +1183,8 @@ class ObjectDetectionData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "DataModule":
-        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders
-        This is currently support only for the predicting stage.
+        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders This is
+        currently support only for the predicting stage.
 
         Args:
             predict_folder: The folder containing the predict data.

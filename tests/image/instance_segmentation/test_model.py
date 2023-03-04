@@ -91,7 +91,6 @@ def coco_instances(tmpdir):
 
 
 class TestInstanceSegmentation(TaskTester):
-
     task = InstanceSegmentation
     task_kwargs = {"num_classes": 2}
     cli_command = "instance_segmentation"

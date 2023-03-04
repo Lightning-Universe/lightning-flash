@@ -47,7 +47,6 @@ try:
     from flash.core.utilities import providers
 
 except ModuleNotFoundError:
-
     about = _load_py_module("__about__.py")
     providers = _load_py_module("core/utilities/providers.py")
 

@@ -69,7 +69,6 @@ class PointCloudObjectDetector(Task):
         lambda_loss_bbox: float = 1.0,
         lambda_loss_dir: float = 1.0,
     ):
-
         super().__init__(
             model=None,
             loss_fn=loss_fn,

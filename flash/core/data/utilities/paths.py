@@ -136,8 +136,8 @@ def filter_valid_files(
     *additional_lists: List[Any],
     valid_extensions: Optional[Tuple[str, ...]] = None,
 ) -> Union[List[Any], Tuple[List[Any], ...]]:
-    """Filter the given list of files and any additional lists to include only the entries that contain a file with
-    a valid extension.
+    """Filter the given list of files and any additional lists to include only the entries that contain a file with a
+    valid extension.
 
     Args:
         files: The list of files to filter by.

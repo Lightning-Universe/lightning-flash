@@ -23,8 +23,8 @@ from flash.graph.collate import _pyg_collate
 
 
 class GraphEmbedder(Task):
-    """The ``GraphEmbedder`` is a :class:`~flash.Task` for obtaining feature vectors (embeddings) from graphs. For
-    more details, see :ref:`graph_embedder`.
+    """The ``GraphEmbedder`` is a :class:`~flash.Task` for obtaining feature vectors (embeddings) from graphs. For more
+    details, see :ref:`graph_embedder`.
 
     Args:
         backbone: A model to use to extract image features.

@@ -17,8 +17,8 @@ from flash.core.data.batch import default_uncollate
 
 
 class OutputTransform:
-    """The :class:`~flash.core.data.io.output_transform.OutputTransform` encapsulates all the data processing logic
-    that should run after the model."""
+    """The :class:`~flash.core.data.io.output_transform.OutputTransform` encapsulates all the data processing logic that
+    should run after the model."""
 
     @staticmethod
     def per_batch_transform(batch: Any) -> Any:

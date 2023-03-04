@@ -26,7 +26,6 @@ TEST_BACKBONE = "distilbert-base-uncased"
 
 
 class TestQuestionAnsweringTask(TaskTester):
-
     task = QuestionAnsweringTask
     task_kwargs = {"backbone": TEST_BACKBONE}
     cli_command = "question_answering"

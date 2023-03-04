@@ -33,7 +33,6 @@ def load_hugingface(backbone: str, num_classes: int):
 HUGGINGFACE_BACKBONES = FlashRegistry("backbones")
 
 if _TRANSFORMERS_AVAILABLE:
-
     HUGGINGFACE_BACKBONES = ExternalRegistry(
         getter=load_hugingface,
         name="backbones",

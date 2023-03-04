@@ -59,9 +59,9 @@ class AlbumentationsAdapter(nn.Module):
 
 
 class ApplyToKeys(nn.Sequential):
-    """The ``ApplyToKeys`` class is an ``nn.Sequential`` which applies the given transforms to the given keys from
-    the input. When a single key is given, a single value will be passed to the transforms. When multiple keys are
-    given, the corresponding values will be passed to the transforms as a list.
+    """The ``ApplyToKeys`` class is an ``nn.Sequential`` which applies the given transforms to the given keys from the
+    input. When a single key is given, a single value will be passed to the transforms. When multiple keys are given,
+    the corresponding values will be passed to the transforms as a list.
 
     Args:
         keys: The key (``str``) or sequence of keys (``Sequence[str]``) to extract and forward to the transforms.

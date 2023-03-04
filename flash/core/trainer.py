@@ -127,8 +127,8 @@ class Trainer(PlTrainer):
         strategy: Union[str, BaseFinetuning, Tuple[str, int], Tuple[str, Tuple[int, int]]] = "no_freeze",
         train_bn: bool = True,
     ):
-        r"""Runs the full optimization routine. Same as :meth:`pytorch_lightning.Trainer.fit`, but unfreezes layers
-        of the backbone throughout training layers of the backbone throughout training.
+        r"""Runs the full optimization routine. Same as :meth:`pytorch_lightning.Trainer.fit`, but unfreezes layers of
+        the backbone throughout training layers of the backbone throughout training.
 
         Args:
             model: Model to fit.
@@ -219,8 +219,7 @@ class Trainer(PlTrainer):
 
     @staticmethod
     def _merge_callbacks(old_callbacks: List, new_callbacks: List) -> List:
-        """This function keeps only 1 instance of each callback type, extending new_callbacks with
-        old_callbacks."""
+        """This function keeps only 1 instance of each callback type, extending new_callbacks with old_callbacks."""
         if len(new_callbacks) == 0:
             return old_callbacks
         new_callbacks_types = {type(c) for c in new_callbacks}
@@ -246,8 +245,8 @@ class Trainer(PlTrainer):
 
     @property
     def estimated_stepping_batches(self) -> Union[int, float]:
-        """Estimated stepping batches for the complete training inferred from DataLoaders, gradient accumulation
-        factor and distributed setup.
+        """Estimated stepping batches for the complete training inferred from DataLoaders, gradient accumulation factor
+        and distributed setup.
 
         Examples
         ________

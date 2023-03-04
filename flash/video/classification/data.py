@@ -238,8 +238,7 @@ class VideoClassificationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
     ) -> "VideoClassificationData":
-        """Load the :class:`~flash.video.classification.data.VideoClassificationData` from folders containing
-        videos.
+        """Load the :class:`~flash.video.classification.data.VideoClassificationData` from folders containing videos.
 
         The supported file extensions are: ``.mp4``, and ``.avi``.
         For train, test, and validation data, the folders are expected to contain a sub-folder for each class.
@@ -715,8 +714,8 @@ class VideoClassificationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "VideoClassificationData":
-        """Load the :class:`~flash.video.classification.data.VideoClassificationData` from CSV files containing
-        video file paths and their corresponding targets.
+        """Load the :class:`~flash.video.classification.data.VideoClassificationData` from CSV files containing video
+        file paths and their corresponding targets.
 
         Input video file paths will be extracted from the ``input_field`` column in the CSV files.
         The supported file extensions are: ``.mp4``, and ``.avi``.
@@ -989,8 +988,8 @@ class VideoClassificationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
     ) -> "VideoClassificationData":
-        """Load the :class:`~flash.video.classification.data.VideoClassificationData` from FiftyOne
-        ``SampleCollection`` objects.
+        """Load the :class:`~flash.video.classification.data.VideoClassificationData` from FiftyOne ``SampleCollection``
+        objects.
 
         The supported file extensions are: ``.mp4``, and ``.avi``.
         The targets will be extracted from the ``label_field`` in the ``SampleCollection`` objects and can be in any

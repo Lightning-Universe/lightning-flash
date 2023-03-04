@@ -85,7 +85,6 @@ class KeypointDetectionData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "KeypointDetectionData":
-
         ds_kw = dict(parser=parser)
 
         return cls(

@@ -48,8 +48,8 @@ _deprecated_backbones = {
 
 
 class ImageEmbedder(AdapterTask):
-    """The ``ImageEmbedder`` is a :class:`~flash.Task` for obtaining feature vectors (embeddings) from images. For
-    more details, see :ref:`image_embedder`.
+    """The ``ImageEmbedder`` is a :class:`~flash.Task` for obtaining feature vectors (embeddings) from images. For more
+    details, see :ref:`image_embedder`.
 
     Args:
         training_strategy: Training strategy from VISSL,
@@ -160,8 +160,7 @@ class ImageEmbedder(AdapterTask):
     @classmethod
     @requires("image", "vissl", "fairscale")
     def available_training_strategies(cls) -> List[str]:
-        """Get the list of available training strategies (passed to the ``training_strategy`` argument) for this
-        task.
+        """Get the list of available training strategies (passed to the ``training_strategy`` argument) for this task.
 
         Examples
         ________

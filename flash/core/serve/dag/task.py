@@ -381,8 +381,7 @@ def getcycle(d, keys):
 
 
 def isdag(d, keys):
-    """Does graph form a directed acyclic graph when calculating keys? ``keys`` may be a single key or list of
-    keys.
+    """Does graph form a directed acyclic graph when calculating keys? ``keys`` may be a single key or list of keys.
 
     Examples
     --------

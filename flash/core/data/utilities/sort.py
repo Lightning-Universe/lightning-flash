@@ -24,8 +24,8 @@ def _alphanumeric_key(key: str) -> List[Union[int, str]]:
 
 
 def sorted_alphanumeric(iterable: Iterable[str]) -> Iterable[str]:
-    """Sort the given iterable in the way that humans expect. For example, given ``{"class_1", "class_11",
-    "class_2"}`` this returns ``["class_1", "class_2", "class_11"]``.
+    """Sort the given iterable in the way that humans expect. For example, given ``{"class_1", "class_11", "class_2"}``
+    this returns ``["class_1", "class_2", "class_11"]``.
 
     Copied from: https://blog.codinghorror.com/sorting-for-humans-natural-sort-order/
     """

@@ -83,7 +83,6 @@ class InputTransform:
 
             class MyInputTransform(InputTransform):
                 def per_sample_transform(self) -> Callable:
-
                     return ApplyToKeys("input", my_func)
         """
         pass
@@ -121,7 +120,6 @@ class InputTransform:
 
             class MyInputTransform(InputTransform):
                 def per_sample_transform(self) -> Callable:
-
                     return ApplyToKeys("input", my_func)
         """
         return self.per_sample_transform()
@@ -159,7 +157,6 @@ class InputTransform:
 
             class MyInputTransform(InputTransform):
                 def per_sample_transform(self) -> Callable:
-
                     return ApplyToKeys("input", my_func)
         """
         return self.per_sample_transform()
@@ -184,7 +181,6 @@ class InputTransform:
 
             class MyInputTransform(InputTransform):
                 def per_sample_transform(self) -> Callable:
-
                     return ApplyToKeys("input", my_func)
         """
         return self.per_sample_transform()
@@ -213,7 +209,6 @@ class InputTransform:
 
             class MyInputTransform(InputTransform):
                 def per_sample_transform_on_device(self) -> Callable:
-
                     return ApplyToKeys("input", my_func)
         """
         pass
@@ -251,7 +246,6 @@ class InputTransform:
 
             class MyInputTransform(InputTransform):
                 def per_sample_transform_on_device(self) -> Callable:
-
                     return ApplyToKeys("input", my_func)
         """
         return self.per_sample_transform_on_device()
@@ -289,7 +283,6 @@ class InputTransform:
 
             class MyInputTransform(InputTransform):
                 def per_sample_transform_on_device(self) -> Callable:
-
                     return ApplyToKeys("input", my_func)
         """
         return self.per_sample_transform_on_device()
@@ -314,7 +307,6 @@ class InputTransform:
 
             class MyInputTransform(InputTransform):
                 def serve_per_sample_transform_on_device(self) -> Callable:
-
                     return ApplyToKeys("input", my_func)
         """
         return self.per_sample_transform_on_device()
@@ -343,7 +335,6 @@ class InputTransform:
 
             class MyInputTransform(InputTransform):
                 def per_batch_transform(self) -> Callable:
-
                     return ApplyToKeys("input", my_func)
         """
         pass
@@ -381,7 +372,6 @@ class InputTransform:
 
             class MyInputTransform(InputTransform):
                 def per_batch_transform(self) -> Callable:
-
                     return ApplyToKeys("input", my_func)
         """
         return self.per_batch_transform()
@@ -419,7 +409,6 @@ class InputTransform:
 
             class MyInputTransform(InputTransform):
                 def per_batch_transform(self) -> Callable:
-
                     return ApplyToKeys("input", my_func)
         """
         return self.per_batch_transform()
@@ -444,7 +433,6 @@ class InputTransform:
 
             class MyInputTransform(InputTransform):
                 def per_batch_transform(self) -> Callable:
-
                     return ApplyToKeys("input", my_func)
         """
         return self.per_batch_transform()
@@ -473,7 +461,6 @@ class InputTransform:
 
             class MyInputTransform(InputTransform):
                 def per_batch_transform_on_device(self) -> Callable:
-
                     return ApplyToKeys("input", my_func)
         """
         pass
@@ -511,7 +498,6 @@ class InputTransform:
 
             class MyInputTransform(InputTransform):
                 def per_batch_transform_on_device(self) -> Callable:
-
                     return ApplyToKeys("input", my_func)
         """
         return self.per_batch_transform_on_device()
@@ -549,7 +535,6 @@ class InputTransform:
 
             class MyInputTransform(InputTransform):
                 def per_batch_transform_on_device(self) -> Callable:
-
                     return ApplyToKeys("input", my_func)
         """
         return self.per_batch_transform_on_device()
@@ -574,7 +559,6 @@ class InputTransform:
 
             class MyInputTransform(InputTransform):
                 def serve_per_batch_transform_on_device(self) -> Callable:
-
                     return ApplyToKeys("input", my_func)
         """
         return self.per_batch_transform_on_device()
@@ -677,7 +661,6 @@ class InputTransform:
 
         # iterate over all transforms hook name
         for transform_name in InputTransformPlacement:
-
             transform_name = transform_name.value
 
             method_name = f"{stage}_{transform_name}"
@@ -726,7 +709,6 @@ def create_or_configure_input_transform(
     transform: INPUT_TRANSFORM_TYPE,
     transform_kwargs: Optional[Dict] = None,
 ) -> Optional[InputTransform]:
-
     if not transform_kwargs:
         transform_kwargs = {}
 
@@ -831,8 +813,8 @@ class _InputTransformProcessor:
 
 
 def __make_collates(input_transform: InputTransform, on_device: bool, collate: Callable) -> Tuple[Callable, Callable]:
-    """Returns the appropriate collate functions based on whether the transforms happen in a DataLoader worker or
-    on the device (main process)."""
+    """Returns the appropriate collate functions based on whether the transforms happen in a DataLoader worker or on the
+    device (main process)."""
     if on_device:
         return input_transform._identity, collate
     return collate, input_transform._identity
@@ -841,7 +823,6 @@ def __make_collates(input_transform: InputTransform, on_device: bool, collate: C
 def __configure_worker_and_device_collate_fn(
     running_stage: RunningStage, input_transform: InputTransform
 ) -> Tuple[Callable, Callable]:
-
     transform_for_stage: _InputTransformPerStage = input_transform._transform[running_stage]
 
     worker_collate_fn, device_collate_fn = __make_collates(
@@ -854,8 +835,8 @@ def __configure_worker_and_device_collate_fn(
 def create_worker_input_transform_processor(
     running_stage: RunningStage, input_transform: InputTransform
 ) -> _InputTransformProcessor:
-    """This utility is used to create the 2 `_InputTransformProcessor` objects which contain the transforms used as
-    the DataLoader `collate_fn`."""
+    """This utility is used to create the 2 `_InputTransformProcessor` objects which contain the transforms used as the
+    DataLoader `collate_fn`."""
     worker_collate_fn, _ = __configure_worker_and_device_collate_fn(
         running_stage=running_stage, input_transform=input_transform
     )

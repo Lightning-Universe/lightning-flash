@@ -186,8 +186,7 @@ class FlashRegistry:
 
 
 class ExternalRegistry(FlashRegistry):
-    """The ``ExternalRegistry`` is a ``FlashRegistry`` that can point to an external provider via a getter
-    function.
+    """The ``ExternalRegistry`` is a ``FlashRegistry`` that can point to an external provider via a getter function.
 
     Args:
         getter: A function whose first argument is a key that can optionally take additional args and kwargs.
@@ -213,8 +212,8 @@ class ExternalRegistry(FlashRegistry):
         self.metadata = metadata
 
     def __contains__(self, item):
-        """Contains is always ``True`` for an ``ExternalRegistry`` as we can't know whether the getter will fail
-        without executing it."""
+        """Contains is always ``True`` for an ``ExternalRegistry`` as we can't know whether the getter will fail without
+        executing it."""
         return True
 
     def get(

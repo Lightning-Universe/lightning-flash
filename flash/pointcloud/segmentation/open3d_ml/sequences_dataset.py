@@ -21,7 +21,6 @@ from torch.utils.data import Dataset
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
 
 if _POINTCLOUD_AVAILABLE:
-
     from open3d._ml3d.datasets.utils import DataProcessing
     from open3d._ml3d.utils.config import Config
 
@@ -44,7 +43,6 @@ class SequencesDataset(Dataset):
         predicting=False,
         **kwargs,
     ):
-
         super().__init__()
 
         self.name = "Dataset"

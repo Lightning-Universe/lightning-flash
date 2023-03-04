@@ -45,7 +45,6 @@ def test_start_server_with_repeated_exposed(session_global_datadir, lightning_sq
     composit = Composition(comp=comp, TESTING=True, DEBUG=True)
     app = composit.serve(host="0.0.0.0", port=8000)
     with TestClient(app) as tc:
-
         meta = tc.get("http://127.0.0.1:8000/classify/meta")
         assert meta.status_code == 200
         with (session_global_datadir / "fish.jpg").open("rb") as f:

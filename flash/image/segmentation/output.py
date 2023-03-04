@@ -54,8 +54,8 @@ SEMANTIC_SEGMENTATION_OUTPUTS = FlashRegistry("outputs")
 
 @SEMANTIC_SEGMENTATION_OUTPUTS(name="labels")
 class SegmentationLabelsOutput(Output):
-    """A :class:`.Output` which converts the model outputs to the label of the argmax classification per pixel in
-    the image for semantic segmentation tasks.
+    """A :class:`.Output` which converts the model outputs to the label of the argmax classification per pixel in the
+    image for semantic segmentation tasks.
 
     Args:
         labels_map: A dictionary that map the labels ids to pixel intensities.
@@ -70,8 +70,8 @@ class SegmentationLabelsOutput(Output):
 
     @staticmethod
     def labels_to_image(img_labels: Tensor, labels_map: Dict[int, Tuple[int, int, int]]) -> Tensor:
-        """Function that given an image with labels ids and their pixel intensity mapping, creates an RGB
-        representation for visualisation purposes."""
+        """Function that given an image with labels ids and their pixel intensity mapping, creates an RGB representation
+        for visualisation purposes."""
         assert len(img_labels.shape) == 2, img_labels.shape
         H, W = img_labels.shape
         out = torch.empty(3, H, W, dtype=torch.uint8)

@@ -39,7 +39,6 @@ if _TIMM_AVAILABLE:
 def register_timm_backbones(register: FlashRegistry):
     if _TIMM_AVAILABLE:
         for model_name in timm.list_models():
-
             if model_name in TORCHVISION_MODELS:
                 continue
 

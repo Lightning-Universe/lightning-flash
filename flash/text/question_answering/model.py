@@ -54,8 +54,8 @@ else:
 
 
 class QuestionAnsweringTask(Task):
-    """The ``QuestionAnsweringTask`` is a :class:`~flash.Task` for extractive question answering. For more details,
-    see `question_answering`.
+    """The ``QuestionAnsweringTask`` is a :class:`~flash.Task` for extractive question answering. For more details, see
+    `question_answering`.
 
     You can change the backbone to any question answering model from `HuggingFace/transformers
     <https://huggingface.co/transformers/model_doc/auto.html#automodelforquestionanswering>`_ using the ``backbone``
@@ -155,7 +155,6 @@ class QuestionAnsweringTask(Task):
             )
 
     def _generate_answers(self, pred_start_logits, pred_end_logits, examples):
-
         all_predictions = collections.OrderedDict()
         if self.version_2_with_negative:
             scores_diff_json = collections.OrderedDict()

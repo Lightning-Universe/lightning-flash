@@ -32,7 +32,6 @@ if _GRAPH_AVAILABLE:
 
 
 class TestGraphClassifier(TaskTester):
-
     task = GraphClassifier
     task_kwargs = {"num_features": 1, "num_classes": 2}
     cli_command = "graph_classification"

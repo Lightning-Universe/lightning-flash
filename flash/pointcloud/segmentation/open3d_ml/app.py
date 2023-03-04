@@ -18,13 +18,11 @@ from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
 
 if _POINTCLOUD_AVAILABLE:
-
     from open3d._ml3d.torch.dataloaders import TorchDataloader
     from open3d._ml3d.vis.visualizer import LabelLUT
     from open3d._ml3d.vis.visualizer import Visualizer as Open3dVisualizer
 
 else:
-
     Open3dVisualizer = object
 
 

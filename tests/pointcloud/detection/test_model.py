@@ -19,7 +19,6 @@ from tests.helpers.task_tester import TaskTester
 
 
 class TestPointCloudObjectDetector(TaskTester):
-
     task = PointCloudObjectDetector
     task_args = (2,)
     cli_command = "pointcloud_detection"

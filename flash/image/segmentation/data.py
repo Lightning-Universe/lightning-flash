@@ -181,8 +181,8 @@ class SemanticSegmentationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "SemanticSegmentationData":
-        """Load the :class:`~flash.image.segmentation.data.SemanticSegmentationData` from folders containing image
-        files and folders containing mask files.
+        """Load the :class:`~flash.image.segmentation.data.SemanticSegmentationData` from folders containing image files
+        and folders containing mask files.
 
         The supported file extensions are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``, ``.bmp``, ``.pgm``, ``.tif``,
         ``.tiff``, ``.webp``, and ``.npy``.
@@ -322,8 +322,8 @@ class SemanticSegmentationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "SemanticSegmentationData":
-        """Load the :class:`~flash.image.segmentation.data.SemanticSegmentationData` from numpy arrays containing
-        images (or lists of arrays) and corresponding numpy arrays containing masks (or lists of arrays).
+        """Load the :class:`~flash.image.segmentation.data.SemanticSegmentationData` from numpy arrays containing images
+        (or lists of arrays) and corresponding numpy arrays containing masks (or lists of arrays).
 
         To learn how to customize the transforms applied for each stage, read our
         :ref:`customizing transforms guide <customizing_transforms>`.
@@ -496,8 +496,8 @@ class SemanticSegmentationData(DataModule):
         label_field: str = "ground_truth",
         **data_module_kwargs: Any,
     ) -> "SemanticSegmentationData":
-        """Load the :class:`~flash.image.segmentation.data.SemanticSegmentationData` from FiftyOne
-        ``SampleCollection`` objects.
+        """Load the :class:`~flash.image.segmentation.data.SemanticSegmentationData` from FiftyOne ``SampleCollection``
+        objects.
 
         The supported file extensions are: ``.jpg``, ``.jpeg``, ``.png``, ``.ppm``, ``.bmp``, ``.pgm``, ``.tif``,
         ``.tiff``, ``.webp``, and ``.npy``.

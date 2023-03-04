@@ -175,7 +175,6 @@ class ResNet(nn.Module):
         remove_first_maxpool: bool = False,
         in_chans: int = 3,
     ) -> None:
-
         super().__init__()
 
         if norm_layer is None:
@@ -315,7 +314,6 @@ def _resnet(
     weights_paths: dict = {"supervised": None},
     **kwargs: Any,
 ) -> ResNet:
-
     pretrained_flag = (pretrained and isinstance(pretrained, bool)) or (pretrained == "supervised")
 
     backbone = ResNet(block, layers, **kwargs)

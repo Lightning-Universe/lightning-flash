@@ -28,8 +28,7 @@ if _TORCHVISION_AVAILABLE:
 
 @dataclass
 class StandardMultiCropSSLTransform(InputTransform):
-    """Convert a PIL image to Multi-resolution Crops. The input is a PIL image and output is the list of image
-    crops.
+    """Convert a PIL image to Multi-resolution Crops. The input is a PIL image and output is the list of image crops.
 
     This transform was proposed in SwAV - https://arxiv.org/abs/2006.09882
     This transform can act as a base transform class for SimCLR, SwAV, and Barlow Twins from VISSL.

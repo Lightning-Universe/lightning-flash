@@ -407,8 +407,8 @@ def _match(S, N):
 
 
 def _process_match(rule, syms):
-    """Process a match to determine if it is correct, and to find the correct substitution that will convert the
-    term into the pattern.
+    """Process a match to determine if it is correct, and to find the correct substitution that will convert the term
+    into the pattern.
 
     Parameters
     ----------
