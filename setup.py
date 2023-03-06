@@ -94,11 +94,7 @@ def _load_py_module(fname, pkg="flash"):
 
 about = _load_py_module("__about__.py")
 
-long_description = _load_readme_description(
-    _PATH_ROOT,
-    homepage=about.__homepage__,
-    ver=about.__version__
-)
+long_description = _load_readme_description(_PATH_ROOT, homepage=about.__homepage__, ver=about.__version__)
 
 
 def _expand_reqs(extras: dict, keys: list) -> list:
@@ -130,6 +126,7 @@ def _get_extras(path_dir: str = _PATH_REQUIRE):
     # filter the uniques
     extras_req = {n: list(set(req)) for n, req in extras_req.items()}
     return extras_req
+
 
 # https://packaging.python.org/discussions/install-requires-vs-requirements /
 # keep the meta-data here for simplicity in reading this file... it's not obvious
