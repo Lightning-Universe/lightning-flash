@@ -20,11 +20,10 @@ jobs:
         python-version: 3.7
 
     - name: Install dependencies
-      run: >-
-        pip install --user --upgrade setuptools wheel
+      run: pip install --user --upgrade setuptools wheel build
     - name: Build
       run: |
-        python setup.py sdist bdist_wheel
+        python -m build
         ls -lh dist/
 
     # We do this, since failures on test.pypi aren't that bad

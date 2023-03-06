@@ -6,6 +6,9 @@ on: # Trigger the workflow on push or pull request, but only for the master bran
   pull_request:
     branches: [master]
 
+env:
+  FREEZE_REQUIREMENTS: 1
+
 jobs:
   make-docs:
     runs-on: ubuntu-20.04

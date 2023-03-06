@@ -34,21 +34,23 @@ jobs:
           - { os: ubuntu-20.04, python-version: 3.9, requires: 'oldest' }
           - { os: ubuntu-20.04, python-version: 3.9, requires: 'latest' }
         include:
-          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'pre', topic: [ 'core' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'image' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'image','image_extras' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'image','image_extras_baal' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'video' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'video','video_extras' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'tabular' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'text' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.8, requires: 'latest', release: 'stable', topic: [ 'pointcloud' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'serve' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'graph' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest', release: 'stable', topic: [ 'audio' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'pre', topic: [ 'core' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'image' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'image','image_extras' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'image','image_extras_baal' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'video' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'video','video_extras' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'tabular' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'text' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.8, release: 'stable', topic: [ 'pointcloud' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'serve' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'graph' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'audio' ] }
 
     # Timeout: https://stackoverflow.com/a/59076067/4521646
     timeout-minutes: 35
+    env:
+      FREEZE_REQUIREMENTS: 1
 
     steps:
     - uses: actions/checkout@v3
@@ -84,7 +86,7 @@ jobs:
       shell: python
 
     - run: echo "period=$(python -c 'import time; days = time.time() / 60 / 60 / 24; print(int(days / 7))' 2>&1)" >> $GITHUB_OUTPUT
-      if: matrix.requires == 'latest'
+      if: matrix.requires != 'latest'
       id: times
 
     - name: Get pip cache dir
@@ -96,8 +98,7 @@ jobs:
       with:
         path: ${{ steps.pip-cache.outputs.dir }}
         key: ${{ runner.os }}-${{ matrix.python-version }}-td${{ steps.times.outputs.period }}-${{ join(matrix.topic,'-') }}-${{ matrix.requires }}-pip-${{ hashFiles('requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-${{ matrix.python-version }}-td${{ steps.times.outputs.period }}-${{ join(matrix.topic,'-') }}-${{ matrix.requires }}-pip-
+        restore-keys: ${{ runner.os }}-${{ matrix.python-version }}-td${{ steps.times.outputs.period }}-${{ join(matrix.topic,'-') }}-${{ matrix.requires }}-pip-
 
     - name: Install graph test dependencies
       if: contains( matrix.topic , 'graph' )
@@ -147,15 +148,7 @@ jobs:
         FLASH_TEST_TOPIC: ${{ join(matrix.topic,',') }}
         FIFTYONE_DO_NOT_TRACK: true
       run: |
-        coverage run --source flash -m pytest flash tests --reruns 3 --reruns-delay 2 -v \
-          --junitxml=junit/test-results-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.requires }}.xml
-
-    - name: Upload pytest test results
-      uses: actions/upload-artifact@v3
-      with:
-        name: pytest-results-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.requires }}
-        path: junit/test-results-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.requires }}.xml
-      if: failure()
+        coverage run --source flash -m pytest flash tests --reruns 3 --reruns-delay 2 -v
 
     - name: Statistics
       if: success()
