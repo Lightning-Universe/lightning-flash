@@ -36,9 +36,6 @@ def _load_readme_description(path_dir: str, homepage: str, ver: str) -> str:
     path_readme = os.path.join(path_dir, "README.md")
     text = open(path_readme, encoding="utf-8").read()
 
-    # drop images from readme
-    text = text.replace("![PT to PL](docs/source/_images/general/pl_quick_start_full_compressed.gif)", "")
-
     # https://github.com/Lightning-AI/lightning/raw/master/docs/source/_images/lightning_module/pt_to_pl.png
     github_source_url = os.path.join(homepage, "raw", ver)
     # replace relative repository path to absolute link to the release
@@ -53,39 +50,18 @@ def _load_readme_description(path_dir: str, homepage: str, ver: str) -> str:
     # replace github badges for release ones
     text = text.replace("badge.svg?branch=master&event=push", f"badge.svg?tag={ver}")
 
-    skip_begin = r"<!-- following section will be skipped from PyPI description -->"
-    skip_end = r"<!-- end skipping PyPI description -->"
-    # todo: wrap content as commented description
-    text = re.sub(rf"{skip_begin}.+?{skip_end}", "<!--  -->", text, flags=re.IGNORECASE + re.DOTALL)
-
-    # # https://github.com/Borda/pytorch-lightning/releases/download/1.1.0a6/codecov_badge.png
-    # github_release_url = os.path.join(homepage, "releases", "download", ver)
-    # # download badge and replace url with local file
-    # text = _parse_for_badge(text, github_release_url)
     return text
 
 
-def _load_requirements(path_dir: str, file_name: str = "requirements.txt", comment_chars: str = "#@") -> list:
-    with open(os.path.join(path_dir, file_name)) as file:
-        lines = [ln.strip() for ln in file.readlines()]
-    reqs = []
-    for ln in lines:
-        # filer all comments
-        found = [ln.index(ch) for ch in comment_chars if ch in ln]
-        if found:
-            ln = ln[: min(found)].strip()
-        # skip directly installed dependencies
-        if ln.startswith("http") or ln.startswith("git") or ln.startswith("-r"):
-            continue
-        if ln:  # if requirement is not empty
-            reqs.append(ln)
-    return reqs
+def _load_requirements(path_dir: str, file_name: str = "requirements.txt") -> list:
+    from lightning_utilities.install import load_requirements
+    return load_requirements(path_dir, file_name)
 
 
 def _load_py_module(fname, pkg="flash"):
     spec = spec_from_file_location(
         os.path.join(pkg, fname),
-        os.path.join(_PATH_ROOT, pkg, fname),
+        os.path.join(_PATH_ROOT, pkg, fname)
     )
     py = module_from_spec(spec)
     spec.loader.exec_module(py)
@@ -153,6 +129,7 @@ setup(
     zip_safe=False,
     keywords=["deep learning", "pytorch", "AI"],
     python_requires=">=3.7",
+    setup_requires=["lightning-utilities @ https://github.com/Lightning-AI/utilities/archive/refs/heads/main.zip"],
     install_requires=_load_requirements(path_dir=_PATH_ROOT, file_name="requirements.txt"),
     project_urls={
         "Bug Tracker": "https://github.com/Lightning-AI/lightning-flash/issues",
