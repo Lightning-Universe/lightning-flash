@@ -1,4 +1,4 @@
-name: Check schema
+name: General Checks
 
 on:
   push:
@@ -10,7 +10,7 @@ jobs:
   check-schema:
     uses: Lightning-AI/utilities/.github/workflows/check-schema.yml@v0.7.1
     with:
-      # azure-dir: '.azure'  # ToDo
+      azure-dir: ''  # ToDo
 
   check-package:
     uses: Lightning-AI/utilities/.github/workflows/check-package.yml@v0.7.1
