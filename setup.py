@@ -13,13 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import glob
+import importlib
 import os
-import re
 from functools import partial
 from importlib.util import module_from_spec, spec_from_file_location
 from itertools import chain
 
 from setuptools import find_packages, setup
+
+importlib.set_lazy_imports()
 
 # https://packaging.python.org/guides/single-sourcing-package-version/
 # http://blog.ionelmc.ro/2014/05/25/python-packaging/
@@ -55,14 +57,12 @@ def _load_readme_description(path_dir: str, homepage: str, ver: str) -> str:
 
 def _load_requirements(path_dir: str, file_name: str = "requirements.txt") -> list:
     from lightning_utilities.install import load_requirements
+
     return load_requirements(path_dir, file_name)
 
 
 def _load_py_module(fname, pkg="flash"):
-    spec = spec_from_file_location(
-        os.path.join(pkg, fname),
-        os.path.join(_PATH_ROOT, pkg, fname)
-    )
+    spec = spec_from_file_location(os.path.join(pkg, fname), os.path.join(_PATH_ROOT, pkg, fname))
     py = module_from_spec(spec)
     spec.loader.exec_module(py)
     return py
