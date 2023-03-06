@@ -14,6 +14,7 @@
 # limitations under the License.
 import glob
 import os
+import re
 from functools import partial
 from importlib.util import module_from_spec, spec_from_file_location
 from itertools import chain
@@ -24,6 +25,61 @@ from setuptools import find_packages, setup
 # http://blog.ionelmc.ro/2014/05/25/python-packaging/
 _PATH_ROOT = os.path.dirname(__file__)
 _PATH_REQUIRE = os.path.join(_PATH_ROOT, "requirements")
+
+
+def _load_readme_description(path_dir: str, homepage: str, ver: str) -> str:
+    """Load readme as decribtion.
+
+    >>> _load_readme_description(_PATH_ROOT, "", "")  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    '<div align="center">...'
+    """
+    path_readme = os.path.join(path_dir, "README.md")
+    text = open(path_readme, encoding="utf-8").read()
+
+    # drop images from readme
+    text = text.replace("![PT to PL](docs/source/_images/general/pl_quick_start_full_compressed.gif)", "")
+
+    # https://github.com/Lightning-AI/lightning/raw/master/docs/source/_images/lightning_module/pt_to_pl.png
+    github_source_url = os.path.join(homepage, "raw", ver)
+    # replace relative repository path to absolute link to the release
+    #  do not replace all "docs" as in the readme we reger some other sources with particular path to docs
+    text = text.replace("docs/source/_static/", f"{os.path.join(github_source_url, 'docs/source/_static/')}")
+
+    # readthedocs badge
+    text = text.replace("badge/?version=stable", f"badge/?version={ver}")
+    text = text.replace("pytorch-lightning.readthedocs.io/en/stable/", f"pytorch-lightning.readthedocs.io/en/{ver}")
+    # codecov badge
+    text = text.replace("/branch/master/graph/badge.svg", f"/release/{ver}/graph/badge.svg")
+    # replace github badges for release ones
+    text = text.replace("badge.svg?branch=master&event=push", f"badge.svg?tag={ver}")
+
+    skip_begin = r"<!-- following section will be skipped from PyPI description -->"
+    skip_end = r"<!-- end skipping PyPI description -->"
+    # todo: wrap content as commented description
+    text = re.sub(rf"{skip_begin}.+?{skip_end}", "<!--  -->", text, flags=re.IGNORECASE + re.DOTALL)
+
+    # # https://github.com/Borda/pytorch-lightning/releases/download/1.1.0a6/codecov_badge.png
+    # github_release_url = os.path.join(homepage, "releases", "download", ver)
+    # # download badge and replace url with local file
+    # text = _parse_for_badge(text, github_release_url)
+    return text
+
+
+def _load_requirements(path_dir: str, file_name: str = "requirements.txt", comment_chars: str = "#@") -> list:
+    with open(os.path.join(path_dir, file_name)) as file:
+        lines = [ln.strip() for ln in file.readlines()]
+    reqs = []
+    for ln in lines:
+        # filer all comments
+        found = [ln.index(ch) for ch in comment_chars if ch in ln]
+        if found:
+            ln = ln[: min(found)].strip()
+        # skip directly installed dependencies
+        if ln.startswith("http") or ln.startswith("git") or ln.startswith("-r"):
+            continue
+        if ln:  # if requirement is not empty
+            reqs.append(ln)
+    return reqs
 
 
 def _load_py_module(fname, pkg="flash"):
@@ -37,43 +93,40 @@ def _load_py_module(fname, pkg="flash"):
 
 
 about = _load_py_module("__about__.py")
-setup_tools = _load_py_module("setup_tools.py")
 
-long_description = setup_tools._load_readme_description(
-    _PATH_ROOT,
-    homepage=about.__homepage__,
-    ver=about.__version__,
-)
+long_description = _load_readme_description(_PATH_ROOT, homepage=about.__homepage__, ver=about.__version__)
 
 
 def _expand_reqs(extras: dict, keys: list) -> list:
     return list(chain(*[extras[ex] for ex in keys]))
 
 
-base_req = setup_tools._load_requirements(path_dir=_PATH_ROOT, file_name="requirements.txt")
 # find all extra requirements
-_load_req = partial(setup_tools._load_requirements, path_dir=_PATH_REQUIRE)
-found_req_files = sorted(os.path.basename(p) for p in glob.glob(os.path.join(_PATH_REQUIRE, "*.txt")))
-# remove datatype prefix
-found_req_names = [os.path.splitext(req)[0].replace("datatype_", "") for req in found_req_files]
-# define basic and extra extras
-extras_req = {
-    name: _load_req(file_name=fname) for name, fname in zip(found_req_names, found_req_files) if "_" not in name
-}
-extras_req.update(
-    {
-        name: extras_req[name.split("_")[0]] + _load_req(file_name=fname)
-        for name, fname in zip(found_req_names, found_req_files)
-        if "_" in name
+def _get_extras(path_dir: str = _PATH_REQUIRE):
+    _load_req = partial(_load_requirements, path_dir=path_dir)
+    found_req_files = sorted(os.path.basename(p) for p in glob.glob(os.path.join(path_dir, "*.txt")))
+    # remove datatype prefix
+    found_req_names = [os.path.splitext(req)[0].replace("datatype_", "") for req in found_req_files]
+    # define basic and extra extras
+    extras_req = {
+        name: _load_req(file_name=fname) for name, fname in zip(found_req_names, found_req_files) if "_" not in name
     }
-)
-# some extra combinations
-extras_req["vision"] = _expand_reqs(extras_req, ["image", "video"])
-extras_req["core"] = _expand_reqs(extras_req, ["image", "tabular", "text"])
-extras_req["all"] = _expand_reqs(extras_req, ["vision", "tabular", "text", "audio"])
-extras_req["dev"] = _expand_reqs(extras_req, ["all", "test", "docs"])
-# filter the uniques
-extras_req = {n: list(set(req)) for n, req in extras_req.items()}
+    extras_req.update(
+        {
+            name: extras_req[name.split("_")[0]] + _load_req(file_name=fname)
+            for name, fname in zip(found_req_names, found_req_files)
+            if "_" in name
+        }
+    )
+    # some extra combinations
+    extras_req["vision"] = _expand_reqs(extras_req, ["image", "video"])
+    extras_req["core"] = _expand_reqs(extras_req, ["image", "tabular", "text"])
+    extras_req["all"] = _expand_reqs(extras_req, ["vision", "tabular", "text", "audio"])
+    extras_req["dev"] = _expand_reqs(extras_req, ["all", "test", "docs"])
+    # filter the uniques
+    extras_req = {n: list(set(req)) for n, req in extras_req.items()}
+    return extras_req
+
 
 # https://packaging.python.org/discussions/install-requires-vs-requirements /
 # keep the meta-data here for simplicity in reading this file... it's not obvious
@@ -93,14 +146,14 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     include_package_data=True,
-    extras_require=extras_req,
+    extras_require=_get_extras(),
     entry_points={
         "console_scripts": ["flash=flash.__main__:main"],
     },
     zip_safe=False,
     keywords=["deep learning", "pytorch", "AI"],
     python_requires=">=3.7",
-    install_requires=base_req,
+    install_requires=_load_requirements(path_dir=_PATH_ROOT, file_name="requirements.txt"),
     project_urls={
         "Bug Tracker": "https://github.com/Lightning-AI/lightning-flash/issues",
         "Documentation": "https://lightning-flash.rtfd.io/en/latest/",
