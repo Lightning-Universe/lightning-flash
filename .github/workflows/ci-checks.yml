@@ -10,11 +10,11 @@ jobs:
   check-schema:
     uses: Lightning-AI/utilities/.github/workflows/check-schema.yml@v0.7.1
     with:
-      azure-dir: '.azure'
+      # azure-dir: '.azure'  # ToDo
 
   check-package:
     uses: Lightning-AI/utilities/.github/workflows/check-package.yml@v0.7.1
     with:
-      actions-ref: ${{ github.sha }}  # use local version
+      actions-ref: v0.7.1
       artifact-name: dist-packages-${{ github.sha }}
       import-name: "flash"
