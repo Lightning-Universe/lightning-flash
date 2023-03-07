@@ -1,4 +1,4 @@
-open3d==0.13
-torch==1.7.1
-torchvision==0.8.1
+open3d ==0.13
+torch ==1.7.1
+torchvision ==0.8.1
 tensorboard <=2.11.0
