@@ -9,4 +9,5 @@ pytest-forked
 
 scikit-learn
 pytest_mock
+qpth !=0.0.15
 torch_optimizer
