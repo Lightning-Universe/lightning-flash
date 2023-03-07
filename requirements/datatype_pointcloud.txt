@@ -1,4 +1,6 @@
-open3d==0.13
-torch==1.7.1
-torchvision
-tensorboard
+# NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forecd in setup
+
+open3d ==0.13
+torch ==1.7.1
+torchvision ==0.8.2
+tensorboard <=2.11.0

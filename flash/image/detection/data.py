@@ -621,10 +621,8 @@ class ObjectDetectionData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ObjectDetectionData":
-        """.. _COCO: https://www.immersivelimit.com/tutorials/create-coco-annotations-from-scratch.
-
-        Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders
-        and annotation files in the `COCO JSON format <https://cocodataset.org/#format-data>`_.
+        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders and
+        annotation files in the `COCO JSON format <https://cocodataset.org/#format-data>`_.
 
         For help understanding and using the COCO format, take a look at this tutorial: `Create COCO annotations from
         scratch <COCO>`__.
@@ -735,6 +733,8 @@ class ObjectDetectionData(DataModule):
             >>> shutil.rmtree("train_folder")
             >>> shutil.rmtree("predict_folder")
             >>> os.remove("train_annotations.json")
+
+        .. _COCO: https://www.immersivelimit.com/tutorials/create-coco-annotations-from-scratch
         """
         return cls.from_icedata(
             train_folder=train_folder,
@@ -767,10 +767,8 @@ class ObjectDetectionData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "ObjectDetectionData":
-        """.. _PASCAL: http://host.robots.ox.ac.uk/pascal/VOC/
-
-        Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders
-        and annotation files in the `PASCAL VOC (Visual Object Challenge) XML format <PASCAL>`_.
+        """Creates a :class:`~flash.image.detection.data.ObjectDetectionData` object from the given data folders and
+        annotation files in the `PASCAL VOC (Visual Object Challenge) XML format <PASCAL>`_.
 
         To learn how to customize the transforms applied for each stage, read our
         :ref:`customizing transforms guide <customizing_transforms>`.
@@ -891,6 +889,8 @@ class ObjectDetectionData(DataModule):
             >>> shutil.rmtree("train_folder")
             >>> shutil.rmtree("predict_folder")
             >>> shutil.rmtree("train_annotations")
+
+        .. _PASCAL: http://host.robots.ox.ac.uk/pascal/VOC/
         """
         return cls.from_icedata(
             train_folder=train_folder,

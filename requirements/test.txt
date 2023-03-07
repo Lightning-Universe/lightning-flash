@@ -1,20 +1,13 @@
+# NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forecd in setup
+
 coverage
 codecov>=2.1
-pytest>=5.0,<7.0
-pytest-flake8
-flake8
+pytest>=5.0, <7.0
 pytest-doctestplus>=0.9.0
 pytest-rerunfailures>=10.0
 pytest-forked
 
-# install pkg
-check-manifest
-twine==3.2
-
-# formatting
-pre-commit
-isort
-#mypy
 scikit-learn
 pytest_mock
+qpth <0.0.14
 torch_optimizer
