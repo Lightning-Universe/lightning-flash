@@ -125,6 +125,7 @@ def _expand_reqs(extras: dict, keys: list) -> list:
 def _get_extras(path_dir: str = _PATH_REQUIRE) -> dict:
     _load_req = partial(_load_requirements, path_dir=path_dir)
     found_req_files = sorted(os.path.basename(p) for p in glob.glob(os.path.join(path_dir, "*.txt")))
+    found_req_files = [p for p in found_req_files if not p.startswith("testing_")]
     # remove datatype prefix
     found_req_names = [os.path.splitext(req)[0].replace("datatype_", "") for req in found_req_files]
     # define basic and extra extras

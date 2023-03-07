@@ -1,0 +1,3 @@
+icevision
+sahi==0.8.19
+effdet

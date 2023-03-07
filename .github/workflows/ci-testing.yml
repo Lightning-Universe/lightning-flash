@@ -78,68 +78,21 @@ jobs:
     - name: Set min. dependencies
       if: matrix.requires == 'oldest'
       run: |
-        fname = 'requirements.txt'
-        ignore = ['pandas', 'torchmetrics']
-        lines = [line if any([line.startswith(package) for package in ignore]) else line.replace('>=', '==') for line in open(fname).readlines()]
-        open(fname, 'w').writelines(lines)
+        import glob, os
+        files = glob.glob(os.path.join("requirements", "*.txt")) + ['requirements.txt']
+        for fname in files:
+          lines = [line.replace('>=', '==') for line in open(fname).readlines()]
+          open(fname, 'w').writelines(lines)
       shell: python
-
-    - run: echo "period=$(python -c 'import time; days = time.time() / 60 / 60 / 24; print(int(days / 7))' 2>&1)" >> $GITHUB_OUTPUT
-      if: matrix.requires != 'latest'
-      id: times
-
-    - name: Get pip cache dir
-      id: pip-cache
-      run: echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
-
-    - name: Cache pip
-      uses: actions/cache@v3
-      with:
-        path: ${{ steps.pip-cache.outputs.dir }}
-        key: ${{ runner.os }}-${{ matrix.python-version }}-td${{ steps.times.outputs.period }}-${{ join(matrix.topic,'-') }}-${{ matrix.requires }}-pip-${{ hashFiles('requirements.txt') }}
-        restore-keys: ${{ runner.os }}-${{ matrix.python-version }}-td${{ steps.times.outputs.period }}-${{ join(matrix.topic,'-') }}-${{ matrix.requires }}-pip-
-
-# TODO
-#    - name: Install graph test dependencies
-#      if: contains( matrix.topic , 'graph' )
-#      run: |
-#        pip install torch==1.11.0+cpu torchvision==0.12.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
-#        pip install torch-scatter -f https://data.pyg.org/whl/torch-1.11.0+cpu.html
-#        pip install torch-sparse -f https://data.pyg.org/whl/torch-1.11.0+cpu.html
-#        pip install torch-cluster -f https://data.pyg.org/whl/torch-1.11.0+cpu.html
 
     - name: Install dependencies
       run: |
         pip --version
-        flag=$(python -c "print('--pre' if '${{matrix.release}}' == 'pre' else '')" 2>&1)
+        # flag=$(python -c "print('--pre' if '${{matrix.release}}' == 'pre' else '')" 2>&1)
         pip install '.[${{ join(matrix.topic, ',') }},test]' \
           -r requirements/testing_${{ matrix.topic[0] }}.txt \
-          --upgrade $flag \
-          --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
+          --upgrade --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
         pip list
-
-# TODO
-#    - name: Install vissl
-#      if: contains( matrix.topic , 'image_extras' )
-#      run: |
-#        pip install git+https://github.com/facebookresearch/ClassyVision.git
-#        pip install git+https://github.com/facebookresearch/vissl.git
-
-# TODO
-#    - name: Install serve test dependencies
-#      if: contains( matrix.topic , 'serve' )
-#      run: |
-#        sudo apt-get install libsndfile1
-#        # TODO
-#        # pip install '.[all,audio]' icevision sahi==0.8.19 effdet --upgrade
-
-# TODO
-#    - name: Install audio test dependencies
-#      if: contains( matrix.topic , 'audio' )
-#      run: |
-#        sudo apt-get install libsndfile1
-#        pip install matplotlib
-#        pip install '.[audio,image]' torch==1.11.0 --upgrade
 
     - name: Cache datasets
       uses: actions/cache@v3
