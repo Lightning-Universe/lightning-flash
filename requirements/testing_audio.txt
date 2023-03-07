@@ -1,2 +1,6 @@
 matplotlib
 torch==1.11.0
+
+matplotlib
+
+-r datatype_image.txt

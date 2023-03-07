@@ -27,24 +27,24 @@ jobs:
         os: [ubuntu-20.04, macOS-12, windows-2022]
         python-version: [3.7, 3.9]
         requires: ['oldest', 'latest']
-        topic: [['core']]
+        topic: [ ['core'] ]
         release: [ 'stable' ]
         exclude:
           # Skip if torch<1.8 and py3.9 on Linux: https://github.com/pytorch/pytorch/issues/50014
-          - { os: ubuntu-20.04, python-version: 3.9, requires: 'oldest' }
-          - { os: ubuntu-20.04, python-version: 3.9, requires: 'latest' }
+          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'oldest' }
+          - { os: 'ubuntu-20.04', python-version: 3.9, requires: 'latest' }
         include:
-          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'pre', topic: [ 'core' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'image' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'image','image_vissl' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'image','image_baal' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'video' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'tabular' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'text' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.8, release: 'stable', topic: [ 'pointcloud' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'serve' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'graph' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'audio' ] }
+          # - { os: 'ubuntu-20.04', python-version: 3.9, release: 'pre', topic: [ 'core' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: [ 'image' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: [ 'image','image_vissl' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: [ 'image','image_baal' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: [ 'video' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: [ 'tabular' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: [ 'text' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.8, topic: [ 'pointcloud' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: [ 'serve' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: [ 'graph' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: [ 'audio' ] }
 
     # Timeout: https://stackoverflow.com/a/59076067/4521646
     timeout-minutes: 35
@@ -67,9 +67,11 @@ jobs:
     # Github Actions: Run step on specific OS: https://stackoverflow.com/a/57948488/4521646
     - name: Setup macOS
       if: runner.os == 'macOS'
-      run: |
-        brew update
-        brew install libomp  # https://github.com/pytorch/pytorch/issues/20030
+      run: brew install libomp openblas lapack
+
+    - name: Setup Ubuntu
+      if: runner.os == 'Linux'
+      run: sudo apt-get install -y libsndfile1
 
     - name: Install graphviz
       if: contains( matrix.topic , 'serve' )
