@@ -1,10 +1,10 @@
-torchvision
-timm>=0.4.5
-lightning-bolts>=0.3.3
-Pillow>=7.2
-albumentations>=1.0
-pystiche==1.*
-segmentation-models-pytorch>=0.2.0
-ftfy
-regex
-sahi<0.11  # Fixes compatibility with icevision
+torchvision <=0.14.1
+timm>=0.4.5, <=0.4.12
+lightning-bolts>=0.3.3, <=0.6.0
+Pillow>=7.2, <=9.3.0
+albumentations>=1.0, <=1.3.0
+pystiche>=1.0.0, <=1.0.1
+segmentation-models-pytorch>=0.2.0, <=0.3.1
+ftfy <=6.1.1
+regex <=2022.10.31
+sahi<0.11  # strict - Fixes compatibility with icevision

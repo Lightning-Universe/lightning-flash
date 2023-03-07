@@ -1,1 +1,1 @@
-fiftyone
+fiftyone <=0.18.0

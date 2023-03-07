@@ -1,9 +1,9 @@
-torchvision
-sentencepiece>=0.1.95
-filelock
-transformers>=4.5
-torchmetrics[text]>=0.5.1
-datasets>=1.8
-sentence-transformers
-ftfy
-regex
+torchvision <=0.14.1
+sentencepiece>=0.1.95, <=0.1.97
+filelock <=3.8.2
+transformers>=4.5, <=4.25.1
+torchmetrics[text]>=0.5.1, <0.11.0
+datasets>=1.8, <=2.8.0
+sentence-transformers <=2.2.2
+ftfy <=6.1.1
+regex <=2022.10.31
