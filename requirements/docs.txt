@@ -1,7 +1,7 @@
 sphinx>=4.0,<5.0
 myst-parser>=0.15
 nbsphinx>=0.8.5, <=0.8.10
-ipython[notebook]
+ipython[notebook] <8.7.0
 pandoc>=1.0
 docutils>=0.16
 sphinxcontrib-fulltoc>=1.0
