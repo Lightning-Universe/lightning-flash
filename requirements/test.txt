@@ -1,4 +1,4 @@
-NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forecd in setup
+# NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forecd in setup
 
 coverage
 codecov>=2.1
