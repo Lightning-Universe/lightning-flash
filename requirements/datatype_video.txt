@@ -1,3 +1,5 @@
+NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forecd in setup
+
 torchvision <=0.14.1
 Pillow>=7.2, <=9.3.0
 kornia>=0.5.1, <=0.6.9

@@ -1,3 +1,5 @@
+NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forecd in setup
+
 coverage
 codecov>=2.1
 pytest>=5.0, <7.0
