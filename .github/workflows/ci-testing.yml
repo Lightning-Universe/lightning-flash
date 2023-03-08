@@ -90,6 +90,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip --version
+        pip install Cython
         # flag=$(python -c "print('--pre' if '${{matrix.release}}' == 'pre' else '')" 2>&1)
         pip install '.[${{ join(matrix.topic, ',') }},test]' \
           -r requirements/testing_${{ matrix.topic[0] }}.txt \

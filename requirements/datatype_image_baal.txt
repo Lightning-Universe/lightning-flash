@@ -1,4 +1,4 @@
 # NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forecd in setup
 
 # This is a separate file, as baal integration is affected by vissl installation (conflicts)
-baal>=1.3.2, <=1.7.0
+baal >=1.3.2, <=1.7.0

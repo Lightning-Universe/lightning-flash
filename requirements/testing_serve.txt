@@ -1,6 +1,4 @@
-icevision
-sahi==0.8.19
-effdet
+sahi ==0.8.19
 
 -r datatype_image.txt
 -r datatype_video.txt

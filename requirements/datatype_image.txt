@@ -1,27 +1,25 @@
 # NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forecd in setup
 
 torchvision <=0.14.1
-timm>=0.4.5, <=0.4.12
-lightning-bolts>=0.3.3, <=0.6.0
-Pillow>=7.2, <=9.3.0
-albumentations>=1.0, <=1.3.0
-pystiche>1.0.0, <=1.0.1
-segmentation-models-pytorch>=0.2.0, <=0.3.1
+timm >=0.4.5, <=0.4.12
+lightning-bolts >=0.3.3, <=0.6.0
+Pillow >=7.2, <=9.3.0
+albumentations >=1.0, <=1.3.0
+pystiche >1.0.0, <=1.0.1
+segmentation-models-pytorch >=0.2.0, <=0.3.1
 ftfy <=6.1.1
 regex <=2022.10.31
-sahi <0.11  # strict - Fixes compatibility with icevision
+sahi >=0.8.19, <0.11  # strict - Fixes compatibility with icevision
 
 matplotlib <=3.6.2
-fiftyone
-classy_vision
-vissl>=0.1.5
-icevision>=0.8
-sahi >=0.8.19,<0.11.0
-icedata
-effdet
-kornia>=0.5.1
-learn2learn
-fastface
+fiftyone <0.19.0
+classy-vision <=0.6.0 # dead
+icevision >=0.8
+icedata <=0.5.1 # dead
+effdet <=0.3.0
+kornia >=0.5.1, <=0.6.9
+learn2learn <=0.1.7  # dead
+fastface <=0.1.3  # dead
 fairscale
 
 # pin PL for testing, remove when fastface is updated
