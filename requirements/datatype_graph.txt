@@ -1,4 +1,4 @@
-# NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forecd in setup
+# NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forced in setup
 
 torch-scatter <=2.1.0
 torch-sparse <=0.6.16
