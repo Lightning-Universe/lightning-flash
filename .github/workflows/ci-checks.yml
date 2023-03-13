@@ -15,6 +15,6 @@ jobs:
   check-package:
     uses: Lightning-AI/utilities/.github/workflows/check-package.yml@v0.8.0
     with:
-      actions-ref: v0.7.1
+      actions-ref: v0.8.0
       artifact-name: dist-packages-${{ github.sha }}
       import-name: "flash"
