@@ -5,11 +5,11 @@ recursive-exclude __pycache__  *.py[cod] *.orig
 
 # Include the README and CHANGELOG
 include *.md
-recursive-include flash *.md
-recursive-include flash *.py
+recursive-include src *.md
+recursive-include src *.py
 
 # Include assets
-recursive-include flash/assets *.jpg *.png
+recursive-include src/flash/assets *.jpg *.png
 
 # Include the license file
 include LICENSE
@@ -17,15 +17,6 @@ include LICENSE
 exclude *.sh
 exclude *.toml
 exclude *.svg
-
-# exclude tests from package
-recursive-exclude tests *
-recursive-exclude site *
-exclude tests
-
-# Exclude the documentation files
-recursive-exclude docs *
-exclude docs
 
 # Include the Requirements
 include requirements/*.txt
@@ -36,6 +27,7 @@ exclude *.yml
 
 prune .git
 prune .github
+prune docs
 prune notebook*
 prune temp*
 prune test*
