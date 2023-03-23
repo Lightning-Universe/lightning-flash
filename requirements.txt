@@ -1,6 +1,6 @@
 # NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forced in setup
 
-packaging
+packaging <23.0
 setuptools<=59.5.0  # Prevent install bug with tensorboard
 numpy <1.24  # strict - freeze for using np.long
 torch >=1.8.1
