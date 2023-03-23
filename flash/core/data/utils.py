@@ -19,7 +19,7 @@ from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Set
 
 import requests
 import urllib3
-from pytorch_lightning.utilities.apply_func import apply_to_collection
+from lightning_utilities.core.apply_func import apply_to_collection
 from torch import nn
 from tqdm.auto import tqdm as tq
 
