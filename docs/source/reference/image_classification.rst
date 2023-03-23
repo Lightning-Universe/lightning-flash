@@ -56,7 +56,7 @@ We then use the trained :class:`~flash.image.classification.model.ImageClassifie
 Finally, we save the model.
 Here's the full example:
 
-.. literalinclude:: ../../../flash_examples/image_classification.py
+.. literalinclude:: ../../../examples/image_classification.py
     :language: python
     :lines: 14-
 
@@ -181,12 +181,12 @@ The :class:`~flash.image.classification.model.ImageClassifier` is servable.
 This means you can call ``.serve`` to serve your :class:`~flash.core.model.Task`.
 Here's an example:
 
-.. literalinclude:: ../../../flash_examples/serve/image_classification/inference_server.py
+.. literalinclude:: ../../../examples/serve/image_classification/inference_server.py
     :language: python
     :lines: 14-
 
 You can now perform inference from your client like this:
 
-.. literalinclude:: ../../../flash_examples/serve/image_classification/client.py
+.. literalinclude:: ../../../examples/serve/image_classification/client.py
     :language: python
     :lines: 14-

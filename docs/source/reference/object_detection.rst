@@ -51,7 +51,7 @@ We then use the trained :class:`~flash.image.detection.model.ObjectDetector` for
 Finally, we save the model.
 Here's the full example:
 
-.. literalinclude:: ../../../flash_examples/object_detection.py
+.. literalinclude:: ../../../examples/object_detection.py
     :language: python
     :lines: 14-
 
@@ -126,12 +126,12 @@ The :class:`~flash.image.detection.model.ObjectDetector` is servable.
 This means you can call ``.serve`` to serve your :class:`~flash.core.model.Task`.
 Here's an example:
 
-.. literalinclude:: ../../../flash_examples/serve/object_detection/inference_server.py
+.. literalinclude:: ../../../examples/serve/object_detection/inference_server.py
     :language: python
     :lines: 14-
 
 You can now perform inference from your client like this:
 
-.. literalinclude:: ../../../flash_examples/serve/object_detection/client.py
+.. literalinclude:: ../../../examples/serve/object_detection/client.py
     :language: python
     :lines: 14-
