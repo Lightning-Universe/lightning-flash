@@ -129,9 +129,7 @@ def _get_extras(path_dir: str = _PATH_REQUIRE) -> dict:
     # remove datatype prefix
     found_req_names = [os.path.splitext(req)[0].replace("datatype_", "") for req in found_req_files]
     # define basic and extra extras
-    extras_req = {
-        name: _load_req(file_name=fname) for name, fname in zip(found_req_names, found_req_files)
-    }
+    extras_req = {name: _load_req(file_name=fname) for name, fname in zip(found_req_names, found_req_files)}
     # extras_req.update({
     #     name: extras_req[name.split("_")[0]] + _load_req(file_name=fname)
     #     for name, fname in zip(found_req_names, found_req_files)
