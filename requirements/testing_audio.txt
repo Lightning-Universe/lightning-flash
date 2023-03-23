@@ -1,6 +1,6 @@
 matplotlib
 torch ==1.11.0
-
-matplotlib
+torchaudio ==0.12.0
+torchvision ==0.12.0
 
 -r datatype_image.txt
