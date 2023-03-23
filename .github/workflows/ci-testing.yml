@@ -36,8 +36,9 @@ jobs:
         include:
           # - { os: 'ubuntu-20.04', python-version: 3.9, release: 'pre', topic: [ 'core' ] }
           - { os: 'ubuntu-20.04', python-version: 3.9, topic: [ 'image' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: [ 'image','image_vissl' ] }
           - { os: 'ubuntu-20.04', python-version: 3.9, topic: [ 'image','image_baal' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: [ 'image','image_segm' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: [ 'image','image_vissl' ] }
           - { os: 'ubuntu-20.04', python-version: 3.9, topic: [ 'video' ] }
           - { os: 'ubuntu-20.04', python-version: 3.9, topic: [ 'tabular' ] }
           - { os: 'ubuntu-20.04', python-version: 3.9, topic: [ 'text' ] }
