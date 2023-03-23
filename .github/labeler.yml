@@ -6,20 +6,20 @@ examples:
   - examples/**/*
 
 data:
-  - flash/core/data/**/*
+  - src/flash/core/data/**/*
 
 task:
-  - flash/tabular/**/*
-  - flash/text/**/*
-  - flash/image/**/*
-  - flash/video/**/*
+  - src/flash/tabular/**/*
+  - src/flash/text/**/*
+  - src/flash/image/**/*
+  - src/flash/video/**/*
 
 tabular:
-  - flash/tabular/**/*
+  - src/flash/tabular/**/*
 
 text:
-  - flash/text/**/*
+  - src/flash/text/**/*
 
 vision:
-  - flash/image/**/*
-  - flash/video/**/*
+  - src/flash/image/**/*
+  - src/flash/video/**/*
