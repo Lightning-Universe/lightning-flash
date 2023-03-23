@@ -36,7 +36,6 @@ exclude *.yml
 
 prune .git
 prune .github
-prune .circleci
 prune notebook*
 prune temp*
 prune test*
