@@ -49,7 +49,7 @@ Next, we use the trained :class:`~flash.text.seq2seq.translation.model.Translati
 Finally, we save the model.
 Here's the full example:
 
-.. literalinclude:: ../../../flash_examples/translation.py
+.. literalinclude:: ../../../examples/translation.py
     :language: python
     :lines: 14-
 
@@ -84,13 +84,13 @@ The :class:`~flash.text.seq2seq.translation.model.TranslationTask` is servable.
 This means you can call ``.serve`` to serve your :class:`~flash.core.model.Task`.
 Here's an example:
 
-.. literalinclude:: ../../../flash_examples/serve/translation/inference_server.py
+.. literalinclude:: ../../../examples/serve/translation/inference_server.py
     :language: python
     :lines: 14-
 
 You can now perform inference from your client like this:
 
-.. literalinclude:: ../../../flash_examples/serve/translation/client.py
+.. literalinclude:: ../../../examples/serve/translation/client.py
     :language: python
     :lines: 14-
 

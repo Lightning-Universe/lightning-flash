@@ -40,7 +40,7 @@ Next, we configure the :class:`~flash.image.embedding.model.ImageEmbedder` task 
 Finally, we construct a :class:`~flash.core.trainer.Trainer` and call ``fit()``.
 Here's the full example:
 
-.. literalinclude:: ../../../flash_examples/image_embedder.py
+.. literalinclude:: ../../../examples/image_embedder.py
     :language: python
     :lines: 14-
 

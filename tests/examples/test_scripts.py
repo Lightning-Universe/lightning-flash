@@ -167,4 +167,4 @@ root = Path(__file__).parent.parent.parent
 )
 @forked
 def test_example(tmpdir, file):
-    run_test(str(root / "flash_examples" / file))
+    run_test(str(root / "examples" / file))

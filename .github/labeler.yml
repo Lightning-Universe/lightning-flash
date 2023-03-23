@@ -3,7 +3,7 @@ documentation:
   - README.md
 
 examples:
-  - flash_examples/**/*
+  - examples/**/*
 
 data:
   - flash/core/data/**/*

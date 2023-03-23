@@ -30,7 +30,7 @@ Next, we create our :class:`~flash.text.embedding.model.TextEmbedder` with a pre
 Finally, we create a :class:`~flash.core.trainer.Trainer` and generate sentence embeddings.
 Here's the full example:
 
-.. literalinclude:: ../../../flash_examples/text_embedder.py
+.. literalinclude:: ../../../examples/text_embedder.py
     :language: python
     :lines: 14-
 

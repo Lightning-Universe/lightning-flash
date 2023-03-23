@@ -41,7 +41,7 @@ Example
 
 In this tutorial, we will serve a Resnet18  from the `PyTorchVision library <https://github.com/pytorch/vision>`_ in 3 steps.
 
-The entire tutorial can be found under ``flash_examples/serve/generic``.
+The entire tutorial can be found under ``examples/serve/generic``.
 
 Introduction
 ============
