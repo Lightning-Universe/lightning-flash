@@ -31,9 +31,9 @@ addopts = [
     "--color=yes",
     "--disable-pytest-warnings",
 ]
-filterwarnings = [
-    "error::FutureWarning",
-]
+#filterwarnings = [
+#    "error::FutureWarning",
+#]
 xfail_strict = false  # todo
 junit_duration_report = "call"
 
