@@ -24,19 +24,19 @@ You also need to provide ``name`` and ``namespace`` of the backbone.
 The standard for *namespace* is ``data_type/task_type``, so for an image classification task the namespace will be ``image/classification``.
 Here's the code:
 
-.. literalinclude:: ../../../flash/template/classification/backbones.py
+.. literalinclude:: ../../../src/flash/template/classification/backbones.py
     :language: python
     :pyobject: load_mlp_128
 
 Here's another example with a slightly more complex model:
 
-.. literalinclude:: ../../../flash/template/classification/backbones.py
+.. literalinclude:: ../../../src/flash/template/classification/backbones.py
     :language: python
     :pyobject: load_mlp_128_256
 
 Here's a another example, which adds ``DINO`` pretrained model from PyTorch Hub to the ``IMAGE_CLASSIFIER_BACKBONES``, from `flash/image/classification/backbones/transformers.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash/image/classification/backbones/transformers.py>`_:
 
-.. literalinclude:: ../../../flash/image/classification/backbones/transformers.py
+.. literalinclude:: ../../../src/flash/image/classification/backbones/transformers.py
     :language: python
     :pyobject: dino_vitb16
 

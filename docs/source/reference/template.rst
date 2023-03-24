@@ -39,6 +39,6 @@ Here's the full example:
 
 <include the example with ``literalinclude``>
 
-.. literalinclude:: ../../../flash_examples/template.py
+.. literalinclude:: ../../../examples/template.py
     :language: python
     :lines: 14-

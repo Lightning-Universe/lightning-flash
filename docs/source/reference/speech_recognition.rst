@@ -49,7 +49,7 @@ The backbone can be any Wav2Vec model from `HuggingFace transformers <https://hu
 Next, we use the trained :class:`~flash.audio.speech_recognition.model.SpeechRecognition` for inference and save the model.
 Here's the full example:
 
-.. literalinclude:: ../../../flash_examples/speech_recognition.py
+.. literalinclude:: ../../../examples/speech_recognition.py
     :language: python
     :lines: 14-
 
@@ -84,12 +84,12 @@ The :class:`~flash.audio.speech_recognition.model.SpeechRecognition` is servable
 This means you can call ``.serve`` to serve your :class:`~flash.core.model.Task`.
 Here's an example:
 
-.. literalinclude:: ../../../flash_examples/serve/speech_recognition/inference_server.py
+.. literalinclude:: ../../../examples/serve/speech_recognition/inference_server.py
     :language: python
     :lines: 14-
 
 You can now perform inference from your client like this:
 
-.. literalinclude:: ../../../flash_examples/serve/speech_recognition/client.py
+.. literalinclude:: ../../../examples/serve/speech_recognition/client.py
     :language: python
     :lines: 14-

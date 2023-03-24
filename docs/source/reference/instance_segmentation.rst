@@ -31,7 +31,7 @@ We then use the trained :class:`~flash.image.instance_segmentation.model.Instanc
 Finally, we save the model.
 Here's the full example:
 
-.. literalinclude:: ../../../flash_examples/instance_segmentation.py
+.. literalinclude:: ../../../examples/instance_segmentation.py
     :language: python
     :lines: 14-
 

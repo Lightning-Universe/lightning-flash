@@ -6,8 +6,7 @@ pytest>=5.0, <7.0
 pytest-doctestplus>=0.9.0
 pytest-rerunfailures>=10.0
 pytest-forked
+pytest-mock
 
 scikit-learn
-pytest_mock
-qpth <0.0.14
 torch_optimizer

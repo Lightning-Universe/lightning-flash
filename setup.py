@@ -108,7 +108,7 @@ def _load_requirements(path_dir: str, file_name: str = "base.txt", unfreeze: boo
 
 
 def _load_py_module(fname, pkg="flash"):
-    spec = spec_from_file_location(os.path.join(pkg, fname), os.path.join(_PATH_ROOT, pkg, fname))
+    spec = spec_from_file_location(os.path.join(pkg, fname), os.path.join(_PATH_ROOT, "src", pkg, fname))
     py = module_from_spec(spec)
     spec.loader.exec_module(py)
     return py
@@ -162,7 +162,8 @@ setup(
     url=about.__homepage__,
     download_url="https://github.com/Lightning-AI/lightning-flash",
     license=about.__license__,
-    packages=find_packages(exclude=["tests", "tests.*"]),
+    package_dir={"": "src"},
+    packages=find_packages(where="src"),
     long_description=_load_readme_description(_PATH_ROOT, homepage=about.__homepage__, ver=about.__version__),
     long_description_content_type="text/markdown",
     include_package_data=True,

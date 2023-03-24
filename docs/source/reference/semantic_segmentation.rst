@@ -45,7 +45,7 @@ We then use the trained :class:`~flash.image.segmentation.model.SemanticSegmenta
 Finally, we save the model.
 Here's the full example:
 
-.. literalinclude:: ../../../flash_examples/semantic_segmentation.py
+.. literalinclude:: ../../../examples/semantic_segmentation.py
     :language: python
     :lines: 14-
 
@@ -81,12 +81,12 @@ The :class:`~flash.image.segmentation.model.SemanticSegmentation` task is servab
 This means you can call ``.serve`` to serve your :class:`~flash.core.model.Task`.
 Here's an example:
 
-.. literalinclude:: ../../../flash_examples/serve/semantic_segmentation/inference_server.py
+.. literalinclude:: ../../../examples/serve/semantic_segmentation/inference_server.py
     :language: python
     :lines: 14-
 
 You can now perform inference from your client like this:
 
-.. literalinclude:: ../../../flash_examples/serve/semantic_segmentation/client.py
+.. literalinclude:: ../../../examples/serve/semantic_segmentation/client.py
     :language: python
     :lines: 14-
