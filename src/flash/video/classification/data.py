@@ -22,7 +22,7 @@ from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE
 from flash.core.data.utilities.classification import TargetFormatter
 from flash.core.data.utilities.paths import PATH_TYPE
-from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioVideoClassificationInput
+from flash.core.integrations.labelstudio.input import LabelStudioVideoClassificationInput, _parse_labelstudio_arguments
 from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,
     _PYTORCHVIDEO_AVAILABLE,

@@ -20,12 +20,12 @@ from flash.core.data.utilities.loading import (
     AUDIO_EXTENSIONS,
     CSV_EXTENSIONS,
     IMG_EXTENSIONS,
+    NP_EXTENSIONS,
+    TSV_EXTENSIONS,
     load_audio,
     load_data_frame,
     load_image,
     load_spectrogram,
-    NP_EXTENSIONS,
-    TSV_EXTENSIONS,
 )
 from flash.core.utilities.imports import (
     _AUDIO_AVAILABLE,

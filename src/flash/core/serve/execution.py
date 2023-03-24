@@ -1,7 +1,7 @@
 from collections import defaultdict
 from dataclasses import dataclass
 from operator import attrgetter
-from typing import Dict, List, Set, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List, Set, Tuple
 
 from flash.core.serve.dag.optimization import cull, functions_of, inline_functions
 from flash.core.serve.dag.rewrite import RewriteRule, RuleSet

@@ -26,10 +26,10 @@ from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.io.input import DataKeys, Input, IterableInput
 from flash.core.data.io.input_transform import (
+    InputTransform,
     create_device_input_transform_processor,
     create_or_configure_input_transform,
     create_worker_input_transform_processor,
-    InputTransform,
 )
 from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX

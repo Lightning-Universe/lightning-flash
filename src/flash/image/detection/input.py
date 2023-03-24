@@ -16,18 +16,18 @@ from typing import Any, Dict, Hashable, List, Optional, Sequence
 from flash.core.data.io.classification_input import ClassificationInputMixin
 from flash.core.data.io.input import DataKeys
 from flash.core.data.utilities.classification import TargetFormatter
-from flash.core.data.utilities.paths import filter_valid_files, PATH_TYPE
+from flash.core.data.utilities.paths import PATH_TYPE, filter_valid_files
 from flash.core.data.utilities.samples import to_samples
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
 from flash.core.integrations.icevision.data import IceVisionInput
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _ICEVISION_AVAILABLE, lazy_import, requires
 from flash.image.data import (
+    IMG_EXTENSIONS,
+    NP_EXTENSIONS,
     ImageFilesInput,
     ImageInput,
     ImageNumpyInput,
     ImageTensorInput,
-    IMG_EXTENSIONS,
-    NP_EXTENSIONS,
 )
 
 if _FIFTYONE_AVAILABLE:

@@ -5,13 +5,13 @@ from functools import partial
 import pytest
 
 from flash.core.serve.dag.optimization import (
+    SubgraphCallable,
     cull,
     functions_of,
     fuse,
     fuse_linear,
     inline,
     inline_functions,
-    SubgraphCallable,
 )
 from flash.core.serve.dag.task import get, get_dependencies
 from flash.core.serve.dag.utils import apply, partial_by_order

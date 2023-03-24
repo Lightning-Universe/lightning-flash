@@ -11,14 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Dict, IO, Optional, Union
+from typing import IO, Any, Callable, Dict, Optional, Union
 
 import torch
-from torch import nn, Tensor
+from torch import Tensor, nn
 
 from flash.core.data.io.input import DataKeys
 from flash.core.model import Task
-from flash.graph.classification.model import GraphClassifier, POOLING_FUNCTIONS
+from flash.graph.classification.model import POOLING_FUNCTIONS, GraphClassifier
 from flash.graph.collate import _pyg_collate
 
 

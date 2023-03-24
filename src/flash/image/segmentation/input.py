@@ -17,8 +17,8 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 
 from flash.core.data.io.input import DataKeys, Input
-from flash.core.data.utilities.loading import IMG_EXTENSIONS, load_image, NP_EXTENSIONS
-from flash.core.data.utilities.paths import filter_valid_files, PATH_TYPE
+from flash.core.data.utilities.loading import IMG_EXTENSIONS, NP_EXTENSIONS, load_image
+from flash.core.data.utilities.paths import PATH_TYPE, filter_valid_files
 from flash.core.data.utilities.samples import to_samples
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import

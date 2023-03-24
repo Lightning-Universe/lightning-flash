@@ -14,7 +14,7 @@
 import hummingbird.ml
 import sklearn.datasets
 
-from flash.core.serve import Composition, expose, ModelComponent
+from flash.core.serve import Composition, ModelComponent, expose
 from flash.core.serve.types import Number, Table
 
 feature_names = [

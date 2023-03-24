@@ -14,7 +14,7 @@
 import sys
 from typing import Any, Dict, Optional, Tuple, Union
 
-from torch import nn, Tensor
+from torch import Tensor, nn
 from torch.utils.data import DataLoader, Sampler
 
 import flash

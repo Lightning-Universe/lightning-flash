@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
-from torch import nn, Tensor
+from torch import Tensor, nn
 
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform

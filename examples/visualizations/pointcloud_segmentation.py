@@ -15,7 +15,7 @@ import torch
 
 import flash
 from flash.core.data.utils import download_data
-from flash.pointcloud.segmentation import launch_app, PointCloudSegmentation, PointCloudSegmentationData
+from flash.pointcloud.segmentation import PointCloudSegmentation, PointCloudSegmentationData, launch_app
 
 # 1. Create the DataModule
 # Dataset Credit: http://www.semantic-kitti.org/

@@ -28,10 +28,10 @@ from flash.core.utilities.imports import (
     _TORCHVISION_AVAILABLE,
 )
 from flash.core.utilities.lightning_cli import (
-    instantiate_class,
     LightningArgumentParser,
     LightningCLI,
     SaveConfigCallback,
+    instantiate_class,
 )
 from tests.helpers.boring_model import BoringDataModule, BoringModel
 
