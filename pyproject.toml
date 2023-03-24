@@ -1,6 +1,115 @@
-[tool.autopep8]
-ignore = ["E731"]
+[metadata]
+license_file = "LICENSE"
+description-file = "README.md"
+
+[build-system]
+requires = [
+    "setuptools",
+    "wheel",
+]
+
+
+[tool.check-manifest]
+ignore = [
+    "*.yml",
+    ".github",
+    ".github/*"
+]
+
+
+[tool.pytest.ini_options]
+norecursedirs = [
+    ".git",
+    ".github",
+    "dist",
+    "build",
+    "docs",
+]
+addopts = [
+    "--strict-markers",
+    "--doctest-modules",
+    "--color=yes",
+    "--disable-pytest-warnings",
+]
+filterwarnings = [
+    "error::FutureWarning",
+]
+xfail_strict = false  # todo
+junit_duration_report = "call"
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "pass",
+]
 
 
 [tool.black]
+# https://github.com/psf/black
 line-length = 120
+exclude = "(.eggs|.git|.hg|.mypy_cache|.venv|_build|buck-out|build|dist)"
+
+[tool.isort]
+known_first_party = [
+    "flash",
+    "examples",
+    "tests",
+]
+skip_glob = []
+profile = "black"
+line_length = 120
+
+
+[tool.ruff]
+line-length = 120
+# Enable Pyflakes `E` and `F` codes by default.
+select = [
+    "E", "W",  # see: https://pypi.org/project/pycodestyle
+    "F",  # see: https://pypi.org/project/pyflakes
+#    "D",  # see: https://pypi.org/project/pydocstyle
+#    "N",  # see: https://pypi.org/project/pep8-naming
+]
+ignore = [
+    "E731",  # Do not assign a lambda expression, use a def
+]
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".eggs",
+    ".git",
+    ".mypy_cache",
+    ".ruff_cache",
+    "__pypackages__",
+    "_build",
+    "build",
+    "dist",
+    "docs"
+]
+ignore-init-module-imports = true
+
+[tool.ruff.per-file-ignores]
+"setup.py" = ["D100", "SIM115"]
+"__about__.py" = ["D100"]
+"__init__.py" = ["D100"]
+
+[tool.ruff.pydocstyle]
+# Use Google-style docstrings.
+convention = "google"
+
+
+[tool.mypy]
+files = [
+    "src",
+]
+install_types = true
+non_interactive = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+show_error_codes = true
+warn_redundant_casts = true
+warn_unused_configs = true
+warn_unused_ignores = true
+allow_redefinition = true
+# disable this rule as the Trainer attributes are defined in the connectors, not in its __init__
+disable_error_code = "attr-defined"
+# style choices
+warn_no_return = false

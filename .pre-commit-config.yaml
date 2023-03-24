@@ -27,9 +27,10 @@ repos:
     hooks:
       - id: end-of-file-fixer
       - id: trailing-whitespace
+      - id: check-json
       - id: check-yaml
-      - id: check-docstring-first
       - id: check-toml
+      - id: check-docstring-first
       - id: check-case-conflict
       - id: check-added-large-files
       - id: detect-private-key
@@ -41,12 +42,6 @@ repos:
         args: [--py37-plus]
         name: Upgrade code
 
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.12.0
-    hooks:
-      - id: isort
-        name: imports
-
   - repo: https://github.com/kynan/nbstripout
     rev: 0.6.1
     hooks:
@@ -56,7 +51,10 @@ repos:
     rev: v1.5.0
     hooks:
       - id: docformatter
-        args: [--in-place, --wrap-summaries=120, --wrap-descriptions=120]
+        args:
+          - "--in-place"
+          - "--wrap-summaries=120"
+          - "--wrap-descriptions=120"
 
   - repo: https://github.com/psf/black
     rev: 23.1.0
@@ -64,14 +62,22 @@ repos:
       - id: black
         name: Format code
 
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        name: imports
+
   - repo: https://github.com/asottile/blacken-docs
     rev: 1.13.0
     hooks:
       - id: blacken-docs
-        args: [ --line-length=120, --skip-errors ]
+        args:
+          - "--line-length=120"
+          - "--skip-errors"
 
-  - repo: https://github.com/PyCQA/flake8
-    rev: 6.0.0
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.0.240
     hooks:
-      - id: flake8
-        name: PEP8
+      - id: ruff
+        args: ["--fix"]
