@@ -38,18 +38,6 @@
   In a nutshell, Flash is the production grade research framework you always dreamed of but didn't have time to build.
 </div>
 
-
-## News
-
-- Sept 30: [Lightning Flash now supports Meta-Learning](https://devblog.pytorchlightning.ai/lightning-flash-now-supports-meta-learning-7c0ac8b1cde7)
-- Sept 9: [Lightning Flash 0.5](https://devblog.pytorchlightning.ai/flash-0-5-your-pytorch-ai-factory-81b172ff0d76)
-- Jul 12: Flash Task-a-thon community sprint with 25+ community members
-- Jul 1: [Lightning Flash 0.4](https://devblog.pytorchlightning.ai/lightning-flash-0-4-flash-serve-fiftyone-multi-label-text-classification-and-jit-support-97428276c06f)
-- Jun 22: [Ushering in the New Age of Video Understanding with PyTorch](https://medium.com/pytorch/ushering-in-the-new-age-of-video-understanding-with-pytorch-1d85078e8015)
-- May 24: [Lightning Flash 0.3](https://devblog.pytorchlightning.ai/lightning-flash-0-3-new-tasks-visualization-tools-data-pipeline-and-flash-registry-api-1e236ba9530)
-- May 20: [Video Understanding with PyTorch](https://towardsdatascience.com/video-understanding-made-simple-with-pytorch-video-and-lightning-flash-c7d65583c37e)
-- Feb 2: [Read our launch blogpost](https://pytorch-lightning.medium.com/introducing-lightning-flash-the-fastest-way-to-get-started-with-deep-learning-202f196b3b98)
-
 ## Getting Started
 
 From PyPI:
@@ -131,6 +119,8 @@ model.serve()
 or make predictions from raw data directly.
 
 ```py
+from flash import Trainer
+
 trainer = Trainer(strategy='ddp', accelerator="gpu", gpus=2)
 dm = SemanticSegmentationData.from_folders(predict_folder="data/CameraRGB")
 predictions = trainer.predict(model, dm)
@@ -145,6 +135,8 @@ Check out this [example](https://github.com/Lightning-AI/lightning-flash/blob/ma
 This is particularly useful if you use this model in production and want to make sure the model adapts quickly to its new environment with minimal labelled data.
 
 ```py
+from flash.image import ImageClassifier
+
 model = ImageClassifier(
     backbone="resnet18",
     optimizer=torch.optim.Adam,
@@ -177,6 +169,8 @@ In detail, the following methods are currently implemented:
 With Flash, swapping among 40+ optimizers and 15+ schedulers recipes are simple. Find the list of available optimizers, schedulers as follows:
 
 ```py
+from flash.image import ImageClassifier
+
 ImageClassifier.available_optimizers()
 # ['A2GradExp', ..., 'Yogi']
 
@@ -187,7 +181,9 @@ ImageClassifier.available_schedulers()
 Once you've chosen, create the model:
 
 ```py
-#### The optimizer of choice can be passed as a
+#### The optimizer of choice can be passed as
+from flash.image import ImageClassifier
+
 # - String value
 model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer="Adam", lr_scheduler=None)
 
@@ -211,6 +207,8 @@ model = ImageClassifier(backbone="resnet18", num_classes=2, optimizer="Adam", lr
 You can also register you own custom scheduler recipes beforeahand and use them shown as above:
 
 ```py
+from flash.image import ImageClassifier
+
 @ImageClassifier.lr_schedulers_registry
 def my_steplr_recipe(optimizer):
     return torch.optim.lr_scheduler.StepLR(optimizer, step_size=10)
@@ -279,13 +277,13 @@ using the [`Lightning CLI`](https://pytorch-lightning.readthedocs.io/en/stable/c
 
 To get started and view the available tasks, run:
 
-```py
+```bash
   flash --help
 ```
 
 For example, to train an image classifier for 10 epochs with a `resnet50` backbone on 2 GPUs using your own data, you can do:
 
-```py
+```bash
   flash image_classification --trainer.max_epochs 10 --trainer.gpus 2 --model.backbone resnet50 from_folders --train_folder {PATH_TO_DATA}
 ```
 
