@@ -3,13 +3,13 @@ from typing import Callable, List
 
 from torch.optim import lr_scheduler
 from torch.optim.lr_scheduler import (
-    _LRScheduler,
     CosineAnnealingLR,
     CosineAnnealingWarmRestarts,
     CyclicLR,
     MultiStepLR,
     ReduceLROnPlateau,
     StepLR,
+    _LRScheduler,
 )
 
 from flash.core.registry import FlashRegistry

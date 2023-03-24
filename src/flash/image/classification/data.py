@@ -25,7 +25,7 @@ from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE
 from flash.core.data.utilities.classification import TargetFormatter
 from flash.core.data.utilities.paths import PATH_TYPE
-from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioImageClassificationInput
+from flash.core.integrations.labelstudio.input import LabelStudioImageClassificationInput, _parse_labelstudio_arguments
 from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,
     _IMAGE_EXTRAS_TESTING,

@@ -414,7 +414,7 @@ def test_cycle_in_connection_fails(session_global_datadir, lightning_squeezenet1
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
 def test_composition_from_url_torchscript_servable(tmp_path):
-    from flash.core.serve import expose, ModelComponent, Servable
+    from flash.core.serve import ModelComponent, Servable, expose
     from flash.core.serve.types import Number
 
     """

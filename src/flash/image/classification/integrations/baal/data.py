@@ -27,7 +27,7 @@ from flash.core.utilities.stages import RunningStage
 
 if _BAAL_AVAILABLE:
     from baal.active.dataset import ActiveLearningDataset
-    from baal.active.heuristics import AbstractHeuristic, BALD
+    from baal.active.heuristics import BALD, AbstractHeuristic
 else:
 
     class AbstractHeuristic:

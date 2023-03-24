@@ -14,7 +14,7 @@
 from typing import Any, List, Optional
 
 from flash.core.data.properties import Properties
-from flash.core.data.utilities.classification import get_target_formatter, TargetFormatter
+from flash.core.data.utilities.classification import TargetFormatter, get_target_formatter
 
 
 class ClassificationInputMixin(Properties):

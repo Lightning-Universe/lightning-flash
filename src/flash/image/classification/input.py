@@ -21,17 +21,17 @@ from flash.core.data.io.input import DataKeys
 from flash.core.data.utilities.classification import MultiBinaryTargetFormatter, TargetFormatter
 from flash.core.data.utilities.data_frame import resolve_files, resolve_targets
 from flash.core.data.utilities.loading import load_data_frame
-from flash.core.data.utilities.paths import filter_valid_files, make_dataset, PATH_TYPE
+from flash.core.data.utilities.paths import PATH_TYPE, filter_valid_files, make_dataset
 from flash.core.data.utilities.samples import to_samples
 from flash.core.integrations.fiftyone.utils import FiftyOneLabelUtilities
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, lazy_import, requires
 from flash.image.data import (
+    IMG_EXTENSIONS,
+    NP_EXTENSIONS,
     ImageFilesInput,
     ImageInput,
     ImageNumpyInput,
     ImageTensorInput,
-    IMG_EXTENSIONS,
-    NP_EXTENSIONS,
 )
 
 if _FIFTYONE_AVAILABLE:

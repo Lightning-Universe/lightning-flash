@@ -22,7 +22,6 @@ import math
 from typing import Tuple
 
 import torch
-from torch import nn
 from torch.optim.optimizer import Optimizer
 
 from flash.core.utilities.imports import _CORE_TESTING

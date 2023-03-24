@@ -11,7 +11,7 @@ from flash.core.serve.utils import download_file
 from flash.core.utilities.imports import _PYDANTIC_AVAILABLE, requires
 
 if _PYDANTIC_AVAILABLE:
-    from pydantic import FilePath, HttpUrl, parse_obj_as, ValidationError
+    from pydantic import FilePath, HttpUrl, ValidationError, parse_obj_as
 else:
     FilePath, HttpUrl, parse_obj_as, ValidationError = None, None, None, None
 

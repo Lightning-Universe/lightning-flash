@@ -19,7 +19,6 @@
 #     - https://arxiv.org/pdf/1708.03888.pdf
 #     - https://github.com/pytorch/pytorch/blob/master/torch/optim/sgd.py
 import torch
-from torch import nn
 from torch.optim.optimizer import Optimizer, required
 
 from flash.core.utilities.imports import _CORE_TESTING

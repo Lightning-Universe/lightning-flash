@@ -19,9 +19,8 @@ import pytorch_lightning as pl
 import torch
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 from torch import Tensor
-from torch.nn import Flatten
+from torch.nn import Flatten, Linear, LogSoftmax, Module
 from torch.nn import functional as F
-from torch.nn import Linear, LogSoftmax, Module
 from torch.utils.data import DataLoader
 
 import flash

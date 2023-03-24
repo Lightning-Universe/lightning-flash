@@ -14,7 +14,7 @@
 import functools
 import os
 from enum import Enum
-from typing import Any, cast, Dict, Iterable, List, Sequence, Tuple, Union
+from typing import Any, Dict, Iterable, List, Sequence, Tuple, Union, cast
 
 from pytorch_lightning.utilities.enums import LightningEnum
 from torch.utils.data import Dataset

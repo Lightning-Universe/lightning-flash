@@ -8,7 +8,7 @@ from flash.core.data.batch import _ServeInputProcessor
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.output_transform import OutputTransform
-from flash.core.serve import expose, ModelComponent
+from flash.core.serve import ModelComponent, expose
 from flash.core.serve.types.base import BaseType
 from flash.core.trainer import Trainer
 from flash.core.utilities.stages import RunningStage

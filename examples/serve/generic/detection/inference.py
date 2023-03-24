@@ -13,7 +13,7 @@
 # limitations under the License.
 import torchvision
 
-from flash.core.serve import Composition, expose, ModelComponent
+from flash.core.serve import Composition, ModelComponent, expose
 from flash.core.serve.types import BBox, Image, Label, Repeated
 
 

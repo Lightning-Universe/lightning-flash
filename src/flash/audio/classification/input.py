@@ -24,11 +24,11 @@ from flash.core.data.utilities.data_frame import resolve_files, resolve_targets
 from flash.core.data.utilities.loading import (
     AUDIO_EXTENSIONS,
     IMG_EXTENSIONS,
+    NP_EXTENSIONS,
     load_data_frame,
     load_spectrogram,
-    NP_EXTENSIONS,
 )
-from flash.core.data.utilities.paths import filter_valid_files, make_dataset, PATH_TYPE
+from flash.core.data.utilities.paths import PATH_TYPE, filter_valid_files, make_dataset
 from flash.core.data.utilities.samples import to_samples
 from flash.core.utilities.imports import requires
 

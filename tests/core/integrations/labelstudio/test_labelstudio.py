@@ -2,10 +2,10 @@ import pytest
 
 from flash.core.data.utils import download_data
 from flash.core.integrations.labelstudio.input import (
-    _load_json_data,
     LabelStudioImageClassificationInput,
     LabelStudioInput,
     LabelStudioTextClassificationInput,
+    _load_json_data,
 )
 from flash.core.integrations.labelstudio.visualizer import launch_app
 from flash.core.utilities.imports import _CORE_TESTING, _IMAGE_TESTING, _TEXT_TESTING, _VIDEO_TESTING
