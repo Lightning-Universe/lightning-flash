@@ -110,8 +110,9 @@ jobs:
         FLASH_TEST_TOPIC: ${{ join(matrix.topic,',') }}
         FIFTYONE_DO_NOT_TRACK: true
       run: |
-        coverage run --source flash -m pytest flash tests \
-          --reruns 3 --reruns-delay 2 -v
+        # FixMe: include doctests for src/
+        coverage run --source flash -m pytest tests/ -v \
+          --reruns 3 --reruns-delay 2
 
     - name: Statistics
       if: success()
