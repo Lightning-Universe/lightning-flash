@@ -9,7 +9,7 @@ recursive-include src *.md
 recursive-include src *.py
 
 # Include assets
-recursive-include src/flash/assets *.jpg *.png
+recursive-include src/flash/assets *
 
 # Include the license file
 include LICENSE
