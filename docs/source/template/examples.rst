@@ -5,7 +5,7 @@ The Example
 ***********
 
 Now you've implemented your task, it's time to add an example showing how cool it is!
-We usually provide one example in `flash_examples/ <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash_examples/>`_.
+We usually provide one example in `examples/ <https://github.com/PyTorchLightning/lightning-flash/blob/master/examples/>`_.
 You can base these off of our ``template.py`` examples.
 
 The example should:
@@ -19,9 +19,9 @@ The example should:
 #. save the checkpoint
 
 For our template example we don't have a pretrained backbone, so we can just call :meth:`~flash.core.trainer.Trainer.fit` rather than :meth:`~flash.core.trainer.Trainer.finetune`.
-Here's the full example (`flash_examples/template.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash_examples/template.py>`_):
+Here's the full example (`examples/template.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/examples/template.py>`_):
 
-.. literalinclude:: ../../../flash_examples/template.py
+.. literalinclude:: ../../../examples/template.py
     :language: python
     :lines: 14-
 

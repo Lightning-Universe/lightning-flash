@@ -158,10 +158,10 @@ movie_posters
 CameraRGB
 CameraSeg
 jigsaw_toxic_comments
-flash_examples/serve/tabular_classification/data
+examples/serve/tabular_classification/data
 logs/cache/*
-flash_examples/data
-flash_examples/checkpoints
+examples/data
+examples/checkpoints
 timit/
 urban8k_images/
 __MACOSX

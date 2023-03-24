@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from typing import Any
+from urllib.error import URLError
 
 import pytest
 import torch
@@ -23,6 +24,7 @@ from flash.image.style_transfer import StyleTransfer
 from tests.helpers.task_tester import TaskTester
 
 
+@pytest.mark.xfail(URLError, reason="Connection timed out for download.pystiche.org")
 class TestStyleTransfer(TaskTester):
     task = StyleTransfer
     cli_command = "style_transfer"
@@ -47,6 +49,7 @@ class TestStyleTransfer(TaskTester):
 
 
 @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.xfail(URLError, reason="Connection timed out for download.pystiche.org")
 def test_style_transfer_task():
     model = StyleTransfer(
         backbone="vgg11", content_layer="relu1_2", content_weight=10, style_layers="relu1_2", style_weight=11

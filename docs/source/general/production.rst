@@ -10,7 +10,7 @@ Flash Serve makes model deployment simple.
 Server Side
 ^^^^^^^^^^^
 
-.. literalinclude:: ../../../flash_examples/serve/semantic_segmentation/inference_server.py
+.. literalinclude:: ../../../examples/serve/semantic_segmentation/inference_server.py
     :language: python
     :lines: 14-
 
@@ -18,7 +18,7 @@ Server Side
 Client Side
 ^^^^^^^^^^^
 
-.. literalinclude:: ../../../flash_examples/serve/semantic_segmentation/client.py
+.. literalinclude:: ../../../examples/serve/semantic_segmentation/client.py
     :language: python
     :lines: 14-
 
