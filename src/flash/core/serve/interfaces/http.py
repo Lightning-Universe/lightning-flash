@@ -2,17 +2,17 @@ import base64
 import uuid
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
 
 from flash.core.serve.dag.task import get
 from flash.core.serve.dag.visualize import visualize
 from flash.core.serve.execution import (
-    build_composition,
-    component_dag_content,
     ComponentJSON,
-    merged_dag_content,
     MergedJSON,
     TaskComposition,
+    build_composition,
+    component_dag_content,
+    merged_dag_content,
 )
 from flash.core.serve.interfaces.models import Alive, EndpointProtocol
 from flash.core.utilities.imports import _CYTOOLZ_AVAILABLE, _FASTAPI_AVAILABLE

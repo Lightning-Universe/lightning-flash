@@ -6,7 +6,7 @@ import warnings
 from argparse import Namespace
 from functools import wraps
 from types import MethodType
-from typing import Any, Callable, cast, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union, cast
 
 import torch
 from jsonargparse import ActionConfigFile, ArgumentParser, set_config_read_mode

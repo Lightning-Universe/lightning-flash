@@ -21,7 +21,7 @@ from flash.core.data.io.input import BaseDataFormat, Input
 from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
 
 if _POINTCLOUD_AVAILABLE:
-    from open3d._ml3d.datasets.kitti import DataProcessing, KITTI
+    from open3d._ml3d.datasets.kitti import KITTI, DataProcessing
 
 
 class PointCloudObjectDetectionDataFormat(BaseDataFormat):

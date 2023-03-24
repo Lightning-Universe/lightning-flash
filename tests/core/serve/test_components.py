@@ -123,7 +123,7 @@ def test_component_parameters(lightning_squeezenet1_1_obj):
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
 def test_invalid_expose_inputs():
-    from flash.core.serve import expose, ModelComponent
+    from flash.core.serve import ModelComponent, expose
     from flash.core.serve.types import Number
 
     lr = LightningSqueezenet()
@@ -199,7 +199,7 @@ def test_connection_invalid_raises(lightning_squeezenet1_1_obj):
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
 def test_invalid_name(lightning_squeezenet1_1_obj):
-    from flash.core.serve import expose, ModelComponent
+    from flash.core.serve import ModelComponent, expose
     from flash.core.serve.types import Number
 
     with pytest.raises(SyntaxError):
@@ -216,7 +216,7 @@ def test_invalid_name(lightning_squeezenet1_1_obj):
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
 def test_invalid_config_args(lightning_squeezenet1_1_obj):
-    from flash.core.serve import expose, ModelComponent
+    from flash.core.serve import ModelComponent, expose
     from flash.core.serve.types import Number
 
     class SomeComponent(ModelComponent):
@@ -243,7 +243,7 @@ def test_invalid_config_args(lightning_squeezenet1_1_obj):
 
 @pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
 def test_invalid_model_args(lightning_squeezenet1_1_obj):
-    from flash.core.serve import expose, ModelComponent
+    from flash.core.serve import ModelComponent, expose
     from flash.core.serve.types import Number
 
     class SomeComponent(ModelComponent):

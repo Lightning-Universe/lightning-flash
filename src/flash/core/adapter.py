@@ -15,7 +15,7 @@ from abc import abstractmethod
 from typing import Any, Callable, Optional
 
 import torch.jit
-from torch import nn, Tensor
+from torch import Tensor, nn
 from torch.utils.data import DataLoader, Sampler
 
 import flash

@@ -21,7 +21,7 @@ from torch.utils.data import DataLoader, Sampler
 import flash
 from flash.core.adapter import Adapter
 from flash.core.data.io.input import DataKeys, InputBase
-from flash.core.data.io.input_transform import create_worker_input_transform_processor, InputTransform
+from flash.core.data.io.input_transform import InputTransform, create_worker_input_transform_processor
 from flash.core.integrations.icevision.transforms import (
     from_icevision_predictions,
     from_icevision_record,

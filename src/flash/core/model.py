@@ -24,7 +24,7 @@ from pytorch_lightning import LightningModule, Trainer
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.callbacks.finetuning import BaseFinetuning
 from pytorch_lightning.utilities.enums import LightningEnum
-from torch import nn, Tensor
+from torch import Tensor, nn
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader, Sampler
@@ -32,9 +32,9 @@ from torch.utils.data import DataLoader, Sampler
 import flash
 from flash.core.data.io.input import InputBase, ServeInput
 from flash.core.data.io.input_transform import (
+    InputTransform,
     create_or_configure_input_transform,
     create_worker_input_transform_processor,
-    InputTransform,
 )
 from flash.core.data.io.output import Output
 from flash.core.data.io.output_transform import OutputTransform

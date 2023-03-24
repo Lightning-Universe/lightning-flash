@@ -13,7 +13,7 @@
 # limitations under the License.
 from typing import Any, Dict, List, Optional, Type, Union
 
-from torch import nn, Tensor
+from torch import Tensor, nn
 from torch.nn import functional as F
 
 from flash.core.classification import ClassificationTask

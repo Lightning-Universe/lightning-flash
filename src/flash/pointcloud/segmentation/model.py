@@ -14,7 +14,7 @@
 from typing import Any, Dict, Iterable, Optional, Tuple, Union
 
 import torch
-from torch import nn, Tensor
+from torch import Tensor, nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, Sampler
 

@@ -22,7 +22,7 @@ import torch
 from lightning_utilities.core.rank_zero import WarningCache
 from pytorch_lightning import LightningModule
 from pytorch_lightning.trainer.states import TrainerFn
-from torch import nn, Tensor
+from torch import Tensor, nn
 from torch.utils.data import DataLoader, IterableDataset, Sampler
 
 import flash

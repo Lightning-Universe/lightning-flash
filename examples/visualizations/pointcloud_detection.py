@@ -15,7 +15,7 @@ import torch
 
 import flash
 from flash.core.data.utils import download_data
-from flash.pointcloud.detection import launch_app, PointCloudObjectDetector, PointCloudObjectDetectorData
+from flash.pointcloud.detection import PointCloudObjectDetector, PointCloudObjectDetectorData, launch_app
 
 # 1. Create the DataModule
 # Dataset Credit: http://www.semantic-kitti.org/

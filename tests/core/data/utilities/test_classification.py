@@ -20,7 +20,6 @@ import torch
 
 from flash.core.data.utilities.classification import (
     CommaDelimitedMultiLabelTargetFormatter,
-    get_target_formatter,
     MultiBinaryTargetFormatter,
     MultiLabelTargetFormatter,
     MultiNumericTargetFormatter,
@@ -29,6 +28,7 @@ from flash.core.data.utilities.classification import (
     SingleLabelTargetFormatter,
     SingleNumericTargetFormatter,
     SpaceDelimitedTargetFormatter,
+    get_target_formatter,
 )
 from flash.core.utilities.imports import _CORE_TESTING
 

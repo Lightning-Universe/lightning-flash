@@ -21,7 +21,7 @@ from flash.core.utilities.imports import _VISSL_AVAILABLE
 if _VISSL_AVAILABLE:
     import vissl.losses  # noqa: F401
     from classy_vision.generic.distributed_util import set_cpu_device
-    from classy_vision.losses import ClassyLoss, LOSS_REGISTRY
+    from classy_vision.losses import LOSS_REGISTRY, ClassyLoss
     from vissl.config.attr_dict import AttrDict
 else:
     AttrDict = object

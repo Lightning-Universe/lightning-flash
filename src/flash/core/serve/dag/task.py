@@ -1,7 +1,6 @@
 from collections import defaultdict
 from typing import List, Sequence
 
-from flash.core.serve.dag.utils_test import add, inc
 from flash.core.utilities.imports import _SERVE_TESTING
 
 # Skip doctests if requirements aren't available

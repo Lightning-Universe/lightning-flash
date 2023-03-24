@@ -20,7 +20,7 @@ from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.utilities.classification import TargetFormatter
 from flash.core.data.utilities.paths import PATH_TYPE
-from flash.core.integrations.labelstudio.input import _parse_labelstudio_arguments, LabelStudioTextClassificationInput
+from flash.core.integrations.labelstudio.input import LabelStudioTextClassificationInput, _parse_labelstudio_arguments
 from flash.core.utilities.imports import _TEXT_AVAILABLE, _TEXT_TESTING
 from flash.core.utilities.stages import RunningStage
 from flash.text.classification.input import (

@@ -25,7 +25,7 @@ import pytorch_lightning as pl
 import torch
 from pytorch_lightning import LightningDataModule
 from pytorch_lightning.callbacks import Callback
-from torch import nn, Tensor
+from torch import Tensor, nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
 from torchmetrics import Accuracy

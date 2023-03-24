@@ -28,10 +28,10 @@ from pytorch_lightning import LightningModule, Trainer
 import flash
 from flash.core.data.data_module import DataModule
 from flash.core.utilities.lightning_cli import (
-    class_from_function,
     LightningArgumentParser,
     LightningCLI,
     SaveConfigCallback,
+    class_from_function,
 )
 from flash.core.utilities.stability import beta
 
