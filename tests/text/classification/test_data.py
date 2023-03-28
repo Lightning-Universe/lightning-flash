@@ -18,10 +18,10 @@ import pandas as pd
 import pytest
 
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _TEXT_AVAILABLE, _TEXT_TESTING
+from flash.core.utilities.imports import _TEXT_TESTING, _TOPIC_TEXT_AVAILABLE
 from flash.text import TextClassificationData
 
-if _TEXT_AVAILABLE:
+if _TOPIC_TEXT_AVAILABLE:
     from datasets import Dataset
 
 TEST_CSV_DATA = """sentence,label
@@ -550,7 +550,7 @@ def test_from_lists_multilabel():
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
-@pytest.mark.skipif(_TEXT_AVAILABLE, reason="text libraries are installed.")
+@pytest.mark.skipif(_TOPIC_TEXT_AVAILABLE, reason="text libraries are installed.")
 def test_text_module_not_found_error():
     with pytest.raises(ModuleNotFoundError, match="[text]"):
         TextClassificationData.from_json("sentence", "lab", train_file="", batch_size=1)

@@ -33,12 +33,12 @@ from flash.core.data.io.input_transform import (
 )
 from flash.core.data.splits import SplitDataset
 from flash.core.data.utils import _STAGES_PREFIX
-from flash.core.utilities.imports import _CORE_TESTING
+from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 
 # Skip doctests if requirements aren't available
-if not _CORE_TESTING:
+if not _TOPIC_CORE_AVAILABLE:
     __doctest_skip__ = ["DataModule"]
 
 

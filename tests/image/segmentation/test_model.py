@@ -21,7 +21,7 @@ from torch import Tensor
 
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _IMAGE_AVAILABLE, _IMAGE_TESTING, _SERVE_TESTING
+from flash.core.utilities.imports import _IMAGE_TESTING, _SERVE_TESTING, _TOPIC_IMAGE_AVAILABLE
 from flash.image import SemanticSegmentation
 from flash.image.segmentation.data import SemanticSegmentationData
 from tests.helpers.task_tester import TaskTester
@@ -32,7 +32,7 @@ class TestSemanticSegmentation(TaskTester):
     task_args = (2,)
     cli_command = "semantic_segmentation"
     is_testing = _IMAGE_TESTING
-    is_available = _IMAGE_AVAILABLE
+    is_available = _TOPIC_IMAGE_AVAILABLE
     scriptable = False
 
     @property

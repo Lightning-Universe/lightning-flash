@@ -20,7 +20,7 @@ from torch import Tensor
 
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _IMAGE_AVAILABLE, _IMAGE_TESTING, _SERVE_TESTING
+from flash.core.utilities.imports import _IMAGE_TESTING, _SERVE_TESTING, _TOPIC_IMAGE_AVAILABLE
 from flash.image import ImageClassifier
 from tests.helpers.task_tester import TaskTester
 
@@ -49,7 +49,7 @@ class TestImageClassifier(TaskTester):
     task_args = (2,)
     cli_command = "image_classification"
     is_testing = _IMAGE_TESTING
-    is_available = _IMAGE_AVAILABLE
+    is_available = _TOPIC_IMAGE_AVAILABLE
 
     marks = {
         "test_fit": [

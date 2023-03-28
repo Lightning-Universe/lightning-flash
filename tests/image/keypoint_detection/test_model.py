@@ -22,11 +22,11 @@ import torch
 
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE, _IMAGE_EXTRAS_TESTING
+from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_EXTRAS_TESTING, _TOPIC_IMAGE_AVAILABLE
 from flash.image import KeypointDetectionData, KeypointDetector
 from tests.helpers.task_tester import TaskTester
 
-if _IMAGE_AVAILABLE:
+if _TOPIC_IMAGE_AVAILABLE:
     from PIL import Image
 
 COCODataConfig = collections.namedtuple("COCODataConfig", "train_folder train_ann_file predict_folder")
@@ -99,7 +99,7 @@ class TestKeypointDetector(TaskTester):
     task_kwargs = {"num_classes": 2}
     cli_command = "keypoint_detection"
     is_testing = _IMAGE_EXTRAS_TESTING
-    is_available = _IMAGE_AVAILABLE and _ICEVISION_AVAILABLE
+    is_available = _TOPIC_IMAGE_AVAILABLE and _ICEVISION_AVAILABLE
 
     # TODO: Resolve JIT support
     traceable = False

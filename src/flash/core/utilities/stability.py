@@ -17,10 +17,10 @@ from typing import Callable, Type, Union
 
 from pytorch_lightning.utilities import rank_zero_warn
 
-from flash.core.utilities.imports import _CORE_TESTING
+from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE
 
 # Skip doctests if requirements aren't available
-if not _CORE_TESTING:
+if not _TOPIC_CORE_AVAILABLE:
     __doctest_skip__ = ["beta"]
 
 

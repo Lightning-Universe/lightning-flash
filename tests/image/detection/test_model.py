@@ -23,7 +23,12 @@ from torch.utils.data import Dataset
 from flash.core.data.io.input import DataKeys
 from flash.core.integrations.icevision.transforms import IceVisionInputTransform
 from flash.core.trainer import Trainer
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE, _IMAGE_EXTRAS_TESTING, _SERVE_TESTING
+from flash.core.utilities.imports import (
+    _ICEVISION_AVAILABLE,
+    _IMAGE_EXTRAS_TESTING,
+    _SERVE_TESTING,
+    _TOPIC_IMAGE_AVAILABLE,
+)
 from flash.image import ObjectDetector
 from tests.helpers.task_tester import TaskTester
 
@@ -73,7 +78,7 @@ class TestObjectDetector(TaskTester):
     task_kwargs = {"num_classes": 2}
     cli_command = "object_detection"
     is_testing = _IMAGE_EXTRAS_TESTING
-    is_available = _IMAGE_AVAILABLE and _ICEVISION_AVAILABLE
+    is_available = _TOPIC_IMAGE_AVAILABLE and _ICEVISION_AVAILABLE
 
     # TODO: Resolve JIT support
     traceable = False

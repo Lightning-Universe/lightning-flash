@@ -19,7 +19,7 @@ from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
-from flash.core.utilities.imports import _PANDAS_AVAILABLE, _TABULAR_TESTING
+from flash.core.utilities.imports import _PANDAS_AVAILABLE, _TOPIC_TABULAR_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 from flash.tabular.forecasting.input import TabularForecastingDataFrameInput
 
@@ -30,7 +30,7 @@ else:
 
 
 # Skip doctests if requirements aren't available
-if not _TABULAR_TESTING:
+if not _TOPIC_TABULAR_AVAILABLE:
     __doctest_skip__ = ["TabularForecastingData", "TabularForecastingData.*"]
 
 

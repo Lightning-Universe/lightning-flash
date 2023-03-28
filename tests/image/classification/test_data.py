@@ -25,10 +25,10 @@ import torch
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,
-    _IMAGE_AVAILABLE,
     _IMAGE_TESTING,
     _MATPLOTLIB_AVAILABLE,
     _PIL_AVAILABLE,
+    _TOPIC_IMAGE_AVAILABLE,
     _TORCHVISION_AVAILABLE,
 )
 from flash.image import ImageClassificationData, ImageClassificationInputTransform
@@ -178,7 +178,7 @@ def test_from_filepaths_list_image_paths(tmpdir):
     assert list(labels.numpy()) == [2, 5]
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _MATPLOTLIB_AVAILABLE, reason="matplotlib isn't installed.")
 def test_from_filepaths_visualise(tmpdir):
     tmpdir = Path(tmpdir)
@@ -214,7 +214,7 @@ def test_from_filepaths_visualise(tmpdir):
     dm.show_train_batch(["per_sample_transform", "per_batch_transform"])
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _MATPLOTLIB_AVAILABLE, reason="matplotlib isn't installed.")
 def test_from_filepaths_visualise_subplots_exceding_max_cols(tmpdir):
     tmpdir = Path(tmpdir)
@@ -248,7 +248,7 @@ def test_from_filepaths_visualise_subplots_exceding_max_cols(tmpdir):
     dm.show_train_batch(["per_sample_transform", "per_batch_transform"])
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _MATPLOTLIB_AVAILABLE, reason="matplotlib isn't installed.")
 def test_from_filepaths_visualise_subplots_single_image(tmpdir):
     tmpdir = Path(tmpdir)
@@ -282,7 +282,7 @@ def test_from_filepaths_visualise_subplots_single_image(tmpdir):
     dm.show_train_batch(["per_sample_transform", "per_batch_transform"])
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _MATPLOTLIB_AVAILABLE, reason="matplotlib isn't installed.")
 def test_from_filepaths_visualise_multilabel(tmpdir):
     tmpdir = Path(tmpdir)
@@ -461,7 +461,7 @@ def test_from_data(data, from_function):
     assert list(labels.numpy()) == [2, 5]
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone isn't installed.")
 def test_from_fiftyone(tmpdir):
     tmpdir = Path(tmpdir)
@@ -635,7 +635,7 @@ def test_from_bad_csv_no_image(bad_csv_no_image):
         _ = next(iter(img_data.train_dataloader()))
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_mixup(single_target_csv):
     @dataclass
     class MyTransform(ImageClassificationInputTransform):

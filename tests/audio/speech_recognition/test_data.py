@@ -20,7 +20,7 @@ import pytest
 import flash
 from flash.audio import SpeechRecognitionData
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _AUDIO_AVAILABLE, _AUDIO_TESTING
+from flash.core.utilities.imports import _AUDIO_TESTING, _TOPIC_AUDIO_AVAILABLE
 
 path = str(Path(flash.ASSETS_ROOT) / "example.wav")
 sample = {"file": path, "text": "example input."}
@@ -83,7 +83,7 @@ def test_from_json(tmpdir):
     assert DataKeys.TARGET in batch
 
 
-@pytest.mark.skipif(_AUDIO_AVAILABLE, reason="audio libraries are installed.")
+@pytest.mark.skipif(_TOPIC_AUDIO_AVAILABLE, reason="audio libraries are installed.")
 def test_audio_module_not_found_error():
     with pytest.raises(ModuleNotFoundError, match="[audio]"):
         SpeechRecognitionData.from_json("file", "text", train_file="", batch_size=1, num_workers=0)

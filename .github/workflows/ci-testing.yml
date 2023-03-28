@@ -27,8 +27,7 @@ jobs:
         os: [ubuntu-20.04, macOS-12, windows-2022]
         python-version: [3.7, 3.9]
         requires: ['oldest', 'latest']
-        topic: [['core']]
-        release: [ 'stable' ]
+        topic: ['core']
         exclude:
           # Skip if torch<1.8 and py3.9 on Linux: https://github.com/pytorch/pytorch/issues/50014
           - { os: ubuntu-20.04, python-version: 3.9, requires: 'oldest' }

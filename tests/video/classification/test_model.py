@@ -25,7 +25,7 @@ from torch.utils.data import SequentialSampler
 
 import flash
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _VIDEO_AVAILABLE, _VIDEO_TESTING
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _TOPIC_VIDEO_AVAILABLE, _VIDEO_TESTING
 from flash.video import VideoClassificationData, VideoClassifier
 from tests.helpers.task_tester import TaskTester
 from tests.video.classification.test_data import create_dummy_video_frames, temp_encoded_tensors
@@ -33,7 +33,7 @@ from tests.video.classification.test_data import create_dummy_video_frames, temp
 if _FIFTYONE_AVAILABLE:
     import fiftyone as fo
 
-if _VIDEO_AVAILABLE:
+if _TOPIC_VIDEO_AVAILABLE:
     import torchvision.io as io
     from pytorchvideo.data.utils import thwc_to_cthw
 
@@ -44,7 +44,7 @@ class TestVideoClassifier(TaskTester):
     task_kwargs = {"pretrained": False, "backbone": "slow_r50"}
     cli_command = "video_classification"
     is_testing = _VIDEO_TESTING
-    is_available = _VIDEO_AVAILABLE
+    is_available = _TOPIC_VIDEO_AVAILABLE
 
     scriptable = False
 
@@ -290,7 +290,7 @@ def test_video_classifier_finetune_from_csv(tmpdir):
         trainer.finetune(model, datamodule=datamodule)
 
 
-@pytest.mark.skipif(not _VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
+@pytest.mark.skipif(not _TOPIC_VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone isn't installed.")
 def test_video_classifier_finetune_fiftyone(tmpdir):
     with mock_encoded_video_dataset_folder(tmpdir) as (

@@ -28,15 +28,15 @@ from flash.core.data.utilities.loading import (
     load_spectrogram,
 )
 from flash.core.utilities.imports import (
-    _AUDIO_AVAILABLE,
     _AUDIO_TESTING,
     _IMAGE_TESTING,
     _PANDAS_AVAILABLE,
     _TABULAR_TESTING,
+    _TOPIC_AUDIO_AVAILABLE,
     Image,
 )
 
-if _AUDIO_AVAILABLE:
+if _TOPIC_AUDIO_AVAILABLE:
     import soundfile as sf
 
 if _PANDAS_AVAILABLE:

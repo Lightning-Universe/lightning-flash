@@ -24,12 +24,12 @@ from flash.core.utilities.imports import (
     _CORE_TESTING,
     _GRAPH_TESTING,
     _ICEVISION_AVAILABLE,
-    _IMAGE_AVAILABLE,
     _IMAGE_EXTRAS_TESTING,
     _IMAGE_TESTING,
     _POINTCLOUD_TESTING,
     _TABULAR_TESTING,
     _TEXT_TESTING,
+    _TOPIC_IMAGE_AVAILABLE,
     _VIDEO_TESTING,
     _VISSL_AVAILABLE,
 )
@@ -63,7 +63,7 @@ root = Path(__file__).parent.parent.parent
             "image_embedder.py",
             marks=[
                 pytest.mark.skipif(
-                    not (_IMAGE_AVAILABLE and _VISSL_AVAILABLE), reason="image libraries aren't installed"
+                    not (_TOPIC_IMAGE_AVAILABLE and _VISSL_AVAILABLE), reason="image libraries aren't installed"
                 ),
                 pytest.mark.skipif(torch.cuda.device_count() > 1, reason="VISSL integration doesn't support multi-GPU"),
             ],

@@ -22,11 +22,11 @@ from flash.core.data.io.input_transform import InputTransform
 from flash.core.utilities.imports import (
     _ICEVISION_AVAILABLE,
     _ICEVISION_GREATER_EQUAL_0_11_0,
-    _IMAGE_AVAILABLE,
+    _TOPIC_IMAGE_AVAILABLE,
     requires,
 )
 
-if _IMAGE_AVAILABLE:
+if _TOPIC_IMAGE_AVAILABLE:
     from PIL import Image
 
 if _ICEVISION_AVAILABLE:

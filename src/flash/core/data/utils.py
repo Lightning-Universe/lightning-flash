@@ -23,11 +23,11 @@ from pytorch_lightning.utilities.apply_func import apply_to_collection
 from torch import nn
 from tqdm.auto import tqdm as tq
 
-from flash.core.utilities.imports import _CORE_TESTING
+from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 
 # Skip doctests if requirements aren't available
-if not _CORE_TESTING:
+if not _TOPIC_CORE_AVAILABLE:
     __doctest_skip__ = ["download_data"]
 
 _STAGES_PREFIX = {

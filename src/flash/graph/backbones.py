@@ -14,10 +14,10 @@
 from functools import partial
 
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _GRAPH_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_GRAPH_AVAILABLE
 from flash.core.utilities.providers import _PYTORCH_GEOMETRIC
 
-if _GRAPH_AVAILABLE:
+if _TOPIC_GRAPH_AVAILABLE:
     from torch_geometric.nn.models import GAT, GCN, GIN, GraphSAGE
 
     MODELS = {"GCN": GCN, "GraphSAGE": GraphSAGE, "GAT": GAT, "GIN": GIN}

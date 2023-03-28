@@ -15,7 +15,7 @@ import pytest
 import torch
 
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _IMAGE_TESTING
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_TESTING, _TOPIC_IMAGE_AVAILABLE
 from flash.image.segmentation.output import FiftyOneSegmentationLabelsOutput, SegmentationLabelsOutput
 
 
@@ -54,7 +54,7 @@ class TestSemanticSegmentationLabelsOutput:
         assert torch.tensor(classes)[1, 2] == 1
         assert torch.tensor(classes)[0, 1] == 3
 
-    @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+    @pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
     @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
     @staticmethod
     def test_serialize_fiftyone():

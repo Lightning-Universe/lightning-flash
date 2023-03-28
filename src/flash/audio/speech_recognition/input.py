@@ -24,9 +24,9 @@ from flash.core.data.io.input import DataKeys, Input, ServeInput
 from flash.core.data.utilities.loading import AUDIO_EXTENSIONS, load_audio, load_data_frame
 from flash.core.data.utilities.paths import filter_valid_files, list_valid_files
 from flash.core.data.utilities.samples import to_sample, to_samples
-from flash.core.utilities.imports import _AUDIO_AVAILABLE, requires
+from flash.core.utilities.imports import _TOPIC_AUDIO_AVAILABLE, requires
 
-if _AUDIO_AVAILABLE:
+if _TOPIC_AUDIO_AVAILABLE:
     import librosa
     from datasets import Dataset as HFDataset
     from datasets import load_dataset

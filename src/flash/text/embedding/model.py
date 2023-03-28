@@ -22,13 +22,13 @@ from torch import Tensor
 
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry, print_provider_info
-from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_TEXT_AVAILABLE
 from flash.core.utilities.providers import _SENTENCE_TRANSFORMERS
 from flash.text.classification.collate import TextClassificationCollate
 from flash.text.embedding.backbones import HUGGINGFACE_BACKBONES
 from flash.text.ort_callback import ORTCallback
 
-if _TEXT_AVAILABLE:
+if _TOPIC_TEXT_AVAILABLE:
     from sentence_transformers.models import Pooling
 
     Pooling = print_provider_info("Pooling", _SENTENCE_TRANSFORMERS, Pooling)

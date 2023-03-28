@@ -25,11 +25,11 @@ from flash.audio.speech_recognition.output_transform import SpeechRecognitionOut
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import INPUT_TRANSFORM_TYPE, InputTransform
-from flash.core.utilities.imports import _AUDIO_TESTING
+from flash.core.utilities.imports import _TOPIC_AUDIO_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 
 # Skip doctests if requirements aren't available
-if not _AUDIO_TESTING:
+if not _TOPIC_AUDIO_AVAILABLE:
     __doctest_skip__ = ["SpeechRecognitionData", "SpeechRecognitionData.*"]
 
 

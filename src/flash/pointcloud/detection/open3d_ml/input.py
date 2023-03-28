@@ -18,9 +18,9 @@ from typing import Any, Dict, List, Optional, Type, Union
 import yaml
 
 from flash.core.data.io.input import BaseDataFormat, Input
-from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_POINTCLOUD_AVAILABLE
 
-if _POINTCLOUD_AVAILABLE:
+if _TOPIC_POINTCLOUD_AVAILABLE:
     from open3d._ml3d.datasets.kitti import KITTI, DataProcessing
 
 

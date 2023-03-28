@@ -21,7 +21,7 @@ from torch import Tensor
 
 import flash
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _SERVE_TESTING, _TABULAR_AVAILABLE, _TABULAR_TESTING
+from flash.core.utilities.imports import _SERVE_TESTING, _TABULAR_TESTING, _TOPIC_TABULAR_AVAILABLE
 from flash.tabular.classification.data import TabularClassificationData
 from flash.tabular.classification.model import TabularClassifier
 from tests.helpers.task_tester import StaticDataset, TaskTester
@@ -39,7 +39,7 @@ class TestTabularClassifier(TaskTester):
     }
     cli_command = "tabular_classification"
     is_testing = _TABULAR_TESTING
-    is_available = _TABULAR_AVAILABLE
+    is_available = _TOPIC_TABULAR_AVAILABLE
 
     # TODO: Resolve JIT issues
     scriptable = False

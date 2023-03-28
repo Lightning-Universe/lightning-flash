@@ -18,14 +18,14 @@ from torch.utils.data import Dataset
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input
 from flash.core.data.utilities.classification import TargetFormatter
-from flash.core.utilities.imports import _GRAPH_TESTING
+from flash.core.utilities.imports import _TOPIC_GRAPH_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 from flash.graph.classification.input import GraphClassificationDatasetInput
 from flash.graph.classification.input_transform import GraphClassificationInputTransform
 
 # Skip doctests if requirements aren't available
-if not _GRAPH_TESTING:
+if not _TOPIC_GRAPH_AVAILABLE:
     __doctest_skip__ = ["GraphClassificationData", "GraphClassificationData.*"]
 
 

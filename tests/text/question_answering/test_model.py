@@ -18,7 +18,7 @@ import pytest
 import torch
 from torch import Tensor
 
-from flash.core.utilities.imports import _TEXT_AVAILABLE, _TEXT_TESTING
+from flash.core.utilities.imports import _TEXT_TESTING, _TOPIC_TEXT_AVAILABLE
 from flash.text import QuestionAnsweringTask
 from tests.helpers.task_tester import TaskTester
 
@@ -30,7 +30,7 @@ class TestQuestionAnsweringTask(TaskTester):
     task_kwargs = {"backbone": TEST_BACKBONE}
     cli_command = "question_answering"
     is_testing = _TEXT_TESTING
-    is_available = _TEXT_AVAILABLE
+    is_available = _TOPIC_TEXT_AVAILABLE
 
     scriptable = False
     traceable = False

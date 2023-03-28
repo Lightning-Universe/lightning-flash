@@ -28,9 +28,8 @@ from flash.core.data.utilities.paths import PATH_TYPE
 from flash.core.integrations.labelstudio.input import LabelStudioImageClassificationInput, _parse_labelstudio_arguments
 from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,
-    _IMAGE_EXTRAS_TESTING,
-    _IMAGE_TESTING,
     _MATPLOTLIB_AVAILABLE,
+    _TOPIC_IMAGE_AVAILABLE,
     Image,
     requires,
 )
@@ -59,7 +58,7 @@ else:
 
 # Skip doctests if requirements aren't available
 __doctest_skip__ = []
-if not _IMAGE_TESTING:
+if not _TOPIC_IMAGE_AVAILABLE:
     __doctest_skip__ += [
         "ImageClassificationData",
         "ImageClassificationData.from_files",
@@ -69,9 +68,8 @@ if not _IMAGE_TESTING:
         "ImageClassificationData.from_tensors",
         "ImageClassificationData.from_data_frame",
         "ImageClassificationData.from_csv",
+        "ImageClassificationData.from_fiftyone",
     ]
-if not _IMAGE_EXTRAS_TESTING:
-    __doctest_skip__ += ["ImageClassificationData.from_fiftyone"]
 
 
 class ImageClassificationData(DataModule):

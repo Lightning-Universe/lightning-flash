@@ -20,7 +20,7 @@ from torch import Tensor
 
 import flash
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _SERVE_TESTING, _TEXT_AVAILABLE, _TEXT_TESTING, _TORCH_ORT_AVAILABLE
+from flash.core.utilities.imports import _SERVE_TESTING, _TEXT_TESTING, _TOPIC_TEXT_AVAILABLE, _TORCH_ORT_AVAILABLE
 from flash.text import TextClassifier
 from flash.text.ort_callback import ORTCallback
 from tests.helpers.boring_model import BoringModel
@@ -35,7 +35,7 @@ class TestTextClassifier(TaskTester):
     task_kwargs = {"backbone": TEST_BACKBONE}
     cli_command = "text_classification"
     is_testing = _TEXT_TESTING
-    is_available = _TEXT_AVAILABLE
+    is_available = _TOPIC_TEXT_AVAILABLE
 
     scriptable = False
 

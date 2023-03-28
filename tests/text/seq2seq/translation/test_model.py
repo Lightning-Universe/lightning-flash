@@ -19,7 +19,7 @@ import torch
 from torch import Tensor
 
 from flash import DataKeys
-from flash.core.utilities.imports import _SERVE_TESTING, _TEXT_AVAILABLE, _TEXT_TESTING
+from flash.core.utilities.imports import _SERVE_TESTING, _TEXT_TESTING, _TOPIC_TEXT_AVAILABLE
 from flash.text import TranslationTask
 from tests.helpers.task_tester import TaskTester
 
@@ -34,7 +34,7 @@ class TestTranslationTask(TaskTester):
     }
     cli_command = "translation"
     is_testing = _TEXT_TESTING
-    is_available = _TEXT_AVAILABLE
+    is_available = _TOPIC_TEXT_AVAILABLE
 
     scriptable = False
 

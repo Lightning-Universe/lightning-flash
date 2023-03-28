@@ -13,7 +13,7 @@
 # limitations under the License.
 import pytest
 
-from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE, _POINTCLOUD_TESTING
+from flash.core.utilities.imports import _POINTCLOUD_TESTING, _TOPIC_POINTCLOUD_AVAILABLE
 from flash.pointcloud.detection import PointCloudObjectDetector
 from tests.helpers.task_tester import TaskTester
 
@@ -23,7 +23,7 @@ class TestPointCloudObjectDetector(TaskTester):
     task_args = (2,)
     cli_command = "pointcloud_detection"
     is_testing = _POINTCLOUD_TESTING
-    is_available = _POINTCLOUD_AVAILABLE
+    is_available = _TOPIC_POINTCLOUD_AVAILABLE
 
 
 @pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed")

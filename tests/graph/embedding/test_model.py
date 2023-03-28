@@ -19,14 +19,14 @@ from torch import Tensor
 
 from flash import RunningStage, Trainer
 from flash.core.data.data_module import DataModule
-from flash.core.utilities.imports import _GRAPH_AVAILABLE, _GRAPH_TESTING
+from flash.core.utilities.imports import _GRAPH_TESTING, _TOPIC_GRAPH_AVAILABLE
 from flash.graph.classification.input import GraphClassificationDatasetInput
 from flash.graph.classification.input_transform import GraphClassificationInputTransform
 from flash.graph.classification.model import GraphClassifier
 from flash.graph.embedding.model import GraphEmbedder
 from tests.helpers.task_tester import TaskTester
 
-if _GRAPH_AVAILABLE:
+if _TOPIC_GRAPH_AVAILABLE:
     from torch_geometric import datasets
     from torch_geometric.data import Batch, Data
     from torch_geometric.nn.models import GCN
@@ -38,7 +38,7 @@ class TestGraphEmbedder(TaskTester):
     task = GraphEmbedder
     task_args = (GCN(in_channels=1, hidden_channels=512, num_layers=4),)
     is_testing = _GRAPH_TESTING
-    is_available = _GRAPH_AVAILABLE
+    is_available = _TOPIC_GRAPH_AVAILABLE
 
     # TODO: Resolve JIT issues
     scriptable = False

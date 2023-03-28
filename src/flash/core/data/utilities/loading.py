@@ -25,9 +25,9 @@ import pandas as pd
 import torch
 
 from flash.core.data.utilities.paths import has_file_allowed_extension
-from flash.core.utilities.imports import _AUDIO_AVAILABLE, _TORCHVISION_AVAILABLE, Image
+from flash.core.utilities.imports import _TOPIC_AUDIO_AVAILABLE, _TORCHVISION_AVAILABLE, Image
 
-if _AUDIO_AVAILABLE:
+if _TOPIC_AUDIO_AVAILABLE:
     from torchaudio.transforms import Spectrogram
 
 if _TORCHVISION_AVAILABLE:

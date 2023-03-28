@@ -23,12 +23,12 @@ from flash.core.data.io.output import Output
 from flash.core.integrations.pytorch_tabular.backbones import PYTORCH_TABULAR_BACKBONES
 from flash.core.registry import FlashRegistry
 from flash.core.serve import Composition
-from flash.core.utilities.imports import _TABULAR_TESTING, requires
+from flash.core.utilities.imports import _TOPIC_TABULAR_AVAILABLE, requires
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.tabular.input import TabularDeserializer
 
 # Skip doctests if requirements aren't available
-if not _TABULAR_TESTING:
+if not _TOPIC_TABULAR_AVAILABLE:
     __doctest_skip__ = ["TabularClassifier", "TabularClassifier.*"]
 
 

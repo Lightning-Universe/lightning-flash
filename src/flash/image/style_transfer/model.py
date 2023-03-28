@@ -18,12 +18,12 @@ from torch import Tensor, nn
 from flash.core.data.io.input import DataKeys
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_IMAGE_AVAILABLE
 from flash.core.utilities.stability import beta
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, OPTIMIZER_TYPE
 from flash.image.style_transfer import STYLE_TRANSFER_BACKBONES
 
-if _IMAGE_AVAILABLE:
+if _TOPIC_IMAGE_AVAILABLE:
     import pystiche.demo
     from pystiche import enc, loss
     from pystiche.image import read_image

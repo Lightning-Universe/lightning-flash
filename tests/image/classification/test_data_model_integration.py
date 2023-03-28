@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 
 from flash import Trainer
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _IMAGE_TESTING, _PIL_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_TESTING, _PIL_AVAILABLE, _TOPIC_IMAGE_AVAILABLE
 from flash.image import ImageClassificationData, ImageClassifier
 
 if _PIL_AVAILABLE:
@@ -56,7 +56,7 @@ def test_classification(tmpdir):
     trainer.finetune(model, datamodule=data, strategy="freeze")
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone isn't installed.")
 def test_classification_fiftyone(tmpdir):
     tmpdir = Path(tmpdir)

@@ -19,7 +19,7 @@ import torch
 from torch import Tensor
 
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _IMAGE_AVAILABLE, _IMAGE_TESTING
+from flash.core.utilities.imports import _IMAGE_TESTING, _TOPIC_IMAGE_AVAILABLE
 from flash.image.style_transfer import StyleTransfer
 from tests.helpers.task_tester import TaskTester
 
@@ -29,7 +29,7 @@ class TestStyleTransfer(TaskTester):
     task = StyleTransfer
     cli_command = "style_transfer"
     is_testing = _IMAGE_TESTING
-    is_available = _IMAGE_AVAILABLE
+    is_available = _TOPIC_IMAGE_AVAILABLE
 
     # TODO: loss_fn and perceptual_loss can't be jitted
     scriptable = False

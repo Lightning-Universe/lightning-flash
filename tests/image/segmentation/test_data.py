@@ -10,10 +10,10 @@ from flash import Trainer
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,
-    _IMAGE_AVAILABLE,
     _IMAGE_TESTING,
     _MATPLOTLIB_AVAILABLE,
     _PIL_AVAILABLE,
+    _TOPIC_IMAGE_AVAILABLE,
 )
 from flash.image import SemanticSegmentation, SemanticSegmentationData
 
@@ -311,7 +311,7 @@ class TestSemanticSegmentationData:
             )
 
     @staticmethod
-    @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+    @pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
     @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
     def test_from_fiftyone(tmpdir):
         tmp_dir = Path(tmpdir)
@@ -381,7 +381,7 @@ class TestSemanticSegmentationData:
         assert imgs.shape == (2, 3, 128, 128)
 
     @staticmethod
-    @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+    @pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
     @pytest.mark.skipif(not _MATPLOTLIB_AVAILABLE, reason="matplotlib isn't installed.")
     def test_map_labels(tmpdir):
         tmp_dir = Path(tmpdir)

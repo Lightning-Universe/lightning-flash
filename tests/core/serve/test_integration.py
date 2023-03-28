@@ -3,9 +3,9 @@ import base64
 import pytest
 
 from flash.core.serve import Composition, Endpoint
-from flash.core.utilities.imports import _FASTAPI_AVAILABLE, _SERVE_AVAILABLE, _SERVE_TESTING
+from flash.core.utilities.imports import _FASTAPI_AVAILABLE, _SERVE_TESTING, _TOPIC_SERVE_AVAILABLE
 
-if _SERVE_AVAILABLE:
+if _TOPIC_SERVE_AVAILABLE:
     from jinja2 import TemplateNotFound
 else:
     TemplateNotFound = ...

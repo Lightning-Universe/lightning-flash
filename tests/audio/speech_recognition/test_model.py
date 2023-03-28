@@ -21,7 +21,7 @@ from torch import Tensor
 
 from flash.audio import SpeechRecognition
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _AUDIO_AVAILABLE, _AUDIO_TESTING, _SERVE_TESTING
+from flash.core.utilities.imports import _AUDIO_TESTING, _SERVE_TESTING, _TOPIC_AUDIO_AVAILABLE
 from tests.helpers.task_tester import TaskTester
 
 TEST_BACKBONE = "patrickvonplaten/wav2vec2_tiny_random_robust"  # tiny model for testing
@@ -32,7 +32,7 @@ class TestSpeechRecognition(TaskTester):
     task_kwargs = dict(backbone=TEST_BACKBONE)
     cli_command = "speech_recognition"
     is_testing = _AUDIO_TESTING
-    is_available = _AUDIO_AVAILABLE
+    is_available = _TOPIC_AUDIO_AVAILABLE
 
     scriptable = False
 

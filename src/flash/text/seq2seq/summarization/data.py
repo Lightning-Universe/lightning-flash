@@ -17,18 +17,18 @@ from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.utilities.paths import PATH_TYPE
-from flash.core.utilities.imports import _TEXT_AVAILABLE, _TEXT_TESTING
+from flash.core.utilities.imports import _TOPIC_TEXT_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 from flash.text.seq2seq.core.input import Seq2SeqCSVInput, Seq2SeqInputBase, Seq2SeqJSONInput, Seq2SeqListInput
 
-if _TEXT_AVAILABLE:
+if _TOPIC_TEXT_AVAILABLE:
     from datasets import Dataset
 else:
     Dataset = object
 
 # Skip doctests if requirements aren't available
-if not _TEXT_TESTING:
+if not _TOPIC_TEXT_AVAILABLE:
     __doctest_skip__ = ["SummarizationData", "SummarizationData.*"]
 
 
