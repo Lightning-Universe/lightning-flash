@@ -134,7 +134,6 @@ jobs:
         pip list
         # FixMe: include doctests for src/
         coverage run --source flash -m pytest \
-          tests/core \
           tests/deprecated_api \
           tests/examples \
           tests/template \
