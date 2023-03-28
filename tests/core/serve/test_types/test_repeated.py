@@ -2,17 +2,17 @@ import pytest
 import torch
 
 from flash.core.serve.types import Label, Repeated
-from flash.core.utilities.imports import _SERVE_TESTING
+from flash.core.utilities.imports import _TOPIC_SERVE_AVAILABLE
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_repeated_deserialize():
     repeated = Repeated(dtype=Label(classes=["classA", "classB"]))
     res = repeated.deserialize(*({"label": "classA"}, {"label": "classA"}, {"label": "classB"}))
     assert res == (torch.tensor(0), torch.tensor(0), torch.tensor(1))
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_repeated_serialize(session_global_datadir):
     repeated = Repeated(dtype=Label(path=str(session_global_datadir / "imagenet_labels.txt")))
     assert repeated.deserialize(*({"label": "chickadee"}, {"label": "stingray"})) == (
@@ -23,7 +23,7 @@ def test_repeated_serialize(session_global_datadir):
     assert repeated.serialize(torch.tensor([19, 6])) == ("chickadee", "stingray")
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_repeated_max_len():
     repeated = Repeated(dtype=Label(classes=["classA", "classB"]), max_len=2)
 
@@ -47,7 +47,7 @@ def test_repeated_max_len():
         Repeated(dtype=Label(classes=["classA", "classB"]), max_len=str)
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_repeated_non_serve_dtype():
     class NonServeDtype:
         pass
@@ -56,7 +56,7 @@ def test_repeated_non_serve_dtype():
         Repeated(NonServeDtype())
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_not_allow_nested_repeated():
     with pytest.raises(TypeError):
         Repeated(dtype=Repeated())

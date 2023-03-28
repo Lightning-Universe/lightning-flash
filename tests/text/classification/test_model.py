@@ -20,7 +20,7 @@ from torch import Tensor
 
 import flash
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _SERVE_TESTING, _TEXT_TESTING, _TOPIC_TEXT_AVAILABLE, _TORCH_ORT_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_SERVE_AVAILABLE, _TOPIC_TEXT_AVAILABLE, _TORCH_ORT_AVAILABLE
 from flash.text import TextClassifier
 from flash.text.ort_callback import ORTCallback
 from tests.helpers.boring_model import BoringModel
@@ -34,7 +34,7 @@ class TestTextClassifier(TaskTester):
     task_args = (2,)
     task_kwargs = {"backbone": TEST_BACKBONE}
     cli_command = "text_classification"
-    is_testing = _TEXT_TESTING
+    is_testing = _TOPIC_TEXT_AVAILABLE
     is_available = _TOPIC_TEXT_AVAILABLE
 
     scriptable = False
@@ -106,7 +106,7 @@ class TestTextClassifier(TaskTester):
             trainer.fit(model, model.process_train_dataset(dataset, batch_size=4))
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="serve libraries aren't installed.")
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = TextClassifier(2, backbone=TEST_BACKBONE)

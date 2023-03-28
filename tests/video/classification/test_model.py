@@ -25,7 +25,7 @@ from torch.utils.data import SequentialSampler
 
 import flash
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _TOPIC_VIDEO_AVAILABLE, _VIDEO_TESTING
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _TOPIC_VIDEO_AVAILABLE
 from flash.video import VideoClassificationData, VideoClassifier
 from tests.helpers.task_tester import TaskTester
 from tests.video.classification.test_data import create_dummy_video_frames, temp_encoded_tensors
@@ -43,7 +43,7 @@ class TestVideoClassifier(TaskTester):
     task_args = (2,)
     task_kwargs = {"pretrained": False, "backbone": "slow_r50"}
     cli_command = "video_classification"
-    is_testing = _VIDEO_TESTING
+    is_testing = _TOPIC_VIDEO_AVAILABLE
     is_available = _TOPIC_VIDEO_AVAILABLE
 
     scriptable = False
@@ -142,7 +142,7 @@ def mock_encoded_video_dataset_folder(tmpdir):
             yield str(tmp_dir), video_duration
 
 
-@pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
+@pytest.mark.skipif(not _TOPIC_VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
 def test_video_classifier_finetune_from_folder(tmpdir):
     with mock_encoded_video_dataset_folder(tmpdir) as (mock_folder, total_duration):
         half_duration = total_duration / 2 - 1e-9
@@ -165,7 +165,7 @@ def test_video_classifier_finetune_from_folder(tmpdir):
         trainer.finetune(model, datamodule=datamodule)
 
 
-@pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
+@pytest.mark.skipif(not _TOPIC_VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
 def test_video_classifier_finetune_from_files(tmpdir):
     with mock_video_data_frame() as (mock_data_frame, total_duration):
         half_duration = total_duration / 2 - 1e-9
@@ -189,7 +189,7 @@ def test_video_classifier_finetune_from_files(tmpdir):
         trainer.finetune(model, datamodule=datamodule)
 
 
-@pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
+@pytest.mark.skipif(not _TOPIC_VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
 def test_video_classifier_finetune_from_data_frame(tmpdir):
     with mock_video_data_frame() as (mock_data_frame, total_duration):
         half_duration = total_duration / 2 - 1e-9
@@ -214,7 +214,7 @@ def test_video_classifier_finetune_from_data_frame(tmpdir):
         trainer.finetune(model, datamodule=datamodule)
 
 
-@pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
+@pytest.mark.skipif(not _TOPIC_VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
 def test_video_classifier_finetune_from_tensors(tmpdir):
     mock_tensors = temp_encoded_tensors(num_frames=5)
     datamodule = VideoClassificationData.from_tensors(
@@ -237,7 +237,7 @@ def test_video_classifier_finetune_from_tensors(tmpdir):
     trainer.finetune(model, datamodule=datamodule)
 
 
-@pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
+@pytest.mark.skipif(not _TOPIC_VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
 def test_video_classifier_predict_from_tensors(tmpdir):
     mock_tensors = temp_encoded_tensors(num_frames=5)
     datamodule = VideoClassificationData.from_tensors(
@@ -265,7 +265,7 @@ def test_video_classifier_predict_from_tensors(tmpdir):
     assert predictions[0][0] in datamodule.labels
 
 
-@pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
+@pytest.mark.skipif(not _TOPIC_VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
 def test_video_classifier_finetune_from_csv(tmpdir):
     with mock_video_csv_file(tmpdir) as (mock_csv, total_duration):
         half_duration = total_duration / 2 - 1e-9

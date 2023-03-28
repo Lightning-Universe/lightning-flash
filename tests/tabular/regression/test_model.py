@@ -21,7 +21,7 @@ from torch import Tensor
 
 import flash
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _SERVE_TESTING, _TABULAR_TESTING, _TOPIC_TABULAR_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_SERVE_AVAILABLE, _TOPIC_TABULAR_AVAILABLE
 from flash.tabular import TabularRegressionData, TabularRegressor
 from tests.helpers.task_tester import StaticDataset, TaskTester
 
@@ -36,7 +36,7 @@ class TestTabularRegressor(TaskTester):
         "backbone": "tabnet",
     }
     cli_command = "tabular_regression"
-    is_testing = _TABULAR_TESTING
+    is_testing = _TOPIC_TABULAR_AVAILABLE
     is_available = _TOPIC_TABULAR_AVAILABLE
 
     # TODO: Resolve JIT issues
@@ -138,7 +138,7 @@ class TestTabularRegressor(TaskTester):
         trainer.fit(model, model.process_train_dataset(dataset, batch_size=4))
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="serve libraries aren't installed.")
 @pytest.mark.parametrize(
     "backbone", ["tabnet", "tabtransformer", "fttransformer", "autoint", "node", "category_embedding"]
 )

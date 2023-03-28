@@ -19,7 +19,7 @@ import torch
 from torch import Tensor
 
 import flash
-from flash.core.utilities.imports import _TEXT_TESTING, _TOPIC_TEXT_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_TEXT_AVAILABLE
 from flash.text import TextClassificationData, TextEmbedder
 from tests.helpers.task_tester import TaskTester
 
@@ -39,7 +39,7 @@ TEST_BACKBONE = "sentence-transformers/all-MiniLM-L6-v2"  # tiny model for testi
 class TestTextEmbedder(TaskTester):
     task = TextEmbedder
     task_kwargs = {"backbone": TEST_BACKBONE}
-    is_testing = _TEXT_TESTING
+    is_testing = _TOPIC_TEXT_AVAILABLE
     is_available = _TOPIC_TEXT_AVAILABLE
 
     scriptable = False
@@ -54,7 +54,7 @@ class TestTextEmbedder(TaskTester):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_predict(tmpdir):
     datamodule = TextClassificationData.from_lists(predict_data=predict_data, batch_size=4)
     model = TextEmbedder(backbone=TEST_BACKBONE)

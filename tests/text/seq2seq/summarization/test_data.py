@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 
 from flash import DataKeys
-from flash.core.utilities.imports import _TEXT_TESTING
+from flash.core.utilities.imports import _TOPIC_TEXT_AVAILABLE
 from flash.text import SummarizationData
 
 TEST_CSV_DATA = """input,target
@@ -58,7 +58,7 @@ def json_data_with_field(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_csv(tmpdir):
     csv_path = csv_data(tmpdir)
     dm = SummarizationData.from_csv("input", "target", train_file=csv_path, batch_size=1)
@@ -68,7 +68,7 @@ def test_from_csv(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_files(tmpdir):
     csv_path = csv_data(tmpdir)
     dm = SummarizationData.from_csv(
@@ -89,7 +89,7 @@ def test_from_files(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_json(tmpdir):
     json_path = json_data(tmpdir)
     dm = SummarizationData.from_json(
@@ -104,7 +104,7 @@ def test_from_json(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_json_with_field(tmpdir):
     json_path = json_data_with_field(tmpdir)
     dm = SummarizationData.from_json(

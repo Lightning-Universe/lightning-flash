@@ -18,7 +18,7 @@ import pandas as pd
 import pytest
 
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _TEXT_TESTING, _TOPIC_TEXT_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_TEXT_AVAILABLE
 from flash.text import TextClassificationData
 
 if _TOPIC_TEXT_AVAILABLE:
@@ -117,7 +117,7 @@ def parquet_data(tmpdir, multilabel: bool):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_csv(tmpdir):
     csv_path = csv_data(tmpdir, multilabel=False)
     dm = TextClassificationData.from_csv(
@@ -147,7 +147,7 @@ def test_from_csv(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_csv_multilabel(tmpdir):
     csv_path = csv_data(tmpdir, multilabel=True)
     dm = TextClassificationData.from_csv(
@@ -179,7 +179,7 @@ def test_from_csv_multilabel(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_json(tmpdir):
     json_path = json_data(tmpdir, multilabel=False)
     dm = TextClassificationData.from_json(
@@ -209,7 +209,7 @@ def test_from_json(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_json_multilabel(tmpdir):
     json_path = json_data(tmpdir, multilabel=True)
     dm = TextClassificationData.from_json(
@@ -241,7 +241,7 @@ def test_from_json_multilabel(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_json_with_field(tmpdir):
     json_path = json_data_with_field(tmpdir, multilabel=False)
     dm = TextClassificationData.from_json(
@@ -272,7 +272,7 @@ def test_from_json_with_field(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_json_with_field_multilabel(tmpdir):
     json_path = json_data_with_field(tmpdir, multilabel=True)
     dm = TextClassificationData.from_json(
@@ -305,7 +305,7 @@ def test_from_json_with_field_multilabel(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_parquet(tmpdir):
     parquet_path = parquet_data(tmpdir, False)
     dm = TextClassificationData.from_parquet(
@@ -335,7 +335,7 @@ def test_from_parquet(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_parquet_multilabel(tmpdir):
     parquet_path = parquet_data(tmpdir, True)
     dm = TextClassificationData.from_parquet(
@@ -367,7 +367,7 @@ def test_from_parquet_multilabel(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_data_frame():
     dm = TextClassificationData.from_data_frame(
         "sentence",
@@ -396,7 +396,7 @@ def test_from_data_frame():
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_data_frame_multilabel():
     dm = TextClassificationData.from_data_frame(
         "sentence",
@@ -427,7 +427,7 @@ def test_from_data_frame_multilabel():
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_hf_datasets():
     TEST_HF_DATASET_DATA = Dataset.from_pandas(TEST_DATA_FRAME_DATA)
     dm = TextClassificationData.from_hf_datasets(
@@ -457,7 +457,7 @@ def test_from_hf_datasets():
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_hf_datasets_multilabel():
     TEST_HF_DATASET_DATA_MULTILABEL = Dataset.from_pandas(TEST_DATA_FRAME_DATA_MULTILABEL)
     dm = TextClassificationData.from_hf_datasets(
@@ -489,7 +489,7 @@ def test_from_hf_datasets_multilabel():
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_lists():
     dm = TextClassificationData.from_lists(
         train_data=TEST_LIST_DATA,
@@ -519,7 +519,7 @@ def test_from_lists():
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_lists_multilabel():
     dm = TextClassificationData.from_lists(
         train_data=TEST_LIST_DATA,

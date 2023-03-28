@@ -28,11 +28,10 @@ from flash.core.data.utilities.loading import (
     load_spectrogram,
 )
 from flash.core.utilities.imports import (
-    _AUDIO_TESTING,
-    _IMAGE_TESTING,
     _PANDAS_AVAILABLE,
-    _TABULAR_TESTING,
     _TOPIC_AUDIO_AVAILABLE,
+    _TOPIC_IMAGE_AVAILABLE,
+    _TOPIC_TABULAR_AVAILABLE,
     Image,
 )
 
@@ -81,7 +80,7 @@ def write_tsv(file_path):
     ).to_csv(file_path, sep="\t")
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.parametrize(
     "extension,write",
     [(extension, write_image) for extension in IMG_EXTENSIONS]
@@ -99,7 +98,7 @@ def test_load_image(tmpdir, extension, write):
     assert image.mode == "RGB"
 
 
-@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_AUDIO_AVAILABLE, reason="audio libraries aren't installed.")
 @pytest.mark.parametrize(
     "extension,write",
     [(extension, write_image) for extension in IMG_EXTENSIONS]
@@ -116,7 +115,7 @@ def test_load_spectrogram(tmpdir, extension, write):
     assert spectrogram.dtype == np.dtype("float32")
 
 
-@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_AUDIO_AVAILABLE, reason="audio libraries aren't installed.")
 @pytest.mark.parametrize("extension,write", [(extension, write_audio) for extension in AUDIO_EXTENSIONS])
 def test_load_audio(tmpdir, extension, write):
     file_path = os.path.join(tmpdir, f"test{extension}")
@@ -128,7 +127,7 @@ def test_load_audio(tmpdir, extension, write):
     assert audio.dtype == np.dtype("float32")
 
 
-@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TABULAR_AVAILABLE, reason="tabular libraries aren't installed.")
 @pytest.mark.parametrize(
     "extension,write",
     [(extension, write_csv) for extension in CSV_EXTENSIONS] + [(extension, write_tsv) for extension in TSV_EXTENSIONS],
@@ -149,26 +148,26 @@ def test_load_data_frame(tmpdir, extension, write):
             "https://pl-flash-data.s3.amazonaws.com/images/ant_1.jpg",
             load_image,
             Image.Image,
-            marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed."),
+            marks=pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed."),
         ),
         # it shouldn't try to expand glob patterns in URLs
         pytest.param(
             "https://pl-flash-data.s3.amazonaws.com/images/ant_1 [test].jpg",
             load_image,
             Image.Image,
-            marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed."),
+            marks=pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed."),
         ),
         pytest.param(
             "https://pl-flash-data.s3.amazonaws.com/images/ant_1.jpg",
             load_spectrogram,
             np.ndarray,
-            marks=pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed."),
+            marks=pytest.mark.skipif(not _TOPIC_AUDIO_AVAILABLE, reason="audio libraries aren't installed."),
         ),
         pytest.param(
             "https://pl-flash-data.s3.amazonaws.com/titanic.csv",
             load_data_frame,
             DataFrame,
-            marks=pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed."),
+            marks=pytest.mark.skipif(not _TOPIC_TABULAR_AVAILABLE, reason="tabular libraries aren't installed."),
         ),
     ],
 )

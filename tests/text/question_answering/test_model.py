@@ -18,7 +18,7 @@ import pytest
 import torch
 from torch import Tensor
 
-from flash.core.utilities.imports import _TEXT_TESTING, _TOPIC_TEXT_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_TEXT_AVAILABLE
 from flash.text import QuestionAnsweringTask
 from tests.helpers.task_tester import TaskTester
 
@@ -29,7 +29,7 @@ class TestQuestionAnsweringTask(TaskTester):
     task = QuestionAnsweringTask
     task_kwargs = {"backbone": TEST_BACKBONE}
     cli_command = "question_answering"
-    is_testing = _TEXT_TESTING
+    is_testing = _TOPIC_TEXT_AVAILABLE
     is_available = _TOPIC_TEXT_AVAILABLE
 
     scriptable = False
@@ -66,7 +66,7 @@ class TestQuestionAnsweringTask(TaskTester):
         return self.example_train_sample
 
 
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_modules_to_freeze():
     model = QuestionAnsweringTask(backbone=TEST_BACKBONE)
     assert model.modules_to_freeze() is model.model.distilbert

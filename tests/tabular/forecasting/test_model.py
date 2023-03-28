@@ -19,7 +19,7 @@ from torch import Tensor
 
 import flash
 from flash import DataKeys
-from flash.core.utilities.imports import _TABULAR_TESTING, _TOPIC_TABULAR_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_TABULAR_AVAILABLE
 from flash.tabular.forecasting import TabularForecaster
 from tests.helpers.task_tester import StaticDataset, TaskTester
 
@@ -72,7 +72,7 @@ class TestTabularForecaster(TaskTester):
         "backbone_kwargs": {"widths": [32, 512], "backcast_loss_ratio": 0.1},
     }
     cli_command = "tabular_forecasting"
-    is_testing = _TABULAR_TESTING
+    is_testing = _TOPIC_TABULAR_AVAILABLE
     is_available = _TOPIC_TABULAR_AVAILABLE
 
     # # TODO: Resolve JIT issues

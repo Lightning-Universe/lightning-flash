@@ -14,7 +14,7 @@
 import pytest
 
 from flash import DataKeys
-from flash.core.utilities.imports import _GRAPH_TESTING, _TOPIC_GRAPH_AVAILABLE, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_GRAPH_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.graph.classification.data import GraphClassificationData
 from flash.graph.classification.input_transform import GraphClassificationInputTransform, PyGTransformAdapter
 
@@ -26,7 +26,7 @@ if _TORCHVISION_AVAILABLE:
     from torchvision import transforms as T
 
 
-@pytest.mark.skipif(not _GRAPH_TESTING, reason="graph libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_GRAPH_AVAILABLE, reason="graph libraries aren't installed.")
 class TestGraphClassificationData:
     """Tests ``GraphClassificationData``."""
 

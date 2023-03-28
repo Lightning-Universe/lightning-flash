@@ -19,7 +19,7 @@ from torch import Tensor
 
 from flash import RunningStage, Trainer
 from flash.core.data.data_module import DataModule
-from flash.core.utilities.imports import _GRAPH_TESTING, _TOPIC_GRAPH_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_GRAPH_AVAILABLE
 from flash.graph.classification.input import GraphClassificationDatasetInput
 from flash.graph.classification.input_transform import GraphClassificationInputTransform
 from flash.graph.classification.model import GraphClassifier
@@ -37,7 +37,7 @@ else:
 class TestGraphEmbedder(TaskTester):
     task = GraphEmbedder
     task_args = (GCN(in_channels=1, hidden_channels=512, num_layers=4),)
-    is_testing = _GRAPH_TESTING
+    is_testing = _TOPIC_GRAPH_AVAILABLE
     is_available = _TOPIC_GRAPH_AVAILABLE
 
     # TODO: Resolve JIT issues
@@ -55,14 +55,14 @@ class TestGraphEmbedder(TaskTester):
         assert output.shape == torch.Size([1, 512])
 
 
-@pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")
+@pytest.mark.skipif(not _TOPIC_GRAPH_AVAILABLE, reason="pytorch geometric isn't installed")
 def test_smoke():
     """A simple test that the class can be instantiated from a GraphClassifier backbone."""
     model = GraphEmbedder(GraphClassifier(num_features=1, num_classes=1).backbone)
     assert model is not None
 
 
-@pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")
+@pytest.mark.skipif(not _TOPIC_GRAPH_AVAILABLE, reason="pytorch geometric isn't installed")
 def test_not_trainable(tmpdir):
     """Tests that the model gives an error when training, validating, or testing."""
     tudataset = datasets.TUDataset(root=tmpdir, name="KKI")
@@ -85,7 +85,7 @@ def test_not_trainable(tmpdir):
         trainer.test(model, datamodule=datamodule)
 
 
-@pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")
+@pytest.mark.skipif(not _TOPIC_GRAPH_AVAILABLE, reason="pytorch geometric isn't installed")
 def test_predict_dataset(tmpdir):
     """Tests that we can generate embeddings from a pytorch geometric dataset."""
     tudataset = datasets.TUDataset(root=tmpdir, name="KKI")

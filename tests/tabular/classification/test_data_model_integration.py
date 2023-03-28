@@ -14,7 +14,7 @@
 import pytest
 import pytorch_lightning as pl
 
-from flash.core.utilities.imports import _TABULAR_TESTING, _TOPIC_TABULAR_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_TABULAR_AVAILABLE
 from flash.tabular import TabularClassificationData, TabularClassifier
 
 if _TOPIC_TABULAR_AVAILABLE:
@@ -30,7 +30,7 @@ if _TOPIC_TABULAR_AVAILABLE:
     )
 
 
-@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TABULAR_AVAILABLE, reason="tabular libraries aren't installed.")
 @pytest.mark.parametrize(
     "backbone,fields",
     [

@@ -18,12 +18,7 @@ import torch
 from torch import Tensor
 
 import flash
-from flash.core.utilities.imports import (
-    _IMAGE_TESTING,
-    _TOPIC_IMAGE_AVAILABLE,
-    _TORCHVISION_AVAILABLE,
-    _VISSL_AVAILABLE,
-)
+from flash.core.utilities.imports import _TOPIC_IMAGE_AVAILABLE, _TORCHVISION_AVAILABLE, _VISSL_AVAILABLE
 from flash.image import ImageClassificationData, ImageEmbedder
 from tests.helpers.task_tester import TaskTester
 
@@ -38,7 +33,7 @@ class TestImageEmbedder(TaskTester):
     task_kwargs = dict(
         backbone="resnet18",
     )
-    is_testing = _IMAGE_TESTING
+    is_testing = _TOPIC_IMAGE_AVAILABLE
     is_available = _TOPIC_IMAGE_AVAILABLE
 
     # TODO: Resolve JIT script issues
@@ -112,7 +107,7 @@ def test_vissl_training_with_wrong_arguments(
         )
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="torch vision not installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="torch vision not installed.")
 @pytest.mark.parametrize(
     "backbone, embedding_size",
     [
@@ -136,7 +131,7 @@ def test_only_embedding(backbone, embedding_size):
             assert prediction.size(0) == embedding_size
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="torch vision not installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="torch vision not installed.")
 def test_not_implemented_steps():
     embedder = ImageEmbedder(backbone="resnet18")
 

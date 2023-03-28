@@ -14,7 +14,7 @@
 import pytest
 import torch
 
-from flash.core.utilities.imports import _POINTCLOUD_TESTING, _TOPIC_POINTCLOUD_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_POINTCLOUD_AVAILABLE
 from flash.pointcloud.segmentation import PointCloudSegmentation
 from tests.helpers.task_tester import TaskTester
 
@@ -23,17 +23,17 @@ class TestPointCloudSegmentation(TaskTester):
     task = PointCloudSegmentation
     task_args = (2,)
     cli_command = "pointcloud_segmentation"
-    is_testing = _POINTCLOUD_TESTING
+    is_testing = _TOPIC_POINTCLOUD_AVAILABLE
     is_available = _TOPIC_POINTCLOUD_AVAILABLE
 
 
-@pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed")
+@pytest.mark.skipif(not _TOPIC_POINTCLOUD_AVAILABLE, reason="pointcloud libraries aren't installed")
 def test_backbones():
     backbones = PointCloudSegmentation.available_backbones()
     assert backbones == ["randlanet", "randlanet_s3dis", "randlanet_semantic_kitti", "randlanet_toronto3d"]
 
 
-@pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed")
+@pytest.mark.skipif(not _TOPIC_POINTCLOUD_AVAILABLE, reason="pointcloud libraries aren't installed")
 @pytest.mark.parametrize(
     "backbone",
     [

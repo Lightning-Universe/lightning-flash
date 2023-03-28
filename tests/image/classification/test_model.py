@@ -20,7 +20,7 @@ from torch import Tensor
 
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _IMAGE_TESTING, _SERVE_TESTING, _TOPIC_IMAGE_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_IMAGE_AVAILABLE, _TOPIC_SERVE_AVAILABLE
 from flash.image import ImageClassifier
 from tests.helpers.task_tester import TaskTester
 
@@ -48,7 +48,7 @@ class TestImageClassifier(TaskTester):
     task = ImageClassifier
     task_args = (2,)
     cli_command = "image_classification"
-    is_testing = _IMAGE_TESTING
+    is_testing = _TOPIC_IMAGE_AVAILABLE
     is_available = _TOPIC_IMAGE_AVAILABLE
 
     marks = {
@@ -113,13 +113,13 @@ class TestImageClassifier(TaskTester):
         return self.example_train_sample
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_non_existent_backbone():
     with pytest.raises(KeyError):
         ImageClassifier(2, backbone="i am never going to implement this lol")
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_freeze():
     model = ImageClassifier(2)
     model.freeze()
@@ -127,7 +127,7 @@ def test_freeze():
         assert p.requires_grad is False
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_unfreeze():
     model = ImageClassifier(2)
     model.unfreeze()
@@ -135,7 +135,7 @@ def test_unfreeze():
         assert p.requires_grad is True
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_multilabel(tmpdir):
     num_classes = 4
     ds = DummyMultiLabelDataset(num_classes)
@@ -149,7 +149,7 @@ def test_multilabel(tmpdir):
     assert len(predictions[0]) == num_classes
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="serve libraries aren't installed.")
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = ImageClassifier(2)

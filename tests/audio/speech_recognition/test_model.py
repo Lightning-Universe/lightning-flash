@@ -21,7 +21,7 @@ from torch import Tensor
 
 from flash.audio import SpeechRecognition
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _AUDIO_TESTING, _SERVE_TESTING, _TOPIC_AUDIO_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_AUDIO_AVAILABLE, _TOPIC_SERVE_AVAILABLE
 from tests.helpers.task_tester import TaskTester
 
 TEST_BACKBONE = "patrickvonplaten/wav2vec2_tiny_random_robust"  # tiny model for testing
@@ -31,7 +31,7 @@ class TestSpeechRecognition(TaskTester):
     task = SpeechRecognition
     task_kwargs = dict(backbone=TEST_BACKBONE)
     cli_command = "speech_recognition"
-    is_testing = _AUDIO_TESTING
+    is_testing = _TOPIC_AUDIO_AVAILABLE
     is_available = _TOPIC_AUDIO_AVAILABLE
 
     scriptable = False
@@ -61,13 +61,13 @@ class TestSpeechRecognition(TaskTester):
         return self.example_train_sample
 
 
-@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_AUDIO_AVAILABLE, reason="audio libraries aren't installed.")
 def test_modules_to_freeze():
     model = SpeechRecognition(backbone=TEST_BACKBONE)
     assert model.modules_to_freeze() is model.model.wav2vec2
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="serve libraries aren't installed.")
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = SpeechRecognition(backbone=TEST_BACKBONE)

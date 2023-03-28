@@ -20,7 +20,7 @@ from torch.utils.data import DataLoader
 
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _IMAGE_TESTING, _LEARN2LEARN_AVAILABLE, _PL_GREATER_EQUAL_1_6_0
+from flash.core.utilities.imports import _LEARN2LEARN_AVAILABLE, _PL_GREATER_EQUAL_1_6_0, _TOPIC_IMAGE_AVAILABLE
 from flash.image import ImageClassificationData, ImageClassifier
 from flash.image.classification.adapters import TRAINING_STRATEGIES
 from tests.image.classification.test_data import _rand_image
@@ -39,7 +39,7 @@ class DummyDataset(torch.utils.data.Dataset):
         return 2
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_default_strategies(tmpdir):
     num_classes = 10
     ds = DummyDataset()

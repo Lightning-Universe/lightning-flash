@@ -15,7 +15,7 @@ import urllib.error
 
 import pytest
 
-from flash.core.utilities.imports import _IMAGE_TESTING
+from flash.core.utilities.imports import _TOPIC_IMAGE_AVAILABLE
 from flash.core.utilities.url_error import catch_url_error
 from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES
 
@@ -23,9 +23,11 @@ from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES
 @pytest.mark.parametrize(
     ["backbone", "expected_num_features"],
     [
-        pytest.param("resnet34", 512, marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="No torchvision")),
-        pytest.param("mobilenetv2_100", 1280, marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="No timm")),
-        pytest.param("mobilenet_v2", 1280, marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="No torchvision")),
+        pytest.param("resnet34", 512, marks=pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="No torchvision")),
+        pytest.param("mobilenetv2_100", 1280, marks=pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="No timm")),
+        pytest.param(
+            "mobilenet_v2", 1280, marks=pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="No torchvision")
+        ),
     ],
 )
 def test_image_classifier_backbones_registry(backbone, expected_num_features):
@@ -42,9 +44,11 @@ def test_image_classifier_backbones_registry(backbone, expected_num_features):
             "resnet50",
             "supervised",
             2048,
-            marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="No torchvision"),
+            marks=pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="No torchvision"),
         ),
-        pytest.param("resnet50", "simclr", 2048, marks=pytest.mark.skipif(not _IMAGE_TESTING, reason="No torchvision")),
+        pytest.param(
+            "resnet50", "simclr", 2048, marks=pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="No torchvision")
+        ),
     ],
 )
 def test_pretrained_weights_registry(backbone, pretrained, expected_num_features):
