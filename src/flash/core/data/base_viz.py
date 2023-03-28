@@ -13,7 +13,7 @@
 # limitations under the License.
 from typing import Any, Dict, List, Set, Tuple
 
-from pytorch_lightning.utilities.model_helpers import is_overridden
+from lightning_utilities.core.overrides import is_overridden
 
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.utils import _CALLBACK_FUNCS

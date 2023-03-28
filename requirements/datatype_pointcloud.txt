@@ -1,6 +1,7 @@
 # NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forced in setup
 
 open3d ==0.13
-torch ==1.8.1
-torchvision ==0.9.1
+# Version mismatch: Open3D needs PyTorch version 1.7.*, but version 1.8.1+cpu is installed!
+torch ==1.7.1
+torchvision ==0.8.1
 tensorboard <=2.11.0
