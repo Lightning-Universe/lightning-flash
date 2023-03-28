@@ -34,18 +34,18 @@ jobs:
           - { os: ubuntu-20.04, python-version: 3.9, requires: 'oldest' }
           - { os: ubuntu-20.04, python-version: 3.9, requires: 'latest' }
         include:
-          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'pre', topic: [ 'core' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'image' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'image','image_extras' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'image','image_extras_baal' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'video' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'video','video_extras' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'tabular' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'text' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.8, release: 'stable', topic: [ 'pointcloud' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'serve' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'graph' ] }
-          - { os: 'ubuntu-20.04', python-version: 3.9, release: 'stable', topic: [ 'audio' ] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'core'}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image'}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image', extra: ['image_extras']}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image', extra: ['image_extras_baal']}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'video'}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'video', extra: ['video_extras']}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'tabular'}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'text'}
+          - { os: 'ubuntu-20.04', python-version: 3.8, topic: 'pointcloud'}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'serve'}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'graph'}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'audio'}
 
     # Timeout: https://stackoverflow.com/a/59076067/4521646
     timeout-minutes: 50
@@ -84,10 +84,6 @@ jobs:
         lines = [line if any([line.startswith(package) for package in ignore]) else line.replace('>', '=') for line in open(fname).readlines()]
         open(fname, 'w').writelines(lines)
       shell: python
-
-    - run: echo "period=$(python -c 'import time; days = time.time() / 60 / 60 / 24; print(int(days / 7))' 2>&1)" >> $GITHUB_OUTPUT
-      if: matrix.requires != 'latest'
-      id: times
 
     - name: Install graph test dependencies
       if: contains( matrix.topic , 'graph' )
@@ -139,10 +135,15 @@ jobs:
       run: |
         pip list
         # FixMe: include doctests for src/
-        coverage run --source flash -m pytest tests/ -v --reruns 3 --reruns-delay 2
+        coverage run --source flash -m pytest \
+          tests/core \
+          tests/deprecated_api \
+          tests/examples \
+          tests/template \
+          tests/${{ matrix.topic }} \
+          -v --reruns 3 --reruns-delay 2
 
     - name: Statistics
-      if: success()
       run: |
         coverage report
         coverage xml
