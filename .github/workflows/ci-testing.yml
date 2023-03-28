@@ -30,8 +30,9 @@ jobs:
         topic: ['core']
         exclude:
           # Skip if torch<1.8 and py3.9 on Linux: https://github.com/pytorch/pytorch/issues/50014
-          - { os: ubuntu-20.04, python-version: 3.9, requires: 'oldest' }
-          - { os: ubuntu-20.04, python-version: 3.9, requires: 'latest' }
+          - { python-version: 3.9, requires: 'oldest' }
+          - { os: macOS-12, requires: 'oldest' }
+          - { os: windows-2022, requires: 'oldest' }
         include:
           - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'core'}
           - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image'}
