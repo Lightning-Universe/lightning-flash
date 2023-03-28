@@ -40,6 +40,7 @@ from flash.core.data.io.output_transform import OutputTransform
 from flash.core.utilities.embedder import Embedder
 from flash.core.utilities.imports import (
     _PL_GREATER_EQUAL_1_8_0,
+    _TM_GREATER_EQUAL_0_10_0,
     _TOPIC_AUDIO_AVAILABLE,
     _TOPIC_CORE_AVAILABLE,
     _TOPIC_GRAPH_AVAILABLE,
@@ -221,7 +222,7 @@ def test_classification_task_trainer_predict(tmpdir):
             SemanticSegmentation,
             "0.9.0/semantic_segmentation_model.pt",
             marks=pytest.mark.skipif(
-                not _TOPIC_IMAGE_AVAILABLE,
+                not _TOPIC_IMAGE_AVAILABLE or not _TM_GREATER_EQUAL_0_10_0,
                 reason="image packages aren't installed",
             ),
         ),

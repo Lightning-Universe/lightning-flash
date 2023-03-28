@@ -239,18 +239,3 @@ class LazyModule(types.ModuleType):
         # Update this object's dict so that attribute references are efficient
         # (__getattr__ is only called on lookups that fail)
         self.__dict__.update(module.__dict__)
-
-
-# FIXME
-# Global variables used for testing purposes (e.g. to only run doctests in the correct CI job)
-_CORE_TESTING = True
-_IMAGE_TESTING = True
-_IMAGE_EXTRAS_TESTING = True
-_VIDEO_TESTING = True
-_VIDEO_EXTRAS_TESTING = True
-_TABULAR_TESTING = True
-_TEXT_TESTING = True
-_SERVE_TESTING = True
-_POINTCLOUD_TESTING = True
-_GRAPH_TESTING = True
-_AUDIO_TESTING = True
