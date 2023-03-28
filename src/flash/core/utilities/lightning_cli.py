@@ -12,12 +12,12 @@ import torch
 from jsonargparse import ActionConfigFile, ArgumentParser, set_config_read_mode
 from jsonargparse.signatures import ClassFromFunctionBase
 from jsonargparse.typehints import ClassType
-from lightning_utilities.core.overrides import is_overridden
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.core.datamodule import LightningDataModule
 from pytorch_lightning.core.lightning import LightningModule
 from pytorch_lightning.trainer.trainer import Trainer
 from pytorch_lightning.utilities.cloud_io import get_filesystem
+from pytorch_lightning.utilities.model_helpers import is_overridden
 from pytorch_lightning.utilities.seed import seed_everything
 from torch.optim import Optimizer
 

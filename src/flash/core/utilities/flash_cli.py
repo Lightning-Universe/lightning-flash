@@ -22,8 +22,8 @@ from typing import Any, Callable, Dict, List, Optional, Set, Type, Union
 import pytorch_lightning as pl
 from jsonargparse import ArgumentParser
 from jsonargparse.signatures import get_class_signature_functions
-from lightning_utilities.core.overrides import is_overridden
 from pytorch_lightning import LightningModule, Trainer
+from pytorch_lightning.utilities.model_helpers import is_overridden
 
 import flash
 from flash.core.data.data_module import DataModule
