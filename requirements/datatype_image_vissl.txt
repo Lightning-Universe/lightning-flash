@@ -1,4 +1,6 @@
 # NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forced in setup
 
+icevision >0.8
+icedata <=0.5.1 # dead
 # This is a separate file, as vissl integration is affected by baal installation (conflicts)
 vissl >=0.1.5, <=0.1.6 # dead

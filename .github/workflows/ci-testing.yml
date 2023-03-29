@@ -36,6 +36,7 @@ jobs:
           - { os: 'windows-2022', requires: 'oldest' }
         include:
           - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'core', extra: []}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image', extra: ['image_extra']}
           - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image', extra: ['image_baal']}
           - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image', extra: ['image_segm']}
           - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image', extra: ['image_vissl']}
