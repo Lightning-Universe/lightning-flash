@@ -22,7 +22,7 @@ import torch
 
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _TOPIC_IMAGE_AVAILABLE
+from flash.core.utilities.imports import _ICEDATA_AVAILABLE, _ICEVISION_AVAILABLE, _TOPIC_IMAGE_AVAILABLE
 from flash.image import KeypointDetectionData, KeypointDetector
 from tests.helpers.task_tester import TaskTester
 
@@ -93,6 +93,7 @@ def coco_keypoints(tmpdir):
     return COCODataConfig(train_folder, train_ann_file, predict_folder)
 
 
+@pytest.mark.skipif(not _ICEDATA_AVAILABLE, reason="icedata is not installed for testing")
 @pytest.mark.skipif(not _ICEVISION_AVAILABLE, reason="icevision is not installed for testing")
 class TestKeypointDetector(TaskTester):
     task = KeypointDetector
