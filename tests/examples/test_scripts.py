@@ -20,6 +20,7 @@ import pytest
 import torch
 
 from flash.core.utilities.imports import (
+    _ICEDATA_AVAILABLE,
     _ICEVISION_AVAILABLE,
     _SEGMENTATION_MODELS_AVAILABLE,
     _TOPIC_AUDIO_AVAILABLE,
@@ -30,6 +31,7 @@ from flash.core.utilities.imports import (
     _TOPIC_TABULAR_AVAILABLE,
     _TOPIC_TEXT_AVAILABLE,
     _TOPIC_VIDEO_AVAILABLE,
+    _TORCHVISION_GREATER_EQUAL_0_9,
     _VISSL_AVAILABLE,
 )
 from tests.examples.utils import run_test
@@ -61,9 +63,8 @@ root = Path(__file__).parent.parent.parent
         pytest.param(
             "image_embedder.py",
             marks=[
-                pytest.mark.skipif(
-                    not (_TOPIC_IMAGE_AVAILABLE and _VISSL_AVAILABLE), reason="image libraries aren't installed"
-                ),
+                pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed"),
+                pytest.mark.skipif(not _VISSL_AVAILABLE, reason="VISSL package isn't installed"),
                 pytest.mark.skipif(torch.cuda.device_count() > 1, reason="VISSL integration doesn't support multi-GPU"),
             ],
         ),
@@ -75,15 +76,17 @@ root = Path(__file__).parent.parent.parent
         ),
         pytest.param(
             "instance_segmentation.py",
-            marks=pytest.mark.skipif(
-                not (_TOPIC_IMAGE_AVAILABLE and _ICEVISION_AVAILABLE), reason="image libraries aren't installed"
-            ),
+            marks=[
+                pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed"),
+                pytest.mark.skipif(not _ICEDATA_AVAILABLE, reason="icedata package isn't installed"),
+            ],
         ),
         pytest.param(
             "keypoint_detection.py",
-            marks=pytest.mark.skipif(
-                not (_TOPIC_IMAGE_AVAILABLE and _ICEVISION_AVAILABLE), reason="image libraries aren't installed"
-            ),
+            marks=[
+                pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed"),
+                pytest.mark.skipif(not _ICEDATA_AVAILABLE, reason="icedata package isn't installed"),
+            ],
         ),
         pytest.param(
             "question_answering.py",
@@ -91,10 +94,11 @@ root = Path(__file__).parent.parent.parent
         ),
         pytest.param(
             "semantic_segmentation.py",
-            marks=pytest.mark.skipif(
-                not _TOPIC_IMAGE_AVAILABLE or not _SEGMENTATION_MODELS_AVAILABLE,
-                reason="image libraries aren't installed",
-            ),
+            marks=[
+                pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed"),
+                pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="Segmentation package isn't installed"),
+                pytest.mark.skipif(not _TORCHVISION_GREATER_EQUAL_0_9, reason="Newer version of TV is needed."),
+            ],
         ),
         pytest.param(
             "style_transfer.py",
