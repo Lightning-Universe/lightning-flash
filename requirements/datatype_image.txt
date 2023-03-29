@@ -10,3 +10,4 @@ segmentation-models-pytorch>=0.2.0, <=0.3.1
 ftfy <=6.1.1
 regex <=2022.10.31
 sahi <0.11  # strict - Fixes compatibility with icevision
+icevision >=0.8
