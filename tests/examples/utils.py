@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 import subprocess
 import sys
 from typing import List, Optional, Tuple
@@ -41,8 +42,9 @@ def call_script(
     except subprocess.TimeoutExpired:
         p.kill()
         stdout, stderr = p.communicate()
-    stdout = stdout.decode("utf-8")
-    stderr = stderr.decode("utf-8")
+    encoding = "windows-1252" if os.name == "nt" else "utf-8"
+    stdout = stdout.decode(encoding)
+    stderr = stderr.decode(encoding)
 
     with open(filepath, "w") as modified:
         modified.writelines(data)

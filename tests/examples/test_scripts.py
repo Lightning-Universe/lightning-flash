@@ -21,6 +21,7 @@ import torch
 
 from flash.core.utilities.imports import (
     _ICEVISION_AVAILABLE,
+    _SEGMENTATION_MODELS_AVAILABLE,
     _TOPIC_AUDIO_AVAILABLE,
     _TOPIC_CORE_AVAILABLE,
     _TOPIC_GRAPH_AVAILABLE,
@@ -90,7 +91,10 @@ root = Path(__file__).parent.parent.parent
         ),
         pytest.param(
             "semantic_segmentation.py",
-            marks=pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed"),
+            marks=pytest.mark.skipif(
+                not _TOPIC_IMAGE_AVAILABLE or not _SEGMENTATION_MODELS_AVAILABLE,
+                reason="image libraries aren't installed",
+            ),
         ),
         pytest.param(
             "style_transfer.py",
