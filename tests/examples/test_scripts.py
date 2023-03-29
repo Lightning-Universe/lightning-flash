@@ -169,5 +169,6 @@ root = Path(__file__).parent.parent.parent
     ],
 )
 @forked
+@pytest.mark.skipif(sys.platform == "darwin", reason="Fatal Python error: Illegal instruction")  # fixme
 def test_example(tmpdir, file):
     run_test(str(root / "examples" / file))
