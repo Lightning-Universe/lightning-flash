@@ -35,18 +35,18 @@ jobs:
           - { os: macOS-12, requires: 'oldest' }
           - { os: windows-2022, requires: 'oldest' }
         include:
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'core'}
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image'}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'core', extra: []}}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image', extra: []}
           - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image', extra: ['image_extras']}
           - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image', extra: ['image_extras_baal']}
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'video'}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'video', extra: []}
           - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'video', extra: ['video_extras']}
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'tabular'}
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'text'}
-          - { os: 'ubuntu-20.04', python-version: 3.8, topic: 'pointcloud'}
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'serve'}
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'graph'}
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'audio'}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'tabular', extra: []}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'text', extra: []}
+          - { os: 'ubuntu-20.04', python-version: 3.8, topic: 'pointcloud', extra: []}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'serve', extra: []}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'graph', extra: []}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'audio', extra: []}
 
     # Timeout: https://stackoverflow.com/a/59076067/4521646
     timeout-minutes: 50
@@ -94,13 +94,14 @@ jobs:
         pip install torch-sparse -f https://data.pyg.org/whl/torch-1.11.0+cpu.html
         pip install torch-cluster -f https://data.pyg.org/whl/torch-1.11.0+cpu.html
 
-    - name: Install dependencies
+    - name: Adjust extras
+      run: python -c "print('EXTRAS=' + ','.join(['${{ matrix.topic }}'] + ${{ matrix.extra }}))" >> $GITHUB_ENV
+
+    - name: Install package & dependencies
       run: |
-        python --version
         pip --version
-        flag=$(python -c "print('--pre' if '${{matrix.release}}' == 'pre' else '')" 2>&1)
-        pip install torch>=1.7.1
-        pip install '.[${{ matrix.topic }},test,${{ join(matrix.extra, ',') }}]' --upgrade $flag --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
+        pip install torch>=1.7.1 -f https://download.pytorch.org/whl/cpu/torch_stable.html
+        pip install '.[${EXTRAS},test]' --upgrade --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
 
     - name: Install vissl
       if: contains( matrix.topic , 'image_extras' )
