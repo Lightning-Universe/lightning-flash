@@ -14,12 +14,12 @@
 from functools import partial
 
 from flash.core.registry import ExternalRegistry, FlashRegistry
-from flash.core.utilities.imports import _AUDIO_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_AUDIO_AVAILABLE
 from flash.core.utilities.providers import _FAIRSEQ, _HUGGINGFACE
 
 SPEECH_RECOGNITION_BACKBONES = FlashRegistry("backbones")
 
-if _AUDIO_AVAILABLE:
+if _TOPIC_AUDIO_AVAILABLE:
     from transformers import AutoModelForCTC, Wav2Vec2ForCTC
 
     WAV2VEC_MODELS = ["facebook/wav2vec2-base-960h", "facebook/wav2vec2-large-960h-lv60"]

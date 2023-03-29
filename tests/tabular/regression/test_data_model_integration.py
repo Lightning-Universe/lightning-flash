@@ -14,10 +14,10 @@
 import pytest
 import pytorch_lightning as pl
 
-from flash.core.utilities.imports import _TABULAR_AVAILABLE, _TABULAR_TESTING
+from flash.core.utilities.imports import _TOPIC_TABULAR_AVAILABLE
 from flash.tabular import TabularRegressionData, TabularRegressor
 
-if _TABULAR_AVAILABLE:
+if _TOPIC_TABULAR_AVAILABLE:
     import pandas as pd
 
     TEST_DICT = {
@@ -39,7 +39,7 @@ if _TABULAR_AVAILABLE:
     TEST_DF = pd.DataFrame(data=TEST_DICT)
 
 
-@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TABULAR_AVAILABLE, reason="tabular libraries aren't installed.")
 @pytest.mark.parametrize(
     "backbone,fields",
     [
@@ -72,7 +72,7 @@ def test_regression_data_frame(backbone, fields, tmpdir):
     trainer.fit(model, data)
 
 
-@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TABULAR_AVAILABLE, reason="tabular libraries aren't installed.")
 @pytest.mark.parametrize(
     "backbone,fields",
     [
@@ -102,7 +102,7 @@ def test_regression_dicts(backbone, fields, tmpdir):
     trainer.fit(model, data)
 
 
-@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TABULAR_AVAILABLE, reason="tabular libraries aren't installed.")
 @pytest.mark.parametrize(
     "backbone,fields",
     [

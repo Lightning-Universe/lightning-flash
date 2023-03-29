@@ -2,10 +2,10 @@ import pytest
 import torch
 
 from flash.core.serve.types import BBox
-from flash.core.utilities.imports import _SERVE_TESTING
+from flash.core.utilities.imports import _TOPIC_SERVE_AVAILABLE
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_deserialize():
     bbox = BBox()
     assert torch.allclose(bbox.deserialize((0, 0, 0, 0)), torch.zeros((4,)))
@@ -34,7 +34,7 @@ def test_deserialize():
         )
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_serialize():
     bbox = BBox()
     assert bbox.serialize(torch.ones(4)) == [1.0, 1.0, 1.0, 1.0]

@@ -16,9 +16,9 @@ from typing import Any
 import torch
 
 from flash.core.data.io.output_transform import OutputTransform
-from flash.core.utilities.imports import _AUDIO_AVAILABLE, requires
+from flash.core.utilities.imports import _TOPIC_AUDIO_AVAILABLE, requires
 
-if _AUDIO_AVAILABLE:
+if _TOPIC_AUDIO_AVAILABLE:
     from transformers import Wav2Vec2CTCTokenizer
 
 

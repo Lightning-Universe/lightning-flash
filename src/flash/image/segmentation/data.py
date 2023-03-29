@@ -19,7 +19,7 @@ from torch import Tensor
 from flash.core.data.callback import BaseDataFetcher
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_EXTRAS_TESTING, _IMAGE_TESTING, lazy_import
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _TOPIC_IMAGE_AVAILABLE, lazy_import
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 from flash.image.segmentation.input import (
@@ -41,16 +41,15 @@ else:
 
 # Skip doctests if requirements aren't available
 __doctest_skip__ = []
-if not _IMAGE_TESTING:
+if not _TOPIC_IMAGE_AVAILABLE:
     __doctest_skip__ += [
         "SemanticSegmentationData",
         "SemanticSegmentationData.from_files",
         "SemanticSegmentationData.from_folders",
         "SemanticSegmentationData.from_numpy",
         "SemanticSegmentationData.from_tensors",
+        "SemanticSegmentationData.from_fiftyone",
     ]
-if not _IMAGE_EXTRAS_TESTING:
-    __doctest_skip__ += ["SemanticSegmentationData.from_fiftyone"]
 
 
 class SemanticSegmentationData(DataModule):

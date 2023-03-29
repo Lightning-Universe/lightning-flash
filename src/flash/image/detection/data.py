@@ -26,7 +26,7 @@ from flash.core.integrations.icevision.transforms import IceVisionInputTransform
 from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,
     _ICEVISION_AVAILABLE,
-    _IMAGE_EXTRAS_TESTING,
+    _TOPIC_IMAGE_AVAILABLE,
     Image,
     requires,
 )
@@ -55,7 +55,7 @@ else:
     Parser = object
 
 # Skip doctests if requirements aren't available
-if not _IMAGE_EXTRAS_TESTING:
+if not _TOPIC_IMAGE_AVAILABLE:
     __doctest_skip__ = ["ObjectDetectionData", "ObjectDetectionData.*"]
 
 

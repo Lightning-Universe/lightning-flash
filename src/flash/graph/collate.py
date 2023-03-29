@@ -16,9 +16,9 @@ from typing import Any, Dict, List
 from torch.utils.data.dataloader import default_collate
 
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _GRAPH_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_GRAPH_AVAILABLE
 
-if _GRAPH_AVAILABLE:
+if _TOPIC_GRAPH_AVAILABLE:
     from torch_geometric.data import Batch
 
 

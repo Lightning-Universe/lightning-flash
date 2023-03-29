@@ -18,7 +18,7 @@ import torch
 from pytorch_lightning.utilities.cloud_io import load as pl_load
 
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_POINTCLOUD_AVAILABLE
 from flash.core.utilities.providers import _OPEN3D_ML
 from flash.core.utilities.url_error import catch_url_error
 
@@ -26,7 +26,7 @@ ROOT_URL = "https://storage.googleapis.com/open3d-releases/model-zoo/"
 
 
 def register_open_3d_ml(register: FlashRegistry):
-    if _POINTCLOUD_AVAILABLE:
+    if _TOPIC_POINTCLOUD_AVAILABLE:
         import open3d
         import open3d.ml as _ml3d
         from open3d._ml3d.torch.dataloaders import ConcatBatcher, DefaultBatcher

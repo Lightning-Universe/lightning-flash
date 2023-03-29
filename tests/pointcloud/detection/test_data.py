@@ -20,14 +20,14 @@ from pytorch_lightning import seed_everything
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
 from flash.core.data.utils import download_data
-from flash.core.utilities.imports import _POINTCLOUD_TESTING
+from flash.core.utilities.imports import _TOPIC_POINTCLOUD_AVAILABLE
 from flash.pointcloud.detection import PointCloudObjectDetector, PointCloudObjectDetectorData
 
-if _POINTCLOUD_TESTING:
+if _TOPIC_POINTCLOUD_AVAILABLE:
     from flash.pointcloud.detection.open3d_ml.backbones import ObjectDetectBatchCollator
 
 
-@pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed")
+@pytest.mark.skipif(not _TOPIC_POINTCLOUD_AVAILABLE, reason="pointcloud libraries aren't installed")
 def test_pointcloud_object_detection_data(tmpdir):
     seed_everything(52)
 

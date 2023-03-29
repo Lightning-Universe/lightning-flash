@@ -1,10 +1,10 @@
 from collections import defaultdict
 from typing import List, Sequence
 
-from flash.core.utilities.imports import _SERVE_TESTING
+from flash.core.utilities.imports import _TOPIC_SERVE_AVAILABLE
 
 # Skip doctests if requirements aren't available
-if not _SERVE_TESTING:
+if not _TOPIC_SERVE_AVAILABLE:
     __doctest_skip__ = ["*"]
 
 no_default = "__no_default__"

@@ -24,12 +24,12 @@ from flash.core.data.io.input import DataKeys, InputBase
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.utilities.collate import wrap_collate
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE, _TM_GREATER_EQUAL_0_7_0, _TM_GREATER_EQUAL_0_10_0
+from flash.core.utilities.imports import _TM_GREATER_EQUAL_0_7_0, _TM_GREATER_EQUAL_0_10_0, _TOPIC_POINTCLOUD_AVAILABLE
 from flash.core.utilities.stability import beta
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.pointcloud.segmentation.backbones import POINTCLOUD_SEGMENTATION_BACKBONES
 
-if _POINTCLOUD_AVAILABLE:
+if _TOPIC_POINTCLOUD_AVAILABLE:
     from open3d._ml3d.torch.modules.losses.semseg_loss import filter_valid_label
     from open3d.ml.torch.dataloaders import TorchDataloader
 

@@ -20,10 +20,10 @@ import torch
 from torch import Tensor
 
 from flash.core.data.utilities.sort import sorted_alphanumeric
-from flash.core.utilities.imports import _CORE_TESTING
+from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE
 
 # Skip doctests if requirements aren't available
-if not _CORE_TESTING:
+if not _TOPIC_CORE_AVAILABLE:
     __doctest_skip__ = ["*"]
 
 

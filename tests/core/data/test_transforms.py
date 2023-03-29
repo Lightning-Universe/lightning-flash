@@ -18,11 +18,11 @@ import torch
 
 from flash.core.data.io.input import DataKeys
 from flash.core.data.transforms import ApplyToKeys
-from flash.core.utilities.imports import _CORE_TESTING
+from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE
 
 
 class TestApplyToKeys:
-    @pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+    @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
     @pytest.mark.parametrize(
         "sample, keys, expected",
         [
@@ -47,7 +47,7 @@ class TestApplyToKeys:
         else:
             transform.assert_not_called()
 
-    @pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+    @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
     @pytest.mark.parametrize(
         "transform, expected",
         [

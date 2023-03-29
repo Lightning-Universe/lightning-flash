@@ -2,9 +2,9 @@ from typing import List, Optional, Tuple, Type
 
 import torch
 
-from flash.core.utilities.imports import _VIDEO_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_VIDEO_AVAILABLE
 
-if _VIDEO_AVAILABLE:
+if _TOPIC_VIDEO_AVAILABLE:
     from pytorchvideo.data.utils import MultiProcessSampler
 else:
     MultiProcessSampler = None

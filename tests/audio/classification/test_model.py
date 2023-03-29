@@ -16,11 +16,11 @@ from unittest import mock
 import pytest
 
 from flash.__main__ import main
-from flash.core.utilities.imports import _AUDIO_TESTING, _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_AUDIO_AVAILABLE, _TOPIC_IMAGE_AVAILABLE
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
-@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_AUDIO_AVAILABLE, reason="audio libraries aren't installed.")
 def test_cli():
     cli_args = ["flash", "audio_classification", "--trainer.fast_dev_run", "True"]
     with mock.patch("sys.argv", cli_args):

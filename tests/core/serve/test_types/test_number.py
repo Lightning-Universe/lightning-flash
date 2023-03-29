@@ -2,10 +2,10 @@ import pytest
 import torch
 
 from flash.core.serve.types import Number
-from flash.core.utilities.imports import _SERVE_TESTING
+from flash.core.utilities.imports import _TOPIC_SERVE_AVAILABLE
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_serialize():
     num = Number()
     tensor = torch.tensor([[1]])
@@ -23,7 +23,7 @@ def test_serialize():
         num.serialize(tensor)
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_deserialize():
     num = Number()
     assert num.deserialize(1).shape == torch.Size([1, 1])

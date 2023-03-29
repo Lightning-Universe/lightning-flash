@@ -17,7 +17,7 @@ import pytest
 import torch
 
 import flash
-from flash.core.utilities.imports import _COCO_AVAILABLE, _FIFTYONE_AVAILABLE, _IMAGE_EXTRAS_TESTING, _PIL_AVAILABLE
+from flash.core.utilities.imports import _COCO_AVAILABLE, _FIFTYONE_AVAILABLE, _PIL_AVAILABLE
 from flash.image import ObjectDetector
 from flash.image.detection import ObjectDetectionData
 
@@ -33,7 +33,7 @@ if _FIFTYONE_AVAILABLE:
     from tests.image.detection.test_data import _create_synth_fiftyone_dataset
 
 
-@pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _COCO_AVAILABLE, reason="coco is not installed for testing")
 @pytest.mark.parametrize(["head", "backbone"], [("retinanet", "resnet18_fpn"), ("faster_rcnn", "resnet18_fpn")])
 def test_detection(tmpdir, head, backbone):
     train_folder, coco_ann_path = _create_synth_coco_dataset(tmpdir)
@@ -55,7 +55,6 @@ def test_detection(tmpdir, head, backbone):
     trainer.predict(model, datamodule=datamodule)
 
 
-@pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
 @pytest.mark.parametrize(["head", "backbone"], [("retinanet", "resnet18_fpn")])
 def test_detection_fiftyone(tmpdir, head, backbone):

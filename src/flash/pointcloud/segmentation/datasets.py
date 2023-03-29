@@ -14,9 +14,9 @@
 import os
 
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _POINTCLOUD_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_POINTCLOUD_AVAILABLE
 
-if _POINTCLOUD_AVAILABLE:
+if _TOPIC_POINTCLOUD_AVAILABLE:
     from open3d.ml.datasets import Lyft, SemanticKITTI
 
 _SEGMENTATION_DATASET = FlashRegistry("dataset")

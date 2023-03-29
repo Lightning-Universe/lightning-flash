@@ -13,7 +13,7 @@
 # limitations under the License.
 import pytest
 
-from flash.core.utilities.imports import _CORE_TESTING
+from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE
 from flash.core.utilities.stability import _raise_beta_warning, beta
 
 
@@ -37,7 +37,7 @@ def _beta_func_custom_message():
     pass
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 @pytest.mark.parametrize(
     "callable, match",
     [

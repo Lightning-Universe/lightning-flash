@@ -17,9 +17,9 @@ from typing import Any, Dict, List, Optional, Union
 from torch import Tensor
 
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _AUDIO_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_AUDIO_AVAILABLE
 
-if _AUDIO_AVAILABLE:
+if _TOPIC_AUDIO_AVAILABLE:
     from transformers import AutoProcessor
 else:
     AutoProcessor = object

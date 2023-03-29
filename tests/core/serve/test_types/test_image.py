@@ -5,10 +5,10 @@ import pytest
 from torch import Tensor
 
 from flash.core.serve.types import Image
-from flash.core.utilities.imports import _PIL_AVAILABLE, _SERVE_TESTING
+from flash.core.utilities.imports import _PIL_AVAILABLE, _TOPIC_SERVE_AVAILABLE
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 @pytest.mark.skipif(not _PIL_AVAILABLE, reason="library PIL is not installed.")
 def test_deserialize_serialize(session_global_datadir):
     with (session_global_datadir / "cat.jpg").open("rb") as f:

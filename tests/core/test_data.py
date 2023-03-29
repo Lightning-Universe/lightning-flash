@@ -16,7 +16,7 @@ import torch
 
 from flash import DataKeys, DataModule, RunningStage
 from flash.core.data.data_module import DatasetInput
-from flash.core.utilities.imports import _CORE_TESTING
+from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE
 
 # ======== Mock functions ========
 
@@ -32,7 +32,7 @@ class DummyDataset(torch.utils.data.Dataset):
 # ===============================
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 def test_init():
     train_input = DatasetInput(RunningStage.TRAINING, DummyDataset())
     val_input = DatasetInput(RunningStage.VALIDATING, DummyDataset())
@@ -48,7 +48,7 @@ def test_init():
     assert data_module.train_dataset and data_module.val_dataset and data_module.test_dataset
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 def test_dataloaders():
     train_input = DatasetInput(RunningStage.TRAINING, DummyDataset())
     val_input = DatasetInput(RunningStage.VALIDATING, DummyDataset())

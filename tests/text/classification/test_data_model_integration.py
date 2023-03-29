@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 
 from flash.core.trainer import Trainer
-from flash.core.utilities.imports import _TEXT_TESTING
+from flash.core.utilities.imports import _TOPIC_TEXT_AVAILABLE
 from flash.text import TextClassificationData, TextClassifier
 
 TEST_BACKBONE = "prajjwal1/bert-tiny"  # tiny model for testing
@@ -36,7 +36,7 @@ def csv_data(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_classification(tmpdir):
     csv_path = csv_data(tmpdir)
 

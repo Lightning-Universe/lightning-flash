@@ -7,7 +7,7 @@ import torch
 from pytest_mock import MockerFixture
 
 from flash.core.serve.decorators import uuid4  # noqa (used in mocker.patch)
-from flash.core.utilities.imports import _SERVE_TESTING, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_SERVE_AVAILABLE, _TORCHVISION_AVAILABLE
 
 if _TORCHVISION_AVAILABLE:
     import torchvision
@@ -60,7 +60,7 @@ def global_datadir(tmp_path_factory, original_global_datadir):
     return prep_global_datadir(tmp_path_factory, original_global_datadir)
 
 
-if _SERVE_TESTING:
+if _TOPIC_SERVE_AVAILABLE:
 
     @pytest.fixture(scope="session")
     def squeezenet1_1_model():

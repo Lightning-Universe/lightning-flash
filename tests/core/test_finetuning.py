@@ -26,7 +26,7 @@ from torch.utils.data import DataLoader
 import flash
 from flash.core.finetuning import _FINETUNING_STRATEGIES_REGISTRY
 from flash.core.model import Task
-from flash.core.utilities.imports import _CORE_TESTING, _DEEPSPEED_AVAILABLE
+from flash.core.utilities.imports import _DEEPSPEED_AVAILABLE, _TOPIC_CORE_AVAILABLE
 from tests.helpers.boring_model import BoringModel
 
 
@@ -135,7 +135,7 @@ class CustomStrategyChecking(ModelCheckpoint):
             assert pl_module.model.layer.weight.requires_grad
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 @pytest.mark.parametrize(
     "strategy, plugins",
     [
@@ -173,7 +173,7 @@ def test_finetuning_with_none_return_type(strategy, plugins):
     trainer.finetune(task, train_dataloader=DataLoader(ds), strategy=strategy)
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 @pytest.mark.parametrize(
     ("strategy", "lr_scheduler", "checker_class", "checker_class_data"),
     [
@@ -220,7 +220,7 @@ def test_finetuning(tmpdir, strategy, lr_scheduler, checker_class, checker_class
     trainer.finetune(task, train_dataloader=DataLoader(ds), strategy=strategy)
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 @pytest.mark.parametrize(
     "strategy,error",
     [

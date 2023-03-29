@@ -14,7 +14,6 @@
 import functools
 import importlib
 import operator
-import os
 import types
 from typing import List, Tuple, Union
 
@@ -71,6 +70,7 @@ _BAAL_AVAILABLE = module_available("baal")
 _TORCH_OPTIMIZER_AVAILABLE = module_available("torch_optimizer")
 _SENTENCE_TRANSFORMERS_AVAILABLE = module_available("sentence_transformers")
 _DEEPSPEED_AVAILABLE = module_available("deepspeed")
+_EFFDET_AVAILABLE = module_available("effdet")
 
 
 if _PIL_AVAILABLE:
@@ -94,7 +94,7 @@ if Version:
     _TM_GREATER_EQUAL_0_10_0 = compare_version("torchmetrics", operator.ge, "0.10.0")
     _BAAL_GREATER_EQUAL_1_5_2 = compare_version("baal", operator.ge, "1.5.2")
 
-_TEXT_AVAILABLE = all(
+_TOPIC_TEXT_AVAILABLE = all(
     [
         _TRANSFORMERS_AVAILABLE,
         _SENTENCEPIECE_AVAILABLE,
@@ -103,9 +103,9 @@ _TEXT_AVAILABLE = all(
         _SENTENCE_TRANSFORMERS_AVAILABLE,
     ]
 )
-_TABULAR_AVAILABLE = all([_PANDAS_AVAILABLE, _FORECASTING_AVAILABLE, _PYTORCHTABULAR_AVAILABLE])
-_VIDEO_AVAILABLE = all([_TORCHVISION_AVAILABLE, _PIL_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, _KORNIA_AVAILABLE])
-_IMAGE_AVAILABLE = all(
+_TOPIC_TABULAR_AVAILABLE = all([_PANDAS_AVAILABLE, _FORECASTING_AVAILABLE, _PYTORCHTABULAR_AVAILABLE])
+_TOPIC_VIDEO_AVAILABLE = all([_TORCHVISION_AVAILABLE, _PIL_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, _KORNIA_AVAILABLE])
+_TOPIC_IMAGE_AVAILABLE = all(
     [
         _TORCHVISION_AVAILABLE,
         _TIMM_AVAILABLE,
@@ -114,22 +114,25 @@ _IMAGE_AVAILABLE = all(
         _PYSTICHE_AVAILABLE,
     ]
 )
-_SERVE_AVAILABLE = all([_FASTAPI_AVAILABLE, _PYDANTIC_AVAILABLE, _CYTOOLZ_AVAILABLE, _UVICORN_AVAILABLE])
-_POINTCLOUD_AVAILABLE = all([_OPEN3D_AVAILABLE, _TORCHVISION_AVAILABLE])
-_AUDIO_AVAILABLE = all([_TORCHAUDIO_AVAILABLE, _TORCHVISION_AVAILABLE, _LIBROSA_AVAILABLE, _TRANSFORMERS_AVAILABLE])
-_GRAPH_AVAILABLE = all(
+_TOPIC_SERVE_AVAILABLE = all([_FASTAPI_AVAILABLE, _PYDANTIC_AVAILABLE, _CYTOOLZ_AVAILABLE, _UVICORN_AVAILABLE])
+_TOPIC_POINTCLOUD_AVAILABLE = all([_OPEN3D_AVAILABLE, _TORCHVISION_AVAILABLE])
+_TOPIC_AUDIO_AVAILABLE = all(
+    [_TORCHAUDIO_AVAILABLE, _TORCHVISION_AVAILABLE, _LIBROSA_AVAILABLE, _TRANSFORMERS_AVAILABLE]
+)
+_TOPIC_GRAPH_AVAILABLE = all(
     [_TORCH_SCATTER_AVAILABLE, _TORCH_SPARSE_AVAILABLE, _TORCH_GEOMETRIC_AVAILABLE, _NETWORKX_AVAILABLE]
 )
+_TOPIC_CORE_AVAILABLE = _TOPIC_IMAGE_AVAILABLE and _TOPIC_TABULAR_AVAILABLE and _TOPIC_TEXT_AVAILABLE
 
 _EXTRAS_AVAILABLE = {
-    "image": _IMAGE_AVAILABLE,
-    "tabular": _TABULAR_AVAILABLE,
-    "text": _TEXT_AVAILABLE,
-    "video": _VIDEO_AVAILABLE,
-    "pointcloud": _POINTCLOUD_AVAILABLE,
-    "serve": _SERVE_AVAILABLE,
-    "audio": _AUDIO_AVAILABLE,
-    "graph": _GRAPH_AVAILABLE,
+    "image": _TOPIC_IMAGE_AVAILABLE,
+    "tabular": _TOPIC_TABULAR_AVAILABLE,
+    "text": _TOPIC_TEXT_AVAILABLE,
+    "video": _TOPIC_VIDEO_AVAILABLE,
+    "pointcloud": _TOPIC_POINTCLOUD_AVAILABLE,
+    "serve": _TOPIC_SERVE_AVAILABLE,
+    "audio": _TOPIC_AUDIO_AVAILABLE,
+    "graph": _TOPIC_GRAPH_AVAILABLE,
 }
 
 
@@ -236,31 +239,3 @@ class LazyModule(types.ModuleType):
         # Update this object's dict so that attribute references are efficient
         # (__getattr__ is only called on lookups that fail)
         self.__dict__.update(module.__dict__)
-
-
-# Global variables used for testing purposes (e.g. to only run doctests in the correct CI job)
-_CORE_TESTING = True
-_IMAGE_TESTING = _IMAGE_AVAILABLE
-_IMAGE_EXTRAS_TESTING = True  # Not for normal use
-_VIDEO_TESTING = _VIDEO_AVAILABLE
-_VIDEO_EXTRAS_TESTING = True  # Not for normal use
-_TABULAR_TESTING = _TABULAR_AVAILABLE
-_TEXT_TESTING = _TEXT_AVAILABLE
-_SERVE_TESTING = _SERVE_AVAILABLE
-_POINTCLOUD_TESTING = _POINTCLOUD_AVAILABLE
-_GRAPH_TESTING = _GRAPH_AVAILABLE
-_AUDIO_TESTING = _AUDIO_AVAILABLE
-
-if "FLASH_TEST_TOPIC" in os.environ:
-    topic = os.environ["FLASH_TEST_TOPIC"]
-    _CORE_TESTING = topic == "core"
-    _IMAGE_TESTING = topic == "image"
-    _IMAGE_EXTRAS_TESTING = topic == "image,image_extras" or topic == "icevision" or topic == "vissl"
-    _VIDEO_TESTING = topic == "video"
-    _VIDEO_EXTRAS_TESTING = topic == "video,video_extras"
-    _TABULAR_TESTING = topic == "tabular"
-    _TEXT_TESTING = topic == "text"
-    _SERVE_TESTING = topic == "serve"
-    _POINTCLOUD_TESTING = topic == "pointcloud"
-    _GRAPH_TESTING = topic == "graph"
-    _AUDIO_TESTING = topic == "audio"

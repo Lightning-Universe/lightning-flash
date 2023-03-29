@@ -21,9 +21,9 @@ from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.utilities.classification import MultiBinaryTargetFormatter, TargetFormatter
 from flash.core.data.utilities.loading import load_data_frame
 from flash.core.data.utilities.paths import PATH_TYPE
-from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
+from flash.core.utilities.imports import _TOPIC_TEXT_AVAILABLE, requires
 
-if _TEXT_AVAILABLE:
+if _TOPIC_TEXT_AVAILABLE:
     from datasets import Dataset, load_dataset
 else:
     Dataset = object
