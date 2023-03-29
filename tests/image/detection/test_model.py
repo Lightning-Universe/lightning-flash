@@ -23,7 +23,12 @@ from torch.utils.data import Dataset
 from flash.core.data.io.input import DataKeys
 from flash.core.integrations.icevision.transforms import IceVisionInputTransform
 from flash.core.trainer import Trainer
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _TOPIC_IMAGE_AVAILABLE, _TOPIC_SERVE_AVAILABLE
+from flash.core.utilities.imports import (
+    _EFFDET_AVAILABLE,
+    _ICEVISION_AVAILABLE,
+    _TOPIC_IMAGE_AVAILABLE,
+    _TOPIC_SERVE_AVAILABLE,
+)
 from flash.image import ObjectDetector
 from tests.helpers.task_tester import TaskTester
 
@@ -68,6 +73,7 @@ class DummyDetectionDataset(Dataset):
         return sample
 
 
+@pytest.mark.skipif(not _EFFDET_AVAILABLE, reason="effdet is not installed for testing")
 class TestObjectDetector(TaskTester):
     task = ObjectDetector
     task_kwargs = {"num_classes": 2}
@@ -126,11 +132,7 @@ def test_predict(tmpdir, head):
     )
     trainer.fit(model, dl)
 
-    dl = model.process_predict_dataset(
-        ds,
-        2,
-        input_transform=input_transform,
-    )
+    dl = model.process_predict_dataset(ds, 2, input_transform=input_transform)
     predictions = trainer.predict(model, dl, output="preds")
     assert len(predictions[0][0]["bboxes"]) > 0
     model.predict_kwargs = {"detection_threshold": 2}

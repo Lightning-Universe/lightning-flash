@@ -70,6 +70,7 @@ _BAAL_AVAILABLE = module_available("baal")
 _TORCH_OPTIMIZER_AVAILABLE = module_available("torch_optimizer")
 _SENTENCE_TRANSFORMERS_AVAILABLE = module_available("sentence_transformers")
 _DEEPSPEED_AVAILABLE = module_available("deepspeed")
+_EFFDET_AVAILABLE = module_available("effdet")
 
 
 if _PIL_AVAILABLE:

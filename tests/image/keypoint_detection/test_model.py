@@ -93,6 +93,7 @@ def coco_keypoints(tmpdir):
     return COCODataConfig(train_folder, train_ann_file, predict_folder)
 
 
+@pytest.mark.skipif(not _ICEVISION_AVAILABLE, reason="icevision is not installed for testing")
 class TestKeypointDetector(TaskTester):
     task = KeypointDetector
     task_args = (2,)

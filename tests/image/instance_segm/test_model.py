@@ -90,6 +90,7 @@ def coco_instances(tmpdir):
     return COCODataConfig(train_folder, train_ann_file, predict_folder)
 
 
+@pytest.mark.skipif(not _ICEVISION_AVAILABLE, reason="icevision is not installed for testing")
 class TestInstanceSegmentation(TaskTester):
     task = InstanceSegmentation
     task_kwargs = {"num_classes": 2}
