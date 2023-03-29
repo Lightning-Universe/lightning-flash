@@ -9,3 +9,6 @@ pystiche >1.0.0, <=1.0.1
 ftfy <=6.1.1
 regex <=2022.10.31
 sahi >=0.8.19, <0.11  # strict - Fixes compatibility with icevision
+
+icevision >0.8
+icedata <=0.5.1 # dead
