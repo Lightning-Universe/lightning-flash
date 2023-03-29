@@ -95,7 +95,7 @@ jobs:
         pip install torch-cluster -f https://data.pyg.org/whl/torch-1.11.0+cpu.html
 
     - name: Adjust extras
-      run: python -c "print('EXTRAS=' + ','.join(['${{ matrix.topic }}'] + ${{ fromJSON(matrix.extra) }}))" >> $GITHUB_ENV
+      run: python -c "print('EXTRAS=' + ','.join(['${{ matrix.topic }}'] + ${{ toJSON(matrix.extra) }}))" >> $GITHUB_ENV
 
     - name: Install package & dependencies
       run: |
