@@ -40,6 +40,7 @@ from flash.core.data.io.output_transform import OutputTransform
 from flash.core.utilities.embedder import Embedder
 from flash.core.utilities.imports import (
     _PL_GREATER_EQUAL_1_8_0,
+    _SEGMENTATION_MODELS_AVAILABLE,
     _TM_GREATER_EQUAL_0_10_0,
     _TOPIC_AUDIO_AVAILABLE,
     _TOPIC_CORE_AVAILABLE,
@@ -213,74 +214,53 @@ def test_classification_task_trainer_predict(tmpdir):
         pytest.param(
             ImageClassifier,
             "0.7.0/image_classification_model.pt",
-            marks=pytest.mark.skipif(
-                not _TOPIC_IMAGE_AVAILABLE,
-                reason="image packages aren't installed",
-            ),
+            marks=pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image packages aren't installed"),
         ),
         pytest.param(
             SemanticSegmentation,
             "0.9.0/semantic_segmentation_model.pt",
-            marks=pytest.mark.skipif(
-                not _TOPIC_IMAGE_AVAILABLE or not _TM_GREATER_EQUAL_0_10_0,
-                reason="image packages aren't installed",
-            ),
+            marks=[
+                pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image packages aren't installed"),
+                pytest.mark.skipif(
+                    not _SEGMENTATION_MODELS_AVAILABLE, reason="segmentation_models_pytorch package is not installed"
+                ),
+                pytest.mark.skipif(not _TM_GREATER_EQUAL_0_10_0, reason="TM compatibility"),
+            ],
         ),
         pytest.param(
             SpeechRecognition,
             "0.7.0/speech_recognition_model.pt",
-            marks=pytest.mark.skipif(
-                not _TOPIC_AUDIO_AVAILABLE,
-                reason="audio packages aren't installed",
-            ),
+            marks=pytest.mark.skipif(not _TOPIC_AUDIO_AVAILABLE, reason="audio packages aren't installed"),
         ),
         pytest.param(
             TabularClassifier,
             "0.7.0/tabular_classification_model.pt",
-            marks=pytest.mark.skipif(
-                not _TOPIC_TABULAR_AVAILABLE,
-                reason="tabular packages aren't installed",
-            ),
+            marks=pytest.mark.skipif(not _TOPIC_TABULAR_AVAILABLE, reason="tabular packages aren't installed"),
         ),
         pytest.param(
             TextClassifier,
             "0.9.0/text_classification_model.pt",
-            marks=pytest.mark.skipif(
-                not _TOPIC_TEXT_AVAILABLE,
-                reason="text packages aren't installed",
-            ),
+            marks=pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text packages aren't installed"),
         ),
         pytest.param(
             SummarizationTask,
             "0.7.0/summarization_model_xsum.pt",
-            marks=pytest.mark.skipif(
-                not _TOPIC_TEXT_AVAILABLE,
-                reason="text packages aren't installed",
-            ),
+            marks=pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text packages aren't installed"),
         ),
         pytest.param(
             TranslationTask,
             "0.7.0/translation_model_en_ro.pt",
-            marks=pytest.mark.skipif(
-                not _TOPIC_TEXT_AVAILABLE,
-                reason="text packages aren't installed",
-            ),
+            marks=pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text packages aren't installed"),
         ),
         pytest.param(
             GraphClassifier,
             "0.7.0/graph_classification_model.pt",
-            marks=pytest.mark.skipif(
-                not _TOPIC_GRAPH_AVAILABLE,
-                reason="graph packages aren't installed",
-            ),
+            marks=pytest.mark.skipif(not _TOPIC_GRAPH_AVAILABLE, reason="graph packages aren't installed"),
         ),
         pytest.param(
             GraphEmbedder,
             "0.7.0/graph_classification_model.pt",
-            marks=pytest.mark.skipif(
-                not _TOPIC_GRAPH_AVAILABLE,
-                reason="graph packages aren't installed",
-            ),
+            marks=pytest.mark.skipif(not _TOPIC_GRAPH_AVAILABLE, reason="graph packages aren't installed"),
         ),
     ],
 )
