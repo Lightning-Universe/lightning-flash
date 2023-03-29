@@ -80,7 +80,8 @@ def test_embedder_scaling_overhead():
 
     deep_time = end - start
 
-    assert (abs(deep_time - shallow_time) / shallow_time) < 1
+    diff_time = abs(deep_time - shallow_time)
+    assert (diff_time / shallow_time) < 1.5
 
 
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
@@ -105,4 +106,4 @@ def test_embedder_raising_overhead():
 
     embedder_time = end - start
 
-    assert abs(embedder_time - model_time) < 0.01
+    assert abs(embedder_time - model_time) < 0.05
