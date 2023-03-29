@@ -4,6 +4,7 @@ matplotlib <=3.6.2
 fiftyone
 classy_vision
 vissl>=0.1.5
+icevision >=0.8
 sahi >=0.8.19,<0.11.0
 icedata
 effdet
