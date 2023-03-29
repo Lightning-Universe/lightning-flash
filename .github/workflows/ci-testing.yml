@@ -103,10 +103,12 @@ jobs:
       shell: python
 
     - name: Install package & dependencies
+      env:
+        SYSTEM_VERSION_COMPAT: 1
       run: |
         pip --version
         pip install cython "torch>=1.7.1" -f https://download.pytorch.org/whl/cpu/torch_stable.html
-        pip install .[$EXTRAS,test] --upgrade --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
+        pip install .[$EXTRAS,test] --upgrade --prefer-binary --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
 
     - name: Install vissl
       if: contains( matrix.topic , 'image_extras' )
