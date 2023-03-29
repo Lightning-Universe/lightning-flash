@@ -35,18 +35,18 @@ jobs:
           - { os: macOS-12, requires: 'oldest' }
           - { os: windows-2022, requires: 'oldest' }
         include:
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'core', extra: ['']}}
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image', extra: ['']}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'core', extra: []}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image', extra: []}
           - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image', extra: ['image_extras']}
           - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image', extra: ['image_extras_baal']}
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'video', extra: ['']}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'video', extra: []}
           - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'video', extra: ['video_extras']}
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'tabular', extra: ['']}
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'text', extra: ['']}
-          - { os: 'ubuntu-20.04', python-version: 3.8, topic: 'pointcloud', extra: ['']}
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'serve', extra: ['']}
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'graph', extra: ['']}
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'audio', extra: ['']}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'tabular', extra: []}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'text', extra: []}
+          - { os: 'ubuntu-20.04', python-version: 3.8, topic: 'pointcloud', extra: []}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'serve', extra: []}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'graph', extra: []}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'audio', extra: []}
 
     # Timeout: https://stackoverflow.com/a/59076067/4521646
     timeout-minutes: 50
