@@ -28,7 +28,7 @@ from flash.core.data.io.output_transform import OutputTransform
 from flash.core.model import Task
 from flash.core.registry import ExternalRegistry, FlashRegistry
 from flash.core.serve import Composition
-from flash.core.utilities.imports import _TEXT_AVAILABLE, requires
+from flash.core.utilities.imports import _TOPIC_TEXT_AVAILABLE, requires
 from flash.core.utilities.providers import _HUGGINGFACE
 from flash.core.utilities.types import (
     INPUT_TRANSFORM_TYPE,
@@ -41,7 +41,7 @@ from flash.text.input import TextDeserializer
 from flash.text.ort_callback import ORTCallback
 from flash.text.seq2seq.core.collate import TextSeq2SeqCollate
 
-if _TEXT_AVAILABLE:
+if _TOPIC_TEXT_AVAILABLE:
     from transformers import AutoModelForSeq2SeqLM
 
     HUGGINGFACE_BACKBONES = ExternalRegistry(

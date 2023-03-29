@@ -39,14 +39,14 @@ from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.utilities.embedder import Embedder
 from flash.core.utilities.imports import (
-    _AUDIO_TESTING,
-    _CORE_TESTING,
-    _GRAPH_TESTING,
-    _IMAGE_AVAILABLE,
-    _IMAGE_TESTING,
     _PL_GREATER_EQUAL_1_8_0,
-    _TABULAR_TESTING,
-    _TEXT_TESTING,
+    _TM_GREATER_EQUAL_0_10_0,
+    _TOPIC_AUDIO_AVAILABLE,
+    _TOPIC_CORE_AVAILABLE,
+    _TOPIC_GRAPH_AVAILABLE,
+    _TOPIC_IMAGE_AVAILABLE,
+    _TOPIC_TABULAR_AVAILABLE,
+    _TOPIC_TEXT_AVAILABLE,
     _TORCH_OPTIMIZER_AVAILABLE,
     _TRANSFORMERS_AVAILABLE,
 )
@@ -158,7 +158,7 @@ class AdapterParent(Parent):
 # ================================
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 @pytest.mark.parametrize("metrics", [None, Accuracy(), {"accuracy": Accuracy()}])
 def test_classificationtask_train(tmpdir: str, metrics: Any):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
@@ -171,7 +171,7 @@ def test_classificationtask_train(tmpdir: str, metrics: Any):
     assert "test_nll_loss" in result[0]
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 def test_task_predict_raises():
     with pytest.raises(AttributeError, match="`flash.Task.predict` has been removed."):
         model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
@@ -179,7 +179,7 @@ def test_task_predict_raises():
         task.predict("args", kwarg="test")
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 @pytest.mark.parametrize("task", [Parent, GrandParent, AdapterParent])
 def test_nested_tasks(tmpdir, task):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.Softmax())
@@ -195,7 +195,7 @@ def test_nested_tasks(tmpdir, task):
     assert "test_nll_loss" in result[0]
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 def test_classification_task_trainer_predict(tmpdir):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10))
     task = ClassificationTask(model)
@@ -214,7 +214,7 @@ def test_classification_task_trainer_predict(tmpdir):
             ImageClassifier,
             "0.7.0/image_classification_model.pt",
             marks=pytest.mark.skipif(
-                not _IMAGE_TESTING,
+                not _TOPIC_IMAGE_AVAILABLE,
                 reason="image packages aren't installed",
             ),
         ),
@@ -222,7 +222,7 @@ def test_classification_task_trainer_predict(tmpdir):
             SemanticSegmentation,
             "0.9.0/semantic_segmentation_model.pt",
             marks=pytest.mark.skipif(
-                not _IMAGE_TESTING,
+                not _TOPIC_IMAGE_AVAILABLE or not _TM_GREATER_EQUAL_0_10_0,
                 reason="image packages aren't installed",
             ),
         ),
@@ -230,7 +230,7 @@ def test_classification_task_trainer_predict(tmpdir):
             SpeechRecognition,
             "0.7.0/speech_recognition_model.pt",
             marks=pytest.mark.skipif(
-                not _AUDIO_TESTING,
+                not _TOPIC_AUDIO_AVAILABLE,
                 reason="audio packages aren't installed",
             ),
         ),
@@ -238,7 +238,7 @@ def test_classification_task_trainer_predict(tmpdir):
             TabularClassifier,
             "0.7.0/tabular_classification_model.pt",
             marks=pytest.mark.skipif(
-                not _TABULAR_TESTING,
+                not _TOPIC_TABULAR_AVAILABLE,
                 reason="tabular packages aren't installed",
             ),
         ),
@@ -246,7 +246,7 @@ def test_classification_task_trainer_predict(tmpdir):
             TextClassifier,
             "0.9.0/text_classification_model.pt",
             marks=pytest.mark.skipif(
-                not _TEXT_TESTING,
+                not _TOPIC_TEXT_AVAILABLE,
                 reason="text packages aren't installed",
             ),
         ),
@@ -254,7 +254,7 @@ def test_classification_task_trainer_predict(tmpdir):
             SummarizationTask,
             "0.7.0/summarization_model_xsum.pt",
             marks=pytest.mark.skipif(
-                not _TEXT_TESTING,
+                not _TOPIC_TEXT_AVAILABLE,
                 reason="text packages aren't installed",
             ),
         ),
@@ -262,7 +262,7 @@ def test_classification_task_trainer_predict(tmpdir):
             TranslationTask,
             "0.7.0/translation_model_en_ro.pt",
             marks=pytest.mark.skipif(
-                not _TEXT_TESTING,
+                not _TOPIC_TEXT_AVAILABLE,
                 reason="text packages aren't installed",
             ),
         ),
@@ -270,7 +270,7 @@ def test_classification_task_trainer_predict(tmpdir):
             GraphClassifier,
             "0.7.0/graph_classification_model.pt",
             marks=pytest.mark.skipif(
-                not _GRAPH_TESTING,
+                not _TOPIC_GRAPH_AVAILABLE,
                 reason="graph packages aren't installed",
             ),
         ),
@@ -278,7 +278,7 @@ def test_classification_task_trainer_predict(tmpdir):
             GraphEmbedder,
             "0.7.0/graph_classification_model.pt",
             marks=pytest.mark.skipif(
-                not _GRAPH_TESTING,
+                not _TOPIC_GRAPH_AVAILABLE,
                 reason="graph packages aren't installed",
             ),
         ),
@@ -305,7 +305,7 @@ class DummyTask(Task):
         return self.backbone(batch)
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 def test_as_embedder():
     layer_number = 1
     embedder = DummyTask().as_embedder(f"backbone.{layer_number}")
@@ -314,13 +314,13 @@ def test_as_embedder():
     assert embedder.predict_step(torch.rand(10, 10), 0, 0).size(1) == embedder.model.backbone[layer_number].out_features
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 def test_available_layers():
     task = DummyTask()
     assert task.available_layers() == ["output", "", "backbone", "backbone.0", "backbone.1", "backbone.2"]
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_available_backbones():
     backbones = ImageClassifier.available_backbones()
     assert "resnet152" in backbones
@@ -331,7 +331,7 @@ def test_available_backbones():
     assert Foo.available_backbones() is None
 
 
-@pytest.mark.skipif(_IMAGE_AVAILABLE, reason="image libraries are installed.")
+@pytest.mark.skipif(_TOPIC_IMAGE_AVAILABLE, reason="image libraries are installed.")
 def test_available_backbones_raises():
     with pytest.raises(ModuleNotFoundError, match="Required dependencies not available."):
         _ = ImageClassifier.available_backbones()
@@ -356,7 +356,7 @@ def custom_steplr_configuration_return_as_dict(optimizer):
     }
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 @pytest.mark.parametrize(
     "optim", ["Adadelta", functools.partial(torch.optim.Adadelta, eps=0.5), ("Adadelta", {"eps": 0.5})]
 )
@@ -396,7 +396,7 @@ def test_optimizers_and_schedulers(tmpdir, optim, sched, interval):
     trainer.fit(task, train_dl)
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 def test_optimizer_learning_rate():
     mock_optimizer = MagicMock()
     Task.optimizers_registry(mock_optimizer, "test")
@@ -475,7 +475,7 @@ def test_external_schedulers_provider_hf_transformers(tmpdir, optim, sched, use_
         assert isinstance(trainer.lr_schedulers[0]["scheduler"], torch.optim.lr_scheduler.LambdaLR)
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 def test_manual_optimization(tmpdir):
     class ManualOptimizationTask(Task):
         def __init__(self, *args, **kwargs):
@@ -505,7 +505,7 @@ def test_manual_optimization(tmpdir):
     trainer.fit(task, train_dl, val_dl)
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 def test_errors_and_exceptions_optimizers_and_schedulers():
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
 
@@ -542,7 +542,7 @@ def test_errors_and_exceptions_optimizers_and_schedulers():
         task.configure_optimizers()
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 def test_classification_task_metrics():
     train_dataset = FixedDataset([0, 1])
     val_dataset = FixedDataset([1, 1])
@@ -566,7 +566,7 @@ def test_classification_task_metrics():
     trainer.test(task, DataLoader(test_dataset))
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 def test_loss_fn_buffer():
     weight = torch.rand(10)
     model = Task(loss_fn=nn.CrossEntropyLoss(weight=weight))

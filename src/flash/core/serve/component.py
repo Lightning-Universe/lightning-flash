@@ -7,7 +7,7 @@ from torch import nn
 
 from flash.core.serve.core import ParameterContainer, Servable
 from flash.core.serve.decorators import BoundMeta, UnboundMeta
-from flash.core.utilities.imports import _CYTOOLZ_AVAILABLE, _SERVE_AVAILABLE, requires
+from flash.core.utilities.imports import _CYTOOLZ_AVAILABLE, _TOPIC_SERVE_AVAILABLE, requires
 
 if _CYTOOLZ_AVAILABLE:
     from cytoolz import first, isiterable, valfilter
@@ -191,7 +191,7 @@ class FlashServeMeta(type):
         return klass
 
 
-if _SERVE_AVAILABLE:
+if _TOPIC_SERVE_AVAILABLE:
 
     class ModelComponent(metaclass=FlashServeMeta):
         """Represents a computation which is decorated by `@expose`.

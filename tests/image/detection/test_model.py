@@ -23,7 +23,12 @@ from torch.utils.data import Dataset
 from flash.core.data.io.input import DataKeys
 from flash.core.integrations.icevision.transforms import IceVisionInputTransform
 from flash.core.trainer import Trainer
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE, _IMAGE_EXTRAS_TESTING, _SERVE_TESTING
+from flash.core.utilities.imports import (
+    _EFFDET_AVAILABLE,
+    _ICEVISION_AVAILABLE,
+    _TOPIC_IMAGE_AVAILABLE,
+    _TOPIC_SERVE_AVAILABLE,
+)
 from flash.image import ObjectDetector
 from tests.helpers.task_tester import TaskTester
 
@@ -68,12 +73,13 @@ class DummyDetectionDataset(Dataset):
         return sample
 
 
+@pytest.mark.skipif(not _EFFDET_AVAILABLE, reason="effdet is not installed for testing")
 class TestObjectDetector(TaskTester):
     task = ObjectDetector
     task_kwargs = {"num_classes": 2}
     cli_command = "object_detection"
-    is_testing = _IMAGE_EXTRAS_TESTING
-    is_available = _IMAGE_AVAILABLE and _ICEVISION_AVAILABLE
+    is_testing = _TOPIC_IMAGE_AVAILABLE
+    is_available = _TOPIC_IMAGE_AVAILABLE and _ICEVISION_AVAILABLE
 
     # TODO: Resolve JIT support
     traceable = False
@@ -109,7 +115,7 @@ class TestObjectDetector(TaskTester):
 
 
 @pytest.mark.parametrize("head", ["retinanet"])
-@pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_predict(tmpdir, head):
     model = ObjectDetector(num_classes=2, head=head, pretrained=False)
     ds = DummyDetectionDataset((128, 128, 3), 1, 2, 10)
@@ -126,11 +132,7 @@ def test_predict(tmpdir, head):
     )
     trainer.fit(model, dl)
 
-    dl = model.process_predict_dataset(
-        ds,
-        2,
-        input_transform=input_transform,
-    )
+    dl = model.process_predict_dataset(ds, 2, input_transform=input_transform)
     predictions = trainer.predict(model, dl, output="preds")
     assert len(predictions[0][0]["bboxes"]) > 0
     model.predict_kwargs = {"detection_threshold": 2}
@@ -138,7 +140,7 @@ def test_predict(tmpdir, head):
     assert len(predictions[0][0]["bboxes"]) == 0
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="serve libraries aren't installed.")
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = ObjectDetector(2)

@@ -22,10 +22,10 @@ from flash.core.classification import (
     ProbabilitiesOutput,
 )
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _CORE_TESTING, _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _TOPIC_CORE_AVAILABLE, _TOPIC_IMAGE_AVAILABLE
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 def test_classification_outputs():
     example_output = torch.tensor([-0.1, 0.2, 0.3])  # 3 classes
     labels = ["class_1", "class_2", "class_3"]
@@ -38,7 +38,7 @@ def test_classification_outputs():
     assert LabelsOutput(labels).transform(example_output) == "class_3"
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 def test_classification_outputs_multi_label():
     example_output = torch.tensor([-0.1, 0.2, 0.3])  # 3 classes
     labels = ["class_1", "class_2", "class_3"]
@@ -52,7 +52,7 @@ def test_classification_outputs_multi_label():
     assert LabelsOutput(labels, multi_label=True).transform(example_output) == ["class_2", "class_3"]
 
 
-@pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
 def test_classification_outputs_fiftyone():
     logits = torch.tensor([-0.1, 0.2, 0.3])

@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import pytest
 import torch
 
-from flash.core.utilities.imports import _SERVE_TESTING
+from flash.core.utilities.imports import _TOPIC_SERVE_AVAILABLE
 
 
 @dataclass
@@ -17,7 +17,7 @@ class CustomTokenizer:
         return f"decoding from {self.name}"
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_custom_tokenizer():
     from flash.core.serve.types import Text
 
@@ -27,7 +27,7 @@ def test_custom_tokenizer():
     assert "decoding from test" == text.serialize(torch.tensor([[1, 2]]))
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_tokenizer_string():
     from flash.core.serve.types import Text
 

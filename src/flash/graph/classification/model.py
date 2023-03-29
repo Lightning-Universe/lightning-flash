@@ -20,12 +20,12 @@ from torch.nn import functional as F
 from flash.core.classification import ClassificationTask
 from flash.core.data.io.input import DataKeys
 from flash.core.registry import FlashRegistry
-from flash.core.utilities.imports import _GRAPH_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_GRAPH_AVAILABLE
 from flash.core.utilities.types import LOSS_FN_TYPE, LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.graph.backbones import GRAPH_BACKBONES
 from flash.graph.collate import _pyg_collate
 
-if _GRAPH_AVAILABLE:
+if _TOPIC_GRAPH_AVAILABLE:
     from torch_geometric.nn import global_add_pool, global_max_pool, global_mean_pool
 
     POOLING_FUNCTIONS = {"mean": global_mean_pool, "add": global_add_pool, "max": global_max_pool}

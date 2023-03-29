@@ -2,7 +2,7 @@ import pytest
 
 from flash.core.serve import ModelComponent, expose
 from flash.core.serve.types import Number
-from flash.core.utilities.imports import _CYTOOLZ_AVAILABLE, _SERVE_TESTING
+from flash.core.utilities.imports import _CYTOOLZ_AVAILABLE, _TOPIC_SERVE_AVAILABLE
 
 
 @pytest.mark.skipif(not _CYTOOLZ_AVAILABLE, reason="the library cytoolz is not installed.")
@@ -168,7 +168,7 @@ def test_metaclass_raises_if_argument_values_of_expose_arent_subclasses_of_baset
                 return param
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="serve libraries aren't installed.")
 def test_ModelComponent_raises_if_exposed_input_keys_differ_from_decorated_method_parameters(
     lightning_squeezenet1_1_obj,
 ):
@@ -193,7 +193,7 @@ def test_ModelComponent_raises_if_exposed_input_keys_differ_from_decorated_metho
         _ = FailedExposedDecorator(comp)
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="serve is not installed.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="serve is not installed.")
 def test_ModelComponent_raises_if_config_is_empty_dict(lightning_squeezenet1_1_obj):
     """This occurs when the instance is being initialized.
 

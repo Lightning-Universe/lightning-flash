@@ -19,9 +19,9 @@ from flash.core.data.io.classification_input import ClassificationInputMixin
 from flash.core.data.io.input import DataKeys, Input
 from flash.core.data.utilities.classification import TargetFormatter
 from flash.core.data.utilities.samples import to_sample
-from flash.core.utilities.imports import _GRAPH_AVAILABLE, requires
+from flash.core.utilities.imports import _TOPIC_GRAPH_AVAILABLE, requires
 
-if _GRAPH_AVAILABLE:
+if _TOPIC_GRAPH_AVAILABLE:
     from torch_geometric.data import Data, InMemoryDataset
 
 

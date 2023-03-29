@@ -17,7 +17,7 @@ import pytest
 import torch
 
 from flash.core.data.batch import default_uncollate
-from flash.core.utilities.imports import _CORE_TESTING
+from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE
 
 Case = namedtuple("Case", ["collated_batch", "uncollated_batch"])
 
@@ -47,7 +47,7 @@ cases = [
 ]
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 @pytest.mark.parametrize("case", cases)
 def test_default_uncollate(case):
     assert default_uncollate(case.collated_batch) == case.uncollated_batch
@@ -62,7 +62,7 @@ error_cases = [
 ]
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 @pytest.mark.parametrize("error_case", error_cases)
 def test_default_uncollate_raises(error_case):
     with pytest.raises(ValueError, match=error_case.match):

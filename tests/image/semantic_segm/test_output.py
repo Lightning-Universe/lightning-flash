@@ -15,12 +15,12 @@ import pytest
 import torch
 
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _IMAGE_TESTING
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _TOPIC_IMAGE_AVAILABLE
 from flash.image.segmentation.output import FiftyOneSegmentationLabelsOutput, SegmentationLabelsOutput
 
 
 class TestSemanticSegmentationLabelsOutput:
-    @pytest.mark.skipif(not _IMAGE_TESTING, "image libraries aren't installed.")
+    @pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, "image libraries aren't installed.")
     @staticmethod
     def test_smoke():
         serial = SegmentationLabelsOutput()
@@ -28,7 +28,7 @@ class TestSemanticSegmentationLabelsOutput:
         assert serial.labels_map is None
         assert serial.visualize is False
 
-    @pytest.mark.skipif(not _IMAGE_TESTING, "image libraries aren't installed.")
+    @pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, "image libraries aren't installed.")
     @staticmethod
     def test_exception():
         serial = SegmentationLabelsOutput()
@@ -41,7 +41,7 @@ class TestSemanticSegmentationLabelsOutput:
             sample = torch.zeros(2, 3)
             serial.transform(sample)
 
-    @pytest.mark.skipif(not _IMAGE_TESTING, "image libraries aren't installed.")
+    @pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, "image libraries aren't installed.")
     @staticmethod
     def test_serialize():
         serial = SegmentationLabelsOutput()
@@ -54,7 +54,7 @@ class TestSemanticSegmentationLabelsOutput:
         assert torch.tensor(classes)[1, 2] == 1
         assert torch.tensor(classes)[0, 1] == 3
 
-    @pytest.mark.skipif(not _IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+    @pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
     @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
     @staticmethod
     def test_serialize_fiftyone():

@@ -17,10 +17,10 @@ from typing import Any, Callable, Dict
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.utilities.samples import to_sample
-from flash.core.utilities.imports import _GRAPH_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_GRAPH_AVAILABLE
 from flash.graph.collate import _pyg_collate
 
-if _GRAPH_AVAILABLE:
+if _TOPIC_GRAPH_AVAILABLE:
     from torch_geometric.data import Data
     from torch_geometric.transforms import NormalizeFeatures
 else:

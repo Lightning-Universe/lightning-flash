@@ -28,10 +28,10 @@ from flash.core.data.io.output import Output
 from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.serve import Composition
-from flash.core.utilities.imports import _AUDIO_AVAILABLE, requires
+from flash.core.utilities.imports import _TOPIC_AUDIO_AVAILABLE, requires
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE, LR_SCHEDULER_TYPE, OPTIMIZER_TYPE
 
-if _AUDIO_AVAILABLE:
+if _TOPIC_AUDIO_AVAILABLE:
     from transformers import AutoProcessor
 
 

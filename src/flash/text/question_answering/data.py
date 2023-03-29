@@ -17,7 +17,7 @@ from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.utilities.paths import PATH_TYPE
-from flash.core.utilities.imports import _TEXT_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_TEXT_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 from flash.core.utilities.types import INPUT_TRANSFORM_TYPE
 from flash.text.question_answering.input import (
@@ -28,7 +28,7 @@ from flash.text.question_answering.input import (
 )
 
 # Skip doctests if requirements aren't available
-if not _TEXT_AVAILABLE:
+if not _TOPIC_TEXT_AVAILABLE:
     __doctest_skip__ = ["QuestionAnsweringData", "QuestionAnsweringData.*"]
 
 

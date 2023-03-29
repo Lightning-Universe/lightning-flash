@@ -32,14 +32,14 @@ from torchmetrics.text.rouge import ROUGEScore
 from flash.core.data.io.input import DataKeys
 from flash.core.model import Task
 from flash.core.registry import ExternalRegistry, FlashRegistry
-from flash.core.utilities.imports import _TEXT_AVAILABLE, _TM_GREATER_EQUAL_0_7_0
+from flash.core.utilities.imports import _TM_GREATER_EQUAL_0_7_0, _TOPIC_TEXT_AVAILABLE
 from flash.core.utilities.providers import _HUGGINGFACE
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.text.ort_callback import ORTCallback
 from flash.text.question_answering.collate import TextQuestionAnsweringCollate
 from flash.text.question_answering.output_transform import QuestionAnsweringOutputTransform
 
-if _TEXT_AVAILABLE:
+if _TOPIC_TEXT_AVAILABLE:
     from transformers import AutoModelForQuestionAnswering
 
     HUGGINGFACE_BACKBONES = ExternalRegistry(
