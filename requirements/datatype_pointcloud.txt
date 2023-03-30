@@ -2,6 +2,6 @@
 
 open3d ==0.13
 # Version mismatch: Open3D needs PyTorch version 1.7.*, but version 1.8.1+cpu is installed!
-torch ==1.7.1
-torchvision ==0.8.1
+torch >=1.7.0, <1.8.0
+torchvision >=0.8.0, <0.9.0
 tensorboard <=2.11.0

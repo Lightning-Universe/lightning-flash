@@ -98,6 +98,9 @@ jobs:
         pip --version
         pip install Cython "torch>=1.7.1" -f https://download.pytorch.org/whl/cpu/torch_stable.html
         pip install .[$EXTRAS,test] --upgrade --prefer-binary \
+          --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
+        # FixMe: this shall be one line command
+        pip install --upgrade --prefer-binary \
           -r requirements/testing_${{ matrix.topic }}.txt \
           --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
         pip list
