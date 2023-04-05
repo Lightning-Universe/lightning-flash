@@ -97,10 +97,10 @@ jobs:
       run: |
         pip --version
         pip install Cython "torch>=1.7.1" -f https://download.pytorch.org/whl/cpu/torch_stable.html
-        pip install .[$EXTRAS,test] --upgrade --prefer-binary \
+        pip install .[$EXTRAS,test] --upgrade  --only-binary=:all: \
           --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
         # FixMe: this shall be one line command
-        pip install --upgrade --prefer-binary \
+        pip install --upgrade  --only-binary=:all: \
           -r requirements/testing_${{ matrix.topic }}.txt \
           --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
         pip list
@@ -114,7 +114,6 @@ jobs:
 
     - name: Tests
       env:
-        FLASH_TEST_TOPIC: ${{ join(matrix.topic,',') }}
         FIFTYONE_DO_NOT_TRACK: true
       run: |
         # FixMe: include doctests for src/
