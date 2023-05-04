@@ -98,7 +98,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip --version
-        pip install Cython "torch>=1.7.1" -f https://download.pytorch.org/whl/cpu/torch_stable.html
+        pip install numpy Cython "torch>=1.7.1" -f https://download.pytorch.org/whl/cpu/torch_stable.html
         pip install .[$EXTRAS,test] --upgrade --prefer-binary \
           --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
         # FixMe: this shall be one line command
