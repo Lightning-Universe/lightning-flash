@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 
 def fn_outputs_to_keyed_map(serialize_fn_out_keys, fn_output) -> Dict[str, Any]:
-    """convert outputs of a function to a dict of `{result_name: values}`
+    """Convert outputs of a function to a dict of `{result_name: values}`
 
     accepts function outputs which are sequence, dict, or object.
     """
