@@ -12,6 +12,7 @@ from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,
     _MATPLOTLIB_AVAILABLE,
     _PIL_AVAILABLE,
+    _SEGMENTATION_MODELS_AVAILABLE,
     _TOPIC_IMAGE_AVAILABLE,
 )
 from flash.image import SemanticSegmentation, SemanticSegmentationData
@@ -375,6 +376,7 @@ class TestSemanticSegmentationData:
 
     @staticmethod
     @pytest.mark.skipif(not _MATPLOTLIB_AVAILABLE, reason="matplotlib isn't installed.")
+    @pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")
     def test_map_labels(tmpdir):
         tmp_dir = Path(tmpdir)
 
