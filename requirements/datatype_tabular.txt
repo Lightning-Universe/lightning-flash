@@ -2,6 +2,6 @@
 
 scikit-learn <=1.2.0
 pytorch-forecasting>=0.9.0, <=0.10.3
-pytorch-tabular==0.7.0
-torchmetrics<0.8.0  # pytorch-tabular pins PL so we force a compatible TM version
+pytorch-tabular>=1.0.0, <1.0.2
+torchmetrics>=0.10.0
 omegaconf<=2.1.1, <=2.1.1
