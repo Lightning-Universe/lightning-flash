@@ -28,8 +28,8 @@ def ishashable(x):
 
 
 def istask(x):
-    """Is x a runnable task?
-    A task is a tuple with a callable first argument
+    """Is x a runnable task? A task is a tuple with a callable first argument.
+
     Examples
     --------
     >>> istask((inc, 1))

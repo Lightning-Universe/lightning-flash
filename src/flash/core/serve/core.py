@@ -206,7 +206,7 @@ class Parameter:
         return f"{self.component_uid}.{self.position}.{self.name}"
 
     def __terminate_invalid_connection_request(self, other: "Parameter", dunder_meth_called: str) -> None:
-        """verify that components can be composed.
+        """Verify that components can be composed.
 
         Parameters
         ----------

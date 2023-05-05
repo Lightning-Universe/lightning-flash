@@ -196,15 +196,13 @@ if _TOPIC_SERVE_AVAILABLE:
     class ModelComponent(metaclass=FlashServeMeta):
         """Represents a computation which is decorated by `@expose`.
 
-        A component is how we represent the main unit of work; it is a set of
-        evaluations which involve some input being passed through some set of
-        functions to generate some set of outputs.
+        A component is how we represent the main unit of work; it is a set of evaluations which involve some input being
+        passed through some set of functions to generate some set of outputs.
 
-        To specify a component, we record things like: its name, source file
-        assets, configuration args, model source assets, etc. The
-        specification must be YAML serializable and loadable to/from a fully
-        initialized instance. It must contain the minimal set of information
-        necessary to find and initialize its dependencies (assets) and itself.
+        To specify a component, we record things like: its name, source file assets, configuration args, model source
+        assets, etc. The specification must be YAML serializable and loadable to/from a fully initialized instance. It
+        must contain the minimal set of information necessary to find and initialize its dependencies (assets) and
+        itself.
         """
 
         _flashserve_meta_: Optional[Union[BoundMeta, UnboundMeta]] = None

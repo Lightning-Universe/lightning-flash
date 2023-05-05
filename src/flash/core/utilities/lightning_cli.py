@@ -63,8 +63,8 @@ class LightningArgumentParser(ArgumentParser):
     def __init__(self, *args: Any, parse_as_dict: bool = True, **kwargs: Any) -> None:
         """Initialize argument parser that supports configuration file input.
 
-        For full details of accepted arguments see `ArgumentParser.__init__
-        <https://jsonargparse.readthedocs.io/en/stable/#jsonargparse.core.ArgumentParser.__init__>`_.
+        For full details of accepted arguments see
+        `ArgumentParser.__init__ <https://jsonargparse.readthedocs.io/en/stable/#jsonargparse.core.ArgumentParser.__init__>`_.
         """
         super().__init__(*args, parse_as_dict=parse_as_dict, **kwargs)
         self.add_argument(
