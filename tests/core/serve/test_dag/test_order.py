@@ -43,8 +43,7 @@ def test_avoid_broker_nodes(abcde):
 
     b0    b1  b2
 
-    |      \  /
-    a0      a1
+    |      \  / a0      a1
 
     a0 should be run before a1
     """
@@ -288,11 +287,7 @@ def test_prefer_short_dependents(abcde):
 def test_run_smaller_sections(abcde):
     r"""Testing structure.
 
-           aa
-           / |
-      b   d  bb dd
-     / \ /|  | /
-    a   c e  cc
+    aa        / |   b   d  bb dd  / \ /|  | / a   c e  cc
 
     Prefer to run acb first because then we can get that out of the way
     """
@@ -379,12 +374,9 @@ def test_local_parents_of_reduction(abcde):
 def test_nearest_neighbor(abcde):
     r"""Testing structure.
 
-    a1  a2  a3  a4  a5  a6  a7 a8  a9
-     \  |  /  \ |  /  \ |  / \ |  /
-        b1      b2      b3     b4
+    a1  a2  a3  a4  a5  a6  a7 a8  a9  \  |  /  \ |  /  \ |  / \ |  /     b1      b2      b3     b4
 
-    Want to finish off a local group before moving on.
-    This is difficult because all groups are connected.
+    Want to finish off a local group before moving on. This is difficult because all groups are connected.
     """
     a, b, c, _, _ = abcde
     a1, a2, a3, a4, a5, a6, a7, a8, a9 = (a + i for i in "123456789")
@@ -512,14 +504,9 @@ def test_prefer_short_ancestor(abcde):
 def test_map_overlap(abcde):
     r"""Testing structure.
 
-      b1      b3      b5.
+    b1      b3      b5.
 
-       |\    / | \  / |
-      c1  c2  c3  c4  c5
-       |/  | \ | / | \|
-      d1  d2  d3  d4  d5
-       |       |      |
-      e1      e2      e5
+     |\    / | \  / | c1  c2  c3  c4  c5  |/  | \ | / | \| d1  d2  d3  d4  d5  |       |      | e1      e2      e5
 
     Want to finish b1 before we start on e5
     """
@@ -667,29 +654,14 @@ def test_order_empty():
 def test_switching_dependents(abcde):
     r"""Testing structure.
 
-    a7 a8  <-- do these last
-    | /
-    a6                e6
-    |                /
-    a5   c5    d5  e5
-    |    |    /   /
-    a4   c4 d4  e4
-    |  \ | /   /
-    a3   b3---/
-    |
-    a2
-    |
-    a1
-    |
-    a0  <-- start here
+    a7 a8  <-- do these last | / a6                e6 |                / a5   c5    d5  e5 |    |    /   / a4   c4 d4
+    e4 |  \ | /   / a3   b3---/ | a2 | a1 | a0  <-- start here
 
-    Test that we are able to switch to better dependents.
-    In this graph, we expect to start at a0.  To compute a4, we need to compute b3.
-    After computing b3, three "better" paths become available.
-    Confirm that we take the better paths before continuing down `a` path.
+    Test that we are able to switch to better dependents. In this graph, we expect to start at a0.  To compute a4, we
+    need to compute b3. After computing b3, three "better" paths become available. Confirm that we take the better paths
+    before continuing down `a` path.
 
-    This test is pretty specific to how `order` is implemented
-    and is intended to increase code coverage.
+    This test is pretty specific to how `order` is implemented and is intended to increase code coverage.
     """
     a, b, c, d, e = abcde
     dsk = {
