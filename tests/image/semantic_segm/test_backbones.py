@@ -19,11 +19,9 @@ from flash.image.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 
 @pytest.mark.parametrize(
     ["backbone"],
-    [
-        pytest.param("resnet50", marks=pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")),
-        pytest.param("dpn131", marks=pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")),
-    ],
+    ["resnet50", "dpn131"],
 )
+@pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")
 def test_semantic_segmentation_backbones_registry(backbone):
     backbone = SEMANTIC_SEGMENTATION_BACKBONES.get(backbone)()
     assert backbone

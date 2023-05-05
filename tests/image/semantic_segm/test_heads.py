@@ -22,14 +22,8 @@ from flash.image.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 from flash.image.segmentation.heads import SEMANTIC_SEGMENTATION_HEADS
 
 
-@pytest.mark.parametrize(
-    "head",
-    [
-        pytest.param("fpn", marks=pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")),
-        pytest.param("deeplabv3", marks=pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")),
-        pytest.param("unet", marks=pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")),
-    ],
-)
+@pytest.mark.parametrize("head", ["fpn", "deeplabv3", "unet"])
+@pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")
 def test_semantic_segmentation_heads_registry(head):
     img = torch.rand(1, 3, 32, 32)
     backbone = SEMANTIC_SEGMENTATION_BACKBONES.get("resnet50")(pretrained=False)
