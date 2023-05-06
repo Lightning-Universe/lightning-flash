@@ -11,12 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import unittest.mock
 
 import pytest
 import torch
 
-from flash.core.utilities.imports import _SEGMENTATION_MODELS_AVAILABLE, _TOPIC_IMAGE_AVAILABLE
+from flash.core.utilities.imports import _SEGMENTATION_MODELS_AVAILABLE
 from flash.image.segmentation import SemanticSegmentation
 from flash.image.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 from flash.image.segmentation.heads import SEMANTIC_SEGMENTATION_HEADS
