@@ -101,10 +101,9 @@ jobs:
       run: |
         python -m pip install "pip==22.2.1"
         pip install numpy Cython "torch>=1.7.1" -f $TORCH_URL
-        pip install .[$EXTRAS,test] --upgrade --prefer-binary -f $TORCH_URL
-        # FixMe: this shall be one line command
-        pip install --upgrade --prefer-binary \
-          -r requirements/testing_${{ matrix.topic }}.txt -f $TORCH_URL
+        pip install .[$EXTRAS,test] \
+          -r requirements/testing_${{ matrix.topic }}.txt  \
+          --upgrade --prefer-binary -f $TORCH_URL
         pip list
 
     - name: Cache datasets
