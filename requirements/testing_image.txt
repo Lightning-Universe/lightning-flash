@@ -1,0 +1,2 @@
+# https://github.com/facebookresearch/ClassyVision/archive/refs/heads/main.zip
+# https://github.com/facebookresearch/vissl/archive/refs/heads/main.zip

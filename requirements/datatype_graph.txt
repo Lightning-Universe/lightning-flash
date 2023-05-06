@@ -1,8 +1,8 @@
-# NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forecd in setup
+# NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forced in setup
 
 torch-scatter <=2.1.0
 torch-sparse <=0.6.16
-torch-geometric>=2.0.0, <=2.2.0
+torch-geometric >=2.0.0, <=2.2.0
 torch-cluster <=1.6.0
 networkx <=2.8.8
-class-resolver>=0.3.2, <=0.3.10
+class-resolver >=0.3.2, <=0.3.10

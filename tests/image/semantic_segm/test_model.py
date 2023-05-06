@@ -21,12 +21,13 @@ from torch import Tensor
 
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _TOPIC_IMAGE_AVAILABLE, _TOPIC_SERVE_AVAILABLE
+from flash.core.utilities.imports import _SEGMENTATION_MODELS_AVAILABLE, _TOPIC_IMAGE_AVAILABLE, _TOPIC_SERVE_AVAILABLE
 from flash.image import SemanticSegmentation
 from flash.image.segmentation.data import SemanticSegmentationData
 from tests.helpers.task_tester import TaskTester
 
 
+@pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")
 class TestSemanticSegmentation(TaskTester):
     task = SemanticSegmentation
     task_args = (2,)
@@ -59,13 +60,13 @@ class TestSemanticSegmentation(TaskTester):
         return self.example_train_sample
 
 
-@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")
 def test_non_existent_backbone():
     with pytest.raises(KeyError):
         SemanticSegmentation(2, "i am never going to implement this lol")
 
 
-@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")
 def test_freeze():
     model = SemanticSegmentation(2)
     model.freeze()
@@ -73,7 +74,7 @@ def test_freeze():
         assert p.requires_grad is False
 
 
-@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")
 def test_unfreeze():
     model = SemanticSegmentation(2)
     model.unfreeze()
@@ -81,7 +82,7 @@ def test_unfreeze():
         assert p.requires_grad is True
 
 
-@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")
 def test_predict_tensor():
     img = torch.rand(1, 3, 64, 64)
     model = SemanticSegmentation(2, backbone="mobilenetv3_large_100")
@@ -93,7 +94,7 @@ def test_predict_tensor():
     assert len(out[0][0][0]) == 64
 
 
-@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")
 def test_predict_numpy():
     img = np.ones((1, 3, 64, 64))
     model = SemanticSegmentation(2, backbone="mobilenetv3_large_100")
@@ -105,7 +106,8 @@ def test_predict_numpy():
     assert len(out[0][0][0]) == 64
 
 
-@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="serve libraries aren't installed.")
+@pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="some serving")
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = SemanticSegmentation(2)
@@ -113,6 +115,6 @@ def test_serve():
     model.serve()
 
 
-@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")
 def test_available_pretrained_weights():
     assert SemanticSegmentation.available_pretrained_weights("resnet18") == ["imagenet", "ssl", "swsl"]

@@ -1,10 +1,10 @@
-# NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forecd in setup
+# NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forced in setup
 
 coverage[toml]
-codecov>=2.1
-pytest>=6.0, <7.0
-pytest-doctestplus>=0.9.0
-pytest-rerunfailures>=10.0
+codecov >2.1
+pytest >7.2, <7.4
+pytest-doctestplus >0.9.0
+pytest-rerunfailures >10.0
 pytest-forked
 pytest-mock
 

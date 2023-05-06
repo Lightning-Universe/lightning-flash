@@ -1,4 +1,4 @@
-# NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forecd in setup
+# NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forced in setup
 
 sphinx >=4.0, <5.0
 myst-parser >=0.15

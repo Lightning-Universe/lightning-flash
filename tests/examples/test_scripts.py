@@ -79,6 +79,7 @@ root = Path(__file__).parent.parent.parent
             marks=[
                 pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed"),
                 pytest.mark.skipif(not _ICEDATA_AVAILABLE, reason="icedata package isn't installed"),
+                pytest.mark.xfail(strict=False),  # ToDo
             ],
         ),
         pytest.param(

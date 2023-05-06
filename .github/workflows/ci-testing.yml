@@ -32,14 +32,15 @@ jobs:
         exclude:
           # Skip if torch<1.8 and py3.9 on Linux: https://github.com/pytorch/pytorch/issues/50014
           - { python-version: 3.9, requires: 'oldest' }
-          - { os: macOS-12, requires: 'oldest' }
-          - { os: windows-2022, requires: 'oldest' }
+          - { os: 'macOS-12', requires: 'oldest' }
+          - { os: 'windows-2022', requires: 'oldest' }
         include:
           - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'core', extra: []}
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image', extra: ['image_extras']}
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image', extra: ['image_extras_baal']}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image', extra: ['image_extra']}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image', extra: ['image_baal']}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image', extra: ['image_segm']}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image', extra: ['image_vissl']}
           - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'video', extra: []}
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'video', extra: ['video_extras']}
           - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'tabular', extra: []}
           - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'text', extra: []}
           - { os: 'ubuntu-20.04', python-version: 3.8, topic: 'pointcloud', extra: []}
@@ -68,30 +69,23 @@ jobs:
     # Github Actions: Run step on specific OS: https://stackoverflow.com/a/57948488/4521646
     - name: Setup macOS
       if: runner.os == 'macOS'
-      run: |
-        brew update
-        brew install libomp  # https://github.com/pytorch/pytorch/issues/20030
+      run: brew install libomp openblas lapack
 
-    - name: Install graphviz
-      if: contains( matrix.topic , 'serve' )
-      run: sudo apt-get install graphviz
+    - name: Setup Ubuntu
+      if: runner.os == 'Linux'
+      run: sudo apt-get install -y libsndfile1 graphviz
 
     - name: Set min. dependencies
       if: matrix.requires == 'oldest'
       run: |
-        fname = 'requirements.txt'
-        ignore = ['pandas', 'torchmetrics']
-        lines = [line if any([line.startswith(package) for package in ignore]) else line.replace('>', '=') for line in open(fname).readlines()]
-        open(fname, 'w').writelines(lines)
+        import glob, os
+        # FixMe: shall be minimal for ALL dependencies not only base
+        # files = glob.glob(os.path.join("requirements", "*.txt")) + ['requirements.txt']
+        files = ['requirements.txt']
+        for fname in files:
+          lines = [line.replace('>=', '==') for line in open(fname).readlines()]
+          open(fname, 'w').writelines(lines)
       shell: python
-
-    - name: Install graph test dependencies
-      if: contains( matrix.topic , 'graph' )
-      run: |
-        pip install torch==1.11.0+cpu torchvision==0.12.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
-        pip install torch-scatter -f https://data.pyg.org/whl/torch-1.11.0+cpu.html
-        pip install torch-sparse -f https://data.pyg.org/whl/torch-1.11.0+cpu.html
-        pip install torch-cluster -f https://data.pyg.org/whl/torch-1.11.0+cpu.html
 
     - name: Adjust extras
       run: |
@@ -101,32 +95,16 @@ jobs:
             gh_env.write(f"EXTRAS={','.join(extras)}")
       shell: python
 
-    - name: Install package & dependencies
+    - name: Install dependencies
       env:
-        SYSTEM_VERSION_COMPAT: 1
+        TORCH_URL: https://download.pytorch.org/whl/cpu/torch_stable.html
       run: |
         python -m pip install "pip==22.2.1"
-        pip install cython "torch>=1.7.1" -f https://download.pytorch.org/whl/cpu/torch_stable.html
-        pip install .[$EXTRAS,test] --upgrade --prefer-binary --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
-
-    - name: Install vissl
-      if: contains( matrix.topic , 'image_extras' )
-      run: |
-        pip install git+https://github.com/facebookresearch/ClassyVision.git
-        pip install git+https://github.com/facebookresearch/vissl.git
-
-    - name: Install serve test dependencies
-      if: contains( matrix.topic , 'serve' )
-      run: |
-        sudo apt-get install libsndfile1
-        pip install '.[all,audio]' icevision sahi==0.8.19 effdet --upgrade
-
-    - name: Install audio test dependencies
-      if: contains( matrix.topic , 'audio' )
-      run: |
-        sudo apt-get install libsndfile1
-        pip install matplotlib
-        pip install '.[audio,image]' torch==1.11.0 --upgrade
+        pip install numpy Cython "torch>=1.7.1" -f $TORCH_URL
+        pip install .[$EXTRAS,test] \
+          -r requirements/testing_${{ matrix.topic }}.txt  \
+          --upgrade --prefer-binary -f $TORCH_URL
+        pip list
 
     - name: Cache datasets
       uses: actions/cache@v3
@@ -137,10 +115,8 @@ jobs:
 
     - name: Tests
       env:
-        FLASH_TEST_TOPIC: ${{ join(matrix.topic,',') }}
         FIFTYONE_DO_NOT_TRACK: true
       run: |
-        pip list
         # FixMe: include doctests for src/
         coverage run --source flash -m pytest \
           tests/core \

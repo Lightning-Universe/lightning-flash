@@ -11,25 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import unittest.mock
+import unittest
 
 import pytest
 import torch
 
-from flash.core.utilities.imports import _SEGMENTATION_MODELS_AVAILABLE, _TOPIC_IMAGE_AVAILABLE
+from flash.core.utilities.imports import _SEGMENTATION_MODELS_AVAILABLE
 from flash.image.segmentation import SemanticSegmentation
 from flash.image.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES
 from flash.image.segmentation.heads import SEMANTIC_SEGMENTATION_HEADS
 
 
-@pytest.mark.parametrize(
-    "head",
-    [
-        pytest.param("fpn", marks=pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")),
-        pytest.param("deeplabv3", marks=pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")),
-        pytest.param("unet", marks=pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")),
-    ],
-)
+@pytest.mark.parametrize("head", ["fpn", "deeplabv3", "unet"])
+@pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")
 def test_semantic_segmentation_heads_registry(head):
     img = torch.rand(1, 3, 32, 32)
     backbone = SEMANTIC_SEGMENTATION_BACKBONES.get("resnet50")(pretrained=False)
@@ -43,7 +37,7 @@ def test_semantic_segmentation_heads_registry(head):
     assert res.shape[1] == 10
 
 
-@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")
 @unittest.mock.patch("flash.image.segmentation.heads.smp")
 def test_pretrained_weights(mock_smp):
     mock_smp.create_model = unittest.mock.MagicMock()
