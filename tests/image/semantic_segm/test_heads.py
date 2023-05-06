@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import unittest
 
 import pytest
 import torch
@@ -37,9 +38,9 @@ def test_semantic_segmentation_heads_registry(head):
 
 
 @pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")
-# @unittest.mock.patch("flash.image.segmentation.heads.smp")
-def test_pretrained_weights():
-    # mock_smp.create_model = unittest.mock.MagicMock()
+@unittest.mock.patch("flash.image.segmentation.heads.smp")
+def test_pretrained_weights(mock_smp):
+    mock_smp.create_model = unittest.mock.MagicMock()
     available_weights = SemanticSegmentation.available_pretrained_weights("resnet18")
     backbone = SEMANTIC_SEGMENTATION_BACKBONES.get("resnet18")()
     SEMANTIC_SEGMENTATION_HEADS.get("unet")(backbone=backbone, num_classes=10, pretrained=True)
