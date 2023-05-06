@@ -22,8 +22,6 @@ from torch import nn
 
 from flash.core.utilities.compatibility import accelerator_connector
 from flash.core.utilities.imports import (
-    _PL_GREATER_EQUAL_1_4_0,
-    _PL_GREATER_EQUAL_1_6_0,
     _TOPIC_CORE_AVAILABLE,
     _TORCHVISION_AVAILABLE,
 )

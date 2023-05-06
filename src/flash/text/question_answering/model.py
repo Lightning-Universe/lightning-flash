@@ -32,7 +32,7 @@ from torchmetrics.text.rouge import ROUGEScore
 from flash.core.data.io.input import DataKeys
 from flash.core.model import Task
 from flash.core.registry import ExternalRegistry, FlashRegistry
-from flash.core.utilities.imports import _TM_GREATER_EQUAL_0_7_0, _TOPIC_TEXT_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_TEXT_AVAILABLE
 from flash.core.utilities.providers import _HUGGINGFACE
 from flash.core.utilities.types import LR_SCHEDULER_TYPE, METRICS_TYPE, OPTIMIZER_TYPE
 from flash.text.ort_callback import ORTCallback
