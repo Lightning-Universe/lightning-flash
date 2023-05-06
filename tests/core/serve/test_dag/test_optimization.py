@@ -5,25 +5,25 @@ from functools import partial
 import pytest
 
 from flash.core.serve.dag.optimization import (
+    SubgraphCallable,
     cull,
     functions_of,
     fuse,
     fuse_linear,
     inline,
     inline_functions,
-    SubgraphCallable,
 )
 from flash.core.serve.dag.task import get, get_dependencies
 from flash.core.serve.dag.utils import apply, partial_by_order
 from flash.core.serve.dag.utils_test import add, inc
-from flash.core.utilities.imports import _SERVE_TESTING
+from flash.core.utilities.imports import _TOPIC_SERVE_AVAILABLE
 
 
 def double(x):
     return x * 2
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_cull():
     # 'out' depends on 'x' and 'y', but not 'z'
     d = {"x": 1, "y": (inc, "x"), "z": (inc, "x"), "out": (add, "y", 10)}
@@ -51,7 +51,7 @@ def with_deps(dsk):
     return dsk, {k: get_dependencies(dsk, k) for k in dsk}
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_fuse():
     fuse = fuse2  # tests both `fuse` and `fuse_linear`
     d = {
@@ -164,7 +164,7 @@ def test_fuse():
     assert fuse(d, rename_keys=True) == with_deps({"a-b": (inc, 1), "c": (add, "a-b", "a-b"), "b": "a-b"})
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_fuse_keys():
     fuse = fuse2  # tests both `fuse` and `fuse_linear`
     d = {"a": 1, "b": (inc, "a"), "c": (inc, "b")}
@@ -196,7 +196,7 @@ def test_fuse_keys():
     )
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_inline():
     d = {"a": 1, "b": (inc, "a"), "c": (inc, "b"), "d": (add, "a", "c")}
     assert inline(d) == {"a": 1, "b": (inc, 1), "c": (inc, "b"), "d": (add, 1, "c")}
@@ -232,7 +232,7 @@ def test_inline():
     }
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_inline_functions():
     x, y, i, d = "xyid"
     dsk = {"out": (add, i, d), i: (inc, x), d: (double, y), x: 1, y: 1}
@@ -242,7 +242,7 @@ def test_inline_functions():
     assert result == expected
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_inline_ignores_curries_and_partials():
     dsk = {"x": 1, "y": 2, "a": (partial(add, 1), "x"), "b": (inc, "a")}
 
@@ -251,7 +251,7 @@ def test_inline_ignores_curries_and_partials():
     assert "a" not in result
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_inline_functions_non_hashable():
     class NonHashableCallable:
         def __call__(self, a):
@@ -269,14 +269,14 @@ def test_inline_functions_non_hashable():
     assert "b" not in result
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_inline_doesnt_shrink_fast_functions_at_top():
     dsk = {"x": (inc, "y"), "y": 1}
     result = inline_functions(dsk, [], fast_functions={inc})
     assert result == dsk
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_inline_traverses_lists():
     x, y, i, d = "xyid"
     dsk = {"out": (sum, [i, d]), i: (inc, x), d: (double, y), x: 1, y: 1}
@@ -285,14 +285,14 @@ def test_inline_traverses_lists():
     assert result == expected
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_inline_functions_protects_output_keys():
     dsk = {"x": (inc, 1), "y": (double, "x")}
     assert inline_functions(dsk, [], [inc]) == {"y": (double, (inc, 1))}
     assert inline_functions(dsk, ["x"], [inc]) == {"y": (double, "x"), "x": (inc, 1)}
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_functions_of():
     def a(x):
         return x
@@ -309,7 +309,7 @@ def test_functions_of():
     assert functions_of((a,)) == {a}
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_inline_cull_dependencies():
     d = {"a": 1, "b": "a", "c": "b", "d": ["a", "b", "c"], "e": (add, (len, "d"), "a")}
 
@@ -317,7 +317,7 @@ def test_inline_cull_dependencies():
     inline(d2, {"b"}, dependencies=dependencies)
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_fuse_reductions_single_input():
     def f(*args):
         return args
@@ -901,7 +901,7 @@ def test_fuse_reductions_single_input():
     )
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_fuse_stressed():
     def f(*args):
         return args
@@ -974,7 +974,7 @@ def test_fuse_stressed():
     assert rv == with_deps(rv[0])
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_fuse_reductions_multiple_input():
     def f(*args):
         return args
@@ -1082,7 +1082,7 @@ def func_with_kwargs(a, b, c=2):
     return a + b + c
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_SubgraphCallable():
     non_hashable = [1, 2, 3]
 
@@ -1129,7 +1129,7 @@ def test_SubgraphCallable():
     assert f2(1, 2) == f(1, 2)
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_SubgraphCallable_with_numpy():
     np = pytest.importorskip("numpy")
 
@@ -1149,7 +1149,7 @@ def test_SubgraphCallable_with_numpy():
     assert f1 != f4
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_fuse_subgraphs():
     dsk = {
         "x-1": 1,
@@ -1277,7 +1277,7 @@ def test_fuse_subgraphs():
     assert res in sols
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_fuse_subgraphs_linear_chains_of_duplicate_deps():
     dsk = {
         "x-1": 1,
@@ -1311,7 +1311,7 @@ def test_fuse_subgraphs_linear_chains_of_duplicate_deps():
     assert res == sol
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_dont_fuse_numpy_arrays():
     """Some types should stay in the graph bare This helps with things like serialization."""
     np = pytest.importorskip("numpy")
@@ -1320,7 +1320,7 @@ def test_dont_fuse_numpy_arrays():
     assert fuse(dsk, "y")[0] == dsk
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_fused_keys_max_length():  # generic fix for gh-5999
     d = {
         "u-looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong": (

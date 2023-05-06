@@ -31,7 +31,7 @@ In the :meth:`~flash.core.model.Task.__init__`, you will need to configure defau
 You will also need to create the backbone from the registry and create the model head.
 Here's the code:
 
-.. literalinclude:: ../../../flash/template/classification/model.py
+.. literalinclude:: ../../../src/flash/template/classification/model.py
     :language: python
     :dedent: 4
     :pyobject: TemplateSKLearnClassifier.__init__
@@ -46,7 +46,7 @@ The default ``{train,val,test,predict}_step`` implementations in :class:`~flash.
 In our template example, we just extract the input and target from the input mapping and forward them to the ``super`` methods.
 Here's the code for the ``training_step``:
 
-.. literalinclude:: ../../../flash/template/classification/model.py
+.. literalinclude:: ../../../src/flash/template/classification/model.py
     :language: python
     :dedent: 4
     :pyobject: TemplateSKLearnClassifier.training_step
@@ -54,7 +54,7 @@ Here's the code for the ``training_step``:
 We use the same code for the ``validation_step`` and ``test_step``.
 For ``predict_step`` we don't need the targets, so our code looks like this:
 
-.. literalinclude:: ../../../flash/template/classification/model.py
+.. literalinclude:: ../../../src/flash/template/classification/model.py
     :language: python
     :dedent: 4
     :pyobject: TemplateSKLearnClassifier.predict_step
@@ -63,7 +63,7 @@ For ``predict_step`` we don't need the targets, so our code looks like this:
 
 Finally, we use our backbone and head in a custom forward pass:
 
-.. literalinclude:: ../../../flash/template/classification/model.py
+.. literalinclude:: ../../../src/flash/template/classification/model.py
     :language: python
     :dedent: 4
     :pyobject: TemplateSKLearnClassifier.forward

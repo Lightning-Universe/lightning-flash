@@ -15,11 +15,11 @@ from unittest.mock import patch
 
 import pytest
 
-from flash.core.utilities.imports import _POINTCLOUD_TESTING
+from flash.core.utilities.imports import _TOPIC_POINTCLOUD_AVAILABLE
 from flash.pointcloud.segmentation.datasets import LyftDataset, SemanticKITTIDataset
 
 
-@pytest.mark.skipif(not _POINTCLOUD_TESTING, reason="pointcloud libraries aren't installed")
+@pytest.mark.skipif(not _TOPIC_POINTCLOUD_AVAILABLE, reason="pointcloud libraries aren't installed")
 @patch("flash.pointcloud.segmentation.datasets.os.system")
 def test_datasets(mock_system):
     LyftDataset("data")

@@ -17,7 +17,12 @@ from unittest import mock
 
 import pytest
 
-from flash.core.utilities.imports import _BAAL_AVAILABLE, _FIFTYONE_AVAILABLE, _IMAGE_AVAILABLE, _LEARN2LEARN_AVAILABLE
+from flash.core.utilities.imports import (
+    _BAAL_AVAILABLE,
+    _FIFTYONE_AVAILABLE,
+    _LEARN2LEARN_AVAILABLE,
+    _TOPIC_IMAGE_AVAILABLE,
+)
 from tests.examples.utils import run_test
 
 root = Path(__file__).parent.parent.parent
@@ -31,20 +36,22 @@ root = Path(__file__).parent.parent.parent
             "fiftyone",
             "image_classification.py",
             marks=pytest.mark.skipif(
-                not (_IMAGE_AVAILABLE and _FIFTYONE_AVAILABLE), reason="fiftyone library isn't installed"
+                not (_TOPIC_IMAGE_AVAILABLE and _FIFTYONE_AVAILABLE), reason="fiftyone library isn't installed"
             ),
         ),
         pytest.param(
             "fiftyone",
             "object_detection.py",
             marks=pytest.mark.skipif(
-                not (_IMAGE_AVAILABLE and _FIFTYONE_AVAILABLE), reason="fiftyone library isn't installed"
+                not (_TOPIC_IMAGE_AVAILABLE and _FIFTYONE_AVAILABLE), reason="fiftyone library isn't installed"
             ),
         ),
         pytest.param(
             "baal",
             "image_classification_active_learning.py",
-            marks=pytest.mark.skipif(not (_IMAGE_AVAILABLE and _BAAL_AVAILABLE), reason="baal library isn't installed"),
+            marks=pytest.mark.skipif(
+                not (_TOPIC_IMAGE_AVAILABLE and _BAAL_AVAILABLE), reason="baal library isn't installed"
+            ),
         ),
         pytest.param(
             "learn2learn",
@@ -52,11 +59,11 @@ root = Path(__file__).parent.parent.parent
             marks=[
                 pytest.mark.skip("MiniImagenet broken: https://github.com/learnables/learn2learn/issues/291"),
                 pytest.mark.skipif(
-                    not (_IMAGE_AVAILABLE and _LEARN2LEARN_AVAILABLE), reason="learn2learn isn't installed"
+                    not (_TOPIC_IMAGE_AVAILABLE and _LEARN2LEARN_AVAILABLE), reason="learn2learn isn't installed"
                 ),
             ],
         ),
     ],
 )
 def test_integrations(tmpdir, folder, file):
-    run_test(str(root / "flash_examples" / "integrations" / folder / file))
+    run_test(str(root / "examples" / "integrations" / folder / file))

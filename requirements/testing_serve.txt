@@ -1,0 +1,7 @@
+sahi ==0.8.19
+
+-r datatype_image.txt
+-r datatype_video.txt
+-r datatype_tabular.txt
+-r datatype_text.txt
+-r datatype_audio.txt

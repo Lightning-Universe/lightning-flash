@@ -19,7 +19,7 @@ import torch
 from torch import Tensor
 
 from flash import DataKeys
-from flash.core.utilities.imports import _SERVE_TESTING, _TEXT_AVAILABLE, _TEXT_TESTING
+from flash.core.utilities.imports import _TOPIC_SERVE_AVAILABLE, _TOPIC_TEXT_AVAILABLE
 from flash.text import TranslationTask
 from tests.helpers.task_tester import TaskTester
 
@@ -33,8 +33,8 @@ class TestTranslationTask(TaskTester):
         "tokenizer_kwargs": {"src_lang": "en_XX", "tgt_lang": "ro_RO"},
     }
     cli_command = "translation"
-    is_testing = _TEXT_TESTING
-    is_available = _TEXT_AVAILABLE
+    is_testing = _TOPIC_TEXT_AVAILABLE
+    is_available = _TOPIC_TEXT_AVAILABLE
 
     scriptable = False
 
@@ -61,7 +61,7 @@ class TestTranslationTask(TaskTester):
         return self.example_train_sample
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="serve libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="serve libraries aren't installed.")
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = TranslationTask(TEST_BACKBONE)
