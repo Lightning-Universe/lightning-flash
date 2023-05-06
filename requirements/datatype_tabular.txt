@@ -1,7 +1,7 @@
 # NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forced in setup
 
 scikit-learn <=1.2.0
-pytorch-forecasting >=0.9.0, <=0.10.3
+pytorch-forecasting >=0.10.0, <=0.10.3
 # pytorch-tabular >=1.0.2, <1.0.3  # pending requirements resolving
 https://github.com/manujosephv/pytorch_tabular/archive/refs/heads/main.zip
 torchmetrics >=0.10.0

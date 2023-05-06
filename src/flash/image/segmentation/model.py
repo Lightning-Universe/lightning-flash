@@ -24,7 +24,6 @@ from flash.core.model import Task
 from flash.core.registry import FlashRegistry
 from flash.core.serve import Composition
 from flash.core.utilities.imports import (
-    _TM_GREATER_EQUAL_0_7_0,
     _TM_GREATER_EQUAL_0_10_0,
     _TORCHVISION_AVAILABLE,
     _TORCHVISION_GREATER_EQUAL_0_9,
@@ -58,10 +57,8 @@ if _TORCHVISION_AVAILABLE:
 
 if _TM_GREATER_EQUAL_0_10_0:
     from torchmetrics.classification import MulticlassJaccardIndex as JaccardIndex
-elif _TM_GREATER_EQUAL_0_7_0:
-    from torchmetrics import JaccardIndex
 else:
-    from torchmetrics import IoU as JaccardIndex
+    from torchmetrics import JaccardIndex
 
 
 class SemanticSegmentationOutputTransform(OutputTransform):

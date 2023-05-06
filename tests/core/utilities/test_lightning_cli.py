@@ -21,12 +21,7 @@ from pytorch_lightning.plugins.environments import SLURMEnvironment
 from torch import nn
 
 from flash.core.utilities.compatibility import accelerator_connector
-from flash.core.utilities.imports import (
-    _PL_GREATER_EQUAL_1_4_0,
-    _PL_GREATER_EQUAL_1_6_0,
-    _TOPIC_CORE_AVAILABLE,
-    _TORCHVISION_AVAILABLE,
-)
+from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.core.utilities.lightning_cli import (
     LightningArgumentParser,
     LightningCLI,
@@ -163,7 +158,7 @@ def test_parse_args_parsing_gpus(monkeypatch, cli_args, expected_gpu):
         ({}, {}),
         (dict(logger=False), {}),
         (dict(logger=False), dict(logger=True)),
-        (dict(logger=False), dict(checkpoint_callback=True)),
+        (dict(logger=False), dict(enable_checkpointing=True)),
     ],
 )
 def test_init_from_argparse_args(cli_args, extra_args):
@@ -278,7 +273,7 @@ def test_lightning_cli_configurable_callbacks(tmpdir):
 
 
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
-@pytest.mark.skipif(_PL_GREATER_EQUAL_1_6_0, reason="Bugs in PL >= 1.6.0")
+@pytest.mark.xfail(reason="Bugs in PL >= 1.6.0")
 def test_lightning_cli_args_cluster_environments(tmpdir):
     plugins = [dict(class_path="pytorch_lightning.plugins.environments.SLURMEnvironment")]
 
@@ -588,8 +583,7 @@ class EarlyExitTestModel(BoringModel):
         dict(accelerator="cpu", strategy="ddp", plugins="ddp_find_unused_parameters_false"),
     ),
 )
-@pytest.mark.skipif(not _PL_GREATER_EQUAL_1_4_0, reason="Bugs in PL < 1.4.0")
-@pytest.mark.skipif(_PL_GREATER_EQUAL_1_6_0, reason="Bugs in PL >= 1.6.0")
+@pytest.mark.xfail(reason="Bugs in PL >= 1.6.0")
 def test_cli_ddp_spawn_save_config_callback(tmpdir, logger, trainer_kwargs):
     with mock.patch("sys.argv", ["any.py"]), pytest.raises(CustomException):
         LightningCLI(
