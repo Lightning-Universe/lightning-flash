@@ -62,7 +62,7 @@ Finetune strategies
     )
 
     model = ImageClassifier(backbone="resnet18", num_classes=2)
-    trainer = flash.Trainer(max_epochs=1, checkpoint_callback=False)
+    trainer = flash.Trainer(max_epochs=1)
 
 Finetuning is very task specific. Each task encodes the best finetuning practices for that task.
 However, Flash gives you a few default strategies for finetuning.
