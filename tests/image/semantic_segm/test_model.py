@@ -21,7 +21,7 @@ from torch import Tensor
 
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _SEGMENTATION_MODELS_AVAILABLE, _TOPIC_IMAGE_AVAILABLE
+from flash.core.utilities.imports import _SEGMENTATION_MODELS_AVAILABLE, _TOPIC_IMAGE_AVAILABLE, _TOPIC_SERVE_AVAILABLE
 from flash.image import SemanticSegmentation
 from flash.image.segmentation.data import SemanticSegmentationData
 from tests.helpers.task_tester import TaskTester
@@ -107,6 +107,7 @@ def test_predict_numpy():
 
 
 @pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="some serving")
 @mock.patch("flash._IS_TESTING", True)
 def test_serve():
     model = SemanticSegmentation(2)

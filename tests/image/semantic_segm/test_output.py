@@ -15,12 +15,18 @@ import pytest
 import torch
 
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _SEGMENTATION_MODELS_AVAILABLE, _TOPIC_IMAGE_AVAILABLE
+from flash.core.utilities.imports import (
+    _FIFTYONE_AVAILABLE,
+    _SEGMENTATION_MODELS_AVAILABLE,
+    _TOPIC_IMAGE_AVAILABLE,
+    _TOPIC_SERVE_AVAILABLE,
+)
 from flash.image.segmentation.output import FiftyOneSegmentationLabelsOutput, SegmentationLabelsOutput
 
 
 @pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, "image libraries aren't installed.")
 @pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="some serving")
 class TestSemanticSegmentationLabelsOutput:
     @staticmethod
     def test_smoke():
