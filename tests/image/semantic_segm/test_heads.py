@@ -38,7 +38,7 @@ def test_semantic_segmentation_heads_registry(head):
 
 @pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")
 # @unittest.mock.patch("flash.image.segmentation.heads.smp")
-def test_pretrained_weights(mock_smp):
+def test_pretrained_weights():
     # mock_smp.create_model = unittest.mock.MagicMock()
     available_weights = SemanticSegmentation.available_pretrained_weights("resnet18")
     backbone = SEMANTIC_SEGMENTATION_BACKBONES.get("resnet18")()
