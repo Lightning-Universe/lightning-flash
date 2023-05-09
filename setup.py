@@ -77,7 +77,7 @@ def _augment_requirement(ln: str, comment_char: str = "#", unfreeze: bool = True
         is_strict = False
     req = ln.strip()
     # skip directly installed dependencies
-    if not req or any(c in req for c in ["http:", "https:", "@"]):
+    if not req or (unfreeze and any(c in req for c in ["http:", "https:", "@"])):
         return ""
 
     # remove version restrictions unless they are strict
@@ -102,8 +102,9 @@ def _load_requirements(path_dir: str, file_name: str = "base.txt", unfreeze: boo
         lines = [ln.strip() for ln in file.readlines()]
     reqs = [_augment_requirement(ln, unfreeze=unfreeze) for ln in lines]
     reqs = [str(req) for req in reqs if req and not req.startswith("-r")]
-    # filter empty lines and containing @ which means redirect to some git/http
-    reqs = [req for req in reqs if not any(c in req for c in ["@", "http://", "https://"])]
+    if unfreeze:
+        # filter empty lines and containing @ which means redirect to some git/http
+        reqs = [req for req in reqs if not any(c in req for c in ["@", "http://", "https://"])]
     return reqs
 
 
