@@ -59,7 +59,9 @@ class ClassificationMixin:
         self.labels = labels
 
         if metrics is None:
-            metrics = F1Score(num_classes=num_classes, task="multilabel") if (multi_label and num_classes) else Accuracy()
+            metrics = (
+                F1Score(num_classes=num_classes, task="multilabel") if (multi_label and num_classes) else Accuracy()
+            )
 
         if loss_fn is None:
             loss_fn = binary_cross_entropy_with_logits if multi_label else F.cross_entropy
