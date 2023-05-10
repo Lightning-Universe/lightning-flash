@@ -52,7 +52,7 @@ def test_default_args(mock_argparse, tmpdir):
 
 
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
-@pytest.mark.parametrize("cli_args", [["--accumulate_grad_batches=22"], ["--weights_save_path=./"], []])
+@pytest.mark.parametrize("cli_args", [["--accumulate_grad_batches=22"], ["--default_root_dir=./"], []])
 def test_add_argparse_args_redefined(cli_args):
     """Redefines some default Trainer arguments via the cli and tests the Trainer initialization correctness."""
     parser = LightningArgumentParser(add_help=False, parse_as_dict=False)
@@ -87,7 +87,6 @@ def test_add_argparse_args_redefined(cli_args):
         ("--auto_lr_find TRUE --auto_scale_batch_size FALSE", dict(auto_lr_find=True, auto_scale_batch_size=False)),
         ("--limit_train_batches=100", dict(limit_train_batches=100)),
         ("--limit_train_batches 0.8", dict(limit_train_batches=0.8)),
-        ("--weights_summary=null", dict(weights_summary=None)),
     ],
 )
 def test_parse_args_parsing(cli_args, expected):
@@ -134,9 +133,9 @@ def test_parse_args_parsing_complex_types(cli_args, expected, instantiate):
         ("--gpus 0,1", [0, 1]),
     ],
 )
-def test_parse_args_parsing_gpus(monkeypatch, cli_args, expected_gpu):
+def test_parse_args_parsing_gpus(mocker, cli_args, expected_gpu):
     """Test parsing of gpus and instantiation of Trainer."""
-    monkeypatch.setattr("torch.cuda.device_count", lambda: 2)
+    mocker.patch("lightning_lite.utilities.device_parser._get_all_available_gpus", return_value=[0, 1])
     cli_args = cli_args.split(" ") if cli_args else []
     parser = LightningArgumentParser(add_help=False, parse_as_dict=False)
     parser.add_lightning_class_args(Trainer, None)
@@ -144,7 +143,7 @@ def test_parse_args_parsing_gpus(monkeypatch, cli_args, expected_gpu):
         args = parser.parse_args()
 
     trainer = Trainer.from_argparse_args(args)
-    assert trainer.data_parallel_device_ids == expected_gpu
+    assert trainer.device_ids == expected_gpu
 
 
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
@@ -225,6 +224,19 @@ def test_lightning_cli(trainer_class, model_class, monkeypatch):
         assert hasattr(cli.trainer, "ran_asserts") and cli.trainer.ran_asserts
 
 
+class TestModelCallbacks(BoringModel):
+    def on_fit_start(self):
+        callback = [c for c in self.trainer.callbacks if isinstance(c, LearningRateMonitor)]
+        assert len(callback) == 1
+        assert callback[0].logging_interval == "epoch"
+        assert callback[0].log_momentum is True
+
+        callback = [c for c in self.trainer.callbacks if isinstance(c, ModelCheckpoint)]
+        assert len(callback) == 1
+        assert callback[0].monitor == "NAME"
+        self.trainer.ran_asserts = True
+
+
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 def test_lightning_cli_args_callbacks(tmpdir):
     callbacks = [
@@ -235,19 +247,8 @@ def test_lightning_cli_args_callbacks(tmpdir):
         dict(class_path="pytorch_lightning.callbacks.ModelCheckpoint", init_args=dict(monitor="NAME")),
     ]
 
-    class TestModel(BoringModel):
-        def on_fit_start(self):
-            callback = [c for c in self.trainer.callbacks if isinstance(c, LearningRateMonitor)]
-            assert len(callback) == 1
-            assert callback[0].logging_interval == "epoch"
-            assert callback[0].log_momentum is True
-            callback = [c for c in self.trainer.callbacks if isinstance(c, ModelCheckpoint)]
-            assert len(callback) == 1
-            assert callback[0].monitor == "NAME"
-            self.trainer.ran_asserts = True
-
     with mock.patch("sys.argv", ["any.py", f"--trainer.callbacks={json.dumps(callbacks)}"]):
-        cli = LightningCLI(TestModel, trainer_defaults=dict(default_root_dir=str(tmpdir), fast_dev_run=True))
+        cli = LightningCLI(TestModelCallbacks, trainer_defaults=dict(default_root_dir=str(tmpdir), fast_dev_run=True))
 
     assert cli.trainer.ran_asserts
 
@@ -272,19 +273,20 @@ def test_lightning_cli_configurable_callbacks(tmpdir):
     assert callback[0].logging_interval == "epoch"
 
 
+class TestModelClusterEnv(BoringModel):
+    def on_fit_start(self):
+        # Ensure SLURMEnvironment is set, instead of default LightningEnvironment
+        assert isinstance(accelerator_connector(self.trainer)._cluster_environment, SLURMEnvironment)
+        self.trainer.ran_asserts = True
+
+
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 @pytest.mark.xfail(reason="Bugs in PL >= 1.6.0")
 def test_lightning_cli_args_cluster_environments(tmpdir):
     plugins = [dict(class_path="pytorch_lightning.plugins.environments.SLURMEnvironment")]
 
-    class TestModel(BoringModel):
-        def on_fit_start(self):
-            # Ensure SLURMEnvironment is set, instead of default LightningEnvironment
-            assert isinstance(accelerator_connector(self.trainer)._cluster_environment, SLURMEnvironment)
-            self.trainer.ran_asserts = True
-
     with mock.patch("sys.argv", ["any.py", f"--trainer.plugins={json.dumps(plugins)}"]):
-        cli = LightningCLI(TestModel, trainer_defaults=dict(default_root_dir=str(tmpdir), fast_dev_run=True))
+        cli = LightningCLI(TestModelClusterEnv, trainer_defaults=dict(default_root_dir=str(tmpdir), fast_dev_run=True))
 
     assert cli.trainer.ran_asserts
 
@@ -421,19 +423,20 @@ def test_lightning_cli_print_config():
     assert outval["data"]["class_path"] == "tests.helpers.boring_model.BoringDataModule"
 
 
+class MainModule(BoringModel):
+    def __init__(
+        self,
+        submodule1: LightningModule,
+        submodule2: LightningModule,
+        main_param: int = 1,
+    ):
+        super().__init__()
+        self.submodule1 = submodule1
+        self.submodule2 = submodule2
+
+
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 def test_lightning_cli_submodules(tmpdir):
-    class MainModule(BoringModel):
-        def __init__(
-            self,
-            submodule1: LightningModule,
-            submodule2: LightningModule,
-            main_param: int = 1,
-        ):
-            super().__init__()
-            self.submodule1 = submodule1
-            self.submodule2 = submodule2
-
     config = """model:
         main_param: 2
         submodule1:
@@ -459,19 +462,20 @@ def test_lightning_cli_submodules(tmpdir):
     assert isinstance(cli.model.submodule2, BoringModel)
 
 
+class TestModuleTorch(BoringModel):
+    def __init__(
+        self,
+        activation: nn.Module = None,
+        transform: Optional[List[nn.Module]] = None,
+    ):
+        super().__init__()
+        self.activation = activation
+        self.transform = transform
+
+
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 @pytest.mark.skipif(torchvision_version < version.parse("0.8.0"), reason="torchvision>=0.8.0 is required")
 def test_lightning_cli_torch_modules(tmpdir):
-    class TestModule(BoringModel):
-        def __init__(
-            self,
-            activation: nn.Module = None,
-            transform: Optional[List[nn.Module]] = None,
-        ):
-            super().__init__()
-            self.activation = activation
-            self.transform = transform
-
     config = """model:
         activation:
           class_path: torch.nn.LeakyReLU
@@ -496,7 +500,7 @@ def test_lightning_cli_torch_modules(tmpdir):
     ]
 
     with mock.patch("sys.argv", ["any.py"] + cli_args):
-        cli = LightningCLI(TestModule)
+        cli = LightningCLI(TestModuleTorch)
 
     assert isinstance(cli.model.activation, torch.nn.LeakyReLU)
     assert cli.model.activation.negative_slope == 0.2
@@ -698,6 +702,19 @@ def test_lightning_cli_optimizer_and_lr_scheduler_subclasses(tmpdir):
     assert cli.trainer.lr_schedulers[0]["scheduler"].step_size == 50
 
 
+class TestModelOptLR(BoringModel):
+    def __init__(
+        self,
+        optim1: dict,
+        optim2: dict,
+        scheduler: dict,
+    ):
+        super().__init__()
+        self.optim1 = instantiate_class(self.parameters(), optim1)
+        self.optim2 = instantiate_class(self.parameters(), optim2)
+        self.scheduler = instantiate_class(self.optim1, scheduler)
+
+
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 def test_lightning_cli_optimizers_and_lr_scheduler_with_link_to(tmpdir):
     class MyLightningCLI(LightningCLI):
@@ -705,18 +722,6 @@ def test_lightning_cli_optimizers_and_lr_scheduler_with_link_to(tmpdir):
             parser.add_optimizer_args(torch.optim.Adam, nested_key="optim1", link_to="model.optim1")
             parser.add_optimizer_args((torch.optim.ASGD, torch.optim.SGD), nested_key="optim2", link_to="model.optim2")
             parser.add_lr_scheduler_args(torch.optim.lr_scheduler.ExponentialLR, link_to="model.scheduler")
-
-    class TestModel(BoringModel):
-        def __init__(
-            self,
-            optim1: dict,
-            optim2: dict,
-            scheduler: dict,
-        ):
-            super().__init__()
-            self.optim1 = instantiate_class(self.parameters(), optim1)
-            self.optim2 = instantiate_class(self.parameters(), optim2)
-            self.scheduler = instantiate_class(self.optim1, scheduler)
 
     cli_args = [
         f"--trainer.default_root_dir={tmpdir}",
@@ -727,7 +732,7 @@ def test_lightning_cli_optimizers_and_lr_scheduler_with_link_to(tmpdir):
     ]
 
     with mock.patch("sys.argv", ["any.py"] + cli_args):
-        cli = MyLightningCLI(TestModel)
+        cli = MyLightningCLI(TestModelOptLR)
 
     assert isinstance(cli.model.optim1, torch.optim.Adam)
     assert isinstance(cli.model.optim2, torch.optim.SGD)
