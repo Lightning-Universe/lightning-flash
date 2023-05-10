@@ -94,7 +94,7 @@ method allows you to load your FiftyOne datasets directly into a
 :class:`~flash.core.data.data_module.DataModule` to be used for training,
 testing, or inference.
 
-.. literalinclude:: ../../../examples/image/fiftyone_img_classification_fiftyone_datasets.py
+.. literalinclude:: ../../../examples/image/fiftyone_img_classification_datasets.py
     :language: python
     :lines: 14-
 
