@@ -23,7 +23,7 @@ from flash.core.utilities.imports import _PYTORCHTABULAR_AVAILABLE
 from flash.core.utilities.providers import _PYTORCH_TABULAR
 
 if _PYTORCHTABULAR_AVAILABLE:
-    import pytorch_tabular.models as models
+    import pytorch_tabular
     from omegaconf import DictConfig, OmegaConf
     from pytorch_tabular.config import ModelConfig
     from pytorch_tabular.models import (
@@ -46,7 +46,7 @@ if _PYTORCHTABULAR_AVAILABLE:
             if os.path.exists(config):
                 _config = OmegaConf.load(config)
                 if cls == ModelConfig:
-                    cls = getattr(getattr(models, _config._module_src), _config._config_name)
+                    cls = getattr(getattr(pytorch_tabular, _config._module_src), _config._config_name)
                 config = cls(
                     **{
                         k: v
@@ -69,12 +69,16 @@ if _PYTORCHTABULAR_AVAILABLE:
     ):
         model_config = model_config_class(task=task_type, embedding_dims=parameters["embedding_dims"], **model_kwargs)
         model_config = _read_parse_config(model_config, ModelConfig)
-        model_callable = getattr(getattr(models, model_config._module_src), model_config._model_name)
+        model_callable = pytorch_tabular
+        for attr in model_config._module_src.split(".") + [model_config._model_name]:
+            model_callable = getattr(model_callable, attr)
         config = OmegaConf.merge(
             OmegaConf.create(parameters),
             OmegaConf.to_container(model_config),
         )
-        model = model_callable(config=config, custom_loss=loss_fn, custom_metrics=metrics)
+        model = model_callable(
+            config=config, custom_loss=loss_fn, custom_metrics=metrics, inferred_config=DictConfig(config)
+        )
         return model
 
     for model_config_class, name in zip(

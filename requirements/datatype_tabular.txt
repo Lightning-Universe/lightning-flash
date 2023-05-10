@@ -3,6 +3,6 @@
 scikit-learn <=1.2.0
 pytorch-forecasting >=0.10.0, <=0.10.3
 # pytorch-tabular >=1.0.2, <1.0.3  # pending requirements resolving
-https://github.com/manujosephv/pytorch_tabular/archive/refs/heads/main.zip
+pytorch-tabular @ https://github.com/manujosephv/pytorch_tabular/archive/refs/heads/main.zip
 torchmetrics >=0.10.0
 omegaconf <=2.1.1, <=2.1.1
