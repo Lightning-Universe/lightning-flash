@@ -49,7 +49,7 @@ The backbone can be any Wav2Vec model from `HuggingFace transformers <https://hu
 Next, we use the trained :class:`~flash.audio.speech_recognition.model.SpeechRecognition` for inference and save the model.
 Here's the full example:
 
-.. literalinclude:: ../../../examples/speech_recognition.py
+.. literalinclude:: ../../../examples/audio/speech_recognition.py
     :language: python
     :lines: 14-
 

@@ -75,7 +75,6 @@ def test_flash_callback(_, __, tmpdir):
         max_epochs=1,
         limit_val_batches=1,
         limit_train_batches=1,
-        progress_bar_refresh_rate=0,
     )
     transform = InputTransform()
     dm = DataModule(

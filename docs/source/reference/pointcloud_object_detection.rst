@@ -80,7 +80,7 @@ We then use the trained :class:`~flash.image.detection.model.PointCloudObjectDet
 Finally, we save the model.
 Here's the full example:
 
-.. literalinclude:: ../../../examples/pointcloud_detection.py
+.. literalinclude:: ../../../examples/pointcloud/pcloud_detection.py
     :language: python
     :lines: 14-
 

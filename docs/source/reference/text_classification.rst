@@ -49,7 +49,7 @@ Next, we use the trained :class:`~flash.text.classification.model.TextClassifier
 Finally, we save the model.
 Here's the full example:
 
-.. literalinclude:: ../../../examples/text_classification.py
+.. literalinclude:: ../../../examples/text/text_classification.py
     :language: python
     :lines: 14-
 

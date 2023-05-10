@@ -71,7 +71,7 @@ We then use the trained ``PointCloudSegmentation`` for inference.
 Finally, we save the model.
 Here's the full example:
 
-.. literalinclude:: ../../../examples/pointcloud_segmentation.py
+.. literalinclude:: ../../../examples/pointcloud/pcloud_segmentation.py
     :language: python
     :lines: 14-
 

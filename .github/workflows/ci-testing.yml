@@ -25,28 +25,23 @@ jobs:
       matrix:
         # PyTorch 1.5 is failing on Win and bolts requires torchvision>=0.5
         os: [ubuntu-20.04, macOS-12, windows-2022]
-        python-version: [3.7, 3.9]
-        requires: ['oldest', 'latest']
+        python-version: [3.8, 3.9]
         topic: ['core']
         extra: [[]]
-        exclude:
-          # Skip if torch<1.8 and py3.9 on Linux: https://github.com/pytorch/pytorch/issues/50014
-          - { python-version: 3.9, requires: 'oldest' }
-          - { os: 'macOS-12', requires: 'oldest' }
-          - { os: 'windows-2022', requires: 'oldest' }
         include:
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'core', extra: []}
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image', extra: ['image_extra']}
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image', extra: ['image_baal']}
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image', extra: ['image_segm']}
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image', extra: ['image_vissl']}
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'video', extra: []}
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'tabular', extra: []}
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'text', extra: []}
-          - { os: 'ubuntu-20.04', python-version: 3.8, topic: 'pointcloud', extra: []}
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'serve', extra: []}
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'graph', extra: []}
-          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'audio', extra: []}
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'core', extra: [] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image', extra: ['image_extra'] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image', extra: ['image_baal'] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image', extra: ['image_segm'] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'image', extra: ['image_vissl'] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'video', extra: [] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'tabular', extra: [] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'text', extra: [] }
+          - { os: 'ubuntu-20.04', python-version: 3.8, topic: 'pointcloud', extra: [] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'serve', extra: [] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'graph', extra: [] }
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'audio', extra: [] }
+          - { os: 'ubuntu-20.04', python-version: 3.7, topic: 'core', extra: [], requires: 'oldest' }
 
     # Timeout: https://stackoverflow.com/a/59076067/4521646
     timeout-minutes: 50

@@ -34,7 +34,7 @@ Next, we use the trained :class:`~flash.graph.classification.model.GraphClassifi
 Finally, we save the model.
 Here's the full example:
 
-.. literalinclude:: ../../../examples/graph_classification.py
+.. literalinclude:: ../../../examples/graph/graph_classification.py
     :language: python
     :lines: 14-
 

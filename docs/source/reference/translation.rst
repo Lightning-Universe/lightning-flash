@@ -49,7 +49,7 @@ Next, we use the trained :class:`~flash.text.seq2seq.translation.model.Translati
 Finally, we save the model.
 Here's the full example:
 
-.. literalinclude:: ../../../examples/translation.py
+.. literalinclude:: ../../../examples/text/translation.py
     :language: python
     :lines: 14-
 
