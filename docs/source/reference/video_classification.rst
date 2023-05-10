@@ -58,7 +58,7 @@ We then use the trained :class:`~flash.video.classification.model.VideoClassifie
 Finally, we save the model.
 Here's the full example:
 
-.. literalinclude:: ../../../examples/video_classification.py
+.. literalinclude:: ../../../examples/video/video_classification.py
     :language: python
     :lines: 14-
 

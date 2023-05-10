@@ -72,7 +72,7 @@ Once done, the users are left to play the hyper-parameters associated with the m
 
 Here is an example using `miniImageNet dataset <https://github.com/learnables/learn2learn/blob/master/learn2learn/vision/datasets/mini_imagenet.py#L34>`_ containing 100 classes divided into 64 training, 16 validation, and 20 test classes.
 
-.. literalinclude:: ../../../examples/integrations/learn2learn/image_classification_imagenette_mini.py
+.. literalinclude:: ../../../examples/image/learn2learn_img_classification_imagenette.py
     :language: python
     :lines: 15-
 

@@ -49,7 +49,7 @@ Next, we use the trained :class:`~flash.text.seq2seq.summarization.model.Summari
 Finally, we save the model.
 Here's the full example:
 
-.. literalinclude:: ../../../examples/summarization.py
+.. literalinclude:: ../../../examples/text/summarization.py
     :language: python
     :lines: 14-
 

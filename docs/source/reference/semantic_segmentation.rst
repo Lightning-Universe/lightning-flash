@@ -45,7 +45,7 @@ We then use the trained :class:`~flash.image.segmentation.model.SemanticSegmenta
 Finally, we save the model.
 Here's the full example:
 
-.. literalinclude:: ../../../examples/semantic_segmentation.py
+.. literalinclude:: ../../../examples/image/semantic_segmentation.py
     :language: python
     :lines: 14-
 

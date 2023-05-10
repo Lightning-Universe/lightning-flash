@@ -31,7 +31,7 @@ We then use the trained :class:`~flash.image.keypoint_detection.model.KeypointDe
 Finally, we save the model.
 Here's the full example:
 
-.. literalinclude:: ../../../examples/keypoint_detection.py
+.. literalinclude:: ../../../examples/image/keypoint_detection.py
     :language: python
     :lines: 14-
 

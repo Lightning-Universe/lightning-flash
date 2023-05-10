@@ -23,7 +23,7 @@ Next, we load a trained :class:`~flash.graph.classification.model.GraphEmbedder`
 Finally, we save the model.
 Here's the full example:
 
-.. literalinclude:: ../../../examples/graph_embedder.py
+.. literalinclude:: ../../../examples/graph/graph_embedder.py
     :language: python
     :lines: 14
 

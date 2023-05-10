@@ -51,7 +51,7 @@ We then use the trained :class:`~flash.image.detection.model.ObjectDetector` for
 Finally, we save the model.
 Here's the full example:
 
-.. literalinclude:: ../../../examples/object_detection.py
+.. literalinclude:: ../../../examples/image/object_detection.py
     :language: python
     :lines: 14-
 

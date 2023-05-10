@@ -56,7 +56,7 @@ We then use the trained :class:`~flash.image.classification.model.ImageClassifie
 Finally, we save the model.
 Here's the full example:
 
-.. literalinclude:: ../../../examples/image_classification.py
+.. literalinclude:: ../../../examples/image/image_classification.py
     :language: python
     :lines: 14-
 

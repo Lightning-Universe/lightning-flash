@@ -60,7 +60,7 @@ Next, we use the trained :class:`~flash.text.question_answering.model.QuestionAn
 Finally, we save the model.
 Here's the full example:
 
-.. literalinclude:: ../../../examples/question_answering.py
+.. literalinclude:: ../../../examples/text/question_answering.py
     :language: python
     :lines: 14-
 

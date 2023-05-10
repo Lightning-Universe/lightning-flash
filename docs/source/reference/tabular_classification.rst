@@ -48,7 +48,7 @@ We then use the trained :class:`~flash.tabular.classification.model.TabularClass
 Finally, we save the model.
 Here's the full example:
 
-.. literalinclude:: ../../../examples/tabular_classification.py
+.. literalinclude:: ../../../examples/tabular/tabular_classification.py
     :language: python
     :lines: 14-
 
