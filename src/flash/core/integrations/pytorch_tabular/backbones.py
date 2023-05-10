@@ -76,7 +76,9 @@ if _PYTORCHTABULAR_AVAILABLE:
             OmegaConf.create(parameters),
             OmegaConf.to_container(model_config),
         )
-        model = model_callable(config=config, custom_loss=loss_fn, custom_metrics=metrics, inferred_config=DictConfig(config))
+        model = model_callable(
+            config=config, custom_loss=loss_fn, custom_metrics=metrics, inferred_config=DictConfig(config)
+        )
         return model
 
     for model_config_class, name in zip(
