@@ -67,7 +67,7 @@ if _PYTORCHTABULAR_AVAILABLE:
         metrics: Optional[Union[torchmetrics.Metric, List[torchmetrics.Metric]]],
         **model_kwargs,
     ):
-        model_config = model_config_class(task=task_type, embedding_dims=parameters["embedding_dims"], **model_kwargs)
+        model_config = model_config_class(task=task_type, embedded_cat_dim=parameters["embedding_dims"], **model_kwargs)
         model_config = _read_parse_config(model_config, ModelConfig)
         model_callable = pytorch_tabular
         for attr in model_config._module_src.split(".") + [model_config._model_name]:
