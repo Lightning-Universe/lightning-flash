@@ -76,6 +76,7 @@ if _PYTORCHTABULAR_AVAILABLE:
             OmegaConf.create(parameters),
             OmegaConf.to_container(model_config),
         )
+        config.embedded_cat_dim = 0  # todo: not sure if this is right
         model = model_callable(
             config=config, custom_loss=loss_fn, custom_metrics=metrics, inferred_config=DictConfig(config)
         )
