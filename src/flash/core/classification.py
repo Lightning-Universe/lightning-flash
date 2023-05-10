@@ -60,7 +60,9 @@ class ClassificationMixin:
 
         if metrics is None:
             metrics = (
-                F1Score(num_classes=num_classes, task="multilabel", top_k=1) if (multi_label and num_classes) else Accuracy()
+                F1Score(num_classes=num_classes, task="multilabel", top_k=1)
+                if (multi_label and num_classes)
+                else Accuracy()
             )
 
         if loss_fn is None:
