@@ -32,7 +32,7 @@ def from_coco_128(
         train_folder="data/coco128/images/train2017/",
         train_ann_file="data/coco128/annotations/instances_train2017.json",
         val_split=val_split,
-        transform_kwargs=dict(image_size=(128, 128)) if transform_kwargs is None else transform_kwargs,
+        transform_kwargs={"image_size": (128, 128)} if transform_kwargs is None else transform_kwargs,
         batch_size=batch_size,
         **data_module_kwargs,
     )

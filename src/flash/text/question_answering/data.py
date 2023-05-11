@@ -209,11 +209,11 @@ class QuestionAnsweringData(DataModule):
             >>> os.remove("predict_data.tsv")
         """
 
-        ds_kw = dict(
-            question_column_name=question_column_name,
-            context_column_name=context_column_name,
-            answer_column_name=answer_column_name,
-        )
+        ds_kw = {
+            "question_column_name": question_column_name,
+            "context_column_name": context_column_name,
+            "answer_column_name": answer_column_name,
+        }
 
         return cls(
             input_cls(RunningStage.TRAINING, train_file, **ds_kw),
@@ -353,12 +353,12 @@ class QuestionAnsweringData(DataModule):
             >>> os.remove("predict_data.json")
         """
 
-        ds_kw = dict(
-            field=field,
-            question_column_name=question_column_name,
-            context_column_name=context_column_name,
-            answer_column_name=answer_column_name,
-        )
+        ds_kw = {
+            "field": field,
+            "question_column_name": question_column_name,
+            "context_column_name": context_column_name,
+            "answer_column_name": answer_column_name,
+        }
 
         return cls(
             input_cls(RunningStage.TRAINING, train_file, **ds_kw),
@@ -635,11 +635,11 @@ class QuestionAnsweringData(DataModule):
             >>> os.remove("predict_data.json")
         """
 
-        ds_kw = dict(
-            question_column_name=question_column_name,
-            context_column_name=context_column_name,
-            answer_column_name=answer_column_name,
-        )
+        ds_kw = {
+            "question_column_name": question_column_name,
+            "context_column_name": context_column_name,
+            "answer_column_name": answer_column_name,
+        }
 
         return cls(
             input_cls(RunningStage.TRAINING, train_file, **ds_kw),
@@ -748,11 +748,11 @@ class QuestionAnsweringData(DataModule):
             >>> del predict_data
         """
 
-        ds_kw = dict(
-            question_column_name=question_column_name,
-            context_column_name=context_column_name,
-            answer_column_name=answer_column_name,
-        )
+        ds_kw = {
+            "question_column_name": question_column_name,
+            "context_column_name": context_column_name,
+            "answer_column_name": answer_column_name,
+        }
 
         return cls(
             input_cls(RunningStage.TRAINING, train_data, **ds_kw),

@@ -186,10 +186,10 @@ class SummarizationData(DataModule):
             >>> os.remove("predict_data.tsv")
         """
 
-        ds_kw = dict(
-            input_key=input_field,
-            target_key=target_field,
-        )
+        ds_kw = {
+            "input_key": input_field,
+            "target_key": target_field,
+        }
 
         return cls(
             input_cls(RunningStage.TRAINING, train_file, **ds_kw),
@@ -295,11 +295,11 @@ class SummarizationData(DataModule):
             >>> os.remove("predict_data.json")
         """
 
-        ds_kw = dict(
-            input_key=input_field,
-            target_key=target_field,
-            field=field,
-        )
+        ds_kw = {
+            "input_key": input_field,
+            "target_key": target_field,
+            "field": field,
+        }
 
         return cls(
             input_cls(RunningStage.TRAINING, train_file, **ds_kw),
@@ -388,10 +388,10 @@ class SummarizationData(DataModule):
             >>> del predict_data
         """
 
-        ds_kw = dict(
-            input_key=input_field,
-            target_key=target_field,
-        )
+        ds_kw = {
+            "input_key": input_field,
+            "target_key": target_field,
+        }
 
         return cls(
             input_cls(RunningStage.TRAINING, train_hf_dataset, **ds_kw),
@@ -462,7 +462,7 @@ class SummarizationData(DataModule):
             Predicting...
         """
 
-        ds_kw = dict()
+        ds_kw = {}
 
         return cls(
             input_cls(RunningStage.TRAINING, train_data, train_targets, **ds_kw),
