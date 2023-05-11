@@ -84,10 +84,7 @@ class FiftyOneDetectionLabelsOutput(Output):
             ]
 
             label = label.item()
-            if self._labels is not None:
-                label = self._labels[label]
-            else:
-                label = str(int(label))
+            label = self._labels[label] if self._labels is not None else str(int(label))
 
             detections.append(
                 fo.Detection(

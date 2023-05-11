@@ -93,8 +93,8 @@ class Composition(ServerMixin):
         if len(self._name_endpoints) == 0:
             comp = first(self.components.values())  # one element iterable
             ep_route = f"/{comp._flashserve_meta_.exposed.__name__}"
-            ep_inputs = {k: f"{comp.uid}.inputs.{k}" for k in asdict(comp.inputs).keys()}
-            ep_outputs = {k: f"{comp.uid}.outputs.{k}" for k in asdict(comp.outputs).keys()}
+            ep_inputs = {k: f"{comp.uid}.inputs.{k}" for k in asdict(comp.inputs)}
+            ep_outputs = {k: f"{comp.uid}.outputs.{k}" for k in asdict(comp.outputs)}
             ep = Endpoint(route=ep_route, inputs=ep_inputs, outputs=ep_outputs)
             self._name_endpoints[f"{comp._flashserve_meta_.exposed.__name__}_ENDPOINT"] = ep
 

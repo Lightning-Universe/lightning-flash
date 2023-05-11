@@ -56,13 +56,12 @@ class IceVisionKeypointDetectionAdapter(IceVisionAdapter):
         )
 
 
-if _ICEVISION_AVAILABLE:
-    if _TORCHVISION_AVAILABLE:
-        model_type = icevision_models.torchvision.keypoint_rcnn
-        KEYPOINT_DETECTION_HEADS(
-            partial(load_icevision_ignore_image_size, model_type),
-            model_type.__name__.split(".")[-1],
-            backbones=get_backbones(model_type),
-            adapter=IceVisionKeypointDetectionAdapter,
-            providers=[_ICEVISION, _TORCHVISION],
-        )
+if _ICEVISION_AVAILABLE and _TORCHVISION_AVAILABLE:
+    model_type = icevision_models.torchvision.keypoint_rcnn
+    KEYPOINT_DETECTION_HEADS(
+        partial(load_icevision_ignore_image_size, model_type),
+        model_type.__name__.split(".")[-1],
+        backbones=get_backbones(model_type),
+        adapter=IceVisionKeypointDetectionAdapter,
+        providers=[_ICEVISION, _TORCHVISION],
+    )

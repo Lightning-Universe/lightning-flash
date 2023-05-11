@@ -774,10 +774,7 @@ class _InputTransformProcessor:
                 self.callback.on_load_sample(sample, self.stage)
 
         if self.apply_per_sample_transform:
-            if not isinstance(samples, list):
-                list_samples = [samples]
-            else:
-                list_samples = samples
+            list_samples = [samples] if not isinstance(samples, list) else samples
 
             transformed_samples = [self.per_sample_transform(sample, self.stage) for sample in list_samples]
 

@@ -215,10 +215,7 @@ class DataModule(pl.LightningDataModule):
         input_transform = self._resolve_input_transform()
 
         shuffle: bool = False
-        if isinstance(train_ds, IterableDataset):
-            drop_last = False
-        else:
-            drop_last = len(train_ds) > self.batch_size
+        drop_last = False if isinstance(train_ds, IterableDataset) else len(train_ds) > self.batch_size
 
         if self.sampler is None:
             sampler = None

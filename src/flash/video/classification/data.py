@@ -40,10 +40,7 @@ from flash.video.classification.input import (
 )
 from flash.video.classification.input_transform import VideoClassificationInputTransform
 
-if _FIFTYONE_AVAILABLE:
-    SampleCollection = "fiftyone.core.collections.SampleCollection"
-else:
-    SampleCollection = None
+SampleCollection = "fiftyone.core.collections.SampleCollection" if _FIFTYONE_AVAILABLE else None
 
 if _PYTORCHVIDEO_AVAILABLE:
     from pytorchvideo.data.clip_sampling import ClipSampler

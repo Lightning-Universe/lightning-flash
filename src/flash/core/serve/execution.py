@@ -267,7 +267,7 @@ def build_composition(
         dsk_tgt_src_connections[target_dsk] = (identity, source_dsk)
 
     rewrite_ruleset = RuleSet()
-    for dsk_payload_target_serial in initial_task_dsk.payload_tasks_dsk.keys():
+    for dsk_payload_target_serial in initial_task_dsk.payload_tasks_dsk:
         dsk_payload_target, _serial_ident = dsk_payload_target_serial.rsplit(".", maxsplit=1)
         if _serial_ident != "serial":
             raise RuntimeError(

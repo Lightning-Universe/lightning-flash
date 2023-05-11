@@ -192,7 +192,7 @@ class FlashCLI(LightningCLI):
     def add_arguments_to_parser(self, parser) -> None:
         subcommands = parser.add_subcommands()
 
-        for function in vars(self.local_datamodule_class).keys():
+        for function in vars(self.local_datamodule_class):
             if not function.startswith("from"):
                 continue
             if (

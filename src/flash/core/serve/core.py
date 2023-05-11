@@ -116,10 +116,7 @@ class Servable:
                 raise
             parsed = [script_loader_cls, parse_obj_as(Union[HttpUrl, FilePath], loc)]
 
-        if isinstance(parsed[-1], Path):
-            f_path = loc
-        else:
-            f_path = download_file(loc, download_path=download_path)
+        f_path = loc if isinstance(parsed[-1], Path) else download_file(loc, download_path=download_path)
 
         if len(args) == 2 and args[0].__qualname__ != script_loader_cls.__qualname__:
             # if this is a class and path/url...

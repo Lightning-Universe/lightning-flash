@@ -23,8 +23,8 @@ def test_custom_tokenizer():
 
     tokenizer = CustomTokenizer("test")
     text = Text(tokenizer=tokenizer)
-    assert "encoding from test" == text.deserialize("random string")
-    assert "decoding from test" == text.serialize(torch.tensor([[1, 2]]))
+    assert text.deserialize("random string") == "encoding from test"
+    assert text.serialize(torch.tensor([[1, 2]])) == "decoding from test"
 
 
 @pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")

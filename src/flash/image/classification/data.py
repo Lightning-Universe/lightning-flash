@@ -46,10 +46,7 @@ from flash.image.classification.input import (
 )
 from flash.image.classification.input_transform import ImageClassificationInputTransform
 
-if _FIFTYONE_AVAILABLE:
-    SampleCollection = "fiftyone.core.collections.SampleCollection"
-else:
-    SampleCollection = None
+SampleCollection = "fiftyone.core.collections.SampleCollection" if _FIFTYONE_AVAILABLE else None
 
 if _MATPLOTLIB_AVAILABLE:
     import matplotlib.pyplot as plt

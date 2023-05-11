@@ -65,10 +65,7 @@ class FlashRegistry:
         else:
             registries += [self]
 
-        if isinstance(other, ConcatRegistry):
-            registries = other.registries + tuple(registries)
-        else:
-            registries = [other] + registries
+        registries = other.registries + tuple(registries) if isinstance(other, ConcatRegistry) else [other] + registries
 
         return ConcatRegistry(*registries)
 
@@ -122,10 +119,7 @@ class FlashRegistry:
             raise TypeError(f"You can only register a callable, found: {fn}")
 
         if name is None:
-            if hasattr(fn, "func"):
-                name = fn.func.__name__
-            else:
-                name = fn.__name__
+            name = fn.func.__name__ if hasattr(fn, "func") else fn.__name__
 
         if self._verbose:
             rank_zero_info(f"Registering: {fn.__name__} function with name: {name} and metadata: {metadata}")

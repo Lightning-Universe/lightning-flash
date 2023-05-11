@@ -46,4 +46,4 @@ class TransformersCollate:
         raise NotImplementedError
 
     def __call__(self, samples):
-        return self.to_tensor(self.tokenize({key: [sample[key] for sample in samples] for key in samples[0].keys()}))
+        return self.to_tensor(self.tokenize({key: [sample[key] for sample in samples] for key in samples[0]}))

@@ -130,10 +130,7 @@ class AudioClassificationDataFrameInput(AudioClassificationFilesInput):
         target_formatter: Optional[TargetFormatter] = None,
     ) -> List[Dict[str, Any]]:
         files = resolve_files(data_frame, input_key, root, resolver)
-        if target_keys is not None:
-            targets = resolve_targets(data_frame, target_keys)
-        else:
-            targets = None
+        targets = resolve_targets(data_frame, target_keys) if target_keys is not None else None
         result = super().load_data(
             files, targets, sampling_rate=sampling_rate, n_fft=n_fft, target_formatter=target_formatter
         )

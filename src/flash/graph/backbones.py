@@ -37,5 +37,5 @@ def _load_graph_backbone(
     return model(in_channels, hidden_channels, num_layers)
 
 
-for model_name in MODELS.keys():
+for model_name in MODELS:
     GRAPH_BACKBONES(name=model_name, providers=_PYTORCH_GEOMETRIC)(partial(_load_graph_backbone, model_name))
