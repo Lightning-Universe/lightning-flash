@@ -24,7 +24,7 @@ if not _TOPIC_CORE_AVAILABLE:
     __doctest_skip__ = ["beta"]
 
 
-@functools.lru_cache()  # Trick to only warn once for each message
+@functools.lru_cache  # Trick to only warn once for each message
 def _raise_beta_warning(message: str, stacklevel: int = 6):
     rank_zero_warn(
         f"{message} The API and functionality may change without warning in future releases. "
