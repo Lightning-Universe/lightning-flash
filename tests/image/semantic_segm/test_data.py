@@ -71,7 +71,7 @@ class TestSemanticSegmentationData:
         assert dm is not None
 
     @staticmethod
-    @pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+    @pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
     def test_identity(tmpdir):
         class IdentityTransform(InputTransform):
             def per_sample_transform(self) -> Callable:
