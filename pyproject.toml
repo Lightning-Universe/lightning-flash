@@ -69,6 +69,9 @@ select = [
 #    "D",  # see: https://pypi.org/project/pydocstyle
 #    "N",  # see: https://pypi.org/project/pep8-naming
 ]
+extend-select = [
+    "RET",  # see: https://pypi.org/project/flake8-return
+]
 ignore = [
     "E731",  # Do not assign a lambda expression, use a def
 ]
