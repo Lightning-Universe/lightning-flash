@@ -111,7 +111,7 @@ def _validate_input(input: "InputBase") -> None:
     if input.data is not None:
         if isinstance(input, Input) and not _has_len(input.data):
             raise RuntimeError("`Input.data` is not a sequence with a defined length. Use `IterableInput` instead.")
-        elif isinstance(input, IterableInput) and _has_len(input.data):
+        if isinstance(input, IterableInput) and _has_len(input.data):
             raise RuntimeError("`IterableInput.data` is a sequence with a defined length. Use `Input` instead.")
 
 

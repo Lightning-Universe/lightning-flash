@@ -51,14 +51,12 @@ class PytorchTabularAdapter(Adapter):
             "continuous_dim": num_features - len(categorical_fields),
             "output_dim": output_dim,
         }
-        adapter = cls(
+        return cls(
             task_type,
             task.backbones.get(backbone)(
                 task_type=task_type, parameters=parameters, loss_fn=loss_fn, metrics=metrics, **backbone_kwargs
             ),
         )
-
-        return adapter
 
     def convert_batch(self, batch):
         new_batch = {

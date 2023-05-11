@@ -43,8 +43,8 @@ class TabularClassificationDataFrameInput(TabularDataFrameInput, ClassificationI
             targets = resolve_targets(data_frame, target_fields)
             self.load_target_metadata(targets, target_formatter=target_formatter)
             return [{DataKeys.INPUT: (c, n), DataKeys.TARGET: t} for c, n, t in zip(cat_vars, num_vars, targets)]
-        else:
-            return [{DataKeys.INPUT: (c, n)} for c, n in zip(cat_vars, num_vars)]
+
+        return [{DataKeys.INPUT: (c, n)} for c, n in zip(cat_vars, num_vars)]
 
     def load_sample(self, sample: Dict[str, Any]) -> Any:
         if DataKeys.TARGET in sample:

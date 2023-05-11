@@ -40,8 +40,8 @@ class TabularRegressionDataFrameInput(TabularDataFrameInput):
         if not self.predicting:
             targets = data_frame[target_field].to_numpy().astype(np.float32)
             return [{DataKeys.INPUT: (c, n), DataKeys.TARGET: t} for c, n, t in zip(cat_vars, num_vars, targets)]
-        else:
-            return [{DataKeys.INPUT: (c, n)} for c, n in zip(cat_vars, num_vars)]
+
+        return [{DataKeys.INPUT: (c, n)} for c, n in zip(cat_vars, num_vars)]
 
 
 class TabularRegressionCSVInput(TabularRegressionDataFrameInput):

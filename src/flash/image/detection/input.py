@@ -219,8 +219,7 @@ class FiftyOneParser(Parser):
         box_h *= img_h
         xmax = xmin + box_w
         ymax = ymin + box_h
-        output_bbox = [xmin, ymin, xmax, ymax]
-        return output_bbox
+        return [xmin, ymin, xmax, ymax]
 
 
 class ObjectDetectionFiftyOneInput(IceVisionInput):

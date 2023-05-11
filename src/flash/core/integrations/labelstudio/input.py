@@ -141,11 +141,10 @@ class BaseLabelStudioInput(Properties):
         label = _get_labels_from_sample(sample["label"], self.parameters.classes)
         # delete label from input data
         del sample["label"]
-        result = {
+        return {
             DataKeys.INPUT: sample,
             DataKeys.TARGET: label,
         }
-        return result
 
     @staticmethod
     def _split_train_test_data(data: Dict, multi_label: bool = False) -> List[Dict]:
@@ -241,11 +240,10 @@ class LabelStudioImageClassificationInput(LabelStudioInput):
         p = sample["file_upload"]
         # loading image
         image = load_image(p)
-        result = {
+        return {
             DataKeys.INPUT: image,
             DataKeys.TARGET: _get_labels_from_sample(sample["label"], self.parameters.classes),
         }
-        return result
 
 
 class LabelStudioTextClassificationInput(LabelStudioInput):

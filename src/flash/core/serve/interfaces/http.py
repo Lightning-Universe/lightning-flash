@@ -94,8 +94,7 @@ def _build_visualization(
             f.seek(0)
             raw = f.read()
         encoded = base64.b64encode(raw).decode("ascii")
-        res = templates.TemplateResponse("dag.html", {"request": request, "encoded_image": encoded})
-        return res
+        return templates.TemplateResponse("dag.html", {"request": request, "encoded_image": encoded})
 
     return endpoint_visualization
 

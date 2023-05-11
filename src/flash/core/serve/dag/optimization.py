@@ -886,8 +886,7 @@ class SubgraphCallable:
 
     def __eq__(self, other):
         is_key = self.outkey == other.outkey and set(self.inkeys) == set(other.inkeys)
-        is_eq = type(self) is type(other) and self.name == other.name and is_key
-        return is_eq
+        return type(self) is type(other) and self.name == other.name and is_key
 
     def __ne__(self, other):
         return not self.__eq__(other)
