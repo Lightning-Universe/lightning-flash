@@ -26,7 +26,7 @@ from tests.image.detection.test_data import _create_synth_files_dataset, _create
 def test_image_detector_data_from_files(tmpdir):
     predict_files = _create_synth_files_dataset(tmpdir)
     datamodule = InstanceSegmentationData.from_files(
-        predict_files=predict_files, batch_size=2, transform_kwargs=dict(image_size=(128, 128))
+        predict_files=predict_files, batch_size=2, transform_kwargs={"image_size": (128, 128)}
     )
     data = next(iter(datamodule.predict_dataloader()))
     sample = data[0]
@@ -37,7 +37,7 @@ def test_image_detector_data_from_files(tmpdir):
 def test_image_detector_data_from_folders(tmpdir):
     predict_folder = _create_synth_folders_dataset(tmpdir)
     datamodule = InstanceSegmentationData.from_folders(
-        predict_folder=predict_folder, batch_size=2, transform_kwargs=dict(image_size=(128, 128))
+        predict_folder=predict_folder, batch_size=2, transform_kwargs={"image_size": (128, 128)}
     )
     data = next(iter(datamodule.predict_dataloader()))
     sample = data[0]

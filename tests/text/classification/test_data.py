@@ -163,15 +163,15 @@ def test_from_csv_multilabel(tmpdir):
     assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
@@ -225,15 +225,15 @@ def test_from_json_multilabel(tmpdir):
     assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
@@ -289,15 +289,15 @@ def test_from_json_with_field_multilabel(tmpdir):
     assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
@@ -351,15 +351,15 @@ def test_from_parquet_multilabel(tmpdir):
     assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
@@ -411,15 +411,15 @@ def test_from_data_frame_multilabel():
     assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
@@ -473,15 +473,15 @@ def test_from_hf_datasets_multilabel():
     assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
@@ -535,15 +535,15 @@ def test_from_lists_multilabel():
     assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))

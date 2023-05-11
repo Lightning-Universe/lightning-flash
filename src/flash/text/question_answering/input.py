@@ -78,7 +78,7 @@ class QuestionAnsweringInputBase(Input):
 
         if flash._IS_TESTING:
             # NOTE: must subset in this way to return a Dataset
-            hf_dataset = [sample for sample in hf_dataset][:40]
+            hf_dataset = list(hf_dataset)[:40]
 
         return hf_dataset
 
@@ -166,7 +166,7 @@ class QuestionAnsweringSQuADInput(QuestionAnsweringDictionaryInput):
                     if not self.predicting:
                         _answer_starts = [answer["answer_start"] for answer in qa["answers"]]
                         _answers = [answer["text"] for answer in qa["answers"]]
-                        answers.append(dict(text=_answers, answer_start=_answer_starts))
+                        answers.append({"text": _answers, "answer_start": _answer_starts})
 
         data = {"id": ids, "title": titles, "context": contexts, "question": questions}
         if not self.predicting:

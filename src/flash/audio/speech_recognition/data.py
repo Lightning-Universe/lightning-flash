@@ -119,9 +119,9 @@ class SpeechRecognitionData(DataModule):
             >>> _ = [os.remove(f"predict_speech_{i}.wav") for i in range(1, 4)]
         """
 
-        ds_kw = dict(
-            sampling_rate=sampling_rate,
-        )
+        ds_kw = {
+            "sampling_rate": sampling_rate,
+        }
 
         return cls(
             input_cls(RunningStage.TRAINING, train_files, train_targets, **ds_kw),
@@ -306,10 +306,10 @@ class SpeechRecognitionData(DataModule):
             >>> os.remove("predict_data.tsv")
         """
 
-        ds_kw = dict(
-            input_key=input_field,
-            sampling_rate=sampling_rate,
-        )
+        ds_kw = {
+            "input_key": input_field,
+            "sampling_rate": sampling_rate,
+        }
 
         return cls(
             input_cls(RunningStage.TRAINING, train_file, target_key=target_field, **ds_kw),
@@ -430,11 +430,11 @@ class SpeechRecognitionData(DataModule):
             >>> os.remove("predict_data.json")
         """
 
-        ds_kw = dict(
-            input_key=input_field,
-            sampling_rate=sampling_rate,
-            field=field,
-        )
+        ds_kw = {
+            "input_key": input_field,
+            "sampling_rate": sampling_rate,
+            "field": field,
+        }
 
         return cls(
             input_cls(RunningStage.TRAINING, train_file, target_key=target_field, **ds_kw),
@@ -580,9 +580,9 @@ class SpeechRecognitionData(DataModule):
             >>> _ = [os.remove(f"predict_speech_{i}.wav") for i in range(1, 4)]
         """
 
-        ds_kw = dict(
-            sampling_rate=sampling_rate,
-        )
+        ds_kw = {
+            "sampling_rate": sampling_rate,
+        }
 
         return cls(
             input_cls(RunningStage.TRAINING, train_dataset, **ds_kw),

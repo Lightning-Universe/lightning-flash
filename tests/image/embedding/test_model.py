@@ -30,9 +30,9 @@ else:
 
 class TestImageEmbedder(TaskTester):
     task = ImageEmbedder
-    task_kwargs = dict(
-        backbone="resnet18",
-    )
+    task_kwargs = {
+        "backbone": "resnet18",
+    }
     is_testing = _TOPIC_IMAGE_AVAILABLE
     is_available = _TOPIC_IMAGE_AVAILABLE
 
@@ -119,7 +119,7 @@ def test_only_embedding(backbone, embedding_size):
     datamodule = ImageClassificationData.from_datasets(
         predict_dataset=FakeData(8),
         batch_size=4,
-        transform_kwargs=dict(image_size=(224, 224)),
+        transform_kwargs={"image_size": (224, 224)},
     )
 
     embedder = ImageEmbedder(backbone=backbone)

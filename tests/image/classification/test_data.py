@@ -75,7 +75,7 @@ def test_from_filepaths_smoke(tmpdir):
     imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2,)
-    assert sorted(list(labels.numpy())) == [1, 2]
+    assert sorted(labels.numpy()) == [1, 2]
 
 
 @pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
@@ -111,19 +111,19 @@ def test_from_data_frame_smoke(tmpdir):
     imgs, labels = data["input"], data["target"]
     assert imgs.shape == (1, 3, 196, 196)
     assert labels.shape == (1,)
-    assert sorted(list(labels.numpy())) == [0]
+    assert sorted(labels.numpy()) == [0]
 
     data = next(iter(img_data.val_dataloader()))
     imgs, labels = data["input"], data["target"]
     assert imgs.shape == (1, 3, 196, 196)
     assert labels.shape == (1,)
-    assert sorted(list(labels.numpy())) == [1]
+    assert sorted(labels.numpy()) == [1]
 
     data = next(iter(img_data.test_dataloader()))
     imgs, labels = data["input"], data["target"]
     assert imgs.shape == (1, 3, 196, 196)
     assert labels.shape == (1,)
-    assert sorted(list(labels.numpy())) == [1]
+    assert sorted(labels.numpy()) == [1]
 
     data = next(iter(img_data.predict_dataloader()))
     imgs = data["input"]
@@ -500,21 +500,21 @@ def test_from_fiftyone(tmpdir):
     imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2,)
-    assert sorted(list(labels.numpy())) == [0, 1]
+    assert sorted(labels.numpy()) == [0, 1]
 
     # check val data
     data = next(iter(img_data.val_dataloader()))
     imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2,)
-    assert sorted(list(labels.numpy())) == [0, 1]
+    assert sorted(labels.numpy()) == [0, 1]
 
     # check test data
     data = next(iter(img_data.test_dataloader()))
     imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 196, 196)
     assert labels.shape == (2,)
-    assert sorted(list(labels.numpy())) == [0, 1]
+    assert sorted(labels.numpy()) == [0, 1]
 
 
 @pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")

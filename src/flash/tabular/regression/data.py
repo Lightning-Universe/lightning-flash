@@ -147,12 +147,12 @@ class TabularRegressionData(TabularData):
             >>> del train_data
             >>> del predict_data
         """
-        ds_kw = dict(
-            categorical_fields=categorical_fields,
-            numerical_fields=numerical_fields,
-            target_field=target_field,
-            parameters=parameters,
-        )
+        ds_kw = {
+            "categorical_fields": categorical_fields,
+            "numerical_fields": numerical_fields,
+            "target_field": target_field,
+            "parameters": parameters,
+        }
 
         train_input = input_cls(RunningStage.TRAINING, train_data_frame, **ds_kw)
         ds_kw["parameters"] = train_input.parameters if train_input else parameters
@@ -334,12 +334,12 @@ class TabularRegressionData(TabularData):
             >>> os.remove("train_data.tsv")
             >>> os.remove("predict_data.tsv")
         """
-        ds_kw = dict(
-            categorical_fields=categorical_fields,
-            numerical_fields=numerical_fields,
-            target_field=target_field,
-            parameters=parameters,
-        )
+        ds_kw = {
+            "categorical_fields": categorical_fields,
+            "numerical_fields": numerical_fields,
+            "target_field": target_field,
+            "parameters": parameters,
+        }
 
         train_input = input_cls(RunningStage.TRAINING, train_file, **ds_kw)
         ds_kw["parameters"] = train_input.parameters if train_input else parameters
@@ -460,12 +460,12 @@ class TabularRegressionData(TabularData):
             >>> del train_data
             >>> del predict_data
         """
-        ds_kw = dict(
-            categorical_fields=categorical_fields,
-            numerical_fields=numerical_fields,
-            target_field=target_field,
-            parameters=parameters,
-        )
+        ds_kw = {
+            "categorical_fields": categorical_fields,
+            "numerical_fields": numerical_fields,
+            "target_field": target_field,
+            "parameters": parameters,
+        }
 
         train_input = input_cls(RunningStage.TRAINING, train_dict, **ds_kw)
         ds_kw["parameters"] = train_input.parameters if train_input else parameters
@@ -589,12 +589,12 @@ class TabularRegressionData(TabularData):
             >>> del train_data
             >>> del predict_data
         """
-        ds_kw = dict(
-            categorical_fields=categorical_fields,
-            numerical_fields=numerical_fields,
-            target_field=target_field,
-            parameters=parameters,
-        )
+        ds_kw = {
+            "categorical_fields": categorical_fields,
+            "numerical_fields": numerical_fields,
+            "target_field": target_field,
+            "parameters": parameters,
+        }
 
         train_input = input_cls(RunningStage.TRAINING, train_list, **ds_kw)
         ds_kw["parameters"] = train_input.parameters if train_input else parameters

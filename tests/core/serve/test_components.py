@@ -29,7 +29,7 @@ def test_model_compute_dependencies(lightning_squeezenet1_1_obj):
             "target_key": "tag",
         }
     ]
-    assert list(map(lambda x: x._asdict(), comp1._flashserve_meta_.connections)) == res
+    assert [x._asdict() for x in comp1._flashserve_meta_.connections] == res
     assert list(comp2._flashserve_meta_.connections) == []
 
 
@@ -48,7 +48,7 @@ def test_inverse_model_compute_component_dependencies(lightning_squeezenet1_1_ob
             "target_key": "tag",
         }
     ]
-    assert list(map(lambda x: x._asdict(), comp2._flashserve_meta_.connections)) == res
+    assert [x._asdict() for x in comp2._flashserve_meta_.connections] == res
     assert list(comp1._flashserve_meta_.connections) == []
 
 

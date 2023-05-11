@@ -33,7 +33,7 @@ class LabelStudioParameters:
 
 def _get_labels_from_sample(labels, classes):
     """Translate string labels to int."""
-    sorted_labels = sorted(list(classes))
+    sorted_labels = sorted(classes)
     return [sorted_labels.index(item) for item in labels] if isinstance(labels, list) else sorted_labels.index(labels)
 
 
