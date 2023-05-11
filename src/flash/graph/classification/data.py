@@ -166,9 +166,9 @@ class GraphClassificationData(DataModule):
             Predicting...
         """
 
-        ds_kw = dict(
-            target_formatter=target_formatter,
-        )
+        ds_kw = {
+            "target_formatter": target_formatter,
+        }
 
         train_input = input_cls(RunningStage.TRAINING, train_dataset, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)

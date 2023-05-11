@@ -36,7 +36,7 @@ def cull(dsk, keys):
         keys = [keys]
 
     seen = set()
-    dependencies = dict()
+    dependencies = {}
     out = {}
     work = list(set(flatten(keys)))
 
@@ -897,4 +897,4 @@ class SubgraphCallable:
         return SubgraphCallable, (self.dsk, self.outkey, self.inkeys, self.name)
 
     def __hash__(self):
-        return hash(tuple((self.outkey, tuple(self.inkeys), self.name)))
+        return hash((self.outkey, tuple(self.inkeys), self.name))

@@ -64,13 +64,13 @@ class TabularDataFrameInput(Input):
 
         codes = _generate_codes(train_data_frame, categorical_fields)
 
-        return dict(
-            mean=mean,
-            std=std,
-            codes=codes,
-            numerical_fields=numerical_fields,
-            categorical_fields=categorical_fields,
-        )
+        return {
+            "mean": mean,
+            "std": std,
+            "codes": codes,
+            "numerical_fields": numerical_fields,
+            "categorical_fields": categorical_fields,
+        }
 
     def preprocess(
         self,

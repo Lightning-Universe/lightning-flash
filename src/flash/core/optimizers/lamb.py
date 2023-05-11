@@ -82,14 +82,14 @@ class LAMB(Optimizer):
             raise ValueError(f"Invalid beta parameter at index 1: {betas[1]}")
         if not weight_decay >= 0.0:
             raise ValueError(f"Invalid weight_decay value: {weight_decay}")
-        defaults = dict(
-            lr=lr,
-            betas=betas,
-            eps=eps,
-            weight_decay=weight_decay,
-            exclude_from_layer_adaptation=exclude_from_layer_adaptation,
-            amsgrad=amsgrad,
-        )
+        defaults = {
+            "lr": lr,
+            "betas": betas,
+            "eps": eps,
+            "weight_decay": weight_decay,
+            "exclude_from_layer_adaptation": exclude_from_layer_adaptation,
+            "amsgrad": amsgrad,
+        }
         super().__init__(params, defaults)
 
     def __setstate__(self, state):

@@ -1116,7 +1116,7 @@ def test_SubgraphCallable():
     f3 = SubgraphCallable(dsk, "g", ["in1", "in2"], name="test")
     assert f != f3
 
-    assert dict(f=None)
+    assert {"f": None}
     assert hash(SubgraphCallable(None, None, [None]))
     assert hash(f3) != hash(f2)
 

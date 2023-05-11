@@ -91,7 +91,7 @@ class TranslationTask(Seq2SeqTask):
         reference_corpus = [[reference] for reference in reference_corpus]
 
         translate_corpus = self.decode(generated_tokens)
-        translate_corpus = [line for line in translate_corpus]
+        translate_corpus = list(translate_corpus)
 
         result = self.bleu(translate_corpus, reference_corpus)
         self.log(f"{prefix}_bleu_score", result, on_step=False, on_epoch=True, prog_bar=True)

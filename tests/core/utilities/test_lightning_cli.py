@@ -76,16 +76,16 @@ def test_add_argparse_args_redefined(cli_args):
 @pytest.mark.parametrize(
     ["cli_args", "expected"],
     [
-        ("--auto_lr_find=True --auto_scale_batch_size=power", dict(auto_lr_find=True, auto_scale_batch_size="power")),
+        ("--auto_lr_find=True --auto_scale_batch_size=power", {"auto_lr_find": True, "auto_scale_batch_size": "power"}),
         (
             "--auto_lr_find any_string --auto_scale_batch_size ON",
-            dict(auto_lr_find="any_string", auto_scale_batch_size=True),
+            {"auto_lr_find": "any_string", "auto_scale_batch_size": True},
         ),
-        ("--auto_lr_find=Yes --auto_scale_batch_size=On", dict(auto_lr_find=True, auto_scale_batch_size=True)),
-        ("--auto_lr_find Off --auto_scale_batch_size No", dict(auto_lr_find=False, auto_scale_batch_size=False)),
-        ("--auto_lr_find TRUE --auto_scale_batch_size FALSE", dict(auto_lr_find=True, auto_scale_batch_size=False)),
-        ("--limit_train_batches=100", dict(limit_train_batches=100)),
-        ("--limit_train_batches 0.8", dict(limit_train_batches=0.8)),
+        ("--auto_lr_find=Yes --auto_scale_batch_size=On", {"auto_lr_find": True, "auto_scale_batch_size": True}),
+        ("--auto_lr_find Off --auto_scale_batch_size No", {"auto_lr_find": False, "auto_scale_batch_size": False}),
+        ("--auto_lr_find TRUE --auto_scale_batch_size FALSE", {"auto_lr_find": True, "auto_scale_batch_size": False}),
+        ("--limit_train_batches=100", {"limit_train_batches": 100}),
+        ("--limit_train_batches 0.8", {"limit_train_batches": 0.8}),
     ],
 )
 def test_parse_args_parsing(cli_args, expected):
@@ -105,9 +105,9 @@ def test_parse_args_parsing(cli_args, expected):
 @pytest.mark.parametrize(
     ["cli_args", "expected", "instantiate"],
     [
-        (["--gpus", "[0, 2]"], dict(gpus=[0, 2]), False),
-        (["--tpu_cores=[1,3]"], dict(tpu_cores=[1, 3]), False),
-        (['--accumulate_grad_batches={"5":3,"10":20}'], dict(accumulate_grad_batches={5: 3, 10: 20}), True),
+        (["--gpus", "[0, 2]"], {"gpus": [0, 2]}, False),
+        (["--tpu_cores=[1,3]"], {"tpu_cores": [1, 3]}, False),
+        (['--accumulate_grad_batches={"5":3,"10":20}'], {"accumulate_grad_batches": {5: 3, 10: 20}}, True),
     ],
 )
 def test_parse_args_parsing_complex_types(cli_args, expected, instantiate):
@@ -151,13 +151,13 @@ def test_parse_args_parsing_gpus(mocker, cli_args, expected_gpu):
     ["cli_args", "extra_args"],
     [
         ({}, {}),
-        (dict(logger=False), {}),
-        (dict(logger=False), dict(logger=True)),
-        (dict(logger=False), dict(enable_checkpointing=True)),
+        ({"logger": False}, {}),
+        ({"logger": False}, {"logger": True}),
+        ({"logger": False}, {"enable_checkpointing": True}),
     ],
 )
 def test_init_from_argparse_args(cli_args, extra_args):
-    unknown_args = dict(unknown_arg=0)
+    unknown_args = {"unknown_arg": 0}
 
     # unkown args in the argparser/namespace should be ignored
     with patch("pytorch_lightning.Trainer.__init__", autospec=True, return_value=None) as init:
@@ -192,8 +192,8 @@ def trainer_builder(
 def test_lightning_cli(trainer_class, model_class, monkeypatch):
     """Test that LightningCLI correctly instantiates model, trainer and calls fit."""
 
-    expected_model = dict(model_param=7)
-    expected_trainer = dict(limit_train_batches=100)
+    expected_model = {"model_param": 7}
+    expected_trainer = {"limit_train_batches": 100}
 
     def fit(trainer, model):
         for k, v in expected_model.items():
@@ -236,15 +236,15 @@ class TestModelCallbacks(BoringModel):
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 def test_lightning_cli_args_callbacks(tmpdir):
     callbacks = [
-        dict(
-            class_path="pytorch_lightning.callbacks.LearningRateMonitor",
-            init_args=dict(logging_interval="epoch", log_momentum=True),
-        ),
-        dict(class_path="pytorch_lightning.callbacks.ModelCheckpoint", init_args=dict(monitor="NAME")),
+        {
+            "class_path": "pytorch_lightning.callbacks.LearningRateMonitor",
+            "init_args": {"logging_interval": "epoch", "log_momentum": True},
+        },
+        {"class_path": "pytorch_lightning.callbacks.ModelCheckpoint", "init_args": {"monitor": "NAME"}},
     ]
 
     with patch("sys.argv", ["any.py", f"--trainer.callbacks={json.dumps(callbacks)}"]):
-        cli = LightningCLI(TestModelCallbacks, trainer_defaults=dict(default_root_dir=str(tmpdir), fast_dev_run=True))
+        cli = LightningCLI(TestModelCallbacks, trainer_defaults={"default_root_dir": str(tmpdir), "fast_dev_run": True})
 
     assert cli.trainer.ran_asserts
 
@@ -279,10 +279,12 @@ class TestModelClusterEnv(BoringModel):
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 @pytest.mark.xfail(reason="Bugs in PL >= 1.6.0")
 def test_lightning_cli_args_cluster_environments(tmpdir):
-    plugins = [dict(class_path="pytorch_lightning.plugins.environments.SLURMEnvironment")]
+    plugins = [{"class_path": "pytorch_lightning.plugins.environments.SLURMEnvironment"}]
 
     with patch("sys.argv", ["any.py", f"--trainer.plugins={json.dumps(plugins)}"]):
-        cli = LightningCLI(TestModelClusterEnv, trainer_defaults=dict(default_root_dir=str(tmpdir), fast_dev_run=True))
+        cli = LightningCLI(
+            TestModelClusterEnv, trainer_defaults={"default_root_dir": str(tmpdir), "fast_dev_run": True}
+        )
 
     assert cli.trainer.ran_asserts
 
@@ -337,11 +339,11 @@ def test_lightning_cli_save_config_cases(tmpdir):
 
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 def test_lightning_cli_config_and_subclass_mode(tmpdir):
-    config = dict(
-        model=dict(class_path="tests.helpers.boring_model.BoringModel"),
-        data=dict(class_path="tests.helpers.boring_model.BoringDataModule", init_args=dict(data_dir=str(tmpdir))),
-        trainer=dict(default_root_dir=str(tmpdir), max_epochs=1, enable_model_summary=False),
-    )
+    config = {
+        "model": {"class_path": "tests.helpers.boring_model.BoringModel"},
+        "data": {"class_path": "tests.helpers.boring_model.BoringDataModule", "init_args": {"data_dir": str(tmpdir)}},
+        "trainer": {"default_root_dir": str(tmpdir), "max_epochs": 1, "enable_model_summary": False},
+    }
     config_path = tmpdir / "config.yaml"
     with open(config_path, "w") as f:
         f.write(yaml.dump(config))
@@ -579,8 +581,8 @@ class EarlyExitTestModel(BoringModel):
 @pytest.mark.parametrize(
     "trainer_kwargs",
     (
-        dict(accelerator="cpu", strategy="ddp"),
-        dict(accelerator="cpu", strategy="ddp", plugins="ddp_find_unused_parameters_false"),
+        {"accelerator": "cpu", "strategy": "ddp"},
+        {"accelerator": "cpu", "strategy": "ddp", "plugins": "ddp_find_unused_parameters_false"},
     ),
 )
 @pytest.mark.xfail(reason="Bugs in PL >= 1.6.0")
@@ -673,14 +675,14 @@ def test_lightning_cli_optimizer_and_lr_scheduler_subclasses(tmpdir):
             parser.add_optimizer_args((torch.optim.SGD, torch.optim.Adam))
             parser.add_lr_scheduler_args((torch.optim.lr_scheduler.StepLR, torch.optim.lr_scheduler.ExponentialLR))
 
-    optimizer_arg = dict(
-        class_path="torch.optim.Adam",
-        init_args=dict(lr=0.01),
-    )
-    lr_scheduler_arg = dict(
-        class_path="torch.optim.lr_scheduler.StepLR",
-        init_args=dict(step_size=50),
-    )
+    optimizer_arg = {
+        "class_path": "torch.optim.Adam",
+        "init_args": {"lr": 0.01},
+    }
+    lr_scheduler_arg = {
+        "class_path": "torch.optim.lr_scheduler.StepLR",
+        "init_args": {"step_size": 50},
+    }
     cli_args = [
         f"--trainer.default_root_dir={tmpdir}",
         "--trainer.max_epochs=1",

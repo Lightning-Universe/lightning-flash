@@ -148,10 +148,10 @@ class SemanticSegmentationData(DataModule):
             >>> _ = [os.remove(f"predict_image_{i}.png") for i in range(1, 4)]
         """
 
-        ds_kw = dict(
-            num_classes=num_classes,
-            labels_map=labels_map,
-        )
+        ds_kw = {
+            "num_classes": num_classes,
+            "labels_map": labels_map,
+        }
 
         return cls(
             input_cls(RunningStage.TRAINING, train_files, train_targets, **ds_kw),
@@ -289,10 +289,10 @@ class SemanticSegmentationData(DataModule):
             >>> shutil.rmtree("predict_folder")
         """
 
-        ds_kw = dict(
-            num_classes=num_classes,
-            labels_map=labels_map,
-        )
+        ds_kw = {
+            "num_classes": num_classes,
+            "labels_map": labels_map,
+        }
 
         return cls(
             input_cls(RunningStage.TRAINING, train_folder, train_target_folder, **ds_kw),
@@ -377,10 +377,10 @@ class SemanticSegmentationData(DataModule):
             Predicting...
         """
 
-        ds_kw = dict(
-            num_classes=num_classes,
-            labels_map=labels_map,
-        )
+        ds_kw = {
+            "num_classes": num_classes,
+            "labels_map": labels_map,
+        }
 
         return cls(
             input_cls(RunningStage.TRAINING, train_data, train_targets, **ds_kw),
@@ -465,10 +465,10 @@ class SemanticSegmentationData(DataModule):
             Predicting...
         """
 
-        ds_kw = dict(
-            num_classes=num_classes,
-            labels_map=labels_map,
-        )
+        ds_kw = {
+            "num_classes": num_classes,
+            "labels_map": labels_map,
+        }
 
         return cls(
             input_cls(RunningStage.TRAINING, train_data, train_targets, **ds_kw),

@@ -140,7 +140,7 @@ def test_model(coco_instances, backbone, head):
         train_folder=coco_instances.train_folder,
         train_ann_file=coco_instances.train_ann_file,
         predict_folder=coco_instances.predict_folder,
-        transform_kwargs=dict(image_size=(128, 128)),
+        transform_kwargs={"image_size": (128, 128)},
         batch_size=2,
     )
 
