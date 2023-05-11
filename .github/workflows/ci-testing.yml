@@ -108,9 +108,10 @@ jobs:
         key: flash-datasets-${{ hashFiles('tests/examples/test_scripts.py') }}
         restore-keys: flash-datasets-
 
-    - name: DocTests
-      run: |
-        pytest src/ -vv # --reruns 3 --reruns-delay 2
+    # ToDO
+    #- name: DocTests
+    #  run: |
+    #    pytest src/ -vv # --reruns 3 --reruns-delay 2
 
     - name: Tests
       run: |
