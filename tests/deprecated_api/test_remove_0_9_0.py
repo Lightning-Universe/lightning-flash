@@ -19,7 +19,7 @@ from flash.image.embedding.model import ImageEmbedder
 
 @pytest.mark.skipif(not _VISSL_AVAILABLE, reason="vissl not installed.")
 @pytest.mark.parametrize(
-    "deprecated_backbone, alternative_backbone",
+    ("deprecated_backbone", "alternative_backbone"),
     [("resnet", "resnet50"), ("vision_transformer", "vit_small_patch16_224")],
 )
 def test_0_9_0_embedder_models(deprecated_backbone, alternative_backbone):

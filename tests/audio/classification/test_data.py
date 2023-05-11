@@ -71,7 +71,7 @@ def test_from_filepaths(tmpdir, file_generator):
 
 @pytest.mark.skipif(not _TOPIC_AUDIO_AVAILABLE, reason="audio libraries aren't installed.")
 @pytest.mark.parametrize(
-    "data,from_function",
+    ("data", "from_function"),
     [
         (torch.rand(3, 3, 64, 64), AudioClassificationData.from_tensors),
         (np.random.rand(3, 3, 64, 64), AudioClassificationData.from_numpy),

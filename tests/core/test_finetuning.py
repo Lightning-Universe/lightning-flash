@@ -137,7 +137,7 @@ class CustomStrategyChecking(ModelCheckpoint):
 
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 @pytest.mark.parametrize(
-    "strategy, plugins",
+    ("strategy", "plugins"),
     [
         ("no_freeze", None),
         ("freeze", None),
@@ -222,7 +222,7 @@ def test_finetuning(tmpdir, strategy, lr_scheduler, checker_class, checker_class
 
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 @pytest.mark.parametrize(
-    "strategy,error",
+    ("strategy", "error"),
     [
         (None, TypeError),
         ("chocolate", ValueError),
@@ -246,7 +246,7 @@ def test_finetuning_errors_and_exceptions(strategy, error):
 
 
 @pytest.mark.parametrize(
-    "strategy_key, strategy_metadata",
+    ("strategy_key", "strategy_metadata"),
     [
         ("no_freeze", None),
         ("freeze", None),

@@ -24,7 +24,7 @@ from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE
 class TestApplyToKeys:
     @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
     @pytest.mark.parametrize(
-        "sample, keys, expected",
+        ("sample", "keys", "expected"),
         [
             ({DataKeys.INPUT: "test"}, DataKeys.INPUT, "test"),
             (
@@ -49,7 +49,7 @@ class TestApplyToKeys:
 
     @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
     @pytest.mark.parametrize(
-        "transform, expected",
+        ("transform", "expected"),
         [
             (
                 ApplyToKeys(DataKeys.INPUT, torch.nn.ReLU()),

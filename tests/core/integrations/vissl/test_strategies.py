@@ -39,7 +39,7 @@ else:
 
 @pytest.mark.skipif(not (_TORCHVISION_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
 @pytest.mark.parametrize(
-    "training_strategy, head_name, loss_fn_class, head_class, hooks_list",
+    ("training_strategy", "head_name", "loss_fn_class", "head_class", "hooks_list"),
     [
         ("barlow_twins", "barlow_twins_head", BarlowTwinsLoss, SimCLRHead, [TrainingSetupHook]),
         (

@@ -38,7 +38,7 @@ class NLayerModel(EmbedderTestModel):
 
 
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
-@pytest.mark.parametrize("layer, size", [("backbone.1", 30), ("output", 40), ("", 40)])
+@pytest.mark.parametrize(("layer", "size"), [("backbone.1", 30), ("output", 40), ("", 40)])
 def test_embedder(layer, size):
     """Tests that the embedder ``predict_step`` correctly returns the output from the requested layer."""
     model = EmbedderTestModel(
