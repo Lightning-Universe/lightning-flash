@@ -809,6 +809,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         # used only for CI
         if flash._IS_TESTING and torch.cuda.is_available():
             return [BenchmarkConvergenceCI()]
+        return None
 
     @requires("serve")
     def run_serve_sanity_check(

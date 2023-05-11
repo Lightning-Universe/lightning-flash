@@ -386,6 +386,7 @@ def default_fused_keys_renamer(keys, max_fused_key_length=120):
         names.append(first_key[0])
         concatenated_name = "-".join(names)
         return (_enforce_max_key_limit(concatenated_name),) + first_key[1:]
+    return None
 
 
 # PEP-484 compliant singleton constant

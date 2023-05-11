@@ -66,6 +66,7 @@ class TabularClassificationCSVInput(TabularClassificationDataFrameInput):
             return super().load_data(
                 load_data_frame(file), categorical_fields, numerical_fields, target_fields, parameters, target_formatter
             )
+        return None
 
 
 class TabularClassificationDictInput(TabularClassificationDataFrameInput):

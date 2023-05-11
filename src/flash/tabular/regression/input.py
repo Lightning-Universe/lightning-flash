@@ -57,6 +57,7 @@ class TabularRegressionCSVInput(TabularRegressionDataFrameInput):
             return super().load_data(
                 load_data_frame(file), categorical_fields, numerical_fields, target_field, parameters
             )
+        return None
 
 
 class TabularRegressionDictInput(TabularRegressionDataFrameInput):

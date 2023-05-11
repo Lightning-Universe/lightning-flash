@@ -462,7 +462,7 @@ class DataModule(pl.LightningDataModule):
         """This function is used to handle transforms profiling for batch visualization."""
         # don't show in CI
         if os.getenv("FLASH_TESTING", "0") == "1":
-            return None
+            return
         iter_name = f"_{stage}_iter"
 
         if not hasattr(self, iter_name):
