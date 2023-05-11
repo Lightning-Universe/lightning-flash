@@ -28,7 +28,7 @@ from flash.core.utilities.stages import RunningStage
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 @patch("pickle.dumps")  # need to mock pickle or we get pickle error
 @patch("torch.save")  # need to mock torch.save, or we get pickle error
-def test_flash_callback(_, __, tmpdir):
+def test_flash_callback(_, __, tmpdir):  # noqa: PT019
     """Test the callback hook system for fit."""
 
     callback_mock = MagicMock()

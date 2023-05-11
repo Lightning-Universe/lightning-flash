@@ -191,7 +191,8 @@ class BaseLabelStudioInput(Properties):
 
     @staticmethod
     def _split_train_val_data(data: Dict, split: float = 0) -> List[Dict]:
-        assert split > 0 and split < 1
+        assert split > 0
+        assert split < 1
         file_path = data.get("export_json", None)
 
         if not file_path:

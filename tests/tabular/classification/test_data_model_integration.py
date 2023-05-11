@@ -32,7 +32,7 @@ if _TOPIC_TABULAR_AVAILABLE:
 
 @pytest.mark.skipif(not _TOPIC_TABULAR_AVAILABLE, reason="tabular libraries aren't installed.")
 @pytest.mark.parametrize(
-    "backbone,fields",
+    ("backbone", "fields"),
     [
         ("tabnet", {"categorical_fields": ["category"], "numerical_fields": ["scalar_a", "scalar_b"]}),
         ("tabtransformer", {"categorical_fields": ["category"], "numerical_fields": ["scalar_a", "scalar_b"]}),

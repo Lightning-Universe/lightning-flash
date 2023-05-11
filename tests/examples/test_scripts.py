@@ -45,7 +45,7 @@ root = Path(__file__).parent.parent.parent
 
 @patch.dict(os.environ, {"FLASH_TESTING": "1"})
 @pytest.mark.parametrize(
-    "folder,fname",
+    ("folder", "fname"),
     [
         pytest.param(
             "",

@@ -95,12 +95,14 @@ def test_data_module():
     assert len(dm.train_dataloader()) == 5
     batch = next(iter(dm.train_dataloader()))
     assert batch.shape == torch.Size([2])
-    assert batch.min() >= 0 and batch.max() < 10
+    assert batch.min() >= 0
+    assert batch.max() < 10
 
     assert len(dm.val_dataloader()) == 5
     batch = next(iter(dm.val_dataloader()))
     assert batch.shape == torch.Size([2])
-    assert batch.min() >= 0 and batch.max() < 10
+    assert batch.min() >= 0
+    assert batch.max() < 10
 
     class TestModel(Task):
         def training_step(self, batch, batch_idx):
@@ -218,7 +220,7 @@ class TestInput(Input):
         self.val_load_sample_called = True
         return {"a": sample, "b": sample + 1}
 
-    def test_load_data(self, _):
+    def test_load_data(self, _):  # noqa: PT019
         return [[torch.rand(1), torch.rand(1)], [torch.rand(1), torch.rand(1)]]
 
 
@@ -426,7 +428,7 @@ def test_datapipeline_transformations_overridden_by_task():
 
 
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
-@pytest.mark.parametrize("sampler, callable", [(MagicMock(), True), (NonCallableMock(), False)])
+@pytest.mark.parametrize(("sampler", "callable"), [(MagicMock(), True), (NonCallableMock(), False)])
 @patch("flash.core.data.data_module.DataLoader")
 def test_dataloaders_with_sampler(mock_dataloader, sampler, callable):
     train_input = TestInput(RunningStage.TRAINING, [1])

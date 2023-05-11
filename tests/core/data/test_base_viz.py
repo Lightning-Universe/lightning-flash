@@ -168,7 +168,7 @@ class TestBaseViz:
             dm.data_fetcher.reset()
 
     @pytest.mark.parametrize(
-        "func_names, valid",
+        ("func_names", "valid"),
         [
             (["load_sample"], True),
             (["not_a_hook"], False),

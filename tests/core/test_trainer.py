@@ -68,7 +68,7 @@ class NoFreeze(BaseFinetuning):
 
 
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
-@pytest.mark.parametrize("callbacks, should_warn", [([], False), ([NoFreeze()], True)])
+@pytest.mark.parametrize(("callbacks", "should_warn"), [([], False), ([NoFreeze()], True)])
 def test_trainer_fit(tmpdir, callbacks, should_warn):
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10), nn.LogSoftmax())
     train_dl = DataLoader(DummyDataset())
