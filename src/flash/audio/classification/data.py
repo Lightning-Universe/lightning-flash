@@ -143,11 +143,11 @@ class AudioClassificationData(DataModule):
             >>> _ = [os.remove(f"predict_spectrogram_{i}.png") for i in range(1, 4)]
         """
 
-        ds_kw = dict(
-            sampling_rate=sampling_rate,
-            n_fft=n_fft,
-            target_formatter=target_formatter,
-        )
+        ds_kw = {
+            "sampling_rate": sampling_rate,
+            "n_fft": n_fft,
+            "target_formatter": target_formatter,
+        }
 
         train_input = input_cls(RunningStage.TRAINING, train_files, train_targets, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
@@ -277,11 +277,11 @@ class AudioClassificationData(DataModule):
             >>> shutil.rmtree("predict_folder")
         """
 
-        ds_kw = dict(
-            sampling_rate=sampling_rate,
-            n_fft=n_fft,
-            target_formatter=target_formatter,
-        )
+        ds_kw = {
+            "sampling_rate": sampling_rate,
+            "n_fft": n_fft,
+            "target_formatter": target_formatter,
+        }
 
         train_input = input_cls(RunningStage.TRAINING, train_folder, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
@@ -367,9 +367,9 @@ class AudioClassificationData(DataModule):
             Predicting...
         """
 
-        ds_kw = dict(
-            target_formatter=target_formatter,
-        )
+        ds_kw = {
+            "target_formatter": target_formatter,
+        }
 
         train_input = input_cls(RunningStage.TRAINING, train_data, train_targets, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
@@ -455,9 +455,9 @@ class AudioClassificationData(DataModule):
             Predicting...
         """
 
-        ds_kw = dict(
-            target_formatter=target_formatter,
-        )
+        ds_kw = {
+            "target_formatter": target_formatter,
+        }
 
         train_input = input_cls(RunningStage.TRAINING, train_data, train_targets, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
@@ -609,11 +609,11 @@ class AudioClassificationData(DataModule):
             >>> del predict_data_frame
         """
 
-        ds_kw = dict(
-            sampling_rate=sampling_rate,
-            n_fft=n_fft,
-            target_formatter=target_formatter,
-        )
+        ds_kw = {
+            "sampling_rate": sampling_rate,
+            "n_fft": n_fft,
+            "target_formatter": target_formatter,
+        }
 
         train_data = (train_data_frame, input_field, target_fields, train_images_root, train_resolver)
         val_data = (val_data_frame, input_field, target_fields, val_images_root, val_resolver)
@@ -856,11 +856,11 @@ class AudioClassificationData(DataModule):
             >>> os.remove("predict_data.tsv")
         """
 
-        ds_kw = dict(
-            sampling_rate=sampling_rate,
-            n_fft=n_fft,
-            target_formatter=target_formatter,
-        )
+        ds_kw = {
+            "sampling_rate": sampling_rate,
+            "n_fft": n_fft,
+            "target_formatter": target_formatter,
+        }
 
         train_data = (train_file, input_field, target_fields, train_images_root, train_resolver)
         val_data = (val_file, input_field, target_fields, val_images_root, val_resolver)

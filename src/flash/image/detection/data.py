@@ -163,9 +163,9 @@ class ObjectDetectionData(DataModule):
             >>> _ = [os.remove(f"predict_image_{i}.png") for i in range(1, 4)]
         """
 
-        ds_kw = dict(
-            target_formatter=target_formatter,
-        )
+        ds_kw = {
+            "target_formatter": target_formatter,
+        }
 
         train_input = input_cls(
             RunningStage.TRAINING,
@@ -281,9 +281,9 @@ class ObjectDetectionData(DataModule):
             Predicting...
         """
 
-        ds_kw = dict(
-            target_formatter=target_formatter,
-        )
+        ds_kw = {
+            "target_formatter": target_formatter,
+        }
 
         train_input = input_cls(
             RunningStage.TRAINING,
@@ -404,9 +404,9 @@ class ObjectDetectionData(DataModule):
             Predicting...
         """
 
-        ds_kw = dict(
-            target_formatter=target_formatter,
-        )
+        ds_kw = {
+            "target_formatter": target_formatter,
+        }
 
         train_input = input_cls(
             RunningStage.TRAINING,
@@ -522,9 +522,9 @@ class ObjectDetectionData(DataModule):
             Predicting...
         """
 
-        ds_kw = dict(
-            target_formatter=target_formatter,
-        )
+        ds_kw = {
+            "target_formatter": target_formatter,
+        }
 
         train_input = input_cls(
             RunningStage.TRAINING,
@@ -576,7 +576,7 @@ class ObjectDetectionData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
     ) -> "ObjectDetectionData":
-        ds_kw = dict(parser=parser)
+        ds_kw = {"parser": parser}
 
         return cls(
             input_cls(
@@ -1162,7 +1162,7 @@ class ObjectDetectionData(DataModule):
             >>> _ = [os.remove(f"predict_image_{i}.png") for i in range(1, 4)]
         """
 
-        ds_kw = dict()
+        ds_kw = {}
 
         return cls(
             input_cls(RunningStage.TRAINING, train_dataset, label_field, iscrowd, **ds_kw),

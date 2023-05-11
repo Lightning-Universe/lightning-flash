@@ -211,11 +211,11 @@ class TextClassificationData(DataModule):
             >>> os.remove("train_data.tsv")
             >>> os.remove("predict_data.tsv")
         """
-        ds_kw = dict(
-            target_formatter=target_formatter,
-            input_key=input_field,
-            target_keys=target_fields,
-        )
+        ds_kw = {
+            "target_formatter": target_formatter,
+            "input_key": input_field,
+            "target_keys": target_fields,
+        }
 
         train_input = input_cls(RunningStage.TRAINING, train_file, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
@@ -333,12 +333,12 @@ class TextClassificationData(DataModule):
             >>> os.remove("train_data.json")
             >>> os.remove("predict_data.json")
         """
-        ds_kw = dict(
-            target_formatter=target_formatter,
-            input_key=input_field,
-            target_keys=target_fields,
-            field=field,
-        )
+        ds_kw = {
+            "target_formatter": target_formatter,
+            "input_key": input_field,
+            "target_keys": target_fields,
+            "field": field,
+        }
 
         train_input = input_cls(RunningStage.TRAINING, train_file, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
@@ -456,11 +456,11 @@ class TextClassificationData(DataModule):
             >>> os.remove("train_data.parquet")
             >>> os.remove("predict_data.parquet")
         """
-        ds_kw = dict(
-            target_formatter=target_formatter,
-            input_key=input_field,
-            target_keys=target_fields,
-        )
+        ds_kw = {
+            "target_formatter": target_formatter,
+            "input_key": input_field,
+            "target_keys": target_fields,
+        }
 
         train_input = input_cls(RunningStage.TRAINING, train_file, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
@@ -559,11 +559,11 @@ class TextClassificationData(DataModule):
             >>> del train_data
             >>> del predict_data
         """
-        ds_kw = dict(
-            target_formatter=target_formatter,
-            input_key=input_field,
-            target_keys=target_fields,
-        )
+        ds_kw = {
+            "target_formatter": target_formatter,
+            "input_key": input_field,
+            "target_keys": target_fields,
+        }
 
         train_input = input_cls(RunningStage.TRAINING, train_hf_dataset, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
@@ -663,11 +663,11 @@ class TextClassificationData(DataModule):
             >>> del train_data
             >>> del predict_data
         """
-        ds_kw = dict(
-            target_formatter=target_formatter,
-            input_key=input_field,
-            target_keys=target_fields,
-        )
+        ds_kw = {
+            "target_formatter": target_formatter,
+            "input_key": input_field,
+            "target_keys": target_fields,
+        }
 
         train_input = input_cls(RunningStage.TRAINING, train_data_frame, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
@@ -749,9 +749,9 @@ class TextClassificationData(DataModule):
             >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Predicting...
         """
-        ds_kw = dict(
-            target_formatter=target_formatter,
-        )
+        ds_kw = {
+            "target_formatter": target_formatter,
+        }
 
         train_input = input_cls(RunningStage.TRAINING, train_data, train_targets, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
@@ -829,7 +829,7 @@ class TextClassificationData(DataModule):
             multi_label=multi_label,
         )
 
-        ds_kw = dict()
+        ds_kw = {}
 
         train_input = input_cls(RunningStage.TRAINING, train_data, **ds_kw)
         ds_kw["parameters"] = getattr(train_input, "parameters", None)

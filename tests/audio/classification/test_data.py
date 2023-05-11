@@ -66,7 +66,7 @@ def test_from_filepaths(tmpdir, file_generator):
     imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, channels, 128, 128)
     assert labels.shape == (2,)
-    assert sorted(list(labels.numpy())) == [1, 2]
+    assert sorted(labels.numpy()) == [1, 2]
 
 
 @pytest.mark.skipif(not _TOPIC_AUDIO_AVAILABLE, reason="audio libraries aren't installed.")
@@ -136,7 +136,7 @@ def test_from_filepaths_numpy(tmpdir):
     imgs, labels = data["input"], data["target"]
     assert imgs.shape == (2, 3, 128, 128)
     assert labels.shape == (2,)
-    assert sorted(list(labels.numpy())) == [1, 2]
+    assert sorted(labels.numpy()) == [1, 2]
 
 
 @pytest.mark.skipif(not _TOPIC_AUDIO_AVAILABLE, reason="audio libraries aren't installed.")
@@ -242,7 +242,7 @@ def test_from_filepaths_visualise_multilabel(tmpdir):
         test_files=[image_b, image_b],
         test_targets=[[0, 0, 1], [1, 1, 0]],
         batch_size=2,
-        transform_kwargs=dict(spectrogram_size=(64, 64)),
+        transform_kwargs={"spectrogram_size": (64, 64)},
     )
     # disable visualisation for testing
     assert dm.data_fetcher.block_viz_window is True

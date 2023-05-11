@@ -29,7 +29,7 @@ TEST_BACKBONE = "patrickvonplaten/wav2vec2_tiny_random_robust"  # tiny model for
 
 class TestSpeechRecognition(TaskTester):
     task = SpeechRecognition
-    task_kwargs = dict(backbone=TEST_BACKBONE)
+    task_kwargs = {"backbone": TEST_BACKBONE}
     cli_command = "speech_recognition"
     is_testing = _TOPIC_AUDIO_AVAILABLE
     is_available = _TOPIC_AUDIO_AVAILABLE

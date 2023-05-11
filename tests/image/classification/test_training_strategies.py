@@ -78,7 +78,7 @@ def _test_learn2learning_training_strategies(gpus, training_strategy, tmpdir, ac
         train_targets=[0] * n + [1] * n + [2] * n + [3] * n,
         batch_size=1,
         num_workers=0,
-        transform_kwargs=dict(image_size=image_size),
+        transform_kwargs={"image_size": image_size},
     )
 
     model = ImageClassifier(

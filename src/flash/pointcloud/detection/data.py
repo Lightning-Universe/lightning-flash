@@ -48,12 +48,12 @@ class PointCloudObjectDetectorData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "PointCloudObjectDetectorData":
-        ds_kw = dict(
-            scans_folder_name=scans_folder_name,
-            labels_folder_name=labels_folder_name,
-            calibrations_folder_name=calibrations_folder_name,
-            data_format=data_format,
-        )
+        ds_kw = {
+            "scans_folder_name": scans_folder_name,
+            "labels_folder_name": labels_folder_name,
+            "calibrations_folder_name": calibrations_folder_name,
+            "data_format": data_format,
+        }
 
         return cls(
             input_cls(RunningStage.TRAINING, train_folder, **ds_kw),
@@ -78,12 +78,12 @@ class PointCloudObjectDetectorData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "PointCloudObjectDetectorData":
-        ds_kw = dict(
-            scans_folder_name=scans_folder_name,
-            labels_folder_name=labels_folder_name,
-            calibrations_folder_name=calibrations_folder_name,
-            data_format=data_format,
-        )
+        ds_kw = {
+            "scans_folder_name": scans_folder_name,
+            "labels_folder_name": labels_folder_name,
+            "calibrations_folder_name": calibrations_folder_name,
+            "data_format": data_format,
+        }
 
         return cls(
             predict_input=input_cls(RunningStage.PREDICTING, predict_files, **ds_kw),
@@ -104,7 +104,7 @@ class PointCloudObjectDetectorData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "PointCloudObjectDetectorData":
-        ds_kw = dict()
+        ds_kw = {}
 
         return cls(
             input_cls(RunningStage.TRAINING, train_dataset, **ds_kw),
