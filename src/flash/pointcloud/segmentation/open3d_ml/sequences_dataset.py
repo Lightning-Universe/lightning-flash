@@ -147,10 +147,9 @@ class SequencesDataset(Dataset):
         points = DataProcessing.load_pc_kitti(pc_path)
 
         folder, file = split(pc_path)
-        if self.predicting:
-            label_path = join(folder, file[:-4] + ".label")
-        else:
-            label_path = join(folder, "../labels", file[:-4] + ".label")
+        label_path = (
+            join(folder, file[:-4] + ".label") if self.predicting else join(folder, "../labels", file[:-4] + ".label")
+        )
         if not exists(label_path):
             labels = np.zeros(np.shape(points)[0], dtype=np.int32)
             if self.split not in ["test", "all"]:
@@ -159,13 +158,11 @@ class SequencesDataset(Dataset):
         else:
             labels = DataProcessing.load_label_kitti(label_path, self.remap_lut_val).astype(np.int32)
 
-        data = {
+        return {
             "point": points[:, 0:3],
             "feat": None,
             "label": labels,
         }
-
-        return data
 
     def get_attr(self, idx):
         pc_path = self.path_list[idx]
@@ -174,8 +171,7 @@ class SequencesDataset(Dataset):
         name = f"{seq}_{file[:-4]}"
 
         pc_path = str(pc_path)
-        attr = {"idx": idx, "name": name, "path": pc_path, "split": self.split}
-        return attr
+        return {"idx": idx, "name": name, "path": pc_path, "split": self.split}
 
     def __len__(self):
         return len(self.path_list)

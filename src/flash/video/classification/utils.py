@@ -61,15 +61,13 @@ class LabeledVideoTensorDataset(torch.utils.data.IterableDataset):
         video_tensor, info_dict = self._labeled_videos[video_index]
         self._loaded_video_label = (video_tensor, info_dict, video_index)
 
-        sample_dict = {
+        return {
             "video": self._loaded_video_label[0],
             "video_name": f"video{video_index}",
             "video_index": video_index,
             "label": info_dict,
             "video_label": info_dict,
         }
-
-        return sample_dict
 
     def __iter__(self):
         self._video_sampler_iter = None  # Reset video sampler

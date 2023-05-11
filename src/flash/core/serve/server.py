@@ -39,7 +39,7 @@ class ServerMixin:
             port number to expose the running server on
         """
         if FLASH_DISABLE_SERVE:
-            return
+            return None
 
         if not self.TESTING:  # pragma: no cover
             app = self.http_app()

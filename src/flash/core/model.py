@@ -486,8 +486,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
                 f"\nUse `{self.__class__.__name__}.available_optimizers()` to list the available optimizers."
                 f"\nList of available Optimizers: {self.available_optimizers()}."
             )
-        optimizer_fn = self.optimizers_registry.get(optimizer_key.lower())
-        return optimizer_fn
+        return self.optimizers_registry.get(optimizer_key.lower())
 
     def configure_optimizers(self) -> Union[Optimizer, Tuple[List[Optimizer], List[_LRScheduler]]]:
         """Implement how optimizer and optionally learning rate schedulers should be configured."""
@@ -811,6 +810,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         # used only for CI
         if flash._IS_TESTING and torch.cuda.is_available():
             return [BenchmarkConvergenceCI()]
+        return None
 
     @requires("serve")
     def run_serve_sanity_check(

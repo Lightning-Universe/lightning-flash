@@ -33,8 +33,7 @@ class SpeechRecognitionOutputTransform(OutputTransform):
     def per_batch_transform(self, batch: Any) -> Any:
         # converts logits into greedy transcription
         pred_ids = torch.argmax(batch, dim=-1)
-        transcriptions = self._tokenizer.batch_decode(pred_ids)
-        return transcriptions
+        return self._tokenizer.batch_decode(pred_ids)
 
     def __getstate__(self):  # TODO: Find out why this is being pickled
         state = self.__dict__.copy()

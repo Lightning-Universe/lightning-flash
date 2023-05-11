@@ -47,26 +47,26 @@ class App:
                 else:
                     task["predictions"] = [temp]
             return _raw_data
-        else:
-            print("No export file provided, meta information is generated!")
-            final_results = []
-            for res in results:
-                temp = {
-                    "result": [res],
-                    "id": meta["max_predictions_id"],
-                    "model_version": "",
-                    "score": 0.0,
-                    "task": meta["max_predictions_id"],
-                }
-                task = {
-                    "id": meta["max_predictions_id"],
-                    "predictions": [temp],
-                    "data": {data_type: ""},
-                    "project": 1,
-                }
-                meta["max_predictions_id"] = meta["max_predictions_id"] + 1
-                final_results.append(task)
-            return final_results
+
+        print("No export file provided, meta information is generated!")
+        final_results = []
+        for res in results:
+            temp = {
+                "result": [res],
+                "id": meta["max_predictions_id"],
+                "model_version": "",
+                "score": 0.0,
+                "task": meta["max_predictions_id"],
+            }
+            task = {
+                "id": meta["max_predictions_id"],
+                "predictions": [temp],
+                "data": {data_type: ""},
+                "project": 1,
+            }
+            meta["max_predictions_id"] = meta["max_predictions_id"] + 1
+            final_results.append(task)
+        return final_results
 
     def _construct_result(self, pred):
         """Construction Label Studio result from data source and prediction values."""
@@ -79,7 +79,7 @@ class App:
         data_type = list(self.parameters.data_types)[0]
         # get tag type, if len(tag_types) > 1 take first tag
         tag_type = list(self.parameters.tag_types)[0]
-        js = {
+        return {
             "result": [
                 {
                     "id": "".join(
@@ -93,7 +93,6 @@ class App:
                 }
             ]
         }
-        return js
 
 
 def launch_app(datamodule: DataModule) -> "App":

@@ -68,6 +68,6 @@ def visualize(
         data = g.pipe(format=format)
         fhandle.seek(0)
         fhandle.write(data)
-        return
+        return None
 
     return g

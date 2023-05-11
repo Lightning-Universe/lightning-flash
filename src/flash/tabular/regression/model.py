@@ -130,14 +130,13 @@ class TabularRegressor(RegressionAdapterTask):
 
     @classmethod
     def from_data(cls, datamodule, **kwargs) -> "TabularRegressor":
-        model = cls(
+        return cls(
             parameters=datamodule.parameters,
             embedding_sizes=datamodule.embedding_sizes,
             cat_dims=datamodule.cat_dims,
             num_features=datamodule.num_features,
             **kwargs
         )
-        return model
 
     @requires("serve")
     def serve(

@@ -140,7 +140,7 @@ class TabularClassifier(ClassificationAdapterTask):
 
     @classmethod
     def from_data(cls, datamodule, **kwargs) -> "TabularClassifier":
-        model = cls(
+        return cls(
             parameters=datamodule.parameters,
             embedding_sizes=datamodule.embedding_sizes,
             cat_dims=datamodule.cat_dims,
@@ -148,7 +148,6 @@ class TabularClassifier(ClassificationAdapterTask):
             num_classes=datamodule.num_classes,
             **kwargs,
         )
-        return model
 
     @requires("serve")
     def serve(

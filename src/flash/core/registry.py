@@ -145,6 +145,7 @@ class FlashRegistry:
         for idx, fn in enumerate(self.functions):
             if all(fn[k] == item[k] for k in ("fn", "name", "metadata")):
                 return idx
+        return None
 
     def __call__(
         self,
@@ -309,6 +310,7 @@ class ConcatRegistry(FlashRegistry):
         for registry in self.registries:
             if getattr(registry, "_register_function", None) is not None:
                 return registry._register_function(fn, name=name, override=override, metadata=metadata)
+        return None
 
     def available_keys(self) -> List[str]:
         return list(itertools.chain.from_iterable(registry.available_keys() for registry in self.registries))

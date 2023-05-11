@@ -161,7 +161,7 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
 
     @staticmethod
     def get_model_config_template():
-        cfg = AttrDict(
+        return AttrDict(
             {
                 "BASE_MODEL_NAME": "multi_input_output_model",
                 "SINGLE_PASS_EVERY_CROP": False,
@@ -192,8 +192,6 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
             }
         )
 
-        return cfg
-
     def ssl_forward(self, batch) -> Any:
         model_output = self.vissl_base_model(batch)
 
@@ -211,9 +209,7 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
             for hook in self.hooks:
                 hook.on_forward(self.vissl_task)
 
-        loss = self.loss_fn(out, target=None)
-
-        return loss
+        return self.loss_fn(out, target=None)
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         loss = self.shared_step(batch)
