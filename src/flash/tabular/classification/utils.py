@@ -56,9 +56,7 @@ def _generate_codes(df: DataFrame, cat_cols: List) -> dict:
         tmp[col] = tmp[col].astype("category").cat.as_ordered()
 
     # list of categories for each column (always a column for None)
-    codes = {col: list(tmp[col].cat.categories) for col in cat_cols}
-
-    return codes
+    return {col: list(tmp[col].cat.categories) for col in cat_cols}
 
 
 def _categorize(df: DataFrame, cat_cols: List, codes) -> DataFrame:

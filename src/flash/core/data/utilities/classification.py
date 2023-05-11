@@ -356,11 +356,10 @@ def _get_target_formatter_type(target: Any) -> Type[TargetFormatter]:
         # TODO: This could be a dangerous assumption if people happen to have a label that contains a comma or space
         if "," in target:
             return CommaDelimitedMultiLabelTargetFormatter
-        elif " " in target:
+        if " " in target:
             return SpaceDelimitedTargetFormatter
-        else:
-            return SingleLabelTargetFormatter
-    elif _is_list_like(target):
+        return SingleLabelTargetFormatter
+    if _is_list_like(target):
         if isinstance(target[0], str):
             return MultiLabelTargetFormatter
         target = _as_list(target)
@@ -369,7 +368,7 @@ def _get_target_formatter_type(target: Any) -> Type[TargetFormatter]:
                 if sum(target) == 1:
                     return SingleBinaryTargetFormatter
                 return MultiBinaryTargetFormatter
-            elif any(isinstance(t, float) for t in target):
+            if any(isinstance(t, float) for t in target):
                 return MultiSoftTargetFormatter
             return MultiNumericTargetFormatter
     return SingleNumericTargetFormatter
@@ -393,9 +392,9 @@ def _resolve_target_formatter(a: Type[TargetFormatter], b: Type[TargetFormatter]
     """
     if a is b:
         return a
-    elif a in _RESOLUTION_MAPPING and b in _RESOLUTION_MAPPING[a]:
+    if a in _RESOLUTION_MAPPING and b in _RESOLUTION_MAPPING[a]:
         return b
-    elif b in _RESOLUTION_MAPPING and a in _RESOLUTION_MAPPING[b]:
+    if b in _RESOLUTION_MAPPING and a in _RESOLUTION_MAPPING[b]:
         return a
     raise ValueError(
         "Found inconsistent target formats. All targets should be either: single values, lists of values, or "

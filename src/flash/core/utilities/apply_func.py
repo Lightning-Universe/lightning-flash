@@ -29,3 +29,4 @@ def get_callable_dict(fn: Union[nn.Module, Callable, Mapping, Sequence]) -> Unio
         return {get_callable_name(f): f for f in fn}
     if callable(fn):
         return {get_callable_name(fn): fn}
+    return None

@@ -140,6 +140,5 @@ class TaskDistributedDataParallel(IterableDataset):
         for _ in range(self.worker_world_size):
             task_descriptions.append(self.taskset.sample_task_description())
 
-        data = self.taskset.get_task(task_descriptions[self.worker_rank])
         self.counter += 1
-        return data
+        return self.taskset.get_task(task_descriptions[self.worker_rank])

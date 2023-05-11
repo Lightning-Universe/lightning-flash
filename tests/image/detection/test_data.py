@@ -109,9 +109,7 @@ def _create_synth_folders_dataset(tmpdir):
     Image.new("RGB", (224, 224)).save(predict / "images" / "sample_one.png")
     Image.new("RGB", (224, 224)).save(predict / "images" / "sample_two.png")
 
-    predict_folder = os.fspath(Path(predict / "images"))
-
-    return predict_folder
+    return os.fspath(Path(predict / "images"))
 
 
 def _create_synth_files_dataset(tmpdir):

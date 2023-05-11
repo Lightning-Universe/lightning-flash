@@ -32,7 +32,7 @@ def simclr_transform(
     collate_fn: Callable = simclr_collate_fn,
 ) -> partial:
     """For simclr and barlow twins."""
-    transform = partial(
+    return partial(
         StandardMultiCropSSLTransform,
         total_num_crops=total_num_crops,
         num_crops=num_crops,
@@ -43,8 +43,6 @@ def simclr_transform(
         normalize=normalize,
         collate_fn=collate_fn,
     )
-
-    return transform
 
 
 def swav_transform(
@@ -58,7 +56,7 @@ def swav_transform(
     collate_fn: Callable = multicrop_collate_fn,
 ) -> partial:
     """For swav."""
-    transform = partial(
+    return partial(
         StandardMultiCropSSLTransform,
         total_num_crops=total_num_crops,
         num_crops=num_crops,
@@ -69,8 +67,6 @@ def swav_transform(
         normalize=normalize,
         collate_fn=collate_fn,
     )
-
-    return transform
 
 
 barlow_twins_transform = partial(simclr_transform, collate_fn=simclr_collate_fn)
