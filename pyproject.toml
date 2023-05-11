@@ -69,6 +69,9 @@ select = [
 #    "D",  # see: https://pypi.org/project/pydocstyle
 #    "N",  # see: https://pypi.org/project/pep8-naming
 ]
+extend-select = [
+    "SIM",  # see: https://pypi.org/project/flake8-simplify
+]
 ignore = [
     "E731",  # Do not assign a lambda expression, use a def
 ]
