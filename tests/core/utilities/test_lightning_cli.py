@@ -287,7 +287,9 @@ def test_lightning_cli_args_cluster_environments(tmpdir):
     plugins = [{"class_path": "pytorch_lightning.plugins.environments.SLURMEnvironment"}]
 
     with patch("sys.argv", ["any.py", f"--trainer.plugins={json.dumps(plugins)}"]):
-        cli = LightningCLI(TestModelClusterEnv, trainer_defaults={"default_root_dir": str(tmpdir), "fast_dev_run": True})
+        cli = LightningCLI(
+            TestModelClusterEnv, trainer_defaults={"default_root_dir": str(tmpdir), "fast_dev_run": True}
+        )
 
     assert cli.trainer.ran_asserts
 
