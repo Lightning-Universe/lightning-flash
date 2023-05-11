@@ -13,7 +13,7 @@
 # limitations under the License.
 import random
 from typing import Any
-from unittest import mock
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -141,7 +141,7 @@ def test_predict(tmpdir, head):
 
 
 @pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="serve libraries aren't installed.")
-@mock.patch("flash._IS_TESTING", True)
+@patch("flash._IS_TESTING", True)
 def test_serve():
     model = ObjectDetector(2)
     model.eval()

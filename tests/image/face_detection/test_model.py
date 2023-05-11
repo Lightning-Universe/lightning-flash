@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from unittest import mock
+from unittest.mock import patch
 
 import pytest
 
@@ -57,7 +57,7 @@ def test_fastface_backbones_registry():
 @pytest.mark.skipif(not _FASTFACE_AVAILABLE, reason="fastface not installed.")
 def test_cli():
     cli_args = ["flash", "face_detection", "--trainer.fast_dev_run", "True"]
-    with mock.patch("sys.argv", cli_args):
+    with patch("sys.argv", cli_args):
         try:
             main()
         except SystemExit:

@@ -13,7 +13,7 @@
 # limitations under the License.
 from dataclasses import dataclass
 from typing import Callable, Dict
-from unittest import mock
+from unittest.mock import MagicMock, NonCallableMock, patch
 
 import numpy as np
 import pytest
@@ -426,8 +426,8 @@ def test_datapipeline_transformations_overridden_by_task():
 
 
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
-@pytest.mark.parametrize("sampler, callable", [(mock.MagicMock(), True), (mock.NonCallableMock(), False)])
-@mock.patch("flash.core.data.data_module.DataLoader")
+@pytest.mark.parametrize("sampler, callable", [(MagicMock(), True), (NonCallableMock(), False)])
+@patch("flash.core.data.data_module.DataLoader")
 def test_dataloaders_with_sampler(mock_dataloader, sampler, callable):
     train_input = TestInput(RunningStage.TRAINING, [1])
     datamodule = DataModule(
