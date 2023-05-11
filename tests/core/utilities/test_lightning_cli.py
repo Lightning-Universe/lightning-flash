@@ -148,10 +148,6 @@ def test_parse_args_parsing_gpus(mocker, cli_args, expected_gpu):
 
 
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
-@pytest.mark.skipif(
-    sys.version_info < (3, 7),
-    reason="signature inspection while mocking is not working in Python < 3.7 despite autospec",
-)
 @pytest.mark.parametrize(
     ["cli_args", "extra_args"],
     [
