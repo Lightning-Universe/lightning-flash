@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import contextlib
 import functools
 import inspect
 import os
@@ -130,11 +131,8 @@ def _test_jit_script(self, tmpdir):
 def _test_cli(self, extra_args: List):
     """Tests that the default Flash zero configuration runs for the task."""
     cli_args = ["flash", self.cli_command, "--trainer.fast_dev_run", "True"] + extra_args
-    with patch("sys.argv", cli_args):
-        try:
-            main()
-        except SystemExit:
-            pass
+    with patch("sys.argv", cli_args), contextlib.suppress(SystemExit):
+        main()
 
 
 def _test_load_from_checkpoint_dependency_error(self):

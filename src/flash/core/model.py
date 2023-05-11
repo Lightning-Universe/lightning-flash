@@ -773,17 +773,20 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             )
 
         # Providers part
-        if lr_scheduler_metadata is not None and "providers" in lr_scheduler_metadata:
-            if lr_scheduler_metadata["providers"] == _HUGGINGFACE:
-                if lr_scheduler_data["name"] != "constant_schedule":
-                    num_training_steps: int = self.get_num_training_steps()
-                    num_warmup_steps: int = self._compute_warmup(
-                        num_training_steps=num_training_steps,
-                        num_warmup_steps=lr_scheduler_kwargs["num_warmup_steps"],
-                    )
-                    lr_scheduler_kwargs["num_warmup_steps"] = num_warmup_steps
-                    if lr_scheduler_data["name"] != "constant_schedule_with_warmup":
-                        lr_scheduler_kwargs["num_training_steps"] = num_training_steps
+        if (
+            lr_scheduler_metadata is not None
+            and "providers" in lr_scheduler_metadata
+            and lr_scheduler_metadata["providers"] == _HUGGINGFACE
+            and lr_scheduler_data["name"] != "constant_schedule"
+        ):
+            num_training_steps: int = self.get_num_training_steps()
+            num_warmup_steps: int = self._compute_warmup(
+                num_training_steps=num_training_steps,
+                num_warmup_steps=lr_scheduler_kwargs["num_warmup_steps"],
+            )
+            lr_scheduler_kwargs["num_warmup_steps"] = num_warmup_steps
+            if lr_scheduler_data["name"] != "constant_schedule_with_warmup":
+                lr_scheduler_kwargs["num_training_steps"] = num_training_steps
 
         # User can register a callable that returns a lr_scheduler_config
         # 1) If return value is an instance of _LR_Scheduler -> Add to current config and return the config.

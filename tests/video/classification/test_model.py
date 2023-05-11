@@ -135,10 +135,11 @@ def mock_encoded_video_dataset_folder(tmpdir):
     os.makedirs(str(tmp_dir / "c1"))
     os.makedirs(str(tmp_dir / "c2"))
 
-    with temp_encoded_video(num_frames=num_frames, fps=fps, directory=str(tmp_dir / "c1")):
-        with temp_encoded_video(num_frames=num_frames, fps=fps, directory=str(tmp_dir / "c2")):
-            video_duration = num_frames / fps
-            yield str(tmp_dir), video_duration
+    with temp_encoded_video(num_frames=num_frames, fps=fps, directory=str(tmp_dir / "c1")), temp_encoded_video(
+        num_frames=num_frames, fps=fps, directory=str(tmp_dir / "c2")
+    ):
+        video_duration = num_frames / fps
+        yield str(tmp_dir), video_duration
 
 
 @pytest.mark.skipif(not _TOPIC_VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
