@@ -84,10 +84,9 @@ class ModuleWrapperBase:
         if isinstance(value, (LightningModule, ModuleWrapperBase)):
             self._children.append(key)
         patched_attributes = ["_current_fx_name", "_current_hook_fx_name", "_results", "_data_pipeline_state"]
-        if isinstance(value, Trainer) or key in patched_attributes:
-            if hasattr(self, "_children"):
-                for child in self._children:
-                    setattr(getattr(self, child), key, value)
+        if (isinstance(value, Trainer) or key in patched_attributes) and hasattr(self, "_children"):
+            for child in self._children:
+                setattr(getattr(self, child), key, value)
         super().__setattr__(key, value)
 
 
@@ -487,8 +486,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
                 f"\nUse `{self.__class__.__name__}.available_optimizers()` to list the available optimizers."
                 f"\nList of available Optimizers: {self.available_optimizers()}."
             )
-        optimizer_fn = self.optimizers_registry.get(optimizer_key.lower())
-        return optimizer_fn
+        return self.optimizers_registry.get(optimizer_key.lower())
 
     def configure_optimizers(self) -> Union[Optimizer, Tuple[List[Optimizer], List[_LRScheduler]]]:
         """Implement how optimizer and optionally learning rate schedulers should be configured."""
@@ -774,17 +772,20 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             )
 
         # Providers part
-        if lr_scheduler_metadata is not None and "providers" in lr_scheduler_metadata.keys():
-            if lr_scheduler_metadata["providers"] == _HUGGINGFACE:
-                if lr_scheduler_data["name"] != "constant_schedule":
-                    num_training_steps: int = self.get_num_training_steps()
-                    num_warmup_steps: int = self._compute_warmup(
-                        num_training_steps=num_training_steps,
-                        num_warmup_steps=lr_scheduler_kwargs["num_warmup_steps"],
-                    )
-                    lr_scheduler_kwargs["num_warmup_steps"] = num_warmup_steps
-                    if lr_scheduler_data["name"] != "constant_schedule_with_warmup":
-                        lr_scheduler_kwargs["num_training_steps"] = num_training_steps
+        if (
+            lr_scheduler_metadata is not None
+            and "providers" in lr_scheduler_metadata
+            and lr_scheduler_metadata["providers"] == _HUGGINGFACE
+            and lr_scheduler_data["name"] != "constant_schedule"
+        ):
+            num_training_steps: int = self.get_num_training_steps()
+            num_warmup_steps: int = self._compute_warmup(
+                num_training_steps=num_training_steps,
+                num_warmup_steps=lr_scheduler_kwargs["num_warmup_steps"],
+            )
+            lr_scheduler_kwargs["num_warmup_steps"] = num_warmup_steps
+            if lr_scheduler_data["name"] != "constant_schedule_with_warmup":
+                lr_scheduler_kwargs["num_training_steps"] = num_training_steps
 
         # User can register a callable that returns a lr_scheduler_config
         # 1) If return value is an instance of _LR_Scheduler -> Add to current config and return the config.
@@ -793,7 +794,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
         if isinstance(lr_scheduler, Dict):
             dummy_config = default_scheduler_config
-            if not all(config_key in dummy_config.keys() for config_key in lr_scheduler.keys()):
+            if not all(config_key in dummy_config for config_key in lr_scheduler):
                 raise ValueError(
                     f"Please make sure that your custom configuration outputs either an LR Scheduler or a scheduler"
                     f" configuration with keys belonging to {list(dummy_config.keys())}."
@@ -809,6 +810,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
         # used only for CI
         if flash._IS_TESTING and torch.cuda.is_available():
             return [BenchmarkConvergenceCI()]
+        return None
 
     @requires("serve")
     def run_serve_sanity_check(

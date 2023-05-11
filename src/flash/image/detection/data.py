@@ -40,10 +40,7 @@ from flash.image.detection.input import (
     ObjectDetectionTensorInput,
 )
 
-if _FIFTYONE_AVAILABLE:
-    SampleCollection = "fiftyone.core.collections.SampleCollection"
-else:
-    SampleCollection = None
+SampleCollection = "fiftyone.core.collections.SampleCollection" if _FIFTYONE_AVAILABLE else None
 
 if _ICEVISION_AVAILABLE:
     from icevision.core import ClassMap

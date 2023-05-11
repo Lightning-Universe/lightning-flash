@@ -65,10 +65,7 @@ class FlashRegistry:
         else:
             registries += [self]
 
-        if isinstance(other, ConcatRegistry):
-            registries = other.registries + tuple(registries)
-        else:
-            registries = [other] + registries
+        registries = other.registries + tuple(registries) if isinstance(other, ConcatRegistry) else [other] + registries
 
         return ConcatRegistry(*registries)
 
@@ -122,10 +119,7 @@ class FlashRegistry:
             raise TypeError(f"You can only register a callable, found: {fn}")
 
         if name is None:
-            if hasattr(fn, "func"):
-                name = fn.func.__name__
-            else:
-                name = fn.__name__
+            name = fn.func.__name__ if hasattr(fn, "func") else fn.__name__
 
         if self._verbose:
             rank_zero_info(f"Registering: {fn.__name__} function with name: {name} and metadata: {metadata}")
@@ -151,6 +145,7 @@ class FlashRegistry:
         for idx, fn in enumerate(self.functions):
             if all(fn[k] == item[k] for k in ("fn", "name", "metadata")):
                 return idx
+        return None
 
     def __call__(
         self,
@@ -315,6 +310,7 @@ class ConcatRegistry(FlashRegistry):
         for registry in self.registries:
             if getattr(registry, "_register_function", None) is not None:
                 return registry._register_function(fn, name=name, override=override, metadata=metadata)
+        return None
 
     def available_keys(self) -> List[str]:
         return list(itertools.chain.from_iterable(registry.available_keys() for registry in self.registries))

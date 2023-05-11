@@ -123,7 +123,7 @@ def test_predict_sklearn():
 
 
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
-@pytest.mark.parametrize("jitter, args", [(torch.jit.script, ()), (torch.jit.trace, (torch.rand(1, 16),))])
+@pytest.mark.parametrize(("jitter", "args"), [(torch.jit.script, ()), (torch.jit.trace, (torch.rand(1, 16),))])
 @pytest.mark.xfail(RuntimeError, reason="TemplateSKLearnClassifier is not attached to a `Trainer`")  # fixme
 def test_jit(tmpdir, jitter, args):
     path = os.path.join(tmpdir, "testing_model.pt")

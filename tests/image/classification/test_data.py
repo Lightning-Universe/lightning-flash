@@ -419,7 +419,7 @@ def test_from_filepaths_multilabel(tmpdir):
 
 @pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.parametrize(
-    "data,from_function",
+    ("data", "from_function"),
     [
         (torch.rand(3, 3, 196, 196), ImageClassificationData.from_tensors),
         (np.random.rand(3, 3, 196, 196), ImageClassificationData.from_numpy),
@@ -546,7 +546,7 @@ def test_from_datasets():
     assert labels.shape == (2,)
 
 
-@pytest.fixture
+@pytest.fixture()
 def image_tmpdir(tmpdir):
     (tmpdir / "train").mkdir()
     Image.new("RGB", (128, 128)).save(str(tmpdir / "train" / "image_1.png"))
@@ -554,7 +554,7 @@ def image_tmpdir(tmpdir):
     return tmpdir / "train"
 
 
-@pytest.fixture
+@pytest.fixture()
 def single_target_csv(image_tmpdir):
     with open(image_tmpdir / "metadata.csv", "w") as csvfile:
         fieldnames = ["image", "target"]
@@ -582,7 +582,7 @@ def test_from_csv_single_target(single_target_csv):
     assert labels.shape == (2,)
 
 
-@pytest.fixture
+@pytest.fixture()
 def multi_target_csv(image_tmpdir):
     with open(image_tmpdir / "metadata.csv", "w") as csvfile:
         fieldnames = ["image", "target_1", "target_2"]
@@ -610,7 +610,7 @@ def test_from_csv_multi_target(multi_target_csv):
     assert labels.shape == (2, 2)
 
 
-@pytest.fixture
+@pytest.fixture()
 def bad_csv_no_image(image_tmpdir):
     with open(image_tmpdir / "metadata.csv", "w") as csvfile:
         fieldnames = ["image", "target"]

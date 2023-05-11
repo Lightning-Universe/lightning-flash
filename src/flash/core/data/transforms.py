@@ -53,9 +53,9 @@ class AlbumentationsAdapter(nn.Module):
         x_ = self.transform(**x_)
         if isinstance(x, dict):
             x.update({self._mapping_rev.get(k, k): x_[k] for k in self._mapping_rev if k in x_})
-        else:
-            x = x_["image"]
-        return x
+            return x
+
+        return x_["image"]
 
 
 class ApplyToKeys(nn.Sequential):

@@ -97,7 +97,7 @@ def _validate_model_args(
         if not all(isinstance(x, _Servable_t) for x in args):
             raise TypeError(f"One of arg in args={args} is not type {_Servable_t}")
     elif isinstance(args, dict):
-        if not all(isinstance(x, str) for x in args.keys()):
+        if not all(isinstance(x, str) for x in args):
             raise TypeError(f"One of keys in args={args.keys()} is not type {str}")
         if not all(isinstance(x, _Servable_t) for x in args.values()):
             raise TypeError(f"One of values in args={args} is not type {_Servable_t}")

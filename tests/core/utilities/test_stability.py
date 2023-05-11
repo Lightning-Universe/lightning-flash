@@ -39,7 +39,7 @@ def _beta_func_custom_message():
 
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 @pytest.mark.parametrize(
-    "callable, match",
+    ("callable", "match"),
     [
         (_BetaType, "This feature is currently in Beta."),
         (_BetaTypeCustomMessage, "_BetaTypeCustomMessage is currently in Beta."),

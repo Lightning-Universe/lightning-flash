@@ -74,7 +74,7 @@ def test_add_argparse_args_redefined(cli_args):
 
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 @pytest.mark.parametrize(
-    ["cli_args", "expected"],
+    ("cli_args", "expected"),
     [
         ("--auto_lr_find=True --auto_scale_batch_size=power", {"auto_lr_find": True, "auto_scale_batch_size": "power"}),
         (
@@ -103,7 +103,7 @@ def test_parse_args_parsing(cli_args, expected):
 
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 @pytest.mark.parametrize(
-    ["cli_args", "expected", "instantiate"],
+    ("cli_args", "expected", "instantiate"),
     [
         (["--gpus", "[0, 2]"], {"gpus": [0, 2]}, False),
         (["--tpu_cores=[1,3]"], {"tpu_cores": [1, 3]}, False),
@@ -125,7 +125,7 @@ def test_parse_args_parsing_complex_types(cli_args, expected, instantiate):
 
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 @pytest.mark.parametrize(
-    ["cli_args", "expected_gpu"],
+    ("cli_args", "expected_gpu"),
     [
         ("--gpus 1", [0]),
         ("--gpus 0,", [0]),
@@ -148,7 +148,7 @@ def test_parse_args_parsing_gpus(mocker, cli_args, expected_gpu):
 
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 @pytest.mark.parametrize(
-    ["cli_args", "extra_args"],
+    ("cli_args", "extra_args"),
     [
         ({}, {}),
         ({"logger": False}, {}),
@@ -188,7 +188,7 @@ def trainer_builder(
 
 
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
-@pytest.mark.parametrize(["trainer_class", "model_class"], [(Trainer, Model), (trainer_builder, model_builder)])
+@pytest.mark.parametrize(("trainer_class", "model_class"), [(Trainer, Model), (trainer_builder, model_builder)])
 def test_lightning_cli(trainer_class, model_class, monkeypatch):
     """Test that LightningCLI correctly instantiates model, trainer and calls fit."""
 
@@ -217,7 +217,8 @@ def test_lightning_cli(trainer_class, model_class, monkeypatch):
 
     with patch("sys.argv", ["any.py", "--model.model_param=7", "--trainer.limit_train_batches=100"]):
         cli = LightningCLI(model_class, trainer_class=trainer_class, save_config_callback=SaveConfigCallback)
-        assert hasattr(cli.trainer, "ran_asserts") and cli.trainer.ran_asserts
+        assert hasattr(cli.trainer, "ran_asserts")
+        assert cli.trainer.ran_asserts
 
 
 class TestModelCallbacks(BoringModel):
@@ -307,7 +308,8 @@ def test_lightning_cli_args(tmpdir):
     assert os.path.isfile(config_path)
     with open(config_path) as f:
         config = yaml.safe_load(f.read())
-    assert "model" not in config and "model" not in cli.config  # no arguments to include
+    assert "model" not in config
+    assert "model" not in cli.config
     assert config["data"] == cli.config["data"]
     assert config["trainer"] == cli.config["trainer"]
 
@@ -389,7 +391,7 @@ def test_lightning_cli_help():
     assert "--data.help" in out.getvalue()
 
     skip_params = {"self"}
-    for param in inspect.signature(Trainer.__init__).parameters.keys():
+    for param in inspect.signature(Trainer.__init__).parameters:
         if param not in skip_params:
             assert f"--trainer.{param}" in out.getvalue()
 
@@ -577,13 +579,13 @@ class EarlyExitTestModel(BoringModel):
 
 
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
-@pytest.mark.parametrize("logger", (False, True))
+@pytest.mark.parametrize("logger", [False, True])
 @pytest.mark.parametrize(
     "trainer_kwargs",
-    (
+    [
         {"accelerator": "cpu", "strategy": "ddp"},
         {"accelerator": "cpu", "strategy": "ddp", "plugins": "ddp_find_unused_parameters_false"},
-    ),
+    ],
 )
 @pytest.mark.xfail(reason="Bugs in PL >= 1.6.0")
 def test_cli_ddp_spawn_save_config_callback(tmpdir, logger, trainer_kwargs):

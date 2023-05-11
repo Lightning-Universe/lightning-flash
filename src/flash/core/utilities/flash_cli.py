@@ -192,14 +192,16 @@ class FlashCLI(LightningCLI):
     def add_arguments_to_parser(self, parser) -> None:
         subcommands = parser.add_subcommands()
 
-        for function in vars(self.local_datamodule_class).keys():
+        for function in vars(self.local_datamodule_class):
             if not function.startswith("from"):
                 continue
-            if (
-                hasattr(DataModule, function) and is_overridden(function, self.local_datamodule_class, DataModule)
-            ) or not hasattr(DataModule, function):
-                if getattr(self.local_datamodule_class, function, None) is not None:
-                    self.add_subcommand_from_function(subcommands, getattr(self.local_datamodule_class, function))
+            _data_overwritten = hasattr(DataModule, function) and is_overridden(
+                function, self.local_datamodule_class, DataModule
+            )
+            if (_data_overwritten or not hasattr(DataModule, function)) and getattr(
+                self.local_datamodule_class, function, None
+            ) is not None:
+                self.add_subcommand_from_function(subcommands, getattr(self.local_datamodule_class, function))
 
         for datamodule_builder in self.additional_datamodule_builders:
             self.add_subcommand_from_function(subcommands, datamodule_builder)
@@ -243,9 +245,11 @@ class FlashCLI(LightningCLI):
         self.datamodule = self._subcommand_builders[sub_config](**self.config.get(sub_config))
 
         for datamodule_attribute in self.datamodule_attributes:
-            if datamodule_attribute in self.config["model"]:
-                if getattr(self.datamodule, datamodule_attribute, None) is not None:
-                    self.config["model"][datamodule_attribute] = getattr(self.datamodule, datamodule_attribute)
+            if (
+                datamodule_attribute in self.config["model"]
+                and getattr(self.datamodule, datamodule_attribute, None) is not None
+            ):
+                self.config["model"][datamodule_attribute] = getattr(self.datamodule, datamodule_attribute)
         self.config_init = self.parser.instantiate_classes(self.config)
         self.model = self.config_init["model"]
         self.instantiate_trainer()

@@ -366,7 +366,7 @@ def order(dsk, dependencies=None):
                             if now_keys:
                                 # Run before `inner_stack` (change tactical goal!)
                                 inner_stacks_append(inner_stack)
-                                if 1 < len(now_keys):
+                                if len(now_keys) > 1:
                                     now_keys.sort(reverse=True)
                                 for key in now_keys:
                                     pool = dep_pools[key]

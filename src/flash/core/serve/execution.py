@@ -267,7 +267,7 @@ def build_composition(
         dsk_tgt_src_connections[target_dsk] = (identity, source_dsk)
 
     rewrite_ruleset = RuleSet()
-    for dsk_payload_target_serial in initial_task_dsk.payload_tasks_dsk.keys():
+    for dsk_payload_target_serial in initial_task_dsk.payload_tasks_dsk:
         dsk_payload_target, _serial_ident = dsk_payload_target_serial.rsplit(".", maxsplit=1)
         if _serial_ident != "serial":
             raise RuntimeError(
@@ -317,7 +317,7 @@ def build_composition(
     toposort_keys = toposort(inlined_culled_dsk)
 
     # construct results
-    res = TaskComposition(
+    return TaskComposition(
         dsk=inlined_culled_dsk,
         sortkeys=toposort_keys,
         get_keys=initial_task_dsk.output_keys,
@@ -325,7 +325,6 @@ def build_composition(
         ep_dsk_output_keys=initial_task_dsk.result_dsk_map,
         pre_optimization_dsk=initial_task_dsk.merged_dsk,
     )
-    return res
 
 
 def _verify_no_cycles(dsk: Dict[str, tuple], out_keys: List[str], endpoint_name: str):

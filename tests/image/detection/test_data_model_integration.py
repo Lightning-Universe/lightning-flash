@@ -34,7 +34,7 @@ if _FIFTYONE_AVAILABLE:
 
 
 @pytest.mark.skipif(not _COCO_AVAILABLE, reason="coco is not installed for testing")
-@pytest.mark.parametrize(["head", "backbone"], [("retinanet", "resnet18_fpn"), ("faster_rcnn", "resnet18_fpn")])
+@pytest.mark.parametrize(("head", "backbone"), [("retinanet", "resnet18_fpn"), ("faster_rcnn", "resnet18_fpn")])
 def test_detection(tmpdir, head, backbone):
     train_folder, coco_ann_path = _create_synth_coco_dataset(tmpdir)
 
@@ -56,7 +56,7 @@ def test_detection(tmpdir, head, backbone):
 
 
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
-@pytest.mark.parametrize(["head", "backbone"], [("retinanet", "resnet18_fpn")])
+@pytest.mark.parametrize(("head", "backbone"), [("retinanet", "resnet18_fpn")])
 def test_detection_fiftyone(tmpdir, head, backbone):
     train_dataset = _create_synth_fiftyone_dataset(tmpdir)
 

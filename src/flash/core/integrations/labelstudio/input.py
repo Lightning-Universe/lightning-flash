@@ -141,11 +141,10 @@ class BaseLabelStudioInput(Properties):
         label = _get_labels_from_sample(sample["label"], self.parameters.classes)
         # delete label from input data
         del sample["label"]
-        result = {
+        return {
             DataKeys.INPUT: sample,
             DataKeys.TARGET: label,
         }
-        return result
 
     @staticmethod
     def _split_train_test_data(data: Dict, multi_label: bool = False) -> List[Dict]:
@@ -192,7 +191,8 @@ class BaseLabelStudioInput(Properties):
 
     @staticmethod
     def _split_train_val_data(data: Dict, split: float = 0) -> List[Dict]:
-        assert split > 0 and split < 1
+        assert split > 0
+        assert split < 1
         file_path = data.get("export_json", None)
 
         if not file_path:
@@ -241,11 +241,10 @@ class LabelStudioImageClassificationInput(LabelStudioInput):
         p = sample["file_upload"]
         # loading image
         image = load_image(p)
-        result = {
+        return {
             DataKeys.INPUT: image,
             DataKeys.TARGET: _get_labels_from_sample(sample["label"], self.parameters.classes),
         }
-        return result
 
 
 class LabelStudioTextClassificationInput(LabelStudioInput):

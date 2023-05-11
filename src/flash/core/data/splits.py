@@ -40,10 +40,7 @@ class SplitDataset(Properties, Dataset):
         if not isinstance(indices, list):
             raise TypeError("indices should be a list")
 
-        if use_duplicated_indices:
-            indices = list(indices)
-        else:
-            indices = list(np.unique(indices))
+        indices = list(indices) if use_duplicated_indices else list(np.unique(indices))
 
         if np.max(indices) >= len(dataset) or np.min(indices) < 0:
             raise ValueError(f"`indices` should be within [0, {len(dataset) -1}].")

@@ -80,10 +80,7 @@ def key_split(s):
         s = s[0]
     try:
         words = s.split("-")
-        if not words[0][0].isalpha():
-            result = words[0].strip("_'()\"")
-        else:
-            result = words[0]
+        result = words[0].strip("_'()\"") if not words[0][0].isalpha() else words[0]
         for word in words[1:]:
             if word.isalpha() and not (len(word) == 8 and hex_pattern.match(word) is not None):
                 result += "-" + word

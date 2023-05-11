@@ -30,7 +30,7 @@ from tests.image.classification.test_data import _rand_image
 # ======== Mock functions ========
 
 
-@pytest.fixture
+@pytest.fixture()
 def simple_datamodule(tmpdir):
     train_dir = Path(tmpdir / "train")
     train_dir.mkdir()
@@ -49,7 +49,7 @@ def simple_datamodule(tmpdir):
     _rand_image(image_size).save(pb_2)
 
     n = 10
-    dm = ImageClassificationData.from_files(
+    return ImageClassificationData.from_files(
         train_files=[str(pa_1)] * n + [str(pa_2)] * n + [str(pb_1)] * n + [str(pb_2)] * n,
         train_targets=[0] * n + [1] * n + [2] * n + [3] * n,
         test_files=[str(pa_1)] * n,
@@ -58,13 +58,12 @@ def simple_datamodule(tmpdir):
         num_workers=0,
         transform_kwargs={"image_size": image_size},
     )
-    return dm
 
 
 @pytest.mark.skipif(
     not (_TOPIC_IMAGE_AVAILABLE and _BAAL_AVAILABLE), reason="image and baal libraries aren't installed."
 )
-@pytest.mark.parametrize("initial_num_labels, query_size", [(0, 5), (5, 5)])
+@pytest.mark.parametrize(("initial_num_labels", "query_size"), [(0, 5), (5, 5)])
 def test_active_learning_training(simple_datamodule, initial_num_labels, query_size):
     seed_everything(42)
 

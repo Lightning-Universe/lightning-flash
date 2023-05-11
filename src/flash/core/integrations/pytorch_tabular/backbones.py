@@ -51,7 +51,7 @@ if _PYTORCHTABULAR_AVAILABLE:
                     **{
                         k: v
                         for k, v in _config.items()
-                        if (k in cls.__dataclass_fields__.keys()) and cls.__dataclass_fields__[k].init
+                        if (k in cls.__dataclass_fields__) and cls.__dataclass_fields__[k].init
                     }
                 )
             else:
@@ -76,10 +76,9 @@ if _PYTORCHTABULAR_AVAILABLE:
             OmegaConf.create(parameters),
             OmegaConf.to_container(model_config),
         )
-        model = model_callable(
+        return model_callable(
             config=config, custom_loss=loss_fn, custom_metrics=metrics, inferred_config=DictConfig(config)
         )
-        return model
 
     for model_config_class, name in zip(
         [

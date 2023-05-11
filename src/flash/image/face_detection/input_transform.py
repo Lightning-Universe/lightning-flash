@@ -41,7 +41,7 @@ def fastface_collate_fn(samples: Sequence[Dict[str, Any]]) -> Dict[str, Sequence
     samples["scales"] = scales
     samples["paddings"] = paddings
 
-    if DataKeys.TARGET in samples.keys():
+    if DataKeys.TARGET in samples:
         targets = samples[DataKeys.TARGET]
 
         for i, (target, scale, padding) in enumerate(zip(targets, scales, paddings)):

@@ -39,13 +39,19 @@ def test_init():
     test_input = DatasetInput(RunningStage.TESTING, DummyDataset())
 
     data_module = DataModule(train_input, batch_size=1)
-    assert data_module.train_dataset and not data_module.val_dataset and not data_module.test_dataset
+    assert data_module.train_dataset
+    assert not data_module.val_dataset
+    assert not data_module.test_dataset
 
     data_module = DataModule(train_input, val_input, batch_size=1)
-    assert data_module.train_dataset and data_module.val_dataset and not data_module.test_dataset
+    assert data_module.train_dataset
+    assert data_module.val_dataset
+    assert not data_module.test_dataset
 
     data_module = DataModule(train_input, val_input, test_input, batch_size=1)
-    assert data_module.train_dataset and data_module.val_dataset and data_module.test_dataset
+    assert data_module.train_dataset
+    assert data_module.val_dataset
+    assert data_module.test_dataset
 
 
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")

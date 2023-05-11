@@ -386,6 +386,7 @@ def default_fused_keys_renamer(keys, max_fused_key_length=120):
         names.append(first_key[0])
         concatenated_name = "-".join(names)
         return (_enforce_max_key_limit(concatenated_name),) + first_key[1:]
+    return None
 
 
 # PEP-484 compliant singleton constant
@@ -492,10 +493,7 @@ def fuse(
         key_renamer = rename_keys
     rename_keys = key_renamer is not None
 
-    if dependencies is None:
-        deps = {k: get_dependencies(dsk, k, as_list=True) for k in dsk}
-    else:
-        deps = dict(dependencies)
+    deps = {k: get_dependencies(dsk, k, as_list=True) for k in dsk} if dependencies is None else dict(dependencies)
 
     rdeps = {}
     for k, vals in deps.items():
@@ -885,8 +883,7 @@ class SubgraphCallable:
 
     def __eq__(self, other):
         is_key = self.outkey == other.outkey and set(self.inkeys) == set(other.inkeys)
-        is_eq = type(self) is type(other) and self.name == other.name and is_key
-        return is_eq
+        return type(self) is type(other) and self.name == other.name and is_key
 
     def __ne__(self, other):
         return not self.__eq__(other)

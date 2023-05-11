@@ -32,7 +32,7 @@ if _TOPIC_IMAGE_AVAILABLE:
 COCODataConfig = collections.namedtuple("COCODataConfig", "train_folder train_ann_file predict_folder")
 
 
-@pytest.fixture
+@pytest.fixture()
 def coco_instances(tmpdir):
     rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
     os.makedirs(tmpdir / "train_folder", exist_ok=True)
@@ -134,7 +134,7 @@ class TestInstanceSegmentation(TaskTester):
 
 
 @pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
-@pytest.mark.parametrize("backbone, head", [("resnet18_fpn", "mask_rcnn")])
+@pytest.mark.parametrize(("backbone", "head"), [("resnet18_fpn", "mask_rcnn")])
 def test_model(coco_instances, backbone, head):
     datamodule = InstanceSegmentationData.from_coco(
         train_folder=coco_instances.train_folder,

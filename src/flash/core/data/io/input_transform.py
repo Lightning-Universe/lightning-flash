@@ -774,10 +774,7 @@ class _InputTransformProcessor:
                 self.callback.on_load_sample(sample, self.stage)
 
         if self.apply_per_sample_transform:
-            if not isinstance(samples, list):
-                list_samples = [samples]
-            else:
-                list_samples = samples
+            list_samples = [samples] if not isinstance(samples, list) else samples
 
             transformed_samples = [self.per_sample_transform(sample, self.stage) for sample in list_samples]
 
@@ -840,14 +837,13 @@ def create_worker_input_transform_processor(
     worker_collate_fn, _ = __configure_worker_and_device_collate_fn(
         running_stage=running_stage, input_transform=input_transform
     )
-    worker_input_transform_processor = _InputTransformProcessor(
+    return _InputTransformProcessor(
         input_transform,
         worker_collate_fn,
         input_transform._per_sample_transform,
         input_transform._per_batch_transform,
         running_stage,
     )
-    return worker_input_transform_processor
 
 
 def create_device_input_transform_processor(
@@ -858,7 +854,7 @@ def create_device_input_transform_processor(
     _, device_collate_fn = __configure_worker_and_device_collate_fn(
         running_stage=running_stage, input_transform=input_transform
     )
-    device_input_transform_processor = _InputTransformProcessor(
+    return _InputTransformProcessor(
         input_transform,
         device_collate_fn,
         input_transform._per_sample_transform_on_device,
@@ -867,4 +863,3 @@ def create_device_input_transform_processor(
         apply_per_sample_transform=device_collate_fn != input_transform._identity,
         on_device=True,
     )
-    return device_input_transform_processor
