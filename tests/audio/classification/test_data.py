@@ -21,7 +21,7 @@ from pytorch_lightning import seed_everything
 
 import flash
 from flash.audio import AudioClassificationData
-from flash.core.utilities.imports import _AUDIO_TESTING, _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE
+from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE, _TOPIC_AUDIO_AVAILABLE
 
 if _PIL_AVAILABLE:
     from PIL import Image
@@ -49,7 +49,7 @@ def _audio_files(_):
     return [raw_audio_path, raw_audio_path], 1
 
 
-@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_AUDIO_AVAILABLE, reason="audio libraries aren't installed.")
 @pytest.mark.parametrize("file_generator", [_image_files, _audio_files])
 def test_from_filepaths(tmpdir, file_generator):
     train_images, channels = file_generator(tmpdir)
@@ -69,7 +69,7 @@ def test_from_filepaths(tmpdir, file_generator):
     assert sorted(list(labels.numpy())) == [1, 2]
 
 
-@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_AUDIO_AVAILABLE, reason="audio libraries aren't installed.")
 @pytest.mark.parametrize(
     "data,from_function",
     [
@@ -112,7 +112,7 @@ def test_from_data(data, from_function):
     assert list(labels.numpy()) == [2, 5]
 
 
-@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_AUDIO_AVAILABLE, reason="audio libraries aren't installed.")
 def test_from_filepaths_numpy(tmpdir):
     tmpdir = Path(tmpdir)
 
@@ -139,7 +139,7 @@ def test_from_filepaths_numpy(tmpdir):
     assert sorted(list(labels.numpy())) == [1, 2]
 
 
-@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_AUDIO_AVAILABLE, reason="audio libraries aren't installed.")
 def test_from_filepaths_list_image_paths(tmpdir):
     tmpdir = Path(tmpdir)
 
@@ -185,7 +185,7 @@ def test_from_filepaths_list_image_paths(tmpdir):
     assert list(labels.numpy()) == [2, 5]
 
 
-@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_AUDIO_AVAILABLE, reason="audio libraries aren't installed.")
 @pytest.mark.skipif(not _MATPLOTLIB_AVAILABLE, reason="matplotlib isn't installed.")
 def test_from_filepaths_visualise(tmpdir):
     tmpdir = Path(tmpdir)
@@ -220,7 +220,7 @@ def test_from_filepaths_visualise(tmpdir):
     dm.show_train_batch(["per_sample_transform", "per_batch_transform"])
 
 
-@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_AUDIO_AVAILABLE, reason="audio libraries aren't installed.")
 @pytest.mark.skipif(not _MATPLOTLIB_AVAILABLE, reason="matplotlib isn't installed.")
 def test_from_filepaths_visualise_multilabel(tmpdir):
     tmpdir = Path(tmpdir)
@@ -255,7 +255,7 @@ def test_from_filepaths_visualise_multilabel(tmpdir):
     dm.show_val_batch("per_batch_transform")
 
 
-@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_AUDIO_AVAILABLE, reason="audio libraries aren't installed.")
 def test_from_folders_only_train(tmpdir):
     seed_everything(42)
 
@@ -278,7 +278,7 @@ def test_from_folders_only_train(tmpdir):
     assert labels.shape == (1,)
 
 
-@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_AUDIO_AVAILABLE, reason="audio libraries aren't installed.")
 def test_from_folders_train_val(tmpdir):
     seed_everything(42)
 
@@ -319,7 +319,7 @@ def test_from_folders_train_val(tmpdir):
     assert list(labels.numpy()) == [0, 0]
 
 
-@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_AUDIO_AVAILABLE, reason="audio libraries aren't installed.")
 def test_from_filepaths_multilabel(tmpdir):
     tmpdir = Path(tmpdir)
 

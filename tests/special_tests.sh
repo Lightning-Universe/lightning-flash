@@ -31,7 +31,7 @@ linenos=$(echo "$grep_output" | cut -f2 -d:)
 linenos_arr=($linenos)
 
 # tests to skip - space separated
-blocklist='test_pytorch_profiler_nested_emit_nvtx'
+blocklist=''
 report=''
 
 for i in "${!files_arr[@]}"; do

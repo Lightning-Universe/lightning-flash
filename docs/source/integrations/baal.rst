@@ -22,13 +22,13 @@ The most uncertain samples will be labelled by the human to accelerate the model
 .. raw:: html
 
   <div style="margin-top: 20px; margin-bottom: 20px">
-    <img src="https://raw.githubusercontent.com/ElementAI/baal/master/docs/literature/images/Baalscheme.svg" width="400px">
+    <img src="https://raw.githubusercontent.com/baal-org/baal/master/docs/research/literature/images/Baalscheme.svg" width="400px">
     <p align="center">Credit to ElementAI / Baal Team for creating this diagram flow</p>
     <br />
   </div>
 
 With its integration within Flash, the Active Learning process is simpler than ever before.
 
-.. literalinclude:: ../../../flash_examples/integrations/baal/image_classification_active_learning.py
+.. literalinclude:: ../../../examples/image/baal_img_classification_active_learning.py
     :language: python
     :lines: 14-

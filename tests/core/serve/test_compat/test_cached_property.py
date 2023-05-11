@@ -14,7 +14,7 @@ import pytest
 
 # Package Implementation
 from flash.core.serve._compat.cached_property import cached_property
-from flash.core.utilities.imports import _SERVE_TESTING
+from flash.core.utilities.imports import _TOPIC_SERVE_AVAILABLE
 
 
 class CachedCostItem:
@@ -78,7 +78,7 @@ class CachedCostItemWithSlots:
 
 
 # noinspection PyStatementEffect
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 class TestCachedProperty:
     @staticmethod
     def test_cached():
@@ -146,7 +146,6 @@ class TestCachedProperty:
     def test_reuse_different_names():
         """Disallow this case because decorated function a would not be cached."""
         with pytest.raises(RuntimeError):
-
             # noinspection PyUnusedLocal
             class ReusedCachedProperty:  # NOSONAR
                 """Test class."""
@@ -211,7 +210,7 @@ class TestCachedProperty:
         assert CachedCostItem.cost.__doc__ == "The cost of the item."
 
 
-@pytest.mark.skipif(not _SERVE_TESTING, reason="Not testing serve.")
+@pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 @pytest.mark.skipif(sys.version_info < (3, 8), reason="Validate, that python 3.8 uses standard implementation")
 class TestPy38Plus:
     @staticmethod

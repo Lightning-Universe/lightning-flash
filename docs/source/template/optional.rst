@@ -10,7 +10,7 @@ Organize your transforms in transforms.py
 It can be useful to define your :class:`~flash.core.data.io.input_transform.InputTransform` in an ``input_transform.py`` file.
 Here's an example from `image/classification/input_transform.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash/image/classification/input_transform.py>`_:
 
-.. literalinclude:: ../../../flash/image/classification/input_transform.py
+.. literalinclude:: ../../../src/flash/image/classification/input_transform.py
     :language: python
     :pyobject: ImageClassificationInputTransform
 
@@ -24,13 +24,13 @@ If you want to support different use cases that require different prediction for
 Some good examples are in `flash/core/classification.py <https://github.com/PyTorchLightning/lightning-flash/blob/master/flash/core/classification.py>`_.
 Here's the :class:`~flash.core.classification.ClassesOutput` :class:`~flash.core.data.io.output.Output`:
 
-.. literalinclude:: ../../../flash/core/classification.py
+.. literalinclude:: ../../../src/flash/core/classification.py
     :language: python
     :pyobject: ClassesOutput
 
 Alternatively, here's the :class:`~flash.core.classification.LogitsOutput` :class:`~flash.core.data.io.output.Output`:
 
-.. literalinclude:: ../../../flash/core/classification.py
+.. literalinclude:: ../../../src/flash/core/classification.py
     :language: python
     :pyobject: LogitsOutput
 

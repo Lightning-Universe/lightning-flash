@@ -20,7 +20,7 @@ import pytest
 from numpy import random
 
 from flash.core.data.utilities.loading import AUDIO_EXTENSIONS, IMG_EXTENSIONS, NP_EXTENSIONS
-from flash.core.data.utilities.paths import filter_valid_files, PATH_TYPE
+from flash.core.data.utilities.paths import PATH_TYPE, filter_valid_files
 
 
 def _make_mock_dir(root, mock_files: List) -> List[PATH_TYPE]:

@@ -12,23 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from typing import Any
+from urllib.error import URLError
 
 import pytest
 import torch
 from torch import Tensor
 
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _IMAGE_AVAILABLE, _IMAGE_TESTING
+from flash.core.utilities.imports import _TOPIC_IMAGE_AVAILABLE
 from flash.image.style_transfer import StyleTransfer
 from tests.helpers.task_tester import TaskTester
 
 
+@pytest.mark.xfail(URLError, reason="Connection timed out for download.pystiche.org")
 class TestStyleTransfer(TaskTester):
-
     task = StyleTransfer
     cli_command = "style_transfer"
-    is_testing = _IMAGE_TESTING
-    is_available = _IMAGE_AVAILABLE
+    is_testing = _TOPIC_IMAGE_AVAILABLE
+    is_available = _TOPIC_IMAGE_AVAILABLE
 
     # TODO: loss_fn and perceptual_loss can't be jitted
     scriptable = False
@@ -47,7 +48,8 @@ class TestStyleTransfer(TaskTester):
         return {DataKeys.INPUT: torch.rand(3, 224, 224)}
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.xfail(URLError, reason="Connection timed out for download.pystiche.org")
 def test_style_transfer_task():
     model = StyleTransfer(
         backbone="vgg11", content_layer="relu1_2", content_weight=10, style_layers="relu1_2", style_weight=11

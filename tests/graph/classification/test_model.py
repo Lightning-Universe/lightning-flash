@@ -20,24 +20,23 @@ from torch import Tensor
 from flash import RunningStage, Trainer
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _GRAPH_AVAILABLE, _GRAPH_TESTING
+from flash.core.utilities.imports import _TOPIC_GRAPH_AVAILABLE
 from flash.graph.classification import GraphClassifier
 from flash.graph.classification.input import GraphClassificationDatasetInput
 from flash.graph.classification.input_transform import GraphClassificationInputTransform
 from tests.helpers.task_tester import TaskTester
 
-if _GRAPH_AVAILABLE:
+if _TOPIC_GRAPH_AVAILABLE:
     from torch_geometric import datasets
     from torch_geometric.data import Batch, Data
 
 
 class TestGraphClassifier(TaskTester):
-
     task = GraphClassifier
     task_kwargs = {"num_features": 1, "num_classes": 2}
     cli_command = "graph_classification"
-    is_testing = _GRAPH_TESTING
-    is_available = _GRAPH_AVAILABLE
+    is_testing = _TOPIC_GRAPH_AVAILABLE
+    is_available = _TOPIC_GRAPH_AVAILABLE
 
     # TODO: Resolve JIT issues
     scriptable = False
@@ -68,7 +67,7 @@ class TestGraphClassifier(TaskTester):
         return self.example_train_sample
 
 
-@pytest.mark.skipif(not _GRAPH_TESTING, reason="pytorch geometric isn't installed")
+@pytest.mark.skipif(not _TOPIC_GRAPH_AVAILABLE, reason="pytorch geometric isn't installed")
 def test_predict_dataset(tmpdir):
     """Tests that we can generate predictions from a pytorch geometric dataset."""
     tudataset = datasets.TUDataset(root=tmpdir, name="KKI")

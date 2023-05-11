@@ -95,7 +95,6 @@ class BoringModel(LightningModule):
 
 
 class BoringDataModule(LightningDataModule):
-
     random_full: Dataset
     random_train: Subset
     random_val: Subset

@@ -1,3 +1,0 @@
-nbconvert
-jupyter_client
-jupyter

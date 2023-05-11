@@ -16,10 +16,10 @@ import torch
 from torch import nn
 
 from flash.core.optimizers import LAMB, LARS, LinearWarmupCosineAnnealingLR
-from flash.core.utilities.imports import _CORE_TESTING
+from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 @pytest.mark.parametrize(
     "optim_fn, lr, kwargs",
     [
@@ -43,7 +43,7 @@ def test_optim_call(tmpdir, optim_fn, lr, kwargs):
         optimizer.step()
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 @pytest.mark.parametrize("optim_fn, lr", [(LARS, 0.1), (LAMB, 1e-3)])
 def test_optim_with_scheduler(tmpdir, optim_fn, lr):
     max_epochs = 10

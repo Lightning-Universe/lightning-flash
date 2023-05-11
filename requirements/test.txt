@@ -1,20 +1,11 @@
-coverage
-codecov>=2.1
-pytest>=5.0,<7.0
-pytest-flake8
-flake8
-pytest-doctestplus>=0.9.0
-pytest-rerunfailures>=10.0
-pytest-forked
+# NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forced in setup
 
-# install pkg
-check-manifest
-twine==3.2
+coverage[toml]
+pytest >6.2, <7.0
+pytest-doctestplus >0.12.0
+pytest-rerunfailures >11.0.0
+pytest-forked ==1.6.0
+pytest-mock ==3.10.0
 
-# formatting
-pre-commit
-isort
-#mypy
 scikit-learn
-pytest_mock
 torch_optimizer

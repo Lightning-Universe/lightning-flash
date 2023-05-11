@@ -20,7 +20,7 @@ import pytest
 import flash
 from flash import Trainer
 from flash.audio import SpeechRecognition, SpeechRecognitionData
-from flash.core.utilities.imports import _AUDIO_TESTING
+from flash.core.utilities.imports import _TOPIC_AUDIO_AVAILABLE
 
 TEST_BACKBONE = "patrickvonplaten/wav2vec2_tiny_random_robust"  # tiny model for testing
 
@@ -50,7 +50,7 @@ def json_data(tmpdir, n_samples=5):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_AUDIO_AVAILABLE, reason="audio libraries aren't installed.")
 def test_classification_csv(tmpdir):
     csv_path = csv_data(tmpdir)
 
@@ -67,7 +67,7 @@ def test_classification_csv(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _AUDIO_TESTING, reason="audio libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_AUDIO_AVAILABLE, reason="audio libraries aren't installed.")
 def test_classification_json(tmpdir):
     json_path = json_data(tmpdir)
 

@@ -18,7 +18,7 @@ import torch
 from torch import Tensor
 
 import flash
-from flash.core.utilities.imports import _IMAGE_AVAILABLE, _IMAGE_TESTING, _TORCHVISION_AVAILABLE, _VISSL_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_IMAGE_AVAILABLE, _TORCHVISION_AVAILABLE, _VISSL_AVAILABLE
 from flash.image import ImageClassificationData, ImageEmbedder
 from tests.helpers.task_tester import TaskTester
 
@@ -29,13 +29,12 @@ else:
 
 
 class TestImageEmbedder(TaskTester):
-
     task = ImageEmbedder
     task_kwargs = dict(
         backbone="resnet18",
     )
-    is_testing = _IMAGE_TESTING
-    is_available = _IMAGE_AVAILABLE
+    is_testing = _TOPIC_IMAGE_AVAILABLE
+    is_available = _TOPIC_IMAGE_AVAILABLE
 
     # TODO: Resolve JIT script issues
     scriptable = False
@@ -50,7 +49,7 @@ class TestImageEmbedder(TaskTester):
 
 
 @pytest.mark.skipif(torch.cuda.device_count() > 1, reason="VISSL integration doesn't support multi-GPU")
-@pytest.mark.skipif(not (_IMAGE_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
+@pytest.mark.skipif(not (_TOPIC_IMAGE_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
 @pytest.mark.parametrize(
     "backbone, training_strategy, head, pretraining_transform, embedding_size",
     [
@@ -88,7 +87,7 @@ def test_vissl_training(backbone, training_strategy, head, pretraining_transform
             assert prediction.size(0) == embedding_size
 
 
-@pytest.mark.skipif(not (_IMAGE_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
+@pytest.mark.skipif(not (_TOPIC_IMAGE_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
 @pytest.mark.parametrize(
     "backbone, training_strategy, head, pretraining_transform, expected_exception",
     [
@@ -108,7 +107,7 @@ def test_vissl_training_with_wrong_arguments(
         )
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="torch vision not installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="torch vision not installed.")
 @pytest.mark.parametrize(
     "backbone, embedding_size",
     [
@@ -132,7 +131,7 @@ def test_only_embedding(backbone, embedding_size):
             assert prediction.size(0) == embedding_size
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="torch vision not installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="torch vision not installed.")
 def test_not_implemented_steps():
     embedder = ImageEmbedder(backbone="resnet18")
 

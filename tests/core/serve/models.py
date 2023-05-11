@@ -4,7 +4,7 @@ import pytorch_lightning as pl
 import torch
 from torch import Tensor
 
-from flash.core.serve import expose, ModelComponent
+from flash.core.serve import ModelComponent, expose
 from flash.core.serve.types import Image, Label, Number, Repeated
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE
 

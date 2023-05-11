@@ -16,10 +16,10 @@ from typing import Union
 import pytest
 import torch
 
-from flash.core.utilities.imports import _VIDEO_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_VIDEO_AVAILABLE
 from flash.video.classification.data import VideoClassificationData
 
-if _VIDEO_AVAILABLE:
+if _TOPIC_VIDEO_AVAILABLE:
     from pytorchvideo.data.utils import thwc_to_cthw
 
 
@@ -35,7 +35,7 @@ def create_dummy_video_frames(num_frames: int, height: int, width: int):
 
 
 def temp_encoded_tensors(num_frames: int, height=10, width=10):
-    if not _VIDEO_AVAILABLE:
+    if not _TOPIC_VIDEO_AVAILABLE:
         return torch.randint(size=(3, num_frames, height, width), low=0, high=255)
     data = create_dummy_video_frames(num_frames, height, width)
     return thwc_to_cthw(data).to(torch.float32)
@@ -61,7 +61,7 @@ def _check_frames(data, expected_frames_count: Union[list, int]):
         ), f"Expected video sample {idx} to have {expected_frames_count[idx]} frames but got {sample.shape[1]} frames"
 
 
-@pytest.mark.skipif(not _VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
+@pytest.mark.skipif(not _TOPIC_VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
 @pytest.mark.parametrize(
     "input_data, input_targets, expected_frames_count",
     [
@@ -79,7 +79,7 @@ def test_load_data_from_tensors(input_data, input_targets, expected_frames_count
     _check_frames(data=datamodule.train_dataset.data, expected_frames_count=expected_frames_count)
 
 
-@pytest.mark.skipif(not _VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
+@pytest.mark.skipif(not _TOPIC_VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
 @pytest.mark.parametrize(
     "input_data, input_targets, error_type, match",
     [

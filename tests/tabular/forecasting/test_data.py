@@ -15,15 +15,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from flash.core.utilities.imports import _TABULAR_TESTING
+from flash.core.utilities.imports import _TOPIC_TABULAR_AVAILABLE
 from flash.tabular.forecasting import TabularForecastingData
 
 
-@pytest.mark.skipif(not _TABULAR_TESTING, reason="Tabular libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TABULAR_AVAILABLE, reason="Tabular libraries aren't installed.")
 @patch("flash.tabular.forecasting.input.TimeSeriesDataSet")
 def test_from_data_frame_time_series_data_set_single_call(patch_time_series_data_set):
-    """Tests that ``TabularForecastingData.from_data_frame`` calls ``TimeSeriesDataSet`` with the expected
-    parameters when called once with data for all stages."""
+    """Tests that ``TabularForecastingData.from_data_frame`` calls ``TimeSeriesDataSet`` with the expected parameters
+    when called once with data for all stages."""
     patch_time_series_data_set.return_value.get_parameters.return_value = {"test": None}
 
     train_data = MagicMock()
@@ -48,11 +48,11 @@ def test_from_data_frame_time_series_data_set_single_call(patch_time_series_data
     )
 
 
-@pytest.mark.skipif(not _TABULAR_TESTING, reason="Tabular libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TABULAR_AVAILABLE, reason="Tabular libraries aren't installed.")
 @patch("flash.tabular.forecasting.input.TimeSeriesDataSet")
 def test_from_data_frame_time_series_data_set_multi_call(patch_time_series_data_set):
-    """Tests that ``TabularForecastingData.from_data_frame`` calls ``TimeSeriesDataSet`` with the expected
-    parameters when called separately for each stage."""
+    """Tests that ``TabularForecastingData.from_data_frame`` calls ``TimeSeriesDataSet`` with the expected parameters
+    when called separately for each stage."""
     patch_time_series_data_set.return_value.get_parameters.return_value = {"test": None}
 
     train_data = MagicMock()
@@ -82,7 +82,7 @@ def test_from_data_frame_time_series_data_set_multi_call(patch_time_series_data_
     )
 
 
-@pytest.mark.skipif(not _TABULAR_TESTING, reason="Tabular libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TABULAR_AVAILABLE, reason="Tabular libraries aren't installed.")
 def test_from_data_frame_misconfiguration():
     """Tests that a ``ValueError`` is raised when ``TabularForecastingData`` is constructed without parameters."""
     with pytest.raises(ValueError, match="evaluation or inference requires parameters"):

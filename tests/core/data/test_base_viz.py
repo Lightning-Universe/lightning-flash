@@ -23,7 +23,7 @@ from torch import Tensor
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.io.input import DataKeys
 from flash.core.data.utils import _CALLBACK_FUNCS
-from flash.core.utilities.imports import _IMAGE_TESTING, _PIL_AVAILABLE
+from flash.core.utilities.imports import _PIL_AVAILABLE, _TOPIC_IMAGE_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 from flash.image import ImageClassificationData
 
@@ -83,10 +83,9 @@ class CustomBaseVisualization(BaseVisualization):
         self.per_batch_transform_called = False
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 class TestBaseViz:
     def test_base_viz(self, tmpdir):
-
         seed_everything(42)
         tmpdir = Path(tmpdir)
 
@@ -117,7 +116,6 @@ class TestBaseViz:
         num_tests = 10
 
         for stage in ("train", "val", "test", "predict"):
-
             for _ in range(num_tests):
                 for fcn_name in _CALLBACK_FUNCS:
                     dm.data_fetcher.reset()

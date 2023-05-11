@@ -36,7 +36,7 @@ except Exception:
 
 
 def _load_py_module(fname, pkg="flash"):
-    spec = spec_from_file_location(os.path.join(pkg, fname), os.path.join(_PATH_ROOT, pkg, fname))
+    spec = spec_from_file_location(os.path.join(pkg, fname), os.path.join(_PATH_ROOT, "src", pkg, fname))
     py = module_from_spec(spec)
     spec.loader.exec_module(py)
     return py
@@ -47,7 +47,6 @@ try:
     from flash.core.utilities import providers
 
 except ModuleNotFoundError:
-
     about = _load_py_module("__about__.py")
     providers = _load_py_module("core/utilities/providers.py")
 

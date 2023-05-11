@@ -18,9 +18,9 @@ import numpy as np
 import pytest
 
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _TABULAR_TESTING
+from flash.core.utilities.imports import _TOPIC_TABULAR_AVAILABLE
 
-if _TABULAR_TESTING:
+if _TOPIC_TABULAR_AVAILABLE:
     import pandas as pd
 
     from flash.tabular import TabularClassificationData
@@ -59,7 +59,7 @@ if _TABULAR_TESTING:
     TEST_DF_2 = pd.DataFrame(data=TEST_DICT_2)
 
 
-@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular dependencies are required")
+@pytest.mark.skipif(not _TOPIC_TABULAR_AVAILABLE, reason="tabular dependencies are required")
 def test_categorize():
     codes = _generate_codes(TEST_DF_1, ["category"])
     assert codes == {"category": ["a", "b", "c"]}
@@ -71,7 +71,7 @@ def test_categorize():
     assert list(df["category"]) == [0, 0, 0]
 
 
-@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular dependencies are required")
+@pytest.mark.skipif(not _TOPIC_TABULAR_AVAILABLE, reason="tabular dependencies are required")
 def test_normalize():
     num_input = ["scalar_a", "scalar_b"]
     mean, std = _compute_normalization(TEST_DF_1, num_input)
@@ -79,7 +79,7 @@ def test_normalize():
     assert np.allclose(df[num_input].mean(), 0.0)
 
 
-@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular dependencies are required")
+@pytest.mark.skipif(not _TOPIC_TABULAR_AVAILABLE, reason="tabular dependencies are required")
 def test_normalize_large_array_dtype_fp16():
     # See: https://github.com/Lightning-AI/lightning-flash/pull/1359 for the motivation behind this test
     arr = np.linspace(0, 10000, 10000, dtype=np.float16)
@@ -90,7 +90,7 @@ def test_normalize_large_array_dtype_fp16():
     assert np.allclose(df[col_name].mean(), 0.0)
 
 
-@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular dependencies are required")
+@pytest.mark.skipif(not _TOPIC_TABULAR_AVAILABLE, reason="tabular dependencies are required")
 def test_embedding_sizes():
     self = Mock()
 
@@ -110,7 +110,7 @@ def test_embedding_sizes():
     assert es == [(100_000, 17), (1_000_000, 31)]
 
 
-@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular dependencies are required")
+@pytest.mark.skipif(not _TOPIC_TABULAR_AVAILABLE, reason="tabular dependencies are required")
 def test_categorical_target(tmpdir):
     train_data_frame = TEST_DF_1.copy()
     val_data_frame = TEST_DF_2.copy()
@@ -138,7 +138,7 @@ def test_categorical_target(tmpdir):
         assert target.shape == (1,)
 
 
-@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular dependencies are required")
+@pytest.mark.skipif(not _TOPIC_TABULAR_AVAILABLE, reason="tabular dependencies are required")
 def test_from_data_frame(tmpdir):
     train_data_frame = TEST_DF_1.copy()
     val_data_frame = TEST_DF_2.copy()
@@ -162,7 +162,7 @@ def test_from_data_frame(tmpdir):
         assert target.shape == (1,)
 
 
-@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular dependencies are required")
+@pytest.mark.skipif(not _TOPIC_TABULAR_AVAILABLE, reason="tabular dependencies are required")
 def test_from_csv(tmpdir):
     train_csv = Path(tmpdir) / "train.csv"
     val_csv = test_csv = Path(tmpdir) / "valid.csv"
@@ -189,7 +189,7 @@ def test_from_csv(tmpdir):
         assert target.shape == (1,)
 
 
-@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular dependencies are required")
+@pytest.mark.skipif(not _TOPIC_TABULAR_AVAILABLE, reason="tabular dependencies are required")
 def test_from_dicts():
     dm = TabularClassificationData.from_dicts(
         categorical_fields=["category"],
@@ -210,7 +210,7 @@ def test_from_dicts():
         assert target.shape == (1,)
 
 
-@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular dependencies are required")
+@pytest.mark.skipif(not _TOPIC_TABULAR_AVAILABLE, reason="tabular dependencies are required")
 def test_from_lists():
     dm = TabularClassificationData.from_lists(
         categorical_fields=["category"],
@@ -231,7 +231,7 @@ def test_from_lists():
         assert target.shape == (1,)
 
 
-@pytest.mark.skipif(not _TABULAR_TESTING, reason="tabular dependencies are required")
+@pytest.mark.skipif(not _TOPIC_TABULAR_AVAILABLE, reason="tabular dependencies are required")
 def test_empty_inputs():
     train_data_frame = TEST_DF_1.copy()
     with pytest.raises(RuntimeError):
