@@ -39,7 +39,7 @@ repos:
     rev: v3.3.2
     hooks:
       - id: pyupgrade
-        args: [--py37-plus]
+        args: [--py38-plus]
         name: Upgrade code
 
   - repo: https://github.com/kynan/nbstripout
