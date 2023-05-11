@@ -493,10 +493,7 @@ def fuse(
         key_renamer = rename_keys
     rename_keys = key_renamer is not None
 
-    if dependencies is None:
-        deps = {k: get_dependencies(dsk, k, as_list=True) for k in dsk}
-    else:
-        deps = dict(dependencies)
+    deps = {k: get_dependencies(dsk, k, as_list=True) for k in dsk} if dependencies is None else dict(dependencies)
 
     rdeps = {}
     for k, vals in deps.items():

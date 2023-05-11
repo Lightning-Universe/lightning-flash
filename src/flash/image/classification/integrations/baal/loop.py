@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import contextlib
 from copy import deepcopy
 from typing import Any, Dict, Optional
 
@@ -182,10 +183,8 @@ class ActiveLearningLoop(Loop):
             )
             setattr(self.trainer, dataloader_name, None)
             # TODO: Resolve this within PyTorch Lightning.
-            try:
+            with contextlib.suppress(Exception):
                 getattr(self.trainer, f"reset_{dataloader_name}")(self.trainer.lightning_module)
-            except Exception:
-                pass
 
     def _teardown(self) -> None:
         self.trainer.train_dataloader = None

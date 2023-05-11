@@ -53,15 +53,14 @@ class QuestionAnsweringInputBase(Input):
         column_names = hf_dataset.column_names
 
         if self.training or self.validating or self.testing:
-            if answer_column_name == "answer":
-                if "answer" not in column_names:
-                    if "answer_text" in column_names and "answer_start" in column_names:
-                        hf_dataset = hf_dataset.map(self._reshape_answer_column, batched=False)
-                    else:
-                        raise KeyError(
-                            """Dataset must contain either \"answer\" key as dict type or "answer_text" and
+            if answer_column_name == "answer" and "answer" not in column_names:
+                if "answer_text" in column_names and "answer_start" in column_names:
+                    hf_dataset = hf_dataset.map(self._reshape_answer_column, batched=False)
+                else:
+                    raise KeyError(
+                        """Dataset must contain either \"answer\" key as dict type or "answer_text" and
                             "answer_start" as string and integer types."""
-                        )
+                    )
             if not isinstance(hf_dataset[answer_column_name][0], Dict):
                 raise TypeError(
                     f'{answer_column_name} column should be of type dict with keys "text" and "answer_start"'

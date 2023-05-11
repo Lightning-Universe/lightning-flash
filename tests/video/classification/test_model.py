@@ -99,20 +99,19 @@ def mock_video_data_frame():
     with temp_encoded_video(num_frames=num_frames, fps=fps) as (
         video_file_name_1,
         data_1,
+    ), temp_encoded_video(num_frames=num_frames, fps=fps) as (
+        video_file_name_2,
+        data_2,
     ):
-        with temp_encoded_video(num_frames=num_frames, fps=fps) as (
-            video_file_name_2,
-            data_2,
-        ):
-            data_frame = DataFrame.from_dict(
-                {
-                    "file": [video_file_name_1, video_file_name_2, video_file_name_1, video_file_name_2],
-                    "target": ["cat", "dog", "cat", "dog"],
-                }
-            )
+        data_frame = DataFrame.from_dict(
+            {
+                "file": [video_file_name_1, video_file_name_2, video_file_name_1, video_file_name_2],
+                "target": ["cat", "dog", "cat", "dog"],
+            }
+        )
 
-            video_duration = num_frames / fps
-            yield data_frame, video_duration
+        video_duration = num_frames / fps
+        yield data_frame, video_duration
 
 
 @contextlib.contextmanager
@@ -136,10 +135,11 @@ def mock_encoded_video_dataset_folder(tmpdir):
     os.makedirs(str(tmp_dir / "c1"))
     os.makedirs(str(tmp_dir / "c2"))
 
-    with temp_encoded_video(num_frames=num_frames, fps=fps, directory=str(tmp_dir / "c1")):
-        with temp_encoded_video(num_frames=num_frames, fps=fps, directory=str(tmp_dir / "c2")):
-            video_duration = num_frames / fps
-            yield str(tmp_dir), video_duration
+    with temp_encoded_video(num_frames=num_frames, fps=fps, directory=str(tmp_dir / "c1")), temp_encoded_video(
+        num_frames=num_frames, fps=fps, directory=str(tmp_dir / "c2")
+    ):
+        video_duration = num_frames / fps
+        yield str(tmp_dir), video_duration
 
 
 @pytest.mark.skipif(not _TOPIC_VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")

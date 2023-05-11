@@ -135,9 +135,12 @@ class ImageEmbedder(AdapterTask):
             )
             self.input_transform = self.transforms.get(pretraining_transform)(**pretraining_transform_kwargs)
 
-        if "providers" in metadata["metadata"] and metadata["metadata"]["providers"].name == "Facebook Research/vissl":
-            if pretraining_transform is None:
-                raise ValueError("Correct pretraining_transform must be set to use VISSL")
+        if (
+            "providers" in metadata["metadata"]
+            and metadata["metadata"]["providers"].name == "Facebook Research/vissl"
+            and pretraining_transform is None
+        ):
+            raise ValueError("Correct pretraining_transform must be set to use VISSL")
 
     def forward(self, x: Tensor) -> Any:
         return self.model(x)

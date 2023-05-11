@@ -71,6 +71,7 @@ select = [
 ]
 extend-select = [
     "C4",  # see: https://pypi.org/project/flake8-comprehensions
+    "SIM",  # see: https://pypi.org/project/flake8-simplify
     "RET",  # see: https://pypi.org/project/flake8-return
 ]
 ignore = [

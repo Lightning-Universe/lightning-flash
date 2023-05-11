@@ -338,7 +338,7 @@ def _resnet(
                 weights_paths[pretrained], map_location=torch.device("cpu") if device == -1 else torch.device(device)
             )
 
-            if "classy_state_dict" in model_weights.keys():
+            if "classy_state_dict" in model_weights:
                 model_weights = model_weights["classy_state_dict"]["base_model"]["model"]["trunk"]
                 model_weights = {
                     key.replace("_feature_blocks.", "") if "_feature_blocks." in key else key: val
