@@ -157,7 +157,7 @@ class TemplateData(DataModule):
             The constructed data module.
         """
 
-        ds_kw = dict()
+        ds_kw = {}
 
         train_input = input_cls(RunningStage.TRAINING, train_data, train_targets, **ds_kw)
         target_formatter = getattr(train_input, "target_formatter", None)
@@ -201,7 +201,7 @@ class TemplateData(DataModule):
         Returns:
             The constructed data module.
         """
-        ds_kw = dict()
+        ds_kw = {}
 
         train_input = input_cls(RunningStage.TRAINING, train_bunch, **ds_kw)
         target_formatter = getattr(train_input, "target_formatter", None)

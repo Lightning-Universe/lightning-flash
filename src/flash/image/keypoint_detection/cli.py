@@ -53,7 +53,7 @@ def from_biwi(
         test_ann_file=test_ann_file,
         predict_folder=predict_folder,
         val_split=val_split,
-        transform_kwargs=dict(image_size=(128, 128)) if transform_kwargs is None else transform_kwargs,
+        transform_kwargs={"image_size": (128, 128)} if transform_kwargs is None else transform_kwargs,
         batch_size=batch_size,
         parser=parser,
         **data_module_kwargs,

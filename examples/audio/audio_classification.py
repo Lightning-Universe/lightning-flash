@@ -24,7 +24,7 @@ download_data("https://pl-flash-data.s3.amazonaws.com/urban8k_images.zip", "./da
 datamodule = AudioClassificationData.from_folders(
     train_folder="data/urban8k_images/train",
     val_folder="data/urban8k_images/val",
-    transform_kwargs=dict(spectrogram_size=(64, 64)),
+    transform_kwargs={"spectrogram_size": (64, 64)},
     batch_size=4,
 )
 

@@ -38,7 +38,7 @@ def _deepcopy_dict(nested_dict: Any) -> Any:
     """Utility to deepcopy a nested dict."""
     if not isinstance(nested_dict, Dict):
         return nested_dict
-    return {key: value for key, value in nested_dict.items()}
+    return dict(nested_dict.items())
 
 
 class InputFormat(LightningEnum):

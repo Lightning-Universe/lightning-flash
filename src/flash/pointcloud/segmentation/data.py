@@ -40,7 +40,7 @@ class PointCloudSegmentationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "PointCloudSegmentationData":
-        ds_kw = dict()
+        ds_kw = {}
 
         return cls(
             input_cls(RunningStage.TRAINING, train_folder, **ds_kw),
@@ -61,7 +61,7 @@ class PointCloudSegmentationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "PointCloudSegmentationData":
-        ds_kw = dict()
+        ds_kw = {}
 
         return cls(
             predict_input=input_cls(RunningStage.PREDICTING, predict_files, **ds_kw),
@@ -82,7 +82,7 @@ class PointCloudSegmentationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs: Any,
     ) -> "PointCloudSegmentationData":
-        ds_kw = dict()
+        ds_kw = {}
 
         return cls(
             input_cls(RunningStage.TRAINING, train_dataset, **ds_kw),

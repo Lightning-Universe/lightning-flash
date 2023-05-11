@@ -157,13 +157,13 @@ class TabularClassificationData(TabularData):
             >>> del train_data
             >>> del predict_data
         """
-        ds_kw = dict(
-            target_formatter=target_formatter,
-            categorical_fields=categorical_fields,
-            numerical_fields=numerical_fields,
-            target_fields=target_fields,
-            parameters=parameters,
-        )
+        ds_kw = {
+            "target_formatter": target_formatter,
+            "categorical_fields": categorical_fields,
+            "numerical_fields": numerical_fields,
+            "target_fields": target_fields,
+            "parameters": parameters,
+        }
 
         train_input = input_cls(RunningStage.TRAINING, train_data_frame, **ds_kw)
         ds_kw["parameters"] = train_input.parameters if train_input else parameters
@@ -359,13 +359,13 @@ class TabularClassificationData(TabularData):
             >>> os.remove("train_data.tsv")
             >>> os.remove("predict_data.tsv")
         """
-        ds_kw = dict(
-            target_formatter=target_formatter,
-            categorical_fields=categorical_fields,
-            numerical_fields=numerical_fields,
-            target_fields=target_fields,
-            parameters=parameters,
-        )
+        ds_kw = {
+            "target_formatter": target_formatter,
+            "categorical_fields": categorical_fields,
+            "numerical_fields": numerical_fields,
+            "target_fields": target_fields,
+            "parameters": parameters,
+        }
 
         train_input = input_cls(RunningStage.TRAINING, train_file, **ds_kw)
         ds_kw["parameters"] = train_input.parameters if train_input else parameters
@@ -495,13 +495,13 @@ class TabularClassificationData(TabularData):
             >>> del train_data
             >>> del predict_data
         """
-        ds_kw = dict(
-            target_formatter=target_formatter,
-            categorical_fields=categorical_fields,
-            numerical_fields=numerical_fields,
-            target_fields=target_fields,
-            parameters=parameters,
-        )
+        ds_kw = {
+            "target_formatter": target_formatter,
+            "categorical_fields": categorical_fields,
+            "numerical_fields": numerical_fields,
+            "target_fields": target_fields,
+            "parameters": parameters,
+        }
 
         train_input = input_cls(RunningStage.TRAINING, train_dict, **ds_kw)
         ds_kw["parameters"] = train_input.parameters if train_input else parameters
@@ -633,13 +633,13 @@ class TabularClassificationData(TabularData):
             >>> del train_data
             >>> del predict_data
         """
-        ds_kw = dict(
-            target_formatter=target_formatter,
-            categorical_fields=categorical_fields,
-            numerical_fields=numerical_fields,
-            target_fields=target_fields,
-            parameters=parameters,
-        )
+        ds_kw = {
+            "target_formatter": target_formatter,
+            "categorical_fields": categorical_fields,
+            "numerical_fields": numerical_fields,
+            "target_fields": target_fields,
+            "parameters": parameters,
+        }
 
         train_input = input_cls(RunningStage.TRAINING, train_list, **ds_kw)
         ds_kw["parameters"] = train_input.parameters if train_input else parameters

@@ -161,9 +161,9 @@ class ImageClassificationData(DataModule):
             >>> _ = [os.remove(f"image_{i}.png") for i in range(1, 4)]
             >>> _ = [os.remove(f"predict_image_{i}.png") for i in range(1, 4)]
         """
-        ds_kw = dict(
-            target_formatter=target_formatter,
-        )
+        ds_kw = {
+            "target_formatter": target_formatter,
+        }
 
         train_input = input_cls(RunningStage.TRAINING, train_files, train_targets, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
@@ -281,9 +281,9 @@ class ImageClassificationData(DataModule):
             >>> shutil.rmtree("train_folder")
             >>> shutil.rmtree("predict_folder")
         """
-        ds_kw = dict(
-            target_formatter=target_formatter,
-        )
+        ds_kw = {
+            "target_formatter": target_formatter,
+        }
 
         train_input = input_cls(RunningStage.TRAINING, train_folder, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
@@ -367,9 +367,9 @@ class ImageClassificationData(DataModule):
             >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Predicting...
         """
-        ds_kw = dict(
-            target_formatter=target_formatter,
-        )
+        ds_kw = {
+            "target_formatter": target_formatter,
+        }
 
         train_input = input_cls(RunningStage.TRAINING, train_data, train_targets, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
@@ -458,9 +458,9 @@ class ImageClassificationData(DataModule):
             >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Predicting...
         """
-        ds_kw = dict(
-            target_formatter=target_formatter,
-        )
+        ds_kw = {
+            "target_formatter": target_formatter,
+        }
 
         train_input = input_cls(RunningStage.TRAINING, train_images, train_targets, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
@@ -544,9 +544,9 @@ class ImageClassificationData(DataModule):
             >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Predicting...
         """
-        ds_kw = dict(
-            target_formatter=target_formatter,
-        )
+        ds_kw = {
+            "target_formatter": target_formatter,
+        }
 
         train_input = input_cls(RunningStage.TRAINING, train_data, train_targets, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
@@ -683,9 +683,9 @@ class ImageClassificationData(DataModule):
             >>> del train_data_frame
             >>> del predict_data_frame
         """
-        ds_kw = dict(
-            target_formatter=target_formatter,
-        )
+        ds_kw = {
+            "target_formatter": target_formatter,
+        }
 
         train_data = (train_data_frame, input_field, target_fields, train_images_root, train_resolver)
         val_data = (val_data_frame, input_field, target_fields, val_images_root, val_resolver)
@@ -914,9 +914,9 @@ class ImageClassificationData(DataModule):
             >>> os.remove("train_data.tsv")
             >>> os.remove("predict_data.tsv")
         """
-        ds_kw = dict(
-            target_formatter=target_formatter,
-        )
+        ds_kw = {
+            "target_formatter": target_formatter,
+        }
 
         train_data = (train_file, input_field, target_fields, train_images_root, train_resolver)
         val_data = (val_file, input_field, target_fields, val_images_root, val_resolver)
@@ -1033,9 +1033,9 @@ class ImageClassificationData(DataModule):
             >>> del train_dataset
             >>> del predict_dataset
         """
-        ds_kw = dict(
-            target_formatter=target_formatter,
-        )
+        ds_kw = {
+            "target_formatter": target_formatter,
+        }
 
         train_input = input_cls(RunningStage.TRAINING, train_dataset, label_field=label_field, **ds_kw)
         ds_kw["target_formatter"] = getattr(train_input, "target_formatter", None)
@@ -1121,7 +1121,7 @@ class ImageClassificationData(DataModule):
             multi_label=multi_label,
         )
 
-        ds_kw = dict()
+        ds_kw = {}
 
         train_input = input_cls(RunningStage.TRAINING, train_data, **ds_kw)
         ds_kw["parameters"] = getattr(train_input, "parameters", None)
@@ -1172,7 +1172,7 @@ class ImageClassificationData(DataModule):
                 train_dataset=train_dataset,
             )
         """
-        ds_kw = dict()
+        ds_kw = {}
 
         return cls(
             input_cls(RunningStage.TRAINING, train_dataset, **ds_kw),

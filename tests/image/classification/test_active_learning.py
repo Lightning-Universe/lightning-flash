@@ -56,7 +56,7 @@ def simple_datamodule(tmpdir):
         test_targets=[0] * n,
         batch_size=2,
         num_workers=0,
-        transform_kwargs=dict(image_size=image_size),
+        transform_kwargs={"image_size": image_size},
     )
 
 

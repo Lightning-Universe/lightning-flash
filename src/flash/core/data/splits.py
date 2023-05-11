@@ -32,9 +32,9 @@ class SplitDataset(Properties, Dataset):
     ) -> None:
         kwargs = {}
         if running_stage is not None:
-            kwargs = dict(running_stage=running_stage)
+            kwargs = {"running_stage": running_stage}
         elif isinstance(dataset, Properties):
-            kwargs = dict(running_stage=dataset._running_stage)
+            kwargs = {"running_stage": dataset._running_stage}
         super().__init__(**kwargs)
 
         if not isinstance(indices, list):

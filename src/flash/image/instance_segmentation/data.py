@@ -85,7 +85,7 @@ class InstanceSegmentationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
     ) -> "InstanceSegmentationData":
-        ds_kw = dict(parser=parser)
+        ds_kw = {"parser": parser}
 
         return cls(
             input_cls(

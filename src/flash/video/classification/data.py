@@ -169,13 +169,13 @@ class VideoClassificationData(DataModule):
             >>> _ = [os.remove(f"video_{i}.mp4") for i in range(1, 4)]
             >>> _ = [os.remove(f"predict_video_{i}.mp4") for i in range(1, 4)]
         """
-        ds_kw = dict(
-            clip_sampler=clip_sampler,
-            clip_duration=clip_duration,
-            clip_sampler_kwargs=clip_sampler_kwargs,
-            decode_audio=decode_audio,
-            decoder=decoder,
-        )
+        ds_kw = {
+            "clip_sampler": clip_sampler,
+            "clip_duration": clip_duration,
+            "clip_sampler_kwargs": clip_sampler_kwargs,
+            "decode_audio": decode_audio,
+            "decoder": decoder,
+        }
 
         train_input = input_cls(
             RunningStage.TRAINING,
@@ -334,13 +334,13 @@ class VideoClassificationData(DataModule):
             >>> shutil.rmtree("train_folder")
             >>> shutil.rmtree("predict_folder")
         """
-        ds_kw = dict(
-            clip_sampler=clip_sampler,
-            clip_duration=clip_duration,
-            clip_sampler_kwargs=clip_sampler_kwargs,
-            decode_audio=decode_audio,
-            decoder=decoder,
-        )
+        ds_kw = {
+            "clip_sampler": clip_sampler,
+            "clip_duration": clip_duration,
+            "clip_sampler_kwargs": clip_sampler_kwargs,
+            "decode_audio": decode_audio,
+            "decoder": decoder,
+        }
 
         train_input = input_cls(
             RunningStage.TRAINING,
@@ -517,13 +517,13 @@ class VideoClassificationData(DataModule):
             >>> del train_data_frame
             >>> del predict_data_frame
         """
-        ds_kw = dict(
-            clip_sampler=clip_sampler,
-            clip_duration=clip_duration,
-            clip_sampler_kwargs=clip_sampler_kwargs,
-            decode_audio=decode_audio,
-            decoder=decoder,
-        )
+        ds_kw = {
+            "clip_sampler": clip_sampler,
+            "clip_duration": clip_duration,
+            "clip_sampler_kwargs": clip_sampler_kwargs,
+            "decode_audio": decode_audio,
+            "decoder": decoder,
+        }
 
         train_data = (train_data_frame, input_field, target_fields, train_videos_root, train_resolver)
         val_data = (val_data_frame, input_field, target_fields, val_videos_root, val_resolver)
@@ -915,13 +915,13 @@ class VideoClassificationData(DataModule):
             >>> os.remove("train_data.tsv")
             >>> os.remove("predict_data.tsv")
         """
-        ds_kw = dict(
-            clip_sampler=clip_sampler,
-            clip_duration=clip_duration,
-            clip_sampler_kwargs=clip_sampler_kwargs,
-            decode_audio=decode_audio,
-            decoder=decoder,
-        )
+        ds_kw = {
+            "clip_sampler": clip_sampler,
+            "clip_duration": clip_duration,
+            "clip_sampler_kwargs": clip_sampler_kwargs,
+            "decode_audio": decode_audio,
+            "decoder": decoder,
+        }
 
         train_data = (train_file, input_field, target_fields, train_videos_root, train_resolver)
         val_data = (val_file, input_field, target_fields, val_videos_root, val_resolver)
@@ -1072,13 +1072,13 @@ class VideoClassificationData(DataModule):
             >>> del train_dataset
             >>> del predict_dataset
         """
-        ds_kw = dict(
-            clip_sampler=clip_sampler,
-            clip_duration=clip_duration,
-            clip_sampler_kwargs=clip_sampler_kwargs,
-            decode_audio=decode_audio,
-            decoder=decoder,
-        )
+        ds_kw = {
+            "clip_sampler": clip_sampler,
+            "clip_duration": clip_duration,
+            "clip_sampler_kwargs": clip_sampler_kwargs,
+            "decode_audio": decode_audio,
+            "decoder": decoder,
+        }
 
         train_input = input_cls(
             RunningStage.TRAINING,
@@ -1198,14 +1198,14 @@ class VideoClassificationData(DataModule):
             multi_label=multi_label,
         )
 
-        ds_kw = dict(
-            clip_sampler=clip_sampler,
-            clip_duration=clip_duration,
-            clip_sampler_kwargs=clip_sampler_kwargs,
-            video_sampler=video_sampler,
-            decode_audio=decode_audio,
-            decoder=decoder,
-        )
+        ds_kw = {
+            "clip_sampler": clip_sampler,
+            "clip_duration": clip_duration,
+            "clip_sampler_kwargs": clip_sampler_kwargs,
+            "video_sampler": video_sampler,
+            "decode_audio": decode_audio,
+            "decoder": decoder,
+        }
 
         train_input = input_cls(RunningStage.TRAINING, train_data, **ds_kw)
         ds_kw["parameters"] = getattr(train_input, "parameters", None)
