@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from typing import Any
-from unittest import mock
+from unittest.mock import patch
 
 import pytest
 import torch
@@ -62,7 +62,7 @@ class TestTranslationTask(TaskTester):
 
 
 @pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="serve libraries aren't installed.")
-@mock.patch("flash._IS_TESTING", True)
+@patch("flash._IS_TESTING", True)
 def test_serve():
     model = TranslationTask(TEST_BACKBONE)
     model.eval()

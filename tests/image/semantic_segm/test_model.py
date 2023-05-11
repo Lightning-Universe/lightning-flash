@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from typing import Any
-from unittest import mock
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -108,7 +108,7 @@ def test_predict_numpy():
 
 @pytest.mark.skipif(not _SEGMENTATION_MODELS_AVAILABLE, reason="No SMP")
 @pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="some serving")
-@mock.patch("flash._IS_TESTING", True)
+@patch("flash._IS_TESTING", True)
 def test_serve():
     model = SemanticSegmentation(2)
     model.eval()

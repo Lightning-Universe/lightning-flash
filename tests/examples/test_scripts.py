@@ -14,7 +14,7 @@
 import os
 import sys
 from pathlib import Path
-from unittest import mock
+from unittest.mock import patch
 
 import pytest
 import torch
@@ -43,7 +43,7 @@ from tests.helpers.decorators import forked
 root = Path(__file__).parent.parent.parent
 
 
-@mock.patch.dict(os.environ, {"FLASH_TESTING": "1"})
+@patch.dict(os.environ, {"FLASH_TESTING": "1"})
 @pytest.mark.parametrize(
     "folder,fname",
     [

@@ -108,11 +108,13 @@ jobs:
         key: flash-datasets-${{ hashFiles('tests/examples/test_scripts.py') }}
         restore-keys: flash-datasets-
 
+    # ToDO
+    #- name: DocTests
+    #  run: |
+    #    pytest src/ -vv # --reruns 3 --reruns-delay 2
+
     - name: Tests
-      env:
-        FIFTYONE_DO_NOT_TRACK: true
       run: |
-        # FixMe: include doctests for src/
         coverage run --source flash -m pytest \
           tests/core \
           tests/deprecated_api \

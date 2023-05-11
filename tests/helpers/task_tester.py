@@ -17,7 +17,7 @@ import os
 import types
 from abc import ABCMeta
 from typing import Any, Dict, List, Optional, Tuple
-from unittest import mock
+from unittest.mock import patch
 
 import pytest
 import torch
@@ -130,7 +130,7 @@ def _test_jit_script(self, tmpdir):
 def _test_cli(self, extra_args: List):
     """Tests that the default Flash zero configuration runs for the task."""
     cli_args = ["flash", self.cli_command, "--trainer.fast_dev_run", "True"] + extra_args
-    with mock.patch("sys.argv", cli_args):
+    with patch("sys.argv", cli_args):
         try:
             main()
         except SystemExit:
