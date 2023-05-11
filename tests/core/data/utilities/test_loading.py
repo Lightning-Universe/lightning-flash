@@ -82,7 +82,7 @@ def write_tsv(file_path):
 
 @pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.parametrize(
-    "extension,write",
+    ("extension", "write"),
     [(extension, write_image) for extension in IMG_EXTENSIONS]
     + [(extension, write_numpy) for extension in NP_EXTENSIONS]
     # it shouldn't try to expand glob patterns in filenames
@@ -100,7 +100,7 @@ def test_load_image(tmpdir, extension, write):
 
 @pytest.mark.skipif(not _TOPIC_AUDIO_AVAILABLE, reason="audio libraries aren't installed.")
 @pytest.mark.parametrize(
-    "extension,write",
+    ("extension", "write"),
     [(extension, write_image) for extension in IMG_EXTENSIONS]
     + [(extension, write_numpy) for extension in NP_EXTENSIONS]
     + [(extension, write_audio) for extension in AUDIO_EXTENSIONS],
@@ -116,7 +116,7 @@ def test_load_spectrogram(tmpdir, extension, write):
 
 
 @pytest.mark.skipif(not _TOPIC_AUDIO_AVAILABLE, reason="audio libraries aren't installed.")
-@pytest.mark.parametrize("extension,write", [(extension, write_audio) for extension in AUDIO_EXTENSIONS])
+@pytest.mark.parametrize(("extension", "write"), [(extension, write_audio) for extension in AUDIO_EXTENSIONS])
 def test_load_audio(tmpdir, extension, write):
     file_path = os.path.join(tmpdir, f"test{extension}")
     write(file_path)
@@ -129,7 +129,7 @@ def test_load_audio(tmpdir, extension, write):
 
 @pytest.mark.skipif(not _TOPIC_TABULAR_AVAILABLE, reason="tabular libraries aren't installed.")
 @pytest.mark.parametrize(
-    "extension,write",
+    ("extension", "write"),
     [(extension, write_csv) for extension in CSV_EXTENSIONS] + [(extension, write_tsv) for extension in TSV_EXTENSIONS],
 )
 def test_load_data_frame(tmpdir, extension, write):
@@ -142,7 +142,7 @@ def test_load_data_frame(tmpdir, extension, write):
 
 
 @pytest.mark.parametrize(
-    "path, loader, target_type",
+    ("path", "loader", "target_type"),
     [
         pytest.param(
             "https://pl-flash-data.s3.amazonaws.com/images/ant_1.jpg",

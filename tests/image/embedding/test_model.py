@@ -51,7 +51,7 @@ class TestImageEmbedder(TaskTester):
 @pytest.mark.skipif(torch.cuda.device_count() > 1, reason="VISSL integration doesn't support multi-GPU")
 @pytest.mark.skipif(not (_TOPIC_IMAGE_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
 @pytest.mark.parametrize(
-    "backbone, training_strategy, head, pretraining_transform, embedding_size",
+    ("backbone", "training_strategy", "head", "pretraining_transform", "embedding_size"),
     [
         ("resnet18", "simclr", "simclr_head", "simclr_transform", 512),
         ("resnet18", "barlow_twins", "barlow_twins_head", "barlow_twins_transform", 512),
@@ -89,7 +89,7 @@ def test_vissl_training(backbone, training_strategy, head, pretraining_transform
 
 @pytest.mark.skipif(not (_TOPIC_IMAGE_AVAILABLE and _VISSL_AVAILABLE), reason="vissl not installed.")
 @pytest.mark.parametrize(
-    "backbone, training_strategy, head, pretraining_transform, expected_exception",
+    ("backbone", "training_strategy", "head", "pretraining_transform", "expected_exception"),
     [
         ("resnet18", "simclr", "simclr_head", None, ValueError),
         ("resnet18", "simclr", None, "simclr_transform", KeyError),
@@ -109,7 +109,7 @@ def test_vissl_training_with_wrong_arguments(
 
 @pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="torch vision not installed.")
 @pytest.mark.parametrize(
-    "backbone, embedding_size",
+    ("backbone", "embedding_size"),
     [
         ("resnet18", 512),
         ("vit_small_patch16_224", 384),

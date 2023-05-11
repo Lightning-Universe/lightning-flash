@@ -21,8 +21,8 @@ class UUID_String(str):
         return str(self)
 
 
-@pytest.fixture(scope="function", autouse=True)
-def patch_decorators_uuid_generator_func(mocker: MockerFixture):
+@pytest.fixture(autouse=True)
+def patch_decorators_uuid_generator_func(mocker: MockerFixture):  # noqa: PT004
     call_num = 0
 
     def _generate_sequential_uuid():
@@ -31,7 +31,6 @@ def patch_decorators_uuid_generator_func(mocker: MockerFixture):
         return UUID_String(f"callnum_{call_num}")
 
     mocker.patch("flash.core.serve.decorators.uuid4", side_effect=_generate_sequential_uuid)
-    yield
 
 
 @pytest.fixture(scope="session")
@@ -55,7 +54,7 @@ def module_global_datadir(tmp_path_factory, original_global_datadir):
     return prep_global_datadir(tmp_path_factory, original_global_datadir)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture()
 def global_datadir(tmp_path_factory, original_global_datadir):
     return prep_global_datadir(tmp_path_factory, original_global_datadir)
 
@@ -64,8 +63,7 @@ if _TOPIC_SERVE_AVAILABLE:
 
     @pytest.fixture(scope="session")
     def squeezenet1_1_model():
-        model = torchvision.models.squeezenet1_1(pretrained=True).eval()
-        yield model
+        return torchvision.models.squeezenet1_1(pretrained=True).eval()
 
     @pytest.fixture(scope="session")
     def lightning_squeezenet1_1_obj():
@@ -73,7 +71,7 @@ if _TOPIC_SERVE_AVAILABLE:
 
         model = LightningSqueezenet()
         model.eval()
-        yield model
+        return model
 
     @pytest.fixture(scope="session")
     def squeezenet_servable(squeezenet1_1_model, session_global_datadir):
@@ -84,7 +82,7 @@ if _TOPIC_SERVE_AVAILABLE:
         torch.jit.save(trace, fpth)
 
         model = Servable(fpth)
-        yield (model, fpth)
+        return (model, fpth)
 
     @pytest.fixture()
     def lightning_squeezenet_checkpoint_path(tmp_path):

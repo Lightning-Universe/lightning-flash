@@ -63,7 +63,7 @@ def _check_frames(data, expected_frames_count: Union[list, int]):
 
 @pytest.mark.skipif(not _TOPIC_VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
 @pytest.mark.parametrize(
-    "input_data, input_targets, expected_frames_count",
+    ("input_data", "input_targets", "expected_frames_count"),
     [
         ([temp_encoded_tensors(5), temp_encoded_tensors(5)], ["label1", "label2"], [5, 5]),
         ([temp_encoded_tensors(5), temp_encoded_tensors(10)], ["label1", "label2"], [5, 10]),
@@ -81,7 +81,7 @@ def test_load_data_from_tensors(input_data, input_targets, expected_frames_count
 
 @pytest.mark.skipif(not _TOPIC_VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
 @pytest.mark.parametrize(
-    "input_data, input_targets, error_type, match",
+    ("input_data", "input_targets", "error_type", "match"),
     [
         (torch.tensor(1), ["label1"], ValueError, "dimension should be"),
         (torch.randint(size=(2, 3), low=0, high=255), ["label"], ValueError, "dimension should be"),

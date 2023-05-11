@@ -208,7 +208,7 @@ def test_classification_task_trainer_predict(tmpdir):
 
 
 @pytest.mark.parametrize(
-    ["cls", "filename"],
+    ("cls", "filename"),
     [
         pytest.param(
             ImageClassifier,
@@ -343,7 +343,7 @@ def custom_steplr_configuration_return_as_dict(optimizer):
     "optim", ["Adadelta", functools.partial(torch.optim.Adadelta, eps=0.5), ("Adadelta", {"eps": 0.5})]
 )
 @pytest.mark.parametrize(
-    "sched, interval",
+    ("sched", "interval"),
     [
         (None, "epoch"),
         ("custom_steplr_configuration_return_as_instance", "epoch"),
