@@ -11,13 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import contextlib
 import functools
 import inspect
 import os
 import types
 from abc import ABCMeta
 from typing import Any, Dict, List, Optional, Tuple
-from unittest import mock
+from unittest.mock import patch
 
 import pytest
 import torch
@@ -130,11 +131,8 @@ def _test_jit_script(self, tmpdir):
 def _test_cli(self, extra_args: List):
     """Tests that the default Flash zero configuration runs for the task."""
     cli_args = ["flash", self.cli_command, "--trainer.fast_dev_run", "True"] + extra_args
-    with mock.patch("sys.argv", cli_args):
-        try:
-            main()
-        except SystemExit:
-            pass
+    with patch("sys.argv", cli_args), contextlib.suppress(SystemExit):
+        main()
 
 
 def _test_load_from_checkpoint_dependency_error(self):
@@ -145,15 +143,15 @@ def _test_load_from_checkpoint_dependency_error(self):
 
 
 def _test_init_dependency_error(self):
-    """Tests that a ``ModuleNotFoundError`` is raised when the task is instantiated if the required dependencies
-    are not available."""
+    """Tests that a ``ModuleNotFoundError`` is raised when the task is instantiated if the required dependencies are not
+    available."""
     with pytest.raises(ModuleNotFoundError, match="Required dependencies not available."):
         _ = self.instantiated_task
 
 
 class TaskTesterMeta(ABCMeta):
-    """The ``TaskTesterMeta`` is a metaclass which attaches a suite of tests to classes that extend ``TaskTester``
-    based on the configuration variables they define.
+    """The ``TaskTesterMeta`` is a metaclass which attaches a suite of tests to classes that extend ``TaskTester`` based
+    on the configuration variables they define.
 
     These tests will also be wrapped with the appropriate marks to skip them if the required dependencies are not
     available.

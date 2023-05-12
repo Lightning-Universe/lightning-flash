@@ -34,14 +34,14 @@ In this ``Input``, we'll also set the ``num_features`` attribute so that we can 
 
 Here's the code for our ``TemplateNumpyClassificationInput.load_data`` method:
 
-.. literalinclude:: ../../../flash/template/classification/data.py
+.. literalinclude:: ../../../src/flash/template/classification/data.py
     :language: python
     :dedent: 4
     :pyobject: TemplateNumpyClassificationInput.load_data
 
 and here's the code for the ``TemplateNumpyClassificationInput.load_sample`` method:
 
-.. literalinclude:: ../../../flash/template/classification/data.py
+.. literalinclude:: ../../../src/flash/template/classification/data.py
     :language: python
     :dedent: 4
     :pyobject: TemplateNumpyClassificationInput.load_sample
@@ -58,7 +58,7 @@ We perform two additional steps here to improve the user experience:
 
 Here's the code for the ``TemplateSKLearnClassificationInput.load_data`` method:
 
-.. literalinclude:: ../../../flash/template/classification/data.py
+.. literalinclude:: ../../../src/flash/template/classification/data.py
     :language: python
     :dedent: 4
     :pyobject: TemplateSKLearnClassificationInput.load_data
@@ -67,7 +67,7 @@ We can customize the behaviour of our :meth:`~flash.core.data.io.input.Input.loa
 For our ``TemplateSKLearnClassificationInput``, we don't want to provide any targets to the model when predicting.
 We can implement ``predict_load_data`` like this:
 
-.. literalinclude:: ../../../flash/template/classification/data.py
+.. literalinclude:: ../../../src/flash/template/classification/data.py
     :language: python
     :dedent: 4
     :pyobject: TemplateSKLearnClassificationInput.predict_load_data
@@ -83,14 +83,14 @@ Defining the standard transforms (typically at least a ``per_sample_transform`` 
 For our ``TemplateInputTransform``, we'll just configure a ``per_sample_transform``.
 Let's first define a to_tensor transform as a ``staticmethod``:
 
-.. literalinclude:: ../../../flash/template/classification/data.py
+.. literalinclude:: ../../../src/flash/template/classification/data.py
     :language: python
     :dedent: 4
     :pyobject: TemplateInputTransform.to_tensor
 
 Now in our ``per_sample_transform`` hook, we return the transform:
 
-.. literalinclude:: ../../../flash/template/classification/data.py
+.. literalinclude:: ../../../src/flash/template/classification/data.py
     :language: python
     :dedent: 4
     :pyobject: TemplateInputTransform.per_sample_transform
@@ -122,7 +122,7 @@ Since we provided a :attr:`~flash.core.data.io.input.InputFormat.NUMPY` :class:`
 If you've defined a fully custom :class:`~flash.core.data.io.input.Input` (like our ``TemplateSKLearnClassificationInput``), then you will need to write a ``from_*`` method for each.
 Here's the ``from_sklearn`` method for our ``TemplateData``:
 
-.. literalinclude:: ../../../flash/template/classification/data.py
+.. literalinclude:: ../../../src/flash/template/classification/data.py
     :language: python
     :dedent: 4
     :pyobject: TemplateData.from_sklearn
@@ -131,7 +131,7 @@ The final step is to implement the ``num_features`` property for our ``TemplateD
 This is just a convenience for the user that finds the ``num_features`` attribute on any of the data sets and returns it.
 Here's the code:
 
-.. literalinclude:: ../../../flash/template/classification/data.py
+.. literalinclude:: ../../../src/flash/template/classification/data.py
     :language: python
     :dedent: 4
     :pyobject: TemplateData.num_features
@@ -148,13 +148,13 @@ This is extremely useful for debugging purposes, allowing users to view their da
 
 Here's the code for our ``TemplateVisualization`` which just prints the data:
 
-.. literalinclude:: ../../../flash/template/classification/data.py
+.. literalinclude:: ../../../src/flash/template/classification/data.py
     :language: python
     :pyobject: TemplateVisualization
 
 We can configure our custom visualization in the ``TemplateData`` using :meth:`~flash.core.data.data_module.DataModule.configure_data_fetcher` like this:
 
-.. literalinclude:: ../../../flash/template/classification/data.py
+.. literalinclude:: ../../../src/flash/template/classification/data.py
     :language: python
     :dedent: 4
     :pyobject: TemplateData.configure_data_fetcher
@@ -166,7 +166,7 @@ OutputTransform
 You may want to use it for: converting tokens back into text, applying an inverse normalization to an output image, resizing a generated image back to the size of the input, etc.
 As an example, here's the :class:`~image.segmentation.model.SemanticSegmentationOutputTransform` which decodes tokenized model outputs:
 
-.. literalinclude:: ../../../flash/image/segmentation/model.py
+.. literalinclude:: ../../../src/flash/image/segmentation/model.py
     :language: python
     :pyobject: SemanticSegmentationOutputTransform
 
@@ -176,7 +176,7 @@ You should use this approach if your postprocessing depends on the state of the 
 For example, if you want to resize the predictions to the original size of the inputs you should add the original image size in the :attr:`~flash.core.data.io.input.DataKeys.METADATA`.
 Here's an example from the :class:`~flash.image.data.ImageInput`:
 
-.. literalinclude:: ../../../flash/image/data.py
+.. literalinclude:: ../../../src/flash/image/data.py
     :language: python
     :dedent: 4
     :pyobject: ImageInput.load_sample
@@ -184,7 +184,7 @@ Here's an example from the :class:`~flash.image.data.ImageInput`:
 The :attr:`~flash.core.data.io.input.DataKeys.METADATA` can now be referenced in your :class:`~flash.core.data.io.output_transform.OutputTransform`.
 For example, here's the code for the ``per_sample_transform`` method of the :class:`~flash.image.segmentation.model.SemanticSegmentationOutputTransform`:
 
-.. literalinclude:: ../../../flash/image/segmentation/model.py
+.. literalinclude:: ../../../src/flash/image/segmentation/model.py
     :language: python
     :dedent: 4
     :pyobject: SemanticSegmentationOutputTransform.per_sample_transform

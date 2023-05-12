@@ -13,7 +13,7 @@ With these, you can train your model and perform inference using Flash but still
 
 Here's an example, plotting the predictions and interpretation analysis from the NBeats model trained in the :ref:`tabular_forecasting` documentation:
 
-.. literalinclude:: ../../../flash_examples/integrations/pytorch_forecasting/tabular_forecasting_interpretable.py
+.. literalinclude:: ../../../examples/tabular/forecasting_interpretable.py
     :language: python
     :lines: 14-
 

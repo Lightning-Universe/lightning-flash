@@ -37,7 +37,6 @@ It is good practice to associate one or multiple registry to a Task as follow:
 
     # creating a custom `Task` with its own registry
     class MyImageClassifier(Task):
-
         backbones = FlashRegistry("backbones")
 
         def __init__(
@@ -66,6 +65,7 @@ Your custom functions can be registered within a :class:`~flash.core.registry.Fl
 
     # HINT 1: Use `from functools import partial` if you want to store some arguments.
     MyImageClassifier.backbones(fn=partial(fn, backbone="my_backbone"), name="username/partial_backbone")
+
 
     # Option 2: Using decorator.
     @MyImageClassifier.backbones(name="username/decorated_backbone")

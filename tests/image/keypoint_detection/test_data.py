@@ -14,27 +14,27 @@
 import pytest
 
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _IMAGE_EXTRAS_TESTING
+from flash.core.utilities.imports import _TOPIC_IMAGE_AVAILABLE
 from flash.image.keypoint_detection import KeypointDetectionData
 from tests.image.detection.test_data import _create_synth_files_dataset, _create_synth_folders_dataset
 
 
-@pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_image_detector_data_from_files(tmpdir):
     predict_files = _create_synth_files_dataset(tmpdir)
     datamodule = KeypointDetectionData.from_files(
-        predict_files=predict_files, batch_size=1, transform_kwargs=dict(image_size=(128, 128))
+        predict_files=predict_files, batch_size=1, transform_kwargs={"image_size": (128, 128)}
     )
     data = next(iter(datamodule.predict_dataloader()))
     sample = data[0]
     assert sample[DataKeys.INPUT].shape == (128, 128, 3)
 
 
-@pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_image_detector_data_from_folders(tmpdir):
     predict_folder = _create_synth_folders_dataset(tmpdir)
     datamodule = KeypointDetectionData.from_folders(
-        predict_folder=predict_folder, batch_size=1, transform_kwargs=dict(image_size=(128, 128))
+        predict_folder=predict_folder, batch_size=1, transform_kwargs={"image_size": (128, 128)}
     )
     data = next(iter(datamodule.predict_dataloader()))
     sample = data[0]

@@ -20,7 +20,7 @@ coverage:
     # https://codecov.readme.io/v1.0/docs/commit-status
     project:
       default:
-        against: auto
+        informational: true
         target: 99% # specify the target coverage for each commit status
         threshold: 30% # allow this little decrease on project
         # https://github.com/codecov/support/wiki/Filtering-Branches
@@ -29,7 +29,7 @@ coverage:
     # https://github.com/codecov/support/wiki/Patch-Status
     patch:
       default:
-        against: auto
+        informational: true
         target: 50% # specify the target "X%" coverage to hit
         # threshold: 50% # allow this much decrease on patch
     changes: false

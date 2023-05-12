@@ -18,7 +18,7 @@ from pathlib import Path
 import pytest
 
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _IMAGE_EXTRAS_TESTING, _PIL_AVAILABLE
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _ICEVISION_AVAILABLE, _PIL_AVAILABLE
 from flash.image.detection.data import ObjectDetectionData
 
 if _PIL_AVAILABLE:
@@ -109,9 +109,7 @@ def _create_synth_folders_dataset(tmpdir):
     Image.new("RGB", (224, 224)).save(predict / "images" / "sample_one.png")
     Image.new("RGB", (224, 224)).save(predict / "images" / "sample_two.png")
 
-    predict_folder = os.fspath(Path(predict / "images"))
-
-    return predict_folder
+    return os.fspath(Path(predict / "images"))
 
 
 def _create_synth_files_dataset(tmpdir):
@@ -160,12 +158,12 @@ def _create_synth_fiftyone_dataset(tmpdir):
     return dataset
 
 
-@pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _ICEVISION_AVAILABLE, reason="icevision is not installed for testing")
 def test_image_detector_data_from_coco(tmpdir):
     train_folder, coco_ann_path = _create_synth_coco_dataset(tmpdir)
 
     datamodule = ObjectDetectionData.from_coco(
-        train_folder=train_folder, train_ann_file=coco_ann_path, batch_size=1, transform_kwargs=dict(image_size=128)
+        train_folder=train_folder, train_ann_file=coco_ann_path, batch_size=1, transform_kwargs={"image_size": 128}
     )
 
     data = next(iter(datamodule.train_dataloader()))
@@ -181,7 +179,7 @@ def test_image_detector_data_from_coco(tmpdir):
         test_ann_file=coco_ann_path,
         batch_size=1,
         num_workers=0,
-        transform_kwargs=dict(image_size=128),
+        transform_kwargs={"image_size": 128},
     )
 
     data = next(iter(datamodule.val_dataloader()))
@@ -193,13 +191,12 @@ def test_image_detector_data_from_coco(tmpdir):
     assert sample[DataKeys.INPUT].shape == (128, 128, 3)
 
 
-@pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _FIFTYONE_AVAILABLE, reason="fiftyone is not installed for testing")
 def test_image_detector_data_from_fiftyone(tmpdir):
     train_dataset = _create_synth_fiftyone_dataset(tmpdir)
 
     datamodule = ObjectDetectionData.from_fiftyone(
-        train_dataset=train_dataset, batch_size=1, transform_kwargs=dict(image_size=128)
+        train_dataset=train_dataset, batch_size=1, transform_kwargs={"image_size": 128}
     )
 
     data = next(iter(datamodule.train_dataloader()))
@@ -212,7 +209,7 @@ def test_image_detector_data_from_fiftyone(tmpdir):
         test_dataset=train_dataset,
         batch_size=1,
         num_workers=0,
-        transform_kwargs=dict(image_size=128),
+        transform_kwargs={"image_size": 128},
     )
 
     data = next(iter(datamodule.val_dataloader()))
@@ -224,22 +221,22 @@ def test_image_detector_data_from_fiftyone(tmpdir):
     assert sample[DataKeys.INPUT].shape == (128, 128, 3)
 
 
-@pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _ICEVISION_AVAILABLE, reason="icevision is not installed for testing")
 def test_image_detector_data_from_files(tmpdir):
     predict_files = _create_synth_files_dataset(tmpdir)
     datamodule = ObjectDetectionData.from_files(
-        predict_files=predict_files, batch_size=1, transform_kwargs=dict(image_size=128)
+        predict_files=predict_files, batch_size=1, transform_kwargs={"image_size": 128}
     )
     data = next(iter(datamodule.predict_dataloader()))
     sample = data[0]
     assert sample[DataKeys.INPUT].shape == (128, 128, 3)
 
 
-@pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _ICEVISION_AVAILABLE, reason="icevision is not installed for testing")
 def test_image_detector_data_from_folders(tmpdir):
     predict_folder = _create_synth_folders_dataset(tmpdir)
     datamodule = ObjectDetectionData.from_folders(
-        predict_folder=predict_folder, batch_size=1, transform_kwargs=dict(image_size=128)
+        predict_folder=predict_folder, batch_size=1, transform_kwargs={"image_size": 128}
     )
     data = next(iter(datamodule.predict_dataloader()))
     sample = data[0]

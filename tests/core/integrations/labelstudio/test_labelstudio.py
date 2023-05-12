@@ -2,20 +2,25 @@ import pytest
 
 from flash.core.data.utils import download_data
 from flash.core.integrations.labelstudio.input import (
-    _load_json_data,
     LabelStudioImageClassificationInput,
     LabelStudioInput,
     LabelStudioTextClassificationInput,
+    _load_json_data,
 )
 from flash.core.integrations.labelstudio.visualizer import launch_app
-from flash.core.utilities.imports import _CORE_TESTING, _IMAGE_TESTING, _TEXT_TESTING, _VIDEO_TESTING
+from flash.core.utilities.imports import (
+    _TOPIC_CORE_AVAILABLE,
+    _TOPIC_IMAGE_AVAILABLE,
+    _TOPIC_TEXT_AVAILABLE,
+    _TOPIC_VIDEO_AVAILABLE,
+)
 from flash.core.utilities.stages import RunningStage
 from flash.image.classification.data import ImageClassificationData
 from flash.text.classification.data import TextClassificationData
 from flash.video.classification.data import LabelStudioVideoClassificationInput, VideoClassificationData
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 def test_utility_load():
     """Test for label studio json loader."""
     data = [
@@ -139,7 +144,7 @@ def test_utility_load():
     assert len(ds_multi[0]) == 5
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 def test_input_labelstudio():
     """Test creation of LabelStudioInput."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/data.zip")
@@ -159,7 +164,7 @@ def test_input_labelstudio():
     assert val_sample
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_input_labelstudio_image():
     """Test creation of LabelStudioImageClassificationInput from images."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/data_nofile.zip")
@@ -180,7 +185,7 @@ def test_input_labelstudio_image():
     assert val_sample
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_datamodule_labelstudio_image():
     """Test creation of LabelStudioImageClassificationInput and Datamodule from images."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/data.zip")
@@ -196,7 +201,7 @@ def test_datamodule_labelstudio_image():
     assert datamodule
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_label_studio_predictions_visualization():
     """Test creation of LabelStudioImageClassificationInput and Datamodule from images."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/data.zip")
@@ -222,7 +227,7 @@ def test_label_studio_predictions_visualization():
     assert tasks_predictions_json
 
 
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_input_labelstudio_text():
     """Test creation of LabelStudioTextClassificationInput and Datamodule from text."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/text_data.zip", "./data/")
@@ -245,7 +250,7 @@ def test_input_labelstudio_text():
     assert len(test) == 0
 
 
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_datamodule_labelstudio_text():
     """Test creation of LabelStudioTextClassificationInput and Datamodule from text."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/text_data.zip", "./data/")
@@ -257,7 +262,7 @@ def test_datamodule_labelstudio_text():
     assert datamodule
 
 
-@pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
+@pytest.mark.skipif(not _TOPIC_VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
 def test_input_labelstudio_video():
     """Test creation of LabelStudioVideoClassificationInput from video."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/video_data.zip")
@@ -271,7 +276,7 @@ def test_input_labelstudio_video():
     assert sample
 
 
-@pytest.mark.skipif(not _VIDEO_TESTING, reason="PyTorchVideo isn't installed.")
+@pytest.mark.skipif(not _TOPIC_VIDEO_AVAILABLE, reason="PyTorchVideo isn't installed.")
 def test_datamodule_labelstudio_video():
     """Test creation of Datamodule from video."""
     download_data("https://label-studio-testdata.s3.us-east-2.amazonaws.com/lightning-flash/video_data.zip")

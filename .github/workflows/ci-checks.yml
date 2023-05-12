@@ -1,0 +1,26 @@
+name: General Checks
+
+on:
+  push:
+    branches: [master, "release/*"]
+  pull_request:
+    branches: [master, "release/*"]
+
+jobs:
+  check-schema:
+    uses: Lightning-AI/utilities/.github/workflows/check-schema.yml@v0.8.0
+    with:
+      # todo: validation has some problem with `- ${{ each topic in parameters.domains }}:` construct
+      azure-dir: ""
+
+  check-package:
+    uses: Lightning-AI/utilities/.github/workflows/check-package.yml@v0.8.0
+    with:
+      actions-ref: v0.8.0
+      artifact-name: dist-packages-${{ github.sha }}
+      import-name: "flash"
+      testing-matrix: |
+          {
+            "os": ["ubuntu-20.04", "macos-11", "windows-2022"],
+            "python-version": ["3.8"]
+          }

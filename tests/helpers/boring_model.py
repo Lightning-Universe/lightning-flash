@@ -46,8 +46,7 @@ class BoringModel(LightningModule):
 
     def step(self, x):
         x = self(x)
-        out = torch.nn.functional.mse_loss(x, torch.ones_like(x))
-        return out
+        return torch.nn.functional.mse_loss(x, torch.ones_like(x))
 
     def training_step(self, batch, batch_idx):
         output = self(batch)
@@ -95,7 +94,6 @@ class BoringModel(LightningModule):
 
 
 class BoringDataModule(LightningDataModule):
-
     random_full: Dataset
     random_train: Subset
     random_val: Subset

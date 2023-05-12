@@ -16,10 +16,10 @@ from unittest.mock import Mock
 import pytest
 
 from flash.core.data.io.output import Output
-from flash.core.utilities.imports import _CORE_TESTING
+from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 def test_output():
     """Tests basic ``Output`` methods."""
     my_output = Output()

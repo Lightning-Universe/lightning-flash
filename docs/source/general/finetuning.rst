@@ -62,7 +62,7 @@ Finetune strategies
     )
 
     model = ImageClassifier(backbone="resnet18", num_classes=2)
-    trainer = flash.Trainer(max_epochs=1, checkpoint_callback=False)
+    trainer = flash.Trainer(max_epochs=1)
 
 Finetuning is very task specific. Each task encodes the best finetuning practices for that task.
 However, Flash gives you a few default strategies for finetuning.
@@ -104,11 +104,6 @@ The freeze strategy keeps the backbone frozen throughout.
 
     trainer.finetune(model, datamodule, strategy="freeze")
 
-.. testoutput:: strategies
-    :hide:
-
-    ...
-
 The pseudocode looks like:
 
 .. code-block:: python
@@ -139,11 +134,6 @@ For example, to unfreeze after epoch 7:
 .. testcode:: strategies
 
     trainer.finetune(model, datamodule, strategy=("freeze_unfreeze", 7))
-
-.. testoutput:: strategies
-    :hide:
-
-    ...
 
 Under the hood, the pseudocode looks like:
 
@@ -180,10 +170,6 @@ Here's an example where:
 
     trainer.finetune(model, datamodule, strategy=("unfreeze_milestones", ((3, 8), 2)))
 
-.. testoutput:: strategies
-    :hide:
-
-    ...
 
 Under the hood, the pseudocode looks like:
 
@@ -216,6 +202,7 @@ For even more customization, create your own finetuning callback. Learn more abo
 
     from flash.core.finetuning import FlashBaseFinetuning
 
+
     # Create a finetuning callback
     class FeatureExtractorFreezeUnfreeze(FlashBaseFinetuning):
         def __init__(self, unfreeze_epoch: int = 5, train_bn: bool = True):
@@ -236,11 +223,6 @@ For even more customization, create your own finetuning callback. Learn more abo
 
     # Pass the callback to trainer.finetune
     trainer.finetune(model, datamodule, strategy=FeatureExtractorFreezeUnfreeze(unfreeze_epoch=5))
-
-.. testoutput:: strategies
-    :hide:
-
-    ...
 
 Working with DeepSpeed
 ======================

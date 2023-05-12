@@ -20,7 +20,7 @@ from torch.utils.data import DataLoader
 
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _IMAGE_TESTING, _LEARN2LEARN_AVAILABLE, _PL_GREATER_EQUAL_1_6_0
+from flash.core.utilities.imports import _LEARN2LEARN_AVAILABLE, _TOPIC_IMAGE_AVAILABLE
 from flash.image import ImageClassificationData, ImageClassifier
 from flash.image.classification.adapters import TRAINING_STRATEGIES
 from tests.image.classification.test_data import _rand_image
@@ -39,7 +39,7 @@ class DummyDataset(torch.utils.data.Dataset):
         return 2
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_default_strategies(tmpdir):
     num_classes = 10
     ds = DummyDataset()
@@ -78,7 +78,7 @@ def _test_learn2learning_training_strategies(gpus, training_strategy, tmpdir, ac
         train_targets=[0] * n + [1] * n + [2] * n + [3] * n,
         batch_size=1,
         num_workers=0,
-        transform_kwargs=dict(image_size=image_size),
+        transform_kwargs={"image_size": image_size},
     )
 
     model = ImageClassifier(
@@ -87,10 +87,7 @@ def _test_learn2learning_training_strategies(gpus, training_strategy, tmpdir, ac
         training_strategy_kwargs={"ways": dm.num_classes, "shots": 4, "meta_batch_size": 4},
     )
 
-    if _PL_GREATER_EQUAL_1_6_0:
-        trainer = Trainer(fast_dev_run=2, gpus=gpus, strategy=strategy)
-    else:
-        trainer = Trainer(fast_dev_run=2, gpus=gpus, accelerator=accelerator)
+    trainer = Trainer(fast_dev_run=2, gpus=gpus, strategy=strategy)
 
     trainer.fit(model, datamodule=dm)
 
@@ -112,10 +109,7 @@ def test_wrongly_specified_training_strategies():
         )
 
 
-@pytest.mark.skipif(not os.getenv("FLASH_RUNNING_SPECIAL_TESTS", "0") == "1", reason="Should run with special test")
+@pytest.mark.skipif(os.getenv("FLASH_RUNNING_SPECIAL_TESTS", "0") != "1", reason="Should run with special test")
 @pytest.mark.skipif(not _LEARN2LEARN_AVAILABLE, reason="image and learn2learn libraries aren't installed.")
 def test_learn2learn_training_strategies_ddp(tmpdir):
-    if _PL_GREATER_EQUAL_1_6_0:
-        _test_learn2learning_training_strategies(2, "prototypicalnetworks", tmpdir, strategy="ddp")
-    else:
-        _test_learn2learning_training_strategies(2, "prototypicalnetworks", tmpdir, accelerator="ddp")
+    _test_learn2learning_training_strategies(2, "prototypicalnetworks", tmpdir, strategy="ddp")

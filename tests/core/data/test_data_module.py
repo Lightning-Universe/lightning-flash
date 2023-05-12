@@ -13,7 +13,7 @@
 # limitations under the License.
 from dataclasses import dataclass
 from typing import Callable, Dict
-from unittest import mock
+from unittest.mock import MagicMock, NonCallableMock, patch
 
 import numpy as np
 import pytest
@@ -25,7 +25,7 @@ from flash import Task, Trainer
 from flash.core.data.data_module import DataModule, DatasetInput
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import InputTransform
-from flash.core.utilities.imports import _CORE_TESTING, _IMAGE_TESTING, _TORCHVISION_AVAILABLE
+from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE, _TOPIC_IMAGE_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 from tests.helpers.boring_model import BoringModel
 
@@ -33,7 +33,7 @@ if _TORCHVISION_AVAILABLE:
     import torchvision.transforms as T
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 def test_data_module():
     seed_everything(42)
 
@@ -95,12 +95,14 @@ def test_data_module():
     assert len(dm.train_dataloader()) == 5
     batch = next(iter(dm.train_dataloader()))
     assert batch.shape == torch.Size([2])
-    assert batch.min() >= 0 and batch.max() < 10
+    assert batch.min() >= 0
+    assert batch.max() < 10
 
     assert len(dm.val_dataloader()) == 5
     batch = next(iter(dm.val_dataloader()))
     assert batch.shape == torch.Size([2])
-    assert batch.min() >= 0 and batch.max() < 10
+    assert batch.min() >= 0
+    assert batch.max() < 10
 
     class TestModel(Task):
         def training_step(self, batch, batch_idx):
@@ -218,7 +220,7 @@ class TestInput(Input):
         self.val_load_sample_called = True
         return {"a": sample, "b": sample + 1}
 
-    def test_load_data(self, _):
+    def test_load_data(self, _):  # noqa: PT019
         return [[torch.rand(1), torch.rand(1)], [torch.rand(1), torch.rand(1)]]
 
 
@@ -311,7 +313,7 @@ class CustomModel(Task):
         assert batch[0].shape == torch.Size([2, 1])
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 def test_transformations(tmpdir):
     transform = TestInputTransform()
     datamodule = DataModule(
@@ -364,7 +366,7 @@ def test_transformations(tmpdir):
     assert datamodule.input_transform.test_per_sample_transform_called
 
 
-@pytest.mark.skipif(not _IMAGE_TESTING, reason="image libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 def test_datapipeline_transformations_overridden_by_task():
     # define input transforms
     class ImageInput(Input):
@@ -425,9 +427,9 @@ def test_datapipeline_transformations_overridden_by_task():
     trainer.fit(model, datamodule=datamodule)
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
-@pytest.mark.parametrize("sampler, callable", [(mock.MagicMock(), True), (mock.NonCallableMock(), False)])
-@mock.patch("flash.core.data.data_module.DataLoader")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
+@pytest.mark.parametrize(("sampler", "callable"), [(MagicMock(), True), (NonCallableMock(), False)])
+@patch("flash.core.data.data_module.DataLoader")
 def test_dataloaders_with_sampler(mock_dataloader, sampler, callable):
     train_input = TestInput(RunningStage.TRAINING, [1])
     datamodule = DataModule(
@@ -453,7 +455,7 @@ def test_dataloaders_with_sampler(mock_dataloader, sampler, callable):
         assert "sampler" not in kwargs
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 def test_val_split():
     datamodule = DataModule(
         Input(RunningStage.TRAINING, [1] * 100),

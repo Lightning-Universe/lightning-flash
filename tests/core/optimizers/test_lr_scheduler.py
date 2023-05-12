@@ -18,12 +18,12 @@ from torch import nn
 from torch.optim import Adam
 
 from flash.core.optimizers import LinearWarmupCosineAnnealingLR
-from flash.core.utilities.imports import _CORE_TESTING
+from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 @pytest.mark.parametrize(
-    "lr, warmup_epochs, max_epochs, warmup_start_lr, eta_min",
+    ("lr", "warmup_epochs", "max_epochs", "warmup_start_lr", "eta_min"),
     [
         (1, 10, 3200, 0.001, 0.0),
         (1e-4, 40, 300, 1e-6, 1e-5),

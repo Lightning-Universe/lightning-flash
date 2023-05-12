@@ -48,7 +48,7 @@ We then use the trained :class:`~flash.tabular.classification.model.TabularClass
 Finally, we save the model.
 Here's the full example:
 
-.. literalinclude:: ../../../flash_examples/tabular_classification.py
+.. literalinclude:: ../../../examples/tabular/tabular_classification.py
     :language: python
     :lines: 14-
 
@@ -83,12 +83,12 @@ The :class:`~flash.tabular.classification.model.TabularClassifier` is servable.
 This means you can call ``.serve`` to serve your :class:`~flash.core.model.Task`.
 Here's an example:
 
-.. literalinclude:: ../../../flash_examples/serve/tabular_classification/inference_server.py
+.. literalinclude:: ../../../examples/serve/tabular_classification/inference_server.py
     :language: python
     :lines: 14-
 
 You can now perform inference from your client like this:
 
-.. literalinclude:: ../../../flash_examples/serve/tabular_classification/client.py
+.. literalinclude:: ../../../examples/serve/tabular_classification/client.py
     :language: python
     :lines: 14-

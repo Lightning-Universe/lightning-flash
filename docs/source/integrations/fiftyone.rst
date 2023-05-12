@@ -57,7 +57,7 @@ dictionaries containing :ref:`FiftyOne Label <fiftyone:using-labels>` objects
 and filepaths, which is exactly the output of the FiftyOne outputs when the
 ``return_filepath=True`` option is specified.
 
-.. literalinclude:: ../../../flash_examples/integrations/fiftyone/image_classification.py
+.. literalinclude:: ../../../examples/image/fiftyone_img_classification.py
     :language: python
     :lines: 14-
 
@@ -94,7 +94,7 @@ method allows you to load your FiftyOne datasets directly into a
 :class:`~flash.core.data.data_module.DataModule` to be used for training,
 testing, or inference.
 
-.. literalinclude:: ../../../flash_examples/integrations/fiftyone/image_classification_fiftyone_datasets.py
+.. literalinclude:: ../../../examples/image/fiftyone_img_classification_datasets.py
     :language: python
     :lines: 14-
 
@@ -109,7 +109,7 @@ FiftyOne provides the methods for
 powerful workflows like clustering, similarity search, pre-annotation, and more
 in only a few lines of code.
 
-.. literalinclude:: ../../../flash_examples/integrations/fiftyone/image_embedding.py
+.. literalinclude:: ../../../examples/image/fiftyone_img_embedding.py
     :language: python
     :lines: 14-
 

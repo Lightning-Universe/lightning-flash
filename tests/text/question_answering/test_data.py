@@ -18,7 +18,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from flash.core.utilities.imports import _TEXT_TESTING
+from flash.core.utilities.imports import _TOPIC_TEXT_AVAILABLE
 from flash.text import QuestionAnsweringData
 
 TEST_CSV_DATA = {
@@ -100,7 +100,7 @@ def json_data_with_field(tmpdir, data):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_csv(tmpdir):
     csv_path = csv_data(tmpdir)
     dm = QuestionAnsweringData.from_csv(
@@ -117,7 +117,7 @@ def test_from_csv(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_files(tmpdir):
     csv_path = csv_data(tmpdir)
     dm = QuestionAnsweringData.from_csv(
@@ -141,7 +141,7 @@ def test_from_files(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_json(tmpdir):
     json_path = json_data(tmpdir, TEST_JSON_DATA)
     dm = QuestionAnsweringData.from_json(
@@ -158,7 +158,7 @@ def test_from_json(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_json_with_field(tmpdir):
     json_path = json_data_with_field(tmpdir, TEST_JSON_DATA)
     dm = QuestionAnsweringData.from_json(
@@ -176,7 +176,7 @@ def test_from_json_with_field(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_wrong_keys_and_types(tmpdir):
     TEST_CSV_DATA.pop("answer_text")
     with pytest.raises(KeyError):

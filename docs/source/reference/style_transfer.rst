@@ -38,7 +38,7 @@ We then use the trained :class:`~flash.image.style_transfer.model.StyleTransfer`
 Finally, we save the model.
 Here's the full example:
 
-.. literalinclude:: ../../../flash_examples/style_transfer.py
+.. literalinclude:: ../../../examples/image/style_transfer.py
     :language: python
     :lines: 14-
 

@@ -22,17 +22,17 @@ import torch
 
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _ICEVISION_AVAILABLE, _IMAGE_AVAILABLE, _IMAGE_EXTRAS_TESTING
+from flash.core.utilities.imports import _ICEDATA_AVAILABLE, _ICEVISION_AVAILABLE, _TOPIC_IMAGE_AVAILABLE
 from flash.image import KeypointDetectionData, KeypointDetector
 from tests.helpers.task_tester import TaskTester
 
-if _IMAGE_AVAILABLE:
+if _TOPIC_IMAGE_AVAILABLE:
     from PIL import Image
 
 COCODataConfig = collections.namedtuple("COCODataConfig", "train_folder train_ann_file predict_folder")
 
 
-@pytest.fixture
+@pytest.fixture()
 def coco_keypoints(tmpdir):
     rand_image = Image.fromarray(np.random.randint(0, 255, (64, 64, 3), dtype="uint8"))
     os.makedirs(tmpdir / "train_folder", exist_ok=True)
@@ -93,14 +93,15 @@ def coco_keypoints(tmpdir):
     return COCODataConfig(train_folder, train_ann_file, predict_folder)
 
 
+@pytest.mark.skipif(not _ICEDATA_AVAILABLE, reason="icedata is not installed for testing")
+@pytest.mark.skipif(not _ICEVISION_AVAILABLE, reason="icevision is not installed for testing")
 class TestKeypointDetector(TaskTester):
-
     task = KeypointDetector
     task_args = (2,)
     task_kwargs = {"num_classes": 2}
     cli_command = "keypoint_detection"
-    is_testing = _IMAGE_EXTRAS_TESTING
-    is_available = _IMAGE_AVAILABLE and _ICEVISION_AVAILABLE
+    is_testing = _TOPIC_IMAGE_AVAILABLE
+    is_available = _TOPIC_IMAGE_AVAILABLE and _ICEVISION_AVAILABLE
 
     # TODO: Resolve JIT support
     traceable = False
@@ -139,14 +140,14 @@ class TestKeypointDetector(TaskTester):
         return self.example_train_sample
 
 
-@pytest.mark.skipif(not _IMAGE_EXTRAS_TESTING, reason="image libraries aren't installed.")
-@pytest.mark.parametrize("backbone, head", [("resnet18_fpn", "keypoint_rcnn")])
+@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
+@pytest.mark.parametrize(("backbone", "head"), [("resnet18_fpn", "keypoint_rcnn")])
 def test_model(coco_keypoints, backbone, head):
     datamodule = KeypointDetectionData.from_coco(
         train_folder=coco_keypoints.train_folder,
         train_ann_file=coco_keypoints.train_ann_file,
         predict_folder=coco_keypoints.predict_folder,
-        transform_kwargs=dict(image_size=(128, 128)),
+        transform_kwargs={"image_size": (128, 128)},
         batch_size=2,
     )
 

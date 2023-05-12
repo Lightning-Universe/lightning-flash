@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from unittest import mock
+from unittest.mock import ANY, MagicMock, call, patch
 
 import pytest
 import torch
@@ -21,17 +21,17 @@ from flash.core.data.data_module import DataModule, DatasetInput
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.model import Task
 from flash.core.trainer import Trainer
-from flash.core.utilities.imports import _CORE_TESTING
+from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 
 
-@pytest.mark.skipif(not _CORE_TESTING, reason="Not testing core.")
-@mock.patch("pickle.dumps")  # need to mock pickle or we get pickle error
-@mock.patch("torch.save")  # need to mock torch.save, or we get pickle error
-def test_flash_callback(_, __, tmpdir):
+@pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
+@patch("pickle.dumps")  # need to mock pickle or we get pickle error
+@patch("torch.save")  # need to mock torch.save, or we get pickle error
+def test_flash_callback(_, __, tmpdir):  # noqa: PT019
     """Test the callback hook system for fit."""
 
-    callback_mock = mock.MagicMock()
+    callback_mock = MagicMock()
 
     inputs = [(torch.rand(1), torch.rand(1))]
     transform = InputTransform()
@@ -48,10 +48,10 @@ def test_flash_callback(_, __, tmpdir):
     _ = next(iter(dm.train_dataloader()))
 
     assert callback_mock.method_calls == [
-        mock.call.on_load_sample(mock.ANY, RunningStage.TRAINING),
-        mock.call.on_per_sample_transform(mock.ANY, RunningStage.TRAINING),
-        mock.call.on_collate(mock.ANY, RunningStage.TRAINING),
-        mock.call.on_per_batch_transform(mock.ANY, RunningStage.TRAINING),
+        call.on_load_sample(ANY, RunningStage.TRAINING),
+        call.on_per_sample_transform(ANY, RunningStage.TRAINING),
+        call.on_collate(ANY, RunningStage.TRAINING),
+        call.on_per_batch_transform(ANY, RunningStage.TRAINING),
     ]
 
     class CustomModel(Task):
@@ -75,7 +75,6 @@ def test_flash_callback(_, __, tmpdir):
         max_epochs=1,
         limit_val_batches=1,
         limit_train_batches=1,
-        progress_bar_refresh_rate=0,
     )
     transform = InputTransform()
     dm = DataModule(
@@ -90,23 +89,23 @@ def test_flash_callback(_, __, tmpdir):
     trainer.fit(CustomModel(), datamodule=dm)
 
     assert callback_mock.method_calls == [
-        mock.call.on_load_sample(mock.ANY, RunningStage.TRAINING),
-        mock.call.on_per_sample_transform(mock.ANY, RunningStage.TRAINING),
-        mock.call.on_collate(mock.ANY, RunningStage.TRAINING),
-        mock.call.on_per_batch_transform(mock.ANY, RunningStage.TRAINING),
-        mock.call.on_load_sample(mock.ANY, RunningStage.VALIDATING),
-        mock.call.on_per_sample_transform(mock.ANY, RunningStage.VALIDATING),
-        mock.call.on_collate(mock.ANY, RunningStage.VALIDATING),
-        mock.call.on_per_batch_transform(mock.ANY, RunningStage.VALIDATING),
-        mock.call.on_per_batch_transform_on_device(mock.ANY, RunningStage.VALIDATING),
-        mock.call.on_load_sample(mock.ANY, RunningStage.TRAINING),
-        mock.call.on_per_sample_transform(mock.ANY, RunningStage.TRAINING),
-        mock.call.on_collate(mock.ANY, RunningStage.TRAINING),
-        mock.call.on_per_batch_transform(mock.ANY, RunningStage.TRAINING),
-        mock.call.on_per_batch_transform_on_device(mock.ANY, RunningStage.TRAINING),
-        mock.call.on_load_sample(mock.ANY, RunningStage.VALIDATING),
-        mock.call.on_per_sample_transform(mock.ANY, RunningStage.VALIDATING),
-        mock.call.on_collate(mock.ANY, RunningStage.VALIDATING),
-        mock.call.on_per_batch_transform(mock.ANY, RunningStage.VALIDATING),
-        mock.call.on_per_batch_transform_on_device(mock.ANY, RunningStage.VALIDATING),
+        call.on_load_sample(ANY, RunningStage.TRAINING),
+        call.on_per_sample_transform(ANY, RunningStage.TRAINING),
+        call.on_collate(ANY, RunningStage.TRAINING),
+        call.on_per_batch_transform(ANY, RunningStage.TRAINING),
+        call.on_load_sample(ANY, RunningStage.VALIDATING),
+        call.on_per_sample_transform(ANY, RunningStage.VALIDATING),
+        call.on_collate(ANY, RunningStage.VALIDATING),
+        call.on_per_batch_transform(ANY, RunningStage.VALIDATING),
+        call.on_per_batch_transform_on_device(ANY, RunningStage.VALIDATING),
+        call.on_load_sample(ANY, RunningStage.TRAINING),
+        call.on_per_sample_transform(ANY, RunningStage.TRAINING),
+        call.on_collate(ANY, RunningStage.TRAINING),
+        call.on_per_batch_transform(ANY, RunningStage.TRAINING),
+        call.on_per_batch_transform_on_device(ANY, RunningStage.TRAINING),
+        call.on_load_sample(ANY, RunningStage.VALIDATING),
+        call.on_per_sample_transform(ANY, RunningStage.VALIDATING),
+        call.on_collate(ANY, RunningStage.VALIDATING),
+        call.on_per_batch_transform(ANY, RunningStage.VALIDATING),
+        call.on_per_batch_transform_on_device(ANY, RunningStage.VALIDATING),
     ]

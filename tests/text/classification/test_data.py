@@ -18,10 +18,10 @@ import pandas as pd
 import pytest
 
 from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _TEXT_AVAILABLE, _TEXT_TESTING
+from flash.core.utilities.imports import _TOPIC_TEXT_AVAILABLE
 from flash.text import TextClassificationData
 
-if _TEXT_AVAILABLE:
+if _TOPIC_TEXT_AVAILABLE:
     from datasets import Dataset
 
 TEST_CSV_DATA = """sentence,label
@@ -117,7 +117,7 @@ def parquet_data(tmpdir, multilabel: bool):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_csv(tmpdir):
     csv_path = csv_data(tmpdir, multilabel=False)
     dm = TextClassificationData.from_csv(
@@ -147,7 +147,7 @@ def test_from_csv(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_csv_multilabel(tmpdir):
     csv_path = csv_data(tmpdir, multilabel=True)
     dm = TextClassificationData.from_csv(
@@ -163,15 +163,15 @@ def test_from_csv_multilabel(tmpdir):
     assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
@@ -179,7 +179,7 @@ def test_from_csv_multilabel(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_json(tmpdir):
     json_path = json_data(tmpdir, multilabel=False)
     dm = TextClassificationData.from_json(
@@ -209,7 +209,7 @@ def test_from_json(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_json_multilabel(tmpdir):
     json_path = json_data(tmpdir, multilabel=True)
     dm = TextClassificationData.from_json(
@@ -225,15 +225,15 @@ def test_from_json_multilabel(tmpdir):
     assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
@@ -241,7 +241,7 @@ def test_from_json_multilabel(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_json_with_field(tmpdir):
     json_path = json_data_with_field(tmpdir, multilabel=False)
     dm = TextClassificationData.from_json(
@@ -272,7 +272,7 @@ def test_from_json_with_field(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_json_with_field_multilabel(tmpdir):
     json_path = json_data_with_field(tmpdir, multilabel=True)
     dm = TextClassificationData.from_json(
@@ -289,15 +289,15 @@ def test_from_json_with_field_multilabel(tmpdir):
     assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
@@ -305,7 +305,7 @@ def test_from_json_with_field_multilabel(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_parquet(tmpdir):
     parquet_path = parquet_data(tmpdir, False)
     dm = TextClassificationData.from_parquet(
@@ -335,7 +335,7 @@ def test_from_parquet(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_parquet_multilabel(tmpdir):
     parquet_path = parquet_data(tmpdir, True)
     dm = TextClassificationData.from_parquet(
@@ -351,15 +351,15 @@ def test_from_parquet_multilabel(tmpdir):
     assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
@@ -367,7 +367,7 @@ def test_from_parquet_multilabel(tmpdir):
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_data_frame():
     dm = TextClassificationData.from_data_frame(
         "sentence",
@@ -396,7 +396,7 @@ def test_from_data_frame():
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_data_frame_multilabel():
     dm = TextClassificationData.from_data_frame(
         "sentence",
@@ -411,15 +411,15 @@ def test_from_data_frame_multilabel():
     assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
@@ -427,7 +427,7 @@ def test_from_data_frame_multilabel():
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_hf_datasets():
     TEST_HF_DATASET_DATA = Dataset.from_pandas(TEST_DATA_FRAME_DATA)
     dm = TextClassificationData.from_hf_datasets(
@@ -457,7 +457,7 @@ def test_from_hf_datasets():
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_hf_datasets_multilabel():
     TEST_HF_DATASET_DATA_MULTILABEL = Dataset.from_pandas(TEST_DATA_FRAME_DATA_MULTILABEL)
     dm = TextClassificationData.from_hf_datasets(
@@ -473,15 +473,15 @@ def test_from_hf_datasets_multilabel():
     assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
@@ -489,7 +489,7 @@ def test_from_hf_datasets_multilabel():
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_lists():
     dm = TextClassificationData.from_lists(
         train_data=TEST_LIST_DATA,
@@ -519,7 +519,7 @@ def test_from_lists():
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Huggingface timing out on Windows")
-@pytest.mark.skipif(not _TEXT_TESTING, reason="text libraries aren't installed.")
+@pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text libraries aren't installed.")
 def test_from_lists_multilabel():
     dm = TextClassificationData.from_lists(
         train_data=TEST_LIST_DATA,
@@ -535,22 +535,22 @@ def test_from_lists_multilabel():
     assert dm.multi_label
 
     batch = next(iter(dm.train_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.val_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.test_dataloader()))
-    assert all([label in [0, 1] for label in batch[DataKeys.TARGET][0]])
+    assert all(label in [0, 1] for label in batch[DataKeys.TARGET][0])
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
     batch = next(iter(dm.predict_dataloader()))
     assert isinstance(batch[DataKeys.INPUT][0], str)
 
 
-@pytest.mark.skipif(_TEXT_AVAILABLE, reason="text libraries are installed.")
+@pytest.mark.skipif(_TOPIC_TEXT_AVAILABLE, reason="text libraries are installed.")
 def test_text_module_not_found_error():
     with pytest.raises(ModuleNotFoundError, match="[text]"):
         TextClassificationData.from_json("sentence", "lab", train_file="", batch_size=1)
