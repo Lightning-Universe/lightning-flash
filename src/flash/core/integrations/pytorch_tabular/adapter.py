@@ -50,6 +50,7 @@ class PytorchTabularAdapter(Adapter):
             "categorical_dim": len(categorical_fields),
             "continuous_dim": num_features - len(categorical_fields),
             "output_dim": output_dim,
+            "embedded_cat_dim": sum([embd_dim for _, embd_dim in embedding_sizes]),
         }
         return cls(
             task_type,
