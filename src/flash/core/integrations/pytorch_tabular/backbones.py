@@ -89,7 +89,7 @@ if _PYTORCHTABULAR_AVAILABLE:
             AutoIntConfig,
             NodeConfig,
             CategoryEmbeddingModelConfig,
-            GatedAdditiveTreeEnsembleConfig
+            GatedAdditiveTreeEnsembleConfig,
         ],
         ["tabnet", "tabtransformer", "fttransformer", "autoint", "node", "category_embedding", "gate"],
     ):
