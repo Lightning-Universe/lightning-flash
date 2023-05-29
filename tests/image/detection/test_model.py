@@ -18,8 +18,6 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 import torch
-from torch.utils.data import Dataset
-
 from flash.core.data.io.input import DataKeys
 from flash.core.integrations.icevision.transforms import IceVisionInputTransform
 from flash.core.trainer import Trainer
@@ -30,6 +28,8 @@ from flash.core.utilities.imports import (
     _TOPIC_SERVE_AVAILABLE,
 )
 from flash.image import ObjectDetector
+from torch.utils.data import Dataset
+
 from tests.helpers.task_tester import TaskTester
 
 

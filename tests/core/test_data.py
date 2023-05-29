@@ -13,7 +13,6 @@
 # limitations under the License.
 import pytest
 import torch
-
 from flash import DataKeys, DataModule, RunningStage
 from flash.core.data.data_module import DatasetInput
 from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE

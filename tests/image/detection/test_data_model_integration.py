@@ -13,10 +13,9 @@
 # limitations under the License.
 import os
 
+import flash
 import pytest
 import torch
-
-import flash
 from flash.core.utilities.imports import _COCO_AVAILABLE, _FIFTYONE_AVAILABLE, _PIL_AVAILABLE
 from flash.image import ObjectDetector
 from flash.image.detection import ObjectDetectionData

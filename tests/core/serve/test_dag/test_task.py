@@ -2,7 +2,6 @@ import pickle
 from collections import namedtuple
 
 import pytest
-
 from flash.core.serve.dag.task import (
     flatten,
     get,

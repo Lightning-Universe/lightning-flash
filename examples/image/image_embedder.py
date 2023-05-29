@@ -11,12 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import torch
-from torchvision.datasets import CIFAR10
-
 import flash
+import torch
 from flash.core.data.utils import download_data
 from flash.image import ImageClassificationData, ImageEmbedder
+from torchvision.datasets import CIFAR10
 
 # 1. Download the data and prepare the datamodule
 datamodule = ImageClassificationData.from_datasets(

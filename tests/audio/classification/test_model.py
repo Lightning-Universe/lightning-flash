@@ -15,7 +15,6 @@ import contextlib
 from unittest.mock import patch
 
 import pytest
-
 from flash.__main__ import main
 from flash.core.utilities.imports import _TOPIC_AUDIO_AVAILABLE, _TOPIC_IMAGE_AVAILABLE
 

@@ -1,5 +1,4 @@
 import pytest
-
 from flash.core.data.utils import download_data
 from flash.core.integrations.labelstudio.input import (
     LabelStudioImageClassificationInput,

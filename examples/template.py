@@ -11,12 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import flash
 import numpy as np
 import torch
-from sklearn import datasets
-
-import flash
 from flash.template import TemplateData, TemplateSKLearnClassifier
+from sklearn import datasets
 
 # 1. Create the DataModule
 datamodule = TemplateData.from_sklearn(

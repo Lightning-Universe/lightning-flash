@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pytest
-
 from flash import DataKeys
 from flash.core.utilities.imports import _TOPIC_GRAPH_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.graph.classification.data import GraphClassificationData

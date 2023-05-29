@@ -14,19 +14,19 @@
 from numbers import Number
 from typing import Iterable, List, Optional, Tuple, Union
 
+import flash
 import pytest
 import pytorch_lightning as pl
 import torch
+from flash.core.finetuning import _FINETUNING_STRATEGIES_REGISTRY
+from flash.core.model import Task
+from flash.core.utilities.imports import _DEEPSPEED_AVAILABLE, _TOPIC_CORE_AVAILABLE
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 from torch import Tensor
 from torch.nn import Flatten, Linear, LogSoftmax, Module
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
-import flash
-from flash.core.finetuning import _FINETUNING_STRATEGIES_REGISTRY
-from flash.core.model import Task
-from flash.core.utilities.imports import _DEEPSPEED_AVAILABLE, _TOPIC_CORE_AVAILABLE
 from tests.helpers.boring_model import BoringModel
 
 

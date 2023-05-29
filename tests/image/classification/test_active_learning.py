@@ -14,17 +14,17 @@
 import math
 from pathlib import Path
 
+import flash
 import numpy as np
 import pytest
 import torch
+from flash.core.utilities.imports import _BAAL_AVAILABLE, _BAAL_GREATER_EQUAL_1_5_2, _TOPIC_IMAGE_AVAILABLE
+from flash.image import ImageClassificationData, ImageClassifier
+from flash.image.classification.integrations.baal import ActiveLearningDataModule, ActiveLearningLoop
 from pytorch_lightning import seed_everything
 from torch import nn
 from torch.utils.data import SequentialSampler
 
-import flash
-from flash.core.utilities.imports import _BAAL_AVAILABLE, _BAAL_GREATER_EQUAL_1_5_2, _TOPIC_IMAGE_AVAILABLE
-from flash.image import ImageClassificationData, ImageClassifier
-from flash.image.classification.integrations.baal import ActiveLearningDataModule, ActiveLearningLoop
 from tests.image.classification.test_data import _rand_image
 
 # ======== Mock functions ========

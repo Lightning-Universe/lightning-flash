@@ -2,10 +2,9 @@ import base64
 
 import numpy as np
 import pytest
-from torch import Tensor
-
 from flash.core.serve.types import Image
 from flash.core.utilities.imports import _PIL_AVAILABLE, _TOPIC_SERVE_AVAILABLE
+from torch import Tensor
 
 
 @pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")

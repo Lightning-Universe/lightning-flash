@@ -13,7 +13,6 @@
 # limitations under the License.
 import hummingbird.ml
 import sklearn.datasets
-
 from flash.core.serve import Composition, ModelComponent, expose
 from flash.core.serve.types import Number, Table
 

@@ -18,15 +18,15 @@ from unittest.mock import MagicMock, NonCallableMock, patch
 import numpy as np
 import pytest
 import torch
-from pytorch_lightning import seed_everything
-from torch.utils.data import Dataset
-
 from flash import Task, Trainer
 from flash.core.data.data_module import DataModule, DatasetInput
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE, _TOPIC_IMAGE_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.core.utilities.stages import RunningStage
+from pytorch_lightning import seed_everything
+from torch.utils.data import Dataset
+
 from tests.helpers.boring_model import BoringModel
 
 if _TORCHVISION_AVAILABLE:

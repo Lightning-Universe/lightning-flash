@@ -16,10 +16,10 @@ from typing import Any
 
 import pytest
 import torch
-from torch import Tensor
-
 from flash.core.utilities.imports import _TOPIC_TEXT_AVAILABLE
 from flash.text import QuestionAnsweringTask
+from torch import Tensor
+
 from tests.helpers.task_tester import TaskTester
 
 TEST_BACKBONE = "distilbert-base-uncased"

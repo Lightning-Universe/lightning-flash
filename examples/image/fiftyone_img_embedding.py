@@ -13,10 +13,9 @@
 # limitations under the License.
 import fiftyone as fo
 import fiftyone.brain as fob
+import flash
 import numpy as np
 import torch
-
-import flash
 from flash.core.data.utils import download_data
 from flash.image import ImageEmbedder
 from flash.image.classification.data import ImageClassificationData

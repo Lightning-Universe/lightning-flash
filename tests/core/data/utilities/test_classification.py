@@ -17,7 +17,6 @@ from collections import namedtuple
 import numpy as np
 import pytest
 import torch
-
 from flash.core.data.utilities.classification import (
     CommaDelimitedMultiLabelTargetFormatter,
     MultiBinaryTargetFormatter,

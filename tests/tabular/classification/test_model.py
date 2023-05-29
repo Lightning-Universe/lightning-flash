@@ -14,16 +14,16 @@
 from typing import Any
 from unittest.mock import patch
 
+import flash
 import pandas as pd
 import pytest
 import torch
-from torch import Tensor
-
-import flash
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _TOPIC_SERVE_AVAILABLE, _TOPIC_TABULAR_AVAILABLE
 from flash.tabular.classification.data import TabularClassificationData
 from flash.tabular.classification.model import TabularClassifier
+from torch import Tensor
+
 from tests.helpers.task_tester import StaticDataset, TaskTester
 
 

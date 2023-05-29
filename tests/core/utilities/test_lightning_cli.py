@@ -13,12 +13,6 @@ from unittest.mock import patch
 import pytest
 import torch
 import yaml
-from packaging import version
-from pytorch_lightning import Callback, LightningDataModule, LightningModule, Trainer
-from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
-from pytorch_lightning.plugins.environments import SLURMEnvironment
-from torch import nn
-
 from flash.core.utilities.compatibility import accelerator_connector
 from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE, _TORCHVISION_AVAILABLE
 from flash.core.utilities.lightning_cli import (
@@ -27,6 +21,12 @@ from flash.core.utilities.lightning_cli import (
     SaveConfigCallback,
     instantiate_class,
 )
+from packaging import version
+from pytorch_lightning import Callback, LightningDataModule, LightningModule, Trainer
+from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
+from pytorch_lightning.plugins.environments import SLURMEnvironment
+from torch import nn
+
 from tests.helpers.boring_model import BoringDataModule, BoringModel
 
 torchvision_version = version.parse("0")

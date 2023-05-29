@@ -16,12 +16,12 @@ from unittest.mock import patch
 
 import pytest
 import torch
-from torch import Tensor
-
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _TOPIC_IMAGE_AVAILABLE, _TOPIC_SERVE_AVAILABLE
 from flash.image import ImageClassifier
+from torch import Tensor
+
 from tests.helpers.task_tester import TaskTester
 
 # ======== Mock functions ========

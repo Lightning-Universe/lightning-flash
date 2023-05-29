@@ -1,5 +1,4 @@
 import pytest
-
 from flash.core.serve import ModelComponent, expose
 from flash.core.serve.types import Number
 from flash.core.utilities.imports import _CYTOOLZ_AVAILABLE, _TOPIC_SERVE_AVAILABLE
