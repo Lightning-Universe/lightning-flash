@@ -10,11 +10,6 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union, cast
 
 import torch
 from jsonargparse import ActionConfigFile, ArgumentParser, set_config_read_mode
-
-try:
-    from jsonargparse.signatures import ClassFromFunctionBase
-except ImportError:
-    from jsonargparse.util import ClassFromFunctionBase
 from jsonargparse.typehints import ClassType
 from pytorch_lightning import LightningDataModule, LightningModule, Trainer
 from pytorch_lightning.callbacks import Callback
@@ -22,6 +17,11 @@ from pytorch_lightning.utilities.cloud_io import get_filesystem
 from pytorch_lightning.utilities.model_helpers import is_overridden
 from pytorch_lightning.utilities.seed import seed_everything
 from torch.optim import Optimizer
+
+try:
+    from jsonargparse.signatures import ClassFromFunctionBase
+except ImportError:
+    from jsonargparse.util import ClassFromFunctionBase
 
 set_config_read_mode(fsspec_enabled=True)
 
