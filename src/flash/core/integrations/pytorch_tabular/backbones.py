@@ -30,6 +30,7 @@ if _PYTORCHTABULAR_AVAILABLE:
         AutoIntConfig,
         CategoryEmbeddingModelConfig,
         FTTransformerConfig,
+        GatedAdditiveTreeEnsembleConfig,
         NodeConfig,
         TabNetModelConfig,
         TabTransformerConfig,
@@ -88,8 +89,9 @@ if _PYTORCHTABULAR_AVAILABLE:
             AutoIntConfig,
             NodeConfig,
             CategoryEmbeddingModelConfig,
+            GatedAdditiveTreeEnsembleConfig,
         ],
-        ["tabnet", "tabtransformer", "fttransformer", "autoint", "node", "category_embedding"],
+        ["tabnet", "tabtransformer", "fttransformer", "autoint", "node", "category_embedding", "gate"],
     ):
         PYTORCH_TABULAR_BACKBONES(
             functools.partial(load_pytorch_tabular, model_config_class),

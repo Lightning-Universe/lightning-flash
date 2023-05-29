@@ -39,8 +39,7 @@ if _TOPIC_TABULAR_AVAILABLE:
         ("fttransformer", {"categorical_fields": ["category"], "numerical_fields": ["scalar_a", "scalar_b"]}),
         ("autoint", {"categorical_fields": ["category"], "numerical_fields": ["scalar_a", "scalar_b"]}),
         ("node", {"categorical_fields": ["category"], "numerical_fields": ["scalar_a", "scalar_b"]}),
-        # ("category_embedding",  # todo: seems to be bug in tabular
-        #  {"categorical_fields": ["category"], "numerical_fields": ["scalar_a", "scalar_b"]}),
+        ("category_embedding", {"categorical_fields": ["category"], "numerical_fields": ["scalar_a", "scalar_b"]}),
         # No categorical / numerical fields
         ("tabnet", {"categorical_fields": ["category"]}),
         ("tabnet", {"numerical_fields": ["scalar_a", "scalar_b"]}),

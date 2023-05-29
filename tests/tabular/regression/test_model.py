@@ -53,7 +53,7 @@ class TestTabularRegressor(TaskTester):
                     {"backbone": "fttransformer"},
                     {"backbone": "autoint"},
                     {"backbone": "node"},
-                    # {"backbone": "category_embedding"},  # todo: seems to be bug in tabular
+                    {"backbone": "category_embedding"},
                 ],
             )
         ],
@@ -66,7 +66,7 @@ class TestTabularRegressor(TaskTester):
                     {"backbone": "fttransformer"},
                     {"backbone": "autoint"},
                     {"backbone": "node"},
-                    # {"backbone": "category_embedding"},  # todo: seems to be bug in tabular
+                    {"backbone": "category_embedding"},
                 ],
             )
         ],
@@ -79,7 +79,7 @@ class TestTabularRegressor(TaskTester):
                     {"backbone": "fttransformer"},
                     {"backbone": "autoint"},
                     {"backbone": "node"},
-                    # {"backbone": "category_embedding"},  # todo: seems to be bug in tabular
+                    {"backbone": "category_embedding"},
                 ],
             )
         ],
