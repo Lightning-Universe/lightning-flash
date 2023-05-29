@@ -10,7 +10,10 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union, cast
 
 import torch
 from jsonargparse import ActionConfigFile, ArgumentParser, set_config_read_mode
-from jsonargparse.signatures import ClassFromFunctionBase
+try:
+    from jsonargparse.signatures import ClassFromFunctionBase
+except ImportError:
+    from jsonargparse.util import ClassFromFunctionBase
 from jsonargparse.typehints import ClassType
 from pytorch_lightning import LightningDataModule, LightningModule, Trainer
 from pytorch_lightning.callbacks import Callback
