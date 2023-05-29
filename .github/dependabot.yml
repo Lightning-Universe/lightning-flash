@@ -1,5 +1,4 @@
-# Basic dependabot.yml file with
-# minimum configuration for two package managers
+# Basic dependabot.yml file with minimum configuration for two package managers
 
 version: 2
 updates:
