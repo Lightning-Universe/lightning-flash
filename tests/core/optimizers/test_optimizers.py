@@ -13,10 +13,9 @@
 # limitations under the License.
 import pytest
 import torch
-from torch import nn
-
 from flash.core.optimizers import LAMB, LARS, LinearWarmupCosineAnnealingLR
 from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE
+from torch import nn
 
 
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")

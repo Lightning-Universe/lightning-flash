@@ -16,13 +16,13 @@ from pathlib import Path
 
 import pytest
 import torch
-from torch.utils.data import DataLoader
-
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _LEARN2LEARN_AVAILABLE, _TOPIC_IMAGE_AVAILABLE
 from flash.image import ImageClassificationData, ImageClassifier
 from flash.image.classification.adapters import TRAINING_STRATEGIES
+from torch.utils.data import DataLoader
+
 from tests.image.classification.test_data import _rand_image
 
 # ======== Mock functions ========

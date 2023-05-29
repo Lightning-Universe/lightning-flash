@@ -27,13 +27,12 @@ import warnings
 from dataclasses import dataclass
 from typing import Tuple, Union
 
+import flash
 import kornia.augmentation as Ka
 import kornia.geometry as Kg
 import learn2learn as l2l
 import torch
 import torchvision.transforms as T
-
-import flash
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.data.transforms import ApplyToKeys

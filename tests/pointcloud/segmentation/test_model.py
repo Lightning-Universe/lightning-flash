@@ -13,9 +13,9 @@
 # limitations under the License.
 import pytest
 import torch
-
 from flash.core.utilities.imports import _TOPIC_POINTCLOUD_AVAILABLE
 from flash.pointcloud.segmentation import PointCloudSegmentation
+
 from tests.helpers.task_tester import TaskTester
 
 

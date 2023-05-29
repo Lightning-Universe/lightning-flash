@@ -13,7 +13,6 @@
 # limitations under the License.
 import pytest
 import pytorch_lightning as pl
-
 from flash.core.utilities.imports import _TOPIC_TABULAR_AVAILABLE
 from flash.tabular import TabularClassificationData, TabularClassifier
 

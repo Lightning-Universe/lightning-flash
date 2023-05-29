@@ -1,7 +1,6 @@
 import base64
 
 import pytest
-
 from flash.core.serve import Composition, Endpoint
 from flash.core.utilities.imports import _FASTAPI_AVAILABLE, _TOPIC_SERVE_AVAILABLE
 

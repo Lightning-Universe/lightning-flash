@@ -16,7 +16,6 @@ import os
 from pathlib import Path
 
 import pytest
-
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _ICEVISION_AVAILABLE, _PIL_AVAILABLE
 from flash.image.detection.data import ObjectDetectionData

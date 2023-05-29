@@ -103,7 +103,6 @@ class DataModule(pl.LightningDataModule):
         >>> datamodule = DataModule(train_input, sampler=WeightedRandomSampler([0.1, 0.5], 2), batch_size=1)
         >>> print(datamodule.train_dataloader().sampler)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
         <torch.utils.data.sampler.WeightedRandomSampler object at ...>
-
     """
 
     input_transform_cls = InputTransform

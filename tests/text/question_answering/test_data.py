@@ -17,7 +17,6 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-
 from flash.core.utilities.imports import _TOPIC_TEXT_AVAILABLE
 from flash.text import QuestionAnsweringData
 

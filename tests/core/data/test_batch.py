@@ -15,7 +15,6 @@ from collections import namedtuple
 
 import pytest
 import torch
-
 from flash.core.data.batch import default_uncollate
 from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE
 

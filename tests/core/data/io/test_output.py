@@ -14,7 +14,6 @@
 from unittest.mock import Mock
 
 import pytest
-
 from flash.core.data.io.output import Output
 from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE
 

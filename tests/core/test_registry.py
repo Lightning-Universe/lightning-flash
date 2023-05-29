@@ -14,10 +14,9 @@
 import logging
 
 import pytest
-from torch import nn
-
 from flash.core.registry import ConcatRegistry, ExternalRegistry, FlashRegistry
 from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE
+from torch import nn
 
 
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")

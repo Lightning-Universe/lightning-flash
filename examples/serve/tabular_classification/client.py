@@ -13,7 +13,6 @@
 # limitations under the License.
 import pandas as pd
 import requests
-
 from flash.core.data.utils import download_data
 
 # 1. Download the data

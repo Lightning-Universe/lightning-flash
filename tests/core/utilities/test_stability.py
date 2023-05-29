@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pytest
-
 from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE
 from flash.core.utilities.stability import _raise_beta_warning, beta
 

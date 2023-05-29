@@ -20,13 +20,12 @@ from abc import ABCMeta
 from typing import Any, Dict, List, Optional, Tuple
 from unittest.mock import patch
 
+import flash
 import pytest
 import torch
-from torch.utils.data import Dataset
-
-import flash
 from flash.__main__ import main
 from flash.core.model import Task
+from torch.utils.data import Dataset
 
 
 def _copy_func(f):

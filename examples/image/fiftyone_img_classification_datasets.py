@@ -14,9 +14,8 @@
 from itertools import chain
 
 import fiftyone as fo
-import torch
-
 import flash
+import torch
 from flash.core.classification import FiftyOneLabelsOutput
 from flash.core.data.utils import download_data
 from flash.image import ImageClassificationData, ImageClassifier

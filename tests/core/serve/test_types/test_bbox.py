@@ -1,6 +1,5 @@
 import pytest
 import torch
-
 from flash.core.serve.types import BBox
 from flash.core.utilities.imports import _TOPIC_SERVE_AVAILABLE
 

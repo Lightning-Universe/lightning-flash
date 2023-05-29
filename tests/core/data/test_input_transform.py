@@ -14,7 +14,6 @@
 from typing import Callable
 
 import pytest
-
 from flash.core.data.io.input_transform import InputTransform
 from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE
 from flash.core.utilities.stages import RunningStage

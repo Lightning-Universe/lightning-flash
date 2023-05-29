@@ -16,13 +16,11 @@ from unittest.mock import Mock
 
 import numpy as np
 import pytest
-
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _TOPIC_TABULAR_AVAILABLE
 
 if _TOPIC_TABULAR_AVAILABLE:
     import pandas as pd
-
     from flash.tabular import TabularClassificationData
     from flash.tabular.classification.utils import _categorize, _compute_normalization, _generate_codes, _normalize
 

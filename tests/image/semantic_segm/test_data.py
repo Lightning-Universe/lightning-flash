@@ -5,7 +5,6 @@ from typing import Callable, Dict, List, Tuple
 import numpy as np
 import pytest
 import torch
-
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
 from flash.core.data.io.input_transform import InputTransform

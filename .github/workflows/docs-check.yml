@@ -9,6 +9,14 @@ on: # Trigger the workflow on push or pull request, but only for the master bran
 env:
   FREEZE_REQUIREMENTS: 1
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.head_ref }}
+  cancel-in-progress: ${{ ! (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/')) }}
+
+defaults:
+  run:
+    shell: bash
+
 jobs:
   make-docs:
     runs-on: ubuntu-20.04
@@ -39,7 +47,6 @@ jobs:
         pip install . --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
         pip install --requirement requirements/docs.txt
         pip list
-      shell: bash
 
     - name: Make Documentation
       working-directory: docs
@@ -79,7 +86,6 @@ jobs:
           pip install '.[all,test]' --find-links https://download.pytorch.org/whl/cpu/torch_stable.html
           pip install --requirement requirements/docs.txt
           pip list
-        shell: bash
 
       - name: Cache datasets
         uses: actions/cache@v3

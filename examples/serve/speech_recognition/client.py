@@ -14,9 +14,8 @@
 import base64
 from pathlib import Path
 
-import requests
-
 import flash
+import requests
 
 with (Path(flash.ASSETS_ROOT) / "example.wav").open("rb") as f:
     audio_str = base64.b64encode(f.read()).decode("UTF-8")

@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pytest
-
 from flash.core.utilities.imports import _VISSL_AVAILABLE
 from flash.image.embedding.model import ImageEmbedder
 

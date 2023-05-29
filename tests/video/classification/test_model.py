@@ -17,16 +17,16 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+import flash
 import pytest
 import torch
+from flash.core.data.io.input import DataKeys
+from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _TOPIC_VIDEO_AVAILABLE
+from flash.video import VideoClassificationData, VideoClassifier
 from pandas import DataFrame
 from torch import Tensor
 from torch.utils.data import SequentialSampler
 
-import flash
-from flash.core.data.io.input import DataKeys
-from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _TOPIC_VIDEO_AVAILABLE
-from flash.video import VideoClassificationData, VideoClassifier
 from tests.helpers.task_tester import TaskTester
 from tests.video.classification.test_data import create_dummy_video_frames, temp_encoded_tensors
 

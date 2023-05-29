@@ -14,14 +14,13 @@
 from pathlib import Path
 from typing import Tuple
 
+import flash
 import numpy as np
 import pytest
 import torch
-from pytorch_lightning import seed_everything
-
-import flash
 from flash.audio import AudioClassificationData
 from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE, _TOPIC_AUDIO_AVAILABLE
+from pytorch_lightning import seed_everything
 
 if _PIL_AVAILABLE:
     from PIL import Image
