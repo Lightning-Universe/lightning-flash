@@ -55,4 +55,4 @@ pull_request_rules:
     actions:
       request_reviews:
         teams:
-          - "@Lightning-AI/core-flash"
+          - "@Lightning-Universe/core-flash"
