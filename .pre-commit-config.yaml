@@ -62,12 +62,6 @@ repos:
       - id: black
         name: Format code
 
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.12.0
-    hooks:
-      - id: isort
-        name: imports
-
   - repo: https://github.com/asottile/blacken-docs
     rev: 1.13.0
     hooks:
