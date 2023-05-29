@@ -1,6 +1,4 @@
-"""
-NOTICE: Some methods in this file have been modified from their original source.
-"""
+"""NOTICE: Some methods in this file have been modified from their original source."""
 
 import functools
 import re

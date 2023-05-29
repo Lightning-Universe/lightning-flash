@@ -1137,11 +1137,10 @@ class VideoClassificationData(DataModule):
         transform_kwargs: Optional[Dict] = None,
         **data_module_kwargs,
     ) -> "VideoClassificationData":
-        """Creates a :class:`~flash.core.data.data_module.DataModule` object
-        from the given export file and data directory using the
-        :class:`~flash.core.data.io.input.Input` of name
-        :attr:`~flash.core.data.io.input.InputFormat.FOLDERS`
-        from the passed or constructed :class:`~flash.core.data.io.input_transform.InputTransform`.
+        """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given export file and data
+        directory using the :class:`~flash.core.data.io.input.Input` of name
+        :attr:`~flash.core.data.io.input.InputFormat.FOLDERS` from the passed or constructed
+        :class:`~flash.core.data.io.input_transform.InputTransform`.
 
         Args:
             export_json: path to label studio export file
