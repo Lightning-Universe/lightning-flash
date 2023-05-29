@@ -10,6 +10,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union, cast
 
 import torch
 from jsonargparse import ActionConfigFile, ArgumentParser, set_config_read_mode
+
 try:
     from jsonargparse.signatures import ClassFromFunctionBase
 except ImportError:
