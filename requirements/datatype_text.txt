@@ -1,6 +1,6 @@
 # NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forced in setup
 
-torchvision <=0.14.1
+torchvision <=0.15.2
 sentencepiece >=0.1.95, <=0.1.97
 filelock <=3.8.2
 transformers >4.13.0, <=4.25.1
