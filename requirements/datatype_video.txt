@@ -1,6 +1,6 @@
 # NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forced in setup
 
-torchvision <=0.14.1
+torchvision <=0.15.2
 Pillow >7.1, <=9.3.0
 kornia >=0.5.1, <=0.6.12
 pytorchvideo ==0.1.2
