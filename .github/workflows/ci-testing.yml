@@ -76,8 +76,7 @@ jobs:
       if: matrix.requires == 'oldest'
       run: |
         import glob, os
-        files = glob.glob(os.path.join("requirements", "*.txt")) + ['requirements.txt']
-        files = ['requirements.txt']
+        files = glob.glob(os.path.join("requirements", "*.txt"))
         for fname in files:
           lines = [line.replace('>=', '==') for line in open(fname).readlines()]
           open(fname, 'w').writelines(lines)
