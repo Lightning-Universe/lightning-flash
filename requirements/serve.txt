@@ -5,7 +5,7 @@ pyyaml <=6.0
 cytoolz <=0.12.1
 graphviz <=0.20.1
 tqdm <=4.64.1
-fastapi >=0.65.2, <=0.68.2
+fastapi >=0.65.2, <=0.96.0
 pydantic >1.8.1, <=1.10.2
 starlette ==0.14.2
 uvicorn[standard] >=0.12.0, <=0.20.0
