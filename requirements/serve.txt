@@ -9,6 +9,6 @@ fastapi >=0.65.2, <=0.96.0
 pydantic >1.8.1, <=1.10.2
 starlette ==0.14.2
 uvicorn[standard] >=0.12.0, <=0.20.0
-aiofiles <=22.1.0
+aiofiles <=23.1.0
 jinja2 >=3.0.0, <3.1.0
 torchvision <=0.15.2
