@@ -65,7 +65,10 @@ if not _TOPIC_IMAGE_AVAILABLE:
         "ImageClassificationData.from_tensors",
         "ImageClassificationData.from_data_frame",
         "ImageClassificationData.from_csv",
-        "ImageClassificationData.from_fiftyone",
+    ]
+if not _FIFTYONE_AVAILABLE:
+    __doctest_skip__ += [
+        "ImageClassificationData.from_fiftyone"
     ]
 
 

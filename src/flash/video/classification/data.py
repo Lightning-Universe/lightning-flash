@@ -57,7 +57,10 @@ if not _TOPIC_VIDEO_AVAILABLE:
         "VideoClassificationData.from_data_frame",
         "VideoClassificationData.from_csv",
         "VideoClassificationData.from_tensors",
-        "VideoClassificationData.from_fiftyone",
+    ]
+if not _FIFTYONE_AVAILABLE:
+    __doctest_skip__ += [
+        "VideoClassificationData.from_fiftyone"
     ]
 
 

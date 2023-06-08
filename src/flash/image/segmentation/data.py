@@ -48,7 +48,10 @@ if not _TOPIC_IMAGE_AVAILABLE:
         "SemanticSegmentationData.from_folders",
         "SemanticSegmentationData.from_numpy",
         "SemanticSegmentationData.from_tensors",
-        "SemanticSegmentationData.from_fiftyone",
+    ]
+if not _FIFTYONE_AVAILABLE:
+    __doctest_skip__ += [
+        "SemanticSegmentationData.from_fiftyone"
     ]
 
 
