@@ -109,12 +109,6 @@ jobs:
         key: flash-datasets-${{ hashFiles('tests/examples/test_scripts.py') }}
         restore-keys: flash-datasets-
 
-    - name: view info
-      if: runner.os == 'Linux'
-      run: |
-        du -h --max-depth=2
-        df -h
-
     # ToDO
     #- name: DocTests
     #  run: |
