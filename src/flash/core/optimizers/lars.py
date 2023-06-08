@@ -45,6 +45,7 @@ class LARS(Optimizer):
         eps (float, optional): eps for division denominator (default: 1e-8)
 
     Example:
+        >>> from torch import nn
         >>> model = nn.Linear(10, 1)
         >>> optimizer = LARS(model.parameters(), lr=0.1, momentum=0.9)
         >>> optimizer.zero_grad()
