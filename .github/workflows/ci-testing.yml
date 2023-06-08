@@ -113,7 +113,7 @@ jobs:
       working-directory: src/
       run: |
         mv flash flashy
-        pytest .
+        pytest . --doctest-modules --doctest-plus
 
     - name: Testing
       run: |
