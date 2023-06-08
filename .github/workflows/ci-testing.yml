@@ -98,7 +98,8 @@ jobs:
         pip install numpy Cython "torch>=1.7.1" -f $TORCH_URL
         pip install .[$EXTRAS,test] \
           -r requirements/testing_${{ matrix.topic }}.txt  \
-          --upgrade --prefer-binary -f $TORCH_URL
+          --upgrade --prefer-binary -f $TORCH_URL --no-cache-dir
+        pip cache info
         pip list
 
     - name: Cache datasets

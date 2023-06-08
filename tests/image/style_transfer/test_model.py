@@ -24,7 +24,7 @@ from torch import Tensor
 from tests.helpers.task_tester import TaskTester
 
 
-@pytest.mark.xfail(URLError, reason="Connection timed out for download.pystiche.org")
+@pytest.mark.xfail(URLError, reason="Connection timed out for download.pystiche.org", strict=False)
 class TestStyleTransfer(TaskTester):
     task = StyleTransfer
     cli_command = "style_transfer"
