@@ -74,6 +74,12 @@ def _defaults_from_env_vars(fn: Callable) -> Callable:
 
 
 class Trainer(PlTrainer):
+    """Exteded Trainer for FLash tasks.
+
+    >>> Trainer()  # doctest: +ELLIPSIS
+    <trainer.Trainer object at ...>
+    """
+
     @_defaults_from_env_vars
     def __init__(self, *args, **kwargs):
         if flash._IS_TESTING:
