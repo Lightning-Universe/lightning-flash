@@ -584,7 +584,10 @@ class EarlyExitTestModel(BoringModel):
     "trainer_kwargs",
     [
         {"accelerator": "cpu", "strategy": "ddp"},
-        pytest.param({"accelerator": "cpu", "strategy": "ddp", "plugins": "ddp_find_unused_parameters_false"}, marks=pytest.mark.xfail(reason="Bugs in PL >= 1.6.0")),
+        pytest.param(
+            {"accelerator": "cpu", "strategy": "ddp", "plugins": "ddp_find_unused_parameters_false"},
+            marks=pytest.mark.xfail(reason="Bugs in PL >= 1.6.0"),
+        ),
     ],
 )
 def test_cli_ddp_spawn_save_config_callback(tmpdir, logger, trainer_kwargs):
