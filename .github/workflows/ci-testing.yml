@@ -124,12 +124,6 @@ jobs:
           tests/${{ matrix.topic }} \
           -v # --reruns 3 --reruns-delay 2
 
-    - name: view info
-      if: runner.os == 'Linux'
-      run: |
-        du -h --max-depth=2
-        ls -lh
-
     - name: Statistics
       run: |
         coverage report
