@@ -110,10 +110,12 @@ jobs:
         restore-keys: flash-datasets-
 
     - name: DocTests
+      working-directory: src/
       run: |
-        pytest src/ -vv # --reruns 3 --reruns-delay 2
+        mv flash flashy
+        pytest .
 
-    - name: Tests
+    - name: Testing
       run: |
         coverage run --source flash -m pytest \
           tests/core \
@@ -133,7 +135,7 @@ jobs:
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         file: ./coverage.xml
-        flags: unittests
+        flags: unittests,${{ matrix.topic }},${{ matrix.extra }}
         env_vars: OS,PYTHON
         name: codecov-umbrella
         fail_ci_if_error: false
