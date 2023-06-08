@@ -42,8 +42,11 @@ jobs:
           - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'graph', extra: [] }
           - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'audio', extra: [] }
           - { os: 'ubuntu-20.04', python-version: 3.8, topic: 'core', extra: [], requires: 'oldest' }
-          - { os: 'ubuntu-20.04', python-version: 3.8, topic: 'serve', extra: [], requires: 'oldest' }
+          - { os: 'ubuntu-20.04', python-version: 3.8, topic: 'image', extra: [], requires: 'oldest' }
           - { os: 'ubuntu-20.04', python-version: 3.8, topic: 'vision', extra: [], requires: 'oldest' }
+          - { os: 'ubuntu-20.04', python-version: 3.8, topic: 'serve', extra: [], requires: 'oldest' }
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'tabular', extra: [], requires: 'oldest' }
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'text', extra: [], requires: 'oldest' }
 
     # Timeout: https://stackoverflow.com/a/59076067/4521646
     timeout-minutes: 50
