@@ -77,7 +77,7 @@ class Trainer(PlTrainer):
     """Exteded Trainer for FLash tasks.
 
     >>> Trainer()  # doctest: +ELLIPSIS
-    <trainer.Trainer object at ...>
+    <...trainer.Trainer object at ...>
     """
 
     @_defaults_from_env_vars
