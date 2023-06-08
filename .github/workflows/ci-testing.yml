@@ -49,6 +49,7 @@ jobs:
     timeout-minutes: 50
     env:
       FREEZE_REQUIREMENTS: 1
+      TORCH_URL: https://download.pytorch.org/whl/cpu/torch_stable.html
 
     steps:
     - uses: actions/checkout@v3
@@ -91,12 +92,25 @@ jobs:
             gh_env.write(f"EXTRAS={','.join(extras)}")
       shell: python
 
-    - name: Install dependencies
-      env:
-        TORCH_URL: https://download.pytorch.org/whl/cpu/torch_stable.html
+    - name: Install package
       run: |
+        # todo: some dependency has not correct format of their extras
         python -m pip install "pip==22.2.1"
+        # todo: this is a hack to be able to install packages that are checking torch version while install
         pip install numpy Cython "torch>=1.7.1" -f $TORCH_URL
+        pip install .[$EXTRAS,test] \
+          --upgrade --prefer-binary -f $TORCH_URL --no-cache-dir
+        pip list
+
+    - name: DocTests
+      working-directory: src/
+      run: |
+        mv flash flashy
+        pytest . --doctest-modules --doctest-plus
+        mv flashy flash
+
+    - name: Install dependencies
+      run: |
         pip install .[$EXTRAS,test] \
           -r requirements/testing_${{ matrix.topic }}.txt  \
           --upgrade --prefer-binary -f $TORCH_URL --no-cache-dir
@@ -109,12 +123,6 @@ jobs:
         path: data # This path is specific to Ubuntu
         key: flash-datasets-${{ hashFiles('tests/examples/test_scripts.py') }}
         restore-keys: flash-datasets-
-
-    - name: DocTests
-      working-directory: src/
-      run: |
-        mv flash flashy
-        pytest . --doctest-modules --doctest-plus
 
     - name: Testing
       run: |
