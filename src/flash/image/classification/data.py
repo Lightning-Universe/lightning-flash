@@ -67,9 +67,7 @@ if not _TOPIC_IMAGE_AVAILABLE:
         "ImageClassificationData.from_csv",
     ]
 if not _FIFTYONE_AVAILABLE:
-    __doctest_skip__ += [
-        "ImageClassificationData.from_fiftyone"
-    ]
+    __doctest_skip__ += ["ImageClassificationData.from_fiftyone"]
 
 
 class ImageClassificationData(DataModule):

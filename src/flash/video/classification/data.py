@@ -59,9 +59,7 @@ if not _TOPIC_VIDEO_AVAILABLE:
         "VideoClassificationData.from_tensors",
     ]
 if not _FIFTYONE_AVAILABLE:
-    __doctest_skip__ += [
-        "VideoClassificationData.from_fiftyone"
-    ]
+    __doctest_skip__ += ["VideoClassificationData.from_fiftyone"]
 
 
 class VideoClassificationData(DataModule):

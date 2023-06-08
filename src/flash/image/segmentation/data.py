@@ -50,9 +50,7 @@ if not _TOPIC_IMAGE_AVAILABLE:
         "SemanticSegmentationData.from_tensors",
     ]
 if not _FIFTYONE_AVAILABLE:
-    __doctest_skip__ += [
-        "SemanticSegmentationData.from_fiftyone"
-    ]
+    __doctest_skip__ += ["SemanticSegmentationData.from_fiftyone"]
 
 
 class SemanticSegmentationData(DataModule):
