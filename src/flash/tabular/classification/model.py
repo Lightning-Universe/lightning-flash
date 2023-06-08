@@ -109,26 +109,24 @@ class TabularClassifier(ClassificationAdapterTask):
         Examples
         ________
 
-        .. doctest::
-
-            >>> import flash
-            >>> from flash.core.data.utils import download_data
-            >>> from flash.tabular import TabularClassificationData, TabularClassifier
-            >>> download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "./data")
-            >>> model = TabularClassifier.load_from_checkpoint(
-            ...     "https://flash-weights.s3.amazonaws.com/0.7.0/tabular_classification_model.pt"
-            ... )
-            >>> datamodule = TabularClassificationData.from_csv(
-            ...     predict_file="data/titanic/predict.csv",
-            ...     parameters=model.data_parameters,
-            ...     batch_size=8,
-            ... )
-            >>> trainer = flash.Trainer()
-            >>> trainer.predict(
-            ...     model,
-            ...     datamodule=datamodule,
-            ...     output="classes",
-            ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+            import flash
+            from flash.core.data.utils import download_data
+            from flash.tabular import TabularClassificationData, TabularClassifier
+            download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "./data")
+            model = TabularClassifier.load_from_checkpoint(
+                "https://flash-weights.s3.amazonaws.com/0.7.0/tabular_classification_model.pt"
+            )
+            datamodule = TabularClassificationData.from_csv(
+                predict_file="data/titanic/predict.csv",
+                parameters=model.data_parameters,
+                batch_size=8,
+            )
+            trainer = flash.Trainer()
+            trainer.predict(
+                model,
+                datamodule=datamodule,
+                output="classes",
+            )
             Predicting...
         """
         return self._data_parameters

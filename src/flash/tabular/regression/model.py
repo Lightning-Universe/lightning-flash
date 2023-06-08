@@ -105,26 +105,23 @@ class TabularRegressor(RegressionAdapterTask):
         Examples
         ________
 
-        .. doctest::
-
-            >>> import flash
-            >>> from flash.core.data.utils import download_data
-            >>> from flash.tabular import TabularRegressionData, TabularRegressor
-            >>> download_data("https://pl-flash-data.s3.amazonaws.com/SeoulBikeData.csv", "./data")
-            >>> model = TabularRegressor.load_from_checkpoint(
-            ...     "https://flash-weights.s3.amazonaws.com/0.7.0/tabular_regression_model.pt"
-            ... )
-            >>> datamodule = TabularRegressionData.from_csv(
-            ...     predict_file="data/SeoulBikeData.csv",
-            ...     parameters=model.data_parameters,
-            ...     batch_size=8,
-            ... )
-            >>> trainer = flash.Trainer()
-            >>> trainer.predict(
-            ...     model,
-            ...     datamodule=datamodule,
-            ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            Predicting...
+            import flash
+            from flash.core.data.utils import download_data
+            from flash.tabular import TabularRegressionData, TabularRegressor
+            download_data("https://pl-flash-data.s3.amazonaws.com/SeoulBikeData.csv", "./data")
+            model = TabularRegressor.load_from_checkpoint(
+                "https://flash-weights.s3.amazonaws.com/0.7.0/tabular_regression_model.pt"
+            )
+            datamodule = TabularRegressionData.from_csv(
+                predict_file="data/SeoulBikeData.csv",
+                parameters=model.data_parameters,
+                batch_size=8,
+            )
+            trainer = flash.Trainer()
+            trainer.predict(
+                model,
+                datamodule=datamodule,
+            )
         """
         return self._data_parameters
 
