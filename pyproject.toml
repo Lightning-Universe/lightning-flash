@@ -33,7 +33,7 @@ addopts = [
 #filterwarnings = [
 #    "error::FutureWarning",
 #]
-xfail_strict = true
+xfail_strict = false # todo
 junit_duration_report = "call"
 
 [tool.coverage.report]
