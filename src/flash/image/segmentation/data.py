@@ -44,10 +44,7 @@ __doctest_skip__ = []
 if not _SEGMENTATION_MODELS_AVAILABLE:
     __doctest_skip__ += [
         "SemanticSegmentationData",
-        "SemanticSegmentationData.from_files",
-        "SemanticSegmentationData.from_folders",
-        "SemanticSegmentationData.from_numpy",
-        "SemanticSegmentationData.from_tensors",
+        "SemanticSegmentationData.*",
     ]
 if not _FIFTYONE_AVAILABLE:
     __doctest_skip__ += ["SemanticSegmentationData.from_fiftyone"]
