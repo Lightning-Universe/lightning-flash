@@ -58,13 +58,7 @@ __doctest_skip__ = []
 if not _TOPIC_IMAGE_AVAILABLE:
     __doctest_skip__ += [
         "ImageClassificationData",
-        "ImageClassificationData.from_files",
-        "ImageClassificationData.from_folders",
-        "ImageClassificationData.from_numpy",
-        "ImageClassificationData.from_images",
-        "ImageClassificationData.from_tensors",
-        "ImageClassificationData.from_data_frame",
-        "ImageClassificationData.from_csv",
+        "ImageClassificationData.*",
     ]
 if not _FIFTYONE_AVAILABLE:
     __doctest_skip__ += ["ImageClassificationData.from_fiftyone"]
