@@ -13,6 +13,7 @@
 # limitations under the License.
 import functools
 import importlib
+import logging
 import operator
 import types
 from typing import List, Tuple, Union
@@ -133,24 +134,26 @@ _EXTRAS_AVAILABLE = {
 
 def requires(*module_paths: Union[str, Tuple[bool, str]]):
     def decorator(func):
+        available = True
         extras = []
         modules = []
-        missing = []
         for module_path in module_paths:
             if isinstance(module_path, str):
                 if module_path in _EXTRAS_AVAILABLE:
                     extras.append(module_path)
                     if not _EXTRAS_AVAILABLE[module_path]:
-                        missing.append(module_path)
+                        logging.error(f"Missing import: {module_path}")
+                        available = False
                 else:
                     modules.append(module_path)
                     if not module_available(module_path):
-                        missing.append(module_path)
+                        logging.error(f"Missing import: {module_path}")
+                        available = False
             else:
                 available, module_path = module_path
                 modules.append(module_path)
 
-        if missing:
+        if not available:
             modules = [f"'{module}'" for module in modules]
 
             if extras:
@@ -159,7 +162,7 @@ def requires(*module_paths: Union[str, Tuple[bool, str]]):
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
                 raise ModuleNotFoundError(
-                    f"Required dependencies ({missing}) not available." f"\nPlease run: pip install {' '.join(modules)}"
+                    f"Required dependencies not available." f"\nPlease run: pip install {' '.join(modules)}"
                 )
 
             return wrapper
