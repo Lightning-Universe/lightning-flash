@@ -236,5 +236,11 @@ root = Path(__file__).parent.parent.parent
 @pytest.mark.skipif(sys.platform == "darwin", reason="Fatal Python error: Illegal instruction")  # fixme
 def test_example(folder, fname):
     run_test(str(root / "examples" / folder / fname))
+
+    # clean ALL logs and used data
     shutil.rmtree(root / "data", ignore_errors=True)
     shutil.rmtree(root / "lightning_logs", ignore_errors=True)
+
+    # remove all saved models
+    for p in root.glob("*.pt"):
+        p.unlink()
