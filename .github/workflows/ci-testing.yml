@@ -128,7 +128,7 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         du -h --max-depth=2
-        df -h
+        ls -h
 
     - name: Statistics
       run: |
