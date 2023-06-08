@@ -159,8 +159,7 @@ def requires(*module_paths: Union[str, Tuple[bool, str]]):
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
                 raise ModuleNotFoundError(
-                    f"Required dependencies ({missing}) not available."
-                    f"\nPlease run: pip install {' '.join(modules)}"
+                    f"Required dependencies ({missing}) not available." f"\nPlease run: pip install {' '.join(modules)}"
                 )
 
             return wrapper
