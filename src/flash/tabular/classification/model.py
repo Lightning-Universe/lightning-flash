@@ -103,8 +103,8 @@ class TabularClassifier(ClassificationAdapterTask):
     @property
     def data_parameters(self) -> Dict[str, Any]:
         """Get the parameters computed from the training data used to create this
-        :class:`~flash.tabular.classification.TabularClassifier`. Use these parameters to load data for
-        evaluation / prediction.
+        :class:`~flash.tabular.classification.TabularClassifier`. Use these parameters to load data for evaluation /
+        prediction.
 
         Examples
         ________

@@ -13,13 +13,13 @@
 # limitations under the License.
 from typing import Any
 
+import flash
 import pytest
 import torch
-from torch import Tensor
-
-import flash
 from flash.core.utilities.imports import _TOPIC_IMAGE_AVAILABLE, _TORCHVISION_AVAILABLE, _VISSL_AVAILABLE
 from flash.image import ImageClassificationData, ImageEmbedder
+from torch import Tensor
+
 from tests.helpers.task_tester import TaskTester
 
 if _TORCHVISION_AVAILABLE:

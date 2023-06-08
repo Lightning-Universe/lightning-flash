@@ -15,7 +15,6 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-
 from flash import Trainer
 from flash.core.utilities.imports import _FIFTYONE_AVAILABLE, _PIL_AVAILABLE, _TOPIC_IMAGE_AVAILABLE
 from flash.image import ImageClassificationData, ImageClassifier

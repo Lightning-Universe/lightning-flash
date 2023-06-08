@@ -3,7 +3,6 @@ from functools import partial
 
 import numpy as np
 import pytest
-
 from flash.core.serve.dag.utils import funcname, partial_by_order
 from flash.core.utilities.imports import _CYTOOLZ_AVAILABLE, _TOPIC_SERVE_AVAILABLE
 

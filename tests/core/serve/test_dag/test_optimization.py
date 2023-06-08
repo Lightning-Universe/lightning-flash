@@ -3,7 +3,6 @@ import pickle
 from functools import partial
 
 import pytest
-
 from flash.core.serve.dag.optimization import (
     SubgraphCallable,
     cull,

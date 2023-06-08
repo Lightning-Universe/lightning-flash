@@ -17,15 +17,14 @@ from typing import Any, List, Sequence, Tuple
 import numpy as np
 import pytest
 import torch
-from pytorch_lightning import seed_everything
-from torch import Tensor
-
 from flash.core.data.base_viz import BaseVisualization
 from flash.core.data.io.input import DataKeys
 from flash.core.data.utils import _CALLBACK_FUNCS
 from flash.core.utilities.imports import _PIL_AVAILABLE, _TOPIC_IMAGE_AVAILABLE
 from flash.core.utilities.stages import RunningStage
 from flash.image import ImageClassificationData
+from pytorch_lightning import seed_everything
+from torch import Tensor
 
 if _PIL_AVAILABLE:
     from PIL import Image

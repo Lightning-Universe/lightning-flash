@@ -15,13 +15,12 @@ from os.path import join
 
 import pytest
 import torch
-from pytorch_lightning import seed_everything
-
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
 from flash.core.data.utils import download_data
 from flash.core.utilities.imports import _TOPIC_POINTCLOUD_AVAILABLE
 from flash.pointcloud.segmentation import PointCloudSegmentation, PointCloudSegmentationData
+from pytorch_lightning import seed_everything
 
 
 @pytest.mark.skipif(not _TOPIC_POINTCLOUD_AVAILABLE, reason="pointcloud libraries aren't installed")

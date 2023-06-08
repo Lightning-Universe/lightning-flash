@@ -14,7 +14,6 @@
 import os
 
 import pytest
-
 from flash.core.data.utils import download_data
 from flash.core.utilities.apply_func import get_callable_dict, get_callable_name
 from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE

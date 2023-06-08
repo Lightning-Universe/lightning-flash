@@ -171,7 +171,7 @@ setup(
     zip_safe=False,
     keywords=["deep learning", "pytorch", "AI"],
     python_requires=">=3.8",
-    install_requires=_load_requirements(path_dir=_PATH_ROOT, file_name="requirements.txt"),
+    install_requires=_load_requirements(path_dir=_PATH_REQUIRE, file_name="base.txt"),
     extras_require=_get_extras(),
     project_urls={
         "Bug Tracker": "https://github.com/Lightning-AI/lightning-flash/issues",

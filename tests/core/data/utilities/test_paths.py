@@ -17,10 +17,9 @@ from string import ascii_lowercase
 from typing import List
 
 import pytest
-from numpy import random
-
 from flash.core.data.utilities.loading import AUDIO_EXTENSIONS, IMG_EXTENSIONS, NP_EXTENSIONS
 from flash.core.data.utilities.paths import PATH_TYPE, filter_valid_files
+from numpy import random
 
 
 def _make_mock_dir(root, mock_files: List) -> List[PATH_TYPE]:

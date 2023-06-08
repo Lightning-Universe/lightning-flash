@@ -15,7 +15,6 @@ import os
 
 import numpy as np
 import pytest
-
 from flash.core.data.utilities.loading import (
     AUDIO_EXTENSIONS,
     CSV_EXTENSIONS,

@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pytest
-
 from flash.core.utilities.imports import _TOPIC_POINTCLOUD_AVAILABLE
 from flash.pointcloud.detection import PointCloudObjectDetector
+
 from tests.helpers.task_tester import TaskTester
 
 

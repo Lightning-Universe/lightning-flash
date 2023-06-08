@@ -18,7 +18,6 @@ from unittest.mock import patch
 
 import pytest
 import torch
-
 from flash.core.utilities.imports import (
     _BAAL_AVAILABLE,
     _FIFTYONE_AVAILABLE,
@@ -37,6 +36,7 @@ from flash.core.utilities.imports import (
     _TORCHVISION_GREATER_EQUAL_0_9,
     _VISSL_AVAILABLE,
 )
+
 from tests.examples.helpers import run_test
 from tests.helpers.decorators import forked
 

@@ -17,11 +17,11 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 import torch
-from torch import Tensor
-
 from flash.audio import SpeechRecognition
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _TOPIC_AUDIO_AVAILABLE, _TOPIC_SERVE_AVAILABLE
+from torch import Tensor
+
 from tests.helpers.task_tester import TaskTester
 
 TEST_BACKBONE = "patrickvonplaten/wav2vec2_tiny_random_robust"  # tiny model for testing

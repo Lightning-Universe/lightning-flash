@@ -19,11 +19,11 @@ from typing import Any
 import numpy as np
 import pytest
 import torch
-
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _ICEDATA_AVAILABLE, _ICEVISION_AVAILABLE, _TOPIC_IMAGE_AVAILABLE
 from flash.image import InstanceSegmentation, InstanceSegmentationData
+
 from tests.helpers.task_tester import TaskTester
 
 if _TOPIC_IMAGE_AVAILABLE:

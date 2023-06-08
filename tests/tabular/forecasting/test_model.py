@@ -13,14 +13,14 @@
 # limitations under the License.
 from typing import Any
 
+import flash
 import pytest
 import torch
-from torch import Tensor
-
-import flash
 from flash import DataKeys
 from flash.core.utilities.imports import _TOPIC_TABULAR_AVAILABLE
 from flash.tabular.forecasting import TabularForecaster
+from torch import Tensor
+
 from tests.helpers.task_tester import StaticDataset, TaskTester
 
 if _TOPIC_TABULAR_AVAILABLE:

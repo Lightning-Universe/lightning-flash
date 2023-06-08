@@ -13,7 +13,6 @@
 # limitations under the License.
 import pytest
 import torch
-
 from flash.core.classification import (
     ClassesOutput,
     FiftyOneLabelsOutput,

@@ -13,9 +13,8 @@
 # limitations under the License.
 import os
 
-import torch
-
 import flash
+import torch
 from flash.core.data.utils import download_data
 from flash.image import ImageClassificationData, ImageClassifier
 

@@ -15,11 +15,10 @@ import time
 
 import pytest
 import torch
-from pytorch_lightning import LightningModule
-from torch import nn
-
 from flash.core.utilities.embedder import Embedder
 from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE
+from pytorch_lightning import LightningModule
+from torch import nn
 
 
 class EmbedderTestModel(LightningModule):

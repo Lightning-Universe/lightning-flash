@@ -16,11 +16,11 @@ from urllib.error import URLError
 
 import pytest
 import torch
-from torch import Tensor
-
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _TOPIC_IMAGE_AVAILABLE
 from flash.image.style_transfer import StyleTransfer
+from torch import Tensor
+
 from tests.helpers.task_tester import TaskTester
 
 

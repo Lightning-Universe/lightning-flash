@@ -14,7 +14,6 @@
 from unittest.mock import patch
 
 import pytest
-
 from flash.core.utilities.imports import _TOPIC_POINTCLOUD_AVAILABLE
 from flash.pointcloud.segmentation.datasets import LyftDataset, SemanticKITTIDataset
 

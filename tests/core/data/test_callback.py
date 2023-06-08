@@ -15,7 +15,6 @@ from unittest.mock import ANY, MagicMock, call, patch
 
 import pytest
 import torch
-
 from flash import DataKeys
 from flash.core.data.data_module import DataModule, DatasetInput
 from flash.core.data.io.input_transform import InputTransform

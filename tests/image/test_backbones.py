@@ -14,7 +14,6 @@
 import urllib.error
 
 import pytest
-
 from flash.core.utilities.imports import _TOPIC_IMAGE_AVAILABLE
 from flash.core.utilities.url_error import catch_url_error
 from flash.image.classification.backbones import IMAGE_CLASSIFIER_BACKBONES

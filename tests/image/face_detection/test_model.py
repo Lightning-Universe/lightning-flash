@@ -14,9 +14,8 @@
 import contextlib
 from unittest.mock import patch
 
-import pytest
-
 import flash
+import pytest
 from flash.__main__ import main
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _FASTFACE_AVAILABLE
@@ -25,7 +24,6 @@ from flash.image import FaceDetectionData, FaceDetector
 if _FASTFACE_AVAILABLE:
     import fastface as ff
     from fastface.arch.lffd import LFFD
-
     from flash.image.face_detection.backbones import FACE_DETECTION_BACKBONES
 else:
     FACE_DETECTION_BACKBONES = FlashRegistry("face_detection_backbones")

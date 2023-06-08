@@ -13,7 +13,6 @@
 # limitations under the License.
 import numpy as np
 import pytest
-
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _SKLEARN_AVAILABLE, _TOPIC_CORE_AVAILABLE
 from flash.template.classification.data import TemplateData

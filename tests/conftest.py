@@ -4,10 +4,9 @@ import shutil
 
 import pytest
 import torch
-from pytest_mock import MockerFixture
-
 from flash.core.serve.decorators import uuid4  # noqa (used in mocker.patch)
 from flash.core.utilities.imports import _TOPIC_SERVE_AVAILABLE, _TORCHVISION_AVAILABLE
+from pytest_mock import MockerFixture
 
 if _TORCHVISION_AVAILABLE:
     import torchvision

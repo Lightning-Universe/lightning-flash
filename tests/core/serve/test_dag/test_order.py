@@ -1,5 +1,4 @@
 import pytest
-
 from flash.core.serve.dag.order import ndependencies, order
 from flash.core.serve.dag.task import get, get_deps
 from flash.core.serve.dag.utils_test import add, inc

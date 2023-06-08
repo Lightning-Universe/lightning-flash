@@ -12,19 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pytest
-
 from flash.core.registry import FlashRegistry
 from flash.core.utilities.imports import _TORCHVISION_AVAILABLE, _VISSL_AVAILABLE
 from flash.image.embedding.heads.vissl_heads import SimCLRHead
 from flash.image.embedding.vissl.hooks import TrainingSetupHook
 
 if _VISSL_AVAILABLE:
+    from flash.image.embedding.strategies import IMAGE_EMBEDDER_STRATEGIES
     from vissl.hooks.swav_hooks import NormalizePrototypesHook, SwAVUpdateQueueScoresHook
     from vissl.losses.barlow_twins_loss import BarlowTwinsLoss
     from vissl.losses.swav_loss import SwAVLoss
     from vissl.models.heads.swav_prototypes_head import SwAVPrototypesHead
-
-    from flash.image.embedding.strategies import IMAGE_EMBEDDER_STRATEGIES
 else:
     NormalizePrototypesHook = object
     SwAVUpdateQueueScoresHook = object
