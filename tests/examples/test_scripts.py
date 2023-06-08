@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import shutil
 import sys
 from pathlib import Path
 from unittest.mock import patch
@@ -235,3 +236,5 @@ root = Path(__file__).parent.parent.parent
 @pytest.mark.skipif(sys.platform == "darwin", reason="Fatal Python error: Illegal instruction")  # fixme
 def test_example(folder, fname):
     run_test(str(root / "examples" / folder / fname))
+    shutil.rmtree(root / "data")
+    shutil.rmtree(root / "lightning_logs")
