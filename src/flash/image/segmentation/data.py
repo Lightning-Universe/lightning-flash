@@ -42,10 +42,7 @@ else:
 # Skip doctests if requirements aren't available
 __doctest_skip__ = []
 if not _SEGMENTATION_MODELS_AVAILABLE:
-    __doctest_skip__ += [
-        "SemanticSegmentationData",
-        "SemanticSegmentationData.*",
-    ]
+    __doctest_skip__ += ["SemanticSegmentationData", "SemanticSegmentationData.*"]
 if not _FIFTYONE_AVAILABLE:
     __doctest_skip__ += ["SemanticSegmentationData.from_fiftyone"]
 

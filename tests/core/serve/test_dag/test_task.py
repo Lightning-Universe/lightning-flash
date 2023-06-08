@@ -114,6 +114,7 @@ def test_get_dependencies_task_none():
 @pytest.mark.skipif(not _TOPIC_SERVE_AVAILABLE, reason="Not testing serve.")
 def test_get_deps():
     """
+    >>> from flash.core.serve.dag.utils_test import inc
     >>> dsk = {'a': 1, 'b': (inc, 'a'), 'c': (inc, 'b')}
     >>> dependencies, dependents = get_deps(dsk)
     >>> dependencies

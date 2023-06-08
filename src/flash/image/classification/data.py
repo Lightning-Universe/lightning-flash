@@ -56,10 +56,7 @@ else:
 # Skip doctests if requirements aren't available
 __doctest_skip__ = []
 if not _TOPIC_IMAGE_AVAILABLE:
-    __doctest_skip__ += [
-        "ImageClassificationData",
-        "ImageClassificationData.*",
-    ]
+    __doctest_skip__ += ["ImageClassificationData", "ImageClassificationData.*"]
 if not _FIFTYONE_AVAILABLE:
     __doctest_skip__ += ["ImageClassificationData.from_fiftyone"]
 

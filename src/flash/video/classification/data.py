@@ -50,14 +50,7 @@ else:
 # Skip doctests if requirements aren't available
 __doctest_skip__ = []
 if not _TOPIC_VIDEO_AVAILABLE:
-    __doctest_skip__ += [
-        "VideoClassificationData",
-        "VideoClassificationData.from_files",
-        "VideoClassificationData.from_folders",
-        "VideoClassificationData.from_data_frame",
-        "VideoClassificationData.from_csv",
-        "VideoClassificationData.from_tensors",
-    ]
+    __doctest_skip__ += ["VideoClassificationData", "VideoClassificationData.*"]
 if not _FIFTYONE_AVAILABLE:
     __doctest_skip__ += ["VideoClassificationData.from_fiftyone"]
 
