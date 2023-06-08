@@ -98,12 +98,11 @@ class TabularRegressor(RegressionAdapterTask):
 
     @property
     def data_parameters(self) -> Dict[str, Any]:
-        """Get the parameters computed from the training data used to create this
+        r"""Get the parameters computed from the training data used to create this
         :class:`~flash.tabular.regression.TabularRegressor`. Use these parameters to load data for evaluation /
         prediction.
 
-        Examples
-        ________
+        Example::
 
             import flash
             from flash.core.data.utils import download_data
