@@ -120,7 +120,7 @@ class SummarizationData(DataModule):
             ...     predict_file="predict_data.csv",
             ...     batch_size=2,
             ... )
-            >>> model = SummarizationTask(backbone="Intel/t5-small-xsum-int8-dynamic")
+            >>> model = SummarizationTask(backbone="JulesBelveze/t5-small-headline-generator")
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -173,7 +173,7 @@ class SummarizationData(DataModule):
             ...     predict_file="predict_data.tsv",
             ...     batch_size=2,
             ... )
-            >>> model = SummarizationTask(backbone="Intel/t5-small-xsum-int8-dynamic")
+            >>> model = SummarizationTask(backbone="JulesBelveze/t5-small-headline-generator")
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -282,7 +282,7 @@ class SummarizationData(DataModule):
             ...     batch_size=2,
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Downloading...
-            >>> model = SummarizationTask(backbone="Intel/t5-small-xsum-int8-dynamic")
+            >>> model = SummarizationTask(backbone="JulesBelveze/t5-small-headline-generator")
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -375,7 +375,7 @@ class SummarizationData(DataModule):
             ...     predict_hf_dataset=predict_data,
             ...     batch_size=2,
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            >>> model = SummarizationTask(backbone="Intel/t5-small-xsum-int8-dynamic")
+            >>> model = SummarizationTask(backbone="JulesBelveze/t5-small-headline-generator")
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -454,7 +454,7 @@ class SummarizationData(DataModule):
             ...     predict_data=["A movie review", "A book chapter"],
             ...     batch_size=2,
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            >>> model = SummarizationTask(backbone="Intel/t5-small-xsum-int8-dynamic")
+            >>> model = SummarizationTask(backbone="JulesBelveze/t5-small-headline-generator")
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
