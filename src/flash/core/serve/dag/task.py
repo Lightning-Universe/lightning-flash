@@ -1,8 +1,6 @@
 from collections import defaultdict
 from typing import List, Sequence
 
-from flash.core.utilities.imports import _TOPIC_SERVE_AVAILABLE
-
 # Skip doctests if requirements aren't available
 # if not _TOPIC_SERVE_AVAILABLE:
 # FixMe: all these test need to be updated

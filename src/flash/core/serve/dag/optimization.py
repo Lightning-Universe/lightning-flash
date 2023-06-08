@@ -4,7 +4,6 @@ from enum import Enum
 
 from flash.core.serve.dag.task import flatten, get, get_dependencies, ishashable, istask, reverse_dict, subs, toposort
 from flash.core.serve.dag.utils import key_split
-from flash.core.utilities.imports import _TOPIC_SERVE_AVAILABLE
 
 # Skip doctests if requirements aren't available
 # if not _TOPIC_SERVE_AVAILABLE:
