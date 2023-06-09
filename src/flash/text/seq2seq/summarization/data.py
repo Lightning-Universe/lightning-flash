@@ -33,7 +33,7 @@ __doctest_skip__ = []
 if not _TOPIC_TEXT_AVAILABLE:
     __doctest_skip__ += ["SummarizationData", "SummarizationData.*"]
 
-if os.name == 'nt':
+if os.name == "nt":
     __doctest_skip__ += ["SummarizationData.from_lists"]
 
 
