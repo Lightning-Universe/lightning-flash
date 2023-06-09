@@ -33,8 +33,9 @@ __doctest_skip__ = []
 if not _TOPIC_TEXT_AVAILABLE:
     __doctest_skip__ += ["SummarizationData", "SummarizationData.*"]
 
+# some strange crash for out of memory with pt 1.11
 if os.name == "nt":
-    __doctest_skip__ += ["SummarizationData.from_lists"]
+    __doctest_skip__ += ["SummarizationData.from_lists", "SummarizationData.from_json"]
 
 
 class SummarizationData(DataModule):
