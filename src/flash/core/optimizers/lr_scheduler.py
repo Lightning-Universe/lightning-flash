@@ -46,6 +46,8 @@ class LinearWarmupCosineAnnealingLR(_LRScheduler):
         train and validation methods.
 
     Example:
+        >>> from torch import nn
+        >>> from torch.optim import Adam
         >>> layer = nn.Linear(10, 1)
         >>> optimizer = Adam(layer.parameters(), lr=0.02)
         >>> scheduler = LinearWarmupCosineAnnealingLR(optimizer, warmup_epochs=10, max_epochs=40)

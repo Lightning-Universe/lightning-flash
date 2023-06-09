@@ -13,6 +13,8 @@
 # limitations under the License.
 from typing import Any, Dict, List, Optional, Type
 
+import torch
+
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import InputTransform
@@ -28,7 +30,7 @@ else:
     Dataset = object
 
 # Skip doctests if requirements aren't available
-if not _TOPIC_TEXT_AVAILABLE:
+if not _TOPIC_TEXT_AVAILABLE or not torch.cuda.is_available():
     __doctest_skip__ = ["TranslationData", "TranslationData.*"]
 
 

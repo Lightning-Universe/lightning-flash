@@ -151,52 +151,53 @@ def _get_extras(path_dir: str = _PATH_REQUIRE) -> dict:
 # what happens and to non-engineers they won't know to look in init ...
 # the goal of the project is simplicity for researchers, don't want to add too much
 # engineer specific practices
-setup(
-    name="lightning-flash",
-    version=about.__version__,
-    description=about.__docs__,
-    author=about.__author__,
-    author_email=about.__author_email__,
-    url=about.__homepage__,
-    download_url="https://github.com/Lightning-AI/lightning-flash",
-    license=about.__license__,
-    package_dir={"": "src"},
-    packages=find_packages(where="src"),
-    long_description=_load_readme_description(_PATH_ROOT, homepage=about.__homepage__, ver=about.__version__),
-    long_description_content_type="text/markdown",
-    include_package_data=True,
-    entry_points={
-        "console_scripts": ["flash=flash.__main__:main"],
-    },
-    zip_safe=False,
-    keywords=["deep learning", "pytorch", "AI"],
-    python_requires=">=3.8",
-    install_requires=_load_requirements(path_dir=_PATH_REQUIRE, file_name="base.txt"),
-    extras_require=_get_extras(),
-    project_urls={
-        "Bug Tracker": "https://github.com/Lightning-AI/lightning-flash/issues",
-        "Documentation": "https://lightning-flash.rtfd.io/en/latest/",
-        "Source Code": "https://github.com/Lightning-AI/lightning-flash",
-    },
-    classifiers=[
-        "Environment :: Console",
-        "Natural Language :: English",
-        # How mature is this project? Common values are
-        #   3 - Alpha, 4 - Beta, 5 - Production/Stable
-        "Development Status :: 4 - Beta",
-        # Indicate who your project is intended for
-        "Intended Audience :: Developers",
-        "Topic :: Scientific/Engineering :: Artificial Intelligence",
-        "Topic :: Scientific/Engineering :: Image Recognition",
-        "Topic :: Scientific/Engineering :: Information Analysis",
-        # Pick your license as you wish
-        # 'License :: OSI Approved :: BSD License',
-        "Operating System :: OS Independent",
-        # Specify the Python versions you support here. In particular, ensure
-        # that you indicate whether you support Python 2, Python 3 or both.
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
-    ],
-)
+if __name__ == "__main__":
+    setup(
+        name="lightning-flash",
+        version=about.__version__,
+        description=about.__docs__,
+        author=about.__author__,
+        author_email=about.__author_email__,
+        url=about.__homepage__,
+        download_url="https://github.com/Lightning-AI/lightning-flash",
+        license=about.__license__,
+        package_dir={"": "src"},
+        packages=find_packages(where="src"),
+        long_description=_load_readme_description(_PATH_ROOT, homepage=about.__homepage__, ver=about.__version__),
+        long_description_content_type="text/markdown",
+        include_package_data=True,
+        entry_points={
+            "console_scripts": ["flash=flash.__main__:main"],
+        },
+        zip_safe=False,
+        keywords=["deep learning", "pytorch", "AI"],
+        python_requires=">=3.8",
+        install_requires=_load_requirements(path_dir=_PATH_REQUIRE, file_name="base.txt"),
+        extras_require=_get_extras(),
+        project_urls={
+            "Bug Tracker": "https://github.com/Lightning-AI/lightning-flash/issues",
+            "Documentation": "https://lightning-flash.rtfd.io/en/latest/",
+            "Source Code": "https://github.com/Lightning-AI/lightning-flash",
+        },
+        classifiers=[
+            "Environment :: Console",
+            "Natural Language :: English",
+            # How mature is this project? Common values are
+            #   3 - Alpha, 4 - Beta, 5 - Production/Stable
+            "Development Status :: 4 - Beta",
+            # Indicate who your project is intended for
+            "Intended Audience :: Developers",
+            "Topic :: Scientific/Engineering :: Artificial Intelligence",
+            "Topic :: Scientific/Engineering :: Image Recognition",
+            "Topic :: Scientific/Engineering :: Information Analysis",
+            # Pick your license as you wish
+            # 'License :: OSI Approved :: BSD License',
+            "Operating System :: OS Independent",
+            # Specify the Python versions you support here. In particular, ensure
+            # that you indicate whether you support Python 2, Python 3 or both.
+            "Programming Language :: Python :: 3",
+            "Programming Language :: Python :: 3.8",
+            "Programming Language :: Python :: 3.9",
+            "Programming Language :: Python :: 3.10",
+        ],
+    )

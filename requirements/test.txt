@@ -6,6 +6,3 @@ pytest-doctestplus >0.12.0
 pytest-rerunfailures >11.0.0
 pytest-forked ==1.6.0
 pytest-mock ==3.10.0
-
-scikit-learn
-torch_optimizer

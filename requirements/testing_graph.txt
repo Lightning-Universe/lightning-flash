@@ -1,3 +1,4 @@
+# todo: try to bump this versions
 torch ==1.11.0
 torchvision ==0.12.0
 
