@@ -119,7 +119,7 @@ class TranslationData(DataModule):
             ...     predict_file="predict_data.csv",
             ...     batch_size=2,
             ... )
-            >>> model = TranslationTask(backbone="echarlaix/t5-small-int8-dynamic")
+            >>> model = TranslationTask(backbone="JustFrederik/jparacrawl-v3-small-ct2-int8")
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -171,7 +171,7 @@ class TranslationData(DataModule):
             ...     predict_file="predict_data.tsv",
             ...     batch_size=2,
             ... )
-            >>> model = TranslationTask(backbone="echarlaix/t5-small-int8-dynamic")
+            >>> model = TranslationTask(backbone="JustFrederik/jparacrawl-v3-small-ct2-int8")
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -279,7 +279,7 @@ class TranslationData(DataModule):
             ...     batch_size=2,
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Downloading...
-            >>> model = TranslationTask(backbone="echarlaix/t5-small-int8-dynamic")
+            >>> model = TranslationTask(backbone="JustFrederik/jparacrawl-v3-small-ct2-int8")
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -372,7 +372,7 @@ class TranslationData(DataModule):
             ...     predict_hf_dataset=predict_data,
             ...     batch_size=2,
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            >>> model = TranslationTask(backbone="echarlaix/t5-small-int8-dynamic")
+            >>> model = TranslationTask(backbone="JustFrederik/jparacrawl-v3-small-ct2-int8")
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -451,7 +451,7 @@ class TranslationData(DataModule):
             ...     predict_data=["ayay entencesay orfay edictionpray"],
             ...     batch_size=2,
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            >>> model = TranslationTask(backbone="echarlaix/t5-small-int8-dynamic")
+            >>> model = TranslationTask(backbone="JustFrederik/jparacrawl-v3-small-ct2-int8")
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
