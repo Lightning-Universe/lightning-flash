@@ -1,10 +1,11 @@
 from collections import defaultdict
 from typing import List, Sequence
 
+from flash.core.utilities.imports import _TOPIC_SERVE_AVAILABLE
+
 # Skip doctests if requirements aren't available
-# if not _TOPIC_SERVE_AVAILABLE:
-# FixMe: all these test need to be updated
-__doctest_skip__ = ["*"]
+if not _TOPIC_SERVE_AVAILABLE:
+    __doctest_skip__ = ["*"]
 
 no_default = "__no_default__"
 
@@ -152,8 +153,8 @@ def get_dependencies(dsk, key=None, task=no_default, as_list=False):
     set()
     >>> get_dependencies(dsk, 'y')
     {'x'}
-    >>> get_dependencies(dsk, 'z')
-    {'x', 'y'}
+    >>> sorted(get_dependencies(dsk, 'z'))
+    ['x', 'y']
     >>> get_dependencies(dsk, 'w')  # Only direct dependencies
     {'z'}
     >>> get_dependencies(dsk, 'a')  # Ignore non-keys
@@ -238,7 +239,7 @@ def reverse_dict(d):
     >>> a, b, c = 'abc'
     >>> d = {a: [b, c], b: [c]}
     >>> reverse_dict(d)
-    {'a': set([]), 'b': set(['a']}, 'c': set(['a', 'b'])}
+    defaultdict(None, {'a': set(), 'b': {'a'}, 'c': {'b', 'a'}})
     """
     result = defaultdict(set)
     _add = set.add
@@ -256,8 +257,8 @@ def subs(task, key, val):
     Examples
     --------
     >>> from flash.core.serve.dag.utils_test import inc
-    >>> subs((inc, 'x'), 'x', 1)
-    (inc, 1)
+    >>> subs((inc, 'x'), 'x', 1)  # doctest: +ELLIPSIS
+    (<function inc at ...>, 1)
     """
     type_task = type(task)
     if not (type_task is tuple and task and callable(task[0])):  # istask(task):
@@ -373,6 +374,7 @@ def getcycle(d, keys):
 
     Examples
     --------
+    >>> from flash.core.serve.dag.utils_test import inc
     >>> d = {'x': (inc, 'z'), 'y': (inc, 'x'), 'z': (inc, 'y')}
     >>> getcycle(d, 'x')
     ['x', 'z', 'y', 'x']
@@ -426,6 +428,7 @@ def quote(x):
 
     Examples
     --------
+    >>> from flash.core.serve.dag.utils_test import add
     >>> quote((add, 1, 2))
     (literal<type=tuple>,)
     """

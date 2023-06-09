@@ -80,11 +80,11 @@ from collections import defaultdict
 from math import log
 
 from flash.core.serve.dag.task import get_dependencies, getcycle, reverse_dict
+from flash.core.utilities.imports import _TOPIC_SERVE_AVAILABLE
 
 # Skip doctests if requirements aren't available
-# if not _TOPIC_SERVE_AVAILABLE:
-# FixMe: all these test need to be updated
-__doctest_skip__ = ["*"]
+if not _TOPIC_SERVE_AVAILABLE:
+    __doctest_skip__ = ["*"]
 
 
 def order(dsk, dependencies=None):
@@ -541,6 +541,7 @@ def graph_metrics(dependencies, dependents, total_dependencies):
 
     Examples
     --------
+    >>> from flash.core.serve.dag.task import get_deps
     >>> from flash.core.serve.dag.utils_test import add, inc
     >>> dsk = {'a1': 1, 'b1': (inc, 'a1'), 'b2': (inc, 'a1'), 'c1': (inc, 'b1')}
     >>> dependencies, dependents = get_deps(dsk)
@@ -616,6 +617,7 @@ def ndependencies(dependencies, dependents):
 
     Examples
     --------
+    >>> from flash.core.serve.dag.task import get_deps
     >>> from flash.core.serve.dag.utils_test import add, inc
     >>> dsk = {'a': 1, 'b': (inc, 'a'), 'c': (inc, 'b')}
     >>> dependencies, dependents = get_deps(dsk)
