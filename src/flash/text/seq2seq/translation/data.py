@@ -13,6 +13,8 @@
 # limitations under the License.
 from typing import Any, Dict, List, Optional, Type
 
+import torch
+
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import Input
 from flash.core.data.io.input_transform import InputTransform
@@ -28,7 +30,7 @@ else:
     Dataset = object
 
 # Skip doctests if requirements aren't available
-if not _TOPIC_TEXT_AVAILABLE:
+if not _TOPIC_TEXT_AVAILABLE or not torch.cuda.is_available():
     __doctest_skip__ = ["TranslationData", "TranslationData.*"]
 
 
@@ -119,7 +121,7 @@ class TranslationData(DataModule):
             ...     predict_file="predict_data.csv",
             ...     batch_size=2,
             ... )
-            >>> model = TranslationTask(backbone="apple/mobilevit-small")
+            >>> model = TranslationTask()
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -171,7 +173,7 @@ class TranslationData(DataModule):
             ...     predict_file="predict_data.tsv",
             ...     batch_size=2,
             ... )
-            >>> model = TranslationTask(backbone="apple/mobilevit-small")
+            >>> model = TranslationTask()
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -279,7 +281,7 @@ class TranslationData(DataModule):
             ...     batch_size=2,
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Downloading...
-            >>> model = TranslationTask(backbone="apple/mobilevit-small")
+            >>> model = TranslationTask()
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -372,7 +374,7 @@ class TranslationData(DataModule):
             ...     predict_hf_dataset=predict_data,
             ...     batch_size=2,
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            >>> model = TranslationTask(backbone="apple/mobilevit-small")
+            >>> model = TranslationTask()
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -451,7 +453,7 @@ class TranslationData(DataModule):
             ...     predict_data=["ayay entencesay orfay edictionpray"],
             ...     batch_size=2,
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            >>> model = TranslationTask(backbone="apple/mobilevit-small")
+            >>> model = TranslationTask()
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
