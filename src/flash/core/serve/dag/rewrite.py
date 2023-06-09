@@ -1,11 +1,11 @@
 from collections import deque
 
 from flash.core.serve.dag.task import istask, subs
+from flash.core.utilities.imports import _TOPIC_SERVE_AVAILABLE
 
 # Skip doctests if requirements aren't available
-# if not _TOPIC_SERVE_AVAILABLE:
-# FixMe: all these test need to be updated
-__doctest_skip__ = ["*"]
+if not _TOPIC_SERVE_AVAILABLE:
+    __doctest_skip__ = ["*"]
 
 
 def head(task):
