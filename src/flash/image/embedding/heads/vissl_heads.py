@@ -85,7 +85,8 @@ class SimCLRHead(nn.Module):
 
 
 if _VISSL_AVAILABLE:
-    SimCLRHead = register_model_head("simclr_head")(SimCLRHead)
+    if "simclr_head" not in MODEL_HEADS_REGISTRY:
+        SimCLRHead = register_model_head("simclr_head")(SimCLRHead)
 
 
 def simclr_head(

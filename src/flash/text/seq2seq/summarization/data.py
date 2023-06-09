@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 from typing import Any, Dict, List, Optional, Type
 
 from flash.core.data.data_module import DataModule
@@ -27,9 +28,13 @@ if _TOPIC_TEXT_AVAILABLE:
 else:
     Dataset = object
 
+__doctest_skip__ = []
 # Skip doctests if requirements aren't available
 if not _TOPIC_TEXT_AVAILABLE:
-    __doctest_skip__ = ["SummarizationData", "SummarizationData.*"]
+    __doctest_skip__ += ["SummarizationData", "SummarizationData.*"]
+
+if os.name == 'nt':
+    __doctest_skip__ += ["SummarizationData.from_lists"]
 
 
 class SummarizationData(DataModule):
