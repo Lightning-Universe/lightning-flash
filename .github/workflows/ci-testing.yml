@@ -98,8 +98,8 @@ jobs:
         python -m pip install "pip==22.2.1"
         # todo: this is a hack to be able to install packages that are checking torch version while install
         pip install numpy Cython "torch>=1.7.1" -f $TORCH_URL
-        pip install .[$EXTRAS,test] \
-          --upgrade --prefer-binary -f $TORCH_URL --no-cache-dir
+        pip install .[$EXTRAS,test] --upgrade \
+          --prefer-binary --no-cache-dir -f $TORCH_URL -f https://data.pyg.org/whl/
         pip list
 
     - name: DocTests

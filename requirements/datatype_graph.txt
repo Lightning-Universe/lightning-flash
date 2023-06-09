@@ -6,5 +6,3 @@ torch-geometric >=2.0.0, <=2.2.0
 torch-cluster <=1.6.0
 networkx <=2.8.8
 class-resolver >=0.3.2, <=0.3.10
-
--f https://data.pyg.org/whl/
