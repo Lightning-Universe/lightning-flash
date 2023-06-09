@@ -42,8 +42,11 @@ jobs:
           - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'graph', extra: [] }
           - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'audio', extra: [] }
           - { os: 'ubuntu-20.04', python-version: 3.8, topic: 'core', extra: [], requires: 'oldest' }
-          - { os: 'ubuntu-20.04', python-version: 3.8, topic: 'serve', extra: [], requires: 'oldest' }
+          - { os: 'ubuntu-20.04', python-version: 3.8, topic: 'image', extra: [], requires: 'oldest' }
           - { os: 'ubuntu-20.04', python-version: 3.8, topic: 'vision', extra: [], requires: 'oldest' }
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'tabular', extra: [], requires: 'oldest' }
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'text', extra: [], requires: 'oldest' }
+          #- { os: 'ubuntu-20.04', python-version: 3.8, topic: 'serve', extra: [], requires: 'oldest' }  # todo
 
     # Timeout: https://stackoverflow.com/a/59076067/4521646
     timeout-minutes: 50
@@ -77,8 +80,7 @@ jobs:
       if: matrix.requires == 'oldest'
       run: |
         import glob, os
-        files = glob.glob(os.path.join("requirements", "*.txt")) + ['requirements.txt']
-        files = ['requirements.txt']
+        files = glob.glob(os.path.join("requirements", "*.txt"))
         for fname in files:
           lines = [line.replace('>=', '==') for line in open(fname).readlines()]
           open(fname, 'w').writelines(lines)
