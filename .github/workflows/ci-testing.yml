@@ -42,13 +42,17 @@ jobs:
           - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'graph', extra: [] }
           - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'audio', extra: [] }
           - { os: 'ubuntu-20.04', python-version: 3.8, topic: 'core', extra: [], requires: 'oldest' }
-          - { os: 'ubuntu-20.04', python-version: 3.8, topic: 'serve', extra: [], requires: 'oldest' }
+          - { os: 'ubuntu-20.04', python-version: 3.8, topic: 'image', extra: [], requires: 'oldest' }
           - { os: 'ubuntu-20.04', python-version: 3.8, topic: 'vision', extra: [], requires: 'oldest' }
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'tabular', extra: [], requires: 'oldest' }
+          - { os: 'ubuntu-20.04', python-version: 3.9, topic: 'text', extra: [], requires: 'oldest' }
+          #- { os: 'ubuntu-20.04', python-version: 3.8, topic: 'serve', extra: [], requires: 'oldest' }  # todo
 
     # Timeout: https://stackoverflow.com/a/59076067/4521646
     timeout-minutes: 50
     env:
       FREEZE_REQUIREMENTS: 1
+      TORCH_URL: https://download.pytorch.org/whl/cpu/torch_stable.html
 
     steps:
     - uses: actions/checkout@v3
@@ -76,8 +80,7 @@ jobs:
       if: matrix.requires == 'oldest'
       run: |
         import glob, os
-        files = glob.glob(os.path.join("requirements", "*.txt")) + ['requirements.txt']
-        files = ['requirements.txt']
+        files = glob.glob(os.path.join("requirements", "*.txt"))
         for fname in files:
           lines = [line.replace('>=', '==') for line in open(fname).readlines()]
           open(fname, 'w').writelines(lines)
@@ -91,15 +94,30 @@ jobs:
             gh_env.write(f"EXTRAS={','.join(extras)}")
       shell: python
 
-    - name: Install dependencies
-      env:
-        TORCH_URL: https://download.pytorch.org/whl/cpu/torch_stable.html
+    - name: Install package
       run: |
+        # todo: some dependency has not correct format of their extras
         python -m pip install "pip==22.2.1"
-        pip install numpy Cython "torch>=1.7.1" -f $TORCH_URL
+        # todo: this is a hack to be able to install packages that are checking torch version while install
+        pip install numpy Cython "torch>=1.11.0" -f $TORCH_URL
+        pip install .[$EXTRAS,test] --upgrade \
+          --prefer-binary --no-cache-dir -f $TORCH_URL \
+          -f https://data.pyg.org/whl/torch-1.13.1+cpu.html  # this extra URL is for graph extras
+        pip list
+
+    - name: DocTests
+      working-directory: src/
+      run: |
+        mv flash flashy
+        pytest . --doctest-modules --doctest-plus
+        mv flashy flash
+
+    - name: Install dependencies
+      run: |
         pip install .[$EXTRAS,test] \
           -r requirements/testing_${{ matrix.topic }}.txt  \
-          --upgrade --prefer-binary -f $TORCH_URL
+          --upgrade --prefer-binary -f $TORCH_URL --no-cache-dir
+        pip cache info
         pip list
 
     - name: Cache datasets
@@ -109,12 +127,7 @@ jobs:
         key: flash-datasets-${{ hashFiles('tests/examples/test_scripts.py') }}
         restore-keys: flash-datasets-
 
-    # ToDO
-    #- name: DocTests
-    #  run: |
-    #    pytest src/ -vv # --reruns 3 --reruns-delay 2
-
-    - name: Tests
+    - name: Testing
       run: |
         coverage run --source flash -m pytest \
           tests/core \
@@ -134,7 +147,7 @@ jobs:
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         file: ./coverage.xml
-        flags: unittests
+        flags: unittests,${{ matrix.topic }},${{ matrix.extra }}
         env_vars: OS,PYTHON
         name: codecov-umbrella
         fail_ci_if_error: false

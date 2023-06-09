@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 from typing import Any, Dict, List, Optional, Type
 
 from flash.core.data.data_module import DataModule
@@ -27,9 +28,14 @@ if _TOPIC_TEXT_AVAILABLE:
 else:
     Dataset = object
 
+__doctest_skip__ = []
 # Skip doctests if requirements aren't available
 if not _TOPIC_TEXT_AVAILABLE:
-    __doctest_skip__ = ["SummarizationData", "SummarizationData.*"]
+    __doctest_skip__ += ["SummarizationData", "SummarizationData.*"]
+
+# some strange crash for out of memory with pt 1.11
+if os.name == "nt":
+    __doctest_skip__ += ["SummarizationData.from_lists", "SummarizationData.from_json"]
 
 
 class SummarizationData(DataModule):
@@ -120,7 +126,7 @@ class SummarizationData(DataModule):
             ...     predict_file="predict_data.csv",
             ...     batch_size=2,
             ... )
-            >>> model = SummarizationTask()
+            >>> model = SummarizationTask(backbone="JulesBelveze/t5-small-headline-generator")
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -173,7 +179,7 @@ class SummarizationData(DataModule):
             ...     predict_file="predict_data.tsv",
             ...     batch_size=2,
             ... )
-            >>> model = SummarizationTask()
+            >>> model = SummarizationTask(backbone="JulesBelveze/t5-small-headline-generator")
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -282,7 +288,7 @@ class SummarizationData(DataModule):
             ...     batch_size=2,
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Downloading...
-            >>> model = SummarizationTask()
+            >>> model = SummarizationTask(backbone="JulesBelveze/t5-small-headline-generator")
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -375,7 +381,7 @@ class SummarizationData(DataModule):
             ...     predict_hf_dataset=predict_data,
             ...     batch_size=2,
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            >>> model = SummarizationTask()
+            >>> model = SummarizationTask(backbone="JulesBelveze/t5-small-headline-generator")
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
@@ -454,7 +460,7 @@ class SummarizationData(DataModule):
             ...     predict_data=["A movie review", "A book chapter"],
             ...     batch_size=2,
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            >>> model = SummarizationTask()
+            >>> model = SummarizationTask(backbone="JulesBelveze/t5-small-headline-generator")
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Training...
