@@ -151,7 +151,7 @@ def _get_extras(path_dir: str = _PATH_REQUIRE) -> dict:
 # what happens and to non-engineers they won't know to look in init ...
 # the goal of the project is simplicity for researchers, don't want to add too much
 # engineer specific practices
-if __name__ == '__main__':
+if __name__ == "__main__":
     setup(
         name="lightning-flash",
         version=about.__version__,
