@@ -541,6 +541,7 @@ def graph_metrics(dependencies, dependents, total_dependencies):
 
     Examples
     --------
+    >>> from flash.core.serve.dag.task import get_deps
     >>> from flash.core.serve.dag.utils_test import add, inc
     >>> dsk = {'a1': 1, 'b1': (inc, 'a1'), 'b2': (inc, 'a1'), 'c1': (inc, 'b1')}
     >>> dependencies, dependents = get_deps(dsk)
@@ -616,6 +617,7 @@ def ndependencies(dependencies, dependents):
 
     Examples
     --------
+    >>> from flash.core.serve.dag.task import get_deps
     >>> from flash.core.serve.dag.utils_test import add, inc
     >>> dsk = {'a': 1, 'b': (inc, 'a'), 'c': (inc, 'b')}
     >>> dependencies, dependents = get_deps(dsk)
