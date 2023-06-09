@@ -224,8 +224,8 @@ class RuleSet:
     >>> rs.rewrite((add, 2, 0))       # Apply ruleset to single task
     2
 
-    >>> rs.rewrite((f, (g, 'a', 3)))  # doctest: +SKIP
-    (h, 'a', 3)
+    >>> rs.rewrite((f, (g, 'a', 3)))  # doctest: +ELLIPSIS
+    (<function h at ...>, 'a', 3)
 
     >>> dsk = {'a': (add, 2, 0),      # Apply ruleset to full dask graph
     ...        'b': (f, (g, 'a', 3))}
@@ -328,8 +328,10 @@ class RuleSet:
         Suppose there was a function `add` that returned the sum of 2 numbers,
         and another function `double` that returned twice its input:
 
-        >>> add = lambda x, y: x + y
-        >>> double = lambda x: 2*x
+        >>> def add(x, y):
+        ...     return x + y
+        >>> def double(x):
+        ...     return 2*x
 
         Now suppose `double` was *significantly* faster than `add`, so
         you'd like to replace all expressions `(add, x, x)` with `(double,
@@ -341,14 +343,14 @@ class RuleSet:
         This can then be applied to terms to perform the rewriting:
 
         >>> term = (add, (add, 2, 2), (add, 2, 2))
-        >>> rs.rewrite(term)  # doctest: +SKIP
-        (double, (double, 2))
+        >>> rs.rewrite(term)  # doctest: +ELLIPSIS
+        (<function double at ...>, (<function double at ...>, 2))
 
         If we only wanted to apply this to the top level of the term, the
         `strategy` kwarg can be set to "top_level".
 
-        >>> rs.rewrite(term)  # doctest: +SKIP
-        (double, (add, 2, 2))
+        >>> rs.rewrite(term)  # doctest: +ELLIPSIS
+        (<function double at ...>, (<function double at ...>, 2))
         """
         return strategies[strategy](self, task)
 

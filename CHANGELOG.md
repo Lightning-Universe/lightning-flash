@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [0.8.2] - 2023-06-08
+
+### Added
+
+- Added GATE backbone for Tabular integrations ([#1559](https://github.com/Lightning-AI/lightning-flash/pull/1559))
+
+### Fixed
+
+- Fixed datamodule can't load files with square brackets in names ([#1501](https://github.com/Lightning-AI/lightning-flash/pull/1501))
+
+
 ## [0.8.1] - 2022-11-08
 
 ### Added
@@ -15,6 +26,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Fixed compatibility with `lightning==1.8.0` ([#1479](https://github.com/Lightning-AI/lightning-flash/pull/1479))
 - Fixed the error message to suggest installing `icevision`, if it's not found while loading data ([#1474](https://github.com/Lightning-AI/lightning-flash/pull/1474))
 - Fixed compatibility with `torchmetrics==0.10.0` ([#1469](https://github.com/Lightning-AI/lightning-flash/pull/1469))
+- Fixed type of `n_gram` from bool to int in TranslationTask ([#1486](https://github.com/Lightning-AI/lightning-flash/pull/1486))
 
 
 ## [0.8.0] - 2022-09-02

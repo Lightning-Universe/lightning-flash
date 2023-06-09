@@ -32,6 +32,7 @@ def istask(x):
 
     Examples
     --------
+    >>> from flash.core.serve.dag.utils_test import inc
     >>> istask((inc, 1))
     True
     >>> istask(1)
@@ -64,6 +65,7 @@ def _execute_task(arg, cache):
 
     Examples
     --------
+    >>> from flash.core.serve.dag.utils_test import add, inc
     >>> cache = {'x': 1, 'y': 2}  # Compute tasks against a cache
     >>> _execute_task((add, 'x', 1), cache)  # Compute task in naive manner
     2
@@ -110,6 +112,7 @@ def get(dsk: dict, out: Sequence[str], cache: dict = None, sortkeys: List[str] =
 
     Examples
     --------
+    >>> from flash.core.serve.dag.utils_test import inc
     >>> d = {'x': 1, 'y': (inc, 'x')}
     >>> get(d, 'x')
     1
@@ -140,6 +143,7 @@ def get_dependencies(dsk, key=None, task=no_default, as_list=False):
 
     Examples
     --------
+    >>> from flash.core.serve.dag.utils_test import add, inc
     >>> dsk = {'x': 1,
     ...        'y': (inc, 'x'),
     ...        'z': (add, 'x', 'y'),
@@ -149,8 +153,8 @@ def get_dependencies(dsk, key=None, task=no_default, as_list=False):
     set()
     >>> get_dependencies(dsk, 'y')
     {'x'}
-    >>> get_dependencies(dsk, 'z')  # doctest: +SKIP
-    {'x', 'y'}
+    >>> sorted(get_dependencies(dsk, 'z'))
+    ['x', 'y']
     >>> get_dependencies(dsk, 'w')  # Only direct dependencies
     {'z'}
     >>> get_dependencies(dsk, 'a')  # Ignore non-keys
@@ -194,6 +198,7 @@ def get_deps(dsk):
 
     Examples
     --------
+    >>> from flash.core.serve.dag.utils_test import inc
     >>> dsk = {'a': 1, 'b': (inc, 'a'), 'c': (inc, 'b')}
     >>> dependencies, dependents = get_deps(dsk)
     >>> dependencies
@@ -233,8 +238,8 @@ def reverse_dict(d):
     """
     >>> a, b, c = 'abc'
     >>> d = {a: [b, c], b: [c]}
-    >>> reverse_dict(d)  # doctest: +SKIP
-    {'a': set([]), 'b': set(['a']}, 'c': set(['a', 'b'])}
+    >>> reverse_dict(d)
+    defaultdict(None, {'a': set(), 'b': {'a'}, 'c': {'b', 'a'}})
     """
     result = defaultdict(set)
     _add = set.add
@@ -251,8 +256,9 @@ def subs(task, key, val):
 
     Examples
     --------
-    >>> subs((inc, 'x'), 'x', 1)  # doctest: +SKIP
-    (inc, 1)
+    >>> from flash.core.serve.dag.utils_test import inc
+    >>> subs((inc, 'x'), 'x', 1)  # doctest: +ELLIPSIS
+    (<function inc at ...>, 1)
     """
     type_task = type(task)
     if not (type_task is tuple and task and callable(task[0])):  # istask(task):
@@ -368,6 +374,7 @@ def getcycle(d, keys):
 
     Examples
     --------
+    >>> from flash.core.serve.dag.utils_test import inc
     >>> d = {'x': (inc, 'z'), 'y': (inc, 'x'), 'z': (inc, 'y')}
     >>> getcycle(d, 'x')
     ['x', 'z', 'y', 'x']
@@ -384,6 +391,7 @@ def isdag(d, keys):
 
     Examples
     --------
+    >>> from flash.core.serve.dag.utils_test import inc
     >>> isdag({'x': 0, 'y': (inc, 'x')}, 'y')
     True
     >>> isdag({'x': (inc, 'y'), 'y': (inc, 'x')}, 'y')
@@ -420,7 +428,8 @@ def quote(x):
 
     Examples
     --------
-    >>> quote((add, 1, 2))  # doctest: +SKIP
+    >>> from flash.core.serve.dag.utils_test import add
+    >>> quote((add, 1, 2))
     (literal<type=tuple>,)
     """
     if istask(x) or type(x) is list or type(x) is dict:
