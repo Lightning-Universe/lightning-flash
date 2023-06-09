@@ -282,14 +282,20 @@ def inline_functions(dsk, output, fast_functions=None, inline_constants=False, d
     ...        'i': (inc, 'x'),
     ...        'd': (double, 'y'),
     ...        'x': 1, 'y': 1}
-    >>> inline_functions(dsk, [], [inc])  # doctest: +ELLIPSIS
-    {'x': 1, 'out': (<function add at ...>, (<function inc at ...>, 'x'), 'd'), 'd': (<function <lambda> at ...>, 'y'), 'y': 1}
+    >>> inline_functions(dsk, [], [inc])  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    {'x': 1,
+     'out': (<function add at ...>, (<function inc at ...>, 'x'), 'd'),
+     'd': (<function <lambda> at ...>, 'y'),
+     'y': 1}
 
     Protect output keys.  In the example below ``i`` is not inlined because it
     is marked as an output key.
 
-    >>> inline_functions(dsk, ['i', 'out'], [inc, double])  # doctest: +ELLIPSIS
-    {'y': 1, 'out': (<function add at ...>, 'i', (<function <lambda> at ...>, 'y')), 'i': (<function inc at ...>, 'x'), 'x': 1}
+    >>> inline_functions(dsk, ['i', 'out'], [inc, double])  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    {'y': 1,
+     'out': (<function add at ...>, 'i', (<function <lambda> at ...>, 'y')),
+     'i': (<function inc at ...>, 'x'),
+     'x': 1}
     """
     if not fast_functions:
         return dsk
