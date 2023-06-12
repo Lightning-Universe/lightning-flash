@@ -3,7 +3,7 @@
 torch-scatter <=2.1.0
 torch-sparse <=0.6.17
 torch-geometric >=2.0.0, <=2.2.0
-torch-cluster <=1.6.0
+torch-cluster <=1.6.1
 networkx <=2.8.8
 class-resolver >=0.3.2, <=0.3.10
 
