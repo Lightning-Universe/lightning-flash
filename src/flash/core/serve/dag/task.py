@@ -239,7 +239,8 @@ def reverse_dict(d):
     >>> a, b, c = 'abc'
     >>> d = {a: [b, c], b: [c]}
     >>> dd = reverse_dict(d)
-    >>> {k: sorted(v) for k, v in dd.items()}
+    >>> from pprint import pprint
+    >>> pprint({k: sorted(v) for k, v in dd.items()})
     {'a': [], 'b': ['a'], 'c': ['a', 'b']}
     """
     result = defaultdict(set)
