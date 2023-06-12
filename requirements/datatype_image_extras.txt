@@ -10,7 +10,7 @@ fastface <=0.1.3  # dead
 fairscale
 
 # pin PL for testing, remove when fastface is updated
-pytorch-lightning <2.1.0
+pytorch-lightning <2.0.0
 
 # pinned PL so we force a compatible TM version
 torchmetrics<0.8.0
