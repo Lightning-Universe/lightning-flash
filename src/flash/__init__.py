@@ -13,6 +13,7 @@
 # limitations under the License.
 """Root package info."""
 import os
+
 import numpy
 
 # adding compatibility for numpy >= 1.24
