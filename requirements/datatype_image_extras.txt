@@ -1,6 +1,6 @@
 # NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forecd in setup
 
-matplotlib <=3.6.2
+matplotlib <=3.7.1
 fiftyone <0.21.0
 classy-vision <=0.6
 effdet <=0.3.0
