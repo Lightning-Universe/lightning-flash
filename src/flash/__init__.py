@@ -21,16 +21,16 @@ for tp_name, tp_ins in [("object", object), ("bool", bool), ("int", int), ("floa
     if not hasattr(numpy, tp_name):
         setattr(numpy, tp_name, tp_ins)
 
-from flash.__about__ import *  # noqa: F401 F403
-from flash.core.data.callback import FlashCallback
-from flash.core.data.data_module import DataModule
-from flash.core.data.io.input import DataKeys, Input
-from flash.core.data.io.input_transform import InputTransform
-from flash.core.data.io.output import Output
-from flash.core.data.io.output_transform import OutputTransform
-from flash.core.model import Task
-from flash.core.trainer import Trainer
-from flash.core.utilities.stages import RunningStage
+from flash.__about__ import *  # noqa: F401 E402 F403
+from flash.core.data.callback import FlashCallback  # noqa: E402
+from flash.core.data.data_module import DataModule  # noqa: E402
+from flash.core.data.io.input import DataKeys, Input  # noqa: E402
+from flash.core.data.io.input_transform import InputTransform  # noqa: E402
+from flash.core.data.io.output import Output  # noqa: E402
+from flash.core.data.io.output_transform import OutputTransform  # noqa: E402
+from flash.core.model import Task  # noqa: E402
+from flash.core.trainer import Trainer  # noqa: E402
+from flash.core.utilities.stages import RunningStage  # noqa: E402
 
 _PACKAGE_ROOT = os.path.dirname(__file__)
 ASSETS_ROOT = os.path.join(_PACKAGE_ROOT, "assets")
