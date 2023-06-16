@@ -13,40 +13,43 @@
 # limitations under the License.
 """Root package info."""
 import os
+import numpy
+
+# adding compatibility for numpy >= 1.24
+for tp_name, tp_ins in [("object", object), ("bool", bool), ("int", int), ("float", float)]:
+    if not hasattr(numpy, tp_name):
+        setattr(numpy, tp_name, tp_ins)
 
 from flash.__about__ import *  # noqa: F401 F403
-from flash.core.utilities.imports import _TORCH_AVAILABLE
+from flash.core.data.callback import FlashCallback
+from flash.core.data.data_module import DataModule
+from flash.core.data.io.input import DataKeys, Input
+from flash.core.data.io.input_transform import InputTransform
+from flash.core.data.io.output import Output
+from flash.core.data.io.output_transform import OutputTransform
+from flash.core.model import Task
+from flash.core.trainer import Trainer
+from flash.core.utilities.stages import RunningStage
 
-if _TORCH_AVAILABLE:
-    from flash.core.data.callback import FlashCallback
-    from flash.core.data.data_module import DataModule
-    from flash.core.data.io.input import DataKeys, Input
-    from flash.core.data.io.input_transform import InputTransform
-    from flash.core.data.io.output import Output
-    from flash.core.data.io.output_transform import OutputTransform
-    from flash.core.model import Task
-    from flash.core.trainer import Trainer
-    from flash.core.utilities.stages import RunningStage
+_PACKAGE_ROOT = os.path.dirname(__file__)
+ASSETS_ROOT = os.path.join(_PACKAGE_ROOT, "assets")
+PROJECT_ROOT = os.path.dirname(_PACKAGE_ROOT)
+_IS_TESTING = os.getenv("FLASH_TESTING", "0") == "1"
 
-    _PACKAGE_ROOT = os.path.dirname(__file__)
-    ASSETS_ROOT = os.path.join(_PACKAGE_ROOT, "assets")
-    PROJECT_ROOT = os.path.dirname(_PACKAGE_ROOT)
-    _IS_TESTING = os.getenv("FLASH_TESTING", "0") == "1"
+if _IS_TESTING:
+    from pytorch_lightning import seed_everything
 
-    if _IS_TESTING:
-        from pytorch_lightning import seed_everything
+    seed_everything(42)
 
-        seed_everything(42)
-
-    __all__ = [
-        "DataKeys",
-        "DataModule",
-        "FlashCallback",
-        "Input",
-        "InputTransform",
-        "Output",
-        "OutputTransform",
-        "RunningStage",
-        "Task",
-        "Trainer",
-    ]
+__all__ = [
+    "DataKeys",
+    "DataModule",
+    "FlashCallback",
+    "Input",
+    "InputTransform",
+    "Output",
+    "OutputTransform",
+    "RunningStage",
+    "Task",
+    "Trainer",
+]
