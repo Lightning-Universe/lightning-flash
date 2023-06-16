@@ -1,6 +1,6 @@
 # NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forced in setup
 
-packaging <23.0
+packaging <24.0
 setuptools <=59.5.0  # Prevent install bug with tensorboard
 numpy <1.24  # strict - freeze for using np.long
 torch >1.7.0
@@ -11,5 +11,5 @@ pandas >1.1.0, <=1.5.2
 jsonargparse[signatures] >4.0.0, <=4.21.1
 click >=7.1.2, <=8.1.3
 protobuf <=3.20.1
-fsspec[http] >=2022.5.0,<=2022.7.1
+fsspec[http] >=2022.5.0,<=2023.6.0
 lightning-utilities >=0.4.1
