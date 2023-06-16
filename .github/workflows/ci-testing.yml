@@ -100,9 +100,9 @@ jobs:
       uses: actions/cache@v3
       with:
         path: ${{ steps.pip-cache.outputs.dir }}
-        key: ${{ runner.os }}-pip-py${{ matrix.python-version }}-${{ hashFiles('requirements/*.txt') }}
+        key: ${{ runner.os }}-pip-py${{ matrix.python-version }}-${{ matrix.topic }}-${{ hashFiles('requirements/*.txt') }}
         restore-keys: |
-          ${{ runner.os }}-pip-py${{ matrix.python-version }}-
+          ${{ runner.os }}-pip-py${{ matrix.python-version }}-${{ matrix.topic }}-
 
     - name: Install package
       run: |
