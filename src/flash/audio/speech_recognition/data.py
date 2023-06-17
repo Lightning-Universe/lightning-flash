@@ -119,9 +119,7 @@ class SpeechRecognitionData(DataModule):
             >>> _ = [os.remove(f"predict_speech_{i}.wav") for i in range(1, 4)]
         """
 
-        ds_kw = {
-            "sampling_rate": sampling_rate
-        }
+        ds_kw = {"sampling_rate": sampling_rate}
         transform_kwargs = {"padding": True} if transform_kwargs is None else transform_kwargs
 
         return cls(
@@ -307,10 +305,7 @@ class SpeechRecognitionData(DataModule):
             >>> os.remove("predict_data.tsv")
         """
 
-        ds_kw = {
-            "input_key": input_field,
-            "sampling_rate": sampling_rate
-        }
+        ds_kw = {"input_key": input_field, "sampling_rate": sampling_rate}
         transform_kwargs = {"padding": True} if transform_kwargs is None else transform_kwargs
 
         return cls(
@@ -432,11 +427,7 @@ class SpeechRecognitionData(DataModule):
             >>> os.remove("predict_data.json")
         """
 
-        ds_kw = {
-            "input_key": input_field,
-            "sampling_rate": sampling_rate,
-            "field": field
-        }
+        ds_kw = {"input_key": input_field, "sampling_rate": sampling_rate, "field": field}
         transform_kwargs = {"padding": True} if transform_kwargs is None else transform_kwargs
 
         return cls(
@@ -583,9 +574,7 @@ class SpeechRecognitionData(DataModule):
             >>> _ = [os.remove(f"predict_speech_{i}.wav") for i in range(1, 4)]
         """
 
-        ds_kw = {
-            "sampling_rate": sampling_rate
-        }
+        ds_kw = {"sampling_rate": sampling_rate}
         transform_kwargs = {"padding": True} if transform_kwargs is None else transform_kwargs
 
         return cls(
