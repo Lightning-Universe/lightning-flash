@@ -110,7 +110,8 @@ jobs:
         # todo: this is a hack to be able to install packages that are checking torch version while install
         pip install numpy Cython "torch>=1.11.0" -f $TORCH_URL
         pip install .[$EXTRAS,test] --upgrade \
-          --prefer-binary --no-cache-dir -f $TORCH_URL \
+          --prefer-binary \
+          -f $TORCH_URL \
           -f https://data.pyg.org/whl/torch-1.13.1+cpu.html  # this extra URL is for graph extras
         pip list
 
@@ -125,7 +126,7 @@ jobs:
       run: |
         pip install .[$EXTRAS,test] \
           -r requirements/testing_${{ matrix.topic }}.txt  \
-          --upgrade --prefer-binary -f $TORCH_URL --no-cache-dir
+          --upgrade --prefer-binary -f $TORCH_URL
         pip cache info
         pip list
 
