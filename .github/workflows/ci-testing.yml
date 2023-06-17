@@ -106,7 +106,7 @@ jobs:
     - name: Install package
       run: |
         # todo: some dependency has not correct format of their extras
-        python -m pip install "pip==22.2.1"
+        python -m pip install "pip==22.3.1"
         # todo: this is a hack to be able to install packages that are checking torch version while install
         pip install numpy Cython "torch>=1.11.0" -f $TORCH_URL
         pip install .[$EXTRAS,test] --upgrade \
