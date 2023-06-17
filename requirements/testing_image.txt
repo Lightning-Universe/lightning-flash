@@ -1,12 +1,2 @@
 # https://github.com/facebookresearch/ClassyVision/archive/refs/heads/main.zip
 # https://github.com/facebookresearch/vissl/archive/refs/heads/main.zip
-
-# CI: just to limit the search space for pip/installation
-torch >1.10.0
-torchvision >0.11.0
-torchmetrics >0.10.0
-pytorch-lightning >1.8.0
-albumentations >1.0.0
-ftfy >6.0.0
-icevision >0.11
-icedata >0.5.0
