@@ -96,13 +96,12 @@ jobs:
     - name: Get pip cache dir
       id: pip-cache
       run: echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
-    - name: Cache pip
-      uses: actions/cache@v3
+    - name: Restore pip cache
+      uses: actions/cache/restore@v3
+      id: restore-cache
       with:
         path: ${{ steps.pip-cache.outputs.dir }}
-        key: ${{ runner.os }}-pip-py${{ matrix.python-version }}-${{ hashFiles('requirements/*.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-py${{ matrix.python-version }}-
+        key: pip-dependencies
 
     - name: Install package
       run: |
@@ -129,6 +128,12 @@ jobs:
           --upgrade --prefer-binary -f $TORCH_URL --no-cache-dir
         pip cache info
         pip list
+
+    - name: Save pip cache
+      uses: actions/cache/save@v3
+      with:
+        path: ${{ steps.pip-cache.outputs.dir }}
+        key: pip-dependencies
 
     - name: Cache datasets
       uses: actions/cache@v3
