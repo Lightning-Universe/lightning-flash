@@ -120,7 +120,6 @@ class SpeechRecognitionData(DataModule):
         """
 
         ds_kw = {"sampling_rate": sampling_rate}
-        transform_kwargs = {"padding": True} if transform_kwargs is None else transform_kwargs
 
         return cls(
             input_cls(RunningStage.TRAINING, train_files, train_targets, **ds_kw),
@@ -306,7 +305,6 @@ class SpeechRecognitionData(DataModule):
         """
 
         ds_kw = {"input_key": input_field, "sampling_rate": sampling_rate}
-        transform_kwargs = {"padding": True} if transform_kwargs is None else transform_kwargs
 
         return cls(
             input_cls(RunningStage.TRAINING, train_file, target_key=target_field, **ds_kw),
@@ -428,7 +426,6 @@ class SpeechRecognitionData(DataModule):
         """
 
         ds_kw = {"input_key": input_field, "sampling_rate": sampling_rate, "field": field}
-        transform_kwargs = {"padding": True} if transform_kwargs is None else transform_kwargs
 
         return cls(
             input_cls(RunningStage.TRAINING, train_file, target_key=target_field, **ds_kw),
@@ -575,7 +572,6 @@ class SpeechRecognitionData(DataModule):
         """
 
         ds_kw = {"sampling_rate": sampling_rate}
-        transform_kwargs = {"padding": True} if transform_kwargs is None else transform_kwargs
 
         return cls(
             input_cls(RunningStage.TRAINING, train_dataset, **ds_kw),
