@@ -17,7 +17,7 @@ import os
 import numpy
 
 # adding compatibility for numpy >= 1.24
-for tp_name, tp_ins in [("object", object), ("bool", bool), ("int", int), ("float", float)]:
+for tp_name, tp_ins in [("object", object), ("bool", bool)]:
     if not hasattr(numpy, tp_name):
         setattr(numpy, tp_name, tp_ins)
 for tp_name, tp_ins in [("float", "float64")]:
