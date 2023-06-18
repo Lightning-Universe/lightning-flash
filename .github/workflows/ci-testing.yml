@@ -61,11 +61,11 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Set Swap Space
-      if: runner.os == 'Linux'
-      uses: pierotofy/set-swap-space@master
-      with:
-        swap-size-gb: 10
+    #- name: Set Swap Space
+    #  if: runner.os == 'Linux'
+    #  uses: pierotofy/set-swap-space@master
+    #  with:
+    #    swap-size-gb: 10
 
     # Github Actions: Run step on specific OS: https://stackoverflow.com/a/57948488/4521646
     - name: Setup macOS
@@ -93,6 +93,11 @@ jobs:
             gh_env.write(f"EXTRAS={','.join(extras)}")
       shell: python
 
+    - name: Setup Hatch
+      run: |
+        pip install "hatch==1.18.0"
+        hatch env create
+
     - name: Get pip cache dir
       id: pip-cache
       run: echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
@@ -105,8 +110,7 @@ jobs:
 
     - name: Install package
       run: |
-        # todo: some dependency has not correct format of their extras
-        python -m pip install "pip==22.3.1"
+        hatch shell
         # todo: this is a hack to be able to install packages that are checking torch version while install
         pip install numpy Cython "torch>=1.11.0" -f $TORCH_URL
         pip install .[$EXTRAS,test] --upgrade \
@@ -118,12 +122,14 @@ jobs:
     - name: DocTests
       working-directory: src/
       run: |
+        hatch shell
         mv flash flashy
         pytest . --doctest-modules --doctest-plus
         mv flashy flash
 
     - name: Install dependencies
       run: |
+        hatch shell
         pip install .[$EXTRAS,test] \
           -r requirements/testing_${{ matrix.topic }}.txt  \
           --upgrade --prefer-binary -f $TORCH_URL
@@ -145,6 +151,7 @@ jobs:
 
     - name: Testing
       run: |
+        hatch shell
         coverage run --source flash -m pytest \
           tests/core \
           tests/deprecated_api \
@@ -155,6 +162,7 @@ jobs:
 
     - name: Statistics
       run: |
+        hatch shell
         coverage report
         coverage xml
 
