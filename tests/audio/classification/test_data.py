@@ -19,8 +19,12 @@ import numpy as np
 import pytest
 import torch
 from flash.audio import AudioClassificationData
-from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE, _TOPIC_AUDIO_AVAILABLE, \
-    _TOPIC_IMAGE_AVAILABLE
+from flash.core.utilities.imports import (
+    _MATPLOTLIB_AVAILABLE,
+    _PIL_AVAILABLE,
+    _TOPIC_AUDIO_AVAILABLE,
+    _TOPIC_IMAGE_AVAILABLE,
+)
 from pytorch_lightning import seed_everything
 
 if _PIL_AVAILABLE:
