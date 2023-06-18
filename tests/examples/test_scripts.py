@@ -60,7 +60,10 @@ root = Path(__file__).parent.parent.parent
         pytest.param(
             "audio",
             "audio_classification.py",
-            marks=pytest.mark.skipif(not _TOPIC_AUDIO_AVAILABLE, reason="audio libraries aren't installed"),
+            marks=[
+                pytest.mark.skipif(not _TOPIC_AUDIO_AVAILABLE, reason="audio libraries aren't installed"),
+                pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed"),
+            ],
         ),
         pytest.param(
             "audio",
