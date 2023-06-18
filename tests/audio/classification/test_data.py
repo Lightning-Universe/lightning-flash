@@ -19,8 +19,7 @@ import numpy as np
 import pytest
 import torch
 from flash.audio import AudioClassificationData
-from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE, _TOPIC_AUDIO_AVAILABLE, \
-    _TOPIC_IMAGE_AVAILABLE
+from flash.core.utilities.imports import _MATPLOTLIB_AVAILABLE, _PIL_AVAILABLE, _TOPIC_AUDIO_AVAILABLE
 from pytorch_lightning import seed_everything
 
 if _PIL_AVAILABLE:
@@ -186,7 +185,6 @@ def test_from_filepaths_list_image_paths(tmpdir):
 
 
 @pytest.mark.skipif(not _TOPIC_AUDIO_AVAILABLE, reason="audio libraries aren't installed.")
-@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _MATPLOTLIB_AVAILABLE, reason="matplotlib isn't installed.")
 def test_from_filepaths_visualise(tmpdir):
     tmpdir = Path(tmpdir)
@@ -222,7 +220,6 @@ def test_from_filepaths_visualise(tmpdir):
 
 
 @pytest.mark.skipif(not _TOPIC_AUDIO_AVAILABLE, reason="audio libraries aren't installed.")
-@pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed.")
 @pytest.mark.skipif(not _MATPLOTLIB_AVAILABLE, reason="matplotlib isn't installed.")
 def test_from_filepaths_visualise_multilabel(tmpdir):
     tmpdir = Path(tmpdir)
