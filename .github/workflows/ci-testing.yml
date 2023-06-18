@@ -16,8 +16,8 @@ defaults:
     shell: bash
 
 jobs:
-  pytester:
 
+  pytester:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -53,6 +53,7 @@ jobs:
     env:
       FREEZE_REQUIREMENTS: 1
       TORCH_URL: https://download.pytorch.org/whl/cpu/torch_stable.html
+      TRANSFORMERS_CACHE: _hf_cache
 
     steps:
     - uses: actions/checkout@v3
@@ -115,6 +116,12 @@ jobs:
           -f https://data.pyg.org/whl/torch-1.13.1+cpu.html  # this extra URL is for graph extras
         pip list
 
+    - name: Restore HF cache
+      uses: actions/cache/restore@v3
+      with:
+        path: ${{ env.TRANSFORMERS_CACHE }}
+        key: cache-transformers
+
     - name: DocTests
       working-directory: src/
       run: |
@@ -136,13 +143,6 @@ jobs:
         path: ${{ steps.pip-cache.outputs.dir }}
         key: pip-dependencies
 
-    - name: Cache datasets
-      uses: actions/cache@v3
-      with:
-        path: data # This path is specific to Ubuntu
-        key: flash-datasets-${{ hashFiles('tests/examples/test_scripts.py') }}
-        restore-keys: flash-datasets-
-
     - name: Testing
       run: |
         coverage run --source flash -m pytest \
@@ -152,6 +152,12 @@ jobs:
           tests/template \
           tests/${{ matrix.topic }} \
           -v # --reruns 3 --reruns-delay 2
+
+    - name: Save HF cache
+      uses: actions/cache/save@v3
+      with:
+        path: ${{ env.TRANSFORMERS_CACHE }}
+        key: cache-transformers
 
     - name: Statistics
       run: |

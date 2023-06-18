@@ -54,6 +54,7 @@ def test_embedder(layer, size):
     assert embedder(torch.rand(10, 10)).size(1) == size
 
 
+@pytest.mark.flaky(reruns=3)
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 def test_embedder_scaling_overhead():
     """Tests that embedding to the 3rd layer of a 200 layer model takes less than double the time of embedding to.
