@@ -143,14 +143,6 @@ jobs:
         key: flash-datasets-${{ hashFiles('tests/examples/test_scripts.py') }}
         restore-keys: flash-datasets-
 
-    - name: Debugging audio  # fixme
-      run: |
-        import os
-        from flash.core.utilities.imports import _TOPIC_AUDIO_AVAILABLE, _TORCHAUDIO_AVAILABLE, _TORCHVISION_AVAILABLE, _LIBROSA_AVAILABLE, _TRANSFORMERS_AVAILABLE
-        for b in [_TOPIC_AUDIO_AVAILABLE, _TORCHAUDIO_AVAILABLE, _TORCHVISION_AVAILABLE, _LIBROSA_AVAILABLE, _TRANSFORMERS_AVAILABLE]:
-          print(b)
-      shell: python
-
     - name: Testing
       run: |
         coverage run --source flash -m pytest \
