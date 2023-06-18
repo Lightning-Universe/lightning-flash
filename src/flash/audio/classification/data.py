@@ -43,7 +43,7 @@ if not _TOPIC_AUDIO_AVAILABLE or not _TOPIC_IMAGE_AVAILABLE:
 
 class AudioClassificationData(DataModule):
     """The ``AudioClassificationData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
-    classmethods for loading data for audio classification."""
+    class methods for loading data for audio classification."""
 
     input_transform_cls = AudioClassificationInputTransform
 

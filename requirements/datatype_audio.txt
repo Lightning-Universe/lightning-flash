@@ -1,6 +1,6 @@
 # NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forced in setup
 
-torchaudio <=0.13.1
+torchaudio <=2.0.2
 torchvision <=0.15.2
 librosa >=0.8.1, <=0.10.0.post2
 transformers >=4.13.0, <=4.29.2

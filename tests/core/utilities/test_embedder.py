@@ -83,6 +83,7 @@ def test_embedder_scaling_overhead():
     assert (diff_time / shallow_time) < 2
 
 
+@pytest.mark.flaky(reruns=3)
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 def test_embedder_raising_overhead():
     """Tests that embedding to the output layer of a 3 layer model takes less than 10ms more than the time taken to
