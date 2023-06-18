@@ -20,7 +20,6 @@ import os
 # for tp_name, tp_ins in [("object", object), ("bool", float), ("int", int), ("float", float)]:
 #     if not hasattr(numpy, tp_name):
 #         setattr(numpy, tp_name, tp_ins)
-
 from flash.__about__ import *  # noqa: F401 E402 F403
 from flash.core.data.callback import FlashCallback  # noqa: E402
 from flash.core.data.data_module import DataModule  # noqa: E402
