@@ -2,3 +2,9 @@
 
 # This is a separate file, as vissl integration is affected by baal installation (conflicts)
 vissl >=0.1.5, <=0.1.6 # dead
+
+# CI: lover bound is set just to limit the search space for pip/installation
+torch >1.11.0
+torchvision >0.12.0
+timm >0.7.0
+icevision >0.11
