@@ -1187,7 +1187,7 @@ class MatplotlibVisualization(BaseVisualization):
     block_viz_window: bool = True  # parameter to allow user to block visualisation windows
 
     @staticmethod
-    @requires("Image")
+    @requires("PIL")
     def _to_numpy(img: Union[np.ndarray, Tensor, Image.Image]) -> np.ndarray:
         out: np.ndarray
         if isinstance(img, np.ndarray):
