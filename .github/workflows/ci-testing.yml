@@ -96,7 +96,7 @@ jobs:
     - name: Setup Hatch
       run: |
         pip install "hatch==1.7.0"
-        hatch env create
+        hatch env create flashy
 
     - name: Get pip cache dir
       id: pip-cache
