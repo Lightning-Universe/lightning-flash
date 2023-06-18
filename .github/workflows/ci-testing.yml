@@ -95,7 +95,7 @@ jobs:
 
     - name: Setup Hatch
       run: |
-        pip install "hatch==1.18.0"
+        pip install "hatch==1.7.0"
         hatch env create
 
     - name: Get pip cache dir
