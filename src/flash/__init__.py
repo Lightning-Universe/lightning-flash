@@ -17,12 +17,9 @@ import os
 import numpy
 
 # adding compatibility for numpy >= 1.24
-for tp_name, tp_ins in [("object", object), ("bool", bool)]:
+for tp_name, tp_ins in [("object", object), ("bool", bool), ("float", float)]:
     if not hasattr(numpy, tp_name):
         setattr(numpy, tp_name, tp_ins)
-for tp_name, tp_ins in [("float", "float64")]:
-    if not hasattr(numpy, tp_name):
-        setattr(numpy, tp_name, getattr(numpy, tp_ins))
 
 from flash.__about__ import *  # noqa: F401 E402 F403
 from flash.core.data.callback import FlashCallback  # noqa: E402
