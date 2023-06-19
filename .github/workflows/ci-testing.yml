@@ -4,8 +4,7 @@ name: CI testing
 on: # Trigger the workflow on push or pull request, but only for the master branch
   push:
     branches: ["master", "release/*"]
-  pull_request:
-    branches: ["master", "release/*"]
+  pull_request: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.head_ref }}
@@ -138,6 +137,7 @@ jobs:
         pip list
 
     - name: Save pip cache
+      if: github.ref == 'refs/heads/master'
       uses: actions/cache/save@v3
       with:
         path: ${{ steps.pip-cache.outputs.dir }}
@@ -154,6 +154,7 @@ jobs:
           -v # --reruns 3 --reruns-delay 2
 
     - name: Save HF cache
+      if: github.ref == 'refs/heads/master'
       uses: actions/cache/save@v3
       with:
         path: ${{ env.TRANSFORMERS_CACHE }}
