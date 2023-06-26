@@ -5,4 +5,4 @@ pytest ==7.3.2
 pytest-doctestplus ==0.13.0
 pytest-rerunfailures ==11.1.2
 pytest-forked ==1.6.0
-pytest-mock ==3.10.0
+pytest-mock ==3.11.1
