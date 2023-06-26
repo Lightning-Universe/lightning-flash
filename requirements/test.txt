@@ -1,7 +1,7 @@
 # NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forced in setup
 
 coverage[toml]
-pytest ==7.3.2
+pytest ==7.4.0
 pytest-doctestplus ==0.13.0
 pytest-rerunfailures ==11.1.2
 pytest-forked ==1.6.0
