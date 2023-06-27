@@ -8,7 +8,7 @@ torchmetrics >0.7.0, <0.11.0  # strict
 pytorch-lightning >1.8.0, <2.0.0  # strict
 pyDeprecate >0.2.0
 pandas >1.1.0, <=1.5.2
-jsonargparse[signatures] >4.0.0, <=4.9.0
+jsonargparse[signatures] >=4.22.0, <4.23.0
 click >=7.1.2, <=8.1.3
 protobuf <=3.20.1
 fsspec[http] >=2022.5.0,<=2023.6.0
