@@ -4,14 +4,11 @@ import inspect
 import os
 import warnings
 from argparse import Namespace
-from functools import wraps
 from types import MethodType
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union, cast
 
 import torch
-from jsonargparse import ActionConfigFile, ArgumentParser, set_config_read_mode
-from jsonargparse.signatures import ClassFromFunctionBase
-from jsonargparse.typehints import ClassType
+from jsonargparse import ActionConfigFile, ArgumentParser, class_from_function, set_config_read_mode
 from pytorch_lightning import LightningDataModule, LightningModule, Trainer
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.utilities.cloud_io import get_filesystem
@@ -25,46 +22,16 @@ LRSchedulerTypeTuple = (torch.optim.lr_scheduler._LRScheduler, torch.optim.lr_sc
 LRSchedulerType = Union[Type[torch.optim.lr_scheduler._LRScheduler], Type[torch.optim.lr_scheduler.ReduceLROnPlateau]]
 
 
-def class_from_function(
-    func: Callable[..., ClassType],
-    return_type: Optional[Type[ClassType]] = None,
-) -> Type[ClassType]:
-    """Creates a dynamic class which if instantiated is equivalent to calling func.
-
-    Args:
-        func: A function that returns an instance of a class. It must have a return type annotation.
-    """
-
-    @wraps(func)
-    def __new__(cls, *args, **kwargs):
-        return func(*args, **kwargs)
-
-    if return_type is None:
-        return_type = inspect.signature(func).return_annotation
-
-    if isinstance(return_type, str):
-        raise RuntimeError("Classmethod instantiation is not supported when the return type annotation is a string.")
-
-    class ClassFromFunction(return_type, ClassFromFunctionBase):  # type: ignore
-        pass
-
-    ClassFromFunction.__new__ = __new__  # type: ignore
-    ClassFromFunction.__doc__ = func.__doc__
-    ClassFromFunction.__name__ = func.__name__
-
-    return ClassFromFunction
-
-
 class LightningArgumentParser(ArgumentParser):
     """Extension of jsonargparse's ArgumentParser for pytorch-lightning."""
 
-    def __init__(self, *args: Any, parse_as_dict: bool = True, **kwargs: Any) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialize argument parser that supports configuration file input.
 
         For full details of accepted arguments see
         `ArgumentParser.__init__ <https://jsonargparse.readthedocs.io/en/stable/#jsonargparse.core.ArgumentParser.__init__>`_.
         """
-        super().__init__(*args, parse_as_dict=parse_as_dict, **kwargs)
+        super().__init__(*args, **kwargs)
         self.add_argument(
             "--config", action=ActionConfigFile, help="Path to a configuration file in json or yaml format."
         )
@@ -95,7 +62,7 @@ class LightningArgumentParser(ArgumentParser):
 
         if inspect.isclass(lightning_class) and issubclass(
             cast(type, lightning_class),
-            (Trainer, LightningModule, LightningDataModule, Callback, ClassFromFunctionBase),
+            (Trainer, LightningModule, LightningDataModule, Callback),
         ):
             if issubclass(cast(type, lightning_class), Callback):
                 self.callback_keys.append(nested_key)
