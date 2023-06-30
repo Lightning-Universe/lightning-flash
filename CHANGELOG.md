@@ -4,16 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [0.8.2] - 2023-06-08
+## [0.8.2] - 2023-06-30
 
-### Added
+### Changed
 
 - Added GATE backbone for Tabular integrations ([#1559](https://github.com/Lightning-AI/lightning-flash/pull/1559))
 
 ### Fixed
 
 - Fixed datamodule can't load files with square brackets in names ([#1501](https://github.com/Lightning-AI/lightning-flash/pull/1501))
-
+- Fixed channel dim selection on segmentation target ([#1509](https://github.com/Lightning-AI/lightning-flash/pull/1509))
+- Fixed used of `jsonargparse` avoiding reliance on non-public internal logic ([#1620](https://github.com/Lightning-AI/lightning-flash/pull/1620))
+- Compatibility with `pytorch-tabular>=1.0` ([#1545](https://github.com/Lightning-AI/lightning-flash/pull/1545))
+- Compatibility latest `numpy` ([#1595](https://github.com/Lightning-AI/lightning-flash/pull/1595))
 
 ## [0.8.1] - 2022-11-08
 
