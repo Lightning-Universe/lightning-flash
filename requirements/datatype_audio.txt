@@ -1,6 +1,6 @@
 # NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forced in setup
 
-numpy <1.26  # strict - freeze for strange failing with required `padding=True`
+numpy <1.24  # strict - freeze for strange failing with required `padding=True`
 torchaudio <=2.0.2
 torchvision <=0.15.2
 librosa >=0.8.1, <=0.10.0.post2
