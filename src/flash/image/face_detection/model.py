@@ -106,13 +106,10 @@ class FaceDetector(Task):
         # preds: Tensor(B, N, 5)
         # preds: Tensor(N, 6) as x1,y1,x2,y2,score,batch_idx
         preds = self.model.logits_to_preds(logits)
-        preds = self.model._postprocess(preds)
-
-        return preds
+        return self.model._postprocess(preds)
 
     def _prepare_batch(self, batch):
-        batch = (((batch * 255) / self.model.normalizer) - self.model.mean) / self.model.std
-        return batch
+        return (((batch * 255) / self.model.normalizer) - self.model.mean) / self.model.std
 
     def _compute_metrics(self, logits, targets):
         # preds: Tensor(B, N, 5)

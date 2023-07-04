@@ -47,8 +47,7 @@ class _VISSLBackboneWrapper(nn.Module):
 
     def forward(self, x, *args, **kwargs):
         x = self.backbone(x)
-        x = x.unsqueeze(0)
-        return x
+        return x.unsqueeze(0)
 
 
 class MockVISSLTask:

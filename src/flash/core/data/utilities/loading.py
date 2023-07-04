@@ -68,8 +68,7 @@ def _load_image_from_image(file):
     img = Image.open(file)
     img.load()
 
-    img = img.convert("RGB")
-    return img
+    return img.convert("RGB")
 
 
 def _load_image_from_numpy(file):

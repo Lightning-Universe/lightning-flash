@@ -35,8 +35,7 @@ class _ServeInputProcessor(nn.Module):
         sample = self.serve_input._call_load_sample(sample)
         if not isinstance(sample, list):
             sample = [sample]
-        sample = self.collate_fn(sample)
-        return sample
+        return self.collate_fn(sample)
 
 
 def _is_list_like_excluding_str(x):
