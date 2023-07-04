@@ -52,7 +52,6 @@ def _load_readme_description(path_dir: str, homepage: str, ver: str) -> str:
     return text.replace("badge.svg?branch=master&event=push", f"badge.svg?tag={ver}")
 
 
-
 def _augment_requirement(ln: str, comment_char: str = "#", unfreeze: bool = True) -> str:
     """Adjust the upper version contrains.
 

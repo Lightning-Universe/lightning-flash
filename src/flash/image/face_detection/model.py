@@ -108,7 +108,6 @@ class FaceDetector(Task):
         preds = self.model.logits_to_preds(logits)
         return self.model._postprocess(preds)
 
-
     def _prepare_batch(self, batch):
         return (((batch * 255) / self.model.normalizer) - self.model.mean) / self.model.std
 

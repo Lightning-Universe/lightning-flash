@@ -99,7 +99,6 @@ class BasicBlock(nn.Module):
         return self.relu(out)
 
 
-
 class Bottleneck(nn.Module):
     # Bottleneck in torchvision places the stride for downsampling at 3x3 convolution(self.conv2)
     # while original implementation places the stride at the first 1x1 convolution(self.conv1)
@@ -155,7 +154,6 @@ class Bottleneck(nn.Module):
 
         out += identity
         return self.relu(out)
-
 
 
 class ResNet(nn.Module):
@@ -299,7 +297,6 @@ class ResNet(nn.Module):
 
         x = self.avgpool(x)
         return torch.flatten(x, 1)
-
 
 
 def _resnet(
