@@ -49,9 +49,8 @@ def _load_readme_description(path_dir: str, homepage: str, ver: str) -> str:
     # codecov badge
     text = text.replace("/branch/master/graph/badge.svg", f"/release/{ver}/graph/badge.svg")
     # replace github badges for release ones
-    text = text.replace("badge.svg?branch=master&event=push", f"badge.svg?tag={ver}")
+    return text.replace("badge.svg?branch=master&event=push", f"badge.svg?tag={ver}")
 
-    return text
 
 
 def _augment_requirement(ln: str, comment_char: str = "#", unfreeze: bool = True) -> str:
@@ -142,8 +141,7 @@ def _get_extras(path_dir: str = _PATH_REQUIRE) -> dict:
     extras_req["all"] = _expand_reqs(extras_req, ["vision", "tabular", "text", "audio"])
     extras_req["dev"] = _expand_reqs(extras_req, ["all", "test", "docs"])
     # filter the uniques
-    extras_req = {n: list(set(req)) for n, req in extras_req.items()}
-    return extras_req
+    return {n: list(set(req)) for n, req in extras_req.items()}
 
 
 # https://packaging.python.org/discussions/install-requires-vs-requirements /

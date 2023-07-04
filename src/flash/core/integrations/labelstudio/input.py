@@ -310,7 +310,7 @@ class LabelStudioVideoClassificationInput(LabelStudioIterableInput):
         if len(dataset) > 0:
             from pytorchvideo.data import LabeledVideoDataset
 
-            dataset = LabeledVideoDataset(
+            return LabeledVideoDataset(
                 [
                     (
                         os.path.join(self._data_folder, sample["file_upload"]),
@@ -322,7 +322,6 @@ class LabelStudioVideoClassificationInput(LabelStudioIterableInput):
                 decode_audio=self.decode_audio,
                 decoder=self.decoder,
             )
-            return dataset
         return []
 
 

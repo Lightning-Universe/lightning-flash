@@ -144,5 +144,4 @@ def convert_to_modules(transforms: Optional[Dict[str, Callable]]):
 
     transforms = apply_to_collection(transforms, Callable, FuncModule, wrong_dtype=nn.Module)
     transforms = apply_to_collection(transforms, Mapping, nn.ModuleDict, wrong_dtype=nn.ModuleDict)
-    transforms = apply_to_collection(transforms, Iterable, nn.ModuleList, wrong_dtype=(nn.ModuleList, nn.ModuleDict))
-    return transforms
+    return apply_to_collection(transforms, Iterable, nn.ModuleList, wrong_dtype=(nn.ModuleList, nn.ModuleDict))

@@ -99,7 +99,6 @@ def build_flash_serve_model_component(model, serve_input, output, transform, tra
                     inputs = self.model.transfer_batch_to_device(inputs, self.device)
                 inputs = self.on_after_batch_transfer(inputs, 0)
                 preds = self.model.predict_step(inputs, 0)
-                preds = self.output_transform(preds)
-                return preds
+                return self.output_transform(preds)
 
     return FlashServeModelComponent(model)

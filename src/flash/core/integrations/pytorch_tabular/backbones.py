@@ -57,8 +57,7 @@ if _PYTORCHTABULAR_AVAILABLE:
                 )
             else:
                 raise ValueError(f"{config} is not a valid path")
-        config = OmegaConf.structured(config)
-        return config
+        return OmegaConf.structured(config)
 
     def load_pytorch_tabular(
         model_config_class,
