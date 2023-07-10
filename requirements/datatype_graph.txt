@@ -4,7 +4,7 @@ torch-scatter <=2.1.1
 torch-sparse <=0.6.17
 torch-geometric >=2.0.0, <=2.3.1
 torch-cluster <=1.6.1
-networkx <=2.8.8
+networkx <=3.1
 class-resolver >=0.3.2, <=0.4.2
 
 # todo: check if we can bump this versions, ALSO if bumped you need to update CI for find links
