@@ -1,7 +1,7 @@
 # NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forced in setup
 
 packaging <24.0
-setuptools <=59.5.0  # Prevent install bug with tensorboard
+setuptools <=68.0.0  # Prevent install bug with tensorboard
 numpy <1.26
 torch >1.7.0, <=2.0.1
 torchmetrics >0.7.0, <0.11.0  # strict
