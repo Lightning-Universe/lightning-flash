@@ -32,6 +32,7 @@ def cull(dsk, keys):
     dsk: culled graph
     dependencies: Dict mapping {key: [deps]}.  Useful side effect to accelerate
         other optimizations, notably fuse.
+
     """
     if not isinstance(keys, (list, set)):
         keys = [keys]
@@ -113,6 +114,7 @@ def fuse_linear(dsk, keys=None, dependencies=None, rename_keys=True):
     dsk: output graph with keys fused
     dependencies: dict mapping dependencies after fusion.  Useful side effect
         to accelerate other downstream optimizations.
+
     """
     if keys is not None and not isinstance(keys, set):
         if not isinstance(keys, list):
@@ -236,6 +238,7 @@ def inline(dsk, keys=None, inline_constants=True, dependencies=None):
     {'x': 1, 'y': (<function inc at ...>, 1), 'z': (<function add at ...>, 1, (<function inc at ...>, 1))}
     >>> inline(d, keys='y', inline_constants=False)  # doctest: +ELLIPSIS
     {'x': 1, 'y': (<function inc at ...>, 'x'), 'z': (<function add at ...>, 'x', (<function inc at ...>, 'x'))}
+
     """
     if dependencies and isinstance(next(iter(dependencies.values())), list):
         dependencies = {k: set(v) for k, v in dependencies.items()}
@@ -296,6 +299,7 @@ def inline_functions(dsk, output, fast_functions=None, inline_constants=False, d
      'out': (<function add at ...>, 'i', (<function <lambda> at ...>, 'y')),
      'i': (<function inc at ...>, 'x'),
      'x': 1}
+
     """
     if not fast_functions:
         return dsk
@@ -338,6 +342,7 @@ def functions_of(task):
     >>> task = (add, (mul, 1, 2), (inc, 3))
     >>> sorted(functions_of(task), key=str)  # doctest: +ELLIPSIS
     [<function add at ...>, <function inc at ...>, <function mul at ...>]
+
     """
     funcs = set()
 
@@ -875,6 +880,7 @@ class SubgraphCallable:
         A list of keys to be used as arguments to the callable.
     name : str, optional
         The name to use for the function.
+
     """
 
     __slots__ = ("dsk", "outkey", "inkeys", "name")

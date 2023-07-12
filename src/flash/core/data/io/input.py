@@ -89,6 +89,7 @@ def _has_len(data: Union[Sequence, Iterable]) -> bool:
 
     Args:
         data: The object to check for length support.
+
     """
     try:
         len(data)

@@ -20,6 +20,7 @@ class ServerMixin:
     debug     If the server should be started up in debug mode. By default, False. testing     If the server should
     return the ``app`` instance instead of blocking     the process (via running the ``app`` in ``uvicorn``). This is
     used     when taking advantage of a server ``TestClient``. By default, False
+
     """
 
     DEBUG: bool
@@ -37,6 +38,7 @@ class ServerMixin:
             host address to run the server on
         port
             port number to expose the running server on
+
         """
         if FLASH_DISABLE_SERVE:
             return None

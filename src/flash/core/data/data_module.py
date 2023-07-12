@@ -566,6 +566,7 @@ class DataModule(pl.LightningDataModule):
 
         Returns:
             A tuple containing the training and validation datasets
+
         """
 
         if not isinstance(val_split, float) or (isinstance(val_split, float) and val_split > 1 or val_split < 0):

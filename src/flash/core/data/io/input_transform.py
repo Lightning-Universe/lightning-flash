@@ -84,6 +84,7 @@ class InputTransform:
             class MyInputTransform(InputTransform):
                 def per_sample_transform(self) -> Callable:
                     return ApplyToKeys("input", my_func)
+
         """
         pass
 
@@ -97,6 +98,7 @@ class InputTransform:
                 DataKeys.TARGET: ...,
                 DataKeys.METADATA: ...,
             }
+
         """
         return self.per_sample_transform()
 
@@ -121,6 +123,7 @@ class InputTransform:
             class MyInputTransform(InputTransform):
                 def per_sample_transform(self) -> Callable:
                     return ApplyToKeys("input", my_func)
+
         """
         return self.per_sample_transform()
 
@@ -134,6 +137,7 @@ class InputTransform:
                 DataKeys.TARGET: ...,
                 DataKeys.METADATA: ...,
             }
+
         """
         return self.per_sample_transform()
 
@@ -158,6 +162,7 @@ class InputTransform:
             class MyInputTransform(InputTransform):
                 def per_sample_transform(self) -> Callable:
                     return ApplyToKeys("input", my_func)
+
         """
         return self.per_sample_transform()
 
@@ -182,6 +187,7 @@ class InputTransform:
             class MyInputTransform(InputTransform):
                 def per_sample_transform(self) -> Callable:
                     return ApplyToKeys("input", my_func)
+
         """
         return self.per_sample_transform()
 
@@ -210,6 +216,7 @@ class InputTransform:
             class MyInputTransform(InputTransform):
                 def per_sample_transform_on_device(self) -> Callable:
                     return ApplyToKeys("input", my_func)
+
         """
         pass
 
@@ -223,6 +230,7 @@ class InputTransform:
                 DataKeys.TARGET: ...,
                 DataKeys.METADATA: ...,
             }
+
         """
         return self.per_sample_transform_on_device()
 
@@ -247,6 +255,7 @@ class InputTransform:
             class MyInputTransform(InputTransform):
                 def per_sample_transform_on_device(self) -> Callable:
                     return ApplyToKeys("input", my_func)
+
         """
         return self.per_sample_transform_on_device()
 
@@ -260,6 +269,7 @@ class InputTransform:
                 DataKeys.TARGET: ...,
                 DataKeys.METADATA: ...,
             }
+
         """
         return self.per_sample_transform_on_device()
 
@@ -284,6 +294,7 @@ class InputTransform:
             class MyInputTransform(InputTransform):
                 def per_sample_transform_on_device(self) -> Callable:
                     return ApplyToKeys("input", my_func)
+
         """
         return self.per_sample_transform_on_device()
 
@@ -308,6 +319,7 @@ class InputTransform:
             class MyInputTransform(InputTransform):
                 def serve_per_sample_transform_on_device(self) -> Callable:
                     return ApplyToKeys("input", my_func)
+
         """
         return self.per_sample_transform_on_device()
 
@@ -336,6 +348,7 @@ class InputTransform:
             class MyInputTransform(InputTransform):
                 def per_batch_transform(self) -> Callable:
                     return ApplyToKeys("input", my_func)
+
         """
         pass
 
@@ -349,6 +362,7 @@ class InputTransform:
                 DataKeys.TARGET: ...,
                 DataKeys.METADATA: ...,
             }
+
         """
         return self.per_batch_transform()
 
@@ -373,6 +387,7 @@ class InputTransform:
             class MyInputTransform(InputTransform):
                 def per_batch_transform(self) -> Callable:
                     return ApplyToKeys("input", my_func)
+
         """
         return self.per_batch_transform()
 
@@ -386,6 +401,7 @@ class InputTransform:
                 DataKeys.TARGET: ...,
                 DataKeys.METADATA: ...,
             }
+
         """
         return self.per_batch_transform()
 
@@ -410,6 +426,7 @@ class InputTransform:
             class MyInputTransform(InputTransform):
                 def per_batch_transform(self) -> Callable:
                     return ApplyToKeys("input", my_func)
+
         """
         return self.per_batch_transform()
 
@@ -434,6 +451,7 @@ class InputTransform:
             class MyInputTransform(InputTransform):
                 def per_batch_transform(self) -> Callable:
                     return ApplyToKeys("input", my_func)
+
         """
         return self.per_batch_transform()
 
@@ -462,6 +480,7 @@ class InputTransform:
             class MyInputTransform(InputTransform):
                 def per_batch_transform_on_device(self) -> Callable:
                     return ApplyToKeys("input", my_func)
+
         """
         pass
 
@@ -475,6 +494,7 @@ class InputTransform:
                 DataKeys.TARGET: ...,
                 DataKeys.METADATA: ...,
             }
+
         """
         return self.per_batch_transform_on_device()
 
@@ -499,6 +519,7 @@ class InputTransform:
             class MyInputTransform(InputTransform):
                 def per_batch_transform_on_device(self) -> Callable:
                     return ApplyToKeys("input", my_func)
+
         """
         return self.per_batch_transform_on_device()
 
@@ -512,6 +533,7 @@ class InputTransform:
                 DataKeys.TARGET: ...,
                 DataKeys.METADATA: ...,
             }
+
         """
         return self.per_batch_transform_on_device()
 
@@ -536,6 +558,7 @@ class InputTransform:
             class MyInputTransform(InputTransform):
                 def per_batch_transform_on_device(self) -> Callable:
                     return ApplyToKeys("input", my_func)
+
         """
         return self.per_batch_transform_on_device()
 
@@ -560,6 +583,7 @@ class InputTransform:
             class MyInputTransform(InputTransform):
                 def serve_per_batch_transform_on_device(self) -> Callable:
                     return ApplyToKeys("input", my_func)
+
         """
         return self.per_batch_transform_on_device()
 
@@ -606,6 +630,7 @@ class InputTransform:
 
         .. note:: This option is mutually exclusive with :meth:`per_sample_transform_on_device`, since if both are
         specified, uncollation has to be applied.
+
         """
         return self.current_transform(stage=stage, current_fn="per_batch_transform")(batch)
 
@@ -620,6 +645,7 @@ class InputTransform:
         specified, uncollation has to be applied. .. note::     This function won't be called within the dataloader
         workers, since to make that happen     each of the workers would have to create it's own CUDA-context which
         would pollute GPU memory (if on GPU).
+
         """
         fn = self.current_transform(stage=stage, current_fn="per_sample_transform_on_device")
         if isinstance(sample, list):
@@ -631,6 +657,7 @@ class InputTransform:
 
         .. note::     This function won't be called within the dataloader workers, since to make that happen     each of
         the workers would have to create it's own CUDA-context which would pollute GPU memory (if on GPU).
+
         """
         return self.current_transform(stage=stage, current_fn="per_batch_transform_on_device")(batch)
 

@@ -33,6 +33,7 @@ def _load_readme_description(path_dir: str, homepage: str, ver: str) -> str:
 
     >>> _load_readme_description(_PATH_ROOT, "", "")  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     '<div align="center">...'
+
     """
     path_readme = os.path.join(path_dir, "README.md")
     text = open(path_readme, encoding="utf-8").read()
@@ -65,6 +66,7 @@ def _augment_requirement(ln: str, comment_char: str = "#", unfreeze: bool = True
     'arrow>=1.2.0, <=1.2.2  # strict'
     >>> _augment_requirement("arrow", unfreeze=True)
     'arrow'
+
     """
     # filer all comments
     if comment_char in ln:
@@ -95,6 +97,7 @@ def _load_requirements(path_dir: str, file_name: str = "base.txt", unfreeze: boo
     >>> path_req = os.path.join(_PATH_ROOT, "requirements")
     >>> _load_requirements(path_req, "docs.txt")  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     ['sphinx>=4.0', ...]
+
     """
     with open(os.path.join(path_dir, file_name)) as file:
         lines = [ln.strip() for ln in file.readlines()]

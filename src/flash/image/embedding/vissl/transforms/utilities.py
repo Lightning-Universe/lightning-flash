@@ -33,6 +33,7 @@ def multicrop_collate_fn(samples):
     """Multi-crop collate function for VISSL integration.
 
     Run custom collate on a single key since VISSL transforms affect only DataKeys.INPUT
+
     """
     result = vissl_collate_helper(samples)
 
@@ -55,6 +56,7 @@ def simclr_collate_fn(samples):
     """Multi-crop collate function for VISSL integration.
 
     Run custom collate on a single key since VISSL transforms affect only DataKeys.INPUT
+
     """
     result = vissl_collate_helper(samples)
 

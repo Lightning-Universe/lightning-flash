@@ -76,6 +76,7 @@ def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:
         >>> download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "./data")
         >>> os.listdir("./data")  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
         [...]
+
     """
     # Disable warning about making an insecure request
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)

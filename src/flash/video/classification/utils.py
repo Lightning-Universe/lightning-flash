@@ -50,6 +50,7 @@ class LabeledVideoTensorDataset(torch.utils.data.IterableDataset):
                     'video_label': <index_label>
                     'video_index': <video_index>,
                 }
+
         """
         if not self._video_sampler_iter:
             # Setup MultiProcessSampler here - after PyTorch DataLoader workers are spawned.

@@ -44,6 +44,7 @@ class StandardMultiCropSSLTransform(InputTransform):
         gaussian_blur (bool): Specifies if the transforms' composition has Gaussian Blur
         jitter_strength (float): Specify the coefficient for color jitter transform
         normalize (Optional): Normalize transform from torchvision with params set according to the dataset
+
     """
 
     total_num_crops: int = 2

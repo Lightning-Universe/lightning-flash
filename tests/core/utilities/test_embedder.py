@@ -63,6 +63,7 @@ def test_embedder_scaling_overhead():
     200 layer model.
 
     Note that this bound is intentionally high in an effort to reduce the flakiness of the test.
+
     """
     shallow_embedder = Embedder(NLayerModel(3), "backbone.2")
 
@@ -91,6 +92,7 @@ def test_embedder_raising_overhead():
     execute the model without the embedder.
 
     Note that this bound is intentionally high in an effort to reduce the flakiness of the test.
+
     """
     model = NLayerModel(10)
     embedder = Embedder(model, "output")

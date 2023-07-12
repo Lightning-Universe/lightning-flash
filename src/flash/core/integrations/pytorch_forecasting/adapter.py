@@ -39,6 +39,7 @@ class PatchTimeSeriesDataSet(TimeSeriesDataSet):
     """Hack to prevent index construction or data validation / conversion when instantiating model.
 
     This enables the ``TimeSeriesDataSet`` to be created from a single row of data.
+
     """
 
     def _construct_index(self, data: DataFrame, predict_mode: bool) -> DataFrame:

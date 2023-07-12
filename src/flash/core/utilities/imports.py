@@ -186,6 +186,7 @@ def lazy_import(module_name, callback=None):
 
     Returns:
         a proxy module object that will be lazily imported when first used
+
     """
     return LazyModule(module_name, callback=callback)
 
@@ -197,6 +198,7 @@ class LazyModule(types.ModuleType):
         module_name: the fully-qualified module name to import
         callback (None): a callback function to call before importing the
             module
+
     """
 
     def __init__(self, module_name, callback=None):

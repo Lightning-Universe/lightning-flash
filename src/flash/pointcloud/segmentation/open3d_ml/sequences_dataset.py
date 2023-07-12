@@ -134,6 +134,7 @@ class SequencesDataset(Dataset):
         Returns:
             A dict where keys are label numbers and
             values are the corresponding names.
+
         """
         return self.meta["label_to_names"]
 
