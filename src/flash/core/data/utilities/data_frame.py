@@ -30,6 +30,7 @@ def resolve_targets(data_frame: pd.DataFrame, target_keys: Union[str, List[str]]
     Args:
         data_frame: The ``pd.DataFrame`` containing the target column / columns.
         target_keys: The column in the data frame (or a list of columns) from which to resolve the target.
+
     """
     if not isinstance(target_keys, List):
         return data_frame[target_keys].tolist()
@@ -63,6 +64,7 @@ def resolve_files(
         root: The root path to use when resolving files.
         resolver: The resolver function to use. This function should receive the root and a file ID as input and return
             the path to an existing file.
+
     """
     if resolver is None:
         resolver = default_resolver

@@ -75,6 +75,7 @@ def temp_encoded_video(num_frames: int, fps: int, height=10, width=10, prefix=No
     """Creates a temporary lossless, mp4 video with synthetic content.
 
     Uses a context which deletes the video after exit.
+
     """
     # Lossless options.
     video_codec = "libx264rgb"
@@ -93,6 +94,7 @@ def mock_video_data_frame():
 
     Returns a labeled video file which points to this mock encoded video dataset, the ordered label and videos tuples
     and the video duration in seconds.
+
     """
     num_frames = 10
     fps = 5
@@ -127,6 +129,7 @@ def mock_encoded_video_dataset_folder(tmpdir):
     """Creates a temporary mock encoded video directory tree with 2 videos labeled 1, 2.
 
     Returns a directory that to this mock encoded video dataset and the video duration in seconds.
+
     """
     num_frames = 10
     fps = 5

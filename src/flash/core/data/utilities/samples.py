@@ -32,6 +32,7 @@ def to_sample(input: Any) -> Dict[str, Any]:
 
     Returns:
         A sample dictionary.
+
     """
     if isinstance(input, dict) and DataKeys.INPUT in input:
         return input
@@ -51,6 +52,7 @@ def to_samples(inputs: List[Any], targets: Optional[List[Any]] = None) -> List[D
 
     Returns:
         A list of sample dictionaries.
+
     """
     if targets is None:
         return [to_sample(input) for input in inputs]

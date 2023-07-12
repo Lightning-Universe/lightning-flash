@@ -67,6 +67,7 @@ class TaskComposition:
     pre_optimization_dsk
         Merged component `_dsk` subgraphs (without payload / result
         mapping or connections applied.)
+
     """
 
     __slots__ = (
@@ -112,6 +113,7 @@ class UnprocessedTaskDask:
         map of ouput (results) key to output task key
     output_keys
         keys to get as results
+
     """
 
     __slots__ = (
@@ -150,6 +152,7 @@ def _process_initial(
     Returns
     -------
     UnprocessedTaskDask
+
     """
 
     # mapping payload input keys -> serialized keys / tasks
@@ -256,6 +259,7 @@ def build_composition(
     ``C_2_1 deserailize``from ``C_2`` / ``C_1``, we see here that since
     endpoints define the path through the DAG, we cannot eliminate them
     entirely either.
+
     """
     initial_task_dsk = _process_initial(endpoint_protocol, components)
 

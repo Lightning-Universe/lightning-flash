@@ -74,6 +74,7 @@ def default(head: Optional[str] = None, loss_fn: Optional[str] = None, **kwargs)
     """Return `(None, None, [])` as loss function, head and hooks.
 
     Because default strategy only support prediction.
+
     """
     if head is not None:
         warnings.warn(f"default strategy has no heads. So given head({head}) is ignored.")

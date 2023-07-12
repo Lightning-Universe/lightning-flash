@@ -32,6 +32,7 @@ def has_file_allowed_extension(filename: PATH_TYPE, extensions: Tuple[str, ...])
 
     Returns:
         bool: True if the filename ends with one of given extensions
+
     """
     return str(filename).lower().endswith(extensions)
 
@@ -59,6 +60,7 @@ def make_dataset(
 
     Returns:
         (files, targets) Tuple containing the list of files and corresponding list of targets.
+
     """
     files, targets = [], []
     directory = os.path.expanduser(str(directory))
@@ -104,6 +106,7 @@ def list_subdirs(folder: PATH_TYPE) -> List[str]:
 
     Returns:
         The list of subdirectories.
+
     """
     return list(sorted_alphanumeric(d.name for d in os.scandir(str(folder)) if d.is_dir()))
 
@@ -146,6 +149,7 @@ def filter_valid_files(
 
     Returns:
         The filtered lists.
+
     """
     if not isinstance(files, List):
         files = [files]

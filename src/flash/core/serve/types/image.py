@@ -40,6 +40,7 @@ class Image(BaseType):
             "I": 1,  # (32-bit signed integer pixels)
             "F": 1,  # (32-bit floating point pixels)
         }
+
     """
 
     height: Optional[int] = None

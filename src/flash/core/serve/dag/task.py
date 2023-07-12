@@ -19,6 +19,7 @@ def ishashable(x):
     True
     >>> ishashable([1])
     False
+
     """
     try:
         hash(x)
@@ -37,6 +38,7 @@ def istask(x):
     True
     >>> istask(1)
     False
+
     """
     return type(x) is tuple and x and callable(x[0])
 
@@ -79,6 +81,7 @@ def _execute_task(arg, cache):
     [[1, 2], [2, 1]]
     >>> _execute_task('foo', cache)  # Passes through on non-keys
     'foo'
+
     """
     if isinstance(arg, list):
         return [_execute_task(a, cache) for a in arg]
@@ -120,6 +123,7 @@ def get(dsk: dict, out: Sequence[str], cache: dict = None, sortkeys: List[str] =
     2
     >>> get(d, 'y', sortkeys=['x', 'y'])
     2
+
     """
     for k in flatten(out) if isinstance(out, list) else [out]:
         if k not in dsk:
@@ -161,6 +165,7 @@ def get_dependencies(dsk, key=None, task=no_default, as_list=False):
     {'x'}
     >>> get_dependencies(dsk, task=(inc, 'x'))  # provide tasks directly
     {'x'}
+
     """
     if key is not None:
         arg = dsk[key]
@@ -205,6 +210,7 @@ def get_deps(dsk):
     {'a': set(), 'b': {'a'}, 'c': {'b'}}
     >>> dict(dependents)
     {'a': {'b'}, 'b': {'c'}, 'c': set()}
+
     """
     dependencies = {k: get_dependencies(dsk, task=v) for k, v in dsk.items()}
     dependents = reverse_dict(dependencies)
@@ -261,6 +267,7 @@ def subs(task, key, val):
     >>> from flash.core.serve.dag.utils_test import inc
     >>> subs((inc, 'x'), 'x', 1)  # doctest: +ELLIPSIS
     (<function inc at ...>, 1)
+
     """
     type_task = type(task)
     if not (type_task is tuple and task and callable(task[0])):  # istask(task):
@@ -299,6 +306,7 @@ def _toposort(dsk, keys=None, returncycle=False, dependencies=None):
     """Stack-based depth-first search traversal.
 
     This is based on Tarjan's method for topological sorting (see wikipedia for pseudocode).
+
     """
     if keys is None:
         keys = dsk
@@ -433,6 +441,7 @@ def quote(x):
     >>> from flash.core.serve.dag.utils_test import add
     >>> quote((add, 1, 2))
     (literal<type=tuple>,)
+
     """
     if istask(x) or type(x) is list or type(x) is dict:
         return (literal(x),)

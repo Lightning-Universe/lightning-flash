@@ -46,6 +46,7 @@ class Traverser:
     current
         The head of the current element in the traversal. This is simply `head`
         applied to the attribute `term`.
+
     """
 
     def __init__(self, term, stack=None):
@@ -64,6 +65,7 @@ class Traverser:
         """Copy the traverser in its current state.
 
         This allows the traversal to be pushed onto a stack, for easy backtracking.
+
         """
 
         return Traverser(self.term, deque(self._stack))
@@ -92,6 +94,7 @@ class Token:
     """A token object.
 
     Used to express certain objects in the traversal of a task or pattern.
+
     """
 
     def __init__(self, name):
@@ -172,6 +175,7 @@ class RewriteRule:
     ...     else:
     ...         return list, x
     >>> rule = RewriteRule(lhs, repl_list, variables)
+
     """
 
     def __init__(self, lhs, rhs, vars=()):
@@ -234,6 +238,7 @@ class RuleSet:
     ----------
     rules : list
         A list of `RewriteRule`s included in the `RuleSet`.
+
     """
 
     def __init__(self, *rules):
@@ -255,6 +260,7 @@ class RuleSet:
         Parameters
         ----------
         rule : RewriteRule
+
         """
 
         if not isinstance(rule, RewriteRule):
@@ -288,6 +294,7 @@ class RuleSet:
         Tuples of `(rule, subs)`, where `rule` is the rewrite rule being
         matched, and `subs` is a dictionary mapping the variables in the lhs
         of the rule to their matching values in the term.
+
         """
 
         S = Traverser(term)
@@ -423,6 +430,7 @@ def _process_match(rule, syms):
     A dictionary of {vars : subterms} describing the substitution to make the
     pattern equivalent with the term. Returns `None` if the match is
     invalid.
+
     """
 
     subs = {}

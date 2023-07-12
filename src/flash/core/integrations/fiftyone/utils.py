@@ -60,6 +60,7 @@ def visualize(
 
     Returns:
         a :class:`fiftyone:fiftyone.core.session.Session`
+
     """
     if flash._IS_TESTING:
         return None

@@ -127,6 +127,7 @@ class ClassificationOutput(Output):
 
     Args:
         multi_label: If true, treats outputs as multi label logits.
+
     """
 
     def __init__(self, multi_label: bool = False):

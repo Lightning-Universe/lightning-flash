@@ -30,6 +30,7 @@ class BaseType(metaclass=abc.ABCMeta):
        .. code-block:: python
 
           {"text": "some string", "language": "en"}
+
     """
 
     @cached_property
@@ -54,6 +55,7 @@ class BaseType(metaclass=abc.ABCMeta):
         """Take the inputs from the network and deserialize/convert them.
 
         Output from this method will go to the exposed method as arguments.
+
         """
         raise NotImplementedError
 
@@ -64,5 +66,6 @@ class BaseType(metaclass=abc.ABCMeta):
         sophisticated datatypes (such as Repeated) where the developer wants to dictate how the unpacking happens. For
         simple cases like Image or Bbox etc., developer would never need to know the existence of this. Task graph would
         never call deserialize directly but always call this method.
+
         """
         return self.deserialize(**kwargs)
