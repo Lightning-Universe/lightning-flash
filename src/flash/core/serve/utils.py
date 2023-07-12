@@ -9,6 +9,7 @@ def fn_outputs_to_keyed_map(serialize_fn_out_keys, fn_output) -> Dict[str, Any]:
     """Convert outputs of a function to a dict of `{result_name: values}`
 
     accepts function outputs which are sequence, dict, or object.
+
     """
     if len(serialize_fn_out_keys) == 1:
         if not isinstance(fn_output, dict):
@@ -33,6 +34,7 @@ def download_file(url: str, *, download_path: Optional[Path] = None) -> str:
     ----
     *  cleanup on error
     *  allow specific file names
+
     """
     fname = f"{url.split('/')[-1]}"
     fpath = str(download_path.absolute()) if download_path is not None else f"./{fname}"

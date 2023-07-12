@@ -330,6 +330,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
       (val_metrics): ModuleDict()
       (test_metrics): ModuleDict()
     )
+
     """
 
     optimizers_registry: FlashRegistry = _OPTIMIZERS_REGISTRY
@@ -381,6 +382,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
         Returns:
             A dict containing both the loss and relevant metrics
+
         """
         x, y = batch
         y_hat = self(x)

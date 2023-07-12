@@ -33,6 +33,7 @@ class BoringModel(LightningModule):
 
         model = BaseTestModel()
         model.training_epoch_end = None
+
         """
         super().__init__()
         self.layer = torch.nn.Linear(32, 2)

@@ -63,6 +63,7 @@ class LinearWarmupCosineAnnealingLR(_LRScheduler):
         ...     scheduler.step(epoch)
         ...     # train(...)
         ...     # validate(...)
+
     """
 
     def __init__(

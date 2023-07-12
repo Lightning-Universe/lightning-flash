@@ -53,6 +53,7 @@ class Table(BaseType):
     *  It might be better to remove pandas dependency to gain performance however we
        are offloading the validation logic to pandas which would have been painful if
        we were to do custom built logic
+
     """
 
     column_names: List[str]

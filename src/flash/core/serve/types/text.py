@@ -22,6 +22,7 @@ class Text(BaseType):
 
     TODO: Allow other arguments such as language, max_len etc. Add guidelines
      to write custom tokenizer
+
     """
 
     tokenizer: Union[str, Any]

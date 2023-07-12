@@ -44,6 +44,7 @@ class Visualizer(Open3dVisualizer):
             indices: An iterable with a subset of the data points to visualize, such as [0,2,3,4].
             width: The width of the visualization window.
             height: The height of the visualization window.
+
         """
         # Setup the labels
         lut = LabelLUT()

@@ -21,6 +21,7 @@ class Label(BaseType):
     classes
         A list, tuple or a dict of classes. If it's list or a tuple, index of the
         class, is the key. If it's a dictionary, the key must be an integer
+
     """
 
     path: Union[str, Path, None] = field(default=None)

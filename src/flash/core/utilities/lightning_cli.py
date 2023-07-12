@@ -30,6 +30,7 @@ class LightningArgumentParser(ArgumentParser):
 
         For full details of accepted arguments see
         `ArgumentParser.__init__ <https://jsonargparse.readthedocs.io/en/stable/#jsonargparse.core.ArgumentParser.__init__>`_.
+
         """
         super().__init__(*args, **kwargs)
         self.add_argument(
@@ -56,6 +57,7 @@ class LightningArgumentParser(ArgumentParser):
             lightning_class: A callable or any subclass of {Trainer, LightningModule, LightningDataModule, Callback}.
             nested_key: Name of the nested namespace to store arguments.
             subclass_mode: Whether allow any subclass of the given class.
+
         """
         if callable(lightning_class) and not inspect.isclass(lightning_class):
             lightning_class = class_from_function(lightning_class)
@@ -91,6 +93,7 @@ class LightningArgumentParser(ArgumentParser):
             optimizer_class: Any subclass of torch.optim.Optimizer.
             nested_key: Name of the nested namespace to store arguments.
             link_to: Dot notation of a parser key to set arguments or AUTOMATIC.
+
         """
         if isinstance(optimizer_class, tuple):
             assert all(issubclass(o, Optimizer) for o in optimizer_class)
@@ -119,6 +122,7 @@ class LightningArgumentParser(ArgumentParser):
             lr_scheduler_class: Any subclass of ``torch.optim.lr_scheduler.{_LRScheduler, ReduceLROnPlateau}``.
             nested_key: Name of the nested namespace to store arguments.
             link_to: Dot notation of a parser key to set arguments or AUTOMATIC.
+
         """
         if isinstance(lr_scheduler_class, tuple):
             assert all(issubclass(o, LRSchedulerTypeTuple) for o in lr_scheduler_class)
@@ -141,6 +145,7 @@ class SaveConfigCallback(Callback):
 
     Raises:
         RuntimeError: If the config file already exists in the directory to avoid overwriting a previous run
+
     """
 
     def __init__(
@@ -309,6 +314,7 @@ class LightningCLI:
 
         Args:
             parser: The argument parser object to which arguments can be added
+
         """
 
     def link_optimizers_and_lr_schedulers(self) -> None:
@@ -359,6 +365,7 @@ class LightningCLI:
 
         If a single optimizer and optionally a scheduler argument groups are added to the parser as 'AUTOMATIC', then a
         `configure_optimizers` method is automatically implemented in the model class.
+
         """
 
         def get_automatic(class_type: Union[Type, Tuple[Type, ...]]) -> List[str]:
@@ -453,6 +460,7 @@ def instantiate_class(args: Union[Any, Tuple[Any, ...]], init: Dict[str, Any]) -
 
     Returns:
         The instantiated class object.
+
     """
     kwargs = init.get("init_args", {})
     if not isinstance(args, tuple):

@@ -21,6 +21,7 @@ class SplitDataset(Properties, Dataset):
         split_ds = SplitDataset(dataset, indices=[10, 14, 25])
 
         split_ds = SplitDataset(dataset, indices=[10, 10, 10, 14, 25], use_duplicated_indices=True)
+
     """
 
     def __init__(

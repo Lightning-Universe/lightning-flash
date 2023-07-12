@@ -3,6 +3,7 @@
 cached_property() - computed once per instance, cached as attribute
 
 credits: https://github.com/penguinolog/backports.cached_property
+
 """
 
 __all__ = ("cached_property",)
