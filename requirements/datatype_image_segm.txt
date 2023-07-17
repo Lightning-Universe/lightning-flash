@@ -1,4 +1,4 @@
 # NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forced in setup
 
 # This is a separate file, as segmentation integration is affected by vissl installation (conflicts)
-segmentation-models-pytorch >0.2.0, <=0.3.1
+segmentation-models-pytorch >0.2.0, <=0.3.3
