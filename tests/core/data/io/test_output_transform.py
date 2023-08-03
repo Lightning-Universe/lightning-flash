@@ -13,7 +13,6 @@
 # limitations under the License.
 import pytest
 import torch
-
 from flash.core.data.io.output_transform import OutputTransform
 from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE
 

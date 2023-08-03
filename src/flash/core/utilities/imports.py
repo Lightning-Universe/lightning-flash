@@ -101,13 +101,7 @@ _TOPIC_TEXT_AVAILABLE = all(
 _TOPIC_TABULAR_AVAILABLE = all([_PANDAS_AVAILABLE, _FORECASTING_AVAILABLE, _PYTORCHTABULAR_AVAILABLE])
 _TOPIC_VIDEO_AVAILABLE = all([_TORCHVISION_AVAILABLE, _PIL_AVAILABLE, _PYTORCHVIDEO_AVAILABLE, _KORNIA_AVAILABLE])
 _TOPIC_IMAGE_AVAILABLE = all(
-    [
-        _TORCHVISION_AVAILABLE,
-        _TIMM_AVAILABLE,
-        _PIL_AVAILABLE,
-        _ALBUMENTATIONS_AVAILABLE,
-        _PYSTICHE_AVAILABLE,
-    ]
+    [_TORCHVISION_AVAILABLE, _TIMM_AVAILABLE, _PIL_AVAILABLE, _ALBUMENTATIONS_AVAILABLE, _PYSTICHE_AVAILABLE]
 )
 _TOPIC_SERVE_AVAILABLE = all([_FASTAPI_AVAILABLE, _PYDANTIC_AVAILABLE, _CYTOOLZ_AVAILABLE, _UVICORN_AVAILABLE])
 _TOPIC_POINTCLOUD_AVAILABLE = all([_OPEN3D_AVAILABLE, _TORCHVISION_AVAILABLE])
@@ -117,7 +111,7 @@ _TOPIC_AUDIO_AVAILABLE = all(
 _TOPIC_GRAPH_AVAILABLE = all(
     [_TORCH_SCATTER_AVAILABLE, _TORCH_SPARSE_AVAILABLE, _TORCH_GEOMETRIC_AVAILABLE, _NETWORKX_AVAILABLE]
 )
-_TOPIC_CORE_AVAILABLE = _TOPIC_IMAGE_AVAILABLE and _TOPIC_TABULAR_AVAILABLE and _TOPIC_TEXT_AVAILABLE
+_TOPIC_CORE_AVAILABLE = all([_TOPIC_IMAGE_AVAILABLE, _TOPIC_TABULAR_AVAILABLE, _TOPIC_TEXT_AVAILABLE])
 
 _EXTRAS_AVAILABLE = {
     "image": _TOPIC_IMAGE_AVAILABLE,
@@ -192,6 +186,7 @@ def lazy_import(module_name, callback=None):
 
     Returns:
         a proxy module object that will be lazily imported when first used
+
     """
     return LazyModule(module_name, callback=callback)
 
@@ -203,6 +198,7 @@ class LazyModule(types.ModuleType):
         module_name: the fully-qualified module name to import
         callback (None): a callback function to call before importing the
             module
+
     """
 
     def __init__(self, module_name, callback=None):

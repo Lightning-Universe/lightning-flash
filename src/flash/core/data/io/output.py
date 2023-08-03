@@ -37,6 +37,7 @@ class Output(Properties):
 
         Returns:
             The converted output.
+
         """
         return sample
 

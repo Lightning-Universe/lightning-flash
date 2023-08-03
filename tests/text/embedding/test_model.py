@@ -14,13 +14,13 @@
 import os
 from typing import Any
 
+import flash
 import pytest
 import torch
-from torch import Tensor
-
-import flash
 from flash.core.utilities.imports import _TOPIC_TEXT_AVAILABLE
 from flash.text import TextClassificationData, TextEmbedder
+from torch import Tensor
+
 from tests.helpers.task_tester import TaskTester
 
 # ======== Mock data ========

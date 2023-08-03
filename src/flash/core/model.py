@@ -323,6 +323,14 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             `metric(preds,target)` and return a single scalar tensor.
         output_transform: :class:`~flash.core.data.io.output_transform.OutputTransform` to use as the default for this
             task.
+
+    >>> Task()  # doctest: +ELLIPSIS
+    Task(
+      (train_metrics): ModuleDict()
+      (val_metrics): ModuleDict()
+      (test_metrics): ModuleDict()
+    )
+
     """
 
     optimizers_registry: FlashRegistry = _OPTIMIZERS_REGISTRY
@@ -374,6 +382,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
         Returns:
             A dict containing both the loss and relevant metrics
+
         """
         x, y = batch
         y_hat = self(x)

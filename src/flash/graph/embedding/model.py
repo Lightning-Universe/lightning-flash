@@ -47,8 +47,7 @@ class GraphEmbedder(Task):
 
     def forward(self, data) -> Tensor:
         x = self.backbone(data.x, data.edge_index)
-        x = self.pooling_fn(x, data.batch)
-        return x
+        return self.pooling_fn(x, data.batch)
 
     def training_step(self, batch: Any, batch_idx: int) -> Any:
         raise NotImplementedError("Training a `GraphEmbedder` is not supported. Use a `GraphClassifier` instead.")

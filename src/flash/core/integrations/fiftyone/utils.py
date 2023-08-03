@@ -26,8 +26,7 @@ def visualize(
     wait: Optional[bool] = False,
     **kwargs,
 ) -> Optional[Session]:
-    """Visualizes predictions from a model with a FiftyOne Output in the
-    :ref:`FiftyOne App <fiftyone:fiftyone-app>`.
+    """Visualizes predictions from a model with a FiftyOne Output in the :ref:`FiftyOne App <fiftyone:fiftyone-app>`.
 
     This method can be used in all of the following environments:
 
@@ -61,6 +60,7 @@ def visualize(
 
     Returns:
         a :class:`fiftyone:fiftyone.core.session.Session`
+
     """
     if flash._IS_TESTING:
         return None

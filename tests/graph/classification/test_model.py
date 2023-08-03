@@ -15,8 +15,6 @@ from typing import Any
 
 import pytest
 import torch
-from torch import Tensor
-
 from flash import RunningStage, Trainer
 from flash.core.data.data_module import DataModule
 from flash.core.data.io.input import DataKeys
@@ -24,6 +22,8 @@ from flash.core.utilities.imports import _TOPIC_GRAPH_AVAILABLE
 from flash.graph.classification import GraphClassifier
 from flash.graph.classification.input import GraphClassificationDatasetInput
 from flash.graph.classification.input_transform import GraphClassificationInputTransform
+from torch import Tensor
+
 from tests.helpers.task_tester import TaskTester
 
 if _TOPIC_GRAPH_AVAILABLE:

@@ -30,6 +30,7 @@ def _load_linear_head(num_features: int, num_classes: int) -> nn.Module:
 
     Returns:
         nn.Module: Linear head.
+
     """
     return nn.Linear(num_features, num_classes)
 

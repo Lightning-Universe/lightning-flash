@@ -15,11 +15,10 @@ import time
 
 import pytest
 import torch
-from pytorch_lightning import LightningModule
-from torch import nn
-
 from flash.core.utilities.embedder import Embedder
 from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE
+from pytorch_lightning import LightningModule
+from torch import nn
 
 
 class EmbedderTestModel(LightningModule):
@@ -55,6 +54,7 @@ def test_embedder(layer, size):
     assert embedder(torch.rand(10, 10)).size(1) == size
 
 
+@pytest.mark.flaky(reruns=3)
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 def test_embedder_scaling_overhead():
     """Tests that embedding to the 3rd layer of a 200 layer model takes less than double the time of embedding to.
@@ -63,6 +63,7 @@ def test_embedder_scaling_overhead():
     200 layer model.
 
     Note that this bound is intentionally high in an effort to reduce the flakiness of the test.
+
     """
     shallow_embedder = Embedder(NLayerModel(3), "backbone.2")
 
@@ -84,12 +85,14 @@ def test_embedder_scaling_overhead():
     assert (diff_time / shallow_time) < 2
 
 
+@pytest.mark.flaky(reruns=3)
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")
 def test_embedder_raising_overhead():
     """Tests that embedding to the output layer of a 3 layer model takes less than 10ms more than the time taken to
     execute the model without the embedder.
 
     Note that this bound is intentionally high in an effort to reduce the flakiness of the test.
+
     """
     model = NLayerModel(10)
     embedder = Embedder(model, "output")

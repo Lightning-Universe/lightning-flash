@@ -13,7 +13,6 @@
 # limitations under the License.
 import pytest
 import torch
-
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import (
     _FIFTYONE_AVAILABLE,

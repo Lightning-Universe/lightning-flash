@@ -63,6 +63,7 @@ class Composition(ServerMixin):
        which provides introspection of components, endpoints, etc.
     *  We plan to add some user-facing API to the ``Composition`` object
        which allows for modification of the composition.
+
     """
 
     _uid_comps: Dict[str, ModelComponent]

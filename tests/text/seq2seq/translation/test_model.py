@@ -16,11 +16,11 @@ from unittest.mock import patch
 
 import pytest
 import torch
-from torch import Tensor
-
 from flash import DataKeys
 from flash.core.utilities.imports import _TOPIC_SERVE_AVAILABLE, _TOPIC_TEXT_AVAILABLE
 from flash.text import TranslationTask
+from torch import Tensor
+
 from tests.helpers.task_tester import TaskTester
 
 TEST_BACKBONE = "sshleifer/tiny-mbart"  # tiny model for testing

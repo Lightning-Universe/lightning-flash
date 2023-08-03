@@ -15,7 +15,6 @@ import unittest
 
 import pytest
 import torch
-
 from flash.core.utilities.imports import _SEGMENTATION_MODELS_AVAILABLE
 from flash.image.segmentation import SemanticSegmentation
 from flash.image.segmentation.backbones import SEMANTIC_SEGMENTATION_BACKBONES

@@ -96,9 +96,7 @@ class BasicBlock(nn.Module):
             identity = self.downsample(x)
 
         out += identity
-        out = self.relu(out)
-
-        return out
+        return self.relu(out)
 
 
 class Bottleneck(nn.Module):
@@ -155,9 +153,7 @@ class Bottleneck(nn.Module):
             identity = self.downsample(x)
 
         out += identity
-        out = self.relu(out)
-
-        return out
+        return self.relu(out)
 
 
 class ResNet(nn.Module):
@@ -300,9 +296,7 @@ class ResNet(nn.Module):
         x = self.layer4(x)
 
         x = self.avgpool(x)
-        x = torch.flatten(x, 1)
-
-        return x
+        return torch.flatten(x, 1)
 
 
 def _resnet(

@@ -76,6 +76,7 @@ def download_data(url: str, path: str = "data/", verbose: bool = False) -> None:
         >>> download_data("https://pl-flash-data.s3.amazonaws.com/titanic.zip", "./data")
         >>> os.listdir("./data")  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
         [...]
+
     """
     # Disable warning about making an insecure request
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -144,5 +145,4 @@ def convert_to_modules(transforms: Optional[Dict[str, Callable]]):
 
     transforms = apply_to_collection(transforms, Callable, FuncModule, wrong_dtype=nn.Module)
     transforms = apply_to_collection(transforms, Mapping, nn.ModuleDict, wrong_dtype=nn.ModuleDict)
-    transforms = apply_to_collection(transforms, Iterable, nn.ModuleList, wrong_dtype=(nn.ModuleList, nn.ModuleDict))
-    return transforms
+    return apply_to_collection(transforms, Iterable, nn.ModuleList, wrong_dtype=(nn.ModuleList, nn.ModuleDict))

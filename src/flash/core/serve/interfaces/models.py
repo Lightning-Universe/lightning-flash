@@ -37,6 +37,7 @@ class EndpointProtocol:
     class initializer. Component inputs & outputs (as defined in `@expose` object decorations) dtype method (`serialize`
     and `deserialize`) type hints are inspected in order to constuct a specification unique to the endpoint, they are
     returned as subclasses of pydantic ``BaseModel``.
+
     """
 
     def __init__(self, name: str, endpoint: "Endpoint", components: Dict[str, "ModelComponent"]):

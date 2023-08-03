@@ -33,6 +33,7 @@ def fastface_collate_fn(samples: Sequence[Dict[str, Any]]) -> Dict[str, Sequence
     """Collate function from fastface.
 
     Organizes individual elements in a batch, calls prepare_batch from fastface and prepares the targets.
+
     """
     samples = {key: [sample[key] for sample in samples] for key in samples[0]}
 

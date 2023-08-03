@@ -51,9 +51,14 @@ else:
     VOCBBoxParser = object
     Parser = object
 
+__doctest_skip__ = []
 # Skip doctests if requirements aren't available
 if not _TOPIC_IMAGE_AVAILABLE:
-    __doctest_skip__ = ["ObjectDetectionData", "ObjectDetectionData.*"]
+    __doctest_skip__ += ["ObjectDetectionData", "ObjectDetectionData.*"]
+
+
+if not _FIFTYONE_AVAILABLE:
+    __doctest_skip__ += ["ObjectDetectionData.from_fiftyone"]
 
 
 class ObjectDetectionData(DataModule):

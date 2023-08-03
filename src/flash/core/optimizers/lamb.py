@@ -50,6 +50,7 @@ class LAMB(Optimizer):
             (default: False)
 
     Example:
+        >>> from torch import nn
         >>> model = nn.Linear(10, 1)
         >>> optimizer = LAMB(model.parameters(), lr=0.1)
         >>> optimizer.zero_grad()
@@ -104,6 +105,7 @@ class LAMB(Optimizer):
         Arguments:
             closure (callable, optional): A closure that reevaluates the model
                 and returns the loss.
+
         """
         loss = None
         if closure is not None:

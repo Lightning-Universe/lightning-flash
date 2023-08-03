@@ -35,8 +35,7 @@ class _ServeInputProcessor(nn.Module):
         sample = self.serve_input._call_load_sample(sample)
         if not isinstance(sample, list):
             sample = [sample]
-        sample = self.collate_fn(sample)
-        return sample
+        return self.collate_fn(sample)
 
 
 def _is_list_like_excluding_str(x):
@@ -59,6 +58,7 @@ def default_uncollate(batch: Any) -> List[Any]:
         ValueError: If the input is a ``dict`` whose values are not all list-like.
         ValueError: If the input is a ``dict`` whose values are not all the same length.
         ValueError: If the input is not a ``dict`` or list-like.
+
     """
     if isinstance(batch, dict):
         if any(not _is_list_like_excluding_str(sub_batch) for sub_batch in batch.values()):

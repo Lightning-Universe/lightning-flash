@@ -90,6 +90,7 @@ class TemplateSKLearnClassificationInput(TemplateNumpyClassificationInput):
 
         Returns:
             A sequence of samples / sample metadata.
+
         """
         return super().load_data(data.data)
 

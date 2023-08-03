@@ -14,15 +14,15 @@
 from typing import Any
 from unittest.mock import patch
 
+import flash
 import pytest
 import torch
-from torch import Tensor
-
-import flash
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _TOPIC_SERVE_AVAILABLE, _TOPIC_TEXT_AVAILABLE, _TORCH_ORT_AVAILABLE
 from flash.text import TextClassifier
 from flash.text.ort_callback import ORTCallback
+from torch import Tensor
+
 from tests.helpers.boring_model import BoringModel
 from tests.helpers.task_tester import StaticDataset, TaskTester
 

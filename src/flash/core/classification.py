@@ -127,6 +127,7 @@ class ClassificationOutput(Output):
 
     Args:
         multi_label: If true, treats outputs as multi label logits.
+
     """
 
     def __init__(self, multi_label: bool = False):
@@ -146,8 +147,7 @@ class ClassificationOutput(Output):
 @CLASSIFICATION_OUTPUTS(name="preds")
 class PredsClassificationOutput(ClassificationOutput):
     """A :class:`~flash.core.classification.ClassificationOutput` which gets the
-    :attr:`~flash.core.data.io.input.InputFormat.PREDS` from the sample.
-    """
+    :attr:`~flash.core.data.io.input.InputFormat.PREDS` from the sample."""
 
     def transform(self, sample: Any) -> Any:
         if isinstance(sample, Mapping) and DataKeys.PREDS in sample:

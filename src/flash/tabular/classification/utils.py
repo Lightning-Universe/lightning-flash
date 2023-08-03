@@ -80,8 +80,7 @@ def _pre_transform(
 ) -> DataFrame:
     df = _impute(df, num_cols)
     df = _normalize(df, num_cols, mean=mean, std=std)
-    df = _categorize(df, cat_cols, codes=codes)
-    return df
+    return _categorize(df, cat_cols, codes=codes)
 
 
 def _to_cat_vars_numpy(df: DataFrame, cat_cols: List[str]) -> list:

@@ -20,8 +20,7 @@ from inspect import Parameter, signature
 from typing import Any, Callable, Dict, List, Optional, Set, Type, Union
 
 import pytorch_lightning as pl
-from jsonargparse import ArgumentParser
-from jsonargparse.signatures import get_class_signature_functions
+from jsonargparse import ArgumentParser, class_from_function
 from lightning_utilities.core.overrides import is_overridden
 from pytorch_lightning import LightningModule, Trainer
 
@@ -31,7 +30,6 @@ from flash.core.utilities.lightning_cli import (
     LightningArgumentParser,
     LightningCLI,
     SaveConfigCallback,
-    class_from_function,
 )
 from flash.core.utilities.stability import beta
 
@@ -105,6 +103,16 @@ def make_args_optional(cls, args: Set[str]):
     wrapper.__signature__ = sig
 
     return wrapper
+
+
+def get_class_signature_functions(classes):
+    signatures = []
+    for num, cls in enumerate(classes):
+        if cls.__new__ is not object.__new__ and not any(cls.__new__ is c.__new__ for c in classes[num + 1 :]):
+            signatures.append((cls, cls.__new__))
+        if not any(cls.__init__ is c.__init__ for c in classes[num + 1 :]):
+            signatures.append((cls, cls.__init__))
+    return signatures
 
 
 def get_overlapping_args(func_a, func_b) -> Set[str]:
@@ -214,7 +222,7 @@ class FlashCLI(LightningCLI):
     def add_subcommand_from_function(self, subcommands, function, function_name=None):
         subcommand = ArgumentParser()
         if get_kwarg_name(function) == "data_module_kwargs":
-            datamodule_function = class_from_function(function, return_type=self.local_datamodule_class)
+            datamodule_function = class_from_function(function, self.local_datamodule_class)
             subcommand.add_class_arguments(
                 datamodule_function,
                 fail_untyped=False,
@@ -233,7 +241,7 @@ class FlashCLI(LightningCLI):
                 },
             )
         else:
-            datamodule_function = class_from_function(drop_kwargs(function), return_type=self.local_datamodule_class)
+            datamodule_function = class_from_function(drop_kwargs(function), self.local_datamodule_class)
             subcommand.add_class_arguments(datamodule_function, fail_untyped=False)
         subcommand_name = function_name or function.__name__
         subcommands.add_subcommand(subcommand_name, subcommand)

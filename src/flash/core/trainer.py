@@ -74,6 +74,13 @@ def _defaults_from_env_vars(fn: Callable) -> Callable:
 
 
 class Trainer(PlTrainer):
+    """Exteded Trainer for FLash tasks.
+
+    >>> Trainer()  # doctest: +ELLIPSIS
+    <...trainer.Trainer object at ...>
+
+    """
+
     @_defaults_from_env_vars
     def __init__(self, *args, **kwargs):
         if flash._IS_TESTING:
@@ -178,6 +185,7 @@ class Trainer(PlTrainer):
 
         Returns:
             Returns a list of dictionaries, one for each provided dataloader containing their respective predictions.
+
         """
         # Note: Prediction on TPU device with multi cores is not supported yet
         if isinstance(self.accelerator, TPUAccelerator) and self.num_devices > 1:
@@ -256,5 +264,6 @@ class Trainer(PlTrainer):
                     optimizer, max_lr=1e-3, total_steps=self.trainer.estimated_stepping_batches
                 )
                 return [optimizer], [scheduler]
+
         """
         return super().estimated_stepping_batches

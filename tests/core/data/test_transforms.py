@@ -15,7 +15,6 @@ from unittest.mock import Mock
 
 import pytest
 import torch
-
 from flash.core.data.io.input import DataKeys
 from flash.core.data.transforms import ApplyToKeys
 from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE

@@ -107,6 +107,7 @@ def _validate_expose_inputs_outputs_args(kwargs: Dict[str, BaseType]):
     >>> out = {'out': Number()}
     >>> _validate_expose_inputs_outputs_args(inp)
     >>> _validate_expose_inputs_outputs_args(out)
+
     """
     if not isinstance(kwargs, dict):
         raise TypeError(f"`expose` values must be {dict}. recieved {kwargs}")
@@ -152,6 +153,7 @@ def expose(inputs: Dict[str, BaseType], outputs: Dict[str, BaseType]):
     TODO
     ----
     *  Examples in the docstring.
+
     """
     _validate_expose_inputs_outputs_args(inputs)
     _validate_expose_inputs_outputs_args(outputs)

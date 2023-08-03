@@ -14,11 +14,10 @@
 import math
 
 import pytest
-from torch import nn
-from torch.optim import Adam
-
 from flash.core.optimizers import LinearWarmupCosineAnnealingLR
 from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE
+from torch import nn
+from torch.optim import Adam
 
 
 @pytest.mark.skipif(not _TOPIC_CORE_AVAILABLE, reason="Not testing core.")

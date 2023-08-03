@@ -15,7 +15,6 @@ from typing import Union
 
 import pytest
 import torch
-
 from flash.core.utilities.imports import _TOPIC_VIDEO_AVAILABLE
 from flash.video.classification.data import VideoClassificationData
 

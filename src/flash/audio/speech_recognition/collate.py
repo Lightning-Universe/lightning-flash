@@ -50,6 +50,7 @@ class DataCollatorCTCWithPadding:
             If set will pad the sequence to a multiple of the provided value.
             This is especially useful to enable the use of Tensor Cores on NVIDIA hardware with compute capability >=
             7.5 (Volta).
+
     """
 
     processor: AutoProcessor

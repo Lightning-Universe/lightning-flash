@@ -14,39 +14,43 @@
 """Root package info."""
 import os
 
-from flash.__about__ import *  # noqa: F401 F403
-from flash.core.utilities.imports import _TORCH_AVAILABLE
+import numpy
 
-if _TORCH_AVAILABLE:
-    from flash.core.data.callback import FlashCallback
-    from flash.core.data.data_module import DataModule
-    from flash.core.data.io.input import DataKeys, Input
-    from flash.core.data.io.input_transform import InputTransform
-    from flash.core.data.io.output import Output
-    from flash.core.data.io.output_transform import OutputTransform
-    from flash.core.model import Task
-    from flash.core.trainer import Trainer
-    from flash.core.utilities.stages import RunningStage
+# adding compatibility for numpy >= 1.24
+for tp_name, tp_ins in [("object", object), ("bool", bool), ("float", float)]:
+    if not hasattr(numpy, tp_name):
+        setattr(numpy, tp_name, tp_ins)
 
-    _PACKAGE_ROOT = os.path.dirname(__file__)
-    ASSETS_ROOT = os.path.join(_PACKAGE_ROOT, "assets")
-    PROJECT_ROOT = os.path.dirname(_PACKAGE_ROOT)
-    _IS_TESTING = os.getenv("FLASH_TESTING", "0") == "1"
+from flash.__about__ import *  # noqa: F401 E402 F403
+from flash.core.data.callback import FlashCallback  # noqa: E402
+from flash.core.data.data_module import DataModule  # noqa: E402
+from flash.core.data.io.input import DataKeys, Input  # noqa: E402
+from flash.core.data.io.input_transform import InputTransform  # noqa: E402
+from flash.core.data.io.output import Output  # noqa: E402
+from flash.core.data.io.output_transform import OutputTransform  # noqa: E402
+from flash.core.model import Task  # noqa: E402
+from flash.core.trainer import Trainer  # noqa: E402
+from flash.core.utilities.stages import RunningStage  # noqa: E402
 
-    if _IS_TESTING:
-        from pytorch_lightning import seed_everything
+_PACKAGE_ROOT = os.path.dirname(__file__)
+ASSETS_ROOT = os.path.join(_PACKAGE_ROOT, "assets")
+PROJECT_ROOT = os.path.dirname(_PACKAGE_ROOT)
+_IS_TESTING = os.getenv("FLASH_TESTING", "0") == "1"
 
-        seed_everything(42)
+if _IS_TESTING:
+    from pytorch_lightning import seed_everything
 
-    __all__ = [
-        "DataKeys",
-        "DataModule",
-        "FlashCallback",
-        "Input",
-        "InputTransform",
-        "Output",
-        "OutputTransform",
-        "RunningStage",
-        "Task",
-        "Trainer",
-    ]
+    seed_everything(42)
+
+__all__ = [
+    "DataKeys",
+    "DataModule",
+    "FlashCallback",
+    "Input",
+    "InputTransform",
+    "Output",
+    "OutputTransform",
+    "RunningStage",
+    "Task",
+    "Trainer",
+]

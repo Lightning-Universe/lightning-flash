@@ -14,7 +14,6 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from flash.core.utilities.imports import _TOPIC_TABULAR_AVAILABLE
 from flash.tabular.forecasting import TabularForecastingData
 

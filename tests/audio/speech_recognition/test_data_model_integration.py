@@ -15,9 +15,8 @@ import json
 import os
 from pathlib import Path
 
-import pytest
-
 import flash
+import pytest
 from flash import Trainer
 from flash.audio import SpeechRecognition, SpeechRecognitionData
 from flash.core.utilities.imports import _TOPIC_AUDIO_AVAILABLE

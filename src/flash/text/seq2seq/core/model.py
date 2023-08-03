@@ -83,6 +83,7 @@ class Seq2SeqTask(Task):
         learning_rate: Learning rate to use for training, defaults to `3e-4`
         num_beams: Number of beams to use in validation when generating predictions. Defaults to `4`
         enable_ort: Enable Torch ONNX Runtime Optimization: https://onnxruntime.ai/docs/#onnx-runtime-for-training
+
     """
 
     required_extras: str = "text"

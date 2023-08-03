@@ -15,7 +15,6 @@ import os
 from pathlib import Path
 
 import pytest
-
 from flash import DataKeys
 from flash.core.utilities.imports import _TOPIC_TEXT_AVAILABLE
 from flash.text import SummarizationData

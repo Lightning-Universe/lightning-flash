@@ -30,6 +30,7 @@ if _PYTORCHTABULAR_AVAILABLE:
         AutoIntConfig,
         CategoryEmbeddingModelConfig,
         FTTransformerConfig,
+        GatedAdditiveTreeEnsembleConfig,
         NodeConfig,
         TabNetModelConfig,
         TabTransformerConfig,
@@ -56,8 +57,7 @@ if _PYTORCHTABULAR_AVAILABLE:
                 )
             else:
                 raise ValueError(f"{config} is not a valid path")
-        config = OmegaConf.structured(config)
-        return config
+        return OmegaConf.structured(config)
 
     def load_pytorch_tabular(
         model_config_class,
@@ -88,8 +88,9 @@ if _PYTORCHTABULAR_AVAILABLE:
             AutoIntConfig,
             NodeConfig,
             CategoryEmbeddingModelConfig,
+            GatedAdditiveTreeEnsembleConfig,
         ],
-        ["tabnet", "tabtransformer", "fttransformer", "autoint", "node", "category_embedding"],
+        ["tabnet", "tabtransformer", "fttransformer", "autoint", "node", "category_embedding", "gate"],
     ):
         PYTORCH_TABULAR_BACKBONES(
             functools.partial(load_pytorch_tabular, model_config_class),

@@ -45,6 +45,7 @@ class LARS(Optimizer):
         eps (float, optional): eps for division denominator (default: 1e-8)
 
     Example:
+        >>> from torch import nn
         >>> model = nn.Linear(10, 1)
         >>> optimizer = LARS(model.parameters(), lr=0.1, momentum=0.9)
         >>> optimizer.zero_grad()
@@ -72,6 +73,7 @@ class LARS(Optimizer):
         Parameters with weight decay set to 0 will automatically be excluded from
         layer-wise LR scaling. This is to ensure consistency with papers like SimCLR
         and BYOL.
+
     """
 
     def __init__(
@@ -120,6 +122,7 @@ class LARS(Optimizer):
         Args:
             closure (callable, optional): A closure that reevaluates the model
                 and returns the loss.
+
         """
         loss = None
         if closure is not None:

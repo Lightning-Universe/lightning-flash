@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import shutil
 import sys
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 import torch
-
 from flash.core.utilities.imports import (
     _BAAL_AVAILABLE,
     _FIFTYONE_AVAILABLE,
@@ -37,6 +37,7 @@ from flash.core.utilities.imports import (
     _TORCHVISION_GREATER_EQUAL_0_9,
     _VISSL_AVAILABLE,
 )
+
 from tests.examples.helpers import run_test
 from tests.helpers.decorators import forked
 
@@ -59,7 +60,10 @@ root = Path(__file__).parent.parent.parent
         pytest.param(
             "audio",
             "audio_classification.py",
-            marks=pytest.mark.skipif(not _TOPIC_AUDIO_AVAILABLE, reason="audio libraries aren't installed"),
+            marks=[
+                pytest.mark.skipif(not _TOPIC_AUDIO_AVAILABLE, reason="audio libraries aren't installed"),
+                pytest.mark.skipif(not _TOPIC_IMAGE_AVAILABLE, reason="image libraries aren't installed"),
+            ],
         ),
         pytest.param(
             "audio",
@@ -235,3 +239,11 @@ root = Path(__file__).parent.parent.parent
 @pytest.mark.skipif(sys.platform == "darwin", reason="Fatal Python error: Illegal instruction")  # fixme
 def test_example(folder, fname):
     run_test(str(root / "examples" / folder / fname))
+
+    # clean ALL logs and used data
+    shutil.rmtree(root / "data", ignore_errors=True)
+    shutil.rmtree(root / "lightning_logs", ignore_errors=True)
+
+    # remove all saved models
+    for p in root.glob("*.pt"):
+        p.unlink()

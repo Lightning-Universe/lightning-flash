@@ -17,6 +17,7 @@ class BBox(BaseType):
        like Javascript to use a dictionary with ``x1, y1, x2 and y2`` as keys, we went
        with DL convention which is to use a list/tuple in which four floats are
        arranged in the same ``order -> x1, y1, x2, y2``
+
     """
 
     def __post_init__(self):

@@ -11,10 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""
-Note: This file will be deleted once
-https://github.com/learnables/learn2learn/pull/257/files is merged within Learn2Learn.
-"""
+"""Note: This file will be deleted once https://github.com/learnables/learn2learn/pull/257/files is merged within
+Learn2Learn."""
 
 from typing import Any, Callable, Optional
 
@@ -44,6 +42,7 @@ class TaskDataParallel(IterableDataset):
             epoch_length: The expected epoch length. This requires to be divisible by devices.
             devices: Number of devices being used.
             collate_fn: The collate_fn to be applied on multiple tasks
+
         """
         self.tasks = tasks
         self.epoch_length = epoch_length
@@ -99,6 +98,7 @@ class TaskDistributedDataParallel(IterableDataset):
             num_workers: Number of workers to be provided to the DataLoader.
             epoch_length: The expected epoch length. This requires to be divisible by (num_workers * world_size).
             seed: The seed will be used on __iter__ call and should be the same for all processes.
+
         """
         self.taskset = taskset
         self.global_rank = global_rank

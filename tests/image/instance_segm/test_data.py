@@ -14,11 +14,11 @@
 import numpy as np
 import pytest
 import torch
-
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _TOPIC_IMAGE_AVAILABLE
 from flash.image.instance_segmentation import InstanceSegmentationData
 from flash.image.instance_segmentation.data import InstanceSegmentationOutputTransform
+
 from tests.image.detection.test_data import _create_synth_files_dataset, _create_synth_folders_dataset
 
 

@@ -18,6 +18,7 @@ class Repeated(BaseType):
         Optional parameter specifying if there is a maximum length of the
         repeated elements (`int > 0`). If `max_len=None`, there can be any
          number of repeated elements. By default: `None`.
+
     """
 
     dtype: BaseType

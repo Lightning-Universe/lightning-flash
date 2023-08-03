@@ -13,7 +13,7 @@
   <a href="https://lightning-flash.readthedocs.io/en/stable/?badge=stable">Docs</a> •
   <a href="#contribute">Contribute</a> •
   <a href="#community">Community</a> •
-  <a href="https://www.pytorchlightning.ai/">Website</a> •
+  <a href="https://www.lightning.ai/">Website</a> •
   <a href="#license">License</a>
 </p>
 
@@ -23,8 +23,8 @@
 [![Slack](https://img.shields.io/badge/slack-chat-green.svg?logo=slack)](https://www.pytorchlightning.ai/community)
 [![license](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/Lightning-AI/pytorch-lightning/blob/master/LICENSE)
 
-![CI testing](https://github.com/Lightning-AI/lightning-flash/workflows/CI%20testing/badge.svg?branch=master&event=push)
-[![codecov](https://codecov.io/gh/Lightning-AI/lightning-flash/branch/master/graph/badge.svg?token=oLuUr9q1vt)](https://codecov.io/gh/Lightning-AI/lightning-flash)
+[![CI testing](https://github.com/Lightning-Universe/lightning-flash/actions/workflows/ci-testing.yml/badge.svg?event=push)](https://github.com/Lightning-Universe/lightning-flash/actions/workflows/ci-testing.yml)
+[![codecov](https://codecov.io/gh/Lightning-Universe/lightning-flash/branch/master/graph/badge.svg?token=oLuUr9q1vt)](https://codecov.io/gh/Lightning-Universe/lightning-flash)
 [![Documentation Status](https://readthedocs.org/projects/lightning-flash/badge/?version=latest)](https://lightning-flash.readthedocs.io/en/stable/?badge=stable)
 [![DOI](https://zenodo.org/badge/333857397.svg)](https://zenodo.org/badge/latestdoi/333857397)
 

@@ -74,6 +74,7 @@ Work towards *small goals* with *big steps*.
     difference exists between two keys, use the key name to break ties.
     This relies on the regularity of graph constructors like dask.array to be a
     good proxy for ordering.  This is usually a good idea and a sane default.
+
 """
 
 from collections import defaultdict
@@ -106,9 +107,11 @@ def order(dsk, dependencies=None):
 
     Examples
     --------
+    >>> from flash.core.serve.dag.utils_test import add, inc
     >>> dsk = {'a': 1, 'b': 2, 'c': (inc, 'a'), 'd': (add, 'b', 'c')}
     >>> order(dsk)
     {'a': 0, 'c': 1, 'b': 2, 'd': 3}
+
     """
     if not dsk:
         return {}
@@ -158,6 +161,7 @@ def order(dsk, dependencies=None):
         """Choose a path from our starting task to our tactical goal.
 
         This path is connected to a large goal, but focuses on completing a small goal and being memory efficient.
+
         """
         return (
             # Focus on being memory-efficient
@@ -171,6 +175,7 @@ def order(dsk, dependencies=None):
         """Choose which dependency to run as part of a reverse DFS.
 
         This is very similar to both ``initial_stack_key``.
+
         """
         num_dependents = len(dependents[x])
         (
@@ -540,6 +545,8 @@ def graph_metrics(dependencies, dependents, total_dependencies):
 
     Examples
     --------
+    >>> from flash.core.serve.dag.task import get_deps
+    >>> from flash.core.serve.dag.utils_test import add, inc
     >>> dsk = {'a1': 1, 'b1': (inc, 'a1'), 'b2': (inc, 'a1'), 'c1': (inc, 'b1')}
     >>> dependencies, dependents = get_deps(dsk)
     >>> _, total_dependencies = ndependencies(dependencies, dependents)
@@ -614,6 +621,8 @@ def ndependencies(dependencies, dependents):
 
     Examples
     --------
+    >>> from flash.core.serve.dag.task import get_deps
+    >>> from flash.core.serve.dag.utils_test import add, inc
     >>> dsk = {'a': 1, 'b': (inc, 'a'), 'c': (inc, 'b')}
     >>> dependencies, dependents = get_deps(dsk)
     >>> num_dependencies, total_dependencies = ndependencies(dependencies, dependents)
@@ -624,6 +633,7 @@ def ndependencies(dependencies, dependents):
     -------
     num_dependencies: Dict[key, int]
     total_dependencies: Dict[key, int]
+
     """
     num_needed = {}
     result = {}
@@ -657,7 +667,7 @@ class StrComparable:
 
     When comparing two objects of different types Python fails
 
-    >>> 'a' < 1  # doctest: +SKIP
+    >>> 'a' < 1
     Traceback (most recent call last):
         ...
     TypeError: '<' not supported between instances of 'str' and 'int'
@@ -667,6 +677,7 @@ class StrComparable:
 
     >>> StrComparable('a') < StrComparable(1)
     False
+
     """
 
     __slots__ = ("obj",)

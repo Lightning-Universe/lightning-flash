@@ -19,17 +19,10 @@ from numbers import Number
 from typing import Any, Tuple
 from unittest.mock import ANY, MagicMock
 
+import flash
 import pytest
 import pytorch_lightning as pl
 import torch
-from pytorch_lightning import LightningDataModule
-from pytorch_lightning.callbacks import Callback
-from torch import Tensor, nn
-from torch.nn import functional as F
-from torch.utils.data import DataLoader
-from torchmetrics import Accuracy
-
-import flash
 from flash import Task
 from flash.audio import SpeechRecognition
 from flash.core.adapter import Adapter
@@ -54,6 +47,12 @@ from flash.graph import GraphClassifier, GraphEmbedder
 from flash.image import ImageClassifier, SemanticSegmentation
 from flash.tabular import TabularClassifier
 from flash.text import SummarizationTask, TextClassifier, TranslationTask
+from pytorch_lightning import LightningDataModule
+from pytorch_lightning.callbacks import Callback
+from torch import Tensor, nn
+from torch.nn import functional as F
+from torch.utils.data import DataLoader
+from torchmetrics import Accuracy
 
 # ======== Mock functions ========
 

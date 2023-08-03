@@ -16,6 +16,9 @@ from typing import Any, Tuple, Union
 
 import pytest
 import torch
+from flash import Trainer
+from flash.core.classification import ClassificationTask
+from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.callbacks.finetuning import BaseFinetuning
 from pytorch_lightning.core.lightning import LightningModule
@@ -23,10 +26,6 @@ from torch import nn
 from torch.nn import functional as F
 from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader
-
-from flash import Trainer
-from flash.core.classification import ClassificationTask
-from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE
 
 
 class DummyDataset(torch.utils.data.Dataset):

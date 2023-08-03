@@ -1,5 +1,4 @@
 import pytest
-
 from flash.core.serve.dag.order import ndependencies, order
 from flash.core.serve.dag.task import get, get_deps
 from flash.core.serve.dag.utils_test import add, inc
@@ -48,6 +47,7 @@ def test_avoid_broker_nodes(abcde):
         a0      a1
 
     a0 should be run before a1
+
     """
     a, b, c, d, e = abcde
     dsk = {
@@ -101,6 +101,7 @@ def test_base_of_reduce_preferred(abcde):
            c
 
     We really want to run b0 quickly
+
     """
     a, b, c, d, e = abcde
     dsk = {(a, i): (f, (a, i - 1), (b, i)) for i in [1, 2, 3]}
@@ -202,6 +203,7 @@ def test_deep_bases_win_over_dependents(abcde):
          b  c |
         / \ | /
        e    d
+
     """
     a, b, c, d, e = abcde
     dsk = {a: (f, b, c, d), b: (f, d, e), c: (f, d), d: 1, e: 2}
@@ -298,6 +300,7 @@ def test_run_smaller_sections(abcde):
         a   c e  cc
 
     Prefer to run acb first because then we can get that out of the way
+
     """
     a, b, c, d, e = abcde
     aa, bb, cc, dd = (x * 2 for x in [a, b, c, d])
@@ -390,6 +393,7 @@ def test_nearest_neighbor(abcde):
 
     Want to finish off a local group before moving on.
     This is difficult because all groups are connected.
+
     """
     a, b, c, _, _ = abcde
     a1, a2, a3, a4, a5, a6, a7, a8, a9 = (a + i for i in "123456789")
@@ -528,6 +532,7 @@ def test_map_overlap(abcde):
           e1      e2      e5
 
     Want to finish b1 before we start on e5
+
     """
     a, b, c, d, e = abcde
     dsk = {
@@ -698,6 +703,7 @@ def test_switching_dependents(abcde):
 
     This test is pretty specific to how `order` is implemented
     and is intended to increase code coverage.
+
     """
     a, b, c, d, e = abcde
     dsk = {

@@ -158,6 +158,7 @@ class FlashRegistry:
         """This function is used to register new functions to the registry along their metadata.
 
         Functions can be filtered using metadata using the ``get`` function.
+
         """
         if providers is not None:
             metadata["providers"] = providers

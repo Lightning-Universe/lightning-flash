@@ -56,17 +56,9 @@ else:
 # Skip doctests if requirements aren't available
 __doctest_skip__ = []
 if not _TOPIC_IMAGE_AVAILABLE:
-    __doctest_skip__ += [
-        "ImageClassificationData",
-        "ImageClassificationData.from_files",
-        "ImageClassificationData.from_folders",
-        "ImageClassificationData.from_numpy",
-        "ImageClassificationData.from_images",
-        "ImageClassificationData.from_tensors",
-        "ImageClassificationData.from_data_frame",
-        "ImageClassificationData.from_csv",
-        "ImageClassificationData.from_fiftyone",
-    ]
+    __doctest_skip__ += ["ImageClassificationData", "ImageClassificationData.*"]
+if not _FIFTYONE_AVAILABLE:
+    __doctest_skip__ += ["ImageClassificationData.from_fiftyone"]
 
 
 class ImageClassificationData(DataModule):
@@ -1067,11 +1059,10 @@ class ImageClassificationData(DataModule):
         multi_label: Optional[bool] = False,
         **data_module_kwargs: Any,
     ) -> "ImageClassificationData":
-        """Creates a :class:`~flash.core.data.data_module.DataModule` object
-        from the given export file and data directory using the
-        :class:`~flash.core.data.io.input.Input` of name
-        :attr:`~flash.core.data.io.input.InputFormat.FOLDERS`
-        from the passed or constructed :class:`~flash.core.data.io.input_transform.InputTransform`.
+        """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given export file and data
+        directory using the :class:`~flash.core.data.io.input.Input` of name
+        :attr:`~flash.core.data.io.input.InputFormat.FOLDERS` from the passed or constructed
+        :class:`~flash.core.data.io.input_transform.InputTransform`.
 
         Args:
             export_json: path to label studio export file
@@ -1146,9 +1137,8 @@ class ImageClassificationData(DataModule):
         **data_module_kwargs: Any,
     ) -> "DataModule":
         """Creates a :class:`~flash.core.data.data_module.DataModule` object from the given datasets using the
-        :class:`~flash.core.data.io.input.Input`
-        of name :attr:`~flash.core.data.io.input.InputFormat.DATASETS`
-        from the passed or constructed :class:`~flash.core.data.io.input_transform.InputTransform`.
+        :class:`~flash.core.data.io.input.Input` of name :attr:`~flash.core.data.io.input.InputFormat.DATASETS` from the
+        passed or constructed :class:`~flash.core.data.io.input_transform.InputTransform`.
 
         Args:
             train_dataset: Dataset used during training.
@@ -1197,7 +1187,7 @@ class MatplotlibVisualization(BaseVisualization):
     block_viz_window: bool = True  # parameter to allow user to block visualisation windows
 
     @staticmethod
-    @requires("image")
+    @requires("PIL")
     def _to_numpy(img: Union[np.ndarray, Tensor, Image.Image]) -> np.ndarray:
         out: np.ndarray
         if isinstance(img, np.ndarray):

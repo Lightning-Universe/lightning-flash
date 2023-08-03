@@ -68,8 +68,7 @@ def _load_image_from_image(file):
     img = Image.open(file)
     img.load()
 
-    img = img.convert("RGB")
-    return img
+    return img.convert("RGB")
 
 
 def _load_image_from_numpy(file):
@@ -182,6 +181,7 @@ def load_image(file_path: str):
 
     Args:
         file_path: The image file to load.
+
     """
     return load(file_path, _image_loaders)
 
@@ -193,6 +193,7 @@ def load_spectrogram(file_path: str, sampling_rate: int = 16000, n_fft: int = 40
         file_path: The file to load.
         sampling_rate: The sampling rate to resample to if loading from an audio file.
         n_fft: The size of the FFT to use when creating a spectrogram from an audio file.
+
     """
     loaders = copy.copy(_spectrogram_loaders)
     loaders[AUDIO_EXTENSIONS] = partial(loaders[AUDIO_EXTENSIONS], sampling_rate=sampling_rate, n_fft=n_fft)
@@ -205,6 +206,7 @@ def load_audio(file_path: str, sampling_rate: int = 16000):
     Args:
         file_path: The file to load.
         sampling_rate: The sampling rate to resample to.
+
     """
     loaders = {
         extensions: partial(loader, sampling_rate=sampling_rate) for extensions, loader in _audio_loaders.items()
@@ -218,6 +220,7 @@ def load_data_frame(file_path: str, encoding: str = "utf-8"):
     Args:
         file_path: The file to load.
         encoding: The encoding to use when reading the file.
+
     """
     loaders = {extensions: partial(loader, encoding=encoding) for extensions, loader in _data_frame_loaders.items()}
     return load(file_path, loaders)

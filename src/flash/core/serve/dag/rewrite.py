@@ -46,6 +46,7 @@ class Traverser:
     current
         The head of the current element in the traversal. This is simply `head`
         applied to the attribute `term`.
+
     """
 
     def __init__(self, term, stack=None):
@@ -64,6 +65,7 @@ class Traverser:
         """Copy the traverser in its current state.
 
         This allows the traversal to be pushed onto a stack, for easy backtracking.
+
         """
 
         return Traverser(self.term, deque(self._stack))
@@ -92,6 +94,7 @@ class Token:
     """A token object.
 
     Used to express certain objects in the traversal of a task or pattern.
+
     """
 
     def __init__(self, name):
@@ -172,6 +175,7 @@ class RewriteRule:
     ...     else:
     ...         return list, x
     >>> rule = RewriteRule(lhs, repl_list, variables)
+
     """
 
     def __init__(self, lhs, rhs, vars=()):
@@ -224,8 +228,8 @@ class RuleSet:
     >>> rs.rewrite((add, 2, 0))       # Apply ruleset to single task
     2
 
-    >>> rs.rewrite((f, (g, 'a', 3)))  # doctest: +SKIP
-    (h, 'a', 3)
+    >>> rs.rewrite((f, (g, 'a', 3)))  # doctest: +ELLIPSIS
+    (<function h at ...>, 'a', 3)
 
     >>> dsk = {'a': (add, 2, 0),      # Apply ruleset to full dask graph
     ...        'b': (f, (g, 'a', 3))}
@@ -234,6 +238,7 @@ class RuleSet:
     ----------
     rules : list
         A list of `RewriteRule`s included in the `RuleSet`.
+
     """
 
     def __init__(self, *rules):
@@ -255,6 +260,7 @@ class RuleSet:
         Parameters
         ----------
         rule : RewriteRule
+
         """
 
         if not isinstance(rule, RewriteRule):
@@ -288,6 +294,7 @@ class RuleSet:
         Tuples of `(rule, subs)`, where `rule` is the rewrite rule being
         matched, and `subs` is a dictionary mapping the variables in the lhs
         of the rule to their matching values in the term.
+
         """
 
         S = Traverser(term)
@@ -328,8 +335,10 @@ class RuleSet:
         Suppose there was a function `add` that returned the sum of 2 numbers,
         and another function `double` that returned twice its input:
 
-        >>> add = lambda x, y: x + y
-        >>> double = lambda x: 2*x
+        >>> def add(x, y):
+        ...     return x + y
+        >>> def double(x):
+        ...     return 2*x
 
         Now suppose `double` was *significantly* faster than `add`, so
         you'd like to replace all expressions `(add, x, x)` with `(double,
@@ -341,14 +350,14 @@ class RuleSet:
         This can then be applied to terms to perform the rewriting:
 
         >>> term = (add, (add, 2, 2), (add, 2, 2))
-        >>> rs.rewrite(term)  # doctest: +SKIP
-        (double, (double, 2))
+        >>> rs.rewrite(term)  # doctest: +ELLIPSIS
+        (<function double at ...>, (<function double at ...>, 2))
 
         If we only wanted to apply this to the top level of the term, the
         `strategy` kwarg can be set to "top_level".
 
-        >>> rs.rewrite(term)  # doctest: +SKIP
-        (double, (add, 2, 2))
+        >>> rs.rewrite(term)  # doctest: +ELLIPSIS
+        (<function double at ...>, (<function double at ...>, 2))
         """
         return strategies[strategy](self, task)
 
@@ -421,6 +430,7 @@ def _process_match(rule, syms):
     A dictionary of {vars : subterms} describing the substitution to make the
     pattern equivalent with the term. Returns `None` if the match is
     invalid.
+
     """
 
     subs = {}

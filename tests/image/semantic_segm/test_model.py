@@ -17,13 +17,13 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 import torch
-from torch import Tensor
-
 from flash import Trainer
 from flash.core.data.io.input import DataKeys
 from flash.core.utilities.imports import _SEGMENTATION_MODELS_AVAILABLE, _TOPIC_IMAGE_AVAILABLE, _TOPIC_SERVE_AVAILABLE
 from flash.image import SemanticSegmentation
 from flash.image.segmentation.data import SemanticSegmentationData
+from torch import Tensor
+
 from tests.helpers.task_tester import TaskTester
 
 

@@ -1,5 +1,4 @@
 import pytest
-
 from flash.core.serve.dag.rewrite import VAR, RewriteRule, RuleSet, Traverser, args, head
 from flash.core.utilities.imports import _TOPIC_SERVE_AVAILABLE
 

@@ -15,7 +15,6 @@ from copy import deepcopy
 
 import numpy as np
 import pytest
-
 from flash.core.data.data_module import DataModule
 from flash.core.data.splits import SplitDataset
 from flash.core.utilities.imports import _TOPIC_CORE_AVAILABLE

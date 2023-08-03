@@ -25,6 +25,7 @@ class OutputTransform:
         """Transforms to apply on a whole batch before uncollation to individual samples.
 
         Can involve both CPU and Device transforms as this is not applied in separate workers.
+
         """
         return batch
 
@@ -33,6 +34,7 @@ class OutputTransform:
         """Transforms to apply to a single sample after splitting up the batch.
 
         Can involve both CPU and Device transforms as this is not applied in separate workers.
+
         """
         return sample
 
@@ -41,6 +43,7 @@ class OutputTransform:
         """Uncollates a batch into single samples.
 
         Tries to preserve the type wherever possible.
+
         """
         return default_uncollate(batch)
 

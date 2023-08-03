@@ -1,8 +1,12 @@
 # NOTE: all pins for latest are for CI consistency unless it is `strict`, then it is also forced in setup
 
-torch-scatter <=2.1.0
-torch-sparse <=0.6.16
-torch-geometric >=2.0.0, <=2.2.0
-torch-cluster <=1.6.0
-networkx <=2.8.8
-class-resolver >=0.3.2, <=0.3.10
+torch-scatter <=2.1.1
+torch-sparse <=0.6.17
+torch-geometric >=2.0.0, <=2.3.1
+torch-cluster <=1.6.1
+networkx <=3.1
+class-resolver >=0.3.2, <=0.4.2
+
+# todo: check if we can bump this versions, ALSO if bumped you need to update CI for find links
+torch ==1.13.1
+torchvision ==0.14.1
