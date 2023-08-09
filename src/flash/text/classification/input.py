@@ -53,7 +53,11 @@ class TextClassificationInput(Input, ClassificationInputMixin):
             self.load_target_metadata(targets, target_formatter=target_formatter)
 
             # If we had binary multi-class targets then we also know the labels (column names)
-            if hasattr(self, "target_formatter") and isinstance(self.target_formatter, MultiBinaryTargetFormatter) and isinstance(target_keys, List):
+            if (
+                hasattr(self, "target_formatter")
+                and isinstance(self.target_formatter, MultiBinaryTargetFormatter)
+                and isinstance(target_keys, List)
+            ):
                 self.labels = target_keys
 
         # remove extra columns
