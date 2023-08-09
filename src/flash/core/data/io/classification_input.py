@@ -27,7 +27,7 @@ class ClassificationInputMixin(Properties):
       tasks.
     """
 
-    target_formatter: TargetFormatter
+    target_formatter: TargetFormatter = ...
     multi_label: bool
     labels: list
     num_classes: int
