@@ -138,6 +138,7 @@ class AudioClassificationDataFrameInput(AudioClassificationFilesInput):
         # If we had binary multi-class targets then we also know the labels (column names)
         if (
             self.training
+            and hasattr(self, "target_formatter")
             and isinstance(self.target_formatter, MultiBinaryTargetFormatter)
             and isinstance(target_keys, List)
         ):
