@@ -13,4 +13,4 @@ fairscale
 torchmetrics<0.8.0
 
 # effdet had an issue with PL 1.12, and icevision doesn't support effdet's latest version yet (0.3.0)
-torch <1.12
+torch <2.1
