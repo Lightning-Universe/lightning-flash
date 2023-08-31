@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+-
 
 
 ### Changed
@@ -17,7 +18,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-
+- Fixed `_strip` for eventually `int` ([#1667](https://github.com/Lightning-AI/lightning-flash/pull/1667))
+- Fixed checking `target_formatter` as attrib type ([#1665](https://github.com/Lightning-AI/lightning-flash/pull/1665))
+- Fixed remote check in `download_data` ([#1666](https://github.com/Lightning-AI/lightning-flash/pull/1666))
 
 
 ## [0.8.2] - 2023-06-30
