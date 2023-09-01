@@ -86,7 +86,7 @@ Inference is the process of generating predictions from trained models. To use a
 Here's an example of inference:
 
 .. testcode::
-   :skipif: flash.core.utilities.imports._TRANSFORMERS_GREATER_EQUAL_4_0
+    :skipif: flash.core.utilities.imports._TRANSFORMERS_GREATER_EQUAL_4_0
 
     # import our libraries
     from flash import Trainer
@@ -111,11 +111,13 @@ Here's an example of inference:
 We get the following output:
 
 .. testoutput::
+    :skipif: flash.core.utilities.imports._TRANSFORMERS_GREATER_EQUAL_4_0
     :hide:
 
     ...
 
 .. testcode::
+    :skipif: flash.core.utilities.imports._TRANSFORMERS_GREATER_EQUAL_4_0
     :hide:
 
     assert all(
