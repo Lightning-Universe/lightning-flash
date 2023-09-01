@@ -316,7 +316,8 @@ class TextClassificationData(DataModule):
             ...     predict_file="predict_data.json",
             ...     batch_size=2,
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            Downloading...
+            <BLANKLINE>
+            ...
             >>> datamodule.num_classes
             3
             >>> datamodule.labels
@@ -439,7 +440,8 @@ class TextClassificationData(DataModule):
             ...     predict_file="predict_data.parquet",
             ...     batch_size=2,
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            Downloading...
+            <BLANKLINE>
+            ...
             >>> datamodule.num_classes
             3
             >>> datamodule.labels
