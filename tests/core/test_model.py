@@ -42,6 +42,7 @@ from flash.core.utilities.imports import (
     _TOPIC_TEXT_AVAILABLE,
     _TORCH_OPTIMIZER_AVAILABLE,
     _TRANSFORMERS_AVAILABLE,
+    _TRANSFORMERS_GREATER_EQUAL_4_0,
 )
 from flash.graph import GraphClassifier, GraphEmbedder
 from flash.image import ImageClassifier, SemanticSegmentation
@@ -241,7 +242,9 @@ def test_classification_task_trainer_predict(tmpdir):
         pytest.param(
             TextClassifier,
             "0.9.0/text_classification_model.pt",
-            marks=pytest.mark.skipif(not _TOPIC_TEXT_AVAILABLE, reason="text packages aren't installed"),
+            marks=pytest.mark.skipif(
+                not _TOPIC_TEXT_AVAILABLE or _TRANSFORMERS_GREATER_EQUAL_4_0, reason="text packages aren't installed"
+            ),
         ),
         pytest.param(
             SummarizationTask,
