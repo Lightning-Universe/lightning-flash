@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import contextlib
 import functools
 import importlib
 import operator
@@ -41,7 +42,8 @@ _PYTORCHVIDEO_AVAILABLE = module_available("pytorchvideo")
 _MATPLOTLIB_AVAILABLE = module_available("matplotlib")
 _TRANSFORMERS_AVAILABLE = module_available("transformers")
 _PYSTICHE_AVAILABLE = module_available("pystiche")
-_FIFTYONE_AVAILABLE = module_available("fiftyone")
+with contextlib.suppress(ConnectionError):
+    _FIFTYONE_AVAILABLE = module_available("fiftyone")
 _FASTAPI_AVAILABLE = module_available("fastapi")
 _PYDANTIC_AVAILABLE = module_available("pydantic")
 _GRAPHVIZ_AVAILABLE = module_available("graphviz")
