@@ -151,7 +151,7 @@ jobs:
           tests/examples \
           tests/template \
           tests/${{ matrix.topic }} \
-          -v # --reruns 3 --reruns-delay 2
+          -v --timeout=300 --durations=50 # --reruns 3 --reruns-delay 2
 
     - name: Save HF cache
       if: github.ref == 'refs/heads/master'
