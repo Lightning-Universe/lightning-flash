@@ -48,7 +48,7 @@ jobs:
           #- { os: 'ubuntu-20.04', python-version: 3.8, topic: 'serve', extra: [], requires: 'oldest' }  # todo
 
     # Timeout: https://stackoverflow.com/a/59076067/4521646
-    timeout-minutes: 50
+    timeout-minutes: 70
     env:
       FREEZE_REQUIREMENTS: 1
       TORCH_URL: https://download.pytorch.org/whl/cpu/torch_stable.html
