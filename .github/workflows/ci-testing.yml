@@ -53,6 +53,7 @@ jobs:
       FREEZE_REQUIREMENTS: 1
       TORCH_URL: https://download.pytorch.org/whl/cpu/torch_stable.html
       TRANSFORMERS_CACHE: _hf_cache
+      DATASETS_VERBOSITY: warning
 
     steps:
     - uses: actions/checkout@v3

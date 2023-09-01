@@ -408,7 +408,8 @@ class SpeechRecognitionData(DataModule):
             ...     predict_file="predict_data.json",
             ...     batch_size=2,
             ... )  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-            Downloading...
+            <BLANKLINE>
+            ...
             >>> model = SpeechRecognition(backbone="patrickvonplaten/wav2vec2_tiny_random_robust")
             >>> trainer = Trainer(fast_dev_run=True)
             >>> trainer.fit(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
