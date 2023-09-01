@@ -48,7 +48,7 @@ jobs:
           #- { os: 'ubuntu-20.04', python-version: 3.8, topic: 'serve', extra: [], requires: 'oldest' }  # todo
 
     # Timeout: https://stackoverflow.com/a/59076067/4521646
-    timeout-minutes: 50
+    timeout-minutes: 70
     env:
       FREEZE_REQUIREMENTS: 1
       TORCH_URL: https://download.pytorch.org/whl/cpu/torch_stable.html
@@ -151,7 +151,7 @@ jobs:
           tests/examples \
           tests/template \
           tests/${{ matrix.topic }} \
-          -v # --reruns 3 --reruns-delay 2
+          -v --timeout=300 --durations=50 # --reruns 3 --reruns-delay 2
 
     - name: Save HF cache
       if: github.ref == 'refs/heads/master'
