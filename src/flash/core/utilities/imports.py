@@ -20,7 +20,6 @@ from typing import List, Tuple, Union
 
 from lightning_utilities.core.imports import compare_version, module_available
 from pkg_resources import DistributionNotFound
-from typeshed_client.typeshed.contextlib import suppress
 
 try:
     from packaging.version import Version
