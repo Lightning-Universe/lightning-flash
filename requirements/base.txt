@@ -10,6 +10,6 @@ pyDeprecate >0.2.0
 pandas >1.1.0, <=2.0.3
 jsonargparse[signatures] >=4.22.0, <4.23.0
 click >=7.1.2, <=8.1.6
-protobuf <=4.24.2
+protobuf <4.25.0
 fsspec[http] >=2022.5.0,<=2023.6.0
 lightning-utilities >=0.4.1
