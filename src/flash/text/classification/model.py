@@ -52,6 +52,7 @@ class TextClassifier(ClassificationAdapterTask):
         learning_rate: Learning rate to use for training, defaults to `1e-3`
         multi_label: Whether the targets are multi-label or not.
         enable_ort: Enable Torch ONNX Runtime Optimization: https://onnxruntime.ai/docs/#onnx-runtime-for-training
+
     """
 
     required_extras: str = "text"

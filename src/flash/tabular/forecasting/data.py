@@ -155,6 +155,7 @@ class TabularForecastingData(DataModule):
         .. testcleanup::
 
             >>> del data
+
         """
 
         ds_kw = dict(

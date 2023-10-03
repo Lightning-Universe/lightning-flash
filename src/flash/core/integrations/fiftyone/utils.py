@@ -96,6 +96,7 @@ class FiftyOneLabelUtilities:
         label_field: The field in the ``SampleCollection`` containing the ground truth labels.
         label_cls: The ``FiftyOne.Label`` subclass to expect ground truth labels to be instances of. If ``None``,
             defaults to ``FiftyOne.Label``.
+
     """
 
     def __init__(self, label_field: str = "ground_truth", label_cls: Optional[Type[Label]] = None):

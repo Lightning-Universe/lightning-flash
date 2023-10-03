@@ -34,6 +34,7 @@ class KeypointDetector(AdapterTask):
         learning_rate: The learning rate to use for training.
         predict_kwargs: dictionary containing parameters that will be used during the prediction phase.
         **kwargs: additional kwargs used for initializing the task
+
     """
 
     heads: FlashRegistry = KEYPOINT_DETECTION_HEADS

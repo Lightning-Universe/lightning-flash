@@ -53,6 +53,7 @@ class TabularClassifier(ClassificationAdapterTask):
             `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training.
         **backbone_kwargs: Optional additional arguments for the model.
+
     """
 
     required_extras: str = "tabular"
@@ -127,6 +128,7 @@ class TabularClassifier(ClassificationAdapterTask):
                 output="classes",
             )
             Predicting...
+
         """
         return self._data_parameters
 

@@ -557,6 +557,7 @@ def graph_metrics(dependencies, dependents, total_dependencies):
     Returns
     -------
     metrics: Dict[key, Tuple[int, int, int, int, int]]
+
     """
     result = {}
     num_needed = {k: len(v) for k, v in dependents.items() if v}

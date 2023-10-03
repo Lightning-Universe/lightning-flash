@@ -73,6 +73,7 @@ class TargetFormatter:
         >>> formatter = CustomStringTargetFormatter()
         >>> formatter("#1")
         1
+
     """
 
     multi_label: ClassVar[Optional[bool]] = None
@@ -109,6 +110,7 @@ class SingleNumericTargetFormatter(TargetFormatter):
         5
         >>> formatter(torch.tensor(5))
         5
+
     """
 
     multi_label: ClassVar[Optional[bool]] = False
@@ -137,6 +139,7 @@ class SingleLabelTargetFormatter(TargetFormatter):
         0
         >>> formatter(["dog"])
         1
+
     """
 
     multi_label: ClassVar[Optional[bool]] = False
@@ -167,6 +170,7 @@ class SingleBinaryTargetFormatter(TargetFormatter):
         0
         >>> formatter(torch.tensor([0, 1]))
         1
+
     """
 
     multi_label: ClassVar[Optional[bool]] = False
@@ -196,6 +200,7 @@ class MultiNumericTargetFormatter(TargetFormatter):
         [0, 0, 1, 0, 0, 1, 0, 0, 0, 0]
         >>> formatter(torch.tensor([2, 5]))
         [0, 0, 1, 0, 0, 1, 0, 0, 0, 0]
+
     """
 
     multi_label: ClassVar[Optional[bool]] = True
@@ -224,6 +229,7 @@ class MultiLabelTargetFormatter(SingleLabelTargetFormatter):
         [0, 1, 1]
         >>> formatter(["bird"])
         [1, 0, 0]
+
     """
 
     multi_label: ClassVar[Optional[bool]] = True
@@ -253,6 +259,7 @@ class CommaDelimitedMultiLabelTargetFormatter(MultiLabelTargetFormatter):
         [0, 1, 1]
         >>> formatter("bird")
         [1, 0, 0]
+
     """
 
     multi_label: ClassVar[Optional[bool]] = True
@@ -278,6 +285,7 @@ class SpaceDelimitedTargetFormatter(MultiLabelTargetFormatter):
         [0, 1, 1]
         >>> formatter("bird")
         [1, 0, 0]
+
     """
 
     multi_label: ClassVar[Optional[bool]] = True
@@ -304,6 +312,7 @@ class MultiBinaryTargetFormatter(TargetFormatter):
         [0, 1, 1]
         >>> formatter(torch.tensor([1, 0, 0]))
         [1, 0, 0]
+
     """
 
     multi_label: ClassVar[Optional[bool]] = True
@@ -330,6 +339,7 @@ class MultiSoftTargetFormatter(MultiBinaryTargetFormatter):
         [0.1, 0.9, 0.6]
         >>> formatter(torch.tensor([0.9, 0.6, 0.7]))  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
         [0..., 0..., 0...]
+
     """
 
     binary: ClassVar[Optional[bool]] = False
@@ -353,6 +363,7 @@ def _get_target_formatter_type(target: Any) -> Type[TargetFormatter]:
 
     Args:
         target: A target that is one of: a single target, a list of targets, a comma delimited string.
+
     """
     if isinstance(target, str):
         target = _strip(target)
@@ -392,6 +403,7 @@ def _resolve_target_formatter(a: Type[TargetFormatter], b: Type[TargetFormatter]
 
     Raises:
         ValueError: If the two target formatters could not be resolved.
+
     """
     if a is b:
         return a
@@ -423,6 +435,7 @@ def _get_target_details(
     Returns:
         (labels, num_classes): Tuple containing the inferred ``labels`` (or ``None`` if no labels could be inferred)
         and ``num_classes``.
+
     """
     targets = _as_list(targets)
     if target_formatter_type.numeric:
@@ -481,6 +494,7 @@ def get_target_formatter(
 
     Returns:
         The target formatter to use when formatting targets.
+
     """
     targets = _as_list(targets)
     target_formatter_type: Type[TargetFormatter] = reduce(

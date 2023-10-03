@@ -44,6 +44,7 @@ class FaceDetector(Task):
         lr_scheduler: The LR scheduler to use during training.
         learning_rate: The learning rate to use for training.
         kwargs: additional kwargs nessesary for initializing face detector backbone
+
     """
 
     required_extras: str = "image"

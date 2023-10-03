@@ -96,6 +96,7 @@ class BaseVisualization(BaseDataFetcher):
         As the :class:`~flash.core.data.io.input_transform.InputTransform` hooks are injected within
         the threaded workers of the DataLoader,
         the data won't be accessible when using ``num_workers > 0``.
+
     """
 
     def _show(

@@ -29,6 +29,7 @@ class GraphEmbedder(Task):
     Args:
         backbone: A model to use to extract image features.
         pooling_fn: The global pooling operation to use (one of: "max", "max", "add" or a callable).
+
     """
 
     required_extras: str = "graph"

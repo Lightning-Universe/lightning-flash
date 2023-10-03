@@ -163,6 +163,7 @@ class ObjectDetectionData(DataModule):
             >>> import os
             >>> _ = [os.remove(f"image_{i}.png") for i in range(1, 4)]
             >>> _ = [os.remove(f"predict_image_{i}.png") for i in range(1, 4)]
+
         """
 
         ds_kw = {
@@ -281,6 +282,7 @@ class ObjectDetectionData(DataModule):
             Training...
             >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Predicting...
+
         """
 
         ds_kw = {
@@ -404,6 +406,7 @@ class ObjectDetectionData(DataModule):
             Training...
             >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Predicting...
+
         """
 
         ds_kw = {
@@ -522,6 +525,7 @@ class ObjectDetectionData(DataModule):
             Training...
             >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Predicting...
+
         """
 
         ds_kw = {
@@ -893,6 +897,7 @@ class ObjectDetectionData(DataModule):
             >>> shutil.rmtree("train_annotations")
 
         .. _PASCAL: http://host.robots.ox.ac.uk/pascal/VOC/
+
         """
         return cls.from_icedata(
             train_folder=train_folder,
@@ -1162,6 +1167,7 @@ class ObjectDetectionData(DataModule):
             >>> import os
             >>> _ = [os.remove(f"image_{i}.png") for i in range(1, 4)]
             >>> _ = [os.remove(f"predict_image_{i}.png") for i in range(1, 4)]
+
         """
 
         ds_kw = {}
@@ -1195,6 +1201,7 @@ class ObjectDetectionData(DataModule):
 
         Returns:
             The constructed data module.
+
         """
         return cls(
             predict_input=input_cls(RunningStage.PREDICTING, predict_folder),

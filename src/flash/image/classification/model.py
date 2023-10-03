@@ -77,6 +77,7 @@ class ImageClassifier(ClassificationAdapterTask):
         training_strategy: string indicating the training strategy. Adjust if you want to use `learn2learn`
             for doing meta-learning research
         training_strategy_kwargs: Additional kwargs for setting the training strategy
+
     """
 
     backbones: FlashRegistry = IMAGE_CLASSIFIER_BACKBONES

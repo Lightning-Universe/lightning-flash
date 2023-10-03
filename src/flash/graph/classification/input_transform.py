@@ -33,6 +33,7 @@ class PyGTransformAdapter:
 
     Args:
         transform: Transform to apply.
+
     """
 
     transform: Callable[[Data], Data]

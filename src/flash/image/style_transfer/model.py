@@ -62,6 +62,7 @@ class StyleTransfer(Task):
         optimizer: Optimizer to use for training.
         lr_scheduler: The LR scheduler to use during training.
         learning_rate: Learning rate to use for training, defaults to ``1e-3``.
+
     """
 
     backbones: FlashRegistry = STYLE_TRANSFER_BACKBONES

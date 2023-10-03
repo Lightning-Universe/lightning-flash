@@ -35,6 +35,7 @@ class Adapter(DatasetProcessor, ModuleWrapperBase, nn.Module):
         """Instantiate the adapter from the given :class:`~flash.core.model.Task`.
 
         This includes resolution / creation of backbones / heads and any other provider specific options.
+
         """
 
     def forward(self, x: Any) -> Any:
@@ -73,6 +74,7 @@ class AdapterTask(Task):
     Args:
         adapter: The :class:`~flash.core.adapter.Adapter` to wrap.
         kwargs: Keyword arguments to be passed to the base :class:`~flash.core.model.Task`.
+
     """
 
     def __init__(self, adapter: Adapter, **kwargs):

@@ -39,6 +39,7 @@ class TemplateSKLearnClassifier(ClassificationTask):
             by the :class:`~flash.core.classification.ClassificationTask` depending on the ``multi_label`` argument.
         learning_rate: The learning rate for the optimizer.
         multi_label: If ``True``, this will be treated as a multi-label classification problem.
+
     """
 
     backbones: FlashRegistry = TEMPLATE_BACKBONES

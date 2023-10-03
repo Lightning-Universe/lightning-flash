@@ -392,6 +392,7 @@ def getcycle(d, keys):
     See Also
     --------
     isdag
+
     """
     return _toposort(d, keys=keys, returncycle=True)
 
@@ -410,6 +411,7 @@ def isdag(d, keys):
     See Also
     --------
     getcycle
+
     """
     return not getcycle(d, keys)
 

@@ -68,6 +68,7 @@ class TabularForecaster(AdapterTask):
         This can be used with
         :func:`~flash.core.integrations.pytorch_forecasting.transforms.convert_predictions` to access the visualization
         features built in to PyTorch Forecasting.
+
         """
         if not isinstance(self.adapter, PyTorchForecastingAdapter):
             raise AttributeError(

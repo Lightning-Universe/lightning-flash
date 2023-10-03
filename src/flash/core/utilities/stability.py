@@ -68,6 +68,7 @@ def beta(message: str = "This feature is currently in Beta."):
         ...     MyBetaFeatureWithCustomMessage()  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
         ...
         <...>
+
     """
 
     def decorator(callable: Union[Callable, Type]):

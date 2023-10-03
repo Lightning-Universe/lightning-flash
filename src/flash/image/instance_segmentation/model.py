@@ -34,6 +34,7 @@ class InstanceSegmentation(AdapterTask):
         learning_rate: The learning rate to use for training.
         predict_kwargs: dictionary containing parameters that will be used during the prediction phase.
         **kwargs: additional kwargs used for initializing the task
+
     """
 
     heads: FlashRegistry = INSTANCE_SEGMENTATION_HEADS

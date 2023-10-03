@@ -42,6 +42,7 @@ class SummarizationTask(Seq2SeqTask):
         num_beams: Number of beams to use in validation when generating predictions. Defaults to `4`
         use_stemmer: Whether Porter stemmer should be used to strip word suffixes to improve matching.
         enable_ort: Enable Torch ONNX Runtime Optimization: https://onnxruntime.ai/docs/#onnx-runtime-for-training
+
     """
 
     def __init__(
