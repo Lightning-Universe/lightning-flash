@@ -54,6 +54,7 @@ class TemplateNumpyClassificationInput(Input, ClassificationInputMixin):
 
         Returns:
             A sequence of samples / sample metadata.
+
         """
         if not self.predicting and isinstance(examples, np.ndarray):
             self.num_features = examples.shape[1]
@@ -79,6 +80,7 @@ class TemplateSKLearnClassificationInput(TemplateNumpyClassificationInput):
 
         Returns:
             A sequence of samples / sample metadata.
+
         """
         return super().load_data(data.data, data.target, target_formatter=target_formatter)
 
@@ -118,6 +120,7 @@ class TemplateData(DataModule):
 
     Next, we add a ``from_numpy`` method and a ``from_sklearn`` method. Finally, we define the ``num_features`` property
     for convenience.
+
     """
 
     input_transform_cls = TemplateInputTransform
@@ -156,6 +159,7 @@ class TemplateData(DataModule):
 
         Returns:
             The constructed data module.
+
         """
 
         ds_kw = {}
@@ -201,6 +205,7 @@ class TemplateData(DataModule):
 
         Returns:
             The constructed data module.
+
         """
         ds_kw = {}
 
@@ -238,6 +243,7 @@ class TemplateVisualization(BaseVisualization):
     the data.
 
     If you want to provide a visualization with your task, you can override these hooks.
+
     """
 
     def show_load_sample(

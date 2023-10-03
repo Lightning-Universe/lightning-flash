@@ -100,6 +100,7 @@ class StyleTransferData(DataModule):
             >>> import os
             >>> _ = [os.remove(f"image_{i}.png") for i in range(1, 4)]
             >>> _ = [os.remove(f"predict_image_{i}.png") for i in range(1, 4)]
+
         """
 
         return cls(
@@ -185,6 +186,7 @@ class StyleTransferData(DataModule):
             >>> import shutil
             >>> shutil.rmtree("train_folder")
             >>> shutil.rmtree("predict_folder")
+
         """
 
         return cls(
@@ -243,6 +245,7 @@ class StyleTransferData(DataModule):
             Training...
             >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Predicting...
+
         """
 
         return cls(
@@ -302,6 +305,7 @@ class StyleTransferData(DataModule):
             Training...
             >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Predicting...
+
         """
 
         return cls(

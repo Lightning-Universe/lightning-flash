@@ -152,6 +152,7 @@ class FlashCLI(LightningCLI):
                     the corresponding ``DataModule.from_*`` method.
                 - ``Callable``. A custom method.
             kwargs: See the parent arguments
+
         """
         if datamodule_attributes is None:
             datamodule_attributes = {"num_classes"}

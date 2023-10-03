@@ -28,5 +28,6 @@ def sorted_alphanumeric(iterable: Iterable[str]) -> Iterable[str]:
     this returns ``["class_1", "class_2", "class_11"]``.
 
     Copied from: https://blog.codinghorror.com/sorting-for-humans-natural-sort-order/
+
     """
     return sorted(iterable, key=_alphanumeric_key)

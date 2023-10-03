@@ -210,6 +210,7 @@ class TextClassificationData(DataModule):
 
             >>> os.remove("train_data.tsv")
             >>> os.remove("predict_data.tsv")
+
         """
         ds_kw = {
             "target_formatter": target_formatter,
@@ -333,6 +334,7 @@ class TextClassificationData(DataModule):
 
             >>> os.remove("train_data.json")
             >>> os.remove("predict_data.json")
+
         """
         ds_kw = {
             "target_formatter": target_formatter,
@@ -457,6 +459,7 @@ class TextClassificationData(DataModule):
 
             >>> os.remove("train_data.parquet")
             >>> os.remove("predict_data.parquet")
+
         """
         ds_kw = {
             "target_formatter": target_formatter,
@@ -560,6 +563,7 @@ class TextClassificationData(DataModule):
 
             >>> del train_data
             >>> del predict_data
+
         """
         ds_kw = {
             "target_formatter": target_formatter,
@@ -664,6 +668,7 @@ class TextClassificationData(DataModule):
 
             >>> del train_data
             >>> del predict_data
+
         """
         ds_kw = {
             "target_formatter": target_formatter,
@@ -750,6 +755,7 @@ class TextClassificationData(DataModule):
             Training...
             >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Predicting...
+
         """
         ds_kw = {
             "target_formatter": target_formatter,
@@ -813,6 +819,7 @@ class TextClassificationData(DataModule):
 
         Returns:
             The constructed data module.
+
         """
 
         train_data, val_data, test_data, predict_data = _parse_labelstudio_arguments(

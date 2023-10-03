@@ -73,6 +73,7 @@ class ModuleWrapperBase:
     ``LightningModule`` instances so that nested calls to ``.log`` are handled correctly. The ``ModuleWrapperBase`` is
     also stateful, meaning that a :class:`~flash.core.data.data_pipeline.DataPipelineState` can be attached. Attached
     state will be forwarded to any nested ``ModuleWrapperBase`` instances.
+
     """
 
     def __init__(self):
@@ -485,6 +486,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
         Returns:
             The backbone ``Module`` to freeze or ``None`` if this task does not have a ``backbone`` attribute.
+
         """
         return getattr(self, "backbone", None)
 
@@ -579,6 +581,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
         Args:
             layer: The layer to embed to. This should be one of the :meth:`~flash.core.model.Task.available_layers`.
+
         """
         from flash.core.utilities.embedder import Embedder  # Avoid circular import
 
@@ -672,6 +675,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
 
             >>> print(Task.available_outputs())
             ['preds', 'raw']
+
         """
         return cls.outputs.available_keys()
 
@@ -861,6 +865,7 @@ class Task(DatasetProcessor, ModuleWrapperBase, LightningModule, FineTuningHooks
             input_cls: The ``ServeInput`` type to use.
             transform: The transform to use when serving.
             transform_kwargs: Keyword arguments used to instantiate the transform.
+
         """
         from flash.core.serve.flash_components import build_flash_serve_model_component
 

@@ -50,6 +50,7 @@ class PointCloudObjectDetector(Task):
         lambda_loss_cls: The value to scale the loss classification.
         lambda_loss_bbox: The value to scale the bounding boxes loss.
         lambda_loss_dir: The value to scale the bounding boxes direction loss.
+
     """
 
     backbones: FlashRegistry = POINTCLOUD_OBJECT_DETECTION_BACKBONES

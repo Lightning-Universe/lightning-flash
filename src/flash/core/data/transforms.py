@@ -66,6 +66,7 @@ class ApplyToKeys(nn.Sequential):
     Args:
         keys: The key (``str``) or sequence of keys (``Sequence[str]``) to extract and forward to the transforms.
         args: The transforms, passed to the ``nn.Sequential`` super constructor.
+
     """
 
     def __init__(self, keys: Union[str, Sequence[str]], *args):

@@ -117,6 +117,7 @@ class SpeechRecognitionData(DataModule):
             >>> import os
             >>> _ = [os.remove(f"speech_{i}.wav") for i in range(1, 4)]
             >>> _ = [os.remove(f"predict_speech_{i}.wav") for i in range(1, 4)]
+
         """
 
         ds_kw = {"sampling_rate": sampling_rate}
@@ -302,6 +303,7 @@ class SpeechRecognitionData(DataModule):
             >>> _ = [os.remove(f"predict_speech_{i}.wav") for i in range(1, 4)]
             >>> os.remove("train_data.tsv")
             >>> os.remove("predict_data.tsv")
+
         """
 
         ds_kw = {"input_key": input_field, "sampling_rate": sampling_rate}
@@ -424,6 +426,7 @@ class SpeechRecognitionData(DataModule):
             >>> _ = [os.remove(f"predict_speech_{i}.wav") for i in range(1, 4)]
             >>> os.remove("train_data.json")
             >>> os.remove("predict_data.json")
+
         """
 
         ds_kw = {"input_key": input_field, "sampling_rate": sampling_rate, "field": field}
@@ -570,6 +573,7 @@ class SpeechRecognitionData(DataModule):
             >>> import os
             >>> _ = [os.remove(f"speech_{i}.wav") for i in range(1, 4)]
             >>> _ = [os.remove(f"predict_speech_{i}.wav") for i in range(1, 4)]
+
         """
 
         ds_kw = {"sampling_rate": sampling_rate}

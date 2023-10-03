@@ -154,6 +154,7 @@ class TaskTesterMeta(ABCMeta):
 
     These tests will also be wrapped with the appropriate marks to skip them if the required dependencies are not
     available.
+
     """
 
     @staticmethod
@@ -240,6 +241,7 @@ class TaskTester(metaclass=TaskTesterMeta):
 
     Use the class attributes to control which tests will be run. For example, if ``traceable`` is ``False`` then no JIT
     tracing test will be performed.
+
     """
 
     task: Task

@@ -99,6 +99,7 @@ class EndpointProtocol:
           the key "image" -> the raw data... The field names are NOT altered,
           and therefore this workaround should pose very little issue for
           our end users).
+
         """
         attrib_dict = {}
         inputs = self._endpoint.inputs
@@ -164,6 +165,7 @@ class EndpointProtocol:
           the key "image" -> the raw data... The field names are NOT altered,
           and therefore this workaround should pose very little issue for
           our end users).
+
         """
         attrib_dict = {}
         outputs = self._endpoint.outputs

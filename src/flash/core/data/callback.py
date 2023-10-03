@@ -19,6 +19,7 @@ class FlashCallback(Callback):
     Same as PyTorch Lightning, Callbacks can be provided directly to the Trainer::
 
         trainer = Trainer(callbacks=[MyCustomCallback()])
+
     """
 
     def on_per_sample_transform(self, sample: Tensor, running_stage: RunningStage) -> None:
@@ -146,6 +147,7 @@ class BaseDataFetcher(FlashCallback):
             'val': {},
             'predict': {}
         }
+
     """
 
     batches: dict

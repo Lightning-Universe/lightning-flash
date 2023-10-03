@@ -50,6 +50,7 @@ class GraphClassifier(ClassificationTask):
         optimizer: Optimizer to use for training.
         lr_scheduler: The LR scheduler to use during training.
         metrics: Metrics to compute for training and evaluation.
+
     """
 
     backbones: FlashRegistry = GRAPH_BACKBONES

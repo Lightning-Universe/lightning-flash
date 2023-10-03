@@ -159,6 +159,7 @@ class VideoClassificationData(DataModule):
             >>> import os
             >>> _ = [os.remove(f"video_{i}.mp4") for i in range(1, 4)]
             >>> _ = [os.remove(f"predict_video_{i}.mp4") for i in range(1, 4)]
+
         """
         ds_kw = {
             "clip_sampler": clip_sampler,
@@ -324,6 +325,7 @@ class VideoClassificationData(DataModule):
             >>> import shutil
             >>> shutil.rmtree("train_folder")
             >>> shutil.rmtree("predict_folder")
+
         """
         ds_kw = {
             "clip_sampler": clip_sampler,
@@ -507,6 +509,7 @@ class VideoClassificationData(DataModule):
             >>> shutil.rmtree("predict_folder")
             >>> del train_data_frame
             >>> del predict_data_frame
+
         """
         ds_kw = {
             "clip_sampler": clip_sampler,
@@ -635,6 +638,7 @@ class VideoClassificationData(DataModule):
         .. testcleanup::
 
             >>> del frame
+
         """
 
         train_input = input_cls(
@@ -905,6 +909,7 @@ class VideoClassificationData(DataModule):
             >>> shutil.rmtree("predict_folder")
             >>> os.remove("train_data.tsv")
             >>> os.remove("predict_data.tsv")
+
         """
         ds_kw = {
             "clip_sampler": clip_sampler,
@@ -1062,6 +1067,7 @@ class VideoClassificationData(DataModule):
             >>> _ = [os.remove(f"predict_video_{i}.mp4") for i in range(1, 4)]
             >>> del train_dataset
             >>> del predict_dataset
+
         """
         ds_kw = {
             "clip_sampler": clip_sampler,
@@ -1171,6 +1177,7 @@ class VideoClassificationData(DataModule):
                 data_folder='label-studio/media/upload',
                 val_split=0.8,
             )
+
         """
 
         train_data, val_data, test_data, predict_data = _parse_labelstudio_arguments(

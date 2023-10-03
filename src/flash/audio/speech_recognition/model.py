@@ -45,6 +45,7 @@ class SpeechRecognition(Task):
         learning_rate: Learning rate to use for training, defaults to ``1e-5``.
         optimizer: Optimizer to use for training.
         lr_scheduler: The LR scheduler to use during training.
+
     """
 
     backbones: FlashRegistry = SPEECH_RECOGNITION_BACKBONES

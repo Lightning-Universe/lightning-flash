@@ -108,6 +108,7 @@ def _validate_input(input: "InputBase") -> None:
     Raises:
         RuntimeError: If the ``input`` is of type ``Input`` and it's ``data`` attribute does not support ``len``.
         RuntimeError: If the ``input`` is of type ``IterableInput`` and it's ``data`` attribute does support ``len``.
+
     """
     if input.data is not None:
         if isinstance(input, Input) and not _has_len(input.data):
@@ -122,6 +123,7 @@ def _wrap_init(class_dict: Dict[str, Any]) -> None:
 
     Args:
         class_dict: The class construction dict, optionally containing an init to wrap.
+
     """
     if "__init__" in class_dict:
         fn = class_dict["__init__"]
@@ -153,14 +155,15 @@ class _IterableInputMeta(_InputMeta, type(IterableDataset)):
 
 class InputBase(Properties, metaclass=_InputMeta):
     """``InputBase`` is the base class for the :class:`~flash.core.data.io.input.Input` and
-    :class:`~flash.core.data.io.input.IterableInput` dataset implementations in Flash. These datasets are
-    constructed via the ``load_data`` and ``load_sample`` hooks, which allow a single dataset object to include custom
-    loading logic according to the running stage (e.g. train, validate, test, predict).
+    :class:`~flash.core.data.io.input.IterableInput` dataset implementations in Flash. These datasets are constructed
+    via the ``load_data`` and ``load_sample`` hooks, which allow a single dataset object to include custom loading logic
+    according to the running stage (e.g. train, validate, test, predict).
 
     Args:
         running_stage: The running stage for which the input will be used.
         *args: Any arguments that are to be passed to the ``load_data`` hook.
         **kwargs: Any additional keyword arguments to pass to the ``load_data`` hook.
+
     """
 
     def __init__(self, running_stage: RunningStage, *args: Any, **kwargs: Any) -> None:
@@ -194,6 +197,7 @@ class InputBase(Properties, metaclass=_InputMeta):
         Args:
             *args: Any arguments that the input requires.
             **kwargs: Any additional keyword arguments that the input requires.
+
         """
         return args[0]
 
@@ -203,6 +207,7 @@ class InputBase(Properties, metaclass=_InputMeta):
         Args:
             *args: Any arguments that the input requires.
             **kwargs: Any additional keyword arguments that the input requires.
+
         """
         return self.load_data(*args, **kwargs)
 
@@ -212,6 +217,7 @@ class InputBase(Properties, metaclass=_InputMeta):
         Args:
             *args: Any arguments that the input requires.
             **kwargs: Any additional keyword arguments that the input requires.
+
         """
         return self.load_data(*args, **kwargs)
 
@@ -221,6 +227,7 @@ class InputBase(Properties, metaclass=_InputMeta):
         Args:
             *args: Any arguments that the input requires.
             **kwargs: Any additional keyword arguments that the input requires.
+
         """
         return self.load_data(*args, **kwargs)
 
@@ -230,6 +237,7 @@ class InputBase(Properties, metaclass=_InputMeta):
         Args:
             *args: Any arguments that the input requires.
             **kwargs: Any additional keyword arguments that the input requires.
+
         """
         return self.load_data(*args, **kwargs)
 
@@ -240,6 +248,7 @@ class InputBase(Properties, metaclass=_InputMeta):
 
         Args:
             sample: A single sample from the output of the ``load_data`` hook.
+
         """
         return sample
 
@@ -248,6 +257,7 @@ class InputBase(Properties, metaclass=_InputMeta):
 
         Args:
             sample: A single sample from the output of the ``load_data`` hook.
+
         """
         return self.load_sample(sample)
 
@@ -256,6 +266,7 @@ class InputBase(Properties, metaclass=_InputMeta):
 
         Args:
             sample: A single sample from the output of the ``load_data`` hook.
+
         """
         return self.load_sample(sample)
 
@@ -264,6 +275,7 @@ class InputBase(Properties, metaclass=_InputMeta):
 
         Args:
             sample: A single sample from the output of the ``load_data`` hook.
+
         """
         return self.load_sample(sample)
 
@@ -272,6 +284,7 @@ class InputBase(Properties, metaclass=_InputMeta):
 
         Args:
             sample: A single sample from the output of the ``load_data`` hook.
+
         """
         return self.load_sample(sample)
 
@@ -279,6 +292,7 @@ class InputBase(Properties, metaclass=_InputMeta):
         """If ``self.data`` is ``None`` then the ``InputBase`` is considered falsey.
 
         This allows for quickly checking whether or not the ``InputBase`` is populated with data.
+
         """
         return self.data is not None
 
