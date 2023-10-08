@@ -4,7 +4,7 @@ matplotlib >3.0.0, <=3.7.2
 fiftyone <0.22.0
 classy-vision <=0.7.0
 effdet <=0.4.1
-kornia >0.5.1, <=0.6.12
+kornia >0.5.1, <=0.7.0
 learn2learn <=0.1.7; platform_system != "Windows"  # dead
 fastface <=0.1.4  # dead
 fairscale
