@@ -431,6 +431,7 @@ class InstanceSegmentationData(DataModule):
             >>> shutil.rmtree("train_annotations")
 
         .. _PASCAL: http://host.robots.ox.ac.uk/pascal/VOC/
+
         """
         return cls.from_icedata(
             train_folder=train_folder,
@@ -472,6 +473,7 @@ class InstanceSegmentationData(DataModule):
 
         Returns:
             The constructed data module.
+
         """
         return cls(
             predict_input=input_cls(RunningStage.PREDICTING, predict_folder),
@@ -502,6 +504,7 @@ class InstanceSegmentationData(DataModule):
 
         Returns:
             The constructed data module.
+
         """
         return cls(
             predict_input=input_cls(RunningStage.PREDICTING, predict_files),

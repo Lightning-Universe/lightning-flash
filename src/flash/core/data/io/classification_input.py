@@ -25,6 +25,7 @@ class ClassificationInputMixin(Properties):
       targets and store metadata like ``labels`` and ``num_classes``.
     * In the ``load_sample`` method, use ``format_target`` to convert the target to a standard format for use with our
       tasks.
+
     """
 
     target_formatter: TargetFormatter
@@ -46,6 +47,7 @@ class ClassificationInputMixin(Properties):
                 rather than inferring from the targets.
             add_background: If ``True``, a background class will be inserted as class zero if ``labels`` and
                 ``num_classes`` are being inferred.
+
         """
         self.target_formatter = target_formatter
         if target_formatter is None and targets is not None:

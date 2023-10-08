@@ -290,6 +290,7 @@ class KeypointDetectionData(DataModule):
 
         Returns:
             The constructed data module.
+
         """
         return cls(
             predict_input=input_cls(RunningStage.PREDICTING, predict_folder),
@@ -320,6 +321,7 @@ class KeypointDetectionData(DataModule):
 
         Returns:
             The constructed data module.
+
         """
         return cls(
             predict_input=input_cls(RunningStage.PREDICTING, predict_files),

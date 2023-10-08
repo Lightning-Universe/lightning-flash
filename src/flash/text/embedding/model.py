@@ -47,6 +47,7 @@ class TextEmbedder(Task):
     Args:
         backbone: backbone model to use for the task.
         enable_ort: Enable Torch ONNX Runtime Optimization: https://onnxruntime.ai/docs/#onnx-runtime-for-training
+
     """
 
     required_extras: str = "text"

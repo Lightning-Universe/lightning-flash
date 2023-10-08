@@ -38,6 +38,7 @@ class _VISSLBackboneWrapper(nn.Module):
     """VISSL backbones take additional arguments in ``forward`` that are not needed for our integration.
 
     This wrapper can be applied to a Flash backbone to ignore any additional arguments to ``forward``.
+
     """
 
     def __init__(self, backbone: nn.Module):
@@ -75,6 +76,7 @@ class VISSLAdapter(Adapter, AdaptVISSLHooks):
     """The ``VISSLAdapter`` is an :class:`~flash.core.adapter.Adapter` for integrating with VISSL.
 
     Also inherits from ``AdaptVISSLHooks`` to support VISSL hooks.
+
     """
 
     required_extras: str = "image"

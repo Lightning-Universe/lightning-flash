@@ -75,6 +75,7 @@ class ActiveLearningDataModule(DataModule):
             initial_num_labels: Number of samples to randomly label to start the training with.
             query_size: Number of samples to be labelled at each Active Learning loop based on the fed heuristic.
             val_split: Float to split train dataset into train and validation set.
+
         """
         super().__init__(batch_size=1)
         self.labelled = labelled

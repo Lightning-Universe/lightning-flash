@@ -52,6 +52,7 @@ class TabularRegressor(RegressionAdapterTask):
             `metric(preds,target)` and return a single scalar tensor. Defaults to :class:`torchmetrics.Accuracy`.
         learning_rate: Learning rate to use for training.
         **backbone_kwargs: Optional additional arguments for the model.
+
     """
 
     required_extras: str = "tabular"
@@ -121,6 +122,7 @@ class TabularRegressor(RegressionAdapterTask):
                 model,
                 datamodule=datamodule,
             )
+
         """
         return self._data_parameters
 

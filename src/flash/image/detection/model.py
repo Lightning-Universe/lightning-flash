@@ -41,6 +41,7 @@ class ObjectDetector(AdapterTask):
         learning_rate: The learning rate to use for training.
         predict_kwargs: dictionary containing parameters that will be used during the prediction phase.
         kwargs: additional kwargs nessesary for initializing the backbone task
+
     """
 
     heads: FlashRegistry = OBJECT_DETECTION_HEADS

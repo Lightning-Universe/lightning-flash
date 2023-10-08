@@ -44,6 +44,7 @@ def wrap_collate(collate):
 
     Returns:
         The wrapped collate function.
+
     """
     return functools.partial(_wrap_collate, collate)
 
@@ -61,5 +62,6 @@ def default_collate(batch: List[Any]) -> Any:
 
     Returns:
         The collated batch.
+
     """
     return _default_collate(batch)

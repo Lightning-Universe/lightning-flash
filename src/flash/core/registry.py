@@ -187,6 +187,7 @@ class ExternalRegistry(FlashRegistry):
     Args:
         getter: A function whose first argument is a key that can optionally take additional args and kwargs.
         providers: The provider(/s) of entries in this registry.
+
     """
 
     # Prevent users from trying to remove or register items

@@ -58,6 +58,7 @@ class ActiveLearningLoop(Loop):
         Args:
             label_epoch_frequency: Number of epoch to train on before requesting labellisation.
             inference_iteration: Number of inference to perform to compute uncertainty.
+
         """
         super().__init__()
         self.label_epoch_frequency = label_epoch_frequency
