@@ -9,4 +9,4 @@ class-resolver >=0.3.2, <=0.4.2
 
 # todo: check if we can bump this versions, ALSO if bumped you need to update CI for find links
 torch ==1.13.1
-torchvision ==0.14.1
+torchvision ==0.15.2
