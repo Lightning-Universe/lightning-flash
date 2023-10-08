@@ -149,6 +149,7 @@ class ImageClassificationData(DataModule):
             >>> import os
             >>> _ = [os.remove(f"image_{i}.png") for i in range(1, 4)]
             >>> _ = [os.remove(f"predict_image_{i}.png") for i in range(1, 4)]
+
         """
         ds_kw = {
             "target_formatter": target_formatter,
@@ -269,6 +270,7 @@ class ImageClassificationData(DataModule):
             >>> import shutil
             >>> shutil.rmtree("train_folder")
             >>> shutil.rmtree("predict_folder")
+
         """
         ds_kw = {
             "target_formatter": target_formatter,
@@ -355,6 +357,7 @@ class ImageClassificationData(DataModule):
             Training...
             >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Predicting...
+
         """
         ds_kw = {
             "target_formatter": target_formatter,
@@ -446,6 +449,7 @@ class ImageClassificationData(DataModule):
             Training...
             >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Predicting...
+
         """
         ds_kw = {
             "target_formatter": target_formatter,
@@ -532,6 +536,7 @@ class ImageClassificationData(DataModule):
             Training...
             >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Predicting...
+
         """
         ds_kw = {
             "target_formatter": target_formatter,
@@ -671,6 +676,7 @@ class ImageClassificationData(DataModule):
             >>> shutil.rmtree("predict_folder")
             >>> del train_data_frame
             >>> del predict_data_frame
+
         """
         ds_kw = {
             "target_formatter": target_formatter,
@@ -902,6 +908,7 @@ class ImageClassificationData(DataModule):
             >>> shutil.rmtree("predict_folder")
             >>> os.remove("train_data.tsv")
             >>> os.remove("predict_data.tsv")
+
         """
         ds_kw = {
             "target_formatter": target_formatter,
@@ -1021,6 +1028,7 @@ class ImageClassificationData(DataModule):
             >>> _ = [os.remove(f"predict_image_{i}.png") for i in range(1, 4)]
             >>> del train_dataset
             >>> del predict_dataset
+
         """
         ds_kw = {
             "target_formatter": target_formatter,
@@ -1092,6 +1100,7 @@ class ImageClassificationData(DataModule):
                 data_folder='label-studio/media/upload',
                 val_split=0.8,
             )
+
         """
 
         train_data, val_data, test_data, predict_data = _parse_labelstudio_arguments(
@@ -1158,6 +1167,7 @@ class ImageClassificationData(DataModule):
             data_module = DataModule.from_datasets(
                 train_dataset=train_dataset,
             )
+
         """
         ds_kw = {}
 

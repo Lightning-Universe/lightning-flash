@@ -92,6 +92,7 @@ class SemanticSegmentation(ClassificationTask):
         multi_label: Whether the targets are multi-label or not.
         output: The :class:`~flash.core.data.io.output.Output` to use when formatting prediction outputs.
         output_transform: :class:`~flash.core.data.io.output_transform.OutputTransform` use for post processing samples.
+
     """
 
     output_transform_cls = SemanticSegmentationOutputTransform

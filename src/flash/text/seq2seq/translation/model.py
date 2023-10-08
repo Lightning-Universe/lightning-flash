@@ -42,6 +42,7 @@ class TranslationTask(Seq2SeqTask):
         n_gram: Maximum n_grams to use in metric calculation. Defaults to `4`
         smooth: Apply smoothing in BLEU calculation. Defaults to `True`
         enable_ort: Enable Torch ONNX Runtime Optimization: https://onnxruntime.ai/docs/#onnx-runtime-for-training
+
     """
 
     def __init__(

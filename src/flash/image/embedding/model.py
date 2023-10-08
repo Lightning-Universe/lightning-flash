@@ -66,6 +66,7 @@ class ImageEmbedder(AdapterTask):
         backbone_kwargs: arguments to be passed to VISSL backbones, i.e. ``vision_transformer`` and ``resnet``.
         training_strategy_kwargs: arguments passed to VISSL loss function, projection head and training hooks.
         pretraining_transform_kwargs: arguments passed to VISSL transforms.
+
     """
 
     training_strategies: FlashRegistry = IMAGE_EMBEDDER_STRATEGIES
@@ -173,6 +174,7 @@ class ImageEmbedder(AdapterTask):
             >>> from flash.image import ImageEmbedder
             >>> ImageEmbedder.available_training_strategies()  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             ['barlow_twins', ..., 'swav']
+
         """
         registry: Optional[FlashRegistry] = getattr(cls, "training_strategies", None)
         if registry is None:

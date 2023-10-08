@@ -164,6 +164,7 @@ class GraphClassificationData(DataModule):
             Training...
             >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Predicting...
+
         """
 
         ds_kw = {

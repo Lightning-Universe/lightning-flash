@@ -53,6 +53,7 @@ def _defaults_from_env_vars(fn: Callable) -> Callable:
     """Copy of ``pytorch_lightning.trainer.connectors.env_vars_connector._defaults_from_env_vars``.
 
     Required to fix build error in readthedocs.
+
     """
 
     @wraps(fn)
@@ -116,6 +117,7 @@ class Trainer(PlTrainer):
 
             val_dataloaders: Either a single Pytorch Dataloader or a list of them, specifying validation samples.
                 If the model has a predefined val_dataloaders method this will be skipped
+
         """
         if any(isinstance(c, BaseFinetuning) for c in self.callbacks):
             # TODO: if we find a finetuning callback in the trainer should we remove it? or just warn the user?
@@ -160,6 +162,7 @@ class Trainer(PlTrainer):
                 By default, ``no_freeze`` strategy will be used.
 
             train_bn: Whether to train Batch Norm layer
+
         """
         self._resolve_callbacks(model, strategy, train_bn=train_bn)
         return super().fit(model, train_dataloader, val_dataloaders, datamodule)

@@ -44,8 +44,7 @@ if not _TOPIC_CORE_AVAILABLE:
 
 class DatasetInput(Input):
     """The ``DatasetInput`` implements default behaviours for data sources which expect the input to
-    :meth:`~flash.core.data.io.input.Input.load_data` to be a :class:`torch.utils.data.dataset.Dataset`
-    """
+    :meth:`~flash.core.data.io.input.Input.load_data` to be a :class:`torch.utils.data.dataset.Dataset`"""
 
     def load_sample(self, sample: Any) -> Dict[str, Any]:
         if isinstance(sample, tuple) and len(sample) == 2:
@@ -103,6 +102,7 @@ class DataModule(pl.LightningDataModule):
         >>> datamodule = DataModule(train_input, sampler=WeightedRandomSampler([0.1, 0.5], 2), batch_size=1)
         >>> print(datamodule.train_dataloader().sampler)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
         <torch.utils.data.sampler.WeightedRandomSampler object at ...>
+
     """
 
     input_transform_cls = InputTransform
@@ -399,6 +399,7 @@ class DataModule(pl.LightningDataModule):
         """This function is used to configure a :class:`~flash.core.data.callback.BaseDataFetcher`.
 
         Override with your custom one.
+
         """
         return BaseDataFetcher()
 

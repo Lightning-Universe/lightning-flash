@@ -42,8 +42,8 @@ if not _TOPIC_AUDIO_AVAILABLE or not _TOPIC_IMAGE_AVAILABLE:
 
 
 class AudioClassificationData(DataModule):
-    """The ``AudioClassificationData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of
-    class methods for loading data for audio classification."""
+    """The ``AudioClassificationData`` class is a :class:`~flash.core.data.data_module.DataModule` with a set of class
+    methods for loading data for audio classification."""
 
     input_transform_cls = AudioClassificationInputTransform
 
@@ -141,6 +141,7 @@ class AudioClassificationData(DataModule):
             >>> import os
             >>> _ = [os.remove(f"spectrogram_{i}.png") for i in range(1, 4)]
             >>> _ = [os.remove(f"predict_spectrogram_{i}.png") for i in range(1, 4)]
+
         """
 
         ds_kw = {
@@ -275,6 +276,7 @@ class AudioClassificationData(DataModule):
             >>> import shutil
             >>> shutil.rmtree("train_folder")
             >>> shutil.rmtree("predict_folder")
+
         """
 
         ds_kw = {
@@ -365,6 +367,7 @@ class AudioClassificationData(DataModule):
             Training...
             >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Predicting...
+
         """
 
         ds_kw = {
@@ -453,6 +456,7 @@ class AudioClassificationData(DataModule):
             Training...
             >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Predicting...
+
         """
 
         ds_kw = {
@@ -607,6 +611,7 @@ class AudioClassificationData(DataModule):
             >>> shutil.rmtree("predict_folder")
             >>> del train_data_frame
             >>> del predict_data_frame
+
         """
 
         ds_kw = {
@@ -854,6 +859,7 @@ class AudioClassificationData(DataModule):
             >>> shutil.rmtree("predict_folder")
             >>> os.remove("train_data.tsv")
             >>> os.remove("predict_data.tsv")
+
         """
 
         ds_kw = {

@@ -28,6 +28,7 @@ class TransformPredictions(Callback):
     Args:
         output_transform: The :class:`~flash.core.data.io.output_transform.OutputTransform` to apply.
         output: The :class:`~flash.core.data.io.output.Output` to apply.
+
     """
 
     def __init__(self, output_transform: OutputTransform, output: Output):

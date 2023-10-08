@@ -146,6 +146,7 @@ class TabularRegressionData(TabularData):
 
             >>> del train_data
             >>> del predict_data
+
         """
         ds_kw = {
             "categorical_fields": categorical_fields,
@@ -333,6 +334,7 @@ class TabularRegressionData(TabularData):
             >>> import os
             >>> os.remove("train_data.tsv")
             >>> os.remove("predict_data.tsv")
+
         """
         ds_kw = {
             "categorical_fields": categorical_fields,
@@ -459,6 +461,7 @@ class TabularRegressionData(TabularData):
 
             >>> del train_data
             >>> del predict_data
+
         """
         ds_kw = {
             "categorical_fields": categorical_fields,
@@ -588,6 +591,7 @@ class TabularRegressionData(TabularData):
 
             >>> del train_data
             >>> del predict_data
+
         """
         ds_kw = {
             "categorical_fields": categorical_fields,

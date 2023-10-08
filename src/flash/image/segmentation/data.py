@@ -141,6 +141,7 @@ class SemanticSegmentationData(DataModule):
             >>> _ = [os.remove(f"image_{i}.png") for i in range(1, 4)]
             >>> _ = [os.remove(f"mask_{i}.npy") for i in range(1, 4)]
             >>> _ = [os.remove(f"predict_image_{i}.png") for i in range(1, 4)]
+
         """
 
         ds_kw = {
@@ -282,6 +283,7 @@ class SemanticSegmentationData(DataModule):
             >>> shutil.rmtree("train_images")
             >>> shutil.rmtree("train_masks")
             >>> shutil.rmtree("predict_folder")
+
         """
 
         ds_kw = {
@@ -370,6 +372,7 @@ class SemanticSegmentationData(DataModule):
             Training...
             >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Predicting...
+
         """
 
         ds_kw = {
@@ -458,6 +461,7 @@ class SemanticSegmentationData(DataModule):
             Training...
             >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Predicting...
+
         """
 
         ds_kw = {
@@ -569,6 +573,7 @@ class SemanticSegmentationData(DataModule):
             >>> import os
             >>> _ = [os.remove(f"image_{i}.png") for i in range(1, 4)]
             >>> _ = [os.remove(f"predict_image_{i}.png") for i in range(1, 4)]
+
         """
 
         return cls(

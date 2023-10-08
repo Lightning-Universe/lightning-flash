@@ -222,19 +222,22 @@ class BaseLabelStudioInput(Properties):
 
 
 class LabelStudioInput(BaseLabelStudioInput, Input):
-    """The ``LabelStudioInput`` expects the input to
-    :meth:`~flash.core.data.io.input.Input.load_data` to be a json export from label studio."""
+    """The ``LabelStudioInput`` expects the input to :meth:`~flash.core.data.io.input.Input.load_data` to be a json
+    export from label studio."""
 
 
 class LabelStudioIterableInput(BaseLabelStudioInput, IterableInput):
-    """The ``LabelStudioInput`` expects the input to
-    :meth:`~flash.core.data.io.input.Input.load_data` to be a json export from label studio."""
+    """The ``LabelStudioInput`` expects the input to :meth:`~flash.core.data.io.input.Input.load_data` to be a json
+    export from label studio."""
 
 
 class LabelStudioImageClassificationInput(LabelStudioInput):
-    """The ``LabelStudioImageInput`` expects the input to
-    :meth:`~flash.core.data.io.input.Input.load_data` to be a json export from label studio.
-    Export data should point to image files"""
+    """The ``LabelStudioImageInput`` expects the input to :meth:`~flash.core.data.io.input.Input.load_data` to be a json
+    export from label studio.
+
+    Export data should point to image files
+
+    """
 
     def load_sample(self, sample: Mapping[str, Any] = None) -> Any:
         """Load 1 sample from dataset."""
@@ -248,9 +251,11 @@ class LabelStudioImageClassificationInput(LabelStudioInput):
 
 
 class LabelStudioTextClassificationInput(LabelStudioInput):
-    """The ``LabelStudioTextInput`` expects the input to
-    :meth:`~flash.core.data.io.input.Input.load_data` to be a json export from label studio.
+    """The ``LabelStudioTextInput`` expects the input to :meth:`~flash.core.data.io.input.Input.load_data` to be a json
+    export from label studio.
+
     Export data should point to text data
+
     """
 
     def load_sample(self, sample: Mapping[str, Any] = None) -> Any:
@@ -265,9 +270,12 @@ class LabelStudioTextClassificationInput(LabelStudioInput):
 
 
 class LabelStudioVideoClassificationInput(LabelStudioIterableInput):
-    """The ``LabelStudioVideoInput`` expects the input to
-    :meth:`~flash.core.data.io.input.Input.load_data` to be a json export from label studio.
-    Export data should point to video files"""
+    """The ``LabelStudioVideoInput`` expects the input to :meth:`~flash.core.data.io.input.Input.load_data` to be a json
+    export from label studio.
+
+    Export data should point to video files
+
+    """
 
     def __init__(
         self,

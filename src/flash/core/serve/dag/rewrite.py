@@ -248,6 +248,7 @@ class RuleSet:
         ----------
         rules
             One or more instances of RewriteRule
+
         """
         self._net = Node()
         self.rules = []
@@ -358,6 +359,7 @@ class RuleSet:
 
         >>> rs.rewrite(term)  # doctest: +ELLIPSIS
         (<function double at ...>, (<function double at ...>, 2))
+
         """
         return strategies[strategy](self, task)
 

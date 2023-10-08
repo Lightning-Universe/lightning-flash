@@ -184,6 +184,7 @@ class TranslationData(DataModule):
 
             >>> os.remove("train_data.tsv")
             >>> os.remove("predict_data.tsv")
+
         """
 
         ds_kw = {
@@ -293,6 +294,7 @@ class TranslationData(DataModule):
 
             >>> os.remove("train_data.json")
             >>> os.remove("predict_data.json")
+
         """
 
         ds_kw = {
@@ -386,6 +388,7 @@ class TranslationData(DataModule):
 
             >>> del train_data
             >>> del predict_data
+
         """
 
         ds_kw = {
@@ -460,6 +463,7 @@ class TranslationData(DataModule):
             Training...
             >>> trainer.predict(model, datamodule=datamodule)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
             Predicting...
+
         """
 
         ds_kw = {}

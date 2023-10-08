@@ -368,6 +368,7 @@ def default_fused_keys_renamer(keys, max_fused_key_length=120):
 
     The optional parameter `max_fused_key_length` is used to limit the maximum string length for each renamed key. If
     this parameter is set to `None`, there is no limit.
+
     """
     it = reversed(keys)
     first_key = next(it)
@@ -476,6 +477,7 @@ def fuse(
     dependencies
         dict mapping dependencies after fusion.  Useful side effect to accelerate other
         downstream optimizations.
+
     """
 
     if keys is not None and not isinstance(keys, set):

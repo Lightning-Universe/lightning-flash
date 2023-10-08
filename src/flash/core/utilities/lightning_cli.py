@@ -261,6 +261,7 @@ class LightningCLI:
             subclass_mode_data: Whether datamodule can be any `subclass
                 <https://jsonargparse.readthedocs.io/en/stable/#class-type-and-sub-classes>`_
                 of the given class.
+
         """
         self.model_class = model_class
         self.datamodule_class = datamodule_class

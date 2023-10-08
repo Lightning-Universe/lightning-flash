@@ -86,6 +86,7 @@ class QuestionAnsweringTask(Task):
             less than the score of the null answer minus this threshold, the null answer is selected for this example.
             Only useful when `version_2_with_negative=True`.
         use_stemmer: Whether Porter stemmer should be used to strip word suffixes to improve matching.
+
     """
 
     required_extras: str = "text"
