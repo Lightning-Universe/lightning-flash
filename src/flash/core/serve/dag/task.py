@@ -445,6 +445,6 @@ def quote(x):
     (literal<type=tuple>,)
 
     """
-    if istask(x) or type(x) is list or type(x) is dict:
+    if istask(x) or isinstance(x, (list, dict)):
         return (literal(x),)
     return x

@@ -458,7 +458,7 @@ def order(dsk, dependencies=None):
         # If we have many tiny groups left, then it's best to simply iterate.
         if not is_init_sorted:
             prev_len = len(init_stack)
-            if type(init_stack) is dict:
+            if isinstance(init_stack, dict):
                 init_stack = set(init_stack)
             init_stack = set_difference(init_stack, result)
             N = len(init_stack)

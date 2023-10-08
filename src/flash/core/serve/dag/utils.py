@@ -72,7 +72,7 @@ def key_split(s):
     >>> key_split('_(x)')  # strips unpleasant characters
     'x'
     """
-    if type(s) is bytes:
+    if isinstance(s, bytes):
         s = s.decode()
     if type(s) is tuple:
         s = s[0]
